@@ -1,0 +1,6 @@
+# Godot engine cache
+.godot/
+# GPU shader cache Godot drops into the project folder
+NVIDIA Corporation/
+# Manual pre-slice snapshots -- git history replaces these
+_backups/
