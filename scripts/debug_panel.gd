@@ -51,6 +51,10 @@ const TUNABLES := [
 		"tip": "How long a scent mark keeps other bees away. Only matters when Tarsal markers is on.",
 	},
 	{
+		"key": "floral_constancy_on", "label": "Floral constancy", "toggle": true,
+		"tip": "Lets you pin a forager to one flower species via 'Set preference' in its selection panel -- it will only ever visit that species from then on. Off by default; existing preferences are kept even if you turn this off, they just stop being offered as a new option.",
+	},
+	{
 		"key": "bee_speed", "label": "Bee speed", "step": 10.0, "min": 10.0,
 		"tip": "Flight and walking speed in pixels per second. The queen moves at a fraction of this (see Queen speed).",
 	},

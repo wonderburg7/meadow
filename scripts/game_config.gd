@@ -34,6 +34,13 @@ var tarsal_marker_seconds: float = 25.0
 ## exhausted flower indefinitely.
 var min_worthwhile_amount: float = 1.0
 
+## When on, a forager can be given a fixed species preference (see the
+## "Set preference" control in a forager's selection panel) and will
+## only ever visit that species from then on, even if it means walking
+## past a nearer flower of something else. Real bees show this kind of
+## floral constancy -- sticking with one species while it's rewarding.
+var floral_constancy_on: bool = false
+
 # --- foraging ---
 var bee_speed: float = 110.0
 var flower_handling_time: float = 2.0

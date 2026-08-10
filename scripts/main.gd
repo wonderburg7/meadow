@@ -72,6 +72,12 @@ var drag_start: Vector2 = Vector2.ZERO
 var drag_current: Vector2 = Vector2.ZERO
 
 var reseed_timer: float = 0.0
+## Rolling window for the top-left rate readout: a sample every 10 sim
+## seconds, keeping the last 7 (a 60s span once warmed up). Rate is the
+## change across the whole window divided by its length, which is
+## steadier than reading the last 10s alone.
+var rate_samples: Array = []
+var rate_sample_timer: float = 10.0
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var panning: bool = false          # middle mouse button held
 var pan_anchor: Vector2 = Vector2.ZERO
@@ -83,6 +89,8 @@ var awaiting_build_cell: bool = false
 var pending_builder_bees: Array = []
 var awaiting_forage_start: bool = false
 var pending_forage_bees: Array = []
+var awaiting_floral_preference: bool = false
+var pending_preference_bees: Array = []
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
@@ -90,10 +98,17 @@ func _ready() -> void:
 	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
 
 	meadow_root = Node2D.new()
+	# Main is PROCESS_MODE_ALWAYS (so the camera and HUD keep working
+	# while paused), and process_mode is inherited by default -- without
+	# pinning these back to normal, every bee and flower under them would
+	# silently inherit ALWAYS too and just keep simulating through a
+	# pause. This is what made Pause not actually stop anything.
+	meadow_root.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(meadow_root)
 
 	hive_root = Node2D.new()
 	hive_root.position = HIVE_WORLD_OFFSET
+	hive_root.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(hive_root)
 
 	_build_meadow()
@@ -115,6 +130,7 @@ func _ready() -> void:
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
+	hud.floral_preference_requested.connect(_on_floral_preference_requested)
 	add_child(hud)
 
 	add_child(DebugPanel.new())
@@ -122,6 +138,7 @@ func _ready() -> void:
 	hive.storage_changed.connect(func(n, p): hud.update_storage(n, p))
 	hud.update_day(day)
 	hud.update_storage(0, 0)
+	hud.update_rates(0.0, 0.0, 0.0)
 	hud.set_speed_display(1.0)
 	_update_population_readout()
 	_apply_view()
@@ -381,6 +398,22 @@ func _spawn_bee(focus: String) -> void:
 	bee.setup(hive, focus, next_bee_id, Bee.Role.FORAGER, self)
 	next_bee_id += 1
 
+## A bee that's just hatched -- unlike the starting roster, it needs to
+## visibly emerge from the actual cell it developed in rather than
+## appearing near the hive centre (indoor roles) or straight out in the
+## meadow (forager, which used to skip the hive entirely). It's spawned
+## inside the hive at the cell's position; a forager then walks itself
+## out through the entrance exactly like any other exiting bee.
+func _spawn_hatched_bee(role: int, cell: Node2D) -> void:
+	var bee := Bee.new()
+	bee.position = cell.position
+	hive_root.add_child(bee)
+	bee.setup(hive, "nectar", next_bee_id, role, self)
+	next_bee_id += 1
+	if role == Bee.Role.FORAGER:
+		bee.state = Bee.State.IN_HIVE_TO_EXIT
+	# other roles: setup() already left it in the right indoor idle state
+
 func _spawn_indoor_bee(role: int) -> void:
 	var bee := Bee.new()
 	bee.position = _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
@@ -411,6 +444,7 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)
+	selection_layer.queue_redraw()
 
 	if not get_tree().paused:
 		GameConfig.sim_time += delta
@@ -420,6 +454,10 @@ func _process(delta: float) -> void:
 			hud.update_day(day)
 		_hatch_ready_brood()
 		_reseed_meadow(delta)
+		rate_sample_timer -= delta
+		if rate_sample_timer <= 0.0:
+			rate_sample_timer = 10.0
+			_sample_rates()
 
 	_prune_selection()
 
@@ -446,11 +484,31 @@ func _hatch_ready_brood() -> void:
 			continue
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
 		cell.clear_cell()
-		if role == Bee.Role.FORAGER:
-			_spawn_bee("nectar")
-		else:
-			_spawn_indoor_bee(role)
+		_spawn_hatched_bee(role, cell)
+		hive.record_birth()
 		_update_population_readout()
+
+func _sample_rates() -> void:
+	rate_samples.append({
+		"t": GameConfig.sim_time,
+		"nectar": hive.lifetime_nectar_collected,
+		"pollen": hive.lifetime_pollen_collected,
+		"births": hive.lifetime_births,
+	})
+	while rate_samples.size() > 7:
+		rate_samples.pop_front()
+	if rate_samples.size() < 2:
+		return
+	var oldest: Dictionary = rate_samples[0]
+	var newest: Dictionary = rate_samples[rate_samples.size() - 1]
+	var span: float = newest.t - oldest.t
+	if span <= 0.0:
+		return
+	hud.update_rates(
+		(newest.nectar - oldest.nectar) / span,
+		(newest.pollen - oldest.pollen) / span,
+		(newest.births - oldest.births) / span,
+	)
 
 func _update_population_readout() -> void:
 	var foragers := 0
@@ -581,6 +639,9 @@ func _finish_drag(additive: bool) -> void:
 	if awaiting_forage_start:
 		_place_forage_start(drag_start)
 		return
+	if awaiting_floral_preference:
+		_place_floral_preference(drag_start)
+		return
 
 	var box := Rect2(drag_start, drag_current - drag_start).abs()
 	var picked: Array = []
@@ -679,6 +740,19 @@ func _place_forage_start(global_point: Vector2) -> void:
 		if is_instance_valid(b):
 			b.set_forage_start_point(meadow_point)
 	pending_forage_bees = []
+
+## Consumes the click that follows a "Set preference" request. A miss
+## (no flower under the click) is ignored rather than nagging -- nothing
+## changes and the player can just click again.
+func _place_floral_preference(global_point: Vector2) -> void:
+	awaiting_floral_preference = false
+	var flower := _flower_at(global_point)
+	if flower:
+		for b in pending_preference_bees:
+			if is_instance_valid(b):
+				b.set_preferred_species(flower.species_name)
+		hud.update_selection(selected_bees)
+	pending_preference_bees = []
 
 ## Right-click: send the selection to a flower if there's one under the
 ## cursor, otherwise just walk them to that spot.
@@ -799,9 +873,33 @@ func _on_forage_start_point_requested() -> void:
 		in_hive_view = false
 		_apply_view()
 
-func _draw_selection_box() -> void:
-	if not dragging:
+## Enters "click a flower" mode for the selected foragers.
+func _on_floral_preference_requested() -> void:
+	pending_preference_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.FORAGER)
+	if pending_preference_bees.is_empty():
 		return
-	var box := Rect2(drag_start, drag_current - drag_start).abs()
-	selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.15), true)
-	selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.9), false, 2.0)
+	awaiting_floral_preference = true
+	if in_hive_view:
+		in_hive_view = false
+		_apply_view()
+
+func _draw_selection_box() -> void:
+	if dragging:
+		var box := Rect2(drag_start, drag_current - drag_start).abs()
+		selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.15), true)
+		selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.9), false, 2.0)
+
+	# A selected forager with a start point set gets a marker at that
+	# spot, so it's obvious at a glance where it'll head on its next
+	# trip out rather than that only living in the selection panel text.
+	if not in_hive_view:
+		for b in selected_bees:
+			if is_instance_valid(b) and b.role == Bee.Role.FORAGER and b.has_forage_start_point():
+				_draw_start_point_marker(b.forage_start_point)
+
+func _draw_start_point_marker(point: Vector2) -> void:
+	var marker_color := Color(0.2, 1.0, 0.4, 0.95)
+	selection_layer.draw_circle(point, 9.0, Color(0.2, 1.0, 0.4, 0.2))
+	selection_layer.draw_arc(point, 9.0, 0.0, TAU, 24, marker_color, 2.5)
+	selection_layer.draw_line(point + Vector2(-6, 0), point + Vector2(6, 0), marker_color, 2.0)
+	selection_layer.draw_line(point + Vector2(0, -6), point + Vector2(0, 6), marker_color, 2.0)

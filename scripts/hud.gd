@@ -24,6 +24,9 @@ signal forage_start_point_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
 signal secondary_role_requested(role_key: String)
+## Enters "click a flower" mode -- only offered when floral constancy is
+## on in tuning. See GameConfig.floral_constancy_on.
+signal floral_preference_requested()
 
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
@@ -82,6 +85,7 @@ const TUNING_BUTTON_RESERVE := 108.0
 var day_label: Label
 var storage_label: Label
 var population_label: Label
+var rate_label: Label
 var pause_label: Label
 var view_button: Button
 var selection_panel: PanelContainer
@@ -110,11 +114,12 @@ func _ready() -> void:
 	day_label = _make_label(Vector2(16, 12), 22)
 	storage_label = _make_label(Vector2(16, 42), 18)
 	population_label = _make_label(Vector2(16, 66), 14)
+	rate_label = _make_label(Vector2(16, 86), 12)
 
-	var hint := _make_label(Vector2(16, 88), 12)
+	var hint := _make_label(Vector2(16, 106), 12)
 	hint.text = "Arrows = pan · wheel = zoom · Tab = switch view · Space = pause\nClick or drag to select bees · right-click a flower to send them · right-click ground to move\nIn the hive view, click a cell to inspect it"
 
-	pause_label = _make_label(Vector2(16, 140), 18)
+	pause_label = _make_label(Vector2(16, 192), 18)
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
 
@@ -410,6 +415,14 @@ func update_storage(nectar: float, pollen: float) -> void:
 func update_population(foragers: int, nurses: int, builders: int) -> void:
 	population_label.text = "Bees: %d foraging, %d nursing, %d building" % [foragers, nurses, builders]
 
+## `births_per_sec` is shown per minute instead -- birth events are rare
+## enough (one every 90s+ per brood cell) that a per-second figure would
+## always read as an unreadable 0.0x.
+func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: float) -> void:
+	rate_label.text = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
+		nectar_per_sec, pollen_per_sec, births_per_sec * 60.0,
+	]
+
 func update_selection(bees: Array) -> void:
 	shown_bees = bees
 	selection_panel.visible = not bees.is_empty()
@@ -448,10 +461,18 @@ func _rebuild_role_controls(bees: Array) -> void:
 		pollen_btn.pressed.connect(func(): focus_requested.emit("pollen"))
 		role_row.add_child(_with_info(pollen_btn, "The selected foragers will look for pollen. Pollen is what the queen eats to lay eggs, so no pollen means no new bees."))
 
+		var has_start: bool = is_instance_valid(bees[0]) and bees[0].has_forage_start_point()
 		var start_btn := Button.new()
-		start_btn.text = "Set start point"
+		start_btn.text = "Reset start point" if has_start else "Set start point"
 		start_btn.pressed.connect(func(): forage_start_point_requested.emit())
-		role_row.add_child(_with_info(start_btn, "Click this, then click a spot in the meadow. The selected foragers will head there first on every trip out of the hive, so you can split them across different parts of the meadow instead of them all drifting to whichever flower happens to be nearest the entrance."))
+		role_row.add_child(_with_info(start_btn, "Click this, then click a spot in the meadow. The selected foragers will head there first on every trip out of the hive, so you can split them across different parts of the meadow instead of them all drifting to whichever flower happens to be nearest the entrance. A green marker shows where it's set while a bee with one is selected."))
+
+		if GameConfig.floral_constancy_on:
+			var current_pref: String = bees[0].preferred_species if is_instance_valid(bees[0]) else ""
+			var pref_btn := Button.new()
+			pref_btn.text = ("Preference: %s" % current_pref) if current_pref != "" else "Set preference"
+			pref_btn.pressed.connect(func(): floral_preference_requested.emit())
+			role_row.add_child(_with_info(pref_btn, "Click this, then click a flower in the meadow. The selected foragers will only ever visit that species from then on, even walking past a nearer flower of something else -- real bees do this too, sticking with one species while it's paying off."))
 	else:
 		var forager_menu := _make_role_menu("Forager", _tip_for("forager"), [
 			{"text": "Become forager", "action": func(): role_requested.emit("forager")},

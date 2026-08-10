@@ -19,6 +19,23 @@ var comb_centre: Vector2 = Vector2.ZERO
 ## Rotation pointer for find_empty_cell's brood-cell sequence.
 var _brood_pointer: int = 0
 
+## Running totals, never reset, for the top-left rate readout (see
+## main.gd's rate-sampling). Counted at the moment of harvest/birth
+## rather than derived from the current stock, since stock also goes
+## down from being eaten/used -- these only ever go up.
+var lifetime_nectar_collected: float = 0.0
+var lifetime_pollen_collected: float = 0.0
+var lifetime_births: int = 0
+
+func record_collection(resource_type: String, amount: float) -> void:
+	if resource_type == "nectar":
+		lifetime_nectar_collected += amount
+	else:
+		lifetime_pollen_collected += amount
+
+func record_birth() -> void:
+	lifetime_births += 1
+
 ## Which hex tiles are taken, so comb and soil never overlap.
 ## Keys are axial Vector2i, values are the node sitting there.
 var occupied_tiles: Dictionary = {}
@@ -280,6 +297,25 @@ func _tile_cost(hex: Vector2i) -> float:
 
 func tile_is_walkable(hex: Vector2i) -> bool:
 	return _tile_ids.has(hex)
+
+## Used to sanitise a player-commanded destination before a bee is sent
+## there: right-clicking on a soil block (solid, no route through it)
+## used to leave the bee's target sitting inside the wall, and the "no
+## route found" fallback in Bee._move_towards walked it there in a
+## straight line -- straight through the wall. Snapping the target to
+## whichever walkable tile is actually closest fixes both ends of that.
+func nearest_walkable_point(point: Vector2) -> Vector2:
+	var hex: Vector2i = Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing)
+	if _tile_ids.has(hex):
+		return point
+	var best_hex: Vector2i = hex
+	var best_dist := INF
+	for h in _tile_ids.keys():
+		var d: float = Vector2(h.x - hex.x, h.y - hex.y).length_squared()
+		if d < best_dist:
+			best_dist = d
+			best_hex = h
+	return comb_centre + Shapes.hex_to_pixel(best_hex.x, best_hex.y, GameConfig.hive_cell_spacing)
 
 ## A list of world points from `from_point` to `to_point` that stays out
 ## of the soil. Returns an empty array if either end is unreachable, in

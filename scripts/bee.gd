@@ -22,7 +22,7 @@ extends Node2D
 
 enum Role { FORAGER, NURSERY, BUILDER, EGG_LAYER, IDLE, MINER }
 enum State {
-	SEEK_FLOWER, TO_FLOWER, COLLECTING, TO_HIVE,           # forager, outdoors
+	SEEK_FLOWER, TO_FLOWER, INSPECTING, COLLECTING, TO_HIVE,   # forager, outdoors
 	IN_HIVE_TO_CELL, DEPOSITING, IN_HIVE_TO_EXIT,          # forager, indoors
 	MOVE_TO_POINT, IDLING,                                 # player-commanded
 	NURSE_IDLE, TO_BROOD, TENDING,                         # nursery
@@ -78,6 +78,13 @@ var pollen_eaten: float = 0.0
 ## of this; it just borrows another role's behaviour between primary
 ## tasks and drops it the instant primary work turns up again.
 var secondary_role: int = -1
+
+## Floral constancy (see GameConfig.floral_constancy_on): "" means no
+## preference. Once set, this bee only ever selects flowers of this
+## species, regardless of the toggle -- turning constancy off in tuning
+## just stops new preferences being offered, it doesn't clear ones a
+## bee already has.
+var preferred_species: String = ""
 
 ## Player-set point (meadow/global space) a forager heads to first on
 ## every trip out, before hunting for a flower. Lets the player split
@@ -198,7 +205,9 @@ func _process(delta: float) -> void:
 			else:
 				_move_towards(current_flower.position, delta)
 				if position.distance_to(current_flower.position) < arrive_distance:
-					_start_collecting()
+					_start_inspecting()
+		State.INSPECTING:
+			_inspect(delta)
 		State.COLLECTING:
 			_collect(delta)
 		State.TO_HIVE:
@@ -337,6 +346,8 @@ func _nearest_flower(strict: bool) -> Node2D:
 			continue
 		if f.get_available(resource_type) <= 0.0:
 			continue
+		if preferred_species != "" and f.species_name != preferred_species:
+			continue
 		if strict:
 			if flower_cooldowns.has(f) and GameConfig.sim_time < flower_cooldowns[f]:
 				continue
@@ -350,6 +361,49 @@ func _nearest_flower(strict: bool) -> Node2D:
 			best_dist = d
 			best = f
 	return best
+
+## Landing on a flower doesn't commit a bee to feeding from it. A short
+## inspection comes first -- long enough to notice things like a fresh
+## tarsal mark from another bee, or that it's nearly empty -- and only
+## then does the bee decide whether to actually feed or move on. This
+## also catches a flower that got marked by someone else mid-flight,
+## after this bee had already committed to it.
+const INSPECTION_TIME := 1.5
+const REJECTED_AVOID_SECONDS := 15.0
+
+func _start_inspecting() -> void:
+	timer = INSPECTION_TIME
+	state = State.INSPECTING
+
+func _inspect(delta: float) -> void:
+	if current_flower == null or not is_instance_valid(current_flower):
+		current_flower = null
+		state = State.SEEK_FLOWER
+		return
+	timer -= delta
+	if timer > 0.0:
+		return
+	if _worth_feeding(current_flower):
+		_start_collecting()
+	else:
+		_reject_flower()
+
+func _worth_feeding(f: Node2D) -> bool:
+	if f.get_available(resource_type) < GameConfig.min_worthwhile_amount:
+		return false
+	if GameConfig.tarsal_markers_on and f.is_marked(self):
+		return false
+	return true
+
+## Doesn't set a full recharge-length cooldown -- this bee didn't drain
+## anything, so there's no reason to wait for a refill. A short "don't
+## bother rechecking immediately" pause is enough.
+func _reject_flower() -> void:
+	if current_flower and is_instance_valid(current_flower):
+		flower_cooldowns[current_flower] = GameConfig.sim_time + REJECTED_AVOID_SECONDS
+		current_flower.release(self)
+	current_flower = null
+	state = State.SEEK_FLOWER
 
 func _start_collecting() -> void:
 	current_flower.leave_marker(self)
@@ -398,6 +452,7 @@ func _collect(delta: float) -> void:
 	current_load += taken
 	if taken > 0.0:
 		current_load_type = resource_type
+		hive.record_collection(resource_type, taken)
 
 	if current_load >= _max_capacity():
 		_finish_collecting()
@@ -427,6 +482,12 @@ func _enter_hive() -> void:
 
 func _go_to_deposit_cell(delta: float) -> void:
 	if current_load <= 0.0:
+		# A forager only ever refuelled here, after a *successful*
+		# deposit -- one that came home empty (nothing worth collecting
+		# outside, or the comb was full) walked straight back out again
+		# without ever eating. Over enough empty trips that starved it
+		# to death. Refuel on every visit home, loaded or not.
+		energy += hive.take("nectar", GameConfig.energy_capacity - energy)
 		state = State.IN_HIVE_TO_EXIT
 		return
 
@@ -775,7 +836,13 @@ func _queen_lay(delta: float) -> void:
 ## meadow_root sits at the origin).
 func command_move_to(world_point: Vector2) -> void:
 	var parent := get_parent()
-	move_target = parent.to_local(world_point) if parent else world_point
+	var target: Vector2 = parent.to_local(world_point) if parent else world_point
+	# Inside the hive, a click can land on solid soil -- snap it to the
+	# nearest open tile rather than sending the bee at a point it can
+	# only reach by cutting straight through the wall.
+	if _is_inside_hive() and hive and hive.has_method("nearest_walkable_point"):
+		target = hive.nearest_walkable_point(target)
+	move_target = target
 	_release_everything()
 	state = State.MOVE_TO_POINT
 
@@ -784,6 +851,13 @@ func command_move_to(world_point: Vector2) -> void:
 ## command_move_to for why that distinction matters elsewhere).
 func set_forage_start_point(meadow_point: Vector2) -> void:
 	forage_start_point = meadow_point
+
+func has_forage_start_point() -> bool:
+	return forage_start_point.x != INF
+
+func set_preferred_species(species: String) -> void:
+	preferred_species = species
+	flower_cooldowns.clear()   # a change of preference is worth a fresh look
 
 ## `hex` is an axial coordinate relative to the comb centre, matching
 ## what hive.gd already uses for cells and soil blocks.
@@ -872,7 +946,7 @@ func _release_everything() -> void:
 func release_flower_reference(flower: Node2D) -> void:
 	if current_flower == flower:
 		current_flower = null
-		if state == State.TO_FLOWER or state == State.COLLECTING:
+		if state == State.TO_FLOWER or state == State.INSPECTING or state == State.COLLECTING:
 			state = State.SEEK_FLOWER
 
 func set_selected(value: bool) -> void:
@@ -905,6 +979,8 @@ func task_description() -> String:
 			return "looking for a %s flower" % resource_type
 		State.TO_FLOWER:
 			return "flying to a flower for %s" % resource_type
+		State.INSPECTING:
+			return "inspecting a flower before deciding whether to feed"
 		State.COLLECTING:
 			if timer > 0.0:
 				return "landing on a flower"
@@ -991,6 +1067,8 @@ func role_name_text() -> String:
 			base = "Miner (automine on)" if automine else "Miner"
 		_:
 			base = "Forager (%s)" % resource_type
+			if preferred_species != "":
+				base += " -- %s only" % preferred_species
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- backup: %s" % _role_short_name(secondary_role)
 	return base
@@ -1095,8 +1173,7 @@ func _move_towards(target: Vector2, delta: float) -> void:
 		path_index = 0
 
 	if path_points.is_empty():
-		position = position.move_toward(target, step)   # no route -- go direct
-		return
+		return   # no safe route -- stay put rather than cutting through soil
 
 	# walk the waypoints, spending any leftover movement on the next one
 	while step > 0.0 and path_index < path_points.size():

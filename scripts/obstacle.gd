@@ -46,14 +46,27 @@ func _build_tree() -> void:
 		leaf.color = Color(0.16, 0.32, 0.14)
 		add_child(leaf)
 
+## A muted tan circle on grass-green grass barely registered -- too
+## close in tone to the meadow itself. Sandy colour, a bold dark
+## outline, and a bright highlight together read as raised ground at a
+## glance, at any zoom level.
 func _build_raised_area() -> void:
 	var mound := Polygon2D.new()
-	mound.polygon = Shapes.circle_points(radius, 16)
-	mound.color = Color(0.5, 0.47, 0.4)
+	mound.polygon = Shapes.circle_points(radius, 20)
+	mound.color = Color(0.68, 0.58, 0.38)   # sandy/rocky -- clearly not grass
 	add_child(mound)
 
+	var outline := Line2D.new()
+	var pts := Shapes.circle_points(radius, 20)
+	for p in pts:
+		outline.add_point(p)
+	outline.add_point(pts[0])   # close the loop
+	outline.width = 3.0
+	outline.default_color = Color(0.3, 0.22, 0.12, 0.95)
+	add_child(outline)
+
 	var highlight := Polygon2D.new()
-	highlight.polygon = Shapes.circle_points(radius * 0.7, 16)
-	highlight.position = Vector2(-radius * 0.15, -radius * 0.15)
-	highlight.color = Color(0.58, 0.55, 0.47)
+	highlight.polygon = Shapes.circle_points(radius * 0.55, 16)
+	highlight.position = Vector2(-radius * 0.2, -radius * 0.2)
+	highlight.color = Color(0.82, 0.73, 0.5)
 	add_child(highlight)
