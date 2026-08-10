@@ -21,6 +21,9 @@ signal cell_hatch_role_requested(cell: Node2D, role: int)
 ## of treating it as a normal select/drag.
 signal build_cell_requested()
 signal forage_start_point_requested()
+## "none" clears it. Only offered for bees whose primary role actually
+## checks a secondary -- see the note on _rebuild_role_controls.
+signal secondary_role_requested(role_key: String)
 
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
@@ -508,6 +511,25 @@ func _rebuild_role_controls(bees: Array) -> void:
 		egg_btn.pressed.connect(func(): role_requested.emit("egg_layer"))
 		role_row.add_child(_with_info(egg_btn, _tip_for("egg_layer")))
 
+	# --- secondary role: only Miner, Nursery and Builder ever check
+	# theirs (see Bee._idle_dispatch), so it's only offered while one of
+	# those is the common role -- offering it otherwise would be a
+	# control that silently does nothing.
+	if common_role == Bee.Role.MINER or common_role == Bee.Role.NURSERY or common_role == Bee.Role.BUILDER:
+		var current_secondary: int = bees[0].secondary_role if is_instance_valid(bees[0]) else -1
+		var secondary_menu := _make_role_menu(
+			"Backup: %s" % _secondary_label(current_secondary),
+			"What this bee does instead of standing around whenever it genuinely has no work of its own -- for example a non-automine miner with no block marked, or a nurse with no brood to tend. It drops the backup role and returns to its own the instant real work turns up again.",
+			[
+				{"text": "None", "action": func(): secondary_role_requested.emit("none")},
+				{"text": "Forager", "action": func(): secondary_role_requested.emit("forager")},
+				{"text": "Nursery", "action": func(): secondary_role_requested.emit("nursery")},
+				{"text": "Builder", "action": func(): secondary_role_requested.emit("builder")},
+				{"text": "Miner", "action": func(): secondary_role_requested.emit("miner")},
+			]
+		)
+		role_row.add_child(secondary_menu)
+
 ## -1 means the selection is mixed -- no role button gets hidden in that
 ## case, since there's no single "already this role" to exclude.
 func _common_role(bees: Array) -> int:
@@ -522,6 +544,19 @@ func _common_role(bees: Array) -> int:
 		elif b.role != role_value:
 			return -1
 	return role_value if found else -1
+
+func _secondary_label(secondary_role: int) -> String:
+	match secondary_role:
+		Bee.Role.FORAGER:
+			return "Forager"
+		Bee.Role.NURSERY:
+			return "Nursery"
+		Bee.Role.BUILDER:
+			return "Builder"
+		Bee.Role.MINER:
+			return "Miner"
+		_:
+			return "None"
 
 func _tip_for(role_key: String) -> String:
 	for entry in ROLE_BUTTONS:

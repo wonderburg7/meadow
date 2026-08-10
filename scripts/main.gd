@@ -114,6 +114,7 @@ func _ready() -> void:
 	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
+	hud.secondary_role_requested.connect(_on_secondary_role_requested)
 	add_child(hud)
 
 	add_child(DebugPanel.new())
@@ -724,6 +725,23 @@ func _on_role_requested(role_name: String) -> void:
 		if is_instance_valid(b):
 			b.set_role(target_role)
 	_update_population_readout()
+	hud.update_selection(selected_bees)
+
+func _on_secondary_role_requested(role_name: String) -> void:
+	var target_role: int = -1
+	match role_name:
+		"forager":
+			target_role = Bee.Role.FORAGER
+		"nursery":
+			target_role = Bee.Role.NURSERY
+		"builder":
+			target_role = Bee.Role.BUILDER
+		"miner":
+			target_role = Bee.Role.MINER
+		# "none" (or anything else) leaves target_role at -1, clearing it
+	for b in selected_bees:
+		if is_instance_valid(b):
+			b.set_secondary_role(target_role)
 	hud.update_selection(selected_bees)
 
 ## Reserving a cell for one resource when it already holds another means

@@ -71,6 +71,14 @@ var automine: bool = false
 var dirt_load: float = 0.0
 var pollen_eaten: float = 0.0
 
+## A role to fall back to whenever this bee's primary role has genuinely
+## nothing for it to do right now -- a non-automine miner with no block
+## marked, a nurse with no brood to tend, a builder with nowhere left to
+## build. -1 means none set. The bee's own `role` never changes because
+## of this; it just borrows another role's behaviour between primary
+## tasks and drops it the instant primary work turns up again.
+var secondary_role: int = -1
+
 ## Player-set point (meadow/global space) a forager heads to first on
 ## every trip out, before hunting for a flower. Lets the player split
 ## foragers across different parts of the meadow instead of them all
@@ -217,7 +225,7 @@ func _process(delta: float) -> void:
 
 		# --- nursery ---
 		State.NURSE_IDLE:
-			_nurse_look_for_work()
+			_idle_dispatch()
 		State.TO_BROOD:
 			_nurse_go_to_brood(delta)
 		State.TENDING:
@@ -225,7 +233,7 @@ func _process(delta: float) -> void:
 
 		# --- builder ---
 		State.BUILD_IDLE:
-			_builder_look_for_work()
+			_idle_dispatch()
 		State.TO_BUILD_SITE:
 			_builder_go_to_site(delta)
 		State.BUILDING:
@@ -237,7 +245,7 @@ func _process(delta: float) -> void:
 
 		# --- miner ---
 		State.MINE_IDLE:
-			_miner_look_for_work()
+			_idle_dispatch()
 		State.TO_MINE_SITE:
 			_miner_go_to_site(delta)
 		State.MINING:
@@ -478,15 +486,6 @@ func _deposit_everything_remotely() -> void:
 
 # --- nursery work -------------------------------------------------
 
-## The queen lays directly into a cell now (see _queen_lay), so there's
-## never a loose egg on the floor for a nurse to fetch. A nurse's only
-## job is tending brood that's already in a cell.
-func _nurse_look_for_work() -> void:
-	var brood = hive.find_brood_cell()
-	if brood:
-		target_cell = brood
-		state = State.TO_BROOD
-
 func _nurse_go_to_brood(delta: float) -> void:
 	if target_cell == null or not is_instance_valid(target_cell) or target_cell.content_type != "brood":
 		state = State.NURSE_IDLE
@@ -501,32 +500,91 @@ func _nurse_tend(_delta: float) -> void:
 		return
 	target_cell.being_tended = true   # cell reads this each frame to speed development
 
-# --- building -----------------------------------------------------
+# --- idle work dispatch --------------------------------------------
 
-## Builders have two jobs, in priority order: shift resources out of
-## cells the player has re-designated, then draw new comb.
-func _builder_look_for_work() -> void:
-	var source = hive.find_cell_needing_eviction()
-	if source:
-		target_cell = source
-		state = State.TO_HAUL_SOURCE
+## Called every frame a bee is sitting in one of the three "waiting for
+## work" states (NURSE_IDLE, BUILD_IDLE, MINE_IDLE -- interchangeable
+## now, since this is the only thing any of them do). Tries the bee's
+## real role first; only if that genuinely has nothing on offer does it
+## try the secondary role instead. Because the fallback states above all
+## route failures back to one of these same three idle states, a bee
+## doing secondary work re-checks its primary role again the moment that
+## task ends -- it never gets stuck permanently "being" its secondary.
+func _idle_dispatch() -> void:
+	if _try_role_work(role):
 		return
+	if secondary_role != -1 and secondary_role != role:
+		_try_role_work(secondary_role)
 
-	var site: Node2D = null
-	if has_manual_build_target:
-		# Consumed either way -- if the tile turns out to be occupied or
-		# solid, falling through to automatic placement is better than
-		# retrying the same bad hex forever.
-		site = hive.create_cell_site_at(manual_build_hex)
-		has_manual_build_target = false
+## Attempts to find and start one unit of work for role `r`. Returns
+## true if it found something (and has already changed state), false if
+## there was genuinely nothing to do.
+func _try_role_work(r: int) -> bool:
+	match r:
+		Role.NURSERY:
+			# The queen lays directly into a cell (see _queen_lay), so
+			# there's never a loose egg on the floor to fetch -- a
+			# nurse's only job is tending brood already in a cell.
+			var brood = hive.find_brood_cell()
+			if brood:
+				target_cell = brood
+				state = State.TO_BROOD
+				return true
+			return false
 
-	if site == null:
-		site = hive.find_unfinished_cell()
-	if site == null:
-		site = hive.create_next_cell_site()   # nothing under way -- start one
-	if site:
-		target_cell = site
-		state = State.TO_BUILD_SITE
+		Role.BUILDER:
+			# Builders have two jobs, in priority order: shift resources
+			# out of cells the player has re-designated, then draw new
+			# comb -- a manually placed site first, if one's pending.
+			var source = hive.find_cell_needing_eviction()
+			if source:
+				target_cell = source
+				state = State.TO_HAUL_SOURCE
+				return true
+
+			var site: Node2D = null
+			if has_manual_build_target:
+				# Consumed either way -- if the tile turns out to be
+				# occupied or solid, falling through to automatic
+				# placement beats retrying the same bad hex forever.
+				site = hive.create_cell_site_at(manual_build_hex)
+				has_manual_build_target = false
+			if site == null:
+				site = hive.find_unfinished_cell()
+			if site == null:
+				site = hive.create_next_cell_site()
+			if site:
+				target_cell = site
+				state = State.TO_BUILD_SITE
+				return true
+			return false
+
+		Role.MINER:
+			# With automine on, a miner doesn't wait to be told: it
+			# takes the edge block nearest the middle of the comb, so
+			# the hive opens up around itself rather than at the rim.
+			var block = hive.find_marked_block()
+			if block == null and automine:
+				block = hive.find_nearest_edge_block()
+				if block != null:
+					block.set_marked(true)
+			if block != null:
+				target_block = block
+				state = State.TO_MINE_SITE
+				return true
+			return false
+
+		Role.FORAGER:
+			# No cheap way to know in advance whether a flower's worth
+			# visiting -- _seek_flower already handles "nothing out
+			# there" gracefully by heading home, so just hand off to it.
+			state = State.SEEK_FLOWER
+			return true
+
+		_:
+			return false
+
+# --- building -----------------------------------------------------
 
 func _builder_go_to_site(delta: float) -> void:
 	if target_cell == null or not is_instance_valid(target_cell) or target_cell.is_built:
@@ -598,19 +656,6 @@ func _builder_go_to_haul_target(delta: float) -> void:
 			state = State.BUILD_IDLE
 
 # --- mining -------------------------------------------------------
-
-## Miners dig out blocks you've marked. With automine on they don't wait
-## to be told: they take the edge block nearest the middle of the comb,
-## so the hive opens up around itself rather than at the far rim.
-func _miner_look_for_work() -> void:
-	var block = hive.find_marked_block()
-	if block == null and automine:
-		block = hive.find_nearest_edge_block()
-		if block != null:
-			block.set_marked(true)
-	if block != null:
-		target_block = block
-		state = State.TO_MINE_SITE
 
 func _miner_go_to_site(delta: float) -> void:
 	if target_block == null or not is_instance_valid(target_block) or not target_block.marked_for_mining:
@@ -782,6 +827,13 @@ func set_focus(type: String) -> void:
 		state = State.SEEK_FLOWER
 	_update_label()
 
+## `new_role` of -1 clears it. A bee can't take itself as its own
+## backup, and only Miner, Nursery and Builder ever actually check
+## theirs (see _idle_dispatch) -- the hud only offers the control for
+## bees currently doing one of those.
+func set_secondary_role(new_role: int) -> void:
+	secondary_role = -1 if new_role == role else new_role
+
 func can_take_role(new_role: int) -> bool:
 	return is_queen if new_role == Role.EGG_LAYER else true
 
@@ -870,7 +922,8 @@ func task_description() -> String:
 		State.IDLING:
 			return "idle -- waiting for orders"
 		State.MINE_IDLE:
-			return "looking for a block to dig" if automine else "waiting for a block to be marked"
+			var base_mine := "looking for a block to dig" if automine else "waiting for a block to be marked"
+			return base_mine + _idle_backup_note()
 		State.TO_MINE_SITE:
 			return "walking to a marked soil block"
 		State.MINING:
@@ -883,13 +936,13 @@ func task_description() -> String:
 		State.DUMPING_DIRT:
 			return "emptying out a load of dirt"
 		State.NURSE_IDLE:
-			return "looking for brood work"
+			return "looking for brood work" + _idle_backup_note()
 		State.TO_BROOD:
 			return "going to tend the brood"
 		State.TENDING:
 			return "tending a developing bee"
 		State.BUILD_IDLE:
-			return "looking for building work"
+			return "looking for building work" + _idle_backup_note()
 		State.TO_BUILD_SITE:
 			return "walking to a cell under construction"
 		State.BUILDING:
@@ -915,20 +968,47 @@ func task_description() -> String:
 			return "laying an egg into a cell"
 	return "idle"
 
+## Only ever reached from task_description() while sitting in an idle
+## state, which means _idle_dispatch already tried the secondary role
+## this frame too and it also came up empty.
+func _idle_backup_note() -> String:
+	if secondary_role != -1 and secondary_role != role:
+		return " (backup role %s also has nothing right now)" % _role_short_name(secondary_role)
+	return ""
+
 func role_name_text() -> String:
+	var base: String
 	match role:
+		Role.NURSERY:
+			base = "Nursery"
+		Role.BUILDER:
+			base = "Builder"
+		Role.EGG_LAYER:
+			base = "Egg layer"
+		Role.IDLE:
+			base = "Idle"
+		Role.MINER:
+			base = "Miner (automine on)" if automine else "Miner"
+		_:
+			base = "Forager (%s)" % resource_type
+	if secondary_role != -1 and secondary_role != role:
+		base += " -- backup: %s" % _role_short_name(secondary_role)
+	return base
+
+func _role_short_name(r: int) -> String:
+	match r:
 		Role.NURSERY:
 			return "Nursery"
 		Role.BUILDER:
 			return "Builder"
+		Role.MINER:
+			return "Miner"
 		Role.EGG_LAYER:
 			return "Egg layer"
 		Role.IDLE:
 			return "Idle"
-		Role.MINER:
-			return "Miner (automine on)" if automine else "Miner"
 		_:
-			return "Forager (%s)" % resource_type
+			return "Forager"
 
 ## What this bee is carrying, for the info panel.
 func carrying_text() -> String:
