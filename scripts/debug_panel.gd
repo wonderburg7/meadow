@@ -43,6 +43,14 @@ const TUNABLES := [
 		"tip": "How fast a drained flower refills its pollen, per second. Deliberately slower than nectar, so pollen is the scarcer resource.",
 	},
 	{
+		"key": "tarsal_markers_on", "label": "Tarsal markers", "toggle": true,
+		"tip": "Bees leave a scent mark from their feet on every flower they land on. With this on, other bees avoid a flower marked in the last few seconds, so the colony spreads out instead of crowding the same patch. Real bumblebees and honeybees both do this.",
+	},
+	{
+		"key": "tarsal_marker_seconds", "label": "Marker lasts s", "step": 5.0, "min": 1.0,
+		"tip": "How long a scent mark keeps other bees away. Only matters when Tarsal markers is on.",
+	},
+	{
 		"key": "bee_speed", "label": "Bee speed", "step": 10.0, "min": 10.0,
 		"tip": "Flight and walking speed in pixels per second. The queen moves at a fraction of this (see Queen speed).",
 	},
@@ -87,8 +95,16 @@ const TUNABLES := [
 		"tip": "Extra energy a builder burns while building. Bees make wax from the sugar they have eaten, so comb is paid for in nectar rather than a separate wax store.",
 	},
 	{
-		"key": "hive_wall_radius", "label": "Hive radius", "step": 25.0, "min": 60.0,
-		"tip": "How far the hive wall sits from the centre. The comb cannot grow past it. A future mining role will widen this during play.",
+		"key": "hive_interior_rings", "label": "Interior rings", "step": 1.0, "min": 2.0,
+		"tip": "How many rings of open floor the hive has before the soil wall starts. This is the space comb can grow into. Takes effect on Restart Run.",
+	},
+	{
+		"key": "hive_soil_depth", "label": "Soil depth", "step": 1.0, "min": 1.0,
+		"tip": "How far the solid soil extends beyond the hollow. This is the ground the bees will be able to mine into, so deeper means more room to expand later. Takes effect on Restart Run.",
+	},
+	{
+		"key": "cell_slow_factor", "label": "Comb speed x", "step": 0.05, "min": 0.1,
+		"tip": "How much slower a bee moves while crossing comb rather than open floor. 1 means no penalty.",
 	},
 	{
 		"key": "hive_cell_spacing", "label": "Cell spacing", "step": 1.0, "min": 4.0,
@@ -138,34 +154,58 @@ func _ready() -> void:
 
 	var vp := get_viewport().get_visible_rect().size
 
+	# Anchored to the top-right corner so it tracks window resizing.
+	# hud.gd keeps this width clear for us, so the two bars can't overlap.
 	toggle_button = Button.new()
 	toggle_button.text = "Tuning ▾"
-	toggle_button.size = Vector2(90, 26)
-	toggle_button.position = Vector2(vp.x - 100, 8)
+	toggle_button.custom_minimum_size = Vector2(92, 26)
+	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	toggle_button.offset_right = -8
+	toggle_button.offset_top = 8
 	toggle_button.tooltip_text = "Open the tuning panel. Changing a value here affects bees and flowers created from then on -- press Restart Run to rebuild the whole world with the new numbers."
 	toggle_button.pressed.connect(_toggle_panel)
 	add_child(toggle_button)
 
 	panel = PanelContainer.new()
-	panel.position = Vector2(vp.x - 290, 38)
-	panel.custom_minimum_size = Vector2(280, 0)
+	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.offset_right = -8
+	panel.offset_top = 40
+	panel.custom_minimum_size = Vector2(290, 0)
 	panel.visible = false
 	add_child(panel)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(280, min(500.0, vp.y - 80.0))
+	scroll.custom_minimum_size = Vector2(290, min(500.0, vp.y - 80.0))
 	panel.add_child(scroll)
 
 	var column := VBoxContainer.new()
 	scroll.add_child(column)
 
 	for entry in TUNABLES:
-		column.add_child(_make_row(entry))
+		# guard against a renamed setting leaving a dead row behind --
+		# that used to crash the panel on startup with a confusing error
+		if GameConfig.get(entry.key) == null:
+			push_warning("Tuning panel refers to a missing setting: %s" % entry.key)
+			continue
+		if entry.get("toggle", false):
+			column.add_child(_make_toggle_row(entry))
+		else:
+			column.add_child(_make_row(entry))
+
+	var restart_row := HBoxContainer.new()
+	column.add_child(restart_row)
 
 	var restart_btn := Button.new()
 	restart_btn.text = "Restart Run"
 	restart_btn.pressed.connect(_on_restart_pressed)
-	column.add_child(UI.with_info(restart_btn, "Rebuild the meadow and hive from scratch using the current values above. Everything in progress is lost; the tuning numbers themselves are kept."))
+	restart_row.add_child(UI.with_info(restart_btn, "Rebuild the meadow and hive from scratch using the current values above. Everything in progress is lost; the tuning numbers themselves are kept."))
+
+	var level1_btn := Button.new()
+	level1_btn.text = "Level 1"
+	level1_btn.pressed.connect(_on_level1_pressed)
+	restart_row.add_child(UI.with_info(level1_btn, "Restart with the same conditions, but start with just the queen -- no foragers, no nurses, no builders, and no comb cells. Everything has to be raised or built from scratch."))
 
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
@@ -198,6 +238,22 @@ func _make_row(entry: Dictionary) -> Control:
 
 	return row
 
+## An on/off setting rather than a number, shown as a checkbox. Takes
+## effect immediately -- no Restart Run needed.
+func _make_toggle_row(entry: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+
+	var box := CheckBox.new()
+	box.text = entry.label
+	box.add_theme_font_size_override("font_size", 11)
+	box.button_pressed = GameConfig.get(entry.key)
+	var key: String = entry.key
+	box.toggled.connect(func(pressed: bool): GameConfig.set(key, pressed))
+	row.add_child(box)
+	row.add_child(UI.info_badge(entry.tip))
+	return row
+
 func _adjust(entry: Dictionary, delta: float) -> void:
 	var new_value: float = GameConfig.get(entry.key) + delta
 	new_value = max(new_value, entry.min)
@@ -210,6 +266,14 @@ func _format_value(v) -> String:
 	return "%.2f" % v
 
 func _on_restart_pressed() -> void:
+	GameConfig.level1_mode = false
+	_restart()
+
+func _on_level1_pressed() -> void:
+	GameConfig.level1_mode = true
+	_restart()
+
+func _restart() -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	GameConfig.sim_time = 0.0

@@ -12,18 +12,57 @@ const Shapes = preload("res://scripts/shapes.gd")
 
 const SPECIES := [
 	{
+		# Clover spreads by runners and seeds into dense mats -- real
+		# patches are tightly packed, so a small cluster radius.
 		"name": "Clover",
 		"nectar_capacity": 20.0,
 		"pollen_capacity": 10.0,
+		"weight": 40.0,
+		"cluster_radius": 45.0,
+		"cluster_chance": 0.85,
 		"color": Color(0.95, 0.85, 0.1),
 		"centre": Color(0.5, 0.35, 0.05),
 	},
 	{
+		# Borage self-seeds readily and is often grown in blocks -- loose
+		# but still clearly patchy.
 		"name": "Borage",
 		"nectar_capacity": 8.0,
 		"pollen_capacity": 22.0,
+		"weight": 30.0,
+		"cluster_radius": 70.0,
+		"cluster_chance": 0.7,
 		"color": Color(0.45, 0.4, 0.85),
 		"centre": Color(0.15, 0.1, 0.4),
+	},
+	{
+		# rich but slow: rewards spreading out rather than camping a patch
+		# Biennial, colonises disturbed ground at wood edges -- loose,
+		# scattered stands rather than a tidy patch.
+		"name": "Foxglove",
+		"nectar_capacity": 34.0,
+		"pollen_capacity": 6.0,
+		"recharge_scale": 0.4,
+		"weight": 8.0,
+		"cluster_radius": 110.0,
+		"cluster_chance": 0.55,
+		"color": Color(0.78, 0.35, 0.6),
+		"centre": Color(0.42, 0.12, 0.3),
+	},
+	{
+		# no nectar at all, so pollen foraging becomes a spatial decision
+		# Annual of disturbed/arable ground, wind-scattered seed -- the
+		# least clustered species, closer to individual plants than a
+		# patch.
+		"name": "Poppy",
+		"nectar_capacity": 0.0,
+		"pollen_capacity": 30.0,
+		"recharge_scale": 1.0,
+		"weight": 22.0,
+		"cluster_radius": 140.0,
+		"cluster_chance": 0.3,
+		"color": Color(0.85, 0.22, 0.18),
+		"centre": Color(0.15, 0.12, 0.1),
 	},
 ]
 
@@ -36,6 +75,11 @@ var pollen_recharge_rate: float = 0.1
 var nectar_amount: float
 var pollen_amount: float
 var occupied_by: Node2D = null   # the bee currently visiting this flower, if any
+var marked_at: float = -999.0    # sim-time of the last tarsal scent mark
+var marked_by: Node2D = null     # which bee left it
+
+var age_seconds: float = 0.0
+var lifespan_seconds: float = 1800.0
 
 var nectar_label: Label
 var pollen_label: Label
@@ -48,10 +92,19 @@ func setup(species_index: int) -> void:
 	species_name = s.name
 	nectar_capacity = s.nectar_capacity
 	pollen_capacity = s.pollen_capacity
-	nectar_recharge_rate = GameConfig.nectar_recharge_rate
-	pollen_recharge_rate = GameConfig.pollen_recharge_rate
+	# some species refill more slowly than others
+	var recharge_scale: float = s.get("recharge_scale", 1.0)
+	nectar_recharge_rate = GameConfig.nectar_recharge_rate * recharge_scale
+	pollen_recharge_rate = GameConfig.pollen_recharge_rate * recharge_scale
 	nectar_amount = nectar_capacity
 	pollen_amount = pollen_capacity
+
+	var spread: float = GameConfig.flower_lifespan_variation
+	lifespan_seconds = GameConfig.flower_lifespan_days * GameConfig.seconds_per_day \
+		* randf_range(1.0 - spread, 1.0 + spread)
+	# start partway through life, so the first generation doesn't all
+	# wither at the same moment
+	age_seconds = randf() * lifespan_seconds
 
 	polygon = Shapes.square_points(Vector2(28, 28))
 	color = s.color
@@ -74,9 +127,31 @@ func setup(species_index: int) -> void:
 
 	_update_labels()
 
+## Picks a species by rarity weight. Clover is common, foxglove scarce.
+static func pick_species_index() -> int:
+	var total := 0.0
+	for s in SPECIES:
+		total += s.get("weight", 1.0)
+	var roll := randf() * total
+	for i in range(SPECIES.size()):
+		roll -= SPECIES[i].get("weight", 1.0)
+		if roll <= 0.0:
+			return i
+	return 0
+
 func _process(delta: float) -> void:
 	nectar_amount = min(nectar_capacity, nectar_amount + nectar_recharge_rate * delta)
 	pollen_amount = min(pollen_capacity, pollen_amount + pollen_recharge_rate * delta)
+
+	# Flowers don't last forever. main.gd seeds a replacement elsewhere,
+	# so the meadow drifts around while staying about as full.
+	age_seconds += delta
+	if age_seconds >= lifespan_seconds:
+		if occupied_by != null and is_instance_valid(occupied_by):
+			occupied_by.release_flower_reference(self)
+		queue_free()
+		return
+
 	_update_fade()
 	_update_labels()
 
@@ -113,6 +188,27 @@ func collect(resource_type: String, amount: float) -> float:
 func release(bee: Node2D) -> void:
 	if occupied_by == bee:
 		occupied_by = null
+
+# --- tarsal secretion markers -------------------------------------
+## Real bees leave a scent from their feet on flowers they land on, and
+## other foragers read it as "someone just emptied this". Modelled here
+## as a timestamp; see GameConfig.tarsal_markers_on.
+
+func leave_marker(bee: Node2D) -> void:
+	marked_at = GameConfig.sim_time
+	marked_by = bee
+
+## True if another bee marked this flower recently. A bee ignores its
+## own mark, since it already has its own memory of what it drained.
+func is_marked(asking_bee: Node2D) -> bool:
+	if marked_by == null or marked_by == asking_bee:
+		return false
+	return GameConfig.sim_time - marked_at < GameConfig.tarsal_marker_seconds
+
+func marker_age() -> float:
+	if marked_by == null:
+		return -1.0
+	return GameConfig.sim_time - marked_at
 
 ## Fades the flower out as it empties so depletion is visible, and
 ## back in as it recharges. Purely a visual aid for playtesting.

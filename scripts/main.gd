@@ -25,20 +25,27 @@ const Bee = preload("res://scripts/bee.gd")
 const Hive = preload("res://scripts/hive.gd")
 const Flower = preload("res://scripts/flower.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
+const SoilBlock = preload("res://scripts/soil_block.gd")
+const Obstacle = preload("res://scripts/obstacle.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
 const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
-const FLOWER_AREA_MIN := Vector2(300, 90)
-const FLOWER_AREA_MAX := Vector2(1100, 560)
-const HIVE_MARKER_POSITION := Vector2(140, 320)
+## A rectangular field rather than a radial one -- a uniform-angle,
+## sqrt-distance scatter (the previous approach) always reads as a disc
+## no matter how it's tuned. Rectangular + clustered breaks that up.
+const FLOWER_FIELD_HALF_SIZE := Vector2(950.0, 700.0)
+const FLOWER_MIN_DISTANCE := 90.0     # keep the ground by the hive clear
+const MAX_CLUSTERS_PER_SPECIES := 22
+const OBSTACLE_COUNT := 14
+const OBSTACLE_HIVE_CLEARANCE := 220.0
+const HIVE_MARKER_POSITION := Vector2(620, 330)
 
-## The hive wall is a near-complete ring with a gap left at the bottom
-## for bees to walk through. Angles are in degrees, y-down, so 90 is
-## straight down the screen.
-const ENTRANCE_HALF_WIDTH_DEGREES := 14.0
+## Muted, slightly grey-green so it reads as grass without glowing.
+const MEADOW_COLOR := Color(0.44, 0.56, 0.35)
+const FLOOR_COLOR := Color(0.78, 0.60, 0.47)
 
 const PAN_SPEED := 420.0
 const MIN_ZOOM := 0.4
@@ -63,6 +70,19 @@ var current_speed: float = 1.0
 var dragging: bool = false
 var drag_start: Vector2 = Vector2.ZERO
 var drag_current: Vector2 = Vector2.ZERO
+
+var reseed_timer: float = 0.0
+var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
+var panning: bool = false          # middle mouse button held
+var pan_anchor: Vector2 = Vector2.ZERO
+
+## "Click a spot" placement modes, entered from the HUD. While one is
+## active the next left click in the relevant view is consumed as the
+## placement rather than a normal select/drag.
+var awaiting_build_cell: bool = false
+var pending_builder_bees: Array = []
+var awaiting_forage_start: bool = false
+var pending_forage_bees: Array = []
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
@@ -91,6 +111,9 @@ func _ready() -> void:
 	hud.view_toggle_requested.connect(_toggle_view)
 	hud.speed_requested.connect(_on_speed_requested)
 	hud.cell_designation_requested.connect(_on_cell_designation_requested)
+	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
+	hud.build_cell_requested.connect(_on_build_cell_requested)
+	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	add_child(hud)
 
 	add_child(DebugPanel.new())
@@ -108,85 +131,238 @@ func _hive_centre_local() -> Vector2:
 	return HIVE_INTERIOR_CENTRE - HIVE_WORLD_OFFSET
 
 func _build_meadow() -> void:
+	# grass, drawn well beyond the flower area so panning never runs off
+	# the edge of it
+	var grass := Polygon2D.new()
+	grass.polygon = Shapes.square_points(Vector2(4000, 3000))
+	grass.position = Vector2(700, 325)
+	grass.color = MEADOW_COLOR
+	grass.z_index = -10
+	meadow_root.add_child(grass)
+
 	hive = Hive.new()
 	hive.position = HIVE_MARKER_POSITION
 	meadow_root.add_child(hive)
 
+	_scatter_obstacles()
+
+	# Flowers ring the hive in every direction rather than sitting in one
+	# block to the side, so which way a forager sets off is a real choice.
 	for i in range(int(GameConfig.flower_count)):
-		var flower := Flower.new()
-		flower.position = Vector2(
-			randf_range(FLOWER_AREA_MIN.x, FLOWER_AREA_MAX.x),
-			randf_range(FLOWER_AREA_MIN.y, FLOWER_AREA_MAX.y)
+		_seed_flower()
+
+## Trees and raised ground that foragers steer around (see
+## Bee._avoid_obstacles). Kept clear of the hive itself so the entrance
+## is never accidentally blocked.
+func _scatter_obstacles() -> void:
+	var placed: Array = []
+	for i in range(OBSTACLE_COUNT):
+		var is_tree := randf() < 0.65
+		var radius: float = randf_range(22.0, 34.0) if is_tree else randf_range(30.0, 48.0)
+		var pos: Vector2
+		var attempts := 0
+		while attempts < 10:
+			pos = hive.position + Vector2(
+				randf_range(-FLOWER_FIELD_HALF_SIZE.x, FLOWER_FIELD_HALF_SIZE.x),
+				randf_range(-FLOWER_FIELD_HALF_SIZE.y, FLOWER_FIELD_HALF_SIZE.y)
+			)
+			var clear_of_hive: bool = pos.distance_to(hive.position) > OBSTACLE_HIVE_CLEARANCE
+			var clear_of_others := true
+			for other in placed:
+				if pos.distance_to(other.pos) < radius + other.radius + 40.0:
+					clear_of_others = false
+					break
+			if clear_of_hive and clear_of_others:
+				break
+			attempts += 1
+		if attempts >= 10:
+			continue   # couldn't find a clear spot -- skip rather than overlap
+
+		var obstacle := Obstacle.new()
+		obstacle.position = pos
+		obstacle.z_index = -1   # above the grass, below bees and flowers
+		meadow_root.add_child(obstacle)
+		obstacle.setup(Obstacle.Kind.TREE if is_tree else Obstacle.Kind.RAISED, radius)
+		placed.append({"pos": pos, "radius": radius})
+
+	# Level 1: the queen and nothing else -- no starting foragers.
+	if not GameConfig.level1_mode:
+		# Always at least one of each, so both resources are coming in
+		# from the first moment and the queen isn't stalled on pollen.
+		var total_bees: int = maxi(2, int(GameConfig.starting_bees))
+		_spawn_bee("nectar")
+		_spawn_bee("pollen")
+		for i in range(total_bees - 2):
+			_spawn_bee("nectar")
+
+## Plants one flower. Most of the time it joins an existing cluster of
+## its own species (a tight huddle for Clover, a loose scatter for
+## Poppy); the rest of the time it starts a new cluster somewhere in the
+## field. Species pick their own patchiness via `cluster_radius` /
+## `cluster_chance` in flower.gd -- see the notes on each species there
+## for the real-world habit it's approximating.
+func _seed_flower() -> void:
+	var species_index := Flower.pick_species_index()
+	var species: Dictionary = Flower.SPECIES[species_index]
+	var species_name: String = species.name
+	var cluster_radius: float = species.get("cluster_radius", 70.0)
+	var cluster_chance: float = species.get("cluster_chance", 0.6)
+
+	var centers: Array = cluster_centers.get(species_name, [])
+	var pos: Vector2
+
+	if not centers.is_empty() and randf() < cluster_chance:
+		var center: Vector2 = centers[randi() % centers.size()]
+		var angle := randf() * TAU
+		var dist := sqrt(randf()) * cluster_radius   # dense towards the centre, thins at the edge
+		pos = center + Vector2(cos(angle), sin(angle)) * dist
+	else:
+		pos = _random_field_point()
+		centers.append(pos)
+		if centers.size() > MAX_CLUSTERS_PER_SPECIES:
+			centers.pop_front()
+		cluster_centers[species_name] = centers
+
+	var flower := Flower.new()
+	flower.position = pos
+	meadow_root.add_child(flower)
+	flower.setup(species_index)
+
+## A point somewhere in the rectangular field, kept clear of the ground
+## immediately around the hive.
+func _random_field_point() -> Vector2:
+	var point: Vector2
+	for attempt in range(6):
+		point = hive.position + Vector2(
+			randf_range(-FLOWER_FIELD_HALF_SIZE.x, FLOWER_FIELD_HALF_SIZE.x),
+			randf_range(-FLOWER_FIELD_HALF_SIZE.y, FLOWER_FIELD_HALF_SIZE.y)
 		)
-		meadow_root.add_child(flower)
-		flower.setup(i % Flower.SPECIES.size())
+		if point.distance_to(hive.position) >= FLOWER_MIN_DISTANCE:
+			break
+	return point
 
-	for i in range(int(GameConfig.starting_bees)):
-		_spawn_bee("nectar" if i % 2 == 0 else "pollen")
-
+## The hive interior is a hexagonal grid. Open floor in the middle, a
+## soil wall of the same tile size around it, and a gap in that wall for
+## the entrance. Because soil sits on the same grid as comb, a mined
+## block can later be replaced by a cell.
 func _build_hive_interior() -> void:
 	var centre_local := _hive_centre_local()
-	var radius: float = GameConfig.hive_wall_radius
+	var interior_rings := int(GameConfig.hive_interior_rings)
+	var soil_depth := int(GameConfig.hive_soil_depth)
+	var spacing: float = GameConfig.hive_cell_spacing
 
-	# floor
-	var floor_disc := Polygon2D.new()
-	floor_disc.polygon = Shapes.circle_points(radius, 48)
-	floor_disc.position = centre_local
-	floor_disc.color = Color(0.22, 0.17, 0.08)
-	hive_root.add_child(floor_disc)
-
-	# wall: a ring with a gap at the bottom for the entrance. Later,
-	# wall-mining bees will widen this to make room for more comb.
-	var wall := Line2D.new()
-	wall.position = centre_local
-	wall.points = Shapes.arc_points(
-		radius,
-		90.0 + ENTRANCE_HALF_WIDTH_DEGREES,
-		90.0 + 360.0 - ENTRANCE_HALF_WIDTH_DEGREES,
-		96
-	)
-	wall.width = 14.0
-	wall.default_color = Color(0.42, 0.32, 0.12)
-	hive_root.add_child(wall)
-
-	# a lighter pad on the floor marking where bees come and go
-	var pad := Polygon2D.new()
-	pad.polygon = Shapes.square_points(Vector2(70, 18))
-	pad.position = centre_local + Vector2(0, radius - 4)
-	pad.color = Color(0.55, 0.45, 0.2)
-	hive_root.add_child(pad)
-
-	var entrance_label := Label.new()
-	entrance_label.position = centre_local + Vector2(-28, radius + 8)
-	entrance_label.add_theme_font_size_override("font_size", 12)
-	entrance_label.text = "entrance"
-	hive_root.add_child(entrance_label)
-
-	# comb
-	var cells: Array = []
-	for axial in Shapes.hex_spiral(int(GameConfig.hive_cell_count)):
-		var cell := HiveCell.new()
-		cell.position = centre_local + Shapes.hex_to_pixel(axial.x, axial.y, GameConfig.hive_cell_spacing)
-		hive_root.add_child(cell)
-		cells.append(cell)
-	hive.cells = cells
 	hive.comb_parent = hive_root
 	hive.comb_centre = centre_local
 
+	# The hive is a hollow dug out of solid ground. Everything from the
+	# edge of the hollow outwards is soil the bees will eventually mine;
+	# the middle is open floor they can move through freely.
+	#
+	# The edge of the hollow is deliberately ragged: each tile near the
+	# boundary is decided individually, so the chamber looks excavated
+	# rather than stamped out.
+	_dig_out_chamber(centre_local, interior_rings, soil_depth, spacing)
+	_add_entrance_marker()
+	_build_starting_comb(centre_local, spacing)
+	hive.build_navigation()
+	hive.refresh_edge_flags()
+	_spawn_hive_occupants(centre_local, interior_rings, spacing)
+
+## Lays down every tile: open floor inside the hollow and in the entrance
+## tunnel, solid soil everywhere else.
+func _dig_out_chamber(centre_local: Vector2, interior_rings: int, soil_depth: int, spacing: float) -> void:
+	var entrance_tiles := _entrance_tiles(interior_rings, soil_depth)
+	for ring in range(0, interior_rings + soil_depth):
+		for hex in Shapes.hex_ring(ring):
+			if entrance_tiles.has(hex) or _is_open_tile(hex, ring, interior_rings):
+				_add_floor_tile(hex, centre_local, spacing)
+			else:
+				_add_soil_block(hex, centre_local, spacing)
+
+func _add_entrance_marker() -> void:
+	var marker := Polygon2D.new()
+	marker.polygon = Shapes.circle_points(7.0, 20)
+	marker.position = hive_entrance_inside()
+	marker.color = Color(0.05, 0.05, 0.05)
+	marker.z_index = 2
+	hive_root.add_child(marker)
+
+func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
+	var cells: Array = []
+	var starting_count: int = 0 if GameConfig.level1_mode else int(GameConfig.hive_cell_count)
+	for i in range(starting_count):
+		var cell_hex: Vector2i = Shapes.hex_spiral_at(i)
+		var cell := HiveCell.new()
+		cell.axial = cell_hex
+		cell.position = centre_local + Shapes.hex_to_pixel(cell_hex.x, cell_hex.y, spacing)
+		hive_root.add_child(cell)
+		cells.append(cell)
+		hive.register_tile(cell_hex, cell)
+	hive.cells = cells
+
+func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: float) -> void:
 	# the queen is an ordinary bee with is_queen set -- she can be
 	# reassigned to forage or build like anyone else
 	queen = Bee.new()
 	queen.is_queen = true
-	queen.position = centre_local + Vector2(0, 120)
+	queen.position = centre_local + Vector2(0, (interior_rings - 3) * spacing * 1.5)
 	hive_root.add_child(queen)
 	queen.setup(hive, "pollen", 0, Bee.Role.EGG_LAYER, self)
 
-	# start with at least one nurse, otherwise the queen's eggs would
-	# sit on the floor forever with nobody to carry them to a cell
-	for i in range(int(GameConfig.starting_nurses)):
-		_spawn_indoor_bee(Bee.Role.NURSERY)
-	for i in range(int(GameConfig.starting_builders)):
-		_spawn_indoor_bee(Bee.Role.BUILDER)
+	if not GameConfig.level1_mode:
+		for i in range(int(GameConfig.starting_nurses)):
+			_spawn_indoor_bee(Bee.Role.NURSERY)
+		for i in range(int(GameConfig.starting_builders)):
+			_spawn_indoor_bee(Bee.Role.BUILDER)
+
+## Tiles well inside the hollow are always open, tiles well outside are
+## always soil, and the boundary ring is decided at random so the wall
+## has a rough, natural edge.
+func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool:
+	if ring < interior_rings - 1:
+		return true
+	if ring > interior_rings:
+		return false
+	# Use the tile's own coordinates as the seed so the shape is stable
+	# for a given layout rather than flickering on rebuild.
+	var noise: float = abs(sin(float(hex.x) * 12.9898 + float(hex.y) * 78.233))
+	return noise > 0.45 if ring == interior_rings - 1 else noise > 0.75
+
+func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
+	var tile := Polygon2D.new()
+	tile.polygon = Shapes.hexagon_points(GameConfig.hive_cell_size * 1.08)
+	tile.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	tile.color = FLOOR_COLOR
+	hive_root.add_child(tile)
+
+func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
+	if not hive.tile_is_free(hex):
+		return
+	var block := SoilBlock.new()
+	block.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	hive_root.add_child(block)
+	block.setup(hex)
+	hive.register_tile(hex, block)
+
+## The tunnel bees walk in through: a narrow channel of open tiles cut
+## straight up from the hollow through the soil above it.
+func _entrance_tiles(interior_rings: int, soil_depth: int) -> Dictionary:
+	var tiles: Dictionary = {}
+	var half: float = GameConfig.hive_entrance_width * GameConfig.hive_cell_spacing
+	for ring in range(interior_rings - 1, interior_rings + soil_depth):
+		for hex in Shapes.hex_ring(ring):
+			var pixel := Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+			# upwards on screen is negative y
+			if pixel.y < 0.0 and abs(pixel.x) <= half:
+				tiles[hex] = true
+	return tiles
+
+## The mouth of the tunnel at the outer surface, where bees actually
+## enter and leave. They then walk the whole tunnel down into the hollow,
+## so arriving and departing reads as a journey rather than a teleport.
+func hive_entrance_inside() -> Vector2:
+	var rings: float = GameConfig.hive_interior_rings + GameConfig.hive_soil_depth - 1.0
+	return _hive_centre_local() + Vector2(0, -rings * GameConfig.hive_cell_spacing * 1.5)
 
 func _build_cameras() -> void:
 	meadow_camera = Camera2D.new()
@@ -213,9 +389,6 @@ func _spawn_indoor_bee(role: int) -> void:
 
 # --- moving bees between the meadow and the hive ------------------
 
-## Where a bee stands once it is inside, just past the entrance gap.
-func hive_entrance_inside() -> Vector2:
-	return _hive_centre_local() + Vector2(0, GameConfig.hive_wall_radius - 26.0)
 
 func move_bee_into_hive(bee: Node2D) -> void:
 	if bee.get_parent() == hive_root:
@@ -245,18 +418,38 @@ func _process(delta: float) -> void:
 			day = new_day
 			hud.update_day(day)
 		_hatch_ready_brood()
+		_reseed_meadow(delta)
 
 	_prune_selection()
+
+## Flowers wither on their own; this quietly seeds replacements so the
+## meadow stays about as full as `flower_count` without every gap
+## refilling instantly.
+func _reseed_meadow(delta: float) -> void:
+	reseed_timer -= delta
+	if reseed_timer > 0.0:
+		return
+	reseed_timer = GameConfig.flower_regrow_seconds
+	if get_tree().get_nodes_in_group("flowers").size() < int(GameConfig.flower_count):
+		_seed_flower()
 	if dragging:
 		selection_layer.queue_redraw()
 
-## A finished brood cell releases a new forager into the meadow.
+## A finished brood cell releases a new bee. The cell decides what that
+## bee becomes: whatever role you set on it, or a nectar forager by
+## default. Because the role lives on the cell, every future egg raised
+## there comes out the same way without you touching it again.
 func _hatch_ready_brood() -> void:
 	for cell in hive.cells:
-		if cell.brood_ready():
-			cell.clear_cell()
+		if not cell.brood_ready():
+			continue
+		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
+		cell.clear_cell()
+		if role == Bee.Role.FORAGER:
 			_spawn_bee("nectar")
-			_update_population_readout()
+		else:
+			_spawn_indoor_bee(role)
+		_update_population_readout()
 
 func _update_population_readout() -> void:
 	var foragers := 0
@@ -357,18 +550,36 @@ func _unhandled_input(event: InputEvent) -> void:
 					drag_current = drag_start
 				else:
 					_finish_drag(event.shift_pressed)
+			MOUSE_BUTTON_MIDDLE:
+				# hold the scroll wheel down and drag to pan the view
+				panning = event.pressed
+				pan_anchor = event.position
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
 					_issue_command(get_global_mouse_position())
 
-	elif event is InputEventMouseMotion and dragging:
-		drag_current = get_global_mouse_position()
+	elif event is InputEventMouseMotion:
+		if panning:
+			# move the camera opposite to the drag, so the world follows
+			# the cursor the way it does in a map application
+			var cam := _active_camera()
+			cam.position -= (event.position - pan_anchor) / cam.zoom.x
+			pan_anchor = event.position
+		elif dragging:
+			drag_current = get_global_mouse_position()
 
 func _finish_drag(additive: bool) -> void:
 	if not dragging:
 		return
 	dragging = false
 	selection_layer.queue_redraw()
+
+	if awaiting_build_cell:
+		_place_build_cell(drag_start)
+		return
+	if awaiting_forage_start:
+		_place_forage_start(drag_start)
+		return
 
 	var box := Rect2(drag_start, drag_current - drag_start).abs()
 	var picked: Array = []
@@ -381,6 +592,16 @@ func _finish_drag(additive: bool) -> void:
 			var cell := _cell_at(drag_start)
 			if cell:
 				hud.show_cell_popup(cell, get_viewport().get_mouse_position())
+				return
+			# clicking an exposed soil block flags it for digging
+			var block := _soil_at(drag_start)
+			if block and block.is_edge:
+				block.set_marked(not block.marked_for_mining)
+				return
+		else:
+			var flower := _flower_at(drag_start)
+			if flower:
+				hud.show_flower_popup(flower, get_viewport().get_mouse_position())
 				return
 	else:
 		for b in _bees_in_current_view():
@@ -416,11 +637,47 @@ func _cell_at(point: Vector2) -> Node2D:
 			return c
 	return null
 
+func _soil_at(point: Vector2) -> Node2D:
+	for b in get_tree().get_nodes_in_group("soil_blocks"):
+		if is_instance_valid(b) and b.global_position.distance_to(point) <= b.block_size:
+			return b
+	return null
+
+## A miner has finished a block: it becomes open floor, and the routes
+## through the hive are rebuilt so bees can use the new space.
+func finish_mining(block: Node2D) -> void:
+	var centre_local := _hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	hive.remove_block(block, func(hex: Vector2i): _add_floor_tile(hex, centre_local, spacing))
+
 func _flower_at(point: Vector2) -> Node2D:
 	for f in get_tree().get_nodes_in_group("flowers"):
 		if f.global_position.distance_to(point) <= 20.0:
 			return f
 	return null
+
+## Consumes the click that follows a "Build Cell" request: works out
+## which hex it landed on and hands it to each pending builder. A miss
+## (soil, already-occupied tile, outside the hollow) is silently ignored
+## rather than nagging the player -- the builder just falls back to
+## automatic placement, same as any other failed manual target.
+func _place_build_cell(global_point: Vector2) -> void:
+	awaiting_build_cell = false
+	var local_point: Vector2 = hive_root.to_local(global_point)
+	var hex: Vector2i = Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
+	for b in pending_builder_bees:
+		if is_instance_valid(b):
+			b.set_manual_build_target(hex)
+	pending_builder_bees = []
+
+## Consumes the click that follows a "Set start point" request.
+func _place_forage_start(global_point: Vector2) -> void:
+	awaiting_forage_start = false
+	var meadow_point: Vector2 = meadow_root.to_local(global_point)
+	for b in pending_forage_bees:
+		if is_instance_valid(b):
+			b.set_forage_start_point(meadow_point)
+	pending_forage_bees = []
 
 ## Right-click: send the selection to a flower if there's one under the
 ## cursor, otherwise just walk them to that spot.
@@ -443,6 +700,14 @@ func _on_focus_requested(type: String) -> void:
 	hud.update_selection(selected_bees)
 
 func _on_role_requested(role_name: String) -> void:
+	# automine isn't a role, it's a switch on the miners already selected
+	if role_name == "automine":
+		for b in selected_bees:
+			if is_instance_valid(b):
+				b.automine = not b.automine
+		hud.update_selection(selected_bees)
+		return
+
 	var target_role: int = Bee.Role.FORAGER
 	match role_name:
 		"nursery":
@@ -451,6 +716,10 @@ func _on_role_requested(role_name: String) -> void:
 			target_role = Bee.Role.BUILDER
 		"egg_layer":
 			target_role = Bee.Role.EGG_LAYER
+		"idle":
+			target_role = Bee.Role.IDLE
+		"miner":
+			target_role = Bee.Role.MINER
 	for b in selected_bees:
 		if is_instance_valid(b):
 			b.set_role(target_role)
@@ -485,6 +754,32 @@ func _on_cell_designation_requested(cell: Node2D, type: String) -> void:
 	else:
 		cell.clear_cell()
 		cell.set_designation(type)
+
+func _on_cell_hatch_role_requested(cell: Node2D, role: int) -> void:
+	if is_instance_valid(cell):
+		cell.hatch_role = role
+
+## Enters "click a hive tile" mode for the selected builders. Switches to
+## the hive view automatically, since that's where the click has to land.
+func _on_build_cell_requested() -> void:
+	pending_builder_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.BUILDER)
+	if pending_builder_bees.is_empty():
+		return
+	awaiting_build_cell = true
+	if not in_hive_view:
+		in_hive_view = true
+		_apply_view()
+
+## Enters "click a meadow spot" mode for the selected foragers. Switches
+## to the meadow view automatically, for the same reason.
+func _on_forage_start_point_requested() -> void:
+	pending_forage_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.FORAGER)
+	if pending_forage_bees.is_empty():
+		return
+	awaiting_forage_start = true
+	if in_hive_view:
+		in_hive_view = false
+		_apply_view()
 
 func _draw_selection_box() -> void:
 	if not dragging:

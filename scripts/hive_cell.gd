@@ -36,8 +36,17 @@ var build_progress: float = 0.0
 var builders: Array = []
 
 ## "" means the cell takes whatever is going. Otherwise it only accepts
-## the named resource.
+## the named thing: "nectar", "pollen", or "brood" for a nursery cell
+## that stores eggs rather than stores.
 var designated_type: String = ""
+
+## Which role a bee raised in this cell takes when it emerges.
+## -1 means "whatever the colony default is". Set from the cell popup,
+## so you can earmark a cell as, say, a builder nursery and every bee
+## it ever raises comes out as a builder.
+var hatch_role: int = -1
+
+var axial: Vector2i = Vector2i.ZERO
 
 var cell_size: float = 17.0
 var info_label: Label
@@ -125,6 +134,11 @@ func accepts(resource_type: String) -> bool:
 		return false
 	return true
 
+## True when this cell has been set aside for raising brood, so foragers
+## leave it alone and nurses use it first.
+func is_nursery_cell() -> bool:
+	return designated_type == "brood"
+
 func space_for(resource_type: String) -> float:
 	if not is_built:
 		return 0.0
@@ -148,11 +162,17 @@ func needs_eviction() -> bool:
 	return content_type != designated_type
 
 ## Adds up to `requested` of `resource_type`, returns how much fitted.
+##
+## The first delivery into a spare cell also reserves it for that
+## resource, so the comb organises itself as it fills and you only need
+## to intervene where you disagree.
 func add_resource(resource_type: String, requested: float) -> float:
 	var space := space_for(resource_type)
 	if space <= 0.0:
 		return 0.0
 	var added: float = min(space, requested)
+	if content_type == "" and designated_type == "":
+		designated_type = resource_type
 	content_type = resource_type
 	amount += added
 	return added
@@ -208,6 +228,8 @@ func _refresh() -> void:
 		designation_ring.default_color = Color(1.0, 0.85, 0.3, 0.95)
 	elif designated_type == "pollen":
 		designation_ring.default_color = Color(0.7, 0.65, 1.0, 0.95)
+	elif designated_type == "brood":
+		designation_ring.default_color = Color(0.6, 1.0, 0.7, 0.95)
 
 	match content_type:
 		"nectar":
@@ -218,8 +240,14 @@ func _refresh() -> void:
 			info_label.text = "P%d" % int(round(amount))
 		"brood":
 			color = BROOD_COLOR
-			var pct: float = 100.0 * brood_progress / max(0.001, GameConfig.brood_develop_time)
-			info_label.text = "e%d%%" % int(min(100.0, pct))
+			info_label.text = "egg %d%%" % int(development_percent())
 		_:
 			color = EMPTY_COLOR
-			info_label.text = ""
+			# an empty cell reserved for brood still says so, otherwise
+			# you can't tell a nursery cell from an unused one
+			info_label.text = "egg" if is_nursery_cell() else ""
+
+func development_percent() -> float:
+	if content_type != "brood":
+		return 0.0
+	return min(100.0, 100.0 * brood_progress / max(0.001, GameConfig.brood_develop_time))
