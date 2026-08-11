@@ -30,6 +30,8 @@ enum State {
 	IN_HIVE_TO_CELL, DEPOSITING, IN_HIVE_TO_EXIT,          # forager, indoors
 	MOVE_TO_POINT, IDLING,                                 # player-commanded
 	NURSE_IDLE, TO_BROOD, TENDING,                         # nursery
+	TO_FOOD_CELL, LOADING_FOOD,                            # nursery, fetching a meal
+	TO_FEED_CELL, FEEDING,                                 # any bee, eating
 	BUILD_IDLE, TO_BUILD_SITE, BUILDING,                   # builder
 	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
 	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
@@ -87,6 +89,23 @@ var fan_target: Node2D = null
 ## at a time, one per wall, so they never stand on top of each other.
 var cell_slot: int = -1
 var slot_cell: Node2D = null
+
+## What a nurse is physically carrying. Brood is fed from this, not from
+## the comb directly, so a nurse has to go and load up first -- see
+## _nurse_restock_errand. `nurse_carb` is either nectar or honey; which
+## one is in `nurse_carb_type`, because honey feeds a larva for longer.
+var nurse_pollen: float = 0.0
+var nurse_carb: float = 0.0
+var nurse_carb_type: String = ""
+var nurse_fetching: String = ""      # what this trip to a cell is for
+
+## Stall watchdog. A bee that hasn't moved for a few seconds while it is
+## supposed to be travelling has got itself pinned on something; rather
+## than hovering there until the player notices, it gives up on the
+## current errand. See _watch_for_stalls.
+var stall_check_position: Vector2 = Vector2(INF, INF)
+var stall_timer: float = 0.0
+const STALL_SECONDS := 4.0
 
 ## A role to fall back to whenever this bee's primary role has genuinely
 ## nothing for it to do right now -- a non-automine miner with no block
@@ -220,6 +239,15 @@ func _process(delta: float) -> void:
 	if not is_inside_tree():
 		return   # died during ageing
 
+	_watch_for_stalls(delta)
+
+	# Eating is an errand now, not a number that quietly appears. A bee
+	# that has run low breaks off whatever it was doing, walks to a cell
+	# with food in it and feeds there. This is checked before the state
+	# machine so it can interrupt anything.
+	if _should_go_and_eat():
+		_begin_feeding_self()
+
 	match state:
 		# --- forager, outdoors ---
 		State.SEEK_FLOWER:
@@ -264,6 +292,16 @@ func _process(delta: float) -> void:
 			_nurse_go_to_brood(delta)
 		State.TENDING:
 			_nurse_tend(delta)
+		State.TO_FOOD_CELL:
+			_nurse_go_to_food(delta)
+		State.LOADING_FOOD:
+			_nurse_load_food(delta)
+
+		# --- eating (any role) ---
+		State.TO_FEED_CELL:
+			_go_to_feed_cell(delta)
+		State.FEEDING:
+			_feed_self(delta)
 
 		# --- builder ---
 		State.BUILD_IDLE:
@@ -327,12 +365,11 @@ func _age_and_burn(delta: float) -> void:
 	if state == State.BUILDING:
 		energy -= GameConfig.build_energy_burn * delta
 
-	# Bees working inside sip from the comb as they go. They eat honey
-	# first where there is any -- it's several times as energy-dense as
-	# the nectar it was made from, so a hive with honey in it supports far
-	# more bees off the same comb.
-	if _works_indoors() and energy < GameConfig.energy_capacity * 0.6:
-		energy += hive.take_energy(GameConfig.energy_capacity * 0.25)
+	# Bees used to top themselves up invisibly from wherever they stood,
+	# which made a forager's deposit look far smaller than the load it
+	# carried in -- it was quietly eating most of it straight back out of
+	# the cell it had just filled. Eating is now a real trip to a real
+	# cell; see _should_go_and_eat and _feed_self.
 
 	# The queen doesn't die of old age -- losing her would silently end
 	# the colony, and there's no succession yet. She can still starve.
@@ -349,6 +386,133 @@ func _works_indoors() -> bool:
 		or role == Role.MINER
 		or role == Role.HONEY_MAKER
 	)
+
+# --- eating -------------------------------------------------------
+
+## True when this bee should break off and go and eat. Only inside the
+## hive: there is nothing to eat out in the meadow, which is why a
+## forager that keeps coming home empty still eventually starves.
+func _should_go_and_eat() -> bool:
+	if state == State.TO_FEED_CELL or state == State.FEEDING:
+		return false
+	# Don't break off partway through a short action where the bee is
+	# holding something not yet committed anywhere -- a mouthful of
+	# nectar being chewed into honey, or a load of brood food being
+	# picked up. It would simply be lost.
+	if state == State.CHEWING or state == State.LOADING_FOOD:
+		return false
+	if not _is_inside_hive():
+		return false
+	if energy > GameConfig.energy_capacity * GameConfig.hunger_threshold:
+		return false
+	return hive.find_food_cell() != null
+
+func _begin_feeding_self() -> void:
+	_release_cell_slot()
+	target_cell = hive.find_food_cell()
+	state = State.TO_FEED_CELL
+
+func _go_to_feed_cell(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or not _is_edible(target_cell):
+		target_cell = hive.find_food_cell()
+		if target_cell == null:
+			_after_feeding()
+		return
+
+	var approach := _approach_cell(target_cell, delta)
+	if approach < 0:
+		# all six walls in use -- eat somewhere else rather than queueing
+		target_cell = hive.find_food_cell(target_cell)
+		if target_cell == null:
+			_after_feeding()
+		return
+	if approach == 1:
+		state = State.FEEDING
+
+func _is_edible(cell: Node2D) -> bool:
+	if cell.amount <= 0.0:
+		return false
+	if cell.content_type == "nectar":
+		return true
+	return cell.is_ripe_honey()
+
+## Feeding drains the cell gradually, so you can watch a bee empty it.
+## Honey gives `honey_energy_factor` times the energy per unit, so a bee
+## eating honey takes far less out of the comb for the same refill.
+func _feed_self(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or not _is_edible(target_cell):
+		target_cell = hive.find_food_cell()
+		state = State.TO_FEED_CELL if target_cell != null else state
+		if target_cell == null:
+			_after_feeding()
+		return
+
+	var room: float = GameConfig.energy_capacity - energy
+	if room <= 0.5:
+		_after_feeding()
+		return
+
+	var per_unit: float = GameConfig.honey_energy_factor if target_cell.content_type == "honey" else 1.0
+	var energy_wanted: float = min(GameConfig.bee_eat_rate * delta, room)
+	var taken: float = target_cell.take_resource(target_cell.content_type, energy_wanted / per_unit)
+	energy += taken * per_unit
+	hive.announce()
+	if taken <= 0.0:
+		_after_feeding()
+
+## Back to work. A forager still carrying a load finishes delivering it;
+## one that has already unloaded heads back out; indoor bees pick their
+## own job up again.
+func _after_feeding() -> void:
+	_release_cell_slot()
+	target_cell = null
+	if _works_indoors():
+		# indoor roles pick their own job back up; sending one down the
+		# forager's deposit path would have it filing away whatever it
+		# was carrying for its own work
+		state = _default_state_for_role()
+	elif current_load > 0.0:
+		state = State.IN_HIVE_TO_CELL
+	else:
+		state = State.IN_HIVE_TO_EXIT
+
+# --- stall watchdog -----------------------------------------------
+
+## A backstop, not the fix. Steering round obstacles is handled properly
+## in _avoid_obstacles; this catches anything that still manages to pin a
+## bee -- an unreachable flower, a corner it cannot steer out of -- and
+## abandons the errand rather than leaving it hovering until the player
+## notices and moves it by hand.
+func _watch_for_stalls(delta: float) -> void:
+	var travelling: bool = (
+		state == State.TO_FLOWER
+		or state == State.TO_HIVE
+		or state == State.MOVE_TO_POINT
+	)
+	if _is_inside_hive() or not travelling:
+		_reset_stall_watch()
+		return
+	if stall_check_position.x == INF or position.distance_to(stall_check_position) > 3.0:
+		_reset_stall_watch()
+		return
+
+	stall_timer += delta
+	if stall_timer < STALL_SECONDS:
+		return
+	_reset_stall_watch()
+
+	if state == State.TO_FLOWER:
+		_reject_flower()          # give up on this one and pick another
+	elif state == State.MOVE_TO_POINT:
+		state = _default_state_for_role()
+	else:
+		# heading home and getting nowhere -- shift sideways so next
+		# frame's steering starts from somewhere different
+		position += Vector2(randf_range(-14.0, 14.0), randf_range(-14.0, 14.0))
+
+func _reset_stall_watch() -> void:
+	stall_check_position = position
+	stall_timer = 0.0
 
 func _die() -> void:
 	if current_flower:
@@ -560,12 +724,10 @@ func _release_cell_slot() -> void:
 
 func _go_to_deposit_cell(delta: float) -> void:
 	if current_load <= 0.0:
-		# A forager only ever refuelled here, after a *successful*
-		# deposit -- one that came home empty (nothing worth collecting
-		# outside, or the comb was full) walked straight back out again
-		# without ever eating. Over enough empty trips that starved it
-		# to death. Refuel on every visit home, loaded or not.
-		energy += hive.take_energy(GameConfig.energy_capacity - energy)
+		# Nothing to deliver. Eating is handled separately now -- the
+		# hunger check in _process will already have sent this bee to a
+		# food cell if it needed one, and it runs whether the trip home
+		# was a productive one or not.
 		state = State.IN_HIVE_TO_EXIT
 		return
 
@@ -596,8 +758,11 @@ func _finish_depositing() -> void:
 	_release_cell_slot()
 	target_cell = null
 
-	# refuel from the comb while we're home
-	energy += hive.take_energy(GameConfig.energy_capacity - energy)
+	# No refuelling here any more. A forager used to eat its fill the
+	# instant it unloaded, taking most of the delivery straight back out
+	# of the very cell it had just filled -- which is why a bee carrying
+	# 50 nectar appeared to deposit a fraction of it. If it is hungry the
+	# check in _process sends it to eat as a separate, visible trip.
 
 	if current_load > 0.0:
 		state = State.IN_HIVE_TO_CELL   # still carrying -- find another cell
@@ -651,7 +816,17 @@ func _nurse_tend(_delta: float) -> void:
 	target_cell.being_tended = true   # cell reads this each frame to speed development
 
 	if target_cell.needs_feeding():
-		_feed_brood(target_cell)
+		if _can_feed_brood():
+			_feed_brood(target_cell)
+			return
+		# Out of one or both halves of the meal. Go and restock, but only
+		# if there is actually something in the comb to fetch -- otherwise
+		# stay put, since standing over the larva at least speeds up
+		# whatever food it has left.
+		if _restock_possible():
+			_release_cell_slot()
+			target_cell = null
+			state = State.NURSE_IDLE
 		return
 
 	# This larva has food in it for now.
@@ -682,25 +857,125 @@ func _nurse_tend(_delta: float) -> void:
 ## honey if the colony has any, because it's denser and lasts the larva
 ## longer -- which is the main reason a colony bothers making honey at
 ## all -- and nectar otherwise.
+## How much carbohydrate one feed takes out of what the nurse is
+## carrying. Honey goes further, which is the whole point of it.
+func _carb_per_feed() -> float:
+	return GameConfig.brood_feed_honey if nurse_carb_type == "honey" else GameConfig.brood_feed_nectar
+
+func _can_feed_brood() -> bool:
+	return nurse_pollen >= GameConfig.brood_feed_pollen and nurse_carb >= _carb_per_feed()
+
+## How many complete meals this nurse is carrying, for the info panel --
+## whichever half runs out first is the limit.
+func _feeds_carried() -> float:
+	var from_pollen: float = nurse_pollen / max(0.001, GameConfig.brood_feed_pollen)
+	var from_carb: float = nurse_carb / max(0.001, _carb_per_feed())
+	return floor(min(from_pollen, from_carb))
+
+## Could a trip to the stores actually improve what this nurse is
+## carrying? Deliberately mirrors _nurse_restock_errand's conditions: if
+## the two disagreed, a nurse short of pollen with none in the comb would
+## bounce between the brood nest and her idle state every frame, being
+## told to restock and finding nothing to restock with.
+func _restock_possible() -> bool:
+	if nurse_pollen < GameConfig.brood_feed_pollen and hive.find_cell_with("pollen") != null:
+		return true
+	if nurse_carb < _carb_per_feed():
+		if hive.find_cell_with("honey") != null or hive.find_cell_with("nectar") != null:
+			return true
+	return false
+
+## Feeds from what this nurse is physically carrying. She had to walk to
+## a pollen cell and a nectar or honey cell to get it (see
+## _nurse_restock_errand) -- food no longer appears in the larva out of
+## the colony's totals with no bee going anywhere.
 func _feed_brood(cell: Node2D) -> void:
-	# Check the comb has both halves of the meal before taking either.
-	# Taking the pollen first and then finding no carbohydrate would throw
-	# scarce pollen away for nothing.
-	if hive.total("pollen") < GameConfig.brood_feed_pollen:
+	if not _can_feed_brood():
+		return
+	var on_honey: bool = nurse_carb_type == "honey"
+	nurse_pollen -= GameConfig.brood_feed_pollen
+	nurse_carb -= _carb_per_feed()
+	if nurse_carb <= 0.001:
+		nurse_carb = 0.0
+		nurse_carb_type = ""
+	cell.feed_brood(
+		GameConfig.brood_feed_seconds_honey if on_honey else GameConfig.brood_feed_seconds,
+		on_honey
+	)
+
+## Sends this nurse off to load up if she is short of either half of a
+## meal. Returns true when an errand was started. Honey is preferred over
+## nectar because a honey feed carries a larva further.
+func _nurse_restock_errand() -> bool:
+	if nurse_pollen < GameConfig.brood_feed_pollen:
+		var pollen_cell = hive.find_cell_with("pollen")
+		if pollen_cell != null:
+			_start_food_errand(pollen_cell, "pollen")
+			return true
+
+	if nurse_carb < _carb_per_feed():
+		var carb_type := "honey"
+		var carb_cell = hive.find_cell_with("honey")
+		if carb_cell == null:
+			carb_type = "nectar"
+			carb_cell = hive.find_cell_with("nectar")
+		if carb_cell != null:
+			_start_food_errand(carb_cell, carb_type)
+			return true
+
+	return false
+
+func _start_food_errand(cell: Node2D, what: String) -> void:
+	_release_cell_slot()
+	target_cell = cell
+	nurse_fetching = what
+	state = State.TO_FOOD_CELL
+
+func _nurse_go_to_food(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or target_cell.content_type != nurse_fetching or target_cell.amount <= 0.0:
+		_abandon_food_errand()
+		return
+	if nurse_fetching == "honey" and not target_cell.is_ripe_honey():
+		_abandon_food_errand()
 		return
 
-	var use_honey: bool = hive.total_honey() >= GameConfig.brood_feed_honey
-	if not use_honey and hive.total("nectar") < GameConfig.brood_feed_nectar:
+	var approach := _approach_cell(target_cell, delta)
+	if approach < 0:
+		_abandon_food_errand()
+		return
+	if approach == 1:
+		timer = GameConfig.nurse_load_time
+		state = State.LOADING_FOOD
+
+## Filling up. She takes several feeds' worth in one visit, so she isn't
+## walking back to the stores for every single larva.
+func _nurse_load_food(delta: float) -> void:
+	timer -= delta
+	if timer > 0.0:
 		return
 
-	hive.take("pollen", GameConfig.brood_feed_pollen)
-	if use_honey:
-		hive.take("honey", GameConfig.brood_feed_honey)
-		cell.feed_brood(GameConfig.brood_feed_seconds_honey, true)
-	else:
-		hive.take("nectar", GameConfig.brood_feed_nectar)
-		cell.feed_brood(GameConfig.brood_feed_seconds, false)
-	hive.announce()
+	if target_cell != null and is_instance_valid(target_cell):
+		var feeds: float = max(1.0, GameConfig.nurse_carry_feeds)
+		if nurse_fetching == "pollen":
+			nurse_pollen += target_cell.take_resource("pollen", GameConfig.brood_feed_pollen * feeds)
+		else:
+			var per_feed: float = GameConfig.brood_feed_honey if nurse_fetching == "honey" else GameConfig.brood_feed_nectar
+			var got: float = target_cell.take_resource(nurse_fetching, per_feed * feeds)
+			if got > 0.0:
+				# a nurse carries one kind of carbohydrate at a time
+				if nurse_carb_type != nurse_fetching:
+					nurse_carb = 0.0
+				nurse_carb += got
+				nurse_carb_type = nurse_fetching
+		hive.announce()
+
+	_abandon_food_errand()
+
+func _abandon_food_errand() -> void:
+	_release_cell_slot()
+	target_cell = null
+	nurse_fetching = ""
+	state = State.NURSE_IDLE
 
 # --- idle work dispatch --------------------------------------------
 
@@ -738,6 +1013,11 @@ func _try_role_work(r: int) -> bool:
 			# between the brood nest and her own idle state forever.
 			if r != role and not brood.needs_feeding():
 				return false
+			# Load up before walking over. A nurse feeds from what she is
+			# carrying, so an empty-handed one goes to the stores first.
+			if brood.needs_feeding() and not _can_feed_brood():
+				if _nurse_restock_errand():
+					return true
 			target_cell = brood
 			state = State.TO_BROOD
 			return true
@@ -1257,6 +1537,11 @@ func set_role(new_role: int) -> void:
 
 	role = new_role
 	visible = true
+	# brood food a nurse was carrying isn't any use in another job
+	nurse_pollen = 0.0
+	nurse_carb = 0.0
+	nurse_carb_type = ""
+	nurse_fetching = ""
 	var now_indoors := _works_indoors()
 
 	if _is_inside_hive():
@@ -1365,6 +1650,19 @@ func task_description() -> String:
 					return "feeding a larva (%ds of development left in it)" % int(target_cell.brood_fed_seconds)
 				return "tending a larva -- no pollen in the comb to feed it"
 			return "tending a developing bee"
+		State.TO_FOOD_CELL:
+			return "going to collect %s for the brood" % nurse_fetching
+		State.LOADING_FOOD:
+			return "loading up with %s to feed the brood" % nurse_fetching
+		State.TO_FEED_CELL:
+			return "hungry -- heading to a cell to eat"
+		State.FEEDING:
+			var eating := "nectar"
+			if target_cell and is_instance_valid(target_cell):
+				eating = target_cell.content_type
+			return "eating %s (energy %d%%)" % [
+				eating, int(100.0 * energy / max(0.001, GameConfig.energy_capacity)),
+			]
 		State.HONEY_IDLE:
 			return "looking for nectar to turn into honey" + _idle_backup_note()
 		State.TO_NECTAR_CELL:
@@ -1461,6 +1759,11 @@ func carrying_text() -> String:
 		return "Carrying: %d dirt (of %d)" % [int(dirt_load), int(GameConfig.miner_dirt_capacity)]
 	if honey_load > 0.0:
 		return "Carrying: %d units of honey mix" % int(ceil(honey_load))
+	if nurse_pollen > 0.0 or nurse_carb > 0.0:
+		var carb_name: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
+		return "Carrying: %d pollen and %d %s for the brood (%d feeds)" % [
+			int(nurse_pollen), int(nurse_carb), carb_name, int(_feeds_carried()),
+		]
 	if current_load <= 0.0 or current_load_type == "":
 		return "Carrying: nothing"
 	return "Carrying: %d %s (of %d)" % [int(current_load), current_load_type, int(_max_capacity())]
@@ -1518,13 +1821,38 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 		var clearance: float = obstacle.radius + 16.0
 		if closest_point.distance_to(obstacle.position) >= clearance:
 			continue
-		# which side to swing round -- whichever side of the line the
-		# obstacle centre is already on, so the bee doesn't cut across it
-		var side_sign: float = signf(direction.cross(to_obstacle))
-		var perpendicular: Vector2 = direction.rotated(PI / 2.0)
-		return obstacle.position - perpendicular * clearance * (1.0 if side_sign >= 0.0 else -1.0)
+		return _point_around(obstacle, target, clearance)
 
 	return target
+
+## How far round the rim to aim, in radians, each frame.
+const SWEEP_STEP := 0.6
+
+## Where to head in order to get round `obstacle`.
+##
+## This used to return a single fixed point on the far side of the
+## obstacle. Once a bee actually reached that point it stopped dead: the
+## line from there to the flower still clipped the obstacle, so the very
+## same point was handed back every frame, and a bee standing on its own
+## destination has nowhere to move. That is what left foragers frozen on
+## "flying to a flower for nectar" until they were ordered somewhere
+## else, which reset the state and unstuck them.
+##
+## Now the aim point is a short way further round the rim from wherever
+## the bee currently is, turning whichever way reaches the target sooner.
+## Because it is always somewhere the bee is not, the bee always makes
+## progress; it walks round the edge until the straight line is clear and
+## then heads directly for the flower again.
+func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vector2:
+	var from_centre: Vector2 = position - obstacle.position
+	if from_centre.length() < 0.01:
+		from_centre = Vector2.RIGHT
+	var rim: float = max(clearance, from_centre.length())
+	var here: float = from_centre.angle()
+	var there: float = (target - obstacle.position).angle()
+	var shorter_way: float = wrapf(there - here, -PI, PI)
+	var swept: float = here + SWEEP_STEP * (1.0 if shorter_way >= 0.0 else -1.0)
+	return obstacle.position + Vector2(cos(swept), sin(swept)) * rim
 
 ## The hard half of obstacle handling. _avoid_obstacles steers, which is
 ## enough most of the time but not a guarantee: a bee right-clicked onto

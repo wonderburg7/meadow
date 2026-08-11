@@ -183,11 +183,32 @@ func find_empty_cell() -> Node2D:
 				_brood_pointer = (idx + 1) % brood_cells.size()
 				return cell
 
+	# Only genuinely spare cells. There used to be a last-resort pass that
+	# took any empty cell at all, which meant the queen would lay brood
+	# into a cell the player had reserved for pollen or honey -- the one
+	# thing a reservation is supposed to prevent. If there is nowhere
+	# free she now waits instead, which is the honest signal that the
+	# colony needs more comb or more cells set aside for eggs.
 	for cell in cells:
-		if cell.is_empty() and cell.designated_type == "":
+		if not is_instance_valid(cell):
+			continue
+		if cell.is_empty() and cell.designated_type == "" and not cell.keep_empty:
+			return cell
+	return null
+
+## What a hungry bee walks to when it needs feeding. Ripe honey first --
+## it carries several times the energy per unit, so a bee spends less
+## time at the cell and the same comb feeds far more of them.
+func find_food_cell(except: Node2D = null) -> Node2D:
+	for cell in cells:
+		if cell == except or not is_instance_valid(cell):
+			continue
+		if cell.is_ripe_honey() and cell.amount > 0.0:
 			return cell
 	for cell in cells:
-		if cell.is_empty():
+		if cell == except or not is_instance_valid(cell):
+			continue
+		if cell.content_type == "nectar" and cell.amount > 0.0:
 			return cell
 	return null
 

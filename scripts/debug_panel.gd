@@ -230,6 +230,16 @@ const TUNABLES := [
 		"tip": "A nurse tops a larva back up once its remaining food drops below this, rather than waiting for it to stall completely.",
 	},
 	{
+		"key": "nurse_carry_feeds", "label": "Feeds carried", "step": 1.0, "min": 1.0,
+		"category": "Brood & the queen",
+		"tip": "How many complete meals a nurse loads up with in one visit to the stores. She walks to a pollen cell and then a nectar or honey cell to fill up, and feeds larvae from what she is carrying -- higher values mean fewer trips back to the comb.",
+	},
+	{
+		"key": "nurse_load_time", "label": "Loading s", "step": 0.5, "min": 0.0,
+		"category": "Brood & the queen",
+		"tip": "Seconds a nurse spends at a cell filling up with food for the brood.",
+	},
+	{
 		"key": "tending_speed_bonus", "label": "Tending bonus", "step": 0.5, "min": 1.0,
 		"category": "Brood & the queen",
 		"tip": "Development speed multiplier while a nursery bee is standing over the cell. It only multiplies time the larva has food for -- tending an unfed larva does nothing.",
@@ -304,6 +314,16 @@ const TUNABLES := [
 		"key": "energy_burn_rate", "label": "Energy burn/s", "step": 0.1, "min": 0.0,
 		"category": "Bee life",
 		"tip": "Energy every bee burns per second just by being alive. Bees refuel from the comb, eating honey first where there is any.",
+	},
+	{
+		"key": "hunger_threshold", "label": "Eat below", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "How low a bee's energy has to fall, as a fraction of its capacity, before it breaks off what it is doing and walks to a cell to eat. Eating is a real trip now, so a low value means bees run leaner but lose less time.",
+	},
+	{
+		"key": "bee_eat_rate", "label": "Eating rate/s", "step": 1.0, "min": 0.5,
+		"category": "Bee life",
+		"tip": "Energy a bee takes on per second while feeding at a cell. Honey supplies this from far fewer units than nectar does.",
 	},
 
 	# --- Interface ---

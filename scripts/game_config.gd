@@ -77,6 +77,22 @@ var brood_feed_honey: float = 1.5       # honey used per feed -- less goes furth
 ## this, rather than waiting for it to stall completely.
 var brood_feed_threshold: float = 6.0
 
+## Nurses carry the food to the brood themselves. A nurse walks to a
+## pollen cell and loads up, then to a honey or nectar cell, and only
+## then can she feed anything -- she feeds from what she is carrying, not
+## out of thin air. Carrying several feeds' worth at a time stops her
+## shuttling back and forth for every single larva.
+var nurse_carry_feeds: float = 4.0
+var nurse_load_time: float = 1.5    # seconds spent filling up at a cell
+
+# --- eating ---
+## Bees eat as a visible errand rather than topping themselves up
+## invisibly wherever they happen to be. Once a bee drops below
+## `hunger_threshold` of its capacity it breaks off, walks to a cell with
+## food in it, and feeds until it is full.
+var hunger_threshold: float = 0.45      # fraction of capacity
+var bee_eat_rate: float = 12.0          # energy per second while feeding
+
 # --- honey ---
 ## Honey makers take nectar out of the comb, chew enzymes into it, spit
 ## the mix into a fresh cell and then fan their wings over it to drive
