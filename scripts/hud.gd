@@ -13,6 +13,7 @@ const Bee = preload("res://scripts/bee.gd")
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
 signal view_toggle_requested()
+signal colony_panel_requested()
 signal speed_requested(speed_scale: float)
 signal cell_designation_requested(cell: Node2D, type: String)
 ## `focus` and `use_automine` carry the sub-mode the chosen role needs --
@@ -28,6 +29,8 @@ signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
 ## Applied the moment the checkbox is ticked, independently of whether
 ## the cell is being emptied right now.
 signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
+## Whether the queen lays a gyne into this cell rather than a worker.
+signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## "Click a spot" modes -- main.gd puts itself into a placement mode when
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
@@ -94,6 +97,14 @@ const ARCHITECT_MODES := [
 	{"key": "architect_both", "mode": "both", "label": "Both"},
 ]
 
+## What a nursery bee can be set to do. Royal jelly is only worth
+## producing when the colony is raising gynes.
+const NURSE_MODES := [
+	{"key": "nurse_feed", "mode": "feed", "label": "Feed brood"},
+	{"key": "nurse_jelly", "mode": "jelly", "label": "Produce royal jelly"},
+	{"key": "nurse_both", "mode": "both", "label": "Both"},
+]
+
 const ROLE_BUTTONS := [
 	{
 		"label": "Forager", "role": "forager",
@@ -101,7 +112,7 @@ const ROLE_BUTTONS := [
 	},
 	{
 		"label": "Nursery", "role": "nursery",
-		"tip": "Keep the selected bees indoors feeding the brood. Larvae do not develop at all on their own: a nurse has to drop pollen and either nectar or honey into each cell, and each feed only buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. Standing over a fed larva speeds it up as well. With no nurse, the colony cannot grow.",
+		"tip": "Keep the selected bees indoors on brood work. Larvae do not develop at all on their own: a nurse collects pollen and either nectar or honey from the comb, carries it to the cell, and each feed only buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. With no nurse, the colony cannot grow. On the royal jelly sub-mode a nurse instead eats pollen and honey and works them into jelly, which is the one thing a gyne larva cannot be raised without.",
 	},
 	{
 		"label": "Architect", "role": "builder",
@@ -151,6 +162,7 @@ var cell_popup_label: Label
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
 var hatch_lock_box: CheckBox
+var gyne_box: CheckBox
 
 var flower_popup: PopupPanel
 var flower_popup_label: Label
@@ -162,6 +174,17 @@ var obstacle_popup_label: Label
 var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
+
+var signal_column: VBoxContainer
+var shown_signals: Array = []
+
+## Severity colours for the at-a-glance strip: 0 is background
+## information, 1 is worth looking at, 2 is losing you something now.
+const SIGNAL_COLOURS := [
+	Color(0.75, 0.82, 0.9),
+	Color(1.0, 0.85, 0.4),
+	Color(1.0, 0.45, 0.4),
+]
 
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
@@ -179,7 +202,15 @@ func _ready() -> void:
 	# The controls used to be printed here permanently. They now live in
 	# the Tuning panel's Interface section, which keeps the corner of the
 	# screen clear once you know them.
-	pause_label = _make_label(Vector2(16, 112), 18)
+	# The at-a-glance strip. Sits directly under the rate readout so the
+	# top-left corner reads as one block: what you have, then what's
+	# wrong with it.
+	signal_column = VBoxContainer.new()
+	signal_column.position = Vector2(16, 106)
+	signal_column.add_theme_constant_override("separation", 1)
+	add_child(signal_column)
+
+	pause_label = _make_label(Vector2(16, 240), 18)
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
 
@@ -230,6 +261,13 @@ func _build_top_right_bar() -> void:
 		speed_buttons.append({"button": btn, "scale": scale_value})
 
 	bar.add_child(_info("Game speed. These change how fast the simulation runs; they do not change how much resource a bee gathers per in-game second."))
+
+	var colony_button := Button.new()
+	colony_button.text = "Colony (C)"
+	colony_button.custom_minimum_size = Vector2(90, 26)
+	colony_button.pressed.connect(func(): colony_panel_requested.emit())
+	bar.add_child(colony_button)
+	bar.add_child(_info("Open the colony overview: how many bees are on each job, what is in the comb, and how the brood is doing. Click any role in it to select every bee doing that job at once."))
 
 	view_button = Button.new()
 	view_button.text = "To Hive (Tab)"
@@ -303,6 +341,11 @@ func _build_cell_popup() -> void:
 	honey_btn.pressed.connect(func(): _request_designation("honey"))
 	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
 
+	var jelly_btn := Button.new()
+	jelly_btn.text = "Store Jelly"
+	jelly_btn.pressed.connect(func(): _request_designation("jelly"))
+	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
+
 	var egg_btn := Button.new()
 	egg_btn.text = "Raise Eggs"
 	egg_btn.pressed.connect(func(): _request_designation("brood"))
@@ -349,6 +392,20 @@ func _build_cell_popup() -> void:
 			_refresh_cell_popup()
 	)
 	lock_row.add_child(hatch_lock_box)
+
+	# Whether the queen lays a gyne here rather than a worker.
+	var gyne_row := HBoxContainer.new()
+	column.add_child(gyne_row)
+	gyne_box = CheckBox.new()
+	gyne_box.text = "Raise a gyne (future queen) in this cell"
+	gyne_box.add_theme_font_size_override("font_size", 11)
+	gyne_box.toggled.connect(func(pressed: bool):
+		if active_cell and is_instance_valid(active_cell):
+			cell_gyne_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
+	gyne_row.add_child(gyne_box)
+	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
 ## Clearing a cell out. This exists because a colony with plenty of
@@ -525,6 +582,8 @@ func _refresh_cell_popup() -> void:
 				lines.append("Nectar: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"pollen":
 				lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+			"jelly":
+				lines.append("Royal jelly: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"honey":
 				if active_cell.is_ripe_honey():
 					lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
@@ -536,7 +595,12 @@ func _refresh_cell_popup() -> void:
 					])
 					lines.append("Not edible until it is fully dried out.")
 			"brood":
-				lines.append("Developing bee -- %d%%" % int(active_cell.development_percent()))
+				lines.append("%s -- %d%%" % [
+					"Developing gyne" if active_cell.brood_is_gyne else "Developing bee",
+					int(active_cell.development_percent()),
+				])
+				if active_cell.brood_is_gyne:
+					lines.append("Needs royal jelly, pollen and honey. Nothing else will do.")
 				if active_cell.brood_fed_seconds > 0.0:
 					lines.append("Fed on %s -- %ds of development left in it" % [
 						"honey" if active_cell.fed_on_honey else "nectar",
@@ -578,6 +642,7 @@ func _refresh_cell_popup() -> void:
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
+	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
 
 func _process(_delta: float) -> void:
 	if warning_panel.visible:
@@ -658,9 +723,9 @@ func update_day(day: int) -> void:
 
 ## Honey is counted only once it's fully fanned dry -- wet mix still
 ## drying in a cell isn't a store the colony can use yet.
-func update_storage(nectar: float, pollen: float, honey: float) -> void:
-	storage_label.text = "Nectar: %d   Pollen: %d   Honey: %d" % [
-		int(round(nectar)), int(round(pollen)), int(round(honey)),
+func update_storage(nectar: float, pollen: float, honey: float, jelly: float) -> void:
+	storage_label.text = "Nectar: %d   Pollen: %d   Honey: %d   Jelly: %d" % [
+		int(round(nectar)), int(round(pollen)), int(round(honey)), int(round(jelly)),
 	]
 
 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
@@ -675,6 +740,26 @@ func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: 
 	rate_label.text = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
 		nectar_per_sec, pollen_per_sec, births_per_sec * 60.0,
 	]
+
+## `lines` is an array of [text, severity] pairs from main.gd. Rebuilt
+## only when the set of problems actually changes, so the strip isn't
+## thrashing labels every second while nothing is happening.
+func update_signals(lines: Array) -> void:
+	var flattened: Array = []
+	for entry in lines:
+		flattened.append("%d|%s" % [entry[1], entry[0]])
+	if flattened == shown_signals:
+		return
+	shown_signals = flattened
+
+	for child in signal_column.get_children():
+		child.queue_free()
+	for entry in lines:
+		var label := Label.new()
+		label.text = "• %s" % entry[0]
+		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
+		signal_column.add_child(label)
 
 func update_selection(bees: Array) -> void:
 	shown_bees = bees
@@ -734,12 +819,17 @@ func _rebuild_role_controls(bees: Array) -> void:
 		])
 		role_row.add_child(forager_menu)
 
-	# --- nursery ---
-	if common_role != Bee.Role.NURSERY:
-		var nursery_btn := Button.new()
-		nursery_btn.text = "Nursery"
-		nursery_btn.pressed.connect(func(): role_requested.emit("nursery"))
-		role_row.add_child(_with_info(nursery_btn, _tip_for("nursery")))
+	# --- nursery: a sub-mode switch if already one, otherwise a dropdown
+	# that picks the mode as it assigns the role
+	if common_role == Bee.Role.NURSERY:
+		var current_nurse_mode: String = bees[0].nurse_mode if is_instance_valid(bees[0]) else "feed"
+		role_row.add_child(_make_role_menu(
+			"Doing: %s" % _nurse_mode_label(current_nurse_mode),
+			_tip_for("nursery"),
+			_nurse_items(false)
+		))
+	else:
+		role_row.add_child(_make_role_menu("Nursery", _tip_for("nursery"), _nurse_items(true)))
 
 	# --- architect: manual cell placement plus a mode switch if already
 	# one, otherwise a dropdown that picks the mode as it assigns the role
@@ -878,6 +968,29 @@ func _architect_items(assign_role: bool) -> Array:
 				"action": func(): role_requested.emit(key),
 			})
 	return items
+
+func _nurse_items(assign_role: bool) -> Array:
+	var items: Array = []
+	for entry in NURSE_MODES:
+		var key: String = entry.key
+		var label: String = entry.label
+		if assign_role:
+			items.append({
+				"text": "Become nursery — %s" % label,
+				"action": func(): role_requested.emit("nursery"); role_requested.emit(key),
+			})
+		else:
+			items.append({
+				"text": label,
+				"action": func(): role_requested.emit(key),
+			})
+	return items
+
+func _nurse_mode_label(mode: String) -> String:
+	for entry in NURSE_MODES:
+		if entry.mode == mode:
+			return entry.label
+	return "Feed brood"
 
 func _architect_mode_label(mode: String) -> String:
 	for entry in ARCHITECT_MODES:

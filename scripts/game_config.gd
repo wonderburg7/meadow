@@ -100,6 +100,64 @@ var nurse_load_time: float = 1.5    # seconds spent filling up at a cell
 var hunger_threshold: float = 0.30      # fraction of capacity
 var bee_eat_rate: float = 15.0          # energy per second while feeding
 
+# --- flight ---
+## Flying costs energy on top of simply being alive, so a forager's range
+## is paid for rather than free. Wet wings cost more again (see rain).
+var flight_energy_burn: float = 0.25
+
+## A forager out in the meadow drinks nectar straight from a flower when
+## it drops below this share of its capacity -- it doesn't have to fly
+## home to eat. Pollen foragers do this too: they aren't collecting
+## nectar, but they will still drink it.
+var forager_drink_threshold: float = 0.5
+var nectar_drink_rate: float = 10.0     # energy per second while drinking
+
+## A nectar forager can also metabolise what is already in its crop
+## rather than land at all. That comes straight off the delivery, so a
+## bee that has to do this a lot is one that is ranging too far.
+var crop_drink_threshold: float = 0.25
+
+# --- gynes ---
+## A gyne is a future queen: bigger than a worker, slower, hungrier, and
+## far more expensive to raise. She can do any worker job in the
+## meantime, so raising one early costs you real labour as well as
+## resources.
+var gyne_size_factor: float = 1.35      # relative to a worker; the queen is ~1.55
+var gyne_speed_factor: float = 0.85
+var gyne_energy_factor: float = 1.3
+var gyne_egg_pollen_cost: float = 180.0 # what the queen must eat to lay one
+var gyne_develop_multiplier: float = 4.0
+## Feeding a gyne larva takes royal jelly as well as pollen, and honey
+## rather than nectar -- nothing else will do.
+var brood_feed_jelly: float = 2.0
+var brood_feed_seconds_gyne: float = 30.0
+
+# --- royal jelly ---
+## Nurses on the royal jelly sub-mode eat pollen and honey and work it
+## into jelly, which is stored in cells of its own. Only gyne larvae need
+## it, so it's dead weight for a colony that isn't raising any.
+var jelly_pollen_cost: float = 12.0
+var jelly_honey_cost: float = 6.0
+var jelly_make_time: float = 12.0
+var jelly_per_batch: float = 8.0
+var jelly_cell_capacity: float = 120.0
+
+# --- weather ---
+## Rain grounds a colony. It waters down the nectar in open flowers, and
+## a wet bee is a heavy bee, so flying costs more. Past
+## `rain_forage_limit` a trip costs more than it brings back and foragers
+## stay in.
+var weather_on: bool = true
+var rain_chance_per_day: float = 0.45
+var rain_min_seconds: float = 40.0
+var rain_max_seconds: float = 130.0
+var rain_nectar_dilution: float = 0.6   # share of nectar value lost at full intensity
+var rain_flight_burn_factor: float = 2.2
+var rain_forage_limit: float = 0.5      # intensity above which foragers stay home
+
+## Live weather state, advanced by main.gd. Not tunable.
+var rain_intensity: float = 0.0
+
 # --- warnings ---
 ## When this fraction of the colony is below `low_energy_warning_level`
 ## of its energy, the game says so. It doesn't pause -- it's a nudge, not
@@ -192,6 +250,10 @@ var warn_on_discard: bool = true        # "don't show this again" clears this
 ## Read on scene build and left as-is, so a plain Restart Run repeats
 ## whatever stage you last chose.
 var starting_level: int = 0
+
+## Set just before a scene reload to tell the freshly built world to
+## replay a saved run over itself. See save_game.gd.
+var load_pending: bool = false
 
 ## True the first time the game runs, so main.gd knows to open the menu
 ## rather than dropping straight into a colony. Cleared once the player

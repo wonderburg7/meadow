@@ -31,6 +31,8 @@ const HONEY_WET_COLOR := Color(0.78, 0.55, 0.18)
 const HONEY_COLOR := Color(0.85, 0.42, 0.05)
 const BROOD_COLOR := Color(0.9, 0.9, 0.85)
 const CORPSE_COLOR := Color(0.34, 0.30, 0.30)
+const JELLY_COLOR := Color(0.97, 0.94, 0.82)
+const GYNE_BROOD_COLOR := Color(0.98, 0.80, 0.35)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
 var content_type: String = ""
@@ -53,6 +55,12 @@ var fed_on_honey: bool = false
 
 ## Architect-seconds spent clearing a dead larva out of this cell.
 var clean_progress: float = 0.0
+
+## Is the larva in here being raised as a gyne -- a future queen? Gynes
+## take several times as long to develop and can only be fed on royal
+## jelly, pollen and honey, so this changes what the cell needs from the
+## moment the egg goes in.
+var brood_is_gyne: bool = false
 
 ## Honey drying. A honey maker fans its wings over the cell to drive the
 ## water off; `ripen_progress` counts bee-seconds of fanning, and the
@@ -90,6 +98,10 @@ var evict_mode: String = "move"
 var hatch_role: int = -1
 var hatch_focus: String = "nectar"
 var hatch_automine: bool = false
+## Set from the cell popup: the queen lays a gyne into this cell rather
+## than a worker. Costs her far more pollen and takes several times as
+## long to raise, so it's a deliberate choice per cell.
+var hatch_gyne: bool = false
 ## When false the role applies to the next bee only and then clears, so a
 ## one-off choice doesn't quietly govern the cell forever. The popup's
 ## "Keep for every bee" button pins it.
@@ -176,6 +188,7 @@ func _larva_dies() -> void:
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
 	clean_progress = 0.0
+	brood_is_gyne = false
 
 # --- working positions --------------------------------------------
 
@@ -243,7 +256,13 @@ func is_empty() -> bool:
 ## Honey cells hold their own amount, which can be tuned separately from
 ## the raw-store cells.
 func capacity_for(resource_type: String) -> float:
-	return GameConfig.honey_cell_capacity if resource_type == "honey" else GameConfig.cell_capacity
+	match resource_type:
+		"honey":
+			return GameConfig.honey_cell_capacity
+		"jelly":
+			return GameConfig.jelly_cell_capacity
+		_:
+			return GameConfig.cell_capacity
 
 func accepts(resource_type: String) -> bool:
 	if not is_built:
@@ -349,12 +368,22 @@ func ripen_fraction() -> float:
 
 # --- brood ---------------------------------------------------------
 
-func start_brood() -> void:
+func start_brood(as_gyne: bool = false) -> void:
 	content_type = "brood"
 	amount = 0.0
 	brood_progress = 0.0
 	brood_fed_seconds = 0.0
+	unfed_seconds = 0.0
 	fed_on_honey = false
+	brood_is_gyne = as_gyne
+
+## How long this larva needs in total. A gyne takes several times as long
+## as a worker, which is what makes raising one a commitment rather than
+## a decision.
+func develop_time() -> float:
+	if brood_is_gyne:
+		return GameConfig.brood_develop_time * GameConfig.gyne_develop_multiplier
+	return GameConfig.brood_develop_time
 
 ## Called by a nurse that has just dropped food in. `seconds` is what the
 ## feed buys; feeds don't stack up indefinitely, they just top the larva
@@ -391,7 +420,7 @@ func clean_fraction() -> float:
 	return clamp(clean_progress / max(0.001, GameConfig.cell_clean_time), 0.0, 1.0)
 
 func brood_ready() -> bool:
-	return content_type == "brood" and brood_progress >= GameConfig.brood_develop_time
+	return content_type == "brood" and brood_progress >= develop_time()
 
 func clear_cell() -> void:
 	content_type = ""
@@ -400,6 +429,7 @@ func clear_cell() -> void:
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
 	clean_progress = 0.0
+	brood_is_gyne = false
 	ripen_progress = 0.0
 	evict_requested = false
 	evict_mode = "move"
@@ -447,6 +477,9 @@ func _refresh() -> void:
 		"pollen":
 			color = POLLEN_COLOR
 			info_label.text = "P%d" % int(round(amount))
+		"jelly":
+			color = JELLY_COLOR
+			info_label.text = "RJ%d" % int(round(amount))
 		"honey":
 			color = HONEY_WET_COLOR.lerp(HONEY_COLOR, ripen_fraction())
 			if is_ripe_honey():
@@ -454,8 +487,8 @@ func _refresh() -> void:
 			else:
 				info_label.text = "h%d %d%%" % [int(round(amount)), int(ripen_fraction() * 100.0)]
 		"brood":
-			color = BROOD_COLOR
-			info_label.text = "egg %d%%" % int(development_percent())
+			color = GYNE_BROOD_COLOR if brood_is_gyne else BROOD_COLOR
+			info_label.text = "%s %d%%" % ["gyne" if brood_is_gyne else "egg", int(development_percent())]
 			if brood_fed_seconds <= 0.0:
 				# a starving larva reddens as it runs out of time, so a
 				# neglected nursery is obvious without opening any panels
@@ -479,4 +512,4 @@ func _refresh() -> void:
 func development_percent() -> float:
 	if content_type != "brood":
 		return 0.0
-	return min(100.0, 100.0 * brood_progress / max(0.001, GameConfig.brood_develop_time))
+	return min(100.0, 100.0 * brood_progress / max(0.001, develop_time()))

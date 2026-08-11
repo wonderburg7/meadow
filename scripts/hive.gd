@@ -7,7 +7,7 @@ extends Polygon2D
 ## out jobs to builders, so the meadow never needs to know how the comb
 ## is laid out.
 
-signal storage_changed(nectar: float, pollen: float, honey: float)
+signal storage_changed(nectar: float, pollen: float, honey: float, jelly: float)
 
 const Shapes = preload("res://scripts/shapes.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
@@ -35,6 +35,46 @@ func record_collection(resource_type: String, amount: float) -> void:
 
 func record_birth() -> void:
 	lifetime_births += 1
+
+# --- cell index ---------------------------------------------------
+## Every bee used to walk the whole cell list several times a frame
+## looking for work -- fine at twenty bees, not at two hundred. The list
+## is now bucketed by what each cell holds, once per frame, and the
+## find_* functions read the buckets instead. One pass for the colony
+## rather than one pass per bee per question.
+
+var _index: Dictionary = {}      # content type -> Array of cells
+var _index_frame: int = -1
+
+func _content_index() -> Dictionary:
+	var frame := Engine.get_process_frames()
+	if _index_frame == frame:
+		return _index
+	_index_frame = frame
+
+	var buckets := {
+		"": [], "nectar": [], "pollen": [], "honey": [], "jelly": [],
+		"brood": [], "corpse": [], "unbuilt": [], "ripe_honey": [],
+	}
+	for cell in cells:
+		if not is_instance_valid(cell):
+			continue
+		if not cell.is_built:
+			buckets["unbuilt"].append(cell)
+			continue
+		buckets[cell.content_type].append(cell)
+		if cell.is_ripe_honey():
+			buckets["ripe_honey"].append(cell)
+	_index = buckets
+	return _index
+
+## Drops the cached buckets, for the rare case where a caller changes
+## cells and needs the next read in the same frame to see it.
+func invalidate_index() -> void:
+	_index_frame = -1
+
+func cells_holding(content: String) -> Array:
+	return _content_index().get(content, [])
 
 ## Which hex tiles are taken, so comb and soil never overlap.
 ## Keys are axial Vector2i, values are the node sitting there.
@@ -216,10 +256,9 @@ func has_room_for_egg() -> bool:
 	return find_empty_cell() != null
 
 func find_cell_with(resource_type: String) -> Node2D:
-	for cell in cells:
-		if cell.content_type == resource_type and cell.amount > 0.0:
-			if resource_type == "honey" and not cell.is_ripe_honey():
-				continue
+	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
+	for cell in cells_holding(bucket):
+		if cell.amount > 0.0:
 			return cell
 	return null
 
@@ -230,9 +269,7 @@ func find_cell_with(resource_type: String) -> Node2D:
 func find_brood_cell() -> Node2D:
 	var hungriest: Node2D = null
 	var any_brood: Node2D = null
-	for cell in cells:
-		if cell.content_type != "brood":
-			continue
+	for cell in cells_holding("brood"):
 		if any_brood == null:
 			any_brood = cell
 		if not cell.needs_feeding():
@@ -265,16 +302,22 @@ func find_unfinished_cell() -> Node2D:
 ## can be laid in it until an architect clears it, so this outranks every
 ## other maintenance job.
 func find_cell_needing_cleaning() -> Node2D:
-	for cell in cells:
-		if is_instance_valid(cell) and cell.needs_cleaning():
-			return cell
-	return null
+	var corpses := cells_holding("corpse")
+	return corpses[0] if not corpses.is_empty() else null
 
 func find_cell_needing_eviction() -> Node2D:
 	for cell in cells:
-		if cell.needs_eviction():
+		if is_instance_valid(cell) and cell.needs_eviction():
 			return cell
 	return null
+
+## A gyne larva waiting on royal jelly, so nurses know whether it's worth
+## anyone making any.
+func has_gyne_brood() -> bool:
+	for cell in cells_holding("brood"):
+		if cell.brood_is_gyne:
+			return true
+	return false
 
 ## Is there anywhere else `resource_type` could go? Used to decide
 ## whether re-designating a cell would destroy its contents.
@@ -350,6 +393,8 @@ var _tile_ids: Dictionary = {}   # axial -> AStar point id
 func build_navigation() -> void:
 	_astar.clear()
 	_tile_ids.clear()
+	# the layout has changed, so every cached route is suspect
+	_path_cache.clear()
 
 	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
 	var next_id := 0
@@ -409,13 +454,38 @@ func nearest_walkable_point(point: Vector2) -> Vector2:
 ## A list of world points from `from_point` to `to_point` that stays out
 ## of the soil. Returns an empty array if either end is unreachable, in
 ## which case the caller should just move straight and hope.
+## Routes are cached by the pair of tiles they run between, because bees
+## ask for the same handful of journeys over and over -- entrance to
+## comb, comb to stores, stores to brood. The hive layout only changes
+## when a block is mined out, and build_navigation clears the cache when
+## that happens, so a cached route can never be stale.
+##
+## Keyed on tiles rather than exact positions: two bees standing anywhere
+## on the same tile want the same route.
+var _path_cache: Dictionary = {}
+const PATH_CACHE_LIMIT := 2000
+
 func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array:
 	var from_hex := Shapes.pixel_to_hex(from_point - comb_centre, GameConfig.hive_cell_spacing)
 	var to_hex := Shapes.pixel_to_hex(to_point - comb_centre, GameConfig.hive_cell_spacing)
 	if not _tile_ids.has(from_hex) or not _tile_ids.has(to_hex):
 		return PackedVector2Array()
+
+	var key := Vector4i(from_hex.x, from_hex.y, to_hex.x, to_hex.y)
+	if _path_cache.has(key):
+		return _path_cache[key]
+
 	var raw := _astar.get_point_path(_tile_ids[from_hex], _tile_ids[to_hex])
-	return _smooth_path(from_point, raw)
+	# Smoothed from the tile centre rather than the bee's exact position,
+	# so the result is the same for everyone on that tile and can be
+	# shared. The bee walks to the first waypoint from wherever it is.
+	var from_centre: Vector2 = comb_centre + Shapes.hex_to_pixel(from_hex.x, from_hex.y, GameConfig.hive_cell_spacing)
+	var smoothed := _smooth_path(from_centre, raw)
+
+	if _path_cache.size() >= PATH_CACHE_LIMIT:
+		_path_cache.clear()   # simplest eviction: start again rather than track ages
+	_path_cache[key] = smoothed
+	return smoothed
 
 ## A* returns a route along hex centres, which makes bees walk in a
 ## zigzag down the six grid directions. This pulls the string tight:
@@ -566,4 +636,4 @@ func remove_block(block: Node2D, floor_maker: Callable) -> void:
 	refresh_edge_flags()
 
 func announce() -> void:
-	storage_changed.emit(total("nectar"), total("pollen"), total_honey())
+	storage_changed.emit(total("nectar"), total("pollen"), total_honey(), total("jelly"))

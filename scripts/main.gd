@@ -32,6 +32,8 @@ const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
+const ColonyPanel = preload("res://scripts/colony_panel.gd")
+const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
 ## The fixed starting stages the main menu offers, so a run can begin
@@ -81,12 +83,27 @@ var hive: Node2D
 var hud: CanvasLayer
 var queen: Node2D
 var game_over: CanvasLayer
+var colony_panel: CanvasLayer
 var colony_lost: bool = false
+
+## Built once when the meadow is laid out. Bees consult this constantly
+## for steering, and a scene-tree group query per bee per frame was the
+## worst-scaling thing in the simulation. Obstacles never move or appear
+## mid-run, so one list serves everybody.
+var obstacles: Array = []
+
+## Weather. Rain waters down open nectar, makes flying heavier, and past
+## a point grounds the foragers entirely.
+var weather_timer: float = 0.0
+var rain_target: float = 0.0
+var rain_seconds_left: float = 0.0
+var rain_overlay: ColorRect
 
 ## Sim time the low-energy warning was last shown, so it can't nag. -INF
 ## means it hasn't been shown at all yet this run.
 var last_energy_warning: float = -INF
 var warning_check_timer: float = 5.0
+var signal_timer: float = 1.0
 
 var in_hive_view: bool = false
 var selected_bees: Array = []
@@ -120,6 +137,7 @@ var awaiting_floral_preference: bool = false
 var pending_preference_bees: Array = []
 
 func _ready() -> void:
+	add_to_group("world")   # so the tuning panel can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
 	Engine.time_scale = 1.0
 	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
@@ -142,6 +160,18 @@ func _ready() -> void:
 	_build_hive_interior()
 	_build_cameras()
 
+	# A wash of grey-blue over the meadow while it's raining. Drawn on its
+	# own layer beneath the HUD so it tints the world, not the panels.
+	var weather_layer := CanvasLayer.new()
+	weather_layer.layer = 5
+	add_child(weather_layer)
+	rain_overlay = ColorRect.new()
+	rain_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rain_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rain_overlay.color = Color(0.35, 0.45, 0.62, 0.0)
+	rain_overlay.visible = false
+	weather_layer.add_child(rain_overlay)
+
 	selection_layer = Node2D.new()
 	selection_layer.z_index = 100
 	selection_layer.draw.connect(_draw_selection_box)
@@ -151,12 +181,14 @@ func _ready() -> void:
 	hud.focus_requested.connect(_on_focus_requested)
 	hud.role_requested.connect(_on_role_requested)
 	hud.view_toggle_requested.connect(_toggle_view)
+	hud.colony_panel_requested.connect(func(): colony_panel.toggle())
 	hud.speed_requested.connect(_on_speed_requested)
 	hud.cell_designation_requested.connect(_on_cell_designation_requested)
 	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
 	hud.cell_hatch_lock_requested.connect(_on_cell_hatch_lock_requested)
 	hud.cell_empty_requested.connect(_on_cell_empty_requested)
 	hud.cell_keep_empty_requested.connect(_on_cell_keep_empty_requested)
+	hud.cell_gyne_requested.connect(_on_cell_gyne_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
@@ -175,18 +207,29 @@ func _ready() -> void:
 	if GameConfig.menu_pending:
 		menu.open()
 
+	colony_panel = ColonyPanel.new()
+	colony_panel.role_selection_requested.connect(_on_role_selection_requested)
+	add_child(colony_panel)
+
 	game_over = GameOver.new()
 	game_over.restart_requested.connect(_on_restart_after_loss)
 	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
 	add_child(game_over)
 
-	hive.storage_changed.connect(func(n, p, h): hud.update_storage(n, p, h))
+	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j))
 	hud.update_day(day)
-	hud.update_storage(0, 0, 0)
+	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
 	hud.set_speed_display(1.0)
 	_update_population_readout()
 	_apply_view()
+
+	# A pending load is applied last, over the top of a world that has
+	# just been built to the saved settings -- see SaveGame's note on why
+	# it replays state rather than restoring a scene tree.
+	if GameConfig.load_pending:
+		GameConfig.load_pending = false
+		_restore(SaveGame.read())
 
 # --- world building -----------------------------------------------
 
@@ -258,6 +301,7 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 		meadow_root.add_child(obstacle)
 		obstacle.setup(kind, radius)
 		placed.append({"pos": pos, "radius": radius})
+		obstacles.append(obstacle)
 
 ## How many foragers a run opens with, and which resource each is on.
 ## A chosen stage says exactly; otherwise the tuning number applies, with
@@ -324,7 +368,7 @@ func _seed_flower() -> void:
 
 ## Is this spot out in the open, clear of every solid obstacle?
 func _is_clear_ground(point: Vector2) -> bool:
-	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		if point.distance_to(obstacle.position) < obstacle.radius + 24.0:
@@ -335,7 +379,7 @@ func _is_clear_ground(point: Vector2) -> bool:
 ## inside, plus a little margin so a bee can actually stand on it.
 func _clear_of_obstacles(point: Vector2) -> Vector2:
 	var result := point
-	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		var edge: float = obstacle.radius + 24.0
@@ -544,8 +588,9 @@ func _spawn_bee(focus: String) -> void:
 ## meadow (forager, which used to skip the hive entirely). It's spawned
 ## inside the hive at the cell's position; a forager then walks itself
 ## out through the entrance exactly like any other exiting bee.
-func _spawn_hatched_bee(role: int, cell: Node2D) -> void:
+func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false) -> void:
 	var bee := Bee.new()
+	bee.is_gyne = as_gyne   # must be set before _ready, which sizes the body
 	bee.position = cell.position
 	hive_root.add_child(bee)
 	# The cell carries the sub-mode for the role as well as the role
@@ -607,8 +652,10 @@ func _process(delta: float) -> void:
 			hud.update_day(day)
 		_hatch_ready_brood()
 		_reseed_meadow(delta)
+		_advance_weather(delta)
 		_check_for_loss()
 		_check_colony_energy(delta)
+		_refresh_signals(delta)
 		rate_sample_timer -= delta
 		if rate_sample_timer <= 0.0:
 			rate_sample_timer = 10.0
@@ -638,8 +685,9 @@ func _hatch_ready_brood() -> void:
 		if not cell.brood_ready():
 			continue
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
+		var as_gyne: bool = cell.brood_is_gyne
 		cell.clear_cell()
-		_spawn_hatched_bee(role, cell)
+		_spawn_hatched_bee(role, cell, as_gyne)
 		# Unless the player pinned it, a role set on a cell applies to that
 		# one bee and then clears, so a one-off choice doesn't quietly
 		# govern everything the cell ever raises. "Keep for every bee" in
@@ -648,6 +696,45 @@ func _hatch_ready_brood() -> void:
 			cell.hatch_role = -1
 		hive.record_birth()
 		_update_population_readout()
+
+## Weather. Rain arrives, builds, sits, and eases off again, so the
+## colony gets a warning rather than being switched off mid-flight. The
+## intensity is what every other system reads: it waters down the nectar
+## standing in open flowers, adds the weight of water to every wingbeat,
+## and past `rain_forage_limit` makes a trip cost more than it returns,
+## at which point foragers stay in.
+func _advance_weather(delta: float) -> void:
+	if not GameConfig.weather_on:
+		GameConfig.rain_intensity = 0.0
+		_apply_rain_overlay()
+		return
+
+	if rain_seconds_left > 0.0:
+		rain_seconds_left -= delta
+		if rain_seconds_left <= 0.0:
+			rain_target = 0.0
+	else:
+		# one roll per in-game day, spread evenly over it
+		weather_timer -= delta
+		if weather_timer <= 0.0:
+			weather_timer = max(10.0, GameConfig.seconds_per_day / 6.0)
+			if randf() < GameConfig.rain_chance_per_day / 6.0:
+				rain_target = randf_range(0.35, 1.0)
+				rain_seconds_left = randf_range(GameConfig.rain_min_seconds, GameConfig.rain_max_seconds)
+				hud.show_warning(
+					"Rain is coming in. Nectar in the open flowers is being watered down, wet wings cost more to fly on, and if it gets heavy enough your foragers will stay at the hive."
+				)
+
+	# eased rather than switched, so bees aren't grounded from one frame
+	# to the next
+	GameConfig.rain_intensity = move_toward(GameConfig.rain_intensity, rain_target, delta * 0.25)
+	_apply_rain_overlay()
+
+func _apply_rain_overlay() -> void:
+	if rain_overlay == null:
+		return
+	rain_overlay.color = Color(0.35, 0.45, 0.62, GameConfig.rain_intensity * 0.35)
+	rain_overlay.visible = GameConfig.rain_intensity > 0.01 and not in_hive_view
 
 ## The queen is the only bee that can lay and there is no succession, so
 ## losing her ends the run. Checked here rather than from the bee itself
@@ -697,6 +784,320 @@ func _check_colony_energy(delta: float) -> void:
 		"%d of your %d bees (%d%%) are below %d%% energy. The colony is burning nectar faster than it is bringing it in — put more bees on nectar foraging, or they will start to starve."
 		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)]
 	)
+
+## The at-a-glance strip: a short list of what is currently wrong, in
+## rough order of how quickly it will hurt. Deliberately phrased as
+## symptoms rather than instructions -- it tells you what is happening,
+## and leaves what to do about it to you.
+##
+## Recomputed once a second for the whole colony rather than per bee, so
+## it costs effectively nothing.
+func _refresh_signals(delta: float) -> void:
+	signal_timer -= delta
+	if signal_timer > 0.0:
+		return
+	signal_timer = 1.0
+
+	var lines: Array = []
+	var bees: Array = get_tree().get_nodes_in_group("bees")
+
+	var starving := 0
+	var hungry := 0
+	var foragers := 0
+	var nurses := 0
+	var architects := 0
+	for b in bees:
+		if b.energy < GameConfig.energy_capacity * 0.15:
+			starving += 1
+		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
+			hungry += 1
+		match b.role:
+			Bee.Role.FORAGER:
+				foragers += 1
+			Bee.Role.NURSERY:
+				nurses += 1
+			Bee.Role.BUILDER:
+				architects += 1
+
+	var hungry_brood := 0
+	var dead_cells := 0
+	var free_cells := 0
+	for cell in hive.cells:
+		if not is_instance_valid(cell):
+			continue
+		if cell.needs_cleaning():
+			dead_cells += 1
+		elif cell.content_type == "brood" and cell.brood_fed_seconds <= 0.0:
+			hungry_brood += 1
+		elif cell.is_empty() and not cell.keep_empty:
+			free_cells += 1
+
+	if starving > 0:
+		lines.append(["%d bees are about to starve" % starving, 2])
+	if hungry_brood > 0:
+		lines.append(["%d larvae are going hungry" % hungry_brood, 2])
+	if dead_cells > 0:
+		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2])
+	if hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
+		lines.append(["Almost no pollen — the queen cannot lay", 2])
+	if hive.total("nectar") < 40.0 and hive.total_honey() < 10.0:
+		lines.append(["Almost no nectar or honey — nothing to eat", 2])
+	if nurses == 0 and hive.cells_holding("brood").size() > 0:
+		lines.append(["No nurses — brood will not develop at all", 2])
+	if free_cells == 0:
+		lines.append(["No free cells — nowhere to store or lay", 1])
+	if hungry > 0:
+		lines.append(["%d bees running low on energy" % hungry, 1])
+	if foragers == 0:
+		lines.append(["No foragers — nothing is coming in", 1])
+	if architects == 0 and dead_cells > 0:
+		lines.append(["No architects to clear the blocked cells", 1])
+	if GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+		lines.append(["Raining hard — foragers are grounded", 1])
+	elif GameConfig.rain_intensity > 0.05:
+		lines.append(["Raining — nectar is watered down and flying costs more", 0])
+
+	hud.update_signals(lines)
+	_refresh_colony_panel(bees)
+
+## Feeds the colony overview. Only computed while the panel is actually
+## open, since nothing else reads these numbers.
+func _refresh_colony_panel(bees: Array) -> void:
+	if not colony_panel.is_open():
+		return
+
+	var counts := {}
+	var total_energy := 0.0
+	for b in bees:
+		var key: String = "%d|" % b.role
+		if b.role == Bee.Role.FORAGER:
+			key = "%d|%s" % [b.role, b.resource_type]
+		counts[key] = int(counts.get(key, 0)) + 1
+		total_energy += b.energy
+
+	var brood_count := 0
+	var gyne_count := 0
+	var hungry_brood := 0
+	var free_cells := 0
+	for cell in hive.cells:
+		if not is_instance_valid(cell):
+			continue
+		if cell.content_type == "brood":
+			brood_count += 1
+			if cell.brood_is_gyne:
+				gyne_count += 1
+			if cell.brood_fed_seconds <= 0.0:
+				hungry_brood += 1
+		elif cell.is_empty() and not cell.keep_empty:
+			free_cells += 1
+
+	colony_panel.refresh(
+		counts,
+		{
+			"nectar": hive.total("nectar"),
+			"pollen": hive.total("pollen"),
+			"honey": hive.total_honey(),
+			"jelly": hive.total("jelly"),
+		},
+		{
+			"cells": hive.cells.size(), "free": free_cells,
+			"brood": brood_count, "gynes": gyne_count, "hungry": hungry_brood,
+		},
+		(total_energy / max(1, bees.size())) / max(0.001, GameConfig.energy_capacity)
+	)
+
+## Clicking a role tally in the colony panel selects every bee in it, so
+## you can retask a whole job at once instead of hunting for them.
+func _on_role_selection_requested(role: int, focus: String) -> void:
+	for b in selected_bees:
+		if is_instance_valid(b):
+			b.set_selected(false)
+	selected_bees.clear()
+
+	for b in get_tree().get_nodes_in_group("bees"):
+		if not is_instance_valid(b) or b.role != role:
+			continue
+		if focus != "" and b.resource_type != focus:
+			continue
+		b.set_selected(true)
+		selected_bees.append(b)
+
+	hud.update_selection(selected_bees)
+
+# --- saving and loading -------------------------------------------
+
+func save_run() -> void:
+	if SaveGame.save(self):
+		hud.show_warning("Run saved.")
+	else:
+		hud.show_warning("The run could not be saved — check the log for why.")
+
+## Replays a saved run over the freshly built world. Order matters: the
+## comb has to exist before bees can be pointed at it, and mined-out soil
+## has to be removed before routes are rebuilt.
+func _restore(data: Dictionary) -> void:
+	if data.is_empty():
+		hud.show_warning("There was no save to load.")
+		return
+
+	var clock: Dictionary = data.get("clock", {})
+	GameConfig.sim_time = float(clock.get("sim_time", 0.0))
+	day = int(clock.get("day", 1))
+	next_bee_id = int(clock.get("next_bee_id", 1))
+	hud.update_day(day)
+
+	var weather: Dictionary = data.get("weather", {})
+	GameConfig.rain_intensity = float(weather.get("intensity", 0.0))
+	rain_target = float(weather.get("target", 0.0))
+	rain_seconds_left = float(weather.get("seconds_left", 0.0))
+
+	var totals: Dictionary = data.get("totals", {})
+	hive.lifetime_nectar_collected = float(totals.get("nectar", 0.0))
+	hive.lifetime_pollen_collected = float(totals.get("pollen", 0.0))
+	hive.lifetime_births = int(totals.get("births", 0))
+
+	_restore_soil(data.get("soil", {}))
+	_restore_cells(data.get("cells", []))
+	_restore_flowers(data.get("flowers", []))
+	_restore_bees(data.get("bees", []))
+
+	hive.build_navigation()
+	hive.refresh_edge_flags()
+	hive.invalidate_index()
+	hive.announce()
+	_update_population_readout()
+	hud.show_warning("Run loaded — day %d." % day)
+
+## Any soil block the save doesn't list has been dug out, so it becomes
+## open floor. Blocks that are listed get their marking and progress back.
+func _restore_soil(soil: Dictionary) -> void:
+	var still_there := {}
+	for pair in soil.get("present", []):
+		still_there[Vector2i(int(pair[0]), int(pair[1]))] = true
+
+	var to_remove: Array = []
+	for node in hive.occupied_tiles.values():
+		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
+			continue
+		if not still_there.has(node.axial):
+			to_remove.append(node)
+
+	var centre_local := _hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	for block in to_remove:
+		var hex: Vector2i = block.axial
+		hive.occupied_tiles.erase(hex)
+		block.queue_free()
+		_add_floor_tile(hex, centre_local, spacing)
+
+	for entry in soil.get("marked", []):
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		var node = hive.occupied_tiles.get(hex)
+		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
+			node.mine_progress = float(entry.progress)
+			node.set_marked(bool(entry.marked))
+
+## The comb is rebuilt from the save wholesale: whatever the starting
+## layout gave us is discarded, because a loaded run's comb has grown,
+## been re-designated and been dug into since.
+func _restore_cells(cells: Array) -> void:
+	for cell in hive.cells:
+		if is_instance_valid(cell):
+			hive.occupied_tiles.erase(cell.axial)
+			cell.queue_free()
+	hive.cells = []
+
+	var centre_local := _hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	for entry in cells:
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		var cell := HiveCell.new()
+		cell.axial = hex
+		cell.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+		hive_root.add_child(cell)
+
+		cell.content_type = str(entry.get("content", ""))
+		cell.amount = float(entry.get("amount", 0.0))
+		cell.designated_type = str(entry.get("designated", ""))
+		cell.keep_empty = bool(entry.get("keep_empty", false))
+		cell.evict_requested = bool(entry.get("evict", false))
+		cell.evict_mode = str(entry.get("evict_mode", "move"))
+		cell.is_built = bool(entry.get("built", true))
+		cell.build_progress = float(entry.get("build_progress", 0.0))
+		cell.brood_progress = float(entry.get("brood_progress", 0.0))
+		cell.brood_fed_seconds = float(entry.get("brood_fed", 0.0))
+		cell.unfed_seconds = float(entry.get("unfed", 0.0))
+		cell.brood_is_gyne = bool(entry.get("gyne", false))
+		cell.clean_progress = float(entry.get("clean", 0.0))
+		cell.ripen_progress = float(entry.get("ripen", 0.0))
+		cell.hatch_role = int(entry.get("hatch_role", -1))
+		cell.hatch_focus = str(entry.get("hatch_focus", "nectar"))
+		cell.hatch_automine = bool(entry.get("hatch_automine", false))
+		cell.hatch_role_locked = bool(entry.get("hatch_locked", false))
+		cell.hatch_gyne = bool(entry.get("hatch_gyne", false))
+
+		hive.cells.append(cell)
+		hive.register_tile(hex, cell)
+
+func _restore_flowers(flowers: Array) -> void:
+	for f in get_tree().get_nodes_in_group("flowers"):
+		if is_instance_valid(f):
+			f.queue_free()
+
+	for entry in flowers:
+		var flower := Flower.new()
+		flower.position = Vector2(float(entry.x), float(entry.y))
+		meadow_root.add_child(flower)
+		flower.setup(int(entry.species))
+		flower.nectar_amount = float(entry.get("nectar", 0.0))
+		flower.pollen_amount = float(entry.get("pollen", 0.0))
+		flower.age_seconds = float(entry.get("age", 0.0))
+
+func _restore_bees(bees: Array) -> void:
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b):
+			b.queue_free()
+	queen = null
+	selected_bees.clear()
+
+	for entry in bees:
+		var bee := Bee.new()
+		bee.is_queen = bool(entry.get("queen", false))
+		bee.is_gyne = bool(entry.get("gyne", false))
+		bee.position = Vector2(float(entry.x), float(entry.y))
+		if bool(entry.get("indoors", false)):
+			hive_root.add_child(bee)
+		else:
+			meadow_root.add_child(bee)
+
+		bee.setup(hive, str(entry.get("resource", "nectar")), int(entry.get("id", 0)), int(entry.get("role", 0)), self)
+		bee.state = int(entry.get("state", bee.state))
+		bee.energy = float(entry.get("energy", GameConfig.energy_capacity))
+		bee.age_seconds = float(entry.get("age", 0.0))
+		bee.current_load = float(entry.get("load", 0.0))
+		bee.current_load_type = str(entry.get("load_type", ""))
+		bee.honey_load = float(entry.get("honey_load", 0.0))
+		bee.dirt_load = float(entry.get("dirt", 0.0))
+		bee.pollen_eaten = float(entry.get("pollen_eaten", 0.0))
+		bee.nurse_pollen = float(entry.get("nurse_pollen", 0.0))
+		bee.nurse_carb = float(entry.get("nurse_carb", 0.0))
+		bee.nurse_carb_type = str(entry.get("nurse_carb_type", ""))
+		bee.nurse_jelly = float(entry.get("nurse_jelly", 0.0))
+		bee.nurse_mode = str(entry.get("nurse_mode", "feed"))
+		bee.architect_mode = str(entry.get("architect_mode", "both"))
+		bee.automine = bool(entry.get("automine", false))
+		bee.secondary_role = int(entry.get("secondary", -1))
+		bee.finish_task_first = bool(entry.get("finish_first", false))
+		bee.pending_role = int(entry.get("pending_role", -1))
+		bee.preferred_species = str(entry.get("preferred", ""))
+		bee.forage_start_point = Vector2(float(entry.get("start_x", INF)), float(entry.get("start_y", INF)))
+
+		if bee.is_queen:
+			queen = bee
+
+	# a saved run whose queen was already gone would otherwise reopen the
+	# game over screen the moment it loads, which is fair enough
+	colony_lost = false
 
 func _on_restart_after_loss() -> void:
 	GameConfig.sim_time = 0.0
@@ -823,6 +1224,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_pause()
 			KEY_TAB:
 				_toggle_view()
+			KEY_C:
+				colony_panel.toggle()
 
 	elif event is InputEventMouseButton:
 		match event.button_index:
@@ -950,7 +1353,7 @@ func finish_mining(block: Node2D) -> void:
 	hive.remove_block(block, func(hex: Vector2i): _add_floor_tile(hex, centre_local, spacing))
 
 func _obstacle_at(point: Vector2) -> Node2D:
-	for o in get_tree().get_nodes_in_group("obstacles"):
+	for o in obstacles:
 		if is_instance_valid(o) and o.global_position.distance_to(point) <= o.radius:
 			return o
 	return null
@@ -1035,6 +1438,15 @@ func _on_role_requested(role_name: String) -> void:
 		hud.update_selection(selected_bees)
 		return
 
+	# nor is a nurse's: feeding brood, making royal jelly, or both
+	if role_name.begins_with("nurse_"):
+		var nurse_mode: String = role_name.substr("nurse_".length())
+		for b in selected_bees:
+			if is_instance_valid(b):
+				b.nurse_mode = nurse_mode
+		hud.update_selection(selected_bees)
+		return
+
 	var target_role: int = Bee.Role.FORAGER
 	match role_name:
 		"nursery":
@@ -1054,6 +1466,7 @@ func _on_role_requested(role_name: String) -> void:
 			b.set_role(target_role)
 	_update_population_readout()
 	hud.update_selection(selected_bees)
+
 
 func _on_finish_first_requested(value: bool) -> void:
 	for b in selected_bees:
@@ -1150,6 +1563,15 @@ func _on_cell_empty_requested(cell: Node2D, method: String, keep_empty: bool) ->
 
 ## Ticking "keep this cell empty" takes effect straight away, whether or
 ## not the cell is being emptied at the same time.
+## Earmarking a cell for a gyne also reserves it for brood, for the same
+## reason as setting a hatch role does: an egg has to end up in it.
+func _on_cell_gyne_requested(cell: Node2D, as_gyne: bool) -> void:
+	if not is_instance_valid(cell):
+		return
+	cell.hatch_gyne = as_gyne
+	if as_gyne and cell.designated_type != "brood":
+		_on_cell_designation_requested(cell, "brood")
+
 func _on_cell_keep_empty_requested(cell: Node2D, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return

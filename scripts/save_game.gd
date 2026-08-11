@@ -1,0 +1,226 @@
+extends RefCounted
+## Saving and loading a run.
+##
+## The save is a plain JSON dictionary written to `user://`, which Godot
+## maps to a per-user application folder, so saves survive the project
+## being moved or rebuilt.
+##
+## The approach is deliberately "record the dynamic state, replay it onto
+## a freshly built world" rather than trying to serialise the scene tree.
+## main.gd already knows how to build a hive, a meadow and a bee from
+## numbers; loading just builds one and then overwrites what it made with
+## what was recorded. That keeps the save format independent of node
+## structure, so rearranging scenes doesn't invalidate saved games.
+##
+## What is *not* saved: the exact layout of soil that has never been
+## touched, and cosmetic scenery. Those are regenerated from the same
+## fixed seed, so they come back identical anyway.
+
+const SAVE_PATH := "user://meadow_save.json"
+const FORMAT_VERSION := 1
+
+## Every GameConfig field worth carrying across. Anything not listed
+## keeps whatever the running game has, which is the right behaviour for
+## things like the live rain intensity.
+const SAVED_SETTINGS := [
+	"flower_count", "hive_cell_count", "starting_bees", "starting_nurses",
+	"starting_builders", "starting_miners", "starting_honey_makers",
+	"seconds_per_day", "nectar_recharge_rate", "pollen_recharge_rate",
+	"tarsal_markers_on", "tarsal_marker_seconds", "floral_constancy_on",
+	"bee_speed", "flower_handling_time", "nectar_collection_rate",
+	"pollen_collection_rate", "deposit_time", "nectar_stomach_capacity",
+	"pollen_stomach_capacity", "cell_capacity", "cell_full_threshold",
+	"egg_pollen_cost", "queen_eat_rate", "queen_speed_factor",
+	"brood_develop_time", "tending_speed_bonus", "brood_feed_seconds",
+	"brood_feed_seconds_honey", "brood_feed_pollen", "brood_feed_nectar",
+	"brood_feed_honey", "brood_feed_threshold", "larva_death_seconds",
+	"cell_clean_time", "nurse_carry_feeds", "nurse_load_time",
+	"hunger_threshold", "bee_eat_rate", "flight_energy_burn",
+	"forager_drink_threshold", "nectar_drink_rate", "crop_drink_threshold",
+	"gyne_size_factor", "gyne_speed_factor", "gyne_energy_factor",
+	"gyne_egg_pollen_cost", "gyne_develop_multiplier", "brood_feed_jelly",
+	"brood_feed_seconds_gyne", "jelly_pollen_cost", "jelly_honey_cost",
+	"jelly_make_time", "jelly_per_batch", "jelly_cell_capacity",
+	"weather_on", "rain_chance_per_day", "rain_min_seconds",
+	"rain_max_seconds", "rain_nectar_dilution", "rain_flight_burn_factor",
+	"rain_forage_limit", "honey_cell_capacity", "honey_energy_factor",
+	"nectar_per_honey", "honey_chew_time", "honey_ripen_time",
+	"honey_rewet_factor", "block_mine_time", "miner_dirt_capacity",
+	"dirt_fill_rate", "dirt_dump_time", "cell_build_time",
+	"build_energy_burn", "hive_interior_rings", "hive_soil_depth",
+	"hive_rock_rings", "hive_entrance_width", "hive_cell_size",
+	"hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
+	"energy_capacity", "energy_burn_rate", "show_info_badges",
+	"low_energy_warning_fraction", "low_energy_warning_level",
+	"low_energy_gap", "starting_level",
+]
+
+static func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+# --- writing -------------------------------------------------------
+
+static func save(world) -> bool:
+	var data := {
+		"version": FORMAT_VERSION,
+		"settings": _settings_dict(),
+		"clock": {
+			"sim_time": GameConfig.sim_time,
+			"day": world.day,
+			"next_bee_id": world.next_bee_id,
+		},
+		"weather": {
+			"intensity": GameConfig.rain_intensity,
+			"target": world.rain_target,
+			"seconds_left": world.rain_seconds_left,
+		},
+		"totals": {
+			"nectar": world.hive.lifetime_nectar_collected,
+			"pollen": world.hive.lifetime_pollen_collected,
+			"births": world.hive.lifetime_births,
+		},
+		"cells": _cells_data(world),
+		"soil": _soil_data(world),
+		"bees": _bees_data(world),
+		"flowers": _flowers_data(world),
+	}
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		push_error("Could not open the save file for writing: %s" % SAVE_PATH)
+		return false
+	file.store_string(JSON.stringify(data))
+	file.close()
+	return true
+
+static func _settings_dict() -> Dictionary:
+	var out := {}
+	for key in SAVED_SETTINGS:
+		out[key] = GameConfig.get(key)
+	return out
+
+static func _cells_data(world) -> Array:
+	var out: Array = []
+	for cell in world.hive.cells:
+		if not is_instance_valid(cell):
+			continue
+		out.append({
+			"q": cell.axial.x, "r": cell.axial.y,
+			"content": cell.content_type,
+			"amount": cell.amount,
+			"designated": cell.designated_type,
+			"keep_empty": cell.keep_empty,
+			"evict": cell.evict_requested,
+			"evict_mode": cell.evict_mode,
+			"built": cell.is_built,
+			"build_progress": cell.build_progress,
+			"brood_progress": cell.brood_progress,
+			"brood_fed": cell.brood_fed_seconds,
+			"unfed": cell.unfed_seconds,
+			"gyne": cell.brood_is_gyne,
+			"clean": cell.clean_progress,
+			"ripen": cell.ripen_progress,
+			"hatch_role": cell.hatch_role,
+			"hatch_focus": cell.hatch_focus,
+			"hatch_automine": cell.hatch_automine,
+			"hatch_locked": cell.hatch_role_locked,
+			"hatch_gyne": cell.hatch_gyne,
+		})
+	return out
+
+## Only blocks that differ from a fresh layout need recording: which have
+## been dug out entirely, and which are marked or part-dug.
+static func _soil_data(world) -> Dictionary:
+	var marked: Array = []
+	var present: Array = []
+	for node in world.hive.occupied_tiles.values():
+		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
+			continue
+		present.append([node.axial.x, node.axial.y])
+		if node.marked_for_mining or node.mine_progress > 0.0:
+			marked.append({
+				"q": node.axial.x, "r": node.axial.y,
+				"marked": node.marked_for_mining,
+				"progress": node.mine_progress,
+			})
+	return {"present": present, "marked": marked}
+
+static func _bees_data(world) -> Array:
+	var out: Array = []
+	for b in world.get_tree().get_nodes_in_group("bees"):
+		if not is_instance_valid(b):
+			continue
+		out.append({
+			"id": b.bee_id,
+			"queen": b.is_queen,
+			"gyne": b.is_gyne,
+			"indoors": b.get_parent() == world.hive_root,
+			"x": b.position.x, "y": b.position.y,
+			"role": b.role,
+			"state": b.state,
+			"resource": b.resource_type,
+			"energy": b.energy,
+			"age": b.age_seconds,
+			"load": b.current_load,
+			"load_type": b.current_load_type,
+			"honey_load": b.honey_load,
+			"dirt": b.dirt_load,
+			"pollen_eaten": b.pollen_eaten,
+			"nurse_pollen": b.nurse_pollen,
+			"nurse_carb": b.nurse_carb,
+			"nurse_carb_type": b.nurse_carb_type,
+			"nurse_jelly": b.nurse_jelly,
+			"nurse_mode": b.nurse_mode,
+			"architect_mode": b.architect_mode,
+			"automine": b.automine,
+			"secondary": b.secondary_role,
+			"finish_first": b.finish_task_first,
+			"pending_role": b.pending_role,
+			"preferred": b.preferred_species,
+			"start_x": b.forage_start_point.x,
+			"start_y": b.forage_start_point.y,
+		})
+	return out
+
+static func _flowers_data(world) -> Array:
+	var out: Array = []
+	for f in world.get_tree().get_nodes_in_group("flowers"):
+		if not is_instance_valid(f):
+			continue
+		out.append({
+			"x": f.position.x, "y": f.position.y,
+			"species": f.species_index,
+			"nectar": f.nectar_amount,
+			"pollen": f.pollen_amount,
+			"age": f.age_seconds,
+		})
+	return out
+
+# --- reading -------------------------------------------------------
+
+## Returns the parsed save, or an empty dictionary if there isn't one or
+## it can't be read. main.gd stashes this and applies it after it has
+## rebuilt the world, because the settings have to be in place *before*
+## the hive geometry is laid out.
+static func read() -> Dictionary:
+	if not has_save():
+		return {}
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_error("The save file is not readable.")
+		return {}
+	if int(parsed.get("version", 0)) != FORMAT_VERSION:
+		push_warning("Save file is from a different version of the game; loading it may not work.")
+	return parsed
+
+## Puts the saved tuning values back before anything is built, so the
+## world comes out the same shape it was saved in.
+static func apply_settings(data: Dictionary) -> void:
+	var settings: Dictionary = data.get("settings", {})
+	for key in settings.keys():
+		if GameConfig.get(key) != null or typeof(settings[key]) == TYPE_BOOL:
+			GameConfig.set(key, settings[key])

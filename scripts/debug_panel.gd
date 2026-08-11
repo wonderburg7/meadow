@@ -15,6 +15,7 @@ extends CanvasLayer
 ## the Interface section.
 
 const UI = preload("res://scripts/ui.gd")
+const SaveGame = preload("res://scripts/save_game.gd")
 
 ## Section order here is the order they appear in the panel.
 const CATEGORIES := [
@@ -24,6 +25,8 @@ const CATEGORIES := [
 	"Hive & comb",
 	"Brood & the queen",
 	"Honey",
+	"Gynes & royal jelly",
+	"Weather",
 	"Mining",
 	"Bee life",
 	"Interface",
@@ -287,6 +290,105 @@ const TUNABLES := [
 		"tip": "Adding fresh wet mix to a part-dried cell sets its drying back to this fraction of the progress it had. Low values make topping cells up expensive.",
 	},
 
+	# --- Gynes & royal jelly ---
+	{
+		"key": "gyne_egg_pollen_cost", "label": "Pollen per gyne", "step": 10.0, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "Pollen the queen must eat before she can lay a gyne, as opposed to a worker. This is the up-front cost of deciding to raise a future queen.",
+	},
+	{
+		"key": "gyne_develop_multiplier", "label": "Gyne time x", "step": 0.5, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How much longer a gyne takes to develop than a worker. She has to be fed the whole way, so this is also how much more nursing she costs.",
+	},
+	{
+		"key": "gyne_speed_factor", "label": "Gyne speed x", "step": 0.05, "min": 0.1,
+		"category": "Gynes & royal jelly",
+		"tip": "A gyne's movement speed as a multiple of a worker's. She is a bigger animal, so she is slower.",
+	},
+	{
+		"key": "gyne_energy_factor", "label": "Gyne energy x", "step": 0.05, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How much more energy a gyne burns than a worker, both at rest and in flight.",
+	},
+	{
+		"key": "gyne_size_factor", "label": "Gyne size x", "step": 0.05, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How large a gyne is drawn relative to a worker, so you can pick one out of a crowd. The queen is about 1.55.",
+	},
+	{
+		"key": "brood_feed_jelly", "label": "Jelly per feed", "step": 0.5, "min": 0.0,
+		"category": "Gynes & royal jelly",
+		"tip": "Royal jelly a nurse puts into a gyne larva per feed. Gyne larvae take jelly with pollen and honey and will not accept nectar.",
+	},
+	{
+		"key": "brood_feed_seconds_gyne", "label": "Gyne feed s", "step": 5.0, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How many seconds of development one royal jelly feed buys a gyne larva.",
+	},
+	{
+		"key": "jelly_pollen_cost", "label": "Jelly: pollen", "step": 1.0, "min": 0.0,
+		"category": "Gynes & royal jelly",
+		"tip": "Pollen a nurse eats to make one batch of royal jelly.",
+	},
+	{
+		"key": "jelly_honey_cost", "label": "Jelly: honey", "step": 1.0, "min": 0.0,
+		"category": "Gynes & royal jelly",
+		"tip": "Honey a nurse eats to make one batch of royal jelly. Jelly needs honey specifically, so a colony has to be making honey before it can raise gynes.",
+	},
+	{
+		"key": "jelly_make_time", "label": "Jelly make s", "step": 1.0, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "Seconds a nurse spends working pollen and honey into a batch of royal jelly.",
+	},
+	{
+		"key": "jelly_per_batch", "label": "Jelly per batch", "step": 1.0, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How much royal jelly one batch produces.",
+	},
+	{
+		"key": "jelly_cell_capacity", "label": "Jelly per cell", "step": 10.0, "min": 1.0,
+		"category": "Gynes & royal jelly",
+		"tip": "How much royal jelly a single cell holds.",
+	},
+
+	# --- Weather ---
+	{
+		"key": "weather_on", "label": "Weather on", "toggle": true,
+		"category": "Weather",
+		"tip": "Turn rain on or off. With it off the meadow stays dry indefinitely, which is easier but removes the main reason to keep stores in the comb.",
+	},
+	{
+		"key": "rain_chance_per_day", "label": "Rain chance/day", "step": 0.05, "min": 0.0,
+		"category": "Weather",
+		"tip": "Roughly how often a day brings rain.",
+	},
+	{
+		"key": "rain_min_seconds", "label": "Rain min s", "step": 10.0, "min": 5.0,
+		"category": "Weather",
+		"tip": "Shortest a shower lasts.",
+	},
+	{
+		"key": "rain_max_seconds", "label": "Rain max s", "step": 10.0, "min": 5.0,
+		"category": "Weather",
+		"tip": "Longest a shower lasts. A long one on a colony with no stores is how a run ends.",
+	},
+	{
+		"key": "rain_nectar_dilution", "label": "Nectar diluted", "step": 0.05, "min": 0.0,
+		"category": "Weather",
+		"tip": "How much of nectar's value is washed out of an open flower at full rain. A wet day's foraging brings home less from the same volume.",
+	},
+	{
+		"key": "rain_flight_burn_factor", "label": "Wet flight x", "step": 0.1, "min": 1.0,
+		"category": "Weather",
+		"tip": "How much more flying costs at full rain. A wet bee carries the water as dead weight.",
+	},
+	{
+		"key": "rain_forage_limit", "label": "Ground above", "step": 0.05, "min": 0.05,
+		"category": "Weather",
+		"tip": "Rain intensity past which a trip costs more than it brings back, so foragers stay at the hive until it eases.",
+	},
+
 	# --- Mining ---
 	{
 		"key": "block_mine_time", "label": "Block dig s", "step": 10.0, "min": 5.0,
@@ -324,6 +426,26 @@ const TUNABLES := [
 		"key": "energy_burn_rate", "label": "Energy burn/s", "step": 0.1, "min": 0.0,
 		"category": "Bee life",
 		"tip": "Energy every bee burns per second just by being alive. Bees refuel from the comb, eating honey first where there is any.",
+	},
+	{
+		"key": "flight_energy_burn", "label": "Flight burn/s", "step": 0.05, "min": 0.0,
+		"category": "Bee life",
+		"tip": "Extra energy a bee burns per second while actually flying, on top of simply being alive. This is what makes a distant patch cost something to work.",
+	},
+	{
+		"key": "forager_drink_threshold", "label": "Drink below", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "How low a forager's energy gets before it drinks nectar straight from the flower it has landed on, rather than flying home. Every forager does this, including pollen foragers.",
+	},
+	{
+		"key": "nectar_drink_rate", "label": "Drink rate/s", "step": 1.0, "min": 0.5,
+		"category": "Bee life",
+		"tip": "How quickly a bee takes nectar on board while drinking, at a flower or from its own crop.",
+	},
+	{
+		"key": "crop_drink_threshold", "label": "Crop below", "step": 0.05, "min": 0.0,
+		"category": "Bee life",
+		"tip": "How low a nectar forager gets before it starts metabolising the load in its own crop rather than landing. That comes off the delivery, so a bee doing it often is ranging further than the patch is worth.",
 	},
 	{
 		"key": "hunger_threshold", "label": "Eat below", "step": 0.05, "min": 0.05,
@@ -500,7 +622,43 @@ func _build_actions(column: VBoxContainer) -> void:
 	menu_btn.pressed.connect(_on_main_menu_pressed)
 	restart_row.add_child(UI.with_info(menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have."))
 
+	var save_row := HBoxContainer.new()
+	column.add_child(save_row)
+
+	var save_btn := Button.new()
+	save_btn.text = "Save run"
+	save_btn.pressed.connect(_on_save_pressed)
+	save_row.add_child(UI.with_info(save_btn, "Write the current run to disk: the comb and everything in it, every bee and what it is doing, the meadow, the weather and the clock. There is one save slot, so saving again overwrites it."))
+
+	var load_btn := Button.new()
+	load_btn.text = "Load run"
+	load_btn.pressed.connect(_on_load_pressed)
+	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
+
 	column.add_child(HSeparator.new())
+
+func _on_save_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		push_warning("No world to save")
+		return
+	worlds[0].save_run()
+
+## Loading goes through a scene reload rather than trying to mutate the
+## running world in place: the saved tuning values decide the shape of
+## the hive, so the world has to be built with them from the start. The
+## flag tells the fresh scene to replay the save over itself.
+func _on_load_pressed() -> void:
+	var data := SaveGame.read()
+	if data.is_empty():
+		push_warning("There is no save to load")
+		return
+	SaveGame.apply_settings(data)
+	GameConfig.load_pending = true
+	GameConfig.menu_pending = false
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
 
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible

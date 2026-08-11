@@ -66,6 +66,9 @@ const SPECIES := [
 	},
 ]
 
+## Which entry of SPECIES this flower is. Kept so a saved game can put
+## the same flower back rather than having to match it up by name.
+var species_index: int = 0
 var species_name: String = "Clover"
 var nectar_capacity: float = 20.0
 var pollen_capacity: float = 10.0
@@ -87,8 +90,9 @@ var pollen_label: Label
 func _ready() -> void:
 	add_to_group("flowers")
 
-func setup(species_index: int) -> void:
-	var s: Dictionary = SPECIES[species_index % SPECIES.size()]
+func setup(index: int) -> void:
+	species_index = index % SPECIES.size()
+	var s: Dictionary = SPECIES[species_index]
 	species_name = s.name
 	nectar_capacity = s.nectar_capacity
 	pollen_capacity = s.pollen_capacity

@@ -27,6 +27,8 @@ extends Node2D
 enum Role { FORAGER, NURSERY, BUILDER, EGG_LAYER, IDLE, MINER, HONEY_MAKER }
 enum State {
 	SEEK_FLOWER, TO_FLOWER, INSPECTING, COLLECTING, TO_HIVE,   # forager, outdoors
+	DRINKING, SHELTERING,                                  # forager, refuelling / rained off
+	MAKING_JELLY, TO_JELLY_CELL, DEPOSITING_JELLY,         # nursery, royal jelly
 	IN_HIVE_TO_CELL, DEPOSITING, IN_HIVE_TO_EXIT,          # forager, indoors
 	MOVE_TO_POINT, IDLING,                                 # player-commanded
 	NURSE_IDLE, TO_BROOD, TENDING,                         # nursery
@@ -60,6 +62,18 @@ var role: int = Role.FORAGER
 var state: int = State.SEEK_FLOWER
 var timer: float = 0.0
 var is_queen: bool = false
+
+## A gyne: a future queen, raised on royal jelly and several times more
+## expensive than a worker. She can do any worker job while she is here,
+## but she is bigger, slower and hungrier than one.
+var is_gyne: bool = false
+
+## Nursery sub-mode: "feed" tends and feeds brood, "jelly" makes royal
+## jelly for gyne larvae, "both" does either as it comes up.
+var nurse_mode: String = "feed"
+## Royal jelly this nurse is carrying, both to feed gyne larvae with and
+## to deposit into a jelly cell after making a batch.
+var nurse_jelly: float = 0.0
 
 var hive: Node2D          # the meadow-side marker / storage accountant
 var world: Node2D         # main.gd -- owns the geometry and the two roots
@@ -186,8 +200,15 @@ func _ready() -> void:
 	pollen_stomach_capacity = GameConfig.pollen_stomach_capacity
 	energy = GameConfig.energy_capacity
 
-	var body_radius: float = 10.0 if is_queen else 6.5
-	var outline_radius: float = 13.5 if is_queen else 9.0
+	# A gyne sits visibly between a worker and the queen, so you can pick
+	# one out of a crowd without selecting it.
+	var size_factor: float = 1.0
+	if is_queen:
+		size_factor = 1.55
+	elif is_gyne:
+		size_factor = GameConfig.gyne_size_factor
+	var body_radius: float = 6.5 * size_factor
+	var outline_radius: float = 9.0 * size_factor
 	click_radius = outline_radius + 5.0
 
 	selection_ring = Polygon2D.new()
@@ -217,6 +238,8 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	resource_type = type
 	bee_id = id
 	role = bee_role
+	if is_gyne:
+		speed = GameConfig.bee_speed * GameConfig.gyne_speed_factor
 	if is_queen:
 		speed = GameConfig.bee_speed * GameConfig.queen_speed_factor
 		# The queen's day used to be eat, lay, wait, eat, lay. Nursing is
@@ -251,7 +274,11 @@ func _default_state_for_role() -> int:
 			return State.SEEK_FLOWER
 
 func _base_colour() -> Color:
-	return Color(0.95, 0.45, 0.75) if is_queen else Color(1.0, 0.85, 0.1)
+	if is_queen:
+		return Color(0.95, 0.45, 0.75)
+	if is_gyne:
+		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
+	return Color(1.0, 0.85, 0.1)
 
 func _process(delta: float) -> void:
 	if hive == null:
@@ -292,10 +319,22 @@ func _process(delta: float) -> void:
 			_inspect(delta)
 		State.COLLECTING:
 			_collect(delta)
+		State.DRINKING:
+			_drink_at_flower(delta)
 		State.TO_HIVE:
 			_move_towards(hive.position, delta)
 			if position.distance_to(hive.position) < arrive_distance:
 				_enter_hive()
+		State.SHELTERING:
+			_shelter(delta)
+
+		# --- nursery, making royal jelly ---
+		State.MAKING_JELLY:
+			_nurse_make_jelly(delta)
+		State.TO_JELLY_CELL:
+			_nurse_go_to_jelly_cell(delta)
+		State.DEPOSITING_JELLY:
+			_nurse_deposit_jelly(delta)
 
 		# --- forager, indoors ---
 		State.IN_HIVE_TO_CELL:
@@ -396,11 +435,56 @@ func _process(delta: float) -> void:
 
 func _age_and_burn(delta: float) -> void:
 	age_seconds += delta
-	energy -= GameConfig.energy_burn_rate * delta
+
+	# A gyne is a bigger animal and costs more to run, whatever she's
+	# doing -- part of why raising one is a real commitment.
+	var upkeep: float = GameConfig.energy_burn_rate
+	if is_gyne:
+		upkeep *= GameConfig.gyne_energy_factor
+	energy -= upkeep * delta
+
+	# Flight is paid for separately from simply being alive, so a long
+	# trip out to a distant patch actually costs something. Rain makes it
+	# worse: a wet bee carries the water as dead weight.
+	if _is_flying():
+		var flight: float = GameConfig.flight_energy_burn
+		if is_gyne:
+			flight *= GameConfig.gyne_energy_factor
+		flight *= lerpf(1.0, GameConfig.rain_flight_burn_factor, GameConfig.rain_intensity)
+		energy -= flight * delta
+
 	# Building costs extra: bees make wax from the sugar they've eaten,
 	# so expansion is paid for in energy rather than a wax stockpile.
 	if state == State.BUILDING:
 		energy -= GameConfig.build_energy_burn * delta
+
+	_sip_from_crop(delta)
+
+## Out in the meadow and actually moving under its own power.
+func _is_flying() -> bool:
+	if _is_inside_hive():
+		return false
+	match state:
+		State.SEEK_FLOWER, State.TO_FLOWER, State.TO_HIVE, State.MOVE_TO_POINT:
+			return true
+	return false
+
+## A nectar forager doesn't have to land to refuel: it can metabolise
+## what's already in its crop. That comes straight off the delivery,
+## though, so a bee doing this often is one that's ranging too far for
+## what the patch is paying.
+func _sip_from_crop(delta: float) -> void:
+	if _is_inside_hive() or current_load_type != "nectar" or current_load <= 0.0:
+		return
+	if energy > GameConfig.energy_capacity * GameConfig.crop_drink_threshold:
+		return
+	var wanted: float = min(GameConfig.nectar_drink_rate * delta, GameConfig.energy_capacity - energy)
+	var taken: float = min(wanted, current_load)
+	current_load -= taken
+	energy += taken
+	if current_load <= 0.001:
+		current_load = 0.0
+		current_load_type = ""
 
 	# Bees used to top themselves up invisibly from wherever they stood,
 	# which made a forager's deposit look far smaller than the load it
@@ -436,7 +520,7 @@ func _should_go_and_eat() -> bool:
 	# holding something not yet committed anywhere -- a mouthful of
 	# nectar being chewed into honey, or a load of brood food being
 	# picked up. It would simply be lost.
-	if state == State.CHEWING or state == State.LOADING_FOOD:
+	if state == State.CHEWING or state == State.LOADING_FOOD or state == State.MAKING_JELLY:
 		return false
 	if not _is_inside_hive():
 		return false
@@ -591,6 +675,13 @@ func _collection_rate() -> float:
 	return nectar_collection_rate if resource_type == "nectar" else pollen_collection_rate
 
 func _seek_flower() -> void:
+	# Heavy rain: a trip costs more in wet-wing flight than the watered
+	# down nectar brings back, so there is no point going out. Wait it out
+	# at the hive instead.
+	if GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+		state = State.TO_HIVE
+		return
+
 	# First pass respects this bee's own memory of what it has drained,
 	# and (if the marker option is on) other bees' scent marks too.
 	var best := _nearest_flower(true)
@@ -656,10 +747,57 @@ func _inspect(delta: float) -> void:
 	timer -= delta
 	if timer > 0.0:
 		return
+	# Refuel before working. Every forager drinks nectar, whatever it came
+	# for -- a pollen forager still needs the sugar, it just isn't what
+	# it's carrying home.
+	if _needs_a_drink() and current_flower.get_available("nectar") > GameConfig.min_worthwhile_amount:
+		state = State.DRINKING
+		return
+
 	if _worth_feeding(current_flower):
 		_start_collecting()
 	else:
 		_reject_flower()
+
+func _needs_a_drink() -> bool:
+	return energy < GameConfig.energy_capacity * GameConfig.forager_drink_threshold
+
+## Drinking straight from the flower, into the bee rather than into its
+## load. This is what gives a forager range: it doesn't have to fly home
+## to eat, so how far it can work depends on what's flowering out there
+## rather than on the distance back to the comb.
+func _drink_at_flower(delta: float) -> void:
+	if current_flower == null or not is_instance_valid(current_flower):
+		current_flower = null
+		state = State.SEEK_FLOWER
+		return
+
+	var room: float = GameConfig.energy_capacity - energy
+	var wanted: float = min(GameConfig.nectar_drink_rate * delta, room)
+	var drunk: float = current_flower.collect("nectar", wanted)
+	# Rain waters the nectar down, so a wet flower gives back less than
+	# the same volume would on a dry day.
+	energy += drunk * _nectar_strength()
+
+	if room <= 0.5 or drunk <= 0.0 or current_flower.get_available("nectar") < GameConfig.min_worthwhile_amount:
+		# topped up (or the flower is dry) -- get on with the job
+		if _worth_feeding(current_flower):
+			_start_collecting()
+		else:
+			_reject_flower()
+
+## How much a unit of nectar is actually worth right now. Rain dilutes
+## what's standing in an open flower.
+func _nectar_strength() -> float:
+	return lerpf(1.0, 1.0 - GameConfig.rain_nectar_dilution, GameConfig.rain_intensity)
+
+## Rained off. Waiting it out *inside* the hive rather than at the door:
+## a bee sheltering out in the meadow couldn't reach the comb to eat, and
+## would have walked itself in and straight back out again every few
+## seconds as the exit and the rain check argued with each other.
+func _shelter(_delta: float) -> void:
+	if GameConfig.rain_intensity <= GameConfig.rain_forage_limit:
+		state = State.IN_HIVE_TO_EXIT if _is_inside_hive() else State.SEEK_FLOWER
 
 func _worth_feeding(f: Node2D) -> bool:
 	if f.get_available(resource_type) < GameConfig.min_worthwhile_amount:
@@ -722,6 +860,10 @@ func _collect(delta: float) -> void:
 
 	var wanted: float = min(_collection_rate() * delta, space_left)
 	var taken: float = current_flower.collect(resource_type, wanted)
+	# Nectar standing in an open flower is watered down by rain, so a wet
+	# day's foraging brings home less than the same volume would dry.
+	if resource_type == "nectar":
+		taken *= _nectar_strength()
 	current_load += taken
 	if taken > 0.0:
 		current_load_type = resource_type
@@ -836,6 +978,12 @@ func _finish_depositing() -> void:
 	state = State.IN_HIVE_TO_EXIT
 
 func _go_to_exit(delta: float) -> void:
+	# No point walking out into weather that costs more to fly in than the
+	# trip would bring back. Wait inside, where the food is.
+	if role == Role.FORAGER and GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+		state = State.SHELTERING
+		return
+
 	var exit_point: Vector2 = world.hive_entrance_inside() if world else position
 	_move_towards(exit_point, delta)
 	if position.distance_to(exit_point) < 8.0:
@@ -881,7 +1029,7 @@ func _nurse_tend(_delta: float) -> void:
 	target_cell.being_tended = true   # cell reads this each frame to speed development
 
 	if target_cell.needs_feeding():
-		if _can_feed_brood():
+		if _can_feed(target_cell):
 			_feed_brood(target_cell)
 			return
 		# Out of one or both halves of the meal. Go and restock, but only
@@ -927,6 +1075,18 @@ func _nurse_tend(_delta: float) -> void:
 func _carb_per_feed() -> float:
 	return GameConfig.brood_feed_honey if nurse_carb_type == "honey" else GameConfig.brood_feed_nectar
 
+## Can this nurse feed that particular larva right now, from what she is
+## carrying? A gyne is fussier: royal jelly and honey specifically, where
+## a worker larva will take nectar.
+func _can_feed(cell: Node2D) -> bool:
+	if nurse_pollen < GameConfig.brood_feed_pollen:
+		return false
+	if cell != null and is_instance_valid(cell) and cell.brood_is_gyne:
+		if nurse_jelly < GameConfig.brood_feed_jelly:
+			return false
+		return nurse_carb_type == "honey" and nurse_carb >= GameConfig.brood_feed_honey
+	return nurse_carb >= _carb_per_feed()
+
 func _can_feed_brood() -> bool:
 	return nurse_pollen >= GameConfig.brood_feed_pollen and nurse_carb >= _carb_per_feed()
 
@@ -948,6 +1108,8 @@ func _restock_possible() -> bool:
 	if nurse_carb < _carb_per_feed():
 		if hive.find_cell_with("honey") != null or hive.find_cell_with("nectar") != null:
 			return true
+	if nurse_jelly < GameConfig.brood_feed_jelly and hive.find_cell_with("jelly") != null:
+		return true
 	return false
 
 ## Feeds from what this nurse is physically carrying. She had to walk to
@@ -955,8 +1117,21 @@ func _restock_possible() -> bool:
 ## _nurse_restock_errand) -- food no longer appears in the larva out of
 ## the colony's totals with no bee going anywhere.
 func _feed_brood(cell: Node2D) -> void:
-	if not _can_feed_brood():
+	if not _can_feed(cell):
 		return
+
+	if cell.brood_is_gyne:
+		# A gyne is raised on royal jelly. Nothing else will do, and it
+		# has to come with honey rather than nectar.
+		nurse_pollen -= GameConfig.brood_feed_pollen
+		nurse_jelly -= GameConfig.brood_feed_jelly
+		nurse_carb -= GameConfig.brood_feed_honey
+		if nurse_carb <= 0.001:
+			nurse_carb = 0.0
+			nurse_carb_type = ""
+		cell.feed_brood(GameConfig.brood_feed_seconds_gyne, true)
+		return
+
 	var on_honey: bool = nurse_carb_type == "honey"
 	nurse_pollen -= GameConfig.brood_feed_pollen
 	nurse_carb -= _carb_per_feed()
@@ -968,24 +1143,101 @@ func _feed_brood(cell: Node2D) -> void:
 		on_honey
 	)
 
+# --- royal jelly ---------------------------------------------------
+## Only gyne larvae eat royal jelly, and only nurses set to make it
+## produce any. A nurse eats pollen and honey and works them into jelly
+## in her head glands, then either carries it straight to a gyne larva or
+## stores it in a cell set aside for it.
+
+func _can_make_jelly() -> bool:
+	# no point making it if nothing needs it and there's nowhere to put it
+	if not hive.has_gyne_brood() and hive.find_cell_for("jelly") == null:
+		return false
+	if hive.total("pollen") < GameConfig.jelly_pollen_cost:
+		return false
+	return hive.total_honey() >= GameConfig.jelly_honey_cost
+
+## Standing still while her glands do the work. The pollen and honey are
+## taken at the start, so a batch that is interrupted still costs.
+func _nurse_make_jelly(delta: float) -> void:
+	if timer == GameConfig.jelly_make_time:
+		if not _can_make_jelly():
+			state = State.NURSE_IDLE
+			return
+		hive.take("pollen", GameConfig.jelly_pollen_cost)
+		hive.take("honey", GameConfig.jelly_honey_cost)
+		hive.announce()
+
+	timer -= delta
+	if timer > 0.0:
+		return
+	nurse_jelly += GameConfig.jelly_per_batch
+	state = State.NURSE_IDLE
+
+func _nurse_go_to_jelly_cell(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or target_cell.space_for("jelly") <= 0.0:
+		_release_cell_slot()
+		target_cell = hive.find_cell_for("jelly")
+		if target_cell == null:
+			state = State.NURSE_IDLE
+		return
+
+	var approach := _approach_cell(target_cell, delta)
+	if approach < 0:
+		target_cell = hive.find_cell_for("jelly", target_cell)
+		return
+	if approach == 1:
+		timer = GameConfig.nurse_load_time
+		state = State.DEPOSITING_JELLY
+
+func _nurse_deposit_jelly(delta: float) -> void:
+	timer -= delta
+	if timer > 0.0:
+		return
+	if target_cell != null and is_instance_valid(target_cell):
+		# She keeps one feed's worth on her, so she isn't storing jelly
+		# and then immediately fetching it back out again.
+		var keep: float = GameConfig.brood_feed_jelly if hive.has_gyne_brood() else 0.0
+		var spare: float = max(0.0, nurse_jelly - keep)
+		nurse_jelly -= target_cell.add_resource("jelly", spare)
+		hive.announce()
+	_release_cell_slot()
+	target_cell = null
+	state = State.NURSE_IDLE
+
 ## Sends this nurse off to load up if she is short of either half of a
 ## meal. Returns true when an errand was started. Honey is preferred over
 ## nectar because a honey feed carries a larva further.
-func _nurse_restock_errand() -> bool:
+func _nurse_restock_errand(for_gyne: bool = false) -> bool:
 	if nurse_pollen < GameConfig.brood_feed_pollen:
 		var pollen_cell = hive.find_cell_with("pollen")
 		if pollen_cell != null:
 			_start_food_errand(pollen_cell, "pollen")
 			return true
 
-	if nurse_carb < _carb_per_feed():
+	# A gyne larva takes honey and nothing else, so there's no falling
+	# back on nectar for one.
+	var carb_needed: float = GameConfig.brood_feed_honey if for_gyne else _carb_per_feed()
+	var carb_short: bool = nurse_carb < carb_needed or (for_gyne and nurse_carb_type != "honey")
+	if carb_short:
 		var carb_type := "honey"
 		var carb_cell = hive.find_cell_with("honey")
-		if carb_cell == null:
+		if carb_cell == null and not for_gyne:
 			carb_type = "nectar"
 			carb_cell = hive.find_cell_with("nectar")
 		if carb_cell != null:
 			_start_food_errand(carb_cell, carb_type)
+			return true
+
+	if for_gyne and nurse_jelly < GameConfig.brood_feed_jelly:
+		var jelly_cell = hive.find_cell_with("jelly")
+		if jelly_cell != null:
+			_start_food_errand(jelly_cell, "jelly")
+			return true
+		# nobody has made any -- make it here if this nurse is set to
+		if nurse_mode != "feed" and _can_make_jelly():
+			timer = GameConfig.jelly_make_time
+			state = State.MAKING_JELLY
 			return true
 
 	return false
@@ -1023,6 +1275,8 @@ func _nurse_load_food(delta: float) -> void:
 		var feeds: float = max(1.0, GameConfig.nurse_carry_feeds)
 		if nurse_fetching == "pollen":
 			nurse_pollen += target_cell.take_resource("pollen", GameConfig.brood_feed_pollen * feeds)
+		elif nurse_fetching == "jelly":
+			nurse_jelly += target_cell.take_resource("jelly", GameConfig.brood_feed_jelly * feeds)
 		else:
 			var per_feed: float = GameConfig.brood_feed_honey if nurse_fetching == "honey" else GameConfig.brood_feed_nectar
 			var got: float = target_cell.take_resource(nurse_fetching, per_feed * feeds)
@@ -1098,6 +1352,20 @@ func _idle_dispatch() -> void:
 func _try_role_work(r: int) -> bool:
 	match r:
 		Role.NURSERY:
+			# Royal jelly first, for a nurse set to make it. It's the one
+			# thing a gyne larva cannot do without, and only nurses on
+			# this sub-mode produce any.
+			if nurse_mode != "feed":
+				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
+					state = State.TO_JELLY_CELL
+					return true
+				if _can_make_jelly():
+					timer = GameConfig.jelly_make_time
+					state = State.MAKING_JELLY
+					return true
+				if nurse_mode == "jelly":
+					return false
+
 			# The queen lays directly into a cell (see _queen_lay), so
 			# there's never a loose egg on the floor to fetch -- a
 			# nurse's job is feeding brood already in a cell.
@@ -1114,8 +1382,8 @@ func _try_role_work(r: int) -> bool:
 				return false
 			# Load up before walking over. A nurse feeds from what she is
 			# carrying, so an empty-handed one goes to the stores first.
-			if brood.needs_feeding() and not _can_feed_brood():
-				if _nurse_restock_errand():
+			if brood.needs_feeding() and not _can_feed(brood):
+				if _nurse_restock_errand(brood.brood_is_gyne):
 					return true
 			target_cell = brood
 			state = State.TO_BROOD
@@ -1542,6 +1810,16 @@ func _honey_fan(delta: float) -> void:
 
 # --- egg laying (queen only) --------------------------------------
 
+## A gyne egg is a far bigger investment than a worker one, so the queen
+## has to eat considerably more before she can lay it. She looks at what
+## the colony has actually asked for: if any free cell is set aside to
+## raise a gyne, that's the next egg.
+func _pollen_needed_for_next_egg() -> float:
+	var next = hive.find_empty_cell()
+	if next != null and is_instance_valid(next) and next.hatch_gyne:
+		return GameConfig.gyne_egg_pollen_cost
+	return GameConfig.egg_pollen_cost
+
 func _queen_seek_pollen() -> void:
 	# Nothing to lay into, or nothing to eat: rather than hovering doing
 	# nothing, hand over to the idle dispatch, which re-checks laying
@@ -1576,7 +1854,7 @@ func _queen_eat(delta: float) -> void:
 		return
 	pollen_eaten += target_cell.take_resource("pollen", GameConfig.queen_eat_rate * delta)
 	hive.announce()
-	if pollen_eaten >= GameConfig.egg_pollen_cost:
+	if pollen_eaten >= _pollen_needed_for_next_egg():
 		# walk to a free cell and lay into it directly. She no longer
 		# drops eggs on the floor for a nurse to pick up -- that's what
 		# left white eggs scattered around the hive.
@@ -1606,8 +1884,10 @@ func _queen_lay(delta: float) -> void:
 	timer -= delta
 	if timer <= 0.0:
 		if target_cell != null and is_instance_valid(target_cell) and target_cell.is_empty():
-			target_cell.start_brood()
-			pollen_eaten -= GameConfig.egg_pollen_cost
+			var as_gyne: bool = target_cell.hatch_gyne
+			target_cell.start_brood(as_gyne)
+			pollen_eaten -= GameConfig.gyne_egg_pollen_cost if as_gyne else GameConfig.egg_pollen_cost
+			pollen_eaten = max(0.0, pollen_eaten)
 		_release_cell_slot()
 		target_cell = null
 		# back through the dispatch, so the brood gets looked at before
@@ -1741,6 +2021,7 @@ func _apply_role(new_role: int) -> void:
 	nurse_carb = 0.0
 	nurse_carb_type = ""
 	nurse_fetching = ""
+	nurse_jelly = 0.0
 	var now_indoors := _works_indoors()
 
 	if _is_inside_hive():
@@ -1849,6 +2130,16 @@ func task_description() -> String:
 					return "feeding a larva (%ds of development left in it)" % int(target_cell.brood_fed_seconds)
 				return "tending a larva -- no pollen in the comb to feed it"
 			return "tending a developing bee"
+		State.DRINKING:
+			return "drinking nectar from the flower to refuel (energy %d%%)" % int(100.0 * energy / max(0.001, GameConfig.energy_capacity))
+		State.SHELTERING:
+			return "sheltering at the hive -- too wet to forage"
+		State.MAKING_JELLY:
+			return "working pollen and honey into royal jelly (%ds)" % int(max(0.0, timer))
+		State.TO_JELLY_CELL:
+			return "carrying royal jelly to a cell"
+		State.DEPOSITING_JELLY:
+			return "storing royal jelly"
 		State.TO_FOOD_CELL:
 			return "going to collect %s for the brood" % nurse_fetching
 		State.LOADING_FOOD:
@@ -1929,7 +2220,7 @@ func role_name_text() -> String:
 	var base: String
 	match role:
 		Role.NURSERY:
-			base = "Nursery"
+			base = "Nursery (%s)" % nurse_mode_name()
 		Role.BUILDER:
 			base = "Architect (%s)" % architect_mode_name()
 		Role.EGG_LAYER:
@@ -1949,6 +2240,15 @@ func role_name_text() -> String:
 	if pending_role != -1:
 		base += " -- becoming %s once this job is done" % _role_short_name(pending_role)
 	return base
+
+func nurse_mode_name() -> String:
+	match nurse_mode:
+		"jelly":
+			return "royal jelly"
+		"both":
+			return "feeding and royal jelly"
+		_:
+			return "feeding brood"
 
 func architect_mode_name() -> String:
 	match architect_mode:
@@ -1984,11 +2284,14 @@ func carrying_text() -> String:
 		return "Carrying: %d dirt (of %d)" % [int(dirt_load), int(GameConfig.miner_dirt_capacity)]
 	if honey_load > 0.0:
 		return "Carrying: %d units of honey mix" % int(ceil(honey_load))
-	if nurse_pollen > 0.0 or nurse_carb > 0.0:
+	if nurse_pollen > 0.0 or nurse_carb > 0.0 or nurse_jelly > 0.0:
 		var carb_name: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
-		return "Carrying: %d pollen and %d %s for the brood (%d feeds)" % [
+		var carried := "Carrying: %d pollen and %d %s for the brood (%d feeds)" % [
 			int(nurse_pollen), int(nurse_carb), carb_name, int(_feeds_carried()),
 		]
+		if nurse_jelly > 0.0:
+			carried += ", plus %d royal jelly" % int(nurse_jelly)
+		return carried
 	if current_load <= 0.0 or current_load_type == "":
 		return "Carrying: nothing"
 	return "Carrying: %d %s (of %d)" % [int(current_load), current_load_type, int(_max_capacity())]
@@ -2044,7 +2347,7 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 	var blocker: Node2D = null
 	var blocker_clearance := 0.0
 	var blocker_distance := INF
-	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle in _obstacles():
 		if not is_instance_valid(obstacle):
 			continue
 		var to_obstacle: Vector2 = obstacle.position - position
@@ -2108,12 +2411,22 @@ func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vecto
 
 ## Is `point` outside every solid obstacle except `ignoring`?
 func _is_clear_spot(point: Vector2, ignoring: Node2D) -> bool:
-	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle in _obstacles():
 		if obstacle == ignoring or not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		if point.distance_to(obstacle.position) < obstacle.radius + 12.0:
 			return false
 	return true
+
+## The obstacle list, from main.gd's cache rather than a group query.
+## Every bee asks about obstacles several times a frame; scanning the
+## scene tree for them each time was one of the few things in here that
+## scales badly with colony size. The meadow's obstacles never change
+## during a run, so main.gd builds the list once.
+func _obstacles() -> Array:
+	if world != null and is_instance_valid(world):
+		return world.obstacles
+	return get_tree().get_nodes_in_group("obstacles")
 
 ## The hard half of obstacle handling. _avoid_obstacles steers, which is
 ## enough most of the time but not a guarantee: a bee right-clicked onto
@@ -2130,7 +2443,7 @@ func _block_obstacles(wanted: Vector2) -> Vector2:
 	# pass would leave it there.
 	for round_number in range(3):
 		var moved := false
-		for obstacle in get_tree().get_nodes_in_group("obstacles"):
+		for obstacle in _obstacles():
 			if not is_instance_valid(obstacle) or not obstacle.solid:
 				continue
 			var edge: float = obstacle.radius + 8.0
