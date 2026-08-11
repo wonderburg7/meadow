@@ -28,6 +28,17 @@ static func hexagon_points(size: float) -> PackedVector2Array:
 		points.append(Vector2(cos(angle), sin(angle)) * size)
 	return points
 
+## The midpoint of each of a hexagon's six edges, in the same order as
+## `hexagon_points`. Bees loading or unloading a comb cell stand on one
+## of these rather than piling into the middle of it, which is what caps
+## a cell at six workers at once -- one per wall.
+static func hexagon_edge_midpoints(size: float) -> Array:
+	var corners := hexagon_points(size)
+	var midpoints: Array = []
+	for i in range(6):
+		midpoints.append((corners[i] + corners[(i + 1) % 6]) * 0.5)
+	return midpoints
+
 ## Converts a pixel position back to the nearest pointy-top axial hex.
 ## Used to work out which tile a bee is standing on, so terrain can slow
 ## it down.

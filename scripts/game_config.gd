@@ -15,7 +15,7 @@ var flower_regrow_seconds: float = 2.0       # gap between replacements seeding
 var hive_cell_count: float = 5.0        # cells the hive starts with; builders add more
 var starting_bees: float = 3.0
 var starting_nurses: float = 1.0        # without at least one nurse, laid eggs never reach a cell
-var starting_builders: float = 1.0
+var starting_builders: float = 0.0
 var seconds_per_day: float = 300.0      # 5 real minutes per in-game day
 
 # --- flowers (per-species values are in flower.gd; these scale them) ---
@@ -59,9 +59,39 @@ var cell_capacity: float = 200.0        # one resource per cell, or one developi
 var cell_full_threshold: float = 0.9
 var egg_pollen_cost: float = 20.0       # pollen the queen must eat to lay one egg
 var queen_eat_rate: float = 4.0         # pollen per second the queen consumes
-var queen_speed_factor: float = 0.45    # she's larger, so slower than a worker
-var brood_develop_time: float = 90.0    # seconds of development before a bee emerges
+var queen_speed_factor: float = 0.6     # she's larger, so slower than a worker
+var brood_develop_time: float = 120.0   # seconds of development before a bee emerges
 var tending_speed_bonus: float = 2.0    # multiplier while a nursery worker is tending
+
+## Brood no longer develops on its own. A nurse (or the queen, who takes
+## nursing as her second job) has to visit the cell and drop food in;
+## each feed buys the larva a fixed stretch of development time and then
+## it stalls again until someone comes back. Honey is the better feed:
+## it's denser, so it lasts longer per visit.
+var brood_feed_seconds: float = 20.0        # a pollen + nectar feed
+var brood_feed_seconds_honey: float = 25.0  # a pollen + honey feed
+var brood_feed_pollen: float = 3.0      # pollen used per feed
+var brood_feed_nectar: float = 6.0      # nectar used per feed, when there's no honey
+var brood_feed_honey: float = 1.5       # honey used per feed -- less goes further
+## A nurse tops a larva back up once its remaining fed-time drops below
+## this, rather than waiting for it to stall completely.
+var brood_feed_threshold: float = 6.0
+
+# --- honey ---
+## Honey makers take nectar out of the comb, chew enzymes into it, spit
+## the mix into a fresh cell and then fan their wings over it to drive
+## the water off. Only once a cell is fully fanned is what's in it
+## actually honey, and honey is a far denser store of energy than the
+## nectar it came from.
+var honey_cell_capacity: float = 200.0
+var honey_energy_factor: float = 4.0    # one unit of honey is worth this much nectar
+var nectar_per_honey: float = 2.0       # nectar consumed to make one unit of mix
+var honey_chew_time: float = 6.0        # seconds spent adding enzymes before depositing
+var honey_ripen_time: float = 30.0      # bee-seconds of fanning to dry one cell out
+## Adding a fresh batch of wet mix to a part-dried cell sets the drying
+## back by this fraction, so topping a cell up has a real cost.
+var honey_rewet_factor: float = 0.5
+var starting_honey_makers: float = 0.0
 
 # --- comb building ---
 ## Miner-seconds to break down one soil block. Like building, several
@@ -94,6 +124,9 @@ var hive_interior_rings: float = 6.0
 ## the edge of the hollow out to here is diggable ground, so the hive
 ## sits in earth rather than being ringed by a thin wall.
 var hive_soil_depth: float = 12.0
+## Rings of bedrock wrapped round the outside of the soil. Rock can't be
+## marked, mined or walked through -- it's the hard edge of the map.
+var hive_rock_rings: float = 2.0
 var hive_entrance_width: float = 1.0    # tiles left out of the soil for the doorway
 var hive_cell_size: float = 17.0        # centre-to-corner of one comb tile
 var hive_cell_spacing: float = 19.0     # spacing passed to hex_to_pixel
@@ -105,15 +138,30 @@ var cell_slow_factor: float = 0.55
 # --- bee life ---
 var bee_lifespan_days: float = 30.0
 var energy_capacity: float = 100.0
-var energy_burn_rate: float = 0.3       # nectar-equivalent burned per second
+var energy_burn_rate: float = 0.4       # nectar-equivalent burned per second
+
+# --- interface ---
+## Turn the small "i" tooltip badges off once you know what everything
+## does. Takes effect immediately -- no restart needed.
+var show_info_badges: bool = true
 
 # --- runtime clock (not tunable; advanced by main.gd) ---
 var sim_time: float = 0.0
 
 # --- session preferences (not tunable; set from dialogs) ---
 var warn_on_discard: bool = true        # "don't show this again" clears this
-## Set by the "Level 1" tuning button: start with just the queen, no
-## starting foragers, nurses, builders or comb. Consumed once by
-## main.gd on build and left as-is -- pressing ordinary Restart Run
-## turns it back off.
-var level1_mode: bool = false
+
+## Which starting stage the next run builds. 0 means "use the tuning
+## numbers as they are"; 1-3 are the fixed stages offered by the main
+## menu (see main_menu.gd and main.gd's _spawn_* functions):
+##   1  the queen alone, no comb
+##   2  queen + one nectar forager + one cell
+##   3  queen + one of each forager + three cells
+## Read on scene build and left as-is, so a plain Restart Run repeats
+## whatever stage you last chose.
+var starting_level: int = 0
+
+## True the first time the game runs, so main.gd knows to open the menu
+## rather than dropping straight into a colony. Cleared once the player
+## picks a stage.
+var menu_pending: bool = true

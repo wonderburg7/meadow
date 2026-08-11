@@ -1,0 +1,120 @@
+extends CanvasLayer
+## The main menu: a full-screen overlay that pauses the run behind it and
+## offers a choice of starting stage.
+##
+## It opens by itself the first time the game is launched, and after that
+## only when the player picks "Return to Main Menu" in the tuning panel.
+## Choosing a stage sets GameConfig.starting_level and reloads the scene
+## (main.gd does the reloading, via the level_chosen signal), so every
+## stage is built by the same world-building code rather than a separate
+## path that could drift out of step.
+
+const UI = preload("res://scripts/ui.gd")
+
+signal level_chosen(level: int)
+
+## Kept in the same order they're shown. `level` matches the keys of
+## main.gd's LEVELS dictionary, which is what actually decides what gets
+## spawned -- these are the words for it.
+const STAGES := [
+	{
+		"level": 1,
+		"title": "Level 1 — The lone queen",
+		"blurb": "Just the queen, in bare ground. No comb, no workers. She has to be fed, and everything the colony ever has gets built from nothing.",
+	},
+	{
+		"level": 2,
+		"title": "Level 2 — First forager",
+		"blurb": "The queen, one nectar forager and a single cell. Enough to keep the lights on, but pollen still has to be found before she can lay.",
+	},
+	{
+		"level": 3,
+		"title": "Level 3 — A working colony",
+		"blurb": "The queen, three cells, and two foragers — one on nectar, one on pollen. Both resources are coming in from the first moment.",
+	},
+]
+
+var panel: PanelContainer
+var backdrop: ColorRect
+
+func _ready() -> void:
+	process_mode = PROCESS_MODE_ALWAYS   # the menu still works while paused
+	layer = 20                           # above the HUD and the tuning panel
+	visible = false
+	# so the tuning panel's "Return to Main Menu" button can find us
+	# without main.gd having to wire the two together
+	add_to_group("main_menu")
+
+	backdrop = ColorRect.new()
+	backdrop.color = Color(0.05, 0.07, 0.05, 0.88)
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP   # swallow clicks on the world behind
+	add_child(backdrop)
+
+	panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(520, 0)
+	add_child(panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+
+	var title := Label.new()
+	title.text = "Meadow"
+	title.add_theme_font_size_override("font_size", 30)
+	column.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "Choose where to start. Everything else uses your current tuning values."
+	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.custom_minimum_size = Vector2(500, 0)
+	column.add_child(subtitle)
+
+	for stage in STAGES:
+		column.add_child(_make_stage_row(stage))
+
+	column.add_child(HSeparator.new())
+
+	var close_btn := Button.new()
+	close_btn.text = "Back to the run"
+	close_btn.custom_minimum_size = Vector2(0, 30)
+	close_btn.pressed.connect(close)
+	column.add_child(UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted."))
+
+func _make_stage_row(stage: Dictionary) -> Control:
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+
+	var button := Button.new()
+	button.text = stage.title
+	button.custom_minimum_size = Vector2(0, 34)
+	var level_value: int = stage.level
+	button.pressed.connect(func(): _choose(level_value))
+	row.add_child(button)
+
+	var blurb := Label.new()
+	blurb.text = stage.blurb
+	blurb.add_theme_font_size_override("font_size", 12)
+	blurb.add_theme_color_override("font_color", Color(0.78, 0.82, 0.75))
+	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	blurb.custom_minimum_size = Vector2(500, 0)
+	row.add_child(blurb)
+
+	return row
+
+func open() -> void:
+	visible = true
+	get_tree().paused = true
+
+func close() -> void:
+	visible = false
+	get_tree().paused = false
+	GameConfig.menu_pending = false
+
+func _choose(level: int) -> void:
+	visible = false
+	level_chosen.emit(level)

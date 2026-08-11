@@ -15,7 +15,16 @@ signal role_requested(role_name: String)
 signal view_toggle_requested()
 signal speed_requested(speed_scale: float)
 signal cell_designation_requested(cell: Node2D, type: String)
-signal cell_hatch_role_requested(cell: Node2D, role: int)
+## `focus` and `use_automine` carry the sub-mode the chosen role needs --
+## which resource a forager starts on, whether a miner starts automining.
+signal cell_hatch_role_requested(cell: Node2D, role: int, focus: String, use_automine: bool)
+## Pins the hatch role so every future bee raised in the cell inherits
+## it, rather than it applying to the next one only.
+signal cell_hatch_lock_requested(cell: Node2D, locked: bool)
+## `method` is "move" (a builder carries the contents to another cell) or
+## "discard" (thrown out of the hive). `keep_empty` leaves the cell
+## closed to deposits afterwards.
+signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
 ## "Click a spot" modes -- main.gd puts itself into a placement mode when
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
@@ -30,12 +39,32 @@ signal floral_preference_requested()
 
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
+##
+## Roles with a sub-mode are offered as a dropdown rather than a single
+## button, so you can earmark a cell as, say, "raises pollen foragers" in
+## one go instead of setting the role here and the focus on the bee once
+## it emerges. `options` is a list of {label, focus, automine}.
 const HATCH_ROLES := [
-	{"label": "Default", "role": -1},
-	{"label": "Forager", "role": 0},
-	{"label": "Nursery", "role": 1},
-	{"label": "Builder", "role": 2},
-	{"label": "Miner", "role": 5},
+	{"label": "Default", "role": -1, "options": [
+		{"label": "Colony default", "focus": "nectar", "automine": false},
+	]},
+	{"label": "Forager", "role": 0, "options": [
+		{"label": "Forager — nectar", "focus": "nectar", "automine": false},
+		{"label": "Forager — pollen", "focus": "pollen", "automine": false},
+	]},
+	{"label": "Nursery", "role": 1, "options": [
+		{"label": "Nursery", "focus": "nectar", "automine": false},
+	]},
+	{"label": "Builder", "role": 2, "options": [
+		{"label": "Builder", "focus": "nectar", "automine": false},
+	]},
+	{"label": "Miner", "role": 5, "options": [
+		{"label": "Miner — marked blocks only", "focus": "nectar", "automine": false},
+		{"label": "Miner — automine on", "focus": "nectar", "automine": true},
+	]},
+	{"label": "Honey", "role": 6, "options": [
+		{"label": "Honey maker", "focus": "nectar", "automine": false},
+	]},
 ]
 
 ## Transport-style controls: pause, play, and two levels of fast
@@ -54,7 +83,7 @@ const ROLE_BUTTONS := [
 	},
 	{
 		"label": "Nursery", "role": "nursery",
-		"tip": "Keep the selected bees indoors to carry newly laid eggs into empty cells and tend developing brood, which speeds up how fast they grow.",
+		"tip": "Keep the selected bees indoors feeding the brood. Larvae do not develop at all on their own: a nurse has to drop pollen and either nectar or honey into each cell, and each feed only buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. Standing over a fed larva speeds it up as well. With no nurse, the colony cannot grow.",
 	},
 	{
 		"label": "Builder", "role": "builder",
@@ -69,12 +98,16 @@ const ROLE_BUTTONS := [
 		"tip": "Toggle automatic digging for the selected miners. With it on they pick the exposed soil block nearest the centre of the comb without waiting to be told, so the hive opens up around itself.",
 	},
 	{
+		"label": "Honey maker", "role": "honey_maker",
+		"tip": "Set the selected bees to make honey. They take stored nectar back out of the comb, chew enzymes into it, spit the mix into a cell of its own and then fan their wings over that cell until the water has evaporated off. Only then is it honey -- which is several times as energy-dense as the nectar it came from, keeps far better, and lets nurses raise larvae faster.",
+	},
+	{
 		"label": "Idle", "role": "idle",
 		"tip": "Stop the selected bees doing anything on their own. They stay where they are and keep burning energy, but you can still move them with right-click. Useful for holding bees back or parking one somewhere.",
 	},
 	{
 		"label": "Egg layer", "role": "egg_layer",
-		"tip": "Queen only. She eats pollen from the comb and lays eggs on the hive floor for nursery bees to collect. Other bees ignore this button.",
+		"tip": "Queen only. She eats pollen from the comb until she has enough for an egg, then walks to a free cell and lays into it. Whenever laying is blocked -- no pollen, or no free cell -- she falls back to her backup role, which is nursing unless you change it, so she is feeding larvae rather than standing idle. Other bees ignore this button.",
 	},
 ]
 
@@ -98,6 +131,8 @@ var shown_bees: Array = []
 var cell_popup: PopupPanel
 var cell_popup_label: Label
 var active_cell: Node2D = null
+var keep_empty_box: CheckBox
+var hatch_lock_box: CheckBox
 
 var flower_popup: PopupPanel
 var flower_popup_label: Label
@@ -236,15 +271,22 @@ func _build_cell_popup() -> void:
 	pollen_btn.pressed.connect(func(): _request_designation("pollen"))
 	row.add_child(_with_info(pollen_btn, "Reserve this cell for pollen. Foragers carrying nectar will walk past it."))
 
+	var honey_btn := Button.new()
+	honey_btn.text = "Store Honey"
+	honey_btn.pressed.connect(func(): _request_designation("honey"))
+	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
+
 	var egg_btn := Button.new()
 	egg_btn.text = "Raise Eggs"
 	egg_btn.pressed.connect(func(): _request_designation("brood"))
-	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. Nurses put eggs here first, and foragers won't fill it with stores. Reserving enough of these is what stops eggs piling up on the hive floor."))
+	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."))
 
 	var auto_btn := Button.new()
 	auto_btn.text = "Any"
 	auto_btn.pressed.connect(func(): _request_designation(""))
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
+
+	_build_empty_controls(column)
 
 	# Which role a bee raised here comes out as.
 	var hatch_row := HBoxContainer.new()
@@ -253,15 +295,82 @@ func _build_cell_popup() -> void:
 	hatch_title.text = "Raises:"
 	hatch_title.add_theme_font_size_override("font_size", 11)
 	hatch_row.add_child(hatch_title)
-	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Every future egg in this cell inherits the same role, so you can earmark a cell as a builder nursery once and forget about it."))
+	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Roles that have a sub-mode -- a forager's resource, whether a miner starts automining -- offer it here, so the new bee arrives already set up."))
 
 	for entry in HATCH_ROLES:
-		var btn := Button.new()
-		btn.text = entry.label
-		btn.add_theme_font_size_override("font_size", 11)
-		var role_value: int = entry.role
-		btn.pressed.connect(func(): _request_hatch_role(role_value))
-		hatch_row.add_child(btn)
+		var options: Array = entry.options
+		if options.size() == 1:
+			var btn := Button.new()
+			btn.text = entry.label
+			btn.add_theme_font_size_override("font_size", 11)
+			var role_value: int = entry.role
+			var only: Dictionary = options[0]
+			btn.pressed.connect(func(): _request_hatch_role(role_value, only.focus, only.automine))
+			hatch_row.add_child(btn)
+		else:
+			hatch_row.add_child(_make_hatch_menu(entry))
+
+	# Whether that role sticks for every future bee, or applies once.
+	var lock_row := HBoxContainer.new()
+	column.add_child(lock_row)
+	hatch_lock_box = CheckBox.new()
+	hatch_lock_box.text = "Keep this role for every bee raised here"
+	hatch_lock_box.add_theme_font_size_override("font_size", 11)
+	hatch_lock_box.toggled.connect(func(pressed: bool):
+		if active_cell and is_instance_valid(active_cell):
+			cell_hatch_lock_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
+	lock_row.add_child(hatch_lock_box)
+	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
+
+## Clearing a cell out. This exists because a colony with plenty of
+## foragers fills every spare cell with nectar, leaving nothing free for
+## pollen or for the queen to lay in -- so emptying a cell is only half
+## the job, and "keep it empty afterwards" is the other half.
+func _build_empty_controls(column: VBoxContainer) -> void:
+	var empty_row := HBoxContainer.new()
+	column.add_child(empty_row)
+
+	var title := Label.new()
+	title.text = "Empty cell:"
+	title.add_theme_font_size_override("font_size", 11)
+	empty_row.add_child(title)
+
+	var move_btn := Button.new()
+	move_btn.text = "To another cell"
+	move_btn.add_theme_font_size_override("font_size", 11)
+	move_btn.pressed.connect(func(): _request_empty("move"))
+	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
+
+	var discard_btn := Button.new()
+	discard_btn.text = "Discard outside"
+	discard_btn.add_theme_font_size_override("font_size", 11)
+	discard_btn.pressed.connect(func(): _request_empty("discard"))
+	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
+
+	var keep_row := HBoxContainer.new()
+	column.add_child(keep_row)
+	keep_empty_box = CheckBox.new()
+	keep_empty_box.text = "Keep this cell empty afterwards"
+	keep_empty_box.add_theme_font_size_override("font_size", 11)
+	keep_row.add_child(keep_empty_box)
+	keep_row.add_child(_info("On: the cell refuses every deposit once it's been cleared, so it stays free. This is what stops a crowd of foragers cramming nectar into the last spare pot and leaving nowhere for pollen or eggs. Reserving the cell for a resource later clears this again. Off: the cell goes back to taking whatever arrives first."))
+
+## A dropdown for a role that has more than one way to start.
+func _make_hatch_menu(entry: Dictionary) -> Control:
+	var menu := MenuButton.new()
+	menu.text = entry.label
+	menu.add_theme_font_size_override("font_size", 11)
+	var options: Array = entry.options
+	var role_value: int = entry.role
+	var popup := menu.get_popup()
+	for i in range(options.size()):
+		popup.add_item(options[i].label, i)
+	popup.id_pressed.connect(func(id: int):
+		_request_hatch_role(role_value, options[id].focus, options[id].automine)
+	)
+	return menu
 
 ## --- flower popup -------------------------------------------------
 
@@ -322,24 +431,56 @@ func _refresh_cell_popup() -> void:
 				lines.append("Nectar: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"pollen":
 				lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+			"honey":
+				if active_cell.is_ripe_honey():
+					lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+				else:
+					lines.append("Honey mix: %d / %d -- %d%% fanned dry" % [
+						int(round(active_cell.amount)),
+						int(active_cell.capacity),
+						int(active_cell.ripen_fraction() * 100.0),
+					])
+					lines.append("Not edible until it is fully dried out.")
 			"brood":
 				lines.append("Developing bee -- %d%%" % int(active_cell.development_percent()))
+				if active_cell.brood_fed_seconds > 0.0:
+					lines.append("Fed on %s -- %ds of development left in it" % [
+						"honey" if active_cell.fed_on_honey else "nectar",
+						int(active_cell.brood_fed_seconds),
+					])
+				else:
+					lines.append("Hungry -- development has stopped until a nurse feeds it")
 			_:
 				lines.append("Empty")
 	var reserved := "any resource"
-	if active_cell.designated_type == "brood":
+	if active_cell.keep_empty:
+		reserved = "nothing -- being kept empty"
+	elif active_cell.designated_type == "brood":
 		reserved = "raising eggs"
 	elif active_cell.designated_type != "":
 		reserved = active_cell.designated_type
 	lines.append("Reserved for: %s" % reserved)
+	if active_cell.evict_requested:
+		lines.append("Waiting for a builder to carry the contents out")
 
 	var hatch_name := "colony default"
 	for entry in HATCH_ROLES:
 		if entry.role == active_cell.hatch_role:
 			hatch_name = entry.label
+			if entry.role == 0:
+				hatch_name += " (%s)" % active_cell.hatch_focus
+			elif entry.role == 5 and active_cell.hatch_automine:
+				hatch_name += " (automine)"
 			break
-	lines.append("Raises: %s" % hatch_name)
+	lines.append("Raises: %s%s" % [
+		hatch_name,
+		" -- every bee" if active_cell.hatch_role_locked else "",
+	])
 	cell_popup_label.text = "\n".join(lines)
+
+	# reflect the cell's own state without re-firing the signals
+	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
+	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 
 func _process(_delta: float) -> void:
 	if cell_popup.visible:
@@ -354,9 +495,14 @@ func _request_designation(type: String) -> void:
 		cell_designation_requested.emit(active_cell, type)
 		_refresh_cell_popup()
 
-func _request_hatch_role(role: int) -> void:
+func _request_hatch_role(role: int, focus: String, use_automine: bool) -> void:
 	if active_cell and is_instance_valid(active_cell):
-		cell_hatch_role_requested.emit(active_cell, role)
+		cell_hatch_role_requested.emit(active_cell, role, focus, use_automine)
+		_refresh_cell_popup()
+
+func _request_empty(method: String) -> void:
+	if active_cell and is_instance_valid(active_cell):
+		cell_empty_requested.emit(active_cell, method, keep_empty_box.button_pressed)
 		_refresh_cell_popup()
 
 # --- discard warning ----------------------------------------------
@@ -409,11 +555,17 @@ func _apply_discard() -> void:
 func update_day(day: int) -> void:
 	day_label.text = "Day %d" % day
 
-func update_storage(nectar: float, pollen: float) -> void:
-	storage_label.text = "Nectar: %d   Pollen: %d" % [int(round(nectar)), int(round(pollen))]
+## Honey is counted only once it's fully fanned dry -- wet mix still
+## drying in a cell isn't a store the colony can use yet.
+func update_storage(nectar: float, pollen: float, honey: float) -> void:
+	storage_label.text = "Nectar: %d   Pollen: %d   Honey: %d" % [
+		int(round(nectar)), int(round(pollen)), int(round(honey)),
+	]
 
-func update_population(foragers: int, nurses: int, builders: int) -> void:
-	population_label.text = "Bees: %d foraging, %d nursing, %d building" % [foragers, nurses, builders]
+func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
+	population_label.text = "Bees: %d foraging, %d nursing, %d building, %d on honey" % [
+		foragers, nurses, builders, honey_makers,
+	]
 
 ## `births_per_sec` is shown per minute instead -- birth events are rare
 ## enough (one every 90s+ per brood cell) that a per-second figure would
@@ -518,6 +670,13 @@ func _rebuild_role_controls(bees: Array) -> void:
 		])
 		role_row.add_child(miner_menu)
 
+	# --- honey maker ---
+	if common_role != Bee.Role.HONEY_MAKER:
+		var honey_btn := Button.new()
+		honey_btn.text = "Honey maker"
+		honey_btn.pressed.connect(func(): role_requested.emit("honey_maker"))
+		role_row.add_child(_with_info(honey_btn, _tip_for("honey_maker")))
+
 	# --- idle ---
 	if common_role != Bee.Role.IDLE:
 		var idle_btn := Button.new()
@@ -536,7 +695,13 @@ func _rebuild_role_controls(bees: Array) -> void:
 	# theirs (see Bee._idle_dispatch), so it's only offered while one of
 	# those is the common role -- offering it otherwise would be a
 	# control that silently does nothing.
-	if common_role == Bee.Role.MINER or common_role == Bee.Role.NURSERY or common_role == Bee.Role.BUILDER:
+	if (
+		common_role == Bee.Role.MINER
+		or common_role == Bee.Role.NURSERY
+		or common_role == Bee.Role.BUILDER
+		or common_role == Bee.Role.HONEY_MAKER
+		or common_role == Bee.Role.EGG_LAYER
+	):
 		var current_secondary: int = bees[0].secondary_role if is_instance_valid(bees[0]) else -1
 		var secondary_menu := _make_role_menu(
 			"Backup: %s" % _secondary_label(current_secondary),
@@ -547,6 +712,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 				{"text": "Nursery", "action": func(): secondary_role_requested.emit("nursery")},
 				{"text": "Builder", "action": func(): secondary_role_requested.emit("builder")},
 				{"text": "Miner", "action": func(): secondary_role_requested.emit("miner")},
+				{"text": "Honey maker", "action": func(): secondary_role_requested.emit("honey_maker")},
 			]
 		)
 		role_row.add_child(secondary_menu)
@@ -576,6 +742,10 @@ func _secondary_label(secondary_role: int) -> String:
 			return "Builder"
 		Bee.Role.MINER:
 			return "Miner"
+		Bee.Role.HONEY_MAKER:
+			return "Honey maker"
+		Bee.Role.EGG_LAYER:
+			return "Egg layer"
 		_:
 			return "None"
 

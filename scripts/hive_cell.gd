@@ -5,6 +5,8 @@ extends Polygon2D
 ##   ""       -- empty
 ##   "nectar" -- stored nectar, up to `capacity`
 ##   "pollen" -- stored pollen, up to `capacity`
+##   "honey"  -- nectar/enzyme mix a honey maker has spat in, drying out
+##               (see `ripen_progress`) and only usable once it's honey
 ##   "brood"  -- a single developing bee (see `brood_progress`)
 ##
 ## Cells may also be *unfinished*: builders draw them over time, and a
@@ -15,12 +17,18 @@ extends Polygon2D
 ## The player can designate a cell to a specific resource. A designated
 ## cell refuses anything else, and any wrong contents already inside get
 ## hauled away by a builder.
+##
+## Bees load and unload from one of the six walls rather than from the
+## middle, so no more than six can work a cell at once -- see
+## `claim_slot`.
 
 const Shapes = preload("res://scripts/shapes.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 const NECTAR_COLOR := Color(0.95, 0.7, 0.15)
 const POLLEN_COLOR := Color(0.4, 0.35, 0.8)
+const HONEY_WET_COLOR := Color(0.78, 0.55, 0.18)
+const HONEY_COLOR := Color(0.85, 0.42, 0.05)
 const BROOD_COLOR := Color(0.9, 0.9, 0.85)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
@@ -30,21 +38,51 @@ var capacity: float = 200.0
 var brood_progress: float = 0.0
 var being_tended: bool = false
 
+## Seconds of development this larva still has food for. Brood does not
+## develop at all while this is zero -- a nurse (or the queen) has to
+## come and drop pollen plus nectar or honey in to top it back up. This
+## is what makes nursing a real, ongoing job rather than a speed bonus.
+var brood_fed_seconds: float = 0.0
+## Set to true by whichever feed was last given, so the readout can say
+## whether the larva is on honey or on nectar.
+var fed_on_honey: bool = false
+
+## Honey drying. A honey maker fans its wings over the cell to drive the
+## water off; `ripen_progress` counts bee-seconds of fanning, and the
+## contents only count as real honey once it reaches honey_ripen_time.
+var ripen_progress: float = 0.0
+var being_fanned: bool = false
+
 ## Building state. Cells the hive starts with are already finished.
 var is_built: bool = true
 var build_progress: float = 0.0
 var builders: Array = []
 
 ## "" means the cell takes whatever is going. Otherwise it only accepts
-## the named thing: "nectar", "pollen", or "brood" for a nursery cell
-## that stores eggs rather than stores.
+## the named thing: "nectar", "pollen", "honey", or "brood" for a nursery
+## cell that stores eggs rather than stores.
 var designated_type: String = ""
+
+## Set from the cell popup's "Empty cell" controls. While true the cell
+## refuses every new deposit, so foragers stop cramming nectar into every
+## spare pot and leave room for pollen and brood. Designating the cell to
+## a resource clears it again.
+var keep_empty: bool = false
+## The player has asked for the contents to be carried to another cell.
+## Builders pick this up the same way they clear a re-designated cell.
+var evict_requested: bool = false
 
 ## Which role a bee raised in this cell takes when it emerges.
 ## -1 means "whatever the colony default is". Set from the cell popup,
-## so you can earmark a cell as, say, a builder nursery and every bee
-## it ever raises comes out as a builder.
+## along with the sub-mode that role needs (a forager's focus, whether a
+## miner starts with automine on).
 var hatch_role: int = -1
+var hatch_focus: String = "nectar"
+var hatch_automine: bool = false
+## When false the role applies to the next bee only and then clears, so a
+## one-off choice doesn't quietly govern the cell forever. The popup's
+## "Keep for every bee" button pins it.
+var hatch_role_locked: bool = false
 
 var axial: Vector2i = Vector2i.ZERO
 
@@ -52,6 +90,11 @@ var cell_size: float = 17.0
 var info_label: Label
 var outline: Line2D
 var designation_ring: Line2D
+
+## One working position per wall. A bee claims a slot before it walks
+## over, and gives it up when it leaves, so bees never stand on top of
+## each other while loading or unloading.
+var slot_users: Array = [null, null, null, null, null, null]
 
 func _ready() -> void:
 	add_to_group("hive_cells")
@@ -90,10 +133,53 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 
 func _process(delta: float) -> void:
 	if content_type == "brood":
+		_develop_brood(delta)
+	elif content_type == "honey":
+		if being_fanned:
+			ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
+		being_fanned = false   # honey makers re-assert this each frame
+	_refresh()
+
+## A larva burns through whatever its last feed bought it and then simply
+## stops. A nurse standing over it still speeds up the time it does have
+## (tending_speed_bonus), but no amount of tending moves an unfed larva.
+func _develop_brood(delta: float) -> void:
+	if brood_fed_seconds > 0.0:
 		var rate: float = GameConfig.tending_speed_bonus if being_tended else 1.0
 		brood_progress += delta * rate
-		being_tended = false   # nursery workers re-assert this each frame while tending
-	_refresh()
+		brood_fed_seconds = max(0.0, brood_fed_seconds - delta)
+	being_tended = false   # nursery workers re-assert this each frame while tending
+
+# --- working positions --------------------------------------------
+
+## Takes one of the six wall positions for `bee`, or returns -1 when all
+## six are already in use. Asking twice just returns the slot the bee
+## already holds.
+func claim_slot(bee: Node2D) -> int:
+	for i in range(6):
+		if slot_users[i] == bee:
+			return i
+	for i in range(6):
+		var holder = slot_users[i]
+		if holder == null or not is_instance_valid(holder):
+			slot_users[i] = bee
+			return i
+	return -1
+
+func release_slot(bee: Node2D) -> void:
+	for i in range(6):
+		if slot_users[i] == bee:
+			slot_users[i] = null
+
+## Where a bee holding slot `index` should stand: the midpoint of that
+## wall, nudged a little outside the hexagon so the bee sits against the
+## cell rather than on top of its contents.
+func slot_position(index: int) -> Vector2:
+	if index < 0:
+		return position
+	var midpoints := Shapes.hexagon_edge_midpoints(cell_size)
+	var offset: Vector2 = midpoints[index % 6]
+	return position + offset * 1.35
 
 # --- building -----------------------------------------------------
 
@@ -127,8 +213,17 @@ func build_fraction() -> float:
 func is_empty() -> bool:
 	return is_built and content_type == ""
 
+## Honey cells hold their own amount, which can be tuned separately from
+## the raw-store cells.
+func capacity_for(resource_type: String) -> float:
+	return GameConfig.honey_cell_capacity if resource_type == "honey" else GameConfig.cell_capacity
+
 func accepts(resource_type: String) -> bool:
 	if not is_built:
+		return false
+	# A cell the player has asked to be kept clear takes nothing at all
+	# until they designate it to something.
+	if keep_empty:
 		return false
 	if designated_type != "" and designated_type != resource_type:
 		return false
@@ -147,17 +242,22 @@ func space_for(resource_type: String) -> float:
 	if not accepts(resource_type):
 		return 0.0
 	if content_type == "":
-		return capacity
+		return capacity_for(resource_type)
 	if content_type == resource_type:
-		return max(0.0, capacity - amount)
+		return max(0.0, capacity_for(resource_type) - amount)
 	return 0.0
 
-## True when the player has pinned this cell to one resource but it
-## still holds something else -- a builder will come and shift it.
+## True when the contents need carrying out: either the player has pinned
+## the cell to one resource but it still holds something else, or they've
+## asked outright for it to be emptied into another cell.
 func needs_eviction() -> bool:
-	if not is_built or designated_type == "":
+	if not is_built:
 		return false
 	if content_type == "" or content_type == "brood":
+		return false
+	if evict_requested:
+		return true
+	if designated_type == "":
 		return false
 	return content_type != designated_type
 
@@ -173,7 +273,14 @@ func add_resource(resource_type: String, requested: float) -> float:
 	var added: float = min(space, requested)
 	if content_type == "" and designated_type == "":
 		designated_type = resource_type
+	if resource_type == "honey":
+		# fresh mix is wet: topping a drying cell up sets it back
+		if content_type == "honey":
+			ripen_progress *= GameConfig.honey_rewet_factor
+		else:
+			ripen_progress = 0.0
 	content_type = resource_type
+	capacity = capacity_for(resource_type)
 	amount += added
 	return added
 
@@ -186,15 +293,47 @@ func take_resource(resource_type: String, requested: float) -> float:
 	if amount <= 0.001:
 		content_type = ""
 		amount = 0.0
+		ripen_progress = 0.0
+		evict_requested = false
 	return taken
 
 func set_designation(resource_type: String) -> void:
 	designated_type = resource_type
+	if resource_type != "":
+		# choosing what a cell is for overrides "leave it empty"
+		keep_empty = false
+
+# --- honey ---------------------------------------------------------
+
+func is_ripe_honey() -> bool:
+	return content_type == "honey" and ripen_progress >= GameConfig.honey_ripen_time
+
+## Honey makers fan cells that still hold wet mix.
+func needs_fanning() -> bool:
+	return content_type == "honey" and amount > 0.0 and not is_ripe_honey()
+
+func ripen_fraction() -> float:
+	return clamp(ripen_progress / max(0.001, GameConfig.honey_ripen_time), 0.0, 1.0)
+
+# --- brood ---------------------------------------------------------
 
 func start_brood() -> void:
 	content_type = "brood"
 	amount = 0.0
 	brood_progress = 0.0
+	brood_fed_seconds = 0.0
+	fed_on_honey = false
+
+## Called by a nurse that has just dropped food in. `seconds` is what the
+## feed buys; feeds don't stack up indefinitely, they just top the larva
+## back to a full feed's worth.
+func feed_brood(seconds: float, on_honey: bool) -> void:
+	brood_fed_seconds = max(brood_fed_seconds, seconds)
+	fed_on_honey = on_honey
+
+## True when the larva is running out of food and a nurse should visit.
+func needs_feeding() -> bool:
+	return content_type == "brood" and brood_fed_seconds < GameConfig.brood_feed_threshold
 
 func brood_ready() -> bool:
 	return content_type == "brood" and brood_progress >= GameConfig.brood_develop_time
@@ -203,6 +342,9 @@ func clear_cell() -> void:
 	content_type = ""
 	amount = 0.0
 	brood_progress = 0.0
+	brood_fed_seconds = 0.0
+	ripen_progress = 0.0
+	evict_requested = false
 
 # --- display ------------------------------------------------------
 
@@ -215,6 +357,7 @@ func _refresh() -> void:
 		polygon = Shapes.hexagon_points(drawn_size)
 		_set_outline_points(outline, drawn_size)
 		outline.default_color = Color(0.6, 0.5, 0.25, 0.9)
+		outline.visible = true
 		color = Color(SITE_COLOR.r, SITE_COLOR.g, SITE_COLOR.b, lerp(0.25, 0.75, f))
 		designation_ring.visible = false
 		info_label.text = "%d%%" % int(f * 100.0)
@@ -223,11 +366,19 @@ func _refresh() -> void:
 	polygon = Shapes.hexagon_points(cell_size)
 	_set_outline_points(outline, cell_size)
 	outline.default_color = Color(0.35, 0.28, 0.12)
-	designation_ring.visible = designated_type != ""
-	if designated_type == "nectar":
+	# An empty cell is drawn as flat colour with no rim, so open comb and
+	# open floor read as one continuous surface instead of a grid of
+	# outlined tiles. Cells with something in them keep their outline.
+	outline.visible = content_type != ""
+	designation_ring.visible = designated_type != "" or keep_empty
+	if keep_empty:
+		designation_ring.default_color = Color(0.85, 0.85, 0.9, 0.9)
+	elif designated_type == "nectar":
 		designation_ring.default_color = Color(1.0, 0.85, 0.3, 0.95)
 	elif designated_type == "pollen":
 		designation_ring.default_color = Color(0.7, 0.65, 1.0, 0.95)
+	elif designated_type == "honey":
+		designation_ring.default_color = Color(1.0, 0.55, 0.1, 0.95)
 	elif designated_type == "brood":
 		designation_ring.default_color = Color(0.6, 1.0, 0.7, 0.95)
 
@@ -238,14 +389,27 @@ func _refresh() -> void:
 		"pollen":
 			color = POLLEN_COLOR
 			info_label.text = "P%d" % int(round(amount))
+		"honey":
+			color = HONEY_WET_COLOR.lerp(HONEY_COLOR, ripen_fraction())
+			if is_ripe_honey():
+				info_label.text = "H%d" % int(round(amount))
+			else:
+				info_label.text = "h%d %d%%" % [int(round(amount)), int(ripen_fraction() * 100.0)]
 		"brood":
 			color = BROOD_COLOR
 			info_label.text = "egg %d%%" % int(development_percent())
+			if brood_fed_seconds <= 0.0:
+				info_label.text += " (hungry)"
 		_:
 			color = EMPTY_COLOR
-			# an empty cell reserved for brood still says so, otherwise
-			# you can't tell a nursery cell from an unused one
-			info_label.text = "egg" if is_nursery_cell() else ""
+			# an empty cell reserved for something still says so, otherwise
+			# you can't tell a reserved cell from an unused one
+			if keep_empty:
+				info_label.text = "keep"
+			elif is_nursery_cell():
+				info_label.text = "egg"
+			else:
+				info_label.text = ""
 
 func development_percent() -> float:
 	if content_type != "brood":

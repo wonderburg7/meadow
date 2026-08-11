@@ -7,7 +7,7 @@ extends Polygon2D
 ## out jobs to builders, so the meadow never needs to know how the comb
 ## is laid out.
 
-signal storage_changed(nectar: float, pollen: float)
+signal storage_changed(nectar: float, pollen: float, honey: float)
 
 const Shapes = preload("res://scripts/shapes.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
@@ -93,14 +93,41 @@ func take(resource_type: String, amount: float) -> float:
 	for cell in cells:
 		if still_needed <= 0.0:
 			break
+		if resource_type == "honey" and not cell.is_ripe_honey():
+			continue   # wet mix isn't food yet
 		still_needed -= cell.take_resource(resource_type, still_needed)
 	announce()
 	return amount - still_needed
+
+## How bees eat. `energy_wanted` is in energy units; honey is drawn on
+## first because it is `honey_energy_factor` times as dense as the nectar
+## it was made from, so a hive with honey in it feeds far more bees from
+## the same comb. Returns the energy actually delivered.
+func take_energy(energy_wanted: float) -> float:
+	if energy_wanted <= 0.0:
+		return 0.0
+	var delivered := 0.0
+
+	var honey_units_wanted: float = energy_wanted / max(0.001, GameConfig.honey_energy_factor)
+	var honey_taken: float = take("honey", honey_units_wanted)
+	delivered += honey_taken * GameConfig.honey_energy_factor
+
+	if delivered < energy_wanted:
+		delivered += take("nectar", energy_wanted - delivered)
+	return delivered
 
 func total(resource_type: String) -> float:
 	var sum := 0.0
 	for cell in cells:
 		if cell.content_type == resource_type:
+			sum += cell.amount
+	return sum
+
+## Ripe honey only -- wet mix still drying isn't a store yet.
+func total_honey() -> float:
+	var sum := 0.0
+	for cell in cells:
+		if cell.is_ripe_honey():
 			sum += cell.amount
 	return sum
 
@@ -170,14 +197,42 @@ func has_room_for_egg() -> bool:
 func find_cell_with(resource_type: String) -> Node2D:
 	for cell in cells:
 		if cell.content_type == resource_type and cell.amount > 0.0:
+			if resource_type == "honey" and not cell.is_ripe_honey():
+				continue
 			return cell
 	return null
 
+## The brood a nurse should go to: the hungriest larva first, so feeding
+## keeps up with the whole nursery rather than one favoured cell. Falls
+## back to any brood at all, since standing over a fed larva still speeds
+## it up.
 func find_brood_cell() -> Node2D:
+	var hungriest: Node2D = null
+	var any_brood: Node2D = null
 	for cell in cells:
-		if cell.content_type == "brood":
+		if cell.content_type != "brood":
+			continue
+		if any_brood == null:
+			any_brood = cell
+		if not cell.needs_feeding():
+			continue
+		if hungriest == null or cell.brood_fed_seconds < hungriest.brood_fed_seconds:
+			hungriest = cell
+	return hungriest if hungriest != null else any_brood
+
+## A cell of wet mix that still needs fanning out. Honey makers do this
+## between trips, and it's the last step before the cell counts as a
+## store the colony can actually eat.
+func find_cell_needing_fanning() -> Node2D:
+	for cell in cells:
+		if cell.needs_fanning():
 			return cell
 	return null
+
+## Where a honey maker puts its chewed mix: a honey cell with room, or
+## failing that any spare cell it can start as a honey pot.
+func find_honey_target() -> Node2D:
+	return find_cell_for("honey")
 
 func find_unfinished_cell() -> Node2D:
 	for cell in cells:
@@ -266,12 +321,12 @@ func build_navigation() -> void:
 	_astar.clear()
 	_tile_ids.clear()
 
-	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
+	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
 	var next_id := 0
-	# every tile that isn't soil is walkable
+	# every tile that isn't soil or bedrock is walkable
 	for ring in range(0, reach + 1):
 		for hex in Shapes.hex_ring(ring):
-			if _is_soil(hex):
+			if _is_solid(hex):
 				continue
 			_tile_ids[hex] = next_id
 			var world_point: Vector2 = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
@@ -288,9 +343,13 @@ func build_navigation() -> void:
 			if _tile_ids.has(other):
 				_astar.connect_points(_tile_ids[hex], _tile_ids[other], true)
 
-func _is_soil(hex: Vector2i) -> bool:
+## Soil can eventually be dug out; bedrock never can. Either way nothing
+## walks through it, so routing treats them the same.
+func _is_solid(hex: Vector2i) -> bool:
 	var node = occupied_tiles.get(hex)
-	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks")
+	if node == null or not is_instance_valid(node):
+		return false
+	return node.is_in_group("soil_blocks") or node.is_in_group("rock_blocks")
 
 func _tile_cost(hex: Vector2i) -> float:
 	return COMB_TRAVEL_COST if cell_at_tile(hex) != null else 1.0
@@ -390,20 +449,42 @@ func refresh_edge_flags() -> void:
 				break
 		node.is_edge = edge
 
-func find_marked_block() -> Node2D:
+## A block the player has flagged for digging. Blocks the player marked
+## always come first, whether or not the miner is on automine -- an
+## explicit instruction outranks the automatic choice. `from_point` (the
+## miner's own position, in hive-local space) breaks ties, so a miner
+## goes to the nearest job rather than whichever happened to be first in
+## the dictionary.
+func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
+	var best: Node2D = null
+	var best_distance := INF
 	for node in occupied_tiles.values():
-		if _is_markable_block(node) and node.marked_for_mining:
-			return node
-	return null
+		if not _is_markable_block(node) or not node.marked_for_mining:
+			continue
+		# a block with no open tile beside it can't be reached, so it's no
+		# use as a job even though it's marked
+		if mine_stand_hex(node) == null:
+			continue
+		var d: float = 0.0 if from_point.x == INF else from_point.distance_to(node.position)
+		if best == null or d < best_distance:
+			best_distance = d
+			best = node
+		if from_point.x == INF:
+			return best
+	return best
 
-## For automining: the edge block nearest the centre of the comb, so
-## digging opens up space next to the hive rather than out at the rim.
+## For automining: the edge block nearest the central wax cell, so
+## digging opens up space next to the comb rather than out at the rim.
 func find_nearest_edge_block() -> Node2D:
 	var best: Node2D = null
 	var best_distance := 1 << 30
 	for node in occupied_tiles.values():
 		if not _is_markable_block(node) or not node.is_edge:
 			continue
+		if mine_stand_hex(node) == null:
+			continue
+		# hex ring index is the step distance from (0,0) -- the middle of
+		# the comb, where the first cell is drawn
 		var d := Shapes.hex_ring_index(node.axial)
 		if d < best_distance:
 			best_distance = d
@@ -412,6 +493,35 @@ func find_nearest_edge_block() -> Node2D:
 
 func _is_markable_block(node) -> bool:
 	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks")
+
+## The open tile a miner should stand on to dig `block`. Soil is solid,
+## so routing a bee at the block's own centre finds no path at all and it
+## just stands there -- which is what stopped miners ever reaching a
+## marked block. Returns null when nothing open touches it.
+func mine_stand_hex(block: Node2D):
+	if not is_instance_valid(block):
+		return null
+	for step in NEIGHBOUR_STEPS:
+		var neighbour: Vector2i = block.axial + step
+		if tile_is_walkable(neighbour):
+			return neighbour
+	return null
+
+## As above, as a position in hive-local space, ready to walk to.
+## Prefers whichever open neighbour is closest to `from_point`.
+func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
+	var best := Vector2(INF, INF)
+	var best_distance := INF
+	for step in NEIGHBOUR_STEPS:
+		var neighbour: Vector2i = block.axial + step
+		if not tile_is_walkable(neighbour):
+			continue
+		var point: Vector2 = comb_centre + Shapes.hex_to_pixel(neighbour.x, neighbour.y, GameConfig.hive_cell_spacing)
+		var d: float = from_point.distance_to(point)
+		if d < best_distance:
+			best_distance = d
+			best = point
+	return best
 
 ## Turns a finished block back into open floor and reopens the routes
 ## through it.
@@ -426,4 +536,4 @@ func remove_block(block: Node2D, floor_maker: Callable) -> void:
 	refresh_edge_flags()
 
 func announce() -> void:
-	storage_changed.emit(total("nectar"), total("pollen"))
+	storage_changed.emit(total("nectar"), total("pollen"), total_honey())

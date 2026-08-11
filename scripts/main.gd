@@ -27,9 +27,21 @@ const Flower = preload("res://scripts/flower.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
 const SoilBlock = preload("res://scripts/soil_block.gd")
 const Obstacle = preload("res://scripts/obstacle.gd")
+const RockBlock = preload("res://scripts/rock_block.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
+const MainMenu = preload("res://scripts/main_menu.gd")
 const Shapes = preload("res://scripts/shapes.gd")
+
+## The fixed starting stages the main menu offers, so a run can begin
+## partway in rather than always from a lone queen. `starting_level` of 0
+## means "use whatever the tuning numbers say" -- that's the ordinary
+## Restart Run behaviour.
+const LEVELS := {
+	1: {"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0, "nurses": 0, "builders": 0},
+	2: {"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0, "nurses": 0, "builders": 0},
+	3: {"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1, "nurses": 0, "builders": 0},
+}
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
 const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
@@ -127,6 +139,8 @@ func _ready() -> void:
 	hud.speed_requested.connect(_on_speed_requested)
 	hud.cell_designation_requested.connect(_on_cell_designation_requested)
 	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
+	hud.cell_hatch_lock_requested.connect(_on_cell_hatch_lock_requested)
+	hud.cell_empty_requested.connect(_on_cell_empty_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
@@ -135,9 +149,18 @@ func _ready() -> void:
 
 	add_child(DebugPanel.new())
 
-	hive.storage_changed.connect(func(n, p): hud.update_storage(n, p))
+	# The main menu sits above everything and pauses the run behind it.
+	# It opens by itself the first time the game is launched, and after
+	# that only when the player asks for it from the tuning panel.
+	var menu := MainMenu.new()
+	menu.level_chosen.connect(_on_level_chosen)
+	add_child(menu)
+	if GameConfig.menu_pending:
+		menu.open()
+
+	hive.storage_changed.connect(func(n, p, h): hud.update_storage(n, p, h))
 	hud.update_day(day)
-	hud.update_storage(0, 0)
+	hud.update_storage(0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
 	hud.set_speed_display(1.0)
 	_update_population_readout()
@@ -203,15 +226,26 @@ func _scatter_obstacles() -> void:
 		obstacle.setup(Obstacle.Kind.TREE if is_tree else Obstacle.Kind.RAISED, radius)
 		placed.append({"pos": pos, "radius": radius})
 
-	# Level 1: the queen and nothing else -- no starting foragers.
-	if not GameConfig.level1_mode:
-		# Always at least one of each, so both resources are coming in
-		# from the first moment and the queen isn't stalled on pollen.
-		var total_bees: int = maxi(2, int(GameConfig.starting_bees))
-		_spawn_bee("nectar")
-		_spawn_bee("pollen")
-		for i in range(total_bees - 2):
+	_spawn_starting_foragers()
+
+## How many foragers a run opens with, and which resource each is on.
+## A chosen stage says exactly; otherwise the tuning number applies, with
+## at least one of each resource so both are coming in from the first
+## moment and the queen isn't stalled waiting for pollen.
+func _spawn_starting_foragers() -> void:
+	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	if not level.is_empty():
+		for i in range(int(level.nectar_foragers)):
 			_spawn_bee("nectar")
+		for i in range(int(level.pollen_foragers)):
+			_spawn_bee("pollen")
+		return
+
+	var total_bees: int = maxi(2, int(GameConfig.starting_bees))
+	_spawn_bee("nectar")
+	_spawn_bee("pollen")
+	for i in range(total_bees - 2):
+		_spawn_bee("nectar")
 
 ## Plants one flower. Most of the time it joins an existing cluster of
 ## its own species (a tight huddle for Clover, a loose scatter for
@@ -241,10 +275,31 @@ func _seed_flower() -> void:
 			centers.pop_front()
 		cluster_centers[species_name] = centers
 
+	# Raised ground and tree trunks are solid now, so a flower planted on
+	# one would be unreachable -- a forager would walk up to the edge and
+	# stall. Nudge it clear instead.
+	pos = _clear_of_obstacles(pos)
+
 	var flower := Flower.new()
 	flower.position = pos
 	meadow_root.add_child(flower)
 	flower.setup(species_index)
+
+## Pushes `point` out to the boundary of any solid obstacle it lands
+## inside, plus a little margin so a bee can actually stand on it.
+func _clear_of_obstacles(point: Vector2) -> Vector2:
+	var result := point
+	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+		if not is_instance_valid(obstacle) or not obstacle.solid:
+			continue
+		var edge: float = obstacle.radius + 24.0
+		var offset: Vector2 = result - obstacle.position
+		if offset.length() >= edge:
+			continue
+		if offset.length() < 0.01:
+			offset = Vector2.RIGHT
+		result = obstacle.position + offset.normalized() * edge
+	return result
 
 ## A point somewhere in the rectangular field, kept clear of the ground
 ## immediately around the hive.
@@ -289,13 +344,26 @@ func _build_hive_interior() -> void:
 ## Lays down every tile: open floor inside the hollow and in the entrance
 ## tunnel, solid soil everywhere else.
 func _dig_out_chamber(centre_local: Vector2, interior_rings: int, soil_depth: int, spacing: float) -> void:
-	var entrance_tiles := _entrance_tiles(interior_rings, soil_depth)
+	var rock_rings := int(GameConfig.hive_rock_rings)
+	var entrance_tiles := _entrance_tiles(interior_rings, soil_depth + rock_rings)
 	for ring in range(0, interior_rings + soil_depth):
 		for hex in Shapes.hex_ring(ring):
 			if entrance_tiles.has(hex) or _is_open_tile(hex, ring, interior_rings):
 				_add_floor_tile(hex, centre_local, spacing)
 			else:
 				_add_soil_block(hex, centre_local, spacing)
+
+	# Bedrock wraps the whole thing. Beyond this the colony cannot dig,
+	# move or build -- it's the hard edge of the world -- so the soil in
+	# between is a finite resource rather than an endless outward sprawl.
+	# The entrance tunnel is carved through it, otherwise the doorway
+	# would be sealed off by the very wall meant to bound the map.
+	for ring in range(interior_rings + soil_depth, interior_rings + soil_depth + rock_rings):
+		for hex in Shapes.hex_ring(ring):
+			if entrance_tiles.has(hex):
+				_add_floor_tile(hex, centre_local, spacing)
+			else:
+				_add_rock_block(hex, centre_local, spacing)
 
 func _add_entrance_marker() -> void:
 	var marker := Polygon2D.new()
@@ -307,7 +375,8 @@ func _add_entrance_marker() -> void:
 
 func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 	var cells: Array = []
-	var starting_count: int = 0 if GameConfig.level1_mode else int(GameConfig.hive_cell_count)
+	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	var starting_count: int = int(level.cells) if not level.is_empty() else int(GameConfig.hive_cell_count)
 	for i in range(starting_count):
 		var cell_hex: Vector2i = Shapes.hex_spiral_at(i)
 		var cell := HiveCell.new()
@@ -327,11 +396,16 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	hive_root.add_child(queen)
 	queen.setup(hive, "pollen", 0, Bee.Role.EGG_LAYER, self)
 
-	if not GameConfig.level1_mode:
-		for i in range(int(GameConfig.starting_nurses)):
-			_spawn_indoor_bee(Bee.Role.NURSERY)
-		for i in range(int(GameConfig.starting_builders)):
-			_spawn_indoor_bee(Bee.Role.BUILDER)
+	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
+	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
+	var honey_makers: int = 0 if not level.is_empty() else int(GameConfig.starting_honey_makers)
+	for i in range(nurses):
+		_spawn_indoor_bee(Bee.Role.NURSERY)
+	for i in range(builders):
+		_spawn_indoor_bee(Bee.Role.BUILDER)
+	for i in range(honey_makers):
+		_spawn_indoor_bee(Bee.Role.HONEY_MAKER)
 
 ## Tiles well inside the hollow are always open, tiles well outside are
 ## always soil, and the boundary ring is decided at random so the wall
@@ -346,9 +420,12 @@ func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool:
 	var noise: float = abs(sin(float(hex.x) * 12.9898 + float(hex.y) * 78.233))
 	return noise > 0.45 if ring == interior_rings - 1 else noise > 0.75
 
+## Open ground. Drawn oversized and with no outline so neighbouring tiles
+## fuse into one continuous floor -- the hive interior should read as an
+## excavated space, not a grid of separately bordered hexagons.
 func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
 	var tile := Polygon2D.new()
-	tile.polygon = Shapes.hexagon_points(GameConfig.hive_cell_size * 1.08)
+	tile.polygon = Shapes.hexagon_points(GameConfig.hive_cell_size * 1.15)
 	tile.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 	tile.color = FLOOR_COLOR
 	hive_root.add_child(tile)
@@ -357,6 +434,15 @@ func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 	if not hive.tile_is_free(hex):
 		return
 	var block := SoilBlock.new()
+	block.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	hive_root.add_child(block)
+	block.setup(hex)
+	hive.register_tile(hex, block)
+
+func _add_rock_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
+	if not hive.tile_is_free(hex):
+		return
+	var block := RockBlock.new()
 	block.position = centre_local + Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 	hive_root.add_child(block)
 	block.setup(hex)
@@ -379,7 +465,12 @@ func _entrance_tiles(interior_rings: int, soil_depth: int) -> Dictionary:
 ## enter and leave. They then walk the whole tunnel down into the hollow,
 ## so arriving and departing reads as a journey rather than a teleport.
 func hive_entrance_inside() -> Vector2:
-	var rings: float = GameConfig.hive_interior_rings + GameConfig.hive_soil_depth - 1.0
+	var rings: float = (
+		GameConfig.hive_interior_rings
+		+ GameConfig.hive_soil_depth
+		+ GameConfig.hive_rock_rings
+		- 1.0
+	)
 	return _hive_centre_local() + Vector2(0, -rings * GameConfig.hive_cell_spacing * 1.5)
 
 func _build_cameras() -> void:
@@ -408,7 +499,14 @@ func _spawn_hatched_bee(role: int, cell: Node2D) -> void:
 	var bee := Bee.new()
 	bee.position = cell.position
 	hive_root.add_child(bee)
-	bee.setup(hive, "nectar", next_bee_id, role, self)
+	# The cell carries the sub-mode for the role as well as the role
+	# itself, so "raises pollen foragers" or "raises automining miners"
+	# comes out right without you having to select the new bee and set it
+	# up by hand every time.
+	var focus: String = cell.hatch_focus if cell.hatch_focus != "" else "nectar"
+	bee.setup(hive, focus, next_bee_id, role, self)
+	if role == Bee.Role.MINER:
+		bee.automine = cell.hatch_automine
 	next_bee_id += 1
 	if role == Bee.Role.FORAGER:
 		bee.state = Bee.State.IN_HIVE_TO_EXIT
@@ -485,6 +583,12 @@ func _hatch_ready_brood() -> void:
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
 		cell.clear_cell()
 		_spawn_hatched_bee(role, cell)
+		# Unless the player pinned it, a role set on a cell applies to that
+		# one bee and then clears, so a one-off choice doesn't quietly
+		# govern everything the cell ever raises. "Keep for every bee" in
+		# the cell popup is what locks it in.
+		if not cell.hatch_role_locked:
+			cell.hatch_role = -1
 		hive.record_birth()
 		_update_population_readout()
 
@@ -514,6 +618,7 @@ func _update_population_readout() -> void:
 	var foragers := 0
 	var nurses := 0
 	var builders := 0
+	var honey_makers := 0
 	for b in get_tree().get_nodes_in_group("bees"):
 		match b.role:
 			Bee.Role.NURSERY:
@@ -522,7 +627,9 @@ func _update_population_readout() -> void:
 				builders += 1
 			Bee.Role.FORAGER:
 				foragers += 1
-	hud.update_population(foragers, nurses, builders)
+			Bee.Role.HONEY_MAKER:
+				honey_makers += 1
+	hud.update_population(foragers, nurses, builders, honey_makers)
 
 func _prune_selection() -> void:
 	var before := selected_bees.size()
@@ -795,6 +902,8 @@ func _on_role_requested(role_name: String) -> void:
 			target_role = Bee.Role.IDLE
 		"miner":
 			target_role = Bee.Role.MINER
+		"honey_maker":
+			target_role = Bee.Role.HONEY_MAKER
 	for b in selected_bees:
 		if is_instance_valid(b):
 			b.set_role(target_role)
@@ -812,6 +921,8 @@ func _on_secondary_role_requested(role_name: String) -> void:
 			target_role = Bee.Role.BUILDER
 		"miner":
 			target_role = Bee.Role.MINER
+		"honey_maker":
+			target_role = Bee.Role.HONEY_MAKER
 		# "none" (or anything else) leaves target_role at -1, clearing it
 	for b in selected_bees:
 		if is_instance_valid(b):
@@ -847,9 +958,53 @@ func _on_cell_designation_requested(cell: Node2D, type: String) -> void:
 		cell.clear_cell()
 		cell.set_designation(type)
 
-func _on_cell_hatch_role_requested(cell: Node2D, role: int) -> void:
+func _on_cell_hatch_role_requested(cell: Node2D, role: int, focus: String, use_automine: bool) -> void:
+	if not is_instance_valid(cell):
+		return
+	cell.hatch_role = role
+	cell.hatch_focus = focus
+	cell.hatch_automine = use_automine
+
+## Pins the cell's hatch role so every future bee raised there inherits
+## it, rather than the role applying to the next one only.
+func _on_cell_hatch_lock_requested(cell: Node2D, locked: bool) -> void:
 	if is_instance_valid(cell):
-		cell.hatch_role = role
+		cell.hatch_role_locked = locked
+
+## Clearing a cell out. "move" hands it to a builder to carry into
+## another cell; "discard" throws it out of the hive there and then.
+## `keep_empty` is what stops foragers immediately refilling it, which is
+## the real problem this solves -- with a lot of foragers running, every
+## spare cell fills with nectar and nothing is left for pollen or brood.
+func _on_cell_empty_requested(cell: Node2D, method: String, keep_empty: bool) -> void:
+	if not is_instance_valid(cell):
+		return
+	cell.keep_empty = keep_empty
+	if keep_empty:
+		# "keep this one clear" and "reserve it for X" are contradictory;
+		# the player can designate it again later, which clears keep_empty
+		cell.set_designation("")
+		cell.keep_empty = true
+
+	if cell.content_type == "" or cell.content_type == "brood":
+		return   # nothing to shift, and brood isn't cargo
+
+	if method == "discard":
+		cell.clear_cell()
+		hive.announce()
+	else:
+		# a builder picks this up the same way it clears a re-designated
+		# cell; if nothing else has room it ends up discarded anyway, and
+		# the player was told that when they chose this
+		cell.evict_requested = true
+
+func _on_level_chosen(level: int) -> void:
+	GameConfig.starting_level = level
+	GameConfig.menu_pending = false
+	GameConfig.sim_time = 0.0
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
 
 ## Enters "click a hive tile" mode for the selected builders. Switches to
 ## the hive view automatically, since that's where the click has to land.
