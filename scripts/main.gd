@@ -31,6 +31,7 @@ const RockBlock = preload("res://scripts/rock_block.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
+const GameOver = preload("res://scripts/game_over.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
 ## The fixed starting stages the main menu offers, so a run can begin
@@ -38,9 +39,10 @@ const Shapes = preload("res://scripts/shapes.gd")
 ## means "use whatever the tuning numbers say" -- that's the ordinary
 ## Restart Run behaviour.
 const LEVELS := {
-	1: {"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0, "nurses": 0, "builders": 0},
-	2: {"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0, "nurses": 0, "builders": 0},
-	3: {"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1, "nurses": 0, "builders": 0},
+	1: {"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0, "nurses": 0, "builders": 0, "miners": 0},
+	2: {"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0, "nurses": 0, "builders": 0, "miners": 0},
+	3: {"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1, "nurses": 0, "builders": 0, "miners": 0},
+	4: {"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3, "nurses": 2, "builders": 2, "miners": 2},
 }
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
@@ -51,7 +53,13 @@ const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
 const FLOWER_FIELD_HALF_SIZE := Vector2(950.0, 700.0)
 const FLOWER_MIN_DISTANCE := 90.0     # keep the ground by the hive clear
 const MAX_CLUSTERS_PER_SPECIES := 22
-const OBSTACLE_COUNT := 14
+## A few large plateaus rather than many small mounds: raised ground is
+## meant to reshape how the colony moves across the meadow, which a
+## scattering of little bumps doesn't do.
+const RAISED_AREA_COUNT := 4
+const RAISED_AREA_RADIUS := Vector2(130.0, 240.0)
+const TREE_COUNT := 10
+const TREE_RADIUS := Vector2(22.0, 34.0)
 const OBSTACLE_HIVE_CLEARANCE := 220.0
 const HIVE_MARKER_POSITION := Vector2(620, 330)
 
@@ -72,6 +80,13 @@ var selection_layer: Node2D
 var hive: Node2D
 var hud: CanvasLayer
 var queen: Node2D
+var game_over: CanvasLayer
+var colony_lost: bool = false
+
+## Sim time the low-energy warning was last shown, so it can't nag. -INF
+## means it hasn't been shown at all yet this run.
+var last_energy_warning: float = -INF
+var warning_check_timer: float = 5.0
 
 var in_hive_view: bool = false
 var selected_bees: Array = []
@@ -145,6 +160,7 @@ func _ready() -> void:
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
+	hud.finish_first_requested.connect(_on_finish_first_requested)
 	hud.floral_preference_requested.connect(_on_floral_preference_requested)
 	add_child(hud)
 
@@ -158,6 +174,11 @@ func _ready() -> void:
 	add_child(menu)
 	if GameConfig.menu_pending:
 		menu.open()
+
+	game_over = GameOver.new()
+	game_over.restart_requested.connect(_on_restart_after_loss)
+	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
+	add_child(game_over)
 
 	hive.storage_changed.connect(func(n, p, h): hud.update_storage(n, p, h))
 	hud.update_day(day)
@@ -196,38 +217,47 @@ func _build_meadow() -> void:
 ## Trees and raised ground that foragers steer around (see
 ## Bee._avoid_obstacles). Kept clear of the hive itself so the entrance
 ## is never accidentally blocked.
+## Raised areas go down first and are given a wide berth, because they
+## are whole regions of the map rather than single props -- a few big
+## plateaus the colony has to route around, each with its own unreachable
+## trees and flowers on top. Scattered trees fill in around them.
 func _scatter_obstacles() -> void:
 	var placed: Array = []
-	for i in range(OBSTACLE_COUNT):
-		var is_tree := randf() < 0.65
-		var radius: float = randf_range(22.0, 34.0) if is_tree else randf_range(30.0, 48.0)
+	_place_obstacles(placed, RAISED_AREA_COUNT, Obstacle.Kind.RAISED, RAISED_AREA_RADIUS, 120.0)
+	_place_obstacles(placed, TREE_COUNT, Obstacle.Kind.TREE, TREE_RADIUS, 40.0)
+	_spawn_starting_foragers()
+
+func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector2, gap: float) -> void:
+	for i in range(count):
+		var radius: float = randf_range(radius_range.x, radius_range.y)
 		var pos: Vector2
 		var attempts := 0
-		while attempts < 10:
+		while attempts < 25:
 			pos = hive.position + Vector2(
 				randf_range(-FLOWER_FIELD_HALF_SIZE.x, FLOWER_FIELD_HALF_SIZE.x),
 				randf_range(-FLOWER_FIELD_HALF_SIZE.y, FLOWER_FIELD_HALF_SIZE.y)
 			)
-			var clear_of_hive: bool = pos.distance_to(hive.position) > OBSTACLE_HIVE_CLEARANCE
+			# The hive doorway has to stay open, so nothing is allowed
+			# near it -- a plateau across the entrance would wall the
+			# colony in.
+			var clear_of_hive: bool = pos.distance_to(hive.position) > OBSTACLE_HIVE_CLEARANCE + radius
 			var clear_of_others := true
 			for other in placed:
-				if pos.distance_to(other.pos) < radius + other.radius + 40.0:
+				if pos.distance_to(other.pos) < radius + other.radius + gap:
 					clear_of_others = false
 					break
 			if clear_of_hive and clear_of_others:
 				break
 			attempts += 1
-		if attempts >= 10:
-			continue   # couldn't find a clear spot -- skip rather than overlap
+		if attempts >= 25:
+			continue   # nowhere it fits -- skip rather than overlap
 
 		var obstacle := Obstacle.new()
 		obstacle.position = pos
 		obstacle.z_index = -1   # above the grass, below bees and flowers
 		meadow_root.add_child(obstacle)
-		obstacle.setup(Obstacle.Kind.TREE if is_tree else Obstacle.Kind.RAISED, radius)
+		obstacle.setup(kind, radius)
 		placed.append({"pos": pos, "radius": radius})
-
-	_spawn_starting_foragers()
 
 ## How many foragers a run opens with, and which resource each is on.
 ## A chosen stage says exactly; otherwise the tuning number applies, with
@@ -276,15 +306,30 @@ func _seed_flower() -> void:
 			centers.pop_front()
 		cluster_centers[species_name] = centers
 
-	# Raised ground and tree trunks are solid now, so a flower planted on
-	# one would be unreachable -- a forager would walk up to the edge and
-	# stall. Nudge it clear instead.
+	# Raised ground and tree trunks are solid, so a flower planted on one
+	# would be unreachable -- a forager would walk to the edge and stall.
+	# Try elsewhere first; pushing it clear is the last resort, because
+	# doing that for every attempt would ring each plateau with a
+	# suspiciously neat hedge of flowers.
+	for retry in range(8):
+		if _is_clear_ground(pos):
+			break
+		pos = _random_field_point()
 	pos = _clear_of_obstacles(pos)
 
 	var flower := Flower.new()
 	flower.position = pos
 	meadow_root.add_child(flower)
 	flower.setup(species_index)
+
+## Is this spot out in the open, clear of every solid obstacle?
+func _is_clear_ground(point: Vector2) -> bool:
+	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+		if not is_instance_valid(obstacle) or not obstacle.solid:
+			continue
+		if point.distance_to(obstacle.position) < obstacle.radius + 24.0:
+			return false
+	return true
 
 ## Pushes `point` out to the boundary of any solid obstacle it lands
 ## inside, plus a little margin so a bee can actually stand on it.
@@ -400,11 +445,14 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
 	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
 	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
+	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)
 	var honey_makers: int = 0 if not level.is_empty() else int(GameConfig.starting_honey_makers)
 	for i in range(nurses):
 		_spawn_indoor_bee(Bee.Role.NURSERY)
 	for i in range(builders):
 		_spawn_indoor_bee(Bee.Role.BUILDER)
+	for i in range(miners):
+		_spawn_indoor_bee(Bee.Role.MINER)
 	for i in range(honey_makers):
 		_spawn_indoor_bee(Bee.Role.HONEY_MAKER)
 
@@ -505,7 +553,13 @@ func _spawn_hatched_bee(role: int, cell: Node2D) -> void:
 	# comes out right without you having to select the new bee and set it
 	# up by hand every time.
 	var focus: String = cell.hatch_focus if cell.hatch_focus != "" else "nectar"
-	bee.setup(hive, focus, next_bee_id, role, self)
+	# An architect's sub-mode travels in the same field as a forager's
+	# resource, so hand it to the right property.
+	if role == Bee.Role.BUILDER:
+		bee.architect_mode = focus if focus in ["build", "maintain", "both"] else "both"
+		bee.setup(hive, "nectar", next_bee_id, role, self)
+	else:
+		bee.setup(hive, focus, next_bee_id, role, self)
 	if role == Bee.Role.MINER:
 		bee.automine = cell.hatch_automine
 	next_bee_id += 1
@@ -553,6 +607,8 @@ func _process(delta: float) -> void:
 			hud.update_day(day)
 		_hatch_ready_brood()
 		_reseed_meadow(delta)
+		_check_for_loss()
+		_check_colony_energy(delta)
 		rate_sample_timer -= delta
 		if rate_sample_timer <= 0.0:
 			rate_sample_timer = 10.0
@@ -593,6 +649,61 @@ func _hatch_ready_brood() -> void:
 		hive.record_birth()
 		_update_population_readout()
 
+## The queen is the only bee that can lay and there is no succession, so
+## losing her ends the run. Checked here rather than from the bee itself
+## because a dying bee frees itself, and main.gd is what holds the
+## reference worth watching.
+func _check_for_loss() -> void:
+	if colony_lost or queen == null:
+		return
+	if is_instance_valid(queen):
+		return
+	colony_lost = true
+	game_over.open(
+		day,
+		get_tree().get_nodes_in_group("bees").size(),
+		hive.total("nectar"),
+		hive.total_honey(),
+	)
+
+## Warns when the colony as a whole is running on empty. Deliberately
+## doesn't pause: it's information, and stopping the game every time
+## things got tight would be worse than the problem. It also won't repeat
+## for `low_energy_gap` seconds, so a colony that stays hungry gets told
+## once and then left alone to be dealt with.
+func _check_colony_energy(delta: float) -> void:
+	warning_check_timer -= delta
+	if warning_check_timer > 0.0:
+		return
+	warning_check_timer = 5.0
+
+	if GameConfig.sim_time - last_energy_warning < GameConfig.low_energy_gap:
+		return
+
+	var bees: Array = get_tree().get_nodes_in_group("bees")
+	if bees.size() < 3:
+		return   # too small a colony for a proportion to mean anything
+
+	var hungry := 0
+	for b in bees:
+		if b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
+			hungry += 1
+	var share: float = float(hungry) / float(bees.size())
+	if share < GameConfig.low_energy_warning_fraction:
+		return
+
+	last_energy_warning = GameConfig.sim_time
+	hud.show_warning(
+		"%d of your %d bees (%d%%) are below %d%% energy. The colony is burning nectar faster than it is bringing it in — put more bees on nectar foraging, or they will start to starve."
+		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)]
+	)
+
+func _on_restart_after_loss() -> void:
+	GameConfig.sim_time = 0.0
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
+
 func _sample_rates() -> void:
 	rate_samples.append({
 		"t": GameConfig.sim_time,
@@ -625,7 +736,7 @@ func _update_population_readout() -> void:
 			Bee.Role.NURSERY:
 				nurses += 1
 			Bee.Role.BUILDER:
-				builders += 1
+				builders += 1   # architects
 			Bee.Role.FORAGER:
 				foragers += 1
 			Bee.Role.HONEY_MAKER:
@@ -915,6 +1026,15 @@ func _on_role_requested(role_name: String) -> void:
 		hud.update_selection(selected_bees)
 		return
 
+	# nor is an architect's mode -- it says which jobs one will take
+	if role_name.begins_with("architect_"):
+		var mode: String = role_name.substr("architect_".length())
+		for b in selected_bees:
+			if is_instance_valid(b):
+				b.architect_mode = mode
+		hud.update_selection(selected_bees)
+		return
+
 	var target_role: int = Bee.Role.FORAGER
 	match role_name:
 		"nursery":
@@ -933,6 +1053,12 @@ func _on_role_requested(role_name: String) -> void:
 		if is_instance_valid(b):
 			b.set_role(target_role)
 	_update_population_readout()
+	hud.update_selection(selected_bees)
+
+func _on_finish_first_requested(value: bool) -> void:
+	for b in selected_bees:
+		if is_instance_valid(b):
+			b.finish_task_first = value
 	hud.update_selection(selected_bees)
 
 func _on_secondary_role_requested(role_name: String) -> void:

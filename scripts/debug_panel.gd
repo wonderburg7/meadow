@@ -230,6 +230,16 @@ const TUNABLES := [
 		"tip": "A nurse tops a larva back up once its remaining food drops below this, rather than waiting for it to stall completely.",
 	},
 	{
+		"key": "larva_death_seconds", "label": "Starves after s", "step": 10.0, "min": 10.0,
+		"category": "Brood & the queen",
+		"tip": "How long a larva survives with nothing to eat before it dies. The body then blocks the cell until an architect on cell maintenance clears it out and carries it away, so neglect costs you the cell as well as the bee.",
+	},
+	{
+		"key": "cell_clean_time", "label": "Clearing s", "step": 5.0, "min": 1.0,
+		"category": "Brood & the queen",
+		"tip": "Architect-seconds needed to clear a dead larva out of a cell. Several working the same cell share it.",
+	},
+	{
 		"key": "nurse_carry_feeds", "label": "Feeds carried", "step": 1.0, "min": 1.0,
 		"category": "Brood & the queen",
 		"tip": "How many complete meals a nurse loads up with in one visit to the stores. She walks to a pollen cell and then a nectar or honey cell to fill up, and feeds larvae from what she is carrying -- higher values mean fewer trips back to the comb.",
@@ -327,6 +337,21 @@ const TUNABLES := [
 	},
 
 	# --- Interface ---
+	{
+		"key": "low_energy_warning_fraction", "label": "Warn at share", "step": 0.05, "min": 0.05,
+		"category": "Interface",
+		"tip": "What fraction of the colony has to be running low on energy before the game warns you. The warning does not pause anything.",
+	},
+	{
+		"key": "low_energy_warning_level", "label": "Low energy is", "step": 0.05, "min": 0.05,
+		"category": "Interface",
+		"tip": "What counts as a bee running low, as a fraction of its energy capacity.",
+	},
+	{
+		"key": "low_energy_gap", "label": "Warn every s", "step": 30.0, "min": 10.0,
+		"category": "Interface",
+		"tip": "Shortest gap between low-energy warnings, so a colony that stays hungry is told once and then left alone to be dealt with.",
+	},
 	{
 		"key": "show_info_badges", "label": "Show info icons", "toggle": true,
 		"category": "Interface",

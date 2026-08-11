@@ -30,6 +30,7 @@ const POLLEN_COLOR := Color(0.4, 0.35, 0.8)
 const HONEY_WET_COLOR := Color(0.78, 0.55, 0.18)
 const HONEY_COLOR := Color(0.85, 0.42, 0.05)
 const BROOD_COLOR := Color(0.9, 0.9, 0.85)
+const CORPSE_COLOR := Color(0.34, 0.30, 0.30)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
 var content_type: String = ""
@@ -43,9 +44,15 @@ var being_tended: bool = false
 ## come and drop pollen plus nectar or honey in to top it back up. This
 ## is what makes nursing a real, ongoing job rather than a speed bonus.
 var brood_fed_seconds: float = 0.0
+## How long this larva has gone with nothing at all in it. Past
+## `larva_death_seconds` it dies and the cell holds a body instead.
+var unfed_seconds: float = 0.0
 ## Set to true by whichever feed was last given, so the readout can say
 ## whether the larva is on honey or on nectar.
 var fed_on_honey: bool = false
+
+## Architect-seconds spent clearing a dead larva out of this cell.
+var clean_progress: float = 0.0
 
 ## Honey drying. A honey maker fans its wings over the cell to drive the
 ## water off; `ripen_progress` counts bee-seconds of fanning, and the
@@ -152,7 +159,23 @@ func _develop_brood(delta: float) -> void:
 		var rate: float = GameConfig.tending_speed_bonus if being_tended else 1.0
 		brood_progress += delta * rate
 		brood_fed_seconds = max(0.0, brood_fed_seconds - delta)
+		unfed_seconds = 0.0
+	else:
+		# Nothing left in it. A larva can go hungry for a while, but not
+		# indefinitely -- neglect eventually kills it, and the body then
+		# blocks the cell until an architect clears it out.
+		unfed_seconds += delta
+		if unfed_seconds >= GameConfig.larva_death_seconds:
+			_larva_dies()
 	being_tended = false   # nursery workers re-assert this each frame while tending
+
+func _larva_dies() -> void:
+	content_type = "corpse"
+	amount = 0.0
+	brood_progress = 0.0
+	brood_fed_seconds = 0.0
+	unfed_seconds = 0.0
+	clean_progress = 0.0
 
 # --- working positions --------------------------------------------
 
@@ -225,6 +248,8 @@ func capacity_for(resource_type: String) -> float:
 func accepts(resource_type: String) -> bool:
 	if not is_built:
 		return false
+	if content_type == "corpse":
+		return false   # blocked until an architect clears it
 	# A cell the player has asked to be kept clear takes nothing at all
 	# until they designate it to something.
 	if keep_empty:
@@ -241,7 +266,7 @@ func is_nursery_cell() -> bool:
 func space_for(resource_type: String) -> float:
 	if not is_built:
 		return 0.0
-	if content_type == "brood":
+	if content_type == "brood" or content_type == "corpse":
 		return 0.0
 	if not accepts(resource_type):
 		return 0.0
@@ -257,7 +282,9 @@ func space_for(resource_type: String) -> float:
 func needs_eviction() -> bool:
 	if not is_built:
 		return false
-	if content_type == "" or content_type == "brood":
+	# A body isn't cargo -- clearing it is its own job (needs_cleaning),
+	# because it ends up thrown away rather than moved to another cell.
+	if content_type == "" or content_type == "brood" or content_type == "corpse":
 		return false
 	if evict_requested:
 		return true
@@ -340,6 +367,29 @@ func feed_brood(seconds: float, on_honey: bool) -> void:
 func needs_feeding() -> bool:
 	return content_type == "brood" and brood_fed_seconds < GameConfig.brood_feed_threshold
 
+## Seconds this larva has left before it starves, for the readout.
+func seconds_until_death() -> float:
+	if content_type != "brood":
+		return 0.0
+	return max(0.0, GameConfig.larva_death_seconds - unfed_seconds)
+
+# --- clearing a dead larva ------------------------------------------
+
+func needs_cleaning() -> bool:
+	return content_type == "corpse"
+
+## Called each frame by every architect working here, so several clearing
+## the same cell share the load. Returns true once the body is free to be
+## carried away.
+func add_clean_progress(delta: float) -> bool:
+	if content_type != "corpse":
+		return false
+	clean_progress += delta
+	return clean_progress >= GameConfig.cell_clean_time
+
+func clean_fraction() -> float:
+	return clamp(clean_progress / max(0.001, GameConfig.cell_clean_time), 0.0, 1.0)
+
 func brood_ready() -> bool:
 	return content_type == "brood" and brood_progress >= GameConfig.brood_develop_time
 
@@ -348,8 +398,11 @@ func clear_cell() -> void:
 	amount = 0.0
 	brood_progress = 0.0
 	brood_fed_seconds = 0.0
+	unfed_seconds = 0.0
+	clean_progress = 0.0
 	ripen_progress = 0.0
 	evict_requested = false
+	evict_mode = "move"
 
 # --- display ------------------------------------------------------
 
@@ -404,7 +457,14 @@ func _refresh() -> void:
 			color = BROOD_COLOR
 			info_label.text = "egg %d%%" % int(development_percent())
 			if brood_fed_seconds <= 0.0:
-				info_label.text += " (hungry)"
+				# a starving larva reddens as it runs out of time, so a
+				# neglected nursery is obvious without opening any panels
+				var urgency: float = 1.0 - (seconds_until_death() / max(0.001, GameConfig.larva_death_seconds))
+				color = BROOD_COLOR.lerp(Color(0.85, 0.25, 0.2), urgency)
+				info_label.text += " (%ds)" % int(seconds_until_death())
+		"corpse":
+			color = CORPSE_COLOR
+			info_label.text = "dead %d%%" % int(clean_fraction() * 100.0)
 		_:
 			color = EMPTY_COLOR
 			# an empty cell reserved for something still says so, otherwise

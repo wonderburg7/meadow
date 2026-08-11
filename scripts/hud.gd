@@ -36,6 +36,8 @@ signal forage_start_point_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
 signal secondary_role_requested(role_key: String)
+## Whether reassigning the selected bees waits for their current job.
+signal finish_first_requested(value: bool)
 ## Enters "click a flower" mode -- only offered when floral constancy is
 ## on in tuning. See GameConfig.floral_constancy_on.
 signal floral_preference_requested()
@@ -58,8 +60,13 @@ const HATCH_ROLES := [
 	{"label": "Nursery", "role": 1, "options": [
 		{"label": "Nursery", "focus": "nectar", "automine": false},
 	]},
-	{"label": "Builder", "role": 2, "options": [
-		{"label": "Builder", "focus": "nectar", "automine": false},
+	## An architect's sub-mode rides in the `focus` field rather than
+	## getting a field of its own -- the cell only needs to carry one
+	## extra string, and a bee is never both a forager and an architect.
+	{"label": "Architect", "role": 2, "options": [
+		{"label": "Architect — cell builder", "focus": "build", "automine": false},
+		{"label": "Architect — cell maintenance", "focus": "maintain", "automine": false},
+		{"label": "Architect — both", "focus": "both", "automine": false},
 	]},
 	{"label": "Miner", "role": 5, "options": [
 		{"label": "Miner — marked blocks only", "focus": "nectar", "automine": false},
@@ -79,6 +86,14 @@ const SPEEDS := [
 	{"label": "▶▶▶", "scale": 4.0, "tip": "Fast forward at quadruple speed. The quickest way to reach the next day."},
 ]
 
+## What an architect can be set to do. The keys are what main.gd matches
+## on in _on_role_requested.
+const ARCHITECT_MODES := [
+	{"key": "architect_build", "mode": "build", "label": "Cell builder"},
+	{"key": "architect_maintain", "mode": "maintain", "label": "Cell maintenance"},
+	{"key": "architect_both", "mode": "both", "label": "Both"},
+]
+
 const ROLE_BUTTONS := [
 	{
 		"label": "Forager", "role": "forager",
@@ -89,8 +104,8 @@ const ROLE_BUTTONS := [
 		"tip": "Keep the selected bees indoors feeding the brood. Larvae do not develop at all on their own: a nurse has to drop pollen and either nectar or honey into each cell, and each feed only buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. Standing over a fed larva speeds it up as well. With no nurse, the colony cannot grow.",
 	},
 	{
-		"label": "Builder", "role": "builder",
-		"tip": "Set the selected bees to draw new comb cells and to shift stores out of any cell you have re-designated. Building burns extra energy, because bees make wax from the sugar they have eaten.",
+		"label": "Architect", "role": "builder",
+		"tip": "Architects look after the comb itself. As a cell builder one draws new cells; on cell maintenance it clears dead larvae out of blocked cells and shifts stores out of any cell you have re-designated or asked to be emptied; on both it takes whichever job comes up, with maintenance first. Building burns extra energy, because bees make wax from the sugar they have eaten.",
 	},
 	{
 		"label": "Miner", "role": "miner",
@@ -144,6 +159,10 @@ var active_flower: Node2D = null
 var obstacle_popup: PopupPanel
 var obstacle_popup_label: Label
 
+var warning_panel: PanelContainer
+var warning_label: Label
+var warning_timer: float = 0.0
+
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
 var pending_type: String = ""
@@ -169,6 +188,7 @@ func _ready() -> void:
 	_build_cell_popup()
 	_build_flower_popup()
 	_build_obstacle_popup()
+	_build_warning_banner()
 	_build_discard_dialog()
 
 func _make_label(pos: Vector2, font_size: int) -> Label:
@@ -403,6 +423,44 @@ func _build_flower_popup() -> void:
 ## Clicking a tree or a bank of raised ground says what it is, so the
 ## things bees have to walk round aren't unexplained scenery.
 
+## --- warning banner -----------------------------------------------
+## A nudge, not an interruption: it sits at the top of the screen, the
+## game carries on running behind it, and it clears itself after a while
+## if the player doesn't dismiss it.
+
+const WARNING_SECONDS := 18.0
+
+func _build_warning_banner() -> void:
+	warning_panel = PanelContainer.new()
+	warning_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	warning_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	warning_panel.offset_top = 48
+	warning_panel.custom_minimum_size = Vector2(520, 0)
+	warning_panel.visible = false
+	add_child(warning_panel)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	warning_panel.add_child(row)
+
+	warning_label = Label.new()
+	warning_label.add_theme_font_size_override("font_size", 13)
+	warning_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
+	warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	warning_label.custom_minimum_size = Vector2(450, 0)
+	row.add_child(warning_label)
+
+	var close_btn := Button.new()
+	close_btn.text = "×"
+	close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.pressed.connect(func(): warning_panel.visible = false)
+	row.add_child(close_btn)
+
+func show_warning(text: String) -> void:
+	warning_label.text = text
+	warning_panel.visible = true
+	warning_timer = WARNING_SECONDS
+
 func _build_obstacle_popup() -> void:
 	obstacle_popup = PopupPanel.new()
 	add_child(obstacle_popup)
@@ -485,7 +543,10 @@ func _refresh_cell_popup() -> void:
 						int(active_cell.brood_fed_seconds),
 					])
 				else:
-					lines.append("Hungry -- development has stopped until a nurse feeds it")
+					lines.append("Hungry -- development has stopped. It dies in %ds if nobody feeds it" % int(active_cell.seconds_until_death()))
+			"corpse":
+				lines.append("A larva starved here. The body blocks the cell.")
+				lines.append("Being cleared: %d%% -- an architect on cell maintenance has to carry it out" % int(active_cell.clean_fraction() * 100.0))
 			_:
 				lines.append("Empty")
 	var reserved := "any resource"
@@ -519,6 +580,10 @@ func _refresh_cell_popup() -> void:
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 
 func _process(_delta: float) -> void:
+	if warning_panel.visible:
+		warning_timer -= _delta
+		if warning_timer <= 0.0:
+			warning_panel.visible = false
 	if cell_popup.visible:
 		_refresh_cell_popup()
 	if flower_popup.visible:
@@ -599,7 +664,7 @@ func update_storage(nectar: float, pollen: float, honey: float) -> void:
 	]
 
 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
-	population_label.text = "Bees: %d foraging, %d nursing, %d building, %d on honey" % [
+	population_label.text = "Bees: %d foraging, %d nursing, %d architects, %d on honey" % [
 		foragers, nurses, builders, honey_makers,
 	]
 
@@ -676,18 +741,22 @@ func _rebuild_role_controls(bees: Array) -> void:
 		nursery_btn.pressed.connect(func(): role_requested.emit("nursery"))
 		role_row.add_child(_with_info(nursery_btn, _tip_for("nursery")))
 
-	# --- builder: manual placement directly if already building,
-	# otherwise a plain button to become one
+	# --- architect: manual cell placement plus a mode switch if already
+	# one, otherwise a dropdown that picks the mode as it assigns the role
 	if common_role == Bee.Role.BUILDER:
 		var build_btn := Button.new()
 		build_btn.text = "Build Cell"
 		build_btn.pressed.connect(func(): build_cell_requested.emit())
-		role_row.add_child(_with_info(build_btn, "Click this, then click an empty tile in the hive view. The selected builders will place and build a cell there next, before falling back to their usual pick-a-site behaviour."))
+		role_row.add_child(_with_info(build_btn, "Click this, then click an empty tile in the hive view. The selected architects will place and build a cell there next, before falling back to their usual pick-a-site behaviour."))
+
+		var current_mode: String = bees[0].architect_mode if is_instance_valid(bees[0]) else "both"
+		role_row.add_child(_make_role_menu(
+			"Doing: %s" % _architect_mode_label(current_mode),
+			_tip_for("builder"),
+			_architect_items(false)
+		))
 	else:
-		var builder_btn := Button.new()
-		builder_btn.text = "Builder"
-		builder_btn.pressed.connect(func(): role_requested.emit("builder"))
-		role_row.add_child(_with_info(builder_btn, _tip_for("builder")))
+		role_row.add_child(_make_role_menu("Architect", _tip_for("builder"), _architect_items(true)))
 
 	# --- miner: automine toggle directly if already mining, otherwise a
 	# dropdown that becomes a miner with automine already on
@@ -727,17 +796,9 @@ func _rebuild_role_controls(bees: Array) -> void:
 		egg_btn.pressed.connect(func(): role_requested.emit("egg_layer"))
 		role_row.add_child(_with_info(egg_btn, _tip_for("egg_layer")))
 
-	# --- secondary role: only Miner, Nursery and Builder ever check
-	# theirs (see Bee._idle_dispatch), so it's only offered while one of
-	# those is the common role -- offering it otherwise would be a
-	# control that silently does nothing.
-	if (
-		common_role == Bee.Role.MINER
-		or common_role == Bee.Role.NURSERY
-		or common_role == Bee.Role.BUILDER
-		or common_role == Bee.Role.HONEY_MAKER
-		or common_role == Bee.Role.EGG_LAYER
-	):
+	# --- secondary role: offered for any bee, so every one of them can be
+	# given something to fall back on rather than standing around.
+	if common_role != -1:
 		var current_secondary: int = bees[0].secondary_role if is_instance_valid(bees[0]) else -1
 		var secondary_menu := _make_role_menu(
 			"Backup: %s" % _secondary_label(current_secondary),
@@ -746,12 +807,20 @@ func _rebuild_role_controls(bees: Array) -> void:
 				{"text": "None", "action": func(): secondary_role_requested.emit("none")},
 				{"text": "Forager", "action": func(): secondary_role_requested.emit("forager")},
 				{"text": "Nursery", "action": func(): secondary_role_requested.emit("nursery")},
-				{"text": "Builder", "action": func(): secondary_role_requested.emit("builder")},
+				{"text": "Architect", "action": func(): secondary_role_requested.emit("builder")},
 				{"text": "Miner", "action": func(): secondary_role_requested.emit("miner")},
 				{"text": "Honey maker", "action": func(): secondary_role_requested.emit("honey_maker")},
 			]
 		)
 		role_row.add_child(secondary_menu)
+
+	# --- whether a change of job waits for the current one to finish ---
+	var finish_box := CheckBox.new()
+	finish_box.text = "Finish current task first"
+	finish_box.add_theme_font_size_override("font_size", 11)
+	finish_box.button_pressed = bees[0].finish_task_first if is_instance_valid(bees[0]) else false
+	finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
+	role_row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying first, an architect finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts the new job immediately."))
 
 ## -1 means the selection is mixed -- no role button gets hidden in that
 ## case, since there's no single "already this role" to exclude.
@@ -784,6 +853,37 @@ func _secondary_label(secondary_role: int) -> String:
 			return "Egg layer"
 		_:
 			return "None"
+
+## Menu entries for the architect dropdown. `assign_role` is true when
+## the bees aren't architects yet, in which case each entry also takes
+## the role, not just the mode.
+##
+## Written as a plain loop rather than a mapped lambda: each entry needs
+## its own captured copy of the mode key, and a lambda built inside
+## another lambda is a good way to end up with every entry sharing the
+## last one.
+func _architect_items(assign_role: bool) -> Array:
+	var items: Array = []
+	for entry in ARCHITECT_MODES:
+		var key: String = entry.key
+		var label: String = entry.label
+		if assign_role:
+			items.append({
+				"text": "Become architect — %s" % label,
+				"action": func(): role_requested.emit("builder"); role_requested.emit(key),
+			})
+		else:
+			items.append({
+				"text": label,
+				"action": func(): role_requested.emit(key),
+			})
+	return items
+
+func _architect_mode_label(mode: String) -> String:
+	for entry in ARCHITECT_MODES:
+		if entry.mode == mode:
+			return entry.label
+	return "Both"
 
 func _tip_for(role_key: String) -> String:
 	for entry in ROLE_BUTTONS:

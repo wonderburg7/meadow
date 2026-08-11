@@ -261,6 +261,15 @@ func find_unfinished_cell() -> Node2D:
 			return cell
 	return null
 
+## A cell blocked by a dead larva. Nothing can be stored there and no egg
+## can be laid in it until an architect clears it, so this outranks every
+## other maintenance job.
+func find_cell_needing_cleaning() -> Node2D:
+	for cell in cells:
+		if is_instance_valid(cell) and cell.needs_cleaning():
+			return cell
+	return null
+
 func find_cell_needing_eviction() -> Node2D:
 	for cell in cells:
 		if cell.needs_eviction():

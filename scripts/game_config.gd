@@ -77,6 +77,13 @@ var brood_feed_honey: float = 1.5       # honey used per feed -- less goes furth
 ## this, rather than waiting for it to stall completely.
 var brood_feed_threshold: float = 6.0
 
+## A larva that has gone this long with nothing to eat dies. The cell is
+## then blocked by the body until an architect on maintenance clears it
+## out and carries it away -- neglect costs you the cell as well as the
+## bee.
+var larva_death_seconds: float = 90.0
+var cell_clean_time: float = 20.0   # architect-seconds to clear a dead larva
+
 ## Nurses carry the food to the brood themselves. A nurse walks to a
 ## pollen cell and loads up, then to a honey or nectar cell, and only
 ## then can she feed anything -- she feeds from what she is carrying, not
@@ -91,7 +98,16 @@ var nurse_load_time: float = 1.5    # seconds spent filling up at a cell
 ## `hunger_threshold` of its capacity it breaks off, walks to a cell with
 ## food in it, and feeds until it is full.
 var hunger_threshold: float = 0.30      # fraction of capacity
-var bee_eat_rate: float = 12.0          # energy per second while feeding
+var bee_eat_rate: float = 15.0          # energy per second while feeding
+
+# --- warnings ---
+## When this fraction of the colony is below `low_energy_warning_level`
+## of its energy, the game says so. It doesn't pause -- it's a nudge, not
+## an interruption -- and it won't say it again for `low_energy_gap`
+## seconds even if things stay bad.
+var low_energy_warning_fraction: float = 0.5
+var low_energy_warning_level: float = 0.3
+var low_energy_gap: float = 180.0
 
 # --- honey ---
 ## Honey makers take nectar out of the comb, chew enzymes into it, spit
@@ -154,7 +170,7 @@ var cell_slow_factor: float = 0.55
 # --- bee life ---
 var bee_lifespan_days: float = 30.0
 var energy_capacity: float = 100.0
-var energy_burn_rate: float = 0.4       # nectar-equivalent burned per second
+var energy_burn_rate: float = 0.35       # nectar-equivalent burned per second
 
 # --- interface ---
 ## Turn the small "i" tooltip badges off once you know what everything

@@ -32,6 +32,11 @@ const STAGES := [
 		"title": "Level 3 — A working colony",
 		"blurb": "The queen, three cells, and two foragers — one on nectar, one on pollen. Both resources are coming in from the first moment.",
 	},
+	{
+		"level": 4,
+		"title": "Level 4 — Established nest",
+		"blurb": "Fifteen cells and a full crew: eleven foragers (eight on nectar, three on pollen), two nurses, two architects on both jobs, and two miners. Enough colony that keeping it fed is the challenge, not starting it.",
+	},
 ]
 
 var panel: PanelContainer

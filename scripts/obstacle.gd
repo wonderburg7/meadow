@@ -37,7 +37,7 @@ func display_name() -> String:
 func description() -> String:
 	if kind == Kind.TREE:
 		return "A tree. Bees cannot fly through the trunk and canopy, so they steer round it. Nothing grows in its shade."
-	return "A bank of raised earth. Bees cannot climb it yet, so they walk the long way round -- a later movement upgrade will let them cross."
+	return "A plateau of raised ground, standing well above the meadow. Trees and flowers grow on top of it, but your bees cannot climb the bank, so all of it is out of reach and they have to walk the long way round. A later movement upgrade will open it up."
 
 func setup(obstacle_kind: int, obstacle_radius: float) -> void:
 	kind = obstacle_kind
@@ -72,41 +72,98 @@ func _build_tree() -> void:
 ## terraces in rising tones, a bright cap, and a heavy outline round the
 ## whole thing. The stepped edges make the boundary unmistakable, which
 ## matters because that boundary is now a wall bees have to walk round.
+## Raised ground is a whole region of the meadow, not a single prop: a
+## broad grassy plateau standing above the field, with its own trees and
+## flowers growing on top of it. Those are scenery -- they aren't in the
+## "flowers" group, so no forager ever targets them. That's the point:
+## you can see resources up there and you cannot reach them, until a
+## movement upgrade lets bees climb.
+##
+## Drawn as a low bank with a stepped edge: a dark shadow skirt, a bare
+## earth cliff face, then the green top surface with a heavy rim, so the
+## boundary bees have to walk around is unmistakable at any zoom.
 func _build_raised_area() -> void:
-	# a shadow offset down-right, so the mound reads as standing proud of
-	# the ground rather than being a patch painted on it
+	var edge := Shapes.circle_points(radius, 26)
+
 	var shadow := Polygon2D.new()
-	shadow.polygon = Shapes.circle_points(radius * 1.06, 24)
-	shadow.position = Vector2(radius * 0.10, radius * 0.12)
-	shadow.color = Color(0.16, 0.20, 0.12, 0.55)
+	shadow.polygon = Shapes.circle_points(radius * 1.05, 26)
+	shadow.position = Vector2(radius * 0.06, radius * 0.08)
+	shadow.color = Color(0.16, 0.20, 0.12, 0.5)
 	add_child(shadow)
 
-	# terraces, outermost first
-	var terraces := [
-		{"scale": 1.0, "color": Color(0.52, 0.44, 0.30)},
-		{"scale": 0.78, "color": Color(0.66, 0.57, 0.39)},
-		{"scale": 0.54, "color": Color(0.79, 0.70, 0.50)},
-		{"scale": 0.30, "color": Color(0.90, 0.83, 0.62)},
-	]
-	for step in terraces:
-		var terrace := Polygon2D.new()
-		terrace.polygon = Shapes.circle_points(radius * step.scale, 24)
-		terrace.color = step.color
-		add_child(terrace)
+	# the exposed earth of the bank itself
+	var cliff := Polygon2D.new()
+	cliff.polygon = edge
+	cliff.color = Color(0.45, 0.36, 0.24)
+	add_child(cliff)
 
-		var rim := Line2D.new()
-		_close_loop(rim, Shapes.circle_points(radius * step.scale, 24))
-		rim.width = 2.0
-		rim.default_color = Color(0.26, 0.19, 0.10, 0.75)
-		add_child(rim)
+	# the flat top, inset so the earth shows as a rim all the way round
+	var top := Polygon2D.new()
+	top.polygon = Shapes.circle_points(radius * 0.9, 26)
+	top.position = Vector2(0, -radius * 0.06)
+	top.color = Color(0.36, 0.5, 0.28)   # greener and lighter than the meadow
+	add_child(top)
 
-	# the boundary bees cannot cross, drawn thick so it's obvious where
-	# the no-go edge actually is
+	var rim := Line2D.new()
+	_close_loop(rim, Shapes.circle_points(radius * 0.9, 26))
+	rim.position = Vector2(0, -radius * 0.06)
+	rim.width = 2.5
+	rim.default_color = Color(0.24, 0.34, 0.18, 0.9)
+	add_child(rim)
+
 	var outline := Line2D.new()
-	_close_loop(outline, Shapes.circle_points(radius, 24))
+	_close_loop(outline, edge)
 	outline.width = 4.0
 	outline.default_color = Color(0.20, 0.14, 0.07, 0.98)
 	add_child(outline)
+
+	_scatter_scenery()
+
+## Trees and flowers growing on top of the plateau. Deliberately plain
+## Polygon2Ds rather than real Flower/Obstacle nodes -- they are out of
+## reach, so they must not join any group the simulation looks at.
+func _scatter_scenery() -> void:
+	var rng := RandomNumberGenerator.new()
+	# seeded from where this area sits, so a given meadow always grows
+	# the same scenery rather than reshuffling on every rebuild
+	rng.seed = int(abs(position.x) * 7919 + abs(position.y) * 104729)
+
+	var tree_count: int = int(radius / 55.0) + 1
+	for i in range(tree_count):
+		var spot := _scenery_spot(rng, 0.62)
+		var size: float = rng.randf_range(16.0, 26.0)
+
+		var trunk := Polygon2D.new()
+		trunk.polygon = Shapes.square_points(Vector2(size * 0.22, size * 0.55))
+		trunk.position = spot + Vector2(0, size * 0.3)
+		trunk.color = Color(0.32, 0.22, 0.13)
+		add_child(trunk)
+
+		for offset in [Vector2.ZERO, Vector2(-size * 0.35, size * 0.12), Vector2(size * 0.35, size * 0.12)]:
+			var leaf := Polygon2D.new()
+			leaf.polygon = Shapes.circle_points(size * 0.6, 12)
+			leaf.position = spot + offset
+			leaf.color = Color(0.13, 0.27, 0.12)
+			add_child(leaf)
+
+	var flower_count: int = int(radius / 14.0)
+	var petal_colours := [
+		Color(0.95, 0.85, 0.35), Color(0.9, 0.45, 0.6),
+		Color(0.75, 0.6, 0.95), Color(0.95, 0.95, 0.9),
+	]
+	for i in range(flower_count):
+		var bloom := Polygon2D.new()
+		bloom.polygon = Shapes.circle_points(rng.randf_range(2.5, 4.5), 8)
+		bloom.position = _scenery_spot(rng, 0.8)
+		bloom.color = petal_colours[rng.randi() % petal_colours.size()]
+		add_child(bloom)
+
+## A point on the top surface, kept in from the edge so nothing appears
+## to hang over the cliff.
+func _scenery_spot(rng: RandomNumberGenerator, spread: float) -> Vector2:
+	var angle := rng.randf() * TAU
+	var distance := sqrt(rng.randf()) * radius * spread
+	return Vector2(cos(angle), sin(angle)) * distance + Vector2(0, -radius * 0.06)
 
 func _close_loop(line: Line2D, points: PackedVector2Array) -> void:
 	for p in points:

@@ -35,6 +35,7 @@ enum State {
 	BUILD_IDLE, TO_BUILD_SITE, BUILDING,                   # builder
 	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
 	TO_WASTE_EXIT, DUMPING_WASTE,                          # builder, throwing it out
+	TO_CLEAN_CELL, CLEANING,                               # architect, clearing a dead larva
 	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
 	TO_MINE_EXIT, DUMPING_DIRT,                            # miner, full of spoil
 	SEEK_POLLEN, TO_POLLEN_CELL, EATING,                   # egg layer
@@ -77,6 +78,21 @@ var target_cell: Node2D = null
 var haul_target: Node2D = null
 var target_block: Node2D = null
 var automine: bool = false
+
+## What an architect (the Builder role) actually does: "build" draws new
+## comb, "maintain" clears dead larvae and shifts stores out of cells the
+## player has re-designated, "both" does either as it comes up.
+var architect_mode: String = "both"
+## True while carrying a dead larva out of the hive to throw away.
+var carrying_corpse: bool = false
+
+## Whether a change of job waits for the current one to finish. Off means
+## the bee drops what it's doing the instant you reassign it; on means it
+## sees the job through first -- a forager, for instance, delivers its
+## load before it takes up the new role. `pending_role` holds the change
+## until then.
+var finish_task_first: bool = false
+var pending_role: int = -1
 var dirt_load: float = 0.0
 var pollen_eaten: float = 0.0
 
@@ -247,6 +263,13 @@ func _process(delta: float) -> void:
 
 	_watch_for_stalls(delta)
 
+	# A queued role change lands the moment the bee is free. Checked here
+	# rather than only in the idle states because not every job ends in
+	# one -- a forager that finishes a walk-to-point drops straight into
+	# looking for a flower, and would otherwise never pick the change up.
+	if pending_role != -1 and not _is_busy():
+		_apply_pending_role()
+
 	# Eating is an errand now, not a number that quietly appears. A bee
 	# that has run low breaks off whatever it was doing, walks to a cell
 	# with food in it and feeds there. This is checked before the state
@@ -324,6 +347,10 @@ func _process(delta: float) -> void:
 			_builder_go_to_waste_exit(delta)
 		State.DUMPING_WASTE:
 			_builder_dump_waste(delta)
+		State.TO_CLEAN_CELL:
+			_architect_go_to_clean(delta)
+		State.CLEANING:
+			_architect_clean(delta)
 
 		# --- miner ---
 		State.MINE_IDLE:
@@ -799,9 +826,14 @@ func _finish_depositing() -> void:
 
 	if current_load > 0.0:
 		state = State.IN_HIVE_TO_CELL   # still carrying -- find another cell
-	else:
-		current_load_type = ""
-		state = State.IN_HIVE_TO_EXIT
+		return
+
+	current_load_type = ""
+	# The load is delivered, so a queued role change takes effect now --
+	# this is the "finish depositing first" case.
+	if _apply_pending_role():
+		return
+	state = State.IN_HIVE_TO_EXIT
 
 func _go_to_exit(delta: float) -> void:
 	var exit_point: Vector2 = world.hive_entrance_inside() if world else position
@@ -1020,7 +1052,32 @@ func _abandon_food_errand() -> void:
 ## route failures back to one of these same three idle states, a bee
 ## doing secondary work re-checks its primary role again the moment that
 ## task ends -- it never gets stuck permanently "being" its secondary.
+## Idle states are exactly the moments a bee has finished something and
+## has nothing in hand, so a queued role change is applied here. Foragers
+## also apply theirs the moment they finish unloading, since standing in
+## the hive holding nothing is not a state they pass through.
+func _apply_pending_role() -> bool:
+	if pending_role == -1:
+		return false
+	var wanted: int = pending_role
+	pending_role = -1
+	if wanted != role:
+		_apply_role(wanted)
+		return true
+	return false
+
+## Is this bee partway through something worth finishing? Everything
+## except the "waiting for work" states and standing idle.
+func _is_busy() -> bool:
+	match state:
+		State.IDLING, State.NURSE_IDLE, State.BUILD_IDLE, State.MINE_IDLE, State.HONEY_IDLE, State.SEEK_FLOWER:
+			return false
+	return true
+
 func _idle_dispatch() -> void:
+	if _apply_pending_role():
+		return
+
 	# The queen is the exception to "own role first". A hungry larva stops
 	# developing altogether and can be lost, whereas a delayed egg costs
 	# only time -- so she feeds the brood she already has before making
@@ -1065,14 +1122,28 @@ func _try_role_work(r: int) -> bool:
 			return true
 
 		Role.BUILDER:
-			# Builders have two jobs, in priority order: shift resources
-			# out of cells the player has re-designated, then draw new
-			# comb -- a manually placed site first, if one's pending.
-			var source = hive.find_cell_needing_eviction()
-			if source:
-				target_cell = source
-				state = State.TO_HAUL_SOURCE
-				return true
+			# Architects do two kinds of work, and which of them this one
+			# is willing to take depends on its mode.
+			#
+			# Maintenance, in priority order: clear dead larvae out of
+			# cells (a body blocks the cell entirely, so this is urgent),
+			# then shift stores out of cells the player has re-designated
+			# or asked to be emptied.
+			if architect_mode != "build":
+				var dead = hive.find_cell_needing_cleaning()
+				if dead:
+					target_cell = dead
+					state = State.TO_CLEAN_CELL
+					return true
+
+				var source = hive.find_cell_needing_eviction()
+				if source:
+					target_cell = source
+					state = State.TO_HAUL_SOURCE
+					return true
+
+			if architect_mode == "maintain":
+				return false
 
 			var site: Node2D = null
 			if has_manual_build_target:
@@ -1241,6 +1312,40 @@ func _builder_go_to_haul_target(delta: float) -> void:
 			target_cell = null
 			state = State.BUILD_IDLE
 
+## Clearing a dead larva. The body blocks the cell completely -- nothing
+## can be stored there and no egg can be laid in it -- so this is the
+## first thing an architect on maintenance picks up.
+func _architect_go_to_clean(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or not target_cell.needs_cleaning():
+		_release_cell_slot()
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+
+	var approach := _approach_cell(target_cell, delta)
+	if approach < 0:
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+	if approach == 1:
+		state = State.CLEANING
+
+func _architect_clean(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or not target_cell.needs_cleaning():
+		_release_cell_slot()
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+
+	if target_cell.add_clean_progress(delta):
+		target_cell.clear_cell()
+		hive.announce()
+		_release_cell_slot()
+		target_cell = null
+		# the body goes out of the hive rather than back into the comb
+		carrying_corpse = true
+		state = State.TO_WASTE_EXIT
+
 ## Carrying unwanted stores out of the hive to throw away. Same shape as
 ## a miner hauling spoil: walk to the entrance, step outside, spend a
 ## moment dumping, then come back in and pick up the next job.
@@ -1259,6 +1364,7 @@ func _builder_dump_waste(delta: float) -> void:
 		return
 	current_load = 0.0
 	current_load_type = ""
+	carrying_corpse = false
 	if world:
 		world.move_bee_into_hive(self)
 	target_cell = null
@@ -1611,6 +1717,21 @@ func can_take_role(new_role: int) -> bool:
 func set_role(new_role: int) -> void:
 	if new_role == role or not can_take_role(new_role):
 		return
+
+	# With "finish current task" ticked, the change is queued rather than
+	# applied: the bee sees the job through -- a forager delivers the
+	# load it is carrying, an architect finishes the cell it is on -- and
+	# picks the new role up the moment it is next free. Unticked, it
+	# drops everything immediately, which is the old behaviour.
+	if finish_task_first and _is_busy():
+		pending_role = new_role
+		return
+
+	pending_role = -1
+	_apply_role(new_role)
+
+## Applied straight away, with no regard for what the bee was doing.
+func _apply_role(new_role: int) -> void:
 	_release_everything()
 
 	role = new_role
@@ -1769,10 +1890,19 @@ func task_description() -> String:
 			return "going to clear a reassigned cell"
 		State.TO_HAUL_TARGET:
 			return "moving %s to another cell" % current_load_type
+		State.TO_CLEAN_CELL:
+			return "going to clear a dead larva out of a cell"
+		State.CLEANING:
+			var cleaned := 0
+			if target_cell and is_instance_valid(target_cell):
+				cleaned = int(target_cell.clean_fraction() * 100.0)
+			return "clearing a dead larva out of a cell (%d%%)" % cleaned
 		State.TO_WASTE_EXIT:
+			if carrying_corpse:
+				return "carrying a dead larva out of the hive"
 			return "carrying %s out of the hive to dump it" % current_load_type
 		State.DUMPING_WASTE:
-			return "throwing out unwanted stores"
+			return "disposing of a dead larva" if carrying_corpse else "throwing out unwanted stores"
 		State.SEEK_POLLEN:
 			if not hive.has_room_for_egg():
 				return "waiting -- no free cell to lay in"
@@ -1801,7 +1931,7 @@ func role_name_text() -> String:
 		Role.NURSERY:
 			base = "Nursery"
 		Role.BUILDER:
-			base = "Builder"
+			base = "Architect (%s)" % architect_mode_name()
 		Role.EGG_LAYER:
 			base = "Egg layer"
 		Role.IDLE:
@@ -1816,14 +1946,25 @@ func role_name_text() -> String:
 				base += " -- %s only" % preferred_species
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- backup: %s" % _role_short_name(secondary_role)
+	if pending_role != -1:
+		base += " -- becoming %s once this job is done" % _role_short_name(pending_role)
 	return base
+
+func architect_mode_name() -> String:
+	match architect_mode:
+		"build":
+			return "cell builder"
+		"maintain":
+			return "cell maintenance"
+		_:
+			return "both"
 
 func _role_short_name(r: int) -> String:
 	match r:
 		Role.NURSERY:
 			return "Nursery"
 		Role.BUILDER:
-			return "Builder"
+			return "Architect"
 		Role.MINER:
 			return "Miner"
 		Role.HONEY_MAKER:
@@ -1837,6 +1978,8 @@ func _role_short_name(r: int) -> String:
 
 ## What this bee is carrying, for the info panel.
 func carrying_text() -> String:
+	if carrying_corpse:
+		return "Carrying: a dead larva, for disposal outside"
 	if role == Role.MINER:
 		return "Carrying: %d dirt (of %d)" % [int(dirt_load), int(GameConfig.miner_dirt_capacity)]
 	if honey_load > 0.0:
