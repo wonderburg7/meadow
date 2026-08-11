@@ -30,6 +30,15 @@ var solid: bool = true
 func _ready() -> void:
 	add_to_group("obstacles")
 
+## Shown when the player clicks this thing in the meadow.
+func display_name() -> String:
+	return "Tree" if kind == Kind.TREE else "Raised ground"
+
+func description() -> String:
+	if kind == Kind.TREE:
+		return "A tree. Bees cannot fly through the trunk and canopy, so they steer round it. Nothing grows in its shade."
+	return "A bank of raised earth. Bees cannot climb it yet, so they walk the long way round -- a later movement upgrade will let them cross."
+
 func setup(obstacle_kind: int, obstacle_radius: float) -> void:
 	kind = obstacle_kind
 	radius = obstacle_radius

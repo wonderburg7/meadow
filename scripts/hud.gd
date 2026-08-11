@@ -25,6 +25,9 @@ signal cell_hatch_lock_requested(cell: Node2D, locked: bool)
 ## "discard" (thrown out of the hive). `keep_empty` leaves the cell
 ## closed to deposits afterwards.
 signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
+## Applied the moment the checkbox is ticked, independently of whether
+## the cell is being emptied right now.
+signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
 ## "Click a spot" modes -- main.gd puts itself into a placement mode when
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
@@ -138,6 +141,9 @@ var flower_popup: PopupPanel
 var flower_popup_label: Label
 var active_flower: Node2D = null
 
+var obstacle_popup: PopupPanel
+var obstacle_popup_label: Label
+
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
 var pending_type: String = ""
@@ -151,10 +157,10 @@ func _ready() -> void:
 	population_label = _make_label(Vector2(16, 66), 14)
 	rate_label = _make_label(Vector2(16, 86), 12)
 
-	var hint := _make_label(Vector2(16, 106), 12)
-	hint.text = "Arrows = pan · wheel = zoom · Tab = switch view · Space = pause\nClick or drag to select bees · right-click a flower to send them · right-click ground to move\nIn the hive view, click a cell to inspect it"
-
-	pause_label = _make_label(Vector2(16, 192), 18)
+	# The controls used to be printed here permanently. They now live in
+	# the Tuning panel's Interface section, which keeps the corner of the
+	# screen clear once you know them.
+	pause_label = _make_label(Vector2(16, 112), 18)
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
 
@@ -162,6 +168,7 @@ func _ready() -> void:
 	_build_selection_panel()
 	_build_cell_popup()
 	_build_flower_popup()
+	_build_obstacle_popup()
 	_build_discard_dialog()
 
 func _make_label(pos: Vector2, font_size: int) -> Label:
@@ -349,11 +356,21 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	discard_btn.pressed.connect(func(): _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
 
+	# This has to write straight through to the cell. It used to be read
+	# back from the cell every frame by _refresh_cell_popup while only
+	# being applied when one of the buttons above was pressed -- so
+	# ticking it was undone a frame later and it looked like the option
+	# could not be selected at all.
 	var keep_row := HBoxContainer.new()
 	column.add_child(keep_row)
 	keep_empty_box = CheckBox.new()
 	keep_empty_box.text = "Keep this cell empty afterwards"
 	keep_empty_box.add_theme_font_size_override("font_size", 11)
+	keep_empty_box.toggled.connect(func(pressed: bool):
+		if active_cell and is_instance_valid(active_cell):
+			cell_keep_empty_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
 	keep_row.add_child(keep_empty_box)
 	keep_row.add_child(_info("On: the cell refuses every deposit once it's been cleared, so it stays free. This is what stops a crowd of foragers cramming nectar into the last spare pot and leaving nowhere for pollen or eggs. Reserving the cell for a resource later clears this again. Off: the cell goes back to taking whatever arrives first."))
 
@@ -381,6 +398,25 @@ func _build_flower_popup() -> void:
 	flower_popup_label = Label.new()
 	flower_popup_label.add_theme_font_size_override("font_size", 12)
 	flower_popup.add_child(flower_popup_label)
+
+## --- obstacle popup -----------------------------------------------
+## Clicking a tree or a bank of raised ground says what it is, so the
+## things bees have to walk round aren't unexplained scenery.
+
+func _build_obstacle_popup() -> void:
+	obstacle_popup = PopupPanel.new()
+	add_child(obstacle_popup)
+
+	obstacle_popup_label = Label.new()
+	obstacle_popup_label.add_theme_font_size_override("font_size", 12)
+	obstacle_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	obstacle_popup_label.custom_minimum_size = Vector2(260, 0)
+	obstacle_popup.add_child(obstacle_popup_label)
+
+func show_obstacle_popup(obstacle: Node2D, screen_position: Vector2) -> void:
+	obstacle_popup_label.text = "%s\n\n%s" % [obstacle.display_name(), obstacle.description()]
+	obstacle_popup.position = Vector2i(screen_position + Vector2(12, -10))
+	obstacle_popup.popup()
 
 func show_flower_popup(flower: Node2D, screen_position: Vector2) -> void:
 	active_flower = flower

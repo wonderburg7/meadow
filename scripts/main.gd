@@ -141,6 +141,7 @@ func _ready() -> void:
 	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
 	hud.cell_hatch_lock_requested.connect(_on_cell_hatch_lock_requested)
 	hud.cell_empty_requested.connect(_on_cell_empty_requested)
+	hud.cell_keep_empty_requested.connect(_on_cell_keep_empty_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
@@ -657,6 +658,17 @@ func _handle_pan(delta: float) -> void:
 		var cam := _active_camera()
 		cam.position += direction.normalized() * PAN_SPEED * delta / cam.zoom.x
 
+## Is the cursor over a panel or control rather than the world?
+##
+## A scroll wheel event inside the tuning panel is consumed by its
+## scroll container -- but only while there is somewhere left to scroll.
+## Once it hits the top or bottom the event falls through to here, and
+## carrying on scrolling zoomed the whole game in and out from under the
+## panel. Checking what the cursor is actually over stops that, and stops
+## clicks on a panel starting a selection drag in the world behind it.
+func _pointer_over_ui() -> bool:
+	return get_viewport().gui_get_hovered_control() != null
+
 func _zoom_by(factor: float) -> void:
 	var cam := _active_camera()
 	var z: float = clamp(cam.zoom.x * factor, MIN_ZOOM, MAX_ZOOM)
@@ -704,13 +716,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
-				if event.pressed:
+				if event.pressed and not _pointer_over_ui():
 					_zoom_by(1.1)
 			MOUSE_BUTTON_WHEEL_DOWN:
-				if event.pressed:
+				if event.pressed and not _pointer_over_ui():
 					_zoom_by(1.0 / 1.1)
 			MOUSE_BUTTON_LEFT:
-				if event.pressed:
+				if event.pressed and _pointer_over_ui():
+					pass   # a click on a panel belongs to the panel
+				elif event.pressed:
 					dragging = true
 					drag_start = get_global_mouse_position()
 					drag_current = drag_start
@@ -772,6 +786,11 @@ func _finish_drag(additive: bool) -> void:
 			if flower:
 				hud.show_flower_popup(flower, get_viewport().get_mouse_position())
 				return
+			# clicking a tree or a bank of raised ground says what it is
+			var obstacle := _obstacle_at(drag_start)
+			if obstacle:
+				hud.show_obstacle_popup(obstacle, get_viewport().get_mouse_position())
+				return
 	else:
 		for b in _bees_in_current_view():
 			if box.has_point(b.global_position):
@@ -818,6 +837,12 @@ func finish_mining(block: Node2D) -> void:
 	var centre_local := _hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
 	hive.remove_block(block, func(hex: Vector2i): _add_floor_tile(hex, centre_local, spacing))
+
+func _obstacle_at(point: Vector2) -> Node2D:
+	for o in get_tree().get_nodes_in_group("obstacles"):
+		if is_instance_valid(o) and o.global_position.distance_to(point) <= o.radius:
+			return o
+	return null
 
 func _flower_at(point: Vector2) -> Node2D:
 	for f in get_tree().get_nodes_in_group("flowers"):
@@ -964,6 +989,12 @@ func _on_cell_hatch_role_requested(cell: Node2D, role: int, focus: String, use_a
 	cell.hatch_role = role
 	cell.hatch_focus = focus
 	cell.hatch_automine = use_automine
+	# Earmarking a cell to raise a particular kind of bee only means
+	# anything if eggs actually end up in it, so choosing a role also
+	# reserves the cell for brood. Without this, foragers carried on
+	# filling it with nectar and the role never came into play.
+	if role >= 0 and cell.designated_type != "brood":
+		_on_cell_designation_requested(cell, "brood")
 
 ## Pins the cell's hatch role so every future bee raised there inherits
 ## it, rather than the role applying to the next one only.
@@ -979,24 +1010,28 @@ func _on_cell_hatch_lock_requested(cell: Node2D, locked: bool) -> void:
 func _on_cell_empty_requested(cell: Node2D, method: String, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return
-	cell.keep_empty = keep_empty
-	if keep_empty:
-		# "keep this one clear" and "reserve it for X" are contradictory;
-		# the player can designate it again later, which clears keep_empty
-		cell.set_designation("")
-		cell.keep_empty = true
+	_on_cell_keep_empty_requested(cell, keep_empty)
 
 	if cell.content_type == "" or cell.content_type == "brood":
 		return   # nothing to shift, and brood isn't cargo
 
-	if method == "discard":
-		cell.clear_cell()
-		hive.announce()
-	else:
-		# a builder picks this up the same way it clears a re-designated
-		# cell; if nothing else has room it ends up discarded anyway, and
-		# the player was told that when they chose this
-		cell.evict_requested = true
+	# Either way a builder does the work: it walks to the cell, lifts the
+	# contents, and then carries them to another cell or out through the
+	# entrance to throw away. Discarding used to happen instantly with
+	# the resource simply vanishing and no bee involved at all.
+	cell.evict_mode = "discard" if method == "discard" else "move"
+	cell.evict_requested = true
+
+## Ticking "keep this cell empty" takes effect straight away, whether or
+## not the cell is being emptied at the same time.
+func _on_cell_keep_empty_requested(cell: Node2D, keep_empty: bool) -> void:
+	if not is_instance_valid(cell):
+		return
+	if keep_empty:
+		# "keep this one clear" and "reserve it for X" are contradictory;
+		# designating it later clears keep_empty again
+		cell.set_designation("")
+	cell.keep_empty = keep_empty
 
 func _on_level_chosen(level: int) -> void:
 	GameConfig.starting_level = level

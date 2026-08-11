@@ -34,6 +34,7 @@ enum State {
 	TO_FEED_CELL, FEEDING,                                 # any bee, eating
 	BUILD_IDLE, TO_BUILD_SITE, BUILDING,                   # builder
 	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
+	TO_WASTE_EXIT, DUMPING_WASTE,                          # builder, throwing it out
 	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
 	TO_MINE_EXIT, DUMPING_DIRT,                            # miner, full of spoil
 	SEEK_POLLEN, TO_POLLEN_CELL, EATING,                   # egg layer
@@ -103,7 +104,7 @@ var nurse_fetching: String = ""      # what this trip to a cell is for
 ## supposed to be travelling has got itself pinned on something; rather
 ## than hovering there until the player notices, it gives up on the
 ## current errand. See _watch_for_stalls.
-var stall_check_position: Vector2 = Vector2(INF, INF)
+var stall_best_distance: float = INF
 var stall_timer: float = 0.0
 const STALL_SECONDS := 4.0
 
@@ -218,7 +219,12 @@ func _default_state_for_role() -> int:
 		Role.BUILDER:
 			return State.BUILD_IDLE
 		Role.EGG_LAYER:
-			return State.SEEK_POLLEN
+			# Deliberately an idle state rather than SEEK_POLLEN: it sends
+			# the queen through _idle_dispatch, which checks the brood
+			# before it checks laying. Going straight to SEEK_POLLEN would
+			# have her start on the next egg without ever looking at the
+			# larvae she already has.
+			return State.NURSE_IDLE
 		Role.IDLE:
 			return State.IDLING
 		Role.MINER:
@@ -314,6 +320,10 @@ func _process(delta: float) -> void:
 			_builder_go_to_haul_source(delta)
 		State.TO_HAUL_TARGET:
 			_builder_go_to_haul_target(delta)
+		State.TO_WASTE_EXIT:
+			_builder_go_to_waste_exit(delta)
+		State.DUMPING_WASTE:
+			_builder_dump_waste(delta)
 
 		# --- miner ---
 		State.MINE_IDLE:
@@ -492,8 +502,19 @@ func _watch_for_stalls(delta: float) -> void:
 	if _is_inside_hive() or not travelling:
 		_reset_stall_watch()
 		return
-	if stall_check_position.x == INF or position.distance_to(stall_check_position) > 3.0:
+
+	# Measured as distance still to go rather than distance moved, so it
+	# catches a bee shuffling back and forth between two obstacles as
+	# well as one standing perfectly still. Either way it isn't getting
+	# any closer, which is the thing that matters.
+	var goal: Vector2 = _current_goal()
+	if goal.x == INF:
 		_reset_stall_watch()
+		return
+	var remaining: float = position.distance_to(goal)
+	if stall_best_distance == INF or remaining < stall_best_distance - 2.0:
+		stall_best_distance = remaining
+		stall_timer = 0.0
 		return
 
 	stall_timer += delta
@@ -510,8 +531,20 @@ func _watch_for_stalls(delta: float) -> void:
 		# frame's steering starts from somewhere different
 		position += Vector2(randf_range(-14.0, 14.0), randf_range(-14.0, 14.0))
 
+## Where the bee is currently trying to get to, in its own parent's
+## coordinates. INF means "not travelling anywhere in particular".
+func _current_goal() -> Vector2:
+	match state:
+		State.TO_FLOWER:
+			return current_flower.position if (current_flower and is_instance_valid(current_flower)) else Vector2(INF, INF)
+		State.TO_HIVE:
+			return hive.position
+		State.MOVE_TO_POINT:
+			return move_target
+	return Vector2(INF, INF)
+
 func _reset_stall_watch() -> void:
-	stall_check_position = position
+	stall_best_distance = INF
 	stall_timer = 0.0
 
 func _die() -> void:
@@ -988,6 +1021,15 @@ func _abandon_food_errand() -> void:
 ## doing secondary work re-checks its primary role again the moment that
 ## task ends -- it never gets stuck permanently "being" its secondary.
 func _idle_dispatch() -> void:
+	# The queen is the exception to "own role first". A hungry larva stops
+	# developing altogether and can be lost, whereas a delayed egg costs
+	# only time -- so she feeds the brood she already has before making
+	# more. Any other bee, and a queen whose backup the player has
+	# changed, still works its own role first.
+	if is_queen and role == Role.EGG_LAYER and secondary_role != -1:
+		if _try_role_work(secondary_role):
+			return
+
 	if _try_role_work(role):
 		return
 	if secondary_role != -1 and secondary_role != role:
@@ -1158,14 +1200,25 @@ func _builder_go_to_haul_source(delta: float) -> void:
 			return
 		current_load = lifted
 		current_load_type = moving_type
+		hive.announce()
+
+		# The player asked for this cell's contents to be thrown out, so
+		# the builder carries them out through the entrance and dumps
+		# them. Discarding used to happen the instant the button was
+		# pressed, with the resource simply vanishing and no bee doing
+		# any of the work.
+		if target_cell.evict_mode == "discard":
+			_release_cell_slot()
+			state = State.TO_WASTE_EXIT
+			return
+
 		haul_target = hive.find_cell_for(moving_type, target_cell)
 		if haul_target == null:
-			# nowhere to put it -- it's discarded. The player was warned
-			# about this when they re-designated the cell.
-			current_load = 0.0
-			current_load_type = ""
-			hive.announce()
-			state = State.BUILD_IDLE
+			# nowhere to put it -- it has to go outside after all, which
+			# is what the player was warned about when they asked for the
+			# cell to be emptied
+			_release_cell_slot()
+			state = State.TO_WASTE_EXIT
 			return
 		state = State.TO_HAUL_TARGET
 
@@ -1187,6 +1240,29 @@ func _builder_go_to_haul_target(delta: float) -> void:
 			current_load_type = ""
 			target_cell = null
 			state = State.BUILD_IDLE
+
+## Carrying unwanted stores out of the hive to throw away. Same shape as
+## a miner hauling spoil: walk to the entrance, step outside, spend a
+## moment dumping, then come back in and pick up the next job.
+func _builder_go_to_waste_exit(delta: float) -> void:
+	var exit_point: Vector2 = world.hive_entrance_inside() if world else position
+	_move_towards(exit_point, delta)
+	if position.distance_to(exit_point) < 8.0:
+		if world:
+			world.move_bee_out_of_hive(self)
+		timer = GameConfig.dirt_dump_time
+		state = State.DUMPING_WASTE
+
+func _builder_dump_waste(delta: float) -> void:
+	timer -= delta
+	if timer > 0.0:
+		return
+	current_load = 0.0
+	current_load_type = ""
+	if world:
+		world.move_bee_into_hive(self)
+	target_cell = null
+	state = State.BUILD_IDLE
 
 # --- mining -------------------------------------------------------
 
@@ -1428,7 +1504,9 @@ func _queen_lay(delta: float) -> void:
 			pollen_eaten -= GameConfig.egg_pollen_cost
 		_release_cell_slot()
 		target_cell = null
-		state = State.SEEK_POLLEN
+		# back through the dispatch, so the brood gets looked at before
+		# she starts on the next egg
+		state = State.NURSE_IDLE
 
 # --- player commands ----------------------------------------------
 
@@ -1691,6 +1769,10 @@ func task_description() -> String:
 			return "going to clear a reassigned cell"
 		State.TO_HAUL_TARGET:
 			return "moving %s to another cell" % current_load_type
+		State.TO_WASTE_EXIT:
+			return "carrying %s out of the hive to dump it" % current_load_type
+		State.DUMPING_WASTE:
+			return "throwing out unwanted stores"
 		State.SEEK_POLLEN:
 			if not hive.has_room_for_egg():
 				return "waiting -- no free cell to lay in"
@@ -1812,6 +1894,13 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 		return target
 	var direction: Vector2 = to_target / span
 
+	# The *nearest* thing in the way, not just the first one the group
+	# happened to list. Steering round a far obstacle while a near one
+	# sits between the bee and that aim point is how bees ended up
+	# shuffling on the spot between two mounds.
+	var blocker: Node2D = null
+	var blocker_clearance := 0.0
+	var blocker_distance := INF
 	for obstacle in get_tree().get_nodes_in_group("obstacles"):
 		if not is_instance_valid(obstacle):
 			continue
@@ -1821,9 +1910,14 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 		var clearance: float = obstacle.radius + 16.0
 		if closest_point.distance_to(obstacle.position) >= clearance:
 			continue
-		return _point_around(obstacle, target, clearance)
+		if along < blocker_distance:
+			blocker_distance = along
+			blocker = obstacle
+			blocker_clearance = clearance
 
-	return target
+	if blocker == null:
+		return target
+	return _point_around(blocker, target, blocker_clearance)
 
 ## How far round the rim to aim, in radians, each frame.
 const SWEEP_STEP := 0.6
@@ -1851,8 +1945,32 @@ func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vecto
 	var here: float = from_centre.angle()
 	var there: float = (target - obstacle.position).angle()
 	var shorter_way: float = wrapf(there - here, -PI, PI)
-	var swept: float = here + SWEEP_STEP * (1.0 if shorter_way >= 0.0 else -1.0)
-	return obstacle.position + Vector2(cos(swept), sin(swept)) * rim
+	var turn: float = 1.0 if shorter_way >= 0.0 else -1.0
+
+	# Try a few sweep sizes and take the first aim point that isn't
+	# itself sitting inside another obstacle. Where two obstacles are
+	# close together, a point that clears one can land inside its
+	# neighbour, and _block_obstacles then shoves the bee straight back
+	# -- the two rules fight each other and the bee goes nowhere.
+	for multiplier in [1.0, 2.0, 3.0, -1.0, -2.0]:
+		var swept: float = here + SWEEP_STEP * turn * multiplier
+		var candidate: Vector2 = obstacle.position + Vector2(cos(swept), sin(swept)) * rim
+		if _is_clear_spot(candidate, obstacle):
+			return candidate
+
+	# Everything round the rim is blocked too. Head straight out from the
+	# obstacle's centre to break out of the pocket, and let the watchdog
+	# pick things up if that still isn't enough.
+	return obstacle.position + from_centre.normalized() * (rim + 40.0)
+
+## Is `point` outside every solid obstacle except `ignoring`?
+func _is_clear_spot(point: Vector2, ignoring: Node2D) -> bool:
+	for obstacle in get_tree().get_nodes_in_group("obstacles"):
+		if obstacle == ignoring or not is_instance_valid(obstacle) or not obstacle.solid:
+			continue
+		if point.distance_to(obstacle.position) < obstacle.radius + 12.0:
+			return false
+	return true
 
 ## The hard half of obstacle handling. _avoid_obstacles steers, which is
 ## enough most of the time but not a guarantee: a bee right-clicked onto
@@ -1864,21 +1982,29 @@ func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vecto
 ## clears `solid` on it.
 func _block_obstacles(wanted: Vector2) -> Vector2:
 	var result := wanted
-	for obstacle in get_tree().get_nodes_in_group("obstacles"):
-		if not is_instance_valid(obstacle) or not obstacle.solid:
-			continue
-		var edge: float = obstacle.radius + 8.0
-		var offset: Vector2 = result - obstacle.position
-		var distance: float = offset.length()
-		if distance >= edge:
-			continue
-		if distance < 0.01:
-			# exactly on the centre (shouldn't happen) -- shove it out in
-			# an arbitrary but consistent direction rather than dividing
-			# by zero
-			offset = Vector2.RIGHT
-			distance = 1.0
-		result = obstacle.position + offset / distance * edge
+	# Settle over a few rounds. Pushing clear of one obstacle can land a
+	# bee inside the next one where two sit close together, and a single
+	# pass would leave it there.
+	for round_number in range(3):
+		var moved := false
+		for obstacle in get_tree().get_nodes_in_group("obstacles"):
+			if not is_instance_valid(obstacle) or not obstacle.solid:
+				continue
+			var edge: float = obstacle.radius + 8.0
+			var offset: Vector2 = result - obstacle.position
+			var distance: float = offset.length()
+			if distance >= edge:
+				continue
+			if distance < 0.01:
+				# exactly on the centre (shouldn't happen) -- shove it out
+				# in an arbitrary but consistent direction rather than
+				# dividing by zero
+				offset = Vector2.RIGHT
+				distance = 1.0
+			result = obstacle.position + offset / distance * edge
+			moved = true
+		if not moved:
+			break
 	return result
 
 ## Outdoors a bee flies straight. Inside the hive it walks a route over

@@ -54,11 +54,14 @@ func _ready() -> void:
 func setup(hex: Vector2i) -> void:
 	axial = hex
 
+## Marking and unmarking is just a change of intent, so the digging
+## already done is kept. It used to be thrown away on unmark, which meant
+## a stray click on a half-dug block -- or toggling one off and on to
+## reprioritise -- silently reset it to 0% and wasted every miner-second
+## spent on it.
 func set_marked(value: bool) -> void:
 	marked_for_mining = value
 	marker.visible = value
-	if not value:
-		mine_progress = 0.0
 	_refresh()
 
 func claim_miner(bee: Node2D) -> void:
@@ -82,8 +85,10 @@ func mine_fraction() -> float:
 
 func _refresh() -> void:
 	if not marked_for_mining:
-		progress_label.text = ""
-		color = SOIL_COLOR
+		# an unmarked block that has been partly dug still shows how far
+		# it got, so the work isn't invisible
+		progress_label.text = "%d%%" % int(mine_fraction() * 100.0) if mine_progress > 0.0 else ""
+		color = SOIL_COLOR.lerp(Color(0.55, 0.45, 0.28), mine_fraction())
 		return
 	progress_label.text = "%d%%" % int(mine_fraction() * 100.0)
 	# lightens as it's dug away

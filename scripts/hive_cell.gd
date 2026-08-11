@@ -68,9 +68,13 @@ var designated_type: String = ""
 ## spare pot and leave room for pollen and brood. Designating the cell to
 ## a resource clears it again.
 var keep_empty: bool = false
-## The player has asked for the contents to be carried to another cell.
-## Builders pick this up the same way they clear a re-designated cell.
+## The player has asked for the contents to be cleared out. Builders pick
+## this up the same way they clear a re-designated cell. `evict_mode`
+## says where it goes: "move" into another cell, or "discard", which
+## means a builder physically carries it out of the hive and dumps it
+## rather than it evaporating the moment you click.
 var evict_requested: bool = false
+var evict_mode: String = "move"
 
 ## Which role a bee raised in this cell takes when it emerges.
 ## -1 means "whatever the colony default is". Set from the cell popup,
@@ -295,6 +299,7 @@ func take_resource(resource_type: String, requested: float) -> float:
 		amount = 0.0
 		ripen_progress = 0.0
 		evict_requested = false
+		evict_mode = "move"
 	return taken
 
 func set_designation(resource_type: String) -> void:

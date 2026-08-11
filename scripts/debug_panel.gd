@@ -428,8 +428,36 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 		else:
 			body.add_child(_make_row(entry))
 
+	# The controls used to be printed permanently in the top-left corner
+	# of the screen. They live here instead, so they're available when
+	# you want them and out of the way when you don't.
+	if category == "Interface":
+		body.add_child(HSeparator.new())
+		body.add_child(_make_controls_help())
+
 	sections[category] = body
 	return wrapper
+
+func _make_controls_help() -> Control:
+	var help := Label.new()
+	help.add_theme_font_size_override("font_size", 11)
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.custom_minimum_size = Vector2(270, 0)
+	help.text = """Controls
+
+Arrow keys — pan the view
+Mouse wheel — zoom in and out
+Middle mouse drag — pan the view
+Tab — switch between meadow and hive
+Space — pause
+
+Left click or drag — select bees
+Left click a flower, tree or raised area — see what it is
+Left click a comb cell — inspect and set it
+Left click exposed soil — mark it for digging
+Right click a flower — send the selection to collect there
+Right click the ground — move the selection there"""
+	return help
 
 ## Restart, stage select and the main menu, kept at the top of the panel
 ## so they don't drift below a growing list of settings.

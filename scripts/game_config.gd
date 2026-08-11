@@ -48,7 +48,7 @@ var nectar_collection_rate: float = 5.0
 var pollen_collection_rate: float = 2.0
 var deposit_time: float = 2.5
 var nectar_stomach_capacity: float = 50.0
-var pollen_stomach_capacity: float = 25.0
+var pollen_stomach_capacity: float = 15.0
 
 # --- hive ---
 var cell_capacity: float = 200.0        # one resource per cell, or one developing bee
@@ -57,7 +57,7 @@ var cell_capacity: float = 200.0        # one resource per cell, or one developi
 ## deposits instead of everything piling into one that's constantly
 ## being sipped from and so never quite reaches the literal cap.
 var cell_full_threshold: float = 0.9
-var egg_pollen_cost: float = 20.0       # pollen the queen must eat to lay one egg
+var egg_pollen_cost: float = 60.0       # pollen the queen must eat to lay one egg
 var queen_eat_rate: float = 4.0         # pollen per second the queen consumes
 var queen_speed_factor: float = 0.6     # she's larger, so slower than a worker
 var brood_develop_time: float = 120.0   # seconds of development before a bee emerges
@@ -90,7 +90,7 @@ var nurse_load_time: float = 1.5    # seconds spent filling up at a cell
 ## invisibly wherever they happen to be. Once a bee drops below
 ## `hunger_threshold` of its capacity it breaks off, walks to a cell with
 ## food in it, and feeds until it is full.
-var hunger_threshold: float = 0.45      # fraction of capacity
+var hunger_threshold: float = 0.30      # fraction of capacity
 var bee_eat_rate: float = 12.0          # energy per second while feeding
 
 # --- honey ---
@@ -102,7 +102,7 @@ var bee_eat_rate: float = 12.0          # energy per second while feeding
 var honey_cell_capacity: float = 200.0
 var honey_energy_factor: float = 4.0    # one unit of honey is worth this much nectar
 var nectar_per_honey: float = 2.0       # nectar consumed to make one unit of mix
-var honey_chew_time: float = 6.0        # seconds spent adding enzymes before depositing
+var honey_chew_time: float = 10.0        # seconds spent adding enzymes before depositing
 var honey_ripen_time: float = 30.0      # bee-seconds of fanning to dry one cell out
 ## Adding a fresh batch of wet mix to a part-dried cell sets the drying
 ## back by this fraction, so topping a cell up has a real cost.
