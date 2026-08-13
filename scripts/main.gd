@@ -36,6 +36,8 @@ const ColonyPanel = preload("res://scripts/colony_panel.gd")
 const NurseryPanel = preload("res://scripts/nursery_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
 const RainEffect = preload("res://scripts/rain_effect.gd")
+const RivalHive = preload("res://scripts/rival_hive.gd")
+const WinterPanel = preload("res://scripts/winter_panel.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
@@ -104,6 +106,8 @@ var queen: Node2D
 var game_over: CanvasLayer
 var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
+var winter_panel: CanvasLayer
+var rival: Node2D = null
 var colony_lost: bool = false
 
 ## Every bee that has emerged, as {t, key} where key is "role|focus".
@@ -233,7 +237,7 @@ func _ready() -> void:
 	hud.focus_requested.connect(_on_focus_requested)
 	hud.role_requested.connect(_on_role_requested)
 	hud.view_toggle_requested.connect(_toggle_view)
-	hud.colony_panel_requested.connect(func(): colony_panel.toggle())
+	hud.colony_panel_requested.connect(func(): _toggle_panel(colony_panel))
 	hud.speed_requested.connect(_on_speed_requested)
 	hud.cell_designation_requested.connect(_on_cell_designation_requested)
 	hud.cell_hatch_role_requested.connect(_on_cell_hatch_role_requested)
@@ -255,6 +259,7 @@ func _ready() -> void:
 	hud.cell_close_requested.connect(_on_cell_close_requested)
 	hud.cell_fill_close_requested.connect(_on_cell_fill_close_requested)
 	hud.nursery_window_requested.connect(_on_nursery_window_requested)
+	hud.winter_window_requested.connect(func(): winter_panel.toggle())
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
 	hud.finish_first_requested.connect(_on_finish_first_requested)
@@ -281,7 +286,11 @@ func _ready() -> void:
 	# closing the window has to take the glow off the comb with it,
 	# otherwise the hive stays lit up with no panel to explain why
 	nursery_panel.closed.connect(_clear_zone_glow)
+	nursery_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
 	add_child(nursery_panel)
+
+	winter_panel = WinterPanel.new()
+	add_child(winter_panel)
 
 	game_over = GameOver.new()
 	game_over.restart_requested.connect(_on_restart_after_loss)
@@ -328,6 +337,37 @@ func _build_meadow() -> void:
 	# block to the side, so which way a forager sets off is a real choice.
 	for i in range(int(GameConfig.flower_count)):
 		_seed_flower()
+
+	if GameConfig.rival_hive_on:
+		_place_rival_hive()
+
+## Puts the rival colony somewhere in the meadow, kept a good distance
+## from the player's hive so the two aren't drawing on the same flowers
+## from the first minute. They meet in the middle later, as both grow --
+## which is the point.
+func _place_rival_hive() -> void:
+	var spot: Vector2 = hive.position
+	for attempt in range(40):
+		var candidate: Vector2 = hive.position + Vector2(
+			randf_range(-FLOWER_FIELD_HALF_SIZE.x, FLOWER_FIELD_HALF_SIZE.x),
+			randf_range(-FLOWER_FIELD_HALF_SIZE.y, FLOWER_FIELD_HALF_SIZE.y)
+		)
+		if candidate.distance_to(hive.position) < GameConfig.rival_min_distance:
+			continue
+		if not _is_clear_ground(candidate):
+			continue
+		spot = candidate
+		break
+	if spot == hive.position:
+		# nowhere far enough inside the field; put it at the far corner
+		# rather than on top of the player
+		spot = hive.position + Vector2(FLOWER_FIELD_HALF_SIZE.x * 0.9, FLOWER_FIELD_HALF_SIZE.y * 0.6)
+		spot = _clear_of_obstacles(spot)
+
+	rival = RivalHive.new()
+	rival.position = spot
+	rival.world = self
+	meadow_root.add_child(rival)
 
 ## Trees and raised ground that foragers steer around (see
 ## Bee._avoid_obstacles). Kept clear of the hive itself so the entrance
@@ -1015,11 +1055,75 @@ func _refresh_panels(bees: Array) -> void:
 
 	if colony_panel.is_open():
 		colony_panel.refresh(counts, hud.corner_texts, history_samples)
-	if nursery_panel.is_open():
+
+	# The nursery figures are computed whenever the window is open *or*
+	# one of them is starred into the corner. Otherwise starring a
+	# nursery readout and closing the window would freeze it at whatever
+	# it last said, which is worse than not showing it at all.
+	if nursery_panel.is_open() or _nursery_stat_pinned():
 		nursery_panel.refresh(
 			hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds
 		)
+		for key in nursery_panel.corner_texts.keys():
+			hud.corner_texts[key] = nursery_panel.corner_texts[key]
+		hud.refresh_corner()
 	_apply_zone_glow()
+	_refresh_winter()
+
+# --- winter -------------------------------------------------------
+
+## What the colony will need to get through the winter, and what it has.
+##
+## Worked out from the colony's own size rather than a fixed target, so
+## it moves as the colony does. That is the whole tension of the run-up:
+## every bee you add is another mouth to feed through the winter, so
+## growing now is directly at odds with surviving later. A fixed target
+## wouldn't create that at all.
+##
+## Honey counts at `honey_energy_factor` because that is genuinely what
+## it is worth -- which is also the argument for the honey-maker role,
+## made in numbers the player can see.
+func _winter_forecast() -> Dictionary:
+	var bees: int = get_tree().get_nodes_in_group("bees").size()
+	var seconds_of_winter: float = GameConfig.winter_length_days * GameConfig.seconds_per_day
+	var required: float = (
+		bees * GameConfig.energy_burn_rate * GameConfig.winter_burn_factor * seconds_of_winter
+	)
+	var held: float = (
+		hive.total("nectar") + hive.total_honey() * GameConfig.honey_energy_factor
+	)
+	var days_left: float = max(0.0, GameConfig.winter_starts_day - day)
+	return {
+		"bees": bees,
+		"required_energy": required,
+		"held_energy": held,
+		"days_left": days_left,
+	}
+
+## Starts the countdown. Called from the tuning panel.
+func begin_winter_countdown() -> void:
+	GameConfig.winter_coming = true
+	GameConfig.winter_starts_day = day + GameConfig.winter_countdown_days
+	winter_panel.open()
+	hud.set_winter_button_visible(true)
+	hud.show_warning(
+		"Winter will arrive on day %d. The forecast in the top right shows what the colony will need to last it out, and how far short it is. Every bee you add between now and then is another mouth to feed through it."
+		% int(GameConfig.winter_starts_day)
+	)
+
+func _refresh_winter() -> void:
+	if not GameConfig.winter_coming:
+		return
+	var forecast := _winter_forecast()
+	winter_panel.refresh(forecast)
+	hud.corner_texts["winter"] = winter_panel.corner_text
+	hud.refresh_corner()
+
+func _nursery_stat_pinned() -> bool:
+	for key in GameConfig.pinned_stats:
+		if str(key).begins_with("nursery_"):
+			return true
+	return false
 
 ## A sample of the things worth watching over time. Taken on the sim
 ## clock rather than the wall clock, so fast-forwarding compresses the
@@ -1079,13 +1183,28 @@ func _apply_zone_glow() -> void:
 		else:
 			cell.set_zone_glow(false)
 
-## Opening the window lights the comb up straight away rather than at the
-## next refresh, which matters because the refresh is paused with the
-## game and looking at the zone while paused is a reasonable thing to do.
-func _on_nursery_window_requested() -> void:
-	nursery_panel.toggle()
-	if not nursery_panel.is_open():
+## The colony and nursery windows both live down the left-hand side and
+## would sit on top of each other, so opening one closes the other. They
+## also answer different questions, so wanting both at once is unlikely
+## enough that overlapping panels would be the more annoying outcome.
+func _toggle_panel(panel: CanvasLayer) -> void:
+	if panel == nursery_panel:
+		_on_nursery_window_requested()
 		return
+	if nursery_panel.is_open():
+		nursery_panel.close()
+	panel.toggle()
+
+## Opening the nursery window lights the comb up straight away rather
+## than at the next refresh, which matters because the refresh is paused
+## with the game and looking at the zone while paused is reasonable.
+func _on_nursery_window_requested() -> void:
+	if nursery_panel.is_open():
+		nursery_panel.close()
+		return
+	if colony_panel.is_open():
+		colony_panel.toggle()
+	nursery_panel.open()
 	if not in_hive_view:
 		in_hive_view = true
 	_apply_view()
@@ -1449,7 +1568,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_TAB:
 				_toggle_view()
 			KEY_C:
-				colony_panel.toggle()
+				_toggle_panel(colony_panel)
+			KEY_N:
+				_toggle_panel(nursery_panel)
 
 	elif event is InputEventMouseButton:
 		match event.button_index:

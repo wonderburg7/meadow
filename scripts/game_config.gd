@@ -284,6 +284,74 @@ var scenery_on: bool = true
 ## visible where they happened rather than only in the numbers.
 var death_marker_days: float = 5.0
 
+# --- the rival colony ---
+## A second colony out in the meadow, run by the game. It isn't a copy of
+## the player's simulation -- that would roughly double the cost of the
+## game to produce something you can't watch, since you only ever see one
+## hive interior at a time. It's an abstract colony advanced once a
+## second, with a few visible foragers that draw on the same real
+## flowers. The pressure is purely economic: no combat, no interference,
+## just two colonies working one meadow.
+var rival_hive_on: bool = false
+var rival_starting_bees: float = 12.0
+var rival_max_bees: float = 90.0
+## How far from the player's hive the rival is placed. Far enough that
+## the two aren't fighting over the same flowers on day one, close enough
+## that they eventually meet in the middle.
+var rival_min_distance: float = 900.0
+var rival_forage_range: float = 620.0
+## Per bee per second, for the once-a-second colony tick.
+var rival_eat_per_bee: float = 0.06
+var rival_nectar_per_bee: float = 0.28
+var rival_pollen_per_bee: float = 0.05
+var rival_pollen_per_bee_raised: float = 8.0
+var rival_hatch_rate: float = 0.004
+## Brood one nurse can start per second. Together with the hatch rate
+## this sets how fast the rival grows -- not where it settles, which is
+## decided by the crowding and eating rates. Slow enough that it isn't
+## fully grown by the end of the first week, which would read as having
+## been placed there rather than having got there.
+var rival_brood_per_nurse: float = 0.012
+## How fast a colony loses bees once its stores run out.
+var rival_starve_rate: float = 0.4
+## Crowding. More bees working the same patch of meadow get less each,
+## so income per bee falls as the colony grows. This is what gives the
+## rival a carrying capacity that depends on the forage available rather
+## than always running up to its hard cap: simulated without it, it
+## either reached the cap or died, with nothing in between. Lower means
+## the meadow supports fewer of them.
+var rival_crowding_scale: float = 30.0
+## The colony only raises brood while it has this many days of food in
+## hand. Growing on an empty larder is what made it boom and then
+## collapse rather than settle.
+var rival_brood_gate_days: float = 40.0
+## Cap on stores, per bee, so a rich colony banks a sensible reserve
+## instead of an ever-growing number nothing ever spends.
+var rival_store_per_bee: float = 400.0
+## Nectar one visible rival forager takes from a flower per visit. This
+## is the only way the rival touches the player's world, and it's what
+## makes it competition rather than scenery.
+var rival_flower_take: float = 4.0
+
+# --- winter ---
+## Winter is a countdown rather than a simulated season, for now. The
+## interesting decisions -- stop growing and start storing, seal a cell,
+## raise gynes now or later -- all happen in the run-up, so an honest
+## countdown with a shortfall figure creates the whole problem without
+## any winter mechanics existing yet.
+var winter_coming: bool = false
+var winter_starts_day: float = 0.0
+var winter_countdown_days: float = 15.0
+var winter_length_days: float = 20.0
+## What a bee burns through winter, as a multiple of its ordinary rate.
+## Well below 1 because a clustered colony is nearly dormant, and because
+## anything higher makes the target impossible: at 0.55 a fifty-bee
+## colony needed forty-eight full honey cells, which is more comb than
+## the hive has. At 0.15 it needs about thirteen -- a real target that a
+## colony can actually reach in the run-up. This is the first number to
+## reach for if winter feels trivial or impossible.
+var winter_burn_factor: float = 0.15
+
 # --- interface ---
 ## Turn the small "i" tooltip badges off once you know what everything
 ## does. Takes effect immediately -- no restart needed.

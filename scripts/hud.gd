@@ -65,6 +65,8 @@ signal cell_close_requested(cell: Node2D, closed: bool)
 signal cell_fill_close_requested(cell: Node2D)
 ## Opens the nursery zone window.
 signal nursery_window_requested()
+## Opens the winter forecast. Only offered once a winter is scheduled.
+signal winter_window_requested()
 ## Marks or clears the digging flag on every selected soil block.
 signal soil_mark_requested(mark: bool)
 signal forage_start_point_requested()
@@ -114,11 +116,15 @@ const HATCH_ROLES := [
 
 ## Transport-style controls: pause, play, and two levels of fast
 ## forward, using the usual arrow symbols rather than numbers.
+## Numbers rather than stacked arrows: "▶▶▶" and "▶▶▶▶" are hard to tell
+## apart at a glance and each one is wider than the last, which is what
+## was eating the top bar. A number is one character at any speed.
 const SPEEDS := [
 	{"label": "❚❚", "scale": 0.0, "tip": "Pause. The whole colony freezes; you can still look around and give orders."},
-	{"label": "▶", "scale": 1.0, "tip": "Play at normal speed."},
-	{"label": "▶▶", "scale": 2.0, "tip": "Fast forward at double speed. Good for waiting out brood development or comb building."},
-	{"label": "▶▶▶", "scale": 4.0, "tip": "Fast forward at quadruple speed. The quickest way to reach the next day."},
+	{"label": "1", "scale": 1.0, "tip": "Normal speed."},
+	{"label": "2", "scale": 2.0, "tip": "Double speed. Good for waiting out brood development or comb building."},
+	{"label": "4", "scale": 4.0, "tip": "Quadruple speed. The quickest way to reach the next day."},
+	{"label": "8", "scale": 8.0, "tip": "Eight times speed. For skipping a stretch you have already seen -- a winter run-up, or waiting on a big dig. Watch the energy readout rather than the bees at this speed; there is more happening per second than you can follow."},
 ]
 
 ## What an architect can be set to do. The keys are what main.gd matches
@@ -185,14 +191,22 @@ const TUNING_BUTTON_RESERVE := 108.0
 var corner_column: VBoxContainer
 var corner_texts: Dictionary = {
 	"day": "", "stores": "", "population": "", "comb": "",
-	"energy": "", "rates": "",
+	"energy": "", "rates": "", "winter": "",
+	"nursery_zone": "", "nursery_mix": "", "nursery_output": "",
 }
-## Order the starred readouts appear in, matching ColonyPanel.STAT_ROWS.
-const CORNER_ORDER := ["day", "stores", "population", "comb", "energy", "rates"]
+## Order the starred readouts appear in. Covers both the colony window's
+## STAT_ROWS and the nursery window's, since both pin into the same
+## corner and the order they appear in shouldn't depend on which window
+## the player happened to star them from.
+const CORNER_ORDER := [
+	"day", "winter", "stores", "population", "comb", "energy", "rates",
+	"nursery_zone", "nursery_mix", "nursery_output",
+]
 ## Font size per readout -- the day is the headline, the rest is detail.
 const CORNER_SIZES := {
-	"day": 22, "stores": 16, "population": 13, "comb": 12,
+	"day": 22, "winter": 15, "stores": 16, "population": 13, "comb": 12,
 	"energy": 13, "rates": 12,
+	"nursery_zone": 12, "nursery_mix": 12, "nursery_output": 12,
 }
 ## What is currently drawn, so the column is only rebuilt when it would
 ## actually look different rather than every frame.
@@ -200,6 +214,7 @@ var corner_signature: String = ""
 
 var pause_label: Label
 var view_button: Button
+var winter_button: Button
 var selection_panel: PanelContainer
 var selection_label: Label
 var task_label: Label
@@ -305,29 +320,55 @@ func _build_top_right_bar() -> void:
 	bar.offset_top = 8
 	add_child(bar)
 
+	# The speed buttons sit in their own tight group with no gaps, which
+	# reads as one control rather than five and gives the extra speed
+	# somewhere to go without pushing everything else off the bar.
+	var speed_group := HBoxContainer.new()
+	speed_group.add_theme_constant_override("separation", 1)
+	bar.add_child(speed_group)
+
 	for entry in SPEEDS:
 		var btn := Button.new()
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
-		btn.custom_minimum_size = Vector2(34, 26)
+		btn.custom_minimum_size = Vector2(24, 26)
+		btn.add_theme_font_size_override("font_size", 11)
+		btn.focus_mode = Control.FOCUS_NONE
 		btn.toggle_mode = true
 		var scale_value: float = entry.scale
 		btn.pressed.connect(func(): speed_requested.emit(scale_value))
-		bar.add_child(btn)
+		speed_group.add_child(btn)
 		speed_buttons.append({"button": btn, "scale": scale_value})
 
-	bar.add_child(_info("Game speed. These change how fast the simulation runs; they do not change how much resource a bee gathers per in-game second."))
+	bar.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
 	var colony_button := Button.new()
 	colony_button.text = "Colony (C)"
-	colony_button.custom_minimum_size = Vector2(90, 26)
+	colony_button.custom_minimum_size = Vector2(80, 26)
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	bar.add_child(colony_button)
-	bar.add_child(_info("Open the colony overview: how many bees are on each job, what is in the comb, and how the brood is doing. Click any role in it to select every bee doing that job at once."))
+	bar.add_child(_info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once."))
+
+	var nursery_button := Button.new()
+	nursery_button.text = "Nursery (N)"
+	nursery_button.custom_minimum_size = Vector2(84, 26)
+	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
+	bar.add_child(nursery_button)
+	bar.add_child(_info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb."))
+
+	# Only appears once a winter has been scheduled -- until then there is
+	# nothing for it to say, and a permanently dead button is worse than
+	# no button.
+	winter_button = Button.new()
+	winter_button.text = "Winter"
+	winter_button.custom_minimum_size = Vector2(62, 26)
+	winter_button.visible = GameConfig.winter_coming
+	winter_button.pressed.connect(func(): winter_window_requested.emit())
+	bar.add_child(winter_button)
 
 	view_button = Button.new()
 	view_button.text = "To Hive (Tab)"
-	view_button.custom_minimum_size = Vector2(120, 26)
+	view_button.custom_minimum_size = Vector2(106, 26)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
 	bar.add_child(view_button)
 	bar.add_child(_info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood). Both keep simulating whichever one you are looking at."))
@@ -386,6 +427,11 @@ func _build_selection_panel() -> void:
 ## works in the zone a lot doesn't reopen it every time.
 var cell_sections: Dictionary = {}     # title -> the VBox holding its rows
 var cell_section_open: Dictionary = {}
+## Popup buttons whose appearance tracks the state of the cell being
+## shown, keyed by what they represent. Lit up in _refresh_cell_popup, so
+## "which priority is this cell on" and "is this one sealed" are readable
+## without hunting through the text above.
+var live_buttons: Dictionary = {}
 
 func _build_cell_popup() -> void:
 	cell_popup = PopupPanel.new()
@@ -404,32 +450,44 @@ func _build_cell_popup() -> void:
 
 	var nectar_btn := Button.new()
 	nectar_btn.text = "Store Nectar"
+	nectar_btn.focus_mode = Control.FOCUS_NONE
 	nectar_btn.pressed.connect(func(): _request_designation("nectar"))
+	live_buttons["designation_nectar"] = nectar_btn
 	row.add_child(_with_info(nectar_btn, "Reserve this cell for nectar. Foragers carrying pollen will walk past it."))
 
 	var pollen_btn := Button.new()
 	pollen_btn.text = "Store Pollen"
+	pollen_btn.focus_mode = Control.FOCUS_NONE
 	pollen_btn.pressed.connect(func(): _request_designation("pollen"))
+	live_buttons["designation_pollen"] = pollen_btn
 	row.add_child(_with_info(pollen_btn, "Reserve this cell for pollen. Foragers carrying nectar will walk past it."))
 
 	var honey_btn := Button.new()
 	honey_btn.text = "Store Honey"
+	honey_btn.focus_mode = Control.FOCUS_NONE
 	honey_btn.pressed.connect(func(): _request_designation("honey"))
+	live_buttons["designation_honey"] = honey_btn
 	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
 
 	var jelly_btn := Button.new()
 	jelly_btn.text = "Store Jelly"
+	jelly_btn.focus_mode = Control.FOCUS_NONE
 	jelly_btn.pressed.connect(func(): _request_designation("jelly"))
+	live_buttons["designation_jelly"] = jelly_btn
 	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
 
 	var egg_btn := Button.new()
 	egg_btn.text = "Raise Eggs"
+	egg_btn.focus_mode = Control.FOCUS_NONE
 	egg_btn.pressed.connect(func(): _request_designation("brood"))
+	live_buttons["designation_brood"] = egg_btn
 	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."))
 
 	var auto_btn := Button.new()
 	auto_btn.text = "Any"
+	auto_btn.focus_mode = Control.FOCUS_NONE
 	auto_btn.pressed.connect(func(): _request_designation(""))
+	live_buttons["designation_any"] = auto_btn
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
 	_build_zone_controls(_cell_section(column, "Nursery zone", false))
@@ -565,9 +623,13 @@ func _build_zone_controls(column: VBoxContainer) -> void:
 		var btn := Button.new()
 		btn.text = ["Low", "Medium", "High"][tier]
 		btn.add_theme_font_size_override("font_size", 11)
+		btn.focus_mode = Control.FOCUS_NONE
 		var tier_value: int = tier
 		btn.pressed.connect(func(): _request_priority(tier_value))
 		tier_row.add_child(btn)
+		# tracked so _refresh_cell_popup can light up whichever is in
+		# force on the cell being shown
+		live_buttons["priority_%d" % tier] = btn
 
 	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the tuning panel."))
 
@@ -583,22 +645,28 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 	row.add_child(title)
 
 	var close_btn := Button.new()
-	close_btn.text = "Close"
+	close_btn.text = "Sealed"
 	close_btn.add_theme_font_size_override("font_size", 11)
+	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.pressed.connect(func(): _request_close(true))
 	row.add_child(_with_info(close_btn, "Seal the selected cells. Nothing can be added and nothing taken out until you open them again -- the contents are held in reserve. A sealed cell is drawn with a dark bar across it."))
+	live_buttons["closed"] = close_btn
 
 	var open_btn := Button.new()
 	open_btn.text = "Open"
 	open_btn.add_theme_font_size_override("font_size", 11)
+	open_btn.focus_mode = Control.FOCUS_NONE
 	open_btn.pressed.connect(func(): _request_close(false))
 	row.add_child(_with_info(open_btn, "Unseal the selected cells so the colony can use what is in them again."))
+	live_buttons["open"] = open_btn
 
 	var fill_btn := Button.new()
-	fill_btn.text = "Fill then close"
+	fill_btn.text = "Fill then seal"
 	fill_btn.add_theme_font_size_override("font_size", 11)
+	fill_btn.focus_mode = Control.FOCUS_NONE
 	fill_btn.pressed.connect(func(): _request_fill_close())
 	row.add_child(_with_info(fill_btn, "Keep taking deposits but refuse every withdrawal, and seal the cell the moment it is full. Without this a honey cell is sipped from as fast as it is filled and never quite gets to the top, so there is never a full pot to put by. A cell in this state is drawn with a yellow bar."))
+	live_buttons["fill_close"] = fill_btn
 
 ## Clearing a cell out. This exists because a colony with plenty of
 ## foragers fills every spare cell with nectar, leaving nothing free for
@@ -881,6 +949,39 @@ func _refresh_cell_popup() -> void:
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
+	_light_current_options()
+
+## Lights up whichever popup buttons match the state of the cell being
+## shown, so the current reservation, priority tier and seal state are
+## visible at a glance instead of only in the text above.
+func _light_current_options() -> void:
+	var designation: String = active_cell.designated_type
+	if active_cell.keep_empty:
+		designation = ""
+	_set_lit("designation_nectar", designation == "nectar")
+	_set_lit("designation_pollen", designation == "pollen")
+	_set_lit("designation_honey", designation == "honey")
+	_set_lit("designation_jelly", designation == "jelly")
+	_set_lit("designation_brood", designation == "brood")
+	_set_lit("designation_any", designation == "" and not active_cell.keep_empty)
+
+	for tier in range(3):
+		_set_lit("priority_%d" % tier, active_cell.is_nursery_cell() and active_cell.nursery_priority == tier)
+
+	_set_lit("closed", active_cell.is_closed)
+	_set_lit("fill_close", active_cell.fill_then_close)
+	_set_lit("open", not active_cell.is_closed and not active_cell.fill_then_close)
+
+func _set_lit(key: String, lit: bool) -> void:
+	if not live_buttons.has(key):
+		return
+	var button: Button = live_buttons[key]
+	if not is_instance_valid(button):
+		return
+	if lit:
+		UI.mark_as_current(button)
+	else:
+		UI.clear_current_mark(button)
 
 func _process(_delta: float) -> void:
 	if warning_panel.visible:
@@ -1061,10 +1162,15 @@ func _refresh_corner() -> void:
 		line.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
 		corner_column.add_child(line)
 
-## Called when the player stars or unstars something in the colony
-## window: the corner has to be redrawn even though no number changed.
+## Called when the player stars or unstars something in either window:
+## the corner has to be redrawn even though no number changed.
 func pinned_stats_changed() -> void:
 	corner_signature = ""
+	_refresh_corner()
+
+## For callers that have written into `corner_texts` directly, rather
+## than through one of the update_* setters.
+func refresh_corner() -> void:
 	_refresh_corner()
 
 func update_selection(bees: Array) -> void:
@@ -1490,6 +1596,10 @@ func _refresh_selection_text() -> void:
 	else:
 		selection_label.text = "%d bees selected" % shown_bees.size()
 		task_label.text = ""
+
+func set_winter_button_visible(value: bool) -> void:
+	if winter_button != null:
+		winter_button.visible = value
 
 func set_view_label(in_hive: bool) -> void:
 	view_button.text = "To Meadow (Tab)" if in_hive else "To Hive (Tab)"

@@ -66,6 +66,8 @@ var plot_button_row: HBoxContainer
 var plot_series: String = "bees"
 var plot_label: Label
 var history: Array = []             # handed over by main.gd each refresh
+## Which sections are expanded, remembered for the session.
+var section_open: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
@@ -97,18 +99,44 @@ func _ready() -> void:
 	hint.add_theme_color_override("font_color", Color(0.7, 0.75, 0.8))
 	column.add_child(hint)
 
-	column.add_child(HSeparator.new())
-
+	# Three collapsible sections rather than one long list. Who is doing
+	# what is the thing you open this for most, so it starts open; the
+	# readouts and the plot are there when you want them and out of the
+	# way when you don't.
+	var jobs := _section(column, "Who is doing what", true)
 	for i in range(ROLE_ROWS.size()):
-		column.add_child(_make_role_row(i))
+		jobs.add_child(_make_role_row(i))
 
-	column.add_child(HSeparator.new())
-
+	var readouts := _section(column, "Readouts", true)
 	for entry in STAT_ROWS:
-		column.add_child(_make_stat_row(entry))
+		readouts.add_child(_make_stat_row(entry))
 
-	column.add_child(HSeparator.new())
-	_build_plot(column)
+	_build_plot(_section(column, "Over time", false))
+
+## A collapsible section. Same pattern as the tuning panel and the cell
+## popup, so all three behave the same way.
+func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VBoxContainer:
+	if not section_open.has(title):
+		section_open[title] = open_by_default
+
+	var header := Button.new()
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.add_theme_font_size_override("font_size", 12)
+	header.focus_mode = Control.FOCUS_NONE
+	column.add_child(header)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	body.visible = section_open[title]
+	column.add_child(body)
+
+	header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+	header.pressed.connect(func():
+		section_open[title] = not section_open[title]
+		body.visible = section_open[title]
+		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+	)
+	return body
 
 ## Each row is a button so the whole strip is clickable, not just a
 ## small target -- selecting every forager should be one easy click.

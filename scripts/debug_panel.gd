@@ -27,6 +27,8 @@ const CATEGORIES := [
 	"Honey",
 	"Gynes & royal jelly",
 	"Weather",
+	"Winter",
+	"The rival colony",
 	"Mining",
 	"Bee life",
 	"Interface",
@@ -419,6 +421,65 @@ const TUNABLES := [
 		"tip": "Rain intensity past which a trip costs more than it brings back, so foragers stay at the hive until it eases.",
 	},
 
+	# --- Winter ---
+	{
+		"key": "winter_countdown_days", "label": "Winter in days", "step": 1.0, "min": 1.0,
+		"category": "Winter",
+		"tip": "How many in-game days ahead \"Bring on winter\" schedules it. Fifteen is enough to change what you are doing without being so far off that it stops mattering.",
+	},
+	{
+		"key": "winter_length_days", "label": "Winter lasts days", "step": 1.0, "min": 1.0,
+		"category": "Winter",
+		"tip": "How long the winter will be. This is what the required-stores figure is calculated from, so it is the main dial for how hard surviving one is.",
+	},
+	{
+		"key": "winter_burn_factor", "label": "Winter burn x", "step": 0.05, "min": 0.05,
+		"category": "Winter",
+		"tip": "What a bee burns per second through the winter, as a multiple of its ordinary rate. Below one because a clustered colony is doing very little. Tune this first if the winter target feels trivial or impossible.",
+	},
+
+	# --- The rival colony ---
+	{
+		"key": "rival_hive_on", "label": "Rival colony", "toggle": true,
+		"category": "The rival colony",
+		"tip": "Put a second colony in the meadow, run by the game. It isn't a copy of your simulation -- that would double the cost of the game for something you can't watch -- but an abstract colony with a few visible foragers that take nectar from the same real flowers you do. There is no combat: the pressure is entirely economic. Takes effect on Restart Run.",
+	},
+	{
+		"key": "rival_starting_bees", "label": "Rival start bees", "step": 1.0, "min": 1.0,
+		"category": "The rival colony",
+		"tip": "How big the rival colony is when a run begins. Takes effect on Restart Run.",
+	},
+	{
+		"key": "rival_max_bees", "label": "Rival max bees", "step": 5.0, "min": 1.0,
+		"category": "The rival colony",
+		"tip": "The most bees the rival can ever reach. This is the main dial for how much competition it eventually represents.",
+	},
+	{
+		"key": "rival_min_distance", "label": "Rival distance", "step": 50.0, "min": 100.0,
+		"category": "The rival colony",
+		"tip": "How far from your hive the rival is placed. Far enough that you aren't fighting over the same flowers on day one; the two colonies meet in the middle later as both grow. Takes effect on Restart Run.",
+	},
+	{
+		"key": "rival_forage_range", "label": "Rival range", "step": 20.0, "min": 50.0,
+		"category": "The rival colony",
+		"tip": "How far the rival's foragers will travel. Raising it makes the two colonies overlap sooner.",
+	},
+	{
+		"key": "rival_crowding_scale", "label": "Rival crowding", "step": 5.0, "min": 1.0,
+		"category": "The rival colony",
+		"tip": "How much the rival's bees get in each other's way. More bees working the same patch of meadow get less each, which is what gives the colony a size that depends on the forage rather than always growing to its cap. Lower means the meadow supports fewer of them. Simulated over 200 days, this is the dial that decides whether squeezing the rival visibly shrinks it or does nothing at all.",
+	},
+	{
+		"key": "rival_brood_gate_days", "label": "Rival grows above", "step": 5.0, "min": 1.0,
+		"category": "The rival colony",
+		"tip": "How many days of food in hand the rival wants before it will raise brood. Growing on an empty larder made it boom and then starve; waiting until it has a margin is what makes it settle at a steady size instead.",
+	},
+	{
+		"key": "rival_flower_take", "label": "Rival take/visit", "step": 0.5, "min": 0.0,
+		"category": "The rival colony",
+		"tip": "Nectar one rival forager removes from a flower per visit. This is the only way the rival touches your world, so it is what turns it from scenery into competition. Set it to zero to have a neighbour that doesn't compete at all.",
+	},
+
 	# --- Mining ---
 	{
 		"key": "block_mine_time", "label": "Block dig s", "step": 10.0, "min": 5.0,
@@ -685,7 +746,24 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
 
+	var winter_row := HBoxContainer.new()
+	column.add_child(winter_row)
+
+	var winter_btn := Button.new()
+	winter_btn.text = "Bring on winter"
+	winter_btn.pressed.connect(_on_winter_pressed)
+	winter_row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" below). A forecast opens in the top right showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
+
 	column.add_child(HSeparator.new())
+
+## Starts the countdown on the running world. Winter is scheduled
+## relative to the current day rather than a fixed date, so pressing this
+## on day 40 gives the same run-up as pressing it on day 4.
+func _on_winter_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	worlds[0].begin_winter_countdown()
 
 func _on_save_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")

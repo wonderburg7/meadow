@@ -17,6 +17,23 @@ extends CanvasLayer
 const UI = preload("res://scripts/ui.gd")
 
 signal closed()
+## A readout here has been starred or unstarred into the top-left corner.
+signal pinned_changed()
+
+## The readouts in this window that can be starred into the corner, the
+## same way the colony window's are. Keys are shared with
+## GameConfig.pinned_stats and HUD.corner_texts, so one mechanism drives
+## the corner rather than each panel having its own.
+const STAT_ROWS := [
+	{"key": "nursery_zone", "tip": "How many cells are set aside for each role, and how many are in each priority tier."},
+	{"key": "nursery_mix", "tip": "What the colony is made of right now, as counts and shares."},
+	{"key": "nursery_output", "tip": "How many bees of each kind have emerged from the comb in the last few minutes. This is the nursery's output -- the thing the zone actually controls."},
+]
+
+## The live text of each, handed to the HUD so the corner and this window
+## always say the same thing.
+var corner_texts: Dictionary = {"nursery_zone": "", "nursery_mix": "", "nursery_output": ""}
+var star_buttons: Dictionary = {}
 
 ## One colour per role, shared between the ring plot, the emergence list
 ## and the glow on the comb itself. Keys match the "role|focus" form used
@@ -99,15 +116,12 @@ func _ready() -> void:
 
 	column.add_child(HSeparator.new())
 
-	zone_label = _make_readout(column, 12)
+	zone_label = _make_readout(_starred_row(column, "nursery_zone", "The zone"), 12)
 	tier_label = _make_readout(column, 12)
 
 	column.add_child(HSeparator.new())
 
-	var ring_title := Label.new()
-	ring_title.text = "The colony now"
-	ring_title.add_theme_font_size_override("font_size", 13)
-	column.add_child(ring_title)
+	column.add_child(_starred_row(column, "nursery_mix", "The colony now", true))
 
 	# Drawn by hand: there is no charting library here, and a donut is a
 	# handful of arcs.
@@ -118,13 +132,58 @@ func _ready() -> void:
 
 	column.add_child(HSeparator.new())
 
-	var out_title := Label.new()
-	out_title.text = "Emerging (last 3 minutes)"
-	out_title.add_theme_font_size_override("font_size", 13)
-	column.add_child(out_title)
+	column.add_child(_starred_row(column, "nursery_output", "Emerging (last 3 minutes)", true))
 	emergence_label = _make_readout(column, 12)
 
-func _make_readout(column: VBoxContainer, size: int) -> Label:
+## A section heading with a star beside it. Starring pins that readout to
+## the top-left corner, the same as in the colony window -- one habit
+## rather than two.
+##
+## `standalone` returns the row for the caller to add itself; otherwise
+## the row is added here and returned as a container for the readout.
+func _starred_row(column: VBoxContainer, key: String, title: String, standalone: bool = false) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+
+	var star := Button.new()
+	star.toggle_mode = true
+	star.custom_minimum_size = Vector2(24, 18)
+	star.add_theme_font_size_override("font_size", 11)
+	star.focus_mode = Control.FOCUS_NONE
+	star.button_pressed = GameConfig.pinned_stats.has(key)
+	star.text = "★" if star.button_pressed else "☆"
+	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
+	star.toggled.connect(func(pressed: bool): _set_pinned(key, pressed))
+	row.add_child(star)
+	star_buttons[key] = star
+
+	var label := Label.new()
+	label.text = title
+	label.add_theme_font_size_override("font_size", 13)
+	row.add_child(label)
+
+	for entry in STAT_ROWS:
+		if entry.key == key:
+			row.add_child(UI.info_badge(entry.tip))
+			break
+
+	if standalone:
+		return row
+	var holder := VBoxContainer.new()
+	holder.add_child(row)
+	column.add_child(holder)
+	return holder
+
+func _set_pinned(key: String, pressed: bool) -> void:
+	if pressed and not GameConfig.pinned_stats.has(key):
+		GameConfig.pinned_stats.append(key)
+	elif not pressed:
+		GameConfig.pinned_stats.erase(key)
+	if star_buttons.has(key):
+		star_buttons[key].text = "★" if pressed else "☆"
+	pinned_changed.emit()
+
+func _make_readout(column: Node, size: int) -> Label:
 	var label := Label.new()
 	label.add_theme_font_size_override("font_size", size)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -162,10 +221,10 @@ static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:
 ##   `live`      -- "role|focus" -> how many bees exist now
 ##   `emerged`   -- "role|focus" -> how many emerged in the window
 ##   `window`    -- length of that window in in-game seconds
+## Runs whether or not the window is showing: a readout starred into the
+## corner has to keep updating with the window closed, or it freezes at
+## whatever it last said. Writing to hidden labels costs nothing.
 func refresh(zone: Dictionary, live: Dictionary, emerged: Dictionary, window: float) -> void:
-	if not panel.visible:
-		return
-
 	_refresh_zone(zone)
 	_refresh_ring(live)
 	_refresh_emergence(emerged, window)
@@ -182,8 +241,10 @@ func _refresh_zone(zone: Dictionary) -> void:
 		lines.append("%s: %d cell%s" % [ROLE_LABELS[key], count, "" if count == 1 else "s"])
 	if lines.is_empty():
 		zone_label.text = "No cells in the zone yet. Select comb and use \"Add to nursery zone\"."
+		corner_texts["nursery_zone"] = "Nursery zone — no cells set aside"
 	else:
 		zone_label.text = "%d cells in the zone\n%s" % [total, "\n".join(lines)]
+		corner_texts["nursery_zone"] = "Nursery zone — %d cells: %s" % [total, ", ".join(lines)]
 
 	var counts: Array = zone.get("counts", [0, 0, 0])
 	var free: Array = zone.get("free", [0, 0, 0])
@@ -216,6 +277,14 @@ func _refresh_ring(live: Dictionary) -> void:
 			"count": count,
 		})
 	ring.queue_redraw()
+	# The ring answers "what shape is the colony", which is a question
+	# about proportions -- so the key gives the share as well as the
+	# count. Reading proportions off arc lengths by eye is exactly the
+	# thing pie charts are bad at.
+	var lines: Array = []
+	for slice in ring_slices:
+		lines.append("%s: %d (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0])
+	corner_texts["nursery_mix"] = "Colony mix — %s" % ", ".join(lines) if not lines.is_empty() else ""
 
 ## Bees that have emerged from the comb in the window, as a rate. This
 ## counts *births*, not what those bees then go on to do -- it is the
@@ -232,9 +301,11 @@ func _refresh_emergence(emerged: Dictionary, window: float) -> void:
 		lines.append("%s: %.1f/min  (%d)" % [ROLE_LABELS.get(key, key), count / minutes, count])
 	if lines.is_empty():
 		emergence_label.text = "Nothing has emerged in the last 3 minutes."
+		corner_texts["nursery_output"] = "Emerging — nothing recently"
 		return
 	lines.append("All bees: %.1f/min" % (total / minutes))
 	emergence_label.text = "\n".join(lines)
+	corner_texts["nursery_output"] = "Emerging — %s" % ", ".join(lines)
 
 ## A donut, drawn as a run of thick arcs. Slices under a couple of degrees
 ## are still drawn -- a role with one bee in a colony of eighty should
@@ -260,7 +331,8 @@ func _draw_ring() -> void:
 	for slice in ring_slices:
 		ring.draw_rect(Rect2(Vector2(150, y), Vector2(10, 10)), slice.colour, true)
 		ring.draw_string(
-			font, Vector2(166, y + 10), "%s (%d)" % [slice.label, slice.count],
+			font, Vector2(166, y + 10),
+			"%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.9, 0.92, 0.95)
 		)
 		y += 15.0

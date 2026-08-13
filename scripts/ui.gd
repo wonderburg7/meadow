@@ -83,6 +83,15 @@ static func mark_as_current(button: Button) -> Button:
 		button.add_theme_stylebox_override(style_name, box)
 	return button
 
+## Undoes mark_as_current, putting the button back to the theme default.
+## Needed wherever a button is reused across refreshes rather than
+## rebuilt -- the cell popup keeps its buttons and re-lights them as the
+## selection changes, so the old lighting has to come off.
+static func clear_current_mark(button: Button) -> void:
+	button.remove_theme_color_override("font_color")
+	for style_name in ["normal", "hover", "pressed", "focus"]:
+		button.remove_theme_stylebox_override(style_name)
+
 ## Applies the current GameConfig.show_info_badges setting to every badge
 ## already on screen. `node` is any node in the tree -- it's only used to
 ## reach the scene tree.
