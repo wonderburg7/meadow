@@ -56,6 +56,33 @@ static func with_info(control: Control, tip: String) -> HBoxContainer:
 	row.add_child(info_badge(tip))
 	return row
 
+## The colour of the "this is what the selection is already doing" border.
+const CURRENT_ROLE_COLOUR := Color(0.35, 1.0, 0.55)
+
+## Draws a glowing border round a button to mark it as the role the
+## selected bees are already on.
+##
+## The selection panel used to hide the button for the current role
+## instead, which meant the row of buttons changed shape every time you
+## clicked a different bee -- and the one piece of information you most
+## want ("what is this bee doing?") was conveyed by an absence, which is
+## the hardest thing to read. Every button is now always present in the
+## same place, and the current one is lit up.
+static func mark_as_current(button: Button) -> Button:
+	button.add_theme_color_override("font_color", CURRENT_ROLE_COLOUR)
+	for style_name in ["normal", "hover", "pressed", "focus"]:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(0.16, 0.30, 0.20) if style_name == "normal" else Color(0.22, 0.38, 0.26)
+		box.set_corner_radius_all(4)
+		box.set_border_width_all(2)
+		box.border_color = CURRENT_ROLE_COLOUR
+		box.content_margin_left = 8
+		box.content_margin_right = 8
+		box.content_margin_top = 3
+		box.content_margin_bottom = 3
+		button.add_theme_stylebox_override(style_name, box)
+	return button
+
 ## Applies the current GameConfig.show_info_badges setting to every badge
 ## already on screen. `node` is any node in the tree -- it's only used to
 ## reach the scene tree.

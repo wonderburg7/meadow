@@ -355,11 +355,25 @@ func _build_selection_panel() -> void:
 
 # --- cell popup ---------------------------------------------------
 
+## The popup had grown to five rows of buttons plus two checkboxes, all
+## on screen at once, which is more than anyone can scan while a click is
+## in progress. It's now grouped into collapsible sections, the same
+## pattern the tuning panel uses.
+##
+## Only "Reserve for" starts open, because that is the one thing you do
+## to nearly every cell. The rest are things you do occasionally and
+## deliberately, so they're one click away rather than always in the way.
+## Which sections are open is remembered for the session, so a player who
+## works in the zone a lot doesn't reopen it every time.
+var cell_sections: Dictionary = {}     # title -> the VBox holding its rows
+var cell_section_open: Dictionary = {}
+
 func _build_cell_popup() -> void:
 	cell_popup = PopupPanel.new()
 	add_child(cell_popup)
 
 	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
 	cell_popup.add_child(column)
 
 	cell_popup_label = Label.new()
@@ -367,7 +381,7 @@ func _build_cell_popup() -> void:
 	column.add_child(cell_popup_label)
 
 	var row := HBoxContainer.new()
-	column.add_child(row)
+	_cell_section(column, "Reserve for", true).add_child(row)
 
 	var nectar_btn := Button.new()
 	nectar_btn.text = "Store Nectar"
@@ -399,13 +413,15 @@ func _build_cell_popup() -> void:
 	auto_btn.pressed.connect(func(): _request_designation(""))
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
-	_build_zone_controls(column)
-	_build_closing_controls(column)
-	_build_empty_controls(column)
+	_build_zone_controls(_cell_section(column, "Nursery zone", false))
+	_build_closing_controls(_cell_section(column, "Sealing", false))
+	_build_empty_controls(_cell_section(column, "Emptying", false))
+
+	var raises := _cell_section(column, "Raises", false)
 
 	# Which role a bee raised here comes out as.
 	var hatch_row := HBoxContainer.new()
-	column.add_child(hatch_row)
+	raises.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
 	hatch_title.add_theme_font_size_override("font_size", 11)
@@ -427,7 +443,7 @@ func _build_cell_popup() -> void:
 
 	# Whether that role sticks for every future bee, or applies once.
 	var lock_row := HBoxContainer.new()
-	column.add_child(lock_row)
+	raises.add_child(lock_row)
 	hatch_lock_box = CheckBox.new()
 	hatch_lock_box.text = "Keep this role for every bee raised here"
 	hatch_lock_box.add_theme_font_size_override("font_size", 11)
@@ -440,7 +456,7 @@ func _build_cell_popup() -> void:
 
 	# Whether the queen lays a gyne here rather than a worker.
 	var gyne_row := HBoxContainer.new()
-	column.add_child(gyne_row)
+	raises.add_child(gyne_row)
 	gyne_box = CheckBox.new()
 	gyne_box.text = "Raise a gyne (future queen) in this cell"
 	gyne_box.add_theme_font_size_override("font_size", 11)
@@ -452,6 +468,37 @@ func _build_cell_popup() -> void:
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
+
+## Adds a collapsible section to the popup and returns the container its
+## rows should go into. The header button toggles it; the arrow says
+## which way it will go, which is the convention everywhere else.
+func _cell_section(column: VBoxContainer, title: String, open_by_default: bool) -> VBoxContainer:
+	if not cell_section_open.has(title):
+		cell_section_open[title] = open_by_default
+
+	var header := Button.new()
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.add_theme_font_size_override("font_size", 12)
+	header.focus_mode = Control.FOCUS_NONE
+	column.add_child(header)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	body.visible = cell_section_open[title]
+	column.add_child(body)
+
+	header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+	header.pressed.connect(func():
+		cell_section_open[title] = not cell_section_open[title]
+		body.visible = cell_section_open[title]
+		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+		# the popup was sized to the old contents, so let it shrink or
+		# grow to fit what's showing now
+		cell_popup.reset_size()
+	)
+
+	cell_sections[title] = body
+	return body
 
 ## The nursery zone: which cells the queen lays in, and how hard she
 ## favours each one.
@@ -1029,6 +1076,8 @@ func _rebuild_role_controls(bees: Array) -> void:
 	# --- forager: focus + start point directly if already foraging,
 	# otherwise a dropdown that becomes a forager with a focus in one go
 	if common_role == Bee.Role.FORAGER:
+		role_row.add_child(_current_role_marker("Forager"))
+
 		var nectar_btn := Button.new()
 		nectar_btn.text = "Focus Nectar"
 		nectar_btn.pressed.connect(func(): focus_requested.emit("nectar"))
@@ -1062,6 +1111,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	# --- nursery: a sub-mode switch if already one, otherwise a dropdown
 	# that picks the mode as it assigns the role
 	if common_role == Bee.Role.NURSERY:
+		role_row.add_child(_current_role_marker("Nursery"))
 		var current_nurse_mode: String = bees[0].nurse_mode if is_instance_valid(bees[0]) else "feed"
 		role_row.add_child(_make_role_menu(
 			"Doing: %s" % _nurse_mode_label(current_nurse_mode),
@@ -1074,6 +1124,8 @@ func _rebuild_role_controls(bees: Array) -> void:
 	# --- architect: manual cell placement plus a mode switch if already
 	# one, otherwise a dropdown that picks the mode as it assigns the role
 	if common_role == Bee.Role.BUILDER:
+		role_row.add_child(_current_role_marker("Architect"))
+
 		var build_btn := Button.new()
 		build_btn.text = "Build Cell"
 		build_btn.pressed.connect(func(): build_cell_requested.emit())
@@ -1096,6 +1148,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	# --- miner: automine toggle directly if already mining, otherwise a
 	# dropdown that becomes a miner with automine already on
 	if common_role == Bee.Role.MINER:
+		role_row.add_child(_current_role_marker("Miner"))
 		var first_automine: bool = bees[0].automine if is_instance_valid(bees[0]) else false
 		var automine_btn := Button.new()
 		automine_btn.toggle_mode = true
@@ -1116,21 +1169,30 @@ func _rebuild_role_controls(bees: Array) -> void:
 		role_row.add_child(miner_menu)
 
 	# --- honey maker ---
-	if common_role != Bee.Role.HONEY_MAKER:
+	# Shown whether or not the selection is already on it, and lit up when
+	# it is: a button that disappears when you're doing the thing makes
+	# the row jump about, and tells you what a bee is doing by absence.
+	if common_role == Bee.Role.HONEY_MAKER:
+		role_row.add_child(_current_role_marker("Honey maker"))
+	else:
 		var honey_btn := Button.new()
 		honey_btn.text = "Honey maker"
 		honey_btn.pressed.connect(func(): role_requested.emit("honey_maker"))
 		role_row.add_child(_with_info(honey_btn, _tip_for("honey_maker")))
 
 	# --- idle ---
-	if common_role != Bee.Role.IDLE:
+	if common_role == Bee.Role.IDLE:
+		role_row.add_child(_current_role_marker("Idle"))
+	else:
 		var idle_btn := Button.new()
 		idle_btn.text = "Idle"
 		idle_btn.pressed.connect(func(): role_requested.emit("idle"))
 		role_row.add_child(_with_info(idle_btn, _tip_for("idle")))
 
-	# --- egg layer: queen only, and only if she isn't already one ---
-	if any_queen and common_role != Bee.Role.EGG_LAYER:
+	# --- egg layer: queen only ---
+	if any_queen and common_role == Bee.Role.EGG_LAYER:
+		role_row.add_child(_current_role_marker("Egg layer"))
+	elif any_queen:
 		var egg_btn := Button.new()
 		egg_btn.text = "Egg layer"
 		egg_btn.pressed.connect(func(): role_requested.emit("egg_layer"))
@@ -1171,8 +1233,19 @@ func _rebuild_role_controls(bees: Array) -> void:
 	finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
 	role_row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying first, an architect finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts the new job immediately."))
 
-## -1 means the selection is mixed -- no role button gets hidden in that
-## case, since there's no single "already this role" to exclude.
+## The lit-up button naming the role the selection is already on. It is
+## an ordinary button rather than a label so it sits at the same height
+## as everything else in the row; pressing it just reasserts the role the
+## bee already has, which is harmless.
+func _current_role_marker(label: String) -> Control:
+	var button := Button.new()
+	button.text = "● %s" % label
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = "This is what the selected bees are doing now."
+	return UI.mark_as_current(button)
+
+## -1 means the selection is mixed -- no role is marked as current in
+## that case, since there's no single answer to what they're all doing.
 func _common_role(bees: Array) -> int:
 	var found := false
 	var role_value := -1

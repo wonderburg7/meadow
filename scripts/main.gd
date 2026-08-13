@@ -65,6 +65,12 @@ const RAISED_AREA_RADIUS := Vector2(130.0, 240.0)
 const TREE_COUNT := 10
 const TREE_RADIUS := Vector2(22.0, 34.0)
 const OBSTACLE_HIVE_CLEARANCE := 220.0
+## How far clear of a tree or plateau a flower is planted. This has to
+## stay comfortably above Bee.BLOCK_MARGIN, the hard boundary a bee is
+## never allowed inside -- a flower any closer than that would sit in
+## ground no bee can stand on, and foragers would queue up against the
+## edge trying to reach it forever.
+const FLOWER_CLEARANCE := 30.0
 const HIVE_MARKER_POSITION := Vector2(620, 330)
 
 ## Muted, slightly grey-green so it reads as grass without glowing.
@@ -88,10 +94,6 @@ var game_over: CanvasLayer
 var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
 var colony_lost: bool = false
-## Dims the world while the nursery window is open, so the glowing zone
-## cells stand out against everything else. Sits under the HUD layers, so
-## panels and readouts stay at full brightness.
-var zone_dim: ColorRect
 
 ## Every bee that has emerged, as {t, key} where key is "role|focus".
 ## Used for the nursery window's "emerging in the last three minutes"
@@ -201,15 +203,6 @@ func _ready() -> void:
 	rain_overlay.visible = false
 	weather_layer.add_child(rain_overlay)
 
-	# Darkens the world while the nursery window is open. On the same
-	# layer as the rain wash -- below the HUD (layer 9) and the panels
-	# (layer 11) -- so the menus and readouts are unaffected by it.
-	zone_dim = ColorRect.new()
-	zone_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	zone_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	zone_dim.color = Color(0.0, 0.0, 0.05, 0.45)
-	zone_dim.visible = false
-	weather_layer.add_child(zone_dim)
 
 	selection_layer = Node2D.new()
 	selection_layer.z_index = 100
@@ -425,7 +418,7 @@ func _is_clear_ground(point: Vector2) -> bool:
 	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
-		if point.distance_to(obstacle.position) < obstacle.radius + 24.0:
+		if point.distance_to(obstacle.position) < obstacle.radius + FLOWER_CLEARANCE:
 			return false
 	return true
 
@@ -436,7 +429,7 @@ func _clear_of_obstacles(point: Vector2) -> Vector2:
 	for obstacle in obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
-		var edge: float = obstacle.radius + 24.0
+		var edge: float = obstacle.radius + FLOWER_CLEARANCE
 		var offset: Vector2 = result - obstacle.position
 		if offset.length() >= edge:
 			continue
@@ -934,9 +927,14 @@ func _refresh_signals(delta: float) -> void:
 ## readouts and both panels, so they can never disagree.
 func _refresh_panels(bees: Array) -> void:
 	var counts := _role_counts()
-	var total_energy := 0.0
+	# The mean of each bee's own percentage, clamped per bee, rather than
+	# the total divided by the total capacity. The two only agree while
+	# every bee is within range, and one bee sitting on a large negative
+	# energy used to drag the whole figure down -- which is what made this
+	# read far lower than any bee you could actually click on.
+	var energy_share := 0.0
 	for b in bees:
-		total_energy += b.energy
+		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
 
 	var brood_count := 0
 	var gyne_count := 0
@@ -954,7 +952,7 @@ func _refresh_panels(bees: Array) -> void:
 		elif cell.is_empty() and not cell.keep_empty:
 			free_cells += 1
 
-	var mean_energy: float = (total_energy / max(1, bees.size())) / max(0.001, GameConfig.energy_capacity)
+	var mean_energy: float = energy_share / max(1, bees.size())
 	var comb_text := "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
 		hive.cells.size(), free_cells, brood_count, gyne_count, hungry_brood,
 	]
@@ -1006,11 +1004,16 @@ func _trim_emergence_log() -> void:
 	while not emergence_log.is_empty() and float(emergence_log[0].t) < cutoff:
 		emergence_log.pop_front()
 
-## Lights up every nursery-zone cell in the colour of the role it raises,
-## and dims everything else, while the nursery window is open.
+## Lights up every nursery-zone cell in the colour of the role it raises
+## while the nursery window is open.
+##
+## The comb itself is no longer dimmed. Dimming was meant to make the
+## zone stand out, but the thing you most want to read while the window
+## is open is the comb -- what is in each cell, how full it is, which are
+## free -- and washing it out made that harder, not easier. A bright
+## border round the zone cells does the job on its own.
 func _apply_zone_glow() -> void:
 	var showing: bool = nursery_panel.is_open() and in_hive_view
-	zone_dim.visible = showing
 	if not showing:
 		_clear_zone_glow()
 		return
@@ -1053,7 +1056,6 @@ func _role_counts() -> Dictionary:
 	return counts
 
 func _clear_zone_glow() -> void:
-	zone_dim.visible = false
 	for cell in hive.cells:
 		if is_instance_valid(cell):
 			cell.set_zone_glow(false)
@@ -1642,6 +1644,15 @@ func _apply_scenery_setting() -> void:
 		if is_instance_valid(obstacle):
 			obstacle.visible = scenery_shown
 			obstacle.solid = scenery_shown
+
+	# Every bee forgets whatever it was steering round, and its stall
+	# watch is reset. Without this a bee mid-detour kept its commitment to
+	# an obstacle that no longer exists, so switching the scenery off
+	# didn't free the ones already caught -- which is exactly what you'd
+	# reach for the toggle to do.
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b):
+			b.clear_navigation_state()
 
 ## A miner has finished a block: it becomes open floor, and the routes
 ## through the hive are rebuilt so bees can use the new space.

@@ -140,6 +140,9 @@ var nurse_fetching: String = ""      # what this trip to a cell is for
 var stall_best_distance: float = INF
 var stall_timer: float = 0.0
 const STALL_SECONDS := 4.0
+## How close to an obstacle a bee has to be for the escape hatch to treat
+## it as the thing it is caught on.
+const ESCAPE_RANGE := 60.0
 
 ## A role to fall back to whenever this bee's primary role has genuinely
 ## nothing for it to do right now -- a non-automine miner with no block
@@ -474,6 +477,25 @@ func _age_and_burn(delta: float) -> void:
 
 	_sip_from_crop(delta)
 
+	# Death is checked here, at the end of the one function every bee runs
+	# every frame.
+	#
+	# It used to sit at the bottom of _sip_from_crop, which returns early
+	# for any bee that is indoors or not carrying nectar -- so in practice
+	# only an outdoor nectar forager could ever die of starvation. Everyone
+	# else burned straight past zero into the negative and stayed alive
+	# there, and if such a bee later reached the comb it drank the debt
+	# back out of the stores. That is the energy leak.
+	if energy <= 0.0:
+		energy = 0.0
+		_die()
+		return
+
+	# The queen doesn't die of old age -- losing her would silently end
+	# the colony, and there's no succession yet. She can still starve.
+	if not is_queen and age_seconds >= GameConfig.bee_lifespan_days * GameConfig.seconds_per_day:
+		_die()
+
 ## Out in the meadow and actually moving under its own power.
 func _is_flying() -> bool:
 	if _is_inside_hive():
@@ -505,21 +527,6 @@ func _sip_from_crop(delta: float) -> void:
 	# carried in -- it was quietly eating most of it straight back out of
 	# the cell it had just filled. Eating is now a real trip to a real
 	# cell; see _should_go_and_eat and _feed_self.
-
-	# Energy is never allowed below zero. A bee that ran out while stuck
-	# behind something used to keep burning into the negative, and if it
-	# later came unstuck it arrived at the comb owing a debt it could
-	# never eat its way out of, draining the stores for nothing. Out of
-	# energy is dead, immediately and finally.
-	if energy <= 0.0:
-		energy = 0.0
-		_die()
-		return
-
-	# The queen doesn't die of old age -- losing her would silently end
-	# the colony, and there's no succession yet. She can still starve.
-	if not is_queen and age_seconds >= GameConfig.bee_lifespan_days * GameConfig.seconds_per_day:
-		_die()
 
 func _works_indoors() -> bool:
 	return (
@@ -627,12 +634,7 @@ func _after_feeding() -> void:
 ## abandons the errand rather than leaving it hovering until the player
 ## notices and moves it by hand.
 func _watch_for_stalls(delta: float) -> void:
-	var travelling: bool = (
-		state == State.TO_FLOWER
-		or state == State.TO_HIVE
-		or state == State.MOVE_TO_POINT
-	)
-	if _is_inside_hive() or not travelling:
+	if _is_inside_hive() or _current_goal().x == INF:
 		_reset_stall_watch()
 		return
 
@@ -655,17 +657,24 @@ func _watch_for_stalls(delta: float) -> void:
 		return
 	_reset_stall_watch()
 
+	# The guarantee the steering doesn't have to provide: a bee that isn't
+	# getting closer to where it is going gets moved, so no geometry bug
+	# can pin one indefinitely.
+	#
+	# If it was going round something, try the other way rather than
+	# forgetting the obstacle entirely -- the usual reason a detour stops
+	# paying is that it committed to the long way round a wall. Flipping
+	# keeps the commitment (so it doesn't dither) but reverses it.
+	if skirt_obstacle != null and is_instance_valid(skirt_obstacle):
+		skirt_turn = -skirt_turn
+	else:
+		skirt_obstacle = null
+	_escape_nearest_obstacle()
+
 	if state == State.TO_FLOWER:
 		_reject_flower()          # give up on this one and pick another
 	elif state == State.MOVE_TO_POINT:
 		state = _default_state_for_role()
-	else:
-		# Heading home and getting nowhere: wedged against something, or
-		# in a pocket between two of them. Step decisively out from
-		# whatever is nearest rather than jiggling on the spot -- a small
-		# random nudge often wasn't enough to clear a large plateau, and
-		# the bee would sit there until it starved.
-		_escape_nearest_obstacle()
 
 ## Pushes this bee clear of whatever solid thing it is closest to. A last
 ## resort, used only when the steering has demonstrably failed.
@@ -676,12 +685,20 @@ func _escape_nearest_obstacle() -> void:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		var gap: float = position.distance_to(obstacle.position) - obstacle.radius
+		# Only things the bee is actually up against. Without this it
+		# could pick a huge plateau on the far side of the meadow -- its
+		# radius makes the gap small even at a distance -- and fling the
+		# bee across the map to "escape" something it was nowhere near.
+		if gap > ESCAPE_RANGE:
+			continue
 		if gap < nearest_gap:
 			nearest_gap = gap
 			nearest = obstacle
 
 	if nearest == null:
-		position += Vector2(randf_range(-20.0, 20.0), randf_range(-20.0, 20.0))
+		# Not caught on anything: the hold-up is elsewhere. A short hop is
+		# enough to break any symmetry that might be causing it.
+		position += Vector2(randf_range(-30.0, 30.0), randf_range(-30.0, 30.0))
 		return
 
 	var outward: Vector2 = position - nearest.position
@@ -2407,135 +2424,186 @@ func _terrain_speed_factor() -> float:
 func _is_inside_hive() -> bool:
 	return world != null and get_parent() == world.hive_root
 
-## The meadow has no real pathfinding -- trees and raised areas are rare
-## enough that a full navmesh would be overkill. Instead: if the straight
-## line to `target` would pass too close to an obstacle, aim at a point
-## that clears it by a bee-width margin instead. Recomputed fresh every
-## frame from the bee's current position, so as it curves round the
-## obstacle the aim point slides along with it, and once the line is
-## clear it heads straight at the real target again.
-func _avoid_obstacles(target: Vector2) -> Vector2:
-	var to_target: Vector2 = target - position
-	var span: float = to_target.length()
-	if span < 1.0:
-		return target
-	var direction: Vector2 = to_target / span
+# --- getting round things in the meadow ---------------------------
+##
+## This was rewritten after three failed patches, because the approach
+## itself was wrong rather than the details.
+##
+## The old scheme aimed at a point on a circle of radius
+## `max(clearance, current distance from the centre)`. That number is the
+## bee's *own* distance from the obstacle, so the aim point sat on the
+## circle the bee was already standing on. Moving towards it produced
+## tangential motion and no radial motion at all -- the bee orbited the
+## obstacle at a fixed distance forever, unable to get closer or further
+## away. That is exactly the behaviour on screen. Every patch since then
+## adjusted which way round the orbit went, which was never the problem.
+##
+## The rewrite steers at the *tangent point*: the place on the inflated
+## circle where a straight line from the bee just grazes the obstacle.
+## Three things follow from that, and they are what make it work:
+##
+##   1. The tangent point is never on the bee's current circle, so the
+##      motion always has a radial component. No orbit is possible.
+##   2. Walking a tangent line is the shortest way past a circle, so the
+##      bee visibly makes for the edge and rounds it.
+##   3. Once the bee passes the tangent point the obstacle is behind it
+##      and the straight line to the target is clear, so the detour ends
+##      by itself rather than needing to be detected.
+##
+## Underneath it all is a hard guarantee that does not depend on any of
+## the geometry being right: `_watch_for_stalls` measures whether the bee
+## is actually getting closer to where it is going, and if it isn't, moves
+## it clear. A steering bug should cost a bee a few seconds, never the run.
 
-	# The *nearest* thing in the way, not just the first one the group
-	# happened to list. Steering round a far obstacle while a near one
-	# sits between the bee and that aim point is how bees ended up
-	# shuffling on the spot between two mounds.
-	var blocker: Node2D = null
-	var blocker_clearance := 0.0
-	var blocker_distance := INF
-	for obstacle in _obstacles():
-		# `solid` matters here as well as in _block_obstacles. Without it,
-		# switching the scenery off left bees still curving round trees
-		# they could now walk straight through.
-		if not is_instance_valid(obstacle) or not obstacle.solid:
-			continue
-		var to_obstacle: Vector2 = obstacle.position - position
-		var along: float = clamp(to_obstacle.dot(direction), 0.0, span)
-		var closest_point: Vector2 = position + direction * along
-		var clearance: float = obstacle.radius + 16.0
-		if closest_point.distance_to(obstacle.position) >= clearance:
-			continue
-		if along < blocker_distance:
-			blocker_distance = along
-			blocker = obstacle
-			blocker_clearance = clearance
+## Room left round an obstacle when steering, and the hard boundary
+## _block_obstacles enforces. These two numbers have to satisfy two
+## constraints, and getting them the wrong way round is what caused the
+## orbiting in the first place:
+##
+##   BLOCK_MARGIN >= OBSTACLE_MARGIN
+##     A bee pressed against the hard boundary must not be considered to
+##     be inside the steering margin. When it was (block 8, steering 16),
+##     a bee at the boundary counted as blocked by the very obstacle it
+##     was touching -- in every direction, including directly away from
+##     it. It could never report "the way is clear", so it circled at the
+##     boundary forever. That is the orbit at fixed distance.
+##
+##   BLOCK_MARGIN < the clearance flowers are planted at
+##     Otherwise a flower near a plateau sits inside the boundary and no
+##     bee can ever physically reach it.
+##
+## 18 and 18 satisfy both, against a flower clearance of 30.
+const OBSTACLE_MARGIN := 18.0
+const BLOCK_MARGIN := 18.0
 
-	if blocker == null:
-		# Line of sight is clear, so we're past whatever we were skirting.
-		# Forgetting it here is what lets the next obstacle be judged
-		# fresh rather than inheriting an old turn direction.
-		skirt_obstacle = null
-		return target
-	return _point_around(blocker, target, blocker_clearance)
-
-## How far round the rim to aim, in radians, each frame.
+## How far round the rim to aim when the bee is already at the boundary.
 const SWEEP_STEP := 0.6
 
-## Which obstacle the bee is currently walking round, and which way it
-## decided to go. Committing to a direction is what stops the side-to-side
-## shuffle: see the note in _point_around.
+## Which obstacle the bee is currently going round, and which way. Held
+## until the bee is genuinely past it -- picking a side afresh each frame
+## flips at the halfway angle and shuffles the bee on the spot.
 var skirt_obstacle: Node2D = null
 var skirt_turn: float = 1.0
 
-## Where to head in order to get round `obstacle`.
-##
-## This used to return a single fixed point on the far side of the
-## obstacle. Once a bee actually reached that point it stopped dead: the
-## line from there to the flower still clipped the obstacle, so the very
-## same point was handed back every frame, and a bee standing on its own
-## destination has nowhere to move. That is what left foragers frozen on
-## "flying to a flower for nectar" until they were ordered somewhere
-## else, which reset the state and unstuck them.
-##
-## Now the aim point is a short way further round the rim from wherever
-## the bee currently is, turning whichever way reaches the target sooner.
-## Because it is always somewhere the bee is not, the bee always makes
-## progress; it walks round the edge until the straight line is clear and
-## then heads directly for the flower again.
-##
-## The remaining bug this fixes: the turn direction used to be recomputed
-## from scratch every frame. Walking round a wide plateau, the angle to
-## the target passes through the point where the two ways round are equal
-## -- and there the decision flips. The bee turns back, which flips it
-## again a frame later, and it shuffles from side to side against the
-## obstacle indefinitely. Any decision made afresh each frame from a
-## quantity that changes as you act on it will do this.
-##
-## So the direction is chosen once, when the bee first meets a given
-## obstacle, and held until the way to the target is clear (at which
-## point _avoid_obstacles clears `skirt_obstacle`). Committing to a
-## slightly longer way round always beats oscillating on the spot.
-func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vector2:
-	var from_centre: Vector2 = position - obstacle.position
-	if from_centre.length() < 0.01:
-		from_centre = Vector2.RIGHT
-	var rim: float = max(clearance, from_centre.length())
-	var here: float = from_centre.angle()
-	var there: float = (target - obstacle.position).angle()
+## Returns where the bee should actually head this frame: the target
+## itself when the way is clear, or a tangent point past whatever is in
+## the way.
+func _avoid_obstacles(target: Vector2) -> Vector2:
+	var blocker := _first_blocker(target)
+	if blocker == null:
+		skirt_obstacle = null
+		return target
+	return _tangent_past(blocker, target)
 
-	var turn: float
-	if skirt_obstacle == obstacle and is_instance_valid(skirt_obstacle):
-		turn = skirt_turn   # already committed -- see above
-	else:
-		var shorter_way: float = wrapf(there - here, -PI, PI)
-		turn = 1.0 if shorter_way >= 0.0 else -1.0
-		skirt_obstacle = obstacle
-		skirt_turn = turn
+## The nearest solid obstacle the straight line to `target` runs into,
+## or null if the way is clear.
+##
+## `solid` is checked here as well as in _block_obstacles. Without it,
+## switching the scenery off left bees still steering round trees they
+## could now walk straight through -- which is why turning the scenery
+## off didn't free the stuck ones.
+func _first_blocker(target: Vector2) -> Node2D:
+	var to_target: Vector2 = target - position
+	var span: float = to_target.length()
+	if span < 1.0:
+		return null
+	var direction: Vector2 = to_target / span
 
-	# Try a few sweep sizes and take the first aim point that isn't
-	# itself sitting inside another obstacle. Where two obstacles are
-	# close together, a point that clears one can land inside its
-	# neighbour, and _block_obstacles then shoves the bee straight back
-	# -- the two rules fight each other and the bee goes nowhere.
-	# Only forward sweeps, in increasing steps. Backward candidates used to
-	# be tried too, which quietly undid the committed direction above and
-	# brought the side-to-side shuffle back whenever two obstacles sat
-	# close together. If nothing ahead is clear, the radial escape below
-	# is the honest answer.
-	for multiplier in [1.0, 2.0, 3.0, 4.0]:
-		var swept: float = here + SWEEP_STEP * turn * multiplier
-		var candidate: Vector2 = obstacle.position + Vector2(cos(swept), sin(swept)) * rim
-		if _is_clear_spot(candidate, obstacle):
-			return candidate
-
-	# Everything round the rim is blocked too. Head straight out from the
-	# obstacle's centre to break out of the pocket, and let the watchdog
-	# pick things up if that still isn't enough.
-	return obstacle.position + from_centre.normalized() * (rim + 40.0)
-
-## Is `point` outside every solid obstacle except `ignoring`?
-func _is_clear_spot(point: Vector2, ignoring: Node2D) -> bool:
+	var nearest: Node2D = null
+	var nearest_along := INF
 	for obstacle in _obstacles():
-		if obstacle == ignoring or not is_instance_valid(obstacle) or not obstacle.solid:
+		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
-		if point.distance_to(obstacle.position) < obstacle.radius + 12.0:
-			return false
-	return true
+		var reach: float = obstacle.radius + OBSTACLE_MARGIN
+
+		# Something the bee is standing next to but heading away from is
+		# not in the way. Without this test a bee at the boundary of a
+		# plateau reports itself blocked by that plateau whichever way it
+		# faces, and can never decide it is past it.
+		var to_obstacle: Vector2 = obstacle.position - position
+		var along: float = clamp(to_obstacle.dot(direction), 0.0, span)
+		if along <= 0.5:
+			continue
+
+		# An obstacle whose margin contains the destination can't be
+		# steered around and still arrived at -- a flower planted close to
+		# a plateau, say. Ignore it and let the hard boundary slide the
+		# bee round the edge instead, which does get there.
+		if target.distance_to(obstacle.position) < reach:
+			continue
+
+		var closest_point: Vector2 = position + direction * along
+		if closest_point.distance_to(obstacle.position) >= reach:
+			continue
+		if along < nearest_along:
+			nearest_along = along
+			nearest = obstacle
+	return nearest
+
+## Where to aim in order to get past `obstacle`.
+##
+## The aim point always sits on the circle of radius R = obstacle radius
+## plus the margin. That fixed R is the whole fix. The old code used
+## `max(R, the bee's own distance from the centre)`, which put the aim
+## point on whatever circle the bee happened to be standing on -- so the
+## bee moved along that circle and never off it. Pure orbit.
+##
+## How far round the circle to aim depends on where the bee is:
+##
+##   Far out: aim at the silhouette edge, acos(R/d) round from the bee's
+##   own bearing. That is the point where a straight line from the bee
+##   just grazes the obstacle, so this is the shortest way past it.
+##
+##   At the boundary: acos(R/d) collapses to nothing, so step a fixed
+##   SWEEP_STEP round instead. The bee walks round the edge until the
+##   way ahead opens up.
+##
+## Both cases put the aim point somewhere the bee is not, and both pull
+## it towards R rather than holding it wherever it started, so there is
+## always motion both around and across.
+func _tangent_past(obstacle: Node2D, target: Vector2) -> Vector2:
+	var rim: float = obstacle.radius + OBSTACLE_MARGIN
+	var from_centre: Vector2 = position - obstacle.position
+	var distance: float = from_centre.length()
+	if distance < 0.01:
+		from_centre = Vector2.RIGHT
+		distance = 0.01
+
+	var turn: float = _committed_turn(obstacle, target)
+	var silhouette: float = acos(clamp(rim / distance, -1.0, 1.0)) if distance > rim else 0.0
+	var offset: float = max(silhouette, SWEEP_STEP)
+	var heading: float = from_centre.angle() + turn * offset
+	return obstacle.position + Vector2(cos(heading), sin(heading)) * rim
+
+	# Deliberately no recursion for the case where the way past one
+	# obstacle points into its neighbour. `_first_blocker` always returns
+	# the *nearest* thing in the way, so as the bee advances the
+	# neighbour becomes the nearest blocker and is routed round in its
+	# turn, one obstacle at a time. Trying to solve the whole chain in
+	# one frame is how the old code produced aim points that satisfied
+	# neither obstacle.
+
+## Which way round. Chosen once per obstacle and then held, because a
+## choice remade every frame from an angle that changes as you act on it
+## will flip back and forth at the halfway point -- that is the
+## side-to-side shuffle. Committing to the longer way round is always
+## better than oscillating.
+func _committed_turn(obstacle: Node2D, target: Vector2) -> float:
+	if skirt_obstacle == obstacle and is_instance_valid(skirt_obstacle):
+		return skirt_turn
+	var here: float = (position - obstacle.position).angle()
+	var there: float = (target - obstacle.position).angle()
+	var shorter_way: float = wrapf(there - here, -PI, PI)
+	skirt_obstacle = obstacle
+	skirt_turn = 1.0 if shorter_way >= 0.0 else -1.0
+	return skirt_turn
+
+## Called when the world changes underneath a bee -- the scenery being
+## toggled, or a bee being given a new order -- so no stale commitment to
+## an obstacle that may no longer be solid survives into the next frame.
+func clear_navigation_state() -> void:
+	skirt_obstacle = null
+	_reset_stall_watch()
 
 ## The obstacle list, from main.gd's cache rather than a group query.
 ## Every bee asks about obstacles several times a frame; scanning the
@@ -2565,7 +2633,7 @@ func _block_obstacles(wanted: Vector2) -> Vector2:
 		for obstacle in _obstacles():
 			if not is_instance_valid(obstacle) or not obstacle.solid:
 				continue
-			var edge: float = obstacle.radius + 8.0
+			var edge: float = obstacle.radius + BLOCK_MARGIN
 			var offset: Vector2 = result - obstacle.position
 			var distance: float = offset.length()
 			if distance >= edge:

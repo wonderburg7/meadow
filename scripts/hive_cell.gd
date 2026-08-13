@@ -137,9 +137,10 @@ var selected: bool = false
 ## can read the state of the whole comb at a glance instead of squinting
 ## at the numbers on each one. See `_refresh`.
 var fill_shape: Polygon2D
-## Shown only while the nursery window is open: a coloured halo marking
+## Shown only while the nursery window is open: a coloured glow marking
 ## this as a zone cell, in the colour of the role it raises.
 var zone_glow: Line2D
+var zone_halo: Line2D
 ## A small seal drawn over a closed cell.
 var closed_mark: Line2D
 
@@ -189,11 +190,21 @@ func _ready() -> void:
 	add_child(selection_ring)
 
 	# Marks this cell as part of the nursery zone while that window is
-	# open. Sits outside the selection ring so the two never overlap.
+	# open. Two rings rather than one: a wide soft halo outside and a
+	# bright thin rim on top of it, which reads as a glow rather than as
+	# a drawn outline, and stays legible over any cell contents. Sits
+	# outside the selection ring so the two never overlap.
+	zone_halo = Line2D.new()
+	_set_outline_points(zone_halo, cell_size + 6.0)
+	zone_halo.width = 7.0
+	zone_halo.default_color = Color(1.0, 1.0, 1.0, 0.22)
+	zone_halo.visible = false
+	add_child(zone_halo)
+
 	zone_glow = Line2D.new()
-	_set_outline_points(zone_glow, cell_size + 5.0)
-	zone_glow.width = 4.0
-	zone_glow.default_color = Color(1.0, 1.0, 1.0, 0.9)
+	_set_outline_points(zone_glow, cell_size + 4.0)
+	zone_glow.width = 2.5
+	zone_glow.default_color = Color(1.0, 1.0, 1.0, 0.95)
 	zone_glow.visible = false
 	add_child(zone_glow)
 
@@ -221,10 +232,12 @@ func set_selected(value: bool) -> void:
 ## the role this cell raises, so the comb and the ring plot in the
 ## nursery window use one palette between them.
 func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE) -> void:
-	if zone_glow == null:
+	if zone_glow == null or zone_halo == null:
 		return
 	zone_glow.visible = value
-	zone_glow.default_color = glow_colour
+	zone_halo.visible = value
+	zone_glow.default_color = Color(glow_colour.r, glow_colour.g, glow_colour.b, 0.95)
+	zone_halo.default_color = Color(glow_colour.r, glow_colour.g, glow_colour.b, 0.28)
 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()
