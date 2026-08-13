@@ -267,12 +267,12 @@ const TUNABLES := [
 	{
 		"key": "larva_death_seconds", "label": "Starves after s", "step": 10.0, "min": 10.0,
 		"category": "Brood & the queen",
-		"tip": "How long a larva survives with nothing to eat before it dies. The body then blocks the cell until an architect on cell maintenance clears it out and carries it away, so neglect costs you the cell as well as the bee.",
+		"tip": "How long a larva survives with nothing to eat before it dies. The body then blocks the cell until a comb worker on cell maintenance clears it out and carries it away, so neglect costs you the cell as well as the bee.",
 	},
 	{
 		"key": "cell_clean_time", "label": "Clearing s", "step": 5.0, "min": 1.0,
 		"category": "Brood & the queen",
-		"tip": "Architect-seconds needed to clear a dead larva out of a cell. Several working the same cell share it.",
+		"tip": "Comb-worker seconds needed to clear a dead larva out of a cell. Several working the same cell share it.",
 	},
 	{
 		"key": "nurse_carry_feeds", "label": "Feeds carried", "step": 1.0, "min": 1.0,

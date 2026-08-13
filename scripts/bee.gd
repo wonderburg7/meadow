@@ -38,7 +38,7 @@ enum State {
 	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
 	TO_RESTOCK_SOURCE, TO_RESTOCK_TARGET,                  # builder, keeping cells topped up
 	TO_WASTE_EXIT, DUMPING_WASTE,                          # builder, throwing it out
-	TO_CLEAN_CELL, CLEANING,                               # architect, clearing a dead larva
+	TO_CLEAN_CELL, CLEANING,                               # comb worker, clearing a dead larva
 	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
 	TO_MINE_EXIT, DUMPING_DIRT,                            # miner, full of spoil
 	SEEK_POLLEN, TO_POLLEN_CELL, EATING,                   # egg layer
@@ -48,6 +48,7 @@ enum State {
 }
 
 const Shapes = preload("res://scripts/shapes.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 var speed: float = 110.0
 var flower_handling_time: float = 2.0
@@ -97,7 +98,7 @@ var haul_target: Node2D = null
 var target_block: Node2D = null
 var automine: bool = false
 
-## What an architect (the Builder role) actually does: "build" draws new
+## What a comb worker (the Builder role) actually does: "build" draws new
 ## comb, "maintain" clears dead larvae and shifts stores out of cells the
 ## player has re-designated, "both" does either as it comes up.
 var architect_mode: String = "both"
@@ -171,17 +172,17 @@ var forage_start_point: Vector2 = Vector2(INF, INF)
 ## moment it's acted on, successfully or not, so a bad click can't loop.
 var manual_build_hex: Vector2i = Vector2i.ZERO
 var has_manual_build_target: bool = false
-## Tiles this architect has been told to build on, in the order they were
-## clicked. Only this bee works its own queue; other architects pick
+## Tiles this comb worker has been told to build on, in the order they were
+## clicked. Only this bee works its own queue; other comb workers pick
 ## their own sites as before.
 var build_queue: Array = []
 ## The same for a miner: blocks it has been told to dig, in order.
 var mine_queue: Array = []
 
-## An architect's own centre of operations. Left to pick its own sites it
+## A comb worker's own centre of operations. Left to pick its own sites it
 ## fills the space around this tile outwards in a honeycomb spiral,
 ## rather than always adding to the middle of the comb -- so two
-## architects with different home cells grow the hive in two places.
+## comb workers with different home cells grow the hive in two places.
 var home_hex: Vector2i = Vector2i.ZERO
 var has_home_hex: bool = false
 ## The same idea for miners: the tile a miner works outward from when
@@ -1474,7 +1475,7 @@ func _try_role_work(r: int) -> bool:
 			return true
 
 		Role.BUILDER:
-			# Architects do two kinds of work, and which of them this one
+			# Comb workers do two kinds of work, and which of them this one
 			# is willing to take depends on its mode.
 			#
 			# Maintenance, in priority order: clear dead larvae out of
@@ -1516,7 +1517,7 @@ func _try_role_work(r: int) -> bool:
 			if site == null:
 				site = hive.find_unfinished_cell()
 			if site == null:
-				# grows outward from this architect's own home cell if it
+				# grows outward from this comb worker's own home cell if it
 				# has been given one, otherwise from the middle of the comb
 				site = hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO)
 			if site:
@@ -1662,14 +1663,14 @@ func _builder_go_to_haul_source(delta: float) -> void:
 		state = State.TO_HAUL_TARGET
 
 # --- keeping cells topped up ---------------------------------------
-## An architect on the restock sub-mode has a list of cells it keeps full
+## A comb worker on the restock sub-mode has a list of cells it keeps full
 ## of one resource, drawing on the rest of the comb to do it.
 ##
 ## The point of it is placement. The colony's stores end up wherever the
 ## foragers happened to put them, which is fine until something needs to
 ## be *somewhere* -- honey next to the brood before winter, pollen within
 ## reach of the nursery, a reserve by the entrance. Rather than adding a
-## new kind of bee, this is a job an architect can be given: it is already
+## new kind of bee, this is a job a comb worker can be given: it is already
 ## the caste that moves things between cells.
 ##
 ## The source list is what stops it undoing your own arrangements. With
@@ -1678,7 +1679,7 @@ func _builder_go_to_haul_source(delta: float) -> void:
 ## lets you say "fill these from the outer comb, but never touch the
 ## winter store".
 
-## Cells this architect keeps full, and of what.
+## Cells this comb worker keeps full, and of what.
 var restock_targets: Array = []
 var restock_resource: String = ""
 ## Cells it may draw on. Empty means anywhere that isn't blocked.
@@ -1704,7 +1705,7 @@ func clear_restock() -> void:
 func has_restock_orders() -> bool:
 	return not restock_targets.is_empty() and restock_resource != ""
 
-## May this architect take `cell`'s contents to fill one of its targets?
+## May this comb worker take `cell`'s contents to fill one of its targets?
 func _may_draw_from(cell: Node2D) -> bool:
 	if not is_instance_valid(cell) or restock_targets.has(cell):
 		return false          # never rob one target to fill another
@@ -1838,7 +1839,7 @@ func _builder_go_to_haul_target(delta: float) -> void:
 
 ## Clearing a dead larva. The body blocks the cell completely -- nothing
 ## can be stored there and no egg can be laid in it -- so this is the
-## first thing an architect on maintenance picks up.
+## first thing a comb worker on maintenance picks up.
 func _architect_go_to_clean(delta: float) -> void:
 	if target_cell == null or not is_instance_valid(target_cell) or not target_cell.needs_cleaning():
 		_release_cell_slot()
@@ -2204,7 +2205,7 @@ func set_manual_build_target(hex: Vector2i) -> void:
 	manual_build_hex = hex
 	has_manual_build_target = true
 
-## Adds a tile to the end of this architect's build order. The queue is
+## Adds a tile to the end of this comb worker's build order. The queue is
 ## worked front to back, so the order you click is the order the comb
 ## gets drawn -- which matters when you're extending towards something.
 func queue_build_target(hex: Vector2i) -> void:
@@ -2336,7 +2337,7 @@ func set_role(new_role: int) -> void:
 
 	# With "finish current task" ticked, the change is queued rather than
 	# applied: the bee sees the job through -- a forager delivers the
-	# load it is carrying, an architect finishes the cell it is on -- and
+	# load it is carrying, a comb worker finishes the cell it is on -- and
 	# picks the new role up the moment it is next free. Unticked, it
 	# drops everything immediately, which is the old behaviour.
 	if finish_task_first and _is_busy():
@@ -2399,21 +2400,12 @@ func set_selected(value: bool) -> void:
 # --- display ------------------------------------------------------
 
 func role_letter() -> String:
-	match role:
-		Role.NURSERY:
-			return "U"
-		Role.BUILDER:
-			return "B"
-		Role.EGG_LAYER:
-			return "E"
-		Role.IDLE:
-			return "-"
-		Role.MINER:
-			return "M"
-		Role.HONEY_MAKER:
-			return "H"
-		_:
-			return "N" if resource_type == "nectar" else "P"
+	# Foragers are the one role whose letter depends on what it's doing,
+	# since which resource a bee is on is the thing you most want to read
+	# off a crowd of them at a glance.
+	if role == Role.FORAGER:
+		return "N" if resource_type == "nectar" else "P"
+	return Roles.letter_for(role)
 
 ## A plain-language description of what this bee is doing right now,
 ## shown in the selection panel. Deliberately concrete ("returning
@@ -2553,32 +2545,25 @@ func task_description() -> String:
 ## this frame too and it also came up empty.
 func _idle_backup_note() -> String:
 	if secondary_role != -1 and secondary_role != role:
-		return " (backup role %s also has nothing right now)" % _role_short_name(secondary_role)
+		return " (backup role %s also has nothing right now)" % Roles.label_for(secondary_role)
 	return ""
 
 func role_name_text() -> String:
-	var base: String
+	var base: String = Roles.label_for(role)
 	match role:
 		Role.NURSERY:
-			base = "Nursery (%s)" % nurse_mode_name()
+			base += " (%s)" % Roles.mode_label(Roles.NURSE, nurse_mode).to_lower()
 		Role.BUILDER:
-			base = "Architect (%s)" % architect_mode_name()
-		Role.EGG_LAYER:
-			base = "Egg layer"
-		Role.IDLE:
-			base = "Idle"
+			base += " (%s)" % architect_mode_name()
 		Role.MINER:
-			base = "Miner (automine on)" if automine else "Miner"
-		Role.HONEY_MAKER:
-			base = "Honey maker"
-		_:
-			base = "Forager (%s)" % resource_type
+			if automine:
+				base += " (digging on its own)"
+		Role.FORAGER:
+			base += " (%s)" % resource_type
 			if preferred_species != "":
 				base += " -- %s only" % preferred_species
 	if secondary_role != -1 and secondary_role != role:
-		base += " -- backup: %s" % _role_short_name(secondary_role)
-	if pending_role != -1:
-		base += " -- becoming %s once this job is done" % _role_short_name(pending_role)
+		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base
 
 func nurse_mode_name() -> String:
@@ -2591,34 +2576,11 @@ func nurse_mode_name() -> String:
 			return "feeding brood"
 
 func architect_mode_name() -> String:
-	match architect_mode:
-		"build":
-			return "building"
-		"maintain":
-			return "maintenance"
-		"restock":
-			return "restocking %s" % (restock_resource if restock_resource != "" else "-- nothing set")
-		_:
-			return "build & maintain"
+	var label: String = Roles.mode_label(Roles.COMB_WORKER, architect_mode).to_lower()
+	if architect_mode == "restock":
+		label += " %s" % (restock_resource if restock_resource != "" else "-- nothing set")
+	return label
 
-func _role_short_name(r: int) -> String:
-	match r:
-		Role.NURSERY:
-			return "Nursery"
-		Role.BUILDER:
-			return "Architect"
-		Role.MINER:
-			return "Miner"
-		Role.HONEY_MAKER:
-			return "Honey maker"
-		Role.EGG_LAYER:
-			return "Egg layer"
-		Role.IDLE:
-			return "Idle"
-		_:
-			return "Forager"
-
-## What this bee is carrying, for the info panel.
 func carrying_text() -> String:
 	if carrying_corpse:
 		return "Carrying: a dead larva, for disposal outside"

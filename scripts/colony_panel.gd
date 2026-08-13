@@ -16,6 +16,7 @@ extends CanvasLayer
 ## Opened with the button in the top-right bar, or the C key.
 
 const UI = preload("res://scripts/ui.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 ## Emitted when a role tally is clicked. `focus` narrows foragers to one
 ## resource; "" means the whole role.
@@ -23,18 +24,9 @@ signal role_selection_requested(role: int, focus: String)
 ## The set of starred readouts has changed; main.gd passes it to the HUD.
 signal pinned_changed()
 
-## Mirrors Bee.Role, as plain ints -- see the note on hud.gd's
-## HATCH_ROLES for why this file doesn't preload bee.gd.
-const ROLE_ROWS := [
-	{"label": "Foragers — nectar", "role": 0, "focus": "nectar"},
-	{"label": "Foragers — pollen", "role": 0, "focus": "pollen"},
-	{"label": "Nurses", "role": 1, "focus": ""},
-	{"label": "Architects", "role": 2, "focus": ""},
-	{"label": "Miners", "role": 5, "focus": ""},
-	{"label": "Honey makers", "role": 6, "focus": ""},
-	{"label": "Idle", "role": 4, "focus": ""},
-	{"label": "Queen", "role": 3, "focus": ""},
-]
+## The job tallies. Built from the role table, so a new role appears
+## here without anyone remembering to add it -- which is exactly the bug
+## this used to invite.
 
 ## The readouts that can be starred into the top-left corner. `key` is
 ## what GameConfig.pinned_stats holds and what the HUD matches on.
@@ -57,7 +49,7 @@ const PLOT_SERIES := [
 ]
 
 var panel: PanelContainer
-var count_labels: Dictionary = {}   # row index -> Button
+var count_labels: Dictionary = {}   # count key -> Button
 var stat_labels: Dictionary = {}    # stat key -> Label
 var star_buttons: Dictionary = {}   # stat key -> Button
 
@@ -104,8 +96,8 @@ func _ready() -> void:
 	# readouts and the plot are there when you want them and out of the
 	# way when you don't.
 	var jobs := _section(column, "Who is doing what", true)
-	for i in range(ROLE_ROWS.size()):
-		jobs.add_child(_make_role_row(i))
+	for key in Roles.count_keys():
+		jobs.add_child(_make_role_row(key))
 
 	var readouts := _section(column, "Readouts", true)
 	for entry in STAT_ROWS:
@@ -140,19 +132,22 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 
 ## Each row is a button so the whole strip is clickable, not just a
 ## small target -- selecting every forager should be one easy click.
-func _make_role_row(index: int) -> Control:
-	var entry: Dictionary = ROLE_ROWS[index]
+func _make_role_row(key: String) -> Control:
 	var button := Button.new()
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(0, 22)
 	button.add_theme_font_size_override("font_size", 12)
-	button.text = "%s: 0" % entry.label
+	button.text = "%s: 0" % Roles.label_for_key(key)
+	# A colour chip in the label so the tallies, the ring plot and the
+	# comb overlays all read as one palette.
+	button.add_theme_color_override("font_color", Roles.colour_for_key(key).lerp(Color.WHITE, 0.35))
 
-	var role_value: int = entry.role
-	var focus_value: String = entry.focus
+	var parts: PackedStringArray = key.split("|")
+	var role_value: int = int(parts[0])
+	var focus_value: String = parts[1]
 	button.pressed.connect(func(): role_selection_requested.emit(role_value, focus_value))
 
-	count_labels[index] = button
+	count_labels[key] = button
 	return button
 
 ## A readout plus the star that pins it to the corner. The star is a
@@ -321,10 +316,8 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array) -> void:
 	if not panel.visible:
 		return
 
-	for i in range(ROLE_ROWS.size()):
-		var entry: Dictionary = ROLE_ROWS[i]
-		var key: String = "%d|%s" % [entry.role, entry.focus]
-		count_labels[i].text = "%s: %d" % [entry.label, counts.get(key, 0)]
+	for key in Roles.count_keys():
+		count_labels[key].text = "%s: %d" % [Roles.label_for_key(key), counts.get(key, 0)]
 
 	for stat_key in stat_labels.keys():
 		stat_labels[stat_key].text = str(texts.get(stat_key, ""))

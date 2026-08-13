@@ -9,6 +9,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Bee = preload("res://scripts/bee.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
@@ -35,7 +36,7 @@ signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
 signal build_cell_requested()
-## Sets the tile an architect builds outward from -- its own centre of
+## Sets the tile a comb worker builds outward from -- its own centre of
 ## operations, rather than the middle of the comb.
 signal home_cell_requested()
 ## The same for a miner: the tile it works outward from when choosing
@@ -44,12 +45,12 @@ signal mine_home_requested()
 ## "Mine": the next click (ctrl to add more) sets this miner's own list
 ## of blocks to dig, in order.
 signal mine_target_requested()
-## "Keep clear": the next click flags a tile no architect will build on.
+## "Keep clear": the next click flags a tile no comb worker will build on.
 signal keep_clear_requested()
 ## Restocking. The currently selected comb becomes the cells this
-## architect keeps full of `resource`.
+## comb worker keeps full of `resource`.
 signal restock_targets_requested(resource: String)
-## The selected comb becomes the architect's allowed sources (`allowed`
+## The selected comb becomes the comb worker's allowed sources (`allowed`
 ## true) or the cells it must never touch (false).
 signal restock_sources_requested(allowed: bool)
 signal restock_clear_requested()
@@ -82,37 +83,36 @@ signal floral_preference_requested()
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
 ##
-## Roles with a sub-mode are offered as a dropdown rather than a single
-## button, so you can earmark a cell as, say, "raises pollen foragers" in
-## one go instead of setting the role here and the focus on the bee once
-## it emerges. `options` is a list of {label, focus, automine}.
-const HATCH_ROLES := [
-	{"label": "Default", "role": -1, "options": [
-		{"label": "Colony default", "focus": "nectar", "automine": false},
-	]},
-	{"label": "Forager", "role": 0, "options": [
-		{"label": "Forager — nectar", "focus": "nectar", "automine": false},
-		{"label": "Forager — pollen", "focus": "pollen", "automine": false},
-	]},
-	{"label": "Nursery", "role": 1, "options": [
-		{"label": "Nursery", "focus": "nectar", "automine": false},
-	]},
-	## An architect's sub-mode rides in the `focus` field rather than
-	## getting a field of its own -- the cell only needs to carry one
-	## extra string, and a bee is never both a forager and an architect.
-	{"label": "Architect", "role": 2, "options": [
-		{"label": "Architect — cell builder", "focus": "build", "automine": false},
-		{"label": "Architect — cell maintenance", "focus": "maintain", "automine": false},
-		{"label": "Architect — both", "focus": "both", "automine": false},
-	]},
-	{"label": "Miner", "role": 5, "options": [
-		{"label": "Miner — marked blocks only", "focus": "nectar", "automine": false},
-		{"label": "Miner — automine on", "focus": "nectar", "automine": true},
-	]},
-	{"label": "Honey", "role": 6, "options": [
-		{"label": "Honey maker", "focus": "nectar", "automine": false},
-	]},
-]
+## What a cell can be set to raise. Built from the role table rather
+## than written out again here: a role's sub-modes are exactly the
+## options a cell should offer, so there is nothing extra to keep in
+## step. "-1" is the colony default.
+##
+## A comb worker's sub-mode rides in the cell's `focus` field rather than
+## getting a field of its own -- the cell only needs to carry one extra
+## string, and a bee is never both a forager and a comb worker.
+static func hatch_options() -> Array:
+	var entries: Array = [{
+		"label": "Default", "role": -1,
+		"options": [{"label": "Colony default", "focus": "nectar", "automine": false}],
+	}]
+	for role in Roles.ROLES:
+		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
+			continue   # a cell can't raise a queen, and "raises idle" is nonsense
+		var options: Array = []
+		if role.modes.is_empty():
+			options.append({"label": role.label, "focus": "nectar", "automine": false})
+		else:
+			for mode in role.modes:
+				options.append({
+					"label": "%s — %s" % [role.label, mode.label],
+					"focus": mode.key if role.id != Roles.MINER else "nectar",
+					"automine": role.id == Roles.MINER and mode.key == "automine",
+				})
+			if role.id == Roles.MINER:
+				options.push_front({"label": "Miner — only where told", "focus": "nectar", "automine": false})
+		entries.append({"label": role.label, "role": role.id, "options": options})
+	return entries
 
 ## Transport-style controls: pause, play, and two levels of fast
 ## forward, using the usual arrow symbols rather than numbers.
@@ -127,57 +127,12 @@ const SPEEDS := [
 	{"label": "8", "scale": 8.0, "tip": "Eight times speed. For skipping a stretch you have already seen -- a winter run-up, or waiting on a big dig. Watch the energy readout rather than the bees at this speed; there is more happening per second than you can follow."},
 ]
 
-## What an architect can be set to do. The keys are what main.gd matches
-## on in _on_role_requested.
-const ARCHITECT_MODES := [
-	{"key": "architect_build", "mode": "build", "label": "Build"},
-	{"key": "architect_maintain", "mode": "maintain", "label": "Maintain"},
-	{"key": "architect_restock", "mode": "restock", "label": "Restock"},
-	{"key": "architect_both", "mode": "both", "label": "Build & maintain"},
-]
-
-## What a nursery bee can be set to do. Royal jelly is only worth
-## producing when the colony is raising gynes.
-const NURSE_MODES := [
-	{"key": "nurse_feed", "mode": "feed", "label": "Feed brood"},
-	{"key": "nurse_jelly", "mode": "jelly", "label": "Produce royal jelly"},
-	{"key": "nurse_both", "mode": "both", "label": "Both"},
-]
-
-const ROLE_BUTTONS := [
-	{
-		"label": "Forager", "role": "forager",
-		"tip": "Send the selected bees out to the meadow to gather nectar or pollen and carry it back into the comb.",
-	},
-	{
-		"label": "Nursery", "role": "nursery",
-		"tip": "Keep the selected bees indoors on brood work. Larvae do not develop at all on their own: a nurse collects pollen and either nectar or honey from the comb, carries it to the cell, and each feed only buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. With no nurse, the colony cannot grow. On the royal jelly sub-mode a nurse instead eats pollen and honey and works them into jelly, which is the one thing a gyne larva cannot be raised without.",
-	},
-	{
-		"label": "Architect", "role": "builder",
-		"tip": "Architects look after the comb itself. As a cell builder one draws new cells; on cell maintenance it clears dead larvae out of blocked cells and shifts stores out of any cell you have re-designated or asked to be emptied; on both it takes whichever job comes up, with maintenance first. Building burns extra energy, because bees make wax from the sugar they have eaten.",
-	},
-	{
-		"label": "Miner", "role": "miner",
-		"tip": "Set the selected bees to dig out soil blocks you have marked. Click any soil block touching open space in the hive view to mark it. One miner takes about two minutes per block; several digging the same block share the work.",
-	},
-	{
-		"label": "Automine", "role": "automine",
-		"tip": "Toggle automatic digging for the selected miners. With it on they pick the exposed soil block nearest the centre of the comb without waiting to be told, so the hive opens up around itself.",
-	},
-	{
-		"label": "Honey maker", "role": "honey_maker",
-		"tip": "Set the selected bees to make honey. They take stored nectar back out of the comb, chew enzymes into it, spit the mix into a cell of its own and then fan their wings over that cell until the water has evaporated off. Only then is it honey -- which is several times as energy-dense as the nectar it came from, keeps far better, and lets nurses raise larvae faster.",
-	},
-	{
-		"label": "Idle", "role": "idle",
-		"tip": "Stop the selected bees doing anything on their own. They stay where they are and keep burning energy, but you can still move them with right-click. Useful for holding bees back or parking one somewhere.",
-	},
-	{
-		"label": "Egg layer", "role": "egg_layer",
-		"tip": "Queen only. She eats pollen from the comb until she has enough for an egg, then walks to a free cell and lays into it. Whenever laying is blocked -- no pollen, or no free cell -- she falls back to her backup role, which is nursing unless you change it, so she is feeding larvae rather than standing idle. Other bees ignore this button.",
-	},
-]
+## The role a bee can be switched to, and the sub-modes of each, both
+## come from Roles now. The keys main.gd matches on are built from the
+## role key and the mode key -- "comb_worker_build", "nurse_jelly" --
+## so adding a mode to the table is all it takes.
+static func mode_command(role_id: int, mode_key: String) -> String:
+	return "%s_%s" % [Roles.key_for(role_id), mode_key]
 
 ## Width kept clear in the top-right corner for the Tuning button that
 ## debug_panel.gd owns. Both use the same number so they can't collide.
@@ -449,42 +404,42 @@ func _build_cell_popup() -> void:
 	_cell_section(column, "Reserve for", true).add_child(row)
 
 	var nectar_btn := Button.new()
-	nectar_btn.text = "Store Nectar"
+	nectar_btn.text = "Nectar"
 	nectar_btn.focus_mode = Control.FOCUS_NONE
 	nectar_btn.pressed.connect(func(): _request_designation("nectar"))
 	live_buttons["designation_nectar"] = nectar_btn
 	row.add_child(_with_info(nectar_btn, "Reserve this cell for nectar. Foragers carrying pollen will walk past it."))
 
 	var pollen_btn := Button.new()
-	pollen_btn.text = "Store Pollen"
+	pollen_btn.text = "Pollen"
 	pollen_btn.focus_mode = Control.FOCUS_NONE
 	pollen_btn.pressed.connect(func(): _request_designation("pollen"))
 	live_buttons["designation_pollen"] = pollen_btn
 	row.add_child(_with_info(pollen_btn, "Reserve this cell for pollen. Foragers carrying nectar will walk past it."))
 
 	var honey_btn := Button.new()
-	honey_btn.text = "Store Honey"
+	honey_btn.text = "Honey"
 	honey_btn.focus_mode = Control.FOCUS_NONE
 	honey_btn.pressed.connect(func(): _request_designation("honey"))
 	live_buttons["designation_honey"] = honey_btn
 	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
 
 	var jelly_btn := Button.new()
-	jelly_btn.text = "Store Jelly"
+	jelly_btn.text = "Jelly"
 	jelly_btn.focus_mode = Control.FOCUS_NONE
 	jelly_btn.pressed.connect(func(): _request_designation("jelly"))
 	live_buttons["designation_jelly"] = jelly_btn
 	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
 
 	var egg_btn := Button.new()
-	egg_btn.text = "Raise Eggs"
+	egg_btn.text = "Eggs"
 	egg_btn.focus_mode = Control.FOCUS_NONE
 	egg_btn.pressed.connect(func(): _request_designation("brood"))
 	live_buttons["designation_brood"] = egg_btn
 	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."))
 
 	var auto_btn := Button.new()
-	auto_btn.text = "Any"
+	auto_btn.text = "Unreserve"
 	auto_btn.focus_mode = Control.FOCUS_NONE
 	auto_btn.pressed.connect(func(): _request_designation(""))
 	live_buttons["designation_any"] = auto_btn
@@ -505,7 +460,7 @@ func _build_cell_popup() -> void:
 	hatch_row.add_child(hatch_title)
 	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Roles that have a sub-mode -- a forager's resource, whether a miner starts automining -- offer it here, so the new bee arrives already set up."))
 
-	for entry in HATCH_ROLES:
+	for entry in hatch_options():
 		var options: Array = entry.options
 		if options.size() == 1:
 			var btn := Button.new()
@@ -522,7 +477,7 @@ func _build_cell_popup() -> void:
 	var lock_row := HBoxContainer.new()
 	raises.add_child(lock_row)
 	hatch_lock_box = CheckBox.new()
-	hatch_lock_box.text = "Keep this role for every bee raised here"
+	hatch_lock_box.text = "Keep for every bee"
 	hatch_lock_box.add_theme_font_size_override("font_size", 11)
 	hatch_lock_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
@@ -535,7 +490,7 @@ func _build_cell_popup() -> void:
 	var gyne_row := HBoxContainer.new()
 	raises.add_child(gyne_row)
 	gyne_box = CheckBox.new()
-	gyne_box.text = "Raise a gyne (future queen) in this cell"
+	gyne_box.text = "Raise a gyne (a future queen)"
 	gyne_box.add_theme_font_size_override("font_size", 11)
 	gyne_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
@@ -701,7 +656,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	var keep_row := HBoxContainer.new()
 	column.add_child(keep_row)
 	keep_empty_box = CheckBox.new()
-	keep_empty_box.text = "Keep this cell empty afterwards"
+	keep_empty_box.text = "Leave empty"
 	keep_empty_box.add_theme_font_size_override("font_size", 11)
 	keep_empty_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
@@ -910,17 +865,17 @@ func _refresh_cell_popup() -> void:
 					lines.append("Hungry -- development has stopped. It dies in %ds if nobody feeds it" % int(active_cell.seconds_until_death()))
 			"corpse":
 				lines.append("A larva starved here. The body blocks the cell.")
-				lines.append("Being cleared: %d%% -- an architect on cell maintenance has to carry it out" % int(active_cell.clean_fraction() * 100.0))
+				lines.append("Being cleared: %d%% -- a comb worker on cell maintenance has to carry it out" % int(active_cell.clean_fraction() * 100.0))
 			_:
 				lines.append("Empty")
 	var reserved := "any resource"
 	if active_cell.keep_empty:
-		reserved = "nothing -- being kept empty"
+		reserved = "nothing -- kept empty"
 	elif active_cell.designated_type == "brood":
 		reserved = "raising eggs"
 	elif active_cell.designated_type != "":
 		reserved = active_cell.designated_type
-	lines.append("Reserved for: %s" % reserved)
+	lines.append("Takes: %s" % reserved)
 	if active_cell.is_nursery_cell():
 		lines.append("Nursery zone — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
 	if active_cell.is_closed:
@@ -931,7 +886,7 @@ func _refresh_cell_popup() -> void:
 		lines.append("Waiting for a builder to carry the contents out")
 
 	var hatch_name := "colony default"
-	for entry in HATCH_ROLES:
+	for entry in hatch_options():
 		if entry.role == active_cell.hatch_role:
 			hatch_name = entry.label
 			if entry.role == 0:
@@ -1095,7 +1050,7 @@ func update_storage(nectar: float, pollen: float, honey: float, jelly: float, se
 	_refresh_corner()
 
 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
-	corner_texts["population"] = "Bees: %d foraging, %d nursing, %d architects, %d on honey" % [
+	corner_texts["population"] = "Bees: %d foraging, %d nursing, %d comb workers, %d on honey" % [
 		foragers, nurses, builders, honey_makers,
 	]
 	_refresh_corner()
@@ -1224,19 +1179,17 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		mixed.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
 		row.add_child(mixed)
 	else:
-		row.add_child(_current_role_marker(_role_label(common_role)))
+		row.add_child(_current_role_marker(Roles.label_for(common_role)))
 
 	var items: Array = []
-	for entry in ROLE_BUTTONS:
-		var key: String = entry.role
-		if key == "automine":
-			continue   # a switch on miners, not a role
-		if key == "egg_layer" and not any_queen:
-			continue   # queen only
-		if _role_key_to_value(key) == common_role:
-			continue   # already doing it
+	for role in Roles.ROLES:
+		if role.id == common_role:
+			continue                       # already doing it
+		if role.id == Roles.QUEEN and not any_queen:
+			continue                       # queen only
+		var key: String = role.key
 		items.append({
-			"text": entry.label,
+			"text": role.label,
 			"action": func(): role_requested.emit(key),
 		})
 	if not items.is_empty():
@@ -1244,37 +1197,36 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 
 ## Doing: the sub-mode of the current job, where that job has one.
 func _build_doing_row(common_role: int, first) -> void:
-	match common_role:
-		Bee.Role.FORAGER:
-			var row := _labelled_row("Doing")
-			var focus: String = first.resource_type if first != null else "nectar"
-			row.add_child(_toggle_button("Nectar", focus == "nectar",
-				func(): focus_requested.emit("nectar"),
-				"Look for nectar. Nectar is the colony's energy: bees eat it, and building comb burns it."))
-			row.add_child(_toggle_button("Pollen", focus == "pollen",
-				func(): focus_requested.emit("pollen"),
-				"Look for pollen. Pollen is what the queen eats to lay eggs, so no pollen means no new bees."))
-		Bee.Role.NURSERY:
-			var row := _labelled_row("Doing")
-			var mode: String = first.nurse_mode if first != null else "feed"
-			for entry in NURSE_MODES:
-				var value: String = entry.mode
-				var key: String = entry.key
-				row.add_child(_toggle_button(entry.label, mode == value,
-					func(): role_requested.emit(key), _tip_for("nursery")))
-		Bee.Role.BUILDER:
-			var row := _labelled_row("Doing")
-			var mode: String = first.architect_mode if first != null else "both"
-			for entry in ARCHITECT_MODES:
-				var value: String = entry.mode
-				var key: String = entry.key
-				row.add_child(_toggle_button(entry.label, mode == value,
-					func(): role_requested.emit(key), _tip_for("builder")))
-		Bee.Role.MINER:
-			var row := _labelled_row("Doing")
-			var on: bool = first.automine if first != null else false
-			row.add_child(_toggle_button("Automine", on,
-				func(): role_requested.emit("automine"), _tip_for("automine")))
+	var modes: Array = Roles.modes_for(common_role)
+	if modes.is_empty() or first == null:
+		return
+	var row := _labelled_row("Doing")
+
+	# What counts as "the mode this bee is on" differs by role -- a
+	# forager's is the resource it collects, a miner's is a switch rather
+	# than a choice between modes -- so each role says how to read it.
+	for mode in modes:
+		var key: String = mode.key
+		var current: bool = _mode_is_active(common_role, first, key)
+		var command: String = mode_command(common_role, key)
+		row.add_child(_toggle_button(
+			mode.label, current,
+			func(): role_requested.emit(command),
+			mode.tip
+		))
+
+## Is `bee` currently on this sub-mode?
+func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
+	match role_id:
+		Roles.FORAGER:
+			return bee.resource_type == mode_key
+		Roles.NURSE:
+			return bee.nurse_mode == mode_key
+		Roles.COMB_WORKER:
+			return bee.architect_mode == mode_key
+		Roles.MINER:
+			return bee.automine       # the miner's only mode is a toggle
+	return false
 
 ## Orders: the "click this, then click a spot" actions. Grouped together
 ## because they all behave the same way and all need the hive or meadow
@@ -1287,7 +1239,7 @@ func _build_orders_row(common_role: int, first) -> void:
 	match common_role:
 		Bee.Role.FORAGER:
 			var has_start: bool = first != null and first.has_forage_start_point()
-			row.add_child(_action_button("Reset start point" if has_start else "Set start point",
+			row.add_child(_action_button("Clear start" if has_start else "Start here",
 				func(): forage_start_point_requested.emit(),
 				"Click this, then click a spot in the meadow. The selected foragers head there first on every trip out, so you can split them across different parts of the meadow instead of them all drifting to whichever flower is nearest the entrance."))
 			if GameConfig.floral_constancy_on:
@@ -1301,10 +1253,10 @@ func _build_orders_row(common_role: int, first) -> void:
 				"Click this, then click any open tile -- including ground that has been mined out. Hold Ctrl and keep clicking to queue up several: they are built in the order you click them, and a faint line shows that order while this bee is selected."))
 			row.add_child(_action_button("Keep clear",
 				func(): keep_clear_requested.emit(),
-				"Click this, then click a tile to reserve it as open floor. No architect will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every architect, not just this one, and the reserved tiles show whenever any architect is selected."))
-			row.add_child(_action_button("Home tile",
+				"Click this, then click a tile to reserve it as open floor. No comb worker will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every comb worker, not just this one, and the reserved tiles show whenever any comb worker is selected."))
+			row.add_child(_action_button("Work from here",
 				func(): home_cell_requested.emit(),
-				"Click this, then click a tile. That tile becomes this architect's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Give two architects different home tiles and the hive grows in two places at once."))
+				"Click this, then click a tile. That tile becomes this comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Give two comb workers different home tiles and the hive grows in two places at once."))
 
 			# Restocking needs three things chosen, so it gets its own row
 			# rather than crowding the general orders.
@@ -1314,7 +1266,7 @@ func _build_orders_row(common_role: int, first) -> void:
 			row.add_child(_action_button("Mine",
 				func(): mine_target_requested.emit(),
 				"Click this, then click a soil block for the selected miners to dig. Hold Ctrl and keep clicking to queue several: they are dug in the order you click them, and a faint line shows that order while the miner is selected."))
-			row.add_child(_action_button("Dig centre",
+			row.add_child(_action_button("Work from here",
 				func(): mine_home_requested.emit(),
 				"Click this, then click a tile. The selected miners will always dig whichever soil is nearest that tile, rather than whichever is nearest wherever they finished the last block. Keeps a team working through one face."))
 
@@ -1333,19 +1285,19 @@ func _build_restock_row(first) -> void:
 		row.add_child(_toggle_button(
 			resource.capitalize(), current,
 			func(): restock_targets_requested.emit(value),
-			"Select comb first, then press this. Those cells become the ones this architect keeps full of %s, fetching it from elsewhere in the hive whenever they run down. This is how you get a resource to sit *somewhere* -- honey beside the brood before winter, pollen within reach of the nursery -- rather than wherever the foragers happened to drop it." % resource
+			"Select comb first, then press this. Those cells become the ones this comb worker keeps full of %s, fetching it from elsewhere in the hive whenever they run down. This is how you get a resource to sit *somewhere* -- honey beside the brood before winter, pollen within reach of the nursery -- rather than wherever the foragers happened to drop it." % resource
 		))
 
 	var source_row := _labelled_row("Take from")
 	source_row.add_child(_action_button("Only these",
 		func(): restock_sources_requested.emit(true),
-		"Select comb first, then press this. The architect will draw only on those cells when refilling. Use it to point restocking at the outer comb and leave the rest alone."))
+		"Select comb first, then press this. The comb worker will draw only on those cells when refilling. Use it to point restocking at the outer comb and leave the rest alone."))
 	source_row.add_child(_action_button("Never these",
 		func(): restock_sources_requested.emit(false),
-		"Select comb first, then press this. The architect will never take from those cells. This is what protects a winter store from being redistributed by your own bee."))
+		"Select comb first, then press this. The comb worker will never take from those cells. This is what protects a winter store from being redistributed by your own bee."))
 	source_row.add_child(_action_button("Clear orders",
 		func(): restock_clear_requested.emit(),
-		"Forget this architect's restocking orders entirely -- the cells it keeps full, and the sources it may use."))
+		"Forget this comb worker's restocking orders entirely -- the cells it keeps full, and the sources it may use."))
 
 	if first != null and first.has_restock_orders():
 		var summary := Label.new()
@@ -1360,24 +1312,17 @@ func _build_fallback_row(common_role: int, first) -> void:
 	if common_role != -1:
 		var current: int = first.secondary_role if first != null else -1
 		row.add_child(_make_role_menu(
-			"Backup: %s" % _secondary_label(current),
+			"When idle: %s" % (Roles.label_for(current) if current != -1 else "nothing"),
 			"What this bee does instead of standing around whenever it genuinely has no work of its own -- a non-automine miner with no block marked, say, or a nurse with no brood to tend. It drops the backup role and returns to its own the instant real work turns up.",
-			[
-				{"text": "None", "action": func(): secondary_role_requested.emit("none")},
-				{"text": "Forager", "action": func(): secondary_role_requested.emit("forager")},
-				{"text": "Nursery", "action": func(): secondary_role_requested.emit("nursery")},
-				{"text": "Architect", "action": func(): secondary_role_requested.emit("builder")},
-				{"text": "Miner", "action": func(): secondary_role_requested.emit("miner")},
-				{"text": "Honey maker", "action": func(): secondary_role_requested.emit("honey_maker")},
-			]
+			_secondary_items()
 		))
 
 	var finish_box := CheckBox.new()
-	finish_box.text = "Finish current task first"
+	finish_box.text = "Finish the job first"
 	finish_box.add_theme_font_size_override("font_size", 11)
 	finish_box.button_pressed = first.finish_task_first if first != null else false
 	finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
-	row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying, an architect finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts immediately."))
+	row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying, a comb worker finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts immediately."))
 
 	# The queen's own laying rule sits here rather than in its own row --
 	# it is a "what does she do when she can't lay" question, which is
@@ -1389,6 +1334,17 @@ func _build_fallback_row(common_role: int, first) -> void:
 		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
 		any_cell_box.toggled.connect(func(pressed: bool): GameConfig.queen_lays_in_any_cell = pressed)
 		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in nursery zone cells and waits when they are full. Turn it off for exact control, and be ready to add zone cells or she stops laying."))
+
+## The "when idle" menu, built from the role table so a new role turns
+## up here without anyone remembering to add it.
+func _secondary_items() -> Array:
+	var items: Array = [{"text": "Nothing", "action": func(): secondary_role_requested.emit("none")}]
+	for role in Roles.ROLES:
+		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
+			continue   # neither is a sensible thing to fall back to
+		var key: String = role.key
+		items.append({"text": role.label, "action": func(): secondary_role_requested.emit(key)})
+	return items
 
 ## One row of the panel, with its heading. Returns the box the controls
 ## go into.
@@ -1426,34 +1382,6 @@ func _action_button(label: String, action: Callable, tip: String) -> Control:
 	button.pressed.connect(action)
 	return _with_info(button, tip)
 
-func _role_label(role_value: int) -> String:
-	match role_value:
-		Bee.Role.FORAGER: return "Forager"
-		Bee.Role.NURSERY: return "Nursery"
-		Bee.Role.BUILDER: return "Architect"
-		Bee.Role.MINER: return "Miner"
-		Bee.Role.HONEY_MAKER: return "Honey maker"
-		Bee.Role.EGG_LAYER: return "Egg layer"
-		Bee.Role.IDLE: return "Idle"
-	return "Unknown"
-
-## Maps the string keys main.gd matches on back to Bee.Role values, so
-## the "Change to…" menu can leave out the role a bee already has.
-func _role_key_to_value(key: String) -> int:
-	match key:
-		"forager": return Bee.Role.FORAGER
-		"nursery": return Bee.Role.NURSERY
-		"builder": return Bee.Role.BUILDER
-		"miner": return Bee.Role.MINER
-		"honey_maker": return Bee.Role.HONEY_MAKER
-		"egg_layer": return Bee.Role.EGG_LAYER
-		"idle": return Bee.Role.IDLE
-	return -1
-
-## The lit-up button naming the role the selection is already on. It is
-## an ordinary button rather than a label so it sits at the same height
-## as everything else in the row; pressing it just reasserts the role the
-## bee already has, which is harmless.
 func _current_role_marker(label: String) -> Control:
 	var button := Button.new()
 	button.text = "● %s" % label
@@ -1476,86 +1404,6 @@ func _common_role(bees: Array) -> int:
 			return -1
 	return role_value if found else -1
 
-func _secondary_label(secondary_role: int) -> String:
-	match secondary_role:
-		Bee.Role.FORAGER:
-			return "Forager"
-		Bee.Role.NURSERY:
-			return "Nursery"
-		Bee.Role.BUILDER:
-			return "Builder"
-		Bee.Role.MINER:
-			return "Miner"
-		Bee.Role.HONEY_MAKER:
-			return "Honey maker"
-		Bee.Role.EGG_LAYER:
-			return "Egg layer"
-		_:
-			return "None"
-
-## Menu entries for the architect dropdown. `assign_role` is true when
-## the bees aren't architects yet, in which case each entry also takes
-## the role, not just the mode.
-##
-## Written as a plain loop rather than a mapped lambda: each entry needs
-## its own captured copy of the mode key, and a lambda built inside
-## another lambda is a good way to end up with every entry sharing the
-## last one.
-func _architect_items(assign_role: bool) -> Array:
-	var items: Array = []
-	for entry in ARCHITECT_MODES:
-		var key: String = entry.key
-		var label: String = entry.label
-		if assign_role:
-			items.append({
-				"text": "Become architect — %s" % label,
-				"action": func(): role_requested.emit("builder"); role_requested.emit(key),
-			})
-		else:
-			items.append({
-				"text": label,
-				"action": func(): role_requested.emit(key),
-			})
-	return items
-
-func _nurse_items(assign_role: bool) -> Array:
-	var items: Array = []
-	for entry in NURSE_MODES:
-		var key: String = entry.key
-		var label: String = entry.label
-		if assign_role:
-			items.append({
-				"text": "Become nursery — %s" % label,
-				"action": func(): role_requested.emit("nursery"); role_requested.emit(key),
-			})
-		else:
-			items.append({
-				"text": label,
-				"action": func(): role_requested.emit(key),
-			})
-	return items
-
-func _nurse_mode_label(mode: String) -> String:
-	for entry in NURSE_MODES:
-		if entry.mode == mode:
-			return entry.label
-	return "Feed brood"
-
-func _architect_mode_label(mode: String) -> String:
-	for entry in ARCHITECT_MODES:
-		if entry.mode == mode:
-			return entry.label
-	return "Both"
-
-func _tip_for(role_key: String) -> String:
-	for entry in ROLE_BUTTONS:
-		if entry.role == role_key:
-			return entry.tip
-	return ""
-
-## A small dropdown button: clicking it opens a popup menu rather than
-## firing an action directly. Used where becoming a role and configuring
-## it (a focus, automine) are offered together as one click.
 func _make_role_menu(label: String, tip: String, items: Array) -> Control:
 	var menu := MenuButton.new()
 	menu.text = label

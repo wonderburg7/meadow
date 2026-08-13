@@ -15,6 +15,7 @@ extends CanvasLayer
 ## the hive are visibly the same thing.
 
 const UI = preload("res://scripts/ui.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 signal closed()
 ## A readout here has been starred or unstarred into the top-left corner.
@@ -35,40 +36,33 @@ const STAT_ROWS := [
 var corner_texts: Dictionary = {"nursery_zone": "", "nursery_mix": "", "nursery_output": ""}
 var star_buttons: Dictionary = {}
 
-## One colour per role, shared between the ring plot, the emergence list
-## and the glow on the comb itself. Keys match the "role|focus" form used
-## everywhere else; "gyne" is its own category because a gyne is not a
-## job, it's a different kind of bee.
-const ROLE_COLOURS := {
-	"0|nectar": Color(0.95, 0.72, 0.20),
-	"0|pollen": Color(0.55, 0.48, 0.90),
-	"1|": Color(0.40, 0.80, 0.95),
-	"2|": Color(0.55, 0.85, 0.45),
-	"5|": Color(0.80, 0.55, 0.35),
-	"6|": Color(0.95, 0.45, 0.25),
-	"4|": Color(0.60, 0.60, 0.62),
-	"3|": Color(1.0, 0.85, 0.55),
-	"gyne": Color(0.98, 0.80, 0.35),
-	"unset": Color(0.75, 0.75, 0.78),
-}
+## Role colours, labels and order all come from the role table now, so
+## the ring plot, the comb glow and the colony window's tallies are
+## guaranteed to agree. Gynes are the one thing here that isn't a job --
+## they get their own slice because they're a different kind of bee.
+const GYNE_COLOUR := Color(0.98, 0.80, 0.35)
+const UNSET_COLOUR := Color(0.75, 0.75, 0.78)
 
-const ROLE_LABELS := {
-	"0|nectar": "Nectar foragers",
-	"0|pollen": "Pollen foragers",
-	"1|": "Nurses",
-	"2|": "Architects",
-	"5|": "Miners",
-	"6|": "Honey makers",
-	"4|": "Idle",
-	"3|": "Queen",
-	"gyne": "Gynes",
-	"unset": "No role set",
-}
+static func _key_label(key: String) -> String:
+	if key == "gyne":
+		return "Gynes"
+	if key == "unset":
+		return "No role set"
+	return Roles.label_for_key(key)
 
-## Row order, so the readouts don't reshuffle themselves as counts change.
-const ROLE_ORDER := [
-	"0|nectar", "0|pollen", "1|", "2|", "5|", "6|", "gyne", "4|", "3|", "unset",
-]
+static func _key_colour(key: String) -> Color:
+	if key == "gyne":
+		return GYNE_COLOUR
+	if key == "unset":
+		return UNSET_COLOUR
+	return Roles.colour_for_key(key)
+
+## Row order, so readouts don't reshuffle as counts change.
+static func row_order() -> Array:
+	var keys: Array = Roles.count_keys()
+	keys.append("gyne")
+	keys.append("unset")
+	return keys
 
 const TIER_NAMES := ["Low", "Medium", "High"]
 
@@ -210,11 +204,10 @@ func is_open() -> bool:
 ## The colour a zone cell should glow, given the role it is set to raise.
 static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:
 	if is_gyne:
-		return ROLE_COLOURS["gyne"]
+		return GYNE_COLOUR
 	if role < 0:
-		return ROLE_COLOURS["unset"]
-	var key: String = "%d|%s" % [role, focus] if role == 0 else "%d|" % role
-	return ROLE_COLOURS.get(key, ROLE_COLOURS["unset"])
+		return UNSET_COLOUR
+	return Roles.colour_for(role, focus)
 
 ## Called once a second by main.gd while the window is open.
 ##   `zone`      -- Hive.zone_summary()
@@ -233,12 +226,12 @@ func _refresh_zone(zone: Dictionary) -> void:
 	var by_role: Dictionary = zone.get("by_role", {})
 	var lines: Array = []
 	var total := 0
-	for key in ROLE_ORDER:
+	for key in row_order():
 		var count: int = int(by_role.get(key, 0))
 		if count <= 0:
 			continue
 		total += count
-		lines.append("%s: %d cell%s" % [ROLE_LABELS[key], count, "" if count == 1 else "s"])
+		lines.append("%s: %d cell%s" % [_key_label(key), count, "" if count == 1 else "s"])
 	if lines.is_empty():
 		zone_label.text = "No cells in the zone yet. Select comb and use \"Add to nursery zone\"."
 		corner_texts["nursery_zone"] = "Nursery zone — no cells set aside"
@@ -266,14 +259,14 @@ func _refresh_ring(live: Dictionary) -> void:
 	if total <= 0:
 		ring.queue_redraw()
 		return
-	for key in ROLE_ORDER:
+	for key in row_order():
 		var count: int = int(live.get(key, 0))
 		if count <= 0:
 			continue
 		ring_slices.append({
-			"colour": ROLE_COLOURS.get(key, ROLE_COLOURS["unset"]),
+			"colour": _key_colour(key),
 			"share": float(count) / float(total),
-			"label": ROLE_LABELS.get(key, key),
+			"label": _key_label(key),
 			"count": count,
 		})
 	ring.queue_redraw()
@@ -293,12 +286,12 @@ func _refresh_emergence(emerged: Dictionary, window: float) -> void:
 	var minutes: float = max(0.001, window / 60.0)
 	var lines: Array = []
 	var total := 0
-	for key in ROLE_ORDER:
+	for key in row_order():
 		var count: int = int(emerged.get(key, 0))
 		if count <= 0:
 			continue
 		total += count
-		lines.append("%s: %.1f/min  (%d)" % [ROLE_LABELS.get(key, key), count / minutes, count])
+		lines.append("%s: %.1f/min  (%d)" % [_key_label(key), count / minutes, count])
 	if lines.is_empty():
 		emergence_label.text = "Nothing has emerged in the last 3 minutes."
 		corner_texts["nursery_output"] = "Emerging — nothing recently"

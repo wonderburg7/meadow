@@ -433,7 +433,7 @@ func find_unfinished_cell() -> Node2D:
 	return null
 
 ## A cell blocked by a dead larva. Nothing can be stored there and no egg
-## can be laid in it until an architect clears it, so this outranks every
+## can be laid in it until a comb worker clears it, so this outranks every
 ## other maintenance job.
 func find_cell_needing_cleaning() -> Node2D:
 	var corpses := cells_holding("corpse")
@@ -467,9 +467,9 @@ func has_room_elsewhere(resource_type: String, except: Node2D) -> bool:
 ## interior tile, and starts an unfinished cell there for builders to
 ## work on. Returns null when the open floor is full -- at that point
 ## the hive can only grow by mining soil, which is the miner role's job.
-## `around` is the tile the spiral grows out from -- an architect's own
+## `around` is the tile the spiral grows out from -- a comb worker's own
 ## home cell if it has been given one, otherwise the middle of the comb.
-## Two architects with different home cells will grow the hive in two
+## Two comb workers with different home cells will grow the hive in two
 ## places at once instead of both queueing at the same edge.
 ##
 ## Comb can now go on any open tile, not just the original interior
@@ -497,13 +497,13 @@ func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 
 	return _start_site_at(hex)
 
-## Tiles the player has asked to be left as open floor. Architects skip
+## Tiles the player has asked to be left as open floor. Comb workers skip
 ## these when picking a site, so you can keep a corridor through the
 ## middle of the comb or leave a landing area by the entrance rather than
 ## having the hive slowly fill in solid.
 ##
 ## Colony-wide rather than per-bee: "don't build here" is a fact about
-## the hive, and having each architect hold its own copy would mean the
+## the hive, and having each comb worker hold its own copy would mean the
 ## rule quietly stopped applying as bees died and were replaced.
 var keep_clear_tiles: Dictionary = {}
 

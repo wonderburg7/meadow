@@ -53,7 +53,7 @@ var unfed_seconds: float = 0.0
 ## whether the larva is on honey or on nectar.
 var fed_on_honey: bool = false
 
-## Architect-seconds spent clearing a dead larva out of this cell.
+## Comb-worker seconds spent clearing a dead larva out of this cell.
 var clean_progress: float = 0.0
 
 ## Is the larva in here being raised as a gyne -- a future queen? Gynes
@@ -267,7 +267,7 @@ func _develop_brood(delta: float) -> void:
 	else:
 		# Nothing left in it. A larva can go hungry for a while, but not
 		# indefinitely -- neglect eventually kills it, and the body then
-		# blocks the cell until an architect clears it out.
+		# blocks the cell until a comb worker clears it out.
 		unfed_seconds += delta
 		if unfed_seconds >= GameConfig.larva_death_seconds:
 			_larva_dies()
@@ -360,7 +360,7 @@ func accepts(resource_type: String) -> bool:
 	if not is_built:
 		return false
 	if content_type == "corpse":
-		return false   # blocked until an architect clears it
+		return false   # blocked until a comb worker clears it
 	# A sealed cell is out of circulation entirely. Cells filling towards
 	# a close still accept -- that's the point of them.
 	if is_closed:
@@ -541,7 +541,7 @@ func seconds_until_death() -> float:
 func needs_cleaning() -> bool:
 	return content_type == "corpse"
 
-## Called each frame by every architect working here, so several clearing
+## Called each frame by every comb worker working here, so several clearing
 ## the same cell share the load. Returns true once the body is free to be
 ## carried away.
 func add_clean_progress(delta: float) -> bool:

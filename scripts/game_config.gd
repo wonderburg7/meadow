@@ -118,11 +118,11 @@ var history_points: float = 180.0
 var pollen_warning_first_day: float = 7.0
 
 ## A larva that has gone this long with nothing to eat dies. The cell is
-## then blocked by the body until an architect on maintenance clears it
+## then blocked by the body until a comb worker on maintenance clears it
 ## out and carries it away -- neglect costs you the cell as well as the
 ## bee.
 var larva_death_seconds: float = 90.0
-var cell_clean_time: float = 20.0   # architect-seconds to clear a dead larva
+var cell_clean_time: float = 20.0   # comb-worker seconds to clear a dead larva
 
 ## Nurses carry the food to the brood themselves. A nurse walks to a
 ## pollen cell and loads up, then to a honey or nectar cell, and only

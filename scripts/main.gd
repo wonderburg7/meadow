@@ -22,6 +22,7 @@ extends Node2D
 ##   Right click    on a flower: go collect there. on ground: move there
 
 const Bee = preload("res://scripts/bee.gd")
+const Roles = preload("res://scripts/roles.gd")
 const Hive = preload("res://scripts/hive.gd")
 const Flower = preload("res://scripts/flower.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
@@ -738,7 +739,7 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 	var focus: String = focus_override if focus_override != "" else cell.hatch_focus
 	if focus == "":
 		focus = "nectar"
-	# An architect's sub-mode travels in the same field as a forager's
+	# A comb worker's sub-mode travels in the same field as a forager's
 	# resource, so hand it to the right property.
 	if role == Bee.Role.BUILDER:
 		bee.architect_mode = focus if focus in ["build", "maintain", "both"] else "both"
@@ -958,7 +959,7 @@ func _refresh_signals(delta: float) -> void:
 	var hungry := 0
 	var foragers := 0
 	var nurses := 0
-	var architects := 0
+	var comb workers := 0
 	for b in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
@@ -970,7 +971,7 @@ func _refresh_signals(delta: float) -> void:
 			Bee.Role.NURSERY:
 				nurses += 1
 			Bee.Role.BUILDER:
-				architects += 1
+				comb workers += 1
 
 	var hungry_brood := 0
 	var dead_cells := 0
@@ -997,7 +998,7 @@ func _refresh_signals(delta: float) -> void:
 	if day >= int(GameConfig.pollen_warning_first_day) and hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
 		lines.append(["Almost no pollen — the queen cannot lay", 2])
 	if hive.total("nectar") < 40.0 and hive.total_honey() < 10.0:
-		lines.append(["Almost no nectar or honey — nothing to eat", 2])
+		lines.append(["Food is running out", 2])
 	if nurses == 0 and hive.cells_holding("brood").size() > 0:
 		lines.append(["No nurses — brood will not develop at all", 2])
 	if free_cells == 0:
@@ -1006,8 +1007,8 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["%d bees running low on energy" % hungry, 1])
 	if foragers == 0:
 		lines.append(["No foragers — nothing is coming in", 1])
-	if architects == 0 and dead_cells > 0:
-		lines.append(["No architects to clear the blocked cells", 1])
+	if comb workers == 0 and dead_cells > 0:
+		lines.append(["No comb workers to clear the blocked cells", 1])
 	if GameConfig.rain_intensity > GameConfig.rain_forage_limit:
 		lines.append(["Raining hard — foragers are grounded", 1])
 	elif GameConfig.rain_intensity > 0.05:
@@ -1467,7 +1468,7 @@ func _update_population_readout() -> void:
 			Bee.Role.NURSERY:
 				nurses += 1
 			Bee.Role.BUILDER:
-				builders += 1   # architects
+				builders += 1   # comb workers
 			Bee.Role.FORAGER:
 				foragers += 1
 			Bee.Role.HONEY_MAKER:
@@ -1899,7 +1900,7 @@ func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
 	pending_mine_target_bees = []
 
 ## Consumes the click after "Keep clear": flags a tile as one no
-## architect will build on. Clicking a flagged tile again clears it, so
+## comb worker will build on. Clicking a flagged tile again clears it, so
 ## the one button both sets and unsets.
 func _place_keep_clear(global_point: Vector2, keep_adding: bool) -> void:
 	var hex: Vector2i = _hex_at(global_point)
@@ -1914,8 +1915,8 @@ func _hex_at(global_point: Vector2) -> Vector2i:
 	var local_point: Vector2 = hive_root.to_local(global_point)
 	return Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
 
-## Consumes the click that follows a "Set home cell" request: the tile an
-## architect will fill outwards from when picking its own sites.
+## Consumes the click that follows a "Work from here" request: the tile an
+## comb worker will fill outwards from when picking its own sites.
 func _place_home_cell(global_point: Vector2) -> void:
 	awaiting_home_cell = false
 	var local_point: Vector2 = hive_root.to_local(global_point)
@@ -1995,7 +1996,7 @@ func _on_cell_fill_close_requested(anchor: Node2D) -> void:
 	for cell in _cells_to_act_on(anchor):
 		cell.set_fill_then_close(true)
 
-## Consumes the click that follows a "Set start point" request.
+## Consumes the click that follows a "Start here" request.
 func _place_forage_start(global_point: Vector2) -> void:
 	awaiting_forage_start = false
 	var meadow_point: Vector2 = meadow_root.to_local(global_point)
@@ -2037,51 +2038,52 @@ func _on_focus_requested(type: String) -> void:
 			b.set_focus(type)
 	hud.update_selection(selected_bees)
 
+## A request from the selection panel. `role_name` is either a role key
+## ("forager", "comb_worker") or a role key and a sub-mode joined by an
+## underscore ("comb_worker_build", "nurse_jelly", "miner_automine").
+##
+## Both forms are built from the role table in roles.gd, so this handles
+## whatever that table contains rather than a hand-written list that has
+## to be kept in step with it.
 func _on_role_requested(role_name: String) -> void:
-	# automine isn't a role, it's a switch on the miners already selected
-	if role_name == "automine":
-		for b in selected_bees:
-			if is_instance_valid(b):
-				b.automine = not b.automine
-		hud.update_selection(selected_bees)
+	var role_id: int = Roles.id_for_key(role_name)
+	if role_id != -1:
+		_assign_role(role_id)
 		return
 
-	# nor is an architect's mode -- it says which jobs one will take
-	if role_name.begins_with("architect_"):
-		var mode: String = role_name.substr("architect_".length())
-		for b in selected_bees:
-			if is_instance_valid(b):
-				b.architect_mode = mode
-		hud.update_selection(selected_bees)
+	# Not a bare role, so it must be a sub-mode. Find which role it
+	# belongs to by matching the longest key that prefixes it -- longest
+	# because "miner" would otherwise also match "miner_automine".
+	for role in Roles.ROLES:
+		var prefix: String = role.key + "_"
+		if not role_name.begins_with(prefix):
+			continue
+		_apply_mode(role.id, role_name.substr(prefix.length()))
 		return
 
-	# nor is a nurse's: feeding brood, making royal jelly, or both
-	if role_name.begins_with("nurse_"):
-		var nurse_mode: String = role_name.substr("nurse_".length())
-		for b in selected_bees:
-			if is_instance_valid(b):
-				b.nurse_mode = nurse_mode
-		hud.update_selection(selected_bees)
-		return
-
-	var target_role: int = Bee.Role.FORAGER
-	match role_name:
-		"nursery":
-			target_role = Bee.Role.NURSERY
-		"builder":
-			target_role = Bee.Role.BUILDER
-		"egg_layer":
-			target_role = Bee.Role.EGG_LAYER
-		"idle":
-			target_role = Bee.Role.IDLE
-		"miner":
-			target_role = Bee.Role.MINER
-		"honey_maker":
-			target_role = Bee.Role.HONEY_MAKER
+func _assign_role(role_id: int) -> void:
 	for b in selected_bees:
 		if is_instance_valid(b):
-			b.set_role(target_role)
+			b.set_role(role_id)
 	_update_population_readout()
+	hud.update_selection(selected_bees)
+
+## Sub-modes live on different fields per role, which is why this can't
+## be one assignment. A miner's is a toggle rather than a choice, since
+## it only has the one.
+func _apply_mode(role_id: int, mode_key: String) -> void:
+	for b in selected_bees:
+		if not is_instance_valid(b):
+			continue
+		match role_id:
+			Roles.FORAGER:
+				b.set_focus(mode_key)
+			Roles.NURSE:
+				b.nurse_mode = mode_key
+			Roles.COMB_WORKER:
+				b.architect_mode = mode_key
+			Roles.MINER:
+				b.automine = not b.automine
 	hud.update_selection(selected_bees)
 
 
@@ -2092,19 +2094,8 @@ func _on_finish_first_requested(value: bool) -> void:
 	hud.update_selection(selected_bees)
 
 func _on_secondary_role_requested(role_name: String) -> void:
-	var target_role: int = -1
-	match role_name:
-		"forager":
-			target_role = Bee.Role.FORAGER
-		"nursery":
-			target_role = Bee.Role.NURSERY
-		"builder":
-			target_role = Bee.Role.BUILDER
-		"miner":
-			target_role = Bee.Role.MINER
-		"honey_maker":
-			target_role = Bee.Role.HONEY_MAKER
-		# "none" (or anything else) leaves target_role at -1, clearing it
+	# "none" (and anything unrecognised) clears it
+	var target_role: int = Roles.id_for_key(role_name)
 	for b in selected_bees:
 		if is_instance_valid(b):
 			b.set_secondary_role(target_role)
@@ -2242,8 +2233,8 @@ func _on_mine_target_requested() -> void:
 	awaiting_mine_target = true
 	_ensure_hive_view()
 
-## "Keep clear": the next click flags a tile no architect will build on.
-## Colony-wide, so it doesn't matter which architect was selected.
+## "Keep clear": the next click flags a tile no comb worker will build on.
+## Colony-wide, so it doesn't matter which comb worker was selected.
 func _on_keep_clear_requested() -> void:
 	awaiting_keep_clear = true
 	_ensure_hive_view()
@@ -2254,7 +2245,7 @@ func _on_keep_clear_requested() -> void:
 ## they are for. Selecting comb is something the player already does
 ## constantly, so reusing it beats inventing a fourth placement mode.
 
-func _restock_architects() -> Array:
+func _restock_comb workers() -> Array:
 	return selected_bees.filter(func(b):
 		return is_instance_valid(b) and b.role == Bee.Role.BUILDER
 	)
@@ -2264,11 +2255,11 @@ func _on_restock_targets_requested(resource: String) -> void:
 	if cells.is_empty():
 		hud.show_warning("Select the comb you want kept full first, then press the resource.")
 		return
-	for b in _restock_architects():
+	for b in _restock_comb workers():
 		b.set_restock_targets(cells, resource)
 		b.architect_mode = "restock"
 	# The cells have to be reserved for the resource, or foragers will
-	# keep filling them with whatever arrives and the architect will
+	# keep filling them with whatever arrives and the comb worker will
 	# spend its life undoing that.
 	for cell in cells:
 		_designate_one(cell, resource)
@@ -2280,13 +2271,13 @@ func _on_restock_sources_requested(allowed: bool) -> void:
 	if cells.is_empty():
 		hud.show_warning("Select the comb you mean first, then press the button.")
 		return
-	for b in _restock_architects():
+	for b in _restock_comb workers():
 		b.set_restock_sources(cells, allowed)
 	_clear_cell_selection()
 	hud.update_selection(selected_bees)
 
 func _on_restock_clear_requested() -> void:
-	for b in _restock_architects():
+	for b in _restock_comb workers():
 		b.clear_restock()
 	hud.update_selection(selected_bees)
 
@@ -2337,7 +2328,7 @@ func _draw_selection_box() -> void:
 ## Everything here is drawn only while the bee holding the order is
 ## selected, so the comb isn't permanently covered in other bees'
 ## plans. The keep-clear tiles are the exception: they belong to the
-## colony, not to a bee, so they show for any selected architect.
+## colony, not to a bee, so they show for any selected comb worker.
 
 const BUILD_ORDER_COLOUR := Color(0.45, 0.85, 1.0)
 const MINE_ORDER_COLOUR := Color(1.0, 0.72, 0.30)
@@ -2354,7 +2345,7 @@ func _draw_hive_orders() -> void:
 		elif b.role == Bee.Role.MINER:
 			_draw_order_chain(b, _mine_queue_points(b), MINE_ORDER_COLOUR)
 
-	# Reserved open space, for any architect. Also shown while placing
+	# Reserved open space, for any comb worker. Also shown while placing
 	# one, so you can see what's already flagged as you click.
 	if any_architect or awaiting_keep_clear:
 		for hex in hive.keep_clear_tiles.keys():
