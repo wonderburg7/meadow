@@ -38,6 +38,7 @@ const NurseryPanel = preload("res://scripts/nursery_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
 const RainEffect = preload("res://scripts/rain_effect.gd")
 const RivalHive = preload("res://scripts/rival_hive.gd")
+const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -127,6 +128,14 @@ var history_timer: float = 0.0
 ## worst-scaling thing in the simulation. Obstacles never move or appear
 ## mid-run, so one list serves everybody.
 var obstacles: Array = []
+## Coarse spatial index over the flowers, so "nearest flower" checks a
+## handful of buckets instead of all 250. Rebuilt when the meadow is
+## reseeded rather than maintained incrementally -- flowers appear and
+## die a few times a minute, not per frame.
+var flower_grid = SpatialGrid.new(200.0)
+## The same for obstacles. They never move or change during a run, so
+## this is built once.
+var obstacle_grid = SpatialGrid.new(300.0)
 ## Mirrors GameConfig.scenery_on, so the toggle is only acted on when it
 ## actually changes rather than every frame.
 var scenery_shown: bool = true
@@ -339,8 +348,43 @@ func _build_meadow() -> void:
 	for i in range(int(GameConfig.flower_count)):
 		_seed_flower()
 
+	_rebuild_flower_grid()
+	obstacle_grid.rebuild(obstacles)
+
 	if GameConfig.rival_hive_on:
 		_place_rival_hive()
+
+## Flowers are planted and die often enough to matter but rarely enough
+## that a full rebuild is the simplest correct answer. Called whenever
+## the set changes rather than on a timer.
+func _rebuild_flower_grid() -> void:
+	flower_grid.rebuild(get_tree().get_nodes_in_group("flowers"))
+
+## Is `node` inside what the camera can currently see, with a margin?
+##
+## Used to skip presentation work -- labels, colour lerps -- for things
+## off screen. Deliberately not used to skip anything the simulation
+## depends on: a bee that stopped foraging because you looked away would
+## be a much worse bug than a wasted colour assignment.
+##
+## The visible rectangle is recomputed once a frame rather than per
+## caller, since every bee asks.
+var _view_rect: Rect2 = Rect2()
+var _view_frame: int = -1
+
+func is_on_screen(node: Node2D) -> bool:
+	# The wrong world entirely is the cheapest possible answer.
+	var root: Node = node.get_parent()
+	if root != (hive_root if in_hive_view else meadow_root):
+		return false
+
+	var frame := Engine.get_process_frames()
+	if _view_frame != frame:
+		_view_frame = frame
+		var cam := _active_camera()
+		var span: Vector2 = get_viewport_rect().size / cam.zoom.x
+		_view_rect = Rect2(cam.position - span * 0.5, span).grow(120.0)
+	return _view_rect.has_point(node.global_position)
 
 ## Puts the rival colony somewhere in the meadow, kept a good distance
 ## from the player's hive so the two aren't drawing on the same flowers
@@ -817,6 +861,7 @@ func _reseed_meadow(delta: float) -> void:
 	reseed_timer = GameConfig.flower_regrow_seconds
 	if get_tree().get_nodes_in_group("flowers").size() < int(GameConfig.flower_count):
 		_seed_flower()
+		_rebuild_flower_grid()
 	if dragging:
 		selection_layer.queue_redraw()
 
@@ -1296,6 +1341,7 @@ func _restore(data: Dictionary) -> void:
 	_restore_cells(data.get("cells", []))
 	_restore_hive_state(data.get("hive", {}))
 	_restore_flowers(data.get("flowers", []))
+	_rebuild_flower_grid()
 	# Bees last: their orders point at cells, so the comb has to exist
 	# before those references can be resolved.
 	_restore_bees(data.get("bees", []))

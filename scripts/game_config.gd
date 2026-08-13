@@ -34,6 +34,13 @@ var tarsal_marker_seconds: float = 25.0
 ## exhausted flower indefinitely.
 var min_worthwhile_amount: float = 1.0
 
+## How far a forager looks for a flower before giving up and falling back
+## to a full search of the meadow. Bounds the spatial-grid query: without
+## a limit, a bee whose species is nowhere nearby would widen its search
+## to the whole map every time and cost more than the plain scan it
+## replaced.
+var forage_search_radius: float = 900.0
+
 ## When on, a forager can be given a fixed species preference (see the
 ## "Set preference" control in a forager's selection panel) and will
 ## only ever visit that species from then on, even if it means walking

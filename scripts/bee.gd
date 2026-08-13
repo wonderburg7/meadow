@@ -305,29 +305,65 @@ func _base_colour() -> Color:
 		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
 	return Color(1.0, 0.85, 0.1)
 
+# --- how often a bee thinks ---------------------------------------
+## Movement has to happen every frame or bees stutter. *Deciding* things
+## does not: a bee choosing a flower, checking whether it is hungry, or
+## looking for work is making a judgement on a scale of seconds, and
+## asking sixty times a second is sixty times more often than the answer
+## can change.
+##
+## So the state machine runs every frame (it is mostly movement) but the
+## expensive judgements behind it -- searching the comb for work, picking
+## a flower, scanning for a stall -- run on a slower tick. At 8 a second
+## no behaviour is visibly different and the per-bee cost of the parts
+## that scale badly drops by roughly seven eighths.
+##
+## Each bee's tick is offset by its own id, so they don't all think on
+## the same frame and produce a spike. This is the single biggest thing
+## standing between the current colony size and a much larger one.
+const THINKS_PER_SECOND := 8.0
+var think_timer: float = 0.0
+## Real time since this bee last thought, so anything measured in
+## seconds (the stall watchdog) counts wall time rather than ticks.
+var since_last_think: float = 0.0
+## True on the frames where the slow work is allowed to happen.
+var thinking: bool = false
+
 func _process(delta: float) -> void:
 	if hive == null or is_dying:
 		return
+
+	# Staggered by a random jitter so the colony's thinking is spread
+	# across frames rather than landing on one.
+	think_timer -= delta
+	since_last_think += delta
+	thinking = think_timer <= 0.0
+	var think_delta: float = since_last_think
+	if thinking:
+		think_timer = (1.0 / THINKS_PER_SECOND) * randf_range(0.85, 1.15)
+		since_last_think = 0.0
 
 	_age_and_burn(delta)
 	if not is_inside_tree():
 		return   # died during ageing
 
-	_watch_for_stalls(delta)
+	if thinking:
+		_watch_for_stalls(think_delta)
 
-	# A queued role change lands the moment the bee is free. Checked here
-	# rather than only in the idle states because not every job ends in
-	# one -- a forager that finishes a walk-to-point drops straight into
-	# looking for a flower, and would otherwise never pick the change up.
-	if pending_role != -1 and not _is_busy():
-		_apply_pending_role()
+		# A queued role change lands the moment the bee is free. Checked
+		# here rather than only in the idle states because not every job
+		# ends in one -- a forager that finishes a walk-to-point drops
+		# straight into looking for a flower, and would otherwise never
+		# pick the change up.
+		if pending_role != -1 and not _is_busy():
+			_apply_pending_role()
 
-	# Eating is an errand now, not a number that quietly appears. A bee
-	# that has run low breaks off whatever it was doing, walks to a cell
-	# with food in it and feeds there. This is checked before the state
-	# machine so it can interrupt anything.
-	if _should_go_and_eat():
-		_begin_feeding_self()
+		# Eating is an errand now, not a number that quietly appears. A
+		# bee that has run low breaks off whatever it was doing, walks to
+		# a cell with food in it and feeds there. Checked before the
+		# state machine so it can interrupt anything.
+		if _should_go_and_eat():
+			_begin_feeding_self()
 
 	match state:
 		# --- forager, outdoors ---
@@ -787,29 +823,54 @@ func _seek_flower() -> void:
 
 ## `strict` applies the avoidance rules; without it only the hard
 ## constraints (occupied, empty) are checked.
+## Searched through main.gd's spatial grid rather than by walking every
+## flower in the meadow. This was a scan of 250 nodes per bee per
+## decision; with the grid it looks at the handful in the buckets
+## nearest the bee and widens only if it finds nothing.
+##
+## The fallback to a full scan matters: a bee whose preferred species has
+## nothing in range should still find one eventually rather than deciding
+## the meadow is empty and going home.
 func _nearest_flower(strict: bool) -> Node2D:
-	var best: Node2D = null
-	var best_dist := INF
-	for f in get_tree().get_nodes_in_group("flowers"):
+	var accept := func(f) -> bool:
 		if f.occupied_by != null:
-			continue
+			return false
 		if f.get_available(resource_type) <= 0.0:
-			continue
+			return false
 		if preferred_species != "" and f.species_name != preferred_species:
-			continue
+			return false
 		if strict:
 			if flower_cooldowns.has(f) and Session.sim_time < flower_cooldowns[f]:
-				continue
+				return false
 			# Tarsal secretion: bees leave a scent mark on flowers they
 			# land on, and other bees avoid a recently marked flower
 			# rather than wasting a trip on one already stripped.
 			if GameConfig.tarsal_markers_on and f.is_marked(self):
-				continue
+				return false
+		return true
+
+	var grid = _flower_grid()
+	if grid != null:
+		var found = grid.nearest(position, GameConfig.forage_search_radius, accept)
+		if found != null:
+			return found
+
+	# Nothing close enough, or no grid yet. Fall back to the honest scan.
+	var best: Node2D = null
+	var best_dist := INF
+	for f in get_tree().get_nodes_in_group("flowers"):
+		if not is_instance_valid(f) or not accept.call(f):
+			continue
 		var d := position.distance_to(f.position)
 		if d < best_dist:
 			best_dist = d
 			best = f
 	return best
+
+func _flower_grid():
+	if world != null and is_instance_valid(world):
+		return world.flower_grid
+	return null
 
 ## Landing on a flower doesn't commit a bee to feeding from it. A short
 ## inspection comes first -- long enough to notice things like a fresh
@@ -2608,7 +2669,12 @@ func age_days() -> float:
 func days_remaining() -> float:
 	return max(0.0, GameConfig.bee_lifespan_days - age_days())
 
+## Skipped entirely for bees the camera can't see. Setting a label's text
+## and a polygon's colour are each cheap; doing both for every bee every
+## frame when most of them are off screen is not, and nobody can tell.
 func _update_label() -> void:
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
 	var prefix := "Q" if is_queen else str(bee_id)
 	label.text = "%s%s" % [prefix, role_letter()]
 	# body dims as energy runs low, so a starving bee is visible at a glance
@@ -2717,7 +2783,7 @@ func _first_blocker(target: Vector2) -> Node2D:
 
 	var nearest: Node2D = null
 	var nearest_along := INF
-	for obstacle in _obstacles():
+	for obstacle in _obstacles_towards(target):
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		var reach: float = obstacle.radius + OBSTACLE_MARGIN
@@ -2820,6 +2886,26 @@ func _obstacles() -> Array:
 	if world != null and is_instance_valid(world):
 		return world.obstacles
 	return get_tree().get_nodes_in_group("obstacles")
+
+## Just the obstacles that could possibly matter for a move from here to
+## `target`: those within the span of the journey plus the largest
+## radius. Read from the spatial grid, so a bee crossing a corner of the
+## meadow doesn't consider a plateau on the far side of it.
+##
+## The whole list is still used for the hard boundary check in
+## _block_obstacles, which is about where the bee *is* rather than where
+## it is going, and is already cheap.
+func _obstacles_towards(target: Vector2) -> Array:
+	if world == null or not is_instance_valid(world):
+		return _obstacles()
+	var midpoint: Vector2 = (position + target) * 0.5
+	var reach: float = position.distance_to(target) * 0.5 + LARGEST_OBSTACLE_RADIUS
+	var near: Array = world.obstacle_grid.near(midpoint, reach)
+	return near if not near.is_empty() else _obstacles()
+
+## Generous upper bound on a plateau's radius, used to pad grid queries
+## so a large obstacle whose centre is outside the query still turns up.
+const LARGEST_OBSTACLE_RADIUS := 260.0
 
 ## The hard half of obstacle handling. _avoid_obstacles steers, which is
 ## enough most of the time but not a guarantee: a bee right-clicked onto
