@@ -338,6 +338,53 @@ var rival_store_per_bee: float = 400.0
 ## makes it competition rather than scenery.
 var rival_flower_take: float = 4.0
 
+# --- seasons ---
+## Species come into flower at different times of the year, so the best
+## ground moves through a run. This is the cheapest way to make three
+## systems that already exist matter more: floral constancy becomes a
+## commitment rather than a curiosity, forage start points matter because
+## the good patch moves, and the pollen supply has a real gap in it,
+## which is what makes storing ahead worth doing.
+var seasons_on: bool = true
+## How long a full year is. Winter is scheduled separately and does not
+## come out of this.
+var season_length_days: float = 60.0
+
+# --- disease ---
+## Pathogen pressure builds in a hive that isn't kept clean and knocks
+## down brood development and bee lifespan. It is what turns clearing
+## from tidying into preventative work: the cost of ignoring it arrives
+## later and all at once, rather than immediately.
+var disease_on: bool = true
+## How fast pressure builds, per corpse per second, and per bee per
+## second from crowding (bees per cell, not bees).
+##
+## Tuned against the recovery rate so that a colony with one dead larva
+## in it never crosses the threshold at all, two becomes a problem in
+## about three days, and four is urgent within one. At the first numbers
+## I wrote, a single body crossed in under two days and a merely crowded
+## but perfectly clean colony crossed in under five -- which made this a
+## constant tax rather than a consequence of neglect, the exact thing it
+## is not supposed to be.
+var disease_per_corpse: float = 0.0008
+var disease_per_bee: float = 0.000004
+## How fast it clears on its own once the cause is dealt with.
+var disease_recovery: float = 0.0012
+## Pressure above which brood slows and bees start dying early. Below it
+## the colony is simply healthy.
+var disease_threshold: float = 0.35
+## At full pressure, brood development runs this much slower and bees
+## live this much less long.
+var disease_brood_penalty: float = 0.55
+var disease_lifespan_penalty: float = 0.4
+
+# --- gynes leaving ---
+## A gyne that reaches maturity and has enough stored energy flies off to
+## found a colony of her own. That is the score: a season is measured in
+## how many you get away, not in how big the hive got.
+var gyne_release_day: float = 0.75   # fraction of the season, earliest
+var gyne_release_energy: float = 0.8 # share of a full crop she needs first
+
 # --- winter ---
 ## How long a winter is and what it costs. Whether one is *scheduled*,
 ## and when, is state of the run rather than a setting, so it lives in

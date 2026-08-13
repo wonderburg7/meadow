@@ -10,11 +10,30 @@ extends Polygon2D
 
 const Shapes = preload("res://scripts/shapes.gd")
 
+## Flowering seasons.
+##
+## Each species is in flower over a window of the year, given as a
+## fraction of a season from 0 (first day) to 1 (the last before
+## winter). Outside its window a species produces nothing and new ones
+## don't seed.
+##
+## This is the cheapest way to make three systems that already exist
+## matter more than they did. Floral constancy becomes a real commitment
+## rather than a curiosity, because the species you pinned a forager to
+## will run out. Forage start points matter, because the best ground
+## moves. And the pollen supply has a genuine gap in it, which is what
+## makes storing ahead worth doing.
 const SPECIES := [
 	{
 		# Clover spreads by runners and seeds into dense mats -- real
 		# patches are tightly packed, so a small cluster radius.
 		"name": "Clover",
+		# Spans almost the whole year, which is why it is the backbone of
+		# a colony's. Between clover and borage something is always in
+		# flower -- simulating the windows found a stretch at the turn of
+		# the year with nothing at all out, which would have starved the
+		# colony for no reason worth playing.
+		"season_start": 0.00, "season_end": 0.85,
 		"nectar_capacity": 20.0,
 		"pollen_capacity": 10.0,
 		"weight": 40.0,
@@ -27,6 +46,9 @@ const SPECIES := [
 		# Borage self-seeds readily and is often grown in blocks -- loose
 		# but still clearly patchy.
 		"name": "Borage",
+		# Comes in late and keeps going, so it carries the pollen supply
+		# through the part of the year when clover is finishing.
+		"season_start": 0.30, "season_end": 1.00,
 		"nectar_capacity": 8.0,
 		"pollen_capacity": 22.0,
 		"weight": 30.0,
@@ -40,6 +62,9 @@ const SPECIES := [
 		# Biennial, colonises disturbed ground at wood edges -- loose,
 		# scattered stands rather than a tidy patch.
 		"name": "Foxglove",
+		# A short mid-summer window. Rich while it lasts, and worth
+		# reorganising around, which is the point of having it.
+		"season_start": 0.40, "season_end": 0.65,
 		"nectar_capacity": 34.0,
 		"pollen_capacity": 6.0,
 		"recharge_scale": 0.4,
@@ -55,6 +80,9 @@ const SPECIES := [
 		# least clustered species, closer to individual plants than a
 		# patch.
 		"name": "Poppy",
+		# Early, and the only pollen worth having before the borage
+		# arrives -- so the start of a run has a real constraint.
+		"season_start": 0.00, "season_end": 0.45,
 		"nectar_capacity": 0.0,
 		"pollen_capacity": 30.0,
 		"recharge_scale": 1.0,
@@ -65,6 +93,11 @@ const SPECIES := [
 		"centre": Color(0.15, 0.12, 0.1),
 	},
 ]
+
+## The window of the year this species is in flower, as fractions of a
+## season. Copied off the species table in setup.
+var season_start: float = 0.0
+var season_end: float = 1.0
 
 ## Which entry of SPECIES this flower is. Kept so a saved game can put
 ## the same flower back rather than having to match it up by name.
@@ -96,6 +129,8 @@ func setup(index: int) -> void:
 	species_name = s.name
 	nectar_capacity = s.nectar_capacity
 	pollen_capacity = s.pollen_capacity
+	season_start = s.get("season_start", 0.0)
+	season_end = s.get("season_end", 1.0)
 	# some species refill more slowly than others
 	var recharge_scale: float = s.get("recharge_scale", 1.0)
 	nectar_recharge_rate = GameConfig.nectar_recharge_rate * recharge_scale
@@ -144,8 +179,14 @@ static func pick_species_index() -> int:
 	return 0
 
 func _process(delta: float) -> void:
-	nectar_amount = min(nectar_capacity, nectar_amount + nectar_recharge_rate * delta)
-	pollen_amount = min(pollen_capacity, pollen_amount + pollen_recharge_rate * delta)
+	# Out of season a plant produces nothing; at the edges of its window
+	# it produces a little. The plant stays where it is either way --
+	# flowers popping in and out of existence would read as a glitch
+	# rather than as a season.
+	var strength: float = season_strength()
+	if strength > 0.0:
+		nectar_amount = min(nectar_capacity, nectar_amount + nectar_recharge_rate * strength * delta)
+		pollen_amount = min(pollen_capacity, pollen_amount + pollen_recharge_rate * strength * delta)
 
 	# Flowers don't last forever. main.gd seeds a replacement elsewhere,
 	# so the meadow drifts around while staying about as full.
@@ -158,6 +199,38 @@ func _process(delta: float) -> void:
 
 	_update_fade()
 	_update_labels()
+
+## Where we are in the year, 0 to 1. Winter is not part of the season:
+## a season runs from day 1 to the day winter starts.
+static func season_fraction() -> float:
+	if not GameConfig.seasons_on:
+		return 0.5     # permanently mid-season
+	var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
+	var length: float = max(1.0, GameConfig.season_length_days)
+	return clampf(fmod(day, length) / length, 0.0, 1.0)
+
+## Is this species in flower now? Out of season a plant is still there --
+## it just isn't producing, which reads better than flowers vanishing and
+## reappearing.
+func in_season() -> bool:
+	if not GameConfig.seasons_on:
+		return true
+	var f: float = season_fraction()
+	return f >= season_start and f <= season_end
+
+## How strongly it is flowering: nothing at the edges of its window,
+## full in the middle. Eased rather than switched, so a species fading
+## out gives the colony warning rather than stopping dead.
+func season_strength() -> float:
+	if not GameConfig.seasons_on:
+		return 1.0
+	var f: float = season_fraction()
+	if f < season_start or f > season_end:
+		return 0.0
+	var span: float = max(0.001, season_end - season_start)
+	var through: float = (f - season_start) / span
+	# a smooth arch: 0 at both ends, 1 in the middle
+	return sin(through * PI)
 
 func get_available(resource_type: String) -> float:
 	return nectar_amount if resource_type == "nectar" else pollen_amount
@@ -224,6 +297,14 @@ func marker_age() -> float:
 func _update_fade() -> void:
 	var fullness: float = (nectar_amount + pollen_amount) / max(0.001, nectar_capacity + pollen_capacity)
 	color.a = lerp(0.35, 1.0, fullness)
+	# Out of season a plant is drawn greyed and small, so a patch that has
+	# gone over is obvious from the air rather than something you only
+	# discover by sending foragers to it.
+	if season_strength() <= 0.0:
+		color = color.lerp(Color(0.45, 0.44, 0.38, color.a), 0.75)
+		scale = Vector2(0.7, 0.7)
+	else:
+		scale = Vector2.ONE
 
 func _update_labels() -> void:
 	nectar_label.text = str(int(round(nectar_amount)))

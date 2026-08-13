@@ -541,8 +541,27 @@ func _age_and_burn(delta: float) -> void:
 
 	# The queen doesn't die of old age -- losing her would silently end
 	# the colony, and there's no succession yet. She can still starve.
-	if not is_queen and age_seconds >= GameConfig.bee_lifespan_days * GameConfig.seconds_per_day:
+	if not is_queen and age_seconds >= _lifespan_seconds():
 		_die()
+
+## How long this bee lives. Shortened by disease, which is most of what
+## makes pathogen pressure hurt: the colony doesn't visibly sicken, it
+## just quietly stops replacing itself fast enough.
+func _lifespan_seconds() -> float:
+	var base: float = GameConfig.bee_lifespan_days * GameConfig.seconds_per_day
+	if world != null and is_instance_valid(world) and world.season != null:
+		base *= world.season.lifespan_factor()
+	return max(GameConfig.seconds_per_day, base)
+
+## Should a forager stay in? Rain and winter both stop trips, and having
+## one function decide means a bee can never be caught out by one of them
+## while checking only the other.
+func _grounded() -> bool:
+	if _grounded():
+		return true
+	if world != null and is_instance_valid(world) and world.season != null:
+		return world.season.foraging_stopped()
+	return false
 
 ## Out in the meadow and actually moving under its own power.
 func _is_flying() -> bool:
@@ -799,7 +818,7 @@ func _seek_flower() -> void:
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
-	if Session.rain_intensity > GameConfig.rain_forage_limit:
+	if _grounded():
 		state = State.TO_HIVE
 		return
 
@@ -942,7 +961,7 @@ func _nectar_strength() -> float:
 ## would have walked itself in and straight back out again every few
 ## seconds as the exit and the rain check argued with each other.
 func _shelter(_delta: float) -> void:
-	if Session.rain_intensity <= GameConfig.rain_forage_limit:
+	if not _grounded():
 		state = State.IN_HIVE_TO_EXIT if _is_inside_hive() else State.SEEK_FLOWER
 
 func _worth_feeding(f: Node2D) -> bool:
@@ -1126,7 +1145,7 @@ func _finish_depositing() -> void:
 func _go_to_exit(delta: float) -> void:
 	# No point walking out into weather that costs more to fly in than the
 	# trip would bring back. Wait inside, where the food is.
-	if role == Role.FORAGER and Session.rain_intensity > GameConfig.rain_forage_limit:
+	if role == Role.FORAGER and _grounded():
 		state = State.SHELTERING
 		return
 
@@ -2666,8 +2685,26 @@ func carrying_text() -> String:
 func age_days() -> float:
 	return age_seconds / max(0.001, GameConfig.seconds_per_day)
 
+## A gyne mature enough and fed enough to go. She simply leaves: the
+## colony has already spent everything it will spend on her, and what it
+## gets back is a number on the scoreboard rather than a bee.
+##
+## Not a death -- no marker, no corpse. She flew off and it worked.
+func leave_to_found_colony() -> void:
+	if is_dying:
+		return
+	is_dying = true
+	if current_flower:
+		current_flower.release(self)
+	if target_cell and is_instance_valid(target_cell):
+		target_cell.release_builder(self)
+	if target_block and is_instance_valid(target_block):
+		target_block.release_miner(self)
+	_release_cell_slot()
+	queue_free()
+
 func days_remaining() -> float:
-	return max(0.0, GameConfig.bee_lifespan_days - age_days())
+	return max(0.0, _lifespan_seconds() / max(1.0, GameConfig.seconds_per_day) - age_days())
 
 ## Skipped entirely for bees the camera can't see. Setting a label's text
 ## and a polygon's colour are each cheap; doing both for every bee every

@@ -27,6 +27,7 @@ const CATEGORIES := [
 	"Honey",
 	"Gynes & royal jelly",
 	"Weather",
+	"Seasons & health",
 	"Winter",
 	"The rival colony",
 	"Mining",
@@ -419,6 +420,58 @@ const TUNABLES := [
 		"key": "rain_forage_limit", "label": "Ground above", "step": 0.05, "min": 0.05,
 		"category": "Weather",
 		"tip": "Rain intensity past which a trip costs more than it brings back, so foragers stay at the hive until it eases.",
+	},
+
+	# --- Seasons & health ---
+	{
+		"key": "seasons_on", "label": "Flowering seasons", "toggle": true,
+		"category": "Seasons & health",
+		"tip": "Species come into flower at different times of the year, so the best ground moves through a run. Poppy is early and is the only pollen worth having before the borage arrives; foxglove has a short rich window in midsummer; clover carries most of the year. With this off everything flowers all the time. Takes effect immediately.",
+	},
+	{
+		"key": "season_length_days", "label": "Season days", "step": 5.0, "min": 5.0,
+		"category": "Seasons & health",
+		"tip": "How long a full year is. Shorter means the flowering windows come round faster and the colony has less time in each.",
+	},
+	{
+		"key": "disease_on", "label": "Pathogens", "toggle": true,
+		"category": "Seasons & health",
+		"tip": "Pressure builds in a hive with dead larvae left in it and in one that is crowded, and it slows brood development and shortens bee lifespans. This is what turns clearing from tidying into work worth doing before you need it -- the cost of ignoring it arrives later and all at once.",
+	},
+	{
+		"key": "disease_threshold", "label": "Harmless below", "step": 0.05, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "Pressure below this does nothing at all. A basically clean colony should not be paying a constant tax; the cost has to arrive as a consequence of neglect.",
+	},
+	{
+		"key": "disease_per_corpse", "label": "Per body/s", "step": 0.0005, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How fast pressure builds per dead larva left in the comb. This is the number that decides how urgent clearing is.",
+	},
+	{
+		"key": "disease_recovery", "label": "Recovery/s", "step": 0.0002, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How fast pressure falls once the cause is dealt with. If clearing a backlog feels like it never helps, raise this.",
+	},
+	{
+		"key": "disease_brood_penalty", "label": "Brood penalty", "step": 0.05, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How much slower brood develops at full pressure.",
+	},
+	{
+		"key": "disease_lifespan_penalty", "label": "Lifespan penalty", "step": 0.05, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How much of its lifespan a bee loses at full pressure.",
+	},
+	{
+		"key": "gyne_release_day", "label": "Gynes leave after", "step": 0.05, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How far through the year gynes will start leaving, as a fraction of a season. They wait until late because one released in spring would have nowhere to overwinter -- and because letting them go the moment they matured would remove the decision about when to start raising them.",
+	},
+	{
+		"key": "gyne_release_energy", "label": "Gyne needs", "step": 0.05, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "How full a gyne's crop has to be before she will leave, as a share of capacity. She is founding a colony on what she carries.",
 	},
 
 	# --- Winter ---

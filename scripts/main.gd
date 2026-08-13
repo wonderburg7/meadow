@@ -39,6 +39,7 @@ const DeathMarker = preload("res://scripts/death_marker.gd")
 const RainEffect = preload("res://scripts/rain_effect.gd")
 const RivalHive = preload("res://scripts/rival_hive.gd")
 const SpatialGrid = preload("res://scripts/spatial_grid.gd")
+const Season = preload("res://scripts/season.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -110,6 +111,8 @@ var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
 var winter_panel: CanvasLayer
 var rival: Node2D = null
+## The year: seasons, disease, winter and gynes leaving.
+var season: Node2D = null
 var colony_lost: bool = false
 
 ## Every bee that has emerged, as {t, key} where key is "role|focus".
@@ -302,13 +305,20 @@ func _ready() -> void:
 	winter_panel = WinterPanel.new()
 	add_child(winter_panel)
 
+	season = Season.new()
+	season.world = self
+	season.winter_started.connect(_on_winter_started)
+	season.winter_survived.connect(_on_winter_survived)
+	season.gyne_released.connect(_on_gyne_released)
+	add_child(season)
+
 	game_over = GameOver.new()
 	game_over.restart_requested.connect(_on_restart_after_loss)
 	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
 	add_child(game_over)
 
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
-	hud.update_day(day)
+	hud.update_day(day, _season_text())
 	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
 	hud.set_speed_display(1.0)
@@ -836,7 +846,7 @@ func _process(delta: float) -> void:
 		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
 		if new_day != day:
 			day = new_day
-			hud.update_day(day)
+			hud.update_day(day, _season_text())
 		_hatch_ready_brood()
 		_reseed_meadow(delta)
 		_advance_weather(delta)
@@ -1096,6 +1106,10 @@ func _refresh_panels(bees: Array) -> void:
 	var comb_text := "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
 		hive.cells.size(), free_cells, brood_count, gyne_count, hungry_brood,
 	]
+	if season != null:
+		var health: String = season.disease_text()
+		if health != "":
+			comb_text += "\n%s" % health
 	hud.update_comb(comb_text)
 	hud.update_energy(mean_energy)
 
@@ -1164,6 +1178,52 @@ func _refresh_winter() -> void:
 	winter_panel.refresh(forecast)
 	hud.corner_texts["winter"] = winter_panel.corner_text
 	hud.refresh_corner()
+
+# --- the year -----------------------------------------------------
+
+## The line beside the day counter: where in the year the colony is, and
+## how many gynes it has got away. The score belongs next to the clock
+## because the two together are the run -- how far through, and how much
+## to show for it.
+func _season_text() -> String:
+	var parts: Array = []
+	if Session.winter_here:
+		parts.append("Winter, %d days left" % int(max(0.0, Session.winter_ends_day - day)))
+	elif GameConfig.seasons_on:
+		var through: float = Flower.season_fraction()
+		var name: String = "Early season"
+		if through > 0.66:
+			name = "Late season"
+		elif through > 0.33:
+			name = "Midsummer"
+		parts.append(name)
+	if Session.gynes_released > 0:
+		parts.append("%d gynes away" % Session.gynes_released)
+	return "  ".join(parts)
+
+func _on_winter_started() -> void:
+	hud.show_warning(
+		"Winter has arrived. The foragers are staying in, nothing more is coming from the meadow, and the colony is living on what is in the comb. It lasts %d days."
+		% int(GameConfig.winter_length_days)
+	)
+
+func _on_winter_survived(losses: int) -> void:
+	if losses > 0:
+		hud.show_warning(
+			"Spring. The colony came through the winter, %d bees lighter. Foraging can start again."
+			% losses
+		)
+	else:
+		hud.show_warning("Spring, and not a bee lost. Foraging can start again.")
+
+## A gyne got away. This is the score, so it is worth saying out loud
+## rather than only appearing in a readout.
+func _on_gyne_released(total: int) -> void:
+	hud.show_warning(
+		"A gyne has left to found a colony of her own. That is %d away this run — the only thing a season is really measured in."
+		% total
+	)
+	_update_population_readout()
 
 func _nursery_stat_pinned() -> bool:
 	for key in Session.pinned_stats:
@@ -1317,7 +1377,7 @@ func _restore(data: Dictionary) -> void:
 	Session.sim_time = float(clock.get("sim_time", 0.0))
 	day = int(clock.get("day", 1))
 	next_bee_id = int(clock.get("next_bee_id", 1))
-	hud.update_day(day)
+	hud.update_day(day, _season_text())
 
 	var weather: Dictionary = data.get("weather", {})
 	Session.rain_intensity = float(weather.get("intensity", 0.0))

@@ -74,9 +74,20 @@ func _ready() -> void:
 	column.add_child(UI.with_info(menu_btn, "Go back to the menu and pick a different starting stage."))
 
 ## `day` and `bees` are shown as a short epitaph for the run.
+## The gyne count leads, because it is the score. A colony that lasted a
+## hundred days and released nothing achieved nothing that a season is
+## for; one that lasted forty and got three away did well.
 func open(day: int, bees: int, nectar: float, honey: float) -> void:
-	summary_label.text = "Lasted %d days · %d bees still alive · %d nectar and %d honey in the comb" % [
+	var lines: Array = []
+	if Session.gynes_released > 0:
+		lines.append("%d gyne%s got away" % [
+			Session.gynes_released, "" if Session.gynes_released == 1 else "s",
+		])
+	else:
+		lines.append("No gynes got away — nothing carries on from this colony")
+	lines.append("Lasted %d days · %d bees still alive · %d nectar and %d honey in the comb" % [
 		day, bees, int(round(nectar)), int(round(honey)),
-	]
+	])
+	summary_label.text = "\n".join(lines)
 	visible = true
 	get_tree().paused = true

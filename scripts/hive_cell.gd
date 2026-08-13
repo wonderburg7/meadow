@@ -261,6 +261,11 @@ func _process(delta: float) -> void:
 func _develop_brood(delta: float) -> void:
 	if brood_fed_seconds > 0.0:
 		var rate: float = GameConfig.tending_speed_bonus if being_tended else 1.0
+		# Pathogens slow development. This is where neglecting to clear
+		# dead larvae actually costs you: not immediately, and not
+		# visibly, but the whole nursery runs slower until it's dealt
+		# with.
+		rate *= _health_factor()
 		brood_progress += delta * rate
 		brood_fed_seconds = max(0.0, brood_fed_seconds - delta)
 		unfed_seconds = 0.0
@@ -272,6 +277,16 @@ func _develop_brood(delta: float) -> void:
 		if unfed_seconds >= GameConfig.larva_death_seconds:
 			_larva_dies()
 	being_tended = false   # nursery workers re-assert this each frame while tending
+
+## The colony's brood-rate multiplier, from the season/disease system.
+## Reached through the group rather than a reference, because a cell is
+## created in a dozen places and threading a reference through all of
+## them for one number would be worse than the lookup.
+func _health_factor() -> float:
+	var found: Array = get_tree().get_nodes_in_group("season")
+	if found.is_empty() or not is_instance_valid(found[0]):
+		return 1.0
+	return found[0].brood_rate()
 
 func _larva_dies() -> void:
 	content_type = "corpse"

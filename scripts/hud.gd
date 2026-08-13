@@ -1032,8 +1032,13 @@ func _apply_discard() -> void:
 
 # --- readouts -----------------------------------------------------
 
-func update_day(day: int) -> void:
+## `note` is where the colony is in the year, and how many gynes it has
+## got away -- both live beside the day counter because together they are
+## the run: how far through, and how much to show for it.
+func update_day(day: int, note: String = "") -> void:
 	corner_texts["day"] = "Day %d" % day
+	if note != "":
+		corner_texts["day"] += "\n%s" % note
 	_refresh_corner()
 
 ## Honey is counted only once it's fully fanned dry -- wet mix still
