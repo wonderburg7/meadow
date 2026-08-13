@@ -174,6 +174,10 @@ var has_manual_build_target: bool = false
 ## architects with different home cells grow the hive in two places.
 var home_hex: Vector2i = Vector2i.ZERO
 var has_home_hex: bool = false
+## The same idea for miners: the tile a miner works outward from when
+## choosing which soil to dig next.
+var mine_home_hex: Vector2i = Vector2i.ZERO
+var has_mine_home: bool = false
 
 ## Flowers this bee has drained, mapped to the sim-time at which they
 ## should be back to full. Time-based rather than checking the flower's
@@ -1492,9 +1496,9 @@ func _try_role_work(r: int) -> bool:
 			# block is dealt with does an automining bee pick its own:
 			# the exposed block nearest the central wax cell, so the
 			# hive opens up around itself rather than at the rim.
-			var block = hive.find_marked_block(position)
+			var block = hive.find_marked_block(_mine_reference_point())
 			if block == null and automine:
-				block = hive.find_nearest_edge_block()
+				block = hive.find_nearest_edge_block(_mine_reference_point() if has_mine_home else Vector2(INF, INF))
 				if block != null:
 					block.set_marked(true)
 			if block != null:
@@ -1940,6 +1944,9 @@ func _queen_lay(delta: float) -> void:
 		if target_cell != null and is_instance_valid(target_cell) and target_cell.is_empty():
 			var as_gyne: bool = target_cell.hatch_gyne
 			target_cell.start_brood(as_gyne)
+			# Only now does the priority share-out move on. Everything up to
+			# this point was the queen asking where she *could* lay.
+			hive.record_lay(target_cell)
 			pollen_eaten -= GameConfig.gyne_egg_pollen_cost if as_gyne else GameConfig.egg_pollen_cost
 			pollen_eaten = max(0.0, pollen_eaten)
 		_release_cell_slot()
@@ -1998,6 +2005,22 @@ func set_manual_build_target(hex: Vector2i) -> void:
 func set_home_hex(hex: Vector2i) -> void:
 	home_hex = hex
 	has_home_hex = true
+
+## A miner's own centre of operations. It picks the soil nearest to this
+## rather than nearest to itself, so a seam gets worked through from one
+## end instead of the miner drifting to whatever happens to be closest
+## after each block. Two miners with different home cells open the hive
+## up in two places at once.
+func set_mine_home_hex(hex: Vector2i) -> void:
+	mine_home_hex = hex
+	has_mine_home = true
+
+## Where the miner should judge distance from: its home cell if it has
+## one, otherwise wherever it is standing.
+func _mine_reference_point() -> Vector2:
+	if has_mine_home and hive != null:
+		return hive.comb_centre + Shapes.hex_to_pixel(mine_home_hex.x, mine_home_hex.y, GameConfig.hive_cell_spacing)
+	return position
 
 ## Sent to a specific flower by right-click: ignore the cooldown list
 ## for this one trip and go straight there.
@@ -2406,7 +2429,10 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 	var blocker_clearance := 0.0
 	var blocker_distance := INF
 	for obstacle in _obstacles():
-		if not is_instance_valid(obstacle):
+		# `solid` matters here as well as in _block_obstacles. Without it,
+		# switching the scenery off left bees still curving round trees
+		# they could now walk straight through.
+		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		var to_obstacle: Vector2 = obstacle.position - position
 		var along: float = clamp(to_obstacle.dot(direction), 0.0, span)
@@ -2420,11 +2446,21 @@ func _avoid_obstacles(target: Vector2) -> Vector2:
 			blocker_clearance = clearance
 
 	if blocker == null:
+		# Line of sight is clear, so we're past whatever we were skirting.
+		# Forgetting it here is what lets the next obstacle be judged
+		# fresh rather than inheriting an old turn direction.
+		skirt_obstacle = null
 		return target
 	return _point_around(blocker, target, blocker_clearance)
 
 ## How far round the rim to aim, in radians, each frame.
 const SWEEP_STEP := 0.6
+
+## Which obstacle the bee is currently walking round, and which way it
+## decided to go. Committing to a direction is what stops the side-to-side
+## shuffle: see the note in _point_around.
+var skirt_obstacle: Node2D = null
+var skirt_turn: float = 1.0
 
 ## Where to head in order to get round `obstacle`.
 ##
@@ -2441,6 +2477,19 @@ const SWEEP_STEP := 0.6
 ## Because it is always somewhere the bee is not, the bee always makes
 ## progress; it walks round the edge until the straight line is clear and
 ## then heads directly for the flower again.
+##
+## The remaining bug this fixes: the turn direction used to be recomputed
+## from scratch every frame. Walking round a wide plateau, the angle to
+## the target passes through the point where the two ways round are equal
+## -- and there the decision flips. The bee turns back, which flips it
+## again a frame later, and it shuffles from side to side against the
+## obstacle indefinitely. Any decision made afresh each frame from a
+## quantity that changes as you act on it will do this.
+##
+## So the direction is chosen once, when the bee first meets a given
+## obstacle, and held until the way to the target is clear (at which
+## point _avoid_obstacles clears `skirt_obstacle`). Committing to a
+## slightly longer way round always beats oscillating on the spot.
 func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vector2:
 	var from_centre: Vector2 = position - obstacle.position
 	if from_centre.length() < 0.01:
@@ -2448,15 +2497,27 @@ func _point_around(obstacle: Node2D, target: Vector2, clearance: float) -> Vecto
 	var rim: float = max(clearance, from_centre.length())
 	var here: float = from_centre.angle()
 	var there: float = (target - obstacle.position).angle()
-	var shorter_way: float = wrapf(there - here, -PI, PI)
-	var turn: float = 1.0 if shorter_way >= 0.0 else -1.0
+
+	var turn: float
+	if skirt_obstacle == obstacle and is_instance_valid(skirt_obstacle):
+		turn = skirt_turn   # already committed -- see above
+	else:
+		var shorter_way: float = wrapf(there - here, -PI, PI)
+		turn = 1.0 if shorter_way >= 0.0 else -1.0
+		skirt_obstacle = obstacle
+		skirt_turn = turn
 
 	# Try a few sweep sizes and take the first aim point that isn't
 	# itself sitting inside another obstacle. Where two obstacles are
 	# close together, a point that clears one can land inside its
 	# neighbour, and _block_obstacles then shoves the bee straight back
 	# -- the two rules fight each other and the bee goes nowhere.
-	for multiplier in [1.0, 2.0, 3.0, -1.0, -2.0]:
+	# Only forward sweeps, in increasing steps. Backward candidates used to
+	# be tried too, which quietly undid the committed direction above and
+	# brought the side-to-side shuffle back whenever two obstacles sat
+	# close together. If nothing ahead is clear, the radial escape below
+	# is the honest answer.
+	for multiplier in [1.0, 2.0, 3.0, 4.0]:
 		var swept: float = here + SWEEP_STEP * turn * multiplier
 		var candidate: Vector2 = obstacle.position + Vector2(cos(swept), sin(swept)) * rim
 		if _is_clear_spot(candidate, obstacle):

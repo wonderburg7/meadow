@@ -33,6 +33,7 @@ const DebugPanel = preload("res://scripts/debug_panel.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
+const NurseryPanel = preload("res://scripts/nursery_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -85,7 +86,23 @@ var hud: CanvasLayer
 var queen: Node2D
 var game_over: CanvasLayer
 var colony_panel: CanvasLayer
+var nursery_panel: CanvasLayer
 var colony_lost: bool = false
+## Dims the world while the nursery window is open, so the glowing zone
+## cells stand out against everything else. Sits under the HUD layers, so
+## panels and readouts stay at full brightness.
+var zone_dim: ColorRect
+
+## Every bee that has emerged, as {t, key} where key is "role|focus".
+## Used for the nursery window's "emerging in the last three minutes"
+## figures -- that is the output of the nursery, which is what the zone
+## actually controls, rather than what those bees go on to collect.
+var emergence_log: Array = []
+
+## Samples of the stores and the population for the colony window's
+## history plot.
+var history_samples: Array = []
+var history_timer: float = 0.0
 
 ## Built once when the meadow is laid out. Bees consult this constantly
 ## for steering, and a scene-tree group query per bee per frame was the
@@ -139,8 +156,10 @@ var pan_anchor: Vector2 = Vector2.ZERO
 ## placement rather than a normal select/drag.
 var awaiting_build_cell: bool = false
 var awaiting_home_cell: bool = false
+var awaiting_mine_home: bool = false
 var pending_builder_bees: Array = []
 var pending_home_bees: Array = []
+var pending_mine_bees: Array = []
 var awaiting_forage_start: bool = false
 var pending_forage_bees: Array = []
 var awaiting_floral_preference: bool = false
@@ -182,6 +201,16 @@ func _ready() -> void:
 	rain_overlay.visible = false
 	weather_layer.add_child(rain_overlay)
 
+	# Darkens the world while the nursery window is open. On the same
+	# layer as the rain wash -- below the HUD (layer 9) and the panels
+	# (layer 11) -- so the menus and readouts are unaffected by it.
+	zone_dim = ColorRect.new()
+	zone_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	zone_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	zone_dim.color = Color(0.0, 0.0, 0.05, 0.45)
+	zone_dim.visible = false
+	weather_layer.add_child(zone_dim)
+
 	selection_layer = Node2D.new()
 	selection_layer.z_index = 100
 	selection_layer.draw.connect(_draw_selection_box)
@@ -201,7 +230,13 @@ func _ready() -> void:
 	hud.cell_gyne_requested.connect(_on_cell_gyne_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.home_cell_requested.connect(_on_home_cell_requested)
+	hud.mine_home_requested.connect(_on_mine_home_requested)
 	hud.soil_mark_requested.connect(_on_soil_mark_requested)
+	hud.cell_zone_requested.connect(_on_cell_zone_requested)
+	hud.cell_priority_requested.connect(_on_cell_priority_requested)
+	hud.cell_close_requested.connect(_on_cell_close_requested)
+	hud.cell_fill_close_requested.connect(_on_cell_fill_close_requested)
+	hud.nursery_window_requested.connect(_on_nursery_window_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
 	hud.finish_first_requested.connect(_on_finish_first_requested)
@@ -221,14 +256,21 @@ func _ready() -> void:
 
 	colony_panel = ColonyPanel.new()
 	colony_panel.role_selection_requested.connect(_on_role_selection_requested)
+	colony_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
 	add_child(colony_panel)
+
+	nursery_panel = NurseryPanel.new()
+	# closing the window has to take the glow off the comb with it,
+	# otherwise the hive stays lit up with no panel to explain why
+	nursery_panel.closed.connect(_clear_zone_glow)
+	add_child(nursery_panel)
 
 	game_over = GameOver.new()
 	game_over.restart_requested.connect(_on_restart_after_loss)
 	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
 	add_child(game_over)
 
-	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j))
+	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
 	hud.update_day(day)
 	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
@@ -600,7 +642,7 @@ func _spawn_bee(focus: String) -> void:
 ## meadow (forager, which used to skip the hive entirely). It's spawned
 ## inside the hive at the cell's position; a forager then walks itself
 ## out through the entrance exactly like any other exiting bee.
-func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false) -> void:
+func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> void:
 	var bee := Bee.new()
 	bee.is_gyne = as_gyne   # must be set before _ready, which sizes the body
 	bee.position = cell.position
@@ -608,8 +650,13 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false) -> void:
 	# The cell carries the sub-mode for the role as well as the role
 	# itself, so "raises pollen foragers" or "raises automining miners"
 	# comes out right without you having to select the new bee and set it
-	# up by hand every time.
-	var focus: String = cell.hatch_focus if cell.hatch_focus != "" else "nectar"
+	# up by hand every time. `focus_override` is what the caller decided,
+	# which matters for a cell with no role set: that raises a plain
+	# nectar forager rather than inheriting a stale focus from whatever
+	# the cell was last configured as.
+	var focus: String = focus_override if focus_override != "" else cell.hatch_focus
+	if focus == "":
+		focus = "nectar"
 	# An architect's sub-mode travels in the same field as a forager's
 	# resource, so hand it to the right property.
 	if role == Bee.Role.BUILDER:
@@ -669,6 +716,7 @@ func _process(delta: float) -> void:
 		_check_for_loss()
 		_check_colony_energy(delta)
 		_refresh_signals(delta)
+		_sample_history(delta)
 		rate_sample_timer -= delta
 		if rate_sample_timer <= 0.0:
 			rate_sample_timer = 10.0
@@ -697,10 +745,15 @@ func _hatch_ready_brood() -> void:
 	for cell in hive.cells:
 		if not cell.brood_ready():
 			continue
+		# A cell with no role named raises an ordinary nectar forager --
+		# the safe default, and the thing a colony short of everything
+		# else most often needs.
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
+		var focus: String = cell.hatch_focus if cell.hatch_role >= 0 else "nectar"
 		var as_gyne: bool = cell.brood_is_gyne
+		_record_emergence(role, focus, as_gyne)
 		cell.clear_cell()
-		_spawn_hatched_bee(role, cell, as_gyne)
+		_spawn_hatched_bee(role, cell, as_gyne, focus)
 		# Unless the player pinned it, a role set on a cell applies to that
 		# one bee and then clears, so a one-off choice doesn't quietly
 		# govern everything the cell ever raises. "Keep for every bee" in
@@ -851,7 +904,10 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["%d larvae are going hungry" % hungry_brood, 2])
 	if dead_cells > 0:
 		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2])
-	if hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
+	# Suppressed for the first week: a colony this young genuinely has no
+	# pollen and there is nothing useful to do about it, so saying so from
+	# the first minute is noise that teaches you to ignore the strip.
+	if day >= int(GameConfig.pollen_warning_first_day) and hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
 		lines.append(["Almost no pollen — the queen cannot lay", 2])
 	if hive.total("nectar") < 40.0 and hive.total_honey() < 10.0:
 		lines.append(["Almost no nectar or honey — nothing to eat", 2])
@@ -871,21 +927,15 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["Raining — nectar is watered down and flying costs more", 0])
 
 	hud.update_signals(lines)
-	_refresh_colony_panel(bees)
+	_refresh_panels(bees)
 
-## Feeds the colony overview. Only computed while the panel is actually
-## open, since nothing else reads these numbers.
-func _refresh_colony_panel(bees: Array) -> void:
-	if not colony_panel.is_open():
-		return
-
-	var counts := {}
+## Feeds the colony overview and the nursery window. The population and
+## comb figures are computed once here and shared between the corner
+## readouts and both panels, so they can never disagree.
+func _refresh_panels(bees: Array) -> void:
+	var counts := _role_counts()
 	var total_energy := 0.0
 	for b in bees:
-		var key: String = "%d|" % b.role
-		if b.role == Bee.Role.FORAGER:
-			key = "%d|%s" % [b.role, b.resource_type]
-		counts[key] = int(counts.get(key, 0)) + 1
 		total_energy += b.energy
 
 	var brood_count := 0
@@ -904,20 +954,109 @@ func _refresh_colony_panel(bees: Array) -> void:
 		elif cell.is_empty() and not cell.keep_empty:
 			free_cells += 1
 
-	colony_panel.refresh(
-		counts,
-		{
-			"nectar": hive.total("nectar"),
-			"pollen": hive.total("pollen"),
-			"honey": hive.total_honey(),
-			"jelly": hive.total("jelly"),
-		},
-		{
-			"cells": hive.cells.size(), "free": free_cells,
-			"brood": brood_count, "gynes": gyne_count, "hungry": hungry_brood,
-		},
-		(total_energy / max(1, bees.size())) / max(0.001, GameConfig.energy_capacity)
+	var mean_energy: float = (total_energy / max(1, bees.size())) / max(0.001, GameConfig.energy_capacity)
+	var comb_text := "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
+		hive.cells.size(), free_cells, brood_count, gyne_count, hungry_brood,
+	]
+	hud.update_comb(comb_text)
+	hud.update_energy(mean_energy)
+
+	if colony_panel.is_open():
+		colony_panel.refresh(counts, hud.corner_texts, history_samples)
+	if nursery_panel.is_open():
+		nursery_panel.refresh(
+			hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds
+		)
+	_apply_zone_glow()
+
+## A sample of the things worth watching over time. Taken on the sim
+## clock rather than the wall clock, so fast-forwarding compresses the
+## plot the same way it compresses everything else.
+func _sample_history(delta: float) -> void:
+	history_timer -= delta
+	if history_timer > 0.0:
+		return
+	history_timer = max(1.0, GameConfig.history_sample_seconds)
+	# Trim the emergence log here as well as when it's read: otherwise a
+	# long run with the nursery window closed would keep every birth it
+	# ever had.
+	_trim_emergence_log()
+	history_samples.append({
+		"t": GameConfig.sim_time,
+		"bees": get_tree().get_nodes_in_group("bees").size(),
+		"nectar": hive.total("nectar"),
+		"pollen": hive.total("pollen"),
+		"honey": hive.total_honey(),
+	})
+	while history_samples.size() > int(GameConfig.history_points):
+		history_samples.pop_front()
+
+## Bees that have emerged inside the window, counted by what they came
+## out as. Old entries are dropped here rather than on a timer, so the
+## list can't grow without bound over a long run.
+func _emergence_counts() -> Dictionary:
+	_trim_emergence_log()
+	var counts := {}
+	for entry in emergence_log:
+		counts[entry.key] = int(counts.get(entry.key, 0)) + 1
+	return counts
+
+func _trim_emergence_log() -> void:
+	var cutoff: float = GameConfig.sim_time - GameConfig.emergence_window_seconds
+	while not emergence_log.is_empty() and float(emergence_log[0].t) < cutoff:
+		emergence_log.pop_front()
+
+## Lights up every nursery-zone cell in the colour of the role it raises,
+## and dims everything else, while the nursery window is open.
+func _apply_zone_glow() -> void:
+	var showing: bool = nursery_panel.is_open() and in_hive_view
+	zone_dim.visible = showing
+	if not showing:
+		_clear_zone_glow()
+		return
+	for cell in hive.cells:
+		if not is_instance_valid(cell):
+			continue
+		if cell.is_nursery_cell():
+			cell.set_zone_glow(true, NurseryPanel.colour_for(cell.hatch_role, cell.hatch_focus, cell.hatch_gyne))
+		else:
+			cell.set_zone_glow(false)
+
+## Opening the window lights the comb up straight away rather than at the
+## next refresh, which matters because the refresh is paused with the
+## game and looking at the zone while paused is a reasonable thing to do.
+func _on_nursery_window_requested() -> void:
+	nursery_panel.toggle()
+	if not nursery_panel.is_open():
+		return
+	if not in_hive_view:
+		in_hive_view = true
+	_apply_view()
+	nursery_panel.refresh(
+		hive.zone_summary(),
+		_role_counts(),
+		_emergence_counts(),
+		GameConfig.emergence_window_seconds
 	)
+
+## The live population, keyed by job. Shared by the colony window, the
+## nursery ring and the corner readouts so they can't drift apart.
+func _role_counts() -> Dictionary:
+	var counts := {}
+	for b in get_tree().get_nodes_in_group("bees"):
+		if not is_instance_valid(b):
+			continue
+		var key: String = "%d|" % b.role
+		if b.role == Bee.Role.FORAGER:
+			key = "%d|%s" % [b.role, b.resource_type]
+		counts[key] = int(counts.get(key, 0)) + 1
+	return counts
+
+func _clear_zone_glow() -> void:
+	zone_dim.visible = false
+	for cell in hive.cells:
+		if is_instance_valid(cell):
+			cell.set_zone_glow(false)
 
 ## Clicking a role tally in the colony panel selects every bee in it, so
 ## you can retask a whole job at once instead of hunting for them.
@@ -1048,6 +1187,9 @@ func _restore_cells(cells: Array) -> void:
 		cell.hatch_automine = bool(entry.get("hatch_automine", false))
 		cell.hatch_role_locked = bool(entry.get("hatch_locked", false))
 		cell.hatch_gyne = bool(entry.get("hatch_gyne", false))
+		cell.nursery_priority = int(entry.get("priority", 1))
+		cell.is_closed = bool(entry.get("closed", false))
+		cell.fill_then_close = bool(entry.get("fill_close", false))
 
 		hive.cells.append(cell)
 		hive.register_tile(hex, cell)
@@ -1214,6 +1356,10 @@ func _apply_view() -> void:
 	meadow_root.visible = not in_hive_view
 	hive_root.visible = in_hive_view
 	hud.set_view_label(in_hive_view)
+	# the zone glow and the dimming only make sense over the comb, so
+	# they follow the view rather than waiting for the next refresh
+	if nursery_panel != null:
+		_apply_zone_glow()
 
 # --- speed --------------------------------------------------------
 
@@ -1294,6 +1440,9 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		return
 	if awaiting_home_cell:
 		_place_home_cell(drag_start)
+		return
+	if awaiting_mine_home:
+		_place_mine_home(drag_start)
 		return
 	if awaiting_forage_start:
 		_place_forage_start(drag_start)
@@ -1547,6 +1696,66 @@ func _on_home_cell_requested() -> void:
 	if not in_hive_view:
 		in_hive_view = true
 		_apply_view()
+
+## Consumes the click that follows a "Set dig centre" request: the tile
+## the selected miners judge distance from when choosing their next block.
+func _place_mine_home(global_point: Vector2) -> void:
+	awaiting_mine_home = false
+	var local_point: Vector2 = hive_root.to_local(global_point)
+	var hex: Vector2i = Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
+	for b in pending_mine_bees:
+		if is_instance_valid(b):
+			b.set_mine_home_hex(hex)
+	pending_mine_bees = []
+	hud.update_selection(selected_bees)
+
+func _on_mine_home_requested() -> void:
+	pending_mine_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.MINER)
+	if pending_mine_bees.is_empty():
+		return
+	awaiting_mine_home = true
+	if not in_hive_view:
+		in_hive_view = true
+		_apply_view()
+
+## Records what just came out of the comb, for the nursery window's
+## emergence rates. Keyed the same way the population counts are, so the
+## two line up row for row.
+func _record_emergence(role: int, focus: String, as_gyne: bool) -> void:
+	var key: String = "gyne"
+	if not as_gyne:
+		key = "%d|%s" % [role, focus] if role == Bee.Role.FORAGER else "%d|" % role
+	emergence_log.append({"t": GameConfig.sim_time, "key": key})
+
+# --- the nursery zone ---------------------------------------------
+
+## Putting cells into the zone is the same thing as reserving them for
+## brood -- the zone *is* the set of brood cells, rather than a second
+## flag that has to be kept in step with the designation. One piece of
+## state, so the two can never disagree.
+func _on_cell_zone_requested(anchor: Node2D, in_zone: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		if in_zone:
+			_designate_one(cell, "brood")
+		elif cell.is_nursery_cell():
+			cell.set_designation("")
+
+func _on_cell_priority_requested(anchor: Node2D, tier: int) -> void:
+	for cell in _cells_to_act_on(anchor):
+		cell.nursery_priority = clampi(tier, 0, 2)
+		# Setting a priority on a cell that isn't in the zone is a clear
+		# statement of intent, so put it in rather than silently doing
+		# nothing.
+		if not cell.is_nursery_cell():
+			_designate_one(cell, "brood")
+
+func _on_cell_close_requested(anchor: Node2D, closed: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		cell.set_closed(closed)
+
+func _on_cell_fill_close_requested(anchor: Node2D) -> void:
+	for cell in _cells_to_act_on(anchor):
+		cell.set_fill_then_close(true)
 
 ## Consumes the click that follows a "Set start point" request.
 func _place_forage_start(global_point: Vector2) -> void:

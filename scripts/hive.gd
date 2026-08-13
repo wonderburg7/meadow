@@ -16,8 +16,14 @@ var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
 var comb_centre: Vector2 = Vector2.ZERO
 
-## Rotation pointer for find_empty_cell's brood-cell sequence.
+## Rotation pointer for find_empty_cell's brood-cell sequence, used to
+## spread a run of eggs across the cells within one priority tier rather
+## than camping the first free one.
 var _brood_pointer: int = 0
+
+## Running credit per priority tier (low, medium, high) for the weighted
+## share-out in `find_empty_cell`. See the note there.
+var _tier_credit: Array = [0.0, 0.0, 0.0]
 
 ## Running totals, never reset, for the top-left rate readout (see
 ## main.gd's rate-sampling). Counted at the moment of harvest/birth
@@ -163,6 +169,16 @@ func total(resource_type: String) -> float:
 			sum += cell.amount
 	return sum
 
+## How much of the stores is sealed away in closed cells. Counted in the
+## totals (it is still the colony's) but worth showing separately, since
+## none of it can be eaten until you open the cells again.
+func total_sealed() -> float:
+	var sum := 0.0
+	for cell in cells:
+		if is_instance_valid(cell) and not cell.can_withdraw():
+			sum += cell.amount
+	return sum
+
 ## Ripe honey only -- wet mix still drying isn't a store yet.
 func total_honey() -> float:
 	var sum := 0.0
@@ -204,49 +220,165 @@ func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 			best_empty = cell   # prefer a cell the player pinned to this
 	return best_empty if best_empty != null else almost_full
 
-## Where the queen should lay her next egg. Cells you've reserved for
-## brood come first -- and if there are several, she works through them
-## in a fixed rotation (see `_brood_pointer`) rather than always filling
-## the first one in the list while it happens to be free. Only once no
-## reserved cell is available does she fall back to a spare undesignated
-## cell, then finally any empty cell at all.
+## Where the queen should lay her next egg.
+##
+## The order is: configured nursery cells, shared out between the three
+## priority tiers; then nursery cells with no role set; then, if the
+## player allows it, any spare undesignated comb.
+##
+## The tier share-out is a deficit-weighted round robin -- the same idea
+## a network router uses to divide bandwidth fairly between connections
+## of different priority. Each tier accumulates credit equal to its
+## weight on every lay; whichever tier has the most credit *and* somewhere
+## to put an egg gets it, and pays the total weight back out of its
+## credit.
+##
+## The reason for doing it this way rather than "high priority first" is
+## certainty: over any stretch of time the tiers get eggs in exactly the
+## ratio of their weights, and they come out interleaved (high, medium,
+## high, low, ...) rather than in streaks. So a 1:2:3 zone really does
+## produce a 1:2:3 mix, and it does so steadily enough to see.
 func find_empty_cell() -> Node2D:
-	var brood_cells: Array = cells.filter(func(c): return is_instance_valid(c) and c.is_nursery_cell())
-	if not brood_cells.is_empty():
-		_brood_pointer = _brood_pointer % brood_cells.size()
-		for step in range(brood_cells.size()):
-			var idx: int = (_brood_pointer + step) % brood_cells.size()
-			var cell = brood_cells[idx]
-			if cell.is_empty():
-				# next call starts past this one, so a run of eggs spreads
-				# across the reserved cells instead of camping the first
-				_brood_pointer = (idx + 1) % brood_cells.size()
-				return cell
+	var configured: Array = []
+	var unset: Array = []
+	for cell in cells:
+		if not is_instance_valid(cell) or not cell.is_nursery_cell():
+			continue
+		if cell.hatch_role >= 0 or cell.hatch_gyne:
+			configured.append(cell)
+		else:
+			unset.append(cell)
 
-	# Only genuinely spare cells. There used to be a last-resort pass that
-	# took any empty cell at all, which meant the queen would lay brood
-	# into a cell the player had reserved for pollen or honey -- the one
-	# thing a reservation is supposed to prevent. If there is nowhere
-	# free she now waits instead, which is the honest signal that the
-	# colony needs more comb or more cells set aside for eggs.
+	var chosen := _lay_by_priority(configured)
+	if chosen != null:
+		return chosen
+
+	# Zone cells with no role named are the fallback within the zone: an
+	# egg goes here only when every configured cell is busy, and the bee
+	# that emerges is an ordinary nectar forager. That way an unset cell
+	# is never wasted, but it also never outbids a cell you set up.
+	chosen = _lay_by_priority(unset)
+	if chosen != null:
+		return chosen
+
+	# Plain spare comb, last of all, and only if the player has left the
+	# queen free to use it. There used to be a pass here that took any
+	# empty cell at all, which meant she would lay into a cell reserved
+	# for pollen or honey -- the one thing a reservation should prevent.
+	if not GameConfig.queen_lays_in_any_cell:
+		return null
 	for cell in cells:
 		if not is_instance_valid(cell):
 			continue
-		if cell.is_empty() and cell.designated_type == "" and not cell.keep_empty:
+		if cell.is_empty() and cell.designated_type == "" and not cell.keep_empty and not cell.is_closed:
 			return cell
 	return null
+
+## Picks a cell out of `pool` according to the priority weights. Returns
+## null when nothing in the pool is free.
+##
+## Deliberately free of side effects. find_empty_cell is a question the
+## queen asks constantly -- "is there anywhere to lay?", "how much pollen
+## does the next egg need?" -- and only occasionally acts on. If asking
+## moved the credit along, the tiers would be shared out in proportion to
+## how often the question was asked rather than how many eggs were laid,
+## which is not the same thing at all. The credit only moves in
+## `record_lay`, called at the moment an egg actually goes in.
+func _lay_by_priority(pool: Array) -> Node2D:
+	if pool.is_empty():
+		return null
+
+	var weights := _tier_weights()
+
+	# Sort the free cells into their tiers first, so a tier with nowhere
+	# to lay is skipped rather than being handed an egg it can't take.
+	var by_tier := [[], [], []]
+	for cell in pool:
+		if cell.is_empty():
+			by_tier[clampi(cell.nursery_priority, 0, 2)].append(cell)
+
+	var best := -1
+	var best_credit := -INF
+	for tier in range(3):
+		if by_tier[tier].is_empty():
+			continue
+		# what this tier's credit *would* be on the next lay
+		var projected: float = _tier_credit[tier] + weights[tier]
+		if projected > best_credit:
+			best_credit = projected
+			best = tier
+	if best == -1:
+		return null
+
+	# Within the tier, keep the old rotation so a run of eggs spreads
+	# across its cells rather than filling one at a time.
+	var tier_cells: Array = by_tier[best]
+	return tier_cells[_brood_pointer % tier_cells.size()]
+
+func _tier_weights() -> Array:
+	return [
+		max(0.0, GameConfig.lay_weight_low),
+		max(0.0, GameConfig.lay_weight_medium),
+		max(0.0, GameConfig.lay_weight_high),
+	]
+
+## Called by the queen the instant an egg goes into `cell`. This is where
+## the priority credit actually moves: every tier earns its weight, and
+## the tier that got the egg pays the total back. A tier whose cells are
+## all occupied keeps banking credit and so gets first refusal the moment
+## one frees up -- nothing is lost by being busy.
+##
+## Eggs laid in plain undesignated comb don't touch the credit, since
+## they were never part of the zone's share-out.
+func record_lay(cell: Node2D) -> void:
+	if not is_instance_valid(cell) or not cell.is_nursery_cell():
+		return
+	var weights := _tier_weights()
+	var total: float = weights[0] + weights[1] + weights[2]
+	if total <= 0.0:
+		total = 1.0
+	for tier in range(3):
+		_tier_credit[tier] += weights[tier]
+	_tier_credit[clampi(cell.nursery_priority, 0, 2)] -= total
+	_brood_pointer += 1
+
+## How many zone cells sit in each tier, and how many of those are free,
+## for the nursery window's readout.
+func zone_summary() -> Dictionary:
+	var counts := [0, 0, 0]
+	var free := [0, 0, 0]
+	var by_role := {}
+	for cell in cells:
+		if not is_instance_valid(cell) or not cell.is_nursery_cell():
+			continue
+		var tier: int = clampi(cell.nursery_priority, 0, 2)
+		counts[tier] += 1
+		if cell.is_empty():
+			free[tier] += 1
+		# Keyed the same way the live population counts are, so the two
+		# read against each other row for row: the focus only forms part
+		# of the key for foragers, since it means nothing for anyone else.
+		var key: String = "unset"
+		if cell.hatch_gyne:
+			key = "gyne"
+		elif cell.hatch_role == 0:
+			key = "0|%s" % cell.hatch_focus
+		elif cell.hatch_role > 0:
+			key = "%d|" % cell.hatch_role
+		by_role[key] = int(by_role.get(key, 0)) + 1
+	return {"counts": counts, "free": free, "by_role": by_role}
 
 ## What a hungry bee walks to when it needs feeding. Ripe honey first --
 ## it carries several times the energy per unit, so a bee spends less
 ## time at the cell and the same comb feeds far more of them.
 func find_food_cell(except: Node2D = null) -> Node2D:
 	for cell in cells:
-		if cell == except or not is_instance_valid(cell):
+		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.is_ripe_honey() and cell.amount > 0.0:
 			return cell
 	for cell in cells:
-		if cell == except or not is_instance_valid(cell):
+		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.content_type == "nectar" and cell.amount > 0.0:
 			return cell
@@ -258,7 +390,9 @@ func has_room_for_egg() -> bool:
 func find_cell_with(resource_type: String) -> Node2D:
 	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
 	for cell in cells_holding(bucket):
-		if cell.amount > 0.0:
+		# a sealed cell is out of circulation -- sending a bee to one just
+		# has it walk over, get nothing, and ask again
+		if cell.amount > 0.0 and cell.can_withdraw():
 			return cell
 	return null
 
@@ -585,9 +719,11 @@ func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 
 ## For automining: the edge block nearest the central wax cell, so
 ## digging opens up space next to the comb rather than out at the rim.
-func find_nearest_edge_block() -> Node2D:
+## `from_point` overrides that with a miner's own home cell, in which
+## case digging opens up around there instead.
+func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 	var best: Node2D = null
-	var best_distance := 1 << 30
+	var best_distance := INF
 	for node in occupied_tiles.values():
 		if not _is_markable_block(node) or not node.is_edge:
 			continue
@@ -595,7 +731,10 @@ func find_nearest_edge_block() -> Node2D:
 			continue
 		# hex ring index is the step distance from (0,0) -- the middle of
 		# the comb, where the first cell is drawn
-		var d := Shapes.hex_ring_index(node.axial)
+		var d: float = (
+			from_point.distance_to(node.position) if from_point.x != INF
+			else float(Shapes.hex_ring_index(node.axial))
+		)
 		if d < best_distance:
 			best_distance = d
 			best = node
@@ -619,6 +758,18 @@ func mine_stand_hex(block: Node2D):
 
 ## As above, as a position in hive-local space, ready to walk to.
 ## Prefers whichever open neighbour is closest to `from_point`.
+##
+## The miner doesn't stand on the centre of that tile but part of the way
+## across it towards the soil, so it is visibly working the face of the
+## block rather than standing a whole tile back from it.
+##
+## It has to stay under 0.5: at exactly half way it is on the boundary
+## between the two tiles, and any further puts the destination inside the
+## soil block itself -- which is not walkable, so path_between would find
+## no route and the miner would stand still forever. That is the bug that
+## stopped marked blocks ever being dug in the first place.
+const MINER_FACE_APPROACH := 0.35
+
 func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
 	var best := Vector2(INF, INF)
 	var best_distance := INF
@@ -631,7 +782,9 @@ func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
 		if d < best_distance:
 			best_distance = d
 			best = point
-	return best
+	if best.x == INF:
+		return best
+	return best.lerp(block.position, MINER_FACE_APPROACH)
 
 ## Turns a finished block back into open floor and reopens the routes
 ## through it.

@@ -58,7 +58,7 @@ var cell_capacity: float = 200.0        # one resource per cell, or one developi
 ## being sipped from and so never quite reaches the literal cap.
 var cell_full_threshold: float = 0.9
 var egg_pollen_cost: float = 60.0       # pollen the queen must eat to lay one egg
-var queen_eat_rate: float = 4.0         # pollen per second the queen consumes
+var queen_eat_rate: float = 3.0         # pollen per second the queen consumes
 var queen_speed_factor: float = 0.6     # she's larger, so slower than a worker
 var brood_develop_time: float = 120.0   # seconds of development before a bee emerges
 var tending_speed_bonus: float = 2.0    # multiplier while a nursery worker is tending
@@ -76,6 +76,46 @@ var brood_feed_honey: float = 1.5       # honey used per feed -- less goes furth
 ## A nurse tops a larva back up once its remaining fed-time drops below
 ## this, rather than waiting for it to stall completely.
 var brood_feed_threshold: float = 6.0
+
+# --- the nursery zone ---
+## Cells reserved for brood form the nursery zone, and each carries a
+## priority tier. The queen shares her eggs between the tiers in
+## proportion to these weights, so with the defaults a high-priority cell
+## gets three eggs for every one a low-priority cell gets.
+##
+## The sharing is done by a running credit per tier rather than a fixed
+## rota (see Hive.find_empty_cell), which keeps the ratio exactly true
+## over any length of time *and* interleaves the tiers -- three highs in
+## a row would average out correctly but feel streaky and unpredictable.
+var lay_weight_low: float = 1.0
+var lay_weight_medium: float = 2.0
+var lay_weight_high: float = 3.0
+
+## A zone cell with no role set is a fallback: the queen only lays in one
+## once every zone cell that *does* name a role is full, and the bee that
+## emerges is an ordinary nectar forager. That way an unset cell is never
+## dead weight, but it never quietly outbids a cell you configured.
+##
+## With this off the queen also refuses to lay in plain undesignated
+## comb, so eggs only ever go where you have asked for them. On (the
+## default) she falls back to any spare cell once the zone is full.
+var queen_lays_in_any_cell: bool = true
+
+## How long a window the nursery window's emergence figures cover, in
+## in-game seconds. Three minutes is long enough to smooth out the
+## lumpiness of individual hatches without lagging behind a change you
+## just made.
+var emergence_window_seconds: float = 180.0
+
+## The colony window's history plot samples the stores and the population
+## this often, keeping this many points.
+var history_sample_seconds: float = 5.0
+var history_points: float = 180.0
+
+## The "almost no pollen" signal is suppressed until this day. A young
+## colony genuinely has no pollen for a while and there is nothing useful
+## to do about it, so saying so from the first minute is just noise.
+var pollen_warning_first_day: float = 7.0
 
 ## A larva that has gone this long with nothing to eat dies. The cell is
 ## then blocked by the body until an architect on maintenance clears it
@@ -244,6 +284,12 @@ var death_marker_days: float = 5.0
 ## Turn the small "i" tooltip badges off once you know what everything
 ## does. Takes effect immediately -- no restart needed.
 var show_info_badges: bool = true
+
+## Which readouts are starred into the top-left corner. Everything lives
+## in the colony window now; this is the subset you have chosen to keep
+## permanently on screen. Kept here rather than on the HUD so it survives
+## a restart. Keys match ColonyPanel.STAT_ROWS.
+var pinned_stats: Array = ["day", "stores", "signals"]
 
 # --- runtime clock (not tunable; advanced by main.gd) ---
 var sim_time: float = 0.0

@@ -64,6 +64,11 @@ const TUNABLES := [
 		"category": "World & start",
 		"tip": "Real seconds in one in-game day. This drives the day counter and how quickly bees age towards their lifespan.",
 	},
+	{
+		"key": "pollen_warning_first_day", "label": "Pollen warning from day", "step": 1.0, "min": 1.0,
+		"category": "World & start",
+		"tip": "The \"almost no pollen\" line is kept off the problem strip until this day. A colony this young genuinely has no pollen and there is nothing useful to do about it, so warning from the first minute only teaches you to ignore the strip.",
+	},
 
 	# --- Flowers ---
 	{
@@ -196,6 +201,31 @@ const TUNABLES := [
 		"key": "queen_speed_factor", "label": "Queen speed x", "step": 0.05, "min": 0.05,
 		"category": "Brood & the queen",
 		"tip": "The queen's speed as a multiple of a worker's. She is larger, so she is slower.",
+	},
+	{
+		"key": "lay_weight_low", "label": "Lay weight — low", "step": 1.0, "min": 0.0,
+		"category": "Brood & the queen",
+		"tip": "How much of the queen's laying a low-priority nursery cell gets, relative to the other two tiers. The three weights are a ratio, not percentages: 1 : 2 : 3 means a high cell receives three eggs for every one a low cell receives. Set a weight to zero to stop that tier being laid in at all.",
+	},
+	{
+		"key": "lay_weight_medium", "label": "Lay weight — medium", "step": 1.0, "min": 0.0,
+		"category": "Brood & the queen",
+		"tip": "The middle tier's share of the queen's laying. This is the default a cell gets when you first put it in the nursery zone.",
+	},
+	{
+		"key": "lay_weight_high", "label": "Lay weight — high", "step": 1.0, "min": 0.0,
+		"category": "Brood & the queen",
+		"tip": "The top tier's share. Widening the gap between this and the low weight makes the zone a blunter instrument -- fewer cells needed to skew the mix, but less room for fine adjustment.",
+	},
+	{
+		"key": "queen_lays_in_any_cell", "label": "Lay in plain comb", "toggle": true,
+		"category": "Brood & the queen",
+		"tip": "On: once every nursery cell is full the queen falls back to any spare undesignated cell, so laying never stalls. Off: she lays only where you have asked her to, and waits otherwise. The same switch appears on the queen's own panel when she is laying.",
+	},
+	{
+		"key": "emergence_window_seconds", "label": "Emergence window s", "step": 30.0, "min": 30.0,
+		"category": "Brood & the queen",
+		"tip": "How long a stretch the nursery window's \"emerging per minute\" figures cover. Longer is steadier but slower to show the effect of a change you just made.",
 	},
 	{
 		"key": "brood_develop_time", "label": "Brood time s", "step": 10.0, "min": 5.0,
@@ -459,6 +489,16 @@ const TUNABLES := [
 	},
 
 	# --- Interface ---
+	{
+		"key": "history_sample_seconds", "label": "History sample s", "step": 1.0, "min": 1.0,
+		"category": "Interface",
+		"tip": "How often the colony window's over-time plot takes a reading. Together with the number of points below, this sets how far back the plot reaches.",
+	},
+	{
+		"key": "history_points", "label": "History points", "step": 10.0, "min": 10.0,
+		"category": "Interface",
+		"tip": "How many readings the plot keeps. Sample seconds multiplied by this is the span it covers, in in-game seconds.",
+	},
 	{
 		"key": "low_energy_warning_fraction", "label": "Warn at share", "step": 0.05, "min": 0.05,
 		"category": "Interface",

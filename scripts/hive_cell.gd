@@ -78,6 +78,24 @@ var builders: Array = []
 ## cell that stores eggs rather than stores.
 var designated_type: String = ""
 
+## Priority tier within the nursery zone: 0 low, 1 medium, 2 high. Only
+## meaningful while this is a brood cell. The queen shares her eggs
+## between the tiers in proportion to the weights in GameConfig, so this
+## is how you set the mix of roles the colony produces without having to
+## micromanage each cell in turn.
+enum Priority { LOW, MEDIUM, HIGH }
+var nursery_priority: int = Priority.MEDIUM
+
+## A closed cell is sealed: nothing can be put in and nothing taken out.
+## This is how you set honey aside for winter rather than watching the
+## colony drink it the moment it ripens.
+var is_closed: bool = false
+## Set from the honey popup's "Fill then close". The cell refuses
+## withdrawals from the moment it is set, so it can actually reach the
+## top instead of being sipped from as fast as it fills, and closes
+## itself once full.
+var fill_then_close: bool = false
+
 ## Set from the cell popup's "Empty cell" controls. While true the cell
 ## refuses every new deposit, so foragers stop cramming nectar into every
 ## spare pot and leave room for pollen and brood. Designating the cell to
@@ -115,6 +133,15 @@ var outline: Line2D
 var designation_ring: Line2D
 var selection_ring: Line2D
 var selected: bool = false
+## Drawn on top of the cell body, sized to how full the cell is, so you
+## can read the state of the whole comb at a glance instead of squinting
+## at the numbers on each one. See `_refresh`.
+var fill_shape: Polygon2D
+## Shown only while the nursery window is open: a coloured halo marking
+## this as a zone cell, in the colour of the role it raises.
+var zone_glow: Line2D
+## A small seal drawn over a closed cell.
+var closed_mark: Line2D
 
 ## One working position per wall. A bee claims a slot before it walks
 ## over, and gives it up when it leaves, so bees never stand on top of
@@ -128,6 +155,14 @@ func _ready() -> void:
 
 	polygon = Shapes.hexagon_points(cell_size)
 	color = EMPTY_COLOR
+
+	# The body is drawn washed out and this sits on top at full strength,
+	# scaled to the contents -- so a cell with 20 nectar in it reads as
+	# obviously different from one with 200 without opening anything.
+	fill_shape = Polygon2D.new()
+	fill_shape.polygon = Shapes.hexagon_points(cell_size)
+	fill_shape.visible = false
+	add_child(fill_shape)
 
 	outline = Line2D.new()
 	_set_outline_points(outline, cell_size)
@@ -153,6 +188,25 @@ func _ready() -> void:
 	selection_ring.visible = false
 	add_child(selection_ring)
 
+	# Marks this cell as part of the nursery zone while that window is
+	# open. Sits outside the selection ring so the two never overlap.
+	zone_glow = Line2D.new()
+	_set_outline_points(zone_glow, cell_size + 5.0)
+	zone_glow.width = 4.0
+	zone_glow.default_color = Color(1.0, 1.0, 1.0, 0.9)
+	zone_glow.visible = false
+	add_child(zone_glow)
+
+	# A bar across a sealed cell, so "closed" is visible on the comb and
+	# not only in the popup.
+	closed_mark = Line2D.new()
+	closed_mark.add_point(Vector2(-cell_size * 0.6, 0))
+	closed_mark.add_point(Vector2(cell_size * 0.6, 0))
+	closed_mark.width = 3.0
+	closed_mark.default_color = Color(0.1, 0.1, 0.12, 0.9)
+	closed_mark.visible = false
+	add_child(closed_mark)
+
 	info_label = Label.new()
 	info_label.position = Vector2(-cell_size, -8)
 	info_label.add_theme_font_size_override("font_size", 9)
@@ -162,6 +216,15 @@ func set_selected(value: bool) -> void:
 	selected = value
 	if selection_ring != null:
 		selection_ring.visible = value
+
+## Turns the nursery-zone halo on or off. `glow_colour` is the colour of
+## the role this cell raises, so the comb and the ring plot in the
+## nursery window use one palette between them.
+func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE) -> void:
+	if zone_glow == null:
+		return
+	zone_glow.visible = value
+	zone_glow.default_color = glow_colour
 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()
@@ -285,6 +348,10 @@ func accepts(resource_type: String) -> bool:
 		return false
 	if content_type == "corpse":
 		return false   # blocked until an architect clears it
+	# A sealed cell is out of circulation entirely. Cells filling towards
+	# a close still accept -- that's the point of them.
+	if is_closed:
+		return false
 	# A cell the player has asked to be kept clear takes nothing at all
 	# until they designate it to something.
 	if keep_empty:
@@ -348,11 +415,21 @@ func add_resource(resource_type: String, requested: float) -> float:
 	content_type = resource_type
 	capacity = capacity_for(resource_type)
 	amount += added
+	# "Fill then close" seals itself the moment it tops out, so you don't
+	# have to be watching the cell at the right second to catch it.
+	if fill_then_close and amount >= capacity - 0.001:
+		fill_then_close = false
+		is_closed = true
 	return added
 
 ## Removes up to `requested`, returns how much came out.
 func take_resource(resource_type: String, requested: float) -> float:
 	if content_type != resource_type:
+		return 0.0
+	# Sealed, or being filled towards a seal. Emptying the cell on the
+	# player's own instruction still gets through -- otherwise a closed
+	# cell could never be opened up and cleared again.
+	if (is_closed or fill_then_close) and not evict_requested:
 		return 0.0
 	var taken: float = min(requested, amount)
 	amount -= taken
@@ -363,6 +440,34 @@ func take_resource(resource_type: String, requested: float) -> float:
 		evict_requested = false
 		evict_mode = "move"
 	return taken
+
+## Can anything actually be drawn out of here right now? The hive's
+## find_* functions check this before sending a bee, otherwise a hungry
+## bee walks all the way to a sealed honey cell, gets nothing, and walks
+## back to ask again -- forever.
+func can_withdraw() -> bool:
+	return not is_closed and not fill_then_close
+
+## Opens a sealed cell back up. Also cancels a pending fill-then-close,
+## so one button undoes either state.
+func set_closed(value: bool) -> void:
+	is_closed = value
+	if not value:
+		fill_then_close = false
+
+func set_fill_then_close(value: bool) -> void:
+	fill_then_close = value
+	if value:
+		is_closed = false   # it has to be able to take deposits to fill
+
+## How full the cell is, 0 to 1, for the fill shading. Brood reports its
+## development instead, which is the equivalent "how far along is this".
+func fill_fraction() -> float:
+	if content_type == "brood":
+		return clamp(brood_progress / max(0.001, develop_time()), 0.0, 1.0)
+	if content_type == "" or content_type == "corpse":
+		return 0.0
+	return clamp(amount / max(0.001, capacity_for(content_type)), 0.0, 1.0)
 
 func set_designation(resource_type: String) -> void:
 	designated_type = resource_type
@@ -464,6 +569,8 @@ func _refresh() -> void:
 		outline.visible = true
 		color = Color(SITE_COLOR.r, SITE_COLOR.g, SITE_COLOR.b, lerp(0.25, 0.75, f))
 		designation_ring.visible = false
+		fill_shape.visible = false
+		closed_mark.visible = false
 		info_label.text = "%d%%" % int(f * 100.0)
 		return
 
@@ -521,9 +628,41 @@ func _refresh() -> void:
 			if keep_empty:
 				info_label.text = "keep"
 			elif is_nursery_cell():
-				info_label.text = "egg"
+				info_label.text = _priority_mark()
 			else:
 				info_label.text = ""
+
+	_apply_fill_shading()
+	closed_mark.visible = is_closed or fill_then_close
+	closed_mark.default_color = (
+		Color(0.1, 0.1, 0.12, 0.9) if is_closed else Color(0.95, 0.95, 0.4, 0.85)
+	)
+
+## An empty nursery cell shows its tier rather than a bare "egg", so the
+## shape of the zone is readable straight off the comb.
+func _priority_mark() -> String:
+	match nursery_priority:
+		Priority.HIGH:
+			return "egg •••"
+		Priority.LOW:
+			return "egg •"
+		_:
+			return "egg ••"
+
+## Draws the cell body washed out and lays a full-strength shape over it
+## sized to the contents. Area, not width, tracks the fraction -- a
+## half-full cell should look half full, and scaling the width linearly
+## would make it look like a quarter.
+func _apply_fill_shading() -> void:
+	var fraction := fill_fraction()
+	if content_type == "" or content_type == "corpse" or fraction <= 0.001:
+		fill_shape.visible = false
+		return
+	fill_shape.visible = true
+	fill_shape.color = color
+	fill_shape.polygon = Shapes.hexagon_points(cell_size * sqrt(fraction))
+	# the body behind it: same hue, drained towards bare wax
+	color = EMPTY_COLOR.lerp(color, 0.35)
 
 func development_percent() -> float:
 	if content_type != "brood":

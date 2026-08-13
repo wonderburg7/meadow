@@ -38,6 +38,21 @@ signal build_cell_requested()
 ## Sets the tile an architect builds outward from -- its own centre of
 ## operations, rather than the middle of the comb.
 signal home_cell_requested()
+## The same for a miner: the tile it works outward from when choosing
+## which soil to dig next.
+signal mine_home_requested()
+## Adds the selected cells to the nursery zone, or takes them out of it.
+signal cell_zone_requested(cell: Node2D, in_zone: bool)
+## Sets the priority tier on the selected zone cells: 0 low, 1 medium,
+## 2 high.
+signal cell_priority_requested(cell: Node2D, tier: int)
+## Seals the selected cells, or opens them back up.
+signal cell_close_requested(cell: Node2D, closed: bool)
+## Fill the cell to the top and then seal it, refusing withdrawals in the
+## meantime so it can actually get there.
+signal cell_fill_close_requested(cell: Node2D)
+## Opens the nursery zone window.
+signal nursery_window_requested()
 ## Marks or clears the digging flag on every selected soil block.
 signal soil_mark_requested(mark: bool)
 signal forage_start_point_requested()
@@ -149,10 +164,27 @@ const ROLE_BUTTONS := [
 ## debug_panel.gd owns. Both use the same number so they can't collide.
 const TUNING_BUTTON_RESERVE := 108.0
 
-var day_label: Label
-var storage_label: Label
-var population_label: Label
-var rate_label: Label
+## The top-left corner. Every readout lives in the colony window now;
+## this shows only the ones the player has starred there, in a fixed
+## order, so the corner is theirs to spend rather than a fixed block of
+## text. `corner_texts` is also what the colony window is handed, so the
+## two can never disagree about what a number says.
+var corner_column: VBoxContainer
+var corner_texts: Dictionary = {
+	"day": "", "stores": "", "population": "", "comb": "",
+	"energy": "", "rates": "",
+}
+## Order the starred readouts appear in, matching ColonyPanel.STAT_ROWS.
+const CORNER_ORDER := ["day", "stores", "population", "comb", "energy", "rates"]
+## Font size per readout -- the day is the headline, the rest is detail.
+const CORNER_SIZES := {
+	"day": 22, "stores": 16, "population": 13, "comb": 12,
+	"energy": 13, "rates": 12,
+}
+## What is currently drawn, so the column is only rebuilt when it would
+## actually look different rather than every frame.
+var corner_signature: String = ""
+
 var pause_label: Label
 var view_button: Button
 var selection_panel: PanelContainer
@@ -186,7 +218,8 @@ var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
 
-var signal_column: VBoxContainer
+## The at-a-glance problem strip, as [text, severity] pairs, kept so the
+## corner can be rebuilt without main.gd having to resend it.
 var shown_signals: Array = []
 
 ## Severity colours for the at-a-glance strip: 0 is background
@@ -205,23 +238,21 @@ func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
 
-	day_label = _make_label(Vector2(16, 12), 22)
-	storage_label = _make_label(Vector2(16, 42), 18)
-	population_label = _make_label(Vector2(16, 66), 14)
-	rate_label = _make_label(Vector2(16, 86), 12)
-
 	# The controls used to be printed here permanently. They now live in
 	# the Tuning panel's Interface section, which keeps the corner of the
 	# screen clear once you know them.
-	# The at-a-glance strip. Sits directly under the rate readout so the
-	# top-left corner reads as one block: what you have, then what's
-	# wrong with it.
-	signal_column = VBoxContainer.new()
-	signal_column.position = Vector2(16, 106)
-	signal_column.add_theme_constant_override("separation", 1)
-	add_child(signal_column)
+	#
+	# One column for everything in the corner: the starred readouts, then
+	# the at-a-glance problem strip underneath, so it reads as one block --
+	# what you have, then what's wrong with it. Laid out rather than
+	# positioned at fixed pixels, because which readouts are showing
+	# changes as the player stars and unstars them.
+	corner_column = VBoxContainer.new()
+	corner_column.position = Vector2(16, 12)
+	corner_column.add_theme_constant_override("separation", 2)
+	add_child(corner_column)
 
-	pause_label = _make_label(Vector2(16, 240), 18)
+	pause_label = _make_label(Vector2(16, 300), 18)
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
 
@@ -368,6 +399,8 @@ func _build_cell_popup() -> void:
 	auto_btn.pressed.connect(func(): _request_designation(""))
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
+	_build_zone_controls(column)
+	_build_closing_controls(column)
 	_build_empty_controls(column)
 
 	# Which role a bee raised here comes out as.
@@ -419,6 +452,87 @@ func _build_cell_popup() -> void:
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
+
+## The nursery zone: which cells the queen lays in, and how hard she
+## favours each one.
+##
+## The reason this is a zone rather than a per-cell setting is that
+## setting twenty cells one at a time is admin, not strategy. Select a
+## block of comb, put it in the zone, give it a role and a tier, and the
+## proportions look after themselves from then on.
+func _build_zone_controls(column: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	column.add_child(row)
+
+	var title := Label.new()
+	title.text = "Nursery zone:"
+	title.add_theme_font_size_override("font_size", 11)
+	row.add_child(title)
+
+	var add_btn := Button.new()
+	add_btn.text = "Add"
+	add_btn.add_theme_font_size_override("font_size", 11)
+	add_btn.pressed.connect(func(): _request_zone(true))
+	row.add_child(_with_info(add_btn, "Put the selected cells into the nursery zone. They are reserved for brood, the queen lays in them ahead of ordinary comb, and foragers leave them alone. Set what each one raises with the \"Raises\" buttons below."))
+
+	var remove_btn := Button.new()
+	remove_btn.text = "Remove"
+	remove_btn.add_theme_font_size_override("font_size", 11)
+	remove_btn.pressed.connect(func(): _request_zone(false))
+	row.add_child(_with_info(remove_btn, "Take the selected cells back out of the zone. They go back to holding whatever arrives first."))
+
+	var open_btn := Button.new()
+	open_btn.text = "Open zone window"
+	open_btn.add_theme_font_size_override("font_size", 11)
+	open_btn.pressed.connect(func(): nursery_window_requested.emit())
+	row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every zone cell glows in the colour of the role it raises."))
+
+	var tier_row := HBoxContainer.new()
+	column.add_child(tier_row)
+
+	var tier_title := Label.new()
+	tier_title.text = "Priority:"
+	tier_title.add_theme_font_size_override("font_size", 11)
+	tier_row.add_child(tier_title)
+
+	for tier in range(3):
+		var btn := Button.new()
+		btn.text = ["Low", "Medium", "High"][tier]
+		btn.add_theme_font_size_override("font_size", 11)
+		var tier_value: int = tier
+		btn.pressed.connect(func(): _request_priority(tier_value))
+		tier_row.add_child(btn)
+
+	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the tuning panel."))
+
+## Sealing a cell. A colony with honey in it drinks the honey; this is
+## how you set some aside for a hard stretch instead.
+func _build_closing_controls(column: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	column.add_child(row)
+
+	var title := Label.new()
+	title.text = "Sealing:"
+	title.add_theme_font_size_override("font_size", 11)
+	row.add_child(title)
+
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.add_theme_font_size_override("font_size", 11)
+	close_btn.pressed.connect(func(): _request_close(true))
+	row.add_child(_with_info(close_btn, "Seal the selected cells. Nothing can be added and nothing taken out until you open them again -- the contents are held in reserve. A sealed cell is drawn with a dark bar across it."))
+
+	var open_btn := Button.new()
+	open_btn.text = "Open"
+	open_btn.add_theme_font_size_override("font_size", 11)
+	open_btn.pressed.connect(func(): _request_close(false))
+	row.add_child(_with_info(open_btn, "Unseal the selected cells so the colony can use what is in them again."))
+
+	var fill_btn := Button.new()
+	fill_btn.text = "Fill then close"
+	fill_btn.add_theme_font_size_override("font_size", 11)
+	fill_btn.pressed.connect(func(): _request_fill_close())
+	row.add_child(_with_info(fill_btn, "Keep taking deposits but refuse every withdrawal, and seal the cell the moment it is full. Without this a honey cell is sipped from as fast as it is filled and never quite gets to the top, so there is never a full pot to put by. A cell in this state is drawn with a yellow bar."))
 
 ## Clearing a cell out. This exists because a colony with plenty of
 ## foragers fills every spare cell with nectar, leaving nothing free for
@@ -673,6 +787,12 @@ func _refresh_cell_popup() -> void:
 	elif active_cell.designated_type != "":
 		reserved = active_cell.designated_type
 	lines.append("Reserved for: %s" % reserved)
+	if active_cell.is_nursery_cell():
+		lines.append("Nursery zone — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
+	if active_cell.is_closed:
+		lines.append("Sealed — nothing goes in or comes out")
+	elif active_cell.fill_then_close:
+		lines.append("Filling to the top, then sealing. Withdrawals refused meanwhile")
 	if active_cell.evict_requested:
 		lines.append("Waiting for a builder to carry the contents out")
 
@@ -723,6 +843,26 @@ func _request_empty(method: String) -> void:
 		cell_empty_requested.emit(active_cell, method, keep_empty_box.button_pressed)
 		_refresh_cell_popup()
 
+func _request_zone(in_zone: bool) -> void:
+	if active_cell and is_instance_valid(active_cell):
+		cell_zone_requested.emit(active_cell, in_zone)
+		_refresh_cell_popup()
+
+func _request_priority(tier: int) -> void:
+	if active_cell and is_instance_valid(active_cell):
+		cell_priority_requested.emit(active_cell, tier)
+		_refresh_cell_popup()
+
+func _request_close(closed: bool) -> void:
+	if active_cell and is_instance_valid(active_cell):
+		cell_close_requested.emit(active_cell, closed)
+		_refresh_cell_popup()
+
+func _request_fill_close() -> void:
+	if active_cell and is_instance_valid(active_cell):
+		cell_fill_close_requested.emit(active_cell)
+		_refresh_cell_popup()
+
 # --- discard warning ----------------------------------------------
 
 ## "Don't warn me again" is a third button rather than a checkbox.
@@ -771,47 +911,95 @@ func _apply_discard() -> void:
 # --- readouts -----------------------------------------------------
 
 func update_day(day: int) -> void:
-	day_label.text = "Day %d" % day
+	corner_texts["day"] = "Day %d" % day
+	_refresh_corner()
 
 ## Honey is counted only once it's fully fanned dry -- wet mix still
-## drying in a cell isn't a store the colony can use yet.
-func update_storage(nectar: float, pollen: float, honey: float, jelly: float) -> void:
-	storage_label.text = "Nectar: %d   Pollen: %d   Honey: %d   Jelly: %d" % [
+## drying in a cell isn't a store the colony can use yet. Anything sealed
+## into closed cells is called out separately: it's still the colony's,
+## but nothing can eat it until the cells are opened again.
+func update_storage(nectar: float, pollen: float, honey: float, jelly: float, sealed: float = 0.0) -> void:
+	var text := "Nectar: %d   Pollen: %d   Honey: %d   Jelly: %d" % [
 		int(round(nectar)), int(round(pollen)), int(round(honey)), int(round(jelly)),
 	]
+	if sealed > 0.5:
+		text += "\n(%d sealed away in closed cells)" % int(round(sealed))
+	corner_texts["stores"] = text
+	_refresh_corner()
 
 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
-	population_label.text = "Bees: %d foraging, %d nursing, %d architects, %d on honey" % [
+	corner_texts["population"] = "Bees: %d foraging, %d nursing, %d architects, %d on honey" % [
 		foragers, nurses, builders, honey_makers,
 	]
+	_refresh_corner()
+
+func update_comb(text: String) -> void:
+	corner_texts["comb"] = text
+	_refresh_corner()
+
+func update_energy(mean_fraction: float) -> void:
+	corner_texts["energy"] = "Average energy: %d%%" % int(round(mean_fraction * 100.0))
+	_refresh_corner()
 
 ## `births_per_sec` is shown per minute instead -- birth events are rare
 ## enough (one every 90s+ per brood cell) that a per-second figure would
 ## always read as an unreadable 0.0x.
 func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: float) -> void:
-	rate_label.text = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
+	corner_texts["rates"] = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
 		nectar_per_sec, pollen_per_sec, births_per_sec * 60.0,
 	]
+	_refresh_corner()
 
-## `lines` is an array of [text, severity] pairs from main.gd. Rebuilt
-## only when the set of problems actually changes, so the strip isn't
-## thrashing labels every second while nothing is happening.
+## `lines` is an array of [text, severity] pairs from main.gd.
 func update_signals(lines: Array) -> void:
-	var flattened: Array = []
-	for entry in lines:
-		flattened.append("%d|%s" % [entry[1], entry[0]])
-	if flattened == shown_signals:
-		return
-	shown_signals = flattened
+	shown_signals = lines
+	corner_texts["signals"] = "\n".join(lines.map(func(e): return "• %s" % e[0]))
+	_refresh_corner()
 
-	for child in signal_column.get_children():
+## Rebuilds the corner from the starred readouts. Only actually does the
+## work when the result would look different, so this can be called from
+## every setter without thrashing labels every frame.
+func _refresh_corner() -> void:
+	var signature := ""
+	for key in CORNER_ORDER:
+		if GameConfig.pinned_stats.has(key):
+			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
+	var show_signals: bool = GameConfig.pinned_stats.has("signals")
+	if show_signals:
+		for entry in shown_signals:
+			signature += "s%d|%s\n" % [entry[1], entry[0]]
+	if signature == corner_signature:
+		return
+	corner_signature = signature
+
+	for child in corner_column.get_children():
 		child.queue_free()
-	for entry in lines:
+
+	for key in CORNER_ORDER:
+		if not GameConfig.pinned_stats.has(key):
+			continue
+		var text: String = str(corner_texts.get(key, ""))
+		if text == "":
+			continue
 		var label := Label.new()
-		label.text = "• %s" % entry[0]
-		label.add_theme_font_size_override("font_size", 12)
-		label.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
-		signal_column.add_child(label)
+		label.text = text
+		label.add_theme_font_size_override("font_size", int(CORNER_SIZES.get(key, 12)))
+		corner_column.add_child(label)
+
+	if not show_signals:
+		return
+	for entry in shown_signals:
+		var line := Label.new()
+		line.text = "• %s" % entry[0]
+		line.add_theme_font_size_override("font_size", 12)
+		line.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
+		corner_column.add_child(line)
+
+## Called when the player stars or unstars something in the colony
+## window: the corner has to be redrawn even though no number changed.
+func pinned_stats_changed() -> void:
+	corner_signature = ""
+	_refresh_corner()
 
 func update_selection(bees: Array) -> void:
 	shown_bees = bees
@@ -915,6 +1103,11 @@ func _rebuild_role_controls(bees: Array) -> void:
 		automine_btn.text = "Automine: On" if first_automine else "Automine: Off"
 		automine_btn.pressed.connect(func(): role_requested.emit("automine"))
 		role_row.add_child(_with_info(automine_btn, _tip_for("automine")))
+
+		var mine_home_btn := Button.new()
+		mine_home_btn.text = "Set dig centre"
+		mine_home_btn.pressed.connect(func(): mine_home_requested.emit())
+		role_row.add_child(_with_info(mine_home_btn, "Click this, then click a tile in the hive view. The selected miners will always dig whichever soil is nearest that tile, rather than whichever happens to be nearest wherever they finished the last block. That keeps a team working through one face instead of drifting apart, and two miners with different centres open the hive up in two places at once."))
 	else:
 		var miner_menu := _make_role_menu("Miner", _tip_for("miner"), [
 			{"text": "Become miner", "action": func(): role_requested.emit("miner")},
@@ -942,6 +1135,15 @@ func _rebuild_role_controls(bees: Array) -> void:
 		egg_btn.text = "Egg layer"
 		egg_btn.pressed.connect(func(): role_requested.emit("egg_layer"))
 		role_row.add_child(_with_info(egg_btn, _tip_for("egg_layer")))
+
+	# --- where a laying queen is allowed to lay ---
+	if any_queen and common_role == Bee.Role.EGG_LAYER:
+		var any_cell_box := CheckBox.new()
+		any_cell_box.text = "Lay in plain comb too"
+		any_cell_box.add_theme_font_size_override("font_size", 11)
+		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
+		any_cell_box.toggled.connect(func(pressed: bool): GameConfig.queen_lays_in_any_cell = pressed)
+		role_row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied the queen will lay into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in cells you have put in the nursery zone, and waits when they are full. Turn it off when you want exact control of what the colony produces, and be ready to add zone cells or she simply stops laying."))
 
 	# --- secondary role: offered for any bee, so every one of them can be
 	# given something to fall back on rather than standing around.
