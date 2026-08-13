@@ -1015,7 +1015,7 @@ func _refresh_signals(delta: float) -> void:
 	var hungry := 0
 	var foragers := 0
 	var nurses := 0
-	var comb workers := 0
+	var comb_workers := 0
 	for b in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
@@ -1027,7 +1027,7 @@ func _refresh_signals(delta: float) -> void:
 			Bee.Role.NURSERY:
 				nurses += 1
 			Bee.Role.BUILDER:
-				comb workers += 1
+				comb_workers += 1
 
 	var hungry_brood := 0
 	var dead_cells := 0
@@ -1063,7 +1063,7 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["%d bees running low on energy" % hungry, 1, "hungry"])
 	if foragers == 0:
 		lines.append(["No foragers — nothing is coming in", 1, ""])
-	if comb workers == 0 and dead_cells > 0:
+	if comb_workers == 0 and dead_cells > 0:
 		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells"])
 	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		lines.append(["Raining hard — foragers are grounded", 1])
@@ -2598,7 +2598,7 @@ func _on_keep_clear_requested() -> void:
 ## they are for. Selecting comb is something the player already does
 ## constantly, so reusing it beats inventing a fourth placement mode.
 
-func _restock_comb workers() -> Array:
+func _restock_comb_workers() -> Array:
 	return selected_bees.filter(func(b):
 		return is_instance_valid(b) and b.role == Bee.Role.BUILDER
 	)
@@ -2608,7 +2608,7 @@ func _on_restock_targets_requested(resource: String) -> void:
 	if cells.is_empty():
 		hud.show_warning("Select the comb you want kept full first, then press the resource.")
 		return
-	for b in _restock_comb workers():
+	for b in _restock_comb_workers():
 		b.set_restock_targets(cells, resource)
 		b.architect_mode = "restock"
 	# The cells have to be reserved for the resource, or foragers will
@@ -2624,13 +2624,13 @@ func _on_restock_sources_requested(allowed: bool) -> void:
 	if cells.is_empty():
 		hud.show_warning("Select the comb you mean first, then press the button.")
 		return
-	for b in _restock_comb workers():
+	for b in _restock_comb_workers():
 		b.set_restock_sources(cells, allowed)
 	_clear_cell_selection()
 	hud.update_selection(selected_bees)
 
 func _on_restock_clear_requested() -> void:
-	for b in _restock_comb workers():
+	for b in _restock_comb_workers():
 		b.clear_restock()
 	hud.update_selection(selected_bees)
 
