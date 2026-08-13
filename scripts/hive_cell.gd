@@ -645,11 +645,43 @@ func _refresh() -> void:
 			else:
 				info_label.text = ""
 
+	# The designation ring is colour-only: a cell reserved for pollen and
+	# one reserved for honey are the same shape, same size, same
+	# everything but hue. With colour-blind labels on, the reservation is
+	# spelled out on the cell instead.
+	if Session.colour_blind_mode and info_label != null:
+		var tag := _designation_tag()
+		if tag != "":
+			info_label.text = ("%s %s" % [tag, info_label.text]).strip_edges()
+
 	_apply_fill_shading()
 	closed_mark.visible = is_closed or fill_then_close
 	closed_mark.default_color = (
 		Color(0.1, 0.1, 0.12, 0.9) if is_closed else Color(0.95, 0.95, 0.4, 0.85)
 	)
+
+## A one-character tag for what the cell is reserved for, shown when
+## colour-blind labels are on. "·" for an unreserved cell would be noise,
+## so that returns nothing.
+func _designation_tag() -> String:
+	if is_closed:
+		return "[X]"
+	if fill_then_close:
+		return "[>]"
+	if keep_empty:
+		return "[-]"
+	match designated_type:
+		"nectar":
+			return "[n]"
+		"pollen":
+			return "[p]"
+		"honey":
+			return "[h]"
+		"jelly":
+			return "[j]"
+		"brood":
+			return "[e]"
+	return ""
 
 ## An empty nursery cell shows its tier rather than a bare "egg", so the
 ## shape of the zone is readable straight off the comb.

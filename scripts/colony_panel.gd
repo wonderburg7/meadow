@@ -29,7 +29,7 @@ signal pinned_changed()
 ## this used to invite.
 
 ## The readouts that can be starred into the top-left corner. `key` is
-## what GameConfig.pinned_stats holds and what the HUD matches on.
+## what Session.pinned_stats holds and what the HUD matches on.
 const STAT_ROWS := [
 	{"key": "day", "tip": "The day counter. One in-game day is however many real seconds the tuning panel says."},
 	{"key": "stores", "tip": "What is actually in the comb: nectar, pollen, ripe honey and royal jelly. Honey only counts once it has been fanned dry."},
@@ -161,7 +161,7 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	star.toggle_mode = true
 	star.custom_minimum_size = Vector2(26, 20)
 	star.add_theme_font_size_override("font_size", 12)
-	star.button_pressed = GameConfig.pinned_stats.has(key)
+	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
 	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
 	star.toggled.connect(func(pressed: bool): _set_pinned(key, pressed))
@@ -179,10 +179,10 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	return row
 
 func _set_pinned(key: String, pressed: bool) -> void:
-	if pressed and not GameConfig.pinned_stats.has(key):
-		GameConfig.pinned_stats.append(key)
+	if pressed and not Session.pinned_stats.has(key):
+		Session.pinned_stats.append(key)
 	elif not pressed:
-		GameConfig.pinned_stats.erase(key)
+		Session.pinned_stats.erase(key)
 	if star_buttons.has(key):
 		star_buttons[key].text = "★" if pressed else "☆"
 	pinned_changed.emit()

@@ -199,8 +199,6 @@ var rain_nectar_dilution: float = 0.6   # share of nectar value lost at full int
 var rain_flight_burn_factor: float = 2.2
 var rain_forage_limit: float = 0.5      # intensity above which foragers stay home
 
-## Live weather state, advanced by main.gd. Not tunable.
-var rain_intensity: float = 0.0
 
 # --- warnings ---
 ## When this fraction of the colony is below `low_energy_warning_level`
@@ -334,13 +332,9 @@ var rival_store_per_bee: float = 400.0
 var rival_flower_take: float = 4.0
 
 # --- winter ---
-## Winter is a countdown rather than a simulated season, for now. The
-## interesting decisions -- stop growing and start storing, seal a cell,
-## raise gynes now or later -- all happen in the run-up, so an honest
-## countdown with a shortfall figure creates the whole problem without
-## any winter mechanics existing yet.
-var winter_coming: bool = false
-var winter_starts_day: float = 0.0
+## How long a winter is and what it costs. Whether one is *scheduled*,
+## and when, is state of the run rather than a setting, so it lives in
+## Session.
 var winter_countdown_days: float = 15.0
 var winter_length_days: float = 20.0
 ## What a bee burns through winter, as a multiple of its ordinary rate.
@@ -352,38 +346,3 @@ var winter_length_days: float = 20.0
 ## reach for if winter feels trivial or impossible.
 var winter_burn_factor: float = 0.15
 
-# --- interface ---
-## Turn the small "i" tooltip badges off once you know what everything
-## does. Takes effect immediately -- no restart needed.
-var show_info_badges: bool = true
-
-## Which readouts are starred into the top-left corner. Everything lives
-## in the colony window now; this is the subset you have chosen to keep
-## permanently on screen. Kept here rather than on the HUD so it survives
-## a restart. Keys match ColonyPanel.STAT_ROWS.
-var pinned_stats: Array = ["day", "stores", "signals"]
-
-# --- runtime clock (not tunable; advanced by main.gd) ---
-var sim_time: float = 0.0
-
-# --- session preferences (not tunable; set from dialogs) ---
-var warn_on_discard: bool = true        # "don't show this again" clears this
-
-## Which starting stage the next run builds. 0 means "use the tuning
-## numbers as they are"; 1-3 are the fixed stages offered by the main
-## menu (see main_menu.gd and main.gd's _spawn_* functions):
-##   1  the queen alone, no comb
-##   2  queen + one nectar forager + one cell
-##   3  queen + one of each forager + three cells
-## Read on scene build and left as-is, so a plain Restart Run repeats
-## whatever stage you last chose.
-var starting_level: int = 0
-
-## Set just before a scene reload to tell the freshly built world to
-## replay a saved run over itself. See save_game.gd.
-var load_pending: bool = false
-
-## True the first time the game runs, so main.gd knows to open the menu
-## rather than dropping straight into a colony. Cleared once the player
-## picks a stage.
-var menu_pending: bool = true

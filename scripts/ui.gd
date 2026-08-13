@@ -45,7 +45,7 @@ static func info_badge(text: String) -> Button:
 	# Every badge joins one group so the tuning panel's "Show info icons"
 	# switch can hide them all at once, wherever they happen to live.
 	badge.add_to_group("info_badges")
-	badge.visible = GameConfig.show_info_badges
+	badge.visible = Session.show_info_badges
 	return badge
 
 ## Wraps a control and its info badge side by side.
@@ -92,7 +92,7 @@ static func clear_current_mark(button: Button) -> void:
 	for style_name in ["normal", "hover", "pressed", "focus"]:
 		button.remove_theme_stylebox_override(style_name)
 
-## Applies the current GameConfig.show_info_badges setting to every badge
+## Applies the current Session.show_info_badges setting to every badge
 ## already on screen. `node` is any node in the tree -- it's only used to
 ## reach the scene tree.
 static func refresh_badge_visibility(node: Node) -> void:
@@ -100,4 +100,4 @@ static func refresh_badge_visibility(node: Node) -> void:
 		return
 	for badge in node.get_tree().get_nodes_in_group("info_badges"):
 		if is_instance_valid(badge):
-			badge.visible = GameConfig.show_info_badges
+			badge.visible = Session.show_info_badges

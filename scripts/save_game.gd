@@ -19,9 +19,12 @@ extends RefCounted
 const SAVE_PATH := "user://meadow_save.json"
 const FORMAT_VERSION := 1
 
-## Every GameConfig field worth carrying across. Anything not listed
-## keeps whatever the running game has, which is the right behaviour for
-## things like the live rain intensity.
+## Every GameConfig field worth carrying across.
+##
+## Balance numbers only. The player's interface preferences (starred
+## readouts, info badges, colour-blind mode) deliberately stay out of the
+## save: they belong to the player, not the run, and loading someone
+## else's save should not rearrange your screen. Those live in Session.
 const SAVED_SETTINGS := [
 	"flower_count", "hive_cell_count", "starting_bees", "starting_nurses",
 	"starting_builders", "starting_miners", "starting_honey_makers",
@@ -50,9 +53,9 @@ const SAVED_SETTINGS := [
 	"build_energy_burn", "hive_interior_rings", "hive_soil_depth",
 	"hive_rock_rings", "hive_entrance_width", "hive_cell_size",
 	"hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
-	"energy_capacity", "energy_burn_rate", "show_info_badges",
+	"energy_capacity", "energy_burn_rate",
 	"low_energy_warning_fraction", "low_energy_warning_level",
-	"low_energy_gap", "starting_level",
+	"low_energy_gap",
 ]
 
 static func has_save() -> bool:
@@ -65,12 +68,12 @@ static func save(world) -> bool:
 		"version": FORMAT_VERSION,
 		"settings": _settings_dict(),
 		"clock": {
-			"sim_time": GameConfig.sim_time,
+			"sim_time": Session.sim_time,
 			"day": world.day,
 			"next_bee_id": world.next_bee_id,
 		},
 		"weather": {
-			"intensity": GameConfig.rain_intensity,
+			"intensity": Session.rain_intensity,
 			"target": world.rain_target,
 			"seconds_left": world.rain_seconds_left,
 		},
@@ -78,6 +81,22 @@ static func save(world) -> bool:
 			"nectar": world.hive.lifetime_nectar_collected,
 			"pollen": world.hive.lifetime_pollen_collected,
 			"births": world.hive.lifetime_births,
+		},
+		"hive": {
+			# Reserved open ground and the queen's laying credit. Neither
+			# was saved before, so a loaded run quietly forgot which
+			# tiles were meant to stay clear and restarted the priority
+			# share-out from zero.
+			"keep_clear": _hex_list(world.hive.keep_clear_tiles.keys()),
+			"tier_credit": world.hive._tier_credit,
+			"brood_pointer": world.hive._brood_pointer,
+		},
+		"session": {
+			"winter_coming": Session.winter_coming,
+			"winter_starts_day": Session.winter_starts_day,
+			"winter_here": Session.winter_here,
+			"winter_ends_day": Session.winter_ends_day,
+			"gynes_released": Session.gynes_released,
 		},
 		"cells": _cells_data(world),
 		"soil": _soil_data(world),
@@ -182,7 +201,35 @@ static func _bees_data(world) -> Array:
 			"preferred": b.preferred_species,
 			"start_x": b.forage_start_point.x,
 			"start_y": b.forage_start_point.y,
+			# A bee's own orders. These were being lost on save, so a
+			# player who had spent time laying out a build order or a
+			# restocking plan reloaded to find it gone -- silent data
+			# loss, which is the worst kind.
+			"build_queue": _hex_list(b.build_queue),
+			"mine_queue": _cell_refs(b.mine_queue),
+			"home_hex": [b.home_hex.x, b.home_hex.y] if b.has_home_hex else [],
+			"mine_home": [b.mine_home_hex.x, b.mine_home_hex.y] if b.has_mine_home else [],
+			"restock_resource": b.restock_resource,
+			"restock_targets": _cell_refs(b.restock_targets),
+			"restock_sources": _cell_refs(b.restock_sources),
+			"restock_blocked": _cell_refs(b.restock_blocked),
 		})
+	return out
+
+## Hexes as flat pairs, which is all JSON can carry.
+static func _hex_list(hexes: Array) -> Array:
+	var out: Array = []
+	for hex in hexes:
+		out.append([hex.x, hex.y])
+	return out
+
+## Cells are referred to by their tile, not by node, since the nodes are
+## rebuilt from scratch on load.
+static func _cell_refs(cells: Array) -> Array:
+	var out: Array = []
+	for cell in cells:
+		if is_instance_valid(cell):
+			out.append([cell.axial.x, cell.axial.y])
 	return out
 
 static func _flowers_data(world) -> Array:

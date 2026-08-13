@@ -479,7 +479,7 @@ func _age_and_burn(delta: float) -> void:
 		var flight: float = GameConfig.flight_energy_burn
 		if is_gyne:
 			flight *= GameConfig.gyne_energy_factor
-		flight *= lerpf(1.0, GameConfig.rain_flight_burn_factor, GameConfig.rain_intensity)
+		flight *= lerpf(1.0, GameConfig.rain_flight_burn_factor, Session.rain_intensity)
 		energy -= flight * delta
 
 	# Building costs extra: bees make wax from the sugar they've eaten,
@@ -763,7 +763,7 @@ func _seek_flower() -> void:
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
-	if GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		state = State.TO_HIVE
 		return
 
@@ -798,7 +798,7 @@ func _nearest_flower(strict: bool) -> Node2D:
 		if preferred_species != "" and f.species_name != preferred_species:
 			continue
 		if strict:
-			if flower_cooldowns.has(f) and GameConfig.sim_time < flower_cooldowns[f]:
+			if flower_cooldowns.has(f) and Session.sim_time < flower_cooldowns[f]:
 				continue
 			# Tarsal secretion: bees leave a scent mark on flowers they
 			# land on, and other bees avoid a recently marked flower
@@ -874,14 +874,14 @@ func _drink_at_flower(delta: float) -> void:
 ## How much a unit of nectar is actually worth right now. Rain dilutes
 ## what's standing in an open flower.
 func _nectar_strength() -> float:
-	return lerpf(1.0, 1.0 - GameConfig.rain_nectar_dilution, GameConfig.rain_intensity)
+	return lerpf(1.0, 1.0 - GameConfig.rain_nectar_dilution, Session.rain_intensity)
 
 ## Rained off. Waiting it out *inside* the hive rather than at the door:
 ## a bee sheltering out in the meadow couldn't reach the comb to eat, and
 ## would have walked itself in and straight back out again every few
 ## seconds as the exit and the rain check argued with each other.
 func _shelter(_delta: float) -> void:
-	if GameConfig.rain_intensity <= GameConfig.rain_forage_limit:
+	if Session.rain_intensity <= GameConfig.rain_forage_limit:
 		state = State.IN_HIVE_TO_EXIT if _is_inside_hive() else State.SEEK_FLOWER
 
 func _worth_feeding(f: Node2D) -> bool:
@@ -896,7 +896,7 @@ func _worth_feeding(f: Node2D) -> bool:
 ## bother rechecking immediately" pause is enough.
 func _reject_flower() -> void:
 	if current_flower and is_instance_valid(current_flower):
-		flower_cooldowns[current_flower] = GameConfig.sim_time + REJECTED_AVOID_SECONDS
+		flower_cooldowns[current_flower] = Session.sim_time + REJECTED_AVOID_SECONDS
 		current_flower.release(self)
 	current_flower = null
 	state = State.SEEK_FLOWER
@@ -960,7 +960,7 @@ func _collect(delta: float) -> void:
 func _finish_collecting() -> void:
 	if current_flower and is_instance_valid(current_flower):
 		# stay away until it's had time to fully recharge
-		flower_cooldowns[current_flower] = GameConfig.sim_time + current_flower.seconds_until_full(resource_type)
+		flower_cooldowns[current_flower] = Session.sim_time + current_flower.seconds_until_full(resource_type)
 		current_flower.release(self)
 	current_flower = null
 	state = State.TO_HIVE if current_load >= _max_capacity() else State.SEEK_FLOWER
@@ -1065,7 +1065,7 @@ func _finish_depositing() -> void:
 func _go_to_exit(delta: float) -> void:
 	# No point walking out into weather that costs more to fly in than the
 	# trip would bring back. Wait inside, where the food is.
-	if role == Role.FORAGER and GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+	if role == Role.FORAGER and Session.rain_intensity > GameConfig.rain_forage_limit:
 		state = State.SHELTERING
 		return
 

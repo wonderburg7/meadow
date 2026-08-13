@@ -166,6 +166,18 @@ static func count_keys() -> Array:
 			keys.append(count_key(role.id))
 	return keys
 
+## A short tag that stands in for a colour when colour alone can't be
+## relied on. Used by the ring plot key, the comb overlays and the zone
+## glow when Session.colour_blind_mode is on.
+static func tag_for_key(key: String) -> String:
+	var parts: PackedStringArray = key.split("|")
+	if parts.size() < 2:
+		return key.substr(0, 2).to_upper()
+	var role_id: int = int(parts[0])
+	if role_id == FORAGER:
+		return "FN" if parts[1] == "nectar" else "FP"
+	return letter_for(role_id)
+
 static func label_for_key(key: String) -> String:
 	var parts: PackedStringArray = key.split("|")
 	if parts.size() < 2:

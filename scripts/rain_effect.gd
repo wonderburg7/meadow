@@ -44,7 +44,7 @@ func _seed_drops() -> void:
 ## something this node knows about. All it does here is stop working when
 ## there's nothing to draw.
 func _process(delta: float) -> void:
-	if not visible or GameConfig.rain_intensity <= 0.01:
+	if not visible or Session.rain_intensity <= 0.01:
 		return
 
 	# Track the window, so resizing doesn't leave a dry strip down one
@@ -56,7 +56,7 @@ func _process(delta: float) -> void:
 
 	# Heavier rain falls faster as well as thicker, which is most of what
 	# makes a downpour read as a downpour.
-	var pace: float = lerpf(0.75, 1.35, GameConfig.rain_intensity)
+	var pace: float = lerpf(0.75, 1.35, Session.rain_intensity)
 	for drop in drops:
 		drop.pos += FALL_SPEED * drop.speed * pace * delta
 		if drop.pos.y > view_size.y + STREAK_LENGTH:
@@ -66,7 +66,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	var intensity: float = GameConfig.rain_intensity
+	var intensity: float = Session.rain_intensity
 	if intensity <= 0.01:
 		return
 	# Below full intensity only a share of the pool is drawn. Taking a

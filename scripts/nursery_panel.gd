@@ -23,7 +23,7 @@ signal pinned_changed()
 
 ## The readouts in this window that can be starred into the corner, the
 ## same way the colony window's are. Keys are shared with
-## GameConfig.pinned_stats and HUD.corner_texts, so one mechanism drives
+## Session.pinned_stats and HUD.corner_texts, so one mechanism drives
 ## the corner rather than each panel having its own.
 const STAT_ROWS := [
 	{"key": "nursery_zone", "tip": "How many cells are set aside for each role, and how many are in each priority tier."},
@@ -49,6 +49,13 @@ static func _key_label(key: String) -> String:
 	if key == "unset":
 		return "No role set"
 	return Roles.label_for_key(key)
+
+static func _key_tag(key: String) -> String:
+	if key == "gyne":
+		return "G"
+	if key == "unset":
+		return "?"
+	return Roles.tag_for_key(key)
 
 static func _key_colour(key: String) -> Color:
 	if key == "gyne":
@@ -144,7 +151,7 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 	star.custom_minimum_size = Vector2(24, 18)
 	star.add_theme_font_size_override("font_size", 11)
 	star.focus_mode = Control.FOCUS_NONE
-	star.button_pressed = GameConfig.pinned_stats.has(key)
+	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
 	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
 	star.toggled.connect(func(pressed: bool): _set_pinned(key, pressed))
@@ -169,10 +176,10 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 	return holder
 
 func _set_pinned(key: String, pressed: bool) -> void:
-	if pressed and not GameConfig.pinned_stats.has(key):
-		GameConfig.pinned_stats.append(key)
+	if pressed and not Session.pinned_stats.has(key):
+		Session.pinned_stats.append(key)
 	elif not pressed:
-		GameConfig.pinned_stats.erase(key)
+		Session.pinned_stats.erase(key)
 	if star_buttons.has(key):
 		star_buttons[key].text = "★" if pressed else "☆"
 	pinned_changed.emit()
@@ -268,6 +275,7 @@ func _refresh_ring(live: Dictionary) -> void:
 			"share": float(count) / float(total),
 			"label": _key_label(key),
 			"count": count,
+			"tag": _key_tag(key),
 		})
 	ring.queue_redraw()
 	# The ring answers "what shape is the colony", which is a question
@@ -316,6 +324,15 @@ func _draw_ring() -> void:
 	for slice in ring_slices:
 		var sweep: float = slice.share * TAU
 		ring.draw_arc(centre, radius, angle, angle + sweep, 32, slice.colour, thickness)
+		# A tag on any slice wide enough to hold one, so a reader who
+		# can't separate the colours can still match ring to key.
+		if Session.colour_blind_mode and sweep > 0.35:
+			var mid: float = angle + sweep * 0.5
+			ring.draw_string(
+				ThemeDB.fallback_font,
+				centre + Vector2(cos(mid), sin(mid)) * radius + Vector2(-7, 4),
+				slice.tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.08, 0.08, 0.1)
+			)
 		angle += sweep
 
 	# legend down the right-hand side
@@ -323,9 +340,14 @@ func _draw_ring() -> void:
 	var font := ThemeDB.fallback_font
 	for slice in ring_slices:
 		ring.draw_rect(Rect2(Vector2(150, y), Vector2(10, 10)), slice.colour, true)
+		var text: String = "%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0]
+		if Session.colour_blind_mode:
+			# The chip alone tells you nothing if you can't separate the
+			# colours, and the slices on the ring have no labels of their
+			# own. The tag appears on both, which is what links them.
+			text = "[%s] %s" % [slice.tag, text]
 		ring.draw_string(
-			font, Vector2(166, y + 10),
-			"%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0],
+			font, Vector2(166, y + 10), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.9, 0.92, 0.95)
 		)
 		y += 15.0

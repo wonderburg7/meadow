@@ -199,7 +199,7 @@ func release(bee: Node2D) -> void:
 ## as a timestamp; see GameConfig.tarsal_markers_on.
 
 func leave_marker(bee: Node2D) -> void:
-	marked_at = GameConfig.sim_time
+	marked_at = Session.sim_time
 	marked_by = bee
 
 ## True if another bee marked this flower recently. A bee ignores its
@@ -207,12 +207,12 @@ func leave_marker(bee: Node2D) -> void:
 func is_marked(asking_bee: Node2D) -> bool:
 	if marked_by == null or marked_by == asking_bee:
 		return false
-	return GameConfig.sim_time - marked_at < GameConfig.tarsal_marker_seconds
+	return Session.sim_time - marked_at < GameConfig.tarsal_marker_seconds
 
 func marker_age() -> float:
 	if marked_by == null:
 		return -1.0
-	return GameConfig.sim_time - marked_at
+	return Session.sim_time - marked_at
 
 ## Fades the flower out as it empties so depletion is visible, and
 ## back in as it recharges. Purely a visual aid for playtesting.

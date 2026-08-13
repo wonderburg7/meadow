@@ -275,7 +275,7 @@ func _ready() -> void:
 	var menu := MainMenu.new()
 	menu.level_chosen.connect(_on_level_chosen)
 	add_child(menu)
-	if GameConfig.menu_pending:
+	if Session.menu_pending:
 		menu.open()
 
 	colony_panel = ColonyPanel.new()
@@ -309,8 +309,8 @@ func _ready() -> void:
 	# A pending load is applied last, over the top of a world that has
 	# just been built to the saved settings -- see SaveGame's note on why
 	# it replays state rather than restoring a scene tree.
-	if GameConfig.load_pending:
-		GameConfig.load_pending = false
+	if Session.load_pending:
+		Session.load_pending = false
 		_restore(SaveGame.read())
 
 # --- world building -----------------------------------------------
@@ -421,7 +421,7 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 ## at least one of each resource so both are coming in from the first
 ## moment and the queen isn't stalled waiting for pollen.
 func _spawn_starting_foragers() -> void:
-	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	var level: Dictionary = LEVELS.get(Session.starting_level, {})
 	if not level.is_empty():
 		for i in range(int(level.nectar_foragers)):
 			_spawn_bee("nectar")
@@ -578,7 +578,7 @@ func _add_entrance_marker() -> void:
 
 func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 	var cells: Array = []
-	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	var level: Dictionary = LEVELS.get(Session.starting_level, {})
 	var starting_count: int = int(level.cells) if not level.is_empty() else int(GameConfig.hive_cell_count)
 	for i in range(starting_count):
 		var cell_hex: Vector2i = Shapes.hex_spiral_at(i)
@@ -618,7 +618,7 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	hive_root.add_child(queen)
 	queen.setup(hive, "pollen", 0, Bee.Role.EGG_LAYER, self)
 
-	var level: Dictionary = LEVELS.get(GameConfig.starting_level, {})
+	var level: Dictionary = LEVELS.get(Session.starting_level, {})
 	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
 	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
 	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)
@@ -788,8 +788,8 @@ func _process(delta: float) -> void:
 	_apply_scenery_setting()
 
 	if not get_tree().paused:
-		GameConfig.sim_time += delta
-		var new_day: int = 1 + int(GameConfig.sim_time / max(1.0, GameConfig.seconds_per_day))
+		Session.sim_time += delta
+		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
 		if new_day != day:
 			day = new_day
 			hud.update_day(day)
@@ -854,7 +854,7 @@ func _hatch_ready_brood() -> void:
 ## at which point foragers stay in.
 func _advance_weather(delta: float) -> void:
 	if not GameConfig.weather_on:
-		GameConfig.rain_intensity = 0.0
+		Session.rain_intensity = 0.0
 		_apply_rain_overlay()
 		return
 
@@ -876,14 +876,14 @@ func _advance_weather(delta: float) -> void:
 
 	# eased rather than switched, so bees aren't grounded from one frame
 	# to the next
-	GameConfig.rain_intensity = move_toward(GameConfig.rain_intensity, rain_target, delta * 0.25)
+	Session.rain_intensity = move_toward(Session.rain_intensity, rain_target, delta * 0.25)
 	_apply_rain_overlay()
 
 func _apply_rain_overlay() -> void:
 	if rain_overlay == null:
 		return
-	rain_overlay.color = Color(0.35, 0.45, 0.62, GameConfig.rain_intensity * 0.35)
-	var showing: bool = GameConfig.rain_intensity > 0.01 and not in_hive_view
+	rain_overlay.color = Color(0.35, 0.45, 0.62, Session.rain_intensity * 0.35)
+	var showing: bool = Session.rain_intensity > 0.01 and not in_hive_view
 	rain_overlay.visible = showing
 	# Rain is only visible from outside. Inside the hive you find out
 	# about it the way the colony does -- the foragers stop coming back.
@@ -918,7 +918,7 @@ func _check_colony_energy(delta: float) -> void:
 		return
 	warning_check_timer = 5.0
 
-	if GameConfig.sim_time - last_energy_warning < GameConfig.low_energy_gap:
+	if Session.sim_time - last_energy_warning < GameConfig.low_energy_gap:
 		return
 
 	var bees: Array = get_tree().get_nodes_in_group("bees")
@@ -933,7 +933,7 @@ func _check_colony_energy(delta: float) -> void:
 	if share < GameConfig.low_energy_warning_fraction:
 		return
 
-	last_energy_warning = GameConfig.sim_time
+	last_energy_warning = Session.sim_time
 	hud.show_warning(
 		"%d of your %d bees (%d%%) are below %d%% energy. The colony is burning nectar faster than it is bringing it in — put more bees on nectar foraging, or they will start to starve."
 		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)]
@@ -1009,9 +1009,9 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["No foragers — nothing is coming in", 1])
 	if comb workers == 0 and dead_cells > 0:
 		lines.append(["No comb workers to clear the blocked cells", 1])
-	if GameConfig.rain_intensity > GameConfig.rain_forage_limit:
+	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		lines.append(["Raining hard — foragers are grounded", 1])
-	elif GameConfig.rain_intensity > 0.05:
+	elif Session.rain_intensity > 0.05:
 		lines.append(["Raining — nectar is watered down and flying costs more", 0])
 
 	hud.update_signals(lines)
@@ -1093,7 +1093,7 @@ func _winter_forecast() -> Dictionary:
 	var held: float = (
 		hive.total("nectar") + hive.total_honey() * GameConfig.honey_energy_factor
 	)
-	var days_left: float = max(0.0, GameConfig.winter_starts_day - day)
+	var days_left: float = max(0.0, Session.winter_starts_day - day)
 	return {
 		"bees": bees,
 		"required_energy": required,
@@ -1103,17 +1103,17 @@ func _winter_forecast() -> Dictionary:
 
 ## Starts the countdown. Called from the tuning panel.
 func begin_winter_countdown() -> void:
-	GameConfig.winter_coming = true
-	GameConfig.winter_starts_day = day + GameConfig.winter_countdown_days
+	Session.winter_coming = true
+	Session.winter_starts_day = day + GameConfig.winter_countdown_days
 	winter_panel.open()
 	hud.set_winter_button_visible(true)
 	hud.show_warning(
 		"Winter will arrive on day %d. The forecast in the top right shows what the colony will need to last it out, and how far short it is. Every bee you add between now and then is another mouth to feed through it."
-		% int(GameConfig.winter_starts_day)
+		% int(Session.winter_starts_day)
 	)
 
 func _refresh_winter() -> void:
-	if not GameConfig.winter_coming:
+	if not Session.winter_coming:
 		return
 	var forecast := _winter_forecast()
 	winter_panel.refresh(forecast)
@@ -1121,7 +1121,7 @@ func _refresh_winter() -> void:
 	hud.refresh_corner()
 
 func _nursery_stat_pinned() -> bool:
-	for key in GameConfig.pinned_stats:
+	for key in Session.pinned_stats:
 		if str(key).begins_with("nursery_"):
 			return true
 	return false
@@ -1139,7 +1139,7 @@ func _sample_history(delta: float) -> void:
 	# ever had.
 	_trim_emergence_log()
 	history_samples.append({
-		"t": GameConfig.sim_time,
+		"t": Session.sim_time,
 		"bees": get_tree().get_nodes_in_group("bees").size(),
 		"nectar": hive.total("nectar"),
 		"pollen": hive.total("pollen"),
@@ -1159,7 +1159,7 @@ func _emergence_counts() -> Dictionary:
 	return counts
 
 func _trim_emergence_log() -> void:
-	var cutoff: float = GameConfig.sim_time - GameConfig.emergence_window_seconds
+	var cutoff: float = Session.sim_time - GameConfig.emergence_window_seconds
 	while not emergence_log.is_empty() and float(emergence_log[0].t) < cutoff:
 		emergence_log.pop_front()
 
@@ -1269,13 +1269,13 @@ func _restore(data: Dictionary) -> void:
 		return
 
 	var clock: Dictionary = data.get("clock", {})
-	GameConfig.sim_time = float(clock.get("sim_time", 0.0))
+	Session.sim_time = float(clock.get("sim_time", 0.0))
 	day = int(clock.get("day", 1))
 	next_bee_id = int(clock.get("next_bee_id", 1))
 	hud.update_day(day)
 
 	var weather: Dictionary = data.get("weather", {})
-	GameConfig.rain_intensity = float(weather.get("intensity", 0.0))
+	Session.rain_intensity = float(weather.get("intensity", 0.0))
 	rain_target = float(weather.get("target", 0.0))
 	rain_seconds_left = float(weather.get("seconds_left", 0.0))
 
@@ -1284,9 +1284,20 @@ func _restore(data: Dictionary) -> void:
 	hive.lifetime_pollen_collected = float(totals.get("pollen", 0.0))
 	hive.lifetime_births = int(totals.get("births", 0))
 
+	var session_state: Dictionary = data.get("session", {})
+	Session.winter_coming = bool(session_state.get("winter_coming", false))
+	Session.winter_starts_day = float(session_state.get("winter_starts_day", 0.0))
+	Session.winter_here = bool(session_state.get("winter_here", false))
+	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
+	Session.gynes_released = int(session_state.get("gynes_released", 0))
+	hud.set_winter_button_visible(Session.winter_coming)
+
 	_restore_soil(data.get("soil", {}))
 	_restore_cells(data.get("cells", []))
+	_restore_hive_state(data.get("hive", {}))
 	_restore_flowers(data.get("flowers", []))
+	# Bees last: their orders point at cells, so the comb has to exist
+	# before those references can be resolved.
 	_restore_bees(data.get("bees", []))
 
 	hive.build_navigation()
@@ -1370,6 +1381,37 @@ func _restore_cells(cells: Array) -> void:
 		hive.cells.append(cell)
 		hive.register_tile(hex, cell)
 
+## Hive-level state that isn't a cell: reserved open ground, and the
+## queen's priority credit. Restoring the credit matters more than it
+## looks -- starting it from zero would give whichever tier happened to
+## come first an extra egg on every load.
+func _restore_hive_state(state: Dictionary) -> void:
+	hive.keep_clear_tiles.clear()
+	for pair in state.get("keep_clear", []):
+		hive.keep_clear_tiles[Vector2i(int(pair[0]), int(pair[1]))] = true
+	var credit: Array = state.get("tier_credit", [])
+	if credit.size() == 3:
+		hive._tier_credit = [float(credit[0]), float(credit[1]), float(credit[2])]
+	hive._brood_pointer = int(state.get("brood_pointer", 0))
+
+## Turns saved tile references back into the cells now sitting on those
+## tiles. Anything whose tile no longer holds a cell is dropped.
+func _cells_at(refs: Array) -> Array:
+	var out: Array = []
+	for pair in refs:
+		var node = hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+		if node != null and is_instance_valid(node) and node.is_in_group("hive_cells"):
+			out.append(node)
+	return out
+
+func _blocks_at(refs: Array) -> Array:
+	var out: Array = []
+	for pair in refs:
+		var node = hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
+			out.append(node)
+	return out
+
 func _restore_flowers(flowers: Array) -> void:
 	for f in get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(f):
@@ -1423,6 +1465,28 @@ func _restore_bees(bees: Array) -> void:
 		bee.preferred_species = str(entry.get("preferred", ""))
 		bee.forage_start_point = Vector2(float(entry.get("start_x", INF)), float(entry.get("start_y", INF)))
 
+		# The bee's own orders. Tile references rather than nodes, since
+		# every cell and block was rebuilt a moment ago.
+		bee.build_queue = []
+		for pair in entry.get("build_queue", []):
+			bee.build_queue.append(Vector2i(int(pair[0]), int(pair[1])))
+		bee.has_manual_build_target = not bee.build_queue.is_empty()
+		if bee.has_manual_build_target:
+			bee.manual_build_hex = bee.build_queue[0]
+		bee.mine_queue = _blocks_at(entry.get("mine_queue", []))
+
+		var home: Array = entry.get("home_hex", [])
+		if home.size() == 2:
+			bee.set_home_hex(Vector2i(int(home[0]), int(home[1])))
+		var mine_home: Array = entry.get("mine_home", [])
+		if mine_home.size() == 2:
+			bee.set_mine_home_hex(Vector2i(int(mine_home[0]), int(mine_home[1])))
+
+		bee.restock_resource = str(entry.get("restock_resource", ""))
+		bee.restock_targets = _cells_at(entry.get("restock_targets", []))
+		bee.restock_sources = _cells_at(entry.get("restock_sources", []))
+		bee.restock_blocked = _cells_at(entry.get("restock_blocked", []))
+
 		if bee.is_queen:
 			queen = bee
 
@@ -1431,14 +1495,14 @@ func _restore_bees(bees: Array) -> void:
 	colony_lost = false
 
 func _on_restart_after_loss() -> void:
-	GameConfig.sim_time = 0.0
+	Session.reset_run_state()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
 
 func _sample_rates() -> void:
 	rate_samples.append({
-		"t": GameConfig.sim_time,
+		"t": Session.sim_time,
 		"nectar": hive.lifetime_nectar_collected,
 		"pollen": hive.lifetime_pollen_collected,
 		"births": hive.lifetime_births,
@@ -1964,7 +2028,7 @@ func _record_emergence(role: int, focus: String, as_gyne: bool) -> void:
 	var key: String = "gyne"
 	if not as_gyne:
 		key = "%d|%s" % [role, focus] if role == Bee.Role.FORAGER else "%d|" % role
-	emergence_log.append({"t": GameConfig.sim_time, "key": key})
+	emergence_log.append({"t": Session.sim_time, "key": key})
 
 # --- the nursery zone ---------------------------------------------
 
@@ -2136,7 +2200,7 @@ func _designate_one(cell: Node2D, type: String) -> void:
 
 	if hive.has_room_elsewhere(cell.content_type, cell):
 		cell.set_designation(type)   # a builder will come and shift it
-	elif GameConfig.warn_on_discard:
+	elif Session.warn_on_discard:
 		hud.show_discard_warning(cell, type, cell.content_type, cell.amount)
 	else:
 		cell.clear_cell()
@@ -2208,9 +2272,9 @@ func _set_keep_empty(cell: Node2D, keep_empty: bool) -> void:
 	cell.keep_empty = keep_empty
 
 func _on_level_chosen(level: int) -> void:
-	GameConfig.starting_level = level
-	GameConfig.menu_pending = false
-	GameConfig.sim_time = 0.0
+	Session.starting_level = level
+	Session.menu_pending = false
+	Session.reset_run_state()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()

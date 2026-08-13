@@ -590,7 +590,26 @@ const TUNABLES := [
 		"category": "Interface",
 		"tip": "Show the small round 'i' buttons next to controls. Turn them off once you know what everything does and the panels get a lot quieter. Takes effect immediately.",
 	},
+	{
+		"key": "colour_blind_mode", "label": "Colour-blind labels", "toggle": true,
+		"category": "Interface",
+		"tip": "Add a short text label wherever colour would otherwise be the only thing telling two states apart: what a cell holds, the nursery ring, the comb overlays and the zone glow. Around one man in twelve has some colour vision deficiency, and several of the palettes here are exactly the ones that fail -- but the labels are clearer for everyone at small sizes, so it is worth trying either way. Takes effect immediately.",
+	},
 ]
+
+## Settings that live in Session rather than GameConfig -- the player's
+## own preferences, as opposed to numbers that change how the game plays.
+## The panel edits both, so it needs to know which object to ask.
+const SESSION_KEYS := ["show_info_badges", "colour_blind_mode"]
+
+static func setting_get(key: String):
+	return Session.get(key) if key in SESSION_KEYS else GameConfig.get(key)
+
+static func setting_set(key: String, value) -> void:
+	if key in SESSION_KEYS:
+		Session.set(key, value)
+	else:
+		GameConfig.set(key, value)
 
 var value_labels: Dictionary = {}
 var panel: PanelContainer
@@ -653,7 +672,7 @@ func _rows_in(category: String) -> Array:
 			continue
 		# guard against a renamed setting leaving a dead row behind --
 		# that used to crash the panel on startup with a confusing error
-		if GameConfig.get(entry.key) == null:
+		if setting_get(entry.key) == null:
 			push_warning("Tuning panel refers to a missing setting: %s" % entry.key)
 			continue
 		found.append(entry)
@@ -782,8 +801,8 @@ func _on_load_pressed() -> void:
 		push_warning("There is no save to load")
 		return
 	SaveGame.apply_settings(data)
-	GameConfig.load_pending = true
-	GameConfig.menu_pending = false
+	Session.load_pending = true
+	Session.menu_pending = false
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
@@ -799,7 +818,7 @@ func _make_row(entry: Dictionary) -> Control:
 	var lbl := Label.new()
 	lbl.add_theme_font_size_override("font_size", 11)
 	lbl.custom_minimum_size = Vector2(140, 0)
-	lbl.text = "%s: %s" % [entry.label, _format_value(GameConfig.get(entry.key))]
+	lbl.text = "%s: %s" % [entry.label, _format_value(setting_get(entry.key))]
 	value_labels[entry.key] = lbl
 	row.add_child(lbl)
 
@@ -828,22 +847,28 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	var box := CheckBox.new()
 	box.text = entry.label
 	box.add_theme_font_size_override("font_size", 11)
-	box.button_pressed = GameConfig.get(entry.key)
+	box.button_pressed = setting_get(entry.key)
 	var key: String = entry.key
 	box.toggled.connect(func(pressed: bool):
-		GameConfig.set(key, pressed)
+		setting_set(key, pressed)
 		if key == "show_info_badges":
 			# applies to every badge already on screen, not just new ones
 			UI.refresh_badge_visibility(self)
+		elif key == "colour_blind_mode":
+			# every cell relabels itself on its next frame; the panels are
+			# told so they can redraw their keys straight away
+			for panel in get_tree().get_nodes_in_group("colour_blind_listeners"):
+				if is_instance_valid(panel) and panel.has_method("colour_blind_changed"):
+					panel.colour_blind_changed()
 	)
 	row.add_child(box)
 	row.add_child(UI.info_badge(entry.tip))
 	return row
 
 func _adjust(entry: Dictionary, delta: float) -> void:
-	var new_value: float = GameConfig.get(entry.key) + delta
+	var new_value: float = setting_get(entry.key) + delta
 	new_value = max(new_value, entry.min)
-	GameConfig.set(entry.key, new_value)
+	setting_set(entry.key, new_value)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _format_value(new_value)]
 
 func _format_value(v) -> String:
@@ -870,5 +895,5 @@ func _on_main_menu_pressed() -> void:
 func _restart() -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	GameConfig.sim_time = 0.0
+	Session.reset_run_state()
 	get_tree().reload_current_scene()

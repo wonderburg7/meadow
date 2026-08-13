@@ -317,7 +317,7 @@ func _build_top_right_bar() -> void:
 	winter_button = Button.new()
 	winter_button.text = "Winter"
 	winter_button.custom_minimum_size = Vector2(62, 26)
-	winter_button.visible = GameConfig.winter_coming
+	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	bar.add_child(winter_button)
 
@@ -1018,7 +1018,7 @@ func _on_discard_confirmed() -> void:
 
 func _on_discard_custom_action(action: StringName) -> void:
 	if action == "discard_always":
-		GameConfig.warn_on_discard = false
+		Session.warn_on_discard = false
 		discard_dialog.hide()
 		_apply_discard()
 
@@ -1084,9 +1084,9 @@ func update_signals(lines: Array) -> void:
 func _refresh_corner() -> void:
 	var signature := ""
 	for key in CORNER_ORDER:
-		if GameConfig.pinned_stats.has(key):
+		if Session.pinned_stats.has(key):
 			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
-	var show_signals: bool = GameConfig.pinned_stats.has("signals")
+	var show_signals: bool = Session.pinned_stats.has("signals")
 	if show_signals:
 		for entry in shown_signals:
 			signature += "s%d|%s\n" % [entry[1], entry[0]]
@@ -1098,7 +1098,7 @@ func _refresh_corner() -> void:
 		child.queue_free()
 
 	for key in CORNER_ORDER:
-		if not GameConfig.pinned_stats.has(key):
+		if not Session.pinned_stats.has(key):
 			continue
 		var text: String = str(corner_texts.get(key, ""))
 		if text == "":

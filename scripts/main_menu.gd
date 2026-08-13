@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## It opens by itself the first time the game is launched, and after that
 ## only when the player picks "Return to Main Menu" in the tuning panel.
-## Choosing a stage sets GameConfig.starting_level and reloads the scene
+## Choosing a stage sets Session.starting_level and reloads the scene
 ## (main.gd does the reloading, via the level_chosen signal), so every
 ## stage is built by the same world-building code rather than a separate
 ## path that could drift out of step.
@@ -123,7 +123,7 @@ func open() -> void:
 func close() -> void:
 	visible = false
 	get_tree().paused = false
-	GameConfig.menu_pending = false
+	Session.menu_pending = false
 
 func _choose(level: int) -> void:
 	visible = false
