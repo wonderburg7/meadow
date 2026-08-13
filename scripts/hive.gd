@@ -497,11 +497,34 @@ func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 
 	return _start_site_at(hex)
 
-## Buildable means open, walkable ground with nothing already on it.
+## Tiles the player has asked to be left as open floor. Architects skip
+## these when picking a site, so you can keep a corridor through the
+## middle of the comb or leave a landing area by the entrance rather than
+## having the hive slowly fill in solid.
+##
+## Colony-wide rather than per-bee: "don't build here" is a fact about
+## the hive, and having each architect hold its own copy would mean the
+## rule quietly stopped applying as bees died and were replaced.
+var keep_clear_tiles: Dictionary = {}
+
+func set_keep_clear(hex: Vector2i, value: bool) -> void:
+	if value:
+		keep_clear_tiles[hex] = true
+	else:
+		keep_clear_tiles.erase(hex)
+
+func is_keep_clear(hex: Vector2i) -> bool:
+	return keep_clear_tiles.has(hex)
+
+## Buildable means open, walkable ground with nothing already on it that
+## the player hasn't reserved as open space.
 ## `tile_is_walkable` is the honest test: it's true for exactly the tiles
 ## a bee can stand on, which is the same set comb can be drawn on.
+func can_build_on(hex: Vector2i) -> bool:
+	return tile_is_free(hex) and tile_is_walkable(hex) and not is_keep_clear(hex)
+
 func _can_build_on(hex: Vector2i) -> bool:
-	return tile_is_free(hex) and tile_is_walkable(hex)
+	return can_build_on(hex)
 
 func _start_site_at(hex: Vector2i) -> Node2D:
 	var cell := HiveCell.new()

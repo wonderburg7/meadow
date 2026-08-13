@@ -35,6 +35,7 @@ const GameOver = preload("res://scripts/game_over.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
 const NurseryPanel = preload("res://scripts/nursery_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
+const RainEffect = preload("res://scripts/rain_effect.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
@@ -47,6 +48,16 @@ const LEVELS := {
 	2: {"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0, "nurses": 0, "builders": 0, "miners": 0},
 	3: {"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1, "nurses": 0, "builders": 0, "miners": 0},
 	4: {"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3, "nurses": 2, "builders": 2, "miners": 2},
+	# An established colony: enough bees and stores that the interesting
+	# decisions are about where it goes next rather than whether it
+	# survives the first week. `automine` puts the miners straight to
+	# work, and `stock` fills some of the comb so the queen can lay from
+	# the first moment instead of waiting on the first pollen delivery.
+	5: {
+		"cells": 12, "nectar_foragers": 16, "pollen_foragers": 6,
+		"nurses": 4, "builders": 3, "miners": 3, "automine": true,
+		"stock": {"nectar": 4, "pollen": 2},
+	},
 }
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
@@ -121,6 +132,7 @@ var weather_timer: float = 0.0
 var rain_target: float = 0.0
 var rain_seconds_left: float = 0.0
 var rain_overlay: ColorRect
+var rain_effect: Node2D
 
 ## Sim time the low-energy warning was last shown, so it can't nag. -INF
 ## means it hasn't been shown at all yet this run.
@@ -159,9 +171,12 @@ var pan_anchor: Vector2 = Vector2.ZERO
 var awaiting_build_cell: bool = false
 var awaiting_home_cell: bool = false
 var awaiting_mine_home: bool = false
+var awaiting_mine_target: bool = false
+var awaiting_keep_clear: bool = false
 var pending_builder_bees: Array = []
 var pending_home_bees: Array = []
 var pending_mine_bees: Array = []
+var pending_mine_target_bees: Array = []
 var awaiting_forage_start: bool = false
 var pending_forage_bees: Array = []
 var awaiting_floral_preference: bool = false
@@ -203,6 +218,11 @@ func _ready() -> void:
 	rain_overlay.visible = false
 	weather_layer.add_child(rain_overlay)
 
+	# The falling streaks themselves, over the colour wash. Screen-space,
+	# so they don't slide about when the camera pans.
+	rain_effect = RainEffect.new()
+	weather_layer.add_child(rain_effect)
+
 
 	selection_layer = Node2D.new()
 	selection_layer.z_index = 100
@@ -224,6 +244,11 @@ func _ready() -> void:
 	hud.build_cell_requested.connect(_on_build_cell_requested)
 	hud.home_cell_requested.connect(_on_home_cell_requested)
 	hud.mine_home_requested.connect(_on_mine_home_requested)
+	hud.mine_target_requested.connect(_on_mine_target_requested)
+	hud.keep_clear_requested.connect(_on_keep_clear_requested)
+	hud.restock_targets_requested.connect(_on_restock_targets_requested)
+	hud.restock_sources_requested.connect(_on_restock_sources_requested)
+	hud.restock_clear_requested.connect(_on_restock_clear_requested)
 	hud.soil_mark_requested.connect(_on_soil_mark_requested)
 	hud.cell_zone_requested.connect(_on_cell_zone_requested)
 	hud.cell_priority_requested.connect(_on_cell_priority_requested)
@@ -523,6 +548,25 @@ func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 		cells.append(cell)
 		hive.register_tile(cell_hex, cell)
 	hive.cells = cells
+	_stock_starting_comb(cells, level)
+
+## Puts something in the comb before the run starts, for stages that
+## begin partway in. Filled cells are taken from the outside of the
+## spiral inwards, leaving the middle free for the queen to lay in --
+## otherwise she has nowhere to start and the stocked hive is worse off
+## than an empty one.
+func _stock_starting_comb(cells: Array, level: Dictionary) -> void:
+	var stock: Dictionary = level.get("stock", {})
+	if stock.is_empty() or cells.is_empty():
+		return
+	var index: int = cells.size() - 1
+	for resource in ["nectar", "pollen", "honey"]:
+		for i in range(int(stock.get(resource, 0))):
+			if index < 0:
+				return
+			var cell = cells[index]
+			cell.add_resource(resource, cell.capacity_for(resource))
+			index -= 1
 
 func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: float) -> void:
 	# the queen is an ordinary bee with is_queen set -- she can be
@@ -543,7 +587,11 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	for i in range(builders):
 		_spawn_indoor_bee(Bee.Role.BUILDER)
 	for i in range(miners):
-		_spawn_indoor_bee(Bee.Role.MINER)
+		var miner := _spawn_indoor_bee(Bee.Role.MINER)
+		# Later stages start their miners already working, so the hive is
+		# visibly opening up rather than waiting to be told to.
+		if miner != null and bool(level.get("automine", false)):
+			miner.automine = true
 	for i in range(honey_makers):
 		_spawn_indoor_bee(Bee.Role.HONEY_MAKER)
 
@@ -664,12 +712,13 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 		bee.state = Bee.State.IN_HIVE_TO_EXIT
 	# other roles: setup() already left it in the right indoor idle state
 
-func _spawn_indoor_bee(role: int) -> void:
+func _spawn_indoor_bee(role: int) -> Node2D:
 	var bee := Bee.new()
 	bee.position = _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
 	hive_root.add_child(bee)
 	bee.setup(hive, "nectar", next_bee_id, role, self)
 	next_bee_id += 1
+	return bee
 
 # --- moving bees between the meadow and the hive ------------------
 
@@ -793,7 +842,12 @@ func _apply_rain_overlay() -> void:
 	if rain_overlay == null:
 		return
 	rain_overlay.color = Color(0.35, 0.45, 0.62, GameConfig.rain_intensity * 0.35)
-	rain_overlay.visible = GameConfig.rain_intensity > 0.01 and not in_hive_view
+	var showing: bool = GameConfig.rain_intensity > 0.01 and not in_hive_view
+	rain_overlay.visible = showing
+	# Rain is only visible from outside. Inside the hive you find out
+	# about it the way the colony does -- the foragers stop coming back.
+	if rain_effect != null:
+		rain_effect.visible = showing
 
 ## The queen is the only bee that can lay and there is no succession, so
 ## losing her ends the run. Checked here rather than from the bee itself
@@ -1358,10 +1412,13 @@ func _apply_view() -> void:
 	meadow_root.visible = not in_hive_view
 	hive_root.visible = in_hive_view
 	hud.set_view_label(in_hive_view)
-	# the zone glow and the dimming only make sense over the comb, so
-	# they follow the view rather than waiting for the next refresh
+	# the zone glow only makes sense over the comb, and the rain only
+	# outside it, so both follow the view rather than waiting for the
+	# next refresh -- which matters because that refresh is paused with
+	# the game
 	if nursery_panel != null:
 		_apply_zone_glow()
+	_apply_rain_overlay()
 
 # --- speed --------------------------------------------------------
 
@@ -1437,8 +1494,17 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	dragging = false
 	selection_layer.queue_redraw()
 
+	# Placement modes consume the click. Ctrl held means "and another",
+	# so the mode stays on and the target is added to the end of the
+	# order rather than replacing it.
 	if awaiting_build_cell:
-		_place_build_cell(drag_start)
+		_place_build_cell(drag_start, add_to_group_selection)
+		return
+	if awaiting_mine_target:
+		_place_mine_target(drag_start, add_to_group_selection)
+		return
+	if awaiting_keep_clear:
+		_place_keep_clear(drag_start, add_to_group_selection)
 		return
 	if awaiting_home_cell:
 		_place_home_cell(drag_start)
@@ -1678,14 +1744,54 @@ func _flower_at(point: Vector2) -> Node2D:
 ## (soil, already-occupied tile, outside the hollow) is silently ignored
 ## rather than nagging the player -- the builder just falls back to
 ## automatic placement, same as any other failed manual target.
-func _place_build_cell(global_point: Vector2) -> void:
-	awaiting_build_cell = false
-	var local_point: Vector2 = hive_root.to_local(global_point)
-	var hex: Vector2i = Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
+func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
+	var hex: Vector2i = _hex_at(global_point)
 	for b in pending_builder_bees:
-		if is_instance_valid(b):
+		if not is_instance_valid(b):
+			continue
+		if keep_adding:
+			b.queue_build_target(hex)
+		else:
 			b.set_manual_build_target(hex)
+	# Ctrl keeps the mode live so a run of tiles can be clicked in the
+	# order they should be built, without going back to the button.
+	if keep_adding:
+		return
+	awaiting_build_cell = false
 	pending_builder_bees = []
+
+## Consumes the click after "Mine": adds a block to the selected miners'
+## own dig order.
+func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
+	var block := _soil_at(global_point)
+	if block != null:
+		for b in pending_mine_target_bees:
+			if not is_instance_valid(b):
+				continue
+			if keep_adding:
+				b.queue_mine_target(block)
+			else:
+				b.set_mine_target(block)
+	if keep_adding:
+		return
+	awaiting_mine_target = false
+	pending_mine_target_bees = []
+
+## Consumes the click after "Keep clear": flags a tile as one no
+## architect will build on. Clicking a flagged tile again clears it, so
+## the one button both sets and unsets.
+func _place_keep_clear(global_point: Vector2, keep_adding: bool) -> void:
+	var hex: Vector2i = _hex_at(global_point)
+	if hive.tile_is_walkable(hex):
+		hive.set_keep_clear(hex, not hive.is_keep_clear(hex))
+	if keep_adding:
+		return
+	awaiting_keep_clear = false
+
+## The hex tile under a global (screen-derived) point, in the hive view.
+func _hex_at(global_point: Vector2) -> Vector2i:
+	var local_point: Vector2 = hive_root.to_local(global_point)
+	return Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
 
 ## Consumes the click that follows a "Set home cell" request: the tile an
 ## architect will fill outwards from when picking its own sites.
@@ -2004,6 +2110,66 @@ func _on_build_cell_requested() -> void:
 	if pending_builder_bees.is_empty():
 		return
 	awaiting_build_cell = true
+	_ensure_hive_view()
+
+## "Mine": the next click (or run of ctrl-clicks) sets this miner's own
+## dig order.
+func _on_mine_target_requested() -> void:
+	pending_mine_target_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.MINER)
+	if pending_mine_target_bees.is_empty():
+		return
+	awaiting_mine_target = true
+	_ensure_hive_view()
+
+## "Keep clear": the next click flags a tile no architect will build on.
+## Colony-wide, so it doesn't matter which architect was selected.
+func _on_keep_clear_requested() -> void:
+	awaiting_keep_clear = true
+	_ensure_hive_view()
+
+# --- restocking orders --------------------------------------------
+## These act on the current comb selection rather than entering a
+## click-a-spot mode: you pick the cells the ordinary way, then say what
+## they are for. Selecting comb is something the player already does
+## constantly, so reusing it beats inventing a fourth placement mode.
+
+func _restock_architects() -> Array:
+	return selected_bees.filter(func(b):
+		return is_instance_valid(b) and b.role == Bee.Role.BUILDER
+	)
+
+func _on_restock_targets_requested(resource: String) -> void:
+	var cells: Array = selected_cells.filter(func(c): return is_instance_valid(c))
+	if cells.is_empty():
+		hud.show_warning("Select the comb you want kept full first, then press the resource.")
+		return
+	for b in _restock_architects():
+		b.set_restock_targets(cells, resource)
+		b.architect_mode = "restock"
+	# The cells have to be reserved for the resource, or foragers will
+	# keep filling them with whatever arrives and the architect will
+	# spend its life undoing that.
+	for cell in cells:
+		_designate_one(cell, resource)
+	_clear_cell_selection()
+	hud.update_selection(selected_bees)
+
+func _on_restock_sources_requested(allowed: bool) -> void:
+	var cells: Array = selected_cells.filter(func(c): return is_instance_valid(c))
+	if cells.is_empty():
+		hud.show_warning("Select the comb you mean first, then press the button.")
+		return
+	for b in _restock_architects():
+		b.set_restock_sources(cells, allowed)
+	_clear_cell_selection()
+	hud.update_selection(selected_bees)
+
+func _on_restock_clear_requested() -> void:
+	for b in _restock_architects():
+		b.clear_restock()
+	hud.update_selection(selected_bees)
+
+func _ensure_hive_view() -> void:
 	if not in_hive_view:
 		in_hive_view = true
 		_apply_view()
@@ -2042,6 +2208,79 @@ func _draw_selection_box() -> void:
 		for b in selected_bees:
 			if is_instance_valid(b) and b.role == Bee.Role.FORAGER and b.has_forage_start_point():
 				_draw_start_point_marker(b.forage_start_point)
+		return
+
+	_draw_hive_orders()
+
+# --- showing a bee's orders ---------------------------------------
+## Everything here is drawn only while the bee holding the order is
+## selected, so the comb isn't permanently covered in other bees'
+## plans. The keep-clear tiles are the exception: they belong to the
+## colony, not to a bee, so they show for any selected architect.
+
+const BUILD_ORDER_COLOUR := Color(0.45, 0.85, 1.0)
+const MINE_ORDER_COLOUR := Color(1.0, 0.72, 0.30)
+const KEEP_CLEAR_COLOUR := Color(0.95, 0.45, 0.45)
+
+func _draw_hive_orders() -> void:
+	var any_architect := false
+	for b in selected_bees:
+		if not is_instance_valid(b):
+			continue
+		if b.role == Bee.Role.BUILDER:
+			any_architect = true
+			_draw_order_chain(b, _build_queue_points(b), BUILD_ORDER_COLOUR)
+		elif b.role == Bee.Role.MINER:
+			_draw_order_chain(b, _mine_queue_points(b), MINE_ORDER_COLOUR)
+
+	# Reserved open space, for any architect. Also shown while placing
+	# one, so you can see what's already flagged as you click.
+	if any_architect or awaiting_keep_clear:
+		for hex in hive.keep_clear_tiles.keys():
+			_draw_tile_outline(_tile_centre(hex), KEEP_CLEAR_COLOUR, 2.0, true)
+
+func _build_queue_points(bee: Node2D) -> Array:
+	var points: Array = []
+	for hex in bee.build_queue:
+		points.append(_tile_centre(hex))
+	return points
+
+func _mine_queue_points(bee: Node2D) -> Array:
+	var points: Array = []
+	for block in bee.mine_queue:
+		if is_instance_valid(block):
+			points.append(hive_root.to_global(block.position))
+	return points
+
+## A faint line from the bee through each of its targets in order, with
+## the tile outlined and numbered. The line is what turns a set of marks
+## into a plan you can read: it says which one is first.
+func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void:
+	if points.is_empty():
+		return
+	var previous: Vector2 = bee.global_position
+	for i in range(points.size()):
+		var point: Vector2 = points[i]
+		selection_layer.draw_line(previous, point, Color(colour.r, colour.g, colour.b, 0.35), 1.5)
+		_draw_tile_outline(point, colour, 2.0, false)
+		previous = point
+
+## One hexagon outline at a world point, sized to a comb tile. `dashed`
+## draws every other edge, which reads as "reserved" rather than "here is
+## a thing".
+func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void:
+	var corners: PackedVector2Array = Shapes.hexagon_points(GameConfig.hive_cell_size + 1.0)
+	for i in range(6):
+		if dashed and i % 2 == 1:
+			continue
+		selection_layer.draw_line(
+			centre + corners[i], centre + corners[(i + 1) % 6], colour, width
+		)
+
+func _tile_centre(hex: Vector2i) -> Vector2:
+	return hive_root.to_global(
+		hive.comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+	)
 
 func _draw_start_point_marker(point: Vector2) -> void:
 	var marker_color := Color(0.2, 1.0, 0.4, 0.95)

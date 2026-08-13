@@ -36,6 +36,7 @@ enum State {
 	TO_FEED_CELL, FEEDING,                                 # any bee, eating
 	BUILD_IDLE, TO_BUILD_SITE, BUILDING,                   # builder
 	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
+	TO_RESTOCK_SOURCE, TO_RESTOCK_TARGET,                  # builder, keeping cells topped up
 	TO_WASTE_EXIT, DUMPING_WASTE,                          # builder, throwing it out
 	TO_CLEAN_CELL, CLEANING,                               # architect, clearing a dead larva
 	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
@@ -170,6 +171,12 @@ var forage_start_point: Vector2 = Vector2(INF, INF)
 ## moment it's acted on, successfully or not, so a bad click can't loop.
 var manual_build_hex: Vector2i = Vector2i.ZERO
 var has_manual_build_target: bool = false
+## Tiles this architect has been told to build on, in the order they were
+## clicked. Only this bee works its own queue; other architects pick
+## their own sites as before.
+var build_queue: Array = []
+## The same for a miner: blocks it has been told to dig, in order.
+var mine_queue: Array = []
 
 ## An architect's own centre of operations. Left to pick its own sites it
 ## fills the space around this tile outwards in a honeycomb spiral,
@@ -395,6 +402,10 @@ func _process(delta: float) -> void:
 			_builder_go_to_site(delta)
 		State.BUILDING:
 			_builder_build(delta)
+		State.TO_RESTOCK_SOURCE:
+			_restock_go_to_source(delta)
+		State.TO_RESTOCK_TARGET:
+			_restock_go_to_target(delta)
 		State.TO_HAUL_SOURCE:
 			_builder_go_to_haul_source(delta)
 		State.TO_HAUL_TARGET:
@@ -1483,14 +1494,23 @@ func _try_role_work(r: int) -> bool:
 					state = State.TO_HAUL_SOURCE
 					return true
 
-			if architect_mode == "maintain":
+			# Keeping chosen cells topped up. Ranked with maintenance
+			# rather than building, because it's the same kind of job --
+			# moving what the colony already has to where it's wanted --
+			# and because a half-built cell can wait while the winter
+			# store runs dry.
+			if architect_mode == "restock" or architect_mode == "both":
+				if _find_restock_job():
+					return true
+
+			if architect_mode == "maintain" or architect_mode == "restock":
 				return false
 
 			var site: Node2D = null
-			if has_manual_build_target:
-				# Consumed either way -- if the tile turns out to be
-				# occupied or solid, falling through to automatic
-				# placement beats retrying the same bad hex forever.
+			# The player's own order comes first, worked front to back.
+			# Entries that have become unbuildable are skipped inside
+			# _take_next_build_target rather than stalling the queue.
+			while site == null and _take_next_build_target():
 				site = hive.create_cell_site_at(manual_build_hex)
 				has_manual_build_target = false
 			if site == null:
@@ -1513,7 +1533,12 @@ func _try_role_work(r: int) -> bool:
 			# block is dealt with does an automining bee pick its own:
 			# the exposed block nearest the central wax cell, so the
 			# hive opens up around itself rather than at the rim.
-			var block = hive.find_marked_block(_mine_reference_point())
+			# This miner's own order first, in the order it was given.
+			var block = _next_queued_block()
+			if block != null and hive.mine_stand_hex(block) == null:
+				block = null   # still buried; take another job meanwhile
+			if block == null:
+				block = hive.find_marked_block(_mine_reference_point())
 			if block == null and automine:
 				block = hive.find_nearest_edge_block(_mine_reference_point() if has_mine_home else Vector2(INF, INF))
 				if block != null:
@@ -1635,6 +1660,162 @@ func _builder_go_to_haul_source(delta: float) -> void:
 			state = State.TO_WASTE_EXIT
 			return
 		state = State.TO_HAUL_TARGET
+
+# --- keeping cells topped up ---------------------------------------
+## An architect on the restock sub-mode has a list of cells it keeps full
+## of one resource, drawing on the rest of the comb to do it.
+##
+## The point of it is placement. The colony's stores end up wherever the
+## foragers happened to put them, which is fine until something needs to
+## be *somewhere* -- honey next to the brood before winter, pollen within
+## reach of the nursery, a reserve by the entrance. Rather than adding a
+## new kind of bee, this is a job an architect can be given: it is already
+## the caste that moves things between cells.
+##
+## The source list is what stops it undoing your own arrangements. With
+## nothing chosen it takes from anywhere; name some cells and it takes
+## only from those; block some and it leaves them alone. That is what
+## lets you say "fill these from the outer comb, but never touch the
+## winter store".
+
+## Cells this architect keeps full, and of what.
+var restock_targets: Array = []
+var restock_resource: String = ""
+## Cells it may draw on. Empty means anywhere that isn't blocked.
+var restock_sources: Array = []
+var restock_blocked: Array = []
+
+func set_restock_targets(cells: Array, resource: String) -> void:
+	restock_targets = cells.duplicate()
+	restock_resource = resource
+
+func set_restock_sources(cells: Array, allowed: bool) -> void:
+	if allowed:
+		restock_sources = cells.duplicate()
+	else:
+		restock_blocked = cells.duplicate()
+
+func clear_restock() -> void:
+	restock_targets.clear()
+	restock_sources.clear()
+	restock_blocked.clear()
+	restock_resource = ""
+
+func has_restock_orders() -> bool:
+	return not restock_targets.is_empty() and restock_resource != ""
+
+## May this architect take `cell`'s contents to fill one of its targets?
+func _may_draw_from(cell: Node2D) -> bool:
+	if not is_instance_valid(cell) or restock_targets.has(cell):
+		return false          # never rob one target to fill another
+	if not cell.can_withdraw():
+		return false          # sealed
+	if restock_blocked.has(cell):
+		return false
+	if restock_sources.is_empty():
+		return true
+	return restock_sources.has(cell)
+
+## Finds the emptiest target that still has room and a cell to fill it
+## from. Emptiest first, so a set of cells fills evenly rather than one
+## being topped up repeatedly while another sits empty.
+func _find_restock_job() -> bool:
+	if not has_restock_orders() or hive == null:
+		return false
+
+	var neediest: Node2D = null
+	var least: float = INF
+	for cell in restock_targets:
+		if not is_instance_valid(cell) or cell.space_for(restock_resource) <= 0.0:
+			continue
+		var held: float = cell.amount if cell.content_type == restock_resource else 0.0
+		if held < least:
+			least = held
+			neediest = cell
+	if neediest == null:
+		return false
+
+	var source: Node2D = null
+	var most := 0.0
+	var bucket: String = "ripe_honey" if restock_resource == "honey" else restock_resource
+	for cell in hive.cells_holding(bucket):
+		if not _may_draw_from(cell) or cell.amount <= 0.0:
+			continue
+		# fullest first: emptying one cell completely beats leaving a
+		# trail of nearly empty ones behind
+		if cell.amount > most:
+			most = cell.amount
+			source = cell
+	if source == null:
+		return false
+
+	target_cell = source
+	haul_target = neediest
+	state = State.TO_RESTOCK_SOURCE
+	return true
+
+func _restock_go_to_source(delta: float) -> void:
+	if target_cell == null or not is_instance_valid(target_cell) or target_cell.content_type != restock_resource:
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+	if haul_target == null or not is_instance_valid(haul_target):
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+
+	var approach := _approach_cell(target_cell, delta)
+	if approach < 0:
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+	if approach != 1:
+		return
+
+	# Never lift more than the destination can hold, so nothing is left
+	# stranded in the bee's crop with nowhere to put it.
+	var room: float = haul_target.space_for(restock_resource)
+	var wanted: float = min(nectar_stomach_capacity, room)
+	var lifted: float = target_cell.take_resource(restock_resource, wanted)
+	_release_cell_slot()
+	if lifted <= 0.0:
+		target_cell = null
+		state = State.BUILD_IDLE
+		return
+	current_load = lifted
+	current_load_type = restock_resource
+	hive.announce()
+	target_cell = null
+	state = State.TO_RESTOCK_TARGET
+
+func _restock_go_to_target(delta: float) -> void:
+	if haul_target == null or not is_instance_valid(haul_target):
+		# The destination has gone. Put the load somewhere sensible
+		# rather than losing it.
+		haul_target = hive.find_cell_for(current_load_type)
+		if haul_target == null:
+			current_load = 0.0
+			current_load_type = ""
+			state = State.BUILD_IDLE
+			return
+
+	var approach := _approach_cell(haul_target, delta)
+	if approach < 0:
+		haul_target = null
+		state = State.BUILD_IDLE
+		return
+	if approach != 1:
+		return
+
+	var placed: float = haul_target.add_resource(current_load_type, current_load)
+	current_load -= placed
+	hive.announce()
+	_release_cell_slot()
+	haul_target = null
+	if current_load <= 0.001:
+		current_load = 0.0
+		current_load_type = ""
+	state = State.BUILD_IDLE
 
 func _builder_go_to_haul_target(delta: float) -> void:
 	if haul_target == null or not is_instance_valid(haul_target):
@@ -2015,9 +2196,66 @@ func set_preferred_species(species: String) -> void:
 
 ## `hex` is an axial coordinate relative to the comb centre, matching
 ## what hive.gd already uses for cells and soil blocks.
+##
+## Replaces whatever was queued. Ctrl-clicking uses queue_build_target
+## instead, which adds to the end.
 func set_manual_build_target(hex: Vector2i) -> void:
+	build_queue = [hex]
 	manual_build_hex = hex
 	has_manual_build_target = true
+
+## Adds a tile to the end of this architect's build order. The queue is
+## worked front to back, so the order you click is the order the comb
+## gets drawn -- which matters when you're extending towards something.
+func queue_build_target(hex: Vector2i) -> void:
+	if build_queue.has(hex):
+		return
+	build_queue.append(hex)
+	manual_build_hex = build_queue[0]
+	has_manual_build_target = true
+
+func clear_build_queue() -> void:
+	build_queue.clear()
+	has_manual_build_target = false
+
+## Takes the next tile off the front of the queue, or returns false when
+## there is nothing queued.
+func _take_next_build_target() -> bool:
+	while not build_queue.is_empty():
+		var hex: Vector2i = build_queue.pop_front()
+		if hive != null and hive.can_build_on(hex):
+			manual_build_hex = hex
+			has_manual_build_target = true
+			return true
+		# tile has been filled or dug away since it was queued -- skip it
+		# rather than stalling the whole order on one stale entry
+	has_manual_build_target = false
+	return false
+
+## Same idea for miners: an ordered list of blocks this bee will dig.
+func set_mine_target(block: Node2D) -> void:
+	mine_queue = [block] if is_instance_valid(block) else []
+	if is_instance_valid(block):
+		block.set_marked(true)
+
+func queue_mine_target(block: Node2D) -> void:
+	if not is_instance_valid(block) or mine_queue.has(block):
+		return
+	mine_queue.append(block)
+	block.set_marked(true)
+
+func clear_mine_queue() -> void:
+	mine_queue.clear()
+
+## The next block this miner should dig from its own order, skipping any
+## that have been dug out or unmarked since.
+func _next_queued_block() -> Node2D:
+	while not mine_queue.is_empty():
+		var block = mine_queue[0]
+		if is_instance_valid(block) and block.marked_for_mining:
+			return block
+		mine_queue.pop_front()
+	return null
 
 func set_home_hex(hex: Vector2i) -> void:
 	home_hex = hex
@@ -2275,6 +2513,10 @@ func task_description() -> String:
 			if target_cell and is_instance_valid(target_cell):
 				pct = int(target_cell.build_fraction() * 100.0)
 			return "building a new cell (%d%%)" % pct
+		State.TO_RESTOCK_SOURCE:
+			return "fetching %s to top up a cell it keeps full" % restock_resource
+		State.TO_RESTOCK_TARGET:
+			return "carrying %s to a cell it keeps full" % current_load_type
 		State.TO_HAUL_SOURCE:
 			return "going to clear a reassigned cell"
 		State.TO_HAUL_TARGET:
@@ -2351,11 +2593,13 @@ func nurse_mode_name() -> String:
 func architect_mode_name() -> String:
 	match architect_mode:
 		"build":
-			return "cell builder"
+			return "building"
 		"maintain":
-			return "cell maintenance"
+			return "maintenance"
+		"restock":
+			return "restocking %s" % (restock_resource if restock_resource != "" else "-- nothing set")
 		_:
-			return "both"
+			return "build & maintain"
 
 func _role_short_name(r: int) -> String:
 	match r:

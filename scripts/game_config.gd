@@ -187,7 +187,11 @@ var jelly_cell_capacity: float = 120.0
 ## a wet bee is a heavy bee, so flying costs more. Past
 ## `rain_forage_limit` a trip costs more than it brings back and foragers
 ## stay in.
-var weather_on: bool = true
+## Off to begin with. Rain is a complication on top of an economy that
+## is already the thing worth learning, and having it arrive unannounced
+## in someone's first run reads as the game being broken rather than as
+## weather. Switch it on once the foraging loop makes sense.
+var weather_on: bool = false
 var rain_chance_per_day: float = 0.45
 var rain_min_seconds: float = 40.0
 var rain_max_seconds: float = 130.0

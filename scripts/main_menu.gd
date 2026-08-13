@@ -37,6 +37,11 @@ const STAGES := [
 		"title": "Level 4 — Established nest",
 		"blurb": "Fifteen cells and a full crew: eleven foragers (eight on nectar, three on pollen), two nurses, two architects on both jobs, and two miners. Enough colony that keeping it fed is the challenge, not starting it.",
 	},
+	{
+		"level": 5,
+		"title": "Level 5 — In full swing",
+		"blurb": "Twenty-two foragers (sixteen on nectar, six on pollen), four nurses, three architects and three miners already digging. Twelve cells, four of them full of nectar and two of pollen, so the queen can lay from the first second. A colony big enough that what to do with it is the question.",
+	},
 ]
 
 var panel: PanelContainer
