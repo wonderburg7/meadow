@@ -273,6 +273,7 @@ func _ready() -> void:
 	hud.cell_fill_close_requested.connect(_on_cell_fill_close_requested)
 	hud.nursery_window_requested.connect(_on_nursery_window_requested)
 	hud.winter_window_requested.connect(func(): winter_panel.toggle())
+	hud.signal_clicked.connect(_on_signal_clicked)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
 	hud.finish_first_requested.connect(_on_finish_first_requested)
@@ -1042,11 +1043,11 @@ func _refresh_signals(delta: float) -> void:
 			free_cells += 1
 
 	if starving > 0:
-		lines.append(["%d bees are about to starve" % starving, 2])
+		lines.append(["%d bees are about to starve" % starving, 2, "starving"])
 	if hungry_brood > 0:
-		lines.append(["%d larvae are going hungry" % hungry_brood, 2])
+		lines.append(["%d larvae are going hungry" % hungry_brood, 2, "hungry_brood"])
 	if dead_cells > 0:
-		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2])
+		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2, "dead_cells"])
 	# Suppressed for the first week: a colony this young genuinely has no
 	# pollen and there is nothing useful to do about it, so saying so from
 	# the first minute is noise that teaches you to ignore the strip.
@@ -1055,15 +1056,15 @@ func _refresh_signals(delta: float) -> void:
 	if hive.total("nectar") < 40.0 and hive.total_honey() < 10.0:
 		lines.append(["Food is running out", 2])
 	if nurses == 0 and hive.cells_holding("brood").size() > 0:
-		lines.append(["No nurses — brood will not develop at all", 2])
+		lines.append(["No nurses — brood will not develop at all", 2, ""])
 	if free_cells == 0:
 		lines.append(["No free cells — nowhere to store or lay", 1])
 	if hungry > 0:
-		lines.append(["%d bees running low on energy" % hungry, 1])
+		lines.append(["%d bees running low on energy" % hungry, 1, "hungry"])
 	if foragers == 0:
-		lines.append(["No foragers — nothing is coming in", 1])
+		lines.append(["No foragers — nothing is coming in", 1, ""])
 	if comb workers == 0 and dead_cells > 0:
-		lines.append(["No comb workers to clear the blocked cells", 1])
+		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells"])
 	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		lines.append(["Raining hard — foragers are grounded", 1])
 	elif Session.rain_intensity > 0.05:
@@ -1225,6 +1226,48 @@ func _on_gyne_released(total: int) -> void:
 	)
 	_update_population_readout()
 
+## Clicking a line in the problem strip selects whatever it is about, or
+## takes you to it. Being told there are hungry larvae and then having to
+## hunt for them yourself is most of the work of acting on the warning.
+func _on_signal_clicked(action: String) -> void:
+	match action:
+		"starving":
+			_select_bees_where(func(b): return b.energy < GameConfig.energy_capacity * 0.15)
+		"hungry":
+			_select_bees_where(func(b): return b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level)
+		"hungry_brood":
+			_focus_cells(func(c): return c.content_type == "brood" and c.brood_fed_seconds <= 0.0)
+		"dead_cells":
+			_focus_cells(func(c): return c.needs_cleaning())
+
+func _select_bees_where(test: Callable) -> void:
+	for b in selected_bees:
+		if is_instance_valid(b):
+			b.set_selected(false)
+	selected_bees.clear()
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b) and test.call(b):
+			b.set_selected(true)
+			selected_bees.append(b)
+	hud.update_selection(selected_bees)
+	if not selected_bees.is_empty():
+		_active_camera().position = selected_bees[0].global_position
+
+## Selects the cells concerned and points the camera at them, switching
+## to the hive view since that is where they are.
+func _focus_cells(test: Callable) -> void:
+	var found: Array = []
+	for cell in hive.cells:
+		if is_instance_valid(cell) and test.call(cell):
+			found.append(cell)
+	if found.is_empty():
+		return
+	if not in_hive_view:
+		in_hive_view = true
+		_apply_view()
+	_select_cells(found, false)
+	_active_camera().position = found[0].global_position
+
 func _nursery_stat_pinned() -> bool:
 	for key in Session.pinned_stats:
 		if str(key).begins_with("nursery_"):
@@ -1333,6 +1376,70 @@ func _role_counts() -> Dictionary:
 			key = "%d|%s" % [b.role, b.resource_type]
 		counts[key] = int(counts.get(key, 0)) + 1
 	return counts
+
+# --- comb overlays ------------------------------------------------
+## Colour the whole comb by one property at a time, so a question about
+## the hive can be answered by looking at it rather than by clicking
+## thirty cells. The nursery zone glow proved the pattern works; this
+## generalises it.
+##
+## Cycled with O rather than buried in a menu, because the useful thing
+## is flicking between them.
+const COMB_OVERLAYS := ["", "contents", "fill", "role", "reserved"]
+const OVERLAY_NAMES := {
+	"": "off",
+	"contents": "what each cell holds",
+	"fill": "how full each cell is",
+	"role": "what each nursery cell raises",
+	"reserved": "what each cell is reserved for",
+}
+
+func _cycle_comb_overlay() -> void:
+	if not in_hive_view:
+		in_hive_view = true
+		_apply_view()
+	var index: int = COMB_OVERLAYS.find(Session.comb_overlay)
+	Session.comb_overlay = COMB_OVERLAYS[(index + 1) % COMB_OVERLAYS.size()]
+	_apply_comb_overlay()
+	hud.show_warning("Comb overlay: %s. Press O again to cycle." % OVERLAY_NAMES[Session.comb_overlay])
+
+func _apply_comb_overlay() -> void:
+	for cell in hive.cells:
+		if is_instance_valid(cell):
+			cell.set_overlay(Session.comb_overlay)
+
+# --- undo ---------------------------------------------------------
+## One step of undo for cell designation, which is the action most often
+## done to a lot of cells at once and so the one most worth being able to
+## take back. Records what each cell was before the change.
+var _designation_undo: Array = []
+
+func _remember_designations(cells: Array) -> void:
+	_designation_undo = []
+	for cell in cells:
+		if is_instance_valid(cell):
+			_designation_undo.append({
+				"cell": cell,
+				"designated": cell.designated_type,
+				"keep_empty": cell.keep_empty,
+				"priority": cell.nursery_priority,
+			})
+
+func _undo_last_designation() -> void:
+	if _designation_undo.is_empty():
+		hud.show_warning("Nothing to undo.")
+		return
+	var restored := 0
+	for entry in _designation_undo:
+		var cell = entry.cell
+		if not is_instance_valid(cell):
+			continue
+		cell.set_designation(entry.designated)
+		cell.keep_empty = entry.keep_empty
+		cell.nursery_priority = entry.priority
+		restored += 1
+	_designation_undo = []
+	hud.show_warning("Undone — %d cells put back." % restored)
 
 func _clear_zone_glow() -> void:
 	for cell in hive.cells:
@@ -1688,6 +1795,64 @@ func _handle_pan(delta: float) -> void:
 func _pointer_over_ui() -> bool:
 	return get_viewport().gui_get_hovered_control() != null
 
+# --- control groups -----------------------------------------------
+## Saved by bee id rather than by node, so a group survives its members
+## dying: recalling it simply picks up whoever is still alive.
+
+func _save_control_group(slot: int) -> void:
+	var ids: Array = []
+	for b in selected_bees:
+		if is_instance_valid(b):
+			ids.append(b.bee_id)
+	if ids.is_empty():
+		Session.control_groups.erase(slot)
+		hud.show_warning("Group %d cleared." % slot)
+		return
+	Session.control_groups[slot] = ids
+	hud.show_warning("Group %d saved — %d bees. Press %d to select them again." % [slot, ids.size(), slot])
+
+func _recall_control_group(slot: int) -> void:
+	var ids: Array = Session.control_groups.get(slot, [])
+	if ids.is_empty():
+		return
+	for b in selected_bees:
+		if is_instance_valid(b):
+			b.set_selected(false)
+	selected_bees.clear()
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b) and ids.has(b.bee_id):
+			b.set_selected(true)
+			selected_bees.append(b)
+	hud.update_selection(selected_bees)
+	if selected_bees.is_empty():
+		hud.show_warning("Every bee in group %d has died." % slot)
+
+## Frames whatever matters in the current view: the comb in the hive, or
+## the colony's bees and the hive marker in the meadow.
+func _zoom_to_fit() -> void:
+	var points: Array = []
+	if in_hive_view:
+		for cell in hive.cells:
+			if is_instance_valid(cell):
+				points.append(cell.global_position)
+	else:
+		points.append(meadow_root.to_global(hive.position))
+		for b in _bees_in_current_view():
+			points.append(b.global_position)
+	if points.size() < 2:
+		return
+
+	var bounds := Rect2(points[0], Vector2.ZERO)
+	for point in points:
+		bounds = bounds.expand(point)
+	bounds = bounds.grow(120.0)
+
+	var cam := _active_camera()
+	cam.position = bounds.get_center()
+	var view: Vector2 = get_viewport_rect().size
+	var fit: float = min(view.x / max(1.0, bounds.size.x), view.y / max(1.0, bounds.size.y))
+	cam.zoom = Vector2(clampf(fit, MIN_ZOOM, MAX_ZOOM), clampf(fit, MIN_ZOOM, MAX_ZOOM))
+
 func _zoom_by(factor: float) -> void:
 	var cam := _active_camera()
 	var z: float = clamp(cam.zoom.x * factor, MIN_ZOOM, MAX_ZOOM)
@@ -1742,6 +1907,22 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_panel(colony_panel)
 			KEY_N:
 				_toggle_panel(nursery_panel)
+			KEY_F:
+				_zoom_to_fit()
+			KEY_O:
+				_cycle_comb_overlay()
+			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
+				# Ctrl+number saves the selection, plain number recalls it.
+				# The usual convention, and worth having the moment a
+				# colony is big enough that finding your foragers is a job.
+				var slot: int = event.keycode - KEY_0
+				if event.ctrl_pressed:
+					_save_control_group(slot)
+				else:
+					_recall_control_group(slot)
+			KEY_Z:
+				if event.ctrl_pressed:
+					_undo_last_designation()
 
 	elif event is InputEventMouseButton:
 		match event.button_index:
@@ -2143,6 +2324,7 @@ func _record_emergence(role: int, focus: String, as_gyne: bool) -> void:
 ## flag that has to be kept in step with the designation. One piece of
 ## state, so the two can never disagree.
 func _on_cell_zone_requested(anchor: Node2D, in_zone: bool) -> void:
+	_remember_designations(_cells_to_act_on(anchor))
 	for cell in _cells_to_act_on(anchor):
 		if in_zone:
 			_designate_one(cell, "brood")
@@ -2284,6 +2466,7 @@ func _cells_to_act_on(cell: Node2D) -> Array:
 	return [cell] if is_instance_valid(cell) else []
 
 func _on_cell_designation_requested(anchor: Node2D, type: String) -> void:
+	_remember_designations(_cells_to_act_on(anchor))
 	for cell in _cells_to_act_on(anchor):
 		_designate_one(cell, type)
 

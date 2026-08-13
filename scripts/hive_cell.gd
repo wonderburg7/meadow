@@ -23,6 +23,7 @@ extends Polygon2D
 ## `claim_slot`.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 const NECTAR_COLOR := Color(0.95, 0.7, 0.15)
@@ -222,6 +223,55 @@ func _ready() -> void:
 	info_label.position = Vector2(-cell_size, -8)
 	info_label.add_theme_font_size_override("font_size", 9)
 	add_child(info_label)
+
+## Which overlay this cell is drawing under, if any. Applied on top of
+## its ordinary colour in _refresh, so switching overlays off restores
+## the normal view without anything having to be remembered.
+var overlay: String = ""
+
+func set_overlay(mode: String) -> void:
+	overlay = mode
+
+## The colour this cell should take under the current overlay, and the
+## short tag that goes with it. Returns an empty tag when the overlay is
+## off or doesn't apply to this cell.
+func _overlay_colour() -> Array:
+	match overlay:
+		"contents":
+			match content_type:
+				"nectar": return [NECTAR_COLOR, "n"]
+				"pollen": return [POLLEN_COLOR, "p"]
+				"honey": return [HONEY_COLOR, "h"]
+				"jelly": return [JELLY_COLOR, "j"]
+				"brood": return [GYNE_BROOD_COLOR if brood_is_gyne else BROOD_COLOR, "e"]
+				"corpse": return [CORPSE_COLOR, "x"]
+			return [Color(0.30, 0.30, 0.32), ""]
+		"fill":
+			# One scale from empty to full, so a glance says where the
+			# spare room is -- the question comb overlays are best at.
+			var f := fill_fraction()
+			if content_type == "":
+				return [Color(0.22, 0.26, 0.30), ""]
+			return [Color(0.25, 0.30, 0.35).lerp(Color(0.35, 1.0, 0.55), f), "%d" % int(f * 9.0)]
+		"role":
+			if not is_nursery_cell():
+				return [Color(0.24, 0.24, 0.26), ""]
+			if hatch_gyne:
+				return [GYNE_BROOD_COLOR, "G"]
+			if hatch_role < 0:
+				return [Color(0.62, 0.62, 0.66), "?"]
+			return [Roles.colour_for(hatch_role, hatch_focus), Roles.tag_for_key(Roles.count_key(hatch_role, hatch_focus))]
+		"reserved":
+			if keep_empty:
+				return [Color(0.75, 0.75, 0.80), "-"]
+			match designated_type:
+				"nectar": return [NECTAR_COLOR, "n"]
+				"pollen": return [POLLEN_COLOR, "p"]
+				"honey": return [HONEY_COLOR, "h"]
+				"jelly": return [JELLY_COLOR, "j"]
+				"brood": return [Color(0.6, 1.0, 0.7), "e"]
+			return [Color(0.26, 0.26, 0.28), ""]
+	return []
 
 func set_selected(value: bool) -> void:
 	selected = value
@@ -668,6 +718,20 @@ func _refresh() -> void:
 		var tag := _designation_tag()
 		if tag != "":
 			info_label.text = ("%s %s" % [tag, info_label.text]).strip_edges()
+
+	# An overlay replaces the cell's ordinary colour entirely, so the
+	# whole comb reads as one map of one property rather than as its
+	# usual mixture. The tag goes on with or without colour-blind mode,
+	# because a colour scale alone can't say "which role" precisely.
+	var over: Array = _overlay_colour()
+	if not over.is_empty():
+		color = over[0]
+		fill_shape.visible = false
+		outline.visible = true
+		outline.default_color = Color(0.12, 0.12, 0.14, 0.8)
+		info_label.text = str(over[1])
+		closed_mark.visible = is_closed or fill_then_close
+		return
 
 	_apply_fill_shading()
 	closed_mark.visible = is_closed or fill_then_close

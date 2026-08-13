@@ -2487,6 +2487,64 @@ func role_letter() -> String:
 		return "N" if resource_type == "nectar" else "P"
 	return Roles.letter_for(role)
 
+## Why isn't this bee doing anything?
+##
+## "Nothing is happening and I can't tell why" is the worst state to
+## leave a player in, and it is easy to reach: a nurse with no brood, a
+## miner with nothing marked and automine off, a comb worker with
+## nowhere left to build all look identical from outside -- a bee
+## standing still.
+##
+## Each role knows what it was looking for, so each can say what it
+## didn't find. Returns "" when the bee is genuinely busy.
+func idle_reason() -> String:
+	if hive == null:
+		return ""
+	match state:
+		State.NURSE_IDLE:
+			if role == Role.EGG_LAYER:
+				if hive.find_cell_with("pollen") == null:
+					return "No pollen in the comb — she can't eat, so she can't lay."
+				if not hive.has_room_for_egg():
+					return "Nowhere to lay. Every nursery cell is occupied and there is no spare comb — reserve more cells for eggs, or build some."
+				return ""
+			if hive.cells_holding("brood").is_empty():
+				return "No brood to look after. Nothing has been laid, or it has all emerged."
+			return ""
+		State.BUILD_IDLE:
+			if architect_mode == "restock":
+				if not has_restock_orders():
+					return "No restocking orders. Select some comb and choose a resource to keep it full of."
+				return "Nowhere to draw from. Every cell holding %s is either sealed, blocked, or one of the cells being filled." % restock_resource
+			if architect_mode == "maintain":
+				return "Nothing to clear. No dead larvae and no cells waiting to be emptied."
+			if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:
+				return "Nowhere left to build. The open floor is full — put miners on the soil to make more room, or clear a keep-clear tile."
+			return ""
+		State.MINE_IDLE:
+			if not mine_queue.is_empty():
+				return "The blocks you marked are still buried. They will be dug once the soil in front of them is gone."
+			if automine:
+				return "No soil left within reach. Everything diggable has been dug, or what's left is behind bedrock."
+			return "Nothing marked to dig, and this miner isn't digging on its own. Use Mine to give it a block, or turn on \"Dig on its own\"."
+		State.HONEY_IDLE:
+			if hive.find_cell_with("nectar") == null:
+				return "No nectar to work with. Honey is made from stored nectar, so the foragers have to bring some in first."
+			if hive.find_honey_target() == null:
+				return "Nowhere to put the mix. Every cell is full or reserved for something else — free one up, or build more comb."
+			return ""
+		State.SEEK_FLOWER:
+			if _grounded():
+				if Session.winter_here:
+					return "Winter. Nothing is out, so the foragers are staying in."
+				return "Raining too hard to fly. They'll go out when it eases."
+			if _nearest_flower(false) == null:
+				return "Nothing worth visiting. Every flower nearby is empty, out of season, or already taken."
+			return ""
+		State.IDLING:
+			return "Set to idle. It will stay put until you give it a job."
+	return ""
+
 ## A plain-language description of what this bee is doing right now,
 ## shown in the selection panel. Deliberately concrete ("returning
 ## pollen to the hive") rather than naming internal states.

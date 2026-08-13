@@ -780,13 +780,23 @@ Mouse wheel — zoom in and out
 Middle mouse drag — pan the view
 Tab — switch between meadow and hive
 Space — pause
+C — colony window
+N — nursery window
+O — cycle the comb overlay
+F — frame everything in view
+Ctrl+1..9 — save the selection as a group
+1..9 — select that group again
+Ctrl+Z — undo the last cell reservation
 
 Left click or drag — select bees
+Ctrl+click — add comb or soil to a selection
 Left click a flower, tree or raised area — see what it is
 Left click a comb cell — inspect and set it
 Left click exposed soil — mark it for digging
 Right click a flower — send the selection to collect there
-Right click the ground — move the selection there"""
+Right click the ground — move the selection there
+
+Click a warning in the corner to select what it is about."""
 	return help
 
 ## Restart, stage select and the main menu, kept at the top of the panel

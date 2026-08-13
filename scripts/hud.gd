@@ -68,6 +68,9 @@ signal cell_fill_close_requested(cell: Node2D)
 signal nursery_window_requested()
 ## Opens the winter forecast. Only offered once a winter is scheduled.
 signal winter_window_requested()
+## A line in the problem strip was clicked. `action` names what it is
+## about, so main.gd can select the bees or cells concerned.
+signal signal_clicked(action: String)
 ## Marks or clears the digging flag on every selected soil block.
 signal soil_mark_requested(mark: bool)
 signal forage_start_point_requested()
@@ -1115,11 +1118,22 @@ func _refresh_corner() -> void:
 
 	if not show_signals:
 		return
+	# Each line is a button rather than a label, so it can take you to
+	# what it is about. Being told there are hungry larvae and then having
+	# to go and find them yourself is most of the work of acting on it.
 	for entry in shown_signals:
-		var line := Label.new()
+		var line := Button.new()
 		line.text = "• %s" % entry[0]
+		line.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		line.flat = true
+		line.focus_mode = Control.FOCUS_NONE
 		line.add_theme_font_size_override("font_size", 12)
 		line.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
+		line.add_theme_color_override("font_hover_color", Color.WHITE)
+		var action: String = entry[2] if entry.size() > 2 else ""
+		if action != "":
+			line.tooltip_text = "Click to select what this is about."
+			line.pressed.connect(func(): signal_clicked.emit(action))
 		corner_column.add_child(line)
 
 ## Called when the player stars or unstars something in either window:
@@ -1446,6 +1460,16 @@ func _refresh_selection_text() -> void:
 			]
 		selection_label.text = line
 		task_label.text = "Now: %s" % b.task_description()
+
+		# If it isn't doing anything, say why. A bee standing still looks
+		# identical whatever the reason, and "nothing is happening and I
+		# can't tell why" is the worst state to leave a player in.
+		var stuck: String = b.idle_reason()
+		if stuck != "":
+			task_label.text += "\n%s" % stuck
+			task_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
+		else:
+			task_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
 	else:
 		selection_label.text = "%d bees selected" % shown_bees.size()
 		task_label.text = ""
