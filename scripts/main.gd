@@ -33,6 +33,7 @@ const DebugPanel = preload("res://scripts/debug_panel.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
+const DeathMarker = preload("res://scripts/death_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 
@@ -91,6 +92,9 @@ var colony_lost: bool = false
 ## worst-scaling thing in the simulation. Obstacles never move or appear
 ## mid-run, so one list serves everybody.
 var obstacles: Array = []
+## Mirrors GameConfig.scenery_on, so the toggle is only acted on when it
+## actually changes rather than every frame.
+var scenery_shown: bool = true
 
 ## Weather. Rain waters down open nectar, makes flying heavier, and past
 ## a point grounds the foragers entirely.
@@ -107,6 +111,10 @@ var signal_timer: float = 1.0
 
 var in_hive_view: bool = false
 var selected_bees: Array = []
+## Comb cells and soil blocks the player has selected. Anything the cell
+## or soil popup does applies to the whole list, not just the one clicked.
+var selected_cells: Array = []
+var selected_blocks: Array = []
 var next_bee_id: int = 1
 var day: int = 1
 var current_speed: float = 1.0
@@ -130,7 +138,9 @@ var pan_anchor: Vector2 = Vector2.ZERO
 ## active the next left click in the relevant view is consumed as the
 ## placement rather than a normal select/drag.
 var awaiting_build_cell: bool = false
+var awaiting_home_cell: bool = false
 var pending_builder_bees: Array = []
+var pending_home_bees: Array = []
 var awaiting_forage_start: bool = false
 var pending_forage_bees: Array = []
 var awaiting_floral_preference: bool = false
@@ -190,6 +200,8 @@ func _ready() -> void:
 	hud.cell_keep_empty_requested.connect(_on_cell_keep_empty_requested)
 	hud.cell_gyne_requested.connect(_on_cell_gyne_requested)
 	hud.build_cell_requested.connect(_on_build_cell_requested)
+	hud.home_cell_requested.connect(_on_home_cell_requested)
+	hud.soil_mark_requested.connect(_on_soil_mark_requested)
 	hud.forage_start_point_requested.connect(_on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(_on_secondary_role_requested)
 	hud.finish_first_requested.connect(_on_finish_first_requested)
@@ -643,6 +655,7 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 func _process(delta: float) -> void:
 	_handle_pan(delta)
 	selection_layer.queue_redraw()
+	_apply_scenery_setting()
 
 	if not get_tree().paused:
 		GameConfig.sim_time += delta
@@ -1145,6 +1158,12 @@ func _update_population_readout() -> void:
 	hud.update_population(foragers, nurses, builders, honey_makers)
 
 func _prune_selection() -> void:
+	# cells and blocks can be freed under us -- a mined block, a cell
+	# rebuilt on load -- so drop the dead references before anything acts
+	# on them
+	selected_cells = selected_cells.filter(func(c): return is_instance_valid(c))
+	selected_blocks = selected_blocks.filter(func(b): return is_instance_valid(b))
+
 	var before := selected_bees.size()
 	selected_bees = selected_bees.filter(func(b): return is_instance_valid(b))
 	if selected_bees.size() != before:
@@ -1243,7 +1262,9 @@ func _unhandled_input(event: InputEvent) -> void:
 					drag_start = get_global_mouse_position()
 					drag_current = drag_start
 				else:
-					_finish_drag(event.shift_pressed)
+					# shift adds bees to a selection; ctrl adds comb cells
+					# and soil blocks to theirs
+					_finish_drag(event.shift_pressed, event.ctrl_pressed)
 			MOUSE_BUTTON_MIDDLE:
 				# hold the scroll wheel down and drag to pan the view
 				panning = event.pressed
@@ -1262,7 +1283,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif dragging:
 			drag_current = get_global_mouse_position()
 
-func _finish_drag(additive: bool) -> void:
+func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	if not dragging:
 		return
 	dragging = false
@@ -1270,6 +1291,9 @@ func _finish_drag(additive: bool) -> void:
 
 	if awaiting_build_cell:
 		_place_build_cell(drag_start)
+		return
+	if awaiting_home_cell:
+		_place_home_cell(drag_start)
 		return
 	if awaiting_forage_start:
 		_place_forage_start(drag_start)
@@ -1288,13 +1312,17 @@ func _finish_drag(additive: bool) -> void:
 		elif in_hive_view:
 			var cell := _cell_at(drag_start)
 			if cell:
-				hud.show_cell_popup(cell, get_viewport().get_mouse_position())
+				_select_cells([cell], add_to_group_selection)
 				return
-			# clicking an exposed soil block flags it for digging
+			# soil: any block can be flagged, not just an exposed one --
+			# marking a whole seam and letting miners work inward as each
+			# layer opens up is a reasonable thing to want to do
 			var block := _soil_at(drag_start)
-			if block and block.is_edge:
-				block.set_marked(not block.marked_for_mining)
+			if block:
+				_select_blocks([block], add_to_group_selection)
 				return
+			_clear_cell_selection()
+			_clear_block_selection()
 		else:
 			var flower := _flower_at(drag_start)
 			if flower:
@@ -1310,6 +1338,34 @@ func _finish_drag(additive: bool) -> void:
 			if box.has_point(b.global_position):
 				picked.append(b)
 
+		# A box in the hive view can cover bees, comb and soil at once.
+		# Bees win, because moving and retasking them is the more common
+		# thing to want; comb comes next, and soil only if the box caught
+		# neither. Without a fixed order a drag near the wall would do
+		# something different depending on exactly where it started.
+		if picked.is_empty() and in_hive_view:
+			var boxed_cells: Array = []
+			for c in get_tree().get_nodes_in_group("hive_cells"):
+				if is_instance_valid(c) and box.has_point(c.global_position):
+					boxed_cells.append(c)
+			if not boxed_cells.is_empty():
+				_select_cells(boxed_cells, add_to_group_selection)
+				return
+
+			var boxed_blocks: Array = []
+			for b in get_tree().get_nodes_in_group("soil_blocks"):
+				if is_instance_valid(b) and box.has_point(b.global_position):
+					boxed_blocks.append(b)
+			if not boxed_blocks.is_empty():
+				_select_blocks(boxed_blocks, add_to_group_selection)
+				return
+
+	# Selecting bees drops any comb or soil selection, so the highlight
+	# rings never outlive the popup that acts on them.
+	if not picked.is_empty():
+		_clear_cell_selection()
+		_clear_block_selection()
+
 	if not additive:
 		for b in selected_bees:
 			if is_instance_valid(b):
@@ -1322,6 +1378,76 @@ func _finish_drag(additive: bool) -> void:
 			selected_bees.append(b)
 
 	hud.update_selection(selected_bees)
+
+# --- selecting comb and soil --------------------------------------
+## Comb cells and soil blocks are selected the same way bees are: click
+## one, ctrl-click to add, or drag a box. Everything the popup then does
+## applies to the whole selection, so re-designating twenty cells is one
+## action rather than twenty.
+
+func _select_cells(cells: Array, additive: bool) -> void:
+	_clear_block_selection()
+	if not additive:
+		_clear_cell_selection()
+	for cell in cells:
+		if not is_instance_valid(cell):
+			continue
+		if selected_cells.has(cell):
+			if additive:
+				# ctrl-clicking one that's already in takes it out again
+				cell.set_selected(false)
+				selected_cells.erase(cell)
+			continue
+		cell.set_selected(true)
+		selected_cells.append(cell)
+
+	if selected_cells.is_empty():
+		return
+	hud.show_cell_popup(selected_cells[0], get_viewport().get_mouse_position(), selected_cells.size())
+
+func _clear_cell_selection() -> void:
+	for cell in selected_cells:
+		if is_instance_valid(cell):
+			cell.set_selected(false)
+	selected_cells.clear()
+
+func _select_blocks(blocks: Array, additive: bool) -> void:
+	_clear_cell_selection()
+	if not additive:
+		_clear_block_selection()
+	for block in blocks:
+		if not is_instance_valid(block):
+			continue
+		if selected_blocks.has(block):
+			if additive:
+				block.set_selected(false)
+				selected_blocks.erase(block)
+			continue
+		block.set_selected(true)
+		selected_blocks.append(block)
+
+	if selected_blocks.is_empty():
+		return
+	var reachable := 0
+	for block in selected_blocks:
+		if hive.mine_stand_hex(block) != null:
+			reachable += 1
+	hud.show_soil_popup(selected_blocks.size(), reachable, get_viewport().get_mouse_position())
+
+func _clear_block_selection() -> void:
+	for block in selected_blocks:
+		if is_instance_valid(block):
+			block.set_selected(false)
+	selected_blocks.clear()
+
+## Marking or unmarking every selected block at once. Blocks buried
+## behind other soil can be marked perfectly well -- miners simply can't
+## reach them until the ones in front are gone, so a marked seam digs
+## itself inward layer by layer.
+func _on_soil_mark_requested(mark: bool) -> void:
+	for block in selected_blocks:
+		if is_instance_valid(block):
+			block.set_marked(mark)
 
 func _bees_in_current_view() -> Array:
 	var root := hive_root if in_hive_view else meadow_root
@@ -1344,6 +1470,29 @@ func _soil_at(point: Vector2) -> Node2D:
 		if is_instance_valid(b) and b.global_position.distance_to(point) <= b.block_size:
 			return b
 	return null
+
+## Drops a fading mark where a bee died. Added to whichever world the
+## bee was in, so a forager that ran out of energy behind a plateau
+## leaves its mark out there where you can see the pattern.
+func mark_death(bee: Node2D) -> void:
+	var marker := DeathMarker.new()
+	marker.position = bee.position
+	var parent: Node = bee.get_parent()
+	if parent == null or not is_instance_valid(parent):
+		parent = meadow_root
+	parent.add_child(marker)
+
+## Trees and raised ground can be switched off from the tuning panel.
+## They are hidden *and* made non-solid, so bees route straight through
+## where they were rather than round invisible walls.
+func _apply_scenery_setting() -> void:
+	if scenery_shown == GameConfig.scenery_on:
+		return
+	scenery_shown = GameConfig.scenery_on
+	for obstacle in obstacles:
+		if is_instance_valid(obstacle):
+			obstacle.visible = scenery_shown
+			obstacle.solid = scenery_shown
 
 ## A miner has finished a block: it becomes open floor, and the routes
 ## through the hive are rebuilt so bees can use the new space.
@@ -1377,6 +1526,27 @@ func _place_build_cell(global_point: Vector2) -> void:
 		if is_instance_valid(b):
 			b.set_manual_build_target(hex)
 	pending_builder_bees = []
+
+## Consumes the click that follows a "Set home cell" request: the tile an
+## architect will fill outwards from when picking its own sites.
+func _place_home_cell(global_point: Vector2) -> void:
+	awaiting_home_cell = false
+	var local_point: Vector2 = hive_root.to_local(global_point)
+	var hex: Vector2i = Shapes.pixel_to_hex(local_point - hive.comb_centre, GameConfig.hive_cell_spacing)
+	for b in pending_home_bees:
+		if is_instance_valid(b):
+			b.set_home_hex(hex)
+	pending_home_bees = []
+	hud.update_selection(selected_bees)
+
+func _on_home_cell_requested() -> void:
+	pending_home_bees = selected_bees.filter(func(b): return is_instance_valid(b) and b.role == Bee.Role.BUILDER)
+	if pending_home_bees.is_empty():
+		return
+	awaiting_home_cell = true
+	if not in_hive_view:
+		in_hive_view = true
+		_apply_view()
 
 ## Consumes the click that follows a "Set start point" request.
 func _place_forage_start(global_point: Vector2) -> void:
@@ -1497,7 +1667,19 @@ func _on_secondary_role_requested(role_name: String) -> void:
 ## the contents have to go somewhere. If any other cell has room, a
 ## builder will haul it across. If nothing has room, the player is
 ## warned before anything is thrown away.
-func _on_cell_designation_requested(cell: Node2D, type: String) -> void:
+## Everything the cell popup does acts on the whole selection. The cell
+## it was opened on is only the anchor; if the player has ten selected,
+## the button applies to all ten.
+func _cells_to_act_on(cell: Node2D) -> Array:
+	if not selected_cells.is_empty():
+		return selected_cells.filter(func(c): return is_instance_valid(c))
+	return [cell] if is_instance_valid(cell) else []
+
+func _on_cell_designation_requested(anchor: Node2D, type: String) -> void:
+	for cell in _cells_to_act_on(anchor):
+		_designate_one(cell, type)
+
+func _designate_one(cell: Node2D, type: String) -> void:
 	if not is_instance_valid(cell):
 		return
 	if type == "":
@@ -1522,23 +1704,22 @@ func _on_cell_designation_requested(cell: Node2D, type: String) -> void:
 		cell.clear_cell()
 		cell.set_designation(type)
 
-func _on_cell_hatch_role_requested(cell: Node2D, role: int, focus: String, use_automine: bool) -> void:
-	if not is_instance_valid(cell):
-		return
-	cell.hatch_role = role
-	cell.hatch_focus = focus
-	cell.hatch_automine = use_automine
-	# Earmarking a cell to raise a particular kind of bee only means
-	# anything if eggs actually end up in it, so choosing a role also
-	# reserves the cell for brood. Without this, foragers carried on
-	# filling it with nectar and the role never came into play.
-	if role >= 0 and cell.designated_type != "brood":
-		_on_cell_designation_requested(cell, "brood")
+func _on_cell_hatch_role_requested(anchor: Node2D, role: int, focus: String, use_automine: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		cell.hatch_role = role
+		cell.hatch_focus = focus
+		cell.hatch_automine = use_automine
+		# Earmarking a cell to raise a particular kind of bee only means
+		# anything if eggs actually end up in it, so choosing a role also
+		# reserves the cell for brood. Without this, foragers carried on
+		# filling it with nectar and the role never came into play.
+		if role >= 0 and cell.designated_type != "brood":
+			_designate_one(cell, "brood")
 
 ## Pins the cell's hatch role so every future bee raised there inherits
 ## it, rather than the role applying to the next one only.
-func _on_cell_hatch_lock_requested(cell: Node2D, locked: bool) -> void:
-	if is_instance_valid(cell):
+func _on_cell_hatch_lock_requested(anchor: Node2D, locked: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
 		cell.hatch_role_locked = locked
 
 ## Clearing a cell out. "move" hands it to a builder to carry into
@@ -1546,10 +1727,14 @@ func _on_cell_hatch_lock_requested(cell: Node2D, locked: bool) -> void:
 ## `keep_empty` is what stops foragers immediately refilling it, which is
 ## the real problem this solves -- with a lot of foragers running, every
 ## spare cell fills with nectar and nothing is left for pollen or brood.
-func _on_cell_empty_requested(cell: Node2D, method: String, keep_empty: bool) -> void:
+func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		_empty_one(cell, method, keep_empty)
+
+func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return
-	_on_cell_keep_empty_requested(cell, keep_empty)
+	_set_keep_empty(cell, keep_empty)
 
 	if cell.content_type == "" or cell.content_type == "brood":
 		return   # nothing to shift, and brood isn't cargo
@@ -1565,14 +1750,17 @@ func _on_cell_empty_requested(cell: Node2D, method: String, keep_empty: bool) ->
 ## not the cell is being emptied at the same time.
 ## Earmarking a cell for a gyne also reserves it for brood, for the same
 ## reason as setting a hatch role does: an egg has to end up in it.
-func _on_cell_gyne_requested(cell: Node2D, as_gyne: bool) -> void:
-	if not is_instance_valid(cell):
-		return
-	cell.hatch_gyne = as_gyne
-	if as_gyne and cell.designated_type != "brood":
-		_on_cell_designation_requested(cell, "brood")
+func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		cell.hatch_gyne = as_gyne
+		if as_gyne and cell.designated_type != "brood":
+			_designate_one(cell, "brood")
 
-func _on_cell_keep_empty_requested(cell: Node2D, keep_empty: bool) -> void:
+func _on_cell_keep_empty_requested(anchor: Node2D, keep_empty: bool) -> void:
+	for cell in _cells_to_act_on(anchor):
+		_set_keep_empty(cell, keep_empty)
+
+func _set_keep_empty(cell: Node2D, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return
 	if keep_empty:

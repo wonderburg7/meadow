@@ -113,6 +113,8 @@ var cell_size: float = 17.0
 var info_label: Label
 var outline: Line2D
 var designation_ring: Line2D
+var selection_ring: Line2D
+var selected: bool = false
 
 ## One working position per wall. A bee claims a slot before it walks
 ## over, and gives it up when it leaves, so bees never stand on top of
@@ -142,10 +144,24 @@ func _ready() -> void:
 	designation_ring.visible = false
 	add_child(designation_ring)
 
+	# Shown while the cell is part of a multi-cell selection, so it's
+	# obvious what the popup's buttons are about to act on.
+	selection_ring = Line2D.new()
+	_set_outline_points(selection_ring, cell_size + 2.0)
+	selection_ring.width = 2.5
+	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.visible = false
+	add_child(selection_ring)
+
 	info_label = Label.new()
 	info_label.position = Vector2(-cell_size, -8)
 	info_label.add_theme_font_size_override("font_size", 9)
 	add_child(info_label)
+
+func set_selected(value: bool) -> void:
+	selected = value
+	if selection_ring != null:
+		selection_ring.visible = value
 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()

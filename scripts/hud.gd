@@ -35,6 +35,11 @@ signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
 signal build_cell_requested()
+## Sets the tile an architect builds outward from -- its own centre of
+## operations, rather than the middle of the comb.
+signal home_cell_requested()
+## Marks or clears the digging flag on every selected soil block.
+signal soil_mark_requested(mark: bool)
 signal forage_start_point_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
@@ -171,6 +176,12 @@ var active_flower: Node2D = null
 var obstacle_popup: PopupPanel
 var obstacle_popup_label: Label
 
+var soil_popup: PopupPanel
+var soil_popup_label: Label
+## How many cells the popup's buttons will act on. 1 unless the player
+## has a multi-cell selection.
+var selected_cell_count: int = 1
+
 var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
@@ -219,6 +230,7 @@ func _ready() -> void:
 	_build_cell_popup()
 	_build_flower_popup()
 	_build_obstacle_popup()
+	_build_soil_popup()
 	_build_warning_banner()
 	_build_discard_dialog()
 
@@ -564,8 +576,45 @@ func _refresh_flower_popup() -> void:
 		lines.append("Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if (fresh and GameConfig.tarsal_markers_on) else ""])
 	flower_popup_label.text = "\n".join(lines)
 
-func show_cell_popup(cell: Node2D, screen_position: Vector2) -> void:
+## --- soil popup ---------------------------------------------------
+
+func _build_soil_popup() -> void:
+	soil_popup = PopupPanel.new()
+	add_child(soil_popup)
+
+	var column := VBoxContainer.new()
+	soil_popup.add_child(column)
+
+	soil_popup_label = Label.new()
+	soil_popup_label.add_theme_font_size_override("font_size", 12)
+	soil_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	soil_popup_label.custom_minimum_size = Vector2(280, 0)
+	column.add_child(soil_popup_label)
+
+	var row := HBoxContainer.new()
+	column.add_child(row)
+
+	var mark_btn := Button.new()
+	mark_btn.text = "Mark for digging"
+	mark_btn.pressed.connect(func(): soil_mark_requested.emit(true); soil_popup.hide())
+	row.add_child(_with_info(mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
+
+	var clear_btn := Button.new()
+	clear_btn.text = "Clear marks"
+	clear_btn.pressed.connect(func(): soil_mark_requested.emit(false); soil_popup.hide())
+	row.add_child(_with_info(clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
+
+func show_soil_popup(count: int, reachable: int, screen_position: Vector2) -> void:
+	var text := "%d soil block%s selected" % [count, "" if count == 1 else "s"]
+	if reachable < count:
+		text += "\n%d can be reached right now; the rest are buried and will be dug once the soil in front of them is gone." % reachable
+	soil_popup_label.text = text
+	soil_popup.position = Vector2i(screen_position + Vector2(12, -10))
+	soil_popup.popup()
+
+func show_cell_popup(cell: Node2D, screen_position: Vector2, count: int = 1) -> void:
 	active_cell = cell
+	selected_cell_count = count
 	_refresh_cell_popup()
 	cell_popup.position = Vector2i(screen_position + Vector2(12, -10))
 	cell_popup.popup()
@@ -574,6 +623,9 @@ func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
 		return
 	var lines := []
+	if selected_cell_count > 1:
+		lines.append("%d cells selected — everything below applies to all of them" % selected_cell_count)
+		lines.append("Showing: the first one")
 	if not active_cell.is_built:
 		lines.append("Unfinished cell -- %d%% built" % int(active_cell.build_fraction() * 100.0))
 	else:
@@ -837,7 +889,12 @@ func _rebuild_role_controls(bees: Array) -> void:
 		var build_btn := Button.new()
 		build_btn.text = "Build Cell"
 		build_btn.pressed.connect(func(): build_cell_requested.emit())
-		role_row.add_child(_with_info(build_btn, "Click this, then click an empty tile in the hive view. The selected architects will place and build a cell there next, before falling back to their usual pick-a-site behaviour."))
+		role_row.add_child(_with_info(build_btn, "Click this, then click any open tile in the hive view -- including ground that has been mined out. The selected architects will place and build a cell there next, before falling back to their usual pick-a-site behaviour."))
+
+		var home_btn := Button.new()
+		home_btn.text = "Set home cell"
+		home_btn.pressed.connect(func(): home_cell_requested.emit())
+		role_row.add_child(_with_info(home_btn, "Click this, then click a tile in the hive view. That tile becomes this architect's centre of operations: left to work on its own it fills the space around it outwards in a honeycomb spiral, rather than always adding to the middle of the existing comb. Give two architects different home cells and the hive grows in two places at once."))
 
 		var current_mode: String = bees[0].architect_mode if is_instance_valid(bees[0]) else "both"
 		role_row.add_child(_make_role_menu(

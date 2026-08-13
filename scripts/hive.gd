@@ -333,24 +333,43 @@ func has_room_elsewhere(resource_type: String, except: Node2D) -> bool:
 ## interior tile, and starts an unfinished cell there for builders to
 ## work on. Returns null when the open floor is full -- at that point
 ## the hive can only grow by mining soil, which is the miner role's job.
-func create_next_cell_site() -> Node2D:
+## `around` is the tile the spiral grows out from -- an architect's own
+## home cell if it has been given one, otherwise the middle of the comb.
+## Two architects with different home cells will grow the hive in two
+## places at once instead of both queueing at the same edge.
+##
+## Comb can now go on any open tile, not just the original interior
+## rings: ground the miners have opened up is exactly the space the comb
+## is supposed to expand into, and refusing to build there made mining
+## pointless.
+func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 	if comb_parent == null:
 		return null
 
-	var index := 0
 	var hex := Vector2i(0, 0)
 	var found := false
-	# a generous ceiling: every tile the interior could possibly hold
-	var limit := 1 + 3 * int(GameConfig.hive_interior_rings) * (int(GameConfig.hive_interior_rings) + 1)
+	# generous ceiling: everything out to the far edge of the dug ground
+	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
+	var limit := 1 + 3 * reach * (reach + 1)
+	var index := 0
 	while index < limit:
-		hex = Shapes.hex_spiral_at(index)
-		if tile_is_interior(hex) and tile_is_free(hex):
+		hex = around + Shapes.hex_spiral_at(index)
+		if _can_build_on(hex):
 			found = true
 			break
 		index += 1
 	if not found:
 		return null
 
+	return _start_site_at(hex)
+
+## Buildable means open, walkable ground with nothing already on it.
+## `tile_is_walkable` is the honest test: it's true for exactly the tiles
+## a bee can stand on, which is the same set comb can be drawn on.
+func _can_build_on(hex: Vector2i) -> bool:
+	return tile_is_free(hex) and tile_is_walkable(hex)
+
+func _start_site_at(hex: Vector2i) -> Node2D:
 	var cell := HiveCell.new()
 	cell.axial = hex
 	cell.position = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
@@ -358,6 +377,7 @@ func create_next_cell_site() -> Node2D:
 	cell.start_as_site()
 	cells.append(cell)
 	register_tile(hex, cell)
+	invalidate_index()
 	return cell
 
 ## As above, but at a player-chosen tile rather than the next spiral
@@ -365,19 +385,9 @@ func create_next_cell_site() -> Node2D:
 ## null (without side effects) if the tile isn't free open interior
 ## floor, so the caller can fall back to automatic placement.
 func create_cell_site_at(hex: Vector2i) -> Node2D:
-	if comb_parent == null:
+	if comb_parent == null or not _can_build_on(hex):
 		return null
-	if not tile_is_interior(hex) or not tile_is_free(hex):
-		return null
-
-	var cell := HiveCell.new()
-	cell.axial = hex
-	cell.position = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
-	comb_parent.add_child(cell)
-	cell.start_as_site()
-	cells.append(cell)
-	register_tile(hex, cell)
-	return cell
+	return _start_site_at(hex)
 
 # --- navigation ---------------------------------------------------
 ## Bees can't walk through soil, so movement inside the hive follows a

@@ -16,7 +16,7 @@ var hive_cell_count: float = 5.0        # cells the hive starts with; builders a
 var starting_bees: float = 3.0
 var starting_nurses: float = 1.0        # without at least one nurse, laid eggs never reach a cell
 var starting_builders: float = 0.0
-var seconds_per_day: float = 300.0      # 5 real minutes per in-game day
+var seconds_per_day: float = 200.0      # real seconds in one in-game day
 
 # --- flowers (per-species values are in flower.gd; these scale them) ---
 var nectar_recharge_rate: float = 0.5   # per second
@@ -226,9 +226,19 @@ var hive_cell_spacing: float = 19.0     # spacing passed to hex_to_pixel
 var cell_slow_factor: float = 0.55
 
 # --- bee life ---
-var bee_lifespan_days: float = 30.0
+var bee_lifespan_days: float = 25.0
 var energy_capacity: float = 100.0
 var energy_burn_rate: float = 0.35       # nectar-equivalent burned per second
+
+## Trees and raised ground can be switched off entirely, which clears the
+## meadow of anything bees have to route around. Useful for seeing the
+## foraging economics without the terrain, and for testing.
+var scenery_on: bool = true
+
+## A bee that dies leaves a mark where it fell, which fades over this
+## many in-game days. Nothing reads it -- it is there so losses are
+## visible where they happened rather than only in the numbers.
+var death_marker_days: float = 5.0
 
 # --- interface ---
 ## Turn the small "i" tooltip badges off once you know what everything

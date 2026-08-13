@@ -29,6 +29,8 @@ var is_edge: bool = false
 
 var marker: Polygon2D
 var progress_label: Label
+var selection_ring: Line2D
+var selected: bool = false
 
 func _ready() -> void:
 	add_to_group("soil_blocks")
@@ -46,10 +48,26 @@ func _ready() -> void:
 	marker.visible = false
 	add_child(marker)
 
+	# ring shown while this block is part of a selection
+	selection_ring = Line2D.new()
+	var ring_points := Shapes.hexagon_points(block_size)
+	for p in ring_points:
+		selection_ring.add_point(p)
+	selection_ring.add_point(ring_points[0])
+	selection_ring.width = 2.5
+	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.visible = false
+	add_child(selection_ring)
+
 	progress_label = Label.new()
 	progress_label.position = Vector2(-block_size, -8)
 	progress_label.add_theme_font_size_override("font_size", 9)
 	add_child(progress_label)
+
+func set_selected(value: bool) -> void:
+	selected = value
+	if selection_ring != null:
+		selection_ring.visible = value
 
 func setup(hex: Vector2i) -> void:
 	axial = hex

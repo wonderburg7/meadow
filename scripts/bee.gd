@@ -86,6 +86,9 @@ var bee_id: int = 0
 var energy: float = 100.0
 var age_seconds: float = 0.0
 var selected: bool = false
+## queue_free only takes effect at the end of the frame, so without this
+## a dying bee can be processed again and die twice.
+var is_dying: bool = false
 
 var move_target: Vector2 = Vector2.ZERO   # for player-commanded movement
 var target_cell: Node2D = null
@@ -164,6 +167,13 @@ var forage_start_point: Vector2 = Vector2(INF, INF)
 ## moment it's acted on, successfully or not, so a bad click can't loop.
 var manual_build_hex: Vector2i = Vector2i.ZERO
 var has_manual_build_target: bool = false
+
+## An architect's own centre of operations. Left to pick its own sites it
+## fills the space around this tile outwards in a honeycomb spiral,
+## rather than always adding to the middle of the comb -- so two
+## architects with different home cells grow the hive in two places.
+var home_hex: Vector2i = Vector2i.ZERO
+var has_home_hex: bool = false
 
 ## Flowers this bee has drained, mapped to the sim-time at which they
 ## should be back to full. Time-based rather than checking the flower's
@@ -281,7 +291,7 @@ func _base_colour() -> Color:
 	return Color(1.0, 0.85, 0.1)
 
 func _process(delta: float) -> void:
-	if hive == null:
+	if hive == null or is_dying:
 		return
 
 	_age_and_burn(delta)
@@ -492,11 +502,19 @@ func _sip_from_crop(delta: float) -> void:
 	# the cell it had just filled. Eating is now a real trip to a real
 	# cell; see _should_go_and_eat and _feed_self.
 
+	# Energy is never allowed below zero. A bee that ran out while stuck
+	# behind something used to keep burning into the negative, and if it
+	# later came unstuck it arrived at the comb owing a debt it could
+	# never eat its way out of, draining the stores for nothing. Out of
+	# energy is dead, immediately and finally.
+	if energy <= 0.0:
+		energy = 0.0
+		_die()
+		return
+
 	# The queen doesn't die of old age -- losing her would silently end
 	# the colony, and there's no succession yet. She can still starve.
 	if not is_queen and age_seconds >= GameConfig.bee_lifespan_days * GameConfig.seconds_per_day:
-		_die()
-	elif energy <= 0.0:
 		_die()
 
 func _works_indoors() -> bool:
@@ -638,9 +656,34 @@ func _watch_for_stalls(delta: float) -> void:
 	elif state == State.MOVE_TO_POINT:
 		state = _default_state_for_role()
 	else:
-		# heading home and getting nowhere -- shift sideways so next
-		# frame's steering starts from somewhere different
-		position += Vector2(randf_range(-14.0, 14.0), randf_range(-14.0, 14.0))
+		# Heading home and getting nowhere: wedged against something, or
+		# in a pocket between two of them. Step decisively out from
+		# whatever is nearest rather than jiggling on the spot -- a small
+		# random nudge often wasn't enough to clear a large plateau, and
+		# the bee would sit there until it starved.
+		_escape_nearest_obstacle()
+
+## Pushes this bee clear of whatever solid thing it is closest to. A last
+## resort, used only when the steering has demonstrably failed.
+func _escape_nearest_obstacle() -> void:
+	var nearest: Node2D = null
+	var nearest_gap := INF
+	for obstacle in _obstacles():
+		if not is_instance_valid(obstacle) or not obstacle.solid:
+			continue
+		var gap: float = position.distance_to(obstacle.position) - obstacle.radius
+		if gap < nearest_gap:
+			nearest_gap = gap
+			nearest = obstacle
+
+	if nearest == null:
+		position += Vector2(randf_range(-20.0, 20.0), randf_range(-20.0, 20.0))
+		return
+
+	var outward: Vector2 = position - nearest.position
+	if outward.length() < 0.01:
+		outward = Vector2.RIGHT
+	position = nearest.position + outward.normalized() * (nearest.radius + 40.0)
 
 ## Where the bee is currently trying to get to, in its own parent's
 ## coordinates. INF means "not travelling anywhere in particular".
@@ -659,11 +702,20 @@ func _reset_stall_watch() -> void:
 	stall_timer = 0.0
 
 func _die() -> void:
+	if is_dying:
+		return          # queue_free is deferred, so guard against a second pass
+	is_dying = true
 	if current_flower:
 		current_flower.release(self)
 	if target_cell and is_instance_valid(target_cell):
 		target_cell.release_builder(self)
+	if target_block and is_instance_valid(target_block):
+		target_block.release_miner(self)
 	_release_cell_slot()
+	# A mark is left where it fell, so losses show up in the place they
+	# happened rather than only as a number going down.
+	if world != null and is_instance_valid(world):
+		world.mark_death(self)
 	queue_free()
 
 # --- foraging -----------------------------------------------------
@@ -1423,7 +1475,9 @@ func _try_role_work(r: int) -> bool:
 			if site == null:
 				site = hive.find_unfinished_cell()
 			if site == null:
-				site = hive.create_next_cell_site()
+				# grows outward from this architect's own home cell if it
+				# has been given one, otherwise from the middle of the comb
+				site = hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO)
 			if site:
 				target_cell = site
 				state = State.TO_BUILD_SITE
@@ -1940,6 +1994,10 @@ func set_preferred_species(species: String) -> void:
 func set_manual_build_target(hex: Vector2i) -> void:
 	manual_build_hex = hex
 	has_manual_build_target = true
+
+func set_home_hex(hex: Vector2i) -> void:
+	home_hex = hex
+	has_home_hex = true
 
 ## Sent to a specific flower by right-click: ignore the cooldown list
 ## for this one trip and go straight there.

@@ -475,6 +475,16 @@ const TUNABLES := [
 		"tip": "Shortest gap between low-energy warnings, so a colony that stays hungry is told once and then left alone to be dealt with.",
 	},
 	{
+		"key": "scenery_on", "label": "Trees & raised ground", "toggle": true,
+		"category": "World & start",
+		"tip": "Turn the trees and raised areas in the meadow on or off. With them off they vanish and stop blocking anything, so bees fly in straight lines -- useful for seeing the foraging economics on their own. Takes effect immediately.",
+	},
+	{
+		"key": "death_marker_days", "label": "Death marks days", "step": 1.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "How many in-game days a mark stays where a bee died, fading as it goes. A cluster of them out at the edge of the meadow tells you bees are running out of energy trying to work a patch that is too far away.",
+	},
+	{
 		"key": "show_info_badges", "label": "Show info icons", "toggle": true,
 		"category": "Interface",
 		"tip": "Show the small round 'i' buttons next to controls. Turn them off once you know what everything does and the panels get a lot quieter. Takes effect immediately.",
