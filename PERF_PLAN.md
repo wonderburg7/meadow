@@ -1,6 +1,12 @@
 # Performance plan: find and fix the 4fps problem
 
-Written 14 Aug 2026. Agreed with Dave, not yet executed.
+Written 14 Aug 2026. Agreed with Dave.
+
+**Step 1 done, 14 Aug 2026** (commit `01098cb`): `perf.gd` autoload,
+the dozen begin/end pairs, the plot and the breakdown line are in.
+Not yet run in Godot, so nothing is measured yet -- that's Step 2,
+next. `_backups/` is also gone now (Dave deleted it), so the "Also
+outstanding" note below is done too.
 
 Read this before starting. It exists so the session doing the work does
 not have to rediscover any of it.
@@ -214,7 +220,4 @@ be judged independently.
 
 ## Also outstanding
 
-- `_backups/` (8 folders, 54 `.gd` files) is gitignored but still on
-  disk, so every filesystem search matches nine copies of everything.
-  Git history replaced it on 10 Aug. Dave to delete; the cloud session
-  cannot.
+- ~~`_backups/`~~ Deleted by Dave, 14 Aug 2026.
