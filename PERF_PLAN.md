@@ -12,11 +12,20 @@ kept naming. Fixed in `6488415`, committed separately from the
 instrumentation per the rule below. Notion **Performance Map** written
 with the measured pre-fix figures.
 
-**Not yet done: Dave's re-measure.** The fix hasn't been confirmed by
-an actual fps reading yet -- that's the real close-out of Step 4.
-Once confirmed, the `main.gd` six-file split (parked below) is
-unblocked. `_backups/` is also gone now (Dave deleted it), so the
-"Also outstanding" note further down is done too.
+**Confirmed, 14 Aug 2026: 60fps.** Dave's re-measure after the fix --
+16.6ms average, 17ms worst, same colony that was reading 4-18fps
+before. Step 4 fully closed. The `main.gd` six-file split (parked
+below) is now unblocked. `_backups/` is also gone (Dave deleted it),
+so the "Also outstanding" note further down is done too.
+
+The measuring method itself (instrument the widest scope first, then
+split by role/state/function one playtest at a time) is now written
+up in `CLAUDE.md` under "Measuring performance, not guessing at it",
+since Dave asked for it to be reusable for whatever's slow next
+rather than specific to this one investigation. `perf.gd` and the
+fps-starred breakdown stay in the project permanently -- see that
+section for the convention on giving new hot per-frame code its own
+section.
 
 The plan below is left as written, for the record of what was agreed
 and why -- the "current status" is the block above, not this line.

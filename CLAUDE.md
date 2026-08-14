@@ -179,6 +179,60 @@ verified.
 
 ---
 
+## Measuring performance, not guessing at it
+
+`perf.gd` is an autoload that times named sections of code and shows
+the worst frame times as a plot plus a top-8 breakdown in the corner,
+behind the "fps" star (`Session.perf_enabled`, kept in sync by
+`hud.gd::pinned_stats_changed`). It exists because this project has
+had two performance regressions caused by confident guesses that were
+wrong — see `PERF_PLAN.md` for the full writeup of the second one, a
+4fps drop that turned out to be `bee.gd::_grounded()` calling itself
+instead of checking rain.
+
+**The method that found it, worth repeating for the next one:**
+
+1. Wrap the suspect at its widest scope first (a whole `_process`),
+   not the function you already suspect — the plan's own leading
+   suspect (A\* pathfinding) turned out to be measured at ~0ms
+   throughout, and guessing would have wasted the session chasing it.
+2. Ask Dave to star "fps", play until it's bad, and screenshot the
+   corner. The breakdown names the worst sections directly; the plot
+   shows whether it's sustained or a spike.
+3. Split whichever section is worst along whatever dimension could
+   explain it — role, then state, then the specific function — one
+   round per playtest. Each split is a small, safe edit: wrap a
+   narrower scope in its own `Perf.begin`/`Perf.end` pair, nested
+   inside the wider one that's already there (different names nest
+   fine; the same name nested twice does not — see the warning
+   below). Two or three rounds is normal; this investigation took
+   three (role → the eight forager states → ruling out a side theory)
+   before the exact function fell out.
+4. Only once a specific function is named, go and read it. Don't read
+   speculatively before that — it's exactly the guessing this exists
+   to avoid.
+
+**Adding a new hot per-frame system?** Give it a `Perf.begin("name")`
+/ `Perf.end("name")` pair at the point that covers its whole per-frame
+cost, the same way the existing dozen-plus sections do. It costs
+nothing when perf is off (both functions check
+`Session.perf_enabled` and return immediately). This keeps the
+breakdown complete rather than silently blind to whatever's newest —
+grep `scripts/*.gd` for `Perf.begin(` to see the current full list
+rather than trusting a copy of it here, since that list will drift.
+
+**The one way this goes wrong**: a `begin` with no matching `end` on
+every exit path of the function it's in. `Perf.end` silently no-ops
+if there's no matching `begin` open, so a missed exit path just
+under-counts that call rather than crashing or corrupting later
+frames — safe, but worth actually checking (count `return` statements
+in the function, make sure each has an `end` before it) rather than
+assuming. Never reuse a section name for two spans that can be
+active at once in the same function; a second `begin` under the same
+name overwrites the first one's start time.
+
+---
+
 ## Bugs this project keeps having
 
 Worth knowing, because each has bitten more than once:
@@ -211,6 +265,18 @@ Worth knowing, because each has bitten more than once:
   a bee doesn't re-pick which way round an obstacle to go and flip at
   the halfway angle. Clearing it the first frame the way looks clear
   defeats that, because the check can momentarily miss part-way past.
+- **A refactor leaves a function calling itself.** `_grounded()`'s doc
+  comment said "rain and winter both stop trips", but the rain half
+  had been replaced with `if _grounded(): return true` — the function
+  calling itself, unconditionally, presumably where a real rain check
+  used to be before something got renamed or moved out from under it.
+  This was the entire cause of a 4fps drop (see `PERF_PLAN.md`):
+  GDScript's call stack recursed until it errored out, every single
+  call. Nothing crashed and nothing looked obviously wrong from
+  outside the function, which is what made it worth `perf.gd` finding
+  rather than a read-through. Worth a beat of suspicion any time a doc
+  comment describes two things a function does but only one appears
+  to happen in the body.
   Any hysteresis needs to survive one bad frame.
 
 ---

@@ -9,19 +9,28 @@ of work.
 
 Last updated: 14 Aug 2026 — a pass to mark what's shipped since this was
 first written, after several items were found done while looking for
-something else. See `PERF_PLAN.md` for the active investigation.
+something else, plus the 4fps investigation closing out the same day.
+See `PERF_PLAN.md` for that writeup.
 
 ---
 
-## Performance and scale — active investigation, see PERF_PLAN.md
+## Performance and scale — resolved, see PERF_PLAN.md
 
-The frame rate drops as low as 4fps with only 29 bees. That is not
-explained by anything below; it means one thing is costing roughly
-250ms in a single frame, and it hasn't been found yet. `PERF_PLAN.md`
-in the repo root has the plan: build a `perf.gd` timing autoload and a
-frame-time plot, measure rather than guess, then fix. Read that file
-before starting on anything performance-related — this table is the
-history, not the live plan.
+**Was:** the frame rate dropped as low as 4fps with 29 bees, sustained,
+in both views. **Found and fixed 14 Aug**, confirmed by Dave's
+playtest at 60fps: `bee.gd::_grounded()` called itself instead of
+checking rain (`if _grounded(): return true`, almost certainly lost in
+a refactor), which recursed until GDScript's call stack errored out,
+called from `_seek_flower` and `_go_to_exit` as their first line. Full
+writeup, the `perf.gd` measuring method, and the Notion Performance
+Map are in `PERF_PLAN.md`. That method — instrument the widest scope
+first, then split by whatever dimension could explain the cost one
+playtest at a time — is now documented in `CLAUDE.md` for the next
+performance question, rather than being specific to this one.
+
+**A\* pathfinding, the original leading suspect, was cleared** — it
+measured at ~0ms throughout thanks to the existing tile-pair cache in
+`path_between`. Moving it to a coarser graph is not needed.
 
 | | Size | Status |
 |---|---|---|
@@ -30,9 +39,12 @@ history, not the live plan.
 | **Spatial grid for obstacles** — same idea, applied to the 14 obstacles | M | **Shipped 13 Aug, reverted 14 Aug.** Wrong call: 14 objects asked 60 times a second per bee lost to the scan it replaced — the grid's own bucket-lookup and allocation cost more than iterating 14 items. See the Decisions Log entry and the "optimising a set too small to need it" bug class in `CLAUDE.md`. |
 | **Stop drawing what isn't on screen** — bees, cells and flowers outside the camera skip label/colour updates | S | **Shipped.** Bees 13 Aug (`is_on_screen`); cells and flowers throttled to 6/sec and skipped off-screen entirely on 14 Aug, which turned out to be the bigger of the two real jitter causes that day. |
 | **Pool the death markers and rain streaks** | S | Not done. Rain is already pooled; death markers not profiled as worth it yet. |
-| **Move the hive's A\* to a coarser graph** | L | Not yet. Currently the leading suspect for the 4fps drop — see `PERF_PLAN.md` suspect #1. |
+| **Move the hive's A\* to a coarser graph** | L | **Not needed.** Cleared as a suspect 14 Aug — `bee_path` measured ~0ms throughout the investigation. |
+| **The `_grounded()` recursion bug** | — | **Fixed 14 Aug**, commit `6488415`. Was the entire cause of the 4fps drop. |
 
-**The measurement this file used to say was worth taking first, still is:** `PERF_PLAN.md` is that measurement, now underway.
+**A permanent fixture now, not a one-off measurement:** `perf.gd` and
+the fps-starred breakdown stay in the project. Give any new hot
+per-frame system its own `Perf.begin`/`Perf.end` pair — see `CLAUDE.md`.
 
 ## Making the middle game interesting
 
@@ -68,7 +80,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **Comb overlay modes** — colour the whole comb by contents, fill, age, assignment | M | **Shipped 13 Aug.** Press O to cycle; `_cycle_comb_overlay()` in `main.gd`. |
 | **Undo for cell designation** (Ctrl+Z) | S | **Shipped 13 Aug.** |
 | **Zoom-to-fit** (F) | S | **Shipped 13 Aug.** |
-| **A frame rate readout** — average, last frame, worst frame in the window | S | **Shipped 14 Aug**, starred like the colony window's stats. A frame-time plot is in progress, see `PERF_PLAN.md`. |
+| **A frame rate readout** — average, last frame, worst frame in the window | S | **Shipped 14 Aug**, starred like the colony window's stats. The frame-time plot and per-section breakdown (`perf.gd`) shipped the same day and are a permanent fixture now, not a one-off — see `CLAUDE.md`. |
 | **A tutorial or first-run guidance** | M | Not built. Named as the next interface thing on 13 Aug, still outstanding. |
 | **Rebindable keys and a settings screen** | S | Not built. |
 
@@ -79,7 +91,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **One `roles.gd` instead of role constants in four files** | S | **Shipped 13 Aug.** |
 | **Split `GameConfig` into balance vs session state** | S | **Shipped 13 Aug.** `session.gd`. |
 | **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | **Shipped 13 Aug.** |
-| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Agreed, not started.** Six-file split agreed with Dave 14 Aug, held until the frame-rate investigation in `PERF_PLAN.md` is resolved, so any breakage stays attributable to one change at a time. `bee.gd` (3,098 lines, the larger file) queued behind it. |
+| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Agreed, not started, now unblocked.** Six-file split agreed with Dave 14 Aug, held until the frame-rate investigation resolved so any breakage stayed attributable to one change at a time — that's now confirmed fixed. `bee.gd` (3,098 lines, the larger file) queued behind it. |
 | **Automated tests for the balance rules** | M | **Shipped 13 Aug.** `tests/balance_tests.py`, extended to `tests/source_checks.py` on the same day after the balance suite didn't catch a syntax error that blanked the game. |
 
 ---
@@ -94,8 +106,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 
 **Picking five again, 14 Aug:**
 
-1. **Resolve the 4fps drop** — `PERF_PLAN.md`. Nothing else matters much until a 29-bee colony is playable.
-2. **Break up `main.gd`** — agreed, waiting on #1 so the two changes aren't tangled together.
+1. ~~Resolve the 4fps drop~~ — **fixed and confirmed 14 Aug**, `PERF_PLAN.md`. `_grounded()` recursion; see the bug class in `CLAUDE.md`.
+2. **Break up `main.gd`** — agreed, was waiting on #1. Unblocked now that #1 is confirmed fixed — next thing to pick up.
 3. **Foraging memory** — the most-requested-feeling gap in what's built; cheap relative to its payoff.
 4. **A tutorial** — named as next on 13 Aug, still outstanding, and the game has grown a lot of surface area since it was last considered.
 5. **Comb temperature** — the deepest of the "depth in what exists" items and the one that would make comb layout an actual decision.
