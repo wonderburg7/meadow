@@ -25,6 +25,14 @@ extends Node2D
 ## ints -- renumbering the existing ones would silently change what
 ## every already-earmarked cell raises.
 enum Role { FORAGER, NURSERY, BUILDER, EGG_LAYER, IDLE, MINER, HONEY_MAKER }
+
+## Perf section per role, indexed by the Role enum above -- an Array
+## lookup rather than building a string every frame, so asking "which
+## role is it" in the breakdown costs almost nothing extra.
+const ROLE_PERF_SECTIONS := [
+	"bee_state_forager", "bee_state_nurse", "bee_state_builder",
+	"bee_state_queen", "bee_state_idle", "bee_state_miner", "bee_state_honey",
+]
 enum State {
 	SEEK_FLOWER, TO_FLOWER, INSPECTING, COLLECTING, TO_HIVE,   # forager, outdoors
 	DRINKING, SHELTERING,                                  # forager, refuelling / rained off
@@ -377,6 +385,12 @@ func _process(delta: float) -> void:
 	# or scan work (rather than just walking) would show up as costing
 	# far more than THINKS_PER_SECOND would suggest.
 	Perf.begin("bee_state")
+	# Nested under a second, role-specific section so the breakdown can
+	# answer "is it every bee, or one role" without needing a second
+	# playtest -- both cover exactly the same code, so bee_state stays
+	# the total and the per-role ones are how it's split.
+	var role_section: String = ROLE_PERF_SECTIONS[role] if role >= 0 and role < ROLE_PERF_SECTIONS.size() else "bee_state"
+	Perf.begin(role_section)
 	match state:
 		# --- forager, outdoors ---
 		State.SEEK_FLOWER:
@@ -505,6 +519,7 @@ func _process(delta: float) -> void:
 			_queen_go_to_lay(delta)
 		State.LAYING:
 			_queen_lay(delta)
+	Perf.end(role_section)
 	Perf.end("bee_state")
 
 	Perf.begin("bee_label")
