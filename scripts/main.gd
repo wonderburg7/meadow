@@ -135,10 +135,12 @@ var obstacles: Array = []
 ## handful of buckets instead of all 250. Rebuilt when the meadow is
 ## reseeded rather than maintained incrementally -- flowers appear and
 ## die a few times a minute, not per frame.
+##
+## Deliberately not done for obstacles. There are only fourteen of them,
+## and steering asks about them every frame rather than eight times a
+## second, so the query cost more than the scan it replaced. See
+## bee.gd's _obstacles_towards.
 var flower_grid = SpatialGrid.new(200.0)
-## The same for obstacles. They never move or change during a run, so
-## this is built once.
-var obstacle_grid = SpatialGrid.new(300.0)
 ## Mirrors GameConfig.scenery_on, so the toggle is only acted on when it
 ## actually changes rather than every frame.
 var scenery_shown: bool = true
@@ -360,7 +362,6 @@ func _build_meadow() -> void:
 		_seed_flower()
 
 	_rebuild_flower_grid()
-	obstacle_grid.rebuild(obstacles)
 
 	if GameConfig.rival_hive_on:
 		_place_rival_hive()

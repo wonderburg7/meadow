@@ -2852,14 +2852,34 @@ const SWEEP_STEP := 0.6
 var skirt_obstacle: Node2D = null
 var skirt_turn: float = 1.0
 
+## How many consecutive clear frames before the bee forgets what it was
+## going round.
+##
+## One clear frame used to be enough, and that was too eager. The
+## blocker test can momentarily report the way clear part-way past an
+## obstacle -- it is a line-of-sight check against a set that changes as
+## the bee moves -- and dropping the commitment on that one frame lets
+## the side be chosen afresh from an angle that has already swung past
+## halfway. Which is precisely the shuffle the commitment exists to
+## stop. Holding it for a few frames costs nothing: the turn is only
+## ever read on a frame where there *is* a blocker.
+const SKIRT_FORGET_FRAMES := 3
+var skirt_clear_frames: int = 0
+
 ## Returns where the bee should actually head this frame: the target
 ## itself when the way is clear, or a tangent point past whatever is in
 ## the way.
 func _avoid_obstacles(target: Vector2) -> Vector2:
 	var blocker := _first_blocker(target)
 	if blocker == null:
-		skirt_obstacle = null
+		# Clear for now, but not necessarily past it. See
+		# SKIRT_FORGET_FRAMES.
+		skirt_clear_frames += 1
+		if skirt_clear_frames >= SKIRT_FORGET_FRAMES:
+			skirt_obstacle = null
+			skirt_clear_frames = 0
 		return target
+	skirt_clear_frames = 0
 	return _tangent_past(blocker, target)
 
 ## The nearest solid obstacle the straight line to `target` runs into,
@@ -2970,6 +2990,7 @@ func _committed_turn(obstacle: Node2D, target: Vector2) -> float:
 ## an obstacle that may no longer be solid survives into the next frame.
 func clear_navigation_state() -> void:
 	skirt_obstacle = null
+	skirt_clear_frames = 0
 	_reset_stall_watch()
 
 ## The obstacle list, from main.gd's cache rather than a group query.
@@ -2982,25 +3003,31 @@ func _obstacles() -> Array:
 		return world.obstacles
 	return get_tree().get_nodes_in_group("obstacles")
 
-## Just the obstacles that could possibly matter for a move from here to
-## `target`: those within the span of the journey plus the largest
-## radius. Read from the spatial grid, so a bee crossing a corner of the
-## meadow doesn't consider a plateau on the far side of it.
+## Which obstacles could matter for a move from here to `target`.
 ##
-## The whole list is still used for the hard boundary check in
-## _block_obstacles, which is about where the bee *is* rather than where
-## it is going, and is already cheap.
-func _obstacles_towards(target: Vector2) -> Array:
-	if world == null or not is_instance_valid(world):
-		return _obstacles()
-	var midpoint: Vector2 = (position + target) * 0.5
-	var reach: float = position.distance_to(target) * 0.5 + LARGEST_OBSTACLE_RADIUS
-	var near: Array = world.obstacle_grid.near(midpoint, reach)
-	return near if not near.is_empty() else _obstacles()
-
-## Generous upper bound on a plateau's radius, used to pad grid queries
-## so a large obstacle whose centre is outside the query still turns up.
-const LARGEST_OBSTACLE_RADIUS := 260.0
+## The honest answer is "all fourteen of them", and that is what this
+## returns. It briefly went through the spatial grid, which was a
+## mistake worth writing down: the grid is a clear win for flowers, and
+## a loss here, because the two questions are not the same shape.
+##
+## The flower search asks about 250 objects, eight times a second. The
+## obstacle search asks about 14, sixty times a second, for every bee.
+## Against 14 items in an array main.gd already holds, the grid query
+## was slower than the scan it replaced -- 25 to 121 bucket lookups
+## depending on how far the bee was flying, plus a fresh Array allocated
+## every frame per bee. At sixty bees that is thousands of allocations a
+## second, and allocation churn shows up as *uneven* frame times rather
+## than a lower average. Since movement is speed * delta, uneven frames
+## are visible directly as bees moving in little lurches.
+##
+## It also fed a set that changed as the bee moved into _committed_turn,
+## which is meant to be sticky. See SKIRT_FORGET_FRAMES.
+##
+## Kept as its own function rather than inlined: if the meadow ever
+## holds hundreds of obstacles this is the one place that has to change,
+## and the right fix then is to cache per journey, not per frame.
+func _obstacles_towards(_target: Vector2) -> Array:
+	return _obstacles()
 
 ## The hard half of obstacle handling. _avoid_obstacles steers, which is
 ## enough most of the time but not a guarantee: a bee right-clicked onto

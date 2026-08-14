@@ -108,6 +108,23 @@ Worth knowing, because each has bitten more than once:
 - **Nearest-thing searches picking the thing you're standing on.**
   A flower recharges every frame, so the one a bee just drained keeps
   winning at distance zero. Any "find the nearest X" needs an exclusion.
+- **Optimising a set too small to need it.** The spatial grid was
+  applied to the 14 obstacles as well as the 250 flowers, and made
+  steering slower: the query touched 25 to 121 buckets and allocated an
+  Array per bee per frame, against a scan of 14 items that allocated
+  nothing. Before adding an index, check the count *and* the call rate.
+  Flowers: 250 objects, 8 queries a second. Obstacles: 14 objects, 60 a
+  second. Only the first is worth indexing.
+- **Allocation churn reads as jitter, not as slowness.** Movement is
+  `speed * delta`, so anything that makes frame times uneven shows up as
+  bees moving in little lurches rather than as a lower FPS number. If
+  something looks twitchy, suspect per-frame allocation before you
+  suspect the steering maths.
+- **Commitments dropped on a single frame.** `skirt_obstacle` is held so
+  a bee doesn't re-pick which way round an obstacle to go and flip at
+  the halfway angle. Clearing it the first frame the way looks clear
+  defeats that, because the check can momentarily miss part-way past.
+  Any hysteresis needs to survive one bad frame.
 
 ---
 
