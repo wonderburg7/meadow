@@ -1125,6 +1125,7 @@ func update_signals(lines: Array) -> void:
 ## work when the result would look different, so this can be called from
 ## every setter without thrashing labels every frame.
 func _refresh_corner() -> void:
+	Perf.begin("corner_refresh")
 	var signature := ""
 	for key in CORNER_ORDER:
 		if Session.pinned_stats.has(key):
@@ -1134,6 +1135,7 @@ func _refresh_corner() -> void:
 		for entry in shown_signals:
 			signature += "s%d|%s\n" % [entry[1], entry[0]]
 	if signature == corner_signature:
+		Perf.end("corner_refresh")
 		return
 	corner_signature = signature
 
@@ -1167,6 +1169,7 @@ func _refresh_corner() -> void:
 		corner_column.move_child(perf_breakdown, corner_column.get_child_count() - 1)
 
 	if not show_signals:
+		Perf.end("corner_refresh")
 		return
 	# Each line is a button rather than a label, so it can take you to
 	# what it is about. Being told there are hungry larvae and then having
@@ -1185,6 +1188,7 @@ func _refresh_corner() -> void:
 			line.tooltip_text = "Click to select what this is about."
 			line.pressed.connect(func(): signal_clicked.emit(action))
 		corner_column.add_child(line)
+	Perf.end("corner_refresh")
 
 ## Called when the player stars or unstars something in either window:
 ## the corner has to be redrawn even though no number changed. Also the

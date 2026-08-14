@@ -828,21 +828,31 @@ func _spawn_indoor_bee(role: int) -> Node2D:
 # --- moving bees between the meadow and the hive ------------------
 
 
+## Both wrapped in the same section: reparenting between the two roots
+## and the population readout it triggers are the two suspects Dave's
+## "bee_to_exit" figure pointed at, and this is the one place both
+## directions of that trip go through.
 func move_bee_into_hive(bee: Node2D) -> void:
+	Perf.begin("hive_transition")
 	if bee.get_parent() == hive_root:
+		Perf.end("hive_transition")
 		return
 	bee.reparent(hive_root)
 	bee.position = hive_entrance_inside()
 	bee.visible = true
 	_update_population_readout()
+	Perf.end("hive_transition")
 
 func move_bee_out_of_hive(bee: Node2D) -> void:
+	Perf.begin("hive_transition")
 	if bee.get_parent() == meadow_root:
+		Perf.end("hive_transition")
 		return
 	bee.reparent(meadow_root)
 	bee.position = hive.position
 	bee.visible = true
 	_update_population_readout()
+	Perf.end("hive_transition")
 
 # --- per-frame ----------------------------------------------------
 
