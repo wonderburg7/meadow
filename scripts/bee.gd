@@ -606,8 +606,15 @@ func _lifespan_seconds() -> float:
 ## Should a forager stay in? Rain and winter both stop trips, and having
 ## one function decide means a bee can never be caught out by one of them
 ## while checking only the other.
+##
+## Fixed 14 Aug 2026: this called itself here instead of checking rain,
+## almost certainly lost in a refactor -- unconditional recursion until
+## GDScript's call stack errors out, which is where the whole 4fps
+## drop came from. `_seek_flower` and `_go_to_exit` both call this as
+## their first line, which is exactly the two states the perf overlay
+## named as the cost.
 func _grounded() -> bool:
-	if _grounded():
+	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		return true
 	if world != null and is_instance_valid(world) and world.season != null:
 		return world.season.foraging_stopped()
