@@ -26,9 +26,80 @@ LANGUAGE_REVIEW.md    naming and structure review (mostly actioned)
 ROADMAP.md            candidate features, sized and prioritised
 ```
 
-The big scripts, by size — `bee.gd` (3,100), `main.gd` (2,750),
-`hud.gd` (1,500), `debug_panel.gd` (960), `hive.gd` (825),
-`hive_cell.gd` (795).
+### Which file to open for which kind of change
+
+Read this table, then open one file. Do not explore the whole `scripts/`
+folder to find where something lives — that is the single most expensive
+thing a session can do here.
+
+| Change | File | Lines |
+|---|---|---|
+| Anything a bee does: states, movement, steering, jobs, energy | `bee.gd` | 3,098 |
+| World setup, per-frame loop, input, selection, saving, orders | `main.gd` | 2,801 |
+| Corner readouts, panels, popups, warnings, the problem strip | `hud.gd` | 1,498 |
+| Tuning rows, starred readouts, save/load buttons, restart | `debug_panel.gd` | 1,014 |
+| The comb as a whole: cells, navigation, finding a cell | `hive.gd` | 825 |
+| One cell: contents, brood, honey ripening, how it draws | `hive_cell.gd` | 823 |
+| Balance numbers | `game_config.gd` | 402 |
+| Run state and interface preferences | `session.gd` | 96 |
+| Role ids, labels, colours, sub-modes | `roles.gd` | 203 |
+| Seasons, disease, winter, gynes leaving | `season.gd` | 161 |
+| Flower behaviour, species, in-season logic | `flower.gd` | 329 |
+| Save file format | `save_game.gd` | 276 |
+
+Smaller and self-explanatory: `colony_panel.gd`, `nursery_panel.gd`,
+`winter_panel.gd`, `game_over.gd`, `main_menu.gd`, `rival_hive.gd`,
+`obstacle.gd`, `soil_block.gd`, `rock_block.gd`, `rain_effect.gd`,
+`death_marker.gd`, `spatial_grid.gd`, `shapes.gd`, `ui.gd`.
+
+`egg.gd` and `queen.gd` are retired stubs. Ignore them.
+
+Every long script is divided by `# --- section name ---` headers. Grep
+for those to find a region rather than reading the file top to bottom.
+
+---
+
+## Working here without burning tokens
+
+This project is now ~13,500 lines, and the cost of a session is mostly
+the cost of what gets read. In rough order of how much each saves:
+
+**Read one file, not the folder.** Use the table above. A whole-folder
+search costs more than every edit in a typical session combined.
+
+**Use git rather than re-reading.** `git log --oneline -10`,
+`git show --stat HEAD` and `git show <sha> -- <file>` answer "what
+changed recently" for a fraction of what re-reading the files costs.
+The commit messages here are deliberately long and explain *why*; they
+are cheaper than the code they describe.
+
+**Run the tests instead of re-reading code to check it.**
+`python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
+produce about twenty lines between them and catch the classes of bug
+this project actually has. Verifying by reading is both dearer and
+worse.
+
+**Grep for a symbol before opening anything.** `grep -n "func _foo"`
+and the section headers will locate a change in a few hundred tokens.
+
+**One topic per session.** A session that has already loaded the hive
+in order to answer a hive question is carrying that context through
+every later question about something else. A fresh session with a
+narrow goal reads less.
+
+**Say what changed, not "have a look".** "The foragers went jittery
+after the last update" points at a diff. "Something feels off" points
+at the whole codebase.
+
+**Splitting the big files is a token change as much as a tidiness
+one.** `main.gd` at 2,801 lines is roughly 27,000 tokens to read once,
+and it is the file most changes touch. `bee.gd` is larger still. Both
+are queued for splitting.
+
+**Leave `_backups/` out of any search.** It holds eight full copies of
+older scripts (54 `.gd` files). It is gitignored, but it is still on
+disk, so a filesystem-wide search matches nine copies of everything.
+Git history has replaced it since 10 Aug and it can be deleted.
 
 ---
 
