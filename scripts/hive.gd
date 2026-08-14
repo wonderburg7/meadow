@@ -604,7 +604,7 @@ func tile_is_walkable(hex: Vector2i) -> bool:
 ## Used to sanitise a player-commanded destination before a bee is sent
 ## there: right-clicking on a soil block (solid, no route through it)
 ## used to leave the bee's target sitting inside the wall, and the "no
-## route found" fallback in Bee._move_towards walked it there in a
+## route found" fallback in BeeMovement.move_towards walked it there in a
 ## straight line -- straight through the wall. Snapping the target to
 ## whichever walkable tile is actually closest fixes both ends of that.
 func nearest_walkable_point(point: Vector2) -> Vector2:

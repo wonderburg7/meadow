@@ -276,14 +276,16 @@ def test_brood_economics():
 # ------------------------------------------------------- movement margins
 def test_movement_invariants():
     section("Movement: the margins that caused the orbiting bug")
-    bee = source("bee.gd")
+    # OBSTACLE_MARGIN/BLOCK_MARGIN moved from bee.gd to bee_movement.gd
+    # in the bee.gd split -- see BEE_SPLIT_PLAN.md.
+    bee_movement = source("bee_movement.gd")
     main = source("main.gd")
 
     def const(src, name):
         return float(re.search(rf"const {name} := ([\d.]+)", src).group(1))
 
-    margin = const(bee, "OBSTACLE_MARGIN")
-    block = const(bee, "BLOCK_MARGIN")
+    margin = const(bee_movement, "OBSTACLE_MARGIN")
+    block = const(bee_movement, "BLOCK_MARGIN")
     flower_clear = const(main, "FLOWER_CLEARANCE")
     print(f"  steering margin {margin}, hard boundary {block}, flower clearance {flower_clear}")
 

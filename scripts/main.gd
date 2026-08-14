@@ -114,7 +114,7 @@ const TREE_COUNT := 10
 const TREE_RADIUS := Vector2(22.0, 34.0)
 const OBSTACLE_HIVE_CLEARANCE := 220.0
 ## How far clear of a tree or plateau a flower is planted. This has to
-## stay comfortably above Bee.BLOCK_MARGIN, the hard boundary a bee is
+## stay comfortably above BeeMovement.BLOCK_MARGIN, the hard boundary a bee is
 ## never allowed inside -- a flower any closer than that would sit in
 ## ground no bee can stand on, and foragers would queue up against the
 ## edge trying to reach it forever.

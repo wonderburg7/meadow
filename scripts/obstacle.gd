@@ -5,10 +5,10 @@ extends Node2D
 ## The meadow has no navmesh (unlike the hive, which routes over a hex
 ## grid with A*). Two lighter mechanisms stand in for one:
 ##
-##   1. Bee._avoid_obstacles aims at a point that clears the obstacle
+##   1. BeeMovement.avoid_obstacles aims at a point that clears the obstacle
 ##      whenever the straight line to a target would cut through it, so
 ##      bees curve round rather than heading into it.
-##   2. Bee._block_obstacles refuses to let a bee's position end up
+##   2. BeeMovement.block_obstacles refuses to let a bee's position end up
 ##      inside a solid obstacle at all, sliding it along the edge
 ##      instead. This is the hard guarantee: however a bee is steered,
 ##      commanded or nudged, it cannot end up on raised ground.
