@@ -20,40 +20,16 @@ extends Node2D
 ## and she alone can take the Egg layer role. She can be reassigned to
 ## forage or build like anyone else.
 
-## HONEY_MAKER is appended rather than slotted in alphabetically because
-## hive_cell.hatch_role and hud.gd's HATCH_ROLES store these as plain
-## ints -- renumbering the existing ones would silently change what
-## every already-earmarked cell raises.
-enum Role { FORAGER, NURSERY, BUILDER, EGG_LAYER, IDLE, MINER, HONEY_MAKER }
-
-## Perf section per role, indexed by the Role enum above -- an Array
-## lookup rather than building a string every frame, so asking "which
-## role is it" in the breakdown costs almost nothing extra.
-const ROLE_PERF_SECTIONS := [
-	"bee_state_forager", "bee_state_nurse", "bee_state_builder",
-	"bee_state_queen", "bee_state_idle", "bee_state_miner", "bee_state_honey",
-]
-enum State {
-	SEEK_FLOWER, TO_FLOWER, INSPECTING, COLLECTING, TO_HIVE,   # forager, outdoors
-	DRINKING, SHELTERING,                                  # forager, refuelling / rained off
-	MAKING_JELLY, TO_JELLY_CELL, DEPOSITING_JELLY,         # nursery, royal jelly
-	IN_HIVE_TO_CELL, DEPOSITING, IN_HIVE_TO_EXIT,          # forager, indoors
-	MOVE_TO_POINT, IDLING,                                 # player-commanded
-	NURSE_IDLE, TO_BROOD, TENDING,                         # nursery
-	TO_FOOD_CELL, LOADING_FOOD,                            # nursery, fetching a meal
-	TO_FEED_CELL, FEEDING,                                 # any bee, eating
-	BUILD_IDLE, TO_BUILD_SITE, BUILDING,                   # builder
-	TO_HAUL_SOURCE, TO_HAUL_TARGET,                        # builder, moving stores
-	TO_RESTOCK_SOURCE, TO_RESTOCK_TARGET,                  # builder, keeping cells topped up
-	TO_WASTE_EXIT, DUMPING_WASTE,                          # builder, throwing it out
-	TO_CLEAN_CELL, CLEANING,                               # comb worker, clearing a dead larva
-	MINE_IDLE, TO_MINE_SITE, MINING,                       # miner
-	TO_MINE_EXIT, DUMPING_DIRT,                            # miner, full of spoil
-	SEEK_POLLEN, TO_POLLEN_CELL, EATING,                   # egg layer
-	TO_CELL_TO_LAY, LAYING,
-	HONEY_IDLE, TO_NECTAR_CELL, CHEWING,                   # honey maker
-	TO_HONEY_CELL, DEPOSITING_HONEY, FANNING,
-}
+## Role and State (and ROLE_PERF_SECTIONS) live in bee_enums.gd, a leaf
+## file with no dependencies, so every other bee_*.gd file can use them
+## without a circular preload of bee.gd itself. Aliased straight back
+## here so every existing `Bee.Role.X` / `Bee.State.X` reference in
+## hud.gd, main.gd, world_building.gd, input_selection.gd,
+## orders_zones.gd and year_winter.gd keeps working unchanged.
+const BeeEnums = preload("res://scripts/bee_enums.gd")
+const Role = BeeEnums.Role
+const State = BeeEnums.State
+const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
