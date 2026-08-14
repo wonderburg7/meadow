@@ -266,7 +266,14 @@ var hive_soil_depth: float = 12.0
 ## Rings of bedrock wrapped round the outside of the soil. Rock can't be
 ## marked, mined or walked through -- it's the hard edge of the map.
 var hive_rock_rings: float = 2.0
-var hive_entrance_width: float = 1.0    # tiles left out of the soil for the doorway
+## No longer read by world_building.gd::_entrance_tiles, which now always
+## carves a single-tile-wide corner tunnel (14 Aug 2026 -- flat-top hexes
+## made a genuinely straight one-tile tunnel possible, which was the
+## point of this setting in the first place). Left in place, unused,
+## rather than removed outright, so old saves that recorded a value for
+## it still load without an unknown-setting warning. Revisit if a wider
+## doorway is ever wanted -- see NEW_FEATURES_BLUEPRINT.md.
+var hive_entrance_width: float = 1.0
 var hive_cell_size: float = 17.0        # centre-to-corner of one comb tile
 var hive_cell_spacing: float = 19.0     # spacing passed to hex_to_pixel
 
@@ -399,4 +406,16 @@ var winter_length_days: float = 20.0
 ## colony can actually reach in the run-up. This is the first number to
 ## reach for if winter feels trivial or impossible.
 var winter_burn_factor: float = 0.15
+## How much longer a bee's natural lifespan runs through winter, as a
+## multiple of its ordinary one -- real colonies overwinter on the same
+## bees rather than replacing them, and a clustered, near-dormant bee
+## simply wears out slower. Without this, `bee_lifespan_days` (25) sits
+## close enough to `winter_length_days` (20) that a chunk of the colony
+## would die of old age over one winter even if perfectly fed, which
+## defeats the point of the reduced burn rate above. Picked as a
+## starting point, not simulated yet -- per this project's rule on
+## balance numbers, model it (alongside winter_burn_factor and
+## winter_length_days) before trusting it, the same way winter_burn_factor
+## itself was worked out.
+var winter_lifespan_factor: float = 4.0
 

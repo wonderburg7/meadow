@@ -38,9 +38,14 @@ signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
 signal build_cell_requested()
-## Sets the tile a comb worker builds outward from -- its own centre of
-## operations, rather than the middle of the comb.
+## Sets the tile the *selected* comb worker builds outward from -- its own
+## centre of operations, rather than the middle of the comb. Applies to
+## one bee only, even if several are selected -- see home_cell_all_requested
+## for the colony-wide version.
 signal home_cell_requested()
+## The same, but for every comb worker in the colony at once, not just
+## the current selection.
+signal home_cell_all_requested()
 ## The same for a miner: the tile it works outward from when choosing
 ## which soil to dig next.
 signal mine_home_requested()
@@ -1333,7 +1338,10 @@ func _build_orders_row(common_role: int, first) -> void:
 				"Click this, then click a tile to reserve it as open floor. No comb worker will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every comb worker, not just this one, and the reserved tiles show whenever any comb worker is selected."))
 			row.add_child(_action_button("Work from here",
 				func(): home_cell_requested.emit(),
-				"Click this, then click a tile. That tile becomes this comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Give two comb workers different home tiles and the hive grows in two places at once."))
+				"Click this, then click a tile. That tile becomes the selected comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Applies to this one bee only, even if you have several selected -- use \"Set for all comb workers\" below to change every comb worker at once."))
+			row.add_child(_action_button("Set for all comb workers",
+				func(): home_cell_all_requested.emit(),
+				"Click this, then click a tile. Every comb worker in the colony -- not just the selected ones -- gets that tile as its centre of operations. Use this to redirect the whole team at once; use \"Work from here\" above to give one bee its own spot."))
 
 			# Restocking needs three things chosen, so it gets its own row
 			# rather than crowding the general orders.

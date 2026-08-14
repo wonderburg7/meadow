@@ -145,6 +145,13 @@ const OVERLAY_NAMES := {
 const BUILD_ORDER_COLOUR := Color(0.45, 0.85, 1.0)
 const MINE_ORDER_COLOUR := Color(1.0, 0.72, 0.30)
 const KEEP_CLEAR_COLOUR := Color(0.95, 0.45, 0.45)
+## The tile under the cursor while "Build here" is armed, before it's
+## clicked -- distinct from BUILD_ORDER_COLOUR so a live hover doesn't
+## read as an already-queued tile.
+const BUILD_HOVER_COLOUR := Color(0.55, 1.0, 0.65)
+## A selected bee's "Work from here" cell -- distinct from the order
+## colours since it isn't a queued job, it's a standing reference point.
+const HOME_CELL_COLOUR := Color(0.85, 0.65, 1.0)
 
 var meadow_root: Node2D
 var hive_root: Node2D
@@ -243,6 +250,7 @@ var pan_anchor: Vector2 = Vector2.ZERO
 ## placement rather than a normal select/drag.
 var awaiting_build_cell: bool = false
 var awaiting_home_cell: bool = false
+var awaiting_home_cell_all: bool = false
 var awaiting_mine_home: bool = false
 var awaiting_mine_target: bool = false
 var awaiting_keep_clear: bool = false
@@ -347,6 +355,7 @@ func _ready() -> void:
 	hud.cell_gyne_requested.connect(orders_zones._on_cell_gyne_requested)
 	hud.build_cell_requested.connect(input_selection._on_build_cell_requested)
 	hud.home_cell_requested.connect(input_selection._on_home_cell_requested)
+	hud.home_cell_all_requested.connect(input_selection._on_home_cell_all_requested)
 	hud.mine_home_requested.connect(input_selection._on_mine_home_requested)
 	hud.mine_target_requested.connect(input_selection._on_mine_target_requested)
 	hud.keep_clear_requested.connect(input_selection._on_keep_clear_requested)

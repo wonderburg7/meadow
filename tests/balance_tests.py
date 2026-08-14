@@ -94,6 +94,24 @@ def test_winter():
           f"would need {workers_needed:.1f} comb workers building non-stop for the whole countdown",
           f"about {workers_needed:.1f} comb workers' worth of building in the countdown")
 
+    # Bees also need to survive old age through the winter, not just be
+    # fed. winter_lifespan_factor stretches bee_lifespan_days for the
+    # duration of Session.winter_here; if that stretched lifespan doesn't
+    # comfortably clear winter_length_days, a chunk of the colony dies of
+    # old age partway through even when perfectly fed -- the same failure
+    # mode the reduced burn rate above exists to avoid, just from the
+    # other direction.
+    lifespan_days = cfg("bee_lifespan_days")
+    winter_days = cfg("winter_length_days")
+    stretched = lifespan_days * cfg("winter_lifespan_factor")
+    margin = stretched / winter_days
+    print(f"  lifespan {lifespan_days:.0f}d x{cfg('winter_lifespan_factor'):.2f} "
+          f"= {stretched:.0f}d stretched, winter is {winter_days:.0f}d ({margin:.1f}x)")
+    check(margin >= 1.5,
+          f"a stretched lifespan of {stretched:.0f} days is only {margin:.1f}x the "
+          f"{winter_days:.0f}-day winter -- bees can still die of old age mid-winter",
+          f"stretched lifespan clears the winter with {margin:.1f}x headroom")
+
 
 # ------------------------------------------------------------- the rival
 def test_rival():

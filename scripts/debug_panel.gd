@@ -505,6 +505,11 @@ const TUNABLES := [
 		"category": "Winter",
 		"tip": "What a bee burns per second through the winter, as a multiple of its ordinary rate. Below one because a clustered colony is doing very little. Tune this first if the winter target feels trivial or impossible.",
 	},
+	{
+		"key": "winter_lifespan_factor", "label": "Winter lifespan x", "step": 0.25, "min": 1.0,
+		"category": "Winter",
+		"tip": "How much longer a bee's natural lifespan runs through the winter, as a multiple of its ordinary one. Above one because a dormant, clustered bee wears out slower -- without this, bees can die of old age mid-winter even when perfectly fed.",
+	},
 
 	# --- The rival colony ---
 	{

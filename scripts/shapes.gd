@@ -19,12 +19,16 @@ static func square_points(size: Vector2) -> PackedVector2Array:
 		Vector2(-half.x, half.y),
 	])
 
-## Pointy-top hexagon centred on origin. `size` is the distance from
-## the centre to any corner.
+## Flat-top hexagon centred on origin. `size` is the distance from the
+## centre to any corner. Every cell gets a flat edge on top and bottom
+## this way, rather than a point -- corners start at 0 degrees instead
+## of the old pointy-top's -30, and nothing else here needs to know
+## which orientation this is: hex_to_pixel/pixel_to_hex below carry the
+## rest of it.
 static func hexagon_points(size: float) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	for i in range(6):
-		var angle := deg_to_rad(60.0 * i - 30.0)
+		var angle := deg_to_rad(60.0 * i)
 		points.append(Vector2(cos(angle), sin(angle)) * size)
 	return points
 
@@ -39,12 +43,12 @@ static func hexagon_edge_midpoints(size: float) -> Array:
 		midpoints.append((corners[i] + corners[(i + 1) % 6]) * 0.5)
 	return midpoints
 
-## Converts a pixel position back to the nearest pointy-top axial hex.
-## Used to work out which tile a bee is standing on, so terrain can slow
-## it down.
+## Converts a pixel position back to the nearest flat-top axial hex. Used
+## to work out which tile a bee is standing on, so terrain can slow it
+## down.
 static func pixel_to_hex(point: Vector2, size: float) -> Vector2i:
-	var qf := (sqrt(3.0) / 3.0 * point.x - point.y / 3.0) / size
-	var rf := (2.0 / 3.0 * point.y) / size
+	var qf := (2.0 / 3.0 * point.x) / size
+	var rf := (-1.0 / 3.0 * point.x + sqrt(3.0) / 3.0 * point.y) / size
 	return _axial_round(qf, rf)
 
 ## Hex coordinates don't round like square ones -- you have to round in
@@ -93,10 +97,13 @@ static func hex_ring(radius: int) -> Array:
 			hex += directions[dir_index]
 	return results
 
-## Converts pointy-top hex axial coordinates (q, r) to pixel position.
+## Converts flat-top hex axial coordinates (q, r) to pixel position.
+## `q = 0` is a perfectly straight vertical column (x stays 0 whatever r
+## is) -- world_building.gd's entrance tunnel relies on that to carve a
+## single-tile-wide shaft rather than the old alternating-width one.
 static func hex_to_pixel(q: int, r: int, size: float) -> Vector2:
-	var x := size * sqrt(3.0) * (q + r / 2.0)
-	var y := size * 1.5 * r
+	var x := size * 1.5 * q
+	var y := size * sqrt(3.0) * (r + q / 2.0)
 	return Vector2(x, y)
 
 ## Points along a circular arc, centred on origin, from `from_degrees`

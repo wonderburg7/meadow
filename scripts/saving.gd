@@ -99,6 +99,17 @@ func _restore_cells(cells: Array) -> void:
 	var spacing: float = GameConfig.hive_cell_spacing
 	for entry in cells:
 		var hex = Vector2i(int(entry.q), int(entry.r))
+		# A save's cell always wins the tile it says it's on, even if the
+		# freshly built hive put soil or bedrock there instead -- which can
+		# happen if the dig pattern has changed since the save was made
+		# (see the hex-orientation/entrance change, 14 Aug 2026). Without
+		# this, the old block's node keeps existing and drawing, just
+		# untracked, which is a silent doubled-up tile rather than a crash.
+		var occupant = main.hive.occupied_tiles.get(hex)
+		if occupant != null and is_instance_valid(occupant):
+			occupant.queue_free()
+		main.hive.occupied_tiles.erase(hex)
+
 		var cell = main.HiveCell.new()
 		cell.axial = hex
 		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)

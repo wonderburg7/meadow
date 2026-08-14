@@ -26,8 +26,21 @@ const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
-const NECTAR_COLOR := Color(0.95, 0.7, 0.15)
-const POLLEN_COLOR := Color(0.4, 0.35, 0.8)
+
+## Nectar is a clear liquid sitting in a yellow wax cell, so it's drawn as
+## a pale blue warmed slightly by the wax showing through, rather than a
+## flat pale blue on its own. Worked out as a pale-blue base lerped 15%
+## towards a wax yellow -- Color(0.72, 0.84, 0.95).lerp(Color(0.9, 0.8, 0.3), 0.15)
+## -- and written out as a literal so this stays an ordinary constant like
+## every other colour here. Nudge the two source colours or the 0.15 and
+## redo the lerp by hand if this needs retuning by eye.
+const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)
+
+## Pollen keeps the amber/gold that nectar used to be, nudged a little
+## lighter and further towards yellow so the two read as clearly
+## different resources sitting side by side.
+const POLLEN_COLOR := Color(0.97, 0.78, 0.22)
+
 const HONEY_WET_COLOR := Color(0.78, 0.55, 0.18)
 const HONEY_COLOR := Color(0.85, 0.42, 0.05)
 const BROOD_COLOR := Color(0.9, 0.9, 0.85)

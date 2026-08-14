@@ -15,18 +15,31 @@ const BeeStatus = preload("res://scripts/bee_status.gd")
 static func age_and_burn(bee: Node2D, delta: float) -> void:
 	bee.age_seconds += delta
 
+	# A clustered, near-dormant winter colony burns far less than an
+	# active one -- this is the number the winter forecast (see
+	# year_winter.gd::_winter_forecast) already promises the player, so
+	# it has to actually apply here or the forecast is a lie: without
+	# it, a colony that met the forecast's stated requirement could
+	# still starve for real, at roughly six times the rate it was told
+	# to plan for.
+	var winter_factor: float = GameConfig.winter_burn_factor if Session.winter_here else 1.0
+
 	# A gyne is a bigger animal and costs more to run, whatever she's
 	# doing -- part of why raising one is a real commitment.
-	var upkeep: float = GameConfig.energy_burn_rate
+	var upkeep: float = GameConfig.energy_burn_rate * winter_factor
 	if bee.is_gyne:
 		upkeep *= GameConfig.gyne_energy_factor
 	bee.energy -= upkeep * delta
 
 	# Flight is paid for separately from simply being alive, so a long
 	# trip out to a distant patch actually costs something. Rain makes it
-	# worse: a wet bee carries the water as dead weight.
+	# worse: a wet bee carries the water as dead weight. Foragers don't
+	# fly at all once winter_here is true (see Season.foraging_stopped),
+	# so winter_factor is applied here only for symmetry -- a bee still
+	# mid-flight the instant winter starts shouldn't be paying the full
+	# summer rate for the few remaining seconds of that trip.
 	if is_flying(bee):
-		var flight: float = GameConfig.flight_energy_burn
+		var flight: float = GameConfig.flight_energy_burn * winter_factor
 		if bee.is_gyne:
 			flight *= GameConfig.gyne_energy_factor
 		flight *= lerpf(1.0, GameConfig.rain_flight_burn_factor, Session.rain_intensity)

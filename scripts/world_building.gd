@@ -329,25 +329,33 @@ func _add_rock_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 	block.setup(hex)
 	main.hive.register_tile(hex, block)
 
+## The dug-out hive is itself a big hexagon (a stack of hex_ring shells),
+## which gives it six corners. Under the flat-top projection, axial
+## `(0, -ring)` is the unique topmost one at every ring -- so walking that
+## single column from the surface down to the interior carves a corner
+## entrance at the top with a tunnel exactly one tile wide, rather than
+## the old pixel-distance test, which alternated between one and two
+## tiles wide depending on the ring's parity. `hive_entrance_width` is no
+## longer read here; a single-file tunnel was the point of this change.
 func _entrance_tiles(interior_rings: int, soil_depth: int) -> Dictionary:
 	var tiles: Dictionary = {}
-	var half: float = GameConfig.hive_entrance_width * GameConfig.hive_cell_spacing
 	for ring in range(interior_rings - 1, interior_rings + soil_depth):
-		for hex in main.Shapes.hex_ring(ring):
-			var pixel = main.Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
-			if pixel.y < 0.0 and abs(pixel.x) <= half:
-				tiles[hex] = true
+		tiles[Vector2i(0, -ring)] = true
 	return tiles
 
 ## Part of main.gd's public surface -- bee.gd calls `world.hive_entrance_inside()`.
 func hive_entrance_inside() -> Vector2:
-	var rings: float = (
+	var rings: int = int(
 		GameConfig.hive_interior_rings
 		+ GameConfig.hive_soil_depth
 		+ GameConfig.hive_rock_rings
 		- 1.0
 	)
-	return _hive_centre_local() + Vector2(0, -rings * GameConfig.hive_cell_spacing * 1.5)
+	# Same corner hex _entrance_tiles walks to, found the one way this
+	# file trusts for turning an axial coordinate into a world position --
+	# not hand-derived, so a future geometry change doesn't have to find
+	# this a second time.
+	return _hive_centre_local() + main.Shapes.hex_to_pixel(0, -rings, GameConfig.hive_cell_spacing)
 
 func _build_cameras() -> void:
 	main.meadow_camera = Camera2D.new()

@@ -17,7 +17,13 @@ extends RefCounted
 ## fixed seed, so they come back identical anyway.
 
 const SAVE_PATH := "user://meadow_save.json"
-const FORMAT_VERSION := 1
+## Bumped 14 Aug 2026: the hive geometry changed (flat-top hexes, corner
+## entrance) so a save from before this version was dug and tunnelled
+## differently. read() below already warns rather than refusing outright
+## -- _restore_cells also defends against a save's cell landing on what
+## the fresh dig now considers soil -- but treat an old save as best
+## loaded fresh rather than trusted.
+const FORMAT_VERSION := 2
 
 ## Every GameConfig field worth carrying across.
 ##
@@ -56,6 +62,11 @@ const SAVED_SETTINGS := [
 	"energy_capacity", "energy_burn_rate",
 	"low_energy_warning_fraction", "low_energy_warning_level",
 	"low_energy_gap",
+	# The winter numbers were missing from this list entirely -- tuning
+	# any of them in the panel didn't survive a save/load. Added together
+	# rather than just the new one, since the gap applied to all four.
+	"winter_countdown_days", "winter_length_days",
+	"winter_burn_factor", "winter_lifespan_factor",
 ]
 
 static func has_save() -> bool:

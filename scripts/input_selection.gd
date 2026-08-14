@@ -81,6 +81,9 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	if main.awaiting_home_cell:
 		_place_home_cell(main.drag_start)
 		return
+	if main.awaiting_home_cell_all:
+		_place_home_cell_all(main.drag_start)
+		return
 	if main.awaiting_mine_home:
 		_place_mine_home(main.drag_start)
 		return
@@ -306,11 +309,37 @@ func _place_home_cell(global_point: Vector2) -> void:
 	main.pending_home_bees = []
 	main.hud.update_selection(main.selected_bees)
 
+## Only the single bee this panel is showing -- not the whole selection.
+## A box-selected group of comb workers used to all get retargeted at
+## once here, which is one click doing far more than the button next to
+## it implied. See _on_home_cell_all_requested for the deliberate
+## colony-wide version.
 func _on_home_cell_requested() -> void:
-	main.pending_home_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.BUILDER)
+	main.pending_home_bees = []
+	if not main.selected_bees.is_empty():
+		var first: Node2D = main.selected_bees[0]
+		if is_instance_valid(first) and first.role == main.Bee.Role.BUILDER:
+			main.pending_home_bees = [first]
 	if main.pending_home_bees.is_empty():
 		return
 	main.awaiting_home_cell = true
+	if not main.in_hive_view:
+		main.in_hive_view = true
+		main.camera_view._apply_view()
+
+## Every comb worker in the colony, not just the current selection --
+## the explicit broadcast counterpart to _on_home_cell_requested.
+func _place_home_cell_all(global_point: Vector2) -> void:
+	main.awaiting_home_cell_all = false
+	var local_point: Vector2 = main.hive_root.to_local(global_point)
+	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing)
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b) and b.role == main.Bee.Role.BUILDER:
+			b.set_home_hex(hex)
+	main.hud.update_selection(main.selected_bees)
+
+func _on_home_cell_all_requested() -> void:
+	main.awaiting_home_cell_all = true
 	if not main.in_hive_view:
 		main.in_hive_view = true
 		main.camera_view._apply_view()
@@ -434,12 +463,38 @@ func _draw_hive_orders() -> void:
 		if b.role == main.Bee.Role.BUILDER:
 			any_architect = true
 			_draw_order_chain(b, _build_queue_points(b), main.BUILD_ORDER_COLOUR)
+			if b.has_home_hex:
+				_draw_home_marker(_tile_centre(b.home_hex))
 		elif b.role == main.Bee.Role.MINER:
 			_draw_order_chain(b, _mine_queue_points(b), main.MINE_ORDER_COLOUR)
+			if b.has_mine_home:
+				_draw_home_marker(_tile_centre(b.mine_home_hex))
 
 	if any_architect or main.awaiting_keep_clear:
 		for hex in main.hive.keep_clear_tiles.keys():
 			_draw_tile_outline(_tile_centre(hex), main.KEEP_CLEAR_COLOUR, 2.0, true)
+
+	if main.awaiting_build_cell:
+		_draw_build_hover()
+
+## Which tile the mouse is over right now, drawn only while "Build here"
+## is armed. Computed fresh every draw rather than tracked on mouse
+## motion -- the selection layer already redraws every frame regardless,
+## so there's nothing to cache.
+func _draw_build_hover() -> void:
+	var hex: Vector2i = _hex_at(main.get_global_mouse_position())
+	if not main.hive.can_build_on(hex):
+		return
+	_draw_tile_outline(_tile_centre(hex), main.BUILD_HOVER_COLOUR, 2.5, false)
+
+## Marks a bee's "Work from here" cell -- a standing reference point,
+## not a queued job, so it gets the start-point marker style rather than
+## the plain hex outline used for build/mine queues.
+func _draw_home_marker(point: Vector2) -> void:
+	main.selection_layer.draw_circle(point, 10.0, Color(main.HOME_CELL_COLOUR.r, main.HOME_CELL_COLOUR.g, main.HOME_CELL_COLOUR.b, 0.25))
+	main.selection_layer.draw_arc(point, 10.0, 0.0, TAU, 24, main.HOME_CELL_COLOUR, 2.5)
+	main.selection_layer.draw_line(point + Vector2(-7, 0), point + Vector2(7, 0), main.HOME_CELL_COLOUR, 2.0)
+	main.selection_layer.draw_line(point + Vector2(0, -7), point + Vector2(0, 7), main.HOME_CELL_COLOUR, 2.0)
 
 func _build_queue_points(bee: Node2D) -> Array:
 	var points: Array = []

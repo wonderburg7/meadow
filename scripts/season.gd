@@ -80,9 +80,17 @@ func _advance_disease(elapsed: float) -> void:
 func brood_rate() -> float:
 	return 1.0 - _severity() * GameConfig.disease_brood_penalty
 
-## How much of its lifespan a bee loses, as a multiplier on the whole.
+## How much longer or shorter a bee's lifespan runs right now, as a
+## multiplier on the whole. Disease shortens it; winter lengthens it far
+## more, on top of whatever disease is doing -- a clustered, dormant
+## winter bee simply wears out slower, and the colony is meant to
+## overwinter on close to the same bees it went in with rather than
+## replacing them mid-winter.
 func lifespan_factor() -> float:
-	return 1.0 - _severity() * GameConfig.disease_lifespan_penalty
+	var factor: float = 1.0 - _severity() * GameConfig.disease_lifespan_penalty
+	if Session.winter_here:
+		factor *= GameConfig.winter_lifespan_factor
+	return factor
 
 ## Nothing happens below the threshold, then it ramps. A colony that is
 ## basically clean shouldn't be paying anything at all -- the cost has to
