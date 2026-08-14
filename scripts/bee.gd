@@ -345,12 +345,15 @@ func _process(delta: float) -> void:
 		think_timer = (1.0 / THINKS_PER_SECOND) * randf_range(0.85, 1.15)
 		since_last_think = 0.0
 
+	Perf.begin("bee_burn")
 	_age_and_burn(delta)
+	Perf.end("bee_burn")
 	if not is_inside_tree():
 		Perf.end("bees")
 		return   # died during ageing
 
 	if thinking:
+		Perf.begin("bee_think")
 		_watch_for_stalls(think_delta)
 
 		# A queued role change lands the moment the bee is free. Checked
@@ -367,7 +370,13 @@ func _process(delta: float) -> void:
 		# state machine so it can interrupt anything.
 		if _should_go_and_eat():
 			_begin_feeding_self()
+		Perf.end("bee_think")
 
+	# Runs every frame, not just on a think tick -- unlike the block
+	# above, so this is where a per-state handler that does real search
+	# or scan work (rather than just walking) would show up as costing
+	# far more than THINKS_PER_SECOND would suggest.
+	Perf.begin("bee_state")
 	match state:
 		# --- forager, outdoors ---
 		State.SEEK_FLOWER:
@@ -496,8 +505,11 @@ func _process(delta: float) -> void:
 			_queen_go_to_lay(delta)
 		State.LAYING:
 			_queen_lay(delta)
+	Perf.end("bee_state")
 
+	Perf.begin("bee_label")
 	_update_label()
+	Perf.end("bee_label")
 	Perf.end("bees")
 
 # --- life support -------------------------------------------------
