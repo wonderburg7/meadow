@@ -393,25 +393,40 @@ func _process(delta: float) -> void:
 	Perf.begin(role_section)
 	match state:
 		# --- forager, outdoors ---
+		# Individually timed rather than lumped into bee_state_forager:
+		# Dave's colony is 25/33 foragers cycling through here, and this
+		# is where the plan's suspect list runs out -- bee_move and
+		# bee_path both read 0ms, so whatever it is has to be one of
+		# these specific branches rather than the moving between them.
 		State.SEEK_FLOWER:
+			Perf.begin("bee_seek_flower")
 			_seek_flower()
+			Perf.end("bee_seek_flower")
 		State.TO_FLOWER:
+			Perf.begin("bee_to_flower")
 			if current_flower == null:
 				state = State.SEEK_FLOWER
 			else:
 				_move_towards(current_flower.position, delta)
 				if position.distance_to(current_flower.position) < arrive_distance:
 					_start_inspecting()
+			Perf.end("bee_to_flower")
 		State.INSPECTING:
+			Perf.begin("bee_inspecting")
 			_inspect(delta)
+			Perf.end("bee_inspecting")
 		State.COLLECTING:
+			Perf.begin("bee_collecting")
 			_collect(delta)
+			Perf.end("bee_collecting")
 		State.DRINKING:
 			_drink_at_flower(delta)
 		State.TO_HIVE:
+			Perf.begin("bee_to_hive")
 			_move_towards(hive.position, delta)
 			if position.distance_to(hive.position) < arrive_distance:
 				_enter_hive()
+			Perf.end("bee_to_hive")
 		State.SHELTERING:
 			_shelter(delta)
 
@@ -425,13 +440,17 @@ func _process(delta: float) -> void:
 
 		# --- forager, indoors ---
 		State.IN_HIVE_TO_CELL:
+			Perf.begin("bee_to_cell")
 			_go_to_deposit_cell(delta)
+			Perf.end("bee_to_cell")
 		State.DEPOSITING:
 			timer -= delta
 			if timer <= 0.0:
 				_finish_depositing()
 		State.IN_HIVE_TO_EXIT:
+			Perf.begin("bee_to_exit")
 			_go_to_exit(delta)
+			Perf.end("bee_to_exit")
 
 		State.MOVE_TO_POINT:
 			_move_towards(move_target, delta)
