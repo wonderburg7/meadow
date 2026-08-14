@@ -62,7 +62,7 @@ func _restore(data: Dictionary) -> void:
 	main.hud.show_warning("Run loaded — day %d." % main.day)
 
 func _restore_soil(soil: Dictionary) -> void:
-	var still_there := {}
+	var still_there = {}
 	for pair in soil.get("present", []):
 		still_there[Vector2i(int(pair[0]), int(pair[1]))] = true
 
@@ -73,7 +73,7 @@ func _restore_soil(soil: Dictionary) -> void:
 		if not still_there.has(node.axial):
 			to_remove.append(node)
 
-	var centre_local := main.world_building._hive_centre_local()
+	var centre_local = main.world_building._hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
 	for block in to_remove:
 		var hex: Vector2i = block.axial
@@ -82,7 +82,7 @@ func _restore_soil(soil: Dictionary) -> void:
 		main.world_building._add_floor_tile(hex, centre_local, spacing)
 
 	for entry in soil.get("marked", []):
-		var hex := Vector2i(int(entry.q), int(entry.r))
+		var hex = Vector2i(int(entry.q), int(entry.r))
 		var node = main.hive.occupied_tiles.get(hex)
 		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
 			node.mine_progress = float(entry.progress)
@@ -95,11 +95,11 @@ func _restore_cells(cells: Array) -> void:
 			cell.queue_free()
 	main.hive.cells = []
 
-	var centre_local := main.world_building._hive_centre_local()
+	var centre_local = main.world_building._hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
 	for entry in cells:
-		var hex := Vector2i(int(entry.q), int(entry.r))
-		var cell := main.HiveCell.new()
+		var hex = Vector2i(int(entry.q), int(entry.r))
+		var cell = main.HiveCell.new()
 		cell.axial = hex
 		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 		main.hive_root.add_child(cell)
@@ -161,7 +161,7 @@ func _restore_flowers(flowers: Array) -> void:
 			f.queue_free()
 
 	for entry in flowers:
-		var flower := main.Flower.new()
+		var flower = main.Flower.new()
 		flower.position = Vector2(float(entry.x), float(entry.y))
 		main.meadow_root.add_child(flower)
 		flower.setup(int(entry.species))
@@ -177,7 +177,7 @@ func _restore_bees(bees: Array) -> void:
 	main.selected_bees.clear()
 
 	for entry in bees:
-		var bee := main.Bee.new()
+		var bee = main.Bee.new()
 		bee.is_queen = bool(entry.get("queen", false))
 		bee.is_gyne = bool(entry.get("gyne", false))
 		bee.position = Vector2(float(entry.x), float(entry.y))

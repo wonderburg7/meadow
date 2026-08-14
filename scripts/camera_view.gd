@@ -10,7 +10,7 @@ func _active_camera() -> Camera2D:
 	return main.hive_camera if main.in_hive_view else main.meadow_camera
 
 func _handle_pan(delta: float) -> void:
-	var direction := Vector2.ZERO
+	var direction = Vector2.ZERO
 	if Input.is_key_pressed(KEY_LEFT):
 		direction.x -= 1.0
 	if Input.is_key_pressed(KEY_RIGHT):
@@ -20,7 +20,7 @@ func _handle_pan(delta: float) -> void:
 	if Input.is_key_pressed(KEY_DOWN):
 		direction.y += 1.0
 	if direction != Vector2.ZERO:
-		var cam := _active_camera()
+		var cam = _active_camera()
 		cam.position += direction.normalized() * main.PAN_SPEED * delta / cam.zoom.x
 
 func _pointer_over_ui() -> bool:
@@ -67,19 +67,19 @@ func _zoom_to_fit() -> void:
 	if points.size() < 2:
 		return
 
-	var bounds := Rect2(points[0], Vector2.ZERO)
+	var bounds = Rect2(points[0], Vector2.ZERO)
 	for point in points:
 		bounds = bounds.expand(point)
 	bounds = bounds.grow(120.0)
 
-	var cam := _active_camera()
+	var cam = _active_camera()
 	cam.position = bounds.get_center()
 	var view: Vector2 = main.get_viewport_rect().size
 	var fit: float = min(view.x / max(1.0, bounds.size.x), view.y / max(1.0, bounds.size.y))
 	cam.zoom = Vector2(clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM), clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM))
 
 func _zoom_by(factor: float) -> void:
-	var cam := _active_camera()
+	var cam = _active_camera()
 	var z: float = clamp(cam.zoom.x * factor, main.MIN_ZOOM, main.MAX_ZOOM)
 	cam.zoom = Vector2(z, z)
 

@@ -23,7 +23,7 @@ var _view_rect: Rect2 = Rect2()
 var _view_frame: int = -1
 
 func _build_meadow() -> void:
-	var grass := Polygon2D.new()
+	var grass = Polygon2D.new()
 	grass.polygon = main.Shapes.square_points(Vector2(4000, 3000))
 	grass.position = Vector2(700, 325)
 	grass.color = main.MEADOW_COLOR
@@ -54,10 +54,10 @@ func is_on_screen(node: Node2D) -> bool:
 	if root != (main.hive_root if main.in_hive_view else main.meadow_root):
 		return false
 
-	var frame := Engine.get_process_frames()
+	var frame = Engine.get_process_frames()
 	if _view_frame != frame:
 		_view_frame = frame
-		var cam := main.camera_view._active_camera()
+		var cam = main.camera_view._active_camera()
 		var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
 		_view_rect = Rect2(cam.position - span * 0.5, span).grow(120.0)
 	return _view_rect.has_point(node.global_position)
@@ -94,14 +94,14 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 	for i in range(count):
 		var radius: float = randf_range(radius_range.x, radius_range.y)
 		var pos: Vector2
-		var attempts := 0
+		var attempts = 0
 		while attempts < 25:
 			pos = main.hive.position + Vector2(
 				randf_range(-main.FLOWER_FIELD_HALF_SIZE.x, main.FLOWER_FIELD_HALF_SIZE.x),
 				randf_range(-main.FLOWER_FIELD_HALF_SIZE.y, main.FLOWER_FIELD_HALF_SIZE.y)
 			)
 			var clear_of_hive: bool = pos.distance_to(main.hive.position) > main.OBSTACLE_HIVE_CLEARANCE + radius
-			var clear_of_others := true
+			var clear_of_others = true
 			for other in placed:
 				if pos.distance_to(other.pos) < radius + other.radius + gap:
 					clear_of_others = false
@@ -112,7 +112,7 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 		if attempts >= 25:
 			continue
 
-		var obstacle := main.Obstacle.new()
+		var obstacle = main.Obstacle.new()
 		obstacle.position = pos
 		obstacle.z_index = -1
 		main.meadow_root.add_child(obstacle)
@@ -136,7 +136,7 @@ func _spawn_starting_foragers() -> void:
 		_spawn_bee("nectar")
 
 func _seed_flower() -> void:
-	var species_index := main.Flower.pick_species_index()
+	var species_index = main.Flower.pick_species_index()
 	var species: Dictionary = main.Flower.SPECIES[species_index]
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
@@ -147,8 +147,8 @@ func _seed_flower() -> void:
 
 	if not centers.is_empty() and randf() < cluster_chance:
 		var center: Vector2 = centers[randi() % centers.size()]
-		var angle := randf() * TAU
-		var dist := sqrt(randf()) * cluster_radius
+		var angle = randf() * TAU
+		var dist = sqrt(randf()) * cluster_radius
 		pos = center + Vector2(cos(angle), sin(angle)) * dist
 	else:
 		pos = _random_field_point()
@@ -163,7 +163,7 @@ func _seed_flower() -> void:
 		pos = _random_field_point()
 	pos = _clear_of_obstacles(pos)
 
-	var flower := main.Flower.new()
+	var flower = main.Flower.new()
 	flower.position = pos
 	main.meadow_root.add_child(flower)
 	flower.setup(species_index)
@@ -177,7 +177,7 @@ func _is_clear_ground(point: Vector2) -> bool:
 	return true
 
 func _clear_of_obstacles(point: Vector2) -> Vector2:
-	var result := point
+	var result = point
 	for obstacle in main.obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
@@ -205,9 +205,9 @@ func _hive_centre_local() -> Vector2:
 	return main.HIVE_INTERIOR_CENTRE - main.HIVE_WORLD_OFFSET
 
 func _build_hive_interior() -> void:
-	var centre_local := _hive_centre_local()
-	var interior_rings := int(GameConfig.hive_interior_rings)
-	var soil_depth := int(GameConfig.hive_soil_depth)
+	var centre_local = _hive_centre_local()
+	var interior_rings = int(GameConfig.hive_interior_rings)
+	var soil_depth = int(GameConfig.hive_soil_depth)
 	var spacing: float = GameConfig.hive_cell_spacing
 
 	main.hive.comb_parent = main.hive_root
@@ -221,8 +221,8 @@ func _build_hive_interior() -> void:
 	_spawn_hive_occupants(centre_local, interior_rings, spacing)
 
 func _dig_out_chamber(centre_local: Vector2, interior_rings: int, soil_depth: int, spacing: float) -> void:
-	var rock_rings := int(GameConfig.hive_rock_rings)
-	var entrance_tiles := _entrance_tiles(interior_rings, soil_depth + rock_rings)
+	var rock_rings = int(GameConfig.hive_rock_rings)
+	var entrance_tiles = _entrance_tiles(interior_rings, soil_depth + rock_rings)
 	for ring in range(0, interior_rings + soil_depth):
 		for hex in main.Shapes.hex_ring(ring):
 			if entrance_tiles.has(hex) or _is_open_tile(hex, ring, interior_rings):
@@ -238,7 +238,7 @@ func _dig_out_chamber(centre_local: Vector2, interior_rings: int, soil_depth: in
 				_add_rock_block(hex, centre_local, spacing)
 
 func _add_entrance_marker() -> void:
-	var marker := Polygon2D.new()
+	var marker = Polygon2D.new()
 	marker.polygon = main.Shapes.circle_points(7.0, 20)
 	marker.position = hive_entrance_inside()
 	marker.color = Color(0.05, 0.05, 0.05)
@@ -251,7 +251,7 @@ func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 	var starting_count: int = int(level.cells) if not level.is_empty() else int(GameConfig.hive_cell_count)
 	for i in range(starting_count):
 		var cell_hex: Vector2i = main.Shapes.hex_spiral_at(i)
-		var cell := main.HiveCell.new()
+		var cell = main.HiveCell.new()
 		cell.axial = cell_hex
 		cell.position = centre_local + main.Shapes.hex_to_pixel(cell_hex.x, cell_hex.y, spacing)
 		main.hive_root.add_child(cell)
@@ -290,7 +290,7 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	for i in range(builders):
 		_spawn_indoor_bee(main.Bee.Role.BUILDER)
 	for i in range(miners):
-		var miner := _spawn_indoor_bee(main.Bee.Role.MINER)
+		var miner = _spawn_indoor_bee(main.Bee.Role.MINER)
 		if miner != null and bool(level.get("automine", false)):
 			miner.automine = true
 	for i in range(honey_makers):
@@ -305,7 +305,7 @@ func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool:
 	return noise > 0.45 if ring == interior_rings - 1 else noise > 0.75
 
 func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
-	var tile := Polygon2D.new()
+	var tile = Polygon2D.new()
 	tile.polygon = main.Shapes.hexagon_points(GameConfig.hive_cell_size * 1.15)
 	tile.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 	tile.color = main.FLOOR_COLOR
@@ -314,7 +314,7 @@ func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
 	if not main.hive.tile_is_free(hex):
 		return
-	var block := main.SoilBlock.new()
+	var block = main.SoilBlock.new()
 	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 	main.hive_root.add_child(block)
 	block.setup(hex)
@@ -323,7 +323,7 @@ func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 func _add_rock_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
 	if not main.hive.tile_is_free(hex):
 		return
-	var block := main.RockBlock.new()
+	var block = main.RockBlock.new()
 	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
 	main.hive_root.add_child(block)
 	block.setup(hex)
@@ -334,7 +334,7 @@ func _entrance_tiles(interior_rings: int, soil_depth: int) -> Dictionary:
 	var half: float = GameConfig.hive_entrance_width * GameConfig.hive_cell_spacing
 	for ring in range(interior_rings - 1, interior_rings + soil_depth):
 		for hex in main.Shapes.hex_ring(ring):
-			var pixel := main.Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+			var pixel = main.Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
 			if pixel.y < 0.0 and abs(pixel.x) <= half:
 				tiles[hex] = true
 	return tiles
@@ -359,14 +359,14 @@ func _build_cameras() -> void:
 	main.add_child(main.hive_camera)
 
 func _spawn_bee(focus: String) -> void:
-	var bee := main.Bee.new()
+	var bee = main.Bee.new()
 	bee.position = main.hive.position
 	main.meadow_root.add_child(bee)
 	bee.setup(main.hive, focus, main.next_bee_id, main.Bee.Role.FORAGER, main)
 	main.next_bee_id += 1
 
 func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> void:
-	var bee := main.Bee.new()
+	var bee = main.Bee.new()
 	bee.is_gyne = as_gyne
 	bee.position = cell.position
 	main.hive_root.add_child(bee)
@@ -385,7 +385,7 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 		bee.state = main.Bee.State.IN_HIVE_TO_EXIT
 
 func _spawn_indoor_bee(role: int) -> Node2D:
-	var bee := main.Bee.new()
+	var bee = main.Bee.new()
 	bee.position = _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
 	main.hive_root.add_child(bee)
 	bee.setup(main.hive, "nectar", main.next_bee_id, role, main)
@@ -418,7 +418,7 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 
 ## Part of main.gd's public surface -- bee.gd calls `world.mark_death(self)`.
 func mark_death(bee: Node2D) -> void:
-	var marker := main.DeathMarker.new()
+	var marker = main.DeathMarker.new()
 	marker.position = bee.position
 	var parent: Node = bee.get_parent()
 	if parent == null or not is_instance_valid(parent):
@@ -440,7 +440,7 @@ func _apply_scenery_setting() -> void:
 
 ## Part of main.gd's public surface -- bee.gd calls `world.finish_mining(target_block)`.
 func finish_mining(block: Node2D) -> void:
-	var centre_local := _hive_centre_local()
+	var centre_local = _hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
 	main.hive.remove_block(block, func(hex: Vector2i): _add_floor_tile(hex, centre_local, spacing))
 

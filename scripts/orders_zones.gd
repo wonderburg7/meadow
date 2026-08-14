@@ -53,7 +53,7 @@ func _undo_last_designation() -> void:
 	if _designation_undo.is_empty():
 		main.hud.show_warning("Nothing to undo.")
 		return
-	var restored := 0
+	var restored = 0
 	for entry in _designation_undo:
 		var cell = entry.cell
 		if not is_instance_valid(cell):

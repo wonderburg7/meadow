@@ -44,7 +44,7 @@ func begin_winter_countdown() -> void:
 func _refresh_winter() -> void:
 	if not Session.winter_coming:
 		return
-	var forecast := _winter_forecast()
+	var forecast = _winter_forecast()
 	main.winter_panel.refresh(forecast)
 	main.hud.corner_texts["winter"] = main.winter_panel.corner_text
 	main.hud.refresh_corner()
@@ -148,7 +148,7 @@ func _sample_history(delta: float) -> void:
 
 func _emergence_counts() -> Dictionary:
 	_trim_emergence_log()
-	var counts := {}
+	var counts = {}
 	for entry in main.emergence_log:
 		counts[entry.key] = int(counts.get(entry.key, 0)) + 1
 	return counts
@@ -169,11 +169,11 @@ func _refresh_signals(delta: float) -> void:
 	var lines: Array = []
 	var bees: Array = get_tree().get_nodes_in_group("bees")
 
-	var starving := 0
-	var hungry := 0
-	var foragers := 0
-	var nurses := 0
-	var comb_workers := 0
+	var starving = 0
+	var hungry = 0
+	var foragers = 0
+	var nurses = 0
+	var comb_workers = 0
 	for b in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
@@ -187,9 +187,9 @@ func _refresh_signals(delta: float) -> void:
 			main.Bee.Role.BUILDER:
 				comb_workers += 1
 
-	var hungry_brood := 0
-	var dead_cells := 0
-	var free_cells := 0
+	var hungry_brood = 0
+	var dead_cells = 0
+	var free_cells = 0
 	for cell in main.hive.cells:
 		if not is_instance_valid(cell):
 			continue
@@ -230,15 +230,15 @@ func _refresh_signals(delta: float) -> void:
 	Perf.end("signals")
 
 func _refresh_panels(bees: Array) -> void:
-	var counts := main._role_counts()
-	var energy_share := 0.0
+	var counts = main._role_counts()
+	var energy_share = 0.0
 	for b in bees:
 		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
 
-	var brood_count := 0
-	var gyne_count := 0
-	var hungry_brood := 0
-	var free_cells := 0
+	var brood_count = 0
+	var gyne_count = 0
+	var hungry_brood = 0
+	var free_cells = 0
 	for cell in main.hive.cells:
 		if not is_instance_valid(cell):
 			continue
@@ -252,7 +252,7 @@ func _refresh_panels(bees: Array) -> void:
 			free_cells += 1
 
 	var mean_energy: float = energy_share / max(1, bees.size())
-	var comb_text := "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
+	var comb_text = "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
 		main.hive.cells.size(), free_cells, brood_count, gyne_count, hungry_brood,
 	]
 	if main.season != null:

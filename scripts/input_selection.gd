@@ -57,7 +57,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	elif event is InputEventMouseMotion:
 		if main.panning:
-			var cam := main.camera_view._active_camera()
+			var cam = main.camera_view._active_camera()
 			cam.position -= (event.position - main.pan_anchor) / cam.zoom.x
 			main.pan_anchor = event.position
 		elif main.dragging:
@@ -91,29 +91,29 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		_place_floral_preference(main.drag_start)
 		return
 
-	var box := Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
+	var box = Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
 	var picked: Array = []
 	if box.size.length() < 6.0:
-		var bee := _bee_at(main.drag_start)
+		var bee = _bee_at(main.drag_start)
 		if bee:
 			picked.append(bee)
 		elif main.in_hive_view:
-			var cell := _cell_at(main.drag_start)
+			var cell = _cell_at(main.drag_start)
 			if cell:
 				_select_cells([cell], add_to_group_selection)
 				return
-			var block := _soil_at(main.drag_start)
+			var block = _soil_at(main.drag_start)
 			if block:
 				_select_blocks([block], add_to_group_selection)
 				return
 			_clear_cell_selection()
 			_clear_block_selection()
 		else:
-			var flower := main.world_building._flower_at(main.drag_start)
+			var flower = main.world_building._flower_at(main.drag_start)
 			if flower:
 				main.hud.show_flower_popup(flower, main.get_viewport().get_mouse_position())
 				return
-			var obstacle := main.world_building._obstacle_at(main.drag_start)
+			var obstacle = main.world_building._obstacle_at(main.drag_start)
 			if obstacle:
 				main.hud.show_obstacle_popup(obstacle, main.get_viewport().get_mouse_position())
 				return
@@ -198,7 +198,7 @@ func _select_blocks(blocks: Array, additive: bool) -> void:
 
 	if main.selected_blocks.is_empty():
 		return
-	var reachable := 0
+	var reachable = 0
 	for block in main.selected_blocks:
 		if main.hive.mine_stand_hex(block) != null:
 			reachable += 1
@@ -216,7 +216,7 @@ func _on_soil_mark_requested(mark: bool) -> void:
 			block.set_marked(mark)
 
 func _bees_in_current_view() -> Array:
-	var root := main.hive_root if main.in_hive_view else main.meadow_root
+	var root = main.hive_root if main.in_hive_view else main.meadow_root
 	return get_tree().get_nodes_in_group("bees").filter(func(b): return b.get_parent() == root)
 
 func _bee_at(point: Vector2) -> Node2D:
@@ -263,7 +263,7 @@ func _on_build_cell_requested() -> void:
 	_ensure_hive_view()
 
 func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
-	var block := _soil_at(global_point)
+	var block = _soil_at(global_point)
 	if block != null:
 		for b in main.pending_mine_target_bees:
 			if not is_instance_valid(b):
@@ -344,7 +344,7 @@ func _place_forage_start(global_point: Vector2) -> void:
 
 func _place_floral_preference(global_point: Vector2) -> void:
 	main.awaiting_floral_preference = false
-	var flower := main.world_building._flower_at(global_point)
+	var flower = main.world_building._flower_at(global_point)
 	if flower:
 		for b in main.pending_preference_bees:
 			if is_instance_valid(b):
@@ -355,7 +355,7 @@ func _place_floral_preference(global_point: Vector2) -> void:
 func _issue_command(world_point: Vector2) -> void:
 	if main.selected_bees.is_empty():
 		return
-	var flower := main.world_building._flower_at(world_point) if not main.in_hive_view else null
+	var flower = main.world_building._flower_at(world_point) if not main.in_hive_view else null
 	for b in main.selected_bees:
 		if not is_instance_valid(b):
 			continue
@@ -412,7 +412,7 @@ func _ensure_hive_view() -> void:
 func _draw_selection_box() -> void:
 	Perf.begin("draw")
 	if main.dragging:
-		var box := Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
+		var box = Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
 		main.selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.15), true)
 		main.selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.9), false, 2.0)
 
@@ -427,7 +427,7 @@ func _draw_selection_box() -> void:
 	Perf.end("draw")
 
 func _draw_hive_orders() -> void:
-	var any_architect := false
+	var any_architect = false
 	for b in main.selected_bees:
 		if not is_instance_valid(b):
 			continue
@@ -479,7 +479,7 @@ func _tile_centre(hex: Vector2i) -> Vector2:
 	)
 
 func _draw_start_point_marker(point: Vector2) -> void:
-	var marker_color := Color(0.2, 1.0, 0.4, 0.95)
+	var marker_color = Color(0.2, 1.0, 0.4, 0.95)
 	main.selection_layer.draw_circle(point, 9.0, Color(0.2, 1.0, 0.4, 0.2))
 	main.selection_layer.draw_arc(point, 9.0, 0.0, TAU, 24, marker_color, 2.5)
 	main.selection_layer.draw_line(point + Vector2(-6, 0), point + Vector2(6, 0), marker_color, 2.0)
