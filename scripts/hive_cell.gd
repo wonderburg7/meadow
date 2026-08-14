@@ -314,6 +314,7 @@ const REFRESHES_PER_SECOND := 6.0
 var refresh_timer: float = 0.0
 
 func _process(delta: float) -> void:
+	Perf.begin("cells")
 	if content_type == "brood":
 		_develop_brood(delta)
 	elif content_type == "honey":
@@ -325,14 +326,17 @@ func _process(delta: float) -> void:
 	# whichever root is not being looked at, so this is false for every
 	# cell in the hive while the player is out in the meadow.
 	if not is_visible_in_tree():
+		Perf.end("cells")
 		return
 	refresh_timer -= delta
 	if refresh_timer > 0.0:
+		Perf.end("cells")
 		return
 	# Staggered, so a hive's worth of cells doesn't all redraw on the
 	# same frame and produce the hitch this was meant to remove.
 	refresh_timer = (1.0 / REFRESHES_PER_SECOND) * randf_range(0.85, 1.15)
 	_refresh()
+	Perf.end("cells")
 
 ## A larva burns through whatever its last feed bought it and then simply
 ## stops. A nurse standing over it still speeds up the time it does have

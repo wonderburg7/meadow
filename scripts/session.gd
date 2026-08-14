@@ -52,6 +52,14 @@ var gynes_released: int = 0
 ## STAT_ROWS of the colony and nursery windows.
 var pinned_stats: Array = ["day", "stores", "signals"]
 
+## Gates perf.gd's instrumentation. Kept in sync with whether "fps" is
+## starred (see hud.gd's pinned_stats_changed) rather than being its
+## own setting, so there's exactly one thing to toggle. A plain field
+## rather than pinned_stats.has("fps") computed on the fly, because
+## Perf reads this on every begin/end and a field read is cheaper than
+## an Array scan repeated a dozen times a frame.
+var perf_enabled: bool = false
+
 ## Turn the small "i" tooltip badges off once you know what everything
 ## does.
 var show_info_badges: bool = true

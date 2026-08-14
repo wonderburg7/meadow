@@ -286,6 +286,9 @@ func _ready() -> void:
 	hud.finish_first_requested.connect(_on_finish_first_requested)
 	hud.floral_preference_requested.connect(_on_floral_preference_requested)
 	add_child(hud)
+	# Syncs Session.perf_enabled and the corner to whatever "fps" was
+	# left starred as, rather than assuming a fresh run starts unstarred.
+	hud.pinned_stats_changed()
 
 	add_child(DebugPanel.new())
 
@@ -927,6 +930,7 @@ func _reseed_meadow(delta: float) -> void:
 ## default. Because the role lives on the cell, every future egg raised
 ## there comes out the same way without you touching it again.
 func _hatch_ready_brood() -> void:
+	Perf.begin("hatch")
 	for cell in hive.cells:
 		if not cell.brood_ready():
 			continue
@@ -947,6 +951,7 @@ func _hatch_ready_brood() -> void:
 			cell.hatch_role = -1
 		hive.record_birth()
 		_update_population_readout()
+	Perf.end("hatch")
 
 ## Weather. Rain arrives, builds, sits, and eases off again, so the
 ## colony gets a warning rather than being switched off mid-flight. The
@@ -1049,8 +1054,10 @@ func _check_colony_energy(delta: float) -> void:
 ## Recomputed once a second for the whole colony rather than per bee, so
 ## it costs effectively nothing.
 func _refresh_signals(delta: float) -> void:
+	Perf.begin("signals")
 	signal_timer -= delta
 	if signal_timer > 0.0:
+		Perf.end("signals")
 		return
 	signal_timer = 1.0
 
@@ -1118,6 +1125,7 @@ func _refresh_signals(delta: float) -> void:
 
 	hud.update_signals(lines)
 	_refresh_panels(bees)
+	Perf.end("signals")
 
 ## Feeds the colony overview and the nursery window. The population and
 ## comb figures are computed once here and shared between the corner
@@ -2706,7 +2714,10 @@ func _on_floral_preference_requested() -> void:
 		in_hive_view = false
 		_apply_view()
 
+## Covers _draw_hive_orders too, since that's only ever called from here --
+## one begin/end pair rather than nesting a second under the same name.
 func _draw_selection_box() -> void:
+	Perf.begin("draw")
 	if dragging:
 		var box := Rect2(drag_start, drag_current - drag_start).abs()
 		selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.15), true)
@@ -2719,9 +2730,11 @@ func _draw_selection_box() -> void:
 		for b in selected_bees:
 			if is_instance_valid(b) and b.role == Bee.Role.FORAGER and b.has_forage_start_point():
 				_draw_start_point_marker(b.forage_start_point)
+		Perf.end("draw")
 		return
 
 	_draw_hive_orders()
+	Perf.end("draw")
 
 # --- showing a bee's orders ---------------------------------------
 ## Everything here is drawn only while the bee holding the order is

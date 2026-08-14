@@ -330,7 +330,9 @@ var since_last_think: float = 0.0
 var thinking: bool = false
 
 func _process(delta: float) -> void:
+	Perf.begin("bees")
 	if hive == null or is_dying:
+		Perf.end("bees")
 		return
 
 	# Staggered by a random jitter so the colony's thinking is spread
@@ -345,6 +347,7 @@ func _process(delta: float) -> void:
 
 	_age_and_burn(delta)
 	if not is_inside_tree():
+		Perf.end("bees")
 		return   # died during ageing
 
 	if thinking:
@@ -495,6 +498,7 @@ func _process(delta: float) -> void:
 			_queen_lay(delta)
 
 	_update_label()
+	Perf.end("bees")
 
 # --- life support -------------------------------------------------
 
@@ -3068,19 +3072,25 @@ func _block_obstacles(wanted: Vector2) -> Vector2:
 ## open tiles, because soil is solid. The route is recalculated only
 ## when the destination changes, not every frame.
 func _move_towards(target: Vector2, delta: float) -> void:
+	Perf.begin("bee_move")
 	var step: float = speed * _terrain_speed_factor() * delta
 
 	if not _is_inside_hive():
 		var wanted: Vector2 = position.move_toward(_avoid_obstacles(target), step)
 		position = _block_obstacles(wanted)
+		Perf.end("bee_move")
 		return
 
 	if target.distance_to(path_goal) > 6.0 or path_points.is_empty():
 		path_goal = target
+		# Timed inside path_between itself (hive.gd), which is the
+		# suspect the perf plan names first: an A* search over the whole
+		# hive grid, potentially every frame per bee.
 		path_points = hive.path_between(position, target)
 		path_index = 0
 
 	if path_points.is_empty():
+		Perf.end("bee_move")
 		return   # no safe route -- stay put rather than cutting through soil
 
 	# walk the waypoints, spending any leftover movement on the next one
@@ -3096,3 +3106,4 @@ func _move_towards(target: Vector2, delta: float) -> void:
 			step = 0.0
 	if path_index >= path_points.size():
 		position = position.move_toward(target, step)
+	Perf.end("bee_move")

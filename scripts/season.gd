@@ -34,12 +34,15 @@ func _ready() -> void:
 	add_to_group("season")
 
 func _process(delta: float) -> void:
+	Perf.begin("season")
 	if world == null or not is_instance_valid(world):
+		Perf.end("season")
 		return
 	# Once a second is plenty for all of this -- none of it changes on a
 	# timescale a player could see faster than that.
 	tick_timer += delta
 	if tick_timer < 1.0:
+		Perf.end("season")
 		return
 	var elapsed := tick_timer
 	tick_timer = 0.0
@@ -47,6 +50,7 @@ func _process(delta: float) -> void:
 	_advance_disease(elapsed)
 	_advance_winter()
 	_release_ready_gynes()
+	Perf.end("season")
 
 # --- disease ------------------------------------------------------
 ## Pressure builds from two things: bodies left in the comb, and how many

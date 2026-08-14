@@ -87,17 +87,21 @@ func _make_forager() -> Dictionary:
 	return {"node": dot, "target": null, "heading_home": false, "load": 0.0}
 
 func _process(delta: float) -> void:
+	Perf.begin("rival")
 	if not alive:
+		Perf.end("rival")
 		return
 	_move_foragers(delta)
 
 	tick_timer += delta
 	if tick_timer < 1.0:
+		Perf.end("rival")
 		return
 	var elapsed := tick_timer
 	tick_timer = 0.0
 	_advance_colony(elapsed)
 	_update_label()
+	Perf.end("rival")
 
 # --- the colony's own rules ---------------------------------------
 ## Once a second: eat, grow, and adjust what it is doing about whatever

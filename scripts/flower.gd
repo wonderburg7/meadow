@@ -186,6 +186,7 @@ const PRESENTATION_PER_SECOND := 6.0
 var presentation_timer: float = 0.0
 
 func _process(delta: float) -> void:
+	Perf.begin("flowers")
 	# Out of season a plant produces nothing; at the edges of its window
 	# it produces a little. The plant stays where it is either way --
 	# flowers popping in and out of existence would read as a glitch
@@ -202,21 +203,25 @@ func _process(delta: float) -> void:
 		if occupied_by != null and is_instance_valid(occupied_by):
 			occupied_by.release_flower_reference(self)
 		queue_free()
+		Perf.end("flowers")
 		return
 
 	# Everything above runs every frame: a flower recharges and ages at
 	# the same rate whether it is on screen or not. Only the drawing
 	# below is throttled.
 	if not is_visible_in_tree():
+		Perf.end("flowers")
 		return
 	presentation_timer -= delta
 	if presentation_timer > 0.0:
+		Perf.end("flowers")
 		return
 	presentation_timer = (1.0 / PRESENTATION_PER_SECOND) * randf_range(0.85, 1.15)
 	# `strength` is passed in rather than asked for again -- it was being
 	# computed twice per flower per frame.
 	_update_fade(strength)
 	_update_labels()
+	Perf.end("flowers")
 
 ## Where we are in the year, 0 to 1. Winter is not part of the season:
 ## a season runs from day 1 to the day winter starts.

@@ -10,6 +10,8 @@ extends CanvasLayer
 const UI = preload("res://scripts/ui.gd")
 const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
+const PerfPlot = preload("res://scripts/perf_plot.gd")
+const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
@@ -147,6 +149,13 @@ const TUNING_BUTTON_RESERVE := 108.0
 ## text. `corner_texts` is also what the colony window is handed, so the
 ## two can never disagree about what a number says.
 var corner_column: VBoxContainer
+## The perf plot and its breakdown line, when "fps" is starred. Kept as
+## persistent children rather than rebuilt with the rest of the corner
+## texts each time the signature changes -- see _refresh_corner -- so
+## their own 4Hz redraw timing isn't reset every time e.g. the day
+## counter ticks over.
+var perf_plot: Control
+var perf_breakdown: Label
 var corner_texts: Dictionary = {
 	"day": "", "stores": "", "population": "", "comb": "",
 	"energy": "", "rates": "", "winter": "", "fps": "",
@@ -243,6 +252,14 @@ func _ready() -> void:
 	corner_column.position = Vector2(16, 12)
 	corner_column.add_theme_constant_override("separation", 2)
 	add_child(corner_column)
+
+	perf_plot = PerfPlot.new()
+	perf_plot.custom_minimum_size = Vector2(140, 40)
+	perf_plot.visible = false
+	corner_column.add_child(perf_plot)
+	perf_breakdown = PerfBreakdown.new()
+	perf_breakdown.visible = false
+	corner_column.add_child(perf_breakdown)
 
 	pause_label = _make_label(Vector2(16, 300), 18)
 	pause_label.text = "PAUSED"
@@ -948,6 +965,7 @@ func _set_lit(key: String, lit: bool) -> void:
 		UI.clear_current_mark(button)
 
 func _process(_delta: float) -> void:
+	Perf.begin("hud")
 	if warning_panel.visible:
 		warning_timer -= _delta
 		if warning_timer <= 0.0:
@@ -958,6 +976,7 @@ func _process(_delta: float) -> void:
 		_refresh_flower_popup()
 	if selection_panel.visible:
 		_refresh_selection_text()
+	Perf.end("hud")
 
 func _request_designation(type: String) -> void:
 	if active_cell and is_instance_valid(active_cell):
@@ -1119,6 +1138,11 @@ func _refresh_corner() -> void:
 	corner_signature = signature
 
 	for child in corner_column.get_children():
+		# perf_plot and perf_breakdown are persistent -- see their
+		# declaration -- so their own redraw timing survives a rebuild
+		# triggered by something unrelated, like the day counter.
+		if child == perf_plot or child == perf_breakdown:
+			continue
 		child.queue_free()
 
 	for key in CORNER_ORDER:
@@ -1131,6 +1155,16 @@ func _refresh_corner() -> void:
 		label.text = text
 		label.add_theme_font_size_override("font_size", int(CORNER_SIZES.get(key, 12)))
 		corner_column.add_child(label)
+
+	# Sits under whichever readouts are starred, same as the plan asked
+	# for "under the three fps numbers" in the common case where fps is
+	# the only thing starred while chasing a frame-time problem.
+	var show_perf: bool = Session.pinned_stats.has("fps")
+	perf_plot.visible = show_perf
+	perf_breakdown.visible = show_perf
+	if show_perf:
+		corner_column.move_child(perf_plot, corner_column.get_child_count() - 1)
+		corner_column.move_child(perf_breakdown, corner_column.get_child_count() - 1)
 
 	if not show_signals:
 		return
@@ -1153,8 +1187,12 @@ func _refresh_corner() -> void:
 		corner_column.add_child(line)
 
 ## Called when the player stars or unstars something in either window:
-## the corner has to be redrawn even though no number changed.
+## the corner has to be redrawn even though no number changed. Also the
+## one place that keeps Session.perf_enabled in step with the "fps"
+## star, so perf.gd's instrumentation only runs while someone could
+## actually be looking at it.
 func pinned_stats_changed() -> void:
+	Session.perf_enabled = Session.pinned_stats.has("fps")
 	corner_signature = ""
 	_refresh_corner()
 

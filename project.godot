@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 GameConfig="*res://scripts/game_config.gd"
 Session="*res://scripts/session.gd"
+Perf="*res://scripts/perf.gd"
 
 [rendering]
 

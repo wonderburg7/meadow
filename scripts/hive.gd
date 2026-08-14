@@ -558,6 +558,7 @@ var _astar := AStar2D.new()
 var _tile_ids: Dictionary = {}   # axial -> AStar point id
 
 func build_navigation() -> void:
+	Perf.begin("nav_rebuild")
 	_astar.clear()
 	_tile_ids.clear()
 	# the layout has changed, so every cached route is suspect
@@ -584,6 +585,7 @@ func build_navigation() -> void:
 			var other: Vector2i = hex + step
 			if _tile_ids.has(other):
 				_astar.connect_points(_tile_ids[hex], _tile_ids[other], true)
+	Perf.end("nav_rebuild")
 
 ## Soil can eventually be dug out; bedrock never can. Either way nothing
 ## walks through it, so routing treats them the same.
@@ -633,13 +635,16 @@ var _path_cache: Dictionary = {}
 const PATH_CACHE_LIMIT := 2000
 
 func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array:
+	Perf.begin("bee_path")
 	var from_hex := Shapes.pixel_to_hex(from_point - comb_centre, GameConfig.hive_cell_spacing)
 	var to_hex := Shapes.pixel_to_hex(to_point - comb_centre, GameConfig.hive_cell_spacing)
 	if not _tile_ids.has(from_hex) or not _tile_ids.has(to_hex):
+		Perf.end("bee_path")
 		return PackedVector2Array()
 
 	var key := Vector4i(from_hex.x, from_hex.y, to_hex.x, to_hex.y)
 	if _path_cache.has(key):
+		Perf.end("bee_path")
 		return _path_cache[key]
 
 	var raw := _astar.get_point_path(_tile_ids[from_hex], _tile_ids[to_hex])
@@ -652,6 +657,7 @@ func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array:
 	if _path_cache.size() >= PATH_CACHE_LIMIT:
 		_path_cache.clear()   # simplest eviction: start again rather than track ages
 	_path_cache[key] = smoothed
+	Perf.end("bee_path")
 	return smoothed
 
 ## A* returns a route along hex centres, which makes bees walk in a
