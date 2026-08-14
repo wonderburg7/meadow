@@ -3,7 +3,10 @@
 Written 14 Aug 2026, after the main.gd split (see `MAIN_SPLIT_PLAN.md`) shipped
 and needed two follow-up fixes once it actually ran in Godot. This plan is
 written to avoid repeating both of those mistakes, plus one new one that's
-specific to `bee.gd`. **Not started -- Dave to review and approve first.**
+specific to `bee.gd`. **Approved 14 Aug. In progress: `bee_enums.gd` and
+`bee_movement.gd` are split out and committed, both passing
+`source_checks.py`/`balance_tests.py` -- neither has run in Godot yet.
+Next: the five role-specific files, foraging suggested first.**
 
 ## Why this is a different shape of problem than main.gd
 
