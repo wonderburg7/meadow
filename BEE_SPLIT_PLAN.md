@@ -8,8 +8,11 @@ committed (`bee_enums.gd`, `bee_movement.gd`, `bee_survival.gd`,
 `bee_foraging.gd`, `bee_nursery.gd`, `bee_building.gd`, `bee_mining.gd`,
 `bee_honey.gd`, `bee_egg_laying.gd`), plus one the plan didn't anticipate
 (`bee_status.gd`, see below). `bee.gd` is 3,138 lines -> 1,399. All three
-commits pass `source_checks.py`/`balance_tests.py`; none has run in Godot
-yet -- **needs Dave's hands-on check before anything else touches bee.gd.**
+commits pass `source_checks.py`/`balance_tests.py`, and Dave confirmed
+it works as intended in Godot 14 Aug. Still outstanding: re-measure
+`bee_movement.gd` with `perf.gd` against a decent-sized colony (~29
+bees) before trusting the static-call pattern is free on the hottest
+path -- see the performance section below.
 
 ## Why this is a different shape of problem than main.gd
 

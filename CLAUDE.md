@@ -19,7 +19,7 @@ Check them before planning; log back to them after a session.
 
 ```
 scenes/Main.tscn      one scene, one node, points at main.gd
-scripts/              all game code, ~13,500 lines
+scripts/              all game code, ~14,000 lines
 tests/                two Python suites, no Godot needed
 DESIGN_BACKLOG.md     agreed but unbuilt: progression, winter debate
 LANGUAGE_REVIEW.md    naming and structure review (mostly actioned)
@@ -34,18 +34,44 @@ thing a session can do here.
 
 | Change | File | Lines |
 |---|---|---|
-| Anything a bee does: states, movement, steering, jobs, energy | `bee.gd` | 3,098 |
-| World setup, per-frame loop, input, selection, saving, orders | `main.gd` | 2,801 |
-| Corner readouts, panels, popups, warnings, the problem strip | `hud.gd` | 1,498 |
+| A bee's dispatch loop, player commands, display text, vars | `bee.gd` | 1,399 |
+| Steering and obstacle avoidance (the hot path -- see PERF_PLAN.md) | `bee_movement.gd` | 325 |
+| Life support, eating, the stall watchdog | `bee_survival.gd` | 309 |
+| Foraging, entering/leaving the hive | `bee_foraging.gd` | 397 |
+| Nursery work, royal jelly | `bee_nursery.gd` | 315 |
+| Building, restocking | `bee_building.gd` | 303 |
+| Mining | `bee_mining.gd` | 80 |
+| Honey making | `bee_honey.gd` | 116 |
+| Queen egg laying | `bee_egg_laying.gd` | 103 |
+| Role/State enums (`bee.gd` and every `bee_*.gd` file alias these) | `bee_enums.gd` | 46 |
+| "Is it grounded" / "does this role work indoors" | `bee_status.gd` | 41 |
+| World setup, spawning, moving bees between meadow and hive | `world_building.gd` | 457 |
+| Click/drag selection, placement modes | `input_selection.gd` | 486 |
+| Save/load | `saving.gd` | 234 |
+| Restock zones, build/mine queues (the orders a player gives) | `orders_zones.gd` | 253 |
+| Year progression, winter | `year_winter.gd` | 323 |
+| Camera | `camera_view.gd` | 114 |
+| Per-frame entry point, everything not yet split out of main | `main.gd` | 725 |
+| Corner readouts, panels, popups, warnings, the problem strip | `hud.gd` | 1,540 |
 | Tuning rows, starred readouts, save/load buttons, restart | `debug_panel.gd` | 1,014 |
-| The comb as a whole: cells, navigation, finding a cell | `hive.gd` | 825 |
-| One cell: contents, brood, honey ripening, how it draws | `hive_cell.gd` | 823 |
+| The comb as a whole: cells, navigation, finding a cell | `hive.gd` | 831 |
+| One cell: contents, brood, honey ripening, how it draws | `hive_cell.gd` | 827 |
 | Balance numbers | `game_config.gd` | 402 |
-| Run state and interface preferences | `session.gd` | 96 |
+| Run state and interface preferences | `session.gd` | 104 |
 | Role ids, labels, colours, sub-modes | `roles.gd` | 203 |
-| Seasons, disease, winter, gynes leaving | `season.gd` | 161 |
-| Flower behaviour, species, in-season logic | `flower.gd` | 329 |
+| Seasons, disease, winter, gynes leaving | `season.gd` | 165 |
+| Flower behaviour, species, in-season logic | `flower.gd` | 334 |
 | Save file format | `save_game.gd` | 276 |
+
+`bee.gd` and `main.gd` are each split across several files now (see
+`BEE_SPLIT_PLAN.md` and `MAIN_SPLIT_PLAN.md` for why each file has the
+boundary it has). `bee_movement.gd`, `bee_survival.gd` and the rest are
+plain `extends RefCounted` files of `static func`s, called as
+`BeeForaging.seek_flower(bee)` -- not child nodes, since a bee is
+instantiated hundreds of times. `world_building.gd`, `input_selection.gd`
+and `main.gd`'s other siblings are the opposite: each a single Node
+child of `main`, reached as `main.world_building.foo()`, because `main`
+exists once.
 
 Smaller and self-explanatory: `colony_panel.gd`, `nursery_panel.gd`,
 `winter_panel.gd`, `game_over.gd`, `main_menu.gd`, `rival_hive.gd`,
@@ -91,10 +117,13 @@ narrow goal reads less.
 after the last update" points at a diff. "Something feels off" points
 at the whole codebase.
 
-**Splitting the big files is a token change as much as a tidiness
-one.** `main.gd` at 2,801 lines is roughly 27,000 tokens to read once,
-and it is the file most changes touch. `bee.gd` is larger still. Both
-are queued for splitting.
+**Splitting the big files was a token change as much as a tidiness
+one, and it's done.** `main.gd` was 2,801 lines and `bee.gd` was 3,138;
+both are now under 1,400, with the rest spread across the files the
+table above lists. Confirmed working in Godot 14 Aug. If either grows
+back towards that size, the same move (a routing table entry, a
+`static func` or child-Node file, see `BEE_SPLIT_PLAN.md`/
+`MAIN_SPLIT_PLAN.md`) applies again.
 
 **Leave `_backups/` out of any search.** It holds eight full copies of
 older scripts (54 `.gd` files). It is gitignored, but it is still on
@@ -187,8 +216,10 @@ behind the "fps" star (`Session.perf_enabled`, kept in sync by
 `hud.gd::pinned_stats_changed`). It exists because this project has
 had two performance regressions caused by confident guesses that were
 wrong — see `PERF_PLAN.md` for the full writeup of the second one, a
-4fps drop that turned out to be `bee.gd::_grounded()` calling itself
-instead of checking rain.
+4fps drop that turned out to be `_grounded()` calling itself instead
+of checking rain -- that function is `bee_status.gd::grounded()` now,
+moved there in the bee.gd split, but the bug and the method that found
+it predate the move.
 
 **The method that found it, worth repeating for the next one:**
 
@@ -270,6 +301,8 @@ Worth knowing, because each has bitten more than once:
   had been replaced with `if _grounded(): return true` — the function
   calling itself, unconditionally, presumably where a real rain check
   used to be before something got renamed or moved out from under it.
+  (The function is `bee_status.gd::grounded()` since the bee.gd split;
+  this bug predates that move.)
   This was the entire cause of a 4fps drop (see `PERF_PLAN.md`):
   GDScript's call stack recursed until it errored out, every single
   call. Nothing crashed and nothing looked obviously wrong from
@@ -299,7 +332,7 @@ Worth knowing, because each has bitten more than once:
 
 ---
 
-## State of play (13 Aug 2026)
+## State of play (14 Aug 2026)
 
 Playable well beyond the original v1 target. The loop runs: found a
 colony, dig out a hive, build comb, assign bees across seven roles,
@@ -308,13 +341,21 @@ score. There's a rival colony competing for the same meadow, disease
 pressure from neglect, weather, save/load, five starting levels and a
 full tuning panel.
 
+`main.gd` and `bee.gd` have both been split (see the routing table
+above, and `MAIN_SPLIT_PLAN.md` / `BEE_SPLIT_PLAN.md` for why each
+boundary is where it is) and confirmed working in Godot 14 Aug --
+that was the last item on the "deferred on purpose" list from the
+previous state-of-play note.
+
 **Deferred on purpose, most recent first:**
 
-- **Break up `main.gd`** — extract selection/placement modes, world
-  building, and save/restore. Agreed worth doing "when it next becomes
-  painful". At 2,750 lines it's close.
 - **Tutorial / first-run guidance** — Dave named this as the next thing
-  to build after the 13 Aug batch.
+  to build once the splits were done.
+- **Re-measure `bee_movement.gd` with `perf.gd`** — it's the hottest
+  path in the file (steering, obstacle avoidance) and hasn't been
+  specifically re-profiled since the static-call pattern went in.
+  Worth doing before trusting it's free, per this project's own rule
+  about not trusting an unsimulated/unmeasured number.
 - **Depth in what exists** — nurse-mediated caste switching, comb
   temperature, bee individuality, foraging memory, multi-storey comb.
 - **A second hive site to move to.**
