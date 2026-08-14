@@ -91,7 +91,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **One `roles.gd` instead of role constants in four files** | S | **Shipped 13 Aug.** |
 | **Split `GameConfig` into balance vs session state** | S | **Shipped 13 Aug.** `session.gd`. |
 | **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | **Shipped 13 Aug.** |
-| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Agreed, not started, now unblocked.** Six-file split agreed with Dave 14 Aug, held until the frame-rate investigation resolved so any breakage stayed attributable to one change at a time — that's now confirmed fixed. `bee.gd` (3,098 lines, the larger file) queued behind it. |
+| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Shipped 14 Aug.** Six new files, each a plain Node created in `_ready()` and reached as `main.world_building` etc. `main.gd` still holds every field and every method something outside the split touches (`bee.gd`, `debug_panel.gd`) — see `MAIN_SPLIT_PLAN.md`. Passes `source_checks.py` and `balance_tests.py`; **not yet played** — needs Dave's hands-on check before it's trusted. `bee.gd` (3,098 lines, the larger file) is the next one queued. |
 | **Automated tests for the balance rules** | M | **Shipped 13 Aug.** `tests/balance_tests.py`, extended to `tests/source_checks.py` on the same day after the balance suite didn't catch a syntax error that blanked the game. |
 
 ---

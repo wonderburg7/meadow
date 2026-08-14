@@ -1,0 +1,234 @@
+extends Node
+## Saving and loading a run. Split out of main.gd 14 Aug 2026 -- see
+## MAIN_SPLIT_PLAN.md. Holds no state; reads and writes main's fields
+## through the `main` reference.
+##
+## `save_run` is part of main.gd's public surface: debug_panel.gd finds
+## main via the "world" group and calls `worlds[0].save_run()` directly,
+## so main.gd keeps a one-line wrapper for it.
+
+var main: Node2D
+
+func save_run() -> void:
+	if main.SaveGame.save(main):
+		main.hud.show_warning("Run saved.")
+	else:
+		main.hud.show_warning("The run could not be saved — check the log for why.")
+
+## Replays a saved run over the freshly built world. Order matters: the
+## comb has to exist before bees can be pointed at it, and mined-out soil
+## has to be removed before routes are rebuilt.
+func _restore(data: Dictionary) -> void:
+	if data.is_empty():
+		main.hud.show_warning("There was no save to load.")
+		return
+
+	var clock: Dictionary = data.get("clock", {})
+	Session.sim_time = float(clock.get("sim_time", 0.0))
+	main.day = int(clock.get("day", 1))
+	main.next_bee_id = int(clock.get("next_bee_id", 1))
+	main.hud.update_day(main.day, main.year_winter._season_text())
+
+	var weather: Dictionary = data.get("weather", {})
+	Session.rain_intensity = float(weather.get("intensity", 0.0))
+	main.rain_target = float(weather.get("target", 0.0))
+	main.rain_seconds_left = float(weather.get("seconds_left", 0.0))
+
+	var totals: Dictionary = data.get("totals", {})
+	main.hive.lifetime_nectar_collected = float(totals.get("nectar", 0.0))
+	main.hive.lifetime_pollen_collected = float(totals.get("pollen", 0.0))
+	main.hive.lifetime_births = int(totals.get("births", 0))
+
+	var session_state: Dictionary = data.get("session", {})
+	Session.winter_coming = bool(session_state.get("winter_coming", false))
+	Session.winter_starts_day = float(session_state.get("winter_starts_day", 0.0))
+	Session.winter_here = bool(session_state.get("winter_here", false))
+	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
+	Session.gynes_released = int(session_state.get("gynes_released", 0))
+	main.hud.set_winter_button_visible(Session.winter_coming)
+
+	_restore_soil(data.get("soil", {}))
+	_restore_cells(data.get("cells", []))
+	_restore_hive_state(data.get("hive", {}))
+	_restore_flowers(data.get("flowers", []))
+	main.world_building._rebuild_flower_grid()
+	_restore_bees(data.get("bees", []))
+
+	main.hive.build_navigation()
+	main.hive.refresh_edge_flags()
+	main.hive.invalidate_index()
+	main.hive.announce()
+	main._update_population_readout()
+	main.hud.show_warning("Run loaded — day %d." % main.day)
+
+func _restore_soil(soil: Dictionary) -> void:
+	var still_there := {}
+	for pair in soil.get("present", []):
+		still_there[Vector2i(int(pair[0]), int(pair[1]))] = true
+
+	var to_remove: Array = []
+	for node in main.hive.occupied_tiles.values():
+		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
+			continue
+		if not still_there.has(node.axial):
+			to_remove.append(node)
+
+	var centre_local := main.world_building._hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	for block in to_remove:
+		var hex: Vector2i = block.axial
+		main.hive.occupied_tiles.erase(hex)
+		block.queue_free()
+		main.world_building._add_floor_tile(hex, centre_local, spacing)
+
+	for entry in soil.get("marked", []):
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		var node = main.hive.occupied_tiles.get(hex)
+		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
+			node.mine_progress = float(entry.progress)
+			node.set_marked(bool(entry.marked))
+
+func _restore_cells(cells: Array) -> void:
+	for cell in main.hive.cells:
+		if is_instance_valid(cell):
+			main.hive.occupied_tiles.erase(cell.axial)
+			cell.queue_free()
+	main.hive.cells = []
+
+	var centre_local := main.world_building._hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	for entry in cells:
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		var cell := main.HiveCell.new()
+		cell.axial = hex
+		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+		main.hive_root.add_child(cell)
+
+		cell.content_type = str(entry.get("content", ""))
+		cell.amount = float(entry.get("amount", 0.0))
+		cell.designated_type = str(entry.get("designated", ""))
+		cell.keep_empty = bool(entry.get("keep_empty", false))
+		cell.evict_requested = bool(entry.get("evict", false))
+		cell.evict_mode = str(entry.get("evict_mode", "move"))
+		cell.is_built = bool(entry.get("built", true))
+		cell.build_progress = float(entry.get("build_progress", 0.0))
+		cell.brood_progress = float(entry.get("brood_progress", 0.0))
+		cell.brood_fed_seconds = float(entry.get("brood_fed", 0.0))
+		cell.unfed_seconds = float(entry.get("unfed", 0.0))
+		cell.brood_is_gyne = bool(entry.get("gyne", false))
+		cell.clean_progress = float(entry.get("clean", 0.0))
+		cell.ripen_progress = float(entry.get("ripen", 0.0))
+		cell.hatch_role = int(entry.get("hatch_role", -1))
+		cell.hatch_focus = str(entry.get("hatch_focus", "nectar"))
+		cell.hatch_automine = bool(entry.get("hatch_automine", false))
+		cell.hatch_role_locked = bool(entry.get("hatch_locked", false))
+		cell.hatch_gyne = bool(entry.get("hatch_gyne", false))
+		cell.nursery_priority = int(entry.get("priority", 1))
+		cell.is_closed = bool(entry.get("closed", false))
+		cell.fill_then_close = bool(entry.get("fill_close", false))
+
+		main.hive.cells.append(cell)
+		main.hive.register_tile(hex, cell)
+
+func _restore_hive_state(state: Dictionary) -> void:
+	main.hive.keep_clear_tiles.clear()
+	for pair in state.get("keep_clear", []):
+		main.hive.keep_clear_tiles[Vector2i(int(pair[0]), int(pair[1]))] = true
+	var credit: Array = state.get("tier_credit", [])
+	if credit.size() == 3:
+		main.hive._tier_credit = [float(credit[0]), float(credit[1]), float(credit[2])]
+	main.hive._brood_pointer = int(state.get("brood_pointer", 0))
+
+func _cells_at(refs: Array) -> Array:
+	var out: Array = []
+	for pair in refs:
+		var node = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+		if node != null and is_instance_valid(node) and node.is_in_group("hive_cells"):
+			out.append(node)
+	return out
+
+func _blocks_at(refs: Array) -> Array:
+	var out: Array = []
+	for pair in refs:
+		var node = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
+			out.append(node)
+	return out
+
+func _restore_flowers(flowers: Array) -> void:
+	for f in get_tree().get_nodes_in_group("flowers"):
+		if is_instance_valid(f):
+			f.queue_free()
+
+	for entry in flowers:
+		var flower := main.Flower.new()
+		flower.position = Vector2(float(entry.x), float(entry.y))
+		main.meadow_root.add_child(flower)
+		flower.setup(int(entry.species))
+		flower.nectar_amount = float(entry.get("nectar", 0.0))
+		flower.pollen_amount = float(entry.get("pollen", 0.0))
+		flower.age_seconds = float(entry.get("age", 0.0))
+
+func _restore_bees(bees: Array) -> void:
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b):
+			b.queue_free()
+	main.queen = null
+	main.selected_bees.clear()
+
+	for entry in bees:
+		var bee := main.Bee.new()
+		bee.is_queen = bool(entry.get("queen", false))
+		bee.is_gyne = bool(entry.get("gyne", false))
+		bee.position = Vector2(float(entry.x), float(entry.y))
+		if bool(entry.get("indoors", false)):
+			main.hive_root.add_child(bee)
+		else:
+			main.meadow_root.add_child(bee)
+
+		bee.setup(main.hive, str(entry.get("resource", "nectar")), int(entry.get("id", 0)), int(entry.get("role", 0)), main)
+		bee.state = int(entry.get("state", bee.state))
+		bee.energy = float(entry.get("energy", GameConfig.energy_capacity))
+		bee.age_seconds = float(entry.get("age", 0.0))
+		bee.current_load = float(entry.get("load", 0.0))
+		bee.current_load_type = str(entry.get("load_type", ""))
+		bee.honey_load = float(entry.get("honey_load", 0.0))
+		bee.dirt_load = float(entry.get("dirt", 0.0))
+		bee.pollen_eaten = float(entry.get("pollen_eaten", 0.0))
+		bee.nurse_pollen = float(entry.get("nurse_pollen", 0.0))
+		bee.nurse_carb = float(entry.get("nurse_carb", 0.0))
+		bee.nurse_carb_type = str(entry.get("nurse_carb_type", ""))
+		bee.nurse_jelly = float(entry.get("nurse_jelly", 0.0))
+		bee.nurse_mode = str(entry.get("nurse_mode", "feed"))
+		bee.architect_mode = str(entry.get("architect_mode", "both"))
+		bee.automine = bool(entry.get("automine", false))
+		bee.secondary_role = int(entry.get("secondary", -1))
+		bee.finish_task_first = bool(entry.get("finish_first", false))
+		bee.pending_role = int(entry.get("pending_role", -1))
+		bee.preferred_species = str(entry.get("preferred", ""))
+		bee.forage_start_point = Vector2(float(entry.get("start_x", INF)), float(entry.get("start_y", INF)))
+
+		bee.build_queue = []
+		for pair in entry.get("build_queue", []):
+			bee.build_queue.append(Vector2i(int(pair[0]), int(pair[1])))
+		bee.has_manual_build_target = not bee.build_queue.is_empty()
+		if bee.has_manual_build_target:
+			bee.manual_build_hex = bee.build_queue[0]
+		bee.mine_queue = _blocks_at(entry.get("mine_queue", []))
+
+		var home: Array = entry.get("home_hex", [])
+		if home.size() == 2:
+			bee.set_home_hex(Vector2i(int(home[0]), int(home[1])))
+		var mine_home: Array = entry.get("mine_home", [])
+		if mine_home.size() == 2:
+			bee.set_mine_home_hex(Vector2i(int(mine_home[0]), int(mine_home[1])))
+
+		bee.restock_resource = str(entry.get("restock_resource", ""))
+		bee.restock_targets = _cells_at(entry.get("restock_targets", []))
+		bee.restock_sources = _cells_at(entry.get("restock_sources", []))
+		bee.restock_blocked = _cells_at(entry.get("restock_blocked", []))
+
+		if bee.is_queen:
+			main.queen = bee
+
+	main.colony_lost = false
