@@ -55,12 +55,12 @@ func _season_text() -> String:
 		parts.append("Winter, %d days left" % int(max(0.0, Session.winter_ends_day - main.day)))
 	elif GameConfig.seasons_on:
 		var through: float = main.Flower.season_fraction()
-		var name: String = "Early season"
+		var season_name: String = "Early season"
 		if through > 0.66:
-			name = "Late season"
+			season_name = "Late season"
 		elif through > 0.33:
-			name = "Midsummer"
-		parts.append(name)
+			season_name = "Midsummer"
+		parts.append(season_name)
 	if Session.gynes_released > 0:
 		parts.append("%d gynes away" % Session.gynes_released)
 	return "  ".join(parts)

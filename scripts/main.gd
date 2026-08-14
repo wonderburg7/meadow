@@ -294,9 +294,17 @@ func _ready() -> void:
 	hive_root.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(hive_root)
 
+	# Cameras first: _build_meadow spawns the starting foragers, and
+	# spawning a bee calls into is_on_screen (bee.gd's _update_label,
+	# via setup()) before the bee has ever been drawn. is_on_screen
+	# reads whichever camera is active, so it has to exist by then --
+	# building cameras after the meadow left a null-camera crash on
+	# every fresh run. Neither _build_meadow nor _build_hive_interior
+	# reads meadow_camera/hive_camera themselves, so moving this earlier
+	# changes nothing else about what they do.
+	world_building._build_cameras()
 	world_building._build_meadow()
 	world_building._build_hive_interior()
-	world_building._build_cameras()
 
 	# A wash of grey-blue over the meadow while it's raining. Drawn on its
 	# own layer beneath the HUD so it tints the world, not the panels.
