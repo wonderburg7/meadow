@@ -144,9 +144,13 @@ const SPEEDS := [
 static func mode_command(role_id: int, mode_key: String) -> String:
 	return "%s_%s" % [Roles.key_for(role_id), mode_key]
 
-## Width kept clear in the top-right corner for the Tuning button that
-## debug_panel.gd owns. Both use the same number so they can't collide.
-const TUNING_BUTTON_RESERVE := 108.0
+## Gap left between this bar and the settings cog that debug_panel.gd
+## owns, on top of however wide the cog button actually is right now.
+const SETTINGS_BUTTON_GAP := 8.0
+## Used only until debug_panel.gd reports the cog's real width (see
+## set_settings_button_width) -- close to the cog's own custom_minimum_size
+## so there's no visible jump on the first frame.
+const SETTINGS_BUTTON_DEFAULT_WIDTH := 36.0
 
 ## The top-left corner. Every readout lives in the colony window now;
 ## this shows only the ones the player has starred there, in a fixed
@@ -189,6 +193,10 @@ var corner_signature: String = ""
 var pause_label: Label
 var view_button: Button
 var winter_button: Button
+## The row of speed/colony/nursery/winter/view buttons in the top-right
+## corner, kept anchored clear of whatever debug_panel.gd's settings cog
+## currently measures -- see set_settings_button_width.
+var top_right_bar: HBoxContainer
 var selection_panel: PanelContainer
 var selection_label: Label
 var task_label: Label
@@ -293,16 +301,22 @@ func _with_info(control: Control, tip: String) -> HBoxContainer:
 	return UI.with_info(control, tip)
 
 ## Anchored to the top-right rather than positioned at fixed pixels, so
-## the bar follows the corner when the window is resized. The tuning
-## button in debug_panel.gd is anchored the same way and reserves its
-## own width, so the two no longer overlap.
+## the bar follows the corner when the window is resized. The settings
+## cog in debug_panel.gd is anchored the same way and reports its own
+## width back here (see set_settings_button_width) so the two never
+## overlap and never leave more of a gap than the cog actually needs --
+## previously this reserved a fixed 108px sized for the old "Tuning ▾"
+## text button, which left a stretch of dead space once that became a
+## plain icon. Reading the real width back, rather than another fixed
+## number, also means this keeps working if the cog's font size (and so
+## its width) ever becomes a player setting.
 func _build_top_right_bar() -> void:
 	var bar := HBoxContainer.new()
+	top_right_bar = bar
 	bar.add_theme_constant_override("separation", 6)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	# leave room for the Tuning button, which sits in the very corner
-	bar.offset_right = -TUNING_BUTTON_RESERVE
+	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
 	bar.offset_top = 8
 	add_child(bar)
 
@@ -358,6 +372,15 @@ func _build_top_right_bar() -> void:
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
 	bar.add_child(view_button)
 	bar.add_child(_info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at."))
+
+## Called by debug_panel.gd whenever its settings cog's actual width
+## changes (including the first layout pass), so this bar sits exactly
+## as far from the corner as the cog needs and no further -- see the
+## comment on _build_top_right_bar.
+func set_settings_button_width(width: float) -> void:
+	if top_right_bar == null:
+		return
+	top_right_bar.offset_right = -(width + SETTINGS_BUTTON_GAP)
 
 func set_speed_display(speed_scale: float) -> void:
 	for entry in speed_buttons:

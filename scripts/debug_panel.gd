@@ -727,6 +727,21 @@ func _ready() -> void:
 	toggle_button.pressed.connect(_toggle_panel)
 	add_child(toggle_button)
 
+	# hud.gd's top-right button row keeps clear of however wide this cog
+	# actually is, rather than a fixed reserve -- see hud.gd's
+	# set_settings_button_width. `resized` covers every future change
+	# (e.g. a font-size setting making the glyph bigger); the deferred
+	# call covers the first layout pass, since `resized` only fires on a
+	# genuine change and the button's very first size might already be
+	# whatever custom_minimum_size says.
+	toggle_button.resized.connect(_report_settings_button_width)
+	call_deferred("_report_settings_button_width")
+
+func _report_settings_button_width() -> void:
+	for hud in get_tree().get_nodes_in_group("huds"):
+		if is_instance_valid(hud) and hud.has_method("set_settings_button_width"):
+			hud.set_settings_button_width(toggle_button.size.x)
+
 	panel = PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
