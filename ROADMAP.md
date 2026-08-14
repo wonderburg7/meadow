@@ -7,78 +7,95 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
+Last updated: 14 Aug 2026 — a pass to mark what's shipped since this was
+first written, after several items were found done while looking for
+something else. See `PERF_PLAN.md` for the active investigation.
+
 ---
 
-## Performance and scale
+## Performance and scale — active investigation, see PERF_PLAN.md
 
-The game currently runs a full state machine, energy budget and
-pathfinding per bee per frame. That's fine at fifty bees. The things
-below are in the order they'll start to matter.
+The frame rate drops as low as 4fps with only 29 bees. That is not
+explained by anything below; it means one thing is costing roughly
+250ms in a single frame, and it hasn't been found yet. `PERF_PLAN.md`
+in the repo root has the plan: build a `perf.gd` timing autoload and a
+frame-time plot, measure rather than guess, then fix. Read that file
+before starting on anything performance-related — this table is the
+history, not the live plan.
 
-| | Size | Worth it? |
+| | Size | Status |
 |---|---|---|
-| **Update budgeting** — give each bee a "think" tick a few times a second rather than every frame, keeping only movement per-frame. Bees make decisions on a scale of seconds; asking sixty times a second is waste | M | **Yes, and first.** This is the single biggest win available and costs nothing visible. A colony of 300 would cost about what 50 does now |
-| **Spatial grid for flowers and obstacles** — bucket the meadow into a coarse grid so "nearest flower" and "what's in the way" check a handful of candidates instead of all 250 | M | **Yes, second.** `_pick_flower` and `_first_blocker` are both linear scans today |
-| **Stop drawing what isn't on screen** — bees and flowers outside the camera don't need `_update_label` or colour lerps | S | Yes, cheap |
-| **Pool the death markers and rain streaks** rather than creating and freeing nodes | S | Only if profiling says so; rain is already pooled |
-| **Move the hive's A\* to a coarser graph** — route between regions rather than tiles, then walk locally | L | Not yet. The path cache already handles it |
+| **Update budgeting** — bees think a few times a second rather than every frame, keeping only movement per-frame | M | **Shipped 13 Aug.** `THINKS_PER_SECOND` in `bee.gd` |
+| **Spatial grid for flowers** — bucket the meadow so "nearest flower" checks a handful of candidates instead of all 250 | M | **Shipped 13 Aug.** Kept. |
+| **Spatial grid for obstacles** — same idea, applied to the 14 obstacles | M | **Shipped 13 Aug, reverted 14 Aug.** Wrong call: 14 objects asked 60 times a second per bee lost to the scan it replaced — the grid's own bucket-lookup and allocation cost more than iterating 14 items. See the Decisions Log entry and the "optimising a set too small to need it" bug class in `CLAUDE.md`. |
+| **Stop drawing what isn't on screen** — bees, cells and flowers outside the camera skip label/colour updates | S | **Shipped.** Bees 13 Aug (`is_on_screen`); cells and flowers throttled to 6/sec and skipped off-screen entirely on 14 Aug, which turned out to be the bigger of the two real jitter causes that day. |
+| **Pool the death markers and rain streaks** | S | Not done. Rain is already pooled; death markers not profiled as worth it yet. |
+| **Move the hive's A\* to a coarser graph** | L | Not yet. Currently the leading suspect for the 4fps drop — see `PERF_PLAN.md` suspect #1. |
 
-**The one measurement worth taking first:** run 300 bees and see what
-actually costs. Everything above is a prediction, and predictions about
-performance are usually wrong.
+**The measurement this file used to say was worth taking first, still is:** `PERF_PLAN.md` is that measurement, now underway.
 
 ## Making the middle game interesting
 
-The colony currently has no reason to stop growing. These give it one.
-
-| | Size | Worth it? |
+| | Size | Status |
 |---|---|---|
-| **Winter proper** — the countdown exists; make the season actually happen. Foraging stops, the colony burns stores, bees die if it runs out, and the survivors emerge in spring | M | **Yes.** The countdown is already creating the interesting decisions; delivering on it closes the loop |
-| **Gynes leaving and scoring** — the original premise. Gynes fly off at the end of the season and are the score | M | **Yes.** It's the stated win condition and nothing currently ends a run except losing |
-| **Disease and parasites** — a hive that grows without cleaning gets sick; nurses and clearing work become preventative rather than reactive | M | Strong. It gives "maintenance" a reason to exist beyond tidiness |
-| **Forage seasonality** — species come into flower at different times, so the best patch moves through the year | M | **Yes, and cheap given `Flower.SPECIES` already exists.** Turns floral constancy and start points from curiosities into real decisions |
-| **Predators** — something that eats foragers in the meadow | M | Maybe. Adds pressure, but the colony already has plenty; risks becoming noise |
-| **A second hive site to move to** | L | Not yet |
+| **Winter proper** — foraging stops, stores burn, bees die if it runs out, survivors emerge in spring | M | **Shipped 13 Aug.** `season.gd` |
+| **Gynes leaving and scoring** — gynes fly off at season's end and are the score | M | **Shipped 13 Aug.** Supersedes the old "day 90 resource score" win condition. |
+| **Disease and parasites** — an uncleaned hive gets sick; clearing becomes preventative | M | **Shipped 13 Aug.** Corpses and crowding drive it; four balance numbers had to be retuned after simulating (see Decisions Log). |
+| **Forage seasonality** — species come into flower at different times | M | **Shipped 13 Aug.** `Flower.SPECIES`, `season_strength()`. |
+| **Predators** — something that eats foragers in the meadow | M | Not built. Still an open question whether it adds pressure or just noise, given the colony already has disease, winter and a rival hive. |
+| **A second hive site to move to** | L | Not built. Deferred on purpose (13 Aug decision). |
 
 ## Depth in what exists
 
+Nothing in this section is built yet. All deferred on purpose on 13 Aug,
+alongside the tutorial, so the systems already in could stabilise first.
+
 | | Size | Worth it? |
 |---|---|---|
-| **Nurse-mediated caste switching** — the deferred option from the nursery zone design. What a larva becomes is set by feeding, not by the cell | M | **Yes, as a later-level unlock.** It changes how an existing system works rather than adding a new one, which is the best kind of progression |
-| **Comb temperature** — brood develops faster in a warm cluster; bees fan or huddle. Gives comb *layout* a reason to matter beyond space | M | Strong. Right now the shape of the comb barely matters |
-| **Bee individuality** — small inherited variation in speed, capacity, lifespan; gynes carry it forward | S | Cheap and adds a lot of texture for the size |
-| **Foraging memory** — a bee that found a good patch returns to it and recruits others (a waggle dance, or bumblebee scent-following) | M | **Yes.** It's the most famous thing bees do and the game doesn't have it |
-| **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain |
+| **Nurse-mediated caste switching** — what a larva becomes is set by feeding, not by the cell | M | Yes, as a later-level unlock. Changes how an existing system works rather than adding a new one. |
+| **Comb temperature** — brood develops faster in a warm cluster; bees fan or huddle | M | Strong. Comb layout barely matters right now. |
+| **Bee individuality** — small inherited variation in speed, capacity, lifespan; gynes carry it forward | S | Cheap, adds texture. |
+| **Foraging memory** — a bee that found a good patch returns and recruits others | M | Yes. The most famous thing bees do and the game doesn't have it. |
+| **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain. |
 
 ## Interface
 
-| | Size | Worth it? |
+| | Size | Status |
 |---|---|---|
-| **A "why is this bee idle?" answer** — click an idle bee and be told what it's waiting for | S | **Yes, high value for the size.** "Nothing is happening and I don't know why" is the worst state for a player |
-| **Alerts you can click through to** — the problem strip lines select the bees or cells they're about | S | Yes, obvious follow-on from the strip |
-| **Saved selections / control groups** (press 1 to select your nectar foragers) | S | Yes |
-| **Comb overlay modes** — colour the whole comb by contents, by fill level, by age, by who's assigned to it | M | **Yes.** The nursery zone glow proved this pattern works; generalise it |
-| **A tutorial or first-run guidance** | M | Eventually. Not while the systems are still moving |
-| **Undo for cell designation** | S | Worth it once players are managing 50+ cells |
-| **Rebindable keys and a settings screen** | S | Later |
-| **Zoom-to-fit and camera bookmarks** | S | Nice, cheap |
+| **A "why is this bee idle?" answer** | S | **Shipped 13 Aug.** `idle_reason()` in `bee.gd`. |
+| **Alerts you can click through to** — problem strip lines select what they're about | S | **Shipped 13 Aug.** `signal_clicked` in `hud.gd`. |
+| **Saved selections / control groups** (Ctrl+1–9) | S | **Shipped 13 Aug.** |
+| **Comb overlay modes** — colour the whole comb by contents, fill, age, assignment | M | **Shipped 13 Aug.** Press O to cycle; `_cycle_comb_overlay()` in `main.gd`. |
+| **Undo for cell designation** (Ctrl+Z) | S | **Shipped 13 Aug.** |
+| **Zoom-to-fit** (F) | S | **Shipped 13 Aug.** |
+| **A frame rate readout** — average, last frame, worst frame in the window | S | **Shipped 14 Aug**, starred like the colony window's stats. A frame-time plot is in progress, see `PERF_PLAN.md`. |
+| **A tutorial or first-run guidance** | M | Not built. Named as the next interface thing on 13 Aug, still outstanding. |
+| **Rebindable keys and a settings screen** | S | Not built. |
 
 ## Structural work (see LANGUAGE_REVIEW.md for detail)
 
-| | Size | Worth it? |
+| | Size | Status |
 |---|---|---|
-| **One `roles.gd` instead of role constants in four files** | S | **Yes, first.** Removes a whole class of bug |
-| **Split `GameConfig` into balance vs session state** | S | Yes |
-| **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | Yes — silent data loss is the worst kind |
-| **Break up `main.gd`** (selection, world building, save/restore) | M | Yes, when it next becomes painful rather than pre-emptively |
-| **Automated tests for the balance rules** — the rival colony and winter maths are already tested this way, and both had real bugs the tests caught | M | **Yes.** The pattern works; extend it to brood, energy and foraging economics |
+| **One `roles.gd` instead of role constants in four files** | S | **Shipped 13 Aug.** |
+| **Split `GameConfig` into balance vs session state** | S | **Shipped 13 Aug.** `session.gd`. |
+| **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | **Shipped 13 Aug.** |
+| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Agreed, not started.** Six-file split agreed with Dave 14 Aug, held until the frame-rate investigation in `PERF_PLAN.md` is resolved, so any breakage stays attributable to one change at a time. `bee.gd` (3,098 lines, the larger file) queued behind it. |
+| **Automated tests for the balance rules** | M | **Shipped 13 Aug.** `tests/balance_tests.py`, extended to `tests/source_checks.py` on the same day after the balance suite didn't catch a syntax error that blanked the game. |
 
 ---
 
-## If I had to pick five
+## If I had to pick five (14 Aug: all five now shipped)
 
-1. **Update budgeting** — everything else gets easier when the colony can be large
-2. **One `roles.gd`** — an evening, and it stops a recurring class of bug
-3. **Winter proper** — the countdown has already created the decisions; deliver on them
-4. **Forage seasonality** — cheap, and makes three existing systems matter more
-5. **"Why is this bee idle?"** — the cheapest large improvement to how the game feels to play
+1. ~~Update budgeting~~ — shipped 13 Aug
+2. ~~One `roles.gd`~~ — shipped 13 Aug
+3. ~~Winter proper~~ — shipped 13 Aug
+4. ~~Forage seasonality~~ — shipped 13 Aug
+5. ~~"Why is this bee idle?"~~ — shipped 13 Aug
+
+**Picking five again, 14 Aug:**
+
+1. **Resolve the 4fps drop** — `PERF_PLAN.md`. Nothing else matters much until a 29-bee colony is playable.
+2. **Break up `main.gd`** — agreed, waiting on #1 so the two changes aren't tangled together.
+3. **Foraging memory** — the most-requested-feeling gap in what's built; cheap relative to its payoff.
+4. **A tutorial** — named as next on 13 Aug, still outstanding, and the game has grown a lot of surface area since it was last considered.
+5. **Comb temperature** — the deepest of the "depth in what exists" items and the one that would make comb layout an actual decision.

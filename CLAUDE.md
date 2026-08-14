@@ -101,6 +101,22 @@ older scripts (54 `.gd` files). It is gitignored, but it is still on
 disk, so a filesystem-wide search matches nine copies of everything.
 Git history has replaced it since 10 Aug and it can be deleted.
 
+**A stale `.git/index.lock` or `HEAD.lock` costs a retry, not a
+rebuild.** Sessions reaching this folder through a device bridge
+(rather than a local shell) sometimes can't delete files directly, and
+a previous git process here can leave a lock file behind. `git commit`
+then fails with "Unable to create ... .git/index.lock". The fix is to
+move the stale lock aside rather than delete it — `mv` works where `rm`
+doesn't — then re-run the commit:
+
+```
+mv .git/index.lock .git/stale_locks/index.lock.$(date +%s)
+mv .git/HEAD.lock .git/stale_locks/HEAD.lock.$(date +%s)   # if present
+```
+
+Nothing is actually wrong with the repo when this happens. Don't spend
+a turn investigating it — move the lock and retry.
+
 ---
 
 ## The four rules that matter
