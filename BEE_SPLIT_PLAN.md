@@ -3,10 +3,13 @@
 Written 14 Aug 2026, after the main.gd split (see `MAIN_SPLIT_PLAN.md`) shipped
 and needed two follow-up fixes once it actually ran in Godot. This plan is
 written to avoid repeating both of those mistakes, plus one new one that's
-specific to `bee.gd`. **Approved 14 Aug. In progress: `bee_enums.gd` and
-`bee_movement.gd` are split out and committed, both passing
-`source_checks.py`/`balance_tests.py` -- neither has run in Godot yet.
-Next: the five role-specific files, foraging suggested first.**
+specific to `bee.gd`. **Done 14 Aug.** All nine planned files split out and
+committed (`bee_enums.gd`, `bee_movement.gd`, `bee_survival.gd`,
+`bee_foraging.gd`, `bee_nursery.gd`, `bee_building.gd`, `bee_mining.gd`,
+`bee_honey.gd`, `bee_egg_laying.gd`), plus one the plan didn't anticipate
+(`bee_status.gd`, see below). `bee.gd` is 3,138 lines -> 1,399. All three
+commits pass `source_checks.py`/`balance_tests.py`; none has run in Godot
+yet -- **needs Dave's hands-on check before anything else touches bee.gd.**
 
 ## Why this is a different shape of problem than main.gd
 
@@ -93,6 +96,25 @@ Calls between two functions in the *same* new file stay bare, same as
 main.gd's split. Calls from one new file into another go through the name
 directly (`BeeMovement.move_towards(bee, ...)`), same pattern as
 `main.world_building.X()`.
+
+## One thing that didn't survive contact with the actual code
+
+The table above didn't anticipate `bee_status.gd`. Two tiny queries --
+`_grounded` (is a forager weathered in) and `_works_indoors` (does this
+role work inside the hive) -- turned out to be needed from **both**
+directions: `bee_foraging.gd` calls them (`_seek_flower`, `_go_to_exit`,
+`_shelter`, `_enter_hive`), and `bee_survival.gd` calls them too
+(`_after_feeding`). Putting them in `bee_survival.gd` as planned would
+have meant `bee_foraging.gd` needs `bee_survival.gd` (for these two) at
+the same time as `bee_survival.gd` needs `bee_foraging.gd` (for
+`_approach_cell`/`_release_cell_slot`/`_reject_flower`) -- a genuine
+circular preload, invisible until actually mapping out which function
+calls which. Fixed the same way the Role/State problem was fixed:
+promoted the two to their own leaf file, `bee_status.gd`, with no
+dependencies of its own. Worth remembering for any future split of a
+file this interconnected: line-range boundaries drawn from section
+headers are a good first guess, not a guarantee -- map the actual call
+graph before finalising which file needs to preload which.
 
 ## The one new landmine: `Role` and `State`
 
