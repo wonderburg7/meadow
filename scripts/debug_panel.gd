@@ -639,6 +639,11 @@ const TUNABLES := [
 		"tip": "How many in-game days a mark stays where a bee died, fading as it goes. A cluster of them out at the edge of the meadow tells you bees are running out of energy trying to work a patch that is too far away.",
 	},
 	{
+		"key": "fps", "label": "Frame rate", "star": true,
+		"category": "Interface",
+		"tip": "Show the frame rate in the top-right corner, alongside whatever else you have starred. Three numbers: the average, how long the last frame took in milliseconds, and the longest frame in the last second. The last one is the one that matters for smoothness -- a run that averages 60 but spikes to 50ms every so often will feel choppy, and only the worst-frame figure shows it.",
+	},
+	{
 		"key": "show_info_badges", "label": "Show info icons", "toggle": true,
 		"category": "Interface",
 		"tip": "Show the small round 'i' buttons next to controls. Turn them off once you know what everything does and the panels get a lot quieter. Takes effect immediately.",
@@ -723,6 +728,13 @@ func _rows_in(category: String) -> Array:
 	for entry in TUNABLES:
 		if entry.get("category", "") != category:
 			continue
+		# star rows aren't settings at all -- they toggle whether
+		# something appears in the corner, which lives in
+		# Session.pinned_stats rather than in GameConfig or Session
+		# directly, so the guard below doesn't apply to them
+		if entry.get("star", false):
+			found.append(entry)
+			continue
 		# guard against a renamed setting leaving a dead row behind --
 		# that used to crash the panel on startup with a confusing error
 		if setting_get(entry.key) == null:
@@ -753,7 +765,9 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	wrapper.add_child(body)
 
 	for entry in entries:
-		if entry.get("toggle", false):
+		if entry.get("star", false):
+			body.add_child(_make_star_row(entry))
+		elif entry.get("toggle", false):
 			body.add_child(_make_toggle_row(entry))
 		else:
 			body.add_child(_make_row(entry))
@@ -925,6 +939,44 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 					panel.colour_blind_changed()
 	)
 	row.add_child(box)
+	row.add_child(UI.info_badge(entry.tip))
+	return row
+
+## A row whose control is the same ★ / ☆ toggle the colony window uses,
+## pinning something into the corner readout rather than changing a
+## number. Kept identical to that one on purpose: a star means the same
+## thing wherever the player meets it.
+func _make_star_row(entry: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+
+	var key: String = entry.key
+	var star := Button.new()
+	star.toggle_mode = true
+	star.flat = true
+	star.focus_mode = Control.FOCUS_NONE
+	star.button_pressed = Session.pinned_stats.has(key)
+	star.text = "★" if star.button_pressed else "☆"
+	star.add_theme_font_size_override("font_size", 13)
+	star.tooltip_text = "Show this in the top-right corner."
+	star.toggled.connect(func(pressed: bool):
+		if pressed and not Session.pinned_stats.has(key):
+			Session.pinned_stats.append(key)
+		elif not pressed:
+			Session.pinned_stats.erase(key)
+		star.text = "★" if pressed else "☆"
+		# The corner has to be told: no number changed, so nothing else
+		# would prompt it to redraw.
+		for hud in get_tree().get_nodes_in_group("huds"):
+			if is_instance_valid(hud) and hud.has_method("pinned_stats_changed"):
+				hud.pinned_stats_changed()
+	)
+	row.add_child(star)
+
+	var label := Label.new()
+	label.text = entry.label
+	label.add_theme_font_size_override("font_size", 11)
+	row.add_child(label)
 	row.add_child(UI.info_badge(entry.tip))
 	return row
 

@@ -296,6 +296,23 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
+## How often a cell redraws itself. Six times a second, not sixty.
+##
+## _refresh rebuilds this cell's hexagon polygon, its outline points and
+## its label text. That was running for every cell every frame, so a
+## grown hive was doing several hundred polygon rebuilds a frame to draw
+## a picture that changes about as fast as a person can read it. It is
+## also the reason the choppiness got worse as a colony grew.
+##
+## Presentation only, and skipped entirely when the comb is not on
+## screen. Everything above this line -- brood developing, honey
+## ripening, the fanned and tended flags the workers re-assert -- runs
+## every frame regardless of whether anyone is looking, which is the
+## rule this project keeps: culling may skip presentation, never
+## simulation.
+const REFRESHES_PER_SECOND := 6.0
+var refresh_timer: float = 0.0
+
 func _process(delta: float) -> void:
 	if content_type == "brood":
 		_develop_brood(delta)
@@ -303,6 +320,18 @@ func _process(delta: float) -> void:
 		if being_fanned:
 			ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
 		being_fanned = false   # honey makers re-assert this each frame
+
+	# `is_visible_in_tree` covers the view switch for free: main.gd hides
+	# whichever root is not being looked at, so this is false for every
+	# cell in the hive while the player is out in the meadow.
+	if not is_visible_in_tree():
+		return
+	refresh_timer -= delta
+	if refresh_timer > 0.0:
+		return
+	# Staggered, so a hive's worth of cells doesn't all redraw on the
+	# same frame and produce the hitch this was meant to remove.
+	refresh_timer = (1.0 / REFRESHES_PER_SECOND) * randf_range(0.85, 1.15)
 	_refresh()
 
 ## A larva burns through whatever its last feed bought it and then simply

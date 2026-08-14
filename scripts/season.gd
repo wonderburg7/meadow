@@ -22,7 +22,11 @@ var world: Node2D = null
 ## with sheer crowding, falls on its own once the cause is dealt with.
 var disease: float = 0.0
 
-var tick_timer: float = 0.0
+## Started at a random point in its second so this tick, the rival
+## colony's tick and main.gd's signal refresh don't all land on the same
+## frame. Three separate whole-colony sweeps arriving together is a
+## visible hitch; spread out, none of them is.
+var tick_timer: float = randf()
 ## Bees alive when winter began, so the loss can be reported at the end.
 var bees_at_winter_start: int = 0
 

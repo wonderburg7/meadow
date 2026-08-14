@@ -124,7 +124,7 @@ var emergence_log: Array = []
 ## Samples of the stores and the population for the colony window's
 ## history plot.
 var history_samples: Array = []
-var history_timer: float = 0.0
+var history_timer: float = randf()
 
 ## Built once when the meadow is laid out. Bees consult this constantly
 ## for steering, and a scene-tree group query per bee per frame was the
@@ -156,8 +156,13 @@ var rain_effect: Node2D
 ## Sim time the low-energy warning was last shown, so it can't nag. -INF
 ## means it hasn't been shown at all yet this run.
 var last_energy_warning: float = -INF
-var warning_check_timer: float = 5.0
-var signal_timer: float = 1.0
+var warning_check_timer: float = 5.0 + randf()
+## The periodic sweeps below are each given a random starting phase.
+## Every one of them walks the whole colony or the whole comb, and when
+## their timers align they all land on one frame, which reads as an
+## intermittent stutter rather than as a slower game. Spread out, the
+## same work costs the same and no single frame carries it all.
+var signal_timer: float = randf()
 
 var in_hive_view: bool = false
 var selected_bees: Array = []
@@ -179,7 +184,7 @@ var reseed_timer: float = 0.0
 ## change across the whole window divided by its length, which is
 ## steadier than reading the last 10s alone.
 var rate_samples: Array = []
-var rate_sample_timer: float = 10.0
+var rate_sample_timer: float = 10.0 + randf() * 2.0
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var panning: bool = false          # middle mouse button held
 var pan_anchor: Vector2 = Vector2.ZERO
@@ -839,6 +844,7 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 # --- per-frame ----------------------------------------------------
 
 func _process(delta: float) -> void:
+	_sample_fps()
 	_handle_pan(delta)
 	selection_layer.queue_redraw()
 	_apply_scenery_setting()
@@ -862,6 +868,45 @@ func _process(delta: float) -> void:
 			_sample_rates()
 
 	_prune_selection()
+
+# --- the frame rate readout ----------------------------------------
+## Measured off the wall clock rather than off `delta`.
+##
+## `delta` is the wrong source here for two reasons: the speed controls
+## work by changing `Engine.time_scale`, which scales it, and pausing
+## stops it entirely. Either would make the reading lie at exactly the
+## moment you were trying to use it.
+##
+## Three numbers are reported, because they answer different questions.
+## The average says whether the game is fast enough. The last frame time
+## says what that average is made of. The worst frame in the window is
+## the one you actually felt: a run that averages 60fps but spends one
+## frame in twenty at 50ms reads as choppy while the average still looks
+## fine, and that is precisely the failure this game has had.
+var fps_last_usec: int = 0
+var fps_worst_ms: float = 0.0
+var fps_window_start_usec: int = 0
+const FPS_WINDOW_USEC := 500000   # report twice a second
+
+func _sample_fps() -> void:
+	var now: int = Time.get_ticks_usec()
+	if fps_last_usec == 0:
+		fps_last_usec = now
+		fps_window_start_usec = now
+		return
+	var frame_ms: float = float(now - fps_last_usec) / 1000.0
+	fps_last_usec = now
+	fps_worst_ms = max(fps_worst_ms, frame_ms)
+
+	if now - fps_window_start_usec < FPS_WINDOW_USEC:
+		return
+	fps_window_start_usec = now
+	# Sampling costs a subtraction whether or not anyone is looking;
+	# rebuilding the corner does not, so that part is skipped unless the
+	# readout is actually starred.
+	if Session.pinned_stats.has("fps"):
+		hud.update_fps(Engine.get_frames_per_second(), frame_ms, fps_worst_ms)
+	fps_worst_ms = 0.0
 
 ## Flowers wither on their own; this quietly seeds replacements so the
 ## meadow stays about as full as `flower_count` without every gap

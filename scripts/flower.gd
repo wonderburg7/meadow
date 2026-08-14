@@ -178,6 +178,13 @@ static func pick_species_index() -> int:
 			return i
 	return 0
 
+## As hive_cell.gd, and for the same reason: there are 250 of these and
+## the two amount labels were being reformatted sixty times a second
+## each, which is thirty thousand throwaway strings a second to show
+## numbers that tick over once or twice.
+const PRESENTATION_PER_SECOND := 6.0
+var presentation_timer: float = 0.0
+
 func _process(delta: float) -> void:
 	# Out of season a plant produces nothing; at the edges of its window
 	# it produces a little. The plant stays where it is either way --
@@ -197,7 +204,18 @@ func _process(delta: float) -> void:
 		queue_free()
 		return
 
-	_update_fade()
+	# Everything above runs every frame: a flower recharges and ages at
+	# the same rate whether it is on screen or not. Only the drawing
+	# below is throttled.
+	if not is_visible_in_tree():
+		return
+	presentation_timer -= delta
+	if presentation_timer > 0.0:
+		return
+	presentation_timer = (1.0 / PRESENTATION_PER_SECOND) * randf_range(0.85, 1.15)
+	# `strength` is passed in rather than asked for again -- it was being
+	# computed twice per flower per frame.
+	_update_fade(strength)
 	_update_labels()
 
 ## Where we are in the year, 0 to 1. Winter is not part of the season:
@@ -294,13 +312,13 @@ func marker_age() -> float:
 ## because `modulate` cascades to child nodes and was dragging the
 ## amount labels down to 35% alpha exactly when you most want to read
 ## them (a nearly empty flower).
-func _update_fade() -> void:
+func _update_fade(strength: float) -> void:
 	var fullness: float = (nectar_amount + pollen_amount) / max(0.001, nectar_capacity + pollen_capacity)
 	color.a = lerp(0.35, 1.0, fullness)
 	# Out of season a plant is drawn greyed and small, so a patch that has
 	# gone over is obvious from the air rather than something you only
 	# discover by sending foragers to it.
-	if season_strength() <= 0.0:
+	if strength <= 0.0:
 		color = color.lerp(Color(0.45, 0.44, 0.38, color.a), 0.75)
 		scale = Vector2(0.7, 0.7)
 	else:

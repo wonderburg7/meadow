@@ -149,7 +149,7 @@ const TUNING_BUTTON_RESERVE := 108.0
 var corner_column: VBoxContainer
 var corner_texts: Dictionary = {
 	"day": "", "stores": "", "population": "", "comb": "",
-	"energy": "", "rates": "", "winter": "",
+	"energy": "", "rates": "", "winter": "", "fps": "",
 	"nursery_zone": "", "nursery_mix": "", "nursery_output": "",
 }
 ## Order the starred readouts appear in. Covers both the colony window's
@@ -157,11 +157,13 @@ var corner_texts: Dictionary = {
 ## corner and the order they appear in shouldn't depend on which window
 ## the player happened to star them from.
 const CORNER_ORDER := [
+	"fps",
 	"day", "winter", "stores", "population", "comb", "energy", "rates",
 	"nursery_zone", "nursery_mix", "nursery_output",
 ]
 ## Font size per readout -- the day is the headline, the rest is detail.
 const CORNER_SIZES := {
+	"fps": 12,
 	"day": 22, "winter": 15, "stores": 16, "population": 13, "comb": 12,
 	"energy": 13, "rates": 12,
 	"nursery_zone": 12, "nursery_mix": 12, "nursery_output": 12,
@@ -223,6 +225,10 @@ var pending_type: String = ""
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
+	# So the tuning panel can find the corner readout to refresh it when
+	# a star is toggled, without either script holding a reference to the
+	# other.
+	add_to_group("huds")
 
 	# The controls used to be printed here permanently. They now live in
 	# the Tuning panel's Interface section, which keeps the corner of the
@@ -1078,6 +1084,16 @@ func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: 
 	corner_texts["rates"] = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
 		nectar_per_sec, pollen_per_sec, births_per_sec * 60.0,
 	]
+	_refresh_corner()
+
+## The frame rate readout. Three numbers rather than one, because they
+## answer different questions: the average tells you whether the game is
+## fast enough, the current frame time tells you what that average is
+## made of, and the worst frame in the last second is the one you
+## actually felt. Smooth play with an occasional 60ms frame reads as
+## choppy while the average still says 60.
+func update_fps(average: int, frame_ms: float, worst_ms: float) -> void:
+	corner_texts["fps"] = "%d fps   %.1f ms   worst %.0f ms" % [average, frame_ms, worst_ms]
 	_refresh_corner()
 
 ## `lines` is an array of [text, severity] pairs from main.gd.

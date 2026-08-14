@@ -47,6 +47,7 @@ PackedStringArray PackedVector2Array PackedFloat32Array PackedInt32Array Array D
 add_child remove_child get_parent get_children get_child get_node find_child has_node
 add_to_group remove_from_group is_in_group get_tree get_viewport get_viewport_rect
 get_global_mouse_position get_local_mouse_position is_inside_tree queue_free set_process
+is_visible_in_tree show hide
 set_physics_process set_process_input set_process_unhandled_input queue_redraw
 draw_line draw_circle draw_rect draw_polygon draw_colored_polygon draw_string draw_arc
 draw_set_transform draw_texture create_tween get_index move_child notification

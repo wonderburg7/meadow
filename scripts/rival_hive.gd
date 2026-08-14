@@ -46,7 +46,9 @@ var alive: bool = true
 ## Sim seconds since the last tick. The whole colony updates once a
 ## second rather than every frame -- nothing here changes fast enough
 ## for that to be visible, and it keeps the cost flat.
-var tick_timer: float = 0.0
+## Random phase, so this doesn't land on the same frame as season.gd's
+## tick. See the note there.
+var tick_timer: float = randf()
 
 ## The drawn foragers: each just a position, a target flower and a
 ## direction of travel. No state machine, no energy, no pathfinding.
