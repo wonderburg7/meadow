@@ -34,9 +34,9 @@ thing a session can do here.
 
 | Change | File | Lines |
 |---|---|---|
-| A bee's dispatch loop, player commands, display text, vars | `bee.gd` | 1,399 |
+| A bee's dispatch loop, player commands, display text, vars | `bee.gd` | 1,470 |
 | Steering and obstacle avoidance (the hot path -- see PERF_PLAN.md) | `bee_movement.gd` | 325 |
-| Life support, eating, the stall watchdog | `bee_survival.gd` | 309 |
+| Life support, eating, the stall watchdog | `bee_survival.gd` | 322 |
 | Foraging, entering/leaving the hive | `bee_foraging.gd` | 397 |
 | Nursery work, royal jelly | `bee_nursery.gd` | 315 |
 | Building, restocking | `bee_building.gd` | 303 |
@@ -45,23 +45,23 @@ thing a session can do here.
 | Queen egg laying | `bee_egg_laying.gd` | 103 |
 | Role/State enums (`bee.gd` and every `bee_*.gd` file alias these) | `bee_enums.gd` | 46 |
 | "Is it grounded" / "does this role work indoors" | `bee_status.gd` | 41 |
-| World setup, spawning, moving bees between meadow and hive | `world_building.gd` | 457 |
-| Click/drag selection, placement modes | `input_selection.gd` | 486 |
-| Save/load | `saving.gd` | 234 |
+| World setup, spawning, moving bees between meadow and hive (hex geometry, the entrance) | `world_building.gd` | 465 |
+| Click/drag selection, placement modes, hive-view overlays | `input_selection.gd` | 541 |
+| Save/load | `saving.gd` | 245 |
 | Restock zones, build/mine queues (the orders a player gives) | `orders_zones.gd` | 253 |
 | Year progression, winter | `year_winter.gd` | 323 |
 | Camera | `camera_view.gd` | 114 |
-| Per-frame entry point, everything not yet split out of main | `main.gd` | 725 |
-| Corner readouts, panels, popups, warnings, the problem strip | `hud.gd` | 1,540 |
-| Tuning rows, starred readouts, save/load buttons, restart | `debug_panel.gd` | 1,014 |
+| Per-frame entry point, everything not yet split out of main | `main.gd` | 738 |
+| Corner readouts, panels, popups, warnings, the problem strip | `hud.gd` | 1,571 |
+| Settings window (the cog icon), starred readouts, save/load buttons, restart | `debug_panel.gd` | 1,060 |
 | The comb as a whole: cells, navigation, finding a cell | `hive.gd` | 831 |
-| One cell: contents, brood, honey ripening, how it draws | `hive_cell.gd` | 827 |
-| Balance numbers | `game_config.gd` | 402 |
-| Run state and interface preferences | `session.gd` | 104 |
+| One cell: contents, brood, honey ripening, how it draws | `hive_cell.gd` | 845 |
+| Balance numbers | `game_config.gd` | 421 |
+| Run state and interface preferences | `session.gd` | 117 |
 | Role ids, labels, colours, sub-modes | `roles.gd` | 203 |
-| Seasons, disease, winter, gynes leaving | `season.gd` | 165 |
-| Flower behaviour, species, in-season logic | `flower.gd` | 334 |
-| Save file format | `save_game.gd` | 276 |
+| Seasons, disease, winter, gynes leaving | `season.gd` | 173 |
+| Flower behaviour, species, in-season logic | `flower.gd` | 341 |
+| Save file format | `save_game.gd` | 287 |
 
 `bee.gd` and `main.gd` are each split across several files now (see
 `BEE_SPLIT_PLAN.md` and `MAIN_SPLIT_PLAN.md` for why each file has the
@@ -346,6 +346,49 @@ above, and `MAIN_SPLIT_PLAN.md` / `BEE_SPLIT_PLAN.md` for why each
 boundary is where it is) and confirmed working in Godot 14 Aug --
 that was the last item on the "deferred on purpose" list from the
 previous state-of-play note.
+
+**Shipped 14 Aug, later the same day (a blueprint-then-implement
+pass, `NEW_FEATURES_BLUEPRINT.md`):**
+
+- **Flat-top hive geometry** — the comb, soil and rock hexagons now sit
+  flat-side up/down instead of pointy-top. Confined almost entirely to
+  `shapes.gd` (`hexagon_points`, `hex_to_pixel`, `pixel_to_hex`); axial
+  neighbour math is orientation-independent so nothing else needed to
+  change. Save format bumped to `FORMAT_VERSION = 2` with defensive
+  tile-clearing in `saving.gd::_restore_cells` for old saves.
+- **Single-file-wide entrance tunnel at the top corner** — replaces the
+  old "1, 2, 1, 2" pattern. `world_building.gd::_entrance_tiles` now
+  walks the straight `q = 0` column; axial `(0, -R)` is always the
+  unique topmost ring corner under flat-top projection.
+- **"Work from here" now targets one bee, not the whole selection** —
+  plus a new "set for all comb workers" button (`hud.gd`,
+  `input_selection.gd`) for the old broadcast behaviour when it's
+  actually wanted.
+- **A visual marker for a selected bee's home cell** — drawn for both
+  builders (`has_home_hex`) and miners (`has_mine_home`), same style as
+  the existing start-point marker.
+- **Nectar/pollen recolour** — pollen took over the old nectar amber
+  (lightened slightly); nectar is now pale blue with a touch of yellow,
+  read as a clear liquid in a yellow wax cell (`hive_cell.gd`).
+- **Tuner renamed to the settings window, text button replaced with a
+  cog icon** (`debug_panel.gd`). Call it "the settings window" in
+  conversation and comments from here on, not "the tuning panel".
+- **Build-here hover border** — any clear, buildable hex under the
+  mouse gets an outline while a build placement is active
+  (`input_selection.gd::_draw_build_hover`).
+- **Winter energy/lifespan now actually applied in simulation, not
+  just shown in the forecast** — `bee_survival.gd::age_and_burn` was
+  computing burn without `winter_burn_factor` even though the forecast
+  display promised it would; now fixed. Added
+  `GameConfig.winter_lifespan_factor` (bees live longer in winter,
+  hibernation-like) applied in `season.gd::lifespan_factor()`. The
+  4.0x starting value isn't yet backed by a full throwaway simulation
+  per this project's own rule 4 — see `DESIGN_BACKLOG.md`.
+- **Top-right button row now positions itself relative to the settings
+  cog's actual measured width**, not a hardcoded pixel constant
+  (`hud.gd::set_settings_button_width`, called from `debug_panel.gd`
+  via the cog button's `resized` signal). Done so a future font-size
+  setting won't silently break the layout again.
 
 **Deferred on purpose, most recent first:**
 

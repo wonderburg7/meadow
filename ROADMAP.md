@@ -7,10 +7,15 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 14 Aug 2026 — a pass to mark what's shipped since this was
-first written, after several items were found done while looking for
-something else, plus the 4fps investigation closing out the same day.
-See `PERF_PLAN.md` for that writeup.
+Last updated: 14 Aug 2026 (evening) — added rows for the hex-hive
+redesign, the winter energy/lifespan fix, and the interface changes
+from the same day's blueprint-then-implement pass
+(`NEW_FEATURES_BLUEPRINT.md`).
+
+Previous update, same day: a pass to mark what's shipped since this
+was first written, after several items were found done while looking
+for something else, plus the 4fps investigation closing out the same
+day. See `PERF_PLAN.md` for that writeup.
 
 ---
 
@@ -54,8 +59,15 @@ per-frame system its own `Perf.begin`/`Perf.end` pair — see `CLAUDE.md`.
 | **Gynes leaving and scoring** — gynes fly off at season's end and are the score | M | **Shipped 13 Aug.** Supersedes the old "day 90 resource score" win condition. |
 | **Disease and parasites** — an uncleaned hive gets sick; clearing becomes preventative | M | **Shipped 13 Aug.** Corpses and crowding drive it; four balance numbers had to be retuned after simulating (see Decisions Log). |
 | **Forage seasonality** — species come into flower at different times | M | **Shipped 13 Aug.** `Flower.SPECIES`, `season_strength()`. |
-| **Predators** — something that eats foragers in the meadow | M | Not built. Still an open question whether it adds pressure or just noise, given the colony already has disease, winter and a rival hive. |
+| **Predators** — something that eats foragers in the meadow | M | Not built. **Confirmed wanted 14 Aug** — no longer just an open question; detail not yet worked out. See `DESIGN_BACKLOG.md` §7.3. |
 | **A second hive site to move to** | L | Not built. Deferred on purpose (13 Aug decision). |
+| **Winter energy/lifespan bug fix** — bees now actually burn less and live longer through winter, matching what the forecast display already claimed | S | **Shipped 14 Aug.** `bee_survival.gd::age_and_burn` was missing `winter_burn_factor` entirely; new `GameConfig.winter_lifespan_factor` (4.0x, not yet fully modelled — see `DESIGN_BACKLOG.md` §9) applied in `season.gd::lifespan_factor()`. |
+
+## Hive geometry
+
+| | Size | Status |
+|---|---|---|
+| **Flat-top hex hive + single-column corner entrance** — comb/soil/rock hexagons flipped from pointy-top to flat-top, entrance moved to a top corner as one tile wide instead of the old "1, 2, 1, 2" pattern | M | **Shipped 14 Aug.** Confined almost entirely to `shapes.gd`; save format bumped to `FORMAT_VERSION 2`. See `NEW_FEATURES_BLUEPRINT.md`. |
 
 ## Depth in what exists
 
@@ -67,7 +79,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **Nurse-mediated caste switching** — what a larva becomes is set by feeding, not by the cell | M | Yes, as a later-level unlock. Changes how an existing system works rather than adding a new one. |
 | **Comb temperature** — brood develops faster in a warm cluster; bees fan or huddle | M | Strong. Comb layout barely matters right now. |
 | **Bee individuality** — small inherited variation in speed, capacity, lifespan; gynes carry it forward | S | Cheap, adds texture. |
-| **Foraging memory** — a bee that found a good patch returns and recruits others | M | Yes. The most famous thing bees do and the game doesn't have it. |
+| **Foraging memory** — a bee that found a good patch returns and recruits others | M | Yes, but **conditional on proving it beats the current baseline** — foragers already collect fine unassisted, so this needs measuring, not just building. Mechanism drafted 14 Aug: see `DESIGN_BACKLOG.md` §7.1. |
 | **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain. |
 
 ## Interface
@@ -83,6 +95,11 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **A frame rate readout** — average, last frame, worst frame in the window | S | **Shipped 14 Aug**, starred like the colony window's stats. The frame-time plot and per-section breakdown (`perf.gd`) shipped the same day and are a permanent fixture now, not a one-off — see `CLAUDE.md`. |
 | **A tutorial or first-run guidance** | M | Not built. Named as the next interface thing on 13 Aug, still outstanding. |
 | **Rebindable keys and a settings screen** | S | Not built. |
+| **Settings window (cog icon)** — replaced the "Tuning ▾" text button; called "the settings window" from here on | S | **Shipped 14 Aug.** `debug_panel.gd`. |
+| **Dynamic top-right button layout** — the speed/Colony/Nursery/Winter/Hive row now positions itself off the settings cog's actual measured width instead of a hardcoded constant, so a future font-size setting won't silently break it | S | **Shipped 14 Aug.** `hud.gd::set_settings_button_width`, driven by the cog button's `resized` signal in `debug_panel.gd`. |
+| **Per-bee "work from here" scoping + all-comb-workers button** — was accidentally moving the whole selection; now targets one bee, with an explicit button for the old broadcast behaviour | S | **Shipped 14 Aug.** `hud.gd`, `input_selection.gd`. |
+| **Home-cell marker** — shows a selected builder/miner's assigned cell | S | **Shipped 14 Aug.** |
+| **Build-here hover border** — outlines a clear, buildable hex under the mouse while placing a build order | S | **Shipped 14 Aug.** |
 
 ## Structural work (see LANGUAGE_REVIEW.md for detail)
 
