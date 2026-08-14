@@ -3,7 +3,7 @@ extends Node
 ## that survive a scene reload, and the player's interface preferences.
 ##
 ## These all used to live in GameConfig alongside `egg_pollen_cost` and
-## `brood_develop_time`, which caused two real problems. The tuning panel
+## `brood_develop_time`, which caused two real problems. The settings window
 ## had to keep a hand-written list of which keys were actually tunable,
 ## because showing "sim_time" as a settable number would be nonsense. And
 ## saving a run wrote the player's starred readouts into the save file

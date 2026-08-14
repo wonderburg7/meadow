@@ -1,5 +1,9 @@
 extends CanvasLayer
-## Tuning controls, collapsed behind a button in the top-right corner.
+## The settings window: every tuning control, collapsed behind a cog
+## icon in the top-right corner. Was a text button reading "Tuning" --
+## renamed and re-iconed 14 Aug 2026, but the file itself keeps its old
+## name (debug_panel.gd) since nothing outside this file references the
+## class, only the scene tree node it adds itself as.
 ## Editing a value doesn't change bees/flowers already in the world --
 ## press "Restart Run" to respawn everything with the new numbers
 ## (they live in the GameConfig autoload, so they survive the reload).
@@ -708,13 +712,18 @@ func _ready() -> void:
 	# Anchored to the top-right corner so it tracks window resizing.
 	# hud.gd keeps this width clear for us, so the two bars can't overlap.
 	toggle_button = Button.new()
-	toggle_button.text = "Tuning ▾"
-	toggle_button.custom_minimum_size = Vector2(92, 26)
+	# A plain cog glyph rather than a loaded texture, consistent with the
+	# rest of the game's placeholder-art approach of drawing everything
+	# rather than importing assets. Sized up with its own font override
+	# since the button itself is now icon-sized rather than text-width.
+	toggle_button.text = "⚙"
+	toggle_button.add_theme_font_size_override("font_size", 18)
+	toggle_button.custom_minimum_size = Vector2(36, 26)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toggle_button.offset_right = -8
 	toggle_button.offset_top = 8
-	toggle_button.tooltip_text = "Open the tuning panel. Changing a value here affects bees and flowers created from then on -- press Restart Run to rebuild the whole world with the new numbers."
+	toggle_button.tooltip_text = "Open the settings window. Changing a value here affects bees and flowers created from then on -- press Restart Run to rebuild the whole world with the new numbers."
 	toggle_button.pressed.connect(_toggle_panel)
 	add_child(toggle_button)
 
@@ -759,7 +768,7 @@ func _rows_in(category: String) -> Array:
 		# guard against a renamed setting leaving a dead row behind --
 		# that used to crash the panel on startup with a confusing error
 		if setting_get(entry.key) == null:
-			push_warning("Tuning panel refers to a missing setting: %s" % entry.key)
+			push_warning("Settings window refers to a missing setting: %s" % entry.key)
 			continue
 		found.append(entry)
 	return found
@@ -907,7 +916,9 @@ func _on_load_pressed() -> void:
 
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
-	toggle_button.text = "Tuning ▴" if panel.visible else "Tuning ▾"
+	# The cog itself doesn't change state -- the panel opening or closing
+	# is feedback enough, the way it wasn't when this button was just a
+	# label reading "Tuning".
 
 func _make_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()
@@ -1025,7 +1036,6 @@ func _on_main_menu_pressed() -> void:
 		push_warning("No main menu in the scene to return to")
 		return
 	panel.visible = false
-	toggle_button.text = "Tuning ▾"
 	menus[0].open()
 
 func _restart() -> void:

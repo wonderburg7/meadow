@@ -264,7 +264,7 @@ var awaiting_floral_preference: bool = false
 var pending_preference_bees: Array = []
 
 func _ready() -> void:
-	add_to_group("world")   # so the tuning panel can find us to save
+	add_to_group("world")   # so the settings window can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
 	Engine.time_scale = 1.0
 	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
@@ -383,7 +383,7 @@ func _ready() -> void:
 
 	# The main menu sits above everything and pauses the run behind it.
 	# It opens by itself the first time the game is launched, and after
-	# that only when the player asks for it from the tuning panel.
+	# that only when the player asks for it from the settings window.
 	var menu := MainMenu.new()
 	menu.level_chosen.connect(_on_level_chosen)
 	add_child(menu)

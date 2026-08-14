@@ -71,8 +71,9 @@ at the only thing a season is for.
 Drag to select bees. Right-click to send them somewhere. Click any
 warning in the corner and it selects whatever it's about.
 
-There's a tuning panel along the bottom: every balance number in the
-game, editable while it runs, plus save/load and restart.
+There's a settings window behind the cog icon in the top-right corner:
+every balance number in the game, editable while it runs, plus
+save/load and restart.
 
 ---
 

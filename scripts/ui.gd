@@ -42,7 +42,7 @@ static func info_badge(text: String) -> Button:
 		box.set_border_width_all(0)
 		badge.add_theme_stylebox_override(style_name, box)
 
-	# Every badge joins one group so the tuning panel's "Show info icons"
+	# Every badge joins one group so the settings window's "Show info icons"
 	# switch can hide them all at once, wherever they happen to live.
 	badge.add_to_group("info_badges")
 	badge.visible = Session.show_info_badges

@@ -31,7 +31,7 @@ signal pinned_changed()
 ## The readouts that can be starred into the top-left corner. `key` is
 ## what Session.pinned_stats holds and what the HUD matches on.
 const STAT_ROWS := [
-	{"key": "day", "tip": "The day counter. One in-game day is however many real seconds the tuning panel says."},
+	{"key": "day", "tip": "The day counter. One in-game day is however many real seconds the settings window says."},
 	{"key": "stores", "tip": "What is actually in the comb: nectar, pollen, ripe honey and royal jelly. Honey only counts once it has been fanned dry."},
 	{"key": "population", "tip": "How the colony is divided between jobs right now."},
 	{"key": "comb", "tip": "How much comb there is, how much of it is free, and how the brood is doing."},
@@ -105,7 +105,7 @@ func _ready() -> void:
 
 	_build_plot(_section(column, "Over time", false))
 
-## A collapsible section. Same pattern as the tuning panel and the cell
+## A collapsible section. Same pattern as the settings window and the cell
 ## popup, so all three behave the same way.
 func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VBoxContainer:
 	if not section_open.has(title):

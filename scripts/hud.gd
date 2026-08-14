@@ -239,13 +239,13 @@ var pending_type: String = ""
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
-	# So the tuning panel can find the corner readout to refresh it when
+	# So the settings window can find the corner readout to refresh it when
 	# a star is toggled, without either script holding a reference to the
 	# other.
 	add_to_group("huds")
 
 	# The controls used to be printed here permanently. They now live in
-	# the Tuning panel's Interface section, which keeps the corner of the
+	# the settings window's Interface section, which keeps the corner of the
 	# screen clear once you know them.
 	#
 	# One column for everything in the corner: the starred readouts, then
@@ -404,7 +404,7 @@ func _build_selection_panel() -> void:
 ## The popup had grown to five rows of buttons plus two checkboxes, all
 ## on screen at once, which is more than anyone can scan while a click is
 ## in progress. It's now grouped into collapsible sections, the same
-## pattern the tuning panel uses.
+## pattern the settings window uses.
 ##
 ## Only "Reserve for" starts open, because that is the one thing you do
 ## to nearly every cell. The rest are things you do occasionally and
@@ -617,7 +617,7 @@ func _build_zone_controls(column: VBoxContainer) -> void:
 		# force on the cell being shown
 		live_buttons["priority_%d" % tier] = btn
 
-	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the tuning panel."))
+	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the settings window."))
 
 ## Sealing a cell. A colony with honey in it drinks the honey; this is
 ## how you set some aside for a hard stretch instead.

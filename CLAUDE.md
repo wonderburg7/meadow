@@ -339,7 +339,7 @@ colony, dig out a hive, build comb, assign bees across seven roles,
 forage through a flowering year, survive winter, release gynes for
 score. There's a rival colony competing for the same meadow, disease
 pressure from neglect, weather, save/load, five starting levels and a
-full tuning panel.
+full settings window (the cog icon, top right).
 
 `main.gd` and `bee.gd` have both been split (see the routing table
 above, and `MAIN_SPLIT_PLAN.md` / `BEE_SPLIT_PLAN.md` for why each

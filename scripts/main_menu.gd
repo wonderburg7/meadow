@@ -3,7 +3,7 @@ extends CanvasLayer
 ## offers a choice of starting stage.
 ##
 ## It opens by itself the first time the game is launched, and after that
-## only when the player picks "Return to Main Menu" in the tuning panel.
+## only when the player picks "Return to Main Menu" in the settings window.
 ## Choosing a stage sets Session.starting_level and reloads the scene
 ## (main.gd does the reloading, via the level_chosen signal), so every
 ## stage is built by the same world-building code rather than a separate
@@ -49,9 +49,9 @@ var backdrop: ColorRect
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # the menu still works while paused
-	layer = 20                           # above the HUD and the tuning panel
+	layer = 20                           # above the HUD and the settings window
 	visible = false
-	# so the tuning panel's "Return to Main Menu" button can find us
+	# so the settings window's "Return to Main Menu" button can find us
 	# without main.gd having to wire the two together
 	add_to_group("main_menu")
 
