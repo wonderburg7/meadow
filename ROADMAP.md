@@ -91,7 +91,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **One `roles.gd` instead of role constants in four files** | S | **Shipped 13 Aug.** |
 | **Split `GameConfig` into balance vs session state** | S | **Shipped 13 Aug.** `session.gd`. |
 | **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | **Shipped 13 Aug.** |
-| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Shipped 14 Aug.** Six new files, each a plain Node created in `_ready()` and reached as `main.world_building` etc. `main.gd` still holds every field and every method something outside the split touches (`bee.gd`, `debug_panel.gd`) — see `MAIN_SPLIT_PLAN.md`. Passes `source_checks.py` and `balance_tests.py`; **not yet played** — needs Dave's hands-on check before it's trusted. `bee.gd` (3,098 lines, the larger file) is the next one queued. |
+| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Shipped 14 Aug, confirmed working 14 Aug** ("Seems to be working ok"). Six new files, each a plain Node created in `_ready()` and reached as `main.world_building` etc. `main.gd` still holds every field and every method something outside the split touches (`bee.gd`, `debug_panel.gd`) — see `MAIN_SPLIT_PLAN.md`. Passes `source_checks.py` and `balance_tests.py`. Two follow-up fixes needed once it actually ran: a `:=` type-inference failure across loosely-typed refs, and a `_build_cameras()` ordering bug — both documented in `MAIN_SPLIT_PLAN.md`'s sibling notes so the `bee.gd` split avoids repeating them. |
+| **Break up `bee.gd`** (3,162 lines — survival/eating, foraging, nursery/jelly, building, mining, honey, egg laying, movement, plus a shared `bee_enums.gd`) | M | **Planned and approved 14 Aug, not yet started.** Full plan in `BEE_SPLIT_PLAN.md`: `static func` library files (matching `Shapes`/`Roles`/`UI` convention) rather than child Nodes, since `bee.gd` is instantiated hundreds of times; `Role`/`State` move to a leaf `bee_enums.gd` to avoid a circular preload; staged one-file-at-a-time execution (`bee_enums.gd` first, then `bee_movement.gd`, then the rest), each committed and playtested before the next, specifically to avoid repeating the two `main.gd` follow-up bugs. Next session should pick this up starting with `bee_enums.gd`. |
 | **Automated tests for the balance rules** | M | **Shipped 13 Aug.** `tests/balance_tests.py`, extended to `tests/source_checks.py` on the same day after the balance suite didn't catch a syntax error that blanked the game. |
 
 ---
@@ -107,7 +108,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 **Picking five again, 14 Aug:**
 
 1. ~~Resolve the 4fps drop~~ — **fixed and confirmed 14 Aug**, `PERF_PLAN.md`. `_grounded()` recursion; see the bug class in `CLAUDE.md`.
-2. **Break up `main.gd`** — agreed, was waiting on #1. Unblocked now that #1 is confirmed fixed — next thing to pick up.
+2. ~~Break up `main.gd`~~ — shipped and confirmed working 14 Aug.
+2a. **Break up `bee.gd`** — plan approved 14 Aug (`BEE_SPLIT_PLAN.md`), not yet started. Next thing to pick up.
 3. **Foraging memory** — the most-requested-feeling gap in what's built; cheap relative to its payoff.
 4. **A tutorial** — named as next on 13 Aug, still outstanding, and the game has grown a lot of surface area since it was last considered.
 5. **Comb temperature** — the deepest of the "depth in what exists" items and the one that would make comb layout an actual decision.
