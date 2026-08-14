@@ -330,5 +330,12 @@ func _update_fade(strength: float) -> void:
 		scale = Vector2.ONE
 
 func _update_labels() -> void:
+	# Off by default -- see Session.show_flower_amounts. The numbers are
+	# still available by clicking the flower; this only governs whether
+	# they're written under every one of them all the time.
+	nectar_label.visible = Session.show_flower_amounts
+	pollen_label.visible = Session.show_flower_amounts
+	if not Session.show_flower_amounts:
+		return
 	nectar_label.text = str(int(round(nectar_amount)))
 	pollen_label.text = str(int(round(pollen_amount)))

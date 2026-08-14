@@ -78,6 +78,19 @@ var colour_blind_mode: bool = false
 ## "Don't show this again" for the discard warning.
 var warn_on_discard: bool = true
 
+## Whether a flower shows its live nectar/pollen numbers underneath itself.
+## Off by default -- 500 flowers' worth of numbers is a lot of clutter for
+## something you can still get, per flower, by clicking it.
+var show_flower_amounts: bool = false
+
+## Whether a comb cell shows the small text describing its contents (N40,
+## an egg's development percent, and so on) on top of its colour coding.
+var show_cell_contents_text: bool = true
+
+## Whether the small ID-and-letter label above a forager is shown. Doesn't
+## affect other roles' labels.
+var show_forager_labels: bool = true
+
 ## Saved selections, 1-9. Each is a list of bee ids rather than node
 ## references, so the group survives bees dying and the scene reloading.
 var control_groups: Dictionary = {}

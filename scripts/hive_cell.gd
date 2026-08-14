@@ -669,6 +669,11 @@ func clear_cell() -> void:
 # --- display ------------------------------------------------------
 
 func _refresh() -> void:
+	# Independent of everything below -- see Session.show_cell_contents_text.
+	# The text is always computed regardless (cheap, and other logic below
+	# doesn't need to know or care whether it's actually shown), only its
+	# visibility is gated.
+	info_label.visible = Session.show_cell_contents_text
 	if not is_built:
 		# an unfinished cell grows outwards from a stub as it's drawn, so
 		# you can see at a glance how far along it is

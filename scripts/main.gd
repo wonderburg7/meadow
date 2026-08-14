@@ -92,7 +92,7 @@ const LEVELS := {
 	# the first moment instead of waiting on the first pollen delivery.
 	5: {
 		"cells": 12, "nectar_foragers": 16, "pollen_foragers": 6,
-		"nurses": 4, "builders": 3, "miners": 3, "automine": true,
+		"nurses": 2, "builders": 3, "miners": 3, "automine": true,
 		"stock": {"nectar": 4, "pollen": 2},
 	},
 }
@@ -102,7 +102,11 @@ const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
 ## A rectangular field rather than a radial one -- a uniform-angle,
 ## sqrt-distance scatter (the previous approach) always reads as a disc
 ## no matter how it's tuned. Rectangular + clustered breaks that up.
-const FLOWER_FIELD_HALF_SIZE := Vector2(950.0, 700.0)
+##
+## Widened alongside the jump from 250 to 500 flowers (see
+## GameConfig.flower_count) so the meadow spreads out rather than just
+## getting denser -- roughly double the area, same rough density.
+const FLOWER_FIELD_HALF_SIZE := Vector2(1350.0, 990.0)
 const FLOWER_MIN_DISTANCE := 90.0     # keep the ground by the hive clear
 const MAX_CLUSTERS_PER_SPECIES := 22
 ## A few large plateaus rather than many small mounds: raised ground is

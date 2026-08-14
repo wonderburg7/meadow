@@ -33,6 +33,11 @@ const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
+## Only for HiveCell.EMPTY_COLOR -- the comb worker's role ring is drawn in
+## the same colour as an empty wax cell, so the two read as the same
+## material rather than picking an unrelated brown/tan and hoping it reads
+## the same. hive_cell.gd doesn't preload bee.gd, so this isn't circular.
+const HiveCell = preload("res://scripts/hive_cell.gd")
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeStatus = preload("res://scripts/bee_status.gd")
 const BeeSurvival = preload("res://scripts/bee_survival.gd")
@@ -197,6 +202,13 @@ var path_goal: Vector2 = Vector2(INF, INF)
 var label: Label
 var selection_ring: Polygon2D
 var body: Polygon2D
+## A thin ring nested just inside the black outline (miner: brown, nurse:
+## white, comb worker: wax colour) and a small dot at the centre (forager:
+## light yellow on pollen, light blue on nectar). Role tells that read from
+## further away than the label text, and that don't depend on
+## Session.show_forager_labels being on. See _update_role_marker.
+var outline_ring: Polygon2D
+var centre_dot: Polygon2D
 
 func _ready() -> void:
 	add_to_group("bees")
@@ -240,15 +252,33 @@ func _ready() -> void:
 	outline.color = Color(0.05, 0.05, 0.05)   # black outline
 	add_child(outline)
 
+	# Sits between the outline and the body -- see the field comment above
+	# -- so it draws as a thin ring just inside the black edge rather than
+	# a dot or a full-radius circle. Radius is fixed at creation; only its
+	# colour and visibility change afterwards, in _update_role_marker.
+	outline_ring = Polygon2D.new()
+	outline_ring.polygon = Shapes.circle_points(outline_radius - 1.5 * size_factor)
+	outline_ring.visible = false
+	add_child(outline_ring)
+
 	body = Polygon2D.new()
 	body.polygon = Shapes.circle_points(body_radius)
 	body.color = _base_colour()
 	add_child(body)
 
+	# Drawn after the body, so it sits on top as a small dot rather than
+	# being covered by it.
+	centre_dot = Polygon2D.new()
+	centre_dot.polygon = Shapes.circle_points(body_radius * 0.35)
+	centre_dot.visible = false
+	add_child(centre_dot)
+
 	label = Label.new()
 	label.position = Vector2(-16, -32 if not is_queen else -40)
 	label.add_theme_font_size_override("font_size", 12)
 	add_child(label)
+
+	_update_role_marker()
 
 func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void:
 	hive = hive_node
@@ -268,6 +298,7 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 			secondary_role = Role.NURSERY
 	state = _default_state_for_role()
 	_update_label()
+	_update_role_marker()
 
 func _default_state_for_role() -> int:
 	match role:
@@ -297,6 +328,29 @@ func _base_colour() -> Color:
 	if is_gyne:
 		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
 	return Color(1.0, 0.85, 0.1)
+
+## Sets which of the two role markers (see the field comments) is showing
+## and what colour it is. Called on creation, whenever the role changes,
+## and whenever a forager's resource_type changes -- anywhere the thing it
+## is telling you about could be out of date otherwise.
+func _update_role_marker() -> void:
+	if outline_ring == null or centre_dot == null:
+		return
+	outline_ring.visible = false
+	centre_dot.visible = false
+	match role:
+		Role.FORAGER:
+			centre_dot.visible = true
+			centre_dot.color = Color(1.0, 1.0, 0.6) if resource_type == "pollen" else Color(0.6, 0.85, 1.0)
+		Role.MINER:
+			outline_ring.visible = true
+			outline_ring.color = Color(0.55, 0.35, 0.18)   # brown
+		Role.NURSERY:
+			outline_ring.visible = true
+			outline_ring.color = Color(1.0, 1.0, 1.0)      # white
+		Role.BUILDER:
+			outline_ring.visible = true
+			outline_ring.color = HiveCell.EMPTY_COLOR      # same as an empty wax cell
 
 # --- how often a bee thinks ---------------------------------------
 ## Movement has to happen every frame or bees stutter. *Deciding* things
@@ -977,6 +1031,7 @@ func set_focus(type: String) -> void:
 		# Already out foraging -- no need to fly home first.
 		state = State.SEEK_FLOWER
 	_update_label()
+	_update_role_marker()
 
 ## `new_role` of -1 clears it. A bee can't take itself as its own
 ## backup, and only Miner, Nursery and Builder ever actually check
@@ -1035,6 +1090,7 @@ func _apply_role(new_role: int) -> void:
 		state = State.TO_HIVE if now_indoors else _default_state_for_role()
 
 	_update_label()
+	_update_role_marker()
 
 func _release_everything() -> void:
 	if current_flower:
@@ -1351,14 +1407,29 @@ func days_remaining() -> float:
 ## Skipped entirely for bees the camera can't see. Setting a label's text
 ## and a polygon's colour are each cheap; doing both for every bee every
 ## frame when most of them are off screen is not, and nobody can tell.
+## Below this share of full energy a bee's body starts to visibly darken.
+## Above it, energy fluctuating in the normal range (feeding, flying,
+## draining slowly between meals) doesn't change how a bee looks at all --
+## darkening is a warning sign, not a readout of every point of energy.
+const ENERGY_DARKEN_THRESHOLD := 0.4
+
 func _update_label() -> void:
 	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
 		return
 	var prefix := "Q" if is_queen else str(bee_id)
 	label.text = "%s%s" % [prefix, role_letter()]
-	# body dims as energy runs low, so a starving bee is visible at a glance
+	# Only foragers currently offer a toggle for this (see
+	# Session.show_forager_labels) -- every other role's label stays as
+	# it was.
+	label.visible = Session.show_forager_labels if role == Role.FORAGER else true
+	# body dims as energy runs low, so a starving bee is visible at a glance.
+	# Nothing happens above ENERGY_DARKEN_THRESHOLD; below it, darkening
+	# ramps up to full at zero energy, same as it always did once it starts.
 	var energy_fraction: float = clamp(energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
-	body.color = _base_colour().lerp(Color(0.45, 0.35, 0.3), 1.0 - energy_fraction)
+	var darken_amount: float = 0.0
+	if energy_fraction < ENERGY_DARKEN_THRESHOLD:
+		darken_amount = (ENERGY_DARKEN_THRESHOLD - energy_fraction) / ENERGY_DARKEN_THRESHOLD
+	body.color = _base_colour().lerp(Color(0.45, 0.35, 0.3), darken_amount)
 
 ## Bees inside the hive pick their way over the comb rather than flying
 ## straight, so standing on a cell slows them down. Out in the meadow

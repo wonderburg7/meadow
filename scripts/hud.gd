@@ -348,11 +348,11 @@ func _build_top_right_bar() -> void:
 	bar.add_child(winter_button)
 
 	view_button = Button.new()
-	view_button.text = "To Hive (Tab)"
-	view_button.custom_minimum_size = Vector2(106, 26)
+	view_button.text = "Hive"
+	view_button.custom_minimum_size = Vector2(64, 26)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
 	bar.add_child(view_button)
-	bar.add_child(_info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood). Both keep simulating whichever one you are looking at."))
+	bar.add_child(_info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at."))
 
 func set_speed_display(speed_scale: float) -> void:
 	for entry in speed_buttons:
@@ -1537,4 +1537,4 @@ func set_winter_button_visible(value: bool) -> void:
 		winter_button.visible = value
 
 func set_view_label(in_hive: bool) -> void:
-	view_button.text = "To Meadow (Tab)" if in_hive else "To Hive (Tab)"
+	view_button.text = "Meadow" if in_hive else "Hive"

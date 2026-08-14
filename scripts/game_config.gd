@@ -6,7 +6,7 @@ extends Node
 ## "Restart Run" respawns everything using whatever values are set here.
 
 # --- world ---
-var flower_count: float = 250.0         # the meadow is topped back up to this
+var flower_count: float = 500.0         # the meadow is topped back up to this
 ## Flowers age and die, and a replacement seeds elsewhere, so the meadow
 ## shifts around underneath the colony while staying roughly this full.
 var flower_lifespan_days: float = 6.0
@@ -68,7 +68,7 @@ var egg_pollen_cost: float = 60.0       # pollen the queen must eat to lay one e
 var queen_eat_rate: float = 3.0         # pollen per second the queen consumes
 var queen_speed_factor: float = 0.6     # she's larger, so slower than a worker
 var brood_develop_time: float = 120.0   # seconds of development before a bee emerges
-var tending_speed_bonus: float = 2.0    # multiplier while a nursery worker is tending
+var tending_speed_bonus: float = 1.5    # multiplier while a nursery worker is tending
 
 ## Brood no longer develops on its own. A nurse (or the queen, who takes
 ## nursing as her second job) has to visit the cell and drop food in;
@@ -145,19 +145,19 @@ var nurse_load_time: float = 1.5    # seconds spent filling up at a cell
 ## `hunger_threshold` of its capacity it breaks off, walks to a cell with
 ## food in it, and feeds until it is full.
 var hunger_threshold: float = 0.30      # fraction of capacity
-var bee_eat_rate: float = 15.0          # energy per second while feeding
+var bee_eat_rate: float = 25.0          # energy per second while feeding
 
 # --- flight ---
 ## Flying costs energy on top of simply being alive, so a forager's range
 ## is paid for rather than free. Wet wings cost more again (see rain).
-var flight_energy_burn: float = 0.25
+var flight_energy_burn: float = 0.17
 
 ## A forager out in the meadow drinks nectar straight from a flower when
 ## it drops below this share of its capacity -- it doesn't have to fly
 ## home to eat. Pollen foragers do this too: they aren't collecting
 ## nectar, but they will still drink it.
-var forager_drink_threshold: float = 0.5
-var nectar_drink_rate: float = 10.0     # energy per second while drinking
+var forager_drink_threshold: float = 0.7
+var nectar_drink_rate: float = 20.0     # energy per second while drinking
 
 ## A nectar forager can also metabolise what is already in its crop
 ## rather than land at all. That comes straight off the delivery, so a
@@ -277,7 +277,7 @@ var cell_slow_factor: float = 0.55
 # --- bee life ---
 var bee_lifespan_days: float = 25.0
 var energy_capacity: float = 100.0
-var energy_burn_rate: float = 0.35       # nectar-equivalent burned per second
+var energy_burn_rate: float = 0.17       # nectar-equivalent burned per second
 
 ## Trees and raised ground can be switched off entirely, which clears the
 ## meadow of anything bees have to route around. Useful for seeing the

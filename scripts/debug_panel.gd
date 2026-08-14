@@ -6,8 +6,8 @@ extends CanvasLayer
 ##
 ## The settings are grouped into collapsible sections, because the flat
 ## list had grown long enough that finding anything meant scrolling past
-## everything. Sections start closed apart from the first, so opening the
-## panel shows a short menu rather than a wall of numbers.
+## everything. Every section starts closed, so opening the panel shows a
+## short menu rather than a wall of numbers.
 ##
 ## Every row carries an "i" badge explaining what the number actually
 ## does, so you can tune without holding the whole model in your head.
@@ -104,6 +104,11 @@ const TUNABLES := [
 		"category": "Flowers",
 		"tip": "Lets you pin a forager to one flower species via 'Set preference' in its selection panel -- it will only ever visit that species from then on. Off by default; existing preferences are kept even if you turn this off, they just stop being offered as a new option.",
 	},
+	{
+		"key": "show_flower_amounts", "label": "Show flower amounts", "toggle": true,
+		"category": "Flowers",
+		"tip": "Show the nectar and pollen numbers under every flower. Off by default -- 500 flowers' worth of numbers gets noisy fast, and clicking a flower shows the same numbers on demand. Applies within about a second, as flowers redraw themselves.",
+	},
 
 	# --- Foraging ---
 	{
@@ -140,6 +145,11 @@ const TUNABLES := [
 		"key": "pollen_stomach_capacity", "label": "Pollen stomach", "step": 5.0, "min": 1.0,
 		"category": "Foraging",
 		"tip": "How much pollen a forager can carry. Smaller than the nectar stomach, so pollen trips deliver less.",
+	},
+	{
+		"key": "show_forager_labels", "label": "Show forager labels", "toggle": true,
+		"category": "Foraging",
+		"tip": "Show the small ID-and-letter label that floats above each forager. Off gives a cleaner view of a big crowd of them out in the meadow -- the small dot on each one (yellow for pollen, blue for nectar) still says what it's collecting. Takes effect on the bees currently on screen straight away.",
 	},
 
 	# --- Hive & comb ---
@@ -187,6 +197,11 @@ const TUNABLES := [
 		"key": "hive_cell_size", "label": "Cell size", "step": 1.0, "min": 3.0,
 		"category": "Hive & comb",
 		"tip": "How large each hexagon is drawn. Keep this a little below Cell spacing or cells will overlap.",
+	},
+	{
+		"key": "show_cell_contents_text", "label": "Show cell contents text", "toggle": true,
+		"category": "Hive & comb",
+		"tip": "Show the small text on each comb cell -- N40, an egg's development percent, and so on. Off keeps the colour coding but drops the numbers, for a quieter comb at a glance. Applies within about a second, as cells redraw themselves.",
 	},
 
 	# --- Brood & the queen ---
@@ -658,7 +673,10 @@ const TUNABLES := [
 ## Settings that live in Session rather than GameConfig -- the player's
 ## own preferences, as opposed to numbers that change how the game plays.
 ## The panel edits both, so it needs to know which object to ask.
-const SESSION_KEYS := ["show_info_badges", "colour_blind_mode"]
+const SESSION_KEYS := [
+	"show_info_badges", "colour_blind_mode",
+	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
+]
 
 static func setting_get(key: String):
 	return Session.get(key) if key in SESSION_KEYS else GameConfig.get(key)
@@ -713,15 +731,13 @@ func _ready() -> void:
 
 	_build_actions(column)
 
-	# First section open, the rest closed, so opening the panel shows a
-	# short menu of headings rather than every number at once.
-	var first := true
+	# Every section starts closed, so opening the panel shows a short menu
+	# of headings rather than every number at once.
 	for category in CATEGORIES:
 		var rows := _rows_in(category)
 		if rows.is_empty():
 			continue
-		column.add_child(_make_section(category, rows, first))
-		first = false
+		column.add_child(_make_section(category, rows, false))
 
 func _rows_in(category: String) -> Array:
 	var found: Array = []
