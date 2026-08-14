@@ -2,11 +2,24 @@
 
 Written 14 Aug 2026. Agreed with Dave.
 
-**Step 1 done, 14 Aug 2026** (commit `01098cb`): `perf.gd` autoload,
-the dozen begin/end pairs, the plot and the breakdown line are in.
-Not yet run in Godot, so nothing is measured yet -- that's Step 2,
-next. `_backups/` is also gone now (Dave deleted it), so the "Also
-outstanding" note below is done too.
+**Steps 1-4 done, 14 Aug 2026** (`01098cb` through `6488415`, see the
+Build Log for the full session-by-session list). Root cause found and
+fixed: `bee.gd::_grounded()` called itself instead of checking rain --
+unconditional recursion until GDScript's call stack errored out,
+called from `_seek_flower` and `_go_to_exit` as their first line,
+which is exactly what three rounds of narrowing the instrumentation
+kept naming. Fixed in `6488415`, committed separately from the
+instrumentation per the rule below. Notion **Performance Map** written
+with the measured pre-fix figures.
+
+**Not yet done: Dave's re-measure.** The fix hasn't been confirmed by
+an actual fps reading yet -- that's the real close-out of Step 4.
+Once confirmed, the `main.gd` six-file split (parked below) is
+unblocked. `_backups/` is also gone now (Dave deleted it), so the
+"Also outstanding" note further down is done too.
+
+The plan below is left as written, for the record of what was agreed
+and why -- the "current status" is the block above, not this line.
 
 Read this before starting. It exists so the session doing the work does
 not have to rediscover any of it.
