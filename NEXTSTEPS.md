@@ -30,13 +30,17 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
    via `mcp__godot__run_project` all came back clean for both bundles,
    but nothing here substitutes for Dave actually playing it.
-2. **`AUDIT_PLAN.md` Bundle C is next in the audit plan** (P1, fog-of-war:
-   measure first, then optimise, ~3-6h, gated on measurement). Needs a
+2. **`AUDIT_PLAN.md` Bundle C's measurement step is next** (P1, fog-of-war:
+   measure first, then optimise, gated on measurement). The
+   `Perf` instrumentation gap is now fixed -- it used to only cover the
+   relight loop, not the draw pass, so a playtest would have missed half
+   the risk both audits flagged. It's now two sections,
+   `fog_of_war_update` and `fog_of_war_draw`; both need checking. Needs a
    playtest with the starred-fps `perf.gd` breakdown at a few colony
    sizes, fog on vs off, at zoom 1.0 and 0.4 -- can be combined with (1)
    above since it's the same "play a run and watch the corner" session.
-   Only write optimisation code if that baseline actually shows
-   `fog_of_war` as a real cost; "measured, not a bottleneck" is a valid
+   Only write optimisation code if that baseline actually shows either
+   section as a real cost; "measured, not a bottleneck" is a valid
    outcome that closes the bundle.
 3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
@@ -74,7 +78,11 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 - `python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
   both passing, and a full Godot boot via `mcp__godot__run_project`
   clean (only pre-existing, unrelated shadowing/unused-parameter
-  warnings), after landing `AUDIT_PLAN.md` Bundle B. The new
+  warnings), after splitting `fog_of_war.gd`'s `Perf` instrumentation
+  into `fog_of_war_update`/`fog_of_war_draw` for `AUDIT_PLAN.md` Bundle
+  C's still-pending baseline measurement -- no behaviour change, prep
+  only.
+- Same two checks and boot, after landing `AUDIT_PLAN.md` Bundle B. The new
   `check_gameconfig_writes` guardrail was confirmed to actually fire
   (tested with a temporary stray write, then reverted) before this was
   called done.

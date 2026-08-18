@@ -100,7 +100,7 @@ func _update() -> void:
 		return
 	_layer.visible = true
 
-	Perf.begin("fog_of_war")
+	Perf.begin("fog_of_war_update")
 	var seen_ids: Dictionary = {}
 	for b in get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b) or b.get_parent() != main.meadow_root:
@@ -117,7 +117,7 @@ func _update() -> void:
 		if not seen_ids.has(id):
 			_unlight(_bee_light[id].tiles)
 			_bee_light.erase(id)
-	Perf.end("fog_of_war")
+	Perf.end("fog_of_war_update")
 	_layer.queue_redraw()
 
 ## Recomputes and swaps in the tiles bee `id` currently lights.
@@ -166,6 +166,14 @@ func _tile_of(pos: Vector2) -> Vector2i:
 func _draw_fog() -> void:
 	if main.in_hive_view:
 		return
+	Perf.begin("fog_of_war_draw")
+	_draw_fog_body()
+	Perf.end("fog_of_war_draw")
+
+## Split from _draw_fog so every early return above the Perf wrap doesn't
+## also need its own Perf.end -- see the "one begin with no matching end"
+## warning in CLAUDE.md's perf section.
+func _draw_fog_body() -> void:
 	var cam: Camera2D = main.camera_view._active_camera()
 	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
 	var view: Rect2 = Rect2(cam.position - span * 0.5, span).grow(FOG_TILE_SIZE)

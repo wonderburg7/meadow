@@ -22,7 +22,7 @@ done, don't delete it).
 |---|---|---|---|
 | A — Challenge state safety | P0 | 2-3h | Done (code + boot check; Dave's hands-on check still pending) |
 | B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
-| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Not started |
+| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Instrumentation split + boot check done; baseline playtest still needed |
 | D — Claude/agent context restructure | P1 | 4-6h | Not started |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Not started |
 | F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
@@ -304,6 +304,27 @@ thing tried.
 baseline. If the baseline in step 1 comes back clean, close this bundle
 with "measured, not a bottleneck" and move on — that's a valid outcome,
 not a stall.
+
+**Done so far (prep only, no optimisation code):** the existing
+`Perf.begin("fog_of_war")`/`end` pair only ever wrapped `_update()`'s
+relight loop — the actual draw pass (`_draw_fog`, called via
+`queue_redraw()` every single frame regardless of whether anything
+changed) had no instrumentation at all, so a baseline taken as the plan
+was originally written would have been blind to exactly the "unconditional
+`queue_redraw()`" risk both audits called out. Split into two sections:
+`fog_of_war_update` (unchanged relight loop) and `fog_of_war_draw` (new,
+wraps the renamed `_draw_fog_body()`; `_draw_fog` itself stays a thin
+early-return wrapper so the `in_hive_view` skip doesn't need its own
+`Perf.end`). No behaviour change — `tests/source_checks.py` and
+`tests/balance_tests.py` both still pass, and a Godot boot via
+`mcp__godot__run_project` shows no new parser/type errors (only the
+same pre-existing shadowing/unused-parameter warnings already on
+record). **Step 1's actual baseline still needs Dave's hands-on
+playtest** — star "fps", play at a few colony sizes with fog on vs off
+and zoom 1.0 vs 0.4, and check the corner breakdown for both
+`fog_of_war_update` and `fog_of_war_draw` specifically. Nothing past
+that point (step 2's optimisation code) should be written until that
+comes back.
 
 ---
 
