@@ -21,7 +21,7 @@ done, don't delete it).
 | Bundle | Priority | Effort | Status |
 |---|---|---|---|
 | A — Challenge state safety | P0 | 2-3h | Done (code + boot check; Dave's hands-on check still pending) |
-| B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Not started |
+| B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Not started |
 | D — Claude/agent context restructure | P1 | 4-6h | Not started |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Not started |
@@ -199,6 +199,51 @@ object/index counts don't grow. Feed the loader a save with
 logged. Run `python3 tests/source_checks.py` — should still pass clean,
 and should now fail if you temporarily insert a stray `GameConfig.x = 1`
 somewhere it shouldn't be (delete the test insert after confirming).
+
+**Done:** all seven actions landed, plus one thing the guardrail found
+before it even shipped:
+
+1-3. `saving.gd` gained `_retire_node(node, group_name)` (removes from
+   group and parent, then `queue_free()`), used by both
+   `_restore_flowers()` and `_restore_bees()` instead of a bare
+   `queue_free()`. Both now return the array of nodes they just created.
+   `_restore()` hands the flower array straight to
+   `main.flower_grid.rebuild()` (no more `world_building._rebuild_flower_grid()`
+   re-querying the group) and the bee array to `main._update_population_readout(bees)`,
+   which now accepts an optional explicit list and only falls back to a
+   live group query when called with none — its three other call sites
+   are unaffected.
+4. `SaveGame.read()` now rejects (returns `{}`, `push_error`) a save
+   whose `version` is newer than `FORMAT_VERSION`, before anything is
+   touched. Older versions keep the existing warn-and-continue path.
+5-7. `tests/source_checks.py`: `Perf` added to the autoload check; the
+   script glob is now recursive (`scripts/**/*.gd`); and a new
+   `check_gameconfig_writes` flags any `GameConfig.<field> =`/`+=`/etc.
+   assignment outside `game_config.gd`, `debug_panel.gd`, `save_game.gd`,
+   `levels.gd`.
+   Turning this check on immediately caught a real, pre-existing
+   violation it wasn't written to find: `hud.gd`'s queen panel had its
+   own "Lay in plain comb too" checkbox writing
+   `GameConfig.queen_lays_in_any_cell` directly, a second, undocumented
+   path to the same setting the settings window already exposes safely.
+   Fixed the same way `finish_first_requested` and every other hud.gd
+   control already work — `hud.gd` now emits
+   `queen_lay_any_cell_toggled(value)`, `main.gd` connects it to a new
+   `debug_panel.gd::set_toggle(key, value)` (writes `GameConfig`/`Session`
+   via the existing `setting_set` and syncs the settings window's own
+   checkbox if it's open), so the write stays inside the one allowlisted
+   file.
+
+Verified: `tests/source_checks.py` and `tests/balance_tests.py` both
+pass; confirmed the new guardrail actually fires by temporarily adding
+a stray `GameConfig.flower_count = 1` to `hive.gd` (caught it, then
+reverted). A full Godot boot via `mcp__godot__run_project` shows no new
+parser/type errors, only the same pre-existing shadowing/unused-parameter
+warnings already on record. **Not yet verified by Dave's own hands-on
+play** — specifically, saving and loading a run with a sizeable colony
+and confirming population/flower counts don't drift across repeated
+loads, and that the queen panel's "Lay in plain comb too" checkbox still
+works and stays in sync with the settings window's copy.
 
 ---
 

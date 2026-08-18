@@ -1009,6 +1009,15 @@ func set_save_load_enabled(enabled: bool) -> void:
 	save_btn.disabled = not enabled
 	load_btn.disabled = not enabled
 
+## Lets another panel (hud.gd's queen panel) change a settings-window
+## toggle without writing GameConfig/Session itself -- keeps the write
+## inside this allowlisted file and keeps the settings window's own
+## checkbox in sync if it's currently open.
+func set_toggle(key: String, value: bool) -> void:
+	setting_set(key, value)
+	if toggle_boxes.has(key):
+		toggle_boxes[key].set_pressed_no_signal(value)
+
 func _on_save_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():

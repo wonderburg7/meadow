@@ -51,16 +51,15 @@ func _restore(data: Dictionary) -> void:
 	_restore_soil(data.get("soil", {}))
 	_restore_cells(data.get("cells", []))
 	_restore_hive_state(data.get("hive", {}))
-	_restore_flowers(data.get("flowers", []))
-	main.world_building._rebuild_flower_grid()
-	_restore_bees(data.get("bees", []))
+	main.flower_grid.rebuild(_restore_flowers(data.get("flowers", [])))
+	var new_bees := _restore_bees(data.get("bees", []))
 	main.fog_of_war.restore(data.get("fog", []))
 
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()
 	main.hive.invalidate_index()
 	main.hive.announce()
-	main._update_population_readout()
+	main._update_population_readout(new_bees)
 	main.hud.show_warning("Run loaded — day %d." % main.day)
 
 func _restore_soil(soil: Dictionary) -> void:
@@ -168,11 +167,28 @@ func _blocks_at(refs: Array) -> Array:
 			out.append(node)
 	return out
 
-func _restore_flowers(flowers: Array) -> void:
+## A bare `queue_free()` leaves a node visible to `get_nodes_in_group()`
+## until the end of the frame -- fine for SpatialGrid (it already guards
+## with `is_instance_valid`), but anything that counts or iterates a group
+## mid-restore would catch the about-to-be-freed node alongside its
+## replacement. Restore paths use this instead so the old node is gone
+## from the group the instant it's called, not at end of frame.
+func _retire_node(node: Node, group_name: String) -> void:
+	node.remove_from_group(group_name)
+	var parent := node.get_parent()
+	if parent != null:
+		parent.remove_child(node)
+	node.queue_free()
+
+## Returns the flowers it just created, so `_restore()` can hand them
+## straight to `flower_grid.rebuild()` instead of re-querying the
+## "flowers" group afterwards.
+func _restore_flowers(flowers: Array) -> Array:
 	for f in get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(f):
-			f.queue_free()
+			_retire_node(f, "flowers")
 
+	var created: Array = []
 	for entry in flowers:
 		var flower = main.Flower.new()
 		flower.position = Vector2(float(entry.x), float(entry.y))
@@ -181,14 +197,19 @@ func _restore_flowers(flowers: Array) -> void:
 		flower.nectar_amount = float(entry.get("nectar", 0.0))
 		flower.pollen_amount = float(entry.get("pollen", 0.0))
 		flower.age_seconds = float(entry.get("age", 0.0))
+		created.append(flower)
+	return created
 
-func _restore_bees(bees: Array) -> void:
+## Returns the bees it just created, same reasoning as `_restore_flowers`
+## above -- `_restore()` hands this straight to the population readout.
+func _restore_bees(bees: Array) -> Array:
 	for b in get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(b):
-			b.queue_free()
+			_retire_node(b, "bees")
 	main.queen = null
 	main.selected_bees.clear()
 
+	var created: Array = []
 	for entry in bees:
 		var bee = main.Bee.new()
 		bee.is_queen = bool(entry.get("queen", false))
@@ -257,4 +278,7 @@ func _restore_bees(bees: Array) -> void:
 		if bee.is_queen:
 			main.queen = bee
 
+		created.append(bee)
+
 	main.colony_lost = false
+	return created

@@ -196,15 +196,37 @@ def check_autoloads(problems):
     text = open(project, encoding="utf-8").read()
     section = re.search(r"\[autoload\](.*?)(?=\n\[|\Z)", text, re.S)
     registered = set(re.findall(r"^(\w+)=", section.group(1), re.M)) if section else set()
-    for expected in ("GameConfig", "Session"):
+    for expected in ("GameConfig", "Session", "Perf"):
         if expected not in registered:
             problems.append(
                 "autoload %s is not registered in project.godot" % expected
             )
 
 
+# Files allowed to assign into GameConfig -- see CLAUDE.md rule 2 and
+# AUDIT_PLAN.md bundle B. Everything else may read GameConfig freely, but
+# an assignment anywhere else is exactly the class of bug bundle A fixed
+# (challenge_runner.gd leaving a global balance number changed).
+GAMECONFIG_WRITE_ALLOWLIST = {"game_config.gd", "debug_panel.gd", "save_game.gd", "levels.gd"}
+
+GAMECONFIG_ASSIGN_RE = re.compile(
+    r"\bGameConfig\.\w+\s*(?:\+=|-=|\*=|/=|=(?!=))"
+)
+
+
+def check_gameconfig_writes(name, code, problems):
+    if name in GAMECONFIG_WRITE_ALLOWLIST:
+        return
+    for i, line in enumerate(code, 1):
+        if GAMECONFIG_ASSIGN_RE.search(line):
+            problems.append(
+                "%s:%d  writes GameConfig outside its allowlist: %s"
+                % (name, i, line.strip()[:80])
+            )
+
+
 def main():
-    files = sorted(glob.glob(os.path.join(ROOT, "*.gd")))
+    files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
         print("no scripts found at %s" % ROOT)
         return 1
@@ -220,6 +242,7 @@ def main():
         check_brackets(name, lines, problems)
         check_declarations(name, code, problems)
         check_duplicates(name, code, problems)
+        check_gameconfig_writes(name, code, problems)
         funcs, _members = collect_names(code, source)
         check_calls(name, code, funcs, problems)
 

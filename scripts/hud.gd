@@ -96,6 +96,11 @@ signal floral_preference_requested()
 ## The star in the single-bee panel -- only offered for one bee at a
 ## time, see BEE_INDIVIDUALITY_PLAN.md section 7.
 signal favourite_requested(value: bool)
+## The queen panel's "Lay in plain comb too" checkbox -- a second place to
+## flip the same GameConfig.queen_lays_in_any_cell the settings window
+## offers. hud.gd doesn't write GameConfig directly (see CLAUDE.md rule 2);
+## main.gd routes this to debug_panel.gd, which does.
+signal queen_lay_any_cell_toggled(value: bool)
 
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
@@ -1540,7 +1545,7 @@ func _build_fallback_row(common_role: int, first) -> void:
 		any_cell_box.text = "Lay in plain comb too"
 		any_cell_box.add_theme_font_size_override("font_size", 11)
 		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
-		any_cell_box.toggled.connect(func(pressed: bool): GameConfig.queen_lays_in_any_cell = pressed)
+		any_cell_box.toggled.connect(func(pressed: bool): queen_lay_any_cell_toggled.emit(pressed))
 		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in nursery zone cells and waits when they are full. Turn it off for exact control, and be ready to add zone cells or she stops laying."))
 
 ## The "when idle" menu, built from the role table so a new role turns

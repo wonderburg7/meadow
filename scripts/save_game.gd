@@ -297,7 +297,14 @@ static func read(path: String = SAVE_PATH) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("The save file is not readable.")
 		return {}
-	if int(parsed.get("version", 0)) != FORMAT_VERSION:
+	var save_version := int(parsed.get("version", 0))
+	if save_version > FORMAT_VERSION:
+		# A save from a newer build may use fields this version doesn't
+		# know to restore -- rather than silently dropping them, refuse
+		# the load outright and leave the current world untouched.
+		push_error("Save file is from a newer version of the game (%d, this build reads %d) and cannot be loaded." % [save_version, FORMAT_VERSION])
+		return {}
+	if save_version != FORMAT_VERSION:
 		push_warning("Save file is from a different version of the game; loading it may not work.")
 	return parsed
 

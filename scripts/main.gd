@@ -403,6 +403,7 @@ func _ready() -> void:
 
 	debug_panel = DebugPanel.new()
 	add_child(debug_panel)
+	hud.queen_lay_any_cell_toggled.connect(func(value: bool): debug_panel.set_toggle("queen_lays_in_any_cell", value))
 
 	# The main menu sits above everything and pauses the run behind it.
 	# It opens by itself the first time the game is launched, and after
@@ -714,12 +715,16 @@ func _role_counts() -> Dictionary:
 		counts[key] = int(counts.get(key, 0)) + 1
 	return counts
 
-func _update_population_readout() -> void:
+## `bees` lets a caller pass an explicit list instead of a live group query
+## -- saving.gd's restore path uses this, since a mid-frame group query
+## would still catch the just-retired old bees alongside their replacements.
+func _update_population_readout(bees = null) -> void:
 	var foragers := 0
 	var nurses := 0
 	var builders := 0
 	var honey_makers := 0
-	for b in get_tree().get_nodes_in_group("bees"):
+	var list: Array = bees if bees != null else get_tree().get_nodes_in_group("bees")
+	for b in list:
 		match b.role:
 			Bee.Role.NURSERY:
 				nurses += 1
