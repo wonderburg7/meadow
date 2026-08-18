@@ -82,7 +82,8 @@ teaching claim is accurate to the code as it stands.
 **Role names, for this document**: Forager (nectar/pollen sub-modes),
 Nurse, **Comb worker** (not "cell worker" — the codebase and on-screen
 label are Comb worker throughout; this exact confusion was already
-flagged and corrected once before, in `NEW_FEATURES_BLUEPRINT.md`),
+flagged and corrected once before, in
+`docs/archive/NEW_FEATURES_BLUEPRINT.md`),
 Queen/Laying, Idle, Miner, Honey.
 
 ---

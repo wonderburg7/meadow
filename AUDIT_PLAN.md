@@ -23,7 +23,7 @@ done, don't delete it).
 | A — Challenge state safety | P0 | 2-3h | Done (code + boot check; Dave's hands-on check still pending) |
 | B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Instrumentation split + boot check done; baseline playtest still needed |
-| D — Claude/agent context restructure | P1 | 4-6h | Not started |
+| D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Not started |
 | F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
 
@@ -54,7 +54,8 @@ done, don't delete it).
   simulation state; don't let a drawing optimisation change what's
   actually been explored).
 - **One behavioural axis per change, small commits.** Same discipline as
-  every other plan file here (`BEE_SPLIT_PLAN.md`, `PERF_PLAN.md`).
+  every other plan file here (`docs/archive/BEE_SPLIT_PLAN.md`,
+  `docs/archive/PERF_PLAN.md`).
 
 ---
 
@@ -288,7 +289,7 @@ actually the bottleneck.
    view — not unconditionally every `_update()`.
 3. Re-measure with the same scenario as the baseline. Stop here if frame
    time and worst-frame numbers are back near the pre-fog-rework 60fps
-   baseline (`PERF_PLAN.md`). Don't proceed to step 3 without a new
+   baseline (`docs/archive/PERF_PLAN.md`). Don't proceed to step 3 without a new
    measurement showing it's still needed.
 
 **Do not do in this bundle** (explicitly deferred to bundle F, and only
@@ -402,6 +403,70 @@ available) before and after on two or three representative small tasks
 change) — the goal is lower context *and* no new corrective edits, not
 context reduction at any cost.
 
+**Done:** all six actions landed, plus two things not explicitly asked
+for but cheap given the same read:
+
+1. `CLAUDE.md` trimmed from 555 lines to 210 -- kept: what Meadow is and
+   its Godot version, the `NEXTSTEPS.md` pointer, the full file-routing
+   table (condensed prose around it, not rows -- that table is the
+   single highest-value part of the file), the four numbered rules, the
+   two test commands and what each catches, and "Working style Dave
+   asked for". 210 is a little over the ~160-200 target; the table
+   itself is 37 rows and didn't seem worth cutting to hit a round
+   number.
+2. Moved out to `docs/`: `docs/known-pitfalls.md` (the bug catalogue),
+   `docs/performance.md` (the measuring-performance methodology, plus
+   the "explicitly do not change" list this file already carried),
+   `docs/history.md` (the state-of-play chronology). All three, and
+   `docs/archive/`, are linked from the trimmed `CLAUDE.md`.
+3. Archived to `docs/archive/` via `git mv` (history preserved):
+   `BEE_SPLIT_PLAN.md`, `MAIN_SPLIT_PLAN.md`, `PERF_PLAN.md`,
+   `NEW_FEATURES_BLUEPRINT.md`, `SCOUTING_TOGGLE_PLAN.md`,
+   `BEE_INDIVIDUALITY_PLAN.md` -- each got a one-line "Archived, shipped"
+   note at the top. `TUTORIAL_PLAN.md` stays at root per this bundle's
+   own condition (Challenge 2 hasn't shipped yet). Every cross-reference
+   to the six moved files elsewhere in the repo (`CLAUDE.md`,
+   `CLAUDE_CODE_SETUP.md`, `DESIGN_BACKLOG.md`, `ROADMAP.md`,
+   `TUTORIAL_PLAN.md`, this file) was repointed to the new path -- the
+   six files reference each other by bare filename and didn't need
+   editing, since they moved together.
+4. `.claude/settings.json` added with `permissions.deny` on
+   `Read(./.godot/**)` and `Read(./_backups/**)` -- `*.uid` files stay
+   un-denied as this bundle specified. `CLAUDE.md` and
+   `CLAUDE_CODE_SETUP.md`'s `.claudeignore` claims rewritten to point
+   at this instead; `.claudeignore` itself is left in place (harmless,
+   just no longer described as doing anything for Claude Code).
+5. `.claude/rules/` added: `gdscript.md` (`scripts/**/*.gd`), `saving.md`
+   (`saving.gd`, `save_game.gd`, `tutorial_checkpoint.gd`,
+   `challenge_runner.gd`), `simulation.md` (`bee*.gd`, `hive*.gd`,
+   `flower.gd`, `season.gd`, `spatial_grid.gd`), `performance.md`
+   (`fog_of_war.gd`, `perf.gd`, `bee_movement.gd`, `spatial_grid.gd`).
+   Confirmed against `claude-code-guide` that `.claude/rules/*.md` with
+   a `paths:` glob list is the actual stable mechanism (not a
+   convention) before writing these, rather than guessing the format.
+6. `tools/update_function_map.py` regenerates `FUNCTION_MAP.md` from the
+   six scripts' own `# --- section ---`/`func`/`static func` lines
+   (`--check` exits non-zero if the committed file has drifted).
+   Running it immediately proved the point of writing it: the
+   hand-maintained map was already stale in four places
+   (`hud.gd` 1,720→1,725, `debug_panel.gd` 1,187→1,209, `hive_cell.gd`
+   845→855, `main.gd` 762→779, plus `saving.gd`, `save_game.gd`,
+   `fog_of_war.gd` and `challenge_runner.gd` outside the six-file map)
+   since it was last hand-updated 19 Aug. The routing table's line
+   counts in `CLAUDE.md` were corrected to match in the same pass. The
+   regenerated file drops the old freeform "Last regenerated: ... because
+   ..." note in favour of "run `git log -- FUNCTION_MAP.md`" -- that
+   narrative duplicated what commit messages already record, and a
+   generated file can't keep writing prose about its own history.
+
+Verified: `tests/source_checks.py` and `tests/balance_tests.py` both
+pass (no `scripts/**/*.gd` file was touched by this bundle, so a Godot
+boot check doesn't add information here -- this is the one bundle where
+that's true). **Not yet verified by Dave:** the `/context` comparison
+this bundle's own "Validate" step asks for, and a skim of the new
+`docs/`/`.claude/rules/` split to confirm nothing load-bearing reads
+wrong out of context.
+
 ---
 
 ## Bundle E — Small hot-path and housekeeping cleanups (P2, bundle together, low risk)
@@ -470,7 +535,7 @@ authorised work yet:
 
 ---
 
-## Explicitly do not change (both audits agree, carried forward from `PERF_PLAN.md`'s own findings)
+## Explicitly do not change (both audits agree, carried forward from `docs/archive/PERF_PLAN.md`'s own findings, also listed in `docs/performance.md`)
 
 - Don't re-add spatial indexing for obstacles (14 objects; already
   measured as slower than a linear scan — see `ROADMAP.md`).

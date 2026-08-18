@@ -1,5 +1,8 @@
 # Splitting main.gd: what was done and why
 
+**Archived 19 Aug 2026 — shipped and confirmed working in Godot.** Kept
+as a record of why the split boundaries are where they are.
+
 Written 14 Aug 2026, same session the split shipped. Read this before
 touching any of the six new files, or before splitting `bee.gd` next.
 

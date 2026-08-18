@@ -21,12 +21,19 @@ that problem was specific to editing through the device bridge.
 
 ## 3. What ports over automatically
 
-`CLAUDE.md`, `NEXTSTEPS.md`, `FUNCTION_MAP.md` and `.claudeignore` all
-sit at the repo root and Claude Code reads them the same way this session
-does — nothing to change. `CLAUDE.md` was already written in the style
-Claude Code expects (a orientation file read at the start of every
-session), so this move is mostly just giving it a faster, more direct
-tool to act on what it already reads.
+`CLAUDE.md`, `NEXTSTEPS.md` and `FUNCTION_MAP.md` all sit at the repo
+root and Claude Code reads them the same way this session does —
+nothing to change. `CLAUDE.md` was already written in the style Claude
+Code expects (an orientation file read at the start of every session),
+so this move is mostly just giving it a faster, more direct tool to act
+on what it already reads.
+
+`.claudeignore` does *not* port over the way you might expect — Claude
+Code doesn't apply file-based ignore lists that way. The actual
+mechanism is a permissions deny rule in `.claude/settings.json` (already
+set up in this repo to keep `.godot/` and `_backups/` out of context) —
+extend that file's `deny` list, not `.claudeignore`, if more paths need
+excluding later.
 
 ## 4. Trim what loads into every session
 
@@ -74,8 +81,9 @@ This is the biggest lever, bigger than any settings file:
 Short sessions with a clean handoff file beat one long session that
 accumulates context it doesn't need any more. If a plan is bigger than
 one session — spans several slices — write it to its own file in the
-repo first (the way `PERF_PLAN.md` and the `*_SPLIT_PLAN.md` files
-already work here) rather than trying to hold it in conversation.
+repo first (the way `TUTORIAL_PLAN.md` and the archived `*_SPLIT_PLAN.md`
+files in `docs/archive/` already work here) rather than trying to hold
+it in conversation.
 
 ## 6. Model choice
 

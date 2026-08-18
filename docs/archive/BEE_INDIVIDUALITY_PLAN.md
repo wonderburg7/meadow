@@ -1,5 +1,8 @@
 # Bee individuality plan
 
+**Archived 19 Aug 2026 — shipped.** Kept as a record of the design, not a
+live plan. See `docs/history.md` for what actually landed.
+
 Written 17 Aug 2026, agreed with Dave in a planning conversation (not yet
 built). This is the spec Claude Code should build from next session. It
 follows the same shape as `PERF_PLAN.md` and `BEE_SPLIT_PLAN.md`: read

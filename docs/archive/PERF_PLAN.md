@@ -1,5 +1,10 @@
 # Performance plan: find and fix the 4fps problem
 
+**Archived 19 Aug 2026 — the investigation is closed and the fix has
+shipped.** The *method* it used is still live guidance — see
+`docs/performance.md`, which is what CLAUDE.md now points to. This file
+is kept as the full writeup of the specific 4fps bug.
+
 Written 14 Aug 2026. Agreed with Dave.
 
 **Steps 1-4 done, 14 Aug 2026** (`01098cb` through `6488415`, see the

@@ -1,5 +1,8 @@
 # New features — technical blueprint (14 Aug 2026)
 
+**Archived 19 Aug 2026 — shipped.** Kept as a record of the design. See
+`docs/history.md` for what actually landed.
+
 Architecture and data-flow only, for a lighter model to implement from.
 No full scripts here — file/function references, the shape of each
 change, and the risks worth knowing about before starting. Grounded in

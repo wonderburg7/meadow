@@ -1,5 +1,8 @@
 # Scouting / floral constancy / recruitment split
 
+**Archived 19 Aug 2026 — shipped.** Kept as a record of the design. See
+`docs/history.md` for what actually landed.
+
 Written 18 Aug 2026, agreed with Dave across two planning conversations
 (not yet built). Follows the same shape as `BEE_INDIVIDUALITY_PLAN.md`
 and `PERF_PLAN.md`: read this before starting, build one slice at a

@@ -7,7 +7,12 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 19 Aug 2026 — the tutorial row now reads "built", not
+Last updated: 19 Aug 2026 — added a row below for the two-report technical
+audit and its resulting `AUDIT_PLAN.md`, covering a confirmed state-leak
+bug, save/restore determinism, fog-of-war performance, and Claude Code
+context efficiency. Nothing in it is started yet.
+
+Previous update, 19 Aug 2026 — the tutorial row now reads "built", not
 "ready to build": Challenge 1 is playable end to end, after two rounds
 of hands-on-testing fixes. See `TUTORIAL_PLAN.md` and `NEXTSTEPS.md`.
 
@@ -17,16 +22,16 @@ Previous update, 18 Aug 2026 — the tutorial row now points at
 Previous update, 14 Aug 2026 (evening) — added rows for the hex-hive
 redesign, the winter energy/lifespan fix, and the interface changes
 from the same day's blueprint-then-implement pass
-(`NEW_FEATURES_BLUEPRINT.md`).
+(`docs/archive/NEW_FEATURES_BLUEPRINT.md`).
 
 Previous update, same day: a pass to mark what's shipped since this
 was first written, after several items were found done while looking
 for something else, plus the 4fps investigation closing out the same
-day. See `PERF_PLAN.md` for that writeup.
+day. See `docs/archive/PERF_PLAN.md` for that writeup.
 
 ---
 
-## Performance and scale — resolved, see PERF_PLAN.md
+## Performance and scale — resolved, see docs/archive/PERF_PLAN.md
 
 **Was:** the frame rate dropped as low as 4fps with 29 bees, sustained,
 in both views. **Found and fixed 14 Aug**, confirmed by Dave's
@@ -35,7 +40,7 @@ checking rain (`if _grounded(): return true`, almost certainly lost in
 a refactor), which recursed until GDScript's call stack errored out,
 called from `_seek_flower` and `_go_to_exit` as their first line. Full
 writeup, the `perf.gd` measuring method, and the Notion Performance
-Map are in `PERF_PLAN.md`. That method — instrument the widest scope
+Map are in `docs/archive/PERF_PLAN.md`. That method — instrument the widest scope
 first, then split by whatever dimension could explain the cost one
 playtest at a time — is now documented in `CLAUDE.md` for the next
 performance question, rather than being specific to this one.
@@ -58,6 +63,22 @@ measured at ~0ms throughout thanks to the existing tile-pair cache in
 the fps-starred breakdown stay in the project. Give any new hot
 per-frame system its own `Perf.begin`/`Perf.end` pair — see `CLAUDE.md`.
 
+## Technical audit findings — see AUDIT_PLAN.md
+
+Two external audits (19 Aug) reviewed the whole repo against runtime
+performance, maintainability, AI-agent context efficiency, and dead code.
+Conclusion: no broad refactor needed, but a handful of concentrated
+bundles are worth doing. Full detail, file lists, and validation steps in
+`AUDIT_PLAN.md` — this row is a summary only, update status there, not here.
+
+| | Size | Status |
+|---|---|---|
+| **Challenge 1's fast build time can leak into normal play/saves** — a global `GameConfig` write that's only restored on completion, not on abandon/restart | S | **Confirmed bug, not yet fixed.** `AUDIT_PLAN.md` Bundle A. |
+| **Save/restore isn't deterministic** — flower/bee grid rebuilds can briefly see nodes just queued for deletion, because Godot defers `queue_free()` to end of frame | M | Not started. `AUDIT_PLAN.md` Bundle B. |
+| **Fog-of-war performance is unmeasured since the 5-unit rework** — the file itself says so; static analysis suggests a real but unconfirmed cost at higher bee counts | S (measure) + M (fix if needed) | Not started, gated on measurement. `AUDIT_PLAN.md` Bundle C. |
+| **Claude Code context restructure** — root `CLAUDE.md` is ~550 lines against guidance of ~200; move history/bug-catalogue to `docs/`, add path-scoped `.claude/rules/`, fix the `.claudeignore` claim | M | Not started, highest-leverage single item. `AUDIT_PLAN.md` Bundle D. |
+| **Small housekeeping** — cache `Season` ref instead of a per-frame group lookup in `hive_cell.gd`; delete retired `egg.gd`/`queen.gd` | S | Not started. `AUDIT_PLAN.md` Bundle E. |
+
 ## Making the middle game interesting
 
 | | Size | Status |
@@ -74,7 +95,7 @@ per-frame system its own `Perf.begin`/`Perf.end` pair — see `CLAUDE.md`.
 
 | | Size | Status |
 |---|---|---|
-| **Flat-top hex hive + single-column corner entrance** — comb/soil/rock hexagons flipped from pointy-top to flat-top, entrance moved to a top corner as one tile wide instead of the old "1, 2, 1, 2" pattern | M | **Shipped 14 Aug.** Confined almost entirely to `shapes.gd`; save format bumped to `FORMAT_VERSION 2`. See `NEW_FEATURES_BLUEPRINT.md`. |
+| **Flat-top hex hive + single-column corner entrance** — comb/soil/rock hexagons flipped from pointy-top to flat-top, entrance moved to a top corner as one tile wide instead of the old "1, 2, 1, 2" pattern | M | **Shipped 14 Aug.** Confined almost entirely to `shapes.gd`; save format bumped to `FORMAT_VERSION 2`. See `docs/archive/NEW_FEATURES_BLUEPRINT.md`. |
 
 ## Depth in what exists
 
@@ -85,8 +106,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 |---|---|---|
 | **Nurse-mediated caste switching** — what a larva becomes is set by feeding, not by the cell | M | Yes, as a later-level unlock. Changes how an existing system works rather than adding a new one. |
 | **Comb temperature** — brood develops faster in a warm cluster; bees fan or huddle | M | Strong. Comb layout barely matters right now. |
-| **Bee individuality** — small variation in speed/capacity, a generated name and fact, gynes carry it forward | S | Cheap, adds texture. Detailed and ready to build, see `BEE_INDIVIDUALITY_PLAN.md`. |
-| **Foraging memory / recruitment** — a bee that found a good patch returns and recruits others | M | **Built 17 Aug** as a combined scouting/floral-constancy/recruitment mechanism (`GameConfig.auto_foraging_on`), still unconfirmed against a real playtest and still not measured against the baseline per rule 4. **Being split 18 Aug** into three independent toggles — see `SCOUTING_TOGGLE_PLAN.md`, ready to build. |
+| **Bee individuality** — small variation in speed/capacity, a generated name and fact, gynes carry it forward | S | Cheap, adds texture. Detailed and ready to build, see `docs/archive/BEE_INDIVIDUALITY_PLAN.md`. |
+| **Foraging memory / recruitment** — a bee that found a good patch returns and recruits others | M | **Built 17 Aug** as a combined scouting/floral-constancy/recruitment mechanism (`GameConfig.auto_foraging_on`), still unconfirmed against a real playtest and still not measured against the baseline per rule 4. **Being split 18 Aug** into three independent toggles — see `docs/archive/SCOUTING_TOGGLE_PLAN.md`, ready to build. |
 | **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain. |
 
 ## Interface
@@ -115,8 +136,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **One `roles.gd` instead of role constants in four files** | S | **Shipped 13 Aug.** |
 | **Split `GameConfig` into balance vs session state** | S | **Shipped 13 Aug.** `session.gd`. |
 | **Save the things that currently aren't** (keep-clear tiles, build/mine queues, restocking orders, priority credit) | S | **Shipped 13 Aug.** |
-| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Shipped 14 Aug, confirmed working 14 Aug** ("Seems to be working ok"). Six new files, each a plain Node created in `_ready()` and reached as `main.world_building` etc. `main.gd` still holds every field and every method something outside the split touches (`bee.gd`, `debug_panel.gd`) — see `MAIN_SPLIT_PLAN.md`. Passes `source_checks.py` and `balance_tests.py`. Two follow-up fixes needed once it actually ran: a `:=` type-inference failure across loosely-typed refs, and a `_build_cameras()` ordering bug — both documented in `MAIN_SPLIT_PLAN.md`'s sibling notes so the `bee.gd` split avoids repeating them. |
-| **Break up `bee.gd`** (3,162 lines — survival/eating, foraging, nursery/jelly, building, mining, honey, egg laying, movement, plus a shared `bee_enums.gd`) | M | **Shipped and confirmed working 14 Aug** ("seems to work as intended"). Full plan in `BEE_SPLIT_PLAN.md`. All nine files split out: `bee_enums.gd`, `bee_movement.gd`, `bee_survival.gd`, `bee_foraging.gd`, `bee_nursery.gd`, `bee_building.gd`, `bee_mining.gd`, `bee_honey.gd`, `bee_egg_laying.gd`, plus `bee_status.gd` (a small leaf the plan didn't anticipate — `grounded`/`works_indoors`, needed from both bee_survival and bee_foraging, would otherwise have made the two preload each other). `bee.gd` is 3,138 → 1,399 lines. `source_checks.py`/`balance_tests.py` pass. Still outstanding: `bee_movement.gd` (the hottest path — steering, obstacle avoidance) hasn't been specifically re-measured with `perf.gd` against a decent-sized colony (~29 bees) since the static-call pattern went in. |
+| **Break up `main.gd`** (world building, input/selection, saving, orders/zones, the year/winter, camera) | M | **Shipped 14 Aug, confirmed working 14 Aug** ("Seems to be working ok"). Six new files, each a plain Node created in `_ready()` and reached as `main.world_building` etc. `main.gd` still holds every field and every method something outside the split touches (`bee.gd`, `debug_panel.gd`) — see `docs/archive/MAIN_SPLIT_PLAN.md`. Passes `source_checks.py` and `balance_tests.py`. Two follow-up fixes needed once it actually ran: a `:=` type-inference failure across loosely-typed refs, and a `_build_cameras()` ordering bug — both documented in `docs/archive/MAIN_SPLIT_PLAN.md`'s sibling notes so the `bee.gd` split avoids repeating them. |
+| **Break up `bee.gd`** (3,162 lines — survival/eating, foraging, nursery/jelly, building, mining, honey, egg laying, movement, plus a shared `bee_enums.gd`) | M | **Shipped and confirmed working 14 Aug** ("seems to work as intended"). Full plan in `docs/archive/BEE_SPLIT_PLAN.md`. All nine files split out: `bee_enums.gd`, `bee_movement.gd`, `bee_survival.gd`, `bee_foraging.gd`, `bee_nursery.gd`, `bee_building.gd`, `bee_mining.gd`, `bee_honey.gd`, `bee_egg_laying.gd`, plus `bee_status.gd` (a small leaf the plan didn't anticipate — `grounded`/`works_indoors`, needed from both bee_survival and bee_foraging, would otherwise have made the two preload each other). `bee.gd` is 3,138 → 1,399 lines. `source_checks.py`/`balance_tests.py` pass. Still outstanding: `bee_movement.gd` (the hottest path — steering, obstacle avoidance) hasn't been specifically re-measured with `perf.gd` against a decent-sized colony (~29 bees) since the static-call pattern went in. |
 | **Automated tests for the balance rules** | M | **Shipped 13 Aug.** `tests/balance_tests.py`, extended to `tests/source_checks.py` on the same day after the balance suite didn't catch a syntax error that blanked the game. |
 
 ---
@@ -131,9 +152,9 @@ alongside the tutorial, so the systems already in could stabilise first.
 
 **Picking five again, 14 Aug:**
 
-1. ~~Resolve the 4fps drop~~ — **fixed and confirmed 14 Aug**, `PERF_PLAN.md`. `_grounded()` recursion; see the bug class in `CLAUDE.md`.
+1. ~~Resolve the 4fps drop~~ — **fixed and confirmed 14 Aug**, `docs/archive/PERF_PLAN.md`. `_grounded()` recursion; see the bug class in `CLAUDE.md`.
 2. ~~Break up `main.gd`~~ — shipped and confirmed working 14 Aug.
-2a. **Break up `bee.gd`** — done and confirmed working 14 Aug (`BEE_SPLIT_PLAN.md`), all nine files plus `bee_status.gd` split out. Still worth re-measuring `bee_movement.gd` with `perf.gd` before trusting the static-call pattern is free on the hottest path.
+2a. **Break up `bee.gd`** — done and confirmed working 14 Aug (`docs/archive/BEE_SPLIT_PLAN.md`), all nine files plus `bee_status.gd` split out. Still worth re-measuring `bee_movement.gd` with `perf.gd` before trusting the static-call pattern is free on the hottest path.
 3. **Foraging memory** — the most-requested-feeling gap in what's built; cheap relative to its payoff.
 4. **A tutorial** — named as next on 13 Aug, plan complete 18 Aug (`TUTORIAL_PLAN.md`). **Challenge 1 built and playable, 19 Aug** — see `NEXTSTEPS.md` for what's still open (Challenge 2's stage data, and Dave's hands-on confirmation of the latest fixes).
 5. **Comb temperature** — the deepest of the "depth in what exists" items and the one that would make comb layout an actual decision.

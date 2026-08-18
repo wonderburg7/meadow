@@ -4,7 +4,11 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 19 Aug 2026 — Challenge 1 (`TUTORIAL_PLAN.md`) is now
+Last updated: 19 Aug 2026 — added section 11, one product decision that
+fell out of the two-report technical audit (`AUDIT_PLAN.md`): whether
+ordinary player save/load should work during an active Challenge.
+
+Previously updated 19 Aug 2026 — Challenge 1 (`TUTORIAL_PLAN.md`) is now
 built and playable end to end: both technical prerequisites in section
 1 and section 5 (the `levels.gd` restructure and the tutorial
 checkpoint system) are done, plus the new UI-unlock and Dr Gallerin
@@ -14,7 +18,7 @@ Challenge 2 has no stage data yet, and Challenge 1 wants Dave's
 hands-on confirmation after two rounds of hands-on-testing fixes.
 
 Previously updated 18 Aug 2026 — the scouting/floral-constancy/recruitment
-split (`SCOUTING_TOGGLE_PLAN.md`) is now built: the old single
+split (`docs/archive/SCOUTING_TOGGLE_PLAN.md`) is now built: the old single
 `auto_foraging_on` toggle is four toggles forming a dependency tree
 (`orientation_flight_on`, `scouting_on`, `floral_constancy_on`,
 `auto_recruitment_on`, the last renamed from `auto_foraging_on`), a
@@ -36,8 +40,8 @@ full design.
 
 Previously updated 17 Aug 2026, added section 10 (bee individuality, the
 lineage/inheritance piece deferred out of the plan agreed the same day,
-see `BEE_INDIVIDUALITY_PLAN.md` for what's in scope for the first
-slice).
+see `docs/archive/BEE_INDIVIDUALITY_PLAN.md` for what's in scope for the
+first slice).
 
 Previously updated 17 Aug 2026 — removed 7.1 (foraging memory and recruitment)
 and 8 (floral constancy — automatic component), now built as one combined
@@ -287,7 +291,7 @@ and rock blocks, the comb. There is no `Sprite2D`, `Texture` or
 - Worth fixing an `assets/sprites/...` folder convention before any art
   exists, so it has a stable home from the start.
 - Performance must be measured, not assumed — use the same method as
-  the 4fps investigation (`perf.gd`, `PERF_PLAN.md`): instrument first,
+  the 4fps investigation (`perf.gd`, `docs/performance.md`): instrument first,
   then compare sprite mode against polygon mode at the colony sizes
   already used for that investigation.
 
@@ -324,8 +328,8 @@ out.
 
 ## 9. Follow-ups from the 14 Aug blueprint pass (hex redesign, winter fix, cog rename)
 
-Two loose ends from the `NEW_FEATURES_BLUEPRINT.md` implementation,
-recorded so they don't get lost:
+Two loose ends from the `docs/archive/NEW_FEATURES_BLUEPRINT.md`
+implementation, recorded so they don't get lost:
 
 - **`GameConfig.hive_entrance_width` is now unused.** The new
   single-column entrance tunnel (`world_building.gd::_entrance_tiles`)
@@ -350,7 +354,7 @@ recorded so they don't get lost:
 The first slice of bee individuality (a rolled stat trait, a generated
 name and fact, cosmetic jitter, milestone bees, death epitaphs,
 favourite-bee pinning) is planned and ready to build, see
-`BEE_INDIVIDUALITY_PLAN.md`. One reading of `ROADMAP.md`'s existing
+`docs/archive/BEE_INDIVIDUALITY_PLAN.md`. One reading of `ROADMAP.md`'s existing
 "gynes carry it forward" line is deliberately left out of that slice
 and recorded here instead.
 
@@ -371,3 +375,34 @@ nowhere to plug in.
 weight or magnitude bands in that bee's favour rather than copying the
 trait outright, keeps every bee still an individual roll rather than a
 clone of her mother.
+
+---
+
+## 11. Ordinary save/load during an active Challenge (decision needed)
+
+Fell out of the technical audit (`AUDIT_PLAN.md` Bundle A), recorded here
+because it's a player-facing behaviour choice, not just an engineering
+fix.
+
+**The problem:** `SaveGame` doesn't record Challenge state (stage index,
+which UI is unlocked, which Dr Gallerin prompts have fired, tutorial
+checkpoint status). If a player saves mid-Challenge and reloads, none of
+that comes back — the world state would restore but the Challenge would
+be out of sync with it.
+
+**Default assumed in `AUDIT_PLAN.md`:** hide/disable the ordinary
+save/load buttons while a Challenge is active, and rely on
+`tutorial_checkpoint.gd`'s own rolling checkpoint for in-Challenge
+rollback instead. This is the cheap, safe option — Challenges are short
+(5-10 minutes) so losing the ability to save mid-Challenge costs little,
+and it avoids designing a Challenge-aware save schema before there's a
+second Challenge to prove the shape of that data.
+
+**The alternative**, not being built now: extend `SaveGame` to serialise
+Challenge state properly, so ordinary save/load works everywhere. Worth
+revisiting once Challenge 2 exists and there's a real second data point
+for what "Challenge state" needs to hold — designing that schema off one
+Challenge risks getting it wrong.
+
+**Status:** proceeding with the default above in `AUDIT_PLAN.md` Bundle A
+unless Dave says otherwise.

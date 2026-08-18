@@ -1,5 +1,8 @@
 # Splitting bee.gd: the plan
 
+**Archived 19 Aug 2026 — shipped and confirmed working in Godot.** Kept
+as a record of why the split boundaries are where they are.
+
 Written 14 Aug 2026, after the main.gd split (see `MAIN_SPLIT_PLAN.md`) shipped
 and needed two follow-up fixes once it actually ran in Godot. This plan is
 written to avoid repeating both of those mistakes, plus one new one that's
