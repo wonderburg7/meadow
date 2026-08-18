@@ -33,6 +33,7 @@ const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
+const BeeIdentity = preload("res://scripts/bee_identity.gd")
 ## Only for HiveCell.EMPTY_COLOR -- the comb worker's role ring is drawn in
 ## the same colour as an empty wax cell, so the two read as the same
 ## material rather than picking an unrelated brown/tan and hoping it reads
@@ -83,7 +84,32 @@ var current_load_type: String = ""
 var current_flower: Node2D = null
 var bee_id: int = 0
 
+## A generated name, one small rolled stat trait, and a generated fact
+## about herself -- see bee_identity.gd and BEE_INDIVIDUALITY_PLAN.md.
+## All three rolled once at spawn and saved, so a bee's identity survives
+## a reload rather than being re-rolled. trait_stat is one of
+## BeeIdentity.TRAIT_STATS, "" only very briefly before _ready() rolls
+## it. trait_percent is signed, e.g. 0.07 or -0.03.
+var bee_name: String = ""
+var bee_fact: String = ""
+var trait_stat: String = ""
+var trait_percent: float = 0.0
+## Set from the single-bee selection panel, or from the colony window's
+## Favourites list, which is how the player finds this bee again in a
+## colony of hundreds.
+var is_favourite: bool = false
+## Cosmetic-only jitter, rolled once at spawn -- see _ready(). Never
+## saved: rerolling on load is harmless since nothing simulated reads
+## either of these (rule 3).
+var tint_factor: float = 1.0
+var size_jitter: float = 1.0
+
 var energy: float = 100.0
+## Held topped up and exempt from starvation -- only ever set by
+## challenge_runner.gd, for the queen, during Challenge 1's "no lethal
+## pressure" start state (see TUTORIAL_PLAN.md). Never touched anywhere
+## else, so ordinary play is completely unaffected.
+var energy_immune: bool = false
 var age_seconds: float = 0.0
 var selected: bool = false
 ## queue_free only takes effect at the end of the frame, so without this
@@ -165,6 +191,60 @@ var preferred_species: String = ""
 ## drifting to whatever's nearest the entrance. INF means "not set".
 var forage_start_point: Vector2 = Vector2(INF, INF)
 
+## Scouting (see GameConfig.scouting_on) -- a brand-new forager's phase
+## of trying a few different start points, timed, so it can settle on
+## whichever paid off best rather than the player having to click "Pick
+## a flower" for every bee. Under Floral constancy this also samples a
+## different species each bout, see scout_species below.
+## Not save-persisted; a bee saved mid-scout just resumes as a plain
+## forager on load rather than continuing where it left off.
+var is_scouting: bool = false
+var scout_bout: int = 0
+## Species committed to for the bout in progress, only ever set when
+## GameConfig.floral_constancy_on is on. "" means this bout hasn't
+## landed on a flower yet (or constancy is off, in which case it never
+## gets set at all and the bout forages whatever's nearest).
+var scout_species: String = ""
+var scout_tried_species: Array = []
+var scout_best_species: String = ""
+var scout_best_rate: float = -1.0
+## Winner-tracking for the current scouting run, alongside the fields
+## above -- see SCOUTING_TOGGLE_PLAN.md section 2. Not save-persisted,
+## same as the rest of the scouting block.
+var scout_current_start_point: Vector2 = Vector2(INF, INF)
+var scout_best_start_point: Vector2 = Vector2(INF, INF)
+## Recruitment: a rolling average of this forager's own resource
+## collection rate, weighted towards recent trips rather than a lifetime
+## average, so it reacts to a patch going bad rather than staying
+## anchored by its first few good trips. Compared against
+## GameConfig.recruit_lower/upper_threshold_nectar/pollen at the hive
+## entrance -- see BeeForaging.wait_at_entrance. Tracked for any forager
+## whenever scouting or auto-recruitment is on, not just while scouting
+## -- scouting just reads the same per-trip rate to score its bouts.
+var avg_collection_rate: float = 0.0
+const RATE_EMA_WEIGHT := 0.3
+## How many trips this forager has actually been scored on since it last
+## started being tracked (scouting or auto-recruitment turned on, or the
+## bee created while either already was). Below GameConfig.recruit_grace_trips,
+## avg_collection_rate is too young a number to judge -- a brand-new
+## colony's first trips are always going to look weak, and a bee that's
+## foraged happily for an hour reads exactly the same as a new one the
+## instant the toggle is switched on, since neither has a scored trip
+## yet. Judging either against the thresholds immediately is what let
+## a whole starting colony pile up at the entrance and starve -- see
+## BeeForaging.go_to_exit.
+var trips_scored: int = 0
+## Set while waiting at the entrance (see BeeForaging.wait_at_entrance) so
+## the bee actually walks a couple of hex rows clear of the doorway
+## instead of standing in it. INF means "not currently waiting".
+var entrance_wait_target: Vector2 = Vector2(INF, INF)
+## Sim time this trip out started, and the load captured at the start
+## of its delivery (so a trip that empties into more than one cell
+## still scores against the whole trip's take, not just the last
+## cell's share). Both -1/0 sentinels outside a trip.
+var trip_start_time: float = 0.0
+var trip_load_amount: float = -1.0
+
 ## A player-placed manual cell site a builder should try first, before
 ## falling back to its usual pick-a-site logic. Consumed (cleared) the
 ## moment it's acted on, successfully or not, so a bad click can't loop.
@@ -221,14 +301,30 @@ func _ready() -> void:
 	# each node happened to be added.
 	z_index = 5
 
-	speed = GameConfig.bee_speed
 	flower_handling_time = GameConfig.flower_handling_time
-	nectar_collection_rate = GameConfig.nectar_collection_rate
-	pollen_collection_rate = GameConfig.pollen_collection_rate
 	deposit_time = GameConfig.deposit_time
-	nectar_stomach_capacity = GameConfig.nectar_stomach_capacity
-	pollen_stomach_capacity = GameConfig.pollen_stomach_capacity
 	energy = GameConfig.energy_capacity
+
+	# One rolled stat trait, small and leaning positive -- see
+	# bee_identity.gd and BEE_INDIVIDUALITY_PLAN.md. _apply_stats() does
+	# the actual multiplying, and is called again by saving.gd after a
+	# save restores trait_stat/trait_percent, so a reload lands on
+	# exactly the same numbers rather than keeping this random roll.
+	var trait_roll: Dictionary = BeeIdentity.roll_trait_stat()
+	trait_stat = trait_roll.stat
+	trait_percent = trait_roll.percent
+	_apply_stats()
+
+	bee_name = BeeIdentity.roll_name()
+
+	# Visual jitter: a small brightness and size nudge, purely cosmetic
+	# (rule 3), so it's fine that this simply rerolls on a save/load
+	# rebuild rather than being saved. Size scales the whole node, not
+	# just the body, so the outline, rings and label all stay aligned --
+	# see the field comments below.
+	tint_factor = randf_range(1.0 - GameConfig.visual_tint_jitter_range, 1.0 + GameConfig.visual_tint_jitter_range)
+	size_jitter = randf_range(1.0 - GameConfig.visual_size_jitter_range, 1.0 + GameConfig.visual_size_jitter_range)
+	scale = Vector2.ONE * size_jitter
 
 	# A gyne sits visibly between a worker and the queen, so you can pick
 	# one out of a crowd without selecting it.
@@ -239,7 +335,7 @@ func _ready() -> void:
 		size_factor = GameConfig.gyne_size_factor
 	var body_radius: float = 6.5 * size_factor
 	var outline_radius: float = 9.0 * size_factor
-	click_radius = outline_radius + 5.0
+	click_radius = (outline_radius + 5.0) * size_jitter
 
 	selection_ring = Polygon2D.new()
 	selection_ring.polygon = Shapes.circle_points(outline_radius + 4.0)
@@ -263,7 +359,7 @@ func _ready() -> void:
 
 	body = Polygon2D.new()
 	body.polygon = Shapes.circle_points(body_radius)
-	body.color = _base_colour()
+	body.color = _tinted(_base_colour())
 	add_child(body)
 
 	# Drawn after the body, so it sits on top as a small dot rather than
@@ -286,19 +382,50 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	resource_type = type
 	bee_id = id
 	role = bee_role
-	if is_gyne:
-		speed = GameConfig.bee_speed * GameConfig.gyne_speed_factor
 	if is_queen:
-		speed = GameConfig.bee_speed * GameConfig.queen_speed_factor
 		# The queen's day used to be eat, lay, wait, eat, lay. Nursing is
 		# her natural second job -- she is in the brood nest anyway -- so
 		# she picks it up automatically whenever laying is blocked. The
 		# player can change it like any other bee's backup role.
 		if secondary_role == -1:
 			secondary_role = Role.NURSERY
-	state = _default_state_for_role()
+	# Only reachable here, not _ready(): a milestone fact needs bee_id
+	# and world, neither of which is set until setup() runs. See
+	# BEE_INDIVIDUALITY_PLAN.md section 5.
+	_roll_fact()
+	# A brand-new forager scouts a few start points before settling,
+	# rather than hunting the nearest flower of nothing in particular --
+	# see BeeForaging.start_scouting. Orientation flight is scouting's
+	# simpler fallback: one point, kept, no comparison. Only at creation:
+	# a bee switched into Forager later (set_role) keeps whatever
+	# preference it already had.
+	if GameConfig.scouting_on and bee_role == Role.FORAGER:
+		BeeForaging.start_scouting(self)
+	elif GameConfig.orientation_flight_on and bee_role == Role.FORAGER:
+		BeeForaging.take_orientation_flight(self)
+	else:
+		state = _default_state_for_role()
 	_update_label()
 	_update_role_marker()
+
+## Milestone bees get a deterministic fact instead of a rolled one --
+## see BEE_INDIVIDUALITY_PLAN.md section 5. Checked in a fixed order so
+## a bee can only ever claim one milestone: the very first bee (id 0,
+## which is also the founding queen), then the first gyne ever raised,
+## then every Nth bee after that.
+func _roll_fact() -> void:
+	if bee_id == 0:
+		bee_fact = BeeIdentity.milestone_fact_first_bee()
+		return
+	if is_gyne and world != null and is_instance_valid(world) and not world.first_gyne_seen:
+		world.first_gyne_seen = true
+		bee_fact = BeeIdentity.milestone_fact_first_gyne()
+		return
+	var interval: int = int(GameConfig.milestone_interval)
+	if interval > 0 and bee_id % interval == 0:
+		bee_fact = BeeIdentity.milestone_fact_nth(bee_id)
+		return
+	bee_fact = BeeIdentity.roll_fact(trait_stat)
 
 func _default_state_for_role() -> int:
 	match role:
@@ -328,6 +455,56 @@ func _base_colour() -> Color:
 	if is_gyne:
 		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
 	return Color(1.0, 0.85, 0.1)
+
+## The role colour with this bee's individual brightness jitter applied
+## -- a nudge, not a hue shift, so role stays identifiable at a glance
+## (Roles.colour_for and the colour-blind tag system depend on colour
+## meaning role). Alpha is left alone.
+func _tinted(c: Color) -> Color:
+	return Color(
+		clampf(c.r * tint_factor, 0.0, 1.0),
+		clampf(c.g * tint_factor, 0.0, 1.0),
+		clampf(c.b * tint_factor, 0.0, 1.0),
+		c.a
+	)
+
+## Recomputes every stat GameConfig can influence: the shared base
+## value, this bee's rolled trait (if any), and the queen/gyne speed
+## adjustment. Called from _ready() at spawn, and again by
+## saving.gd::_restore_bees after a save restores trait_stat/
+## trait_percent -- always resetting from the GameConfig base rather
+## than multiplying whatever's already there, so it's safe to call more
+## than once and always lands on the same numbers for the same trait.
+func _apply_stats() -> void:
+	speed = GameConfig.bee_speed
+	nectar_collection_rate = GameConfig.nectar_collection_rate
+	pollen_collection_rate = GameConfig.pollen_collection_rate
+	nectar_stomach_capacity = GameConfig.nectar_stomach_capacity
+	pollen_stomach_capacity = GameConfig.pollen_stomach_capacity
+	if trait_stat != "":
+		var factor: float = 1.0 + trait_percent
+		match trait_stat:
+			"speed":
+				speed *= factor
+			"nectar_collection_rate":
+				nectar_collection_rate *= factor
+			"pollen_collection_rate":
+				pollen_collection_rate *= factor
+			"nectar_stomach_capacity":
+				nectar_stomach_capacity *= factor
+			"pollen_stomach_capacity":
+				pollen_stomach_capacity *= factor
+	if is_gyne:
+		speed *= GameConfig.gyne_speed_factor
+	if is_queen:
+		speed *= GameConfig.queen_speed_factor
+
+## A short readout of this bee's trait, e.g. "Speed +7%", or "" if
+## somehow unrolled.
+func trait_text() -> String:
+	if trait_stat == "":
+		return ""
+	return "%s %s" % [BeeIdentity.stat_label(trait_stat), BeeIdentity.trait_percent_text(trait_percent)]
 
 ## Sets which of the two role markers (see the field comments) is showing
 ## and what colour it is. Called on creation, whenever the role changes,
@@ -468,6 +645,8 @@ func _process(delta: float) -> void:
 			Perf.end("bee_to_hive")
 		State.SHELTERING:
 			BeeForaging.shelter(self, delta)
+		State.AT_ENTRANCE_SEEKING, State.AT_ENTRANCE_MENTORING:
+			BeeForaging.wait_at_entrance(self, delta)
 
 		# --- nursery, making royal jelly ---
 		State.MAKING_JELLY:
@@ -900,6 +1079,18 @@ func command_move_to(world_point: Vector2) -> void:
 	_release_everything()
 	state = State.MOVE_TO_POINT
 
+## Right-clicking the entrance tile (see input_selection.gd's
+## _issue_command) sends a selected, indoor bee out through the door
+## rather than to a plain point -- the same route BeeForaging.go_to_exit
+## already walks automatically once a bee's job sends it home, just
+## triggered directly rather than waiting on the state machine to get
+## there on its own. Does nothing for a bee already outside.
+func command_exit_hive() -> void:
+	if not _is_inside_hive():
+		return
+	_release_everything()
+	state = State.IN_HIVE_TO_EXIT
+
 ## `meadow_point` is global/meadow-space (meadow_root sits at the origin,
 ## so global and local-to-meadow coincide -- see the note on
 ## command_move_to for why that distinction matters elsewhere).
@@ -912,6 +1103,10 @@ func has_forage_start_point() -> bool:
 func set_preferred_species(species: String) -> void:
 	preferred_species = species
 	flower_cooldowns.clear()   # a change of preference is worth a fresh look
+	# A manual choice always wins over the automatic one still in
+	# progress -- without this, scouting would silently overwrite it
+	# the moment the bee's three bouts finished.
+	is_scouting = false
 
 ## `hex` is an axial coordinate relative to the comb centre, matching
 ## what hive.gd already uses for cells and soil blocks.
@@ -998,9 +1193,15 @@ func _mine_reference_point() -> Vector2:
 
 ## Sent to a specific flower by right-click: ignore the cooldown list
 ## for this one trip and go straight there.
+## Right-clicking a flower with a bee selected always sends it to collect
+## from that flower -- switching it to Forager first if it wasn't
+## already one, the same direct-command spirit as command_exit_hive.
+## Doesn't change resource_type: she gathers whichever resource she's
+## already set to (nectar by default -- see Bee.setup), not whatever the
+## flower happens to be offering.
 func command_collect_from(flower: Node2D) -> void:
 	if role != Role.FORAGER:
-		return
+		set_role(Role.FORAGER)
 	if flower.occupied_by != null and flower.occupied_by != self:
 		return
 	if current_flower and current_flower != flower:
@@ -1105,6 +1306,8 @@ func _release_everything() -> void:
 	target_block = null
 	haul_target = null
 	fan_target = null
+	if hive:
+		hive.remove_entrance_mentor(self)
 
 ## Called by a flower that's about to wither with this bee on it.
 func release_flower_reference(flower: Node2D) -> void:
@@ -1240,6 +1443,12 @@ func task_description() -> String:
 			return "drinking nectar from the flower to refuel (energy %d%%)" % int(100.0 * energy / max(0.001, GameConfig.energy_capacity))
 		State.SHELTERING:
 			return "sheltering at the hive -- too wet to forage"
+		State.AT_ENTRANCE_SEEKING:
+			if is_scouting:
+				return "scouting: bout %d of 3, waiting at the entrance for a tip (%ds)" % [scout_bout + 1, int(max(0.0, timer))]
+			return "waiting at the entrance, hoping to be told a better patch (%ds)" % int(max(0.0, timer))
+		State.AT_ENTRANCE_MENTORING:
+			return "waiting at the entrance, willing to recruit a struggling forager (%ds)" % int(max(0.0, timer))
 		State.MAKING_JELLY:
 			return "working pollen and honey into royal jelly (%ds)" % int(max(0.0, timer))
 		State.TO_JELLY_CELL:
@@ -1338,8 +1547,14 @@ func role_name_text() -> String:
 				base += " (digging on its own)"
 		Role.FORAGER:
 			base += " (%s)" % resource_type
-			if preferred_species != "":
+			if is_scouting:
+				base += " -- scouting (%d/3)" % (scout_bout + 1)
+			elif preferred_species != "":
 				base += " -- %s only" % preferred_species
+			if state == State.AT_ENTRANCE_SEEKING:
+				base += " -- waiting to be told a better patch"
+			elif state == State.AT_ENTRANCE_MENTORING:
+				base += " -- waiting to recruit a struggling forager"
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base

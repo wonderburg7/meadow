@@ -7,7 +7,14 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 14 Aug 2026 (evening) — added rows for the hex-hive
+Last updated: 19 Aug 2026 — the tutorial row now reads "built", not
+"ready to build": Challenge 1 is playable end to end, after two rounds
+of hands-on-testing fixes. See `TUTORIAL_PLAN.md` and `NEXTSTEPS.md`.
+
+Previous update, 18 Aug 2026 — the tutorial row now points at
+`TUTORIAL_PLAN.md`, a complete Challenge 1/2 design ready to build.
+
+Previous update, 14 Aug 2026 (evening) — added rows for the hex-hive
 redesign, the winter energy/lifespan fix, and the interface changes
 from the same day's blueprint-then-implement pass
 (`NEW_FEATURES_BLUEPRINT.md`).
@@ -78,8 +85,8 @@ alongside the tutorial, so the systems already in could stabilise first.
 |---|---|---|
 | **Nurse-mediated caste switching** — what a larva becomes is set by feeding, not by the cell | M | Yes, as a later-level unlock. Changes how an existing system works rather than adding a new one. |
 | **Comb temperature** — brood develops faster in a warm cluster; bees fan or huddle | M | Strong. Comb layout barely matters right now. |
-| **Bee individuality** — small inherited variation in speed, capacity, lifespan; gynes carry it forward | S | Cheap, adds texture. |
-| **Foraging memory** — a bee that found a good patch returns and recruits others | M | Yes, but **conditional on proving it beats the current baseline** — foragers already collect fine unassisted, so this needs measuring, not just building. Mechanism drafted 14 Aug: see `DESIGN_BACKLOG.md` §7.1. |
+| **Bee individuality** — small variation in speed/capacity, a generated name and fact, gynes carry it forward | S | Cheap, adds texture. Detailed and ready to build, see `BEE_INDIVIDUALITY_PLAN.md`. |
+| **Foraging memory / recruitment** — a bee that found a good patch returns and recruits others | M | **Built 17 Aug** as a combined scouting/floral-constancy/recruitment mechanism (`GameConfig.auto_foraging_on`), still unconfirmed against a real playtest and still not measured against the baseline per rule 4. **Being split 18 Aug** into three independent toggles — see `SCOUTING_TOGGLE_PLAN.md`, ready to build. |
 | **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain. |
 
 ## Interface
@@ -93,7 +100,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **Undo for cell designation** (Ctrl+Z) | S | **Shipped 13 Aug.** |
 | **Zoom-to-fit** (F) | S | **Shipped 13 Aug.** |
 | **A frame rate readout** — average, last frame, worst frame in the window | S | **Shipped 14 Aug**, starred like the colony window's stats. The frame-time plot and per-section breakdown (`perf.gd`) shipped the same day and are a permanent fixture now, not a one-off — see `CLAUDE.md`. |
-| **A tutorial or first-run guidance** | M | Not built. Named as the next interface thing on 13 Aug, still outstanding. |
+| **A tutorial or first-run guidance** | M | **Challenge 1 built and playable, 19 Aug.** Both prerequisites from `DESIGN_BACKLOG.md` §1/§5 (the `levels.gd` restructure, the tutorial checkpoint system) are done, plus the new machinery `TUTORIAL_PLAN.md` called for: `stage_gate.gd` (UI unlock/lock), `gallerin_panel.gd` (the mentor popup), `challenge_runner.gd` (the seven sub-stages). Two rounds of hands-on-testing fixes landed the same day — a real navigation off-by-one that let bees wander outside the hive's rock wall, a forager defaulting to the wrong resource, a load-destroying deposit bug, and others; see `NEXTSTEPS.md` for the full list. Challenge 2 has no stage data yet — same menu entry, still a plain level preset underneath. |
 | **Rebindable keys and a settings screen** | S | Not built. |
 | **Settings window (cog icon)** — replaced the "Tuning ▾" text button; called "the settings window" from here on | S | **Shipped 14 Aug.** `debug_panel.gd`. |
 | **Dynamic top-right button layout** — the speed/Colony/Nursery/Winter/Hive row now positions itself off the settings cog's actual measured width instead of a hardcoded constant, so a future font-size setting won't silently break it | S | **Shipped 14 Aug.** `hud.gd::set_settings_button_width`, driven by the cog button's `resized` signal in `debug_panel.gd`. |
@@ -128,5 +135,5 @@ alongside the tutorial, so the systems already in could stabilise first.
 2. ~~Break up `main.gd`~~ — shipped and confirmed working 14 Aug.
 2a. **Break up `bee.gd`** — done and confirmed working 14 Aug (`BEE_SPLIT_PLAN.md`), all nine files plus `bee_status.gd` split out. Still worth re-measuring `bee_movement.gd` with `perf.gd` before trusting the static-call pattern is free on the hottest path.
 3. **Foraging memory** — the most-requested-feeling gap in what's built; cheap relative to its payoff.
-4. **A tutorial** — named as next on 13 Aug, still outstanding, and the game has grown a lot of surface area since it was last considered.
+4. **A tutorial** — named as next on 13 Aug, plan complete 18 Aug (`TUTORIAL_PLAN.md`). **Challenge 1 built and playable, 19 Aug** — see `NEXTSTEPS.md` for what's still open (Challenge 2's stage data, and Dave's hands-on confirmation of the latest fixes).
 5. **Comb temperature** — the deepest of the "depth in what exists" items and the one that would make comb layout an actual decision.

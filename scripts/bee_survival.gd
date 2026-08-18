@@ -15,6 +15,14 @@ const BeeStatus = preload("res://scripts/bee_status.gd")
 static func age_and_burn(bee: Node2D, delta: float) -> void:
 	bee.age_seconds += delta
 
+	# Only ever set on the queen during Challenge 1 -- see the field
+	# comment on bee.gd. Keeping her topped up here, rather than merely
+	# skipping the death check below, means she also never goes sluggish
+	# or gets stuck unable to fly while immune.
+	if bee.energy_immune:
+		bee.energy = GameConfig.energy_capacity
+		return
+
 	# A clustered, near-dormant winter colony burns far less than an
 	# active one -- this is the number the winter forecast (see
 	# year_winter.gd::_winter_forecast) already promises the player, so
@@ -318,5 +326,19 @@ static func die(bee: Node2D) -> void:
 	# happened rather than only as a number going down.
 	if bee.world != null and is_instance_valid(bee.world):
 		bee.world.mark_death(bee)
+		_announce_death(bee)
 	bee.queue_free()
 
+
+## A one-line epitaph via the same toast channel as any other warning,
+## throttled by GameConfig.epitaph_min_gap so a bad night in winter, or a
+## mass starvation event, can't fire a dozen of these back to back --
+## see BEE_INDIVIDUALITY_PLAN.md section 6. If more bees die within the
+## gap, their epitaphs are skipped rather than queued: the moment
+## matters more than completeness.
+static func _announce_death(bee: Node2D) -> void:
+	if Session.sim_time - bee.world.last_epitaph_time < GameConfig.epitaph_min_gap:
+		return
+	bee.world.last_epitaph_time = Session.sim_time
+	var cause: String = "old age" if not bee.is_queen and bee.age_seconds >= lifespan_seconds(bee) else "starvation"
+	bee.world.hud.show_warning("%s has died of %s. %s" % [bee.bee_name, cause, bee.bee_fact])

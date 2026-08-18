@@ -48,6 +48,49 @@ var forage_search_radius: float = 900.0
 ## floral constancy -- sticking with one species while it's rewarding.
 var floral_constancy_on: bool = false
 
+## Foraging-automation dependency tree (see SCOUTING_TOGGLE_PLAN.md):
+## Orientation flight (tier 0, a new forager's one semi-random start-point
+## flight, kept from then on, no comparison) sits under Scouting (tries a
+## few of those points and keeps whichever scored best), which sits under
+## both Floral constancy (also folds a species sample into each scouting
+## bout, so a scouted forager settles on the best (start point, species)
+## pair) and Auto-recruitment (the entrance exchange -- foragers below a
+## resource-specific lower threshold wait hoping a better performer passes
+## on its start point; foragers above the upper threshold wait to offer).
+## Turning a toggle on turns its prerequisite on too, recursively; turning
+## one off turns everything that depends on it off too, recursively.
+## Floral constancy and Auto-recruitment sit side by side -- each depends
+## on Scouting, not on each other, so "recruit without constancy, start
+## point only" is a real working combination. All four off by default;
+## off means foraging works exactly as it does with none of this present.
+var orientation_flight_on: bool = false
+var scouting_on: bool = false
+var auto_recruitment_on: bool = false
+## How far from the hive a new forager's start point (Orientation flight
+## or Scouting) is scattered.
+var forage_start_radius: float = 200.0
+## Resource units/second. A forager below this after a delivery waits at
+## the entrance hoping to be told a better patch; a forager above it
+## waits to offer one. Split by resource type since pollen's base
+## collection rate is much lower than nectar's. Starting guesses, not yet
+## backed by a simulation (see CLAUDE.md rule 4) -- tune here rather than
+## trusting them blindly.
+var recruit_lower_threshold_nectar: float = 0.5
+var recruit_upper_threshold_nectar: float = 2.0
+var recruit_lower_threshold_pollen: float = 0.2
+var recruit_upper_threshold_pollen: float = 0.8
+## How long a bee waits at the entrance for a match before giving up.
+var recruit_wait_seconds: float = 10.0
+## Trips a forager must actually be scored on -- since auto-recruitment
+## turned on, or since it was created -- before its avg_collection_rate
+## is trusted against the thresholds above. Below this, it leaves
+## straight back out no matter how low or high its (still unformed)
+## average reads. Without this, a brand-new colony's foragers judge
+## themselves against the thresholds on their very first trip home, when
+## the number means nothing yet, and pile up waiting at the door with no
+## mentors ever able to form either -- see bee.gd's trips_scored.
+var recruit_grace_trips: float = 3.0
+
 # --- foraging ---
 var bee_speed: float = 110.0
 var flower_handling_time: float = 2.0
@@ -286,10 +329,61 @@ var bee_lifespan_days: float = 25.0
 var energy_capacity: float = 100.0
 var energy_burn_rate: float = 0.17       # nectar-equivalent burned per second
 
+# --- bee individuality ---
+## Every bee rolls one small stat trait at spawn (see bee_identity.gd
+## and BEE_INDIVIDUALITY_PLAN.md). Leans positive so a colony reads as
+## quietly gifted rather than half-crippled; starting guesses, not yet
+## backed by a simulation -- see CLAUDE.md rule 4.
+var trait_positive_chance: float = 0.7
+## Small changes are far more likely than big ones. Weights must sum to
+## 1.0 -- checked in tests/balance_tests.py.
+var trait_magnitude_bands: Array = [
+	{"min": 0.02, "max": 0.04, "weight": 0.50},
+	{"min": 0.04, "max": 0.07, "weight": 0.35},
+	{"min": 0.07, "max": 0.10, "weight": 0.15},
+]
+
+## How a bee's fact is rolled: commentary on its own trait, pure
+## flavour, or a love/hate/fascination template. Shapes how "meaningful"
+## vs "purely silly" a colony feels.
+var fact_trait_matched_chance: float = 0.4
+var fact_general_chance: float = 0.3
+var fact_templated_chance: float = 0.3
+
+## Cosmetic-only jitter on a bee's body tint and size, rolled once at
+## spawn. Never gated by is_on_screen -- see bee.gd's _ready().
+var visual_size_jitter_range: float = 0.05    # GameConfig, +/- this fraction
+var visual_tint_jitter_range: float = 0.05
+
+## Milestone bees ("the hundredth bee this colony ever raised") get a
+## deterministic fact instead of a rolled one -- see
+## bee_identity.gd::milestone_fact_nth.
+var milestone_interval: float = 100.0
+
+## A death epitaph (see BeeSurvival.die) won't repeat more often than
+## this, in sim seconds -- a bad night shouldn't fire a dozen of them
+## back to back. Same pattern as low_energy_gap.
+var epitaph_min_gap: float = 8.0
+
 ## Trees and raised ground can be switched off entirely, which clears the
 ## meadow of anything bees have to route around. Useful for seeing the
 ## foraging economics without the terrain, and for testing.
 var scenery_on: bool = true
+
+## Unexplored meadow stays dark until a bee has flown near it. Purely a
+## player-facing view of the meadow -- bees themselves still find
+## flowers by the same search either way. See fog_of_war.gd and
+## DESIGN_BACKLOG.md 7.4.
+var fog_of_war_on: bool = true
+## How far around a bee out in the meadow counts as "seen", in world
+## units. Larger clears the map faster and makes discovery feel cheaper.
+var fog_reveal_radius: float = 240.0
+## What happens to a patch once no bee is near it any more: dims to a
+## foggy memory (off, the classic fog-of-war reading) or stays exactly
+## as visible as the moment it was found (on -- "you've mapped the
+## meadow", nothing is ever re-hidden). Either way it's saved once
+## explored; this only changes how an explored-but-unlit patch draws.
+var fog_permanent_reveal: bool = false
 
 ## A bee that dies leaves a mark where it fell, which fades over this
 ## many in-game days. Nothing reads it -- it is there so losses are

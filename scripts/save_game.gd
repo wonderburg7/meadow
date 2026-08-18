@@ -17,13 +17,17 @@ extends RefCounted
 ## fixed seed, so they come back identical anyway.
 
 const SAVE_PATH := "user://meadow_save.json"
-## Bumped 14 Aug 2026: the hive geometry changed (flat-top hexes, corner
-## entrance) so a save from before this version was dug and tunnelled
-## differently. read() below already warns rather than refusing outright
-## -- _restore_cells also defends against a save's cell landing on what
-## the fresh dig now considers soil -- but treat an old save as best
-## loaded fresh rather than trusted.
-const FORMAT_VERSION := 2
+## Bumped 16 Aug 2026: added fog of war's explored-cells map. A save from
+## before this version simply has no "fog" key, and read() below already
+## warns rather than refusing outright -- _restore_fog treats a missing
+## key as "nothing explored yet" rather than erroring, so an old save
+## still loads, just re-fogged.
+##
+## Previously bumped 14 Aug 2026: the hive geometry changed (flat-top
+## hexes, corner entrance) so a save from before that version was dug and
+## tunnelled differently. _restore_cells defends against a save's cell
+## landing on what the fresh dig now considers soil.
+const FORMAT_VERSION := 3
 
 ## Every GameConfig field worth carrying across.
 ##
@@ -67,14 +71,22 @@ const SAVED_SETTINGS := [
 	# rather than just the new one, since the gap applied to all four.
 	"winter_countdown_days", "winter_length_days",
 	"winter_burn_factor", "winter_lifespan_factor",
+	# Bee individuality.
+	"trait_positive_chance", "trait_magnitude_bands",
+	"fact_trait_matched_chance", "fact_general_chance", "fact_templated_chance",
+	"visual_size_jitter_range", "visual_tint_jitter_range",
+	"milestone_interval", "epitaph_min_gap",
 ]
 
-static func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+static func has_save(path: String = SAVE_PATH) -> bool:
+	return FileAccess.file_exists(path)
 
 # --- writing -------------------------------------------------------
 
-static func save(world) -> bool:
+## `path` defaults to the player's own save slot. tutorial_checkpoint.gd
+## passes its own path so a Challenge's automatic checkpoints never touch
+## the player's save.
+static func save(world, path: String = SAVE_PATH) -> bool:
 	var data := {
 		"version": FORMAT_VERSION,
 		"settings": _settings_dict(),
@@ -82,6 +94,7 @@ static func save(world) -> bool:
 			"sim_time": Session.sim_time,
 			"day": world.day,
 			"next_bee_id": world.next_bee_id,
+			"first_gyne_seen": world.first_gyne_seen,
 		},
 		"weather": {
 			"intensity": Session.rain_intensity,
@@ -113,11 +126,12 @@ static func save(world) -> bool:
 		"soil": _soil_data(world),
 		"bees": _bees_data(world),
 		"flowers": _flowers_data(world),
+		"fog": world.fog_of_war.explored_list(),
 	}
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		push_error("Could not open the save file for writing: %s" % SAVE_PATH)
+		push_error("Could not open the save file for writing: %s" % path)
 		return false
 	file.store_string(JSON.stringify(data))
 	file.close()
@@ -212,6 +226,14 @@ static func _bees_data(world) -> Array:
 			"preferred": b.preferred_species,
 			"start_x": b.forage_start_point.x,
 			"start_y": b.forage_start_point.y,
+			# Bee individuality -- see BEE_INDIVIDUALITY_PLAN.md. Without
+			# these, reloading a save would silently re-roll every bee's
+			# name, fact and trait, which breaks the whole point.
+			"name": b.bee_name,
+			"fact": b.bee_fact,
+			"trait_stat": b.trait_stat,
+			"trait_pct": b.trait_percent,
+			"favourite": b.is_favourite,
 			# A bee's own orders. These were being lost on save, so a
 			# player who had spent time laying out a build order or a
 			# restocking plan reloaded to find it gone -- silent data
@@ -262,11 +284,12 @@ static func _flowers_data(world) -> Array:
 ## Returns the parsed save, or an empty dictionary if there isn't one or
 ## it can't be read. main.gd stashes this and applies it after it has
 ## rebuilt the world, because the settings have to be in place *before*
-## the hive geometry is laid out.
-static func read() -> Dictionary:
-	if not has_save():
+## the hive geometry is laid out. `path` defaults to the player's own
+## save slot, same as save() above.
+static func read(path: String = SAVE_PATH) -> Dictionary:
+	if not has_save(path):
 		return {}
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
 	var parsed = JSON.parse_string(file.get_as_text())

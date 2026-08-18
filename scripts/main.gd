@@ -54,8 +54,12 @@ const RivalHive = preload("res://scripts/rival_hive.gd")
 const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const Season = preload("res://scripts/season.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
+const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
+const ClickMarker = preload("res://scripts/click_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
+const Levels = preload("res://scripts/levels.gd")
+const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
 
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
@@ -68,6 +72,9 @@ const InputSelection = preload("res://scripts/input_selection.gd")
 const OrdersZones = preload("res://scripts/orders_zones.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
+const FogOfWar = preload("res://scripts/fog_of_war.gd")
+const StageGate = preload("res://scripts/stage_gate.gd")
+const ChallengeRunner = preload("res://scripts/challenge_runner.gd")
 
 var world_building: Node
 var saving: Node
@@ -75,27 +82,9 @@ var input_selection: Node
 var orders_zones: Node
 var year_winter: Node
 var camera_view: Node
-
-## The fixed starting stages the main menu offers, so a run can begin
-## partway in rather than always from a lone queen. `starting_level` of 0
-## means "use whatever the tuning numbers say" -- that's the ordinary
-## Restart Run behaviour.
-const LEVELS := {
-	1: {"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0, "nurses": 0, "builders": 0, "miners": 0},
-	2: {"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0, "nurses": 0, "builders": 0, "miners": 0},
-	3: {"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1, "nurses": 0, "builders": 0, "miners": 0},
-	4: {"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3, "nurses": 2, "builders": 2, "miners": 2},
-	# An established colony: enough bees and stores that the interesting
-	# decisions are about where it goes next rather than whether it
-	# survives the first week. `automine` puts the miners straight to
-	# work, and `stock` fills some of the comb so the queen can lay from
-	# the first moment instead of waiting on the first pollen delivery.
-	5: {
-		"cells": 12, "nectar_foragers": 16, "pollen_foragers": 6,
-		"nurses": 2, "builders": 3, "miners": 3, "automine": true,
-		"stock": {"nectar": 4, "pollen": 2},
-	},
-}
+var fog_of_war: Node
+var stage_gate: Node
+var challenge_runner: Node
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
 const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
@@ -166,6 +155,7 @@ var game_over: CanvasLayer
 var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
 var winter_panel: CanvasLayer
+var gallerin_panel: CanvasLayer
 var rival: Node2D = null
 ## The year: seasons, disease, winter and gynes leaving.
 var season: Node2D = null
@@ -212,6 +202,9 @@ var rain_effect: Node2D
 ## Sim time the low-energy warning was last shown, so it can't nag. -INF
 ## means it hasn't been shown at all yet this run.
 var last_energy_warning: float = -INF
+## Same idea for death epitaphs (see BeeSurvival.die) -- a bad night
+## shouldn't fire a dozen toasts back to back.
+var last_epitaph_time: float = -INF
 var warning_check_timer: float = 5.0 + randf()
 ## The periodic sweeps below are each given a random starting phase.
 ## Every one of them walks the whole colony or the whole comb, and when
@@ -227,6 +220,10 @@ var selected_bees: Array = []
 var selected_cells: Array = []
 var selected_blocks: Array = []
 var next_bee_id: int = 1
+## Set the first time any bee's is_gyne becomes true -- see
+## bee.gd::_roll_fact and BEE_INDIVIDUALITY_PLAN.md section 5. Saved
+## alongside next_bee_id so a reload can't award "first gyne" twice.
+var first_gyne_seen: bool = false
 var day: int = 1
 var current_speed: float = 1.0
 
@@ -269,10 +266,12 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
 
-	# The six split-out files, created first so everything below can call
-	# into them. They hold no state of their own beyond a `main` pointer
-	# back here, so creation order relative to the rest of _ready() only
-	# matters in that they have to exist before anything calls them.
+	# The split-out files, created first so everything below can call into
+	# them. They hold no state of their own beyond a `main` pointer back
+	# here (fog_of_war and stage_gate are the exceptions -- their
+	# explored-cells map and unlocked-UI set respectively are real state),
+	# so creation order relative to the rest of _ready() only matters in
+	# that they have to exist before anything calls them.
 	world_building = WorldBuilding.new()
 	world_building.main = self
 	add_child(world_building)
@@ -291,6 +290,15 @@ func _ready() -> void:
 	camera_view = CameraView.new()
 	camera_view.main = self
 	add_child(camera_view)
+	fog_of_war = FogOfWar.new()
+	fog_of_war.main = self
+	add_child(fog_of_war)
+	stage_gate = StageGate.new()
+	stage_gate.main = self
+	add_child(stage_gate)
+	challenge_runner = ChallengeRunner.new()
+	challenge_runner.main = self
+	add_child(challenge_runner)
 
 	meadow_root = Node2D.new()
 	# Main is PROCESS_MODE_ALWAYS (so the camera and HUD keep working
@@ -317,6 +325,7 @@ func _ready() -> void:
 	world_building._build_cameras()
 	world_building._build_meadow()
 	world_building._build_hive_interior()
+	fog_of_war._build_layer()   # needs main.hive's position, set by _build_meadow
 
 	# A wash of grey-blue over the meadow while it's raining. Drawn on its
 	# own layer beneath the HUD so it tints the world, not the panels.
@@ -354,6 +363,7 @@ func _ready() -> void:
 	hud.cell_keep_empty_requested.connect(orders_zones._on_cell_keep_empty_requested)
 	hud.cell_gyne_requested.connect(orders_zones._on_cell_gyne_requested)
 	hud.build_cell_requested.connect(input_selection._on_build_cell_requested)
+	hud.queen_build_cell_requested.connect(challenge_runner._on_queen_build_cell_requested)
 	hud.home_cell_requested.connect(input_selection._on_home_cell_requested)
 	hud.home_cell_all_requested.connect(input_selection._on_home_cell_all_requested)
 	hud.mine_home_requested.connect(input_selection._on_mine_home_requested)
@@ -374,6 +384,7 @@ func _ready() -> void:
 	hud.secondary_role_requested.connect(orders_zones._on_secondary_role_requested)
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
 	hud.floral_preference_requested.connect(input_selection._on_floral_preference_requested)
+	hud.favourite_requested.connect(orders_zones._on_favourite_requested)
 	add_child(hud)
 	# Syncs Session.perf_enabled and the corner to whatever "fps" was
 	# left starred as, rather than assuming a fresh run starts unstarred.
@@ -393,6 +404,7 @@ func _ready() -> void:
 	colony_panel = ColonyPanel.new()
 	colony_panel.role_selection_requested.connect(input_selection._on_role_selection_requested)
 	colony_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
+	colony_panel.favourite_selected.connect(camera_view._focus_on_bee)
 	add_child(colony_panel)
 
 	nursery_panel = NurseryPanel.new()
@@ -404,6 +416,9 @@ func _ready() -> void:
 
 	winter_panel = WinterPanel.new()
 	add_child(winter_panel)
+
+	gallerin_panel = GallerinPanel.new()
+	add_child(gallerin_panel)
 
 	season = Season.new()
 	season.world = self
@@ -431,6 +446,11 @@ func _ready() -> void:
 	if Session.load_pending:
 		Session.load_pending = false
 		saving._restore(SaveGame.read())
+	elif Session.starting_level == 1:
+		# Only Challenge 1's stages are defined so far (see
+		# challenge_runner.gd) -- Challenge 2 stays a plain level preset
+		# until its own stage data is written.
+		challenge_runner.start()
 
 # --- public surface other scripts call directly -------------------
 ## bee.gd holds a reference to this node (as `world`) and calls these by
@@ -444,6 +464,9 @@ func is_on_screen(node: Node2D) -> bool:
 
 func hive_entrance_inside() -> Vector2:
 	return world_building.hive_entrance_inside()
+
+func entrance_wait_point(side: int) -> Vector2:
+	return world_building.entrance_wait_point(side)
 
 func move_bee_into_hive(bee: Node2D) -> void:
 	world_building.move_bee_into_hive(bee)
@@ -470,6 +493,7 @@ func _process(delta: float) -> void:
 	camera_view._handle_pan(delta)
 	selection_layer.queue_redraw()
 	world_building._apply_scenery_setting()
+	fog_of_war._update()
 
 	if not get_tree().paused:
 		Session.sim_time += delta

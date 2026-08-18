@@ -43,4 +43,10 @@ enum State {
 	TO_CELL_TO_LAY, LAYING,
 	HONEY_IDLE, TO_NECTAR_CELL, CHEWING,                   # honey maker
 	TO_HONEY_CELL, DEPOSITING_HONEY, FANNING,
+	# Appended rather than slotted in near DRINKING/SHELTERING where they
+	# conceptually belong -- `state` is saved as a plain int (see
+	# save_game.gd), so inserting mid-list would silently renumber every
+	# state after it and corrupt old saves. Same reasoning as HONEY_MAKER
+	# on the Role enum above.
+	AT_ENTRANCE_SEEKING, AT_ENTRANCE_MENTORING,            # forager, entrance recruitment exchange
 }

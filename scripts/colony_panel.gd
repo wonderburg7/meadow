@@ -23,6 +23,9 @@ const Roles = preload("res://scripts/roles.gd")
 signal role_selection_requested(role: int, focus: String)
 ## The set of starred readouts has changed; main.gd passes it to the HUD.
 signal pinned_changed()
+## A row in the Favourites list was clicked -- select and jump the
+## camera to that bee. See BEE_INDIVIDUALITY_PLAN.md section 7.
+signal favourite_selected(bee: Node2D)
 
 ## The job tallies. Built from the role table, so a new role appears
 ## here without anyone remembering to add it -- which is exactly the bug
@@ -61,6 +64,12 @@ var history: Array = []             # handed over by main.gd each refresh
 ## Which sections are expanded, remembered for the session.
 var section_open: Dictionary = {}
 
+## Rebuilt every refresh() -- see _rebuild_favourites. A plain list
+## rather than count_labels' fixed-key dictionary, since which bees are
+## favourited (and whether they're still alive) changes at any time.
+var favourites_column: VBoxContainer
+var favourites_empty_label: Label
+
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 11
@@ -98,6 +107,15 @@ func _ready() -> void:
 	var jobs := _section(column, "Who is doing what", true)
 	for key in Roles.count_keys():
 		jobs.add_child(_make_role_row(key))
+
+	favourites_column = _section(column, "Favourites", true)
+	favourites_empty_label = Label.new()
+	favourites_empty_label.text = "Star a bee from its selection panel to pin it here."
+	favourites_empty_label.add_theme_font_size_override("font_size", 11)
+	favourites_empty_label.add_theme_color_override("font_color", Color(0.65, 0.7, 0.75))
+	favourites_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	favourites_empty_label.custom_minimum_size = Vector2(300, 0)
+	favourites_column.add_child(favourites_empty_label)
 
 	var readouts := _section(column, "Readouts", true)
 	for entry in STAT_ROWS:
@@ -322,5 +340,42 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array) -> void:
 	for stat_key in stat_labels.keys():
 		stat_labels[stat_key].text = str(texts.get(stat_key, ""))
 
+	_rebuild_favourites()
+
 	history = samples
 	plot.queue_redraw()
+
+## Rebuilt from scratch each refresh, same as the plot -- there's no
+## fixed set of keys to update in place, since which bees are favourited
+## (and whether they're even still alive) can change at any time. Cheap:
+## a colony's favourites list is meant to stay short.
+func _rebuild_favourites() -> void:
+	for child in favourites_column.get_children():
+		if child != favourites_empty_label:
+			child.queue_free()
+
+	var favourites: Array = []
+	for b in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(b) and b.is_favourite:
+			favourites.append(b)
+	favourites.sort_custom(func(x, y): return x.bee_name < y.bee_name)
+
+	favourites_empty_label.visible = favourites.is_empty()
+	for b in favourites:
+		favourites_column.add_child(_make_favourite_row(b))
+
+## Name, role and energy -- enough to recognise a bee and see at a
+## glance whether it needs attention. Clicking selects it and jumps the
+## camera there, same as recalling a control group.
+func _make_favourite_row(bee: Node2D) -> Control:
+	var button := Button.new()
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, 22)
+	button.add_theme_font_size_override("font_size", 12)
+	button.text = "★ %s — %s — %d%%" % [
+		bee.bee_name, Roles.label_for(bee.role),
+		int(100.0 * bee.energy / max(0.001, GameConfig.energy_capacity)),
+	]
+	button.tooltip_text = bee.bee_fact
+	button.pressed.connect(func(): favourite_selected.emit(bee))
+	return button

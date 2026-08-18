@@ -78,6 +78,12 @@ var colour_blind_mode: bool = false
 ## "Don't show this again" for the discard warning.
 var warn_on_discard: bool = true
 
+## Whether Dr Gallerin (the Challenge tutorial's mentor popup, see
+## TUTORIAL_PLAN.md) appears at all. Gameplay is identical either way --
+## this only silences his prompts, same spirit as the other interface
+## preferences above.
+var gallerin_enabled: bool = true
+
 ## Whether a flower shows its live nectar/pollen numbers underneath itself.
 ## Off by default -- 500 flowers' worth of numbers is a lot of clutter for
 ## something you can still get, per flower, by clicking it.

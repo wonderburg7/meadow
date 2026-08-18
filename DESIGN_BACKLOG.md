@@ -4,10 +4,56 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 14 Aug 2026 — added sections 6–8 (sprite readiness, meadow
-engagement, floral constancy automation), recorded from a planning
-conversation. Nothing in these new sections is built; no code changed
-alongside this update.
+Last updated: 19 Aug 2026 — Challenge 1 (`TUTORIAL_PLAN.md`) is now
+built and playable end to end: both technical prerequisites in section
+1 and section 5 (the `levels.gd` restructure and the tutorial
+checkpoint system) are done, plus the new UI-unlock and Dr Gallerin
+machinery the plan called for (`stage_gate.gd`, `gallerin_panel.gd`,
+`challenge_runner.gd`). See `NEXTSTEPS.md` for what's still open —
+Challenge 2 has no stage data yet, and Challenge 1 wants Dave's
+hands-on confirmation after two rounds of hands-on-testing fixes.
+
+Previously updated 18 Aug 2026 — the scouting/floral-constancy/recruitment
+split (`SCOUTING_TOGGLE_PLAN.md`) is now built: the old single
+`auto_foraging_on` toggle is four toggles forming a dependency tree
+(`orientation_flight_on`, `scouting_on`, `floral_constancy_on`,
+`auto_recruitment_on`, the last renamed from `auto_foraging_on`), a
+scouting bee now actually keeps the start point it found (previously
+only the species survived), and the recruitment thresholds are split
+into nectar/pollen pairs with mentor/seeker matching now
+resource-specific in both directions. See `bee_foraging.gd`
+(`take_orientation_flight`, `start_scouting`, `_score_trip`,
+`wait_at_entrance`), `debug_panel.gd`'s `TOGGLE_PREREQUISITE` for the
+cascade wiring, and section 5 below for the still-unsimulated
+threshold numbers. Needs Dave's hands-on check in Godot — see
+`NEXTSTEPS.md`.
+
+Previously updated 18 Aug 2026 — resolved part of section 1 (the tutorial's
+menu terminology and the levels-1/2 supersede rule) and extended
+section 5 (the tutorial checkpoint system), both from the Challenge
+1/2 tutorial plan agreed the same day. See `TUTORIAL_PLAN.md` for the
+full design.
+
+Previously updated 17 Aug 2026, added section 10 (bee individuality, the
+lineage/inheritance piece deferred out of the plan agreed the same day,
+see `BEE_INDIVIDUALITY_PLAN.md` for what's in scope for the first
+slice).
+
+Previously updated 17 Aug 2026 — removed 7.1 (foraging memory and recruitment)
+and 8 (floral constancy — automatic component), now built as one combined
+mechanism (they shared the entrance-wait exchange). See `bee_foraging.gd`
+(`start_scouting`, `wait_at_entrance`, `_score_trip`), `hive.gd`
+(`entrance_mentors`) and `GameConfig.auto_foraging_on`. The Foraging
+window (collection-rate breakdown, heatmap) and per-hive-cell preference
+setting that both sections mentioned as accompanying UI are **not** built
+— see section 5.
+
+Previously updated 16 Aug 2026 — removed 7.4 (fog of war), now built. See
+`fog_of_war.gd`.
+
+Previously updated 14 Aug 2026 — added sections 6–8 (sprite readiness,
+meadow engagement, floral constancy automation), recorded from a
+planning conversation.
 
 ---
 
@@ -30,10 +76,26 @@ a level definition holding: starting state, which mechanics are enabled,
 win conditions, and adverse conditions. Worth doing as one restructure
 rather than bolting conditions on piecemeal.
 
-**Suggested first step when we pick this up:** extract levels out of
-`main.gd` into their own `levels.gd` data file, with the same
-starting-state fields plus empty `unlocks` and `win_conditions` arrays.
-That is a small, safe change that makes everything after it easier.
+**Done, 19 Aug 2026:** `LEVELS` extracted out of `main.gd` into its own
+`levels.gd` data file (`main.Levels.LEVELS`), each entry now carrying
+empty `unlocks` and `win_conditions` arrays alongside the starting-state
+fields that were already there. Challenge 1's actual sub-stage data
+(goals, unlocked UI keys, Dr Gallerin prompts) lives separately in
+`challenge_runner.gd`'s `STAGES` rather than inside `levels.gd` itself
+— see that file's own header comment for why the split landed there.
+
+**Menu terminology and the levels 1/2 supersede rule (agreed 18 Aug,
+full detail in `TUTORIAL_PLAN.md`) — done, 19 Aug 2026:** the opening
+menu (`main_menu.gd`) splits `LEVELS` into two labelled groups rather
+than one flat list. **Challenges** are the new staged, scripted entries
+(Challenge 1: First Stores — built; Challenge 2: Brood, Roles and
+Expansion — menu entry only, no stage data yet) — "levels" only
+internally, "Challenges" in every player-facing surface. **Starter
+modes** are the existing plain starting-point presets (`LEVELS` 3, 4
+and 5), relabelled 1-3 for display but otherwise unchanged. Challenge
+1's starting state, sub-stages and UI unlocks now supersede what
+`LEVELS` 1 used to be, exactly as agreed; Challenge 2 (`LEVELS` 2)
+hasn't been superseded yet since it has no stage data.
 
 ---
 
@@ -145,6 +207,18 @@ the player manages *against* as well as with.
 ## 5. Technical work not yet done
 
 - **Save slots.** There is currently one slot, overwritten each save.
+- **Tutorial checkpoint/rollback system (agreed 18 Aug, full detail in
+  `TUTORIAL_PLAN.md`) — built 19 Aug 2026, `tutorial_checkpoint.gd`.**
+  Reuses `save_game.gd`'s serialise/deserialise routines (both given an
+  optional `path` parameter for this) against a separate
+  `user://tutorial_checkpoint.save`, one rolling checkpoint, never
+  touching the player's own save slot. `challenge_runner.gd` writes one
+  at every Challenge 1 sub-stage boundary as designed. Still genuinely
+  untested in the sense that matters: Challenge 1 has no defined
+  failure condition, so nothing has ever called `.restore()` yet — that
+  only happens once Challenge 2's stage data defines a real soft-failure
+  case. Could eventually share plumbing with proper save slots once
+  those exist, but doesn't depend on them.
 - **Flower regrowth on load.** Cluster centres aren't saved, so the meadow's
   patchiness gradually re-randomises after loading. Harmless, but it means a
   loaded run drifts from the one that was saved.
@@ -154,6 +228,24 @@ the player manages *against* as well as with.
 - **Bee update budgeting.** Every bee runs its full state machine every
   frame. At several hundred bees, staggering the expensive checks (work
   searches, not movement) across frames would be the next thing to do.
+- **A Foraging window.** Deferred from the auto-scouting/recruitment work
+  (17 Aug) — collection-rate data broken down by flower/species and area,
+  plus a heatmap, so the player can judge whether the mechanism (and their
+  `recruit_lower/upper_threshold` settings) are actually working rather
+  than trusting it blindly.
+- **Per-hive-cell flower preference.** Also deferred from the same work —
+  a cell already sets a hatching bee's role and focus (`hatch_role`,
+  `hatch_focus` in `hive_cell.gd`/`hud.gd`); a preferred species should
+  follow the same pattern, so a cell can raise foragers already committed
+  to a species rather than only settable after the bee exists (and, for
+  now, only reachable by disabling Auto scouting or waiting for it to run).
+- **Auto-recruitment thresholds are unsimulated.** `GameConfig.recruit_lower/
+  upper_threshold_nectar` (0.5 / 2.0 resource units/sec), the `_pollen` pair
+  (0.2 / 0.8, scaled off nectar's by the two collection rates' ratio, an even
+  rougher guess) and `forage_start_radius` (200px) are starting guesses, not
+  backed by a throwaway model per rule 4 — tune live in the settings window
+  and watch whether scouting/recruitment actually change collection rates
+  before trusting the defaults.
 
 ---
 
@@ -207,59 +299,6 @@ Most decisions currently happen in the hive; the meadow is largely bees
 walking to the nearest acceptable flower on their own. Several ideas
 below, in the order Dave wants to take them.
 
-### 7.1 Foraging memory and recruitment
-
-The most-requested-feeling gap on `ROADMAP.md`, but Dave's explicit
-condition: **it has to be shown to actually increase resource
-collection before it's trusted**, not just built and assumed to help —
-foragers are already collecting fine on their own. This is the same
-rule `CLAUDE.md` already has for balance numbers ("never trust a
-balance number that hasn't been simulated") — this needs a throwaway
-model or a measured before/after comparison, not a build-and-hope.
-
-**Open question, to work out alongside the mechanism:** what makes one
-patch "good" compared to another. The mechanism below assumes a
-per-bee resource collection rate (amount collected, factored by time
-taken) as the measure, but the exact definition still needs settling.
-
-**Mechanism, as Dave drafted it 14 Aug:**
-
-- Each forager tracks its own average resource collection rate.
-- Two player-tunable thresholds, a lower and an upper. Where a bee sits
-  relative to them decides what happens after it deposits its last
-  batch:
-  - **Below the lower threshold** — the bee waits at the hive entrance
-    (inside) for ten seconds after depositing, receptive to being
-    influenced by a bee above the upper threshold if one is there.
-  - **Above the upper threshold** — the bee also waits at the entrance
-    for ten seconds after depositing, willing to pass on its flower
-    preference and starting location to an under-threshold bee it
-    meets there.
-  - **Between the two thresholds** — the bee does neither; it goes
-    straight back out.
-- If an under-threshold bee meets an over-threshold bee at the
-  entrance within its ten seconds, it adopts the over-threshold bee's
-  flower preference and starting location.
-- If an under-threshold bee's ten seconds pass with no over-threshold
-  bee arriving, it picks a new flower preference and starting location
-  of its own rather than repeating the same low-performing pattern.
-- The two thresholds need to be tunable by the player (fits the
-  existing settings window pattern in `debug_panel.gd`/`GameConfig`),
-  since what counts as "good enough" will vary by hive setup.
-- Scouting-phase bees (see section 8) use the same entrance-waiting
-  behaviour as under-threshold bees, and can be influenced the same
-  way by an over-threshold bee they encounter there.
-
-**New UI to support this — a Foraging window:**
-
-- Collection-rate data broken down by flower/species and by area, so
-  the player has the information to judge whether the mechanism (and
-  their threshold settings) are actually working, not just trust it
-  blindly.
-- A heatmap option showing how much of a given resource is being
-  collected in a given area, to help spot where the good patches
-  actually are.
-
 ### 7.2 Patch depletion made visible
 
 Agreed to build. `flower.gd` already fades and shrinks a flower as it
@@ -275,58 +314,11 @@ as a future item, not shelved). Detail still to be worked out; the
 existing "floral ambush predators (crab spiders and the like)" note in
 section 3's win-condition pool is the same idea.
 
-### 7.4 Fog of war
-
-Agreed to build. Not previously scoped — the goal is to make finding a
-good patch feel like a discovery rather than something the player can
-see laid out from the start. Listed as an unbuilt environment feature
-in the original Game Outline; this confirms it's wanted, not just
-raw material.
-
-### 7.5 Weather beyond rain
+### 7.4 Weather beyond rain
 
 Agreed to build. Wind, cold snap, heatwave — see the existing
 candidate list in section 4. Confirmed wanted, detail not yet worked
 out.
-
----
-
-## 8. Floral constancy — automatic component (agreed direction, not built)
-
-Currently 100% manual: select foragers, click "Pick a flower", click a
-flower in the meadow (`input_selection._place_floral_preference`) →
-`bee.set_preferred_species()`. Dave wants an automatic path that
-doesn't rely on the player clicking every bee.
-
-**Mechanism, as Dave drafted it 14 Aug — a scouting phase, not
-richness-weighted pre-selection:**
-
-- When a forager first emerges, it enters a scouting phase: it heads to
-  a location a short, slightly randomised distance from the hive.
-- It runs a full forage bout there (collect, return, deposit) on
-  whichever species it first encounters.
-- It repeats this for a second and then a third species — three bouts,
-  three different species.
-- It calculates each bout's resource collection rate (amount collected
-  factored by time taken) and sets its permanent flower preference to
-  whichever species scored highest.
-- This is deliberately experiential rather than the richness-weighted
-  "look before visiting" option considered earlier — the bee has to
-  actually forage each species to judge it, not be handed the answer.
-- While scouting, these bees use the same hive-entrance waiting
-  behaviour as the under-threshold bees in section 7.1's recruitment
-  mechanism, and can be influenced by an over-threshold bee they meet
-  there — which would let a scouting bee adopt a known-good preference
-  early and skip the rest of its own scouting bouts.
-
-**Player control, alongside the automatic path:**
-
-- A colony-level policy toggle for whether new foragers auto-scout.
-- The existing per-bee click-to-set control stays.
-- The same preference should also be settable per hive cell — a cell
-  already sets a hatching bee's focus (`hatch_options` in `hud.gd`);
-  flower preference should follow the same pattern rather than only
-  being settable after a bee already exists.
 
 ---
 
@@ -350,3 +342,32 @@ recorded so they don't get lost:
   way this project's rule 4 asks for. Worth a proper model before
   trusting the number, the same way the disease and forage balance
   numbers were modelled.
+
+---
+
+## 10. Bee individuality: lineage inheritance (deferred slice)
+
+The first slice of bee individuality (a rolled stat trait, a generated
+name and fact, cosmetic jitter, milestone bees, death epitaphs,
+favourite-bee pinning) is planned and ready to build, see
+`BEE_INDIVIDUALITY_PLAN.md`. One reading of `ROADMAP.md`'s existing
+"gynes carry it forward" line is deliberately left out of that slice
+and recorded here instead.
+
+**The question:** does a trait "carrying forward" mean only that a
+gyne keeps her own rolled trait when she leaves the colony (trivial,
+already covered by saving the trait on the bee), or that a colony she
+goes on to found should bias its own new bees' rolls toward her trait,
+a genetics/lineage mechanic?
+
+**Why it's parked:** there's no simulation of a founded colony to
+attach lineage to yet, a gyne currently just leaves and becomes a
+scoreboard number (`bee.gd::leave_to_found_colony()`). Building
+inheritance before that exists would be designing a system with
+nowhere to plug in.
+
+**Worth doing once a founded colony is simulated:** track which bee
+(if any) a new bee's trait was biased from, and nudge the direction
+weight or magnitude bands in that bee's favour rather than copying the
+trait outright, keeps every bee still an individual roll rather than a
+clone of her mother.

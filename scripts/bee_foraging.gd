@@ -11,12 +11,40 @@ const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeStatus = preload("res://scripts/bee_status.gd")
 
+const SCOUT_BOUTS := 3
+
 static func max_capacity(bee: Node2D) -> float:
 	return bee.nectar_stomach_capacity if bee.resource_type == "nectar" else bee.pollen_stomach_capacity
 
 
 static func collection_rate(bee: Node2D) -> float:
 	return bee.nectar_collection_rate if bee.resource_type == "nectar" else bee.pollen_collection_rate
+
+
+## A short, randomised point near the hive -- shared by orientation
+## flight (kept as-is) and scouting (one per bout, scored). See
+## DESIGN_BACKLOG.md section 8, "a location a short, slightly randomised
+## distance from the hive."
+static func _random_point_near_hive(bee: Node2D) -> Vector2:
+	var base: Vector2 = bee.world.hive.position if bee.world else bee.position
+	var angle: float = randf() * TAU
+	var dist: float = randf() * GameConfig.forage_start_radius
+	return base + Vector2(cos(angle), sin(angle)) * dist
+
+
+## Tier 0: a new forager's one semi-random flight before her first trip,
+## kept as her start point from then on -- see SCOUTING_TOGGLE_PLAN.md.
+## Outdoor-spawned bees fly there immediately; indoor-spawned (hatched)
+## ones pick it up on their first exit via the normal forage_start_point
+## handling in _leave_hive_and_resume.
+static func take_orientation_flight(bee: Node2D) -> void:
+	var point: Vector2 = _random_point_near_hive(bee)
+	bee.forage_start_point = point
+	if not bee._is_inside_hive():
+		bee.move_target = point
+		bee.state = State.MOVE_TO_POINT
+	else:
+		bee.state = bee._default_state_for_role()
 
 
 static func seek_flower(bee: Node2D) -> void:
@@ -44,6 +72,8 @@ static func seek_flower(bee: Node2D) -> void:
 	best.occupied_by = bee
 	bee.current_flower = best
 	bee.state = State.TO_FLOWER
+	if GameConfig.floral_constancy_on and bee.is_scouting and bee.scout_species == "":
+		bee.scout_species = best.species_name
 
 
 ## `strict` applies the avoidance rules; without it only the hard
@@ -62,7 +92,22 @@ static func nearest_flower(bee: Node2D, strict: bool) -> Node2D:
 			return false
 		if f.get_available(bee.resource_type) <= 0.0:
 			return false
-		if bee.preferred_species != "" and f.species_name != bee.preferred_species:
+		# Gated on floral_constancy_on too, not just is_scouting -- a pure
+		# scout (constancy off) never commits scout_species (see
+		# seek_flower), so this branch is never entered during a plain
+		# scout and the bout forages whatever's nearest and available,
+		# exactly as a non-scouting bee would -- which is what lets the
+		# bout's rate reflect the start point alone.
+		if bee.is_scouting and GameConfig.floral_constancy_on:
+			# Bout not yet committed to a species: anything not already
+			# scored this scouting run is fair game. Once committed (see
+			# seek_flower), stay on that species for the rest of the bout.
+			if bee.scout_species != "":
+				if f.species_name != bee.scout_species:
+					return false
+			elif bee.scout_tried_species.has(f.species_name):
+				return false
+		elif bee.preferred_species != "" and f.species_name != bee.preferred_species:
 			return false
 		if strict:
 			if bee.flower_cooldowns.has(f) and Session.sim_time < bee.flower_cooldowns[f]:
@@ -322,6 +367,14 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
 		bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
 		if bee.target_cell == null:
+			if bee.hive.cells.is_empty():
+				# Nothing built yet at all -- distinct from an established
+				# colony's comb being genuinely full. A brand new colony
+				# whose first forager comes home before the first cell is
+				# finished shouldn't lose her whole trip for it; just wait
+				# here (still carrying it) and recheck next frame, so a
+				# cell finishing mid-wait picks her straight back up.
+				return
 			# comb is full -- the load is lost, which is the signal that
 			# the hive needs more cells built
 			bee.current_load = 0.0
@@ -340,6 +393,11 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 
 
 static func finish_depositing(bee: Node2D) -> void:
+	# Captured once, before the first cell takes its share, so a trip
+	# split across several cells still scores against the whole trip.
+	# Needed by either scouting or auto-recruitment, not just the latter.
+	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.trip_load_amount < 0.0:
+		bee.trip_load_amount = bee.current_load
 	if bee.target_cell and is_instance_valid(bee.target_cell):
 		var placed: float = bee.target_cell.add_resource(bee.current_load_type, bee.current_load)
 		bee.current_load -= placed
@@ -358,11 +416,51 @@ static func finish_depositing(bee: Node2D) -> void:
 		return
 
 	bee.current_load_type = ""
+	if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+		_score_trip(bee)
 	# The load is delivered, so a queued role change takes effect now --
 	# this is the "finish depositing first" case.
 	if bee._apply_pending_role():
 		return
 	bee.state = State.IN_HIVE_TO_EXIT
+
+
+## The trip just finished (whether or not this bee is scouting): work
+## out how much it collected per second and fold that into its running
+## average (used by the entrance recruitment check). A scouting bee
+## also scores this bout of its three against the best one seen so far.
+static func _score_trip(bee: Node2D) -> void:
+	var amount: float = max(bee.trip_load_amount, 0.0)
+	var elapsed: float = max(Session.sim_time - bee.trip_start_time, 0.1)
+	var rate: float = amount / elapsed
+	if bee.avg_collection_rate <= 0.0:
+		bee.avg_collection_rate = rate
+	else:
+		bee.avg_collection_rate = lerpf(bee.avg_collection_rate, rate, bee.RATE_EMA_WEIGHT)
+	bee.trips_scored += 1
+	bee.trip_load_amount = -1.0
+
+	if not bee.is_scouting:
+		return
+	if rate > bee.scout_best_rate:
+		bee.scout_best_rate = rate
+		bee.scout_best_species = bee.scout_species
+		bee.scout_best_start_point = bee.scout_current_start_point
+	if GameConfig.floral_constancy_on:
+		bee.scout_tried_species.append(bee.scout_species)
+	bee.scout_bout += 1
+	bee.scout_species = ""
+	if bee.scout_bout >= SCOUT_BOUTS:
+		# All bouts tried -- settle on whichever start point (and, under
+		# Floral constancy, species) paid off best. If every bout came
+		# back empty (rate never beat the -1 sentinel), leave both unset
+		# rather than pinning something that never actually delivered.
+		bee.is_scouting = false
+		if bee.scout_best_rate > 0.0:
+			if bee.scout_best_start_point.x != INF:
+				bee.forage_start_point = bee.scout_best_start_point
+			if GameConfig.floral_constancy_on:
+				bee.preferred_species = bee.scout_best_species
 
 
 static func go_to_exit(bee: Node2D, delta: float) -> void:
@@ -375,16 +473,158 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
 	BeeMovement.move_towards(bee, exit_point, delta)
 	if bee.position.distance_to(exit_point) < 8.0:
-		if bee.world:
-			bee.world.move_bee_out_of_hive(bee)
-		# A forager with a start point set heads there first, every trip,
-		# rather than just once -- that's what keeps it working the same
-		# patch instead of drifting back to whatever's nearest the door.
-		if bee.role == Role.FORAGER and bee.forage_start_point.x != INF:
-			bee.move_target = bee.forage_start_point
-			bee.state = State.MOVE_TO_POINT
+		# Auto-recruitment: a still-scouting bee, or one whose own rate has
+		# drifted outside the recruitment band, waits here rather than
+		# walking straight back out -- see wait_at_entrance. This is the
+		# one place bee.is_scouting still causes an entrance visit, and
+		# it's only reachable at all when auto_recruitment_on is on -- with
+		# it off, all of scouting's bouts run uninterrupted every time. The
+		# rate check itself is gated on trips_scored -- see its declaration
+		# on bee.gd -- so a bee with no real trips behind it yet (brand
+		# new, or auto-recruitment just switched on for an established bee)
+		# goes straight back out rather than judging itself on a number
+		# that isn't real yet.
+		if GameConfig.auto_recruitment_on and bee.role == Role.FORAGER:
+			var past_grace: bool = bee.trips_scored >= GameConfig.recruit_grace_trips
+			var lower: float = GameConfig.recruit_lower_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_lower_threshold_pollen
+			var upper: float = GameConfig.recruit_upper_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_upper_threshold_pollen
+			if bee.is_scouting or (past_grace and bee.avg_collection_rate < lower):
+				bee.timer = GameConfig.recruit_wait_seconds
+				bee.entrance_wait_target = _entrance_wait_spot(bee, -1)
+				bee.state = State.AT_ENTRANCE_SEEKING
+				return
+			elif past_grace and bee.avg_collection_rate > upper:
+				bee.hive.add_entrance_mentor(bee)
+				bee.timer = GameConfig.recruit_wait_seconds
+				bee.entrance_wait_target = _entrance_wait_spot(bee, 1)
+				bee.state = State.AT_ENTRANCE_MENTORING
+				return
+		_leave_hive_and_resume(bee)
+
+## `side` is -1 for a seeker (left of the empty middle tile) or 1 for a
+## mentor (right), so the two waiting groups read as distinct queues
+## rather than one crowd blocking the doorway. A little jitter on top
+## keeps several bees on the same side from standing exactly on top of
+## each other.
+static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2:
+	if bee.world == null:
+		return bee.position
+	var jitter := Vector2(randf_range(-6.0, 6.0), randf_range(-5.0, 5.0))
+	return bee.world.entrance_wait_point(side) + jitter
+
+
+## Every exit from the hive door funnels through here once the bee has
+## actually decided to go, whether that's a plain exit, a seeker who
+## just got matched, or a wait that timed out -- so "what does a
+## forager do next" (start point, scout point, or the plain default)
+## is decided in exactly one place.
+static func _leave_hive_and_resume(bee: Node2D) -> void:
+	bee.entrance_wait_target = Vector2(INF, INF)
+	if bee.world:
+		bee.world.move_bee_out_of_hive(bee)
+	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.role == Role.FORAGER:
+		bee.trip_start_time = Session.sim_time
+		if bee.is_scouting:
+			_send_to_scout_point(bee)
+			return
+	# A forager with a start point set heads there first, every trip,
+	# rather than just once -- that's what keeps it working the same
+	# patch instead of drifting back to whatever's nearest the door.
+	if bee.role == Role.FORAGER and bee.forage_start_point.x != INF:
+		bee.move_target = bee.forage_start_point
+		bee.state = State.MOVE_TO_POINT
+	else:
+		bee.state = bee._default_state_for_role()
+
+
+## Sends a scouting bee to a fresh random start point for its next bout,
+## and records it so _score_trip can compare this bout's rate against the
+## best one seen so far and keep the winning point.
+static func _send_to_scout_point(bee: Node2D) -> void:
+	var point: Vector2 = _random_point_near_hive(bee)
+	bee.move_target = point
+	bee.scout_current_start_point = point
+	bee.state = State.MOVE_TO_POINT
+
+
+## Kicks off a brand-new forager's scouting phase (see setup() in
+## bee.gd, the only caller). An outdoor-spawned bee is already out in
+## the meadow, so it heads to its first bout immediately; an
+## indoor-spawned (hatched) one walks out through the door as normal
+## and picks up its first bout from _leave_hive_and_resume instead.
+static func start_scouting(bee: Node2D) -> void:
+	bee.is_scouting = true
+	bee.scout_bout = 0
+	bee.scout_species = ""
+	bee.scout_tried_species = []
+	bee.scout_best_species = ""
+	bee.scout_best_rate = -1.0
+	bee.scout_current_start_point = Vector2(INF, INF)
+	bee.scout_best_start_point = Vector2(INF, INF)
+	bee.trip_load_amount = -1.0
+	if not bee._is_inside_hive():
+		bee.trip_start_time = Session.sim_time
+		_send_to_scout_point(bee)
+
+
+## A forager waiting at the entrance, either hoping to be told a
+## better patch (seeker: scouting, or its own rate has fallen below
+## the lower threshold) or offering to tell one (mentor: its rate is
+## above the upper threshold). See DESIGN_BACKLOG.md section 7.1.
+static func wait_at_entrance(bee: Node2D, delta: float) -> void:
+	# Walk clear of the doorway itself while waiting -- see
+	# world_building.gd::entrance_wait_point. Harmless if the spot turns
+	# out to be unreachable: move_towards just leaves the bee where it is,
+	# right by the door, same as before this existed.
+	if bee.entrance_wait_target.x != INF:
+		BeeMovement.move_towards(bee, bee.entrance_wait_target, delta)
+
+	if bee.state == State.AT_ENTRANCE_MENTORING:
+		bee.timer -= delta
+		if bee.timer <= 0.0:
+			bee.hive.remove_entrance_mentor(bee)
+			_leave_hive_and_resume(bee)
+		return
+
+	# Seeker. Any same-resource mentor currently waiting is fair game --
+	# being learned from doesn't use a mentor up, so there's no claiming
+	# involved. A mentor that died mid-wait is pruned here rather than
+	# left blocking the front of the list forever. A mismatched-resource
+	# mentor is left in place for a seeker of its own type instead -- a
+	# nectar forager has no use for a pollen patch's start point, and
+	# shouldn't block a pollen mentor from ever being found by a pollen
+	# seeker either.
+	var i := 0
+	while i < bee.hive.entrance_mentors.size():
+		var mentor: Node2D = bee.hive.entrance_mentors[i]
+		if not is_instance_valid(mentor):
+			bee.hive.entrance_mentors.remove_at(i)
+			continue
+		if mentor.resource_type != bee.resource_type:
+			i += 1
+			continue
+		bee.forage_start_point = mentor.forage_start_point
+		if GameConfig.floral_constancy_on:
+			bee.preferred_species = mentor.preferred_species
+		# The whole point of scouting is finding a good patch -- being
+		# handed one already-proven is strictly better, so there's no
+		# reason to keep running the remaining bouts.
+		bee.is_scouting = false
+		_leave_hive_and_resume(bee)
+		return
+
+	bee.timer -= delta
+	if bee.timer <= 0.0:
+		# Nobody came. Rather than repeat the same low-performing pattern,
+		# drop it and pick a fresh spot -- scouting bees just re-enter
+		# scouting; an established forager with a stale preference tries
+		# a new one the same way a fresh bee would.
+		if bee.is_scouting:
+			_send_to_scout_point(bee)
 		else:
-			bee.state = bee._default_state_for_role()
+			bee.preferred_species = ""
+			bee.forage_start_point = Vector2(INF, INF)
+			_leave_hive_and_resume(bee)
 
 
 ## Fallback only -- deposits without the walk-in animation.
@@ -394,4 +634,3 @@ static func deposit_everything_remotely(bee: Node2D) -> void:
 	bee.current_load_type = ""
 	bee.energy += bee.hive.take_energy(GameConfig.energy_capacity - bee.energy)
 	bee.state = State.SEEK_FLOWER
-

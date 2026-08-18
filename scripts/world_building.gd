@@ -121,7 +121,7 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 		main.obstacles.append(obstacle)
 
 func _spawn_starting_foragers() -> void:
-	var level: Dictionary = main.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
 	if not level.is_empty():
 		for i in range(int(level.nectar_foragers)):
 			_spawn_bee("nectar")
@@ -247,7 +247,7 @@ func _add_entrance_marker() -> void:
 
 func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 	var cells: Array = []
-	var level: Dictionary = main.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
 	var starting_count: int = int(level.cells) if not level.is_empty() else int(GameConfig.hive_cell_count)
 	for i in range(starting_count):
 		var cell_hex: Vector2i = main.Shapes.hex_spiral_at(i)
@@ -278,9 +278,13 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	main.queen.is_queen = true
 	main.queen.position = centre_local + Vector2(0, (interior_rings - 3) * spacing * 1.5)
 	main.hive_root.add_child(main.queen)
-	main.queen.setup(main.hive, "pollen", 0, main.Bee.Role.EGG_LAYER, main)
+	# "nectar" here is only ever read if she's later switched to Forager
+	# (nothing else looks at a Laying bee's resource_type) -- matches
+	# every other bee's default so a queen turned forager starts on
+	# nectar like anyone else, rather than keeping this leftover value.
+	main.queen.setup(main.hive, "nectar", 0, main.Bee.Role.EGG_LAYER, main)
 
-	var level: Dictionary = main.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
 	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
 	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
 	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)
@@ -356,6 +360,22 @@ func hive_entrance_inside() -> Vector2:
 	# not hand-derived, so a future geometry change doesn't have to find
 	# this a second time.
 	return _hive_centre_local() + main.Shapes.hex_to_pixel(0, -rings, GameConfig.hive_cell_spacing)
+
+## Where a recruit (seeker, `side` -1) or recruiter (mentor, `side` 1)
+## forager stands while waiting at the door for a match. Deliberately
+## *not* hive_entrance_inside() -- that's the outer mouth of the
+## single-file entrance tunnel, walled in on both sides the whole way
+## down, so there's no "left" or "right" to stand in down there. The
+## point where the tunnel actually opens out into the interior room is
+## axial (0, -(interior_rings - 1)) -- see _entrance_tiles -- so this
+## starts there and steps two rows further into the open room, clear of
+## the doorway, before offsetting sideways.
+func entrance_wait_point(side: int) -> Vector2:
+	var interior_rings: int = int(GameConfig.hive_interior_rings)
+	var spacing: float = GameConfig.hive_cell_spacing
+	var row: int = -(interior_rings - 1) + 2
+	var base: Vector2 = _hive_centre_local() + main.Shapes.hex_to_pixel(0, row, spacing)
+	return base + Vector2(sign(side) * spacing * 1.4, 0.0)
 
 func _build_cameras() -> void:
 	main.meadow_camera = Camera2D.new()

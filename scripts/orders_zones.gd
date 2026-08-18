@@ -166,6 +166,14 @@ func _on_finish_first_requested(value: bool) -> void:
 			b.finish_task_first = value
 	main.hud.update_selection(main.selected_bees)
 
+## Only ever offered for a single selected bee -- see hud.gd's
+## _build_favourite_row.
+func _on_favourite_requested(value: bool) -> void:
+	for b in main.selected_bees:
+		if is_instance_valid(b):
+			b.is_favourite = value
+	main.hud.update_selection(main.selected_bees)
+
 func _on_secondary_role_requested(role_name: String) -> void:
 	var target_role: int = main.Roles.id_for_key(role_name)
 	for b in main.selected_bees:

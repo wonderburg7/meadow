@@ -20,8 +20,21 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
-	BeeMovement.move_towards(bee, bee.target_cell.position, delta)
-	if bee.position.distance_to(bee.target_cell.position) < 12.0:
+	# Stands at one of the cell's six walls rather than its centre, so a
+	# builder (the queen included, in Challenge 1) doesn't sit on top of
+	# the comb she's forming and hide it from view while it's drawn.
+	# Always wall 0 rather than whichever is nearest her current
+	# position -- recomputing "nearest" every frame as she approaches
+	# would flip between two walls once she's roughly equidistant and
+	# make her waver instead of walking straight there. Doesn't use
+	# claim_slot/release_slot: that's a separate, six-slot-capped system
+	# for deposit/feed queues, and any number of builders can already
+	# work one cell at once via claim_builder below -- reusing the slot
+	# system here would add a cap on simultaneous builders that never
+	# existed before.
+	var stand_point: Vector2 = bee.target_cell.slot_position(0)
+	BeeMovement.move_towards(bee, stand_point, delta)
+	if bee.position.distance_to(stand_point) < 12.0:
 		bee.target_cell.claim_builder(bee)
 		bee.state = State.BUILDING
 

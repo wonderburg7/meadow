@@ -27,6 +27,7 @@ func _restore(data: Dictionary) -> void:
 	Session.sim_time = float(clock.get("sim_time", 0.0))
 	main.day = int(clock.get("day", 1))
 	main.next_bee_id = int(clock.get("next_bee_id", 1))
+	main.first_gyne_seen = bool(clock.get("first_gyne_seen", false))
 	main.hud.update_day(main.day, main.year_winter._season_text())
 
 	var weather: Dictionary = data.get("weather", {})
@@ -53,6 +54,7 @@ func _restore(data: Dictionary) -> void:
 	_restore_flowers(data.get("flowers", []))
 	main.world_building._rebuild_flower_grid()
 	_restore_bees(data.get("bees", []))
+	main.fog_of_war.restore(data.get("fog", []))
 
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()
@@ -198,6 +200,19 @@ func _restore_bees(bees: Array) -> void:
 			main.meadow_root.add_child(bee)
 
 		bee.setup(main.hive, str(entry.get("resource", "nectar")), int(entry.get("id", 0)), int(entry.get("role", 0)), main)
+
+		# Bee individuality -- restore the actual rolled identity rather
+		# than the fresh random one _ready()/setup() just rolled for this
+		# new node. _apply_stats() re-derives speed/collection rates/etc
+		# from the restored trait so a reload lands on the same numbers,
+		# not a compounded or re-rolled trait. See BEE_INDIVIDUALITY_PLAN.md.
+		bee.bee_name = str(entry.get("name", bee.bee_name))
+		bee.trait_stat = str(entry.get("trait_stat", bee.trait_stat))
+		bee.trait_percent = float(entry.get("trait_pct", bee.trait_percent))
+		bee._apply_stats()
+		bee.bee_fact = str(entry.get("fact", bee.bee_fact))
+		bee.is_favourite = bool(entry.get("favourite", false))
+
 		bee.state = int(entry.get("state", bee.state))
 		bee.energy = float(entry.get("energy", GameConfig.energy_capacity))
 		bee.age_seconds = float(entry.get("age", 0.0))

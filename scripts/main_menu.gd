@@ -14,34 +14,55 @@ const UI = preload("res://scripts/ui.gd")
 signal level_chosen(level: int)
 
 ## Kept in the same order they're shown. `level` matches the keys of
-## main.gd's LEVELS dictionary, which is what actually decides what gets
+## levels.gd's LEVELS dictionary, which is what actually decides what gets
 ## spawned -- these are the words for it.
+##
+## Split into two groups per TUTORIAL_PLAN.md's "Terminology" section:
+## **Challenges** (`group: "challenge"`) are staged, scripted entries with
+## a win condition and Dr Gallerin guiding you through it. **Starter
+## modes** (`group: "starter"`) are the plain starting-point presets this
+## menu always had -- no sub-stages, no win condition, no Dr Gallerin,
+## just a different-sized colony to begin from. Internal level ids stay
+## exactly as they were (1-5) so existing saves and the LEVELS dictionary
+## don't need to change shape; only the menu's grouping and labels do.
 const STAGES := [
 	{
 		"level": 1,
-		"title": "Level 1 — The lone queen",
-		"blurb": "Just the queen, in bare ground. No comb, no workers. She has to be fed, and everything the colony ever has gets built from nothing.",
+		"group": "challenge",
+		"title": "Challenge 1: First Stores",
+		"blurb": "Found the beginnings of a colony. Build your first cell, gather nectar, and learn how a tiny hive starts to sustain itself.",
 	},
 	{
 		"level": 2,
-		"title": "Level 2 — First forager",
-		"blurb": "The queen, one nectar forager and a single cell. Enough to keep the lights on, but pollen still has to be found before she can lay.",
+		"group": "challenge",
+		"title": "Challenge 2: Brood, Roles and Expansion",
+		"blurb": "Grow the colony from stored food into a working hive. Lay eggs, raise specialist bees, keep nectar flowing, and expand the hive enough to support a balanced workforce.",
 	},
 	{
 		"level": 3,
-		"title": "Level 3 — A working colony",
+		"group": "starter",
+		"title": "Starter mode 1 — A working colony",
 		"blurb": "The queen, three cells, and two foragers — one on nectar, one on pollen. Both resources are coming in from the first moment.",
 	},
 	{
 		"level": 4,
-		"title": "Level 4 — Established nest",
+		"group": "starter",
+		"title": "Starter mode 2 — Established nest",
 		"blurb": "Fifteen cells and a full crew: eleven foragers (eight on nectar, three on pollen), two nurses, two comb workers on both jobs, and two miners. Enough colony that keeping it fed is the challenge, not starting it.",
 	},
 	{
 		"level": 5,
-		"title": "Level 5 — In full swing",
+		"group": "starter",
+		"title": "Starter mode 3 — In full swing",
 		"blurb": "Twenty-two foragers (sixteen on nectar, six on pollen), four nurses, three comb workers and three miners already digging. Twelve cells, four of them full of nectar and two of pollen, so the queen can lay from the first second. A colony big enough that what to do with it is the question.",
 	},
+]
+
+## Shown above each group of STAGES rows, in the same order the groups
+## should appear.
+const GROUPS := [
+	{"key": "challenge", "heading": "Challenges", "note": "Staged and scripted, with Dr Gallerin guiding you through each one."},
+	{"key": "starter", "heading": "Starter modes", "note": "Plain starting points -- no sub-stages, no win condition, no Dr Gallerin."},
 ]
 
 var panel: PanelContainer
@@ -84,10 +105,25 @@ func _ready() -> void:
 	subtitle.custom_minimum_size = Vector2(500, 0)
 	column.add_child(subtitle)
 
-	for stage in STAGES:
-		column.add_child(_make_stage_row(stage))
+	for group in GROUPS:
+		var heading := Label.new()
+		heading.text = group.heading
+		heading.add_theme_font_size_override("font_size", 16)
+		column.add_child(heading)
 
-	column.add_child(HSeparator.new())
+		var note := Label.new()
+		note.text = group.note
+		note.add_theme_font_size_override("font_size", 11)
+		note.add_theme_color_override("font_color", Color(0.7, 0.74, 0.68))
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.custom_minimum_size = Vector2(500, 0)
+		column.add_child(note)
+
+		for stage in STAGES:
+			if stage.group == group.key:
+				column.add_child(_make_stage_row(stage))
+
+		column.add_child(HSeparator.new())
 
 	var close_btn := Button.new()
 	close_btn.text = "Back to the run"

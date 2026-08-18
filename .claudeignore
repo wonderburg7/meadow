@@ -1,0 +1,20 @@
+# Godot 4 build cache -- regenerated automatically, never hand-edited.
+.godot/
+
+# Per-resource UID cache files Godot 4 writes next to every script/scene.
+# One per resource, pure metadata, nothing in them worth a session reading.
+*.uid
+
+# GPU shader cache some NVIDIA driver setups drop into the project folder.
+# Already in .gitignore; excluded here too so a session never opens it.
+NVIDIA Corporation/
+
+# Manual pre-slice snapshots of scripts before the bee.gd/main.gd splits.
+# Git history has replaced these since 10 Aug -- see CLAUDE.md.
+_backups/
+
+# No binary art or audio assets in the repo yet (placeholder shapes are
+# drawn in code -- see shapes.gd). If/when real assets are added, extend
+# this file with their extensions (e.g. *.png, *.wav, *.ogg, *.ttf) --
+# a session can't act on raw binary bytes, so there's no reason to load
+# them into context.

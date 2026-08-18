@@ -78,6 +78,34 @@ func _zoom_to_fit() -> void:
 	var fit: float = min(view.x / max(1.0, bounds.size.x), view.y / max(1.0, bounds.size.y))
 	cam.zoom = Vector2(clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM), clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM))
 
+## Selects one bee and centres the camera tightly on it, switching view
+## if it's on the other side (indoors/outdoors) from wherever the player
+## is looking. Used by the colony window's Favourites list -- see
+## BEE_INDIVIDUALITY_PLAN.md section 7. Deliberately its own thing
+## rather than a call to _zoom_to_fit(): that function's hive-view branch
+## frames the whole comb, not one bee in it.
+func _focus_on_bee(bee: Node2D) -> void:
+	if not is_instance_valid(bee):
+		return
+	for b in main.selected_bees:
+		if is_instance_valid(b):
+			b.set_selected(false)
+	main.selected_bees.clear()
+	bee.set_selected(true)
+	main.selected_bees.append(bee)
+	main.hud.update_selection(main.selected_bees)
+
+	var bee_indoors: bool = bee.get_parent() == main.hive_root
+	if bee_indoors != main.in_hive_view:
+		_toggle_view()
+
+	var bounds := Rect2(bee.global_position, Vector2.ZERO).grow(140.0)
+	var cam := _active_camera()
+	cam.position = bounds.get_center()
+	var view: Vector2 = main.get_viewport_rect().size
+	var fit: float = min(view.x / bounds.size.x, view.y / bounds.size.y)
+	cam.zoom = Vector2(clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM), clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM))
+
 func _zoom_by(factor: float) -> void:
 	var cam = _active_camera()
 	var z: float = clamp(cam.zoom.x * factor, main.MIN_ZOOM, main.MAX_ZOOM)

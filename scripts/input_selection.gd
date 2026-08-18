@@ -381,8 +381,22 @@ func _place_floral_preference(global_point: Vector2) -> void:
 		main.hud.update_selection(main.selected_bees)
 	main.pending_preference_bees = []
 
+## Right-clicking near the hive's entrance tile is its own command,
+## checked before the plain flower/move-to-point cases below -- it sends
+## a selected indoor bee out through the door and into the meadow (see
+## Bee.command_exit_hive), the general mechanism a Bee.command_exit_hive
+## once had no equivalent for: previously the only way out was waiting on
+## a role change to route a bee there automatically.
+const EXIT_CLICK_RADIUS := 26.0
+
 func _issue_command(world_point: Vector2) -> void:
 	if main.selected_bees.is_empty():
+		return
+	_show_click_marker(world_point)
+	if main.in_hive_view and world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
+		for b in main.selected_bees:
+			if is_instance_valid(b):
+				b.command_exit_hive()
 		return
 	var flower = main.world_building._flower_at(world_point) if not main.in_hive_view else null
 	for b in main.selected_bees:
@@ -392,6 +406,14 @@ func _issue_command(world_point: Vector2) -> void:
 			b.command_collect_from(flower)
 		else:
 			b.command_move_to(world_point)
+
+## A short ripple at the clicked spot, so a command actually landing
+## somewhere reads as a response rather than nothing having happened.
+func _show_click_marker(world_point: Vector2) -> void:
+	var root: Node2D = main.hive_root if main.in_hive_view else main.meadow_root
+	var marker = main.ClickMarker.new()
+	marker.position = root.to_local(world_point)
+	root.add_child(marker)
 
 func _on_focus_requested(type: String) -> void:
 	for b in main.selected_bees:
@@ -460,6 +482,13 @@ func _draw_hive_orders() -> void:
 	for b in main.selected_bees:
 		if not is_instance_valid(b):
 			continue
+		if b.role == main.Bee.Role.FORAGER and b.has_forage_start_point():
+			# The actual meadow-space point isn't meaningful in hive-space
+			# (meadow_root and hive_root sit at different world offsets --
+			# see CLAUDE.md's coordinate-space note), so this just confirms
+			# at the door that a start point is set, rather than pointing
+			# at it. Switch to the meadow view to see exactly where.
+			_draw_start_point_marker(main.hive_root.to_global(main.hive_entrance_inside()))
 		if b.role == main.Bee.Role.BUILDER:
 			any_architect = true
 			_draw_order_chain(b, _build_queue_points(b), main.BUILD_ORDER_COLOUR)

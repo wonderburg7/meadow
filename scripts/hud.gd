@@ -38,6 +38,10 @@ signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## these fire, and consumes the next click in the relevant view instead
 ## of treating it as a normal select/drag.
 signal build_cell_requested()
+## Challenge 1 only -- a "Build cell" button in the queen's own selection
+## panel, replacing the generic Job-row-then-placement-click flow for
+## that one first cell. See set_queen_build_button_visible.
+signal queen_build_cell_requested()
 ## Sets the tile the *selected* comb worker builds outward from -- its own
 ## centre of operations, rather than the middle of the comb. Applies to
 ## one bee only, even if several are selected -- see home_cell_all_requested
@@ -89,6 +93,9 @@ signal finish_first_requested(value: bool)
 ## Enters "click a flower" mode -- only offered when floral constancy is
 ## on in tuning. See GameConfig.floral_constancy_on.
 signal floral_preference_requested()
+## The star in the single-bee panel -- only offered for one bee at a
+## time, see BEE_INDIVIDUALITY_PLAN.md section 7.
+signal favourite_requested(value: bool)
 
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
@@ -193,6 +200,25 @@ var corner_signature: String = ""
 var pause_label: Label
 var view_button: Button
 var winter_button: Button
+var colony_button: Button
+var nursery_button: Button
+## The "i" badges next to colony_button/nursery_button/view_button --
+## kept so the visibility setters below can hide the explanation
+## alongside the control it explains, rather than leaving an orphaned
+## info badge for a button that isn't there.
+var colony_info: Button
+var nursery_info: Button
+var view_info: Button
+## The current Challenge's next-goal readout -- see set_challenge_goal.
+var goal_label: Label
+## Restricts the Job row's "Change to..." dropdown / the Doing row's
+## Forager sub-modes to just these keys. Empty means no restriction --
+## only a Challenge (see challenge_runner.gd) ever sets these to
+## something non-empty. See set_allowed_role_keys/set_allowed_mode_keys.
+var allowed_role_keys: Array = []
+var allowed_mode_keys: Array = []
+## Challenge 1 only -- see set_queen_build_button_visible.
+var show_queen_build_button: bool = false
 ## The row of speed/colony/nursery/winter/view buttons in the top-right
 ## corner, kept anchored clear of whatever debug_panel.gd's settings cog
 ## currently measures -- see set_settings_button_width.
@@ -227,6 +253,10 @@ var selected_cell_count: int = 1
 var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
+## Set by challenge_runner.gd for the length of a Challenge -- see
+## TUTORIAL_PLAN.md's "Don't include the warning messages" note. Every
+## other caller of show_warning is unaffected outside a Challenge.
+var warnings_muted: bool = false
 
 ## The at-a-glance problem strip, as [text, severity] pairs, kept so the
 ## corner can be rebuilt without main.gd having to resend it.
@@ -342,19 +372,21 @@ func _build_top_right_bar() -> void:
 
 	bar.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
-	var colony_button := Button.new()
+	colony_button = Button.new()
 	colony_button.text = "Colony (C)"
 	colony_button.custom_minimum_size = Vector2(80, 26)
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	bar.add_child(colony_button)
-	bar.add_child(_info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once."))
+	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
+	bar.add_child(colony_info)
 
-	var nursery_button := Button.new()
+	nursery_button = Button.new()
 	nursery_button.text = "Nursery (N)"
 	nursery_button.custom_minimum_size = Vector2(84, 26)
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	bar.add_child(nursery_button)
-	bar.add_child(_info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb."))
+	nursery_info = _info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
+	bar.add_child(nursery_info)
 
 	# Only appears once a winter has been scheduled -- until then there is
 	# nothing for it to say, and a permanently dead button is worse than
@@ -371,7 +403,24 @@ func _build_top_right_bar() -> void:
 	view_button.custom_minimum_size = Vector2(64, 26)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
 	bar.add_child(view_button)
-	bar.add_child(_info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at."))
+	view_info = _info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at.")
+	bar.add_child(view_info)
+
+	# Sits directly under the button row, anchored and widened the same
+	# way -- see set_settings_button_width. Hidden outside a Challenge;
+	# challenge_runner.gd is the only caller of set_challenge_goal.
+	goal_label = Label.new()
+	goal_label.visible = false
+	goal_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	goal_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal_label.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
+	goal_label.offset_top = 38
+	goal_label.custom_minimum_size = Vector2(320, 0)
+	goal_label.add_theme_font_size_override("font_size", 13)
+	goal_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6))
+	add_child(goal_label)
 
 ## Called by debug_panel.gd whenever its settings cog's actual width
 ## changes (including the first layout pass), so this bar sits exactly
@@ -381,6 +430,13 @@ func set_settings_button_width(width: float) -> void:
 	if top_right_bar == null:
 		return
 	top_right_bar.offset_right = -(width + SETTINGS_BUTTON_GAP)
+	goal_label.offset_right = -(width + SETTINGS_BUTTON_GAP)
+
+## Shown under the top-right button row for the length of a Challenge --
+## see TUTORIAL_PLAN.md. Empty text hides it again.
+func set_challenge_goal(text: String) -> void:
+	goal_label.text = text
+	goal_label.visible = not text.is_empty()
 
 func set_speed_display(speed_scale: float) -> void:
 	for entry in speed_buttons:
@@ -783,9 +839,16 @@ func _build_warning_banner() -> void:
 	row.add_child(close_btn)
 
 func show_warning(text: String) -> void:
+	if warnings_muted:
+		return
 	warning_label.text = text
 	warning_panel.visible = true
 	warning_timer = WARNING_SECONDS
+
+func set_warnings_muted(value: bool) -> void:
+	warnings_muted = value
+	if value:
+		warning_panel.visible = false
 
 func _build_obstacle_popup() -> void:
 	obstacle_popup = PopupPanel.new()
@@ -1268,10 +1331,40 @@ func _rebuild_role_controls(bees: Array) -> void:
 			any_queen = true
 			break
 
+	var show_queen_build_row: bool = show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
+	if show_queen_build_row:
+		_build_queen_build_row()
 	_build_job_row(common_role, any_queen)
 	_build_doing_row(common_role, first)
-	_build_orders_row(common_role, first)
+	# Skipped while the queen's own "Build cell" button is showing --
+	# that button is the one build control Challenge 1 wants here, not
+	# also the ordinary placement/home-cell controls this row offers.
+	if not show_queen_build_row:
+		_build_orders_row(common_role, first)
 	_build_fallback_row(common_role, first)
+	if bees.size() == 1 and first != null:
+		_build_favourite_row(first)
+
+## Challenge 1 only -- see set_queen_build_button_visible.
+func _build_queen_build_row() -> void:
+	var row := _labelled_row("Build")
+	var button := Button.new()
+	button.text = "Build cell"
+	button.custom_minimum_size = Vector2(0, 26)
+	button.pressed.connect(func(): queen_build_cell_requested.emit())
+	row.add_child(button)
+
+## The star toggle -- only offered for one bee at a time, so "favourite"
+## always names one individual rather than a whole selection. Lets the
+## player find this bee again later from the colony window's
+## Favourites list. See BEE_INDIVIDUALITY_PLAN.md section 7.
+func _build_favourite_row(bee) -> void:
+	var row := _labelled_row("Mark")
+	row.add_child(_toggle_button(
+		"★ Favourite" if bee.is_favourite else "☆ Favourite", bee.is_favourite,
+		func(): favourite_requested.emit(not bee.is_favourite),
+		"Pin this bee by name so you can find it again in the colony window's Favourites list, in a colony of hundreds."
+	))
 
 ## Job: what the selection is, lit up, plus one dropdown holding every
 ## role it could be switched to.
@@ -1293,6 +1386,8 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		if role.id == Roles.QUEEN and not any_queen:
 			continue                       # queen only
 		var key: String = role.key
+		if not allowed_role_keys.is_empty() and not allowed_role_keys.has(key):
+			continue                       # a Challenge hasn't taught this role yet
 		items.append({
 			"text": role.label,
 			"action": func(): role_requested.emit(key),
@@ -1312,6 +1407,11 @@ func _build_doing_row(common_role: int, first) -> void:
 	# than a choice between modes -- so each role says how to read it.
 	for mode in modes:
 		var key: String = mode.key
+		# Only ever restricts the Forager's nectar/pollen choice -- that's
+		# the only mode a Challenge currently teaches in stages. Every
+		# other role's modes are unaffected regardless of this list.
+		if common_role == Roles.FORAGER and not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(key):
+			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
 		row.add_child(_toggle_button(
@@ -1536,11 +1636,21 @@ func _refresh_selection_text() -> void:
 			b.role_name_text(),
 			int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
 		]
+		# Name and rolled trait first -- this is what turns "Bee 214" into
+		# someone the player can recognise. See BEE_INDIVIDUALITY_PLAN.md.
+		if b.bee_name != "":
+			line = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, line]
+		if b.trait_text() != "":
+			line += "\n%s" % b.trait_text()
 		if b.is_queen:
 			line += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
 		else:
 			line += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
 		line += "\n%s" % b.carrying_text()
+		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
+			line += "\nPreferred flower: %s" % b.preferred_species
+		if b.bee_fact != "":
+			line += "\n\"%s\"" % b.bee_fact
 		# the queen's pollen store is the thing that gates egg-laying,
 		# so it's worth showing as a running total
 		if b.is_queen:
@@ -1569,3 +1679,42 @@ func set_winter_button_visible(value: bool) -> void:
 
 func set_view_label(in_hive: bool) -> void:
 	view_button.text = "Meadow" if in_hive else "Hive"
+
+func set_colony_button_visible(value: bool) -> void:
+	if colony_button != null:
+		colony_button.visible = value
+	if colony_info != null:
+		colony_info.visible = value
+
+func set_nursery_button_visible(value: bool) -> void:
+	if nursery_button != null:
+		nursery_button.visible = value
+	if nursery_info != null:
+		nursery_info.visible = value
+
+func set_view_button_visible(value: bool) -> void:
+	if view_button != null:
+		view_button.visible = value
+	if view_info != null:
+		view_info.visible = value
+
+## See the `allowed_role_keys` field comment. Rebuilds the selection
+## panel immediately so a stage unlocking a new role shows it without
+## waiting for the next unrelated selection change.
+func set_allowed_role_keys(keys: Array) -> void:
+	allowed_role_keys = keys
+	if not shown_bees.is_empty():
+		_rebuild_role_controls(shown_bees)
+
+func set_allowed_mode_keys(keys: Array) -> void:
+	allowed_mode_keys = keys
+	if not shown_bees.is_empty():
+		_rebuild_role_controls(shown_bees)
+
+## Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
+## spot" flow with one direct button in the queen's own panel -- see
+## TUTORIAL_PLAN.md. Only ever shown for the queen, one bee selected.
+func set_queen_build_button_visible(value: bool) -> void:
+	show_queen_build_button = value
+	if not shown_bees.is_empty():
+		_rebuild_role_controls(shown_bees)

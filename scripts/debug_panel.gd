@@ -104,9 +104,59 @@ const TUNABLES := [
 		"tip": "How long a scent mark keeps other bees away. Only matters when Tarsal markers is on.",
 	},
 	{
+		"key": "orientation_flight_on", "label": "Orientation flight", "toggle": true,
+		"category": "Flowers",
+		"tip": "A new forager makes a short flight to a random spot near the hive before her first trip, and keeps working that spot from then on, rather than beelining for whatever's nearest the door -- real bees do this too, learning the area before they start foraging properly. Off by default. Turning on Auto scouting turns this on too.",
+	},
+	{
+		"key": "scouting_on", "label": "Auto scouting", "toggle": true,
+		"category": "Flowers",
+		"tip": "A new forager tries a few start points near the hive (see Orientation flight) and settles on whichever collected best, instead of just keeping the first one. Off by default. Turning on Floral constancy or Auto-recruitment turns this on too, since both rely on a forager having actually scouted. Turning this off also turns off Floral constancy and Auto-recruitment.",
+	},
+	{
 		"key": "floral_constancy_on", "label": "Floral constancy", "toggle": true,
 		"category": "Flowers",
-		"tip": "Lets you pin a forager to one flower species via 'Set preference' in its selection panel -- it will only ever visit that species from then on. Off by default; existing preferences are kept even if you turn this off, they just stop being offered as a new option.",
+		"tip": "Lets you pin a forager to one flower species via 'Set preference' in its selection panel -- it will only ever visit that species from then on. Also makes Auto scouting sample a different species each bout, so a scouted forager settles on the best start point AND species together, not just the best spot. Off by default; existing preferences are kept even if you turn this off, they just stop being offered as a new option. Turning this on also turns Auto scouting on.",
+	},
+	{
+		"key": "auto_recruitment_on", "label": "Auto-recruitment", "toggle": true,
+		"category": "Flowers",
+		"tip": "Foragers compare notes at the hive entrance -- a good performer can pass its start point (and species, if Floral constancy is also on) to a struggling one of the same resource type. Off by default; off means no bee ever waits at the door. Turning this on also turns Auto scouting on.",
+	},
+	{
+		"key": "forage_start_radius", "label": "Start point radius", "step": 20.0, "min": 20.0,
+		"category": "Flowers",
+		"tip": "How far from the hive a new forager's start point (Orientation flight or Auto scouting) is scattered. Only matters when one of those is on.",
+	},
+	{
+		"key": "recruit_lower_threshold_nectar", "label": "Recruit: seek below (nectar)", "step": 0.1, "min": 0.0,
+		"category": "Flowers",
+		"tip": "A nectar forager collecting less than this (units/second) waits at the entrance hoping a better-performing forager tells it where to go. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_upper_threshold_nectar", "label": "Recruit: offer above (nectar)", "step": 0.1, "min": 0.0,
+		"category": "Flowers",
+		"tip": "A nectar forager collecting more than this (units/second) waits at the entrance, willing to pass on its start point. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_lower_threshold_pollen", "label": "Recruit: seek below (pollen)", "step": 0.1, "min": 0.0,
+		"category": "Flowers",
+		"tip": "Same as the nectar version, for pollen foragers. Pollen's base collection rate is lower than nectar's, so this needs its own number rather than sharing the nectar threshold. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_upper_threshold_pollen", "label": "Recruit: offer above (pollen)", "step": 0.1, "min": 0.0,
+		"category": "Flowers",
+		"tip": "Same as the nectar version, for pollen foragers. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_wait_seconds", "label": "Recruit wait s", "step": 1.0, "min": 1.0,
+		"category": "Flowers",
+		"tip": "How long a forager waits at the entrance for a match before giving up and heading out on its own. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_grace_trips", "label": "Recruit grace trips", "step": 1.0, "min": 0.0,
+		"category": "Flowers",
+		"tip": "How many trips a forager must complete before it's judged against the thresholds above. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "show_flower_amounts", "label": "Show flower amounts", "toggle": true,
@@ -658,6 +708,21 @@ const TUNABLES := [
 		"tip": "Turn the trees and raised areas in the meadow on or off. With them off they vanish and stop blocking anything, so bees fly in straight lines -- useful for seeing the foraging economics on their own. Takes effect immediately.",
 	},
 	{
+		"key": "fog_of_war_on", "label": "Fog of war", "toggle": true,
+		"category": "World & start",
+		"tip": "Hide meadow ground no bee has explored yet, and dim ground that's been seen before but has no bee near it right now. Turn off to see the whole meadow at once, same as before this existed. Takes effect immediately.",
+	},
+	{
+		"key": "fog_reveal_radius", "label": "Sight radius", "step": 20.0, "min": 40.0,
+		"category": "World & start",
+		"tip": "How far around a bee out in the meadow counts as seen. Larger clears the fog faster and makes finding flowers less of a discovery.",
+	},
+	{
+		"key": "fog_permanent_reveal", "label": "Fog stays revealed", "toggle": true,
+		"category": "World & start",
+		"tip": "Once a patch of meadow has been scouted, keep it fully visible for good. Off (the default), a scouted patch dims to a foggy memory once no bee is nearby, and brightens again when one returns. Either way it stays explored -- this only changes how an unlit patch draws. Takes effect immediately.",
+	},
+	{
 		"key": "death_marker_days", "label": "Death marks days", "step": 1.0, "min": 0.0,
 		"category": "World & start",
 		"tip": "How many in-game days a mark stays where a bee died, fading as it goes. A cluster of them out at the edge of the meadow tells you bees are running out of energy trying to work a patch that is too far away.",
@@ -677,7 +742,22 @@ const TUNABLES := [
 		"category": "Interface",
 		"tip": "Add a short text label wherever colour would otherwise be the only thing telling two states apart: what a cell holds, the nursery ring, the comb overlays and the zone glow. Around one man in twelve has some colour vision deficiency, and several of the palettes here are exactly the ones that fail -- but the labels are clearer for everyone at small sizes, so it is worth trying either way. Takes effect immediately.",
 	},
+	{
+		"key": "gallerin_enabled", "label": "Dr Gallerin", "toggle": true,
+		"category": "Interface",
+		"tip": "The moth mentor who offers hints and encouragement during a Challenge. Turning him off changes nothing about how a Challenge plays -- he can be switched back on here at any time. Takes effect immediately.",
+	},
 ]
+
+## Foraging-automation prerequisite tree (see SCOUTING_TOGGLE_PLAN.md):
+## each key's value is the toggle it depends on. Empty string means no
+## prerequisite. Mirrors the intended research order for a future skills
+## tree, not built yet.
+const TOGGLE_PREREQUISITE := {
+	"scouting_on": "orientation_flight_on",
+	"floral_constancy_on": "scouting_on",
+	"auto_recruitment_on": "scouting_on",
+}
 
 ## Settings that live in Session rather than GameConfig -- the player's
 ## own preferences, as opposed to numbers that change how the game plays.
@@ -685,6 +765,7 @@ const TUNABLES := [
 const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
 	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
+	"gallerin_enabled",
 ]
 
 static func setting_get(key: String):
@@ -697,6 +778,9 @@ static func setting_set(key: String, value) -> void:
 		GameConfig.set(key, value)
 
 var value_labels: Dictionary = {}
+## setting key -> its CheckBox, so the cascade helpers below can refresh
+## a row's display when they flip a toggle other than the one clicked.
+var toggle_boxes: Dictionary = {}
 var panel: PanelContainer
 var toggle_button: Button
 ## category name -> the VBox holding its rows, so the header button can
@@ -737,11 +821,12 @@ func _ready() -> void:
 	toggle_button.resized.connect(_report_settings_button_width)
 	call_deferred("_report_settings_button_width")
 
-func _report_settings_button_width() -> void:
-	for hud in get_tree().get_nodes_in_group("huds"):
-		if is_instance_valid(hud) and hud.has_method("set_settings_button_width"):
-			hud.set_settings_button_width(toggle_button.size.x)
-
+	# Built once, here, rather than inside _report_settings_button_width --
+	# that function's job is only to tell hud.gd how wide the cog is, and
+	# it fires again on every resize. Building the panel there too used to
+	# rebuild (and re-add, orphaning the old one) the whole settings window
+	# every time the window was resized, on top of using `vp` from outside
+	# its own scope, which failed to compile at all.
 	panel = PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -767,6 +852,11 @@ func _report_settings_button_width() -> void:
 		if rows.is_empty():
 			continue
 		column.add_child(_make_section(category, rows, false))
+
+func _report_settings_button_width() -> void:
+	for hud in get_tree().get_nodes_in_group("huds"):
+		if is_instance_valid(hud) and hud.has_method("set_settings_button_width"):
+			hud.set_settings_button_width(toggle_button.size.x)
 
 func _rows_in(category: String) -> Array:
 	var found: Array = []
@@ -973,6 +1063,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	box.add_theme_font_size_override("font_size", 11)
 	box.button_pressed = setting_get(entry.key)
 	var key: String = entry.key
+	toggle_boxes[key] = box
 	box.toggled.connect(func(pressed: bool):
 		setting_set(key, pressed)
 		if key == "show_info_badges":
@@ -984,10 +1075,46 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			for panel in get_tree().get_nodes_in_group("colour_blind_listeners"):
 				if is_instance_valid(panel) and panel.has_method("colour_blind_changed"):
 					panel.colour_blind_changed()
+		elif key == "gallerin_enabled":
+			# gallerin_panel.gd only reads this once, in its own _ready() --
+			# toggling it here has to reach the live node directly, same
+			# idea as the colour-blind broadcast above.
+			for panel in get_tree().get_nodes_in_group("gallerin"):
+				if is_instance_valid(panel):
+					panel.visible = pressed
+		elif TOGGLE_PREREQUISITE.has(key) or TOGGLE_PREREQUISITE.values().has(key):
+			if pressed:
+				_cascade_prerequisites_on(key)
+			else:
+				_cascade_dependents_off(key)
 	)
 	row.add_child(box)
 	row.add_child(UI.info_badge(entry.tip))
 	return row
+
+## Walks up TOGGLE_PREREQUISITE from `key`, turning on everything it
+## depends on -- e.g. switching on Floral constancy also switches on
+## Auto scouting, which also switches on Orientation flight.
+func _cascade_prerequisites_on(key: String) -> void:
+	var parent: String = TOGGLE_PREREQUISITE.get(key, "")
+	while parent != "":
+		if not setting_get(parent):
+			setting_set(parent, true)
+			if toggle_boxes.has(parent):
+				toggle_boxes[parent].button_pressed = true
+		parent = TOGGLE_PREREQUISITE.get(parent, "")
+
+## Walks TOGGLE_PREREQUISITE's values to find anything whose prerequisite
+## is `key` (directly or transitively) and turns it off too -- e.g.
+## switching off Auto scouting also switches off Floral constancy and
+## Auto-recruitment.
+func _cascade_dependents_off(key: String) -> void:
+	for child in TOGGLE_PREREQUISITE:
+		if TOGGLE_PREREQUISITE[child] == key and setting_get(child):
+			setting_set(child, false)
+			if toggle_boxes.has(child):
+				toggle_boxes[child].button_pressed = false
+			_cascade_dependents_off(child)
 
 ## A row whose control is the same ★ / ☆ toggle the colony window uses,
 ## pinning something into the corner readout rather than changing a

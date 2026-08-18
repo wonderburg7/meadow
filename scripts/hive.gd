@@ -33,6 +33,20 @@ var lifetime_nectar_collected: float = 0.0
 var lifetime_pollen_collected: float = 0.0
 var lifetime_births: int = 0
 
+## Foragers currently waiting at the entrance willing to pass on their
+## start point (and species, under floral_constancy_on) to a seeker of
+## the same resource type (see GameConfig.auto_recruitment_on). A seeker
+## doesn't claim one -- any number can read the same mentor's info, so
+## this is just "who's currently offering", not a queue.
+var entrance_mentors: Array = []
+
+func add_entrance_mentor(bee: Node2D) -> void:
+	if not entrance_mentors.has(bee):
+		entrance_mentors.append(bee)
+
+func remove_entrance_mentor(bee: Node2D) -> void:
+	entrance_mentors.erase(bee)
+
 func record_collection(resource_type: String, amount: float) -> void:
 	if resource_type == "nectar":
 		lifetime_nectar_collected += amount
@@ -476,8 +490,26 @@ func has_room_elsewhere(resource_type: String, except: Node2D) -> bool:
 ## rings: ground the miners have opened up is exactly the space the comb
 ## is supposed to expand into, and refusing to build there made mining
 ## pointless.
+## Set to the current frame when a full spiral walk has just found
+## nothing to build on, so that frame's other idle comb workers get the
+## same answer for free rather than each repeating the whole walk.
+## Scoped to one frame, not cached until something changes, because
+## mining can free a tile at any moment and the very next frame has to
+## see it -- unlike `_index_frame` above this never needs an explicit
+## invalidate, the timeout is one frame.
+##
+## Added 16 Aug 2026: with the comb full, every idle comb worker was
+## repeating this same few-hundred-tile walk every single frame -- the
+## corner readout showed it as 480ms of a frame's budget with a few dozen
+## of them idle at once. Exactly the "every bee walks the whole list"
+## shape of bug `_content_index()` above already fixed once for the
+## cell-content searches; this is the same fix for the comb-growing one.
+var _no_room_frame: int = -1
+
 func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 	if comb_parent == null:
+		return null
+	if _no_room_frame == Engine.get_process_frames():
 		return null
 
 	var hex := Vector2i(0, 0)
@@ -493,6 +525,7 @@ func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 			break
 		index += 1
 	if not found:
+		_no_room_frame = Engine.get_process_frames()
 		return null
 
 	return _start_site_at(hex)
@@ -566,8 +599,17 @@ func build_navigation() -> void:
 
 	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
 	var next_id := 0
-	# every tile that isn't soil or bedrock is walkable
-	for ring in range(0, reach + 1):
+	# Every tile that isn't soil or bedrock is walkable -- but only up to
+	# `reach - 1`, the outermost ring world_building.gd actually dug or
+	# walled (see its _dig_out_chamber loops, which stop one short of
+	# `reach` too). Ring `reach` itself was never given a floor, a soil
+	# block or a rock block -- nothing registers a node there -- so
+	# _is_solid(hex) below reported it as open floor by default and this
+	# used to scan one ring past the real structure, adding a phantom
+	# walkable ring in the empty space just outside the rock wall. A bee
+	# routed anywhere near the entrance could path onto that ring and
+	# wander the outer perimeter instead of reaching the actual doorway.
+	for ring in range(0, reach):
 		for hex in Shapes.hex_ring(ring):
 			if _is_solid(hex):
 				continue

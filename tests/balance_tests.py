@@ -25,6 +25,7 @@ and the feedback loops. That is the half worth testing anyway.
 
 import math
 import os
+import random
 import re
 import sys
 
@@ -316,11 +317,59 @@ def test_movement_invariants():
           "flowers are always reachable")
 
 
+# ------------------------------------------------------ bee individuality
+def test_bee_individuality():
+    section("Bee individuality: trait rolls make sense")
+    # trait_magnitude_bands is an Array of Dictionaries, not the simple
+    # scalar cfg() parses -- read it out by hand.
+    match = re.search(r"trait_magnitude_bands: Array = \[(.*?)\]\n", CONFIG, re.S)
+    check(match is not None, "could not find trait_magnitude_bands in game_config.gd")
+    if not match:
+        return
+    bands = []
+    for entry in re.findall(r"\{[^}]*\}", match.group(1)):
+        lo = float(re.search(r'"min":\s*([\d.]+)', entry).group(1))
+        hi = float(re.search(r'"max":\s*([\d.]+)', entry).group(1))
+        wt = float(re.search(r'"weight":\s*([\d.]+)', entry).group(1))
+        bands.append((lo, hi, wt))
+
+    total_weight = sum(w for _, _, w in bands)
+    print(f"  {len(bands)} magnitude bands, weights sum to {total_weight:.3f}")
+    check(abs(total_weight - 1.0) < 1e-6,
+          f"trait_magnitude_bands' weights sum to {total_weight:.3f}, not 1.0")
+
+    # A rough re-simulation of BeeIdentity.roll_trait_stat(): should land
+    # noticeably positive given the 70/30 skew -- that's the intended
+    # texture (a colony reads as quietly gifted), just worth confirming
+    # rather than assuming, per CLAUDE.md rule 4.
+    positive_chance = cfg("trait_positive_chance")
+    random.seed(1)
+    shifts = []
+    for _ in range(20000):
+        roll = random.random()
+        cumulative = 0.0
+        magnitude = bands[-1][0]
+        for lo, hi, wt in bands:
+            cumulative += wt
+            if roll <= cumulative:
+                magnitude = random.uniform(lo, hi)
+                break
+        sign = 1.0 if random.random() < positive_chance else -1.0
+        shifts.append(sign * magnitude)
+    average = sum(shifts) / len(shifts)
+    print(f"  simulated {len(shifts)} rolls: average shift {average:+.4f} "
+          f"({positive_chance:.0%} positive chance)")
+    check(average > 0.0,
+          f"average trait shift is {average:+.4f} -- the positive lean should show up",
+          f"average trait shift is {average:+.4f}: positive, as the positive lean intends")
+
+
 def main():
     print("Meadow balance tests")
     print("====================")
     for test in (test_winter, test_rival, test_disease, test_seasons,
-                 test_brood_economics, test_movement_invariants):
+                 test_brood_economics, test_movement_invariants,
+                 test_bee_individuality):
         test()
 
     print("\n" + "=" * 60)
