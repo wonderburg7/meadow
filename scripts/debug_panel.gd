@@ -783,6 +783,10 @@ var value_labels: Dictionary = {}
 var toggle_boxes: Dictionary = {}
 var panel: PanelContainer
 var toggle_button: Button
+## Greyed out for the length of an active Challenge -- see
+## set_save_load_enabled, called by challenge_runner.gd.
+var save_btn: Button
+var load_btn: Button
 ## category name -> the VBox holding its rows, so the header button can
 ## show and hide it
 var sections: Dictionary = {}
@@ -967,12 +971,12 @@ func _build_actions(column: VBoxContainer) -> void:
 	var save_row := HBoxContainer.new()
 	column.add_child(save_row)
 
-	var save_btn := Button.new()
+	save_btn = Button.new()
 	save_btn.text = "Save run"
 	save_btn.pressed.connect(_on_save_pressed)
 	save_row.add_child(UI.with_info(save_btn, "Write the current run to disk: the comb and everything in it, every bee and what it is doing, the meadow, the weather and the clock. There is one save slot, so saving again overwrites it."))
 
-	var load_btn := Button.new()
+	load_btn = Button.new()
 	load_btn.text = "Load run"
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
@@ -995,6 +999,15 @@ func _on_winter_pressed() -> void:
 	if worlds.is_empty():
 		return
 	worlds[0].begin_winter_countdown()
+
+## Ordinary player save/load doesn't record Challenge stage/gate/prompt
+## state (see challenge_runner.gd), so it's disabled for the length of an
+## active Challenge -- tutorial_checkpoint.gd covers Challenge-internal
+## rollback instead. Godot doesn't fire `pressed` on a disabled button, so
+## the handlers below don't need their own guard on top of this.
+func set_save_load_enabled(enabled: bool) -> void:
+	save_btn.disabled = not enabled
+	load_btn.disabled = not enabled
 
 func _on_save_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")

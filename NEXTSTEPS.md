@@ -7,32 +7,37 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Challenge 1 needs Dave's hands-on check in Godot, after a second
-   round of bug fixes landed 19 Aug.** The first playtest surfaced seven
-   real problems; all seven are fixed, but none re-confirmed by an actual
-   playthrough yet. See `TUTORIAL_PLAN.md`'s "Built and playable, 19 Aug
-   2026" note under "Challenge 1: First Stores" for the full list with
-   the reasoning behind each fix. Specifically worth eyeballing:
-   - The camera opens centred on the queen at the hive entrance, not
-     wherever the default hive-view framing used to put it.
-   - Assigning the queen Forager defaults her to nectar, not pollen.
-   - Right-clicking a flower with any bee selected sends it collecting
-     from that flower (switching it to Forager first if needed); right-
-     clicking the doorway sends a selected indoor bee straight out to
-     the meadow. Both are new general mechanics, not Challenge-1-only.
-   - Building the one cell in 1.3 (via the queen's new "Build cell"
-     button) should produce exactly one cell, not a scatter of
-     unfinished ones around it, and comb workers now stand beside a
-     cell while building it rather than on top of it.
-   - A full nectar-then-pollen run should reach 1.7 and actually show
-     the "Challenge complete" message -- this was reported as not
-     happening, and the most likely cause (a deposit bug that silently
-     destroyed a forager's load before it ever counted toward the
-     stage's target) is fixed, but wants confirming end to end.
-   - Small polish: a short ripple appears wherever a right-click command
-     lands, and a goal readout under the settings cog names the current
-     sub-stage's goal in plain language.
-2. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
+1. **Challenge 1 needs Dave's hands-on check in Godot** -- two things now
+   need confirming in the same playthrough:
+   - The second round of tutorial bug fixes (19 Aug): see
+     `TUTORIAL_PLAN.md`'s "Built and playable, 19 Aug 2026" note for the
+     full list (camera framing, queen forager default, right-click
+     commands, the 1.3 build-cell flow, the 1.7 completion message, the
+     right-click ripple and goal readout).
+   - `AUDIT_PLAN.md` Bundle A (Challenge state safety), just landed: the
+     tutorial's fast build time no longer writes into the `GameConfig`
+     autoload (it's scoped to the one cell via
+     `HiveCell.build_time_override`); the settings window's Save/Load
+     buttons grey out for the length of an active Challenge; and
+     `tutorial_checkpoint.gd`'s rolling checkpoint is now cleared on
+     every scene reload. Worth specifically: start Challenge 1, reach
+     1.3, abandon to the main menu partway through the fast build, and
+     confirm building a cell in a fresh run afterwards takes the normal
+     90s (not 15s) and that Save/Load were greyed out the whole time.
+     `python3 tests/source_checks.py`/`balance_tests.py` and a Godot
+     boot via `mcp__godot__run_project` both came back clean, but
+     nothing here substitutes for Dave actually playing it.
+2. **`AUDIT_PLAN.md` Bundle B is next in the audit plan** (P1,
+   deterministic restore + machine-checked guardrails, ~5-7h): makes
+   `saving.gd`'s flower/bee restore build and pass its own node array
+   instead of re-querying a SceneTree group mid-restore, rejects a save
+   newer than `FORMAT_VERSION`, and adds a couple of guardrails to
+   `tests/source_checks.py` (checks `Perf` is a registered autoload,
+   recursive script glob, a regex guard against unauthorised
+   `GameConfig.` writes -- the last of which would have caught Bundle
+   A's bug automatically). Start a session on this once (1) is
+   confirmed, same one-bundle-per-session order the plan lays out.
+3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
    Dr Gallerin prompts are written. `challenge_runner.gd`'s `STAGES`
@@ -42,7 +47,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    first thing that will actually exercise `tutorial_checkpoint.gd`'s
    restore path (Challenge 1 has no failure condition to trigger it;
    Challenge 2's does, from sub-stage 2.3 onward per the plan).
-3. **The balance overrides `TUTORIAL_PLAN.md` describes for Challenge 1's
+4. **The balance overrides `TUTORIAL_PLAN.md` describes for Challenge 1's
    start state are still not applied** -- no rain, no rival colony, no
    winter, no disease are all just "not yet true" rather than switched
    off. Hasn't caused a visible problem in testing (a 5-10 minute
@@ -58,7 +63,9 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   request since, but none has had an explicit "confirmed working" either
   -- they've only been exercised incidentally while playtesting the
   tutorial. Worth a deliberate look whenever there's a session not
-  focused on the tutorial.
+  focused on the tutorial. Fog of war specifically now also has a
+  measurement step queued up in `AUDIT_PLAN.md` Bundle C -- the same
+  playtest can cover both "does it look right" and "is it fast".
 - **Re-measure `bee_movement.gd` with `perf.gd`** -- still on the list.
   See "Measuring performance, not guessing at it" in CLAUDE.md before
   touching it -- wrap the widest scope first.
@@ -69,15 +76,16 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 ## Last verified
 
 - `python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
-  both passing as of 19 Aug.
+  both passing, and a full Godot boot via `mcp__godot__run_project`
+  clean (only pre-existing, unrelated shadowing/unused-parameter
+  warnings), after landing `AUDIT_PLAN.md` Bundle A.
 - Every script in `scripts/` also checked with `gdlint`/`gdparse`
-  (`gdtoolkit`, pip-installed locally, not a project dependency) and
-  with an actual Godot 4.7.1 boot via the `mcp__godot__*` tools now
-  available in-session -- both catch real parser/type errors that
-  `source_checks.py` alone can't (it only checks names/brackets, not
-  scope or type inference). Two real bugs were caught and fixed this
-  way before reaching Dave: a leftover cross-scope reference in
-  `hud.gd`, and a `:=` type-inference failure on a loosely-typed `main.X`
-  reference in `input_selection.gd` -- see `bee_survival.gd`'s
-  `_announce_death` pattern (`main.DeathMarker.new()`, plain `=`) for
-  why that class of assignment has to skip `:=`.
+  (`gdtoolkit`, pip-installed locally, not a project dependency) as of
+  19 Aug -- catches real parser/type errors that `source_checks.py`
+  alone can't (it only checks names/brackets, not scope or type
+  inference). Two real bugs were caught and fixed this way before
+  reaching Dave: a leftover cross-scope reference in `hud.gd`, and a
+  `:=` type-inference failure on a loosely-typed `main.X` reference in
+  `input_selection.gd` -- see `bee_survival.gd`'s `_announce_death`
+  pattern (`main.DeathMarker.new()`, plain `=`) for why that class of
+  assignment has to skip `:=`.

@@ -42,8 +42,11 @@ const STRONGER_HINT_DELAY := 45.0
 
 ## The normal cell_build_time (90s by default) makes sense once a colony
 ## has many comb workers splitting the wait -- for a lone queen building
-## her very first cell it's just standing around. Overridden for the
-## length of the Challenge and restored in _complete().
+## her very first cell it's just standing around. Set only on the one
+## cell site the queen builds in 1.3 (via HiveCell.build_time_override),
+## never on the GameConfig autoload -- a global write there used to leak
+## the tutorial's fast build speed into normal play (and into a save) if
+## the Challenge was left or restarted before 1.3 completed.
 const FAST_BUILD_TIME := 15.0
 
 ## A soft gold ring, distinct from the build-hover/home-cell colours
@@ -123,13 +126,17 @@ var active: bool = false
 var _stage_index: int = 0
 var _meadow_view_seen: bool = false
 var _marker: Polygon2D
-var _original_cell_build_time: float = 0.0
 
 func start() -> void:
 	active = true
 	_stage_index = 0
 	_meadow_view_seen = false
 	main.stage_gate.start()
+	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
+	# so a load mid-Challenge would silently drop it -- disabled for the
+	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
+	# rollback instead. Re-enabled in _complete().
+	main.debug_panel.set_save_load_enabled(false)
 
 	# Challenge 1 starts in hive view, per TUTORIAL_PLAN.md's start
 	# state -- and since the view switch stays hidden until 1.4, there
@@ -154,8 +161,12 @@ func start() -> void:
 	main.queen.energy_immune = true
 	main.hud.set_warnings_muted(true)
 
-	_original_cell_build_time = GameConfig.cell_build_time
-	GameConfig.cell_build_time = FAST_BUILD_TIME
+	# Clears any checkpoint left behind by a previous Challenge run that
+	# was abandoned before reaching _complete() -- belt and braces, since
+	# every exit path that doesn't complete the Challenge also reloads the
+	# scene (see main.gd's _ready(), which clears this unconditionally),
+	# but a fresh start() shouldn't depend on that indirection to be safe.
+	main.TutorialCheckpoint.clear()
 
 	_marker = Polygon2D.new()
 	_marker.polygon = Shapes.circle_points(GameConfig.hive_cell_size * 1.6, 24)
@@ -216,7 +227,8 @@ func _complete() -> void:
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
 	main.hud.set_warnings_muted(false)
-	GameConfig.cell_build_time = _original_cell_build_time
+	main.debug_panel.set_save_load_enabled(true)
+	main.TutorialCheckpoint.clear()
 	main.gallerin_panel.clear_queue()
 	main.gallerin_panel.show_now({
 		"id": "challenge_1_complete", "trigger": "complete", "repeatable": false,
@@ -248,6 +260,7 @@ func _on_queen_build_cell_requested() -> void:
 	main.queen.set_role(main.Bee.Role.BUILDER)
 	var site: Node2D = main.hive.create_cell_site_at(Vector2i.ZERO)
 	if site:
+		site.build_time_override = FAST_BUILD_TIME
 		main.queen.target_cell = site
 		main.queen.state = main.Bee.State.TO_BUILD_SITE
 

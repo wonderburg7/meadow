@@ -85,6 +85,7 @@ var camera_view: Node
 var fog_of_war: Node
 var stage_gate: Node
 var challenge_runner: Node
+var debug_panel: Node
 
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
 const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
@@ -266,6 +267,16 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
 
+	# Every path back to this function -- a fresh boot, Restart Run, the
+	# main menu's level picker, a load, a post-game-over restart -- reloads
+	# the whole scene, and tutorial_checkpoint.gd's rolling snapshot is only
+	# ever meant to be replayed within the Challenge run that wrote it, not
+	# across a reload. Clearing it unconditionally here means every
+	# Challenge exit path is covered for free, including ones a future
+	# "abandon" button might add, without each of them needing to remember
+	# to call this themselves.
+	TutorialCheckpoint.clear()
+
 	# The split-out files, created first so everything below can call into
 	# them. They hold no state of their own beyond a `main` pointer back
 	# here (fog_of_war and stage_gate are the exceptions -- their
@@ -390,7 +401,8 @@ func _ready() -> void:
 	# left starred as, rather than assuming a fresh run starts unstarred.
 	hud.pinned_stats_changed()
 
-	add_child(DebugPanel.new())
+	debug_panel = DebugPanel.new()
+	add_child(debug_panel)
 
 	# The main menu sits above everything and pauses the run behind it.
 	# It opens by itself the first time the game is launched, and after

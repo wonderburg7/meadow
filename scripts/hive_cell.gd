@@ -87,6 +87,16 @@ var is_built: bool = true
 var build_progress: float = 0.0
 var builders: Array = []
 
+## -1 means "use GameConfig.cell_build_time as normal". Set above zero to
+## give this one cell its own build speed without touching the GameConfig
+## autoload -- see challenge_runner.gd's queen-built cell in Challenge 1,
+## which needs a fast build without leaking that speed into every other
+## cell in the hive (or into a save, if building outlasts the Challenge).
+var build_time_override: float = -1.0
+
+func effective_build_time() -> float:
+	return build_time_override if build_time_override > 0.0 else GameConfig.cell_build_time
+
 ## "" means the cell takes whatever is going. Otherwise it only accepts
 ## the named thing: "nectar", "pollen", "honey", or "brood" for a nursery
 ## cell that stores eggs rather than stores.
@@ -443,13 +453,13 @@ func add_build_progress(delta: float) -> void:
 	if is_built:
 		return
 	build_progress += delta
-	if build_progress >= GameConfig.cell_build_time:
-		build_progress = GameConfig.cell_build_time
+	if build_progress >= effective_build_time():
+		build_progress = effective_build_time()
 		is_built = true
 		builders.clear()
 
 func build_fraction() -> float:
-	return clamp(build_progress / max(0.001, GameConfig.cell_build_time), 0.0, 1.0)
+	return clamp(build_progress / max(0.001, effective_build_time()), 0.0, 1.0)
 
 # --- contents -----------------------------------------------------
 
