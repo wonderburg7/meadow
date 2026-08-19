@@ -67,6 +67,15 @@ extends Node
 ##     changed, the camera moved or zoomed, the hive/meadow view switched,
 ##     or `fog_permanent_reveal` toggled -- a static camera over an
 ##     unchanging fog state now draws nothing.
+##
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): even after the
+## above, a re-measurement (same session, see Bundle C's "Clean
+## re-measurement" note) found `fog_of_war_draw` still the dominant cost at
+## min zoom -- ~29ms dynamic reveal, worst frame 83ms of a 96ms total. The
+## remaining cost was the draw method itself: `_draw_fog_body` used to merge
+## each row into runs of one colour and `draw_rect` each run, which still
+## means many draw calls when the explored boundary is jagged. See the perf
+## note above `_draw_fog_body` for what replaced it.
 
 var main: Node2D
 
@@ -94,6 +103,14 @@ var _last_draw_cam_pos: Vector2 = Vector2.ZERO
 var _last_draw_cam_zoom: float = -1.0
 var _last_draw_permanent: bool = false
 
+## Mask-texture rendering (AUDIT_PLAN.md Bundle F, 19 Aug 2026) -- see the
+## perf note further down, above `_draw_fog_body`. `_mask_image`/
+## `_mask_texture` are reused frame to frame and only rebuilt (rather than
+## updated in place) when the visible tile span changes size.
+var _mask_material: ShaderMaterial
+var _mask_image: Image
+var _mask_texture: ImageTexture
+
 const FOG_TILE_SIZE := 5.0
 ## How far a bee has to move since its last recompute before its lit
 ## tiles are redone. Keeps the expensive part (walking every tile in
@@ -105,13 +122,14 @@ const RELIGHT_DISTANCE := 40.0
 ## -- it just becomes ordinary explored tiles like any other.
 const START_CLEAR_RADIUS := 420.0
 
-## Fully opaque so unexplored ground is genuinely hidden, not just
-## darkened -- nothing of the meadow underneath should show through.
-const UNEXPLORED_COLOR := Color8(18, 11, 15, 255)
-## Explored but no bee nearby right now, when fog_permanent_reveal is
-## off: a dim memory of the ground rather than the full black of never
-## having seen it, and not fully clear either.
-const EXPLORED_DIM_COLOR := Color8(18, 11, 15, 140)
+## Mask-texture byte values -- one per tile, read by shaders/fog_mask.gdshader
+## as a normalised float and bucketed into the same three states this file
+## used to draw directly (see the band comments there). Values just need to
+## fall clearly either side of 0.25/0.75 once divided by 255, not match any
+## particular scale.
+const MASK_UNEXPLORED := 0
+const MASK_EXPLORED := 128
+const MASK_LIT := 255
 
 ## Called once, after meadow_root and main.hive both exist -- world_building
 ## builds the meadow before this can run, so main._ready calls this right
@@ -120,6 +138,9 @@ func _build_layer() -> void:
 	_layer = Node2D.new()
 	_layer.z_index = 90   # above bees (5) and the rain wash (50), below the selection layer (100)
 	_layer.draw.connect(_draw_fog)
+	_mask_material = ShaderMaterial.new()
+	_mask_material.shader = preload("res://shaders/fog_mask.gdshader")
+	_layer.material = _mask_material
 	main.meadow_root.add_child(_layer)
 	reveal_around(main.hive.position, START_CLEAR_RADIUS)
 
@@ -251,6 +272,20 @@ func _draw_fog() -> void:
 ## Split from _draw_fog so every early return above the Perf wrap doesn't
 ## also need its own Perf.end -- see the "one begin with no matching end"
 ## warning in CLAUDE.md's perf section.
+##
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): used to walk each
+## row merging same-colour tiles into runs and issuing one draw_rect per
+## run -- correct, but Bundle C's re-measurement found this the dominant
+## frame cost at low zoom regardless (~29ms dynamic reveal, worst frame
+## 83ms), because a fog boundary is jagged enough that the view can still
+## produce a lot of runs, and each is its own draw call. Replaced with a
+## mask texture: one byte per visible tile written into `_mask_texture`
+## (0/128/255 for unexplored/explored/lit, read back by
+## shaders/fog_mask.gdshader as three alpha bands) and a single
+## draw_texture_rect call. Same tiles get walked -- the tile-iteration cost
+## this shares with the old version is unchanged -- but the per-run
+## draw-call and Rect2/Color churn is gone, replaced by one flat byte-array
+## write and one draw call regardless of how jagged the boundary is.
 func _draw_fog_body() -> void:
 	var cam: Camera2D = main.camera_view._active_camera()
 	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
@@ -258,34 +293,41 @@ func _draw_fog_body() -> void:
 
 	var min_tile: Vector2i = _tile_of(view.position)
 	var max_tile: Vector2i = _tile_of(view.position + view.size)
-	var permanent: bool = GameConfig.fog_permanent_reveal
+	var w: int = max_tile.x - min_tile.x + 1
+	var h: int = max_tile.y - min_tile.y + 1
+	if w <= 0 or h <= 0:
+		return
 
-	# Merged into horizontal runs of one colour rather than one draw call
-	# per tile -- at this tile size the view can span tens of thousands
-	# of them, and a fog boundary is a smooth curve, so most of a row is
-	# a single colour either side of it. See the perf note at the top of
-	# this file.
+	var data: PackedByteArray = PackedByteArray()
+	data.resize(w * h)
+	var i: int = 0
 	for cy in range(min_tile.y, max_tile.y + 1):
-		var run_start: int = min_tile.x
-		var run_color: Color = Color(0.0, 0.0, 0.0, 0.0)
-		var run_open: bool = false
-		for cx in range(min_tile.x, max_tile.x + 2):   # one past the end, to flush the last run
-			var color: Color = Color(0.0, 0.0, 0.0, 0.0)
-			if cx <= max_tile.x:
-				var tile: Vector2i = Vector2i(cx, cy)
-				if not _lit_count.has(tile):
-					if explored.has(tile):
-						color = Color(0.0, 0.0, 0.0, 0.0) if permanent else EXPLORED_DIM_COLOR
-					else:
-						color = UNEXPLORED_COLOR
-			if run_open and color == run_color:
-				continue
-			if run_open and run_color.a > 0.0:
-				var width: float = float(cx - run_start) * FOG_TILE_SIZE
-				_layer.draw_rect(Rect2(Vector2(run_start, cy) * FOG_TILE_SIZE, Vector2(width, FOG_TILE_SIZE)), run_color)
-			run_start = cx
-			run_color = color
-			run_open = true
+		for cx in range(min_tile.x, max_tile.x + 1):
+			var tile: Vector2i = Vector2i(cx, cy)
+			if _lit_count.has(tile):
+				data[i] = MASK_LIT
+			elif explored.has(tile):
+				data[i] = MASK_EXPLORED
+			else:
+				data[i] = MASK_UNEXPLORED
+			i += 1
+
+	_update_mask_texture(w, h, data)
+	_mask_material.set_shader_parameter("permanent_reveal", GameConfig.fog_permanent_reveal)
+	var dest: Rect2 = Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(w, h) * FOG_TILE_SIZE)
+	_layer.draw_texture_rect(_mask_texture, dest, false)
+
+## Rebuilds `_mask_image`/`_mask_texture` only when the visible tile span's
+## size changes (camera zoom); an unchanged size just overwrites the pixel
+## data in place instead of reallocating an Image/Texture2D every dirty
+## frame.
+func _update_mask_texture(w: int, h: int, data: PackedByteArray) -> void:
+	if _mask_image == null or _mask_image.get_width() != w or _mask_image.get_height() != h:
+		_mask_image = Image.create_from_data(w, h, false, Image.FORMAT_R8, data)
+		_mask_texture = ImageTexture.create_from_image(_mask_image)
+	else:
+		_mask_image.set_data(w, h, false, Image.FORMAT_R8, data)
+		_mask_texture.update(_mask_image)
 
 ## Tiles as flat pairs, matching SaveGame._hex_list -- save_game.gd calls
 ## this rather than reaching into `explored` directly, same as it goes

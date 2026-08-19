@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item landed (code + boot check; Dave's hands-on frame-time comparison still pending). Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -713,24 +713,57 @@ now closed with real measurements behind it (see its "Step 2
 re-measured" note) — one item below has fresh, specific justification
 from that; the rest still don't:
 
-- **Mask-texture + canvas-shader fog rendering — justified, specifically
-  and cleanly now.** Bundle C's re-measurement confirmed `_draw_fog`
-  remains the dominant frame cost at minimum zoom (~71ms, worst frame
-  36fps/92ms) with fog genuinely on. An earlier version of this note
-  attributed that to unexplored-tile drawing specifically based on a
-  comparison that turned out to be a `perf.gd` staleness bug — that's
-  now been redone cleanly (same colony size and camera, `perf.gd` fixed
-  first): dynamic reveal measured `fog_of_war_draw` at 29ms vs 7ms for
-  `fog_permanent_reveal` at the same zoom. Confirmed: it's specifically
-  the opaque-unexplored and dimmed-explored branches of
-  `_draw_fog_body` that are expensive, not fog bookkeeping or tile-walk
-  cost in general — see Bundle C's "Clean re-measurement" note. This is
-  a rendering-architecture change, not a tuning change — compare against
-  the current run-merged rect renderer on frame time, worst frame,
-  memory and visual parity before adopting it, and note the same session
-  found a further, smaller, non-fog cost at this zoom/colony-size (worst
-  frame stayed 83-88ms even in the cheap case) that's out of scope here
-  but worth a `Perf` breakdown of its own before or after this work.
+- **Mask-texture + canvas-shader fog rendering — landed 19 Aug, code +
+  boot check, gated on Bundle C's specific justification.** Bundle C's
+  re-measurement confirmed `_draw_fog` remains the dominant frame cost
+  at minimum zoom (~29ms dynamic reveal, worst frame 83-96ms) and traced
+  it to the opaque-unexplored/dimmed-explored branches of
+  `_draw_fog_body`, not fog bookkeeping or tile-walk cost in general —
+  see Bundle C's "Clean re-measurement" note.
+
+  **Read only:** `fog_of_war.gd` (`_draw_fog_body`/`_update_mask_texture`
+  and the mask-texture fields near the top), `shaders/fog_mask.gdshader`.
+
+  **What changed:** `_draw_fog_body` still walks the same visible tile
+  span it always did (same trigger conditions from `_update`'s
+  dirty-tracking, unchanged), but instead of merging each row into
+  colour runs and issuing one `draw_rect` per run, it writes one byte
+  per tile (`MASK_UNEXPLORED`/`MASK_EXPLORED`/`MASK_LIT`) into a flat
+  `PackedByteArray`, pushes that into a reused `Image`/`ImageTexture`
+  (`_update_mask_texture` — only reallocated when the visible span's
+  pixel size changes, e.g. on zoom; same size just overwrites the pixel
+  data in place), and issues exactly one `draw_texture_rect` call.
+  `shaders/fog_mask.gdshader` (a `ShaderMaterial` on `_layer`, assigned
+  once in `_build_layer`) reads the mask texture back into the same
+  three-state, two-colour picture the old draw_rect version produced —
+  unexplored opaque, explored-dim (or clear if `fog_permanent_reveal`),
+  lit fully clear — via three alpha bands on a single-channel float
+  read, entirely on the GPU. `UNEXPLORED_COLOR`/`EXPLORED_DIM_COLOR`
+  (both `Color8(18, 11, 15, ...)`, only differing by alpha) moved into
+  the shader as `fog_rgb` plus the two literal alphas, since nothing in
+  GDScript needs them any more.
+
+  Deliberately kept the tile-iteration cost and dirty-redraw triggers
+  identical to the previous version — the only variable changed is the
+  draw method itself (many `draw_rect` calls vs one `draw_texture_rect`
+  call), so a before/after comparison at the same scenario measures
+  exactly what this bundle claims to fix rather than conflating it with
+  a bigger architecture change. A persistent whole-world mask texture
+  (updating only changed pixels, no camera-driven rebuild at all) would
+  be a further step but changes more than one thing at once — not done
+  here.
+
+  Verified: `tests/source_checks.py`/`tests/balance_tests.py` pass; a
+  Godot boot via `mcp__godot__run_project` shows no new parser/type
+  errors (same pre-existing shadowing/unused-parameter warnings already
+  on record) and ran ~14s with fog on and no runtime shader errors in
+  the debug output. **Not yet verified by Dave:** the actual frame-time
+  comparison this item exists for — same scenario as Bundle C's "Clean
+  re-measurement" (a decent-sized colony, zoomed out, dynamic reveal),
+  `fog_of_war_draw`'s rolling average and `Perf.last_worst_breakdown`
+  before vs after, plus a visual-parity check (fixed camera position,
+  fog on, screenshot compare) since the shader reproduces the old
+  colours/alphas by hand rather than sharing code with them any more.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped

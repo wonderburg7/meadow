@@ -7,26 +7,26 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **`AUDIT_PLAN.md` Bundle C is closed and Bundle F's mask-shader item
-   is justified even more strongly than first thought** -- see
-   `AUDIT_PLAN.md` for the full trail (baseline, a correction, a clean
-   re-measurement, then a worst-frame-breakdown tool that settled the
-   remaining question, all 19 Aug). Short version: the shared-offset-disc
-   cache solved `fog_of_war_update` (0-3ms everywhere, was ~27ms at 32
-   bees). `fog_of_war_draw` at min zoom is a real cost, and it's
-   specifically about drawing unexplored/dimmed tiles (29ms dynamic
-   reveal vs 7ms `fog_permanent_reveal`, same colony/camera -- a clean
-   comparison taken after fixing a `perf.gd` staleness bug that had
-   muddied an earlier attempt at this same comparison). Then, once
-   `perf.gd` gained an unsmoothed worst-frame breakdown (item 2 below),
-   a zoomed-out fog-on worst frame of 96ms turned out to be 89ms
-   `fog_of_war_draw` -- worse than its own 15ms rolling average had
-   suggested, since draw cost is bursty enough that smoothing buries the
-   real peaks. **Next: pick up Bundle F's mask-texture/canvas-shader
-   item** in the new thread -- read `AUDIT_PLAN.md` Bundle F's entry and
-   Bundle C's re-measurement notes first, they carry the exact numbers
-   and the comparison bar (measure against the current run-merged rect
-   renderer).
+1. **Bundle F's mask-texture/canvas-shader fog item has landed (code +
+   boot check) and needs Dave's hands-on frame-time comparison.**
+   `fog_of_war.gd::_draw_fog_body` no longer merges rows into colour runs
+   and issues one `draw_rect` per run; it writes one byte per visible
+   tile into a reused `Image`/`ImageTexture` and issues a single
+   `draw_texture_rect`, with `shaders/fog_mask.gdshader` (a
+   `ShaderMaterial` on the fog layer) turning that single-channel mask
+   back into the same unexplored/dim/lit picture on the GPU. Same tiles
+   walked, same dirty-redraw triggers as before -- only the draw method
+   changed, so it's a fair comparison. `source_checks.py`/
+   `balance_tests.py` pass, a Godot boot shows no new parser/type errors
+   and ran cleanly with fog on. **Next: same scenario as the Bundle C
+   "Clean re-measurement"** (decent colony, zoomed out, dynamic reveal)
+   -- compare `fog_of_war_draw`'s rolling average and the worst-frame
+   breakdown against the pre-change numbers already on record (29ms
+   average / 83-96ms worst frame), and eyeball a fixed camera position
+   with fog on to confirm the shader reproduces the same colours/alphas
+   (it hand-copies them rather than sharing code with the old version
+   now). See `AUDIT_PLAN.md` Bundle F's updated entry for the full
+   before/after numbers and what to look for.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -103,6 +103,24 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- `AUDIT_PLAN.md` Bundle F's mask-texture/canvas-shader fog item landed
+  19 Aug. `fog_of_war.gd::_draw_fog_body` now writes one byte per visible
+  tile into a reused `Image`/`ImageTexture` and issues one
+  `draw_texture_rect`, instead of merging rows into colour runs and
+  issuing one `draw_rect` per run; a new `shaders/fog_mask.gdshader`
+  (assigned as a `ShaderMaterial` on the fog layer in `_build_layer`)
+  reads the mask back into the same three-state fog picture on the GPU.
+  Tile-walk cost and the dirty-redraw triggers from Bundle C's step 2
+  are unchanged -- only the draw method itself changed, so a before/after
+  comparison isolates exactly the thing this item claims to fix.
+  `source_checks.py`/`balance_tests.py` pass, a Godot boot via
+  `mcp__godot__run_project` shows no new parser/type errors and ran ~14s
+  with fog on with no runtime shader errors in the debug output. **Not
+  yet verified by Dave** -- the actual frame-time comparison (same
+  scenario as Bundle C's "Clean re-measurement": decent colony, zoomed
+  out, dynamic reveal vs the 29ms/83-96ms numbers already on record) and
+  a visual-parity check, since the shader hand-reproduces the old
+  colours/alphas rather than sharing code with them.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line
