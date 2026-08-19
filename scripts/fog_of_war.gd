@@ -445,14 +445,29 @@ func _draw_fog_body() -> void:
 
 	var min_tile: Vector2i = _tile_of(view.position)
 	var max_tile: Vector2i = _tile_of(view.position + view.size)
+
+	# Clamp to the persistent image's actual tile range before drawing.
+	# camera_view.gd never clamps camera position (only zoom), so at low
+	# zoom near a field edge the view can reach well past WORLD_MARGIN --
+	# and draw_texture_rect_region's clip_uv doesn't just stop sampling at
+	# the texture edge, it stretches the boundary texel across whatever
+	# screen space is left, which is what "fog lifts into infinity toward
+	# an edge" was: a lit/clear boundary pixel smeared across the rest of
+	# the view. Clamping the drawn region here means that never happens --
+	# past the edge just draws no fog at all, which is fine since nothing
+	# playable exists out there anyway.
+	var tex_max_tile: Vector2i = _world_origin_tile + Vector2i(_world_mask_image.get_width() - 1, _world_mask_image.get_height() - 1)
+	min_tile.x = max(min_tile.x, _world_origin_tile.x)
+	min_tile.y = max(min_tile.y, _world_origin_tile.y)
+	max_tile.x = min(max_tile.x, tex_max_tile.x)
+	max_tile.y = min(max_tile.y, tex_max_tile.y)
+
 	var w: int = max_tile.x - min_tile.x + 1
 	var h: int = max_tile.y - min_tile.y + 1
 	if w <= 0 or h <= 0:
 		return
 
 	var dest: Rect2 = Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(w, h) * FOG_TILE_SIZE)
-	# clip_uv (the draw call's default true) keeps this safe even if the
-	# camera view pokes past the persistent image's edge -- see WORLD_MARGIN.
 	var src: Rect2 = Rect2(Vector2(min_tile - _world_origin_tile), Vector2(w, h))
 	_layer.draw_texture_rect_region(_world_mask_texture, dest, src)
 
