@@ -7,28 +7,29 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **`AUDIT_PLAN.md` Bundle C is now closed** ("measured, partially
-   fixed" -- see its own file for the full re-measurement, including a
-   correction). Short version: the shared-offset-disc cache landed and
-   effectively solved `fog_of_war_update` (0-3ms everywhere now, was
-   ~27ms at 32 bees) -- solid. `fog_of_war_draw` at normal zoom is fine;
-   at minimum zoom with fog genuinely on it's still the dominant
-   per-frame cost (~71ms, worst frame 36fps/92ms) -- also solid, and
-   still justifies Bundle F's mask-shader item as a candidate. What
-   *doesn't* hold up: the original "specifically the unexplored tiles,
-   not fog bookkeeping in general" narrowing. That was based on
-   comparing against fog toggled fully off, which turned out to be a
-   `perf.gd` display bug (fixed same session -- an inactive section used
-   to freeze at its last reading forever instead of decaying to zero;
-   see `perf.gd`'s "Not yet verified" note below), not a real "revealed
-   ground draws cheap" data point. **Next: before picking up Bundle F's
-   mask-shader item, take one more cheap measurement** -- same zoom/
-   colony size, `fog_permanent_reveal` on (not the master toggle) vs
-   off, now that `perf.gd`'s readings can actually be trusted -- to
-   confirm whether the cost really is about unexplored margin
-   specifically or just raw visible-tile count at low zoom. Read
-   `AUDIT_PLAN.md` Bundle F's updated note and Bundle C's correction
-   first.
+1. **`AUDIT_PLAN.md` Bundle C is now closed and Bundle F's mask-shader
+   item is cleanly justified** -- see `AUDIT_PLAN.md` for the full
+   trail (baseline, a correction, then a clean re-measurement, all 19
+   Aug). Short version: the shared-offset-disc cache solved
+   `fog_of_war_update` (0-3ms everywhere, was ~27ms at 32 bees).
+   `fog_of_war_draw` at min zoom is a real cost (~71ms, worst frame
+   36fps/92ms) with fog genuinely on. An earlier same-session comparison
+   wrongly attributed that to unexplored-tile drawing specifically --
+   turned out to be a `perf.gd` display bug (fixed: an inactive section
+   used to freeze at its last reading instead of decaying to zero, see
+   below). Redone cleanly right after the fix, same colony/camera:
+   `fog_of_war_draw` measured 29ms with dynamic (ordinary) fog reveal
+   vs 7ms with `fog_permanent_reveal` on. **That confirms the original
+   theory after all** -- it's specifically the opaque-unexplored/dimmed
+   branches of `_draw_fog_body` that are expensive, not fog bookkeeping
+   or raw tile-walk cost in general. **Next: pick up Bundle F's
+   mask-texture/canvas-shader item** in the new thread -- read
+   `AUDIT_PLAN.md` Bundle F's entry and Bundle C's "Clean re-measurement"
+   note first, they carry the exact numbers and the comparison bar
+   (measure against the current run-merged rect renderer). Note: even
+   the cheap (permanent-reveal) case still showed an 83-88ms worst
+   frame at this zoom/colony-size -- a separate, smaller, non-fog cost,
+   not investigated, worth a fresh `Perf` breakdown of its own.
 2. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
@@ -101,13 +102,15 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   parser/type errors. **Re-measured by Dave the same day** -- confirmed:
   `fog_of_war_update` down to 0-3ms everywhere tested (was ~27ms at 32
   bees); `fog_of_war_draw` down at min zoom (~71ms, was ~130ms) but
-  still the dominant cost there with fog genuinely on. The narrower
-  claim -- that this is specifically about unexplored tiles rather than
-  fog bookkeeping in general -- turned out to rest on a `perf.gd`
-  staleness bug (below), so it's an open question again, not a closed
-  one. Bundle C is closed either way; see `AUDIT_PLAN.md`'s own "Step 2
-  re-measured" note (including its correction) and Bundle F's updated
-  entry for what to check before the mask-shader work.
+  still the dominant cost there with fog genuinely on. A same-session
+  comparison then wrongly narrowed that to "specifically unexplored
+  tiles" based on a reading that turned out to be a `perf.gd` staleness
+  bug (below) -- but a clean redo right after the fix (same colony size
+  and camera, dynamic reveal vs `fog_permanent_reveal`) confirmed the
+  narrowing was actually correct: 29ms vs 7ms. Bundle C is closed;
+  Bundle F's mask-shader item now has clean, specific justification --
+  see `AUDIT_PLAN.md`'s "Clean re-measurement" note and Bundle F's
+  updated entry.
 - `perf.gd`'s corner breakdown used to freeze a section at its last
   reading forever once that section stopped running (e.g. fog toggled
   off), because `_process()`'s averaging loop only updated a section's

@@ -402,25 +402,6 @@ and what it didn't:
   yet, and now that `perf.gd`'s readings can be trusted, it's a cheap
   one to take before committing to the mask-shader rewrite below.
 
-**Bundle C is closed as "measured, partially fixed."** `fog_of_war_update`
-needs nothing further — solid, confirmed both times fog was genuinely
-on. `fog_of_war_draw` at normal zoom is fine; at min zoom with fog
-genuinely on it's still a real cost (~71ms, worst frame 36fps/92ms,
-both readings taken while fog was actually drawing) — that part of the
-finding stands. What's *not* established is why: whether it's the
-sheer number of visible tiles at low zoom regardless of what they show,
-or specifically the unexplored-margin tiles as originally guessed here.
-Bundle F's mask-texture/canvas-shader item still has real justification
-from the raw zoom-out number, but **take a `fog_permanent_reveal`-on
-comparison at the same zoom/colony-size first** (now that `perf.gd` can
-be trusted) before deciding a rendering rewrite is the right fix rather
-than something cheaper aimed at the tile-walk itself. The other three
-Bundle F items (`BitMap`/packed storage, incremental disc-edge updates,
-save-size RLE) still have no fresh measurement behind them —
-`fog_of_war_update` being cheap now removes the case for incremental
-edge updates specifically, and save size/load time hasn't been measured
-at all yet.
-
 **`perf.gd` fix, landed same session:** `_process()`'s averaging loop
 now walks `averages.keys()` first and decays (same 0.1 lerp toward
 zero) any section absent from `_totals` this frame, erasing it once its
@@ -428,6 +409,38 @@ value drops below 0.01ms. A section that stops running — any toggled-
 off system, not just fog — now fades out of the corner breakdown
 instead of freezing at its last reading forever. `tests/source_checks.py`/
 `balance_tests.py` pass, a Godot boot shows no new parser/type errors.
+
+**Clean re-measurement (Dave, same session, right after the `perf.gd`
+fix):** same colony size and camera (22 foraging + 2 nursing + 3 comb
+workers, zoomed out), this time comparing "dynamic reveal" (ordinary
+fog — unexplored opaque, explored-but-unlit dimmed) against
+`fog_permanent_reveal` on, with the `perf.gd` fix in place so the
+readings are trustworthy:
+- Dynamic reveal: `fog_of_war_draw` **29ms** (35fps, worst 83ms).
+- Permanent reveal: `fog_of_war_draw` **7ms** (56fps, worst 88ms).
+
+**This confirms the original theory after all** — drawing genuinely
+unexplored/dimmed tiles costs roughly 4x what drawing an
+already-revealed, mostly-transparent view does, at the same zoom and
+colony size. The open question raised by the correction above is
+answered: it's not just raw visible-tile count at low zoom, it's
+specifically the opaque-unexplored and dimmed-explored branches of
+`_draw_fog_body` that are expensive. (Both readings still show a worst
+frame well above the 60fps target — 83-88ms — so there's a separate,
+smaller cost at this zoom/colony-size that isn't fog-specific; not
+investigated here, out of scope for this bundle.)
+
+**Bundle C is closed as "measured, partially fixed."** `fog_of_war_update`
+needs nothing further. `fog_of_war_draw` at normal zoom is fine; at min
+zoom it's a real cost, and now cleanly confirmed to concentrate in
+drawing unexplored/dimmed tiles specifically rather than fog bookkeeping
+or tile-walk cost in general. Bundle F's mask-texture/canvas-shader item
+has real, specific justification — see its updated entry. The other
+three Bundle F items (`BitMap`/packed storage, incremental disc-edge
+updates, save-size RLE) still have no fresh measurement behind them —
+`fog_of_war_update` being cheap now removes the case for incremental
+edge updates specifically, and save size/load time hasn't been measured
+at all yet.
 
 ---
 
@@ -647,25 +660,24 @@ now closed with real measurements behind it (see its "Step 2
 re-measured" note) — one item below has fresh, specific justification
 from that; the rest still don't:
 
-- **Mask-texture + canvas-shader fog rendering — justified by the raw
-  number, but the "why" needs one more measurement first.** Bundle C's
-  re-measurement confirmed `_draw_fog` remains the dominant frame cost
-  at minimum zoom with fog genuinely on (~71ms, worst frame 36fps/92ms)
-  — that part is solid. The original claim that this is specifically
-  about drawing *unexplored* tiles (vs fog bookkeeping in general) was
-  based on a comparison against fog toggled fully off, which turned out
-  to be a `perf.gd` staleness bug (now fixed) rather than a real
-  "revealed ground is cheap" data point — see Bundle C's correction
-  note. Before committing to a rendering-architecture rewrite, take a
-  cheap same-zoom/colony-size comparison with `fog_permanent_reveal` on
-  instead (not the master toggle) — if a mostly-revealed view at the
-  same zoom is meaningfully cheaper than a mostly-unexplored one, the
-  original theory holds and this rewrite is well-targeted; if not, the
-  cost may just be the sheer number of visible tiles regardless of what
-  they show, which a mask/shader approach would still address but for a
-  different reason than originally written here. Either way, compare
-  against the current run-merged rect renderer on frame time, worst
-  frame, memory and visual parity before adopting it.
+- **Mask-texture + canvas-shader fog rendering — justified, specifically
+  and cleanly now.** Bundle C's re-measurement confirmed `_draw_fog`
+  remains the dominant frame cost at minimum zoom (~71ms, worst frame
+  36fps/92ms) with fog genuinely on. An earlier version of this note
+  attributed that to unexplored-tile drawing specifically based on a
+  comparison that turned out to be a `perf.gd` staleness bug — that's
+  now been redone cleanly (same colony size and camera, `perf.gd` fixed
+  first): dynamic reveal measured `fog_of_war_draw` at 29ms vs 7ms for
+  `fog_permanent_reveal` at the same zoom. Confirmed: it's specifically
+  the opaque-unexplored and dimmed-explored branches of
+  `_draw_fog_body` that are expensive, not fog bookkeeping or tile-walk
+  cost in general — see Bundle C's "Clean re-measurement" note. This is
+  a rendering-architecture change, not a tuning change — compare against
+  the current run-merged rect renderer on frame time, worst frame,
+  memory and visual parity before adopting it, and note the same session
+  found a further, smaller, non-fog cost at this zoom/colony-size (worst
+  frame stayed 83-88ms even in the cheap case) that's out of scope here
+  but worth a `Perf` breakdown of its own before or after this work.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped
