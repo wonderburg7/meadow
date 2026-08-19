@@ -7,9 +7,22 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Two audit bundles now need Dave's hands-on check in Godot, together
-   in one playthrough** -- `AUDIT_PLAN.md` Bundle A and Bundle B have both
-   landed (code + boot check) but neither has been played:
+1. **`AUDIT_PLAN.md` Bundle C step 2 needs re-measuring.** Dave's 19 Aug
+   baseline playtest confirmed `fog_of_war` was a real cost (up to
+   ~130ms `fog_of_war_draw` at min zoom, ~27ms `fog_of_war_update` at 32
+   bees, worst frame 15fps) -- so the shared-offset-disc cache and
+   dirty-driven redraw described in Bundle C's "Step 2" have now landed
+   (code + boot check done). What's needed next is the *same* playtest
+   scenario again (star fps, a few colony sizes, fog on/off, zoom 1.0 vs
+   0.4) to confirm both sections actually dropped and the explored/lit
+   visual output looks identical at a fixed camera position. Don't start
+   Bundle F (RLE save, BitMap, mask shader, etc.) without this
+   re-measurement showing step 2 wasn't enough -- it's still explicitly
+   gated.
+2. **Two other audit bundles still need Dave's hands-on check in Godot**
+   -- can be combined with (1) above since it's the same "play a run"
+   session. `AUDIT_PLAN.md` Bundle A and Bundle B have both landed (code
+   + boot check) but neither has been played:
    - **Bundle A** (Challenge state safety): start Challenge 1, reach
      stage 1.3, abandon to the main menu partway through the fast build,
      and confirm building a cell in a fresh run afterwards takes the
@@ -28,24 +41,8 @@ into a history. Full history lives in `git log` and the Notion Build Log.
      1.3 build-cell flow, the 1.7 completion message, the right-click
      ripple and goal readout).
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
-   via `mcp__godot__run_project` all came back clean for both bundles,
-   but nothing here substitutes for Dave actually playing it.
-2. **`AUDIT_PLAN.md` Bundle C's measurement step is next** (P1, fog-of-war:
-   measure first, then optimise, gated on measurement). The
-   `Perf` instrumentation gap is now fixed -- it used to only cover the
-   relight loop, not the draw pass, so a playtest would have missed half
-   the risk both audits flagged. It's now two sections,
-   `fog_of_war_update` and `fog_of_war_draw`; both need checking. Needs a
-   playtest with the starred-fps `perf.gd` breakdown at a few colony
-   sizes, fog on vs off, at zoom 1.0 and 0.4 -- can be combined with (1)
-   above since it's the same "play a run and watch the corner" session.
-   Only write optimisation code if that baseline actually shows either
-   section as a real cost; "measured, not a bottleneck" is a valid
-   outcome that closes the bundle.
-   - Also fold in Bundle E's one behavioural check while a run is going
-     anyway: leave a few dead larvae uncleaned and confirm brood
-     development still visibly slows (disease reads `main.season` now
-     instead of a per-frame group lookup -- see Bundle E's "Done" note).
+   via `mcp__godot__run_project` all came back clean for all three
+   bundles, but nothing here substitutes for Dave actually playing it.
 3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
@@ -79,6 +76,21 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- `AUDIT_PLAN.md` Bundle C step 2 (shared-offset fog cache + dirty-driven
+  redraw) landed 19 Aug, gated on Dave's own baseline playtest that
+  confirmed `fog_of_war` was a real cost (up to ~130ms `fog_of_war_draw`
+  at min zoom, ~27ms `fog_of_war_update` at 32 bees, worst frame
+  15fps/65ms). `fog_of_war.gd`'s `_bee_light` now stores a centre tile
+  per bee instead of a full translated disc; a shared `_disc_offsets`
+  array (rebuilt only if `fog_reveal_radius` changes) is applied via
+  `_light_center()`. `_update()` only calls `queue_redraw()` when
+  something that affects the drawn output actually changed (a relight,
+  the layer becoming visible again, a view switch, or the camera/
+  `fog_permanent_reveal` changing) rather than every frame.
+  `source_checks.py`/`balance_tests.py` pass, a Godot boot shows no new
+  parser/type errors. **Not yet re-measured by Dave** -- same scenario
+  as the baseline, to confirm both sections actually dropped and the
+  visual output is unchanged.
 - `AUDIT_PLAN.md` Bundle E (small hot-path/housekeeping cleanups) is
   done -- `HiveCell._health_factor()` no longer does a per-frame
   `get_tree().get_nodes_in_group("season")` lookup on the brood-
@@ -92,9 +104,16 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   pass, `tools/update_function_map.py --check` is clean (regenerated
   after `hive_cell.gd`'s new field shifted its line numbers), and a
   Godot boot via `mcp__godot__run_project` shows no new parser/type
-  errors. **Not yet verified by Dave:** that disease still visibly slows
-  brood development the same way it did before (see item 2 above -- can
-  be checked in the same playtest as Bundle C's fog measurement).
+  errors. Dave checked the disease/brood-slowing behaviour on 19 Aug
+  during the Bundle C baseline playtest and saw no visible effect after
+  a few minutes of leaving larvae uncleaned -- traced to the mechanism
+  itself (not this bundle's wiring): `balance_tests.py`'s own pathogen
+  model needs `2 bodies, 40 bees in 50 cells` before it sickens, and even
+  then takes `3.3 days` at 1x -- by design ("no cost until real
+  neglect"), so a short test window plausibly never crossed the 0.35
+  disease threshold. `hud.gd`'s comb readout does show
+  `Season.disease_text()` when it does cross. Considered closed unless a
+  longer/heavier neglect test says otherwise.
 - `AUDIT_PLAN.md` Bundle D (Claude/agent context restructure) is done --
   root `CLAUDE.md` trimmed 555 -> 210 lines, history/pitfalls/perf detail
   moved to `docs/`, six completed plan docs archived to `docs/archive/`,

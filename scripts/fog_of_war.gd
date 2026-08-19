@@ -50,17 +50,49 @@ extends Node
 ## Neither is measured against a real playtest (nothing here can run
 ## Godot) -- both are wrapped in Perf so the corner readout will show
 ## `fog_of_war` if this guess turns out wrong.
+##
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle C): the guess above
+## turned out wrong -- a baseline playtest showed `fog_of_war_draw` costing
+## up to ~130ms at minimum zoom and `fog_of_war_update` scaling visibly
+## with bee count (~30ms at ~30 meadow bees). Two changes, gated on that
+## measurement rather than guessed:
+##   - `_bee_light` used to store each bee's full translated tile array
+##     (thousands of Vector2i at today's reveal radius). It now stores
+##     only a centre tile; `_disc_offsets` holds one shared array of
+##     relative offsets, rebuilt only if `fog_reveal_radius` changes, and
+##     `_light_center` applies it to whichever centre needs lighting or
+##     unlighting. Same tiles get lit, far less stored and reallocated.
+##   - `_update` used to call `_layer.queue_redraw()` unconditionally
+##     every frame. It now only does so when a bee's lit tiles actually
+##     changed, the camera moved or zoomed, the hive/meadow view switched,
+##     or `fog_permanent_reveal` toggled -- a static camera over an
+##     unchanging fog state now draws nothing.
 
 var main: Node2D
 
 var explored: Dictionary = {}      # Vector2i tile -> true, saved
 var _lit_count: Dictionary = {}    # Vector2i tile -> int, bees currently covering it
 
-## bee instance id -> {"pos": Vector2, "tiles": Array[Vector2i]} -- the
-## position and lit-tile set as of that bee's last recompute.
+## bee instance id -> {"pos": Vector2, "center": Vector2i} -- the position
+## and lit-disc centre as of that bee's last recompute. The disc itself
+## isn't stored per bee any more -- see `_disc_offsets` below.
 var _bee_light: Dictionary = {}
 
+## Every bee shares one disc of tile offsets (relative to its own centre
+## tile), rebuilt only when `GameConfig.fog_reveal_radius` changes rather
+## than translated and stored fresh per bee per relight -- see the 19 Aug
+## perf note below.
+var _disc_offsets: Array[Vector2i] = []
+var _disc_offsets_radius: float = -1.0
+
 var _layer: Node2D
+## Tracked so `_update` only queues a redraw when something actually
+## changed, instead of every frame -- see the 19 Aug perf note below.
+var _last_layer_visible: bool = false
+var _last_seen_in_hive_view: bool = false
+var _last_draw_cam_pos: Vector2 = Vector2.ZERO
+var _last_draw_cam_zoom: float = -1.0
+var _last_draw_permanent: bool = false
 
 const FOG_TILE_SIZE := 5.0
 ## How far a bee has to move since its last recompute before its lit
@@ -97,10 +129,14 @@ func _update() -> void:
 	if not GameConfig.fog_of_war_on:
 		if _layer.visible:
 			_layer.visible = false
+		_last_layer_visible = false
 		return
+	var just_shown: bool = not _last_layer_visible
 	_layer.visible = true
+	_last_layer_visible = true
 
 	Perf.begin("fog_of_war_update")
+	var dirty: bool = just_shown
 	var seen_ids: Dictionary = {}
 	for b in get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b) or b.get_parent() != main.meadow_root:
@@ -110,34 +146,76 @@ func _update() -> void:
 		var cached: Dictionary = _bee_light.get(id, {})
 		if cached.is_empty() or cached.pos.distance_to(b.position) >= RELIGHT_DISTANCE:
 			_relight(id, b.position)
+			dirty = true
 
 	# A bee that died or came indoors since the last frame stops lighting
 	# whatever it was covering.
 	for id in _bee_light.keys():
 		if not seen_ids.has(id):
-			_unlight(_bee_light[id].tiles)
+			_light_center(_bee_light[id].center, -1)
 			_bee_light.erase(id)
+			dirty = true
 	Perf.end("fog_of_war_update")
-	_layer.queue_redraw()
 
-## Recomputes and swaps in the tiles bee `id` currently lights.
+	var view_switched: bool = main.in_hive_view != _last_seen_in_hive_view
+	_last_seen_in_hive_view = main.in_hive_view
+	if main.in_hive_view:
+		return   # _draw_fog is a no-op while the hive view is showing
+
+	if dirty or view_switched or _camera_view_changed():
+		_layer.queue_redraw()
+		var cam: Camera2D = main.camera_view._active_camera()
+		_last_draw_cam_pos = cam.position
+		_last_draw_cam_zoom = cam.zoom.x
+		_last_draw_permanent = GameConfig.fog_permanent_reveal
+
+## True once the camera's moved, zoomed, or `fog_permanent_reveal` has
+## flipped since the last frame we actually redrew.
+func _camera_view_changed() -> bool:
+	var cam: Camera2D = main.camera_view._active_camera()
+	return (
+		cam.position != _last_draw_cam_pos
+		or cam.zoom.x != _last_draw_cam_zoom
+		or GameConfig.fog_permanent_reveal != _last_draw_permanent
+	)
+
+## Rebuilds the shared offset disc only when the reveal radius has
+## actually changed (it's a live-tunable debug-panel slider).
+func _ensure_disc_offsets() -> void:
+	var radius: float = GameConfig.fog_reveal_radius
+	if radius == _disc_offsets_radius and not _disc_offsets.is_empty():
+		return
+	_disc_offsets.clear()
+	var span: int = int(ceil(radius / FOG_TILE_SIZE))
+	for dx in range(-span, span + 1):
+		for dy in range(-span, span + 1):
+			if Vector2(dx, dy).length() * FOG_TILE_SIZE > radius:
+				continue
+			_disc_offsets.append(Vector2i(dx, dy))
+	_disc_offsets_radius = radius
+
+## Recomputes and swaps in the disc centre bee `id` currently lights.
 func _relight(id: int, pos: Vector2) -> void:
+	_ensure_disc_offsets()
 	var old: Dictionary = _bee_light.get(id, {})
 	if not old.is_empty():
-		_unlight(old.tiles)
-	var tiles: Array = _disc(pos, GameConfig.fog_reveal_radius)
-	for tile in tiles:
-		_lit_count[tile] = _lit_count.get(tile, 0) + 1
-		explored[tile] = true
-	_bee_light[id] = {"pos": pos, "tiles": tiles}
+		_light_center(old.center, -1)
+	var center: Vector2i = _tile_of(pos)
+	_light_center(center, 1)
+	_bee_light[id] = {"pos": pos, "center": center}
 
-func _unlight(tiles: Array) -> void:
-	for tile in tiles:
-		var count: int = _lit_count.get(tile, 0) - 1
+## Applies the shared disc offsets around `center`, lighting (delta 1) or
+## unlighting (delta -1) every tile it covers.
+func _light_center(center: Vector2i, delta: int) -> void:
+	for off in _disc_offsets:
+		var tile: Vector2i = Vector2i(center.x + off.x, center.y + off.y)
+		var count: int = _lit_count.get(tile, 0) + delta
 		if count <= 0:
 			_lit_count.erase(tile)
 		else:
 			_lit_count[tile] = count
+		if delta > 0:
+			explored[tile] = true
 
 ## Marks a circle of tiles explored without lighting them -- used for the
 ## starting clearing and for restoring a save.

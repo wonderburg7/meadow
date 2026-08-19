@@ -22,7 +22,7 @@ done, don't delete it).
 |---|---|---|---|
 | A — Challenge state safety | P0 | 2-3h | Done (code + boot check; Dave's hands-on check still pending) |
 | B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
-| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Instrumentation split + boot check done; baseline playtest still needed |
+| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Baseline measured, showed a real cost; step 2 (shared-offset cache + dirty redraw) landed, code + boot check done; re-measure still needed |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
 | F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
@@ -306,26 +306,59 @@ baseline. If the baseline in step 1 comes back clean, close this bundle
 with "measured, not a bottleneck" and move on — that's a valid outcome,
 not a stall.
 
-**Done so far (prep only, no optimisation code):** the existing
-`Perf.begin("fog_of_war")`/`end` pair only ever wrapped `_update()`'s
-relight loop — the actual draw pass (`_draw_fog`, called via
-`queue_redraw()` every single frame regardless of whether anything
-changed) had no instrumentation at all, so a baseline taken as the plan
-was originally written would have been blind to exactly the "unconditional
-`queue_redraw()`" risk both audits called out. Split into two sections:
-`fog_of_war_update` (unchanged relight loop) and `fog_of_war_draw` (new,
-wraps the renamed `_draw_fog_body()`; `_draw_fog` itself stays a thin
-early-return wrapper so the `in_hive_view` skip doesn't need its own
-`Perf.end`). No behaviour change — `tests/source_checks.py` and
-`tests/balance_tests.py` both still pass, and a Godot boot via
-`mcp__godot__run_project` shows no new parser/type errors (only the
+**Step 1 baseline (Dave's playtest, 19 Aug):** starred fps, played Day
+1-5 at a handful of colony sizes, fog on and off, zoom 1.0 and 0.4.
+Confirmed a real cost, not a false alarm:
+- `fog_of_war_draw` dominated at low zoom — ~4ms zoomed in vs measured
+  as high as ~130ms zoomed out (the 6.25x drawn-area scaling both
+  audits predicted).
+- `fog_of_war_update` grew with colony size — from ~1ms at 2 bees to
+  ~27ms at 32 meadow bees (Day 3 sample), consistent with the
+  per-bee-stored-disc shape both audits flagged.
+- Worst frame recorded: 15fps/65ms (Day 3, 32 bees, fog on). With fog
+  permanently revealed the cost dropped but didn't disappear (`_draw_fog_body`
+  still walks every visible tile either way) — expected, not a bug.
+- Separately, Dave also checked Bundle E's pending disease/brood item
+  and saw no visible slowdown or comb-panel text after a few minutes of
+  leaving larvae uncleaned. Checked against `balance_tests.py`'s own
+  pathogen model (`2 bodies, 40 bees in 50 cells: sickens in 3.3 days`)
+  — the mechanism is correctly wired (`hud.gd`'s comb readout does show
+  `Season.disease_text()`, confirmed by reading the code), it just needs
+  more corpses and/or more real time than a few minutes to cross the
+  0.35 disease threshold by design ("no cost until real neglect"). Not
+  reopening Bundle E for this; flagging here since it was checked in the
+  same session.
+
+**Step 2 (landed, gated on the baseline above showing a real cost):**
+1. **Shared precomputed disc + centre-only per-bee cache.** `_bee_light`
+   no longer stores each bee's full translated tile array; it stores a
+   centre tile only. `_disc_offsets` holds one shared `Array[Vector2i]`
+   of relative offsets, rebuilt via `_ensure_disc_offsets()` only when
+   `GameConfig.fog_reveal_radius` changes (it's a live debug-panel
+   slider). `_light_center(center, delta)` applies the shared offsets to
+   light (`delta 1`) or unlight (`delta -1`) whichever centre needs it —
+   used by both `_relight` and the bee-departed cleanup loop, replacing
+   the old `_unlight(tiles)`.
+2. **Dirty-driven redraw.** `_update()` now only calls
+   `_layer.queue_redraw()` when something that affects the drawn output
+   actually changed: a bee relit/unlit this frame, the fog layer just
+   became visible again, the hive/meadow view switched, or the camera
+   moved/zoomed/`fog_permanent_reveal` toggled since the last frame that
+   was actually redrawn (`_camera_view_changed()`). A static camera over
+   an unchanging fog state now draws nothing.
+
+Verified: `tests/source_checks.py` and `tests/balance_tests.py` both
+pass; `tools/update_function_map.py --check` unaffected (fog_of_war.gd
+isn't one of the six mapped scripts). A Godot boot via
+`mcp__godot__run_project` shows no new parser/type errors, only the
 same pre-existing shadowing/unused-parameter warnings already on
-record). **Step 1's actual baseline still needs Dave's hands-on
-playtest** — star "fps", play at a few colony sizes with fog on vs off
-and zoom 1.0 vs 0.4, and check the corner breakdown for both
-`fog_of_war_update` and `fog_of_war_draw` specifically. Nothing past
-that point (step 2's optimisation code) should be written until that
-comes back.
+record. **Not yet re-measured by Dave** — same scenario as the baseline
+(star fps, a few colony sizes, fog on/off, zoom 1.0 vs 0.4) to confirm
+`fog_of_war_update`/`fog_of_war_draw` actually dropped and the visual
+output is unchanged (explored/lit state should look identical at a
+fixed camera position before and after). Per step 3, don't proceed to
+Bundle F's edge-update/`BitMap`/mask-shader options without a fresh
+measurement showing step 2 wasn't enough.
 
 ---
 
