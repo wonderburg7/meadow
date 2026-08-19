@@ -203,6 +203,13 @@ func _build_layer() -> void:
 	_world_mask_image.fill(Color8(MASK_UNEXPLORED, MASK_UNEXPLORED, MASK_UNEXPLORED, 255))
 	_world_mask_texture = ImageTexture.create_from_image(_world_mask_image)
 	_mask_material.set_shader_parameter("mask_tex", _world_mask_texture)
+	# Constant for the texture's lifetime -- the shader uses this plus the
+	# per-draw view_world_pos/size (set in _draw_fog_body) to work out
+	# whether a given screen pixel's world position actually falls inside
+	# mask_tex's real coverage, rather than trusting Godot's own UV
+	# clipping. See shaders/fog_mask.gdshader's header comment for why.
+	_mask_material.set_shader_parameter("tex_world_pos", Vector2(_world_origin_tile) * FOG_TILE_SIZE)
+	_mask_material.set_shader_parameter("tex_world_size", Vector2(world_w, world_h) * FOG_TILE_SIZE)
 
 	reveal_around(main.hive.position, START_CLEAR_RADIUS)
 
@@ -422,14 +429,25 @@ func _draw_fog() -> void:
 ## warning in CLAUDE.md's perf section.
 ##
 ## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): see the header
-## comment's two 19 Aug perf notes for the full trail (draw_rect runs ->
-## per-view mask texture -> this, a persistent whole-meadow mask texture).
+## comment's 19 Aug perf notes for the full trail (draw_rect runs ->
+## per-view mask texture -> persistent whole-meadow mask texture -> this).
 ## No per-frame tile walk here any more -- `_paint_tile` (called from
 ## `_light_center`/`reveal_around`/`_repaint_all`) already keeps
 ## `_world_mask_image` current as tiles change state. This function only
-## uploads it to the GPU if `_mask_dirty`, then draws whichever sub-rect
-## of it the camera currently frames -- cost no longer depends on view
-## size or zoom at all, only on whether anything actually changed.
+## uploads it to the GPU if `_mask_dirty`, then draws the camera's whole
+## current view in one call -- cost no longer depends on view size or
+## zoom at all, only on whether anything actually changed.
+##
+## Always draws the *whole* view, with no CPU-side clamping to
+## `_world_mask_image`'s bounds -- an earlier version clamped here, which
+## fixed a stretching artifact (see shaders/fog_mask.gdshader's header
+## comment) but introduced a worse one: whatever part of the view fell
+## outside the clamped region just never got drawn, which read as that
+## ground being revealed by default rather than hidden. The shader itself
+## now decides, per pixel, whether that pixel's world position is inside
+## `mask_tex`'s real coverage -- see `view_world_pos`/`view_world_size`,
+## set below, and `tex_world_pos`/`tex_world_size`, set once in
+## `_build_layer`.
 func _draw_fog_body() -> void:
 	if _mask_dirty:
 		Perf.begin("fog_of_war_draw_upload")
@@ -445,31 +463,15 @@ func _draw_fog_body() -> void:
 
 	var min_tile: Vector2i = _tile_of(view.position)
 	var max_tile: Vector2i = _tile_of(view.position + view.size)
-
-	# Clamp to the persistent image's actual tile range before drawing.
-	# camera_view.gd never clamps camera position (only zoom), so at low
-	# zoom near a field edge the view can reach well past WORLD_MARGIN --
-	# and draw_texture_rect_region's clip_uv doesn't just stop sampling at
-	# the texture edge, it stretches the boundary texel across whatever
-	# screen space is left, which is what "fog lifts into infinity toward
-	# an edge" was: a lit/clear boundary pixel smeared across the rest of
-	# the view. Clamping the drawn region here means that never happens --
-	# past the edge just draws no fog at all, which is fine since nothing
-	# playable exists out there anyway.
-	var tex_max_tile: Vector2i = _world_origin_tile + Vector2i(_world_mask_image.get_width() - 1, _world_mask_image.get_height() - 1)
-	min_tile.x = max(min_tile.x, _world_origin_tile.x)
-	min_tile.y = max(min_tile.y, _world_origin_tile.y)
-	max_tile.x = min(max_tile.x, tex_max_tile.x)
-	max_tile.y = min(max_tile.y, tex_max_tile.y)
-
 	var w: int = max_tile.x - min_tile.x + 1
 	var h: int = max_tile.y - min_tile.y + 1
 	if w <= 0 or h <= 0:
 		return
 
 	var dest: Rect2 = Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(w, h) * FOG_TILE_SIZE)
-	var src: Rect2 = Rect2(Vector2(min_tile - _world_origin_tile), Vector2(w, h))
-	_layer.draw_texture_rect_region(_world_mask_texture, dest, src)
+	_mask_material.set_shader_parameter("view_world_pos", dest.position)
+	_mask_material.set_shader_parameter("view_world_size", dest.size)
+	_layer.draw_texture_rect(_world_mask_texture, dest, false)
 
 ## Tiles as flat pairs, matching SaveGame._hex_list -- save_game.gd calls
 ## this rather than reaching into `explored` directly, same as it goes
