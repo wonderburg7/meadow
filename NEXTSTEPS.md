@@ -8,25 +8,27 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 ## Next up
 
 1. **Bundle F's mask-texture/canvas-shader fog item has landed (code +
-   boot check) and needs Dave's hands-on frame-time comparison.**
-   `fog_of_war.gd::_draw_fog_body` no longer merges rows into colour runs
-   and issues one `draw_rect` per run; it writes one byte per visible
-   tile into a reused `Image`/`ImageTexture` and issues a single
-   `draw_texture_rect`, with `shaders/fog_mask.gdshader` (a
-   `ShaderMaterial` on the fog layer) turning that single-channel mask
-   back into the same unexplored/dim/lit picture on the GPU. Same tiles
-   walked, same dirty-redraw triggers as before -- only the draw method
-   changed, so it's a fair comparison. `source_checks.py`/
-   `balance_tests.py` pass, a Godot boot shows no new parser/type errors
-   and ran cleanly with fog on. **Next: same scenario as the Bundle C
-   "Clean re-measurement"** (decent colony, zoomed out, dynamic reveal)
-   -- compare `fog_of_war_draw`'s rolling average and the worst-frame
-   breakdown against the pre-change numbers already on record (29ms
-   average / 83-96ms worst frame), and eyeball a fixed camera position
-   with fog on to confirm the shader reproduces the same colours/alphas
-   (it hand-copies them rather than sharing code with the old version
-   now). See `AUDIT_PLAN.md` Bundle F's updated entry for the full
-   before/after numbers and what to look for.
+   boot check), including a fix for a real bug Dave's first hands-on
+   check caught (fog was invisible entirely) -- needs re-checking, then
+   the frame-time comparison.** `fog_of_war.gd::_draw_fog_body` no
+   longer merges rows into colour runs and issues one `draw_rect` per
+   run; it writes one byte per visible tile into a reused
+   `Image`/`ImageTexture` and issues a single `draw_texture_rect`, with
+   `shaders/fog_mask.gdshader` (a `ShaderMaterial` on the fog layer)
+   turning that single-channel mask back into the same
+   unexplored/dim/lit picture on the GPU. The bug: `draw_texture_rect`
+   binds the built-in `TEXTURE` sampler, not the shader's custom
+   `mask_tex` uniform, which was never bound via `set_shader_parameter`
+   -- so fog drew fully transparent everywhere, always. Fixed by binding
+   `mask_tex` in `_update_mask_texture` whenever the texture is
+   (re)created. **Next: Dave to re-check fog actually shows (toggle it,
+   look for the black/dimmed unexplored ground)**, then -- once that's
+   confirmed -- the frame-time comparison this item exists for: same
+   scenario as Bundle C's "Clean re-measurement" (decent colony, zoomed
+   out, dynamic reveal), `fog_of_war_draw`'s rolling average and
+   `Perf.last_worst_breakdown` against the pre-change numbers already on
+   record (29ms average / 83-96ms worst frame). See `AUDIT_PLAN.md`
+   Bundle F's updated entry for the full trail.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -114,13 +116,22 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   are unchanged -- only the draw method itself changed, so a before/after
   comparison isolates exactly the thing this item claims to fix.
   `source_checks.py`/`balance_tests.py` pass, a Godot boot via
-  `mcp__godot__run_project` shows no new parser/type errors and ran ~14s
-  with fog on with no runtime shader errors in the debug output. **Not
-  yet verified by Dave** -- the actual frame-time comparison (same
-  scenario as Bundle C's "Clean re-measurement": decent colony, zoomed
-  out, dynamic reveal vs the 29ms/83-96ms numbers already on record) and
-  a visual-parity check, since the shader hand-reproduces the old
-  colours/alphas rather than sharing code with them.
+  `mcp__godot__run_project` shows no new parser/type errors and ran
+  cleanly with fog on. **Dave's first hands-on check (same day) found
+  fog invisible entirely, toggled on or not** -- `_draw_fog_body`'s
+  `draw_texture_rect(_mask_texture, ...)` binds the mask to the
+  built-in `TEXTURE` sampler, but the shader reads a separate custom
+  `mask_tex` uniform that was never bound via `set_shader_parameter`.
+  An unbound custom sampler2D falls back to Godot's default white
+  texture -- reads as 1.0, the shader's "fully lit" band, so every tile
+  drew fully transparent. Fixed same session: `_update_mask_texture`
+  now calls `_mask_material.set_shader_parameter("mask_tex",
+  _mask_texture)` whenever it (re)creates the texture. Re-run clean
+  (`source_checks.py`/`balance_tests.py`, a fresh Godot boot). **Still
+  not yet re-verified by Dave** -- needs the same visual check again,
+  plus the frame-time comparison this item exists for (same scenario as
+  Bundle C's "Clean re-measurement": decent colony, zoomed out, dynamic
+  reveal vs the 29ms/83-96ms numbers already on record).
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line

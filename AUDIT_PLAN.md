@@ -756,14 +756,33 @@ from that; the rest still don't:
   Verified: `tests/source_checks.py`/`tests/balance_tests.py` pass; a
   Godot boot via `mcp__godot__run_project` shows no new parser/type
   errors (same pre-existing shadowing/unused-parameter warnings already
-  on record) and ran ~14s with fog on and no runtime shader errors in
-  the debug output. **Not yet verified by Dave:** the actual frame-time
-  comparison this item exists for — same scenario as Bundle C's "Clean
-  re-measurement" (a decent-sized colony, zoomed out, dynamic reveal),
-  `fog_of_war_draw`'s rolling average and `Perf.last_worst_breakdown`
-  before vs after, plus a visual-parity check (fixed camera position,
-  fog on, screenshot compare) since the shader reproduces the old
-  colours/alphas by hand rather than sharing code with them any more.
+  on record) and ran cleanly with fog on.
+
+  **Bug found by Dave's first hands-on check, same session: fog was
+  invisible entirely, toggled on or not.** Root cause: `_draw_fog_body`
+  passes `_mask_texture` to `draw_texture_rect`, which binds it to the
+  canvas-item shader's built-in `TEXTURE` sampler — but
+  `shaders/fog_mask.gdshader` never reads `TEXTURE`, it reads a
+  separate custom uniform `mask_tex`, which nothing was ever binding
+  via `set_shader_parameter`. An unbound custom `sampler2D` falls back
+  to Godot's default white texture, which reads as `1.0` — the shader's
+  "currently lit" band (`a = 0.0`) — so every tile drew fully
+  transparent regardless of its actual explored/lit state. Fixed same
+  session: `_update_mask_texture` now calls
+  `_mask_material.set_shader_parameter("mask_tex", _mask_texture)`
+  whenever it (re)creates the texture (on the first draw, and on any
+  resize). Re-verified: `source_checks.py`/`balance_tests.py` pass, a
+  fresh Godot boot is clean.
+
+  **Not yet re-verified by Dave:** that fog actually shows now (toggle
+  it, expect black/dimmed unexplored ground), then the actual
+  frame-time comparison this item exists for — same scenario as
+  Bundle C's "Clean re-measurement" (a decent-sized colony, zoomed out,
+  dynamic reveal), `fog_of_war_draw`'s rolling average and
+  `Perf.last_worst_breakdown` before vs after, plus a visual-parity
+  check (fixed camera position, fog on, screenshot compare) since the
+  shader reproduces the old colours/alphas by hand rather than sharing
+  code with them any more.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped

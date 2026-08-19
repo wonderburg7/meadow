@@ -320,11 +320,16 @@ func _draw_fog_body() -> void:
 ## Rebuilds `_mask_image`/`_mask_texture` only when the visible tile span's
 ## size changes (camera zoom); an unchanged size just overwrites the pixel
 ## data in place instead of reallocating an Image/Texture2D every dirty
-## frame.
+## frame. Also (re)binds `mask_tex` on the shader -- `draw_texture_rect`
+## in `_draw_fog_body` feeds the built-in TEXTURE sampler, not a custom
+## uniform, so the shader would otherwise read an unset `mask_tex` (an
+## opaque-white fallback -- reads as "fully lit," hiding fog everywhere)
+## instead of this texture.
 func _update_mask_texture(w: int, h: int, data: PackedByteArray) -> void:
 	if _mask_image == null or _mask_image.get_width() != w or _mask_image.get_height() != h:
 		_mask_image = Image.create_from_data(w, h, false, Image.FORMAT_R8, data)
 		_mask_texture = ImageTexture.create_from_image(_mask_image)
+		_mask_material.set_shader_parameter("mask_tex", _mask_texture)
 	else:
 		_mask_image.set_data(w, h, false, Image.FORMAT_R8, data)
 		_mask_texture.update(_mask_image)
