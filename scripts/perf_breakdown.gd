@@ -1,9 +1,13 @@
 extends Label
-## The top eight instrumented sections by rolling average, shown under
-## the plot. Answers "which process correlates with the drop" at a
-## glance, without opening the debug panel. Same 4Hz cadence as the
-## plot, driven by the same version counter so the two never fall out
-## of step with each other.
+## Two lines under the plot, same 4Hz cadence, driven by the same
+## version counter so neither falls out of step with the other:
+##   - the top eight instrumented sections by rolling average -- good
+##     for a steady cost, answers "which process correlates with the
+##     drop" at a glance without opening the debug panel;
+##   - the section breakdown of the single worst frame in the most
+##     recently closed window -- unsmoothed, so it actually explains a
+##     one-off spike the average line can't. A 60ms frame barely nudges
+##     a 0.1-lerp average; it fully appears here.
 ##
 ## Widened from five to eight partway through the investigation (Dave
 ## noted the list keeps changing as sections get split further) and
@@ -28,4 +32,11 @@ func _process(_delta: float) -> void:
 	var parts: Array = []
 	for key in Perf.top_sections(SHOWN):
 		parts.append("%s %dms" % [key, roundi(float(Perf.averages[key]))])
-	text = "  ·  ".join(parts)
+	var lines: Array = ["  ·  ".join(parts)]
+
+	var worst_parts: Array = []
+	for key in Perf.worst_sections(SHOWN):
+		worst_parts.append("%s %dms" % [key, roundi(float(Perf.last_worst_breakdown[key]))])
+	if not worst_parts.is_empty():
+		lines.append("worst frame (%dms): %s" % [roundi(Perf.last_worst_ms), "  ·  ".join(worst_parts)])
+	text = "\n".join(lines)

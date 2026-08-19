@@ -427,8 +427,39 @@ answered: it's not just raw visible-tile count at low zoom, it's
 specifically the opaque-unexplored and dimmed-explored branches of
 `_draw_fog_body` that are expensive. (Both readings still show a worst
 frame well above the 60fps target — 83-88ms — so there's a separate,
-smaller cost at this zoom/colony-size that isn't fog-specific; not
-investigated here, out of scope for this bundle.)
+smaller cost at this zoom/colony-size that isn't fog-specific. Out of
+scope for this bundle, but see the `perf.gd` granularity addition
+directly below — added the same session to actually investigate it.)
+
+**`perf.gd` granularity addition, same session:** the corner
+breakdown's smoothed rolling average couldn't explain that 83-88ms
+figure at all — its sections summed to roughly 10ms, because a single
+spike barely nudges a 0.1-lerp average taken across many frames. The
+"worst" number and the section breakdown were never even answering the
+same question. Added `Perf.last_worst_ms`/`last_worst_breakdown`: an
+unsmoothed snapshot of every section's time taken at the exact frame
+that set the current window's worst-ms figure (`perf.gd::_process`,
+captured into `_window_worst_totals` the moment `frame_ms` raises
+`_window_worst_ms`, published as `last_worst_breakdown` when the window
+closes). `perf_breakdown.gd` now shows a second line, "worst frame
+(Xms): ...", alongside the existing rolling-average line. Also closed
+the one real coverage gap this surfaced: `main.gd::_process()` called
+`camera_view._handle_pan`, `world_building._apply_scenery_setting`,
+`_reseed_meadow`, `_advance_weather`, `_check_for_loss` and
+`_check_colony_energy` with no `Perf` wrap at all, so nothing could
+attribute cost to them even in principle. Now wrapped as `camera_pan`
+and a combined `housekeeping` section — not because either is assumed
+to be the culprit, just so the new worst-frame breakdown can actually
+account for the whole frame instead of leaving an unexplained gap.
+`tests/source_checks.py`/`balance_tests.py` pass, `tools/
+update_function_map.py --check` clean (regenerated after main.gd's new
+lines shifted it), a Godot boot shows no new parser/type errors.
+**Not yet checked by Dave** — star "fps" and read the new "worst frame"
+line at the same zoomed-out, fog-on scenario as above; it should now
+show which section(s) actually made up the 83-88ms, or reveal that the
+listed sections still don't add up to it (meaning the cost is somewhere
+Perf can't see at all — GPU/render-thread time, most likely, given the
+scene's zoomed-out draw-call volume).
 
 **Bundle C is closed as "measured, partially fixed."** `fog_of_war_update`
 needs nothing further. `fog_of_war_draw` at normal zoom is fine; at min

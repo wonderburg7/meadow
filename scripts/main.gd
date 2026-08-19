@@ -500,10 +500,19 @@ func begin_winter_countdown() -> void:
 	year_winter.begin_winter_countdown()
 
 # --- per-frame ----------------------------------------------------
+## Two Perf sections below (camera_pan, housekeeping) were added 19 Aug
+## while chasing a worst-frame spike that had no matching cost in any
+## instrumented section -- everything main.gd calls straight from here
+## used to run uncovered. Not because either turned out to be the
+## culprit necessarily, but so `Perf.last_worst_breakdown` (perf.gd) can
+## actually account for the whole frame instead of leaving an
+## unexplained gap between the worst-ms figure and the sections summed.
 
 func _process(delta: float) -> void:
 	_sample_fps()
+	Perf.begin("camera_pan")
 	camera_view._handle_pan(delta)
+	Perf.end("camera_pan")
 	selection_layer.queue_redraw()
 	world_building._apply_scenery_setting()
 	fog_of_war._update()
@@ -515,10 +524,12 @@ func _process(delta: float) -> void:
 			day = new_day
 			hud.update_day(day, year_winter._season_text())
 		_hatch_ready_brood()
+		Perf.begin("housekeeping")
 		_reseed_meadow(delta)
 		_advance_weather(delta)
 		_check_for_loss()
 		_check_colony_energy(delta)
+		Perf.end("housekeeping")
 		year_winter._refresh_signals(delta)
 		year_winter._sample_history(delta)
 		rate_sample_timer -= delta

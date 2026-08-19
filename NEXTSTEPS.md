@@ -28,9 +28,21 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    note first, they carry the exact numbers and the comparison bar
    (measure against the current run-merged rect renderer). Note: even
    the cheap (permanent-reveal) case still showed an 83-88ms worst
-   frame at this zoom/colony-size -- a separate, smaller, non-fog cost,
-   not investigated, worth a fresh `Perf` breakdown of its own.
-2. **Two other audit bundles still need Dave's hands-on check in Godot**
+   frame at this zoom/colony-size -- a separate, smaller, non-fog cost.
+2. **That non-fog cost now has a tool to investigate it -- needs Dave's
+   playtest.** The rolling-average breakdown couldn't explain an 83-88ms
+   spike at all (its sections summed to ~10ms; a single spike barely
+   nudges a smoothed average). `perf.gd` now also captures an unsmoothed
+   snapshot of every section's time from the exact frame that set the
+   window's worst-ms figure -- `perf_breakdown.gd` shows it as a second
+   line, "worst frame (Xms): ...". Also wrapped `main.gd`'s previously
+   uninstrumented per-frame calls (`camera_pan`, `housekeeping`) so that
+   line can actually account for the whole frame. **Star "fps" and
+   re-check the same zoomed-out scenario** -- the new line should show
+   which section(s) made up the 83-88ms, or reveal that nothing listed
+   adds up to it (pointing at GPU/render-thread time, which no `Perf`
+   section can ever see, rather than anything in this codebase).
+3. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
    neither has been played:
@@ -54,7 +66,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
    via `mcp__godot__run_project` all came back clean for all three
    bundles, but nothing here substitutes for Dave actually playing it.
-3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
+4. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
    Dr Gallerin prompts are written. `challenge_runner.gd`'s `STAGES`
@@ -87,6 +99,23 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- `perf.gd` gained an unsmoothed worst-frame section breakdown
+  (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
+  raises the current window's worst-ms figure), shown as a second line
+  in `perf_breakdown.gd`. Added 19 Aug because the existing
+  rolling-average breakdown couldn't explain an 83-88ms worst-frame
+  spike at all -- its sections summed to ~10ms, since a single spike
+  barely moves a 0.1-lerp average taken across many frames. Also wrapped
+  `main.gd::_process()`'s previously-uninstrumented calls
+  (`camera_view._handle_pan`, `_reseed_meadow`, `_advance_weather`,
+  `_check_for_loss`, `_check_colony_energy`) as `camera_pan` and
+  `housekeeping`, so the new breakdown can actually account for the
+  whole frame instead of leaving an unexplained gap.
+  `source_checks.py`/`balance_tests.py` pass, `FUNCTION_MAP.md`
+  regenerated (main.gd shifted), a Godot boot shows no new parser/type
+  errors. **Not yet checked by Dave** -- star "fps", re-run the same
+  zoomed-out scenario from the fog investigation above, and read the new
+  "worst frame" line.
 - `AUDIT_PLAN.md` Bundle C step 2 (shared-offset fog cache + dirty-driven
   redraw) landed 19 Aug, gated on Dave's own baseline playtest that
   confirmed `fog_of_war` was a real cost (up to ~130ms `fog_of_war_draw`
