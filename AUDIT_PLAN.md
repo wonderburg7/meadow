@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: renders correctly; after a Day 11 regression, both a persistent whole-world texture (draw side) and incremental relight (update side) have landed and boot-checked. Not yet played by Dave. Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: perf fix confirmed by Dave at Day 11/50-bee scale; an edge-stretch bug it surfaced is fixed and awaiting one more check. Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -874,14 +874,42 @@ from that; the rest still don't:
   `source_checks.py`/`balance_tests.py` pass, a Godot boot ran ~12s
   with bees relighting and no new parser/type or runtime errors.
 
-  **Not yet verified by Dave:** play a similarly large
-  colony/zoomed-out scenario to the Day 11 reading and check two
-  things — the reveal shape still looks correct (the relight change is
-  the one piece of this fix that could silently draw a wrong-shaped
-  edge without erroring, since nothing here can visually confirm
-  geometry), and whether `fog_of_war_draw`/`fog_of_war_update` actually
-  come back down this time. This item isn't closeable either way until
-  then.
+  **Re-checked by Dave at Day 11/50-bee scale, same session: the perf
+  fix is confirmed.** `fog_of_war_relight` down to 27ms average / 45ms
+  in a 55ms worst frame (was 44-45ms flat, at the same colony size) —
+  the incremental-relight fix works as intended. `fog_of_war_draw` no
+  longer even appears in the breakdown (negligible) — the persistent
+  texture fully decoupled draw cost from view size, as intended.
+
+  **That same check surfaced a real bug: fog "lifting into infinity"
+  toward the right/bottom screen edge once a bee neared the meadow's
+  own right/bottom edge.** Root cause: `camera_view.gd` clamps zoom
+  (`main.MIN_ZOOM`/`MAX_ZOOM`) but never clamps camera *position* —
+  nothing stops the camera from panning arbitrarily far, and at low
+  zoom near a field edge its view span reaches well past `WORLD_MARGIN`
+  into territory the persistent texture was never sized to cover.
+  `draw_texture_rect_region`'s `clip_uv` (the draw call's default)
+  doesn't simply stop sampling at the texture's edge in that case — it
+  stretches the boundary texel across whatever screen space is left,
+  which is exactly what "lifts into infinity" describes: a lit/clear
+  edge pixel smeared across the rest of the view as the camera's
+  requested region grew past real data.
+
+  Fixed same session: `_draw_fog_body` now clamps `min_tile`/`max_tile`
+  to the persistent image's actual tile range before building the
+  draw/src rects, so the drawn region can never exceed real texture
+  data — past the edge, the fix simply draws no fog there, which is
+  fine since nothing playable exists past the field anyway. This is a
+  general fix, not tied to any particular `WORLD_MARGIN` value — it
+  would have been needed regardless of how large the margin was, since
+  the camera itself has no hard bound. Verified:
+  `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
+  boot is clean.
+
+  **Not yet verified by Dave:** confirm the edge-stretch is actually
+  gone (pan/zoom near the meadow's right/bottom edge) and that the
+  reveal shape still looks like a clean circle around each bee
+  generally. Once both check out, this item is done.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped
