@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item landed and confirmed working by Dave, with strong (if not fully controlled) preliminary perf numbers. Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: renders correctly, but a Day 11 large-colony reading came back much worse than the early spot-check (details below) -- diagnostic Perf sub-sections added, not yet re-diagnosed. Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -785,11 +785,49 @@ from that; the rest still don't:
   fog responsible for ~89ms of it) — a strong preliminary result, but
   since day/zoom/colony all differ between the two readings and against
   the original baseline, this isn't proof to the same standard Bundle C
-  used. **Still open, lower priority:** a same-camera, same-colony,
-  same-zoom dynamic-vs-permanent comparison at min zoom (mirroring
-  Bundle C's method exactly) if a rigorous before/after number is
-  wanted; not blocking, since the preliminary numbers already clear the
-  bar this item was justified against.
+  used.
+
+  **That preliminary read didn't hold up — a Day 11 reading came back
+  much worse.** Same session, a further screenshot from Day 11 (a
+  bigger colony by then, `fog_permanent_reveal` on): `fog_of_war_draw`
+  73ms average / 79ms in a 190ms worst frame; `fog_of_war_update` 74ms
+  average / 84ms in that same worst frame. Both are close to or above
+  the *old* draw_rect renderer's own worst-case numbers — update in
+  particular is far above the 0-3ms Bundle C's shared-offset-disc fix
+  was supposed to guarantee regardless of colony size, and this is
+  meant to be the *cheap* case (`fog_permanent_reveal` on, which the
+  old renderer measured at just 7ms). Two live suspects, neither
+  confirmed:
+  1. The mask-texture draw walks and uploads every visible tile every
+     dirty frame with no early-out for "this whole view is one colour"
+     — unlike the old draw_rect version, which skipped drawing entirely
+     over transparent (fully-explored/permanent-reveal) stretches. This
+     may have traded away the old renderer's one genuinely cheap case
+     (mostly-explored view, few draw calls needed) for a flat
+     view-tile-count cost that doesn't care what's actually in view.
+  2. A bigger colony means more bees crossing `RELIGHT_DISTANCE`
+     simultaneously, and disc-application cost is `O(active relights x
+     disc_size)` regardless of the shared-offset optimisation — nobody
+     has measured that scaling above the ~27-32 bees Bundle C tested.
+
+  **Added diagnostic `Perf` sections rather than guessing between the
+  two** (same instrumentation-before-diagnosis approach as the main.gd
+  worst-frame investigation): `fog_of_war_draw_build` (the byte-array
+  tile loop) and `fog_of_war_draw_upload` (texture creation/update plus
+  the `draw_texture_rect` call) split what was one `fog_of_war_draw`
+  section; `fog_of_war_relight` (just the `_relight` calls) is now
+  nested inside `fog_of_war_update`, isolating disc-application cost
+  from the group-query/cleanup-loop bookkeeping around it.
+  `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
+  boot is clean — instrumentation only, no behaviour change.
+
+  **Not yet verified by Dave:** reproduce a similarly large
+  colony/zoomed-out scenario and report the new sub-section breakdown
+  (visible in `perf_breakdown.gd`'s corner readout and its "worst frame
+  (Xms): ..." line). Whether the fix ends up being an early-out in the
+  draw build step, a cheaper relight strategy at high bee counts, or
+  reverting to the old draw_rect renderer entirely depends on what that
+  breakdown shows — this item is not closeable either way until then.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped

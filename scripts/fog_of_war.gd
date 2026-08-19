@@ -166,7 +166,13 @@ func _update() -> void:
 		seen_ids[id] = true
 		var cached: Dictionary = _bee_light.get(id, {})
 		if cached.is_empty() or cached.pos.distance_to(b.position) >= RELIGHT_DISTANCE:
+			# Own section, nested inside fog_of_war_update -- lets a
+			# breakdown tell "many bees relit this frame" apart from
+			# "the group query/cleanup loop itself got expensive". See
+			# the 19 Aug Bundle F granularity note above _draw_fog_body.
+			Perf.begin("fog_of_war_relight")
 			_relight(id, b.position)
+			Perf.end("fog_of_war_relight")
 			dirty = true
 
 	# A bee that died or came indoors since the last frame stops lighting
@@ -286,6 +292,23 @@ func _draw_fog() -> void:
 ## this shares with the old version is unchanged -- but the per-run
 ## draw-call and Rect2/Color churn is gone, replaced by one flat byte-array
 ## write and one draw call regardless of how jagged the boundary is.
+##
+## Performance note (19 Aug 2026, later same day): a Day 11 playtest with a
+## bigger colony and (likely) a more zoomed-out camera than the earlier
+## quick check showed fog_of_war_draw back up to 73-79ms and
+## fog_of_war_update up to 74ms -- both far above what the "small scenario"
+## check suggested and above Bundle C's own worst-case numbers. Two
+## unproven suspects: (1) the byte-array build below still walks every
+## visible tile every dirty frame with no early-out for "this whole run is
+## the same colour", unlike the old draw_rect version, which skipped
+## drawing entirely over transparent (fully explored/permanent-reveal)
+## stretches -- so this version may have simply traded "many draw calls"
+## for "no cheap case at all" when most of the view is already explored;
+## (2) the GPU texture upload in `_update_mask_texture` itself may be the
+## expensive part at a large view size, not the CPU-side loop. Split into
+## `fog_of_war_draw_build`/`fog_of_war_draw_upload` below rather than
+## guessing which -- same instrumentation-before-diagnosis approach as the
+## main.gd worst-frame investigation (see AUDIT_PLAN.md Bundle C).
 func _draw_fog_body() -> void:
 	var cam: Camera2D = main.camera_view._active_camera()
 	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
@@ -298,6 +321,7 @@ func _draw_fog_body() -> void:
 	if w <= 0 or h <= 0:
 		return
 
+	Perf.begin("fog_of_war_draw_build")
 	var data: PackedByteArray = PackedByteArray()
 	data.resize(w * h)
 	var i: int = 0
@@ -311,11 +335,14 @@ func _draw_fog_body() -> void:
 			else:
 				data[i] = MASK_UNEXPLORED
 			i += 1
+	Perf.end("fog_of_war_draw_build")
 
+	Perf.begin("fog_of_war_draw_upload")
 	_update_mask_texture(w, h, data)
 	_mask_material.set_shader_parameter("permanent_reveal", GameConfig.fog_permanent_reveal)
 	var dest: Rect2 = Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(w, h) * FOG_TILE_SIZE)
 	_layer.draw_texture_rect(_mask_texture, dest, false)
+	Perf.end("fog_of_war_draw_upload")
 
 ## Rebuilds `_mask_image`/`_mask_texture` only when the visible tile span's
 ## size changes (camera zoom); an unchanged size just overwrites the pixel

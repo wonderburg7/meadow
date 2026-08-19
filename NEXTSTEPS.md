@@ -7,29 +7,36 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Bundle F's mask-texture/canvas-shader fog item is landed and
-   confirmed working.** `fog_of_war.gd::_draw_fog_body` no longer merges
-   rows into colour runs and issues one `draw_rect` per run; it writes
-   one byte per visible tile into a reused `Image`/`ImageTexture` and
-   issues a single `draw_texture_rect`, with `shaders/fog_mask.gdshader`
-   (a `ShaderMaterial` on the fog layer) turning that single-channel
-   mask back into the same unexplored/dim/lit picture on the GPU. One
-   real bug turned up and got fixed along the way -- `draw_texture_rect`
-   binds the built-in `TEXTURE` sampler, not the shader's custom
-   `mask_tex` uniform, so fog drew fully transparent everywhere until
-   `_update_mask_texture` was made to bind it explicitly. Dave's
-   playtest (two screenshots, dynamic reveal then `fog_permanent_reveal`)
-   confirms fog renders correctly. Perf readouts from those same shots
-   look like a strong win over the old baseline -- 8-12ms
-   `fog_of_war_draw` average and 15-19ms in-worst-frame here vs the old
-   29ms average / 83-96ms worst frame -- but the two shots weren't a
-   controlled comparison (different day/colony/zoom, no fixed camera),
-   so it's not to the same rigour as Bundle C's own measurement.
-   **Optional next step, not blocking:** a same-camera, same-colony,
-   min-zoom dynamic-vs-permanent comparison mirroring Bundle C's "Clean
-   re-measurement" exactly, if a precise before/after number matters.
-   Otherwise this item is done -- see `AUDIT_PLAN.md` Bundle F's entry
-   for the full trail.
+1. **Bundle F's mask-shader fog item isn't a clean win after all -- a
+   Day 11 reading came back much worse than the early spot-check, and
+   the cause isn't confirmed yet.** Early readings (Day 1/3) looked like
+   a strong improvement over the old draw_rect baseline. A Day 11 shot
+   (bigger colony, `fog_permanent_reveal` on) showed the opposite:
+   `fog_of_war_draw` 73-79ms and `fog_of_war_update` 74-84ms -- both
+   near or above the *old* renderer's worst-case numbers, and update in
+   particular is far above the 0-3ms Bundle C's disc-cache fix was
+   supposed to guarantee regardless of colony size. Two live suspects,
+   neither confirmed: (1) the mask-texture draw walks and uploads every
+   visible tile every dirty frame with no early-out, so it may have
+   traded the old renderer's "permanent reveal / mostly-explored view is
+   nearly free" property for a flat cost that doesn't care how much of
+   the view is actually fog; (2) a bigger colony means more simultaneous
+   relights per frame, and disc-application cost scales with
+   `bee_count x disc_size` regardless of the shared-offset optimisation
+   -- nobody's measured that scaling above ~32 bees before. **Added
+   finer `Perf` sections to tell these apart rather than guessing**:
+   `fog_of_war_draw_build` (the byte-array tile loop) vs
+   `fog_of_war_draw_upload` (texture creation/update + the draw call) on
+   the draw side, and `fog_of_war_relight` (just the disc-application
+   calls) nested inside `fog_of_war_update` on the update side.
+   `source_checks.py`/`balance_tests.py` pass, a fresh Godot boot is
+   clean -- instrumentation only, no behaviour change. **Next: reproduce
+   a similar large-colony/zoomed-out scenario and read the new
+   sub-section breakdown** (the "worst frame (Xms): ..." line in
+   `perf_breakdown.gd` will show all of them) -- that tells us whether
+   to fix the draw method's lack of an early-out, revisit the relight
+   scaling, or both. See `AUDIT_PLAN.md` Bundle F's entry for the full
+   trail and reasoning.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -134,11 +141,25 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   screenshots look like a strong win over the old baseline (8-12ms
   `fog_of_war_draw` average, 15-19ms in the worst frame, vs the old
   29ms average / 83-96ms worst frame) but weren't a controlled
-  comparison -- different day/colony/zoom, no fixed camera -- so treat
-  as a strong preliminary result, not a rigorous before/after. A
-  same-camera, same-colony, min-zoom re-measurement mirroring Bundle
-  C's method is optional if a precise number is ever wanted; not
-  blocking.
+  comparison -- different day/colony/zoom, no fixed camera.
+
+  **That preliminary read didn't hold up.** A Day 11 screenshot (bigger
+  colony, `fog_permanent_reveal` on) showed `fog_of_war_draw` at
+  73-79ms and `fog_of_war_update` at 74-84ms -- both near or above the
+  *old* draw_rect renderer's own worst-case numbers, and update in
+  particular is far above the 0-3ms Bundle C's disc-cache fix was meant
+  to hold regardless of colony size. Not chasing a fix blind: added
+  `fog_of_war_draw_build`/`fog_of_war_draw_upload` (splitting the
+  byte-array tile loop from the texture upload + draw call) and
+  `fog_of_war_relight` (just the disc-application calls, nested inside
+  `fog_of_war_update`) so the next reading says which part is actually
+  expensive rather than guessing between "the mask draw has no
+  cheap-case early-out any more" and "relight cost scales with colony
+  size beyond what's been measured before." `source_checks.py`/
+  `balance_tests.py` pass, a fresh Godot boot is clean --
+  instrumentation only, no behaviour change. **Needs Dave to reproduce
+  a similar large-colony/zoomed-out scenario** and report the new
+  sub-section breakdown before this item can be called done either way.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line
