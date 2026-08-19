@@ -97,9 +97,16 @@ extends Node
 ## `_mask_dirty`) and draws whichever sub-rect the camera currently frames
 ## with `draw_texture_rect_region` -- panning or zooming costs nothing
 ## extra, since it only changes which part of the already-current texture
-## gets sampled. This does not by itself fix relight cost scaling with bee
-## count (a separate, already-flagged issue) -- see the note above
-## `_light_center` for that half.
+## gets sampled.
+##
+## That fixed the draw side but not relight cost scaling with bee count
+## (Day 11, 50 foraging bees: `fog_of_war_relight` 44-45ms) -- tackled the
+## same session via `_relight_delta`, applied instead of `_light_center`
+## once a bee has an old position to diff against. See its own comment for
+## the reasoning; short version: a bee only relights after moving
+## `RELIGHT_DISTANCE` (8 tiles), far less than `fog_reveal_radius` (48
+## tiles), so consecutive discs overlap almost entirely and only the thin
+## edge between them needs touching.
 
 var main: Node2D
 
@@ -116,6 +123,11 @@ var _bee_light: Dictionary = {}
 ## than translated and stored fresh per bee per relight -- see the 19 Aug
 ## perf note below.
 var _disc_offsets: Array[Vector2i] = []
+## Same offsets as `_disc_offsets`, as Dictionary keys -- lets
+## `_relight_delta` ask "is this offset part of the disc" in O(1) instead
+## of scanning the array, which is what makes an incremental relight worth
+## doing at all. Rebuilt alongside `_disc_offsets` in `_ensure_disc_offsets`.
+var _disc_offsets_set: Dictionary = {}
 var _disc_offsets_radius: float = -1.0
 
 var _layer: Node2D
@@ -263,45 +275,88 @@ func _ensure_disc_offsets() -> void:
 	if radius == _disc_offsets_radius and not _disc_offsets.is_empty():
 		return
 	_disc_offsets.clear()
+	_disc_offsets_set.clear()
 	var span: int = int(ceil(radius / FOG_TILE_SIZE))
 	for dx in range(-span, span + 1):
 		for dy in range(-span, span + 1):
 			if Vector2(dx, dy).length() * FOG_TILE_SIZE > radius:
 				continue
-			_disc_offsets.append(Vector2i(dx, dy))
+			var off: Vector2i = Vector2i(dx, dy)
+			_disc_offsets.append(off)
+			_disc_offsets_set[off] = true
 	_disc_offsets_radius = radius
 
 ## Recomputes and swaps in the disc centre bee `id` currently lights.
+##
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): used to
+## unconditionally unlight the whole old disc then relight the whole new
+## one -- correct, but a Day 11 playtest at 50 foraging bees measured this
+## at 44-45ms, since a full disc is thousands of tiles and every relight
+## paid for all of them regardless of how far the bee actually moved. A
+## bee only relights after moving `RELIGHT_DISTANCE` (40 units, 8 tiles),
+## far less than `fog_reveal_radius` (240 units, 48 tiles) -- so the old
+## and new discs overlap almost completely, and only a thin edge actually
+## changes state. `_relight_delta` below applies just that edge instead of
+## the whole disc on every relight after the first.
 func _relight(id: int, pos: Vector2) -> void:
 	_ensure_disc_offsets()
-	var old: Dictionary = _bee_light.get(id, {})
-	if not old.is_empty():
-		_light_center(old.center, -1)
 	var center: Vector2i = _tile_of(pos)
-	_light_center(center, 1)
+	var old: Dictionary = _bee_light.get(id, {})
+	if old.is_empty():
+		_light_center(center, 1)   # first light for this bee -- no "old" to diff against
+	else:
+		_relight_delta(old.center, center, center - old.center)
 	_bee_light[id] = {"pos": pos, "center": center}
 
-## Applies the shared disc offsets around `center`, lighting (delta 1) or
-## unlighting (delta -1) every tile it covers.
+## Unlights whichever old-disc tiles the new disc no longer covers, and
+## lights whichever new-disc tiles the old disc didn't already cover --
+## the symmetric difference between the two discs, not their full areas.
 ##
-## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): still walks the
-## whole disc every relight, same as before this session's persistent-mask
-## change -- `_paint_tile` below is a cheap single-pixel write, not a
-## reason this got more expensive, but it's also not the fix for the
-## already-flagged relight-cost-scales-with-bee-count issue (`bees 50` at
-## Day 11 measured `fog_of_war_relight` at 44-45ms) -- see AUDIT_PLAN.md
-## Bundle F for that half, tackled separately in the same session.
+## For an old-disc tile at `off` (world position `old_center + off`): it's
+## still covered by the new disc iff `off - delta` is itself a valid disc
+## offset (that's the offset the same world tile would have relative to
+## `new_center`). Only unlight it if not. Mirror argument for a new-disc
+## tile at `off`: it was already covered by the old disc iff `delta + off`
+## is a valid offset. Still walks every entry in `_disc_offsets` twice (so
+## this doesn't reduce the O(disc_size) iteration itself, only the
+## `_lit_count`/`_paint_tile` writes -- those are the expensive part, and
+## for a typical small `delta` only a thin edge fails either membership
+## test). A genuinely O(edge) version would need per-row circle geometry;
+## deliberately not attempted here -- correctness of a hand-derived edge
+## algorithm is much harder to verify without Dave's hands-on check of the
+## reveal shape than this membership-test version, which can't produce a
+## different disc shape than `_light_center` already does, only reach it
+## with less redundant work. Re-measure before going further.
+func _relight_delta(old_center: Vector2i, new_center: Vector2i, delta: Vector2i) -> void:
+	for off in _disc_offsets:
+		if not _disc_offsets_set.has(off - delta):
+			_apply_light(Vector2i(old_center.x + off.x, old_center.y + off.y), -1)
+	for off in _disc_offsets:
+		if not _disc_offsets_set.has(delta + off):
+			_apply_light(Vector2i(new_center.x + off.x, new_center.y + off.y), 1)
+
+## Applies the shared disc offsets around `center`, lighting (delta 1) or
+## unlighting (delta -1) every tile it covers. Used for a bee's first
+## light (no "old" position to diff against yet) and for a departed bee's
+## full unlight -- `_relight_delta` above handles the common case of a bee
+## that's already lighting somewhere and just moved.
 func _light_center(center: Vector2i, delta: int) -> void:
 	for off in _disc_offsets:
-		var tile: Vector2i = Vector2i(center.x + off.x, center.y + off.y)
-		var count: int = _lit_count.get(tile, 0) + delta
-		if count <= 0:
-			_lit_count.erase(tile)
-		else:
-			_lit_count[tile] = count
-		if delta > 0:
-			explored[tile] = true
-		_paint_tile(tile)
+		_apply_light(Vector2i(center.x + off.x, center.y + off.y), delta)
+
+## One tile's actual state change: updates the reference count (and
+## `explored`, on a light) and repaints the tile in the persistent mask
+## image. Shared by `_light_center` and `_relight_delta` so both apply a
+## tile exactly the same way.
+func _apply_light(tile: Vector2i, delta: int) -> void:
+	var count: int = _lit_count.get(tile, 0) + delta
+	if count <= 0:
+		_lit_count.erase(tile)
+	else:
+		_lit_count[tile] = count
+	if delta > 0:
+		explored[tile] = true
+	_paint_tile(tile)
 
 ## Marks a circle of tiles explored without lighting them -- used for the
 ## starting clearing and for restoring a save.
