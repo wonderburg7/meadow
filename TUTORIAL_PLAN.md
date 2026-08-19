@@ -280,7 +280,8 @@ beyond "wire up the plan":
   four to `false` for levels 1 and 2, so Challenge 2's own "no disease,
   rain, rival colony, winter" start state gets this for free once its
   stage data exists. `source_checks.py`/`balance_tests.py` pass, a
-  Godot boot shows no new parser/type errors.
+  Godot boot shows no new parser/type errors, and Dave confirmed none
+  of the four stated elements show up in Challenge 1.
 
 Internal `level_01`, supersedes the current `LEVELS[1]`.
 Player-facing title: **Challenge 1: First Stores**. ~5–10 minutes.

@@ -66,16 +66,15 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
-- **Challenge 1's missing balance overrides are now applied** (19 Aug
-  2026, `TUTORIAL_PLAN.md`'s "Not done" note is resolved) -- no rain, no
-  disease, no rival colony, no winter, via a new per-level field read
-  by each system alongside its own GameConfig toggle, rather than a
-  GameConfig write from `challenge_runner.gd` (see `levels.gd`'s new
-  header comment for why). `source_checks.py`/`balance_tests.py` pass,
-  a Godot boot shows no new parser/type errors. **Still wants Dave's
-  hands-on check**: play Challenge 1 (or watch a few minutes) and
-  confirm no rain, rival colony sighting, disease warning or winter
-  countdown appear -- nothing here substitutes for that.
+- **Challenge 1's missing balance overrides are now applied and
+  confirmed by Dave** (19 Aug 2026, `TUTORIAL_PLAN.md`'s "Not done"
+  note is resolved) -- no rain, no disease, no rival colony, no winter,
+  via a new per-level field read by each system alongside its own
+  GameConfig toggle, rather than a GameConfig write from
+  `challenge_runner.gd` (see `levels.gd`'s new header comment for why).
+  `source_checks.py`/`balance_tests.py` pass, a Godot boot shows no new
+  parser/type errors, and Dave confirmed none of the four stated
+  elements show up in Challenge 1. Closed.
 - Diagnostic logging system (`DIAGNOSTIC_LOGGING_PLAN.md`) built and
   confirmed 19 Aug. Dave played a run and read the resulting
   `session_*.jsonl` back: a clean config line (every `GameConfig`
