@@ -7,34 +7,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Bundle F's fog item: the perf fix is confirmed working; the edge
-   bug it exposed took two tries to actually fix -- needs one more
-   playtest to close out.** Persistent whole-meadow mask texture (draw
-   side) + `_relight_delta` (update side) landed after the Day 11
-   regression; Dave's re-check at similar scale confirmed the perf win
-   (`fog_of_war_relight` 44-45ms -> 27ms average/45ms worst,
-   `fog_of_war_draw` now negligible) but also found fog "lifting into
-   infinity" toward the right/bottom screen edge near the meadow's own
-   right/bottom edge. First fix attempt (clamp the drawn region to the
-   persistent texture's tile bounds on the CPU side) stopped the
-   stretching but **traded it for a worse bug**: whatever part of the
-   camera's view fell outside the clamp just never got drawn at all,
-   which read as that edge being revealed by default -- and since
-   `camera_view.gd` never clamps camera position (only zoom), the view
-   commonly exceeds `WORLD_MARGIN` at low zoom, so this wasn't rare.
-   **Real fix, same session:** moved the bounds check into
-   `shaders/fog_mask.gdshader` itself -- the draw call now always covers
-   the camera's whole view, and the shader converts each pixel's own
-   world position back to a `mask_tex` UV, explicitly treating
-   out-of-bounds as unexplored (the actually-correct answer) rather than
-   letting the draw call's own clipping behaviour decide. `source_checks.py`/
-   `balance_tests.py` pass, a Godot boot is clean with no shader compile
-   errors. **Next: Dave to confirm both the stretching *and* the
-   revealed-by-default edge are gone** (pan/zoom near the meadow's
-   right/bottom edge), and that the reveal shape still looks like a
-   clean circle around each bee generally -- once both check out, this
-   item is done. See `AUDIT_PLAN.md` Bundle F's entry for the full trail.
-2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
+1. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
    `last_worst_breakdown` -- an unsmoothed snapshot of every section's
@@ -53,7 +26,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    CPU-side timer can see. Not blocking anything; if it's worth chasing
    further, that means opening Godot's built-in Debugger > Profiler, a
    different tool entirely.
-3. **Two other audit bundles still need Dave's hands-on check in Godot**
+2. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
    neither has been played:
@@ -77,16 +50,17 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
    via `mcp__godot__run_project` all came back clean for all three
    bundles, but nothing here substitutes for Dave actually playing it.
-4. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
+3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
    Dr Gallerin prompts are written. `challenge_runner.gd`'s `STAGES`
    array is Challenge 1 only so far -- see its own header comment for
    why stage data lives there rather than in `levels.gd`. This is
-   naturally the next slice once (1) is confirmed, since it's the
-   first thing that will actually exercise `tutorial_checkpoint.gd`'s
-   restore path (Challenge 1 has no failure condition to trigger it;
-   Challenge 2's does, from sub-stage 2.3 onward per the plan).
+   naturally the next slice once Bundle A/B's Challenge 1 hands-on check
+   (above) is confirmed, since it's the first thing that will actually
+   exercise `tutorial_checkpoint.gd`'s restore path (Challenge 1 has no
+   failure condition to trigger it; Challenge 2's does, from sub-stage
+   2.3 onward per the plan).
 
 ## Waiting, lower priority
 
@@ -110,117 +84,31 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
-- `AUDIT_PLAN.md` Bundle F's mask-texture/canvas-shader fog item landed
-  19 Aug. `fog_of_war.gd::_draw_fog_body` now writes one byte per visible
-  tile into a reused `Image`/`ImageTexture` and issues one
-  `draw_texture_rect`, instead of merging rows into colour runs and
-  issuing one `draw_rect` per run; a new `shaders/fog_mask.gdshader`
-  (assigned as a `ShaderMaterial` on the fog layer in `_build_layer`)
-  reads the mask back into the same three-state fog picture on the GPU.
-  Tile-walk cost and the dirty-redraw triggers from Bundle C's step 2
-  are unchanged -- only the draw method itself changed, so a before/after
-  comparison isolates exactly the thing this item claims to fix.
-  `source_checks.py`/`balance_tests.py` pass, a Godot boot via
-  `mcp__godot__run_project` shows no new parser/type errors and ran
-  cleanly with fog on. **Dave's first hands-on check (same day) found
-  fog invisible entirely, toggled on or not** -- `_draw_fog_body`'s
-  `draw_texture_rect(_mask_texture, ...)` binds the mask to the
-  built-in `TEXTURE` sampler, but the shader reads a separate custom
-  `mask_tex` uniform that was never bound via `set_shader_parameter`.
-  An unbound custom sampler2D falls back to Godot's default white
-  texture -- reads as 1.0, the shader's "fully lit" band, so every tile
-  drew fully transparent. Fixed same session: `_update_mask_texture`
-  now calls `_mask_material.set_shader_parameter("mask_tex",
-  _mask_texture)` whenever it (re)creates the texture. Re-run clean
-  (`source_checks.py`/`balance_tests.py`, a fresh Godot boot). **Dave
-  re-checked, same day: fog renders correctly** (two screenshots,
-  dynamic reveal then `fog_permanent_reveal`). Perf readouts from those
-  screenshots look like a strong win over the old baseline (8-12ms
-  `fog_of_war_draw` average, 15-19ms in the worst frame, vs the old
-  29ms average / 83-96ms worst frame) but weren't a controlled
-  comparison -- different day/colony/zoom, no fixed camera.
-
-  **That preliminary read didn't hold up.** A Day 11 screenshot (bigger
-  colony, `fog_permanent_reveal` on) showed `fog_of_war_draw` at
-  73-79ms and `fog_of_war_update` at 74-84ms -- both near or above the
-  *old* draw_rect renderer's own worst-case numbers, and update in
-  particular is far above the 0-3ms Bundle C's disc-cache fix was meant
-  to hold regardless of colony size. Not chasing a fix blind: added
-  `fog_of_war_draw_build`/`fog_of_war_draw_upload` (splitting the
-  byte-array tile loop from the texture upload + draw call) and
-  `fog_of_war_relight` (just the disc-application calls, nested inside
-  `fog_of_war_update`) so the next reading says which part is actually
-  expensive rather than guessing between "the mask draw has no
-  cheap-case early-out any more" and "relight cost scales with colony
-  size beyond what's been measured before." `source_checks.py`/
-  `balance_tests.py` pass, a fresh Godot boot is clean --
-  instrumentation only, no behaviour change.
-
-  **Dave chose to fix both suspects rather than wait for a reading to
-  pick between them.** Draw side: replaced the per-view mask texture
-  with one persistent `_world_mask_image`/`_world_mask_texture` covering
-  the whole meadow (`WORLD_MARGIN` past `main.FLOWER_FIELD_HALF_SIZE`).
-  `_paint_tile` writes single pixels as `_light_center`/`reveal_around`
-  change a tile's state; `_draw_fog_body` uploads the image only when
-  `_mask_dirty` and draws whichever sub-rect the camera currently frames
-  via `draw_texture_rect_region` -- panning/zooming no longer costs
-  anything. `restore()` repaints the whole image via a new
-  `_repaint_all` since a loaded save replaces `explored` wholesale.
-  Relight side: `_light_center` used to unlight the whole old disc and
-  light the whole new one on every relight regardless of how far the bee
-  moved -- a new `_relight_delta` applies only the symmetric difference
-  between the old and new disc position (a bee relights after moving 8
-  tiles, far less than the 48-tile reveal radius, so consecutive discs
-  overlap almost entirely and most of the disc doesn't change state).
-  Deliberately kept to a membership-test approach rather than a true
-  O(edge) geometric algorithm -- still walks the full offset list, just
-  skips the `_lit_count`/`_paint_tile` writes for tiles that don't
-  change, since a hand-derived per-row circle algorithm would be much
-  harder to verify correct without a visual check. `source_checks.py`/
-  `balance_tests.py` pass after each change, two separate Godot boots
-  (~12-18s each, fog on, bees relighting) both clean.
-
-  **Dave re-checked at Day 11/50-bee scale, same session: the perf fix
-  is confirmed.** `fog_of_war_relight` down to 27ms average / 45ms in a
-  55ms worst frame (was 44-45ms flat); `fog_of_war_draw` doesn't even
-  show up in the breakdown any more (negligible). But the check
-  surfaced a real bug: fog would "lift into infinity" toward the
-  right/bottom screen edge once a bee neared the meadow's own
-  right/bottom edge. Root cause: `camera_view.gd` clamps zoom but never
-  camera *position*, so at low zoom near a field edge the camera's view
-  span reaches past `WORLD_MARGIN` into territory the persistent texture
-  doesn't cover -- and `draw_texture_rect_region`'s `clip_uv` doesn't
-  just stop sampling at the texture edge in that case, it stretches the
-  boundary texel across whatever screen space is left, smearing a
-  lit/clear edge pixel across the rest of the view. First fix attempt:
-  `_draw_fog_body` clamped `min_tile`/`max_tile` to the persistent
-  image's actual tile range before building the draw/src rects, so it
-  never asked the GPU to sample past real data.
-
-  **That clamp fix stopped the stretching but introduced a worse bug --
-  Dave's next check found the right/bottom edge revealed by default,
-  no bees needed.** Cause: clamping shrank the *drawn region* itself,
-  so whatever part of the camera's view fell outside the clamp (common
-  at low zoom, since the view routinely exceeds `WORLD_MARGIN`) just
-  never got a draw call at all -- no draw call means nothing hides that
-  ground, which reads as pre-revealed rather than correctly hidden.
-  **Real fix, same session:** moved the bounds check out of GDScript and
-  into `shaders/fog_mask.gdshader` itself. `_draw_fog_body` now always
-  draws the camera's *whole* view in one `draw_texture_rect` call (no
-  more clamping, no more `draw_texture_rect_region`); the shader
-  receives `view_world_pos`/`view_world_size` (this draw's view rect,
-  set every draw) and `tex_world_pos`/`tex_world_size` (`mask_tex`'s
-  real world coverage, set once in `_build_layer`), reconstructs each
-  fragment's own world position from `UV`, and explicitly treats
-  anything outside `mask_tex`'s coverage as unexplored -- the correct
-  answer for ground nothing has ever revealed, rather than an artifact
-  of the draw call's own clipping behaviour. `source_checks.py`/
-  `balance_tests.py` pass, a fresh Godot boot is clean with no shader
-  compile errors. **Needs Dave to confirm both bugs are actually gone**
-  (pan/zoom near the meadow's right/bottom edge -- no stretching, no
-  pre-reveal) and that the reveal shape still looks like a clean circle
-  around each bee -- once all three check out, Bundle F's fog item is
-  done.
+- `AUDIT_PLAN.md` Bundle F's fog item (mask-texture/canvas-shader
+  rendering) is done, confirmed by Dave 19 Aug. Final shape: a
+  persistent whole-meadow `_world_mask_image`/`_world_mask_texture`
+  (one byte per tile) replaces the old per-tile `draw_rect` runs;
+  `_paint_tile` writes single pixels into it as `_light_center`/
+  `_relight_delta`/`reveal_around` change a tile's state, and
+  `_draw_fog_body` uploads it only when dirty and draws the camera's
+  whole current view in one call. `shaders/fog_mask.gdshader`
+  reconstructs each pixel's own world position from `UV` and explicitly
+  treats anything outside the mask's real world coverage as unexplored,
+  rather than trusting any draw call's own clipping. `_relight_delta`
+  also cut relight cost by only touching tiles that actually change
+  between a bee's old and new disc position, instead of redoing the
+  whole disc on every relight. Three real bugs surfaced and were fixed
+  along the way, all traced to the same root gap (the camera has no
+  position clamp, so its view routinely exceeds the mask's coverage at
+  low zoom): an unbound shader uniform that hid fog entirely; a
+  CPU-side edge clamp that stretched a boundary pixel to infinity; and
+  that clamp's own replacement revealing ground by default, fixed by
+  moving the bounds check into the shader itself. Confirmed at Day
+  11/50-bee scale: `fog_of_war_relight` 44-45ms -> 27ms average/45ms
+  worst frame, `fog_of_war_draw` no longer measurable.
+  `source_checks.py`/`balance_tests.py` pass throughout, multiple
+  Godot boots clean. Dave's final playtest confirms both edge bugs are
+  gone and the reveal shape looks correct.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line

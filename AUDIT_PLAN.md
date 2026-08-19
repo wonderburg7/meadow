@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: perf fix confirmed by Dave at Day 11/50-bee scale; the edge bug it surfaced took two attempts (a CPU-side clamp fixed stretching but caused a worse revealed-by-default bug; the real fix moved the bounds check into the shader) -- awaiting one more check. Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: **done**, confirmed by Dave 19 Aug (perf win and both edge bugs verified fixed). Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -938,11 +938,15 @@ from that; the rest still don't:
   `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
   boot is clean with no shader compile errors.
 
-  **Not yet verified by Dave:** confirm both bugs are actually gone —
-  pan/zoom near the meadow's right/bottom edge and check for both the
-  stretching and the pre-reveal — and that the reveal shape still
-  looks like a clean circle around each bee generally. Once all three
-  check out, this item is done.
+  **Confirmed by Dave, same session: both bugs are gone and the reveal
+  shape looks correct.** No stretching, no pre-reveal, clean circles
+  around bees. This item is done — final shape is a persistent
+  whole-meadow mask texture, incremental relight, and a shader that
+  decides fog state per-pixel from world position rather than relying
+  on any draw call's own edge-clipping behaviour. The other three
+  Bundle F items (`BitMap`/packed storage, fog save-size/RLE, event-driven
+  hatch detection) still have no fresh measurement behind them and
+  remain deferred.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped
