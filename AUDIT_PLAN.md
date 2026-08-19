@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: perf fix confirmed by Dave at Day 11/50-bee scale; an edge-stretch bug it surfaced is fixed and awaiting one more check. Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: perf fix confirmed by Dave at Day 11/50-bee scale; the edge bug it surfaced took two attempts (a CPU-side clamp fixed stretching but caused a worse revealed-by-default bug; the real fix moved the bounds check into the shader) -- awaiting one more check. Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -906,10 +906,43 @@ from that; the rest still don't:
   `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
   boot is clean.
 
-  **Not yet verified by Dave:** confirm the edge-stretch is actually
-  gone (pan/zoom near the meadow's right/bottom edge) and that the
-  reveal shape still looks like a clean circle around each bee
-  generally. Once both check out, this item is done.
+  **That clamp fix stopped the stretching but introduced a worse bug —
+  Dave's next check found the right/bottom edge revealed by default,
+  no bees needed to go there.** Cause: clamping shrank the drawn
+  region itself, so whatever part of the camera's view fell outside
+  the clamp (common at low zoom, since a view span routinely exceeds
+  `WORLD_MARGIN`) just never got a `draw_texture_rect_region` call at
+  all — no draw call means nothing hides that ground, reading as
+  pre-revealed rather than correctly hidden. The two fixes were opposite
+  failure modes of the same underlying gap: relying on the draw call's
+  own boundary handling (`clip_uv`'s stretch, or a CPU-side clamp's
+  "just don't draw there") for something that needs an actual semantic
+  answer — ground outside the mask's real coverage is always
+  unexplored, never revealed and never a stretched sample of something
+  else.
+
+  **Real fix, same session: moved the bounds check out of GDScript and
+  into `shaders/fog_mask.gdshader` itself.** `_draw_fog_body` now
+  always draws the camera's whole current view in one
+  `draw_texture_rect` call (no more CPU-side clamping, no more
+  `draw_texture_rect_region`). The shader receives
+  `view_world_pos`/`view_world_size` (this draw's view rect in world
+  space, set every draw) and `tex_world_pos`/`tex_world_size`
+  (`mask_tex`'s actual world coverage, constant, set once in
+  `_build_layer`); each fragment reconstructs its own world position
+  from the built-in `UV`, converts that to a `mask_tex` UV, and
+  explicitly treats anything outside `[0, 1]` as unexplored before
+  ever sampling the texture — the correct semantic answer, computed
+  once per pixel, rather than delegated to whichever clipping behaviour
+  the draw call happened to have. Verified:
+  `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
+  boot is clean with no shader compile errors.
+
+  **Not yet verified by Dave:** confirm both bugs are actually gone —
+  pan/zoom near the meadow's right/bottom edge and check for both the
+  stretching and the pre-reveal — and that the reveal shape still
+  looks like a clean circle around each bee generally. Once all three
+  check out, this item is done.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped

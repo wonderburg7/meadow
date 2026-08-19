@@ -7,31 +7,33 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Bundle F's fog item: the perf fix is confirmed working, and a real
-   visual bug the fix exposed is now also fixed -- needs one more
+1. **Bundle F's fog item: the perf fix is confirmed working; the edge
+   bug it exposed took two tries to actually fix -- needs one more
    playtest to close out.** Persistent whole-meadow mask texture (draw
-   side) + `_relight_delta` (update side, only touches tiles that
-   actually change between a bee's old and new disc position) landed
-   after the Day 11 regression. Dave's re-check at similar scale (Day 11,
-   50-bee colony) confirmed the fix: `fog_of_war_relight` down to 27ms
-   average/45ms worst frame (was 44-45ms both), `fog_of_war_draw` not
-   even appearing in the breakdown any more (negligible). **But it
-   surfaced a real bug**: fog would "lift into infinity" toward the
-   right/bottom screen edge once a bee neared the meadow's own
-   right/bottom edge. Cause: `camera_view.gd` never clamps camera
-   *position* (only zoom), so at low zoom near a field edge the camera's
-   view span reaches past `WORLD_MARGIN`, and `draw_texture_rect_region`'s
-   `clip_uv` doesn't stop sampling at the texture edge -- it stretches
-   the boundary texel across the leftover screen space. Fixed same
-   session: `_draw_fog_body` now clamps the drawn tile range to the
-   persistent image's actual bounds before building the draw rect, so it
-   never asks the GPU to sample past real data -- past the edge just
-   draws no fog (fine, nothing playable is out there). `source_checks.py`/
-   `balance_tests.py` pass, a fresh Godot boot is clean. **Next: Dave to
-   confirm the edge-stretch is gone** (pan/zoom out near the meadow's
-   right/bottom edge) and that the reveal shape still looks like a clean
-   circle around each bee generally -- once both check out, this item is
-   done. See `AUDIT_PLAN.md` Bundle F's entry for the full trail.
+   side) + `_relight_delta` (update side) landed after the Day 11
+   regression; Dave's re-check at similar scale confirmed the perf win
+   (`fog_of_war_relight` 44-45ms -> 27ms average/45ms worst,
+   `fog_of_war_draw` now negligible) but also found fog "lifting into
+   infinity" toward the right/bottom screen edge near the meadow's own
+   right/bottom edge. First fix attempt (clamp the drawn region to the
+   persistent texture's tile bounds on the CPU side) stopped the
+   stretching but **traded it for a worse bug**: whatever part of the
+   camera's view fell outside the clamp just never got drawn at all,
+   which read as that edge being revealed by default -- and since
+   `camera_view.gd` never clamps camera position (only zoom), the view
+   commonly exceeds `WORLD_MARGIN` at low zoom, so this wasn't rare.
+   **Real fix, same session:** moved the bounds check into
+   `shaders/fog_mask.gdshader` itself -- the draw call now always covers
+   the camera's whole view, and the shader converts each pixel's own
+   world position back to a `mask_tex` UV, explicitly treating
+   out-of-bounds as unexplored (the actually-correct answer) rather than
+   letting the draw call's own clipping behaviour decide. `source_checks.py`/
+   `balance_tests.py` pass, a Godot boot is clean with no shader compile
+   errors. **Next: Dave to confirm both the stretching *and* the
+   revealed-by-default edge are gone** (pan/zoom near the meadow's
+   right/bottom edge), and that the reveal shape still looks like a
+   clean circle around each bee generally -- once both check out, this
+   item is done. See `AUDIT_PLAN.md` Bundle F's entry for the full trail.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -190,16 +192,35 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   doesn't cover -- and `draw_texture_rect_region`'s `clip_uv` doesn't
   just stop sampling at the texture edge in that case, it stretches the
   boundary texel across whatever screen space is left, smearing a
-  lit/clear edge pixel across the rest of the view. Fixed same session:
-  `_draw_fog_body` now clamps `min_tile`/`max_tile` to the persistent
+  lit/clear edge pixel across the rest of the view. First fix attempt:
+  `_draw_fog_body` clamped `min_tile`/`max_tile` to the persistent
   image's actual tile range before building the draw/src rects, so it
-  never asks the GPU to sample past real data -- past the edge just
-  draws no fog, which is fine since nothing playable exists out there.
-  `source_checks.py`/`balance_tests.py` pass, a fresh Godot boot is
-  clean. **Needs Dave to confirm the edge-stretch is actually gone**
-  (pan/zoom near the meadow's right/bottom edge) and that the reveal
-  shape still looks like a clean circle around each bee -- once both
-  check out, Bundle F's fog item is done.
+  never asked the GPU to sample past real data.
+
+  **That clamp fix stopped the stretching but introduced a worse bug --
+  Dave's next check found the right/bottom edge revealed by default,
+  no bees needed.** Cause: clamping shrank the *drawn region* itself,
+  so whatever part of the camera's view fell outside the clamp (common
+  at low zoom, since the view routinely exceeds `WORLD_MARGIN`) just
+  never got a draw call at all -- no draw call means nothing hides that
+  ground, which reads as pre-revealed rather than correctly hidden.
+  **Real fix, same session:** moved the bounds check out of GDScript and
+  into `shaders/fog_mask.gdshader` itself. `_draw_fog_body` now always
+  draws the camera's *whole* view in one `draw_texture_rect` call (no
+  more clamping, no more `draw_texture_rect_region`); the shader
+  receives `view_world_pos`/`view_world_size` (this draw's view rect,
+  set every draw) and `tex_world_pos`/`tex_world_size` (`mask_tex`'s
+  real world coverage, set once in `_build_layer`), reconstructs each
+  fragment's own world position from `UV`, and explicitly treats
+  anything outside `mask_tex`'s coverage as unexplored -- the correct
+  answer for ground nothing has ever revealed, rather than an artifact
+  of the draw call's own clipping behaviour. `source_checks.py`/
+  `balance_tests.py` pass, a fresh Godot boot is clean with no shader
+  compile errors. **Needs Dave to confirm both bugs are actually gone**
+  (pan/zoom near the meadow's right/bottom edge -- no stretching, no
+  pre-reveal) and that the reveal shape still looks like a clean circle
+  around each bee -- once all three check out, Bundle F's fog item is
+  done.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line
