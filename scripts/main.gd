@@ -500,13 +500,14 @@ func begin_winter_countdown() -> void:
 	year_winter.begin_winter_countdown()
 
 # --- per-frame ----------------------------------------------------
-## Two Perf sections below (camera_pan, housekeeping) were added 19 Aug
-## while chasing a worst-frame spike that had no matching cost in any
-## instrumented section -- everything main.gd calls straight from here
-## used to run uncovered. Not because either turned out to be the
-## culprit necessarily, but so `Perf.last_worst_breakdown` (perf.gd) can
-## actually account for the whole frame instead of leaving an
-## unexplained gap between the worst-ms figure and the sections summed.
+## The Perf sections below (camera_pan, scenery, housekeeping, history,
+## prune_selection) were added 19 Aug while chasing a worst-frame spike
+## that had no matching cost in any instrumented section -- everything
+## main.gd calls straight from here used to run uncovered. Not because
+## any one of them turned out to be the culprit necessarily, but so
+## `Perf.last_worst_breakdown` (perf.gd) can actually account for the
+## whole frame instead of leaving an unexplained gap between the
+## worst-ms figure and the sections summed.
 
 func _process(delta: float) -> void:
 	_sample_fps()
@@ -514,7 +515,9 @@ func _process(delta: float) -> void:
 	camera_view._handle_pan(delta)
 	Perf.end("camera_pan")
 	selection_layer.queue_redraw()
+	Perf.begin("scenery")
 	world_building._apply_scenery_setting()
+	Perf.end("scenery")
 	fog_of_war._update()
 
 	if not get_tree().paused:
@@ -531,13 +534,17 @@ func _process(delta: float) -> void:
 		_check_colony_energy(delta)
 		Perf.end("housekeeping")
 		year_winter._refresh_signals(delta)
+		Perf.begin("history")
 		year_winter._sample_history(delta)
 		rate_sample_timer -= delta
 		if rate_sample_timer <= 0.0:
 			rate_sample_timer = 10.0
 			year_winter._sample_rates()
+		Perf.end("history")
 
+	Perf.begin("prune_selection")
 	_prune_selection()
+	Perf.end("prune_selection")
 
 # --- the frame rate readout ----------------------------------------
 ## Measured off the wall clock rather than off `delta`.

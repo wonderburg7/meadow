@@ -454,12 +454,34 @@ account for the whole frame instead of leaving an unexplained gap.
 `tests/source_checks.py`/`balance_tests.py` pass, `tools/
 update_function_map.py --check` clean (regenerated after main.gd's new
 lines shifted it), a Godot boot shows no new parser/type errors.
-**Not yet checked by Dave** — star "fps" and read the new "worst frame"
-line at the same zoomed-out, fog-on scenario as above; it should now
-show which section(s) actually made up the 83-88ms, or reveal that the
-listed sections still don't add up to it (meaning the cost is somewhere
-Perf can't see at all — GPU/render-thread time, most likely, given the
-scene's zoomed-out draw-call volume).
+
+**Checked by Dave, same session — a genuine split result:**
+- **Fog on: fully explained, and worse than the average suggested.**
+  Worst frame 96ms; the new breakdown attributes 89ms of it (93%) to
+  `fog_of_war_draw` alone (83ms) plus `fog_of_war_update` (4ms) — its
+  own rolling average had only been showing 15ms, because fog draw cost
+  is bursty enough that a 0.1-lerp average buries the real peaks. This
+  strengthens Bundle F's mask-shader case further: the worst case is
+  materially worse than the steady-state number already used to justify
+  it.
+- **Fog off: still unexplained, and now confirmed unrelated to
+  anything in this codebase's `_process`/`_draw` calls.** Worst frame
+  58ms; every listed section — including the newly-wrapped
+  `camera_pan`/`housekeeping` — summed to roughly 2ms. Wrapped the
+  remaining main.gd calls that were still uncovered (`scenery`,
+  `history` — folding in `_sample_rates` — and `prune_selection`) in
+  case one of those was it; none showed up either. At this point every
+  per-frame call main.gd itself makes has a `Perf` section, and the gap
+  persists — this is very likely genuine engine/render-thread time
+  (vsync/present stall, GPU flush, texture/font work) that no CPU-side
+  GDScript timer can ever see, not a missing instrumentation site.
+  **`perf.gd` has hit its ceiling on this one specific spike** — further
+  diagnosis needs Godot's own built-in profiler (Debugger > Profiler/
+  Monitors in the editor), a different tool, not more `perf.gd` surgery.
+  Not blocking anything; noted as a known, lower-priority open item.
+
+`source_checks.py`/`balance_tests.py` re-run clean after the second
+round of wraps; `FUNCTION_MAP.md` regenerated again; Godot boot clean.
 
 **Bundle C is closed as "measured, partially fixed."** `fog_of_war_update`
 needs nothing further. `fog_of_war_draw` at normal zoom is fine; at min

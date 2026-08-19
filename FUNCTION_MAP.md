@@ -367,7 +367,7 @@ The comb as a whole: cells, navigation, finding a cell.
 878  func announce() -> void
 ```
 
-## main.gd (790 lines)
+## main.gd (797 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -384,19 +384,19 @@ Per-frame entry point, everything not yet split out of main.
 496  func save_run() -> void
 499  func begin_winter_countdown() -> void
 502  # --- per-frame ----------------------------------------------------
-511  func _process(delta: float) -> void
-542  # --- the frame rate readout ----------------------------------------
-561  func _sample_fps() -> void
-584  func _reseed_meadow(delta: float) -> void
-599  func _hatch_ready_brood() -> void
-629  func _advance_weather(delta: float) -> void
-656  func _apply_rain_overlay() -> void
-671  func _check_for_loss() -> void
-689  func _check_colony_energy(delta: float) -> void
-718  func _role_counts() -> Dictionary
-732  func _update_population_readout(bees = null) -> void
-753  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-759  func _prune_selection() -> void
-772  func _on_restart_after_loss() -> void
-778  func _on_level_chosen(level: int) -> void
+512  func _process(delta: float) -> void
+549  # --- the frame rate readout ----------------------------------------
+568  func _sample_fps() -> void
+591  func _reseed_meadow(delta: float) -> void
+606  func _hatch_ready_brood() -> void
+636  func _advance_weather(delta: float) -> void
+663  func _apply_rain_overlay() -> void
+678  func _check_for_loss() -> void
+696  func _check_colony_energy(delta: float) -> void
+725  func _role_counts() -> Dictionary
+739  func _update_population_readout(bees = null) -> void
+760  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+766  func _prune_selection() -> void
+779  func _on_restart_after_loss() -> void
+785  func _on_level_chosen(level: int) -> void
 ```

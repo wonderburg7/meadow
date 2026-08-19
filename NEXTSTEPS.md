@@ -7,41 +7,45 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **`AUDIT_PLAN.md` Bundle C is now closed and Bundle F's mask-shader
-   item is cleanly justified** -- see `AUDIT_PLAN.md` for the full
-   trail (baseline, a correction, then a clean re-measurement, all 19
-   Aug). Short version: the shared-offset-disc cache solved
-   `fog_of_war_update` (0-3ms everywhere, was ~27ms at 32 bees).
-   `fog_of_war_draw` at min zoom is a real cost (~71ms, worst frame
-   36fps/92ms) with fog genuinely on. An earlier same-session comparison
-   wrongly attributed that to unexplored-tile drawing specifically --
-   turned out to be a `perf.gd` display bug (fixed: an inactive section
-   used to freeze at its last reading instead of decaying to zero, see
-   below). Redone cleanly right after the fix, same colony/camera:
-   `fog_of_war_draw` measured 29ms with dynamic (ordinary) fog reveal
-   vs 7ms with `fog_permanent_reveal` on. **That confirms the original
-   theory after all** -- it's specifically the opaque-unexplored/dimmed
-   branches of `_draw_fog_body` that are expensive, not fog bookkeeping
-   or raw tile-walk cost in general. **Next: pick up Bundle F's
-   mask-texture/canvas-shader item** in the new thread -- read
-   `AUDIT_PLAN.md` Bundle F's entry and Bundle C's "Clean re-measurement"
-   note first, they carry the exact numbers and the comparison bar
-   (measure against the current run-merged rect renderer). Note: even
-   the cheap (permanent-reveal) case still showed an 83-88ms worst
-   frame at this zoom/colony-size -- a separate, smaller, non-fog cost.
-2. **That non-fog cost now has a tool to investigate it -- needs Dave's
-   playtest.** The rolling-average breakdown couldn't explain an 83-88ms
-   spike at all (its sections summed to ~10ms; a single spike barely
-   nudges a smoothed average). `perf.gd` now also captures an unsmoothed
-   snapshot of every section's time from the exact frame that set the
-   window's worst-ms figure -- `perf_breakdown.gd` shows it as a second
-   line, "worst frame (Xms): ...". Also wrapped `main.gd`'s previously
-   uninstrumented per-frame calls (`camera_pan`, `housekeeping`) so that
-   line can actually account for the whole frame. **Star "fps" and
-   re-check the same zoomed-out scenario** -- the new line should show
-   which section(s) made up the 83-88ms, or reveal that nothing listed
-   adds up to it (pointing at GPU/render-thread time, which no `Perf`
-   section can ever see, rather than anything in this codebase).
+1. **`AUDIT_PLAN.md` Bundle C is closed and Bundle F's mask-shader item
+   is justified even more strongly than first thought** -- see
+   `AUDIT_PLAN.md` for the full trail (baseline, a correction, a clean
+   re-measurement, then a worst-frame-breakdown tool that settled the
+   remaining question, all 19 Aug). Short version: the shared-offset-disc
+   cache solved `fog_of_war_update` (0-3ms everywhere, was ~27ms at 32
+   bees). `fog_of_war_draw` at min zoom is a real cost, and it's
+   specifically about drawing unexplored/dimmed tiles (29ms dynamic
+   reveal vs 7ms `fog_permanent_reveal`, same colony/camera -- a clean
+   comparison taken after fixing a `perf.gd` staleness bug that had
+   muddied an earlier attempt at this same comparison). Then, once
+   `perf.gd` gained an unsmoothed worst-frame breakdown (item 2 below),
+   a zoomed-out fog-on worst frame of 96ms turned out to be 89ms
+   `fog_of_war_draw` -- worse than its own 15ms rolling average had
+   suggested, since draw cost is bursty enough that smoothing buries the
+   real peaks. **Next: pick up Bundle F's mask-texture/canvas-shader
+   item** in the new thread -- read `AUDIT_PLAN.md` Bundle F's entry and
+   Bundle C's re-measurement notes first, they carry the exact numbers
+   and the comparison bar (measure against the current run-merged rect
+   renderer).
+2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
+   hit its ceiling investigating it -- next step is Godot's own
+   profiler, not more work here.** Added `Perf.last_worst_ms`/
+   `last_worst_breakdown` -- an unsmoothed snapshot of every section's
+   time from the exact frame that set the window's worst-ms figure,
+   shown as a second "worst frame (Xms): ..." line in
+   `perf_breakdown.gd` -- because the existing rolling average couldn't
+   explain an 83-88ms spike at all (summed to ~10ms). Also wrapped every
+   remaining uninstrumented call in `main.gd::_process()` (`camera_pan`,
+   `scenery`, `housekeeping`, `history`, `prune_selection`). Dave's
+   re-check gave a clean split: with fog on, the tool fully explained the
+   spike (above). **With fog off, a 58ms worst frame still summed to
+   only ~2ms across every listed section**, including all the
+   newly-wrapped main.gd ones -- meaning that cost isn't happening in
+   any GDScript `_process`/`_draw` call at all. Most likely genuine
+   engine/render-thread time (vsync/present stall, GPU flush) that no
+   CPU-side timer can see. Not blocking anything; if it's worth chasing
+   further, that means opening Godot's built-in Debugger > Profiler, a
+   different tool entirely.
 3. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
@@ -106,16 +110,24 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   rolling-average breakdown couldn't explain an 83-88ms worst-frame
   spike at all -- its sections summed to ~10ms, since a single spike
   barely moves a 0.1-lerp average taken across many frames. Also wrapped
-  `main.gd::_process()`'s previously-uninstrumented calls
-  (`camera_view._handle_pan`, `_reseed_meadow`, `_advance_weather`,
-  `_check_for_loss`, `_check_colony_energy`) as `camera_pan` and
-  `housekeeping`, so the new breakdown can actually account for the
+  every remaining uninstrumented call in `main.gd::_process()`
+  (`camera_pan`, `scenery`, `housekeeping`, `history`,
+  `prune_selection`), so the new breakdown can actually account for the
   whole frame instead of leaving an unexplained gap.
   `source_checks.py`/`balance_tests.py` pass, `FUNCTION_MAP.md`
-  regenerated (main.gd shifted), a Godot boot shows no new parser/type
-  errors. **Not yet checked by Dave** -- star "fps", re-run the same
-  zoomed-out scenario from the fog investigation above, and read the new
-  "worst frame" line.
+  regenerated (main.gd shifted, twice), a Godot boot shows no new
+  parser/type errors. **Checked by Dave, same session -- a clean split
+  result.** Fog on: the tool worked exactly as intended, attributing
+  89ms of a 96ms worst frame to `fog_of_war_draw`/`fog_of_war_update` --
+  see the Bundle C entry above, this also raised the mask-shader item's
+  urgency (83ms peak vs the 15ms average previously used to justify it).
+  Fog off: a 58ms worst frame still summed to only ~2ms across every
+  section, main.gd's newly-wrapped ones included -- so that cost isn't
+  in any GDScript `_process`/`_draw` call at all, most likely genuine
+  engine/render-thread time. `perf.gd` has reached its ceiling on that
+  specific spike; further diagnosis needs Godot's own built-in profiler,
+  not more work here. Not blocking anything, logged as a known
+  lower-priority open item.
 - `AUDIT_PLAN.md` Bundle C step 2 (shared-offset fog cache + dirty-driven
   redraw) landed 19 Aug, gated on Dave's own baseline playtest that
   confirmed `fog_of_war` was a real cost (up to ~130ms `fog_of_war_draw`
