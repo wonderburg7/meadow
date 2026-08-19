@@ -24,7 +24,7 @@ done, don't delete it).
 | B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Instrumentation split + boot check done; baseline playtest still needed |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
-| E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Not started |
+| E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
 | F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
 
 ---
@@ -496,6 +496,45 @@ session setup than the fixes themselves take.
 **Validate:** `python3 tests/source_checks.py` and
 `python3 tests/balance_tests.py` both still pass; a `rg` for `egg.gd`/
 `queen.gd` outside `_backups/` and git history returns nothing.
+
+**Done:** all three actions landed, wired slightly more explicitly than
+the literal wording above so it holds up across the hive's three cell-
+creation sites (the initial comb build, a save restore, and a
+player-placed build site) rather than just the common one:
+
+1. `Hive` gained `main: Node2D`, set once by `world_building.gd` right
+   after `main.hive = main.Hive.new()`. `HiveCell` gained the same
+   `main` field, set at all three sites that call `HiveCell.new()`
+   (`hive.gd::_start_site_at`, `world_building.gd::_build_starting_comb`,
+   `saving.gd`'s restore loop). `HiveCell._health_factor()` now reads
+   `main.season.brood_rate()` directly instead of
+   `get_tree().get_nodes_in_group("season")` every frame a cell has
+   brood in it. Capturing `main` rather than `season` itself sidesteps a
+   construction-order problem: `world_building._build_hive_interior()`
+   (which builds the starting comb) runs before `main.gd::_ready()`
+   creates `season`, so a cell created at boot would have captured a
+   null `season` reference forever; reading `main.season` fresh each
+   call means it resolves correctly once `season` exists, regardless of
+   which of the three sites created the cell or when.
+2. `rg 'egg\.gd|queen\.gd|preload\(.*egg|preload\(.*queen'` outside
+   comments/docs turned up nothing (both files only ever appeared in
+   their own retirement-notice headers), so both were `git rm`'d
+   outright rather than edited first — action 3's "clean up the stale
+   `_backups/` reference" is moot once the file holding it is gone.
+   Stale references to the two files in `CLAUDE.md`, `AGENTS.md` and
+   `ROADMAP.md` were updated in the same pass.
+
+Verified: `tests/source_checks.py` and `tests/balance_tests.py` both
+pass; `tools/update_function_map.py --check` (the `main` field shifted
+line numbers in `hive_cell.gd`, one of the six mapped scripts) was
+re-run and is clean. A full Godot boot via `mcp__godot__run_project`
+shows no new parser/type errors, only the same pre-existing
+shadowing/unused-parameter warnings already on record. **Not yet
+verified by Dave's own hands-on play** — specifically, that disease
+still slows brood development the same way it did before (e.g. leaving
+a few corpses uncleaned in a run and checking brood still visibly slows
+down), since that's the one behavioural path this bundle's change
+actually sits on.
 
 ---
 

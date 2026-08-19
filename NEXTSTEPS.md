@@ -42,6 +42,10 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    Only write optimisation code if that baseline actually shows either
    section as a real cost; "measured, not a bottleneck" is a valid
    outcome that closes the bundle.
+   - Also fold in Bundle E's one behavioural check while a run is going
+     anyway: leave a few dead larvae uncleaned and confirm brood
+     development still visibly slows (disease reads `main.season` now
+     instead of a per-frame group lookup -- see Bundle E's "Done" note).
 3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
@@ -75,6 +79,22 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- `AUDIT_PLAN.md` Bundle E (small hot-path/housekeeping cleanups) is
+  done -- `HiveCell._health_factor()` no longer does a per-frame
+  `get_tree().get_nodes_in_group("season")` lookup on the brood-
+  development path; `Hive` and `HiveCell` both gained a `main:
+  Node2D` field, set at all three sites a `HiveCell` gets created
+  (initial comb build, save restore, player-placed build site), so a
+  cell reaches `main.season.brood_rate()` directly. Retired
+  `egg.gd`/`queen.gd` stubs deleted (`git rm`, confirmed no remaining
+  references first); stale mentions of them in `CLAUDE.md`, `AGENTS.md`
+  and `ROADMAP.md` cleaned up too. `source_checks.py`/`balance_tests.py`
+  pass, `tools/update_function_map.py --check` is clean (regenerated
+  after `hive_cell.gd`'s new field shifted its line numbers), and a
+  Godot boot via `mcp__godot__run_project` shows no new parser/type
+  errors. **Not yet verified by Dave:** that disease still visibly slows
+  brood development the same way it did before (see item 2 above -- can
+  be checked in the same playtest as Bundle C's fog measurement).
 - `AUDIT_PLAN.md` Bundle D (Claude/agent context restructure) is done --
   root `CLAUDE.md` trimmed 555 -> 210 lines, history/pitfalls/perf detail
   moved to `docs/`, six completed plan docs archived to `docs/archive/`,

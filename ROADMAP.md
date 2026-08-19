@@ -77,7 +77,7 @@ bundles are worth doing. Full detail, file lists, and validation steps in
 | **Save/restore isn't deterministic** — flower/bee grid rebuilds can briefly see nodes just queued for deletion, because Godot defers `queue_free()` to end of frame | M | Not started. `AUDIT_PLAN.md` Bundle B. |
 | **Fog-of-war performance is unmeasured since the 5-unit rework** — the file itself says so; static analysis suggests a real but unconfirmed cost at higher bee counts | S (measure) + M (fix if needed) | Not started, gated on measurement. `AUDIT_PLAN.md` Bundle C. |
 | **Claude Code context restructure** — root `CLAUDE.md` is ~550 lines against guidance of ~200; move history/bug-catalogue to `docs/`, add path-scoped `.claude/rules/`, fix the `.claudeignore` claim | M | Not started, highest-leverage single item. `AUDIT_PLAN.md` Bundle D. |
-| **Small housekeeping** — cache `Season` ref instead of a per-frame group lookup in `hive_cell.gd`; delete retired `egg.gd`/`queen.gd` | S | Not started. `AUDIT_PLAN.md` Bundle E. |
+| **Small housekeeping** — cache `Season` ref instead of a per-frame group lookup in `hive_cell.gd`; delete retired `egg.gd`/`queen.gd` | S | Done. `AUDIT_PLAN.md` Bundle E. |
 
 ## Making the middle game interesting
 

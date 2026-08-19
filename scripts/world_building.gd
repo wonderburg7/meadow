@@ -31,6 +31,7 @@ func _build_meadow() -> void:
 	main.meadow_root.add_child(grass)
 
 	main.hive = main.Hive.new()
+	main.hive.main = main
 	main.hive.position = main.HIVE_MARKER_POSITION
 	main.meadow_root.add_child(main.hive)
 
@@ -253,6 +254,7 @@ func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 		var cell_hex: Vector2i = main.Shapes.hex_spiral_at(i)
 		var cell = main.HiveCell.new()
 		cell.axial = cell_hex
+		cell.main = main
 		cell.position = centre_local + main.Shapes.hex_to_pixel(cell_hex.x, cell_hex.y, spacing)
 		main.hive_root.add_child(cell)
 		cells.append(cell)

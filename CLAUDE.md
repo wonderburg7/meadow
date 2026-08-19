@@ -94,7 +94,7 @@ instantiated hundreds of times, while `world_building.gd`,
 `input_selection.gd` and `main.gd`'s other siblings are each a single
 Node child of `main` (`main.world_building.foo()`), since `main` exists
 once. Everything else not in the table is small and self-explanatory by
-filename; `egg.gd`/`queen.gd` are retired stubs.
+filename.
 
 Every long script is divided by `# --- section name ---` headers -- grep
 those rather than reading top to bottom. For the six biggest scripts

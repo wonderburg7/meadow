@@ -94,6 +94,11 @@ var builders: Array = []
 ## cell in the hive (or into a save, if building outlasts the Challenge).
 var build_time_override: float = -1.0
 
+## Set by whichever of hive.gd/world_building.gd/saving.gd created this
+## cell, so _health_factor can reach main.season directly instead of a
+## per-frame get_nodes_in_group lookup on the brood-development path.
+var main: Node2D = null
+
 func effective_build_time() -> float:
 	return build_time_override if build_time_override > 0.0 else GameConfig.cell_build_time
 
@@ -385,14 +390,13 @@ func _develop_brood(delta: float) -> void:
 	being_tended = false   # nursery workers re-assert this each frame while tending
 
 ## The colony's brood-rate multiplier, from the season/disease system.
-## Reached through the group rather than a reference, because a cell is
-## created in a dozen places and threading a reference through all of
-## them for one number would be worse than the lookup.
 func _health_factor() -> float:
-	var found: Array = get_tree().get_nodes_in_group("season")
-	if found.is_empty() or not is_instance_valid(found[0]):
+	if main == null or not is_instance_valid(main):
 		return 1.0
-	return found[0].brood_rate()
+	var season: Node2D = main.season
+	if season == null or not is_instance_valid(season):
+		return 1.0
+	return season.brood_rate()
 
 func _larva_dies() -> void:
 	content_type = "corpse"

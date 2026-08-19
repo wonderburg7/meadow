@@ -16,6 +16,11 @@ var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
 var comb_centre: Vector2 = Vector2.ZERO
 
+## Set once by world_building.gd right after this Hive is created. Handed
+## on to every cell it builds so a cell can reach main.season without a
+## per-frame get_nodes_in_group lookup -- see HiveCell._health_factor.
+var main: Node2D = null
+
 ## Rotation pointer for find_empty_cell's brood-cell sequence, used to
 ## spread a run of eggs across the cells within one priority tier rather
 ## than camping the first free one.
@@ -562,6 +567,7 @@ func _can_build_on(hex: Vector2i) -> bool:
 func _start_site_at(hex: Vector2i) -> Node2D:
 	var cell := HiveCell.new()
 	cell.axial = hex
+	cell.main = main
 	cell.position = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
 	comb_parent.add_child(cell)
 	cell.start_as_site()
