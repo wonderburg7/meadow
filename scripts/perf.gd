@@ -96,6 +96,23 @@ func _process(_delta: float) -> void:
 		var frame_ms: float = float(now - _frame_start_usec) / 1000.0
 		_window_worst_ms = max(_window_worst_ms, frame_ms)
 
+		# A section that didn't run this frame decays toward zero instead
+		# of freezing at its last reading -- otherwise a toggled-off
+		# system (fog of war with fog_of_war_on false, etc.) keeps
+		# showing a stale cost in the breakdown forever. Dropped once
+		# negligible so top_sections() stops surfacing a dead section
+		# ahead of ones still actually running.
+		var stale: Array = []
+		for section in averages:
+			if not _totals.has(section):
+				var decayed: float = lerpf(float(averages[section]), 0.0, 0.1)
+				if decayed < 0.01:
+					stale.append(section)
+				else:
+					averages[section] = decayed
+		for section in stale:
+			averages.erase(section)
+
 		for section in _totals:
 			var ms: float = _totals[section] / 1000.0
 			if averages.has(section):
