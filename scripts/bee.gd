@@ -115,6 +115,10 @@ var selected: bool = false
 ## queue_free only takes effect at the end of the frame, so without this
 ## a dying bee can be processed again and die twice.
 var is_dying: bool = false
+## Set by BeeSurvival.die() the instant it's called, so anything reading
+## it afterwards (the epitaph toast, the diagnostic log) sees the actual
+## branch that fired rather than re-deriving a guess from stale state.
+var death_cause: String = ""
 
 var move_target: Vector2 = Vector2.ZERO   # for player-commanded movement
 var target_cell: Node2D = null

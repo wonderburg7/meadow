@@ -7,7 +7,12 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 19 Aug 2026 — added a row below for the two-report technical
+Last updated: 19 Aug 2026 — added a row below for the diagnostic
+logging system (post-run `.jsonl` files Claude can read back to help
+diagnose deaths/imbalance), now fully planned in
+`DIAGNOSTIC_LOGGING_PLAN.md`. Not started.
+
+Previous update, 19 Aug 2026 — added a row below for the two-report technical
 audit and its resulting `AUDIT_PLAN.md`, covering a confirmed state-leak
 bug, save/restore determinism, fog-of-war performance, and Claude Code
 context efficiency. Nothing in it is started yet.
@@ -78,6 +83,23 @@ bundles are worth doing. Full detail, file lists, and validation steps in
 | **Fog-of-war performance is unmeasured since the 5-unit rework** — the file itself says so; static analysis suggests a real but unconfirmed cost at higher bee counts | S (measure) + M (fix if needed) | Not started, gated on measurement. `AUDIT_PLAN.md` Bundle C. |
 | **Claude Code context restructure** — root `CLAUDE.md` is ~550 lines against guidance of ~200; move history/bug-catalogue to `docs/`, add path-scoped `.claude/rules/`, fix the `.claudeignore` claim | M | Not started, highest-leverage single item. `AUDIT_PLAN.md` Bundle D. |
 | **Small housekeeping** — cache `Season` ref instead of a per-frame group lookup in `hive_cell.gd`; delete retired `egg.gd`/`queen.gd` | S | Done. `AUDIT_PLAN.md` Bundle E. |
+
+## Diagnostic logging — see DIAGNOSTIC_LOGGING_PLAN.md
+
+Post-run `.jsonl` files (one per run, last 5 kept) capturing a config
+snapshot, every death, hourly population/resource/cell snapshots, and
+a session summary — so Dave can hand Claude a file after a playtest and
+get back correlated findings (e.g. "foragers keep dying shortly after a
+long trip") instead of just a population number going down. Fully
+planned against the actual code (death-cause tracking doesn't exist yet
+and needs a small fix first; no hive-temperature or weather-string
+systems exist yet, so those spec fields are substituted with what the
+game actually tracks). Full detail in `DIAGNOSTIC_LOGGING_PLAN.md` —
+update status there, not here.
+
+| | Size | Status |
+|---|---|---|
+| **Diagnostic logging system** — `DiagnosticLog` autoload, death-cause fix in `bee_survival.gd`, hourly snapshots, session summary | S/M | **Done.** Built and confirmed by Dave 19 Aug, reading a real `session_*.jsonl` back after a playtest. `DIAGNOSTIC_LOGGING_PLAN.md`. |
 
 ## Making the middle game interesting
 

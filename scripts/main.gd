@@ -542,6 +542,8 @@ func _process(delta: float) -> void:
 			year_winter._sample_rates()
 		Perf.end("history")
 
+		DiagnosticLog.tick(delta, self)
+
 	Perf.begin("prune_selection")
 	_prune_selection()
 	Perf.end("prune_selection")
@@ -681,6 +683,7 @@ func _check_for_loss() -> void:
 	if is_instance_valid(queen):
 		return
 	colony_lost = true
+	DiagnosticLog.end_session("collapsed")
 	game_over.open(
 		day,
 		get_tree().get_nodes_in_group("bees").size(),

@@ -7,26 +7,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **The separate non-fog worst-frame cost is real, and `perf.gd` has
-   hit its ceiling investigating it -- next step is Godot's own
-   profiler, not more work here.** Added `Perf.last_worst_ms`/
-   `last_worst_breakdown` -- an unsmoothed snapshot of every section's
-   time from the exact frame that set the window's worst-ms figure,
-   shown as a second "worst frame (Xms): ..." line in
-   `perf_breakdown.gd` -- because the existing rolling average couldn't
-   explain an 83-88ms spike at all (summed to ~10ms). Also wrapped every
-   remaining uninstrumented call in `main.gd::_process()` (`camera_pan`,
-   `scenery`, `housekeeping`, `history`, `prune_selection`). Dave's
-   re-check gave a clean split: with fog on, the tool fully explained the
-   spike (above). **With fog off, a 58ms worst frame still summed to
-   only ~2ms across every listed section**, including all the
-   newly-wrapped main.gd ones -- meaning that cost isn't happening in
-   any GDScript `_process`/`_draw` call at all. Most likely genuine
-   engine/render-thread time (vsync/present stall, GPU flush) that no
-   CPU-side timer can see. Not blocking anything; if it's worth chasing
-   further, that means opening Godot's built-in Debugger > Profiler, a
-   different tool entirely.
-2. **Two other audit bundles still need Dave's hands-on check in Godot**
+1. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
    neither has been played:
@@ -50,7 +31,7 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
    via `mcp__godot__run_project` all came back clean for all three
    bundles, but nothing here substitutes for Dave actually playing it.
-3. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
+2. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
    The menu entry and `LEVELS[2]` starting-state preset exist
    (`levels.gd`); none of its ten sub-stages, failure conditions or
    Dr Gallerin prompts are written. `challenge_runner.gd`'s `STAGES`
@@ -64,6 +45,13 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Waiting, lower priority
 
+- **The separate non-fog worst-frame cost is real, and `perf.gd` has hit
+  its ceiling investigating it** -- confirmed 19 Aug: with fog off, a
+  58ms worst frame still summed to only ~2ms across every measured
+  section, so the cost isn't in any GDScript `_process`/`_draw` call at
+  all. Most likely genuine engine/render-thread time. Not blocking
+  anything; next step if it's worth chasing is Godot's own built-in
+  Debugger > Profiler, not more work in `perf.gd`.
 - **The balance overrides `TUTORIAL_PLAN.md` describes for Challenge 1's
   start state are still not applied** -- no rain, no rival colony, no
   winter, no disease are all just "not yet true" rather than switched
@@ -84,6 +72,24 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- Diagnostic logging system (`DIAGNOSTIC_LOGGING_PLAN.md`) built and
+  confirmed 19 Aug. Dave played a run and read the resulting
+  `session_*.jsonl` back: a clean config line (every `GameConfig`
+  tunable present via reflection), hourly snapshots with sane
+  population/cells/resources/environment fields, five real death lines
+  (role, state, cause, location, stats all correct) tallying correctly
+  into a `summary` line with the right `outcome`. Confirms the
+  `Session.run_reset` → `start_session()` → `end_session("quit")`
+  boundary logic works in practice, not just in the source checks. Two
+  narrower Phase 4 checks are still open, both mechanically simple and
+  low-risk: killing the window with the OS close button mid-run (should
+  still land a summary line, via the `NOTIFICATION_WM_CLOSE_REQUEST`
+  handler), and six restarts in a row leaving only 5 files behind. Along
+  the way, `BeeSurvival.die()` was changed to take an explicit
+  `cause: String` instead of `_announce_death()` re-deriving it after
+  the fact from a ternary that could disagree with which branch actually
+  fired -- a real bug, low-stakes (only affected the epitaph toast's
+  wording), fixed as a side effect of Phase 1.
 - `AUDIT_PLAN.md` Bundle F's fog item (mask-texture/canvas-shader
   rendering) is done, confirmed by Dave 19 Aug. Final shape: a
   persistent whole-meadow `_world_mask_image`/`_world_mask_texture`
@@ -205,24 +211,3 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   pass. Still needs Dave to skim the new `docs/`/`.claude/rules/` split
   and confirm nothing load-bearing reads wrong out of context (this
   bundle's own "Validate" step).
-- `python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
-  both passing, and a full Godot boot via `mcp__godot__run_project`
-  clean (only pre-existing, unrelated shadowing/unused-parameter
-  warnings), after splitting `fog_of_war.gd`'s `Perf` instrumentation
-  into `fog_of_war_update`/`fog_of_war_draw` for `AUDIT_PLAN.md` Bundle
-  C's still-pending baseline measurement -- no behaviour change, prep
-  only.
-- Same two checks and boot, after landing `AUDIT_PLAN.md` Bundle B. The new
-  `check_gameconfig_writes` guardrail was confirmed to actually fire
-  (tested with a temporary stray write, then reverted) before this was
-  called done.
-- Every script in `scripts/` also checked with `gdlint`/`gdparse`
-  (`gdtoolkit`, pip-installed locally, not a project dependency) as of
-  19 Aug -- catches real parser/type errors that `source_checks.py`
-  alone can't (it only checks names/brackets, not scope or type
-  inference). Two real bugs were caught and fixed this way before
-  reaching Dave: a leftover cross-scope reference in `hud.gd`, and a
-  `:=` type-inference failure on a loosely-typed `main.X` reference in
-  `input_selection.gd` -- see `bee_survival.gd`'s `_announce_death`
-  pattern (`main.DeathMarker.new()`, plain `=`) for why that class of
-  assignment has to skip `:=`.

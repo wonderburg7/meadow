@@ -14,6 +14,15 @@ extends Node
 ## it to change how the game plays, it belongs in GameConfig. If it
 ## describes the state of *this* run or *this* player, it belongs here.
 
+## Fires at the end of reset_run_state() -- i.e. at every point a new run
+## actually begins (Restart Run, New Run, Load; see every call site of
+## reset_run_state()). diagnostic_log.gd is the one listener today,
+## closing out the previous session file and opening the next. A signal
+## rather than a direct call, so Session stays ignorant of
+## DiagnosticLog's existence -- new call sites of reset_run_state() get
+## covered automatically without Session needing to know why.
+signal run_reset()
+
 # --- the clock ----------------------------------------------------
 ## In-game seconds elapsed. Advanced by main.gd, saved with the run.
 var sim_time: float = 0.0
@@ -121,3 +130,4 @@ func reset_run_state() -> void:
 	gynes_released = 0
 	rain_intensity = 0.0
 	control_groups.clear()
+	run_reset.emit()

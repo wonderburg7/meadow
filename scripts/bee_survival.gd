@@ -71,13 +71,13 @@ static func age_and_burn(bee: Node2D, delta: float) -> void:
 	# back out of the stores. That is the energy leak.
 	if bee.energy <= 0.0:
 		bee.energy = 0.0
-		die(bee)
+		die(bee, "starvation")
 		return
 
 	# The queen doesn't die of old age -- losing her would silently end
 	# the colony, and there's no succession yet. She can still starve.
 	if not bee.is_queen and bee.age_seconds >= lifespan_seconds(bee):
-		die(bee)
+		die(bee, "old age")
 
 
 ## How long this bee lives. Shortened by disease, which is most of what
@@ -311,10 +311,11 @@ static func current_goal(bee: Node2D) -> Vector2:
 	return Vector2(INF, INF)
 
 
-static func die(bee: Node2D) -> void:
+static func die(bee: Node2D, cause: String) -> void:
 	if bee.is_dying:
 		return          # queue_free is deferred, so guard against a second pass
 	bee.is_dying = true
+	bee.death_cause = cause
 	if bee.current_flower:
 		bee.current_flower.release(bee)
 	if bee.target_cell and is_instance_valid(bee.target_cell):
@@ -322,6 +323,7 @@ static func die(bee: Node2D) -> void:
 	if bee.target_block and is_instance_valid(bee.target_block):
 		bee.target_block.release_miner(bee)
 	BeeForaging.release_cell_slot(bee)
+	DiagnosticLog.log_death(bee)
 	# A mark is left where it fell, so losses show up in the place they
 	# happened rather than only as a number going down.
 	if bee.world != null and is_instance_valid(bee.world):
@@ -340,5 +342,4 @@ static func _announce_death(bee: Node2D) -> void:
 	if Session.sim_time - bee.world.last_epitaph_time < GameConfig.epitaph_min_gap:
 		return
 	bee.world.last_epitaph_time = Session.sim_time
-	var cause: String = "old age" if not bee.is_queen and bee.age_seconds >= lifespan_seconds(bee) else "starvation"
-	bee.world.hud.show_warning("%s has died of %s. %s" % [bee.bee_name, cause, bee.bee_fact])
+	bee.world.hud.show_warning("%s has died of %s. %s" % [bee.bee_name, bee.death_cause, bee.bee_fact])
