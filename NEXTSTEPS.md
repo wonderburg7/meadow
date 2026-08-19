@@ -7,28 +7,29 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Bundle F's mask-texture/canvas-shader fog item has landed (code +
-   boot check), including a fix for a real bug Dave's first hands-on
-   check caught (fog was invisible entirely) -- needs re-checking, then
-   the frame-time comparison.** `fog_of_war.gd::_draw_fog_body` no
-   longer merges rows into colour runs and issues one `draw_rect` per
-   run; it writes one byte per visible tile into a reused
-   `Image`/`ImageTexture` and issues a single `draw_texture_rect`, with
-   `shaders/fog_mask.gdshader` (a `ShaderMaterial` on the fog layer)
-   turning that single-channel mask back into the same
-   unexplored/dim/lit picture on the GPU. The bug: `draw_texture_rect`
+1. **Bundle F's mask-texture/canvas-shader fog item is landed and
+   confirmed working.** `fog_of_war.gd::_draw_fog_body` no longer merges
+   rows into colour runs and issues one `draw_rect` per run; it writes
+   one byte per visible tile into a reused `Image`/`ImageTexture` and
+   issues a single `draw_texture_rect`, with `shaders/fog_mask.gdshader`
+   (a `ShaderMaterial` on the fog layer) turning that single-channel
+   mask back into the same unexplored/dim/lit picture on the GPU. One
+   real bug turned up and got fixed along the way -- `draw_texture_rect`
    binds the built-in `TEXTURE` sampler, not the shader's custom
-   `mask_tex` uniform, which was never bound via `set_shader_parameter`
-   -- so fog drew fully transparent everywhere, always. Fixed by binding
-   `mask_tex` in `_update_mask_texture` whenever the texture is
-   (re)created. **Next: Dave to re-check fog actually shows (toggle it,
-   look for the black/dimmed unexplored ground)**, then -- once that's
-   confirmed -- the frame-time comparison this item exists for: same
-   scenario as Bundle C's "Clean re-measurement" (decent colony, zoomed
-   out, dynamic reveal), `fog_of_war_draw`'s rolling average and
-   `Perf.last_worst_breakdown` against the pre-change numbers already on
-   record (29ms average / 83-96ms worst frame). See `AUDIT_PLAN.md`
-   Bundle F's updated entry for the full trail.
+   `mask_tex` uniform, so fog drew fully transparent everywhere until
+   `_update_mask_texture` was made to bind it explicitly. Dave's
+   playtest (two screenshots, dynamic reveal then `fog_permanent_reveal`)
+   confirms fog renders correctly. Perf readouts from those same shots
+   look like a strong win over the old baseline -- 8-12ms
+   `fog_of_war_draw` average and 15-19ms in-worst-frame here vs the old
+   29ms average / 83-96ms worst frame -- but the two shots weren't a
+   controlled comparison (different day/colony/zoom, no fixed camera),
+   so it's not to the same rigour as Bundle C's own measurement.
+   **Optional next step, not blocking:** a same-camera, same-colony,
+   min-zoom dynamic-vs-permanent comparison mirroring Bundle C's "Clean
+   re-measurement" exactly, if a precise before/after number matters.
+   Otherwise this item is done -- see `AUDIT_PLAN.md` Bundle F's entry
+   for the full trail.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -127,11 +128,17 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   drew fully transparent. Fixed same session: `_update_mask_texture`
   now calls `_mask_material.set_shader_parameter("mask_tex",
   _mask_texture)` whenever it (re)creates the texture. Re-run clean
-  (`source_checks.py`/`balance_tests.py`, a fresh Godot boot). **Still
-  not yet re-verified by Dave** -- needs the same visual check again,
-  plus the frame-time comparison this item exists for (same scenario as
-  Bundle C's "Clean re-measurement": decent colony, zoomed out, dynamic
-  reveal vs the 29ms/83-96ms numbers already on record).
+  (`source_checks.py`/`balance_tests.py`, a fresh Godot boot). **Dave
+  re-checked, same day: fog renders correctly** (two screenshots,
+  dynamic reveal then `fog_permanent_reveal`). Perf readouts from those
+  screenshots look like a strong win over the old baseline (8-12ms
+  `fog_of_war_draw` average, 15-19ms in the worst frame, vs the old
+  29ms average / 83-96ms worst frame) but weren't a controlled
+  comparison -- different day/colony/zoom, no fixed camera -- so treat
+  as a strong preliminary result, not a rigorous before/after. A
+  same-camera, same-colony, min-zoom re-measurement mirroring Bundle
+  C's method is optional if a precise number is ever wanted; not
+  blocking.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line

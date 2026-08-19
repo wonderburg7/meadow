@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item landed (code + boot check; Dave's hands-on frame-time comparison still pending). Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item landed and confirmed working by Dave, with strong (if not fully controlled) preliminary perf numbers. Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -774,15 +774,22 @@ from that; the rest still don't:
   resize). Re-verified: `source_checks.py`/`balance_tests.py` pass, a
   fresh Godot boot is clean.
 
-  **Not yet re-verified by Dave:** that fog actually shows now (toggle
-  it, expect black/dimmed unexplored ground), then the actual
-  frame-time comparison this item exists for — same scenario as
-  Bundle C's "Clean re-measurement" (a decent-sized colony, zoomed out,
-  dynamic reveal), `fog_of_war_draw`'s rolling average and
-  `Perf.last_worst_breakdown` before vs after, plus a visual-parity
-  check (fixed camera position, fog on, screenshot compare) since the
-  shader reproduces the old colours/alphas by hand rather than sharing
-  code with them any more.
+  **Re-checked by Dave, same session: fog renders correctly** (two
+  screenshots, dynamic reveal then `fog_permanent_reveal`) — visual bug
+  confirmed fixed. Perf readouts from those same screenshots, not a
+  controlled comparison (different days/colony sizes/zoom, not a fixed
+  camera the way Bundle C's "Clean re-measurement" was) but still
+  informative: Day 1, `fog_of_war_draw` 8ms average / 19ms in the 61ms
+  worst frame; Day 3, 12ms average / 15ms in the 41ms worst frame. Both
+  well under the old baseline (29ms average, 83-96ms worst frame with
+  fog responsible for ~89ms of it) — a strong preliminary result, but
+  since day/zoom/colony all differ between the two readings and against
+  the original baseline, this isn't proof to the same standard Bundle C
+  used. **Still open, lower priority:** a same-camera, same-colony,
+  same-zoom dynamic-vs-permanent comparison at min zoom (mirroring
+  Bundle C's method exactly) if a rigorous before/after number is
+  wanted; not blocking, since the preliminary numbers already clear the
+  bar this item was justified against.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped
