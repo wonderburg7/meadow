@@ -75,7 +75,31 @@ extends Node
 ## remaining cost was the draw method itself: `_draw_fog_body` used to merge
 ## each row into runs of one colour and `draw_rect` each run, which still
 ## means many draw calls when the explored boundary is jagged. See the perf
-## note above `_draw_fog_body` for what replaced it.
+## note above `_draw_fog_body` for what replaced it -- and the note below
+## for why that replacement itself needed a second pass.
+##
+## Performance note (19 Aug 2026, later same day): the mask-texture version
+## above was a per-view-rebuild -- a byte array covering only what the
+## camera could currently see, rebuilt from scratch on every dirty frame.
+## A Day 11 playtest with a bigger colony and a more zoomed-out camera than
+## the earlier quick check showed it costing as much as the original
+## draw_rect version, worst in exactly the case that used to be cheap
+## (`fog_permanent_reveal` on): with no early-out for "this whole run is
+## one colour", its cost tracked view size, not how much fog was actually
+## in view. Replaced the per-view texture with one persistent
+## `_world_mask_image`/`_world_mask_texture` sized to the whole meadow
+## (`WORLD_MARGIN` past `main.FLOWER_FIELD_HALF_SIZE`, ~700x556 tiles at
+## today's field size -- a few hundred KB, trivial). `_paint_tile` writes a
+## single pixel directly into it whenever `_light_center`/`reveal_around`
+## change a tile's state, instead of every visible tile being redetermined
+## every dirty frame. `_draw_fog_body` now just re-uploads the image (only
+## if something was actually painted since the last upload -- see
+## `_mask_dirty`) and draws whichever sub-rect the camera currently frames
+## with `draw_texture_rect_region` -- panning or zooming costs nothing
+## extra, since it only changes which part of the already-current texture
+## gets sampled. This does not by itself fix relight cost scaling with bee
+## count (a separate, already-flagged issue) -- see the note above
+## `_light_center` for that half.
 
 var main: Node2D
 
@@ -104,14 +128,30 @@ var _last_draw_cam_zoom: float = -1.0
 var _last_draw_permanent: bool = false
 
 ## Mask-texture rendering (AUDIT_PLAN.md Bundle F, 19 Aug 2026) -- see the
-## perf note further down, above `_draw_fog_body`. `_mask_image`/
-## `_mask_texture` are reused frame to frame and only rebuilt (rather than
-## updated in place) when the visible tile span changes size.
+## perf notes further down. One persistent image covers the whole meadow;
+## `_paint_tile` writes single pixels into it as tiles change state, and
+## `_draw_fog_body` uploads it to the GPU only when `_mask_dirty` and draws
+## whichever sub-rect the camera currently frames.
 var _mask_material: ShaderMaterial
-var _mask_image: Image
-var _mask_texture: ImageTexture
+var _world_mask_image: Image
+var _world_mask_texture: ImageTexture
+## Tile coordinate of the persistent image's pixel (0, 0) -- tile
+## coordinates are signed (the hive sits near the world's centre) but image
+## pixel coordinates aren't, so every read/write subtracts this to convert.
+var _world_origin_tile: Vector2i = Vector2i.ZERO
+## True once `_paint_tile`/`_repaint_all` has changed a pixel since the
+## last GPU upload -- lets `_draw_fog_body` skip re-uploading the whole
+## image on a frame that only panned or zoomed the camera.
+var _mask_dirty: bool = false
 
 const FOG_TILE_SIZE := 5.0
+## How far past `main.FLOWER_FIELD_HALF_SIZE` the persistent mask image
+## extends on each side -- covers `fog_reveal_radius` overshoot and any
+## steering wander near the field edge, so a bee near the boundary never
+## tries to paint a tile outside the image (silently dropped by
+## `_paint_tile` if it ever did, rather than erroring, but shouldn't
+## happen with this much slack).
+const WORLD_MARGIN := 400.0
 ## How far a bee has to move since its last recompute before its lit
 ## tiles are redone. Keeps the expensive part (walking every tile in
 ## sight radius) down to roughly once every third of a second per bee
@@ -142,6 +182,16 @@ func _build_layer() -> void:
 	_mask_material.shader = preload("res://shaders/fog_mask.gdshader")
 	_layer.material = _mask_material
 	main.meadow_root.add_child(_layer)
+
+	var half_size: Vector2 = main.FLOWER_FIELD_HALF_SIZE + Vector2(WORLD_MARGIN, WORLD_MARGIN)
+	var world_w: int = int(ceil(half_size.x * 2.0 / FOG_TILE_SIZE))
+	var world_h: int = int(ceil(half_size.y * 2.0 / FOG_TILE_SIZE))
+	_world_origin_tile = _tile_of(Vector2(-half_size.x, -half_size.y))
+	_world_mask_image = Image.create_empty(world_w, world_h, false, Image.FORMAT_R8)
+	_world_mask_image.fill(Color8(MASK_UNEXPLORED, MASK_UNEXPLORED, MASK_UNEXPLORED, 255))
+	_world_mask_texture = ImageTexture.create_from_image(_world_mask_image)
+	_mask_material.set_shader_parameter("mask_tex", _world_mask_texture)
+
 	reveal_around(main.hive.position, START_CLEAR_RADIUS)
 
 ## Part of main's public surface for this system: called once from
@@ -233,6 +283,14 @@ func _relight(id: int, pos: Vector2) -> void:
 
 ## Applies the shared disc offsets around `center`, lighting (delta 1) or
 ## unlighting (delta -1) every tile it covers.
+##
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): still walks the
+## whole disc every relight, same as before this session's persistent-mask
+## change -- `_paint_tile` below is a cheap single-pixel write, not a
+## reason this got more expensive, but it's also not the fix for the
+## already-flagged relight-cost-scales-with-bee-count issue (`bees 50` at
+## Day 11 measured `fog_of_war_relight` at 44-45ms) -- see AUDIT_PLAN.md
+## Bundle F for that half, tackled separately in the same session.
 func _light_center(center: Vector2i, delta: int) -> void:
 	for off in _disc_offsets:
 		var tile: Vector2i = Vector2i(center.x + off.x, center.y + off.y)
@@ -243,12 +301,41 @@ func _light_center(center: Vector2i, delta: int) -> void:
 			_lit_count[tile] = count
 		if delta > 0:
 			explored[tile] = true
+		_paint_tile(tile)
 
 ## Marks a circle of tiles explored without lighting them -- used for the
 ## starting clearing and for restoring a save.
 func reveal_around(pos: Vector2, radius: float) -> void:
 	for tile in _disc(pos, radius):
 		explored[tile] = true
+		_paint_tile(tile)
+
+## Writes `tile`'s current state (unexplored/explored/lit) into the
+## persistent mask image, if it falls within the image's bounds -- see
+## `WORLD_MARGIN`. Marks the image dirty so `_draw_fog_body` knows to
+## upload it before the next draw.
+func _paint_tile(tile: Vector2i) -> void:
+	var px: Vector2i = tile - _world_origin_tile
+	if px.x < 0 or px.y < 0 or px.x >= _world_mask_image.get_width() or px.y >= _world_mask_image.get_height():
+		return
+	var value: int = MASK_UNEXPLORED
+	if _lit_count.has(tile):
+		value = MASK_LIT
+	elif explored.has(tile):
+		value = MASK_EXPLORED
+	_world_mask_image.set_pixel(px.x, px.y, Color8(value, value, value, 255))
+	_mask_dirty = true
+
+## Repaints the whole persistent image from `explored` -- used after
+## `restore()` replaces `explored` wholesale, since the image's existing
+## pixels reflect the previous world's state, not the loaded save's.
+## `_lit_count` isn't restored (bees relight fresh once respawned), and a
+## lit tile is always already explored, so `explored` alone is enough.
+func _repaint_all() -> void:
+	_world_mask_image.fill(Color8(MASK_UNEXPLORED, MASK_UNEXPLORED, MASK_UNEXPLORED, 255))
+	for tile in explored.keys():
+		_paint_tile(tile)
+	_mask_dirty = true
 
 ## Every tile within `radius` of `pos`, as a flat array.
 func _disc(pos: Vector2, radius: float) -> Array:
@@ -279,37 +366,24 @@ func _draw_fog() -> void:
 ## also need its own Perf.end -- see the "one begin with no matching end"
 ## warning in CLAUDE.md's perf section.
 ##
-## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): used to walk each
-## row merging same-colour tiles into runs and issuing one draw_rect per
-## run -- correct, but Bundle C's re-measurement found this the dominant
-## frame cost at low zoom regardless (~29ms dynamic reveal, worst frame
-## 83ms), because a fog boundary is jagged enough that the view can still
-## produce a lot of runs, and each is its own draw call. Replaced with a
-## mask texture: one byte per visible tile written into `_mask_texture`
-## (0/128/255 for unexplored/explored/lit, read back by
-## shaders/fog_mask.gdshader as three alpha bands) and a single
-## draw_texture_rect call. Same tiles get walked -- the tile-iteration cost
-## this shares with the old version is unchanged -- but the per-run
-## draw-call and Rect2/Color churn is gone, replaced by one flat byte-array
-## write and one draw call regardless of how jagged the boundary is.
-##
-## Performance note (19 Aug 2026, later same day): a Day 11 playtest with a
-## bigger colony and (likely) a more zoomed-out camera than the earlier
-## quick check showed fog_of_war_draw back up to 73-79ms and
-## fog_of_war_update up to 74ms -- both far above what the "small scenario"
-## check suggested and above Bundle C's own worst-case numbers. Two
-## unproven suspects: (1) the byte-array build below still walks every
-## visible tile every dirty frame with no early-out for "this whole run is
-## the same colour", unlike the old draw_rect version, which skipped
-## drawing entirely over transparent (fully explored/permanent-reveal)
-## stretches -- so this version may have simply traded "many draw calls"
-## for "no cheap case at all" when most of the view is already explored;
-## (2) the GPU texture upload in `_update_mask_texture` itself may be the
-## expensive part at a large view size, not the CPU-side loop. Split into
-## `fog_of_war_draw_build`/`fog_of_war_draw_upload` below rather than
-## guessing which -- same instrumentation-before-diagnosis approach as the
-## main.gd worst-frame investigation (see AUDIT_PLAN.md Bundle C).
+## Performance note (19 Aug 2026, AUDIT_PLAN.md Bundle F): see the header
+## comment's two 19 Aug perf notes for the full trail (draw_rect runs ->
+## per-view mask texture -> this, a persistent whole-meadow mask texture).
+## No per-frame tile walk here any more -- `_paint_tile` (called from
+## `_light_center`/`reveal_around`/`_repaint_all`) already keeps
+## `_world_mask_image` current as tiles change state. This function only
+## uploads it to the GPU if `_mask_dirty`, then draws whichever sub-rect
+## of it the camera currently frames -- cost no longer depends on view
+## size or zoom at all, only on whether anything actually changed.
 func _draw_fog_body() -> void:
+	if _mask_dirty:
+		Perf.begin("fog_of_war_draw_upload")
+		_world_mask_texture.update(_world_mask_image)
+		_mask_dirty = false
+		Perf.end("fog_of_war_draw_upload")
+
+	_mask_material.set_shader_parameter("permanent_reveal", GameConfig.fog_permanent_reveal)
+
 	var cam: Camera2D = main.camera_view._active_camera()
 	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
 	var view: Rect2 = Rect2(cam.position - span * 0.5, span).grow(FOG_TILE_SIZE)
@@ -321,45 +395,11 @@ func _draw_fog_body() -> void:
 	if w <= 0 or h <= 0:
 		return
 
-	Perf.begin("fog_of_war_draw_build")
-	var data: PackedByteArray = PackedByteArray()
-	data.resize(w * h)
-	var i: int = 0
-	for cy in range(min_tile.y, max_tile.y + 1):
-		for cx in range(min_tile.x, max_tile.x + 1):
-			var tile: Vector2i = Vector2i(cx, cy)
-			if _lit_count.has(tile):
-				data[i] = MASK_LIT
-			elif explored.has(tile):
-				data[i] = MASK_EXPLORED
-			else:
-				data[i] = MASK_UNEXPLORED
-			i += 1
-	Perf.end("fog_of_war_draw_build")
-
-	Perf.begin("fog_of_war_draw_upload")
-	_update_mask_texture(w, h, data)
-	_mask_material.set_shader_parameter("permanent_reveal", GameConfig.fog_permanent_reveal)
 	var dest: Rect2 = Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(w, h) * FOG_TILE_SIZE)
-	_layer.draw_texture_rect(_mask_texture, dest, false)
-	Perf.end("fog_of_war_draw_upload")
-
-## Rebuilds `_mask_image`/`_mask_texture` only when the visible tile span's
-## size changes (camera zoom); an unchanged size just overwrites the pixel
-## data in place instead of reallocating an Image/Texture2D every dirty
-## frame. Also (re)binds `mask_tex` on the shader -- `draw_texture_rect`
-## in `_draw_fog_body` feeds the built-in TEXTURE sampler, not a custom
-## uniform, so the shader would otherwise read an unset `mask_tex` (an
-## opaque-white fallback -- reads as "fully lit," hiding fog everywhere)
-## instead of this texture.
-func _update_mask_texture(w: int, h: int, data: PackedByteArray) -> void:
-	if _mask_image == null or _mask_image.get_width() != w or _mask_image.get_height() != h:
-		_mask_image = Image.create_from_data(w, h, false, Image.FORMAT_R8, data)
-		_mask_texture = ImageTexture.create_from_image(_mask_image)
-		_mask_material.set_shader_parameter("mask_tex", _mask_texture)
-	else:
-		_mask_image.set_data(w, h, false, Image.FORMAT_R8, data)
-		_mask_texture.update(_mask_image)
+	# clip_uv (the draw call's default true) keeps this safe even if the
+	# camera view pokes past the persistent image's edge -- see WORLD_MARGIN.
+	var src: Rect2 = Rect2(Vector2(min_tile - _world_origin_tile), Vector2(w, h))
+	_layer.draw_texture_rect_region(_world_mask_texture, dest, src)
 
 ## Tiles as flat pairs, matching SaveGame._hex_list -- save_game.gd calls
 ## this rather than reaching into `explored` directly, same as it goes
@@ -378,3 +418,4 @@ func restore(tiles: Array) -> void:
 	explored.clear()
 	for pair in tiles:
 		explored[Vector2i(int(pair[0]), int(pair[1]))] = true
+	_repaint_all()
