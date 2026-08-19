@@ -442,6 +442,87 @@ checkpoint, never the whole Challenge, via the checkpoint system above.
 
 ## Challenge 2: Brood, Roles and Expansion
 
+**Built 19 Aug 2026** (`challenge_runner.gd`'s `STAGES_2`, plus the same
+`hud.gd`/`stage_gate.gd`/`tutorial_checkpoint.gd`/`gallerin_panel.gd`
+mechanisms Challenge 1 already used). The stage-by-stage design below is
+what was built, with real implementation notes inline. This is the first
+Challenge to actually exercise `TutorialCheckpoint.restore()` (Challenge
+1 has no failure condition) and the first to need UI gating beyond
+role/forage-mode buttons -- both needed new plumbing, not just new stage
+data:
+
+- **Checkpoint restore, for real.** Confirmed by reading `saving.gd`: a
+  restore replaces `main.queen` with a new `Bee` node and rebuilds
+  `main.hive.cells` from scratch, but never touches `stage_gate`/
+  `challenge_runner` state at all. So `_check_c2_failure()`'s restore
+  path re-fetches nothing by reference -- it just re-reads `main.queen`/
+  `main.hive` fresh afterwards -- and never moves `_stage_index`: a
+  restore always lands back at the *start* of the current sub-stage, per
+  the plan, since the checkpoint itself was written at that boundary.
+- **New `hud.gd` gating.** Cell designation, the hatch-role picker,
+  Nurse/Comb-worker/Miner sub-modes and soil marking were all completely
+  ungated before this -- `set_allowed_mode_keys` only ever filtered
+  Forager's nectar/pollen row. Added `allowed_designation_keys` (filters
+  the "Reserve for" buttons), filtered `hatch_options()`'s entries by the
+  existing `allowed_role_keys`, and `hatch_lock_visible`/
+  `soil_marking_visible` toggles for the "Keep for every bee" checkbox
+  and the soil popup's mark/clear buttons. `_build_doing_row`'s mode
+  filter is no longer Forager-only; every other role's mode keys are
+  namespaced `"<role_key>_<mode_key>"` (`"nurse_both"`,
+  `"comb_worker_build"`, ...) rather than bare, since Nurse and Comb
+  worker both have a mode keyed `"both"` and a bare key would have let
+  one role's unlock leak into the other's.
+- **One `challenge_runner.gd` drives both Challenges.** `STAGES_1`/
+  `STAGES_2`, picked by `_stages()` reading `Session.starting_level`.
+  Where the two genuinely differ (Challenge 1 walks the queen from the
+  entrance to a marker before she can build; Challenge 2 starts with
+  comb and cells already in place per `levels.gd`; only Challenge 2 has
+  failure/rescue) the functions branch on level id rather than forcing
+  one path to fit both. Challenge 2 shows no positional marker at all --
+  it has no single "go here" moment the way Challenge 1's early stages
+  do.
+- **Goal checks read live game state directly**, same approach as
+  Challenge 1: egg/brood counts off `hive.cells`, role counts via
+  `main._role_counts()` (already shared with the colony window/year_
+  winter.gd), designation/`hatch_role_locked` off the cells themselves.
+  A few stages (2.9's "one manual and one automatic build", 2.10's "dig
+  then build in the freed space") are approximated by simple before/
+  after counters snapshotted in `_enter_stage()` -- e.g. 2.9 asks for the
+  built-cell count to rise by 2 since stage entry rather than trying to
+  distinguish *which* cell was manually placed -- close enough to the
+  design's intent without new per-cell bookkeeping.
+- **The one-time rescue reuses `gallerin_panel`'s existing dedup**
+  (`_shown_ids`, keyed by a prompt's `id`) rather than adding a second
+  "used" flag purely for the message; the nectar grant itself still
+  needs its own `_c2_rescue_used` guard since that's not something
+  Gallerin tracks.
+- **Interim/completion numbers and the rescue threshold are first
+  guesses**, sanity-checked by hand against `GameConfig` rather than a
+  full discrete-event simulation: `cell_capacity` is 200, so the two
+  nectar-full starting cells already hold 400 -- comfortably above the
+  300 completion target, which is deliberate (the nest egg gets spent
+  growing the workforce through 2.1-2.6 and earned back easily once 10
+  nectar Foragers exist, each worth roughly 50 nectar per ~60s trip per
+  `tests/balance_tests.py`'s own brood-economics section). Untouched:
+  the doc's "faster egg/brood development, lower food consumption until
+  2.3" balance overrides -- flagged as a follow-up below, same as
+  Challenge 1's own balance overrides landed in a separate pass after
+  its initial stage build.
+- `source_checks.py`/`balance_tests.py` pass, `FUNCTION_MAP.md`
+  regenerated (`hud.gd` shifted), a Godot boot via `mcp__godot__
+  run_project` shows no new parser/type errors. **Not yet played by
+  Dave** -- nothing here substitutes for that, especially the
+  failure/rescue path and every UI-gating change, which only a real
+  playthrough can confirm actually shows and hides the right things at
+  the right moments.
+
+**Still open, follow-up work**: the balance overrides named in this
+section's own "Balance notes" below (faster brood development, lower
+consumption pre-2.3, generous nearby flowers) were not implemented this
+pass -- Challenge 2 currently runs on ordinary `GameConfig` rates aside
+from the queen's `energy_immune` flag. Whether they're needed at all is
+easier to judge after a real playtest than to guess at now.
+
 Internal `level_02`, supersedes the current `LEVELS[2]`.
 Player-facing title: **Challenge 2: Brood, Roles and Expansion**.
 ~10–15 minutes.

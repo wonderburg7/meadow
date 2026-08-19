@@ -7,7 +7,35 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Two other audit bundles still need Dave's hands-on check in Godot**
+1. **Challenge 2 (Brood, Roles and Expansion) is built and needs Dave's
+   hands-on playtest** -- all ten sub-stages (`challenge_runner.gd`'s
+   new `STAGES_2`), the checkpoint/rescue path from 2.3 onward, and new
+   `hud.gd` gating for cell designation, the hatch-role picker,
+   Nurse/Comb-worker/Miner sub-modes and soil marking (none of that was
+   gated before this). `source_checks.py`/`balance_tests.py` pass and a
+   Godot boot shows no new parser/type errors, but nothing here has
+   actually been played -- see `TUTORIAL_PLAN.md`'s Challenge 2 section
+   for the full "Built" note. Specifically worth checking:
+   - The whole sub-stage sequence plays through in order with sensible
+     goal text and Dr Gallerin prompts.
+   - Triggering the 2.3+ soft nectar collapse actually restores to the
+     start of the current sub-stage (not further back, not forward).
+   - The one-time rescue (+150 nectar once, after 2.3, below ~40 nectar)
+     fires once and only once per run.
+   - Nothing player-facing leaks early: honey/jelly designation stays
+     hidden throughout; Nurse/Comb-worker/Miner sub-modes, cell
+     designation, the hatch-role picker and soil marking each only
+     appear at their own stage.
+   - The interim (2.6) and completion targets are actually reachable
+     inside the doc's ~10-15 minute window -- these are first guesses,
+     sanity-checked by hand rather than fully simulated (see
+     `TUTORIAL_PLAN.md`).
+   - Whether the doc's balance overrides (faster brood development,
+     lower consumption pre-2.3, generous flowers) turn out to be needed
+     at all once played -- not implemented this pass, deliberately left
+     for after a real playtest tells us whether the ordinary rates are
+     already fine.
+2. **Two other audit bundles still need Dave's hands-on check in Godot**
    -- can be combined with a future playtest session. `AUDIT_PLAN.md`
    Bundle A and Bundle B have both landed (code + boot check) but
    neither has been played:
@@ -31,18 +59,6 @@ into a history. Full history lives in `git log` and the Notion Build Log.
    `python3 tests/source_checks.py`/`balance_tests.py` and a Godot boot
    via `mcp__godot__run_project` all came back clean for all three
    bundles, but nothing here substitutes for Dave actually playing it.
-2. **Challenge 2 (Brood, Roles and Expansion) has no stage data yet.**
-   The menu entry and `LEVELS[2]` starting-state preset exist
-   (`levels.gd`); none of its ten sub-stages, failure conditions or
-   Dr Gallerin prompts are written. `challenge_runner.gd`'s `STAGES`
-   array is Challenge 1 only so far -- see its own header comment for
-   why stage data lives there rather than in `levels.gd`. This is
-   naturally the next slice once Bundle A/B's Challenge 1 hands-on check
-   (above) is confirmed, since it's the first thing that will actually
-   exercise `tutorial_checkpoint.gd`'s restore path (Challenge 1 has no
-   failure condition to trigger it; Challenge 2's does, from sub-stage
-   2.3 onward per the plan).
-
 ## Waiting, lower priority
 
 - **The separate non-fog worst-frame cost is real, and `perf.gd` has hit

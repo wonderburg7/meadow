@@ -33,9 +33,17 @@ const LEVELS := {
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
 	},
+	# Challenge 2: Brood, Roles and Expansion (TUTORIAL_PLAN.md). 5 cells,
+	# stocked from the last-built backward (see world_building.gd::
+	# _stock_starting_comb) -- 2 nectar-full, 1 pollen-full, 2 left empty
+	# for the queen to lay into at stage 2.1. No worker bees; the queen is
+	# the only one, role EGG_LAYER (challenge_runner.gd resets this
+	# explicitly at start() too, since Challenge 1 may have left her as a
+	# Forager).
 	2: {
-		"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0,
+		"cells": 5, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0,
+		"stock": {"nectar": 2, "pollen": 1},
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
 	},

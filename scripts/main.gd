@@ -459,10 +459,10 @@ func _ready() -> void:
 	if Session.load_pending:
 		Session.load_pending = false
 		saving._restore(SaveGame.read())
-	elif Session.starting_level == 1:
-		# Only Challenge 1's stages are defined so far (see
-		# challenge_runner.gd) -- Challenge 2 stays a plain level preset
-		# until its own stage data is written.
+	elif Session.starting_level in [1, 2]:
+		# Both Challenges now have stage data (challenge_runner.gd's
+		# STAGES_1/STAGES_2) -- levels.gd's own presets only cover the
+		# starting state for either.
 		challenge_runner.start()
 
 # --- public surface other scripts call directly -------------------

@@ -217,13 +217,28 @@ var view_info: Button
 ## The current Challenge's next-goal readout -- see set_challenge_goal.
 var goal_label: Label
 ## Restricts the Job row's "Change to..." dropdown / the Doing row's
-## Forager sub-modes to just these keys. Empty means no restriction --
-## only a Challenge (see challenge_runner.gd) ever sets these to
-## something non-empty. See set_allowed_role_keys/set_allowed_mode_keys.
+## sub-modes to just these keys. Empty means no restriction -- only a
+## Challenge (see challenge_runner.gd) ever sets these to something
+## non-empty. See set_allowed_role_keys/set_allowed_mode_keys.
+##
+## allowed_mode_keys holds Forager's mode keys bare ("nectar", "pollen")
+## but every other role's modes namespaced as "<role_key>_<mode_key>"
+## ("nurse_feed", "comb_worker_both", ...) -- Nurse and Comb worker both
+## have a mode keyed "both" (see roles.gd), so a bare key would let one
+## role's unlock leak into the other's. See _build_doing_row.
 var allowed_role_keys: Array = []
 var allowed_mode_keys: Array = []
+## Restricts the cell popup's "Reserve for" row to just these designation
+## keys ("nectar", "pollen", "honey", "jelly", "brood", "any" for
+## Unreserve). Empty means no restriction. See set_allowed_designation_keys.
+var allowed_designation_keys: Array = []
 ## Challenge 1 only -- see set_queen_build_button_visible.
 var show_queen_build_button: bool = false
+## Hides the cell popup's "Keep for every bee" row / the soil popup's
+## mark/clear buttons until a Challenge has taught them. Both default to
+## visible so starter modes/open world/Challenge 1 are unaffected.
+var hatch_lock_visible: bool = true
+var soil_marking_visible: bool = true
 ## The row of speed/colony/nursery/winter/view buttons in the top-right
 ## corner, kept anchored clear of whatever debug_panel.gd's settings cog
 ## currently measures -- see set_settings_button_width.
@@ -241,6 +256,14 @@ var active_cell: Node2D = null
 var keep_empty_box: CheckBox
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
+## The "Keep for every bee" row, so set_hatch_lock_visible can hide it as
+## a whole rather than reaching into its children.
+var lock_row: HBoxContainer
+## One entry per hatch_options() choice, so _refresh_cell_popup can hide
+## the ones for a role the current Challenge hasn't unlocked yet.
+var hatch_option_controls: Array = []
+var soil_mark_btn: Button
+var soil_clear_btn: Button
 
 var flower_popup: PopupPanel
 var flower_popup_label: Label
@@ -575,8 +598,10 @@ func _build_cell_popup() -> void:
 	hatch_row.add_child(hatch_title)
 	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Roles that have a sub-mode -- a forager's resource, whether a miner starts automining -- offer it here, so the new bee arrives already set up."))
 
+	hatch_option_controls.clear()
 	for entry in hatch_options():
 		var options: Array = entry.options
+		var control: Control
 		if options.size() == 1:
 			var btn := Button.new()
 			btn.text = entry.label
@@ -585,11 +610,14 @@ func _build_cell_popup() -> void:
 			var only: Dictionary = options[0]
 			btn.pressed.connect(func(): _request_hatch_role(role_value, only.focus, only.automine))
 			hatch_row.add_child(btn)
+			control = btn
 		else:
-			hatch_row.add_child(_make_hatch_menu(entry))
+			control = _make_hatch_menu(entry)
+			hatch_row.add_child(control)
+		hatch_option_controls.append({"role": entry.role, "control": control})
 
 	# Whether that role sticks for every future bee, or applies once.
-	var lock_row := HBoxContainer.new()
+	lock_row = HBoxContainer.new()
 	raises.add_child(lock_row)
 	hatch_lock_box = CheckBox.new()
 	hatch_lock_box.text = "Keep for every bee"
@@ -919,21 +947,23 @@ func _build_soil_popup() -> void:
 	var row := HBoxContainer.new()
 	column.add_child(row)
 
-	var mark_btn := Button.new()
-	mark_btn.text = "Mark for digging"
-	mark_btn.pressed.connect(func(): soil_mark_requested.emit(true); soil_popup.hide())
-	row.add_child(_with_info(mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
+	soil_mark_btn = Button.new()
+	soil_mark_btn.text = "Mark for digging"
+	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true); soil_popup.hide())
+	row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
 
-	var clear_btn := Button.new()
-	clear_btn.text = "Clear marks"
-	clear_btn.pressed.connect(func(): soil_mark_requested.emit(false); soil_popup.hide())
-	row.add_child(_with_info(clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
+	soil_clear_btn = Button.new()
+	soil_clear_btn.text = "Clear marks"
+	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false); soil_popup.hide())
+	row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
 
 func show_soil_popup(count: int, reachable: int, screen_position: Vector2) -> void:
 	var text := "%d soil block%s selected" % [count, "" if count == 1 else "s"]
 	if reachable < count:
 		text += "\n%d can be reached right now; the rest are buried and will be dug once the soil in front of them is gone." % reachable
 	soil_popup_label.text = text
+	soil_mark_btn.visible = soil_marking_visible
+	soil_clear_btn.visible = soil_marking_visible
 	soil_popup.position = Vector2i(screen_position + Vector2(12, -10))
 	soil_popup.popup()
 
@@ -1027,6 +1057,23 @@ func _refresh_cell_popup() -> void:
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
 	_light_current_options()
+	_apply_cell_popup_gating()
+
+## Hides whichever "Reserve for" buttons and hatch-role choices a
+## Challenge hasn't taught yet, and the "Keep for every bee" row until
+## its own stage unlocks it. allowed_designation_keys/allowed_role_keys
+## empty means unrestricted -- outside a Challenge every control here
+## stays visible, same convention as the bee-selection panel's role row.
+func _apply_cell_popup_gating() -> void:
+	for suffix in ["nectar", "pollen", "honey", "jelly", "brood", "any"]:
+		var btn: Button = live_buttons.get("designation_%s" % suffix)
+		if btn != null:
+			btn.visible = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
+	for entry in hatch_option_controls:
+		var role: int = entry.role
+		entry.control.visible = role == -1 or allowed_role_keys.is_empty() or allowed_role_keys.has(Roles.key_for(role))
+	if lock_row != null:
+		lock_row.visible = hatch_lock_visible
 
 ## Lights up whichever popup buttons match the state of the cell being
 ## shown, so the current reservation, priority tier and seal state are
@@ -1412,10 +1459,12 @@ func _build_doing_row(common_role: int, first) -> void:
 	# than a choice between modes -- so each role says how to read it.
 	for mode in modes:
 		var key: String = mode.key
-		# Only ever restricts the Forager's nectar/pollen choice -- that's
-		# the only mode a Challenge currently teaches in stages. Every
-		# other role's modes are unaffected regardless of this list.
-		if common_role == Roles.FORAGER and not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(key):
+		# Forager's keys are checked bare ("nectar", "pollen"); every other
+		# role's are namespaced "<role_key>_<mode_key>" -- see the
+		# allowed_mode_keys field comment for why (Nurse and Comb worker
+		# both have a mode keyed "both").
+		var gate_key: String = key if common_role == Roles.FORAGER else "%s_%s" % [Roles.key_for(common_role), key]
+		if not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
@@ -1715,6 +1764,26 @@ func set_allowed_mode_keys(keys: Array) -> void:
 	allowed_mode_keys = keys
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+
+## See the allowed_designation_keys field comment. Re-applies immediately
+## if the cell popup is currently open, same as set_allowed_role_keys
+## does for the bee-selection panel.
+func set_allowed_designation_keys(keys: Array) -> void:
+	allowed_designation_keys = keys
+	if active_cell != null and is_instance_valid(active_cell) and cell_popup != null and cell_popup.visible:
+		_apply_cell_popup_gating()
+
+func set_hatch_lock_visible(value: bool) -> void:
+	hatch_lock_visible = value
+	if lock_row != null:
+		lock_row.visible = value
+
+func set_soil_marking_visible(value: bool) -> void:
+	soil_marking_visible = value
+	if soil_mark_btn != null:
+		soil_mark_btn.visible = value
+	if soil_clear_btn != null:
+		soil_clear_btn.visible = value
 
 ## Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
 ## spot" flow with one direct button in the queen's own panel -- see
