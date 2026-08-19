@@ -7,36 +7,39 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Bundle F's mask-shader fog item isn't a clean win after all -- a
-   Day 11 reading came back much worse than the early spot-check, and
-   the cause isn't confirmed yet.** Early readings (Day 1/3) looked like
-   a strong improvement over the old draw_rect baseline. A Day 11 shot
-   (bigger colony, `fog_permanent_reveal` on) showed the opposite:
-   `fog_of_war_draw` 73-79ms and `fog_of_war_update` 74-84ms -- both
-   near or above the *old* renderer's worst-case numbers, and update in
-   particular is far above the 0-3ms Bundle C's disc-cache fix was
-   supposed to guarantee regardless of colony size. Two live suspects,
-   neither confirmed: (1) the mask-texture draw walks and uploads every
-   visible tile every dirty frame with no early-out, so it may have
-   traded the old renderer's "permanent reveal / mostly-explored view is
-   nearly free" property for a flat cost that doesn't care how much of
-   the view is actually fog; (2) a bigger colony means more simultaneous
-   relights per frame, and disc-application cost scales with
-   `bee_count x disc_size` regardless of the shared-offset optimisation
-   -- nobody's measured that scaling above ~32 bees before. **Added
-   finer `Perf` sections to tell these apart rather than guessing**:
-   `fog_of_war_draw_build` (the byte-array tile loop) vs
-   `fog_of_war_draw_upload` (texture creation/update + the draw call) on
-   the draw side, and `fog_of_war_relight` (just the disc-application
-   calls) nested inside `fog_of_war_update` on the update side.
-   `source_checks.py`/`balance_tests.py` pass, a fresh Godot boot is
-   clean -- instrumentation only, no behaviour change. **Next: reproduce
-   a similar large-colony/zoomed-out scenario and read the new
-   sub-section breakdown** (the "worst frame (Xms): ..." line in
-   `perf_breakdown.gd` will show all of them) -- that tells us whether
-   to fix the draw method's lack of an early-out, revisit the relight
-   scaling, or both. See `AUDIT_PLAN.md` Bundle F's entry for the full
-   trail and reasoning.
+1. **Bundle F's fog item got two real fixes this session after the Day 11
+   regression, both landed and boot-checked, neither played yet.** The
+   diagnostic `Perf` split (`fog_of_war_draw_build`/`_upload`,
+   `fog_of_war_relight`) confirmed the Day 11 slowdown was CPU-side tile
+   work, not GPU upload, and pointed at two separate causes -- Dave chose
+   to fix both rather than pick one:
+   - **Draw side:** the per-view mask texture (rebuilt every dirty frame,
+     covering only the current camera view) had no early-out for "this
+     whole run is one colour", so its cost tracked view size regardless
+     of how much was actually fog -- worst in `fog_permanent_reveal`,
+     previously the cheap case. Replaced with one persistent
+     `_world_mask_image`/`_world_mask_texture` covering the whole meadow;
+     `_paint_tile` writes single pixels as tiles change state instead of
+     redetermining the whole view every frame, and the draw call now just
+     uploads (only if dirty) and samples a sub-rect -- panning/zooming
+     costs nothing extra.
+   - **Relight side:** `_light_center` unlit the whole old disc and lit
+     the whole new one on every relight, regardless of how far the bee
+     moved -- measured at 44-45ms with 50 foraging bees. `_relight_delta`
+     now applies only the symmetric difference between the old and new
+     disc position (a bee only relights after moving 8 tiles, far less
+     than the 48-tile reveal radius, so consecutive discs overlap almost
+     entirely). Deliberately not a full O(edge) geometric algorithm --
+     that needs new per-row circle maths that's much harder to verify
+     correct without eyeballing the reveal shape.
+   `source_checks.py`/`balance_tests.py` pass after each change, two
+   separate Godot boots are both clean. **Next: Dave to play a similar
+   large-colony/zoomed-out scenario to Day 11** and check two things --
+   the reveal shape still looks right (the relight change is the one
+   piece of this session that could silently draw a wrong-shaped edge
+   without erroring), and whether `fog_of_war_draw`/`fog_of_war_update`
+   actually come back down this time. See `AUDIT_PLAN.md` Bundle F's
+   entry for the full trail.
 2. **The separate non-fog worst-frame cost is real, and `perf.gd` has
    hit its ceiling investigating it -- next step is Godot's own
    profiler, not more work here.** Added `Perf.last_worst_ms`/
@@ -157,9 +160,35 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   cheap-case early-out any more" and "relight cost scales with colony
   size beyond what's been measured before." `source_checks.py`/
   `balance_tests.py` pass, a fresh Godot boot is clean --
-  instrumentation only, no behaviour change. **Needs Dave to reproduce
-  a similar large-colony/zoomed-out scenario** and report the new
-  sub-section breakdown before this item can be called done either way.
+  instrumentation only, no behaviour change.
+
+  **Dave chose to fix both suspects rather than wait for a reading to
+  pick between them.** Draw side: replaced the per-view mask texture
+  with one persistent `_world_mask_image`/`_world_mask_texture` covering
+  the whole meadow (`WORLD_MARGIN` past `main.FLOWER_FIELD_HALF_SIZE`).
+  `_paint_tile` writes single pixels as `_light_center`/`reveal_around`
+  change a tile's state; `_draw_fog_body` uploads the image only when
+  `_mask_dirty` and draws whichever sub-rect the camera currently frames
+  via `draw_texture_rect_region` -- panning/zooming no longer costs
+  anything. `restore()` repaints the whole image via a new
+  `_repaint_all` since a loaded save replaces `explored` wholesale.
+  Relight side: `_light_center` used to unlight the whole old disc and
+  light the whole new one on every relight regardless of how far the bee
+  moved -- a new `_relight_delta` applies only the symmetric difference
+  between the old and new disc position (a bee relights after moving 8
+  tiles, far less than the 48-tile reveal radius, so consecutive discs
+  overlap almost entirely and most of the disc doesn't change state).
+  Deliberately kept to a membership-test approach rather than a true
+  O(edge) geometric algorithm -- still walks the full offset list, just
+  skips the `_lit_count`/`_paint_tile` writes for tiles that don't
+  change, since a hand-derived per-row circle algorithm would be much
+  harder to verify correct without a visual check. `source_checks.py`/
+  `balance_tests.py` pass after each change, two separate Godot boots
+  (~12-18s each, fog on, bees relighting) both clean. **Needs Dave to
+  play a similar large-colony/zoomed-out scenario to Day 11** and check
+  both that the reveal shape still looks right (the one piece here that
+  could silently be wrong without erroring) and that
+  `fog_of_war_draw`/`fog_of_war_update` actually come back down.
 - `perf.gd` gained an unsmoothed worst-frame section breakdown
   (`last_worst_ms`/`last_worst_breakdown`, captured the instant a frame
   raises the current window's worst-ms figure), shown as a second line

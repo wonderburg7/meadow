@@ -25,7 +25,7 @@ done, don't delete it).
 | C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
-| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: renders correctly, but a Day 11 large-colony reading came back much worse than the early spot-check (details below) -- diagnostic Perf sub-sections added, not yet re-diagnosed. Everything else in the bundle still needs new measurement before starting |
+| F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Mask-texture/canvas-shader item: renders correctly; after a Day 11 regression, both a persistent whole-world texture (draw side) and incremental relight (update side) have landed and boot-checked. Not yet played by Dave. Everything else in the bundle still needs new measurement before starting |
 
 ---
 
@@ -821,13 +821,67 @@ from that; the rest still don't:
   `tests/source_checks.py`/`tests/balance_tests.py` pass, a fresh Godot
   boot is clean — instrumentation only, no behaviour change.
 
-  **Not yet verified by Dave:** reproduce a similarly large
-  colony/zoomed-out scenario and report the new sub-section breakdown
-  (visible in `perf_breakdown.gd`'s corner readout and its "worst frame
-  (Xms): ..." line). Whether the fix ends up being an early-out in the
-  draw build step, a cheaper relight strategy at high bee counts, or
-  reverting to the old draw_rect renderer entirely depends on what that
-  breakdown shows — this item is not closeable either way until then.
+  **Dave chose to fix both suspects at once** (persistent texture +
+  incremental relight) rather than wait for a reading to pick between
+  them — see the two follow-up entries below.
+
+  **Draw-side fix: persistent whole-meadow mask texture, replacing the
+  per-view rebuild.** The per-view texture covered only the current
+  camera view and had no early-out for "this whole run is one colour",
+  so its cost tracked view size regardless of how much was actually fog
+  — worst in exactly the case (`fog_permanent_reveal` on) that used to
+  be cheap under the old draw_rect renderer. Replaced with one
+  persistent `_world_mask_image`/`_world_mask_texture` sized to the
+  whole meadow (`WORLD_MARGIN` past `main.FLOWER_FIELD_HALF_SIZE`, ~700x556
+  tiles at today's field size — a few hundred KB). A new `_paint_tile`
+  writes a single pixel into it whenever `_light_center`/`reveal_around`
+  change a tile's state, instead of every visible tile being
+  redetermined from scratch on every dirty frame. `_draw_fog_body` now
+  just uploads the image to the GPU when `_mask_dirty` (only if
+  something actually changed since the last upload) and draws whichever
+  sub-rect the camera currently frames via `draw_texture_rect_region` —
+  panning or zooming costs nothing extra, since it only changes which
+  part of an already-current texture gets sampled. `restore()` repaints
+  the whole image via a new `_repaint_all`, since a loaded save replaces
+  `explored` wholesale and the image's existing pixels reflect the
+  previous world. Verified: `source_checks.py`/`balance_tests.py` pass,
+  a Godot boot ran ~18s with fog on and no new parser/type or runtime
+  errors.
+
+  **Update-side fix: incremental relight, replacing full-disc
+  unlight/relight.** `_light_center` used to unlight the whole old disc
+  and light the whole new one on every relight, regardless of how far
+  the bee actually moved — the Day 11 measurement (44-45ms at 50
+  foraging bees) is explained by this: a bee only relights after moving
+  `RELIGHT_DISTANCE` (8 tiles), far less than `fog_reveal_radius` (48
+  tiles), so consecutive discs overlap almost entirely, and the old code
+  paid for the whole disc anyway. A new `_relight_delta` applies only
+  the symmetric difference between the old and new disc position: for
+  an old-disc tile at offset `off`, it's still covered by the new disc
+  iff `off - delta` is itself a valid disc offset (unlight it if not);
+  mirrored for a new-disc tile at offset `off` against `delta + off`.
+  Still walks the full `_disc_offsets` list twice (so the O(disc_size)
+  iteration itself isn't reduced), but skips the `_lit_count`/
+  `_paint_tile` writes — the expensive part — for the large majority of
+  tiles that don't actually change state. Deliberately not a true
+  O(edge) geometric algorithm (per-row circle-boundary maths): that
+  would cut the iteration cost too, but is much harder to verify
+  correct without eyeballing the reveal shape, and a membership-test
+  approach can't produce a different disc shape than `_light_center`
+  already did, only reach it with less redundant work. `_light_center`
+  (now backed by a shared `_apply_light` helper) still handles a bee's
+  first light and a departed bee's full unlight. Verified:
+  `source_checks.py`/`balance_tests.py` pass, a Godot boot ran ~12s
+  with bees relighting and no new parser/type or runtime errors.
+
+  **Not yet verified by Dave:** play a similarly large
+  colony/zoomed-out scenario to the Day 11 reading and check two
+  things — the reveal shape still looks correct (the relight change is
+  the one piece of this fix that could silently draw a wrong-shaped
+  edge without erroring, since nothing here can visually confirm
+  geometry), and whether `fog_of_war_draw`/`fog_of_war_update` actually
+  come back down this time. This item isn't closeable either way until
+  then.
 - **Incremental disc edge updates** (update only the symmetric difference
   between old and new translated discs on a relight). **Not justified** —
   Bundle C step 2's shared-offset cache already dropped
