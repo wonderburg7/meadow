@@ -636,7 +636,8 @@ func _hatch_ready_brood() -> void:
 ## and past `rain_forage_limit` makes a trip cost more than it returns,
 ## at which point foragers stay in.
 func _advance_weather(delta: float) -> void:
-	if not GameConfig.weather_on:
+	var level: Dictionary = Levels.LEVELS.get(Session.starting_level, {})
+	if not GameConfig.weather_on or not level.get("weather", true):
 		Session.rain_intensity = 0.0
 		_apply_rain_overlay()
 		return

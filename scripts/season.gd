@@ -57,7 +57,8 @@ func _process(delta: float) -> void:
 ## bees are packed into how much space. Both are things the player
 ## controls, which is what makes it a decision rather than a tax.
 func _advance_disease(elapsed: float) -> void:
-	if not GameConfig.disease_on:
+	var level: Dictionary = Levels.LEVELS.get(Session.starting_level, {})
+	if not GameConfig.disease_on or not level.get("disease", true):
 		disease = 0.0
 		return
 
@@ -171,3 +172,4 @@ func _gyne_season() -> bool:
 	return Flower.season_fraction() >= GameConfig.gyne_release_day
 
 const Flower = preload("res://scripts/flower.gd")
+const Levels = preload("res://scripts/levels.gd")

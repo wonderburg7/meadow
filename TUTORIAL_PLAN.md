@@ -264,14 +264,23 @@ beyond "wire up the plan":
   showing the current sub-stage's goal in plain language — not in the
   original plan, added after playtesting made clear the player needed
   it.
-- **Not done**: the fuller balance overrides this section's "Start
-  state" describes (no rain, no rival colony, no winter, no disease)
-  are still just the ordinary GameConfig defaults — Challenge 1 doesn't
-  actually disable any of them yet. In practice this hasn't caused a
-  problem in testing (a 5-10 minute Challenge doesn't run long enough
-  to hit winter, and the rival colony/rain haven't visibly interfered),
-  but it's a known gap against what's written below, not a deliberate
-  decision to skip it.
+- **The fuller balance overrides this section's "Start state" describes
+  (no rain, no rival colony, no winter, no disease) are now applied**
+  (19 Aug 2026). Rather than a GameConfig write from `challenge_runner.gd`
+  (not in the writer allowlist, and the same leak risk `FAST_BUILD_TIME`
+  already ran into once), each system reads a new per-level field
+  (`weather`, `disease`, `rival_hive`, `winter`) alongside its own
+  existing GameConfig toggle: `main.gd::_advance_weather`,
+  `season.gd::_advance_disease`, `world_building.gd::_build_meadow`
+  (rival hive spawn, checked once at world-build time, before
+  `challenge_runner.start()` ever runs) and
+  `year_winter.gd::begin_winter_countdown` (a no-op now if the level
+  disallows it, covering the "Bring on winter" debug button too, not
+  just an automatic trigger — there isn't one). `levels.gd` sets all
+  four to `false` for levels 1 and 2, so Challenge 2's own "no disease,
+  rain, rival colony, winter" start state gets this for free once its
+  stage data exists. `source_checks.py`/`balance_tests.py` pass, a
+  Godot boot shows no new parser/type errors.
 
 Internal `level_01`, supersedes the current `LEVELS[1]`.
 Player-facing title: **Challenge 1: First Stores**. ~5–10 minutes.

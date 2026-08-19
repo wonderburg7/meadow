@@ -13,16 +13,30 @@ extends RefCounted
 ## without a second restructure. Levels 1 and 2 are the ones TUTORIAL_PLAN.md
 ## says will eventually be superseded by full Challenge definitions;
 ## levels 3-5 stay as plain starter-mode presets.
+##
+## `weather`, `disease`, `rival_hive` and `winter` are read directly by
+## the systems they gate (main.gd::_advance_weather, season.gd::
+## _advance_disease, world_building.gd::_build_meadow,
+## year_winter.gd::begin_winter_countdown) alongside each system's own
+## GameConfig toggle -- `.get(key, true)` so every level except 1 and 2
+## behaves exactly as before. Deliberately *not* a GameConfig write: per
+## .claude/rules/saving.md, a Challenge-local override belongs on the
+## thing it affects, not the shared autoload -- writing e.g.
+## GameConfig.weather_on = false here would leak into every later run
+## the same way an early attempt at cell_build_time did (see
+## challenge_runner.gd's FAST_BUILD_TIME comment).
 
 const LEVELS := {
 	1: {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0,
+		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
 	},
 	2: {
 		"cells": 1, "nectar_foragers": 1, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0,
+		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
 	},
 	3: {

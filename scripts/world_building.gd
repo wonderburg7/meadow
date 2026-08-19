@@ -42,7 +42,8 @@ func _build_meadow() -> void:
 
 	_rebuild_flower_grid()
 
-	if GameConfig.rival_hive_on:
+	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	if GameConfig.rival_hive_on and level.get("rival_hive", true):
 		_place_rival_hive()
 
 func _rebuild_flower_grid() -> void:

@@ -52,12 +52,6 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   all. Most likely genuine engine/render-thread time. Not blocking
   anything; next step if it's worth chasing is Godot's own built-in
   Debugger > Profiler, not more work in `perf.gd`.
-- **The balance overrides `TUTORIAL_PLAN.md` describes for Challenge 1's
-  start state are still not applied** -- no rain, no rival colony, no
-  winter, no disease are all just "not yet true" rather than switched
-  off. Hasn't caused a visible problem in testing (a 5-10 minute
-  Challenge doesn't run long enough to hit most of them), but it's a
-  known gap against the written design.
 - **Scouting/recruitment split and bee individuality** -- both shipped
   18-19 Aug and were last known to need Dave's hands-on check; neither
   has had a specific correction request since, but neither has had an
@@ -72,6 +66,16 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Last verified
 
+- **Challenge 1's missing balance overrides are now applied** (19 Aug
+  2026, `TUTORIAL_PLAN.md`'s "Not done" note is resolved) -- no rain, no
+  disease, no rival colony, no winter, via a new per-level field read
+  by each system alongside its own GameConfig toggle, rather than a
+  GameConfig write from `challenge_runner.gd` (see `levels.gd`'s new
+  header comment for why). `source_checks.py`/`balance_tests.py` pass,
+  a Godot boot shows no new parser/type errors. **Still wants Dave's
+  hands-on check**: play Challenge 1 (or watch a few minutes) and
+  confirm no rain, rival colony sighting, disease warning or winter
+  countdown appear -- nothing here substitutes for that.
 - Diagnostic logging system (`DIAGNOSTIC_LOGGING_PLAN.md`) built and
   confirmed 19 Aug. Dave played a run and read the resulting
   `session_*.jsonl` back: a clean config line (every `GameConfig`
