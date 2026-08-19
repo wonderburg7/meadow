@@ -7,22 +7,30 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **`AUDIT_PLAN.md` Bundle C step 2 needs re-measuring.** Dave's 19 Aug
-   baseline playtest confirmed `fog_of_war` was a real cost (up to
-   ~130ms `fog_of_war_draw` at min zoom, ~27ms `fog_of_war_update` at 32
-   bees, worst frame 15fps) -- so the shared-offset-disc cache and
-   dirty-driven redraw described in Bundle C's "Step 2" have now landed
-   (code + boot check done). What's needed next is the *same* playtest
-   scenario again (star fps, a few colony sizes, fog on/off, zoom 1.0 vs
-   0.4) to confirm both sections actually dropped and the explored/lit
-   visual output looks identical at a fixed camera position. Don't start
-   Bundle F (RLE save, BitMap, mask shader, etc.) without this
-   re-measurement showing step 2 wasn't enough -- it's still explicitly
-   gated.
+1. **`AUDIT_PLAN.md` Bundle C is now closed** ("measured, partially
+   fixed" -- see its own file for the full re-measurement). Short
+   version: the shared-offset-disc cache landed and effectively solved
+   `fog_of_war_update` (0-3ms everywhere now, was ~27ms at 32 bees).
+   `fog_of_war_draw` at normal zoom is fine; at minimum zoom over
+   still-mostly-unexplored ground it's still the dominant per-frame cost
+   (~71ms, worst frame 36fps/92ms) -- Dave's re-measurement narrowed this
+   to specifically drawing opaque unexplored tiles (a same-zoom,
+   mostly-revealed view showed no spike). This gives **Bundle F's
+   mask-texture/canvas-shader fog rendering item fresh, specific
+   justification** -- the other three Bundle F items (BitMap storage,
+   incremental disc-edge updates, save-size RLE) still don't have
+   measurement behind them; incremental edge updates in particular is
+   now explicitly *not* justified since update is already cheap.
+   **Next: pick up Bundle F's mask-shader item in a new session/thread**
+   -- read `AUDIT_PLAN.md` Bundle F's updated note plus Bundle C's
+   "Step 2 re-measured" section first, since that's where the specific
+   condition to target (zoomed out, large unexplored margin) and the
+   comparison bar (measure against the current run-merged rect renderer)
+   are recorded.
 2. **Two other audit bundles still need Dave's hands-on check in Godot**
-   -- can be combined with (1) above since it's the same "play a run"
-   session. `AUDIT_PLAN.md` Bundle A and Bundle B have both landed (code
-   + boot check) but neither has been played:
+   -- can be combined with a future playtest session. `AUDIT_PLAN.md`
+   Bundle A and Bundle B have both landed (code + boot check) but
+   neither has been played:
    - **Bundle A** (Challenge state safety): start Challenge 1, reach
      stage 1.3, abandon to the main menu partway through the fast build,
      and confirm building a cell in a fresh run afterwards takes the
@@ -88,9 +96,14 @@ into a history. Full history lives in `git log` and the Notion Build Log.
   the layer becoming visible again, a view switch, or the camera/
   `fog_permanent_reveal` changing) rather than every frame.
   `source_checks.py`/`balance_tests.py` pass, a Godot boot shows no new
-  parser/type errors. **Not yet re-measured by Dave** -- same scenario
-  as the baseline, to confirm both sections actually dropped and the
-  visual output is unchanged.
+  parser/type errors. **Re-measured by Dave the same day** -- confirmed:
+  `fog_of_war_update` down to 0-3ms everywhere tested (was ~27ms at 32
+  bees); `fog_of_war_draw` down at min zoom (~71ms, was ~130ms) but
+  still the dominant cost specifically when the zoomed-out view is
+  mostly unexplored ground -- a same-zoom, mostly-revealed view showed
+  no spike. Bundle C is now closed; see `AUDIT_PLAN.md`'s own "Step 2
+  re-measured" note and Bundle F's updated entry for what that justifies
+  next (mask-shader rendering, specifically).
 - `AUDIT_PLAN.md` Bundle E (small hot-path/housekeeping cleanups) is
   done -- `HiveCell._health_factor()` no longer does a per-frame
   `get_tree().get_nodes_in_group("season")` lookup on the brood-

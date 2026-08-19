@@ -22,7 +22,7 @@ done, don't delete it).
 |---|---|---|---|
 | A — Challenge state safety | P0 | 2-3h | Done (code + boot check; Dave's hands-on check still pending) |
 | B — Deterministic restore + machine-checked guardrails | P1 | 5-7h | Done (code + boot check; Dave's hands-on check still pending) |
-| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Baseline measured, showed a real cost; step 2 (shared-offset cache + dirty redraw) landed, code + boot check done; re-measure still needed |
+| C — Fog-of-war baseline, then optimise if justified | P1 | 3-6h | Closed: measured, partially fixed. `fog_of_war_update` resolved; `fog_of_war_draw` at min zoom over unexplored ground remains the one item with fresh justification, carried to Bundle F |
 | D — Claude/agent context restructure | P1 | 4-6h | Done |
 | E — Small hot-path and housekeeping cleanups | P2 | 1-2h | Done (code + boot check; Dave's hands-on check still pending) |
 | F — Conditional/deferred (fog RLE save, BitMap, mask texture) | P2/P3 | varies | Do not start without new measurement |
@@ -352,13 +352,53 @@ pass; `tools/update_function_map.py --check` unaffected (fog_of_war.gd
 isn't one of the six mapped scripts). A Godot boot via
 `mcp__godot__run_project` shows no new parser/type errors, only the
 same pre-existing shadowing/unused-parameter warnings already on
-record. **Not yet re-measured by Dave** — same scenario as the baseline
-(star fps, a few colony sizes, fog on/off, zoom 1.0 vs 0.4) to confirm
-`fog_of_war_update`/`fog_of_war_draw` actually dropped and the visual
-output is unchanged (explored/lit state should look identical at a
-fixed camera position before and after). Per step 3, don't proceed to
-Bundle F's edge-update/`BitMap`/mask-shader options without a fresh
-measurement showing step 2 wasn't enough.
+record.
+
+**Step 2 re-measured (Dave's playtest, 19 Aug, same day as the
+baseline):** same scenario — a handful of colony sizes, fog on
+(unexplored ground opaque black) vs `fog_permanent_reveal` on
+(explored ground shows through), zoom 1.0 vs 0.4. Confirmed the shape
+of what step 2 fixed and what it didn't:
+- **`fog_of_war_update` is effectively resolved.** 0-3ms across every
+  sample, including the busiest (27 bees, min zoom: 2ms) — down from
+  the baseline's ~27ms at 32 bees. Matches the theory: the old cost was
+  mostly the ~9,000 `Vector2.length()` calls and array-append churn of
+  rebuilding each bee's disc from scratch every relight, not the
+  dictionary writes themselves — sharing one precomputed offsets array
+  removed exactly that part.
+- **`fog_of_war_draw` dropped at min zoom but is still the dominant
+  cost there.** ~71ms at zoom 0.4 with fog on (27-bee sample; worst
+  frame 92ms/36fps) vs the baseline's ~132ms at similar zoom — real,
+  but not enough on its own. At zoom 1.0 it's largely unchanged (12-27ms
+  across samples, comparable to baseline) — expected, since dirty-driven
+  redraw only pays off when the view is genuinely static, and an active
+  colony with bees flying near the visible edge keeps triggering a
+  relight most frames regardless.
+- **New finding, not in the original baseline: the zoom-out spike is
+  specific to drawing unexplored ground, not fog bookkeeping in
+  general.** The same zoomed-out view with `fog_permanent_reveal` on
+  didn't show the cost spike. `_draw_fog_body`'s row loop still touches
+  every visible tile either way, but a mostly-explored/revealed view
+  collapses into one long transparent run per row (cheap: no
+  `draw_rect` call), while a normal fog view at min zoom has a lot of
+  genuinely unexplored margin around the discovered area, each of which
+  is an opaque `UNEXPLORED_COLOR` run needing its own `draw_rect` call.
+  So the remaining cost scales with how much of the zoomed-out view is
+  still unexplored, not just with zoom level alone.
+
+**Bundle C is closed as "measured, partially fixed."** `fog_of_war_update`
+needs nothing further. `fog_of_war_draw` at normal zoom and in an
+already-explored area is fine; at min zoom over unexplored ground it's
+still a real cost (worst frame recorded 36fps/92ms) — this is the one
+Bundle F item with fresh, specific justification: **mask-texture +
+canvas-shader fog rendering**, since the bottleneck is confirmed to be
+`_draw_fog` itself under exactly the "camera pulled back over mostly
+unexplored ground" condition that rendering approach targets. The other
+three Bundle F items (`BitMap`/packed storage, incremental disc-edge
+updates, save-size RLE) still have no fresh measurement behind them —
+`fog_of_war_update` being cheap now removes the case for incremental
+edge updates specifically, and save size/load time hasn't been measured
+at all yet.
 
 ---
 
@@ -573,27 +613,38 @@ actually sits on.
 
 ## Bundle F — Conditional / deferred (do not start without new measurement)
 
-Keep these visible so nobody re-discovers them from scratch, but none is
-authorised work yet:
+Keep these visible so nobody re-discovers them from scratch. Bundle C is
+now closed with real measurements behind it (see its "Step 2
+re-measured" note) — one item below has fresh, specific justification
+from that; the rest still don't:
 
-- **Fog save-size (RLE/row-run representation).** Only worth it if a
-  save-file-size/load-time measurement at high exploration percentage
-  actually shows a problem. The flower field alone is ~214,000 possible
-  5-unit fog cells, so a naive one-pair-per-tile JSON *could* get large,
-  but that's not yet measured.
-- **`BitMap`/packed fog storage.** Requires committing to a fixed
-  fog-space rectangle as an architectural assumption (today's dictionary
-  is unbounded). Only prototype if bundle C's memory measurements justify
-  it.
+- **Mask-texture + canvas-shader fog rendering — now justified,
+  specifically.** Bundle C's re-measurement confirmed `_draw_fog`
+  remains the dominant frame cost at minimum zoom over still-mostly-
+  unexplored ground (~71ms, worst frame 36fps/92ms), and that the cost
+  is concentrated in drawing opaque unexplored tiles rather than fog
+  bookkeeping in general (a same-zoom, mostly-revealed view showed no
+  spike). This is a rendering-architecture change, not a tuning change —
+  compare against the current run-merged rect renderer on frame time,
+  worst frame, memory and visual parity before adopting it, and confirm
+  it targets the actual condition measured (zoomed out, large unexplored
+  margin) rather than a general rewrite.
 - **Incremental disc edge updates** (update only the symmetric difference
-  between old and new translated discs on a relight). Only worth the
-  added correctness risk if bundle C step 2 still shows relight as hot
-  after the shared-offset change.
-- **Mask-texture + canvas-shader fog rendering.** Only if `_draw_fog`
-  itself remains a measured bottleneck after the dirty-redraw change —
-  this is a rendering-architecture change, not a tuning change, and
-  should be compared against the simpler renderer on frame time, worst
-  frame, memory and visual parity before being adopted.
+  between old and new translated discs on a relight). **Not justified** —
+  Bundle C step 2's shared-offset cache already dropped
+  `fog_of_war_update` to 0-3ms even at the busiest sample measured (27
+  bees, min zoom); there's no remaining relight cost left to chase here.
+- **`BitMap`/packed fog storage.** Still not justified — no memory
+  measurement has been taken, and step 2 didn't touch memory shape
+  (still one dictionary entry per lit/explored tile). Only prototype if
+  a future memory measurement at high exploration actually shows a
+  problem.
+- **Fog save-size (RLE/row-run representation).** Still not justified —
+  a save-file-size/load-time measurement at high exploration percentage
+  hasn't been taken. The flower field alone is ~214,000 possible 5-unit
+  fog cells, so a naive one-pair-per-tile JSON *could* get large, but
+  that's a different axis (save size) from anything Bundle C measured
+  (frame time).
 - **Event-driven whole-hive hatch detection** (a `brood_ready` signal or a
   coarser hatch-check tick instead of a per-frame linear scan). Only
   worth it if a 250/500-cell stress test actually shows this scaling
