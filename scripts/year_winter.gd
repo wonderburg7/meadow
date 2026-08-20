@@ -169,8 +169,23 @@ func _refresh_signals(delta: float) -> void:
 		return
 	main.signal_timer = 1.0
 
-	var lines: Array = []
 	var bees: Array = get_tree().get_nodes_in_group("bees")
+
+	# A Challenge already tells the player what's wrong and what to do
+	# about it, one stage at a time, through Dr Gallerin -- this generic
+	# strip has no notion of what's been unlocked yet, so it would flag
+	# things the tutorial hasn't taught a fix for (no nurses before 2.7,
+	# a bee running low while the player is still learning the controls),
+	# which cuts against "no lethal pressure, nothing irreversible".
+	# Cleared explicitly rather than left showing whatever it last said
+	# just before start().
+	if main.challenge_runner.active:
+		main.hud.update_signals([])
+		_refresh_panels(bees)
+		Perf.end("signals")
+		return
+
+	var lines: Array = []
 
 	var starving = 0
 	var hungry = 0

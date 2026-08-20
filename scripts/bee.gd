@@ -182,6 +182,13 @@ const ESCAPE_RANGE := 60.0
 ## tasks and drops it the instant primary work turns up again.
 var secondary_role: int = -1
 
+## True while the bee is currently doing secondary_role's work rather than
+## its own. Building and mining are the two secondary jobs long enough
+## (up to a full cell or block) that "drops it the instant primary work
+## turns up" needs an actual check mid-task, not just at the next idle
+## state -- see _maybe_break_off_secondary.
+var working_secondary: bool = false
+
 ## Floral constancy (see GameConfig.floral_constancy_on): "" means no
 ## preference. Once set, this bee only ever selects flowers of this
 ## species, regardless of the toggle -- turning constancy off in tuning
@@ -592,6 +599,15 @@ func _process(delta: float) -> void:
 		if pending_role != -1 and not _is_busy():
 			_apply_pending_role()
 
+		# Backup building/mining is the one case secondary_role's "drops it
+		# the instant primary work turns up" promise doesn't already hold --
+		# both can run for a whole cell or block, far longer than the gap
+		# between idle-dispatch checks. With "Finish the job first" off the
+		# player has said the same thing for a manual reassignment; this is
+		# that promise applied automatically. See _maybe_break_off_secondary.
+		if working_secondary and not finish_task_first:
+			_maybe_break_off_secondary()
+
 		# Eating is an errand now, not a number that quietly appears. A
 		# bee that has run low breaks off whatever it was doing, walks to
 		# a cell with food in it and feeds there. Checked before the
@@ -834,10 +850,39 @@ func _idle_dispatch() -> void:
 		if _try_role_work(secondary_role):
 			return
 
+	working_secondary = false
 	if _try_role_work(role):
 		return
 	if secondary_role != -1 and secondary_role != role:
-		_try_role_work(secondary_role)
+		working_secondary = _try_role_work(secondary_role)
+
+## Called on a think tick while working_secondary and "Finish the job
+## first" is off. Only building and mining are long enough to need this --
+## everything else a secondary role can be doing routes back through an
+## idle state (BUILD_IDLE/MINE_IDLE/NURSE_IDLE) often enough on its own.
+## Both keep their progress on the cell/block itself when abandoned (see
+## builder_build/miner_dig), the same as a bee that wanders off mid-job
+## today, so breaking off here costs nothing but the walk back.
+func _maybe_break_off_secondary() -> void:
+	var was_building: bool = state == State.TO_BUILD_SITE or state == State.BUILDING
+	var was_mining: bool = state == State.TO_MINE_SITE or state == State.MINING
+	if not (was_building or was_mining):
+		return
+	# Captured before the call: _try_role_work(role), if it succeeds,
+	# overwrites target_cell/target_block with the new primary job's own
+	# targets, so these are the only references left that still need
+	# releasing.
+	var old_cell: Node2D = target_cell if was_building else null
+	var old_block: Node2D = target_block if was_mining else null
+	working_secondary = false
+	if not _try_role_work(role):
+		# Nothing to switch to after all -- put it back and carry on.
+		working_secondary = true
+		return
+	if old_cell != null and is_instance_valid(old_cell):
+		old_cell.release_builder(self)
+	if old_block != null and is_instance_valid(old_block):
+		old_block.release_miner(self)
 
 ## Attempts to find and start one unit of work for role `r`. Returns
 ## true if it found something (and has already changed state), false if
@@ -1274,6 +1319,7 @@ func set_role(new_role: int) -> void:
 ## Applied straight away, with no regard for what the bee was doing.
 func _apply_role(new_role: int) -> void:
 	_release_everything()
+	working_secondary = false
 
 	role = new_role
 	visible = true
