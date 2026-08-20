@@ -818,9 +818,10 @@ func _on_level_chosen(level: int) -> void:
 
 ## Dev-only headless playtest path -- see AI_PLAYTEST_PLAN.md. Never
 ## reachable from the main menu; only ever set by a --scenario= argument on
-## the actual command line the process was launched with. Slice 1 only:
-## the JSON is applied through levels.gd's existing LEVELS shape unchanged
-## (via Levels.get_level, see levels.gd), no GameConfig overrides yet.
+## the actual command line the process was launched with. The JSON is
+## applied through levels.gd's existing LEVELS shape (via Levels.get_level),
+## plus a "config_overrides" block applied to GameConfig -- see
+## Levels.apply_config_overrides for the per-field allowlist check.
 func _apply_scenario_boot_arg() -> void:
 	var scenario_path: String = ""
 	for arg in OS.get_cmdline_user_args():
@@ -842,10 +843,13 @@ func _apply_scenario_boot_arg() -> void:
 	var level: Dictionary = parsed.duplicate(true)
 	var stop: Dictionary = level.get("stop", {})
 	level.erase("stop")
+	var config_overrides: Dictionary = level.get("config_overrides", {})
+	level.erase("config_overrides")
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
 
 	Levels.scenario_override = level
+	Levels.apply_config_overrides(config_overrides)
 	Session.starting_level = Levels.SCENARIO_LEVEL_ID
 	Session.menu_pending = false
 	scenario_active = true

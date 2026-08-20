@@ -1,0 +1,6 @@
+{
+  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
+  "nurses": 2, "builders": 2, "miners": 2,
+  "config_overrides": {"seconds_per_day": 200, "bogus_key_not_allowed": 1.0},
+  "stop": {"max_days": 2}
+}

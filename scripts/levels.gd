@@ -80,7 +80,24 @@ const LEVELS := {
 const SCENARIO_LEVEL_ID := 999
 static var scenario_override: Dictionary = {}
 
+const SaveGame = preload("res://scripts/save_game.gd")
+
 static func get_level(id: int) -> Dictionary:
 	if id == SCENARIO_LEVEL_ID and not scenario_override.is_empty():
 		return scenario_override
 	return LEVELS.get(id, {})
+
+## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md slice 2). Applies a
+## scenario file's "config_overrides" block to GameConfig, one field at a
+## time, checked against SaveGame.SAVED_SETTINGS -- the same per-field
+## allowlist a save file is already restricted to (see save_game.gd,
+## .claude/rules/saving.md), so a scenario file can't touch anything a save
+## couldn't already touch. An unknown or disallowed key fails loudly and is
+## skipped rather than silently doing nothing, since a scenario file with a
+## wrong key that silently no-oped would produce a result nobody could trust.
+static func apply_config_overrides(overrides: Dictionary) -> void:
+	for key in overrides:
+		if key not in SaveGame.SAVED_SETTINGS:
+			push_error("--scenario= config_overrides: '%s' is not an allowed GameConfig field" % key)
+			continue
+		GameConfig.set(key, overrides[key])

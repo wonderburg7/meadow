@@ -7,16 +7,15 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **AI playtest harness, slice 2: `config_overrides` + the allowlist
-   check.** Slice 1 is built and self-verified (see below) -- full design
-   in `AI_PLAYTEST_PLAN.md`, build order at its end. Slice 2 adds:
-   - A `config_overrides` block to the scenario JSON format, applied to
-     `GameConfig` at boot, checked key-by-key against the existing
-     write-allowlist (`.claude/rules/saving.md`) -- an unknown or
-     disallowed key should fail loudly (push_error + skip that key, or
-     abort the boot) rather than silently doing nothing.
-   - Once that's in, slice 3 (`AI_PLAYTEST_PLAN.md`'s time_scale-past-8x
-     stability check) and slice 4 (`tools/run_scenario.py`) are next.
+1. **AI playtest harness, slice 3: test time_scale past the 8x ceiling
+   for physics artifacts.** Slices 1 and 2 are built and self-verified
+   (see below) -- full design in `AI_PLAYTEST_PLAN.md`, build order at
+   its end. Slice 3 is `AI_PLAYTEST_PLAN.md`'s "Open risk" section:
+   compare a short run's outcome at a few `Engine.time_scale` multipliers
+   (8x, 16x, 30x) and check population/death numbers hold steady before
+   trusting anything faster than the player-facing 8x cap for headless
+   runs; whatever stays stable becomes the dev-path default. Slice 4
+   (`tools/run_scenario.py`) is next after that.
 2. **Crab spiders: a second round of playtest fixes, still waiting on
    Dave's hands-on re-check.** Death marks, dev-marker/alarm-ring/
    logging fixes, and three further issues plus a settings gap were all
@@ -43,6 +42,35 @@ into a history. Full history lives in `git log` and the Notion Build Log.
      confirm a fresh run's build time/Save-Load state reset cleanly)
      and Bundle B (save/load a few times, check population/flower
      counts and the queen panel's plain-comb checkbox stay in sync).
+
+## What slice 2 of the playtest harness actually did
+
+Built and self-verified this session (20 Aug 2026), on top of slice 1:
+
+- `levels.gd`: new `apply_config_overrides(overrides: Dictionary)` static
+  func -- checks each key against `SaveGame.SAVED_SETTINGS` (the same
+  per-field allowlist a save file is already restricted to), writes
+  allowed keys straight to `GameConfig`, and `push_error`s + skips any
+  unknown/disallowed key rather than aborting the whole boot or silently
+  doing nothing. Lives in `levels.gd` (not `main.gd`) because
+  `GameConfig` writes are file-allowlisted by
+  `source_checks.py::check_gameconfig_writes`, and `levels.gd` is
+  already on that list.
+- `main.gd::_apply_scenario_boot_arg()`: pulls `config_overrides` out of
+  the parsed scenario JSON (same pattern as the existing `stop` block)
+  and calls `Levels.apply_config_overrides()` with it, before the level
+  itself is built.
+- `test_scenarios/slice2_config_overrides_test.json`: one real override
+  (`seconds_per_day`) plus one deliberately-invalid key
+  (`bogus_key_not_allowed`), to exercise both paths in one run.
+- Verified with the same direct `Godot.exe --headless` invocation slice
+  1 used: the bad key logs an `ERROR` and is skipped, the run still
+  completes and quits at the configured day, and the resulting
+  `session_*.jsonl`'s `config` line shows `seconds_per_day: 200.0`
+  applied with no trace of the bogus key. Re-ran the slice 1 scenario
+  too -- no regression. `source_checks.py`, `balance_tests.py` and
+  `FUNCTION_MAP.md --check` (regenerated) all clean.
+- Not yet committed to git -- Dave hasn't reviewed the diff yet.
 
 ## What slice 1 of the playtest harness actually did
 
