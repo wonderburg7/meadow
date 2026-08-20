@@ -821,7 +821,8 @@ func _on_level_chosen(level: int) -> void:
 ## the actual command line the process was launched with. The JSON is
 ## applied through levels.gd's existing LEVELS shape (via Levels.get_level),
 ## plus a "config_overrides" block applied to GameConfig -- see
-## Levels.apply_config_overrides for the per-field allowlist check.
+## Levels.apply_config_overrides for the per-field allowlist check -- and an
+## optional "time_scale" field (defaults to 30x, see slice 3 below).
 func _apply_scenario_boot_arg() -> void:
 	var scenario_path: String = ""
 	for arg in OS.get_cmdline_user_args():
@@ -845,6 +846,17 @@ func _apply_scenario_boot_arg() -> void:
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
 	level.erase("config_overrides")
+	# Dev-only, not a GameConfig field so it doesn't go through the
+	# allowlist in Levels.apply_config_overrides -- see AI_PLAYTEST_PLAN.md
+	# slice 3. Default of 30x is the ceiling that slice 3 confirmed holds
+	# steady (identical total_deaths/deaths_by_cause/deaths_by_role at
+	# 8x/16x/30x on a 30-day level-4-shaped run -- no sign of the large-
+	# per-frame-delta overshoot the plan's "open risk" worried about,
+	# comfortably past the player-facing 8x speed-control cap). A scenario
+	# file can still ask for a different value if a future test finds a
+	# scenario class where 30x isn't safe.
+	var scenario_time_scale: float = float(level.get("time_scale", 30.0))
+	level.erase("time_scale")
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
 
@@ -854,18 +866,14 @@ func _apply_scenario_boot_arg() -> void:
 	Session.menu_pending = false
 	scenario_active = true
 	scenario_stop_max_days = int(stop.get("max_days", -1))
-	# An unattended run needs to actually finish -- use the same 8x ceiling
-	# the speed control already offers a player, not anything past it (see
-	# AI_PLAYTEST_PLAN.md's open risk about very high time_scale and large
-	# per-frame delta before that ceiling is ever raised for this path).
-	Engine.time_scale = 8.0
+	Engine.time_scale = scenario_time_scale
 	# DiagnosticLog only ever opens a session file off Session.run_reset
 	# (see diagnostic_log.gd) -- fired at the end of every reset_run_state(),
 	# which a normal boot never calls (only Restart/New Run/Load do). A
 	# scenario boot needs the same session file every other run gets, so it
 	# has to trigger that itself.
 	Session.reset_run_state()
-	print("AI playtest: loaded scenario %s (stop.max_days=%s)" % [scenario_path, scenario_stop_max_days])
+	print("AI playtest: loaded scenario %s (stop.max_days=%s, time_scale=%s)" % [scenario_path, scenario_stop_max_days, scenario_time_scale])
 
 ## Ends a headless scenario run the same way a normal loss does --
 ## DiagnosticLog gets its summary line either way -- but quits the process

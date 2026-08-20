@@ -76,6 +76,12 @@ const SAVED_SETTINGS := [
 	"fact_trait_matched_chance", "fact_general_chance", "fact_templated_chance",
 	"visual_size_jitter_range", "visual_tint_jitter_range",
 	"milestone_interval", "epitaph_min_gap",
+	# Crab spiders. Added so a --scenario= file can turn predators on
+	# via config_overrides (AI_PLAYTEST_PLAN.md slice 6) -- overrides
+	# are checked against this same list, so it doubles as making
+	# predators_on/attack chance survive an ordinary save/load too,
+	# which they didn't before.
+	"predators_on", "crab_spider_attack_success_chance",
 ]
 
 static func has_save(path: String = SAVE_PATH) -> bool:

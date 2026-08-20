@@ -1,9 +1,11 @@
 # AI playtest / headless scenario harness — plan
 
-Status: agreed 20 Aug 2026, build starting. `NEXTSTEPS.md` points at
-slice 1 (the boot-arg + auto-quit mechanism, no new scenario format or
-config overrides yet) as the next concrete action for a Claude Code
-session. Written from a
+Status: built, 20 Aug 2026 -- all six slices below done and
+self-verified, `source_checks.py`/`balance_tests.py` pass. Slice 6 ran
+`test_scenarios/slice6_crab_spider_test.json` for real and confirmed
+`crab_spider_event` fires reliably (5/5 runs) at a kill ratio consistent
+with `crab_spider_attack_success_chance` -- see `NEXTSTEPS.md`'s slice 6
+write-up for the numbers. Written from a
 planning conversation in the Meadow Cowork Project, checked against what
 the codebase already has (`game_config.gd`, `levels.gd`, `diagnostic_log.gd`,
 `session.gd`, `hud.gd`, `camera_view.gd`, `main.gd`, `project.godot`,
@@ -176,6 +178,8 @@ cap headless runs at whatever multiplier stays stable rather than
 assuming faster is free.
 
 ## Suggested build order (small slices)
+
+All six done -- see `NEXTSTEPS.md` for what each slice actually built.
 
 1. `--scenario=` boot arg + auto-quit on queen death, reusing the
    *existing* `LEVELS` shape untouched and the *existing* 8x speed cap.
