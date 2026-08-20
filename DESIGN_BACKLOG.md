@@ -4,7 +4,14 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 19 Aug 2026 — added section 11, one product decision that
+Last updated: 20 Aug 2026 -- section 7.3 (predators) now has a full design
+rather than just a confirmation, extended the same day with spider
+movement and a narrower recruitment-suppression rule. See
+`CRAB_SPIDER_PLAN.md` for the complete plan, worked out from a planning
+conversation plus research into real crab spider (Thomisidae) ecology.
+Nothing built yet.
+
+Previously updated 19 Aug 2026 — added section 11, one product decision that
 fell out of the two-report technical audit (`AUDIT_PLAN.md`): whether
 ordinary player save/load should work during an active Challenge.
 
@@ -314,9 +321,41 @@ are.
 ### 7.3 Predators / ambush threats
 
 Agreed to build (was an open question on `ROADMAP.md` — now confirmed
-as a future item, not shelved). Detail still to be worked out; the
-existing "floral ambush predators (crab spiders and the like)" note in
-section 3's win-condition pool is the same idea.
+as a future item, not shelved). The existing "floral ambush predators
+(crab spiders and the like)" note in section 3's win-condition pool is
+the same idea.
+
+**Full design done, 20 Aug 2026, extended same day -- see
+`CRAB_SPIDER_PLAN.md`.** Starting with crab spiders specifically: an
+ambush predator that waits, invisible to the player except for a brief
+flash when it strikes or relocates, on one flower of whichever species
+this run has randomly decided is dangerous (rolled per run, not fixed,
+so a player can't permanently write off one species). It moves to a new
+flower after a set residency time, and immediately if its current flower
+dies, rather than staying on one flower for that flower's whole life. A
+forager is only at risk once it actually starts feeding, not while
+inspecting -- grounded in real crab spider ecology (Thomisidae attack
+from a fixed ambush position, usually miss, favour pale/yellow flowers,
+and do relocate once a flower stops paying off) researched for this
+plan. Kills reuse the existing `BeeSurvival.die()`/epitaph path
+unchanged. An escaped bee gets a long flower-specific cooldown and,
+behind a toggle, stops recruiting other bees at the entrance exchange --
+only for as long as her own start point and preferred species stay the
+same as they were at the attack; moving on herself lifts it. A marker
+left on the flower by any attack is the basis of an "alarm pheromone"
+sense that would let a bee notice and leave before ever feeding there --
+no skill tree exists yet to hang that on, so the plan builds it as a
+working global toggle explicitly labelled as a placeholder for a future
+per-bee/per-colony unlock. Floral constancy (already built) becomes the
+main defence for free, with no new code -- a forager pinned to a safe
+species never visits the dangerous one. Whole feature ships off by
+default (`GameConfig.predators_on = false`). Every quantity (spider
+rarity, attack success chance, residency time, cooldowns) is a starting
+guess pending a throwaway model per rule 4 -- see the plan's own "before
+implementing" section. Dave has also flagged bees fighting back and
+killing a spider (eventually generalising to colony/wasp "fights") as a
+wanted future mechanism -- not part of this build, noted in the plan's
+deferred section.
 
 ### 7.4 Weather beyond rain
 

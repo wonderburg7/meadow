@@ -7,7 +7,10 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 19 Aug 2026 — added a row below for the diagnostic
+Last updated: 20 Aug 2026 -- the Predators row now points at a full
+design, `CRAB_SPIDER_PLAN.md`. Not started.
+
+Previous update, 19 Aug 2026 — added a row below for the diagnostic
 logging system (post-run `.jsonl` files Claude can read back to help
 diagnose deaths/imbalance), now fully planned in
 `DIAGNOSTIC_LOGGING_PLAN.md`. Not started.
@@ -109,7 +112,7 @@ update status there, not here.
 | **Gynes leaving and scoring** — gynes fly off at season's end and are the score | M | **Shipped 13 Aug.** Supersedes the old "day 90 resource score" win condition. |
 | **Disease and parasites** — an uncleaned hive gets sick; clearing becomes preventative | M | **Shipped 13 Aug.** Corpses and crowding drive it; four balance numbers had to be retuned after simulating (see Decisions Log). |
 | **Forage seasonality** — species come into flower at different times | M | **Shipped 13 Aug.** `Flower.SPECIES`, `season_strength()`. |
-| **Predators** — something that eats foragers in the meadow | M | Not built. **Confirmed wanted 14 Aug** — no longer just an open question; detail not yet worked out. See `DESIGN_BACKLOG.md` §7.3. |
+| **Predators** — something that eats foragers in the meadow | M | Not built. **Full design done 20 Aug** -- crab spiders, an ambush predator, ready to build against the code as it stands. See `CRAB_SPIDER_PLAN.md` and `DESIGN_BACKLOG.md` §7.3. |
 | **A second hive site to move to** | L | Not built. Deferred on purpose (13 Aug decision). |
 | **Winter energy/lifespan bug fix** — bees now actually burn less and live longer through winter, matching what the forecast display already claimed | S | **Shipped 14 Aug.** `bee_survival.gd::age_and_burn` was missing `winter_burn_factor` entirely; new `GameConfig.winter_lifespan_factor` (4.0x, not yet fully modelled — see `DESIGN_BACKLOG.md` §9) applied in `season.gd::lifespan_factor()`. |
 
