@@ -56,6 +56,14 @@ var winter_ends_day: float = 0.0
 ## score: the whole point of a season is how many you get away.
 var gynes_released: int = 0
 
+# --- crab spiders (see CRAB_SPIDER_PLAN.md) ------------------------
+## Which flower species this run's crab spiders are hunting on. Rolled
+## once, the first time GameConfig.predators_on is true and this is
+## still unset -- see CrabSpider.roll_preferred_species(). Run state,
+## not a balance number: it's "which species this particular run
+## picked", same reasoning as winter_coming above.
+var crab_spider_preferred_species: String = ""
+
 # --- interface preferences ----------------------------------------
 ## Which readouts are starred into the top-left corner. Keys match the
 ## STAT_ROWS of the colony and nursery windows.
@@ -106,6 +114,12 @@ var show_cell_contents_text: bool = true
 ## affect other roles' labels.
 var show_forager_labels: bool = true
 
+## Dev-only: keeps a flower's crab spider marker visible all the time
+## instead of only flashing on an attack/relocation. Off means the
+## normal, mostly-invisible presentation; see CRAB_SPIDER_PLAN.md
+## section 7. Same pattern as show_flower_amounts.
+var show_crab_spiders: bool = false
+
 ## Saved selections, 1-9. Each is a list of bee ids rather than node
 ## references, so the group survives bees dying and the scene reloading.
 var control_groups: Dictionary = {}
@@ -128,6 +142,7 @@ func reset_run_state() -> void:
 	winter_starts_day = 0.0
 	winter_ends_day = 0.0
 	gynes_released = 0
+	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()
 	run_reset.emit()

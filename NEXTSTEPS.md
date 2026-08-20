@@ -7,64 +7,47 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **This session's two fixes need Dave's hands-on check in Challenge 1
-   and 2** -- `source_checks.py`/`balance_tests.py` pass and
-   `FUNCTION_MAP.md` is regenerated, but no Godot boot was available this
-   session (the `mcp__godot__*` tools were disabled), so there hasn't
-   even been a parser-error check yet -- do that first next session,
-   before anything else.
-   - **Corner problem strip during a Challenge** (`year_winter.gd::
-     _refresh_signals`): the "signals" readout ("larvae are going
-     hungry", "bees running low on energy", etc.) is starred by default
-     for every run and was never covered by `hud.gd`'s `warnings_muted`
-     -- that flag only silences the toast banner (`show_warning`), a
-     separate mechanism. It now goes blank for the length of an active
-     Challenge (`main.challenge_runner.active`), on the reasoning that
-     Dr Gallerin already gives stage-appropriate guidance and the generic
-     strip was flagging things the tutorial hadn't unlocked a fix for yet
-     (no nurses before 2.7, low energy while still learning the
-     controls). Check: start Challenge 1 or 2, let a larva go hungry or a
-     bee's energy drop, and confirm nothing appears in the corner: only
-     Dr Gallerin's own prompts should be visible. If Dave wants specific
-     ones back (or reworded to reference the current stage) rather than
-     all of them gone, that's a follow-up.
-   - **Backup building/mining not dropping when primary work turns up**
-     (`bee.gd`): a bee whose secondary role is Comb worker or Miner used
-     to only re-check its primary role at the *next* idle state --
-     `BUILDING`/`MINING` can run for a whole cell or block, so with
-     "Finish the job first" off it still didn't drop the backup job for
-     up to that whole stretch, unlike every other manual reassignment.
-     New `working_secondary` flag + `_maybe_break_off_secondary()` (see
-     its doc comment) now checks on every think tick and, if off, hands
-     back to the primary role immediately -- reusing the same
-     `_try_role_work`/`release_builder`/`release_miner` paths a manual
-     switch already goes through, so build/mine progress on the
-     cell/block itself is preserved exactly as if the bee had wandered
-     off mid-job (existing behaviour). Check: give a Nurse (or Forager)
-     a Comb worker or Miner backup role with "Finish the job first" off,
-     let it start building/mining as backup, then create primary work
-     (brood to feed / a flower to visit) and confirm it breaks off within
-     a second or two rather than finishing the whole cell/block first.
-     Also worth confirming this is what was behind the reported deaths --
-     if bees still die mid-build/mid-mine after this, the cause is
-     something else (e.g. the colony genuinely out of food, not a stuck
-     state).
-2. **Challenge 2 (Brood, Roles and Expansion) still needs Dave's first
-   hands-on playtest** -- all ten sub-stages, the 2.3+ checkpoint/rescue
-   path, and the new `hud.gd` gating (cell designation, hatch-role
-   picker, Nurse/Comb-worker/Miner sub-modes, soil marking) are built and
-   checked, but never played. See `TUTORIAL_PLAN.md`'s Challenge 2
-   section for the full checklist (stage sequence, restore-on-collapse
-   behaviour, the one-time rescue firing once, nothing unlocking early,
-   whether the balance overrides turn out to be needed at all).
-3. **Two audit bundles still need Dave's hands-on check, same as last
-   session** -- can combine with the Challenge 2 playtest:
-   - **Bundle A**: start Challenge 1, reach 1.3, abandon to the main menu
-     mid-build, confirm a fresh run's build time is back to normal (90s)
-     and Save/Load were greyed out throughout.
-   - **Bundle B**: save/load a run a few times, check population/flower
-     counts don't drift, and check the queen panel's "Lay in plain comb
-     too" checkbox stays in sync with the settings window's copy.
+1. **Crab spiders: a second round of playtest fixes.** Death marks
+   (confirmed working) and the first round of dev-marker/alarm-ring/
+   logging fixes (confirmed) turned up three more issues plus a settings
+   gap, all fixed this session -- see `CRAB_SPIDER_PLAN.md`'s 20 Aug
+   "Confirmed" entry for the full detail:
+   - `crab_spider_attack_success_chance` is now in the settings window
+     (it was the one crab-spider number that wasn't).
+   - **Real bug**: an escaped bee's cooldown on the exact flower she was
+     attacked at lived in the same dictionary `nearest_flower()`'s
+     scarcity fallback deliberately ignores (right for an ordinary
+     rejection, wrong for a predator memory that should hold regardless
+     of what else is nearby) -- bees were walking straight back into the
+     same spider. Fixed with a separate `predator_flower_cooldowns` dict,
+     checked unconditionally.
+   - A bee who's actually attacked and escapes (not just alarm-avoids)
+     had no visual at all -- only `alarm_ring`'s precognitive-avoidance
+     case flashed. Added `attack_ring` (red, vs. alarm_ring's orange) so
+     both outcomes are now visible and distinguishable.
+   - The dev marker's large filled disc visually dwarfed the flower it
+     sat on, reading as a separate object bees "beelined for" -- changed
+     to an unfilled ring (`Line2D`) so it frames the flower instead.
+   `source_checks.py`/`balance_tests.py` pass, `FUNCTION_MAP.md`
+   regenerated, a Godot boot is clean. **Needs Dave's re-check** on all
+   four: the new setting does something, an escaped bee's flower stays
+   off-limits even when forage is tight, every attack (not just
+   alarm-triggered avoidance) flashes red, and the dev marker now reads
+   as a ring rather than a blob. Bundle 3 (recruitment suppression) and
+   Bundle 4's original checklist item still haven't had their own
+   hands-on check; Bundle 6 (closeout) is last, once all of this settles.
+2. **A backlog of earlier hands-on checks is building up** -- none of
+   these are blocked on anything, just not yet played:
+   - Two Challenge 1/2 fixes from two sessions ago (corner problem strip
+     hidden during a Challenge; backup building/mining now breaks off
+     promptly when primary work turns up) -- both boot clean, neither
+     played.
+   - Challenge 2's ten sub-stages -- built and checked, never played
+     start to finish (see `TUTORIAL_PLAN.md`'s checklist).
+   - Two older audit bundles: Bundle A (abandon Challenge 1 mid-build,
+     confirm a fresh run's build time/Save-Load state reset cleanly) and
+     Bundle B (save/load a few times, check population/flower counts and
+     the queen panel's plain-comb checkbox stay in sync).
 
 ## Waiting, lower priority
 

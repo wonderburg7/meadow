@@ -31,6 +31,9 @@ var _hour_accum: float = 0.0
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
 var _deaths_by_role: Dictionary = {}
+var _crab_spider_events: Dictionary = {}   # "kill"/"escape"/"alarm_flee" -> count
+var _recruitment_matches: int = 0
+var _scouting_settled: int = 0
 
 
 func _ready() -> void:
@@ -59,6 +62,9 @@ func start_session() -> void:
 	_total_deaths = 0
 	_deaths_by_cause.clear()
 	_deaths_by_role.clear()
+	_crab_spider_events.clear()
+	_recruitment_matches = 0
+	_scouting_settled = 0
 
 	_write({"type": "config", "game_time": Session.sim_time, "settings": _config_snapshot()})
 
@@ -83,6 +89,70 @@ func log_death(bee: Node2D) -> void:
 	_total_deaths += 1
 	_deaths_by_cause[bee.death_cause] = int(_deaths_by_cause.get(bee.death_cause, 0)) + 1
 	_deaths_by_role[role_name] = int(_deaths_by_role.get(role_name, 0)) + 1
+
+
+## Called from crab_spider.gd for all three outcomes an attack/alarm can
+## have -- "kill", "escape", "alarm_flee" -- so the log has direct
+## evidence the mechanic is firing at all (CRAB_SPIDER_PLAN.md is off by
+## default; a run with predators_on but zero of these lines means the
+## toggle, the spawn roll, or the hook into start_collecting()/inspect()
+## isn't actually wired up, not just that nobody got unlucky) and so the
+## observed kill/escape ratio can be checked against
+## crab_spider_attack_success_chance directly, rather than only inferred
+## from the death log's "crab spider ambush" cause.
+func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "crab_spider_event",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"role": BeeEnums.Role.keys()[bee.role],
+		"species": flower.species_name,
+		"outcome": outcome,
+		"location": [flower.position.x, flower.position.y],
+	})
+	_crab_spider_events[outcome] = int(_crab_spider_events.get(outcome, 0)) + 1
+
+
+## Called from bee_foraging.gd::wait_at_entrance() the moment a seeker is
+## handed a mentor's patch -- direct evidence auto-recruitment is
+## actually matching bees up, not just that the entrance-wait states are
+## being entered.
+func log_recruitment_match(seeker: Node2D, mentor: Node2D) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "recruitment_match",
+		"game_time": Session.sim_time,
+		"seeker_id": seeker.bee_id,
+		"mentor_id": mentor.bee_id,
+		"resource_type": seeker.resource_type,
+		"start_point": [mentor.forage_start_point.x, mentor.forage_start_point.y],
+		"species": mentor.preferred_species,
+	})
+	_recruitment_matches += 1
+
+
+## Called from bee_foraging.gd::_score_trip() when a scouting bee's three
+## bouts are all in and she commits (or fails to). `found_patch: false`
+## with scouting otherwise looking healthy in the snapshot counts is the
+## tell for "scouting runs but never actually finds anywhere worth
+## settling", which reads identically to "scouting isn't wired up" from
+## the population numbers alone.
+func log_scouting_settled(bee: Node2D) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "scouting_settled",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"found_patch": bee.scout_best_rate > 0.0,
+		"best_rate": bee.scout_best_rate,
+		"start_point": [bee.forage_start_point.x, bee.forage_start_point.y],
+		"species": bee.preferred_species,
+	})
+	_scouting_settled += 1
 
 
 ## Called from main.gd's own per-frame block (only while unpaused, same
@@ -113,6 +183,9 @@ func end_session(outcome: String) -> void:
 		"deaths_by_cause": _deaths_by_cause,
 		"deaths_by_role": _deaths_by_role,
 		"gynes_released": Session.gynes_released,
+		"crab_spider_events": _crab_spider_events,
+		"recruitment_matches": _recruitment_matches,
+		"scouting_settled": _scouting_settled,
 	})
 	_file.close()
 	_file = null
@@ -149,6 +222,26 @@ func _snapshot(world: Node2D) -> Dictionary:
 		var state_bucket: String = BeeEnums.State.keys()[b.state]
 		by_state[state_bucket] = int(by_state[state_bucket]) + 1
 
+	# Live counts, not just deltas since the last event -- these are what
+	# let a snapshot answer "is floral constancy/recruitment/scouting
+	# actually doing anything right now" on its own, without having to
+	# cross-reference the discrete event lines above.
+	var scouting_now := 0
+	var by_preferred_species: Dictionary = {}
+	for b in bees:
+		if not is_instance_valid(b):
+			continue
+		if b.is_scouting:
+			scouting_now += 1
+		if b.preferred_species != "":
+			by_preferred_species[b.preferred_species] = int(by_preferred_species.get(b.preferred_species, 0)) + 1
+
+	var active_spiders := 0
+	if GameConfig.predators_on:
+		for f in world.get_tree().get_nodes_in_group("flowers"):
+			if is_instance_valid(f) and f.has_crab_spider:
+				active_spiders += 1
+
 	var hive: Node2D = world.hive
 	var by_contents: Dictionary = {}
 	for content_type in ["", "nectar", "pollen", "honey", "jelly", "brood", "corpse"]:
@@ -183,6 +276,21 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"season_fraction": Flower.season_fraction(),
 			"disease": world.season.disease if world.season != null and is_instance_valid(world.season) else 0.0,
 			"winter_here": Session.winter_here,
+		},
+		"foraging_behaviour": {
+			"floral_constancy_on": GameConfig.floral_constancy_on,
+			"scouting_on": GameConfig.scouting_on,
+			"auto_recruitment_on": GameConfig.auto_recruitment_on,
+			"scouting_now": scouting_now,
+			"with_preferred_species": by_preferred_species,
+			"entrance_mentors_waiting": hive.entrance_mentors.size(),
+		},
+		"crab_spiders": {
+			"predators_on": GameConfig.predators_on,
+			"alarm_pheromone_on": GameConfig.alarm_pheromone_on,
+			"recruit_suppression_on": GameConfig.crab_spider_recruit_suppression_on,
+			"preferred_species": Session.crab_spider_preferred_species,
+			"active_spiders": active_spiders,
 		},
 	}
 

@@ -38,6 +38,7 @@ const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Hive = preload("res://scripts/hive.gd")
 const Flower = preload("res://scripts/flower.gd")
+const CrabSpider = preload("res://scripts/crab_spider.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
 const SoilBlock = preload("res://scripts/soil_block.gd")
 const Obstacle = preload("res://scripts/obstacle.gd")
@@ -206,6 +207,8 @@ var last_energy_warning: float = -INF
 ## Same idea for death epitaphs (see BeeSurvival.die) -- a bad night
 ## shouldn't fire a dozen toasts back to back.
 var last_epitaph_time: float = -INF
+## Same idea for crab spider escape warnings (see CrabSpider.resolve_attack).
+var last_crab_spider_escape_time: float = -INF
 var warning_check_timer: float = 5.0 + randf()
 ## The periodic sweeps below are each given a random starting phase.
 ## Every one of them walks the whole colony or the whole comb, and when

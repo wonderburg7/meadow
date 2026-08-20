@@ -109,6 +109,10 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 			if block:
 				_select_blocks([block], add_to_group_selection)
 				return
+			var marker = _death_marker_at(main.drag_start)
+			if marker:
+				main.hud.show_death_popup(marker.death_info, main.get_viewport().get_mouse_position())
+				return
 			_clear_cell_selection()
 			_clear_block_selection()
 		else:
@@ -119,6 +123,10 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 			var obstacle = main.world_building._obstacle_at(main.drag_start)
 			if obstacle:
 				main.hud.show_obstacle_popup(obstacle, main.get_viewport().get_mouse_position())
+				return
+			var marker = _death_marker_at(main.drag_start)
+			if marker:
+				main.hud.show_death_popup(marker.death_info, main.get_viewport().get_mouse_position())
 				return
 	else:
 		for b in _bees_in_current_view():
@@ -140,6 +148,17 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 					boxed_blocks.append(b)
 			if not boxed_blocks.is_empty():
 				_select_blocks(boxed_blocks, add_to_group_selection)
+				return
+
+		# No bee, cell or soil block in the box -- a death mark is the last
+		# thing worth catching before falling through to "select nothing".
+		if picked.is_empty():
+			var boxed_markers: Array = []
+			for m in _death_markers_in_current_view():
+				if box.has_point(m.global_position):
+					boxed_markers.append(m)
+			if not boxed_markers.is_empty():
+				main.hud.show_death_popup(boxed_markers[0].death_info, main.get_viewport().get_mouse_position())
 				return
 
 	if not picked.is_empty():
@@ -222,6 +241,10 @@ func _bees_in_current_view() -> Array:
 	var root = main.hive_root if main.in_hive_view else main.meadow_root
 	return get_tree().get_nodes_in_group("bees").filter(func(b): return b.get_parent() == root)
 
+func _death_markers_in_current_view() -> Array:
+	var root = main.hive_root if main.in_hive_view else main.meadow_root
+	return get_tree().get_nodes_in_group("death_markers").filter(func(m): return m.get_parent() == root)
+
 func _bee_at(point: Vector2) -> Node2D:
 	for b in _bees_in_current_view():
 		if b.global_position.distance_to(point) <= b.click_radius:
@@ -238,6 +261,12 @@ func _soil_at(point: Vector2) -> Node2D:
 	for b in get_tree().get_nodes_in_group("soil_blocks"):
 		if is_instance_valid(b) and b.global_position.distance_to(point) <= b.block_size:
 			return b
+	return null
+
+func _death_marker_at(point: Vector2) -> Node2D:
+	for m in get_tree().get_nodes_in_group("death_markers"):
+		if is_instance_valid(m) and m.global_position.distance_to(point) <= m.CLICK_RADIUS:
+			return m
 	return null
 
 func _hex_at(global_point: Vector2) -> Vector2i:

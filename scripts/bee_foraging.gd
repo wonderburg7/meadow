@@ -10,6 +10,7 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeStatus = preload("res://scripts/bee_status.gd")
+const CrabSpider = preload("res://scripts/crab_spider.gd")
 
 const SCOUT_BOUTS := 3
 
@@ -109,6 +110,13 @@ static func nearest_flower(bee: Node2D, strict: bool) -> Node2D:
 				return false
 		elif bee.preferred_species != "" and f.species_name != bee.preferred_species:
 			return false
+		# Checked outside the `if strict:` block below -- unlike an
+		# ordinary rejection, memory of a spider attack isn't something
+		# scarcity should override. See bee.gd's predator_flower_cooldowns
+		# field comment.
+		if GameConfig.predators_on and bee.predator_flower_cooldowns.has(f) \
+				and Session.sim_time < bee.predator_flower_cooldowns[f]:
+			return false
 		if strict:
 			if bee.flower_cooldowns.has(f) and Session.sim_time < bee.flower_cooldowns[f]:
 				return false
@@ -176,6 +184,8 @@ static func inspect(bee: Node2D, delta: float) -> void:
 	if worth_feeding(bee, bee.current_flower):
 		start_collecting(bee)
 	else:
+		if GameConfig.alarm_pheromone_on and CrabSpider.is_alarmed(bee.current_flower):
+			CrabSpider.flee_alarm(bee, bee.current_flower)
 		reject_flower(bee)
 
 
@@ -205,6 +215,8 @@ static func drink_at_flower(bee: Node2D, delta: float) -> void:
 		if worth_feeding(bee, bee.current_flower):
 			start_collecting(bee)
 		else:
+			if GameConfig.alarm_pheromone_on and CrabSpider.is_alarmed(bee.current_flower):
+				CrabSpider.flee_alarm(bee, bee.current_flower)
 			reject_flower(bee)
 
 
@@ -228,6 +240,8 @@ static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
 		return false
 	if GameConfig.tarsal_markers_on and f.is_marked(bee):
 		return false
+	if GameConfig.alarm_pheromone_on and CrabSpider.is_alarmed(f):
+		return false
 	return true
 
 
@@ -244,6 +258,14 @@ static func reject_flower(bee: Node2D) -> void:
 
 static func start_collecting(bee: Node2D) -> void:
 	bee.current_flower.leave_marker(bee)
+	# Crab spiders (see CRAB_SPIDER_PLAN.md section 4) -- risk begins the
+	# instant a bee actually starts feeding, not on landing/inspecting.
+	# resolve_attack already moved the bee to SEEK_FLOWER (escaped) or
+	# freed her entirely (killed) when it returns false, so the caller
+	# must not fall through into COLLECTING.
+	if GameConfig.predators_on and bee.current_flower.has_crab_spider:
+		if not CrabSpider.resolve_attack(bee):
+			return
 	# `timer` now counts down the handling phase only -- finding the
 	# nectary after landing. Gathering itself happens gradually, in
 	# _collect(), so the flower's readout ticks down while you watch.
@@ -461,6 +483,7 @@ static func _score_trip(bee: Node2D) -> void:
 				bee.forage_start_point = bee.scout_best_start_point
 			if GameConfig.floral_constancy_on:
 				bee.preferred_species = bee.scout_best_species
+		DiagnosticLog.log_scouting_settled(bee)
 
 
 static func go_to_exit(bee: Node2D, delta: float) -> void:
@@ -493,7 +516,7 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 				bee.entrance_wait_target = _entrance_wait_spot(bee, -1)
 				bee.state = State.AT_ENTRANCE_SEEKING
 				return
-			elif past_grace and bee.avg_collection_rate > upper:
+			elif past_grace and bee.avg_collection_rate > upper and not CrabSpider.recruitment_suppressed(bee):
 				bee.hive.add_entrance_mentor(bee)
 				bee.timer = GameConfig.recruit_wait_seconds
 				bee.entrance_wait_target = _entrance_wait_spot(bee, 1)
@@ -606,6 +629,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		bee.forage_start_point = mentor.forage_start_point
 		if GameConfig.floral_constancy_on:
 			bee.preferred_species = mentor.preferred_species
+		DiagnosticLog.log_recruitment_match(bee, mentor)
 		# The whole point of scouting is finding a good patch -- being
 		# handed one already-proven is strictly better, so there's no
 		# reason to keep running the remaining bouts.

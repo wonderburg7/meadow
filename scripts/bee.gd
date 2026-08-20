@@ -283,7 +283,47 @@ var has_mine_home: bool = false
 ## should be back to full. Time-based rather than checking the flower's
 ## live amount, so a bee commits to staying away for the whole recharge
 ## rather than darting back the moment a trickle appears.
+##
+## This is deliberately soft memory: BeeForaging.nearest_flower() relaxes
+## it when nothing else qualifies (see that function's own comment)
+## rather than have a bee stand starving over a spent flower. That's the
+## right call for "this was recently stripped" but the wrong one for
+## "a spider is sitting on this" -- see predator_flower_cooldowns below.
 var flower_cooldowns: Dictionary = {}
+
+## Same shape as flower_cooldowns, but for exactly the flower a crab
+## spider ambush happened at (see CrabSpider.resolve_attack) -- kept
+## separate so it's never in the pool nearest_flower() relaxes under
+## scarcity. Real bees that survive an attack abandon that flower
+## outright (CRAB_SPIDER_PLAN.md's biology section), not "unless nothing
+## else is nearby" -- a bee low on options should go hungry a little
+## longer or try a different species, not walk back into the same spider.
+var predator_flower_cooldowns: Dictionary = {}
+
+## Crab spiders (see CRAB_SPIDER_PLAN.md section 4) -- set at the moment
+## this bee escapes an ambush. Not a permanent mark: recruitment
+## suppression (Bundle 3) compares her *current* forage_start_point/
+## preferred_species against this snapshot, so it lifts on its own once
+## she's genuinely moved on rather than needing a timer or a clear-flag
+## hook.
+var was_attacked_by_predator: bool = false
+var attacked_at_start_point: Vector2 = Vector2(INF, INF)
+var attacked_at_preferred_species: String = ""
+## Sim-time until which alarm_ring (below) shows -- set by
+## CrabSpider.flee_alarm when alarm_pheromone_on lets this bee notice an
+## alarmed flower and turn away before ever risking State.COLLECTING.
+## Same brief-flash duration as a flower's own reveal (section 7); the
+## point is a visible signal on the bee reacting, not just her quietly
+## not feeding.
+var alarm_flash_until: float = -999.0
+## Sim-time until which attack_ring (below) shows -- set by
+## CrabSpider.resolve_attack the instant a bee is actually attacked and
+## narrowly escapes. A separate signal from alarm_ring above: that one
+## fires when alarm_pheromone_on lets a bee avoid the risk entirely,
+## this one fires when she took the risk and survived it, which needs
+## its own visible tell or those two very different outcomes look
+## identical from the outside.
+var attack_flash_until: float = -999.0
 
 ## Cached route while walking inside the hive -- see _move_towards.
 var path_points: PackedVector2Array = PackedVector2Array()
@@ -292,6 +332,8 @@ var path_goal: Vector2 = Vector2(INF, INF)
 
 var label: Label
 var selection_ring: Polygon2D
+var alarm_ring: Polygon2D
+var attack_ring: Polygon2D
 var body: Polygon2D
 ## A thin ring nested just inside the black outline (miner: brown, nurse:
 ## white, comb worker: wax colour) and a small dot at the centre (forager:
@@ -353,6 +395,26 @@ func _ready() -> void:
 	selection_ring.color = Color(0.2, 1.0, 0.4, 0.85)
 	selection_ring.visible = false
 	add_child(selection_ring)
+
+	# Alarm-pheromone flee flash (see CRAB_SPIDER_PLAN.md sections 5/7) --
+	# a distinct ring, outside selection_ring, so the two never get read
+	# as the same thing. Only ever shown by CrabSpider.flee_alarm.
+	alarm_ring = Polygon2D.new()
+	alarm_ring.polygon = Shapes.circle_points(outline_radius + 8.0)
+	alarm_ring.color = Color(1.0, 0.55, 0.0, 0.85)
+	alarm_ring.visible = false
+	add_child(alarm_ring)
+
+	# Attack flash (see CRAB_SPIDER_PLAN.md section 4) -- a bee who was
+	# actually attacked and escaped, not just one who noticed the alarm
+	# mark and turned away. Red rather than alarm_ring's orange, and a
+	# touch further out, so the two read as clearly different events.
+	# Only ever shown by CrabSpider.resolve_attack's escape branch.
+	attack_ring = Polygon2D.new()
+	attack_ring.polygon = Shapes.circle_points(outline_radius + 11.0)
+	attack_ring.color = Color(0.95, 0.1, 0.1, 0.85)
+	attack_ring.visible = false
+	add_child(attack_ring)
 
 	var outline := Polygon2D.new()
 	outline.polygon = Shapes.circle_points(outline_radius)
@@ -781,6 +843,7 @@ func _process(delta: float) -> void:
 
 	Perf.begin("bee_label")
 	_update_label()
+	_update_alarm_ring()
 	Perf.end("bee_label")
 	Perf.end("bees")
 
@@ -1256,6 +1319,7 @@ func command_collect_from(flower: Node2D) -> void:
 	if current_flower and current_flower != flower:
 		current_flower.release(self)
 	flower_cooldowns.erase(flower)
+	predator_flower_cooldowns.erase(flower)
 	flower.occupied_by = self
 	current_flower = flower
 	state = State.TO_FLOWER
@@ -1695,6 +1759,14 @@ func _update_label() -> void:
 	if energy_fraction < ENERGY_DARKEN_THRESHOLD:
 		darken_amount = (ENERGY_DARKEN_THRESHOLD - energy_fraction) / ENERGY_DARKEN_THRESHOLD
 	body.color = _base_colour().lerp(Color(0.45, 0.35, 0.3), darken_amount)
+
+## Same off-screen skip as _update_label -- purely presentational (rule
+## 3), and cheap enough not to need its own throttle.
+func _update_alarm_ring() -> void:
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	alarm_ring.visible = Session.sim_time < alarm_flash_until
+	attack_ring.visible = Session.sim_time < attack_flash_until
 
 ## Bees inside the hive pick their way over the comb rather than flying
 ## straight, so standing on a cell slows them down. Out in the meadow

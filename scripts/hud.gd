@@ -278,6 +278,9 @@ var soil_popup_label: Label
 ## has a multi-cell selection.
 var selected_cell_count: int = 1
 
+var death_popup: PopupPanel
+var death_popup_label: Label
+
 var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
@@ -342,6 +345,7 @@ func _ready() -> void:
 	_build_flower_popup()
 	_build_obstacle_popup()
 	_build_soil_popup()
+	_build_death_popup()
 	_build_warning_banner()
 	_build_discard_dialog()
 
@@ -966,6 +970,41 @@ func show_soil_popup(count: int, reachable: int, screen_position: Vector2) -> vo
 	soil_clear_btn.visible = soil_marking_visible
 	soil_popup.position = Vector2i(screen_position + Vector2(12, -10))
 	soil_popup.popup()
+
+## --- death popup ----------------------------------------------------
+## Clicking (or drag-selecting) a death mark brings up what happened to
+## the bee who died there. Built from death_marker.gd's death_info
+## snapshot rather than a live bee -- see that file's header comment --
+## so this is a one-shot popup, not a persistent selection like
+## update_selection() below.
+
+func _build_death_popup() -> void:
+	death_popup = PopupPanel.new()
+	add_child(death_popup)
+
+	death_popup_label = Label.new()
+	death_popup_label.add_theme_font_size_override("font_size", 12)
+	death_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	death_popup_label.custom_minimum_size = Vector2(260, 0)
+	death_popup.add_child(death_popup_label)
+
+func show_death_popup(info: Dictionary, screen_position: Vector2) -> void:
+	var lines := []
+	var title: String = "Queen" if info.get("is_queen", false) else ("Gyne" if info.get("is_gyne", false) else "Bee %d" % info.get("bee_id", 0))
+	if info.get("bee_name", "") != "":
+		title = "%s%s" % ["★ " if info.get("is_favourite", false) else "", info.get("bee_name")]
+	lines.append(title)
+	lines.append("%s -- died of %s" % [info.get("role_text", ""), info.get("cause", "unknown causes")])
+	lines.append("Lived %.1f days" % info.get("age_days", 0.0))
+	if info.get("trait_text", "") != "":
+		lines.append(info.get("trait_text"))
+	if info.get("preferred_species", "") != "":
+		lines.append("Preferred flower: %s" % info.get("preferred_species"))
+	if info.get("bee_fact", "") != "":
+		lines.append("\"%s\"" % info.get("bee_fact"))
+	death_popup_label.text = "\n".join(lines)
+	death_popup.position = Vector2i(screen_position + Vector2(12, -10))
+	death_popup.popup()
 
 func show_cell_popup(cell: Node2D, screen_position: Vector2, count: int = 1) -> void:
 	active_cell = cell

@@ -9,6 +9,7 @@ extends Polygon2D
 ##   Borage -- pollen-rich, nectar-poor, blue-violet
 
 const Shapes = preload("res://scripts/shapes.gd")
+const CrabSpider = preload("res://scripts/crab_spider.gd")
 
 ## Flowering seasons.
 ##
@@ -41,6 +42,10 @@ const SPECIES := [
 		"cluster_chance": 0.85,
 		"color": Color(0.95, 0.85, 0.1),
 		"centre": Color(0.5, 0.35, 0.05),
+		# yellow -- the classic crab spider ambush colour (see
+		# CRAB_SPIDER_PLAN.md section 1); a different thing from "weight"
+		# above, which governs how common the species is
+		"crab_spider_weight": 40.0,
 	},
 	{
 		# Borage self-seeds readily and is often grown in blocks -- loose
@@ -56,6 +61,9 @@ const SPECIES := [
 		"cluster_chance": 0.7,
 		"color": Color(0.45, 0.4, 0.85),
 		"centre": Color(0.15, 0.1, 0.4),
+		# blue-violet, least typical ambush colour, but not zero -- real
+		# crab spiders do occasionally turn up somewhere surprising
+		"crab_spider_weight": 5.0,
 	},
 	{
 		# rich but slow: rewards spreading out rather than camping a patch
@@ -73,6 +81,8 @@ const SPECIES := [
 		"cluster_chance": 0.55,
 		"color": Color(0.78, 0.35, 0.6),
 		"centre": Color(0.42, 0.12, 0.3),
+		# pink/magenta, less typical ambush colour than clover's yellow
+		"crab_spider_weight": 10.0,
 	},
 	{
 		# no nectar at all, so pollen foraging becomes a spatial decision
@@ -91,6 +101,8 @@ const SPECIES := [
 		"cluster_chance": 0.3,
 		"color": Color(0.85, 0.22, 0.18),
 		"centre": Color(0.15, 0.12, 0.1),
+		# red, but wide open and much-visited, so not a negligible risk
+		"crab_spider_weight": 25.0,
 	},
 ]
 
@@ -119,6 +131,16 @@ var lifespan_seconds: float = 1800.0
 
 var nectar_label: Label
 var pollen_label: Label
+
+# --- crab spiders (see CRAB_SPIDER_PLAN.md) -------------------------
+## Whether this flower currently carries a spider. False for essentially
+## every flower, even with predators_on -- see CrabSpider.maybe_spawn.
+var has_crab_spider: bool = false
+var crab_spider_settled_at: float = -999.0      # sim-time the spider arrived here
+var crab_spider_reveal_until: float = -999.0    # sim-time; drives the brief-visibility presentation
+var crab_spider_alarm_at: float = -999.0        # sim-time of the last attack here
+var crab_spider_marker: Polygon2D
+var crab_spider_dev_marker: Line2D
 
 func _ready() -> void:
 	add_to_group("flowers")
@@ -152,6 +174,36 @@ func setup(index: int) -> void:
 	centre_dot.polygon = Shapes.circle_points(5.0)
 	centre_dot.color = s.centre
 	add_child(centre_dot)
+
+	# A small dark shape, hidden except for the brief flash a spider gets
+	# on an attack or a relocation (or the dev reveal toggle) -- see
+	# CRAB_SPIDER_PLAN.md section 7. Placeholder-art style, same as
+	# everything else here.
+	crab_spider_marker = Polygon2D.new()
+	crab_spider_marker.polygon = Shapes.circle_points(4.0)
+	crab_spider_marker.color = Color(0.1, 0.1, 0.1)
+	crab_spider_marker.position = Vector2(8, -8)
+	crab_spider_marker.visible = false
+	add_child(crab_spider_marker)
+
+	# The dark dot above is deliberately tiny and easy to miss -- that's
+	# the point in normal play. But that also made Session.show_crab_spiders
+	# useless for testing: a 4px dark circle is nearly invisible against
+	# 500 flowers even when you know to look. This one only ever appears
+	# under that dev toggle (never from a real in-play flash), and uses a
+	# colour nothing else in the game does, so a spider is unmissable
+	# while testing. Drawn as an unfilled ring, not a filled disc -- an
+	# earlier filled version was big enough to read as a separate object
+	# sitting next to the flower, which made bees flying to the flower
+	# look like they were beelining for "the spider" itself. A ring
+	# frames the flower it's on instead of competing with it.
+	crab_spider_dev_marker = Line2D.new()
+	crab_spider_dev_marker.points = Shapes.circle_points(22.0)
+	crab_spider_dev_marker.closed = true
+	crab_spider_dev_marker.width = 3.5
+	crab_spider_dev_marker.default_color = Color(1.0, 0.0, 0.85, 0.85)
+	crab_spider_dev_marker.visible = false
+	add_child(crab_spider_dev_marker)
 
 	# nectar amount reads bottom-left, pollen amount reads bottom-right
 	nectar_label = Label.new()
@@ -196,12 +248,17 @@ func _process(delta: float) -> void:
 		nectar_amount = min(nectar_capacity, nectar_amount + nectar_recharge_rate * strength * delta)
 		pollen_amount = min(pollen_capacity, pollen_amount + pollen_recharge_rate * strength * delta)
 
+	if GameConfig.predators_on:
+		CrabSpider.update(self, delta)
+
 	# Flowers don't last forever. main.gd seeds a replacement elsewhere,
 	# so the meadow drifts around while staying about as full.
 	age_seconds += delta
 	if age_seconds >= lifespan_seconds:
 		if occupied_by != null and is_instance_valid(occupied_by):
 			occupied_by.release_flower_reference(self)
+		if has_crab_spider:
+			CrabSpider.relocate(self, false)
 		queue_free()
 		Perf.end("flowers")
 		return
@@ -221,6 +278,7 @@ func _process(delta: float) -> void:
 	# computed twice per flower per frame.
 	_update_fade(strength)
 	_update_labels()
+	_update_crab_spider_marker()
 	Perf.end("flowers")
 
 ## Where we are in the year, 0 to 1. Winter is not part of the season:
@@ -339,3 +397,13 @@ func _update_labels() -> void:
 		return
 	nectar_label.text = str(int(round(nectar_amount)))
 	pollen_label.text = str(int(round(pollen_amount)))
+
+## Hidden except for a brief flash on an attack or a relocation -- see
+## CRAB_SPIDER_PLAN.md section 7. Folded into this file's existing
+## throttled presentation pass rather than a second per-frame check. The
+## dev-only reveal (Session.show_crab_spiders) drives a separate, much
+## more conspicuous marker below rather than this one, so testing
+## doesn't depend on spotting a near-invisible dot.
+func _update_crab_spider_marker() -> void:
+	crab_spider_marker.visible = has_crab_spider and Session.sim_time < crab_spider_reveal_until
+	crab_spider_dev_marker.visible = has_crab_spider and Session.show_crab_spiders

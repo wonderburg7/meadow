@@ -2,8 +2,51 @@
 
 Status: built, 19 Aug 2026 -- `source_checks.py`/`balance_tests.py` pass
 and a Godot boot is clean, but this still needs Dave's own hands-on
-check (Phase 4 below) before it's considered confirmed. One design
-change from the plan as written: rather than wiring
+check (Phase 4 below) before it's considered confirmed.
+
+**Extended 20 Aug 2026** to answer a question Dave's own hands-on crab
+spider playtest raised directly: watching bees get attacked in the
+meadow doesn't tell you whether alarm pheromone, recruitment, floral
+constancy or scouting are actually doing anything -- their effect is a
+bee *not* doing something, which is invisible by eye. `diagnostic_log.gd`
+now writes three new discrete event types and two new snapshot sections,
+purely additive to what Phase 1-4 below already built:
+
+- **`crab_spider_event`** (new type) -- one line per attack outcome
+  (`"kill"`/`"escape"`) and per alarm-pheromone flee (`"alarm_flee"`),
+  written from `crab_spider.gd`'s `resolve_attack()`/`flee_alarm()`
+  (new). Carries `bee_id`, `role`, the flower's `species`, `outcome` and
+  `location`. A `predators_on` run with zero of these lines is now
+  direct evidence the mechanic isn't actually firing, rather than
+  something only inferable from an absence of "crab spider ambush" in
+  the death log (which only ever covers the kill case, not escapes or
+  alarm flees). The summary line's `crab_spider_events` tallies each
+  outcome for the whole run.
+- **`recruitment_match`** (new type) -- one line whenever a seeker at the
+  entrance is handed a mentor's patch in `wait_at_entrance()`. Carries
+  both bees' ids, resource type, and the patch (start point + species)
+  handed over. Summary's `recruitment_matches` tallies the run total.
+- **`scouting_settled`** (new type) -- one line whenever a scouting bee's
+  three bouts are all in and `_score_trip()` commits her (or fails to,
+  if every bout came back empty -- `found_patch: false`). Summary's
+  `scouting_settled` tallies the run total.
+- **Snapshot gains `foraging_behaviour`** (`floral_constancy_on`/
+  `scouting_on`/`auto_recruitment_on` echoed alongside live counts:
+  `scouting_now`, `with_preferred_species` by species,
+  `entrance_mentors_waiting`) and **`crab_spiders`** (`predators_on`/
+  `alarm_pheromone_on`/`recruit_suppression_on` echoed alongside
+  `preferred_species` and a live `active_spiders` count) -- so an hourly
+  snapshot alone answers "is this system doing anything right now"
+  without needing to have caught a discrete event in the same window.
+
+None of this needed a `GameConfig` change (write-allowlist untouched)
+or a new autoload -- everything hangs off the existing `DiagnosticLog`
+singleton and its existing `_write()`/session-boundary machinery. See
+`CRAB_SPIDER_PLAN.md`'s own 20 Aug follow-up entry for the two other
+fixes this same playtest surfaced (the dev spider-reveal toggle and the
+alarm-pheromone visual cue, both presentation-only).
+
+One design change from the original plan as written: rather than wiring
 `DiagnosticLog.start_session()` into each `reset_run_state()` call site
 by hand, `Session` now emits a `run_reset` signal at the end of
 `reset_run_state()` and `DiagnosticLog` listens for it -- found while
@@ -245,14 +288,43 @@ Responsibilities:
    "pollen": 6, "honey": 9, "brood": 15, "corpse": 1}, "sealed": 4,
    "unbuilt": 3},
  "environment": {"rain_intensity": 0.0, "season_fraction": 0.55,
-   "disease": 0.02, "winter_here": false}}
+   "disease": 0.02, "winter_here": false},
+ "foraging_behaviour": {"floral_constancy_on": true, "scouting_on": true,
+   "auto_recruitment_on": true, "scouting_now": 3,
+   "with_preferred_species": {"Clover": 9, "Poppy": 2},
+   "entrance_mentors_waiting": 1},
+ "crab_spiders": {"predators_on": true, "alarm_pheromone_on": true,
+   "recruit_suppression_on": true, "preferred_species": "Clover",
+   "active_spiders": 4}}
 ```
 
 ```json
 {"type": "summary", "game_time": 92100.0, "day": 63, "outcome": "collapsed",
  "total_deaths": 19, "deaths_by_cause": {"starvation": 15, "old age": 4},
  "deaths_by_role": {"forager": 11, "nursery": 5, "builder": 3},
- "gynes_released": 2}
+ "gynes_released": 2, "crab_spider_events": {"escape": 6, "kill": 1, "alarm_flee": 4},
+ "recruitment_matches": 9, "scouting_settled": 14}
+```
+
+Added 20 Aug 2026, alongside the snapshot's new `foraging_behaviour`/
+`crab_spiders` sections shown in the snapshot example above:
+
+```json
+{"type": "crab_spider_event", "game_time": 15320.4, "bee_id": 17,
+ "role": "forager", "species": "Clover", "outcome": "escape",
+ "location": [640.2, -88.5]}
+```
+
+```json
+{"type": "recruitment_match", "game_time": 15400.1, "seeker_id": 22,
+ "mentor_id": 9, "resource_type": "nectar",
+ "start_point": [712.0, -140.0], "species": "Clover"}
+```
+
+```json
+{"type": "scouting_settled", "game_time": 15500.7, "bee_id": 22,
+ "found_patch": true, "best_rate": 2.4,
+ "start_point": [712.0, -140.0], "species": "Clover"}
 ```
 
 (`stats` in the death event uses `energy`/`age_seconds` rather than the

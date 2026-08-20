@@ -204,6 +204,79 @@ def test_disease():
           f"four bodies sicken it in {four:.1f} days: clearing has real urgency")
 
 
+# ---------------------------------------------------------- crab spiders
+def test_crab_spiders():
+    section("Crab spiders: rare enough to miss, real enough to notice?")
+    # CRAB_SPIDER_PLAN.md Bundle 5. The rolled preferred species decides
+    # *which* species is dangerous, but not how dangerous it is once
+    # chosen -- that's driven by the species' ordinary "weight" (its
+    # share of the meadow), not "crab_spider_weight" (which only decided
+    # the odds of being picked in the first place). So every species is
+    # modelled here as if it were this run's unlucky pick.
+    flower = source("flower.gd")
+    species = re.findall(
+        r'"name": "(\w+)",.*?"weight": ([\d.]+),.*?"crab_spider_weight": ([\d.]+),',
+        flower, re.S)
+    check(len(species) >= 3, "could not read the species weight table")
+
+    total_weight = sum(float(w) for _, w, _ in species)
+    fraction = cfg("crab_spider_flower_fraction")
+    attack_chance = cfg("crab_spider_attack_success_chance")
+    flower_count = cfg("flower_count")
+    day = cfg("seconds_per_day")
+    lifespan_days = cfg("bee_lifespan_days")
+    trip_seconds = 60.0   # same assumption test_brood_economics uses
+    trips_per_day = day / trip_seconds
+    forager_count = 40   # a representative colony, matching test_disease's
+
+    worst_days_between_kills = None
+    worst_lifetime_risk = None
+    for name, weight, _cs_weight in species:
+        share = float(weight) / total_weight
+        spiders_in_meadow = flower_count * share * fraction
+        p_death_per_trip = share * fraction * attack_chance
+        p_death_per_forager_per_day = trips_per_day * p_death_per_trip
+        days_per_forager = 1.0 / max(1e-12, p_death_per_forager_per_day)
+        days_between_colony_kills = days_per_forager / forager_count
+        lifetime_risk = p_death_per_forager_per_day * lifespan_days
+        print(f"  {name:10} {share:.0%} of the meadow, ~{spiders_in_meadow:.1f} spiders, "
+              f"1 colony kill/{days_between_colony_kills:.0f} days, "
+              f"{lifetime_risk:.1%} of a forager's lifetime")
+        if worst_days_between_kills is None or days_between_colony_kills < worst_days_between_kills:
+            worst_days_between_kills = days_between_colony_kills
+        if worst_lifetime_risk is None or lifetime_risk > worst_lifetime_risk:
+            worst_lifetime_risk = lifetime_risk
+
+    # The failure mode from CLAUDE.md rule 4 / the plan's own Bundle 5
+    # brief: forage income taking a real, felt hit, rather than staying
+    # "rare enough not to notice mechanically, present enough to notice
+    # narratively." A kill every few days reads as a tax; one every few
+    # hundred days may as well not exist.
+    check(worst_days_between_kills > 5.0,
+          f"even the worst-case species costs the colony a forager every "
+          f"{worst_days_between_kills:.1f} days -- that's a felt tax, not an occasional loss")
+    check(worst_days_between_kills < 200.0,
+          f"even the worst-case species only costs a forager every "
+          f"{worst_days_between_kills:.0f} days -- rare enough that predators_on "
+          "would barely register in a normal run")
+    check(worst_lifetime_risk < 0.20,
+          f"a forager on the worst-case species has a {worst_lifetime_risk:.0%} chance of dying "
+          "to a spider before old age would have taken her anyway -- too punishing",
+          f"worst case, a forager has a {worst_lifetime_risk:.1%} chance of a spider "
+          "beating old age to her -- present, not punishing")
+
+    # Section 1's own worked example: Clover at its ~40% share and the
+    # starting flower_fraction should land near "roughly 4 spiders".
+    clover = next((s for s in species if s[0] == "Clover"), None)
+    if clover:
+        clover_share = float(clover[1]) / total_weight
+        clover_spiders = flower_count * clover_share * fraction
+        check(3.0 <= clover_spiders <= 5.0,
+              f"the plan's own worked example expects ~4 spiders on Clover; "
+              f"the current numbers give {clover_spiders:.1f}",
+              f"Clover gives {clover_spiders:.1f} spiders, matching the plan's own estimate")
+
+
 # --------------------------------------------------------------- seasons
 def test_seasons():
     section("Seasons: is there always something in flower?")
@@ -367,7 +440,7 @@ def test_bee_individuality():
 def main():
     print("Meadow balance tests")
     print("====================")
-    for test in (test_winter, test_rival, test_disease, test_seasons,
+    for test in (test_winter, test_rival, test_disease, test_crab_spiders, test_seasons,
                  test_brood_economics, test_movement_invariants,
                  test_bee_individuality):
         test()

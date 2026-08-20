@@ -34,6 +34,7 @@ const CATEGORIES := [
 	"Seasons & health",
 	"Winter",
 	"The rival colony",
+	"Predators",
 	"Mining",
 	"Bee life",
 	"Interface",
@@ -607,6 +608,53 @@ const TUNABLES := [
 		"tip": "Nectar one rival forager removes from a flower per visit. This is the only way the rival touches your world, so it is what turns it from scenery into competition. Set it to zero to have a neighbour that doesn't compete at all.",
 	},
 
+	# --- Predators ---
+	{
+		"key": "predators_on", "label": "Crab spiders", "toggle": true,
+		"category": "Predators",
+		"tip": "Ambush predators that sit motionless on flowers of one species (rolled per run) and occasionally kill a forager that starts feeding. Off by default -- the whole feature stays off until you turn it on to test. Everything else in this section only matters once this is on.",
+	},
+	{
+		"key": "crab_spider_flower_fraction", "label": "Spider chance/flower", "step": 0.005, "min": 0.0,
+		"category": "Predators",
+		"tip": "Chance a newly created or regrown flower of the dangerous species gets a spider. At the default flower count and clover's share of the species mix, the starting guess of 0.02 puts roughly 4 spiders in the meadow at once. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "crab_spider_attack_success_chance", "label": "Spider attack success", "step": 0.01, "min": 0.0,
+		"category": "Predators",
+		"tip": "Chance a spider actually catches a bee that starts feeding at its flower, rather than her narrowly escaping. Starting guess is 0.05 (5%) -- most attacks in real life miss too. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "crab_spider_residency_seconds", "label": "Spider residency s", "step": 30.0, "min": 10.0,
+		"category": "Predators",
+		"tip": "How long a spider stays on one flower before relocating to another of the same species. It also relocates immediately, without waiting this long, if its flower dies first. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "crab_spider_reveal_seconds", "label": "Spider reveal s", "step": 0.5, "min": 0.1,
+		"category": "Predators",
+		"tip": "How long a spider stays visible after an attack or a relocation before fading from view again. It's otherwise invisible. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "show_crab_spiders", "label": "Always show spiders (dev)", "toggle": true,
+		"category": "Predators",
+		"tip": "Dev-only: marks every crab spider's flower with a large bright ring, rather than only flashing the tiny in-play marker on an attack or a relocation. For finding spiders to test spawning and movement before anything dangerous is worth watching for.",
+	},
+	{
+		"key": "crab_spider_recruit_suppression_on", "label": "Suppress recruitment after escape", "toggle": true,
+		"category": "Predators",
+		"tip": "A forager who escapes an attack stops recruiting entrance mentors towards wherever she was foraging at the time -- until she moves on herself (a re-scout, a new preferred species, being mentored). She can still forage and still ask for help throughout; this only ever holds back her own recruiting. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "alarm_pheromone_on", "label": "Alarm pheromone (placeholder)", "toggle": true,
+		"category": "Predators",
+		"tip": "Placeholder -- will move to a skill unlock once the skill tree exists. While on, a bee that lands at a flower another bee was recently attacked at (hit or miss) notices and leaves before ever risking a feed there -- a brief orange ring flashes on her when this fires, same as an attack flashes on a flower. Only matters when Crab spiders is on.",
+	},
+	{
+		"key": "crab_spider_alarm_marker_seconds", "label": "Alarm marker s", "step": 5.0, "min": 5.0,
+		"category": "Predators",
+		"tip": "How long a flower stays marked as alarmed after an attack there. Only matters when Crab spiders and Alarm pheromone are both on.",
+	},
+
 	# --- Mining ---
 	{
 		"key": "block_mine_time", "label": "Block dig s", "step": 10.0, "min": 5.0,
@@ -757,6 +805,8 @@ const TOGGLE_PREREQUISITE := {
 	"scouting_on": "orientation_flight_on",
 	"floral_constancy_on": "scouting_on",
 	"auto_recruitment_on": "scouting_on",
+	"crab_spider_recruit_suppression_on": "predators_on",
+	"alarm_pheromone_on": "predators_on",
 }
 
 ## Settings that live in Session rather than GameConfig -- the player's
@@ -765,7 +815,7 @@ const TOGGLE_PREREQUISITE := {
 const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
 	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
-	"gallerin_enabled",
+	"gallerin_enabled", "show_crab_spiders",
 ]
 
 static func setting_get(key: String):

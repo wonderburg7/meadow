@@ -29,6 +29,50 @@ var pollen_recharge_rate: float = 0.1   # per second
 var tarsal_markers_on: bool = false
 var tarsal_marker_seconds: float = 25.0
 
+## Crab spiders (see CRAB_SPIDER_PLAN.md) -- ambush predators that sit
+## motionless on flowers of one species, rolled per run, and occasionally
+## kill a forager that starts feeding. Off by default; the whole feature
+## stays off until Dave turns it on to test. This is the toggle tree's
+## root -- everything else the plan adds (attack resolution, recruitment
+## suppression, the alarm-pheromone placeholder) depends on this.
+var predators_on: bool = false
+## Chance a newly created/regrown flower of the preferred species gets a
+## spider. Starting guess, not yet modelled -- see CLAUDE.md rule 4 and
+## CRAB_SPIDER_PLAN.md Bundle 5.
+var crab_spider_flower_fraction: float = 0.02
+## How long a spider stays on one flower before relocating (it also
+## relocates immediately if that flower dies). Starting guess, one and a
+## half in-game days at the default seconds_per_day of 200.
+var crab_spider_residency_seconds: float = 300.0
+## How long a spider flashes into view after an attack or a relocation,
+## before fading from view again.
+var crab_spider_reveal_seconds: float = 1.5
+## Chance a bee that starts feeding at a spider's flower is caught.
+## Starting guess, not yet modelled -- see CLAUDE.md rule 4 and
+## CRAB_SPIDER_PLAN.md Bundle 5.
+var crab_spider_attack_success_chance: float = 0.05
+## How long an escaped bee avoids the exact flower she was attacked at --
+## much longer than the ordinary REJECTED_AVOID_SECONDS (15s) a bee gets
+## for simply finding a flower not worthwhile.
+var crab_spider_escape_cooldown_seconds: float = 120.0
+## Throttle on the escape warning toast, same shape as epitaph_min_gap,
+## so a bad patch of near-misses can't spam the corner.
+var crab_spider_escape_min_gap: float = 8.0
+## Whether an escaped bee is held back from becoming an entrance mentor
+## for as long as she's still pointing recruits towards wherever she was
+## attacked (her forage_start_point/preferred_species unchanged since).
+## Bundle 3 -- see CRAB_SPIDER_PLAN.md section 6.
+var crab_spider_recruit_suppression_on: bool = false
+## Placeholder for a future skill-tree unlock (no skill tree exists yet --
+## see CRAB_SPIDER_PLAN.md section 5 and CLAUDE.md). While on, a bee that
+## reaches State.INSPECTING at a flower another bee was recently attacked
+## at (hit or miss) notices and leaves before ever risking
+## State.COLLECTING there. Off by default, cascaded under predators_on.
+var alarm_pheromone_on: bool = false
+## How long a flower stays "alarmed" after an attack there, for the
+## alarm_pheromone_on check above. Starting guess, not yet modelled.
+var crab_spider_alarm_marker_seconds: float = 40.0
+
 ## A bee gives up on a flower once less than this is left. Without it,
 ## the slow recharge trickle is enough to keep a bee parked on an
 ## exhausted flower indefinitely.

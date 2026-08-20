@@ -169,6 +169,7 @@ func _seed_flower() -> void:
 	flower.position = pos
 	main.meadow_root.add_child(flower)
 	flower.setup(species_index)
+	main.CrabSpider.maybe_spawn(flower)
 
 func _is_clear_ground(point: Vector2) -> bool:
 	for obstacle in main.obstacles:
@@ -448,9 +449,25 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 	Perf.end("hive_transition")
 
 ## Part of main.gd's public surface -- bee.gd calls `world.mark_death(self)`.
+## Called from BeeSurvival.die() before queue_free() actually removes the
+## bee, so death_info is snapshotted from a still-valid node -- see
+## death_marker.gd's own header comment for why that matters.
 func mark_death(bee: Node2D) -> void:
 	var marker = main.DeathMarker.new()
 	marker.position = bee.position
+	marker.death_info = {
+		"bee_id": bee.bee_id,
+		"bee_name": bee.bee_name,
+		"is_favourite": bee.is_favourite,
+		"is_queen": bee.is_queen,
+		"is_gyne": bee.is_gyne,
+		"role_text": bee.role_name_text(),
+		"trait_text": bee.trait_text(),
+		"bee_fact": bee.bee_fact,
+		"age_days": bee.age_days(),
+		"cause": bee.death_cause,
+		"preferred_species": bee.preferred_species,
+	}
 	var parent: Node = bee.get_parent()
 	if parent == null or not is_instance_valid(parent):
 		parent = main.meadow_root

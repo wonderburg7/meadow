@@ -355,7 +355,14 @@ guess pending a throwaway model per rule 4 -- see the plan's own "before
 implementing" section. Dave has also flagged bees fighting back and
 killing a spider (eventually generalising to colony/wasp "fights") as a
 wanted future mechanism -- not part of this build, noted in the plan's
-deferred section.
+deferred section. The logic lives in a new `crab_spider.gd` module
+(same shape as `bee_survival.gd`/`bee_foraging.gd`) rather than being
+folded into `flower.gd`/`bee_foraging.gd` directly, and the plan is now
+split into six sequential bundles -- foundations/spawning/movement,
+attack resolution, recruitment suppression, alarm pheromone, balance
+modelling, closeout -- each meant for its own Claude Code session, with
+its own check before the next one starts. See `CRAB_SPIDER_PLAN.md`'s
+"Implementation bundles" section.
 
 ### 7.4 Weather beyond rain
 
