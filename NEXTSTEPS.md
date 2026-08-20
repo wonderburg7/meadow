@@ -7,47 +7,80 @@ into a history. Full history lives in `git log` and the Notion Build Log.
 
 ## Next up
 
-1. **Crab spiders: a second round of playtest fixes.** Death marks
-   (confirmed working) and the first round of dev-marker/alarm-ring/
-   logging fixes (confirmed) turned up three more issues plus a settings
-   gap, all fixed this session -- see `CRAB_SPIDER_PLAN.md`'s 20 Aug
-   "Confirmed" entry for the full detail:
-   - `crab_spider_attack_success_chance` is now in the settings window
-     (it was the one crab-spider number that wasn't).
-   - **Real bug**: an escaped bee's cooldown on the exact flower she was
-     attacked at lived in the same dictionary `nearest_flower()`'s
-     scarcity fallback deliberately ignores (right for an ordinary
-     rejection, wrong for a predator memory that should hold regardless
-     of what else is nearby) -- bees were walking straight back into the
-     same spider. Fixed with a separate `predator_flower_cooldowns` dict,
-     checked unconditionally.
-   - A bee who's actually attacked and escapes (not just alarm-avoids)
-     had no visual at all -- only `alarm_ring`'s precognitive-avoidance
-     case flashed. Added `attack_ring` (red, vs. alarm_ring's orange) so
-     both outcomes are now visible and distinguishable.
-   - The dev marker's large filled disc visually dwarfed the flower it
-     sat on, reading as a separate object bees "beelined for" -- changed
-     to an unfilled ring (`Line2D`) so it frames the flower instead.
-   `source_checks.py`/`balance_tests.py` pass, `FUNCTION_MAP.md`
-   regenerated, a Godot boot is clean. **Needs Dave's re-check** on all
-   four: the new setting does something, an escaped bee's flower stays
-   off-limits even when forage is tight, every attack (not just
-   alarm-triggered avoidance) flashes red, and the dev marker now reads
-   as a ring rather than a blob. Bundle 3 (recruitment suppression) and
-   Bundle 4's original checklist item still haven't had their own
-   hands-on check; Bundle 6 (closeout) is last, once all of this settles.
-2. **A backlog of earlier hands-on checks is building up** -- none of
+1. **AI playtest harness, slice 2: `config_overrides` + the allowlist
+   check.** Slice 1 is built and self-verified (see below) -- full design
+   in `AI_PLAYTEST_PLAN.md`, build order at its end. Slice 2 adds:
+   - A `config_overrides` block to the scenario JSON format, applied to
+     `GameConfig` at boot, checked key-by-key against the existing
+     write-allowlist (`.claude/rules/saving.md`) -- an unknown or
+     disallowed key should fail loudly (push_error + skip that key, or
+     abort the boot) rather than silently doing nothing.
+   - Once that's in, slice 3 (`AI_PLAYTEST_PLAN.md`'s time_scale-past-8x
+     stability check) and slice 4 (`tools/run_scenario.py`) are next.
+2. **Crab spiders: a second round of playtest fixes, still waiting on
+   Dave's hands-on re-check.** Death marks, dev-marker/alarm-ring/
+   logging fixes, and three further issues plus a settings gap were all
+   fixed in the 20 Aug session -- see `CRAB_SPIDER_PLAN.md`'s 20 Aug
+   "Confirmed" entry for the full detail. `source_checks.py`/
+   `balance_tests.py` pass, `FUNCTION_MAP.md` regenerated, a Godot boot
+   is clean. **Needs Dave's re-check** on: the new
+   `crab_spider_attack_success_chance` setting does something, an
+   escaped bee's flower stays off-limits even when forage is tight,
+   every attack (not just alarm-triggered avoidance) flashes red, and
+   the dev marker now reads as a ring rather than a blob. Bundle 3
+   (recruitment suppression) and Bundle 4's original checklist item
+   still haven't had their own hands-on check; Bundle 6 (closeout) is
+   last, once all of this settles.
+3. **A backlog of earlier hands-on checks is building up** -- none of
    these are blocked on anything, just not yet played:
-   - Two Challenge 1/2 fixes from two sessions ago (corner problem strip
-     hidden during a Challenge; backup building/mining now breaks off
-     promptly when primary work turns up) -- both boot clean, neither
-     played.
+   - Two Challenge 1/2 fixes from a few sessions ago (corner problem
+     strip hidden during a Challenge; backup building/mining now breaks
+     off promptly when primary work turns up) -- both boot clean,
+     neither played.
    - Challenge 2's ten sub-stages -- built and checked, never played
      start to finish (see `TUTORIAL_PLAN.md`'s checklist).
    - Two older audit bundles: Bundle A (abandon Challenge 1 mid-build,
-     confirm a fresh run's build time/Save-Load state reset cleanly) and
-     Bundle B (save/load a few times, check population/flower counts and
-     the queen panel's plain-comb checkbox stay in sync).
+     confirm a fresh run's build time/Save-Load state reset cleanly)
+     and Bundle B (save/load a few times, check population/flower
+     counts and the queen panel's plain-comb checkbox stay in sync).
+
+## What slice 1 of the playtest harness actually did
+
+Built and self-verified end-to-end this session (20 Aug 2026), no
+waiting on Dave needed for this one -- it's the mechanism itself, not
+anything judged by eye:
+
+- `levels.gd`: added `SCENARIO_LEVEL_ID`, a `scenario_override`
+  dictionary, and `get_level(id)` -- every site that used to read
+  `LEVELS.get(Session.starting_level, {})` directly (`main.gd`,
+  `world_building.gd` x4, `year_winter.gd`, `season.gd`) now calls
+  `get_level()` instead, so a scenario-loaded level reuses the same
+  lookup rather than a parallel one.
+- `main.gd`: `_apply_scenario_boot_arg()` reads `--scenario=<path>`
+  (`OS.get_cmdline_user_args()`), parses the JSON, installs it as
+  `Levels.scenario_override`, points `Session.starting_level` at it,
+  skips the main menu, sets `Engine.time_scale = 8.0` (the existing
+  player-facing ceiling, not past it), and calls
+  `Session.reset_run_state()` -- needed because `DiagnosticLog` only
+  ever opens a session file off `Session.run_reset`, which a normal
+  boot never fires (only Restart/New Run/Load do). `_end_scenario_run()`
+  closes the diagnostic log and calls `get_tree().quit()`; wired into
+  `_check_for_loss()` (queen death) and a new max-days check in
+  `_process()`.
+- `test_scenarios/slice1_smoke_test.json`: level 4's shape plus
+  `stop.max_days`, used as the self-check scenario.
+- Verified by running
+  `"C:\Program Files\Godot\Godot.exe" --headless --path . -- --scenario=test_scenarios/slice1_smoke_test.json`
+  directly: process exits on its own (exit code 0) at the right day, and
+  the resulting `session_*.jsonl` under
+  `%APPDATA%\Godot\app_userdata\Meadow\logs\` has a real `config` line,
+  hourly `snapshot` lines with the scenario's exact starting population
+  (11 foragers split 8/3, 2 nurses, 2 builders, 2 miners, 15 built cells
+  + 1 unbuilt), and a `summary` line reading
+  `"outcome":"max_days"` at the configured day. `source_checks.py`,
+  `balance_tests.py`, `FUNCTION_MAP.md --check` and a `mcp__godot__`
+  boot (normal, non-scenario path) all clean.
+- Not yet committed to git -- Dave hasn't reviewed the diff yet.
 
 ## Waiting, lower priority
 

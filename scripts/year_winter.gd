@@ -32,7 +32,7 @@ func _winter_forecast() -> Dictionary:
 ## Part of main.gd's public surface -- debug_panel.gd calls
 ## `worlds[0].begin_winter_countdown()`.
 func begin_winter_countdown() -> void:
-	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	if not level.get("winter", true):
 		return
 	Session.winter_coming = true

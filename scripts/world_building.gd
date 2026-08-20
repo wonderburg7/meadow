@@ -42,7 +42,7 @@ func _build_meadow() -> void:
 
 	_rebuild_flower_grid()
 
-	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	if GameConfig.rival_hive_on and level.get("rival_hive", true):
 		_place_rival_hive()
 
@@ -123,7 +123,7 @@ func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector
 		main.obstacles.append(obstacle)
 
 func _spawn_starting_foragers() -> void:
-	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	if not level.is_empty():
 		for i in range(int(level.nectar_foragers)):
 			_spawn_bee("nectar")
@@ -250,7 +250,7 @@ func _add_entrance_marker() -> void:
 
 func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 	var cells: Array = []
-	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	var starting_count: int = int(level.cells) if not level.is_empty() else int(GameConfig.hive_cell_count)
 	for i in range(starting_count):
 		var cell_hex: Vector2i = main.Shapes.hex_spiral_at(i)
@@ -288,7 +288,7 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	# nectar like anyone else, rather than keeping this leftover value.
 	main.queen.setup(main.hive, "nectar", 0, main.Bee.Role.EGG_LAYER, main)
 
-	var level: Dictionary = main.Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
 	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
 	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)

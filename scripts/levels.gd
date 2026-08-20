@@ -69,3 +69,18 @@ const LEVELS := {
 		"unlocks": [], "win_conditions": [],
 	},
 }
+
+## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md). main.gd's
+## --scenario= boot arg parses a JSON file into this instead of adding a
+## sixth entry to the const LEVELS above, and points Session.starting_level
+## at SCENARIO_LEVEL_ID -- every existing `LEVELS.get(Session.starting_level,
+## {})`-shaped call site becomes get_level(...) below, so a scenario run
+## reuses the same lookup instead of a parallel one. Empty except during a
+## --scenario= boot; never touched from the main menu.
+const SCENARIO_LEVEL_ID := 999
+static var scenario_override: Dictionary = {}
+
+static func get_level(id: int) -> Dictionary:
+	if id == SCENARIO_LEVEL_ID and not scenario_override.is_empty():
+		return scenario_override
+	return LEVELS.get(id, {})

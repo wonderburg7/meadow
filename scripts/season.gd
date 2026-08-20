@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 ## bees are packed into how much space. Both are things the player
 ## controls, which is what makes it a decision rather than a tax.
 func _advance_disease(elapsed: float) -> void:
-	var level: Dictionary = Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = Levels.get_level(Session.starting_level)
 	if not GameConfig.disease_on or not level.get("disease", true):
 		disease = 0.0
 		return

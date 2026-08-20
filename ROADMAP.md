@@ -7,7 +7,13 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 20 Aug 2026 -- the Predators row now points at a full
+Last updated: 20 Aug 2026 -- added a row below for the AI playtest
+harness (Claude running its own headless, unattended scenarios to check
+balance and behaviour, rather than every question needing Dave's own
+hands-on play), now agreed and building, first slice in `NEXTSTEPS.md`.
+Full design in `AI_PLAYTEST_PLAN.md`.
+
+Previous update, 20 Aug 2026 -- the Predators row now points at a full
 design, `CRAB_SPIDER_PLAN.md`. Not started.
 
 Previous update, 19 Aug 2026 — added a row below for the diagnostic
@@ -103,6 +109,33 @@ update status there, not here.
 | | Size | Status |
 |---|---|---|
 | **Diagnostic logging system** — `DiagnosticLog` autoload, death-cause fix in `bee_survival.gd`, hourly snapshots, session summary | S/M | **Done.** Built and confirmed by Dave 19 Aug, reading a real `session_*.jsonl` back after a playtest. `DIAGNOSTIC_LOGGING_PLAN.md`. |
+
+## AI playtest harness — see AI_PLAYTEST_PLAN.md
+
+Grew out of Dave asking whether Claude could "play the game" itself to
+gather insight and check things are working as intended, including
+choosing its own bespoke test scenarios. `DiagnosticLog` and `levels.gd`
+already cover two of the three pieces a real answer needs; the missing
+one is a way to drive an unattended run and turn its output into a
+verdict rather than a human reading raw JSON. Design: a `--scenario=`
+boot argument (skips the main menu, applies a `levels.gd`-shaped starting
+state plus a small `GameConfig`-allowlisted override, auto-quits via
+`DiagnosticLog.end_session()` on queen death or a day limit), run
+headless and faster than the player-facing 8x speed cap, plus a
+`tools/run_scenario.py` that launches it, waits, and parses the log into
+population curves, deaths, and whether specific mechanics actually
+fired. Explicitly not attempting real input injection or literal screen
+control — the installed Godot MCP server doesn't support it and it's a
+much bigger lift for a narrower payoff than the headless route. Full
+detail in `AI_PLAYTEST_PLAN.md` — update status there, not here.
+
+| | Size | Status |
+|---|---|---|
+| **Headless scenario boot path** — `--scenario=` arg, `levels.gd`-shaped starting state, auto-quit via `DiagnosticLog` | S | **Agreed 20 Aug 2026, building.** First slice, see `NEXTSTEPS.md`. `AI_PLAYTEST_PLAN.md`. |
+| **Config-override block + allowlist check** | S | Not started, second slice. |
+| **Time_scale past the 8x player cap** — needs testing for steering/physics artifacts first | S | Not started, third slice. |
+| **`tools/run_scenario.py`** — headless launch, wait, parse the log | S | Not started, fourth slice. |
+| **N-repeat batch mode + richer analysis** (population curves, mechanic-firing checks) | M | Not started, fifth slice. |
 
 ## Making the middle game interesting
 

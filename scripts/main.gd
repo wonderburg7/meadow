@@ -231,6 +231,13 @@ var first_gyne_seen: bool = false
 var day: int = 1
 var current_speed: float = 1.0
 
+## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md). Set by
+## _apply_scenario_boot_arg() when launched with --scenario=<path>;
+## scenario_stop_max_days stays -1 (never triggers) unless the scenario
+## file's "stop.max_days" says otherwise.
+var scenario_active: bool = false
+var scenario_stop_max_days: int = -1
+
 var dragging: bool = false
 var drag_start: Vector2 = Vector2.ZERO
 var drag_current: Vector2 = Vector2.ZERO
@@ -279,6 +286,12 @@ func _ready() -> void:
 	# "abandon" button might add, without each of them needing to remember
 	# to call this themselves.
 	TutorialCheckpoint.clear()
+
+	# Dev-only: --scenario=<path> (AI_PLAYTEST_PLAN.md). Has to run before
+	# world_building._build_meadow() below, since that's what actually reads
+	# Session.starting_level -- and before menu.open(), since a scenario run
+	# skips the main menu entirely.
+	_apply_scenario_boot_arg()
 
 	# The split-out files, created first so everything below can call into
 	# them. They hold no state of their own beyond a `main` pointer back
@@ -529,6 +542,9 @@ func _process(delta: float) -> void:
 		if new_day != day:
 			day = new_day
 			hud.update_day(day, year_winter._season_text())
+			if scenario_active and scenario_stop_max_days >= 0 and day >= scenario_stop_max_days:
+				_end_scenario_run("max_days")
+				return
 		_hatch_ready_brood()
 		Perf.begin("housekeeping")
 		_reseed_meadow(delta)
@@ -639,7 +655,7 @@ func _hatch_ready_brood() -> void:
 ## and past `rain_forage_limit` makes a trip cost more than it returns,
 ## at which point foragers stay in.
 func _advance_weather(delta: float) -> void:
-	var level: Dictionary = Levels.LEVELS.get(Session.starting_level, {})
+	var level: Dictionary = Levels.get_level(Session.starting_level)
 	if not GameConfig.weather_on or not level.get("weather", true):
 		Session.rain_intensity = 0.0
 		_apply_rain_overlay()
@@ -687,6 +703,9 @@ func _check_for_loss() -> void:
 	if is_instance_valid(queen):
 		return
 	colony_lost = true
+	if scenario_active:
+		_end_scenario_run("collapsed")
+		return
 	DiagnosticLog.end_session("collapsed")
 	game_over.open(
 		day,
@@ -796,6 +815,64 @@ func _on_level_chosen(level: int) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
+
+## Dev-only headless playtest path -- see AI_PLAYTEST_PLAN.md. Never
+## reachable from the main menu; only ever set by a --scenario= argument on
+## the actual command line the process was launched with. Slice 1 only:
+## the JSON is applied through levels.gd's existing LEVELS shape unchanged
+## (via Levels.get_level, see levels.gd), no GameConfig overrides yet.
+func _apply_scenario_boot_arg() -> void:
+	var scenario_path: String = ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--scenario="):
+			scenario_path = arg.substr("--scenario=".length())
+			break
+	if scenario_path.is_empty():
+		return
+
+	if not FileAccess.file_exists(scenario_path):
+		push_error("--scenario=%s: file not found" % scenario_path)
+		return
+	var text: String = FileAccess.get_file_as_string(scenario_path)
+	var parsed = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		push_error("--scenario=%s: not a JSON object" % scenario_path)
+		return
+
+	var level: Dictionary = parsed.duplicate(true)
+	var stop: Dictionary = level.get("stop", {})
+	level.erase("stop")
+	level["unlocks"] = level.get("unlocks", [])
+	level["win_conditions"] = level.get("win_conditions", [])
+
+	Levels.scenario_override = level
+	Session.starting_level = Levels.SCENARIO_LEVEL_ID
+	Session.menu_pending = false
+	scenario_active = true
+	scenario_stop_max_days = int(stop.get("max_days", -1))
+	# An unattended run needs to actually finish -- use the same 8x ceiling
+	# the speed control already offers a player, not anything past it (see
+	# AI_PLAYTEST_PLAN.md's open risk about very high time_scale and large
+	# per-frame delta before that ceiling is ever raised for this path).
+	Engine.time_scale = 8.0
+	# DiagnosticLog only ever opens a session file off Session.run_reset
+	# (see diagnostic_log.gd) -- fired at the end of every reset_run_state(),
+	# which a normal boot never calls (only Restart/New Run/Load do). A
+	# scenario boot needs the same session file every other run gets, so it
+	# has to trigger that itself.
+	Session.reset_run_state()
+	print("AI playtest: loaded scenario %s (stop.max_days=%s)" % [scenario_path, scenario_stop_max_days])
+
+## Ends a headless scenario run the same way a normal loss does --
+## DiagnosticLog gets its summary line either way -- but quits the process
+## afterwards instead of showing game_over's UI, since nothing is watching
+## it. `outcome` matches DiagnosticLog.end_session's existing vocabulary
+## ("collapsed" is already used by _check_for_loss; "max_days" is new,
+## slice 1's other stop condition).
+func _end_scenario_run(outcome: String) -> void:
+	DiagnosticLog.end_session(outcome)
+	print("AI playtest: scenario ended (%s) at day %d" % [outcome, day])
+	get_tree().quit()
 
 # Note: input_selection.gd defines its own _unhandled_input(event) and is
 # added to the tree as a child of this node in _ready() above, so Godot

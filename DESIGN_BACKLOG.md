@@ -4,7 +4,19 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 20 Aug 2026 -- section 7.3 (predators) now has a full design
+Last updated: 20 Aug 2026 -- section 12 (headless playtest/scenario
+harness) is now agreed, build starting. `NEXTSTEPS.md` points at slice 1
+as the next concrete action. See `AI_PLAYTEST_PLAN.md` for the full
+design. Nothing built yet.
+
+Previously updated 20 Aug 2026 -- added section 12, a proposed headless
+playtest/scenario-testing harness so Claude can run bespoke automated
+scenarios (chosen starting states and settings) and turn the result into
+an answer, rather than every balance/behaviour question needing Dave's
+own hands-on play. Builds on `DiagnosticLog` and `levels.gd`, both
+already in the codebase.
+
+Previously updated 20 Aug 2026 -- section 7.3 (predators) now has a full design
 rather than just a confirmation, extended the same day with spider
 movement and a narrower recruitment-suppression rule. See
 `CRAB_SPIDER_PLAN.md` for the complete plan, worked out from a planning
@@ -452,3 +464,48 @@ Challenge risks getting it wrong.
 
 **Status:** proceeding with the default above in `AUDIT_PLAN.md` Bundle A
 unless Dave says otherwise.
+
+---
+
+## 12. Headless playtest / scenario-testing harness (proposed, not agreed)
+
+Fell out of Dave asking, in the Meadow Cowork Project, whether Claude
+could "play the game" itself to gather insight and check things are
+working as intended, including building its own bespoke test scenarios.
+
+**The problem:** nothing today runs an actual playthrough unattended and
+turns the result into an answer. `balance_tests.py` re-simulates only
+the arithmetic and says outright it can't test behaviour;
+`mcp__godot__run_project` only boots the project and watches for
+parser/crash errors; `DiagnosticLog` (built 19-20 Aug, see
+`DIAGNOSTIC_LOGGING_PLAN.md`) already writes rich per-run JSONL but only
+gets exercised by Dave's own hands-on play. So questions like "does
+recruitment actually reduce forager deaths once the meadow's stripped"
+or "does a 50-bee colony still clear winter with predators at 2x
+density" need either a live playtest or a guess.
+
+**Proposed direction (full design in `AI_PLAYTEST_PLAN.md`):** built from
+pieces already in the codebase rather than new architecture — a
+`--scenario=<path>` boot argument that skips the main menu, applies a
+`levels.gd`-shaped starting state plus a small `GameConfig`-allowlisted
+override block, and auto-quits via the existing
+`DiagnosticLog.end_session()` on a stop condition (queen death or a day
+limit); `Engine.time_scale` pushed past the player-facing 8x cap in this
+dev-only path (needs testing for physics artifacts at high multipliers
+first); and a `tools/run_scenario.py`, in the same spirit as
+`balance_tests.py`, that launches Godot headless, waits for exit, and
+turns the resulting `session_*.jsonl` into a verdict, repeated a few
+times per scenario since bee behaviour has randomness.
+
+**Not attempting:** real input injection or literal screen control — the
+installed `@coding-solo/godot-mcp` server doesn't support it, and it's a
+much bigger lift than the headless route for a narrower payoff. Anything
+that can only be judged visually stays with `mcp__godot__run_project`
+plus Dave's own hands-on check, same as today.
+
+**Status:** agreed 20 Aug 2026, build starting. First slice: the boot-arg
++ auto-quit mechanism alone, reusing the existing `LEVELS` shape and the
+existing 8x speed cap, to prove the unattended run-to-collapse loop
+works before adding a new scenario format or higher speeds. See
+`NEXTSTEPS.md` for the concrete next action and `AI_PLAYTEST_PLAN.md`
+for the full design.
