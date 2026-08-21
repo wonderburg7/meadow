@@ -195,7 +195,21 @@ var recruit_wait_seconds: float = 15.0
 ## her in the same general proven area (the whole point of being told
 ## about it) while giving her a different starting corner of it, rather
 ## than funnelling both bees onto the same handful of flowers.
-var recruit_start_point_jitter: float = 80.0
+## 150, up from 80 (see the mentor-cap fix alongside this one, and the
+## recruitment-competition investigation, NEXTSTEPS.md) -- 80px inside a
+## 900px forage_search_radius wasn't really "a different corner of the
+## same patch", it was the same catchment of flowers the mentor was
+## already drawing from. A/B'd against 250 on foraging_features_on_test.json
+## (5 runs each, mentor cap in place both times): 250 gave the best
+## per-match outcomes (a seeker's 3rd tracked trip averaged *above* her
+## own pre-match rate) but cost colony-wide flower visits (202.6 -> 179.4,
+## moving away from the 230 no-automation baseline) -- likely random-
+## direction jitter that size sometimes lands a seeker in a sparser
+## corner of the meadow rather than nearer more flowers. 150 as a
+## deliberate middle ground, not yet A/B'd on its own -- recruitment's
+## matching logic is expected to change again shortly, so revisit this
+## once that lands rather than spending another calibration pass now.
+var recruit_start_point_jitter: float = 150.0
 ## Trips a forager must actually be scored on -- since auto-recruitment
 ## turned on, or since it was created -- before its avg_collection_rate
 ## is trusted against the thresholds above. Below this, it leaves

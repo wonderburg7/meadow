@@ -266,13 +266,23 @@ the player manages *against* as well as with.
   follow the same pattern, so a cell can raise foragers already committed
   to a species rather than only settable after the bee exists (and, for
   now, only reachable by disabling Auto scouting or waiting for it to run).
-- **Auto-recruitment thresholds are unsimulated.** `GameConfig.recruit_lower/
-  upper_threshold_nectar` (0.5 / 2.0 resource units/sec), the `_pollen` pair
-  (0.2 / 0.8, scaled off nectar's by the two collection rates' ratio, an even
-  rougher guess) and `forage_start_radius` (200px) are starting guesses, not
-  backed by a throwaway model per rule 4 — tune live in the settings window
-  and watch whether scouting/recruitment actually change collection rates
-  before trusting the defaults.
+- **Auto-recruitment thresholds are now simulation-derived (was: unsimulated
+  starting guesses) — re-derived 21 Aug 2026, mentor fan-out fixed 22 Aug.**
+  `recruit_lower/upper_threshold_nectar/pollen` and `forage_start_radius`
+  (450, up from 200) come from real calibration runs — see each field's
+  comment in `game_config.gd` and `NEXTSTEPS.md`'s recruitment-competition
+  writeup. The actual reason recruitment wasn't raising colony intake
+  turned out to be structural, not a threshold-tuning problem: nothing
+  capped how many seekers one mentor could recruit in a single waiting
+  cycle, so a "good" patch got oversubscribed rather than shared out.
+  Fixed 22 Aug (`bee_foraging.gd::wait_at_entrance` removes a mentor from
+  `entrance_mentors` once matched); A/B testing on
+  `foraging_features_on_test.json` showed colony-wide flower visits
+  recovering from below the no-automation baseline to close to it.
+  `recruit_start_point_jitter` (150) is a stopgap pending Dave's planned
+  rework of the matching logic itself — don't re-tune it further until
+  that lands. The Foraging window below is still worth building on its
+  own merits, independent of this fix.
 
 ---
 

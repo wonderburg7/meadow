@@ -699,6 +699,18 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		if mentor.resource_type != bee.resource_type:
 			i += 1
 			continue
+		# One match per mentor per waiting cycle -- see the
+		# recruitment-competition investigation, NEXTSTEPS.md. Nothing used
+		# to remove a mentor from entrance_mentors except her own timeout,
+		# so every seeker who checked the list during her wait matched the
+		# same mentor: real session logs showed one mentor picking up 3-4
+		# seekers within a couple of seconds, all funnelled onto the same
+		# ~900px catchment (recruit_start_point_jitter is only 80px). The
+		# mentor's own next trip then read ~4% of her pre-match rate on
+		# average, not just "diminished" -- her patch was actually
+		# oversubscribed. She keeps waiting out her own timer below and
+		# leaves normally; she just can't be handed out again.
+		bee.hive.remove_entrance_mentor(mentor)
 		# Nudged, not identical -- see recruit_start_point_jitter's field
 		# comment in game_config.gd. Same general proven area, different
 		# corner of it, so the seeker isn't funnelled onto the exact same
