@@ -45,11 +45,29 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _last_snapshot_per_day(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One snapshot per in-game day (the last one seen for that day),
+    instead of every snapshot in the file.
+
+    A day-resolution curve is all population/rate charts actually need --
+    the numbers barely move between one snapshot and the next at the
+    hourly cadence a normal run logs at, and a compressed-day test
+    scenario (see DiagnosticLog.snapshot_interval_override) can log
+    dozens of snapshots per day, which used to mean --full's output (and
+    the token cost of reading it) scaled with how compressed the test's
+    days were rather than with anything informative.
+    """
+    by_day: dict[int, dict[str, Any]] = {}
+    for s in snapshots:
+        by_day[s["day"]] = s   # last write for a given day wins
+    return [by_day[day] for day in sorted(by_day)]
+
+
 def _population_curve(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         {"day": s["day"], "total": s["population"]["total"],
          "by_role": s["population"]["by_role"]}
-        for s in snapshots
+        for s in _last_snapshot_per_day(snapshots)
     ]
 
 
@@ -80,7 +98,7 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
     two separate series by hand.
     """
     out = []
-    for s in snapshots:
+    for s in _last_snapshot_per_day(snapshots):
         total_cells = s["cells"]["total"]
         honey_cells = s["cells"]["by_contents"].get("honey", 0)
         fraction = (honey_cells / total_cells) if total_cells > 0 else 0.0
@@ -100,6 +118,8 @@ _MECHANIC_TOGGLES = {
     "predators_on": "crab_spider_events",
     "auto_recruitment_on": "recruitment_matches",
     "scouting_on": "scouting_settled",
+    "orientation_flight_on": "orientation_flights",
+    "tarsal_markers_on": "tarsal_marks",
 }
 
 

@@ -245,6 +245,12 @@ static func watch_for_stalls(bee: Node2D, delta: float) -> void:
 	bee.stall_timer += delta
 	if bee.stall_timer < bee.STALL_SECONDS:
 		return
+	# Logged before recovery touches anything -- position/goal/state at the
+	# exact moment the watchdog judged this bee stuck, so a run where
+	# scouting collapses (see foraging_features_on_test.json) can show
+	# whether the backstop is firing a lot (a real steering dead end) or
+	# not at all (the bee isn't actually reaching this check).
+	DiagnosticLog.log_stall_recovery(bee, goal)
 	bee._reset_stall_watch()
 
 	# The guarantee the steering doesn't have to provide: a bee that isn't

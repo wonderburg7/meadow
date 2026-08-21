@@ -232,8 +232,16 @@ var scout_best_start_point: Vector2 = Vector2(INF, INF)
 ## entrance -- see BeeForaging.wait_at_entrance. Tracked for any forager
 ## whenever scouting or auto-recruitment is on, not just while scouting
 ## -- scouting just reads the same per-trip rate to score its bouts.
+## Only becomes the EMA described above once past the grace window --
+## see _grace_rate_sum immediately below.
 var avg_collection_rate: float = 0.0
 const RATE_EMA_WEIGHT := 0.3
+## Running sum of trip rates while still inside the grace window (see
+## trips_scored below) -- avg_collection_rate is a plain mean of these
+## until she's settled, only switching to the EMA above once there are
+## enough real trips behind it to smooth one lucky/unlucky trip out
+## rather than being decided by it. See BeeForaging._score_trip.
+var _grace_rate_sum: float = 0.0
 ## How many trips this forager has actually been scored on since it last
 ## started being tracked (scouting or auto-recruitment turned on, or the
 ## bee created while either already was). Below GameConfig.recruit_grace_trips,
@@ -255,6 +263,28 @@ var entrance_wait_target: Vector2 = Vector2(INF, INF)
 ## cell's share). Both -1/0 sentinels outside a trip.
 var trip_start_time: float = 0.0
 var trip_load_amount: float = -1.0
+## Set on both bees the instant a recruitment match happens at the
+## entrance (see BeeForaging.wait_at_entrance) so their next several
+## scored trips can each be logged against the rate each had *before* the
+## match -- see BeeForaging._score_trip/RECRUIT_FOLLOWUP_TRIPS. Tracks
+## both sides, not just the seeker: the mentor keeps working the same
+## patch she just handed out the start point for, so if a followed-onto
+## patch is worse for the one who was already there too, this is what
+## shows it. Not save-persisted, same as the rest of the
+## scouting/recruitment block: a bee saved mid-check just drops the
+## comparison rather than resuming it on load.
+var recruit_partner: Node2D = null
+var recruit_role: String = ""
+var recruit_rate_before: float = -1.0
+var recruit_followup_remaining: int = 0
+## Set the first time trips_scored reaches recruit_grace_trips, so
+## DiagnosticLog.log_forager_settled fires exactly once per bee -- see
+## BeeForaging._score_trip. Gives a standing, always-on source for the
+## per-forager rate distribution (recruit_lower/upper_threshold_nectar/
+## pollen were derived from exactly this reading, gathered by hand before
+## this event existed -- see game_config.gd) without needing a one-off
+## debug print re-added every time the thresholds need rechecking.
+var settled_rate_logged: bool = false
 
 ## A player-placed manual cell site a builder should try first, before
 ## falling back to its usual pick-a-site logic. Consumed (cleared) the
@@ -702,7 +732,19 @@ func _process(delta: float) -> void:
 			Perf.end("bee_seek_flower")
 		State.TO_FLOWER:
 			Perf.begin("bee_to_flower")
-			if current_flower == null:
+			# is_instance_valid too, not just null -- a flower that died
+			# mid-flight (flower_lifespan_days) leaves current_flower
+			# pointing at a freed instance, not a null one. Every other
+			# flower-handling function here (inspect, drink_at_flower,
+			# collect) already guards both; this one didn't, so a bee
+			# flying towards a flower that happened to die under it errored
+			# on current_flower.position every frame from then on and never
+			# left this state -- found via foraging_features_on_test.json,
+			# where scouting's extra churn through fresh flowers made the
+			# odds of catching a dying one high enough to strand most of
+			# the colony within the first week.
+			if current_flower == null or not is_instance_valid(current_flower):
+				current_flower = null
 				state = State.SEEK_FLOWER
 			else:
 				BeeMovement.move_towards(self, current_flower.position, delta)

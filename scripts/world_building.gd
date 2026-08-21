@@ -292,7 +292,10 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
 	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
 	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)
-	var honey_makers: int = 0 if not level.is_empty() else int(GameConfig.starting_honey_makers)
+	# "honey_makers" is optional even on a level-shaped scenario -- every
+	# existing level/scenario predates this key and still means "none",
+	# same as before it existed.
+	var honey_makers: int = int(level.get("honey_makers", 0)) if not level.is_empty() else int(GameConfig.starting_honey_makers)
 	for i in range(nurses):
 		_spawn_indoor_bee(main.Bee.Role.NURSERY)
 	for i in range(builders):

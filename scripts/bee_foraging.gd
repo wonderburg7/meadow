@@ -13,6 +13,12 @@ const BeeStatus = preload("res://scripts/bee_status.gd")
 const CrabSpider = preload("res://scripts/crab_spider.gd")
 
 const SCOUT_BOUTS := 3
+## How many of a recruited bee's (and her mentor's) trips get logged
+## against their pre-match rate -- see wait_at_entrance's match branch and
+## _score_trip. One trip is noisy (a single trip's raw rate against a
+## multi-trip EMA average is not a fair comparison); a handful smooths
+## that out enough to tell a real effect from trip-to-trip variance.
+const RECRUIT_FOLLOWUP_TRIPS := 5
 
 static func max_capacity(bee: Node2D) -> float:
 	return bee.nectar_stomach_capacity if bee.resource_type == "nectar" else bee.pollen_stomach_capacity
@@ -33,6 +39,17 @@ static func _random_point_near_hive(bee: Node2D) -> Vector2:
 	return base + Vector2(cos(angle), sin(angle)) * dist
 
 
+## A random point within `radius` of `base` -- same shape as
+## _random_point_near_hive above, just not anchored to the hive. Used to
+## spread a recruited seeker's inherited start point away from her
+## mentor's exact one -- see wait_at_entrance and
+## GameConfig.recruit_start_point_jitter.
+static func _jittered_point(base: Vector2, radius: float) -> Vector2:
+	var angle: float = randf() * TAU
+	var dist: float = randf() * radius
+	return base + Vector2(cos(angle), sin(angle)) * dist
+
+
 ## Tier 0: a new forager's one semi-random flight before her first trip,
 ## kept as her start point from then on -- see SCOUTING_TOGGLE_PLAN.md.
 ## Outdoor-spawned bees fly there immediately; indoor-spawned (hatched)
@@ -41,6 +58,7 @@ static func _random_point_near_hive(bee: Node2D) -> Vector2:
 static func take_orientation_flight(bee: Node2D) -> void:
 	var point: Vector2 = _random_point_near_hive(bee)
 	bee.forage_start_point = point
+	DiagnosticLog.log_orientation_flight(bee)
 	if not bee._is_inside_hive():
 		bee.move_target = point
 		bee.state = State.MOVE_TO_POINT
@@ -124,6 +142,7 @@ static func nearest_flower(bee: Node2D, strict: bool) -> Node2D:
 			# land on, and other bees avoid a recently marked flower
 			# rather than wasting a trip on one already stripped.
 			if GameConfig.tarsal_markers_on and f.is_marked(bee):
+				DiagnosticLog.count_tarsal_rejection()
 				return false
 		return true
 
@@ -257,6 +276,19 @@ static func reject_flower(bee: Node2D) -> void:
 
 
 static func start_collecting(bee: Node2D) -> void:
+	DiagnosticLog.count_flower_visit(bee.current_flower)
+	if GameConfig.tarsal_markers_on:
+		DiagnosticLog.count_tarsal_mark()
+	# Checked before this bee's own mark overwrites whatever was here --
+	# tarsal marking's marked_by/marked_at update unconditionally on every
+	# visit regardless of tarsal_markers_on (only the *avoidance* is gated
+	# by that toggle), so this reads the true "who was just here" even
+	# with marking off. Direct evidence for/against the hypothesis that a
+	# recruited bee, sharing her mentor's exact start point, tends to land
+	# on flowers her mentor only just finished draining.
+	if bee.recruit_followup_remaining > 0 and bee.recruit_partner != null \
+			and is_instance_valid(bee.recruit_partner) and bee.current_flower.marked_by == bee.recruit_partner:
+		DiagnosticLog.count_recruit_partner_overlap()
 	bee.current_flower.leave_marker(bee)
 	# Crab spiders (see CRAB_SPIDER_PLAN.md section 4) -- risk begins the
 	# instant a bee actually starts feeding, not on landing/inspecting.
@@ -383,6 +415,25 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		# hunger check in _process will already have sent this bee to a
 		# food cell if it needed one, and it runs whether the trip home
 		# was a productive one or not.
+		#
+		# Still score the trip itself, though. This used to fall straight
+		# through to IN_HIVE_TO_EXIT without ever touching _score_trip, so
+		# a played-out patch (drained by weather, normal recharge timing,
+		# or a pile of recruited seekers all working it at once) was
+		# invisible to avg_collection_rate -- an empty-handed forager kept
+		# reading exactly as good as her last real delivery, so she kept
+		# re-qualifying as a mentor and re-advertising the same dead patch
+		# to every new seeker. Confirmed against real session logs: every
+		# mentor matched more than once had a bit-identical
+		# avg_collection_rate across every match, sometimes 100+ seconds
+		# apart -- proof no scored trip had happened in between, not just
+		# a stable patch. See the recruitment-competition investigation,
+		# NEXTSTEPS.md.
+		if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+			bee.trip_load_amount = 0.0
+			_score_trip(bee)
+			if bee._apply_pending_role():
+				return
 		bee.state = State.IN_HIVE_TO_EXIT
 		return
 
@@ -455,12 +506,34 @@ static func _score_trip(bee: Node2D) -> void:
 	var amount: float = max(bee.trip_load_amount, 0.0)
 	var elapsed: float = max(Session.sim_time - bee.trip_start_time, 0.1)
 	var rate: float = amount / elapsed
-	if bee.avg_collection_rate <= 0.0:
-		bee.avg_collection_rate = rate
+	if bee.trips_scored < GameConfig.recruit_grace_trips:
+		# Plain mean, not the EMA below, while still inside the grace
+		# window -- an EMA started on trip one is ~49% decided by that
+		# first trip alone by the time trips_scored reaches 3, so a
+		# single lucky or unlucky trip was effectively answering "has
+		# this forager found a good patch" on its own. An equal-weighted
+		# average of the same handful of trips is a fairer read of
+		# whether the patch itself is actually good before recruitment
+		# starts trusting the number. See the recruitment-competition
+		# investigation, NEXTSTEPS.md.
+		bee._grace_rate_sum += rate
+		bee.avg_collection_rate = bee._grace_rate_sum / (bee.trips_scored + 1)
 	else:
 		bee.avg_collection_rate = lerpf(bee.avg_collection_rate, rate, bee.RATE_EMA_WEIGHT)
 	bee.trips_scored += 1
 	bee.trip_load_amount = -1.0
+
+	if not bee.settled_rate_logged and bee.trips_scored >= GameConfig.recruit_grace_trips:
+		bee.settled_rate_logged = true
+		DiagnosticLog.log_forager_settled(bee)
+
+	if bee.recruit_followup_remaining > 0:
+		var trip_index: int = RECRUIT_FOLLOWUP_TRIPS - bee.recruit_followup_remaining + 1
+		DiagnosticLog.log_recruitment_followup(bee, trip_index, rate)
+		bee.recruit_followup_remaining -= 1
+		if bee.recruit_followup_remaining <= 0:
+			bee.recruit_partner = null
+			bee.recruit_role = ""
 
 	if not bee.is_scouting:
 		return
@@ -626,9 +699,27 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		if mentor.resource_type != bee.resource_type:
 			i += 1
 			continue
-		bee.forage_start_point = mentor.forage_start_point
+		# Nudged, not identical -- see recruit_start_point_jitter's field
+		# comment in game_config.gd. Same general proven area, different
+		# corner of it, so the seeker isn't funnelled onto the exact same
+		# handful of flowers the mentor is still working.
+		bee.forage_start_point = _jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter)
 		if GameConfig.floral_constancy_on:
 			bee.preferred_species = mentor.preferred_species
+		# Captured here, before the new patch has had a single trip on it,
+		# so _score_trip can log a clean before/after comparison over each
+		# of the next few trips -- for both bees, not just the seeker: the
+		# mentor is still working the same patch she just handed the start
+		# point out for, so if the seeker following her onto it costs the
+		# mentor anything, this is what shows it.
+		bee.recruit_partner = mentor
+		bee.recruit_role = "seeker"
+		bee.recruit_rate_before = bee.avg_collection_rate
+		bee.recruit_followup_remaining = RECRUIT_FOLLOWUP_TRIPS
+		mentor.recruit_partner = bee
+		mentor.recruit_role = "mentor"
+		mentor.recruit_rate_before = mentor.avg_collection_rate
+		mentor.recruit_followup_remaining = RECRUIT_FOLLOWUP_TRIPS
 		DiagnosticLog.log_recruitment_match(bee, mentor)
 		# The whole point of scouting is finding a good patch -- being
 		# handed one already-proven is strictly better, so there's no
@@ -644,7 +735,22 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		# scouting; an established forager with a stale preference tries
 		# a new one the same way a fresh bee would.
 		if bee.is_scouting:
-			_send_to_scout_point(bee)
+			# _leave_hive_and_resume, not _send_to_scout_point directly --
+			# this bee is still parented under hive_root (she walked in to
+			# wait at the entrance and never left), and only
+			# _leave_hive_and_resume reparents her out before handing her a
+			# fresh meadow-space scout point. Calling _send_to_scout_point
+			# on its own here set State.MOVE_TO_POINT with a target the
+			# hive-interior pathfinder can't reach, and left her
+			# permanently invisible to the stall watchdog too, since its
+			# very first check is bee._is_inside_hive() -- a seeker who
+			# timed out with no mentor waiting (the common case early in a
+			# run, before anyone's traded enough trips to qualify as one)
+			# got stuck for good the moment this fired. Found via
+			# foraging_features_on_test.json: scouting plus auto-recruitment
+			# together made this the dominant failure mode, freezing most
+			# of the colony's foraging within the first week.
+			_leave_hive_and_resume(bee)
 		else:
 			bee.preferred_species = ""
 			bee.forage_start_point = Vector2(INF, INF)

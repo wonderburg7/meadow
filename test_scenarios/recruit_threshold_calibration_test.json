@@ -1,0 +1,18 @@
+{
+  "cells": 40, "nectar_foragers": 30, "pollen_foragers": 15,
+  "nurses": 6, "builders": 4, "miners": 3, "honey_makers": 2,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "orientation_flight_on": true,
+    "scouting_on": true,
+    "auto_recruitment_on": true,
+    "floral_constancy_on": true,
+    "tarsal_markers_on": true,
+    "flower_count": 900,
+    "bee_lifespan_days": 200,
+    "flower_lifespan_days": 60
+  },
+  "snapshot_seconds": 30,
+  "stop": {"max_days": 40}
+}

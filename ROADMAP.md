@@ -170,6 +170,14 @@ alongside the tutorial, so the systems already in could stabilise first.
 
 ## Interface
 
+**A full interface redesign is now planned (not built)** — warm/cosy
+honeycomb visual language, theming and accessibility (text scale,
+typefaces, reduced motion), a configurable selection/command tray
+layout, a scenario-preset system, and a skill-tree framework. See
+`UI_PLAN.md` for the full spec and its nine-slice build sequence.
+Everything below this line is what has actually shipped so far, under
+the interface as it currently looks.
+
 | | Size | Status |
 |---|---|---|
 | **A "why is this bee idle?" answer** | S | **Shipped 13 Aug.** `idle_reason()` in `bee.gd`. |

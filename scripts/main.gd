@@ -857,6 +857,13 @@ func _apply_scenario_boot_arg() -> void:
 	# scenario class where 30x isn't safe.
 	var scenario_time_scale: float = float(level.get("time_scale", 30.0))
 	level.erase("time_scale")
+	# Same reasoning as time_scale just above: dev-only, describes how much
+	# diagnostic data this run records rather than anything about how the
+	# game plays, so it bypasses GameConfig/the allowlist entirely rather
+	# than going through config_overrides. Optional -- omitted means the
+	# ordinary hourly cadence. See DiagnosticLog.snapshot_interval_override.
+	var scenario_snapshot_seconds: float = float(level.get("snapshot_seconds", -1.0))
+	level.erase("snapshot_seconds")
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
 
@@ -867,6 +874,7 @@ func _apply_scenario_boot_arg() -> void:
 	scenario_active = true
 	scenario_stop_max_days = int(stop.get("max_days", -1))
 	Engine.time_scale = scenario_time_scale
+	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
 	# DiagnosticLog only ever opens a session file off Session.run_reset
 	# (see diagnostic_log.gd) -- fired at the end of every reset_run_state(),
 	# which a normal boot never calls (only Restart/New Run/Load do). A

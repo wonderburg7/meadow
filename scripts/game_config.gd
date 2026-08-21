@@ -111,20 +111,91 @@ var orientation_flight_on: bool = false
 var scouting_on: bool = false
 var auto_recruitment_on: bool = false
 ## How far from the hive a new forager's start point (Orientation flight
-## or Scouting) is scattered.
-var forage_start_radius: float = 200.0
+## or Scouting) is scattered -- not to be confused with
+## forage_search_radius below, which is how far *from wherever she
+## currently is* a forager will look for a flower on any given decision.
+## This one only controls how spread out different foragers' patches are
+## from each other and from the hive.
+##
+## 450, up from 200 -- simulation-backed: A/B on
+## test_scenarios/forage_radius_wide_test.json vs the 200 default showed
+## the wider spread bringing home ~13% more flower visits and ~24% more
+## distinct flowers visited (foragers landing on the same handful of
+## flowers less often), with no rise in deaths -- the generous
+## forage_search_radius already means a bee starting further out has no
+## trouble finding a flower. Only tested at 450 itself, not the space
+## between 200 and 450 -- there may be a better point in between, but 450
+## is the one with real data behind it rather than a guess.
+var forage_start_radius: float = 450.0
 ## Resource units/second. A forager below this after a delivery waits at
 ## the entrance hoping to be told a better patch; a forager above it
 ## waits to offer one. Split by resource type since pollen's base
-## collection rate is much lower than nectar's. Starting guesses, not yet
-## backed by a simulation (see CLAUDE.md rule 4) -- tune here rather than
-## trusting them blindly.
-var recruit_lower_threshold_nectar: float = 0.5
-var recruit_upper_threshold_nectar: float = 2.0
-var recruit_lower_threshold_pollen: float = 0.2
-var recruit_upper_threshold_pollen: float = 0.8
+## collection rate is much lower than nectar's.
+##
+## Simulation-derived (see CLAUDE.md rule 4), not a starting guess any
+## more: checked against real settled-forager avg_collection_rate from
+## test_scenarios/recruit_threshold_calibration_test.json (a 45-forager
+## colony, everything on, life spans stretched so the founder cohort
+## survives long enough to build real trip history). These are the
+## 10th/90th percentiles of that run's settled-forager rates, so roughly
+## the bottom-performing tenth reads as a seeker and the top-performing
+## tenth as a mentor, matching what real bees in this colony size/shape
+## were actually collecting.
+##
+## Re-derived 21 Aug 2026 (nectar 0.42/0.56 -> 0.27/0.45, pollen
+## 0.25/0.31 -> 0.23/0.31, from 150 settled-forager samples over 5 runs)
+## after fixing two measurement bugs in avg_collection_rate itself, found
+## while investigating why recruitment kept funnelling many seekers onto
+## one already-drained patch (see NEXTSTEPS.md's recruitment-competition
+## writeup):
+## - An empty-handed return (patch had nothing left) used to skip
+##   BeeForaging._score_trip entirely, so avg_collection_rate stayed
+##   frozen at whatever a forager's last real delivery read -- a mentor
+##   whose patch had gone dry kept advertising it as good, undiminished,
+##   to every new seeker, rather than her own next few empty trips
+##   pulling her rate back down. Confirmed directly in old session logs:
+##   every mentor matched more than once had a bit-identical
+##   avg_collection_rate across every match, sometimes 100+ seconds
+##   apart.
+## - The grace-window average (trips_scored below recruit_grace_trips)
+##   used to be the same EMA as afterwards, which put ~49% of the weight
+##   on trip one alone by the time a forager was first judged -- one
+##   lucky or unlucky trip was deciding "has she found a good patch"
+##   almost by itself. It's now a plain mean across the grace window,
+##   switching to the EMA only once settled.
+## Both fixes pull real (previously invisible) low readings into the
+## distribution, which is why every threshold moved down rather than
+## just nectar's median shifting -- this is the corrected picture, not a
+## regression. Re-check with debug_panel.gd's "Recruiting" readout (see
+## year_winter.gd::_refresh_recruit_gap) if the foraging economy changes
+## enough to shift the distribution -- collection rates, flower density,
+## or anything else upstream of avg_collection_rate.
+var recruit_lower_threshold_nectar: float = 0.27
+var recruit_upper_threshold_nectar: float = 0.45
+var recruit_lower_threshold_pollen: float = 0.23
+var recruit_upper_threshold_pollen: float = 0.31
 ## How long a bee waits at the entrance for a match before giving up.
-var recruit_wait_seconds: float = 10.0
+## 15s, up from 10 -- untested guess either way, but a mentor and a
+## matching seeker both have to be waiting at the same time for a match
+## to happen at all, so a few more seconds of overlap window should mean
+## more matches without the wait itself costing much against a whole
+## multi-trip foraging cycle. Worth rechecking recruitment_matches once
+## there's a longer/bigger run to compare against.
+var recruit_wait_seconds: float = 15.0
+## How far a recruited seeker's inherited start point is nudged away from
+## her mentor's exact one. Simulation-backed, not a guess: tracking both
+## bees' rates over their next 5 trips (see bee.gd's recruit_partner
+## block/DiagnosticLog.log_recruitment_followup) found the mentor's own
+## rate dropping hard right after a match and staying down across the
+## whole tracked window, while a direct flower-overlap check (did the
+## seeker land on a flower the mentor had *just* marked) hit noticeably
+## more often than chance alone would explain with dozens of candidate
+## flowers in range. Sending the seeker to literally the same point was
+## putting two bees onto one bee's worth of nearby flowers. This keeps
+## her in the same general proven area (the whole point of being told
+## about it) while giving her a different starting corner of it, rather
+## than funnelling both bees onto the same handful of flowers.
+var recruit_start_point_jitter: float = 80.0
 ## Trips a forager must actually be scored on -- since auto-recruitment
 ## turned on, or since it was created -- before its avg_collection_rate
 ## is trusted against the thresholds above. Below this, it leaves

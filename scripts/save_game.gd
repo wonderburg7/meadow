@@ -40,6 +40,16 @@ const SAVED_SETTINGS := [
 	"starting_builders", "starting_miners", "starting_honey_makers",
 	"seconds_per_day", "nectar_recharge_rate", "pollen_recharge_rate",
 	"tarsal_markers_on", "tarsal_marker_seconds", "floral_constancy_on",
+	# Orientation flight/scouting/auto-recruitment were missing from this
+	# list entirely -- same gap as the winter numbers below: tuning any of
+	# them in the panel didn't survive a save/load, and a scenario's
+	# config_overrides (checked against this same list -- see
+	# Levels.apply_config_overrides) couldn't turn them on either.
+	"orientation_flight_on", "scouting_on", "auto_recruitment_on",
+	"forage_start_radius", "forage_search_radius",
+	"recruit_lower_threshold_nectar", "recruit_upper_threshold_nectar",
+	"recruit_lower_threshold_pollen", "recruit_upper_threshold_pollen",
+	"recruit_wait_seconds", "recruit_grace_trips", "recruit_start_point_jitter",
 	"bee_speed", "flower_handling_time", "nectar_collection_rate",
 	"pollen_collection_rate", "deposit_time", "nectar_stomach_capacity",
 	"pollen_stomach_capacity", "cell_capacity", "cell_full_threshold",

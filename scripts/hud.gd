@@ -181,6 +181,7 @@ var corner_texts: Dictionary = {
 	"day": "", "stores": "", "population": "", "comb": "",
 	"energy": "", "rates": "", "winter": "", "fps": "",
 	"nursery_zone": "", "nursery_mix": "", "nursery_output": "",
+	"recruit_gap": "",
 }
 ## Order the starred readouts appear in. Covers both the colony window's
 ## STAT_ROWS and the nursery window's, since both pin into the same
@@ -189,13 +190,14 @@ var corner_texts: Dictionary = {
 const CORNER_ORDER := [
 	"fps",
 	"day", "winter", "stores", "population", "comb", "energy", "rates",
+	"recruit_gap",
 	"nursery_zone", "nursery_mix", "nursery_output",
 ]
 ## Font size per readout -- the day is the headline, the rest is detail.
 const CORNER_SIZES := {
 	"fps": 12,
 	"day": 22, "winter": 15, "stores": 16, "population": 13, "comb": 12,
-	"energy": 13, "rates": 12,
+	"energy": 13, "rates": 12, "recruit_gap": 12,
 	"nursery_zone": 12, "nursery_mix": 12, "nursery_output": 12,
 }
 ## What is currently drawn, so the column is only rebuilt when it would
@@ -1285,6 +1287,15 @@ func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: 
 	corner_texts["rates"] = "Rates (60s avg): Nectar +%.1f/s   Pollen +%.1f/s   Births %.2f/min" % [
 		nectar_per_sec, pollen_per_sec, births_per_sec * 60.0,
 	]
+	_refresh_corner()
+
+## How many foragers currently read above the "offer a mentor" threshold
+## or below the "go and seek one" threshold, against how many are actually
+## being judged (past recruit_grace_trips, not still mid-scout) -- see
+## year_winter.gd::_refresh_recruit_gap. Placeholder home for this reading
+## until a dedicated foraging window exists (see UI_PLAN.md).
+func update_recruit_gap(text: String) -> void:
+	corner_texts["recruit_gap"] = text
 	_refresh_corner()
 
 ## The frame rate readout. Three numbers rather than one, because they

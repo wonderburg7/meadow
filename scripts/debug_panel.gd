@@ -127,7 +127,7 @@ const TUNABLES := [
 	{
 		"key": "forage_start_radius", "label": "Start point radius", "step": 20.0, "min": 20.0,
 		"category": "Flowers",
-		"tip": "How far from the hive a new forager's start point (Orientation flight or Auto scouting) is scattered. Only matters when one of those is on.",
+		"tip": "How far from the hive a new forager's start point (Orientation flight or Auto scouting) is scattered -- how spread apart different foragers' patches are. Not how far a forager will fly to find a flower once she's working an area (that's forage_search_radius, tuned separately and much larger). Only matters when Orientation flight or Auto scouting is on.",
 	},
 	{
 		"key": "recruit_lower_threshold_nectar", "label": "Recruit: seek below (nectar)", "step": 0.1, "min": 0.0,
@@ -153,6 +153,11 @@ const TUNABLES := [
 		"key": "recruit_wait_seconds", "label": "Recruit wait s", "step": 1.0, "min": 1.0,
 		"category": "Flowers",
 		"tip": "How long a forager waits at the entrance for a match before giving up and heading out on its own. Only matters when Auto-recruitment is on.",
+	},
+	{
+		"key": "recruit_start_point_jitter", "label": "Recruit start point spread", "step": 10.0, "min": 0.0,
+		"category": "Flowers",
+		"tip": "A recruited forager's inherited start point is nudged this far from her mentor's exact one, in a random direction -- still the same general proven area, but not the same handful of flowers. At 0, she starts from exactly the mentor's point, which measurably cost the mentor her own rate in testing (both bees converging on one patch). Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_grace_trips", "label": "Recruit grace trips", "step": 1.0, "min": 0.0,

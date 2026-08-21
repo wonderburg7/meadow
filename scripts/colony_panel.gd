@@ -40,6 +40,7 @@ const STAT_ROWS := [
 	{"key": "comb", "tip": "How much comb there is, how much of it is free, and how the brood is doing."},
 	{"key": "energy", "tip": "The average energy of every living bee, as a share of a full crop. This is the single best early warning: it falls for a while before bees actually start dying, so a steady slide here is the moment to put more bees on nectar."},
 	{"key": "rates", "tip": "Nectar and pollen coming in, and bees emerging, averaged over the last minute. Rates rather than totals, because what matters is whether the colony is keeping up."},
+	{"key": "recruit_gap", "tip": "How many foragers (past their first few trips, not still scouting) currently read above the 'offer a mentor' threshold or below the 'go and seek one' threshold, out of how many are being judged at all. Only means anything with Auto scouting or Auto-recruitment on -- otherwise no forager's rate is being tracked yet. A placeholder home for this reading until there's a dedicated foraging window."},
 	{"key": "signals", "tip": "The list of things currently going wrong, worst first."},
 ]
 

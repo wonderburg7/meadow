@@ -279,6 +279,7 @@ func _refresh_panels(bees: Array) -> void:
 			comb_text += "\n%s" % health
 	main.hud.update_comb(comb_text)
 	main.hud.update_energy(mean_energy)
+	_refresh_recruit_gap(bees)
 
 	if main.colony_panel.is_open():
 		main.colony_panel.refresh(counts, main.hud.corner_texts, main.history_samples)
@@ -292,6 +293,51 @@ func _refresh_panels(bees: Array) -> void:
 		main.hud.refresh_corner()
 	main.orders_zones._apply_zone_glow()
 	_refresh_winter()
+
+## How many foragers currently sit above the "offer" threshold (mentor-
+## eligible) or below the "seek" threshold (would wait at the door hoping
+## for one), against how many are actually being judged. Mirrors
+## BeeForaging.go_to_exit's own gating exactly -- past recruit_grace_trips,
+## and not still mid-scout (a scouting bee always seeks regardless of her
+## rate, so she isn't "judged" against the thresholds the way a settled
+## forager is) -- so this reads as "what the recruitment logic itself
+## would decide right now", not a looser approximation of it. Built to
+## answer NEXTSTEPS.md's balance question directly: are the threshold
+## numbers realistic against what bees actually collect, and roughly what
+## fraction end up on each side.
+func _refresh_recruit_gap(bees: Array) -> void:
+	if not (GameConfig.scouting_on or GameConfig.auto_recruitment_on):
+		main.hud.update_recruit_gap("Recruiting — turn on Auto scouting or Auto-recruitment to see this.")
+		return
+
+	var counts: Dictionary = {
+		"nectar": {"scored": 0, "above": 0, "below": 0},
+		"pollen": {"scored": 0, "above": 0, "below": 0},
+	}
+	for b in bees:
+		if not is_instance_valid(b) or b.role != main.Bee.Role.FORAGER or b.is_scouting:
+			continue
+		if b.trips_scored < GameConfig.recruit_grace_trips:
+			continue
+		var bucket: Dictionary = counts[b.resource_type]
+		bucket.scored += 1
+		var upper: float = GameConfig.recruit_upper_threshold_nectar if b.resource_type == "nectar" else GameConfig.recruit_upper_threshold_pollen
+		var lower: float = GameConfig.recruit_lower_threshold_nectar if b.resource_type == "nectar" else GameConfig.recruit_lower_threshold_pollen
+		if b.avg_collection_rate > upper:
+			bucket.above += 1
+		elif b.avg_collection_rate < lower:
+			bucket.below += 1
+
+	var parts: Array = []
+	for key in ["nectar", "pollen"]:
+		var c: Dictionary = counts[key]
+		if c.scored == 0:
+			parts.append("%s: none scored yet" % key.capitalize())
+		else:
+			parts.append("%s: %d/%d above offer, %d/%d below seek" % [
+				key.capitalize(), c.above, c.scored, c.below, c.scored,
+			])
+	main.hud.update_recruit_gap("Recruiting — %s" % " · ".join(parts))
 
 func _toggle_panel(panel: CanvasLayer) -> void:
 	if panel == main.nursery_panel:

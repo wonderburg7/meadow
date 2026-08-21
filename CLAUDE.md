@@ -40,6 +40,9 @@ FUNCTION_MAP.md       func index for the six biggest scripts (regenerate
                        with tools/update_function_map.py)
 AUDIT_PLAN.md         the 19 Aug technical audit plan -- read before
                        touching save/restore or fog_of_war.gd
+UI_PLAN.md             the 20 Aug UI redesign plan -- read before
+                       touching hud.gd, debug_panel.gd, colony_panel.gd,
+                       nursery_panel.gd, main_menu.gd or gallerin_panel.gd
 ```
 
 ### Which file to open for which kind of change

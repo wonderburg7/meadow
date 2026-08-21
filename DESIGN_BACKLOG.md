@@ -4,7 +4,11 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 20 Aug 2026 -- section 12 (headless playtest/scenario
+Last updated: 21 Aug 2026 -- added section 13, a systems/language/
+architecture map reviewed against the current codebase. Parked as
+agreed-but-not-started, same status as sections 6-10. Nothing built.
+
+Previously updated 20 Aug 2026 -- section 12 (headless playtest/scenario
 harness) is now agreed, build starting. `NEXTSTEPS.md` points at slice 1
 as the next concrete action. See `AI_PLAYTEST_PLAN.md` for the full
 design. Nothing built yet.
@@ -509,3 +513,79 @@ existing 8x speed cap, to prove the unattended run-to-collapse loop
 works before adding a new scenario format or higher speeds. See
 `NEXTSTEPS.md` for the concrete next action and `AI_PLAYTEST_PLAN.md`
 for the full design.
+
+---
+
+## 13. Systems/language/architecture map (proposed, not agreed)
+
+Dave brought an outside report (a "systems, language and architecture
+map") proposing a shared vocabulary and documentation framework for
+Meadow — a 9-part template (definition/input/evaluation/output/
+connection/presentation/availability/persistence/observability) applied
+to every system, a glossary of architecture and gameplay terms, an
+availability-state lifecycle, per-system "cards", and checklists for
+adding a role/mechanic/resource/command/adverse condition.
+
+**Checked against the actual codebase before parking this.** Most of
+the report turned out to describe what's already built rather than
+propose new work: the "does Meadow need a game manager?" question
+(no — `main.gd` is already a coordinator with `world_building.gd`,
+`input_selection.gd`, `camera_view.gd`, `orders_zones.gd`, `saving.gd`
+etc. split out) and the role/naming vocabulary (`roles.gd` as the single
+role authority, `GameConfig`/`Session` split) both match what
+`LANGUAGE_REVIEW.md` already got built. Costs nothing to adopt because
+there's nothing to change.
+
+**The one item backed by a real, live pain point:**
+`debug_panel.gd::TOGGLE_PREREQUISITE` (the mechanic-prerequisite cascade
+for the settings-window toggles) lives in a presentation file, not a
+data file — confirmed independently by this file's own section 18
+Aug entry, which already had to explain what that variable does.
+Worth extracting into a small non-visual catalogue on its own merits,
+separate from the rest of this section.
+
+**Flagged against adopting wholesale, if this is picked up:**
+
+- **A nine-part card for all ~20 systems in the report's system table**
+  — don't commit to all of them up front. Pilot the template on two
+  systems with a live pain point (Foraging; the availability/
+  prerequisite tree) before deciding it's worth the other ~18.
+- **The five addition checklists (8-13 steps each)** — heavier than how
+  this project actually works (small slices, "good enough to act on").
+  Trim to the handful of steps that have actually caused a bug before
+  (role constants duplicated in three places, already fixed by
+  `roles.gd`), not a maximal list.
+- **The full 12-term availability lifecycle** (Unimplemented → Disabled
+  → Locked → … → Hidden) — apply it only where a distinction has
+  actually caused confusion (the prerequisite tree), not as a blanket
+  relabelling of every toggle in the game.
+- **The ~40-term glossary enforced everywhere at once** — fine as a
+  reference for new writing, not worth a pass to rename things that
+  already work.
+- **"Audit connections and identify duplicated ownership" as a general
+  codebase sweep** — scope it to the one named offender
+  (`TOGGLE_PREREQUISITE`) rather than an open-ended audit.
+
+**If this gets picked up, suggested slice order** (none started):
+
+1. A trimmed `GAME_MODEL.md` — the 9-part template, the bee-model
+   vocabulary (role/focus/work mode/fallback role/standing instruction,
+   already true of the code), and the core architecture terms
+   (System/Mechanic/Coordinator/Controller/Service). Skip the full
+   gameplay-term table and the 12-term lifecycle for now. Pure new
+   file, no code touched.
+2. Pilot the 9-part card on exactly two systems: Foraging and a new
+   "Availability/prerequisites" card. Proves the template's worth
+   before extending it further.
+3. Extract `TOGGLE_PREREQUISITE` out of `debug_panel.gd` into a small
+   non-visual catalogue. Verify with `source_checks.py`,
+   `balance_tests.py`, a Godot boot, and an AI-playtest run before/after
+   to prove the cascade behaviour is unchanged. The only slice that
+   touches code.
+4. Only if 1-3 felt worth it: extend the availability-lifecycle terms
+   to the debug panel's toggle rows specifically.
+5. Everything else (full system catalogue, addition checklists, full
+   glossary) — fill in incrementally when a system is next touched
+   anyway, not as its own sprint.
+
+**Status:** parked, not started. Pick up slice 1 whenever Dave wants to.

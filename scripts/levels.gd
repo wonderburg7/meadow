@@ -80,8 +80,6 @@ const LEVELS := {
 const SCENARIO_LEVEL_ID := 999
 static var scenario_override: Dictionary = {}
 
-const SaveGame = preload("res://scripts/save_game.gd")
-
 static func get_level(id: int) -> Dictionary:
 	if id == SCENARIO_LEVEL_ID and not scenario_override.is_empty():
 		return scenario_override
@@ -89,15 +87,30 @@ static func get_level(id: int) -> Dictionary:
 
 ## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md slice 2). Applies a
 ## scenario file's "config_overrides" block to GameConfig, one field at a
-## time, checked against SaveGame.SAVED_SETTINGS -- the same per-field
-## allowlist a save file is already restricted to (see save_game.gd,
-## .claude/rules/saving.md), so a scenario file can't touch anything a save
-## couldn't already touch. An unknown or disallowed key fails loudly and is
-## skipped rather than silently doing nothing, since a scenario file with a
-## wrong key that silently no-oped would produce a result nobody could trust.
+## time.
+##
+## Checked against every real GameConfig field (via reflection, same
+## approach diagnostic_log.gd's _config_snapshot uses), not against
+## SaveGame.SAVED_SETTINGS -- that list is what a *player save* is allowed
+## to touch, a much narrower and separate concern (see
+## .claude/rules/saving.md) than a dev-only test scenario, which is never
+## reachable except via the --scenario= command-line flag and has no
+## save-compatibility promise to keep. Restricting scenarios to the same
+## allowlist as player saves was blocking legitimate balance testing --
+## see the foraging-diagnostics session in NEXTSTEPS.md/git log for the
+## concrete case (scouting_on/auto_recruitment_on/orientation_flight_on
+## couldn't be scenario-tested at all until SAVED_SETTINGS grew a separate
+## fix for those three; this removes the need for that pattern to repeat
+## for every future tunable). An unknown key (a typo, not a real field)
+## still fails loudly and is skipped rather than silently doing nothing.
 static func apply_config_overrides(overrides: Dictionary) -> void:
+	var valid_keys: Dictionary = {}
+	for prop in GameConfig.get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			valid_keys[prop.name] = true
+
 	for key in overrides:
-		if key not in SaveGame.SAVED_SETTINGS:
-			push_error("--scenario= config_overrides: '%s' is not an allowed GameConfig field" % key)
+		if not valid_keys.has(key):
+			push_error("--scenario= config_overrides: '%s' is not a GameConfig field" % key)
 			continue
 		GameConfig.set(key, overrides[key])

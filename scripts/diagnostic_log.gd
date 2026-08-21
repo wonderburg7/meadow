@@ -27,6 +27,13 @@ var _file: FileAccess = null
 ## session that never existed.
 var _ended: bool = true
 var _hour_accum: float = 0.0
+## -1.0 means "use the ordinary hourly cadence" (GameConfig.seconds_per_day
+## / 24). Set directly by main.gd from a scenario's "snapshot_seconds"
+## field -- see tick() -- never through GameConfig, since this describes
+## how much diagnostic data a run records rather than anything about how
+## the game plays (.claude/rules/simulation.md's GameConfig/Session
+## test), and mirrors how "time_scale" is already handled the same way.
+var snapshot_interval_override: float = -1.0
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -34,6 +41,20 @@ var _deaths_by_role: Dictionary = {}
 var _crab_spider_events: Dictionary = {}   # "kill"/"escape"/"alarm_flee" -> count
 var _recruitment_matches: int = 0
 var _scouting_settled: int = 0
+var _orientation_flights: int = 0
+var _recruitment_followups: int = 0
+var _recruit_partner_overlaps: int = 0
+var _foragers_settled: int = 0
+## Cheap counters, bumped straight from bee_foraging.gd's hot flower-search
+## path (nearest_flower's accept closure, once per bee per candidate
+## flower) -- no per-call _write() there, that path runs far too often for
+## a file write each time. Only the once-an-hour snapshot and the summary
+## ever read these.
+var _tarsal_marks: int = 0
+var _tarsal_rejections: int = 0
+var _flower_visits: int = 0
+var _flowers_visited_ids: Dictionary = {}   # flower instance id -> true
+var _stall_recoveries: int = 0
 
 
 func _ready() -> void:
@@ -65,6 +86,15 @@ func start_session() -> void:
 	_crab_spider_events.clear()
 	_recruitment_matches = 0
 	_scouting_settled = 0
+	_orientation_flights = 0
+	_recruitment_followups = 0
+	_recruit_partner_overlaps = 0
+	_foragers_settled = 0
+	_tarsal_marks = 0
+	_tarsal_rejections = 0
+	_flower_visits = 0
+	_flowers_visited_ids.clear()
+	_stall_recoveries = 0
 
 	_write({"type": "config", "game_time": Session.sim_time, "settings": _config_snapshot()})
 
@@ -118,7 +148,12 @@ func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void
 ## Called from bee_foraging.gd::wait_at_entrance() the moment a seeker is
 ## handed a mentor's patch -- direct evidence auto-recruitment is
 ## actually matching bees up, not just that the entrance-wait states are
-## being entered.
+## being entered. Carries both bees' avg_collection_rate at the moment of
+## the match, so the recruit_lower/upper_threshold_nectar/pollen numbers
+## in game_config.gd can be checked against what real trips were actually
+## delivering rather than trusted on the strength of the starting guess
+## alone. seeker_rate_before is also the baseline log_recruitment_followup
+## compares this bee's next few trips on the new patch against.
 func log_recruitment_match(seeker: Node2D, mentor: Node2D) -> void:
 	if _file == null:
 		return
@@ -130,8 +165,128 @@ func log_recruitment_match(seeker: Node2D, mentor: Node2D) -> void:
 		"resource_type": seeker.resource_type,
 		"start_point": [mentor.forage_start_point.x, mentor.forage_start_point.y],
 		"species": mentor.preferred_species,
+		"seeker_rate_before": seeker.avg_collection_rate,
+		"seeker_trips_scored": seeker.trips_scored,
+		"mentor_rate": mentor.avg_collection_rate,
+		"mentor_trips_scored": mentor.trips_scored,
 	})
 	_recruitment_matches += 1
+
+
+## Called from bee_foraging.gd::_score_trip() for each of a recruited
+## bee's (and her mentor's -- see recruit_role) first RECRUIT_FOLLOWUP_TRIPS
+## trips after a match -- the direct answer to "does resource collection
+## improve for recruited bees, over more than just the first noisy trip",
+## and, since the mentor is tracked too, "does having someone follow you
+## onto your own patch cost you anything". trip_rate is that one trip's
+## raw rate; rate_before is the fixed baseline both bees had *before* the
+## match, repeated on every row so each trip can be compared against it
+## without joining back to the recruitment_match line.
+func log_recruitment_followup(bee: Node2D, trip_index: int, trip_rate: float) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "recruitment_followup",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"partner_id": bee.recruit_partner.bee_id if bee.recruit_partner != null and is_instance_valid(bee.recruit_partner) else -1,
+		"recruit_role": bee.recruit_role,
+		"resource_type": bee.resource_type,
+		"trip_index": trip_index,
+		"rate_before": bee.recruit_rate_before,
+		"trip_rate": trip_rate,
+	})
+	_recruitment_followups += 1
+
+
+## Called from bee_foraging.gd::start_collecting() when a bee mid-followup
+## lands on a flower her recruit partner (mentor or seeker, whichever she
+## is) marked most recently -- direct evidence for or against the
+## hypothesis that sharing a start point means trailing the other bee
+## onto flowers she only just drained, rather than genuinely fresh ones.
+func count_recruit_partner_overlap() -> void:
+	_recruit_partner_overlaps += 1
+
+
+## Called from bee_foraging.gd::_score_trip() the first time a forager's
+## trips_scored reaches recruit_grace_trips -- fires once per bee, so a
+## run's own log always carries a real settled-rate sample for nectar and
+## pollen without needing a one-off debug print added back in to get one
+## (see recruit_lower/upper_threshold_nectar/pollen's derivation comment
+## in game_config.gd).
+func log_forager_settled(bee: Node2D) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "forager_settled",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"resource_type": bee.resource_type,
+		"rate": bee.avg_collection_rate,
+	})
+	_foragers_settled += 1
+
+
+## Called from bee_foraging.gd::take_orientation_flight() -- direct
+## evidence orientation flight is actually running (fires for every new
+## forager whenever orientation_flight_on is on, indoor- or
+## outdoor-spawned), rather than only inferable from forage_start_point
+## being set.
+func log_orientation_flight(bee: Node2D) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "orientation_flight",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"role": BeeEnums.Role.keys()[bee.role],
+		"point": [bee.forage_start_point.x, bee.forage_start_point.y],
+	})
+	_orientation_flights += 1
+
+
+## Bumped from bee_foraging.gd::start_collecting() -- a real feeding visit,
+## whatever the toggles. Cheap counters only (no per-call _write, see the
+## field comments above); rolled into the hourly snapshot and the summary.
+func count_flower_visit(flower: Node2D) -> void:
+	_flower_visits += 1
+	if flower != null and is_instance_valid(flower):
+		_flowers_visited_ids[flower.get_instance_id()] = true
+
+
+func count_tarsal_mark() -> void:
+	_tarsal_marks += 1
+
+
+## Bumped from bee_foraging.gd::nearest_flower()'s accept closure -- a
+## candidate flower turned down specifically because another bee marked it
+## recently. Direct evidence tarsal marking is actually steering bees away
+## from stripped flowers, not just that the toggle is on and marks are
+## being left.
+func count_tarsal_rejection() -> void:
+	_tarsal_rejections += 1
+
+
+## Called from bee_survival.gd::watch_for_stalls() the moment it judges a
+## bee stuck (STALL_SECONDS of no real progress towards `goal`) and is
+## about to take recovery action -- not gated to a toggle, since a stall
+## can happen to any moving bee, but written for every scouting-collapse
+## investigation this diagnostic pass was built for: whether the backstop
+## is firing constantly (a real dead end in the steering) or barely at
+## all (the bees piling up aren't even reaching this check).
+func log_stall_recovery(bee: Node2D, goal: Vector2) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "stall_recovery",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"role": BeeEnums.Role.keys()[bee.role],
+		"state": BeeEnums.State.keys()[bee.state],
+		"position": [bee.position.x, bee.position.y],
+		"goal": [goal.x, goal.y],
+	})
+	_stall_recoveries += 1
 
 
 ## Called from bee_foraging.gd::_score_trip() when a scouting bee's three
@@ -163,8 +318,21 @@ func tick(delta: float, world: Node2D) -> void:
 	if _file == null:
 		return
 	_hour_accum += delta
-	var hour_seconds: float = GameConfig.seconds_per_day / 24.0
-	if _hour_accum < hour_seconds:
+	# snapshot_interval_override lets a --scenario= run pick a fixed
+	# sim-second cadence instead -- see main.gd::_apply_scenario_boot_arg
+	# and its "snapshot_seconds" field, same pattern as "time_scale".
+	# Ordinary play is untouched: an hour is exactly what the day-length
+	# setting says it is. A compressed test day (seconds_per_day pushed
+	# down to keep a headless run's real-world time short) otherwise means
+	# an "hour" is a fraction of a sim-second, so a 60-day run logs a
+	# snapshot every frame or two -- the AI-playtest-harness session's
+	# 60-day/20s-per-day runs were writing 1000+ snapshot lines each
+	# (2MB+ files) for data that a coarser cadence captures just as well:
+	# population and rates barely move between one snapshot and the next
+	# at that resolution, so nothing analyze_session.py or a human
+	# actually reads was lost by spacing them out.
+	var interval: float = snapshot_interval_override if snapshot_interval_override > 0.0 else GameConfig.seconds_per_day / 24.0
+	if _hour_accum < interval:
 		return
 	_hour_accum = 0.0
 	_write(_snapshot(world))
@@ -186,6 +354,15 @@ func end_session(outcome: String) -> void:
 		"crab_spider_events": _crab_spider_events,
 		"recruitment_matches": _recruitment_matches,
 		"scouting_settled": _scouting_settled,
+		"orientation_flights": _orientation_flights,
+		"recruitment_followups": _recruitment_followups,
+		"recruit_partner_overlaps": _recruit_partner_overlaps,
+		"foragers_settled": _foragers_settled,
+		"tarsal_marks": _tarsal_marks,
+		"tarsal_rejections": _tarsal_rejections,
+		"flower_visits": _flower_visits,
+		"unique_flowers_visited": _flowers_visited_ids.size(),
+		"stall_recoveries": _stall_recoveries,
 	})
 	_file.close()
 	_file = null
@@ -228,6 +405,14 @@ func _snapshot(world: Node2D) -> Dictionary:
 	# cross-reference the discrete event lines above.
 	var scouting_now := 0
 	var by_preferred_species: Dictionary = {}
+	# Settled foragers (not mid-scout) split by whether they've got a
+	# floral-constancy preference, so a snapshot can answer "are the bees
+	# with a preferred species actually collecting faster" directly,
+	# without needing to cross-reference individual bees by hand.
+	var rate_with_preference_sum := 0.0
+	var rate_with_preference_n := 0
+	var rate_without_preference_sum := 0.0
+	var rate_without_preference_n := 0
 	for b in bees:
 		if not is_instance_valid(b):
 			continue
@@ -235,6 +420,13 @@ func _snapshot(world: Node2D) -> Dictionary:
 			scouting_now += 1
 		if b.preferred_species != "":
 			by_preferred_species[b.preferred_species] = int(by_preferred_species.get(b.preferred_species, 0)) + 1
+		if b.role == BeeEnums.Role.FORAGER and not b.is_scouting:
+			if b.preferred_species != "":
+				rate_with_preference_sum += b.avg_collection_rate
+				rate_with_preference_n += 1
+			else:
+				rate_without_preference_sum += b.avg_collection_rate
+				rate_without_preference_n += 1
 
 	var active_spiders := 0
 	if GameConfig.predators_on:
@@ -278,12 +470,24 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"winter_here": Session.winter_here,
 		},
 		"foraging_behaviour": {
+			"orientation_flight_on": GameConfig.orientation_flight_on,
 			"floral_constancy_on": GameConfig.floral_constancy_on,
 			"scouting_on": GameConfig.scouting_on,
 			"auto_recruitment_on": GameConfig.auto_recruitment_on,
+			"tarsal_markers_on": GameConfig.tarsal_markers_on,
 			"scouting_now": scouting_now,
 			"with_preferred_species": by_preferred_species,
+			"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
+			"avg_rate_without_preferred_species": rate_without_preference_sum / rate_without_preference_n if rate_without_preference_n > 0 else 0.0,
 			"entrance_mentors_waiting": hive.entrance_mentors.size(),
+			"orientation_flights_total": _orientation_flights,
+			"tarsal_marks_total": _tarsal_marks,
+			"tarsal_rejections_total": _tarsal_rejections,
+			"flower_visits_total": _flower_visits,
+			"unique_flowers_visited": _flowers_visited_ids.size(),
+			"recruitment_followups_total": _recruitment_followups,
+			"recruit_partner_overlaps_total": _recruit_partner_overlaps,
+			"foragers_settled_total": _foragers_settled,
 		},
 		"crab_spiders": {
 			"predators_on": GameConfig.predators_on,
