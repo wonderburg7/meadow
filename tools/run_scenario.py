@@ -169,8 +169,9 @@ def _warn_on_action_problems(analysis: dict) -> None:
     """Prints a short, hard-to-miss warning when a scenario's actions
     block (scenario_actions.gd) didn't go cleanly -- a rejected action, an
     action whose "when" never fired, or a failed "assert" ending the run.
-    Printed even when --full is off, since a strategy script silently not
-    doing what it said is exactly the failure mode
+    Printed even when --full is off, and run_scenario returns a failing exit
+    status when any are present, since a strategy script silently not doing
+    what it said is exactly the failure mode
     insights_from_ChatGPT.md's 22 Aug 2026 entry asked assertions to catch
     loudly.
     """
@@ -191,6 +192,7 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
         return 1
 
     analyses = []
+    had_action_problems = False
     for i in range(repeat):
         if repeat > 1:
             print("--- run %d/%d ---" % (i + 1, repeat))
@@ -213,13 +215,15 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
         if profile != "brief" or repeat == 1:
             print(json.dumps(report(analysis, profile), indent=2))
         _warn_on_action_problems(analysis)
+        had_action_problems = had_action_problems or bool(
+            analysis.get("actions", {}).get("problems", []))
         analyses.append(analysis)
 
     if repeat > 1:
         print("--- aggregate over %d runs ---" % repeat)
         print(json.dumps(aggregate_runs(analyses), indent=2))
 
-    return 0
+    return 1 if had_action_problems else 0
 
 
 def main() -> int:

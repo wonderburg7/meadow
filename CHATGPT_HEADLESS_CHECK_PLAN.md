@@ -6,7 +6,8 @@
 > session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
 > `NEXTSTEPS.md` remains exclusively Claude's source of work.
 
-Status: in progress 22 Aug 2026. H0 inventory completed; H1 is next. This is
+Status: in progress 22 Aug 2026. H0 inventory and H1 smoke gate completed; H2
+is next. This is
 the execution hand-off for ChatGPT sessions. It turns Meadow's existing
 headless harness into a small, stable mechanism-check suite without spending
 runs on systems that are about to change.
@@ -161,6 +162,29 @@ living queen, non-zero population and no failed or unresolved actions. Use one
 pinned seed and `brief`. This is the only Godot scenario intended for routine
 use after every gameplay slice. Target wall time: a few seconds. Reuse
 `slice1_smoke_test.json` if it already supplies the evidence.
+
+Completed 22 Aug 2026. `slice1_smoke_test.json` now starts a deliberately small
+colony with every worker role represented, pins seed `4242`, and waits for the
+first cell completed through the normal builder loop. At that decisive event it
+asserts that the queen is still alive and population is non-zero, then
+`when_actions_resolved` ends the run; `max_days: 3` is the safety ceiling that
+turns a missing completion into an unresolved action. The runner now exits
+non-zero for any rejected, failed or unresolved action instead of printing a
+warning and returning success.
+
+Routine invocation: `python tools/run_scenario.py
+test_scenarios/slice1_smoke_test.json --report brief` (default fixed FPS 30,
+one pinned seed). The final development run took 5.6s wall time and stopped on
+day 1 at game time 92.75s with one completed cell, outcome
+`actions_resolved`, one accepted assertion and no action problems. This is
+moderate-validity integration evidence: the artificial colony is small, but
+cell completion and queen/population state come from normal game code.
+
+Named failure protected: a scenario boot/setup regression, broken builder
+dispatch or cell completion, loss of the queen, an empty colony, or action
+plumbing that rejects or never reaches its assertion now makes the routine
+gate fail. It deliberately does not promise brood, foraging quality, balance
+or presentation coverage.
 
 ### H2. Brood lifecycle
 

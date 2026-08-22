@@ -88,6 +88,12 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		var spec: Dictionary = when["event_count_at_least"]
 		if DiagnosticLog.event_count(spec.get("type", ""), spec.get("subtype", "")) < int(spec.get("count", 0)):
 			return false
+	if when.has("cells_completed_at_least") and DiagnosticLog.cell_completed_count() < int(when["cells_completed_at_least"]):
+		return false
+	if when.has("queen_alive"):
+		var queen_alive: bool = main.queen != null and is_instance_valid(main.queen) and not main.colony_lost
+		if queen_alive != bool(when["queen_alive"]):
+			return false
 	return true
 
 static func _population(main: Node2D, role_key: String) -> int:

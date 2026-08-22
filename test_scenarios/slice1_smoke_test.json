@@ -1,5 +1,16 @@
 {
-  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
-  "nurses": 2, "builders": 2, "miners": 2,
-  "stop": {"max_days": 2}
+  "cells": 10, "nectar_foragers": 3, "pollen_foragers": 2,
+  "nurses": 1, "builders": 1, "miners": 1,
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "assert",
+      "when": {"cells_completed_at_least": 1},
+      "condition": {
+        "queen_alive": true,
+        "population_at_least": {"count": 1}
+      }
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
 }
