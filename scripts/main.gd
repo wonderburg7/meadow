@@ -47,6 +47,7 @@ const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
+const ChallengeComplete = preload("res://scripts/challenge_complete.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
 const NurseryPanel = preload("res://scripts/nursery_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
@@ -157,6 +158,7 @@ var hive: Node2D
 var hud: CanvasLayer
 var queen: Node2D
 var game_over: CanvasLayer
+var challenge_complete: CanvasLayer
 var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
 var winter_panel: CanvasLayer
@@ -478,6 +480,11 @@ func _ready() -> void:
 	game_over.restart_requested.connect(_on_restart_after_loss)
 	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
 	add_child(game_over)
+
+	challenge_complete = ChallengeComplete.new()
+	challenge_complete.continue_requested.connect(func(): challenge_complete.visible = false; get_tree().paused = false)
+	challenge_complete.menu_requested.connect(func(): challenge_complete.visible = false; menu.open())
+	add_child(challenge_complete)
 
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
 	hud.update_day(day, year_winter._season_text())

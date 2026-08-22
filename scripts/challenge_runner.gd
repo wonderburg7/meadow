@@ -481,16 +481,23 @@ func _complete() -> void:
 	main.debug_panel.set_save_load_enabled(true)
 	main.TutorialCheckpoint.clear()
 	main.gallerin_panel.clear_queue()
+	# The completion screen now carries this moment (UI_PLAN.md section 15
+	# slice 7) -- Dr Gallerin's own "complete" bubble was dropped rather
+	# than kept alongside it, since the two would otherwise say the same
+	# thing twice in a row.
+	var bees: int = main.get_tree().get_nodes_in_group("bees").size()
 	if Session.starting_level == 2:
-		main.gallerin_panel.show_now({
-			"id": "challenge_2_complete", "trigger": "complete", "repeatable": false,
-			"text": "Challenge complete: your colony has a balanced young workforce and enough stores to keep growing.\n\nWonderful. Nectar, pollen, nurses, builders, miners -- a small colony with actual departments. I shall try not to look too proud.",
-		})
+		main.challenge_complete.open(
+			"Challenge complete: your colony has a balanced young workforce and enough stores to keep growing.",
+			"Wonderful. Nectar, pollen, nurses, builders, miners -- a small colony with actual departments. I shall try not to look too proud.",
+			main.day, bees, main.hive.total("nectar"), main.hive.total("pollen"),
+		)
 	else:
-		main.gallerin_panel.show_now({
-			"id": "challenge_1_complete", "trigger": "complete", "repeatable": false,
-			"text": "Challenge complete: your first stores are in place.\n\nA promising start. One queen, one cell, and enough stored sweetness to suggest this was not a terrible idea.",
-		})
+		main.challenge_complete.open(
+			"Challenge complete: your first stores are in place.",
+			"A promising start. One queen, one cell, and enough stored sweetness to suggest this was not a terrible idea.",
+			main.day, bees, main.hive.total("nectar"), main.hive.total("pollen"),
+		)
 
 ## Challenge 1 only -- the queen's panel shows a direct "Build cell"
 ## button during 1.3 instead of the usual assign-role-then-click-a-spot
