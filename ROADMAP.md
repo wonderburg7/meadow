@@ -7,6 +7,21 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
+Latest update, 22 Aug 2026 (evening) -- Dave's hands-on pass found that
+several UI Plan slice-1-7 items don't actually work in-game, despite
+`NEXTSTEPS.md` previously marking them built: text scale, font choice
+and the dark/light theme toggle do nothing visible; panels lack the
+intended background/frame/spacing; the settings window isn't split into
+sections; the cell popup appears at the mouse instead of a fixed
+position; the meadow/hive view button only half-responds to clicks; and
+following a bee stops when it flies from hive to meadow (not the other
+way). Root cause and an eight-slice fix plan, ordered for token
+efficiency and tagged with a suggested model per slice, are in
+`UI_BUGFIX_PLAN.md`. Treat "UI Plan slices 1-7 built" below as
+unconfirmed until that plan lands. Confirmed working the same session:
+bumble flight, the settings-window prerequisite cascades, and the
+crab-spider predator behaviour.
+
 Last updated: 22 Aug 2026 -- bumble flight built (see the "Depth in what
 exists" row), waiting on Dave's hands-on check.
 
