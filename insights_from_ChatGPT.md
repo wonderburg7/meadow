@@ -14,12 +14,12 @@ below, which are ChatGPT's own record.
 
 | Slice | What | Status |
 |---|---|---|
-| C1 | Anything nurses feed before jelly | Built, 22 Aug -- headless comparison still open |
+| C1 | Anything nurses feed before jelly | Built and headless-verified, 22 Aug |
 | C2 | Stop undesignated jelly spill | Built, 22 Aug -- headless comparison still open |
-| C3 | Honey fanning stacks | Built, 22 Aug -- headless comparison still open |
+| C3 | Honey fanning stacks | Built and headless-verified, 22 Aug |
 | C4 | Stocking hatch fallback | Built, 22 Aug -- hatch test still open |
-| C5 | Role outcome telemetry | Not started |
-| C6 | Re-run balance comparisons | Not started |
+| C5 | Role outcome telemetry | Built and headless-verified, 22 Aug |
+| C6 | Re-run balance comparisons | Done, 22 Aug -- found and fixed a follow-on bug, see `CHATGPT_INSIGHTS_PLAN.md` |
 | B1 | Shared settings-cascade command | Not started |
 | B2 | Split role assignment from role mode | Not started |
 | B3 | Postcondition evidence for remaining verbs | Not started |

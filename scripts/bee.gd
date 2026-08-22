@@ -1063,8 +1063,10 @@ func _try_role_work(r: int) -> bool:
 				return true
 
 			# Nothing waiting to be fed -- an Anything-mode nurse fills the
-			# gap making jelly instead of standing idle.
-			if nurse_mode == "anything":
+			# gap making jelly instead of standing idle. "both" is the
+			# sub-mode's actual key (roles.gd) -- not "anything", which
+			# no code ever assigns to nurse_mode.
+			if nurse_mode == "both":
 				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
 					state = State.TO_JELLY_CELL
 					return true

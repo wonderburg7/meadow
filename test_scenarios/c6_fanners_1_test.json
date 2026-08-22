@@ -1,0 +1,13 @@
+{
+  "cells": 25, "nectar_foragers": 10, "pollen_foragers": 2,
+  "nurses": 2, "builders": 2, "miners": 1,
+  "actions": [
+    {
+      "when": {"day_at_least": 1},
+      "do": "assign_role",
+      "target": {"current_role": "forager", "count": 1},
+      "role": "honey"
+    }
+  ],
+  "stop": {"max_days": 6}
+}

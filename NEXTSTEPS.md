@@ -75,7 +75,7 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1, C2, C3 and C4 built, 22 Aug.** C1 fixed
+7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 through C5 built, 22 Aug.** C1 fixed
    `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
    (the plan named `bee_nursery.gd`, but the actual match-statement
    dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
@@ -110,15 +110,51 @@ into a history. Full history lives in `git log`.
    workers do maintenance work (clearing dead larvae, evicting redesignated
    cells) ahead of restocking -- is that wanted, or should Stocking be
    restock-only?
-   **Still open:** all four slices' own verification steps (2-Feed-vs-
-   2-Anything for C1; a headless run with no jelly cell marked for C2;
-   a 1-fanner-vs-4-fanner comparison for C3; a hatch test confirming a
-   Stocking-configured cell produces a Stocking worker for C4) -- worth
-   doing together as C6's combined re-run rather than four separate
-   scenario runs. No `mcp__godot__` tools were available this session, so
-   C4 has only been checked by source-reading and the two Python suites,
-   not a live boot.
-   **Next concrete action:** C5 (role outcome telemetry) -- see
-   `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A (action-driver
-   correctness, then harness speed/token efficiency) can follow in
-   either order.
+   **Still open:** C2's headless run with no jelly cell marked, and
+   C4's hatch test confirming a Stocking-configured cell produces a
+   Stocking worker.
+   C5 (role outcome telemetry, 22 Aug) added ten cumulative counters --
+   brood feeds, jelly batches, larval deaths, cells completed/cleaned/
+   evicted/restocked, blocks mined, honey batches deposited, cells
+   ripened -- to [diagnostic_log.gd](scripts/diagnostic_log.gd)'s
+   summary line, plus a live `role_outcomes` snapshot section (the same
+   ten as running totals, plus a live exposed/marked soil-block count
+   read off the `soil_blocks` group). Bumped from the actual completion
+   point in [bee_nursery.gd](scripts/bee_nursery.gd) (feed_brood,
+   nurse_make_jelly), [hive_cell.gd](scripts/hive_cell.gd) (_larva_dies,
+   add_build_progress, take_resource's eviction-drain branch,
+   add_fanning_progress's ripen-transition check),
+   [bee_building.gd](scripts/bee_building.gd) (architect_clean,
+   restock_go_to_target), [bee_honey.gd](scripts/bee_honey.gd)
+   (honey_deposit) and [bee_mining.gd](scripts/bee_mining.gd)
+   (miner_dig) -- additive only, no new log file or format.
+   `source_checks.py`, `balance_tests.py`, `FUNCTION_MAP.md`
+   regeneration and a `mcp__godot__` boot (clean, only the same
+   pre-existing warnings as before) all pass. **Verified with an actual
+   headless run** (`tools/run_scenario.py test_scenarios/slice1_smoke_test.json`):
+   a 2-day run logged 8 brood feeds and 3 cells completed in its summary,
+   all other new counters correctly zero for a run with no mining/honey/
+   eviction activity, and the first snapshot's `role_outcomes` showed
+   73 exposed soil blocks with every cumulative counter still at zero.
+   **C6 (re-run the balance comparisons) is done, 22 Aug.** New
+   scenarios in `test_scenarios/c6_*.json`. Before the comparison could
+   even run, found and fixed a follow-on bug C1 itself introduced:
+   [bee.gd:1067](scripts/bee.gd:1067) checked `nurse_mode == "anything"`,
+   but the sub-mode's real key is `"both"` (`roles.gd`) -- no code ever
+   assigns the literal `"anything"`, so C1's "fall back to jelly when
+   idle" half was dead code (an Anything-mode nurse with no hungry
+   brood just stood idle). Fixed the string; C1's headline fix (feed
+   before jelly) was unaffected, since that's a separate branch. With
+   the fix in: nurse comparison shows Anything (112 feeds, 0 deaths
+   over 10 days) tracking Feed (118 feeds, 2 deaths) instead of lagging
+   it; fanner comparison shows honey batches deposited and cells
+   ripened both rising with fanner count (27/27, 39/27, 55/34 for
+   1/2/4 fanners over 6 days) instead of staying flat, though not a
+   clean linear multiplier -- see `CHATGPT_INSIGHTS_PLAN.md`'s C6
+   writeup for why. `source_checks.py`, `balance_tests.py`,
+   `FUNCTION_MAP.md` regeneration and a `mcp__godot__` boot (clean,
+   only the same pre-existing warnings) all pass.
+   **Next concrete action:** C2's and C4's own still-open verification
+   steps (a headless run with no jelly cell marked; a hatch test for a
+   Stocking-configured cell), then Groups B and A (action-driver
+   correctness, then harness speed/token efficiency) in either order.

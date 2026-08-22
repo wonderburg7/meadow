@@ -83,7 +83,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Verify:** `source_checks.py`, plus a hatch test confirming a
   Stocking-configured cell actually produces a Stocking worker.
 
-### C5. Role outcome telemetry
+### C5. Role outcome telemetry -- done, 22 Aug
 - **File:** `diagnostic_log.gd` (new counters), fed from
   `bee_nursery.gd`, `bee_honey.gd`, `bee_building.gd`, `bee_mining.gd`.
 - **Add:** brood feeds, jelly batches, larval deaths; completed/
@@ -94,13 +94,42 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Verify:** `source_checks.py`; a headless run's summary line shows
   the new counters populated with plausible values.
 
-### C6. Re-run the balance comparisons (verification only, no code)
-- After C1-C3 ship, re-run the Feed/Anything nurse comparison and the
-  1/2/4-fanner comparison via `run_scenario.py`. Only *then* consider
-  touching `jelly_pollen_cost`, `jelly_honey_cost`, `jelly_per_batch`,
-  `honey_ripen_time`, `nectar_per_honey` or `honey_energy_factor` --
-  the audit's numbers were distorted by these bugs, not proven-bad
-  constants.
+### C6. Re-run the balance comparisons -- done, 22 Aug
+- New scenarios: `test_scenarios/c6_nurse_feed_test.json` /
+  `c6_nurse_both_test.json` (10 days, 3 nurses, default Feed vs
+  reassigned to Anything on day 1) and `c6_fanners_1_test.json` /
+  `_2_` / `_4_test.json` (6 days, 1/2/4 foragers reassigned to Honey on
+  day 1).
+- **Found a follow-on bug before the comparison could even run**: C1's
+  own fix at [bee.gd:1067](scripts/bee.gd:1067) checked
+  `nurse_mode == "anything"`, but the sub-mode's real key (`roles.gd`'s
+  table, and everywhere else that reads `nurse_mode`) is `"both"` --
+  no code ever assigns the literal string `"anything"`. C1's headline
+  fix (feed before jelly) still worked, since that's a separate branch,
+  but the "fall back to jelly when idle" half of C1 was dead code --
+  an Anything-mode nurse with no hungry brood just stood idle instead.
+  Fixed by changing the check to `"both"`.
+- **Nurse comparison** (brood feeds / deaths over 10 days): Feed 118
+  feeds, 2 deaths (1 starvation-adjacent builder loss, 1 larval death);
+  Anything 112 feeds, 0 deaths. Anything now tracks Feed instead of
+  lagging it -- C1 confirmed.
+- **Fanner comparison** (honey batches deposited / cells ripened over 6
+  days): 1 fanner 27/27, 2 fanners 39/27, 4 fanners 55/34. Deposits and
+  ripening both rise with fanner count instead of staying flat --
+  confirms C3's stacking fix is doing something -- but the increase
+  isn't linear: `cells_ripened` looks bottlenecked by how many wet
+  cells exist to fan at once (comb space, deposit rate) rather than by
+  fanning speed alone at low fanner counts. Good enough to confirm the
+  fix works; not a clean throughput multiplier, so don't read a
+  fanner-to-ripening-rate constant out of these three numbers.
+- `source_checks.py` and `balance_tests.py` both still pass after the
+  `bee.gd` fix.
+- **Conclusion:** C1 and C3 hold up under re-test. Still don't touch
+  `jelly_pollen_cost`, `jelly_honey_cost`, `jelly_per_batch`,
+  `honey_ripen_time`, `nectar_per_honey` or `honey_energy_factor` off
+  the back of this alone -- these five scenarios are a bugfix check,
+  not a balance pass; C2's "no jelly cell marked" run and C4's hatch
+  test are still open (see `NEXTSTEPS.md`).
 
 ---
 
