@@ -1027,10 +1027,11 @@ func _maybe_break_off_secondary() -> void:
 func _try_role_work(r: int) -> bool:
 	match r:
 		Role.NURSERY:
-			# Royal jelly first, for a nurse set to make it. It's the one
-			# thing a gyne larva cannot do without, and only nurses on
-			# this sub-mode produce any.
-			if nurse_mode != "feed":
+			# A nurse set to Jelly only ever makes jelly. Feed and Anything
+			# both tend to hungry brood first -- a larva can't wait, but
+			# jelly can be batched up whenever there's slack -- so Anything
+			# only falls back to jelly work once no brood needs feeding.
+			if nurse_mode == "jelly":
 				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
 					state = State.TO_JELLY_CELL
 					return true
@@ -1038,31 +1039,41 @@ func _try_role_work(r: int) -> bool:
 					timer = GameConfig.jelly_make_time
 					state = State.MAKING_JELLY
 					return true
-				if nurse_mode == "jelly":
-					return false
+				return false
 
 			# The queen lays directly into a cell (see _queen_lay), so
 			# there's never a loose egg on the floor to fetch -- a
 			# nurse's job is feeding brood already in a cell.
 			var brood = hive.find_brood_cell()
-			if brood == null:
-				return false
 			# A bee nursing only as a backup (the queen, by default)
 			# takes the job when a larva is actually waiting to be fed.
 			# A dedicated nurse also stands over already-fed brood,
 			# because that speeds up the time the larva has food for.
 			# Without this distinction the queen would ping-pong
 			# between the brood nest and her own idle state forever.
-			if r != role and not brood.needs_feeding():
-				return false
-			# Load up before walking over. A nurse feeds from what she is
-			# carrying, so an empty-handed one goes to the stores first.
-			if brood.needs_feeding() and not BeeNursery.can_feed(self, brood):
-				if BeeNursery.nurse_restock_errand(self, brood.brood_is_gyne):
+			if brood != null and (r == role or brood.needs_feeding()):
+				# Load up before walking over. A nurse feeds from what she
+				# is carrying, so an empty-handed one goes to the stores
+				# first.
+				if brood.needs_feeding() and not BeeNursery.can_feed(self, brood):
+					if BeeNursery.nurse_restock_errand(self, brood.brood_is_gyne):
+						return true
+				target_cell = brood
+				state = State.TO_BROOD
+				return true
+
+			# Nothing waiting to be fed -- an Anything-mode nurse fills the
+			# gap making jelly instead of standing idle.
+			if nurse_mode == "anything":
+				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
+					state = State.TO_JELLY_CELL
 					return true
-			target_cell = brood
-			state = State.TO_BROOD
-			return true
+				if BeeNursery.can_make_jelly(self):
+					timer = GameConfig.jelly_make_time
+					state = State.MAKING_JELLY
+					return true
+
+			return false
 
 		Role.BUILDER:
 			# Comb workers do two kinds of work, and which of them this one

@@ -7,46 +7,46 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **UI Plan slices 1-7 are built** (`UI_PLAN.md` section 15). Slices 1-6
-   are as before -- see `git log` for the slice-by-slice detail, or the
-   previous version of this file for slice 6's full description.
-   **Slice 7** adds the Challenge-completion screen; the winter forecast
-   restyle it was paired with turned out to already be done (slice 1
-   restyled `winter_panel.gd` as its own demonstration panel, so there
-   was nothing left for this slice to do there):
-   - New `challenge_complete.gd` (`CanvasLayer`, `game_over.gd`'s shape:
-     backdrop + centred panel, `get_tree().paused = true` while open) --
-     shown once a Challenge's final sub-stage completes. Unlike
-     `game_over.gd` the colony hasn't ended, so its two buttons are
-     "Continue playing" (unpauses, keeps playing the same now-fully-
-     unlocked colony) and "Main menu" (opens the main menu, same as
-     `game_over.gd`'s own menu button) -- no restart option, since
-     there's nothing to restart from.
-   - `challenge_runner.gd::_complete()` now calls
-     `main.challenge_complete.open(headline, flavour, day, bees, nectar,
-     pollen)` instead of showing Dr Gallerin's old "complete" bubble --
-     kept the same headline/flavour text, moved it into the new screen
-     rather than showing both (they'd otherwise say the same thing
-     twice in a row).
-   - `main.gd` instantiates and wires it the same way as `game_over`
-     (const preload, `var challenge_complete`, signal connections in
-     `_ready()`).
-   `source_checks.py` and `balance_tests.py` both pass. **No
-   `mcp__godot__` boot check this session** -- the Godot MCP tools
-   weren't available; say so rather than treating this as verified.
-   **Not yet hands-on checked.** Play (or dev-warp) through Challenge 1
-   or 2 to its final sub-stage and confirm: the new screen appears,
-   paused, with the right headline/flavour/summary numbers; "Continue
-   playing" unpauses and leaves the colony exactly as it was, now fully
-   unlocked; "Main menu" opens the menu as expected. Also worth a look:
-   the screen at 200% text scale and in all three themes, per section
-   14's usual checks -- not specifically verified this session.
-   Also still outstanding from before: slices 2-6's hands-on checks --
-   see `git log` for those lists, all of it still applies.
-   **Next slice** is slice 9 (final feature-gating/accessibility/layout
-   verification pass) -- slice 8 (the skill tree) is superseded by
-   `SKILL_TREE_PLAN.md`'s own build sequence, so slice 9 is next unless
-   Dave wants the skill tree prioritised first.
+1. **UI Plan slices 1-7 and 9 are built** (`UI_PLAN.md` section 15).
+   Slices 1-7 are as before -- see `git log` for the slice-by-slice
+   detail, or the previous version of this file for slice 7's full
+   description (the Challenge-completion screen).
+   **Slice 9** (22 Aug) is the verification pass -- ran both check
+   suites and a `mcp__godot__` boot (clean, only pre-existing warnings),
+   regenerated a stale `FUNCTION_MAP.md`, and added the seven missing
+   accessibility keys (`ui_theme`, `text_scale`, `ui_typeface`,
+   `reduced_motion`, `screen_shake`, `tooltip_delay`,
+   `show_info_badges`) to `stage_gate.gd::ACCESSIBILITY_KEYS`, which
+   section 10 already specified but slice 1 never actually added.
+   **The pass surfaced one real, unfixed gap, not just a checklist
+   pass:** the slice-1b Theme/text-scale migration only ever reached
+   `colony_panel.gd`, `nursery_panel.gd`, `main_menu.gd`,
+   `winter_panel.gd`, `challenge_complete.gd` and `ui.gd`. `hud.gd` --
+   the file slices 2 and 3 both built, and the single biggest source of
+   on-screen UI text -- still has all 50 of its original
+   `add_theme_font_size_override` calls and none converted to
+   `theme_type_variation`; `debug_panel.gd` (8 calls), `game_over.gd`
+   (3) and `gallerin_panel.gd` (1) are the same. **This means
+   `Session.text_scale` at 200% does nothing to the top-right controls,
+   goal shelf, selection tray, command tray or settings window today**
+   -- most of what's actually on screen during play. See `UI_PLAN.md`
+   slice 9's writeup for the full detail, including one more thing that
+   needs Dave's own eyes rather than more reading (whether a `Button`
+   using a `Label`-registered type variation actually picks up the
+   scaled font size at all -- untestable without running the game).
+   **Next concrete action:** finish the slice-1b migration for `hud.gd`
+   and `debug_panel.gd` (the two files that matter most -- `game_over.gd`
+   and `gallerin_panel.gd` are much smaller and can follow). This is
+   real build work, not another verification pass -- worth treating as
+   its own slice.
+   Everything visual/behavioural from slices 1-7 (rendering at each
+   resolution/theme/scale, the narrow-window reflow, the bottom-row
+   grows-taller rule, the Challenge-completion screen's actual play
+   test) is still only checked as far as source-reading and a clean
+   boot can confirm -- all of it still needs Dave's hands-on pass; see
+   `git log` for the per-slice hands-on-check lists, all still open.
+   Slice 8 (the skill tree) stays superseded by `SKILL_TREE_PLAN.md`'s
+   own build sequence.
 2. **Game model slices 1-4 are built** (`DESIGN_BACKLOG.md` section 13).
    **Not yet hands-on checked** -- slice 3's prerequisite cascade only
    fires from the settings-window checkboxes, which nothing automated
@@ -75,11 +75,19 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-7. **`CHATGPT_INSIGHTS_PLAN.md` is new, not started** -- 16 small slices
-   turning `insights_from_ChatGPT.md`'s 22 Aug entries into real fixes.
-   Suggested first move: Group C (real gameplay bugs -- Anything-mode
-   nurses feeding after jelly instead of before, honey fanning not
-   stacking, undesignated jelly spill, Stocking hatch fallback), since
-   those affect the game as it plays today, not just the headless
-   harness. Groups B and A (action-driver correctness, then harness
-   speed/token efficiency) can follow in either order.
+7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 built, 22 Aug.** Fixed
+   `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
+   (the plan named `bee_nursery.gd`, but the actual match-statement
+   dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
+   hungry brood before falling back to jelly work, instead of trying
+   jelly first and starving larvae almost like Jelly mode does.
+   `source_checks.py`, `balance_tests.py` and a clean `mcp__godot__`
+   boot all pass. **Still open:** the plan's own verification step, a
+   headless 2-Feed-vs-2-Anything comparison via `run_scenario.py`
+   showing Anything no longer lags Feed on population growth -- worth
+   doing once, alongside C2/C3, as C6's combined re-run rather than
+   three separate scenario runs. **Next concrete action:** C2
+   (undesignated jelly spill) or C3 (honey fanning doesn't stack) --
+   see `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A (action-driver
+   correctness, then harness speed/token efficiency) can follow in
+   either order.
