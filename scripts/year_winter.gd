@@ -218,18 +218,24 @@ func _refresh_signals(delta: float) -> void:
 		elif cell.is_empty() and not cell.keep_empty:
 			free_cells += 1
 
+	# A 4th element, where present, is a "category" used to sort a signal
+	# into the Colony/Nursery drawers' "needing attention" blocks
+	# (UI_PLAN.md section 15 slice 4) -- separate from the 3rd element
+	# ("action"), which is what a click on this line does in hud.gd's
+	# corner strip. The two can differ: a line worth flagging in the
+	# nursery drawer isn't always one with something sensible to select.
 	if starving > 0:
 		lines.append(["%d bees are about to starve" % starving, 2, "starving"])
 	if hungry_brood > 0:
-		lines.append(["%d larvae are going hungry" % hungry_brood, 2, "hungry_brood"])
+		lines.append(["%d larvae are going hungry" % hungry_brood, 2, "hungry_brood", "brood"])
 	if dead_cells > 0:
-		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2, "dead_cells"])
+		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2, "dead_cells", "brood"])
 	if main.day >= int(GameConfig.pollen_warning_first_day) and main.hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
-		lines.append(["Almost no pollen — the queen cannot lay", 2])
+		lines.append(["Almost no pollen — the queen cannot lay", 2, "", "brood"])
 	if main.hive.total("nectar") < 40.0 and main.hive.total_honey() < 10.0:
 		lines.append(["Food is running out", 2])
 	if nurses == 0 and main.hive.cells_holding("brood").size() > 0:
-		lines.append(["No nurses — brood will not develop at all", 2, ""])
+		lines.append(["No nurses — brood will not develop at all", 2, "", "brood"])
 	if free_cells == 0:
 		lines.append(["No free cells — nowhere to store or lay", 1])
 	if hungry > 0:
@@ -237,7 +243,7 @@ func _refresh_signals(delta: float) -> void:
 	if foragers == 0:
 		lines.append(["No foragers — nothing is coming in", 1, ""])
 	if comb_workers == 0 and dead_cells > 0:
-		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells"])
+		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells", "brood"])
 	if Session.rain_intensity > GameConfig.rain_forage_limit:
 		lines.append(["Raining hard — foragers are grounded", 1])
 	elif Session.rain_intensity > 0.05:
@@ -282,11 +288,12 @@ func _refresh_panels(bees: Array) -> void:
 	_refresh_recruit_gap(bees)
 
 	if main.colony_panel.is_open():
-		main.colony_panel.refresh(counts, main.hud.corner_texts, main.history_samples)
+		main.colony_panel.refresh(counts, main.hud.corner_texts, main.history_samples, main.hud.shown_signals)
 
 	if main.nursery_panel.is_open() or _nursery_stat_pinned():
 		main.nursery_panel.refresh(
-			main.hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds
+			main.hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds,
+			main.hive.brood_stage_counts(), main.hud.shown_signals
 		)
 		for key in main.nursery_panel.corner_texts.keys():
 			main.hud.corner_texts[key] = main.nursery_panel.corner_texts[key]
@@ -361,7 +368,9 @@ func _on_nursery_window_requested() -> void:
 		main.hive.zone_summary(),
 		main._role_counts(),
 		_emergence_counts(),
-		GameConfig.emergence_window_seconds
+		GameConfig.emergence_window_seconds,
+		main.hive.brood_stage_counts(),
+		main.hud.shown_signals
 	)
 
 func _sample_rates() -> void:

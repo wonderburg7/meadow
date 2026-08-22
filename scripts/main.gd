@@ -445,6 +445,9 @@ func _ready() -> void:
 	colony_panel.role_selection_requested.connect(input_selection._on_role_selection_requested)
 	colony_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
 	colony_panel.favourite_selected.connect(camera_view._focus_on_bee)
+	# Same "needing attention" click-to-select handler as the corner
+	# problem strip -- one place decides what a signal's action does.
+	colony_panel.signal_clicked.connect(year_winter._on_signal_clicked)
 	add_child(colony_panel)
 
 	nursery_panel = NurseryPanel.new()
@@ -452,6 +455,7 @@ func _ready() -> void:
 	# otherwise the hive stays lit up with no panel to explain why
 	nursery_panel.closed.connect(orders_zones._clear_zone_glow)
 	nursery_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
+	nursery_panel.signal_clicked.connect(year_winter._on_signal_clicked)
 	add_child(nursery_panel)
 
 	winter_panel = WinterPanel.new()

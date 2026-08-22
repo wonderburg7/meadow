@@ -17,6 +17,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 ## Emitted when a role tally is clicked. `focus` narrows foragers to one
 ## resource; "" means the whole role.
@@ -26,6 +27,11 @@ signal pinned_changed()
 ## A row in the Favourites list was clicked -- select and jump the
 ## camera to that bee. See BEE_INDIVIDUALITY_PLAN.md section 7.
 signal favourite_selected(bee: Node2D)
+## A line in "Needing attention" was clicked -- same [text, severity,
+## action] shape hud.gd's own corner strip uses. main.gd wires this to
+## the same handler (year_winter.gd::_on_signal_clicked) so a signal
+## does the same thing wherever it's clicked from.
+signal signal_clicked(action: String)
 
 ## The job tallies. Built from the role table, so a new role appears
 ## here without anyone remembering to add it -- which is exactly the bug
@@ -71,12 +77,20 @@ var section_open: Dictionary = {}
 var favourites_column: VBoxContainer
 var favourites_empty_label: Label
 
+## Rebuilt every refresh() -- see _rebuild_needing_attention. Same reason
+## as the favourites column: there's no fixed key set, since which
+## problems exist (and how many) changes at any time.
+var needing_attention_column: VBoxContainer
+var needing_attention_ok_label: Label
+
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 11
 	add_to_group("colony_panel")
 
 	panel = PanelContainer.new()
+	panel.theme = UiTheme.build_theme()
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.offset_left = 16
 	panel.offset_top = 60
@@ -90,39 +104,57 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Colony"
-	title.add_theme_font_size_override("font_size", 16)
+	title.theme_type_variation = "Heading"
 	column.add_child(title)
 
 	var hint := Label.new()
 	hint.text = "Click a row to select every bee in it. Star a readout to keep it in the corner of the screen."
-	hint.add_theme_font_size_override("font_size", 10)
+	hint.theme_type_variation = "Tiny"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(300, 0)
-	hint.add_theme_color_override("font_color", Color(0.7, 0.75, 0.8))
+	hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	column.add_child(hint)
 
-	# Three collapsible sections rather than one long list. Who is doing
-	# what is the thing you open this for most, so it starts open; the
-	# readouts and the plot are there when you want them and out of the
-	# way when you don't.
+	# Priority order per UI_PLAN.md section 5: is anything wrong right
+	# now, then who is doing what, then the readouts and favourites you
+	# open this for less often, then the plot last since its own history
+	# is only worth building on request.
+	needing_attention_column = _section(column, "Needing attention", true)
+	needing_attention_ok_label = Label.new()
+	needing_attention_ok_label.text = "Nothing needs attention right now."
+	needing_attention_ok_label.theme_type_variation = "Small"
+	needing_attention_ok_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	needing_attention_ok_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
+	needing_attention_column.add_child(needing_attention_ok_label)
+
 	var jobs := _section(column, "Who is doing what", true)
 	for key in Roles.count_keys():
 		jobs.add_child(_make_role_row(key))
-
-	favourites_column = _section(column, "Favourites", true)
-	favourites_empty_label = Label.new()
-	favourites_empty_label.text = "Star a bee from its selection panel to pin it here."
-	favourites_empty_label.add_theme_font_size_override("font_size", 11)
-	favourites_empty_label.add_theme_color_override("font_color", Color(0.65, 0.7, 0.75))
-	favourites_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	favourites_empty_label.custom_minimum_size = Vector2(300, 0)
-	favourites_column.add_child(favourites_empty_label)
 
 	var readouts := _section(column, "Readouts", true)
 	for entry in STAT_ROWS:
 		readouts.add_child(_make_stat_row(entry))
 
+	favourites_column = _section(column, "Favourites", true)
+	favourites_empty_label = Label.new()
+	favourites_empty_label.text = "Star a bee from its selection panel to pin it here."
+	favourites_empty_label.theme_type_variation = "Small"
+	favourites_empty_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	favourites_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	favourites_empty_label.custom_minimum_size = Vector2(300, 0)
+	favourites_column.add_child(favourites_empty_label)
+
 	_build_plot(_section(column, "Over time", false))
+
+## The five states a plain Godot Button actually looks up ("selected" and
+## "locked" from UiTheme's seven apply to custom-drawn controls like the
+## future skill tree, not a native Button) -- one place to apply them so
+## every button in this panel draws from the same tokens.
+func _style_button(button: Button) -> Button:
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	return button
 
 ## A collapsible section. Same pattern as the settings window and the cell
 ## popup, so all three behave the same way.
@@ -132,8 +164,9 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 
 	var header := Button.new()
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	header.add_theme_font_size_override("font_size", 12)
+	header.theme_type_variation = "Small"
 	header.focus_mode = Control.FOCUS_NONE
+	_style_button(header)
 	column.add_child(header)
 
 	var body := VBoxContainer.new()
@@ -155,7 +188,8 @@ func _make_role_row(key: String) -> Control:
 	var button := Button.new()
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(0, 22)
-	button.add_theme_font_size_override("font_size", 12)
+	button.theme_type_variation = "Small"
+	_style_button(button)
 	button.text = "%s: 0" % Roles.label_for_key(key)
 	# A colour chip in the label so the tallies, the ring plot and the
 	# comb overlays all read as one palette.
@@ -179,7 +213,8 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	var star := Button.new()
 	star.toggle_mode = true
 	star.custom_minimum_size = Vector2(26, 20)
-	star.add_theme_font_size_override("font_size", 12)
+	star.theme_type_variation = "Small"
+	_style_button(star)
 	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
 	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
@@ -188,7 +223,7 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	star_buttons[key] = star
 
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 12)
+	label.theme_type_variation = "Small"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(270, 0)
 	row.add_child(label)
@@ -218,7 +253,7 @@ func _build_plot(column: VBoxContainer) -> void:
 
 	var title := Label.new()
 	title.text = "Over time"
-	title.add_theme_font_size_override("font_size", 13)
+	title.theme_type_variation = "Body"
 	header.add_child(title)
 	header.add_child(UI.info_badge(
 		"How one number has moved over the last quarter of an hour or so of game time. Shape matters more than the values: a store that climbs and then flattens is a colony that has run out of somewhere to put things, and a population that flattens while nectar keeps climbing is one short of nursery cells."
@@ -230,7 +265,8 @@ func _build_plot(column: VBoxContainer) -> void:
 		var btn := Button.new()
 		btn.text = entry.label
 		btn.toggle_mode = true
-		btn.add_theme_font_size_override("font_size", 11)
+		btn.theme_type_variation = "Small"
+		_style_button(btn)
 		btn.button_pressed = entry.key == plot_series
 		var key: String = entry.key
 		btn.pressed.connect(func(): _choose_series(key))
@@ -242,8 +278,8 @@ func _build_plot(column: VBoxContainer) -> void:
 	column.add_child(plot)
 
 	plot_label = Label.new()
-	plot_label.add_theme_font_size_override("font_size", 11)
-	plot_label.add_theme_color_override("font_color", Color(0.72, 0.78, 0.85))
+	plot_label.theme_type_variation = "Small"
+	plot_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	column.add_child(plot_label)
 
 func _choose_series(key: String) -> void:
@@ -275,7 +311,7 @@ func _draw_plot() -> void:
 	if history.size() < 2:
 		plot.draw_string(
 			font, frame.position + Vector2(8, 22), "Not enough history yet.",
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.7, 0.72, 0.76)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UiTheme.color("text_secondary")
 		)
 		return
 
@@ -306,11 +342,11 @@ func _draw_plot() -> void:
 	)
 	plot.draw_string(
 		font, Vector2(2, frame.position.y + 10), "%d" % int(highest),
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.7, 0.72, 0.76)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UiTheme.color("text_secondary")
 	)
 	plot.draw_string(
 		font, Vector2(2, frame.position.y + frame.size.y), "0",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.7, 0.72, 0.76)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UiTheme.color("text_secondary")
 	)
 
 	var latest: float = float(history[count - 1].get(plot_series, 0.0))
@@ -330,8 +366,10 @@ func is_open() -> bool:
 ## Called each second by main.gd with the live figures. `counts` is keyed
 ## by "role|focus" to match ROLE_ROWS. `texts` carries the ready-made
 ## readout lines, so the corner and this panel can never disagree about
-## what a number says -- both are handed the same strings.
-func refresh(counts: Dictionary, texts: Dictionary, samples: Array) -> void:
+## what a number says -- both are handed the same strings. `signals` is
+## main.hud.shown_signals -- the same [text, severity, action] list the
+## corner problem strip is built from (year_winter.gd::_refresh_signals).
+func refresh(counts: Dictionary, texts: Dictionary, samples: Array, signals: Array = []) -> void:
 	if not panel.visible:
 		return
 
@@ -342,9 +380,23 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array) -> void:
 		stat_labels[stat_key].text = str(texts.get(stat_key, ""))
 
 	_rebuild_favourites()
+	_rebuild_needing_attention(signals)
 
 	history = samples
 	plot.queue_redraw()
+
+## Rebuilt from scratch each refresh, same reason as the favourites list
+## -- which problems exist, and how many, changes at any time.
+func _rebuild_needing_attention(signals: Array) -> void:
+	for child in needing_attention_column.get_children():
+		if child != needing_attention_ok_label:
+			child.queue_free()
+
+	needing_attention_ok_label.visible = signals.is_empty()
+	for entry in signals:
+		needing_attention_column.add_child(
+			UI.signal_line_button(entry, func(action): signal_clicked.emit(action))
+		)
 
 ## Rebuilt from scratch each refresh, same as the plot -- there's no
 ## fixed set of keys to update in place, since which bees are favourited
@@ -372,7 +424,8 @@ func _make_favourite_row(bee: Node2D) -> Control:
 	var button := Button.new()
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(0, 22)
-	button.add_theme_font_size_override("font_size", 12)
+	button.theme_type_variation = "Small"
+	_style_button(button)
 	button.text = "★ %s — %s — %d%%" % [
 		bee.bee_name, Roles.label_for(bee.role),
 		int(100.0 * bee.energy / max(0.001, GameConfig.energy_capacity)),

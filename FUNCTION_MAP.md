@@ -26,7 +26,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (2,158 lines)
+## hud.gd (2,161 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -119,18 +119,18 @@ Challenge goal readout.
 1990 func _common_role(bees: Array) -> int
 2003 func _make_role_menu(label: String, tip: String, items: Array) -> Control
 2017 func _refresh_selection_text() -> void
-2083 func _update_command_tray_width() -> void
-2090 func set_winter_button_visible(value: bool) -> void
-2096 func set_view_label(in_hive: bool) -> void
-2101 func set_colony_button_visible(value: bool) -> void
-2107 func set_nursery_button_visible(value: bool) -> void
-2113 func set_view_button_visible(value: bool) -> void
-2122 func set_allowed_role_keys(keys: Array) -> void
-2127 func set_allowed_mode_keys(keys: Array) -> void
-2135 func set_allowed_designation_keys(keys: Array) -> void
-2140 func set_hatch_lock_visible(value: bool) -> void
-2145 func set_soil_marking_visible(value: bool) -> void
-2155 func set_queen_build_button_visible(value: bool) -> void
+2086 func _update_command_tray_width() -> void
+2093 func set_winter_button_visible(value: bool) -> void
+2099 func set_view_label(in_hive: bool) -> void
+2104 func set_colony_button_visible(value: bool) -> void
+2110 func set_nursery_button_visible(value: bool) -> void
+2116 func set_view_button_visible(value: bool) -> void
+2125 func set_allowed_role_keys(keys: Array) -> void
+2130 func set_allowed_mode_keys(keys: Array) -> void
+2138 func set_allowed_designation_keys(keys: Array) -> void
+2143 func set_hatch_lock_visible(value: bool) -> void
+2148 func set_soil_marking_visible(value: bool) -> void
+2158 func set_queen_build_button_visible(value: bool) -> void
 ```
 
 ## bee.gd (1,918 lines)
@@ -315,7 +315,7 @@ One cell: contents, brood, honey ripening, how it draws.
 856  func development_percent() -> float
 ```
 
-## hive.gd (879 lines)
+## hive.gd (897 lines)
 
 The comb as a whole: cells, navigation, finding a cell.
 
@@ -346,77 +346,78 @@ The comb as a whole: cells, navigation, finding a cell.
 337  func _tier_weights() -> Array
 352  func record_lay(cell: Node2D) -> void
 366  func zone_summary() -> Dictionary
-393  func find_food_cell(except: Node2D = null) -> Node2D
-406  func has_room_for_egg() -> bool
-409  func find_cell_with(resource_type: String) -> Node2D
-422  func find_brood_cell() -> Node2D
-437  func find_cell_needing_fanning() -> Node2D
-445  func find_honey_target() -> Node2D
-448  func find_unfinished_cell() -> Node2D
-457  func find_cell_needing_cleaning() -> Node2D
-461  func find_cell_needing_eviction() -> Node2D
-469  func has_gyne_brood() -> bool
-477  func has_room_elsewhere(resource_type: String, except: Node2D) -> bool
-480  # --- growing the comb ---------------------------------------------
-514  func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D
-548  func set_keep_clear(hex: Vector2i, value: bool) -> void
-554  func is_keep_clear(hex: Vector2i) -> bool
-561  func can_build_on(hex: Vector2i) -> bool
-564  func _can_build_on(hex: Vector2i) -> bool
-567  func _start_site_at(hex: Vector2i) -> Node2D
-583  func create_cell_site_at(hex: Vector2i) -> Node2D
-588  # --- navigation ---------------------------------------------------
-599  func build_navigation() -> void
-640  func _is_solid(hex: Vector2i) -> bool
-646  func _tile_cost(hex: Vector2i) -> float
-649  func tile_is_walkable(hex: Vector2i) -> bool
-658  func nearest_walkable_point(point: Vector2) -> Vector2
-685  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
-719  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
-743  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
-753  # --- mining -------------------------------------------------------
-762  func refresh_edge_flags() -> void
-779  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-801  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-820  func _is_markable_block(node) -> bool
-827  func mine_stand_hex(block: Node2D)
-850  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
-868  func remove_block(block: Node2D, floor_maker: Callable) -> void
-878  func announce() -> void
+396  func brood_stage_counts() -> Dictionary
+411  func find_food_cell(except: Node2D = null) -> Node2D
+424  func has_room_for_egg() -> bool
+427  func find_cell_with(resource_type: String) -> Node2D
+440  func find_brood_cell() -> Node2D
+455  func find_cell_needing_fanning() -> Node2D
+463  func find_honey_target() -> Node2D
+466  func find_unfinished_cell() -> Node2D
+475  func find_cell_needing_cleaning() -> Node2D
+479  func find_cell_needing_eviction() -> Node2D
+487  func has_gyne_brood() -> bool
+495  func has_room_elsewhere(resource_type: String, except: Node2D) -> bool
+498  # --- growing the comb ---------------------------------------------
+532  func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D
+566  func set_keep_clear(hex: Vector2i, value: bool) -> void
+572  func is_keep_clear(hex: Vector2i) -> bool
+579  func can_build_on(hex: Vector2i) -> bool
+582  func _can_build_on(hex: Vector2i) -> bool
+585  func _start_site_at(hex: Vector2i) -> Node2D
+601  func create_cell_site_at(hex: Vector2i) -> Node2D
+606  # --- navigation ---------------------------------------------------
+617  func build_navigation() -> void
+658  func _is_solid(hex: Vector2i) -> bool
+664  func _tile_cost(hex: Vector2i) -> float
+667  func tile_is_walkable(hex: Vector2i) -> bool
+676  func nearest_walkable_point(point: Vector2) -> Vector2
+703  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
+737  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
+761  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
+771  # --- mining -------------------------------------------------------
+780  func refresh_edge_flags() -> void
+797  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+819  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+838  func _is_markable_block(node) -> bool
+845  func mine_stand_hex(block: Node2D)
+868  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
+886  func remove_block(block: Node2D, floor_maker: Callable) -> void
+896  func announce() -> void
 ```
 
-## main.gd (926 lines)
+## main.gd (930 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
 ```
 284  func _ready() -> void
-495  # --- public surface other scripts call directly -------------------
-502  func is_on_screen(node: Node2D) -> bool
-505  func hive_entrance_inside() -> Vector2
-508  func entrance_wait_point(side: int) -> Vector2
-511  func move_bee_into_hive(bee: Node2D) -> void
-514  func move_bee_out_of_hive(bee: Node2D) -> void
-517  func mark_death(bee: Node2D) -> void
-520  func finish_mining(block: Node2D) -> void
-523  func save_run() -> void
-526  func begin_winter_countdown() -> void
-529  # --- per-frame ----------------------------------------------------
-539  func _process(delta: float) -> void
-585  # --- the frame rate readout ----------------------------------------
-604  func _sample_fps() -> void
-627  func _reseed_meadow(delta: float) -> void
-642  func _hatch_ready_brood() -> void
-672  func _advance_weather(delta: float) -> void
-700  func _apply_rain_overlay() -> void
-715  func _check_for_loss() -> void
-737  func _check_colony_energy(delta: float) -> void
-766  func _role_counts() -> Dictionary
-780  func _update_population_readout(bees = null) -> void
-801  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-807  func _prune_selection() -> void
-820  func _on_restart_after_loss() -> void
-826  func _on_level_chosen(level: int) -> void
-841  func _apply_scenario_boot_arg() -> void
-916  func _end_scenario_run(outcome: String) -> void
+499  # --- public surface other scripts call directly -------------------
+506  func is_on_screen(node: Node2D) -> bool
+509  func hive_entrance_inside() -> Vector2
+512  func entrance_wait_point(side: int) -> Vector2
+515  func move_bee_into_hive(bee: Node2D) -> void
+518  func move_bee_out_of_hive(bee: Node2D) -> void
+521  func mark_death(bee: Node2D) -> void
+524  func finish_mining(block: Node2D) -> void
+527  func save_run() -> void
+530  func begin_winter_countdown() -> void
+533  # --- per-frame ----------------------------------------------------
+543  func _process(delta: float) -> void
+589  # --- the frame rate readout ----------------------------------------
+608  func _sample_fps() -> void
+631  func _reseed_meadow(delta: float) -> void
+646  func _hatch_ready_brood() -> void
+676  func _advance_weather(delta: float) -> void
+704  func _apply_rain_overlay() -> void
+719  func _check_for_loss() -> void
+741  func _check_colony_energy(delta: float) -> void
+770  func _role_counts() -> Dictionary
+784  func _update_population_readout(bees = null) -> void
+805  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+811  func _prune_selection() -> void
+824  func _on_restart_after_loss() -> void
+830  func _on_level_chosen(level: int) -> void
+845  func _apply_scenario_boot_arg() -> void
+920  func _end_scenario_run(outcome: String) -> void
 ```

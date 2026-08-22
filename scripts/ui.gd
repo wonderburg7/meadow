@@ -3,6 +3,8 @@ extends RefCounted
 ## Usage: const UI = preload("res://scripts/ui.gd")
 ##        row.add_child(UI.info_badge("what this control does"))
 
+const UiTheme = preload("res://scripts/ui_theme.gd")
+
 const BADGE_SIZE := 16.0
 
 ## A small dark "i" in a white circle. Hovering it shows `text`.
@@ -91,6 +93,38 @@ static func clear_current_mark(button: Button) -> void:
 	button.remove_theme_color_override("font_color")
 	for style_name in ["normal", "hover", "pressed", "focus"]:
 		button.remove_theme_stylebox_override(style_name)
+
+## One line of a "things going wrong" list -- the same shape hud.gd's
+## corner problem strip already builds from (year_winter.gd::
+## _refresh_signals), shared here so the Colony and Nursery drawers'
+## "needing attention" blocks read the same way that strip does rather
+## than inventing their own colours. `entry` is [text, severity] or
+## [text, severity, action] (see year_winter.gd for what action means).
+## Connects nothing itself -- pass `on_action` to decide what a click on
+## an actionable line does, since that differs per caller.
+static func signal_line_button(entry: Array, on_action: Callable = Callable()) -> Button:
+	var line := Button.new()
+	line.text = "• %s" % entry[0]
+	line.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	line.flat = true
+	line.focus_mode = Control.FOCUS_NONE
+	line.theme_type_variation = "Small"
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	var severity: int = int(entry[1]) if entry.size() > 1 else 0
+	var colour: Color = UiTheme.color("text_secondary")
+	if severity == 1:
+		colour = UiTheme.color("warning")
+	elif severity >= 2:
+		colour = UiTheme.color("danger")
+	line.add_theme_color_override("font_color", colour)
+	line.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
+
+	var action: String = entry[2] if entry.size() > 2 else ""
+	if action != "" and on_action.is_valid():
+		line.tooltip_text = "Click to select what this is about."
+		line.pressed.connect(func(): on_action.call(action))
+	return line
 
 ## Applies the current Session.show_info_badges setting to every badge
 ## already on screen. `node` is any node in the tree -- it's only used to

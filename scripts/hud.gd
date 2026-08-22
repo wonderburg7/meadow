@@ -2063,10 +2063,13 @@ func _refresh_selection_text() -> void:
 			]
 		activity_label.text = activity
 
-		var trait := b.trait_text()
+		# "trait" is a reserved GDScript word (used for the language's own
+		# trait/mixin feature), so this can't be called that even though
+		# it holds a bee's rolled trait line.
+		var trait_line: String = b.trait_text()
 		if b.bee_fact != "":
-			trait += ("\n" if trait != "" else "") + "\"%s\"" % b.bee_fact
-		trait_label.text = trait
+			trait_line += ("\n" if trait_line != "" else "") + "\"%s\"" % b.bee_fact
+		trait_label.text = trait_line
 	else:
 		identity_label.text = "%d bees selected" % shown_bees.size()
 		energy_label.text = ""

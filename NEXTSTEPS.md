@@ -7,54 +7,70 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **UI Plan slices 1-3 are built** (`UI_PLAN.md` section 15). Slice 1
-   is the shared design-token/layout/text-scale foundation
-   (`scripts/ui_theme.gd`, `scripts/ui_layout.gd`, the six new
-   `Session` interface-preference fields, `show_info_badges` defaulting
-   off, `winter_panel.gd` restyled as the demonstration panel). Slice 2
-   reworks `hud.gd`'s top-right bar into two rows (pause/speed, then
-   Colony/Nursery/Winter/view-switch via icon-plus-label buttons) and
-   extends the goal shelf with a struck-through last-completed goal and
-   optional progress bar. Slice 3 splits the old selection panel into
-   two trays (`UI_PLAN.md` section 5): a bottom-left **selection tray**
-   with four independently hideable fields (identity/job, energy/load,
-   activity, trait/quote -- toggled from a `⚙` cog, new `Session`
-   fields `show_selection_*`), and a bottom-centre **command tray**
-   whose primary row (Doing/Orders/restock/queen-build/the new "Follow
-   bee" toggle) wraps in an `HFlowContainer` capped to
-   `ui_layout.gd::command_tray_max_width()` so it can never grow into
-   Dr Gallerin's reserve; Job, backup role, finish-first and Favourite
-   moved into a collapsible "More…" panel below. `gallerin_panel.gd`
-   now exposes `RESERVE_WIDTH` as a real constant, which `ui_layout.gd`
-   reads instead of duplicating the number. "Follow bee" is new
-   camera-tracking behaviour in `camera_view.gd`
-   (`_handle_follow`/`_on_follow_bee_toggled`, driven by `main.gd`'s new
-   `following_bee` field) -- continuous centring, not a one-off snap;
-   it stops automatically on any selection change.
+1. **UI Plan slices 1-4 are built** (`UI_PLAN.md` section 15). Slices
+   1-3 are as before (tokens/text-scale foundation, two-row top bar plus
+   goal shelf, selection/command trays). **Slice 4** restyles the Colony
+   and Nursery drawers under `ui_theme.gd`'s tokens and reorders each
+   per section 5's priority list. Colony drawer: a new "Needing
+   attention" section now leads (repurposing `main.hud.shown_signals` --
+   the same list the corner problem strip already builds from -- as a
+   clickable, severity-coloured list via a new shared
+   `UI.signal_line_button()` helper), then "Who is doing what", then
+   "Readouts", then "Favourites", then "Over time" last. Nursery drawer:
+   a new "Brood needing attention" section leads (the same signals list,
+   filtered to a new "brood" category tag `year_winter.gd` now attaches
+   to the hungry-brood/dead-cell/no-pollen/no-nurse lines), then "The
+   zone" (now capacity only -- cell counts, not the by-role breakdown),
+   then a new **"Brood stages"** row (egg/larva/capped counts from a new
+   `Hive.brood_stage_counts()`, which buckets each cell's existing
+   `development_percent()` into thirds -- presentation only, no new
+   simulation state), then "Priority tiers", "The colony now" (ring),
+   "Emerging", and "Intended roles" (the by-role breakdown, moved to its
+   own section) last. Both drawers' new signal sections share one click
+   handler (`colony_panel.gd`/`nursery_panel.gd`'s new `signal_clicked`
+   signal, wired in `main.gd` to `year_winter.gd::_on_signal_clicked`,
+   the same handler the corner strip already uses).
+   **While boot-checking this slice, found and fixed a real parser bug
+   in `hud.gd` left over from slice 3** (never boot-tested until this
+   session, since no Godot MCP tools were available before now): a local
+   variable named `trait` at `hud.gd:2066` (`trait` is a reserved
+   GDScript word) plus a `:=` type-inference failure on the same line
+   once renamed (the documented landmine in `.claude/rules/gdscript.md`
+   -- `b` isn't statically typed as `Bee`) were both blocking the whole
+   project from parsing at all. Fixed by renaming to `trait_line` and
+   giving it an explicit `: String` type. This means **slices 2 and 3
+   have now had their first real boot check too**, not just slice 4 --
+   the project loads and runs with no parser/compile errors and no new
+   warnings.
    `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
-   (regenerated) all pass/are clean. **No Godot MCP tools were available
-   this session, so slice 3 has not had even a boot-level check** --
-   worth doing before the hands-on pass below.
-   **Not yet hands-on checked, any of slices 2-3** -- start or continue
-   Challenge 1 and confirm: the two-row top-right bar looks right and
-   doesn't overlap the settings cog; the goal shelf's strikethrough and
-   progress bar behave across a sub-stage transition; selecting a bee
-   shows the new bottom-left tray with all four fields, and the cog
-   actually hides/shows each one and remembers the choice for the rest
-   of the session; the bottom-centre command tray shows the right
-   primary buttons per role and never visually overlaps Dr Gallerin's
-   bottom-right corner, including at 200% text scale (Settings ->
-   Appearance, once slice 5 adds a toggle -- for now `Session.text_scale`
-   can be set directly); "More…" reveals Job/backup-role/Favourite and
-   remembers open/closed across reselection within the session; "Follow
-   bee" (single-bee selection only) keeps the camera centred as the bee
-   moves and switches meadow/hive view with it, and turns itself off the
-   moment you select something else. Also worth a look at a narrow
-   window width (~800px) to confirm nothing clips.
-   **Next slice** is slice 4 (Colony/Nursery drawer restyle plus a new
-   colony-wide brood-stage count) -- `UI_PLAN.md` section 15 has the
-   detail; likely files `colony_panel.gd`, `nursery_panel.gd`,
-   `hive.gd`, `hive_cell.gd`.
+   (regenerated) all pass/are clean; a full `mcp__godot__run_project`
+   boot was clean (no errors, only pre-existing warnings unrelated to
+   this session's files).
+   **Not yet hands-on checked, any of slices 2-4** -- a boot check only
+   confirms the game loads and runs, not that any of this looks or
+   behaves right. Start or continue Challenge 1 and a Starter-mode run
+   and confirm, for slice 4 specifically: opening the Colony drawer
+   shows "Needing attention" first with real problems (or the "nothing
+   needs attention" message when the colony's fine), and clicking a line
+   selects/focuses what it's about; the Nursery drawer's "Brood needing
+   attention" only shows brood-relevant problems (not the full list);
+   "Brood stages" shows sensible egg/larva/capped counts against a
+   manual count in a small colony, and its star still pins it to the
+   corner; "The zone" and "Intended roles" between them still show
+   everything the old combined "zone" block used to; nothing in either
+   drawer looks wrong in light/high-contrast theme or at 200% text
+   scale. For slices 2-3 (first real check of any kind this session):
+   the two-row top-right bar, the goal shelf's strikethrough/progress,
+   the bottom-left selection tray's four fields and cog, the
+   bottom-centre command tray's primary buttons and "More…" panel, and
+   "Follow bee" -- see the previous version of this file (`git log` /
+   `git show`) for the full acceptance list, all of it still applies.
+   Also worth a look at a narrow window width (~800px) to confirm
+   nothing clips.
+   **Next slice** is slice 5 (Settings drawer: split "Interface" into
+   Appearance/Accessibility, add rows for every new `Session` field from
+   slices 1-4) -- `UI_PLAN.md` section 15 has the detail; likely file
+   `debug_panel.gd`.
 2. **Game model slices 1-4 are built** (`DESIGN_BACKLOG.md` section 13).
    **Not yet hands-on checked** -- slice 3's prerequisite cascade only
    fires from the settings-window checkboxes, which nothing automated

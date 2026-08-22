@@ -387,6 +387,24 @@ func zone_summary() -> Dictionary:
 		by_role[key] = int(by_role.get(key, 0)) + 1
 	return {"counts": counts, "free": free, "by_role": by_role}
 
+## Colony-wide brood counts by developmental stage, for the nursery
+## drawer's "brood stages" row (UI_PLAN.md section 15, slice 4). Each
+## cell only ever tracks one continuous brood_progress/develop_time()
+## fraction (rule 3, CLAUDE.md) -- this buckets that same fraction into
+## three roughly equal thirds for display, adding nothing new to what a
+## cell tracks, only summing it up.
+func brood_stage_counts() -> Dictionary:
+	var counts := {"egg": 0, "larva": 0, "capped": 0}
+	for cell in cells_holding("brood"):
+		var fraction: float = cell.development_percent() / 100.0
+		if fraction < 1.0 / 3.0:
+			counts["egg"] += 1
+		elif fraction < 2.0 / 3.0:
+			counts["larva"] += 1
+		else:
+			counts["capped"] += 1
+	return counts
+
 ## What a hungry bee walks to when it needs feeding. Ripe honey first --
 ## it carries several times the energy per unit, so a bee spends less
 ## time at the cell and the same comb feeds far more of them.

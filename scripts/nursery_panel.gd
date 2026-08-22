@@ -16,10 +16,14 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal closed()
 ## A readout here has been starred or unstarred into the top-left corner.
 signal pinned_changed()
+## A line in "Brood needing attention" was clicked -- see colony_panel.gd's
+## identical signal for why this is separate from hud.gd's own.
+signal signal_clicked(action: String)
 
 ## The readouts in this window that can be starred into the corner, the
 ## same way the colony window's are. Keys are shared with
@@ -27,13 +31,22 @@ signal pinned_changed()
 ## the corner rather than each panel having its own.
 const STAT_ROWS := [
 	{"key": "nursery_zone", "tip": "How many cells are set aside for each role, and how many are in each priority tier."},
+	{"key": "nursery_brood_stages", "tip": "How many of the colony's brood are eggs, larvae or capped and close to emerging. A count derived from each cell's own development progress, not a separately tracked stage."},
 	{"key": "nursery_mix", "tip": "What the colony is made of right now, as counts and shares."},
 	{"key": "nursery_output", "tip": "How many bees of each kind have emerged from the comb in the last few minutes. This is the nursery's output -- the thing the zone actually controls."},
 ]
 
+## Nursery-relevant signal kinds, matched against the 4th ("category")
+## element year_winter.gd::_refresh_signals tags a line with -- see that
+## function's comment. Everything else in main.hud.shown_signals is
+## still shown in the Colony drawer, just not repeated here.
+const BROOD_SIGNAL_CATEGORY := "brood"
+
 ## The live text of each, handed to the HUD so the corner and this window
 ## always say the same thing.
-var corner_texts: Dictionary = {"nursery_zone": "", "nursery_mix": "", "nursery_output": ""}
+var corner_texts: Dictionary = {
+	"nursery_zone": "", "nursery_brood_stages": "", "nursery_mix": "", "nursery_output": "",
+}
 var star_buttons: Dictionary = {}
 
 ## Role colours, labels and order all come from the role table now, so
@@ -75,10 +88,15 @@ const TIER_NAMES := ["Low", "Medium", "High"]
 
 var panel: PanelContainer
 var zone_label: Label
+var brood_stages_label: Label
 var tier_label: Label
+var intended_roles_label: Label
 var emergence_label: Label
 var ring: Control
 var ring_slices: Array = []   # [{colour, share}] read by the ring's _draw
+
+var needing_attention_column: VBoxContainer
+var needing_attention_ok_label: Label
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
@@ -86,6 +104,8 @@ func _ready() -> void:
 	add_to_group("nursery_panel")
 
 	panel = PanelContainer.new()
+	panel.theme = UiTheme.build_theme()
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	# left-hand side, clear of the top-left readouts
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.offset_left = 16
@@ -103,7 +123,7 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Nursery zone"
-	title.add_theme_font_size_override("font_size", 16)
+	title.theme_type_variation = "Heading"
 	header.add_child(title)
 	header.add_child(UI.info_badge(
 		"Cells reserved for brood make up the nursery zone. Each one can name the role it raises and a priority tier, and the queen shares her eggs between the tiers in proportion to their weights -- so with the default 1:2:3, a high-priority cell gets three eggs for every one a low cell gets. That is how you steer what the colony grows into without giving every bee an order."
@@ -112,13 +132,37 @@ func _ready() -> void:
 	var close_btn := Button.new()
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(26, 22)
+	_style_button(close_btn)
 	close_btn.pressed.connect(func(): close())
 	header.add_child(close_btn)
 
 	column.add_child(HSeparator.new())
 
-	zone_label = _make_readout(_starred_row(column, "nursery_zone", "The zone"), 12)
-	tier_label = _make_readout(column, 12)
+	# Priority order per UI_PLAN.md section 5: is any brood in trouble
+	# right now, then the zone's capacity, then the stage make-up of what
+	# it currently holds, then the tier weights steering future eggs,
+	# then the colony as a whole, then output, then the by-role detail
+	# behind the zone's capacity figure.
+	needing_attention_column = _section_body(column, "Brood needing attention")
+	needing_attention_ok_label = Label.new()
+	needing_attention_ok_label.text = "Brood is fine -- nothing needs attention right now."
+	needing_attention_ok_label.theme_type_variation = "Small"
+	needing_attention_ok_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	needing_attention_ok_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
+	needing_attention_column.add_child(needing_attention_ok_label)
+
+	column.add_child(HSeparator.new())
+
+	zone_label = _make_readout(_starred_row(column, "nursery_zone", "The zone"), "Small")
+
+	column.add_child(HSeparator.new())
+
+	brood_stages_label = _make_readout(_starred_row(column, "nursery_brood_stages", "Brood stages"), "Small")
+
+	column.add_child(HSeparator.new())
+
+	tier_label = _make_readout(_section_body(column, "Priority tiers"), "Small")
 
 	column.add_child(HSeparator.new())
 
@@ -134,7 +178,31 @@ func _ready() -> void:
 	column.add_child(HSeparator.new())
 
 	column.add_child(_starred_row(column, "nursery_output", "Emerging (last 3 minutes)", true))
-	emergence_label = _make_readout(column, 12)
+	emergence_label = _make_readout(column, "Small")
+
+	column.add_child(HSeparator.new())
+
+	intended_roles_label = _make_readout(_section_body(column, "Intended roles"), "Small")
+
+## The five states a plain Godot Button actually looks up -- see
+## colony_panel.gd's identical helper.
+func _style_button(button: Button) -> Button:
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	return button
+
+## A plain (non-collapsible) sub-heading, for a block that doesn't need
+## hiding -- unlike colony_panel.gd's sections, everything here is short
+## enough that collapsing it would save no real space.
+func _section_body(column: VBoxContainer, title: String) -> VBoxContainer:
+	var heading := Label.new()
+	heading.text = title
+	heading.theme_type_variation = "Body"
+	column.add_child(heading)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	column.add_child(body)
+	return body
 
 ## A section heading with a star beside it. Starring pins that readout to
 ## the top-left corner, the same as in the colony window -- one habit
@@ -149,7 +217,8 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 	var star := Button.new()
 	star.toggle_mode = true
 	star.custom_minimum_size = Vector2(24, 18)
-	star.add_theme_font_size_override("font_size", 11)
+	star.theme_type_variation = "Small"
+	_style_button(star)
 	star.focus_mode = Control.FOCUS_NONE
 	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
@@ -160,7 +229,7 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 
 	var label := Label.new()
 	label.text = title
-	label.add_theme_font_size_override("font_size", 13)
+	label.theme_type_variation = "Body"
 	row.add_child(label)
 
 	for entry in STAT_ROWS:
@@ -184,9 +253,9 @@ func _set_pinned(key: String, pressed: bool) -> void:
 		star_buttons[key].text = "★" if pressed else "☆"
 	pinned_changed.emit()
 
-func _make_readout(column: Node, size: int) -> Label:
+func _make_readout(column: Node, variation: String) -> Label:
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", size)
+	label.theme_type_variation = variation
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(300, 0)
 	column.add_child(label)
@@ -217,37 +286,61 @@ static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:
 	return Roles.colour_for(role, focus)
 
 ## Called once a second by main.gd while the window is open.
-##   `zone`      -- Hive.zone_summary()
-##   `live`      -- "role|focus" -> how many bees exist now
-##   `emerged`   -- "role|focus" -> how many emerged in the window
-##   `window`    -- length of that window in in-game seconds
+##   `zone`          -- Hive.zone_summary()
+##   `live`          -- "role|focus" -> how many bees exist now
+##   `emerged`       -- "role|focus" -> how many emerged in the window
+##   `window`        -- length of that window in in-game seconds
+##   `brood_stages`  -- Hive.brood_stage_counts()
+##   `signals`       -- main.hud.shown_signals
 ## Runs whether or not the window is showing: a readout starred into the
 ## corner has to keep updating with the window closed, or it freezes at
 ## whatever it last said. Writing to hidden labels costs nothing.
-func refresh(zone: Dictionary, live: Dictionary, emerged: Dictionary, window: float) -> void:
+func refresh(
+	zone: Dictionary, live: Dictionary, emerged: Dictionary, window: float,
+	brood_stages: Dictionary = {}, signals: Array = []
+) -> void:
 	_refresh_zone(zone)
+	_refresh_brood_stages(brood_stages)
 	_refresh_ring(live)
 	_refresh_emergence(emerged, window)
+	_rebuild_needing_attention(signals)
 
+## Rebuilt from scratch each refresh, same reason as colony_panel.gd's
+## identical favourites/needing-attention lists -- which problems exist,
+## and how many, changes at any time.
+func _rebuild_needing_attention(signals: Array) -> void:
+	for child in needing_attention_column.get_children():
+		if child != needing_attention_ok_label:
+			child.queue_free()
+
+	var relevant: Array = []
+	for entry in signals:
+		var category: String = entry[3] if entry.size() > 3 else ""
+		if category == BROOD_SIGNAL_CATEGORY:
+			relevant.append(entry)
+
+	needing_attention_ok_label.visible = relevant.is_empty()
+	for entry in relevant:
+		needing_attention_column.add_child(
+			UI.signal_line_button(entry, func(action): signal_clicked.emit(action))
+		)
+
+## Capacity (how big the zone is, how much of it is free) and the tier
+## weights, both read straight off Hive.zone_summary() -- the by-role
+## breakdown moved to _refresh_intended_roles below, since it's a
+## separate priority item per UI_PLAN.md section 5, not because the
+## underlying data changed.
 func _refresh_zone(zone: Dictionary) -> void:
-	var by_role: Dictionary = zone.get("by_role", {})
-	var lines: Array = []
-	var total := 0
-	for key in row_order():
-		var count: int = int(by_role.get(key, 0))
-		if count <= 0:
-			continue
-		total += count
-		lines.append("%s: %d cell%s" % [_key_label(key), count, "" if count == 1 else "s"])
-	if lines.is_empty():
-		zone_label.text = "No cells in the zone yet. Select comb and use \"Add to nursery zone\"."
-		corner_texts["nursery_zone"] = "Nursery zone — no cells set aside"
-	else:
-		zone_label.text = "%d cells in the zone\n%s" % [total, "\n".join(lines)]
-		corner_texts["nursery_zone"] = "Nursery zone — %d cells: %s" % [total, ", ".join(lines)]
-
 	var counts: Array = zone.get("counts", [0, 0, 0])
 	var free: Array = zone.get("free", [0, 0, 0])
+	var total_cells := int(counts[0]) + int(counts[1]) + int(counts[2])
+	var total_free := int(free[0]) + int(free[1]) + int(free[2])
+
+	if total_cells <= 0:
+		zone_label.text = "No cells in the zone yet. Select comb and use \"Add to nursery zone\"."
+	else:
+		zone_label.text = "%d cells in the zone, %d free" % [total_cells, total_free]
+
 	var tier_lines: Array = []
 	var weights := [
 		GameConfig.lay_weight_low, GameConfig.lay_weight_medium, GameConfig.lay_weight_high,
@@ -257,6 +350,39 @@ func _refresh_zone(zone: Dictionary) -> void:
 			TIER_NAMES[tier], int(weights[tier]), int(counts[tier]), int(free[tier]),
 		])
 	tier_label.text = "\n".join(tier_lines)
+
+	_refresh_intended_roles(zone, total_cells)
+
+func _refresh_intended_roles(zone: Dictionary, total_cells: int) -> void:
+	var by_role: Dictionary = zone.get("by_role", {})
+	var lines: Array = []
+	for key in row_order():
+		var count: int = int(by_role.get(key, 0))
+		if count <= 0:
+			continue
+		lines.append("%s: %d cell%s" % [_key_label(key), count, "" if count == 1 else "s"])
+	if lines.is_empty():
+		intended_roles_label.text = "No cells in the zone yet."
+		corner_texts["nursery_zone"] = "Nursery zone — no cells set aside"
+	else:
+		intended_roles_label.text = "\n".join(lines)
+		corner_texts["nursery_zone"] = "Nursery zone — %d cells: %s" % [total_cells, ", ".join(lines)]
+
+## Buckets each brood cell's own development_percent() into thirds --
+## presentation only, see Hive.brood_stage_counts().
+func _refresh_brood_stages(stages: Dictionary) -> void:
+	var egg := int(stages.get("egg", 0))
+	var larva := int(stages.get("larva", 0))
+	var capped := int(stages.get("capped", 0))
+	var total := egg + larva + capped
+	if total <= 0:
+		brood_stages_label.text = "No brood in the comb right now."
+		corner_texts["nursery_brood_stages"] = "Brood stages — none right now"
+		return
+	brood_stages_label.text = "Egg: %d · Larva: %d · Capped: %d  (%d total)" % [egg, larva, capped, total]
+	corner_texts["nursery_brood_stages"] = (
+		"Brood stages — egg %d, larva %d, capped %d" % [egg, larva, capped]
+	)
 
 func _refresh_ring(live: Dictionary) -> void:
 	var total := 0
@@ -348,6 +474,6 @@ func _draw_ring() -> void:
 			text = "[%s] %s" % [slice.tag, text]
 		ring.draw_string(
 			font, Vector2(166, y + 10), text,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.9, 0.92, 0.95)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UiTheme.color("text_primary")
 		)
 		y += 15.0
