@@ -251,8 +251,9 @@ non-zero” into “the feature feels good”.
    balance value was changed merely to make a test green.
 5. The hand-off states what still needs Dave's eyes.
 
-At the end, update this file's status/results, add only durable conclusions to
-`CHATGPT_INSIGHTS_PLAN.md`, rewrite `CHATGPT_NEXTSTEPS.md`, and commit the
-completed slice with a plain-language message. Never put ChatGPT actions in
+At the end, update this file's status/results, add only unresolved durable
+conclusions to `insights_from_ChatGPT.md`, rewrite `CHATGPT_NEXTSTEPS.md`, and
+commit the completed slice with a plain-language message. Delete an insight
+once it is resolved; Git history is the archive. Never put ChatGPT actions in
 `NEXTSTEPS.md`. Do not push; pushing depends on the GitKraken plugin being
 available.
