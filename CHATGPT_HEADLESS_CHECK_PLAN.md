@@ -3,8 +3,8 @@
 > **CHATGPT-ONLY WORKING FILE. Claude Code must ignore this file.**
 > Do not read it for orientation, implement it, maintain it, or fold it into
 > Claude's plans. Dave will explicitly start this work with ChatGPT in a new
-> session. `NEXTSTEPS.md` and the normal project plans remain Claude's source
-> of work.
+> session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
+> `NEXTSTEPS.md` remains exclusively Claude's source of work.
 
 Status: planned 22 Aug 2026, not started. This is the execution hand-off for a
 future ChatGPT session. It turns Meadow's existing headless harness into a
@@ -25,7 +25,8 @@ question.
 
 ## Start of the new ChatGPT session
 
-1. Read `NEXTSTEPS.md`, then this file.
+1. Read `CHATGPT_NEXTSTEPS.md`, then this file. Do not use or edit Claude's
+   `NEXTSTEPS.md` as part of this work.
 2. Read only the relevant part of `AI_PLAYTEST_PLAN.md` and the header of
    `scripts/scenario_actions.gd` for the slice being built.
 3. Check `git log --oneline -10` and `git status --short` so this plan is not
@@ -70,8 +71,9 @@ capped failures and presentation gating.
 - A large winter-balance oracle. Winter remains an open design question; keep
   the arithmetic tests and add only a narrow integration check.
 
-If a newer `NEXTSTEPS.md` says an included system is about to change, park that
-check rather than testing an expectation with a short shelf life.
+Before each slice, use the recent Git history and the named project plan for
+that mechanism to confirm it is not about to change. Park the check if it is,
+rather than reading or modifying Claude's separate next-step hand-off.
 
 ## Evidence and cost rules
 
@@ -219,6 +221,7 @@ non-zero” into “the feature feels good”.
 5. The hand-off states what still needs Dave's eyes.
 
 At the end, update this file's status/results, add only durable conclusions to
-`CHATGPT_INSIGHTS_PLAN.md`, rewrite `NEXTSTEPS.md`, and commit the completed
-slice with a plain-language message. Do not push; pushing depends on the
-GitKraken plugin being available.
+`CHATGPT_INSIGHTS_PLAN.md`, rewrite `CHATGPT_NEXTSTEPS.md`, and commit the
+completed slice with a plain-language message. Never put ChatGPT actions in
+`NEXTSTEPS.md`. Do not push; pushing depends on the GitKraken plugin being
+available.

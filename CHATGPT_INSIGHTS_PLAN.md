@@ -15,6 +15,8 @@ Dave asked which important parts of Meadow are worth checking through cheap
 headless runs without investing in areas that upcoming work will change. The
 execution hand-off is in `CHATGPT_HEADLESS_CHECK_PLAN.md`, a ChatGPT-only file
 which Claude Code must ignore unless Dave explicitly reverses that instruction.
+ChatGPT's short hand-off lives separately in `CHATGPT_NEXTSTEPS.md`; no ChatGPT
+action from this work belongs in Claude's `NEXTSTEPS.md`.
 
 Durable insights and recommendations:
 
