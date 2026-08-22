@@ -111,22 +111,22 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
-				main.hud.show_death_popup(marker.death_info, main.get_viewport().get_mouse_position())
+				main.hud.show_object_summary("death", marker.death_info)
 				return
 			_clear_cell_selection()
 			_clear_block_selection()
 		else:
 			var flower = main.world_building._flower_at(main.drag_start)
 			if flower:
-				main.hud.show_flower_popup(flower, main.get_viewport().get_mouse_position())
+				main.hud.show_object_summary("flower", flower)
 				return
 			var obstacle = main.world_building._obstacle_at(main.drag_start)
 			if obstacle:
-				main.hud.show_obstacle_popup(obstacle, main.get_viewport().get_mouse_position())
+				main.hud.show_object_summary("obstacle", obstacle)
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
-				main.hud.show_death_popup(marker.death_info, main.get_viewport().get_mouse_position())
+				main.hud.show_object_summary("death", marker.death_info)
 				return
 	else:
 		for b in _bees_in_current_view():
@@ -158,7 +158,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				if box.has_point(m.global_position):
 					boxed_markers.append(m)
 			if not boxed_markers.is_empty():
-				main.hud.show_death_popup(boxed_markers[0].death_info, main.get_viewport().get_mouse_position())
+				main.hud.show_object_summary("death", boxed_markers[0].death_info)
 				return
 
 	if not picked.is_empty():
@@ -224,7 +224,7 @@ func _select_blocks(blocks: Array, additive: bool) -> void:
 	for block in main.selected_blocks:
 		if main.hive.mine_stand_hex(block) != null:
 			reachable += 1
-	main.hud.show_soil_popup(main.selected_blocks.size(), reachable, main.get_viewport().get_mouse_position())
+	main.hud.show_object_summary("soil", {"count": main.selected_blocks.size(), "reachable": reachable})
 
 func _clear_block_selection() -> void:
 	for block in main.selected_blocks:

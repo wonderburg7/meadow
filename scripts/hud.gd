@@ -290,6 +290,22 @@ var identity_label: Label
 var energy_label: Label
 var activity_label: Label
 var trait_label: Label
+## Which kind of "not a bee" thing the panel is showing, if any --
+## "flower"/"obstacle"/"death"/"soil", or "" for the ordinary bee/multi-
+## bee fields. Folded in from four separate mouse-anchored popups
+## (UI_BUGFIX_PLAN.md Slice 5, Dave's 22 Aug call): a content swap, not
+## a second region, so whichever of a bee selection or an object summary
+## happened most recently is what shows. See show_object_summary.
+var active_summary_kind: String = ""
+## The flower currently summarised, if active_summary_kind == "flower"
+## -- kept live (unlike the other three kinds) because its nectar/pollen
+## amounts tick up while the panel is open; see _refresh_flower_summary.
+var active_flower: Node2D = null
+## Only shown for a soil summary -- see show_object_summary and
+## set_soil_marking_visible.
+var soil_summary_row: HBoxContainer
+var soil_mark_btn: Button
+var soil_clear_btn: Button
 var speed_buttons: Array = []
 var shown_bees: Array = []
 
@@ -326,24 +342,9 @@ var lock_row: HBoxContainer
 ## One entry per hatch_options() choice, so _refresh_cell_popup can hide
 ## the ones for a role the current Challenge hasn't unlocked yet.
 var hatch_option_controls: Array = []
-var soil_mark_btn: Button
-var soil_clear_btn: Button
-
-var flower_popup: PopupPanel
-var flower_popup_label: Label
-var active_flower: Node2D = null
-
-var obstacle_popup: PopupPanel
-var obstacle_popup_label: Label
-
-var soil_popup: PopupPanel
-var soil_popup_label: Label
 ## How many cells the popup's buttons will act on. 1 unless the player
 ## has a multi-cell selection.
 var selected_cell_count: int = 1
-
-var death_popup: PopupPanel
-var death_popup_label: Label
 
 var warning_panel: PanelContainer
 var warning_label: Label
@@ -409,10 +410,6 @@ func _ready() -> void:
 	_build_selection_panel()
 	_build_command_tray()
 	_build_cell_popup()
-	_build_flower_popup()
-	_build_obstacle_popup()
-	_build_soil_popup()
-	_build_death_popup()
 	_build_warning_banner()
 	_build_discard_dialog()
 
@@ -736,6 +733,23 @@ func _build_selection_panel() -> void:
 	trait_label.theme_type_variation = "Body"
 	trait_label.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 	column.add_child(trait_label)
+
+	# Only shown for a soil summary -- see show_object_summary.
+	soil_summary_row = HBoxContainer.new()
+	soil_summary_row.visible = false
+	column.add_child(soil_summary_row)
+
+	soil_mark_btn = Button.new()
+	_style_button(soil_mark_btn)
+	soil_mark_btn.text = "Mark for digging"
+	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
+	soil_summary_row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
+
+	soil_clear_btn = Button.new()
+	_style_button(soil_clear_btn)
+	soil_clear_btn.text = "Clear marks"
+	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
+	soil_summary_row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
 
 	_apply_selection_field_visibility()
 
@@ -1208,20 +1222,6 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 
 ## --- flower popup -------------------------------------------------
 
-func _build_flower_popup() -> void:
-	flower_popup = PopupPanel.new()
-	flower_popup.theme = UiTheme.build_theme()
-	flower_popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	add_child(flower_popup)
-
-	flower_popup_label = Label.new()
-	flower_popup_label.theme_type_variation = "Body"
-	flower_popup.add_child(flower_popup_label)
-
-## --- obstacle popup -----------------------------------------------
-## Clicking a tree or a bank of raised ground says what it is, so the
-## things bees have to walk round aren't unexplained scenery.
-
 ## --- warning banner -----------------------------------------------
 ## A nudge, not an interruption: it sits at the top of the screen, the
 ## game carries on running behind it, and it clears itself after a while
@@ -1270,132 +1270,96 @@ func set_warnings_muted(value: bool) -> void:
 	if value:
 		warning_panel.visible = false
 
-func _build_obstacle_popup() -> void:
-	obstacle_popup = PopupPanel.new()
-	obstacle_popup.theme = UiTheme.build_theme()
-	obstacle_popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	add_child(obstacle_popup)
+## --- object summary (flower / obstacle / death / soil) -------------
+## Folded into the bottom-left selection panel from four separate
+## mouse-anchored popups (UI_BUGFIX_PLAN.md Slice 5, Dave's 22 Aug
+## call). A content swap: whichever of a bee selection or an object
+## summary happened most recently is what the panel shows. Leaves
+## shown_bees/command_tray alone -- a bee can stay selected (and its
+## command tray stay up) while this panel shows something else the
+## player clicked to look at. See input_selection.gd's call sites.
+func show_object_summary(kind: String, data) -> void:
+	active_summary_kind = kind
+	active_flower = data if kind == "flower" else null
+	soil_summary_row.visible = kind == "soil"
+	match kind:
+		"flower":
+			_refresh_flower_summary()
+		"obstacle":
+			_show_obstacle_summary(data)
+		"soil":
+			_show_soil_summary(data.count, data.reachable)
+		"death":
+			_show_death_summary(data)
+	selection_panel.visible = true
 
-	obstacle_popup_label = Label.new()
-	obstacle_popup_label.theme_type_variation = "Body"
-	obstacle_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	obstacle_popup_label.custom_minimum_size = Vector2(260, 0)
-	obstacle_popup.add_child(obstacle_popup_label)
-
-func show_obstacle_popup(obstacle: Node2D, screen_position: Vector2) -> void:
-	obstacle_popup_label.text = "%s\n\n%s" % [obstacle.display_name(), obstacle.description()]
-	obstacle_popup.position = Vector2i(screen_position + Vector2(12, -10))
-	obstacle_popup.popup()
-
-func show_flower_popup(flower: Node2D, screen_position: Vector2) -> void:
-	active_flower = flower
-	_refresh_flower_popup()
-	flower_popup.position = Vector2i(screen_position + Vector2(12, -10))
-	flower_popup.popup()
-
-func _refresh_flower_popup() -> void:
+## Kept live (unlike the other three kinds) because a flower's
+## nectar/pollen amounts tick up while the panel is open -- see the
+## _process call below.
+func _refresh_flower_summary() -> void:
 	if active_flower == null or not is_instance_valid(active_flower):
 		return
-	var lines := []
-	lines.append(active_flower.species_name)
-	lines.append("Nectar: %d / %d   (+%.2f/s)" % [
+	identity_label.text = active_flower.species_name
+	energy_label.text = "Nectar: %d / %d   (+%.2f/s)\nPollen: %d / %d   (+%.2f/s)" % [
 		int(round(active_flower.nectar_amount)),
 		int(active_flower.nectar_capacity),
 		active_flower.nectar_recharge_rate,
-	])
-	lines.append("Pollen: %d / %d   (+%.2f/s)" % [
 		int(round(active_flower.pollen_amount)),
 		int(active_flower.pollen_capacity),
 		active_flower.pollen_recharge_rate,
-	])
+	]
 	if active_flower.occupied_by != null and is_instance_valid(active_flower.occupied_by):
-		lines.append("Being worked by bee %d" % active_flower.occupied_by.bee_id)
+		activity_label.text = "Being worked by bee %d" % active_flower.occupied_by.bee_id
 	else:
-		lines.append("No bee here")
+		activity_label.text = "No bee here"
 	var age: float = active_flower.marker_age()
 	if age >= 0.0:
 		var fresh := age < GameConfig.tarsal_marker_seconds
-		lines.append("Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if (fresh and GameConfig.tarsal_markers_on) else ""])
-	flower_popup_label.text = "\n".join(lines)
+		trait_label.text = "Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if (fresh and GameConfig.tarsal_markers_on) else ""]
+	else:
+		trait_label.text = ""
 
-## --- soil popup ---------------------------------------------------
+## Clicking a tree or a bank of raised ground says what it is, so the
+## things bees have to walk round aren't unexplained scenery.
+func _show_obstacle_summary(obstacle: Node2D) -> void:
+	identity_label.text = obstacle.display_name()
+	energy_label.text = ""
+	activity_label.text = obstacle.description()
+	trait_label.text = ""
 
-func _build_soil_popup() -> void:
-	soil_popup = PopupPanel.new()
-	soil_popup.theme = UiTheme.build_theme()
-	soil_popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	add_child(soil_popup)
-
-	var column := VBoxContainer.new()
-	soil_popup.add_child(column)
-
-	soil_popup_label = Label.new()
-	soil_popup_label.theme_type_variation = "Body"
-	soil_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	soil_popup_label.custom_minimum_size = Vector2(280, 0)
-	column.add_child(soil_popup_label)
-
-	var row := HBoxContainer.new()
-	column.add_child(row)
-
-	soil_mark_btn = Button.new()
-	_style_button(soil_mark_btn)
-	soil_mark_btn.text = "Mark for digging"
-	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true); soil_popup.hide())
-	row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
-
-	soil_clear_btn = Button.new()
-	_style_button(soil_clear_btn)
-	soil_clear_btn.text = "Clear marks"
-	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false); soil_popup.hide())
-	row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
-
-func show_soil_popup(count: int, reachable: int, screen_position: Vector2) -> void:
-	var text := "%d soil block%s selected" % [count, "" if count == 1 else "s"]
+func _show_soil_summary(count: int, reachable: int) -> void:
+	identity_label.text = "%d soil block%s selected" % [count, "" if count == 1 else "s"]
+	energy_label.text = ""
 	if reachable < count:
-		text += "\n%d can be reached right now; the rest are buried and will be dug once the soil in front of them is gone." % reachable
-	soil_popup_label.text = text
+		activity_label.text = "%d can be reached right now; the rest are buried and will be dug once the soil in front of them is gone." % reachable
+	else:
+		activity_label.text = ""
+	trait_label.text = ""
 	soil_mark_btn.visible = soil_marking_visible
 	soil_clear_btn.visible = soil_marking_visible
-	soil_popup.position = Vector2i(screen_position + Vector2(12, -10))
-	soil_popup.popup()
 
-## --- death popup ----------------------------------------------------
-## Clicking (or drag-selecting) a death mark brings up what happened to
-## the bee who died there. Built from death_marker.gd's death_info
-## snapshot rather than a live bee -- see that file's header comment --
-## so this is a one-shot popup, not a persistent selection like
+## Clicking (or drag-selecting) a death mark shows what happened to the
+## bee who died there. Built from death_marker.gd's death_info snapshot
+## rather than a live bee -- see that file's header comment -- so this
+## is a one-shot summary, not a persistent selection like
 ## update_selection() below.
-
-func _build_death_popup() -> void:
-	death_popup = PopupPanel.new()
-	death_popup.theme = UiTheme.build_theme()
-	death_popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	add_child(death_popup)
-
-	death_popup_label = Label.new()
-	death_popup_label.theme_type_variation = "Body"
-	death_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	death_popup_label.custom_minimum_size = Vector2(260, 0)
-	death_popup.add_child(death_popup_label)
-
-func show_death_popup(info: Dictionary, screen_position: Vector2) -> void:
-	var lines := []
+func _show_death_summary(info: Dictionary) -> void:
 	var title: String = "Queen" if info.get("is_queen", false) else ("Gyne" if info.get("is_gyne", false) else "Bee %d" % info.get("bee_id", 0))
 	if info.get("bee_name", "") != "":
 		title = "%s%s" % ["★ " if info.get("is_favourite", false) else "", info.get("bee_name")]
-	lines.append(title)
-	lines.append("%s -- died of %s" % [info.get("role_text", ""), info.get("cause", "unknown causes")])
-	lines.append("Lived %.1f days" % info.get("age_days", 0.0))
+	identity_label.text = title
+	energy_label.text = ""
+	activity_label.text = "%s -- died of %s\nLived %.1f days" % [
+		info.get("role_text", ""), info.get("cause", "unknown causes"), info.get("age_days", 0.0),
+	]
+	var trait_lines := []
 	if info.get("trait_text", "") != "":
-		lines.append(info.get("trait_text"))
+		trait_lines.append(info.get("trait_text"))
 	if info.get("preferred_species", "") != "":
-		lines.append("Preferred flower: %s" % info.get("preferred_species"))
+		trait_lines.append("Preferred flower: %s" % info.get("preferred_species"))
 	if info.get("bee_fact", "") != "":
-		lines.append("\"%s\"" % info.get("bee_fact"))
-	death_popup_label.text = "\n".join(lines)
-	death_popup.position = Vector2i(screen_position + Vector2(12, -10))
-	death_popup.popup()
+		trait_lines.append("\"%s\"" % info.get("bee_fact"))
+	trait_label.text = "\n".join(trait_lines)
 
 func show_cell_popup(cell: Node2D, screen_position: Vector2, count: int = 1) -> void:
 	active_cell = cell
@@ -1545,10 +1509,11 @@ func _process(_delta: float) -> void:
 			warning_panel.visible = false
 	if cell_popup.visible:
 		_refresh_cell_popup()
-	if flower_popup.visible:
-		_refresh_flower_popup()
 	if selection_panel.visible:
-		_refresh_selection_text()
+		if active_summary_kind == "flower":
+			_refresh_flower_summary()
+		elif active_summary_kind == "":
+			_refresh_selection_text()
 	Perf.end("hud")
 
 func _request_designation(type: String) -> void:
@@ -1808,6 +1773,10 @@ func update_selection(bees: Array) -> void:
 	# on follow_bee_toggled.
 	follow_bee_toggled.emit(null, false)
 	shown_bees = bees
+	# A bee selection always wins over whatever object summary the panel
+	# might currently be showing -- see show_object_summary.
+	active_summary_kind = ""
+	soil_summary_row.visible = false
 	selection_panel.visible = not bees.is_empty()
 	command_tray.visible = not bees.is_empty()
 	if bees.is_empty():

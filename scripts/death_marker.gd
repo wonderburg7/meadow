@@ -13,7 +13,7 @@ extends Node2D
 ## nothing after this marker exists can safely read her fields again.
 ## Lets a click bring up what happened to her without needing the bee
 ## herself to still exist -- see input_selection.gd's death-marker click
-## handling and hud.gd's show_death_popup.
+## handling and hud.gd's show_object_summary.
 
 const Shapes = preload("res://scripts/shapes.gd")
 const CLICK_RADIUS := 10.0
