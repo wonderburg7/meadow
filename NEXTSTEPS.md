@@ -162,8 +162,23 @@ into a history. Full history lives in `git log`.
    `balance_tests.py` both still pass; no `mcp__godot__` boot tool was
    available this session, but both new scenarios ran clean end-to-end
    through Godot itself, which is stronger evidence than a boot check.
-   **Next concrete action:** Group B of the AI playtest harness
-   (`CHATGPT_INSIGHTS_PLAN.md`, action-driver correctness), starting
-   with B1 (the shared settings-cascade command) -- needed before the
-   next headless audit can be trusted. Group A (harness speed/token
-   efficiency) can follow in either order once B is done.
+   **B1 (shared settings-cascade command) is now also done, 22 Aug.**
+   `debug_panel.gd` gained a static `apply_setting(key, value)` plus two
+   static `Prerequisites`-walking helpers that both the settings
+   checkbox handler and `scenario_actions.gd::_do_set_config` now call --
+   one cascade implementation instead of two that could drift. Verified:
+   both check suites pass, `FUNCTION_MAP.md` regenerated, a clean
+   `mcp__godot__` boot (same pre-existing warnings, nothing new), and
+   `test_scenarios/slice7_action_driver_test.json` (already exercises
+   `set_config scouting_on=true`) still runs clean end-to-end through
+   the new shared path. One honest gap: this is source-level
+   verification of a pure extraction, not a live before/after read of
+   the cascaded value -- the diagnostic log's `config` snapshot is
+   boot-time only, which is exactly the gap B4 (live settings in
+   analysis) exists to close. Full detail in `CHATGPT_INSIGHTS_PLAN.md`'s
+   B1 section. **Next concrete action:** B2 (split role assignment from
+   role mode in `scenario_actions.gd`/`orders_zones.gd`), then B3
+   (postcondition evidence for the remaining verbs) and B4 (live
+   settings in analysis) -- see the plan's Group B section. Group A
+   (harness speed/token efficiency) can follow in either order once B
+   is done.

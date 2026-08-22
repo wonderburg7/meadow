@@ -213,16 +213,18 @@ static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 			b.set_mine_target(block)
 	_log("queue_mine", "%d bees -> %s" % [bees.size(), hex], "accepted", "")
 
-## Calls DebugPanel.setting_set -- the exact function the settings-window
-## checkboxes call, already covering both GameConfig and Session keys
-## (see debug_panel.gd's SESSION_KEYS split), so this reaches every
-## toggle/value the settings window can already reach, nothing wider.
+## Calls DebugPanel.apply_setting -- the same setting-plus-cascade function
+## the settings-window checkbox handler calls (CHATGPT_INSIGHTS_PLAN.md
+## B1), already covering both GameConfig and Session keys (see
+## debug_panel.gd's SESSION_KEYS split) and the Prerequisites cascade, so
+## this reaches every toggle/value the settings window can already reach,
+## behaving exactly the same way, nothing wider.
 static func _do_set_config(main: Node2D, action: Dictionary) -> void:
 	var key: String = action.get("key", "")
 	if key == "" or not action.has("value"):
 		_log("set_config", str(action), "rejected", "missing key or value")
 		return
-	main.DebugPanel.setting_set(key, action["value"])
+	main.DebugPanel.apply_setting(key, action["value"])
 	_log("set_config", "%s = %s" % [key, action["value"]], "accepted", "")
 
 ## Calls orders_zones._on_cell_hatch_role_requested -- the same function

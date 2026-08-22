@@ -1,7 +1,7 @@
 # ChatGPT insights — implementation plan
 
-Status: Group C fully built and verified, 22 Aug 2026. Groups B and A
-still planned, not started.
+Status: Group C fully built and verified, 22 Aug 2026. B1 built and
+verified, 22 Aug 2026. B2-B5 and Group A still planned, not started.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -157,7 +157,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 
 ## Group B -- action driver correctness (do before trusting the next audit)
 
-### B1. Shared settings-cascade command
+### B1. Shared settings-cascade command -- done, 22 Aug; verified 22 Aug
 - **Files:** `debug_panel.gd` (`setting_set` and its `Prerequisites`
   walk) and `scenario_actions.gd` (`_do_set_config`).
 - **Fix:** extract one function that applies a setting value plus the
@@ -169,6 +169,38 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   without Orientation flight now cascades the same way the settings
   checkbox does (turns the dependant off, or refuses, whichever the
   checkbox does).
+- **Built:** `debug_panel.gd` gained two static helpers,
+  `_cascade_prerequisites_on_static` and `_cascade_dependents_off_static`
+  (the same up/down `Prerequisites` walks as before, now returning the
+  keys they actually changed instead of touching UI directly), plus a
+  new static `apply_setting(key, value)` that calls `setting_set` and
+  then cascades. The old instance methods `_cascade_prerequisites_on` /
+  `_cascade_dependents_off` are now thin wrappers: they call the static
+  walkers and use the returned key list to sync `toggle_boxes`
+  checkboxes -- same on-screen behaviour, same algorithm, just no
+  longer duplicated. `scenario_actions.gd::_do_set_config` now calls
+  `DebugPanel.apply_setting` instead of the bare `setting_set`, so a
+  headless `set_config` action gets the identical cascade a settings
+  checkbox click gets -- structurally one implementation, not two that
+  can drift.
+- **Verified:** `source_checks.py` and `balance_tests.py` both pass,
+  `FUNCTION_MAP.md` regenerated (`debug_panel.gd` is one of the six
+  mapped files), and a `mcp__godot__` boot is clean (same pre-existing
+  warning set as before, no new ones -- including the two
+  already-known `debug_panel.gd` iterator-shadow warnings at the lines
+  the refactor didn't touch). Re-ran
+  `test_scenarios/slice7_action_driver_test.json` (its existing
+  `set_config scouting_on=true` action) end-to-end: still 4/4 actions
+  `accepted`, `scouting_settled: 1`, no assert failures -- the scenario
+  that already exercised this cascade path keeps working through the
+  new shared function. A live-value check of the cascaded parent
+  (`orientation_flight_on` actually flipping true) isn't observable
+  from outside Godot yet -- the diagnostic log's `config` snapshot is
+  boot-time only, which is exactly the gap B4 exists to close. Given
+  this is a pure extraction (same walk algorithm, same call sites, now
+  literally one function instead of two independently-written copies),
+  source-level equivalence plus a clean end-to-end scenario run is
+  the practical verification available before B4 lands.
 
 ### B2. Split role assignment from role mode
 - **Files:** `scenario_actions.gd` (`_do_assign_role`), `orders_zones.gd`

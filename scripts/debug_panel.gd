@@ -887,6 +887,50 @@ static func setting_set(key: String, value) -> void:
 	else:
 		GameConfig.set(key, value)
 
+## Sets `key` to `value` and, if `key` takes part in the Prerequisites
+## tree, cascades to keep dependencies consistent -- turning a toggle on
+## also turns on everything it depends on; turning one off also turns
+## off everything that depends on it. Shared by the settings-window
+## checkbox handler (`_make_toggle_row`, which additionally syncs its own
+## checkboxes afterwards) and the headless `set_config` scenario verb
+## (`scenario_actions.gd::_do_set_config`), so there is one cascade
+## implementation, not two that can drift (CHATGPT_INSIGHTS_PLAN.md B1).
+static func apply_setting(key: String, value) -> void:
+	setting_set(key, value)
+	if not Prerequisites.is_gated(key):
+		return
+	if value:
+		_cascade_prerequisites_on_static(key)
+	else:
+		_cascade_dependents_off_static(key)
+
+## Walks up Prerequisites from `key`, turning on everything it depends
+## on -- e.g. switching on Floral constancy also switches on Auto
+## scouting, which also switches on Orientation flight. Returns the keys
+## it actually changed, so a UI caller can sync their checkboxes.
+static func _cascade_prerequisites_on_static(key: String) -> Array[String]:
+	var changed: Array[String] = []
+	var parent: String = Prerequisites.direct_parent(key)
+	while parent != "":
+		if not setting_get(parent):
+			setting_set(parent, true)
+			changed.append(parent)
+		parent = Prerequisites.direct_parent(parent)
+	return changed
+
+## Walks Prerequisites to find anything whose prerequisite is `key`
+## (directly or transitively) and turns it off too -- e.g. switching off
+## Auto scouting also switches off Floral constancy and
+## Auto-recruitment. Returns the keys it actually changed.
+static func _cascade_dependents_off_static(key: String) -> Array[String]:
+	var changed: Array[String] = []
+	for child in Prerequisites.direct_dependents(key):
+		if setting_get(child):
+			setting_set(child, false)
+			changed.append(child)
+			changed.append_array(_cascade_dependents_off_static(child))
+	return changed
+
 var value_labels: Dictionary = {}
 ## setting key -> its CheckBox, so the cascade helpers below can refresh
 ## a row's display when they flip a toggle other than the one clicked.
@@ -1284,29 +1328,19 @@ func _cycle_option(entry: Dictionary, direction: int) -> void:
 	setting_set(entry.key, new_value)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _option_display(entry, new_value)]
 
-## Walks up Prerequisites from `key`, turning on everything it depends
-## on -- e.g. switching on Floral constancy also switches on Auto
-## scouting, which also switches on Orientation flight.
+## UI-syncing wrapper over `_cascade_prerequisites_on_static` -- ticks the
+## checkbox for every key the cascade actually changed.
 func _cascade_prerequisites_on(key: String) -> void:
-	var parent: String = Prerequisites.direct_parent(key)
-	while parent != "":
-		if not setting_get(parent):
-			setting_set(parent, true)
-			if toggle_boxes.has(parent):
-				toggle_boxes[parent].button_pressed = true
-		parent = Prerequisites.direct_parent(parent)
+	for changed in _cascade_prerequisites_on_static(key):
+		if toggle_boxes.has(changed):
+			toggle_boxes[changed].button_pressed = true
 
-## Walks Prerequisites to find anything whose prerequisite is `key`
-## (directly or transitively) and turns it off too -- e.g. switching off
-## Auto scouting also switches off Floral constancy and
-## Auto-recruitment.
+## UI-syncing wrapper over `_cascade_dependents_off_static` -- unticks the
+## checkbox for every key the cascade actually changed.
 func _cascade_dependents_off(key: String) -> void:
-	for child in Prerequisites.direct_dependents(key):
-		if setting_get(child):
-			setting_set(child, false)
-			if toggle_boxes.has(child):
-				toggle_boxes[child].button_pressed = false
-			_cascade_dependents_off(child)
+	for changed in _cascade_dependents_off_static(key):
+		if toggle_boxes.has(changed):
+			toggle_boxes[changed].button_pressed = false
 
 ## A row whose control is the same ★ / ☆ toggle the colony window uses,
 ## pinning something into the corner readout rather than changing a

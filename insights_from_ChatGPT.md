@@ -20,7 +20,7 @@ below, which are ChatGPT's own record.
 | C4 | Stocking hatch fallback | Built and headless-verified, 22 Aug |
 | C5 | Role outcome telemetry | Built and headless-verified, 22 Aug |
 | C6 | Re-run balance comparisons | Done, 22 Aug -- found and fixed a follow-on bug, see `CHATGPT_INSIGHTS_PLAN.md` |
-| B1 | Shared settings-cascade command | Not started |
+| B1 | Shared settings-cascade command | Done, 22 Aug |
 | B2 | Split role assignment from role mode | Not started |
 | B3 | Postcondition evidence for remaining verbs | Not started |
 | B4 | Live settings in analysis | Not started |
