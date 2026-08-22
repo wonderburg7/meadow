@@ -220,42 +220,42 @@ A bee's dispatch loop, player commands, display text, vars.
 1930 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (1,421 lines)
+## debug_panel.gd (1,424 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-880  static func setting_get(key: String)
-883  static func setting_set(key: String, value) -> void
-898  static func apply_setting(key: String, value) -> void
-911  static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-925  static func _cascade_dependents_off_static(key: String) -> Array[String]
-948  func _ready() -> void
-1020 func _report_settings_button_width() -> void
-1025 func _rows_in(category: String) -> Array
-1047 func _make_section(category: String, entries: Array, start_open: bool) -> Control
-1086 func _make_controls_help() -> Control
-1119 func _build_actions(column: VBoxContainer) -> void
-1159 func _on_winter_pressed() -> void
-1170 func set_save_load_enabled(enabled: bool) -> void
-1178 func set_toggle(key: String, value: bool) -> void
-1183 func _on_save_pressed() -> void
-1194 func _on_load_pressed() -> void
-1206 func _toggle_panel() -> void
-1212 func _make_row(entry: Dictionary) -> Control
-1241 func _make_toggle_row(entry: Dictionary) -> Control
-1290 func _make_options_row(entry: Dictionary) -> Control
-1317 func _option_display(entry: Dictionary, value) -> String
-1321 func _cycle_option(entry: Dictionary, direction: int) -> void
-1333 func _cascade_prerequisites_on(key: String) -> void
-1340 func _cascade_dependents_off(key: String) -> void
-1349 func _make_star_row(entry: Dictionary) -> Control
-1384 func _adjust(entry: Dictionary, delta: float) -> void
-1397 func _format_value(v) -> String
-1404 func _on_restart_pressed() -> void
-1409 func _on_main_menu_pressed() -> void
-1417 func _restart() -> void
+881  static func setting_get(key: String)
+884  static func setting_set(key: String, value) -> void
+899  static func apply_setting(key: String, value) -> void
+912  static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+926  static func _cascade_dependents_off_static(key: String) -> Array[String]
+949  func _ready() -> void
+1023 func _report_settings_button_width() -> void
+1028 func _rows_in(category: String) -> Array
+1050 func _make_section(category: String, entries: Array, start_open: bool) -> Control
+1089 func _make_controls_help() -> Control
+1122 func _build_actions(column: VBoxContainer) -> void
+1162 func _on_winter_pressed() -> void
+1173 func set_save_load_enabled(enabled: bool) -> void
+1181 func set_toggle(key: String, value: bool) -> void
+1186 func _on_save_pressed() -> void
+1197 func _on_load_pressed() -> void
+1209 func _toggle_panel() -> void
+1215 func _make_row(entry: Dictionary) -> Control
+1244 func _make_toggle_row(entry: Dictionary) -> Control
+1293 func _make_options_row(entry: Dictionary) -> Control
+1320 func _option_display(entry: Dictionary, value) -> String
+1324 func _cycle_option(entry: Dictionary, direction: int) -> void
+1336 func _cascade_prerequisites_on(key: String) -> void
+1343 func _cascade_dependents_off(key: String) -> void
+1352 func _make_star_row(entry: Dictionary) -> Control
+1387 func _adjust(entry: Dictionary, delta: float) -> void
+1400 func _format_value(v) -> String
+1407 func _on_restart_pressed() -> void
+1412 func _on_main_menu_pressed() -> void
+1420 func _restart() -> void
 ```
 
 ## hive_cell.gd (867 lines)

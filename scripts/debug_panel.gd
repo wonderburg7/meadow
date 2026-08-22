@@ -19,6 +19,7 @@ extends CanvasLayer
 ## the Interface section.
 
 const UI = preload("res://scripts/ui.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Prerequisites = preload("res://scripts/prerequisites.gd")
 
@@ -965,7 +966,8 @@ func _ready() -> void:
 	# rather than importing assets. Sized up with its own font override
 	# since the button itself is now icon-sized rather than text-width.
 	toggle_button.text = "⚙"
-	toggle_button.add_theme_font_size_override("font_size", 18)
+	toggle_button.theme = UiTheme.build_theme()
+	toggle_button.theme_type_variation = "Heading"
 	toggle_button.custom_minimum_size = Vector2(36, 26)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -992,6 +994,7 @@ func _ready() -> void:
 	# every time the window was resized, on top of using `vp` from outside
 	# its own scope, which failed to compile at all.
 	panel = PanelContainer.new()
+	panel.theme = UiTheme.build_theme()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.offset_right = -8
@@ -1055,7 +1058,7 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	header.text = "%s  %s" % ["▾" if start_open else "▸", category]
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 24)
-	header.add_theme_font_size_override("font_size", 12)
+	header.theme_type_variation = "Small"
 	header.pressed.connect(func():
 		body.visible = not body.visible
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", category]
@@ -1085,7 +1088,7 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 
 func _make_controls_help() -> Control:
 	var help := Label.new()
-	help.add_theme_font_size_override("font_size", 11)
+	help.theme_type_variation = "Small"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.custom_minimum_size = Vector2(270, 0)
 	help.text = """Controls
@@ -1214,7 +1217,7 @@ func _make_row(entry: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 3)
 
 	var lbl := Label.new()
-	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.theme_type_variation = "Small"
 	lbl.custom_minimum_size = Vector2(140, 0)
 	lbl.text = "%s: %s" % [entry.label, _format_value(setting_get(entry.key))]
 	value_labels[entry.key] = lbl
@@ -1244,7 +1247,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 
 	var box := CheckBox.new()
 	box.text = entry.label
-	box.add_theme_font_size_override("font_size", 11)
+	box.theme_type_variation = "Small"
 	box.button_pressed = setting_get(entry.key)
 	var key: String = entry.key
 	toggle_boxes[key] = box
@@ -1292,7 +1295,7 @@ func _make_options_row(entry: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 3)
 
 	var lbl := Label.new()
-	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.theme_type_variation = "Small"
 	lbl.custom_minimum_size = Vector2(140, 0)
 	lbl.text = "%s: %s" % [entry.label, _option_display(entry, setting_get(entry.key))]
 	value_labels[entry.key] = lbl
@@ -1357,7 +1360,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 	star.focus_mode = Control.FOCUS_NONE
 	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
-	star.add_theme_font_size_override("font_size", 13)
+	star.theme_type_variation = "Body"
 	star.tooltip_text = "Show this in the top-right corner."
 	star.toggled.connect(func(pressed: bool):
 		if pressed and not Session.pinned_stats.has(key):
@@ -1376,7 +1379,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 
 	var label := Label.new()
 	label.text = entry.label
-	label.add_theme_font_size_override("font_size", 11)
+	label.theme_type_variation = "Small"
 	row.add_child(label)
 	row.add_child(UI.info_badge(entry.tip))
 	return row
