@@ -26,6 +26,36 @@ stays short and current. If a plan needs to survive past the current
 session, it goes in its own file, not just in `NEXTSTEPS.md` or the
 conversation.
 
+## Standing checklist — apply these without being asked
+
+Three things Dave used to have to ask for by name, every session. They
+are not optional extras — treat a change as failing review if it skips
+one, the same way a change that fails `source_checks.py` would be.
+
+1. **Token/context-efficient.** Read one file from the table below, not
+   the folder; grep section headers or check `FUNCTION_MAP.md` instead
+   of reading a long file top to bottom; use `git log`/`git show` and
+   the two check suites instead of re-reading code to verify it. Full
+   reasoning: `.claude/rules/gdscript.md`, `TOKEN_EFFICIENCY_PLAN.md`.
+2. **Architecturally right.** Matches "The four rules that matter"
+   below — role data lives only in `roles.gd`, `GameConfig` is balance
+   and `Session` is run/UI state, presentation never gates simulation,
+   a balance number is simulated before it's set. Full detail:
+   `.claude/rules/simulation.md`, `.claude/rules/saving.md`.
+3. **Processing-efficient at runtime.** Profile with `perf.gd` before
+   changing anything on a per-frame/per-bee hot path — don't guess at
+   what's slow, and don't add an index, cache or early-out without
+   checking the count *and* the call rate first. Full detail:
+   `.claude/rules/performance.md`, `docs/performance.md`.
+
+**Claude Code loads the `.claude/rules/*.md` files above automatically**
+when a matching file path is touched — that's what the `paths:`
+frontmatter in each one is for. **Claude Project and ChatGPT have no
+such mechanism.** Working from a Project, from `AGENTS.md`, or from any
+session without that auto-load feature: read the three rule files
+above directly before proposing or reviewing a code change, rather than
+assuming their content will surface on its own.
+
 ## Where things are
 
 ```
