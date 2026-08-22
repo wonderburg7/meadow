@@ -29,6 +29,7 @@ import os
 import random
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -88,6 +89,25 @@ def session_file_for_run_id(run_id: str) -> Path | None:
     return candidates[0]
 
 
+def _report_failure(label: str, stdout: str, stderr: str, tail_lines: int = 15) -> None:
+    """A one-line classified error plus a short tail, not the full raw
+    stdout/stderr (CHATGPT_INSIGHTS_PLAN.md's A4) -- a native crash's own
+    traceback can be enormous, and dumping it straight to the terminal
+    (or an AI caller's context window) buries the one line that actually
+    says what went wrong. The full text still goes somewhere -- a temp
+    file whose path is printed -- for whenever it's actually needed.
+    """
+    fd, path = tempfile.mkstemp(prefix="meadow_scenario_failure_", suffix=".log")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write("--- stdout ---\n%s\n--- stderr ---\n%s\n" % (stdout, stderr))
+    tail_source = stderr.strip() or stdout.strip()
+    tail = tail_source.splitlines()[-tail_lines:]
+    print("error: %s" % label, file=sys.stderr)
+    print("  full output saved to: %s" % path, file=sys.stderr)
+    for line in tail:
+        print("  %s" % line, file=sys.stderr)
+
+
 def run_once(scenario_path: Path, godot_path: str, timeout: int,
              fixed_fps: int | None = None) -> Path | None:
     """Launch one headless run and return the session_*.jsonl it wrote,
@@ -121,20 +141,26 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
     except subprocess.TimeoutExpired:
         print("error: scenario run exceeded %ds timeout, killed" % timeout, file=sys.stderr)
         return None
+    except OSError as e:
+        # e.g. godot_path doesn't exist or isn't executable -- no
+        # stdout/stderr was ever captured, so there's nothing to save.
+        print("error: could not launch Godot at %r: %s" % (godot_path, e), file=sys.stderr)
+        return None
     print("wall time: %.1fs" % (time.time() - start))
-
-    if result.returncode != 0:
-        print("warning: Godot exited with code %d" % result.returncode, file=sys.stderr)
-        if result.stderr.strip():
-            print(result.stderr, file=sys.stderr)
 
     session_file = session_file_for_run_id(run_id)
     if session_file is None:
-        print("error: no session_*_%s.jsonl written after this run" % run_id, file=sys.stderr)
-        if result.stdout.strip():
-            print("--- Godot stdout ---", file=sys.stderr)
-            print(result.stdout, file=sys.stderr)
+        label = ("Godot exited with code %d and " % result.returncode if result.returncode != 0
+                  else "") + "no session_*_%s.jsonl written after this run" % run_id
+        _report_failure(label, result.stdout, result.stderr)
         return None
+
+    # A non-zero exit that still produced a valid session file is only
+    # worth a short heads-up, not the capped-artifact treatment above --
+    # the run's own data is intact either way.
+    if result.returncode != 0:
+        print("warning: Godot exited with code %d (session file still written)" % result.returncode,
+              file=sys.stderr)
 
     return session_file
 

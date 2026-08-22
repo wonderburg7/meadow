@@ -1,10 +1,10 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked. Group A: A1-A3 built and
+verified, 22 Aug 2026. B5 stays parked. Group A: A1-A4 built and
 verified, 22 Aug 2026 (A3 closes the determinism gap A2 surfaced --
 `--fixed-fps 30` is now the harness's default and gives genuine
-run-to-run reproducibility); A4-A6 still planned, A7 stays parked.
+run-to-run reproducibility); A5-A6 still planned, A7 stays parked.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -484,13 +484,35 @@ needs live mid-run decisions rather than a scripted policy.
 - **Verify:** one fixed baseline scenario run at each step size,
   diffed on those metrics -- done, see the table and findings above.
 
-### A4. Cap failure output
+### A4. Cap failure output -- done, 22 Aug 2026
 - **File:** `run_scenario.py`.
 - **Fix:** on a crash or unreadable log, save full stdout/stderr to a
   file and print only a one-line classified error plus the last 10-20
   lines and the artifact path -- not the full native/Python traceback.
-- **Verify:** deliberately point the runner at a bad Godot path; the
-  printed output stays short.
+- **Built:** two failure paths, both now capped. A bad `--godot-path`
+  (the executable itself missing/unlaunchable) is caught as `OSError`
+  around `subprocess.run` and prints one line -- there's no
+  stdout/stderr to save in that case, since the process never started.
+  A launched-but-failed run (non-zero exit with no session file, or a
+  session file that never got written at all) goes through the new
+  `_report_failure`: writes `--- stdout ---`/`--- stderr ---` to a
+  `tempfile.mkstemp` log, then prints one classified line, the saved
+  path, and the last 15 lines of whichever stream is non-empty
+  (stderr preferred). A non-zero exit that *did* still produce a valid
+  session file (Godot can exit non-zero for reasons that don't corrupt
+  the run) stays a short one-line warning, not a capped-artifact
+  failure -- same tolerance the pre-slice code had, just shorter.
+- **Verified:** `source_checks.py`/`balance_tests.py` pass (Python-only
+  change, no GDScript). Three real invocations of
+  `tools/run_scenario.py`: a nonexistent `--godot-path` printed exactly
+  one line (`error: could not launch Godot at ...: [WinError 2] ...`),
+  no traceback; `--godot-path` pointed at `cmd.exe` (launches, never
+  writes a session file) printed a 6-line capped report -- one
+  classified line, the saved artifact path, and cmd.exe's own short
+  banner as the tail -- with the file at that path confirmed to hold
+  the full stdout/stderr; and an ordinary successful run against the
+  real Godot install was unaffected, confirming the change doesn't
+  touch the non-failure path.
 
 ### A5. Early-success stop conditions + brief reports
 - **Files:** `scenario_actions.gd` (stop condition),
