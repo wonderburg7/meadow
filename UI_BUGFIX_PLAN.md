@@ -32,6 +32,9 @@ found and noted below rather than guessed at.
 
 ## Clarify before building (Slice 0 -- five minutes, no code)
 
+**Answered 22 Aug** -- see Slice 4/5's DONE notes above for what actually
+got built from these answers.
+
 Three things this plan can't resolve from the repo alone:
 
 1. **Icon-only menus** -- remove the "Meadow"/"Hive"/"Nursery"/"Colony"
@@ -102,24 +105,30 @@ pattern.*
 spacing in all three themes; colour-blind mode changes more than the
 nursery ring.
 
-**Slice 4 -- Icon-only buttons and the bottom-row layout.** Gated on
-Slice 0's answers.
-Rebuild the top-bar buttons per Dave's icon-only call, and rework the
-command tray into the confirmed column layout.
-*Model: Sonnet.*
-*Files:* `hud.gd`.
+**Slice 4 -- Icon-only buttons and the bottom-row layout. DONE**, split
+into four sub-slices once Slice 0's answers turned out to need more
+than a single-file rework -- see `NEXTSTEPS.md` and `git log` (sub-
+slices A-D, one commit each). Not yet Dave-verified in-game.
+- A: top-bar buttons default to icon-only, with a "Show button labels"
+  setting to bring the words back.
+- B: the command tray's flat button row became three ranked columns --
+  Job, Focus, Orders -- with More… holding the rest (queen build-cell,
+  Follow bee, backup role, finish-first, favourite).
+- C: the flower/obstacle/death/soil popups (Slice 5's original scope,
+  pulled forward once Slice 0 answered it) folded into the bottom-left
+  selection panel as a content swap, rather than moving to a fixed
+  screen position -- see `show_object_summary`.
+- D: the cell popup (Slice 5's "assign, not just look at" case) folded
+  into the command tray, mutually exclusive with the Job/Focus/Orders
+  columns -- see `show_cell_popup`.
+*Files:* `hud.gd`, `input_selection.gd`, `session.gd`, `debug_panel.gd`,
+`player_profile.gd`, `death_marker.gd`.
 
-**Slice 5 -- Popup positioning.**
-`hud.gd::show_cell_popup` sets `cell_popup.position = screen_position +
-Vector2(12, -10)` -- literally anchored to the mouse click, which is
-the entire cause of the "next-to-item, not bottom-left" report. Move it
-(and the other `show_*_popup` calls, if Slice 0 says so) to a fixed
-screen position consistent with the "drawers slide from a screen edge"
-rule already used elsewhere.
-*Model: Haiku once the target position is confirmed -- mechanical once
-decided.*
-*Files:* `hud.gd`, `input_selection.gd` (the four call sites that pass
-a mouse position in).
+**Slice 5 -- Popup positioning. DONE**, folded into Slice 4 above (sub-
+slices C and D) rather than done separately -- Dave's answer to Slice
+0's third question changed the fix from "move to a fixed position" to
+"fold into the panels that already exist", which touched the same
+files as Slice 4's column rework.
 
 **Slice 6 -- Panel overlap on window resize.**
 Audit whether `ui_layout.gd`'s responsive-breakpoint helpers are
