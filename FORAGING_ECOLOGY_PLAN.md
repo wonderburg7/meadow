@@ -138,6 +138,51 @@ scenario-seed plumbing in `main.gd`.
 runs themselves stand in for a hands-on check here — there's no new
 visible behaviour to click through.
 
+### Slice 0 results (22 Aug 2026)
+
+**Task 1 turned out already done.** `main.gd:278`'s assumed unconditional
+`seed(12345)` is stale — `CHATGPT_INSIGHTS_PLAN.md`'s A2 work already
+added a scenario JSON `random_seed` field plus a `--random-seed=` CLI
+override (`main.gd:976-995`, `run_scenario.py:61-135`), wired before this
+plan was written. No code change was needed; only new scenario files.
+
+**Seeds used:** 12345, 7, 2026, 90210, 555 — following the repo's
+existing `a2_seed_111_test.json` convention, one new scenario file per
+seed per side: `test_scenarios/foraging_features_{on,off}_seed{N}_test.json`.
+
+**Re-run comparison** (one run per seed per side — reduced from the
+5-repeats-per-seed the task originally specified, after Dave flagged that
+as an oversized/wasteful batch; see `docs/known-pitfalls.md`-style note
+in memory `feedback_headless_run_batches`):
+
+| side | seed | flower_visits | total_deaths | recruitment_matches | foragers_settled |
+|---|---|---|---|---|---|
+| on | 12345 | 225 | 21 | 7 | 14 |
+| on | 7 | 221 | 20 | 5 | 14 |
+| on | 2026 | 215 | 20 | 8 | 14 |
+| on | 90210 | 210 | 21 | 6 | 13 |
+| on | 555 | 204 | 20 | 5 | 12 |
+| off | 12345 | 392 | 22 | 0 | 0 |
+| off | 7 | 388 | 22 | 0 | 0 |
+| off | 2026 | 378 | 22 | 0 | 0 |
+| off | 90210 | 353 | 21 | 0 | 0 |
+| off | 555 | 366 | 22 | 0 | 0 |
+
+On (features on): mean flower_visits ≈215 across 5 independent seeds.
+Off (features off): mean flower_visits ≈375. This gap is wider than the
+single-seed 203-vs-230 figure NEXTSTEPS previously cited — expected,
+since `off` disables recruitment/scouting/orientation entirely (hence
+`recruitment_matches`/`foragers_settled` both 0), removing all the
+overhead auto-recruitment adds to a trip, not because `on` regressed.
+Read this as the real multi-seed shape of the existing on/off gap, not
+as a new regression to chase.
+
+**Not done this slice:** the 5-repeats-per-seed jitter averaging (only 1
+run per seed was taken, to keep the batch small per Dave's steer) and
+the `perf.gd` performance baseline (needs an interactive boot with the
+"fps" star — no `mcp__godot__*` tools were connected this session, so
+this stayed a hands-on item for Dave rather than something automated).
+
 ---
 
 ## Slice 1: Stats and foraging-window foundation — implementation-ready

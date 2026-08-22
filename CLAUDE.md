@@ -37,6 +37,17 @@ one, the same way a change that fails `source_checks.py` would be.
    of reading a long file top to bottom; use `git log`/`git show` and
    the two check suites instead of re-reading code to verify it. Full
    reasoning: `.claude/rules/gdscript.md`, `TOKEN_EFFICIENCY_PLAN.md`.
+   Applies to how a multi-step task is run, without Dave asking each
+   time: sequence sub-tasks cheap/low-risk first (confirm a fact via
+   grep/table lookup before editing, run a plan's earlier prerequisite
+   slice before a later one, check whether something's already shipped
+   before proposing it); batch repetitive mechanical steps (e.g. the
+   same scenario across several seeds) into one script/background call
+   instead of one tool call per repeat; default to Sonnet, and only
+   name a case for Haiku (narrow, well-specified, mechanical — e.g.
+   generating repetitive JSON variants) or Opus (genuinely
+   architecture-sensitive or ambiguous) explicitly, rather than
+   switching silently.
 2. **Architecturally right.** Matches "The four rules that matter"
    below — role data lives only in `roles.gd`, `GameConfig` is balance
    and `Session` is run/UI state, presentation never gates simulation,

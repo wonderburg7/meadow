@@ -6,25 +6,34 @@ plan file, full history in `git log`.
 
 ## Next up
 
-1. **UI bugfix plan -- Slice 4 and the popup-repositioning part of
-   Slice 5 are done (four sub-slices, each committed separately: icon-
-   only top bar with a settings toggle; the three-column Job/Focus/
-   Orders command tray; flower/obstacle/death/soil popups folded into
-   the bottom-left selection panel as a content swap; the cell popup
-   folded into the command tray, mutually exclusive with the three
-   columns). `source_checks.py`/`balance_tests.py` pass and the project
-   boots clean under `mcp__godot__run_project` after each sub-slice.
-   **Not yet Dave-verified in-game.** Next session should open a save
-   and check: the top-bar buttons go icon-only and the "Show button
-   labels" setting brings the words back; selecting a bee shows Job/
-   Focus/Orders as three columns with More… holding the rest; clicking
-   a flower/obstacle/dead bee/soil block shows its summary in the
-   bottom-left panel (and that a still-selected bee's command tray
-   stays up underneath); selecting a cell shows its five sections in
-   the command tray instead of the columns, and reselecting a bee swaps
-   back cleanly. Full detail in `UI_BUGFIX_PLAN.md` -- Slices 6
+1. **UI settings & polish plan** -- new, from Dave's 22 Aug second pass
+   (screenshots of the settings window and a bee selected). Full detail
+   in `UI_SETTINGS_PLAN.md`. Two root causes explain most symptoms:
+   `UiTheme.build_theme()` is only ever applied once per panel at
+   construction, so theme/typeface/text-scale changes need a Restart
+   Run to show; and `build_theme()` never sets a font colour at all, so
+   light mode falls back to invisible white text. Dave's chosen order
+   (his call, not the plan's default suggestion): **start with Slice 3
+   (settings reorganised into Game Settings / Hive / Meadow collections,
+   plus a content audit -- e.g. foraging-behaviour tunables currently
+   filed under "Flowers")**, then Slice 1 (live theme apply), Slice 2
+   (light contrast), Slice 4 (control alignment/sizing), Slice 6
+   (favourite as a header icon), Slice 5 (panel texture, needs Dave's
+   steer on look before building). Three open questions for Dave are in
+   the plan's "Open decisions" section -- check before Slice 3 if they
+   haven't been answered yet.
+2. **UI bugfix plan** -- Slice 4 and the popup-repositioning part of
+   Slice 5 are done, **not yet Dave-verified in-game**. Slices 6
    (resize overlap), 7 (Meadow/Hive hit-area) and 8 (follow-bee-stops)
-   are the remaining, unrelated slices.
-2. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
+   are the remaining, unrelated slices. Full detail in
+   `UI_BUGFIX_PLAN.md`.
+3. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
+4. **Foraging ecology plan -- Slice 0 done, Slice 1 next.** Multi-seed
+   on/off baseline recorded in `FORAGING_ECOLOGY_PLAN.md`'s "Slice 0
+   results". Dave still owes a hand-recorded `perf.gd` baseline (no
+   `mcp__godot__*` tools available to automate it). Start Slice 1
+   (foraging-stats instrumentation + read-only panel) in a **fresh
+   session** -- its own section is implementation-ready, and the plan
+   says not to combine slices.

@@ -1,32 +1,16 @@
-# Meadow — read CLAUDE.md
+# Meadow — ChatGPT/Codex entry point
 
-This file used to be a full standalone copy of `CLAUDE.md`'s content
-for tools that read `AGENTS.md` instead. It drifted out of date against
-the real one (last resynced 19 Aug, missed the later `docs/` and
-`.claude/rules/` split) — keeping it a pointer instead of a copy means
-it can't drift again.
+This file is the entry point for ChatGPT and Codex sessions in this
+repository.
 
-**Read `CLAUDE.md` first.** It has the project orientation, the "start
-here" pointer to `NEXTSTEPS.md`, the file-routing table, the standing
-checklist (token-efficiency / architecture / runtime performance), the
-four architectural rules, and the verification commands.
+**Before reading or acting on any other project file, read `CHATGPT.md` and
+follow its file-editing boundary.**
 
-**Then read these directly, rather than assuming they'll surface on
-their own:**
+Do not use `NEXTSTEPS.md` as ChatGPT's work queue and do not implement work
+from Claude plans. Those files belong to Claude Project and Claude Code.
+ChatGPT may read Meadow files to provide analysis, insights and
+recommendations, but it must write only to the ChatGPT-specific Markdown files
+allowed by `CHATGPT.md`.
 
-- `.claude/rules/gdscript.md` — GDScript conventions and known parse
-  landmines.
-- `.claude/rules/simulation.md` — presentation-vs-simulation,
-  `roles.gd`, `GameConfig` vs `Session`.
-- `.claude/rules/performance.md` — profile before changing a hot path.
-- `.claude/rules/saving.md` — save format and `GameConfig` write rules.
-
-Claude Code loads those four automatically when a matching file path is
-touched (each has a `paths:` frontmatter for exactly that). Nothing
-does that for a session reading `AGENTS.md` — treat them as required
-reading before touching a matching file, not optional background.
-
-`docs/known-pitfalls.md` and `docs/performance.md` hold the fuller
-write-ups the rule files summarise. `NEXTSTEPS.md` holds the next 1-3
-concrete actions — read it before `CLAUDE.md`, per `CLAUDE.md`'s own
-"Start here" section.
+Claude Project and Claude Code should continue to use `CLAUDE.md` and
+`NEXTSTEPS.md` as their project instructions and work queue.
