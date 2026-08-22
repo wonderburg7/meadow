@@ -21,9 +21,9 @@ below, which are ChatGPT's own record.
 | C5 | Role outcome telemetry | Built and headless-verified, 22 Aug |
 | C6 | Re-run balance comparisons | Done, 22 Aug -- found and fixed a follow-on bug, see `CHATGPT_INSIGHTS_PLAN.md` |
 | B1 | Shared settings-cascade command | Done, 22 Aug |
-| B2 | Split role assignment from role mode | Not started |
+| B2 | Split role assignment from role mode | Done, 22 Aug 2026 |
 | B3 | Postcondition evidence for remaining verbs | Done, 22 Aug 2026 |
-| B4 | Live settings in analysis | Not started |
+| B4 | Live settings in analysis | Done, 22 Aug 2026 |
 | A1 | Unique run IDs | Not started |
 | A2 | Explicit `random_seed` field | Not started |
 | A3 | `--fixed-fps` benchmark | Not started |

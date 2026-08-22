@@ -41,7 +41,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "population_curve": _population_curve(snapshots),
         "deaths_over_time": _deaths_over_time(deaths),
         "honey_fill_vs_winter": _honey_fill_vs_winter(snapshots),
-        "mechanic_firing": _mechanic_firing(settings, summary),
+        "mechanic_firing": _mechanic_firing(settings, summary, actions),
         "actions": _action_summary(actions),
         "summary": summary,
     }
@@ -145,14 +145,65 @@ _MECHANIC_TOGGLES = {
 }
 
 
-def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None) -> dict[str, Any]:
+def _parse_set_config_value(raw: str) -> Any:
+    """Undo scenario_actions.gd::_do_set_config's "%s = %s" % [key, value]
+    formatting -- the action log has no structured value field, just that
+    string, since it's a debug line first and a data source second."""
+    if raw == "true":
+        return True
+    if raw == "false":
+        return False
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    try:
+        return float(raw)
+    except ValueError:
+        pass
+    return raw
+
+
+def _settings_timeline(actions: list[dict[str, Any]]) -> list[tuple[float, str, Any]]:
+    """Every accepted set_config action, in log order, as (game_time, key,
+    value). A mid-run set_config changes what a later mechanic-firing check
+    should compare against -- the boot config snapshot alone goes stale the
+    moment a scenario flips a toggle after boot."""
+    timeline: list[tuple[float, str, Any]] = []
+    for a in actions:
+        if a.get("do") != "set_config" or a.get("result") != "accepted":
+            continue
+        target = a.get("target", "")
+        if " = " not in target:
+            continue
+        key, _, raw_value = target.partition(" = ")
+        timeline.append((a["game_time"], key, _parse_set_config_value(raw_value)))
+    return timeline
+
+
+def _live_value(key: str, settings: dict[str, Any],
+                 timeline: list[tuple[float, str, Any]], cutoff: float) -> Any:
+    """The value `key` actually held at `cutoff` game_time: the boot
+    setting, overridden by the last set_config for that key at or before
+    cutoff."""
+    value = settings.get(key)
+    for game_time, tkey, tvalue in timeline:
+        if tkey == key and game_time <= cutoff:
+            value = tvalue
+    return value
+
+
+def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None,
+                      actions: list[dict[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     if summary is None:
         return result
+    timeline = _settings_timeline(actions)
+    cutoff = summary.get("game_time", float("inf"))
     for toggle_key, count_key in _MECHANIC_TOGGLES.items():
         if toggle_key not in settings:
             continue
-        toggle_on = bool(settings[toggle_key])
+        toggle_on = bool(_live_value(toggle_key, settings, timeline, cutoff))
         count = summary.get(count_key, 0)
         # crab_spider_events is a dict of outcome -> count, everything else
         # is a plain int.

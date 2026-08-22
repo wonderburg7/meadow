@@ -1,7 +1,8 @@
 # ChatGPT insights — implementation plan
 
-Status: Group C fully built and verified, 22 Aug 2026. B1-B3 built and
-verified, 22 Aug 2026. B4-B5 and Group A still planned, not started.
+Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
+verified, 22 Aug 2026. B5 stays parked; Group A still planned, not
+started.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -276,7 +277,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   the code instead: `_designate_one` leaves `cell.designated_type`
   unchanged on that path, so the new comparison catches it.
 
-### B4. Live settings in analysis
+### B4. Live settings in analysis -- done, 22 Aug 2026
 - **File:** `tools/analyze_session.py` (`_mechanic_firing`).
 - **Bug:** mechanic-firing checks read the boot `config` entry only, so
   a mid-run `set_config` action doesn't update what the summary
@@ -285,8 +286,31 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Fix:** build a settings timeline from `action`-type log entries and
   use the last live value before each check, not just the boot
   snapshot.
-- **Verify:** a run that enables a mechanic mid-run via `set_config`
-  reports `toggle_on: true` once events start firing.
+- **Built:** three new module-level helpers. `_parse_set_config_value`
+  undoes `scenario_actions.gd::_do_set_config`'s `"%s = %s" % [key,
+  value]` log formatting (the action entry has no structured value
+  field, just that string) back into bool/int/float/str.
+  `_settings_timeline` walks every `action`-type entry with
+  `do == "set_config"` and `result == "accepted"` into an ordered
+  `(game_time, key, value)` list. `_live_value` starts from the boot
+  `config` snapshot and applies every timeline entry for that key at or
+  before a given cutoff, last one wins. `_mechanic_firing` now takes
+  `actions` as a third argument and reads each toggle's `toggle_on` via
+  `_live_value(..., cutoff=summary["game_time"])` instead of the raw
+  boot `settings` dict -- `analyze()`'s call site passes `actions`
+  through.
+- **Verified:** `source_checks.py` and `balance_tests.py` both pass
+  (this file has no GDScript side, so no `FUNCTION_MAP.md`/Godot-boot
+  step applies). Since the change is pure Python parsing with no
+  Godot/gameplay dependency, verified directly against synthetic
+  session entries rather than a scenario run: a 3-entry session (boot
+  `scouting_on: false`, an accepted `set_config scouting_on = true` at
+  `game_time` 10, a `summary` at `game_time` 50 with
+  `scouting_settled: 3`) reports `toggle_on: true, fired: true` on this
+  branch; re-run against the pre-fix code (`git stash`) on the same
+  synthetic entries reproduces the exact bug this slice describes --
+  `toggle_on: false` despite `event_count: 3` -- confirming the fix
+  changes the reported value, not just the code path.
 
 ### B5. (Backlog, not a slice yet) Observe-pause-act loop
 Park this -- the insight doc's own framing says "only then consider"
