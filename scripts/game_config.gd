@@ -484,6 +484,17 @@ var fact_templated_chance: float = 0.3
 var visual_size_jitter_range: float = 0.05    # GameConfig, +/- this fraction
 var visual_tint_jitter_range: float = 0.05
 
+## Bumble flight: a small side-to-side drift while flying outdoors, so
+## movement reads as bee-like instead of beelining. Purely visual -- the
+## offset lands on bee.visual_root, never on bee.position, so arrival
+## checks, obstacle steering and the stall watchdog are all unaffected.
+## Gated on is_on_screen and outdoor flight, so it costs nothing off
+## screen or indoors -- see bee.gd::_update_wander_flight and
+## bee_movement.gd::move_towards.
+var bumble_flight_on: bool = true
+var bumble_flight_amplitude: float = 6.0   # pixels either side of the flight line
+var bumble_flight_frequency: float = 1.6   # radians/second
+
 ## Milestone bees ("the hundredth bee this colony ever raised") get a
 ## deterministic fact instead of a rolled one -- see
 ## bee_identity.gd::milestone_fact_nth.

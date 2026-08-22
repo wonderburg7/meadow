@@ -7,7 +7,10 @@ much use on its own.
 Sizes: **S** an evening, **M** a few sessions, **L** a substantial piece
 of work.
 
-Last updated: 20 Aug 2026 -- added a row below for the AI playtest
+Last updated: 22 Aug 2026 -- bumble flight built (see the "Depth in what
+exists" row), waiting on Dave's hands-on check.
+
+Previous update, 20 Aug 2026 -- added a row below for the AI playtest
 harness (Claude running its own headless, unattended scenarios to check
 balance and behaviour, rather than every question needing Dave's own
 hands-on play), now agreed and building, first slice in `NEXTSTEPS.md`.
@@ -167,6 +170,7 @@ alongside the tutorial, so the systems already in could stabilise first.
 | **Bee individuality** — small variation in speed/capacity, a generated name and fact, gynes carry it forward | S | Cheap, adds texture. Detailed and ready to build, see `docs/archive/BEE_INDIVIDUALITY_PLAN.md`. |
 | **Foraging memory / recruitment** — a bee that found a good patch returns and recruits others | M | **Built 17 Aug** as a combined scouting/floral-constancy/recruitment mechanism (`GameConfig.auto_foraging_on`), still unconfirmed against a real playtest and still not measured against the baseline per rule 4. **Being split 18 Aug** into three independent toggles — see `docs/archive/SCOUTING_TOGGLE_PLAN.md`, ready to build. |
 | **Cell depth / multi-storey comb** | L | No. Doubles the UI problem for little gain. |
+| **Bumble flight** — outdoor flying bees drift on a small wander instead of beelining, so movement reads as bee-like | S | **Built 22 Aug 2026**, waiting on Dave's hands-on check. A two-sine Lissajous offset on a new `visual_root` child node (not `bee.position`), so arrival checks, obstacle steering and the stall watchdog are untouched. `bee_movement.gd::move_towards`'s outdoor branch sets `bee.flying_outdoors = true`; `bee.gd::_update_wander_flight()` (called from `_process`, same on-screen-gated pattern as `_update_label`/`_update_alarm_ring`) reads that flag and skips the `sin()` calls entirely off screen or indoors. Toggle plus amplitude/frequency under debug panel's "Bee life" (`GameConfig.bumble_flight_on`, on by default). |
 
 ## Interface
 

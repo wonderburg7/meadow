@@ -294,6 +294,7 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	if not bee._is_inside_hive():
 		var wanted: Vector2 = bee.position.move_toward(avoid_obstacles(bee, target), step)
 		bee.position = block_obstacles(bee, wanted)
+		bee.flying_outdoors = true   # bumble flight -- see bee.gd::_update_wander_flight
 		Perf.end("bee_move")
 		return
 

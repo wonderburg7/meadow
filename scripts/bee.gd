@@ -360,6 +360,23 @@ var path_points: PackedVector2Array = PackedVector2Array()
 var path_index: int = 0
 var path_goal: Vector2 = Vector2(INF, INF)
 
+## Every visual child (rings, body, label) hangs off this instead of the
+## bee node itself, so bumble flight (see _update_wander_flight) can drift
+## the whole visual stack a few pixels off the real position without
+## touching bee.position -- everything that reads bee.position (arrival
+## checks, obstacle steering, the stall watchdog) stays exact.
+var visual_root: Node2D
+
+## Rolled once at spawn, like tint/size jitter, so a knot of bees flying
+## together don't all wobble in lockstep. See _update_wander_flight.
+var wander_phase: float = 0.0
+
+## Set true by bee_movement.gd's move_towards whenever this bee actually
+## moves outdoors this frame, cleared before the state machine runs each
+## _process -- so it reflects only this frame's movement. Read by
+## _update_wander_flight below.
+var flying_outdoors: bool = false
+
 var label: Label
 var selection_ring: Polygon2D
 var alarm_ring: Polygon2D
@@ -420,11 +437,16 @@ func _ready() -> void:
 	var outline_radius: float = 9.0 * size_factor
 	click_radius = (outline_radius + 5.0) * size_jitter
 
+	wander_phase = randf() * TAU
+
+	visual_root = Node2D.new()
+	add_child(visual_root)
+
 	selection_ring = Polygon2D.new()
 	selection_ring.polygon = Shapes.circle_points(outline_radius + 4.0)
 	selection_ring.color = Color(0.2, 1.0, 0.4, 0.85)
 	selection_ring.visible = false
-	add_child(selection_ring)
+	visual_root.add_child(selection_ring)
 
 	# Alarm-pheromone flee flash (see CRAB_SPIDER_PLAN.md sections 5/7) --
 	# a distinct ring, outside selection_ring, so the two never get read
@@ -433,7 +455,7 @@ func _ready() -> void:
 	alarm_ring.polygon = Shapes.circle_points(outline_radius + 8.0)
 	alarm_ring.color = Color(1.0, 0.55, 0.0, 0.85)
 	alarm_ring.visible = false
-	add_child(alarm_ring)
+	visual_root.add_child(alarm_ring)
 
 	# Attack flash (see CRAB_SPIDER_PLAN.md section 4) -- a bee who was
 	# actually attacked and escaped, not just one who noticed the alarm
@@ -444,12 +466,12 @@ func _ready() -> void:
 	attack_ring.polygon = Shapes.circle_points(outline_radius + 11.0)
 	attack_ring.color = Color(0.95, 0.1, 0.1, 0.85)
 	attack_ring.visible = false
-	add_child(attack_ring)
+	visual_root.add_child(attack_ring)
 
 	var outline := Polygon2D.new()
 	outline.polygon = Shapes.circle_points(outline_radius)
 	outline.color = Color(0.05, 0.05, 0.05)   # black outline
-	add_child(outline)
+	visual_root.add_child(outline)
 
 	# Sits between the outline and the body -- see the field comment above
 	# -- so it draws as a thin ring just inside the black edge rather than
@@ -458,24 +480,24 @@ func _ready() -> void:
 	outline_ring = Polygon2D.new()
 	outline_ring.polygon = Shapes.circle_points(outline_radius - 1.5 * size_factor)
 	outline_ring.visible = false
-	add_child(outline_ring)
+	visual_root.add_child(outline_ring)
 
 	body = Polygon2D.new()
 	body.polygon = Shapes.circle_points(body_radius)
 	body.color = _tinted(_base_colour())
-	add_child(body)
+	visual_root.add_child(body)
 
 	# Drawn after the body, so it sits on top as a small dot rather than
 	# being covered by it.
 	centre_dot = Polygon2D.new()
 	centre_dot.polygon = Shapes.circle_points(body_radius * 0.35)
 	centre_dot.visible = false
-	add_child(centre_dot)
+	visual_root.add_child(centre_dot)
 
 	label = Label.new()
 	label.position = Vector2(-16, -32 if not is_queen else -40)
 	label.add_theme_font_size_override("font_size", 12)
-	add_child(label)
+	visual_root.add_child(label)
 
 	_update_role_marker()
 
@@ -708,6 +730,12 @@ func _process(delta: float) -> void:
 			BeeSurvival.begin_feeding_self(self)
 		Perf.end("bee_think")
 
+	# Cleared before the state machine runs so it reflects only this
+	# frame's movement -- bee_movement.gd's move_towards sets it back to
+	# true from inside the outdoor branch, if that's what actually runs
+	# below. See _update_wander_flight.
+	flying_outdoors = false
+
 	# Runs every frame, not just on a think tick -- unlike the block
 	# above, so this is where a per-state handler that does real search
 	# or scan work (rather than just walking) would show up as costing
@@ -887,6 +915,10 @@ func _process(delta: float) -> void:
 	_update_label()
 	_update_alarm_ring()
 	Perf.end("bee_label")
+
+	Perf.begin("bee_wander")
+	_update_wander_flight()
+	Perf.end("bee_wander")
 	Perf.end("bees")
 
 # --- life support -------------------------------------------------
@@ -1809,6 +1841,30 @@ func _update_alarm_ring() -> void:
 		return
 	alarm_ring.visible = Session.sim_time < alarm_flash_until
 	attack_ring.visible = Session.sim_time < attack_flash_until
+
+## Bumble flight (see ROADMAP.md): a small Lissajous drift on visual_root
+## while the bee is actually flying outdoors, so movement reads as
+## bee-like instead of beelining. bee.position itself never moves for
+## this, so arrival checks, obstacle steering and the stall watchdog are
+## all unaffected -- only where the bee is *drawn* wobbles.
+##
+## Two sines at slightly different rates (rather than one) so the path
+## traces a small drifting loop instead of a straight line back and
+## forth, which reads as idling in place rather than flight.
+func _update_wander_flight() -> void:
+	if not GameConfig.bumble_flight_on or not flying_outdoors:
+		if visual_root.position != Vector2.ZERO:
+			visual_root.position = Vector2.ZERO
+		return
+	# Off screen or indoors: skip the trig entirely, same pattern as
+	# _update_label/_update_alarm_ring (rule 3).
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	var t: float = Session.sim_time * GameConfig.bumble_flight_frequency + wander_phase
+	visual_root.position = Vector2(
+		sin(t) * GameConfig.bumble_flight_amplitude,
+		sin(t * 1.3 + PI * 0.5) * GameConfig.bumble_flight_amplitude
+	)
 
 ## Bees inside the hive pick their way over the comb rather than flying
 ## straight, so standing on a cell slows them down. Out in the meadow

@@ -728,6 +728,21 @@ const TUNABLES := [
 		"category": "Bee life",
 		"tip": "Energy a bee takes on per second while feeding at a cell. Honey supplies this from far fewer units than nectar does.",
 	},
+	{
+		"key": "bumble_flight_on", "label": "Bumble flight", "toggle": true,
+		"category": "Bee life",
+		"tip": "Outdoor flying bees drift on a small side-to-side wander instead of beelining, so movement reads as bee-like. Purely visual -- never changes where a bee is or how fast it gets there.",
+	},
+	{
+		"key": "bumble_flight_amplitude", "label": "Wander amplitude", "step": 1.0, "min": 0.0,
+		"category": "Bee life",
+		"tip": "How far side to side the wander drifts, in pixels. Only matters when Bumble flight is on.",
+	},
+	{
+		"key": "bumble_flight_frequency", "label": "Wander speed", "step": 0.1, "min": 0.1,
+		"category": "Bee life",
+		"tip": "How fast the wander oscillates, in radians per second. Higher is twitchier. Only matters when Bumble flight is on.",
+	},
 
 	# --- Interface ---
 	{
