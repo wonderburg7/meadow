@@ -12,6 +12,7 @@ const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
 const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
+const UiIcon = preload("res://scripts/ui_icon.gd")
 
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
@@ -136,18 +137,23 @@ static func hatch_options() -> Array:
 		entries.append({"label": role.label, "role": role.id, "options": options})
 	return entries
 
-## Transport-style controls: pause, play, and two levels of fast
-## forward, using the usual arrow symbols rather than numbers.
-## Numbers rather than stacked arrows: "▶▶▶" and "▶▶▶▶" are hard to tell
-## apart at a glance and each one is wider than the last, which is what
-## was eating the top bar. A number is one character at any speed.
+## Play and two levels of fast forward, using numbers rather than
+## stacked arrows: "▶▶▶" and "▶▶▶▶" are hard to tell apart at a glance
+## and each one is wider than the last, which is what was eating the top
+## bar. A number is one character at any speed. Pause is its own
+## explicit button (see _build_top_right_bar), not an entry here.
+## 8x is dev-only (UI_PLAN.md section 2's "(8x)") -- see Session.show_speed_8x.
 const SPEEDS := [
-	{"label": "❚❚", "scale": 0.0, "tip": "Pause. The whole colony freezes; you can still look around and give orders."},
 	{"label": "1", "scale": 1.0, "tip": "Normal speed."},
 	{"label": "2", "scale": 2.0, "tip": "Double speed. Good for waiting out brood development or comb building."},
 	{"label": "4", "scale": 4.0, "tip": "Quadruple speed. The quickest way to reach the next day."},
-	{"label": "8", "scale": 8.0, "tip": "Eight times speed. For skipping a stretch you have already seen -- a winter run-up, or waiting on a big dig. Watch the energy readout rather than the bees at this speed; there is more happening per second than you can follow."},
+	{"label": "8", "scale": 8.0, "dev_only": true, "tip": "Eight times speed. For skipping a stretch you have already seen -- a winter run-up, or waiting on a big dig. Watch the energy readout rather than the bees at this speed; there is more happening per second than you can follow."},
 ]
+
+## Kept apart from the speed multipliers themselves so the pause button
+## (which stops the sim rather than scaling it) reads as its own control
+## -- see UI_PLAN.md section 2's "pause, 1x/2x/4x/(8x)".
+const PAUSE_TIP := "Pause. The whole colony freezes; you can still look around and give orders."
 
 ## The role a bee can be switched to, and the sub-modes of each, both
 ## come from Roles now. The keys main.gd matches on are built from the
@@ -205,7 +211,15 @@ const CORNER_SIZES := {
 var corner_signature: String = ""
 
 var pause_label: Label
+## Explicit pause control in the top-right bar's first row, separate
+## from the speed multiplier buttons -- see UI_PLAN.md section 2.
+var pause_button: Button
 var view_button: Button
+## The icon inside view_button, and its text label -- both swap between
+## the meadow and hive shape/word in set_view_label, since the button
+## always shows the *other* view (never both), per section 2.
+var view_icon: UiIcon
+var view_button_label: Label
 var winter_button: Button
 var colony_button: Button
 var nursery_button: Button
@@ -216,8 +230,16 @@ var nursery_button: Button
 var colony_info: Button
 var nursery_info: Button
 var view_info: Button
-## The current Challenge's next-goal readout -- see set_challenge_goal.
-var goal_label: Label
+## The Challenge goal shelf (UI_PLAN.md section 5): current goal leads,
+## the goal just completed is shown struck through underneath it, and a
+## compact progress bar appears only for a goal with a countable target.
+## See set_challenge_goal.
+var goal_shelf: VBoxContainer
+var completed_goal_label: RichTextLabel
+var current_goal_label: Label
+var goal_progress_row: HBoxContainer
+var goal_progress_bar: ProgressBar
+var goal_progress_label: Label
 ## Restricts the Job row's "Change to..." dropdown / the Doing row's
 ## sub-modes to just these keys. Empty means no restriction -- only a
 ## Challenge (see challenge_runner.gd) ever sets these to something
@@ -241,10 +263,11 @@ var show_queen_build_button: bool = false
 ## visible so starter modes/open world/Challenge 1 are unaffected.
 var hatch_lock_visible: bool = true
 var soil_marking_visible: bool = true
-## The row of speed/colony/nursery/winter/view buttons in the top-right
-## corner, kept anchored clear of whatever debug_panel.gd's settings cog
-## currently measures -- see set_settings_button_width.
-var top_right_bar: HBoxContainer
+## The top-right corner: two rows (pause/speed controls, then
+## colony/nursery/winter/view icons -- UI_PLAN.md section 2), kept
+## anchored clear of whatever debug_panel.gd's settings cog currently
+## measures -- see set_settings_button_width.
+var top_right_bar: VBoxContainer
 var selection_panel: PanelContainer
 var selection_label: Label
 var task_label: Label
@@ -342,6 +365,7 @@ func _ready() -> void:
 	pause_label.visible = false
 
 	_build_top_right_bar()
+	_build_goal_shelf()
 	_build_selection_panel()
 	_build_cell_popup()
 	_build_flower_popup()
@@ -374,24 +398,47 @@ func _with_info(control: Control, tip: String) -> HBoxContainer:
 ## plain icon. Reading the real width back, rather than another fixed
 ## number, also means this keeps working if the cog's font size (and so
 ## its width) ever becomes a player setting.
+##
+## Two rows (UI_PLAN.md section 2): the transport row (pause, speed
+## multipliers) first, then the window/view icon row (colony, nursery,
+## winter, meadow/hive switch) underneath -- each row is its own tight
+## HBoxContainer inside a VBoxContainer, rather than one long row, so
+## neither has to fit more controls across than it comfortably can.
 func _build_top_right_bar() -> void:
-	var bar := HBoxContainer.new()
+	var bar := VBoxContainer.new()
 	top_right_bar = bar
-	bar.add_theme_constant_override("separation", 6)
+	bar.add_theme_constant_override("separation", 4)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
 	bar.offset_top = 8
 	add_child(bar)
 
+	var row1 := HBoxContainer.new()
+	row1.alignment = BoxContainer.ALIGNMENT_END
+	row1.add_theme_constant_override("separation", 6)
+	bar.add_child(row1)
+
+	pause_button = Button.new()
+	pause_button.text = "❚❚"
+	pause_button.tooltip_text = PAUSE_TIP
+	pause_button.custom_minimum_size = Vector2(28, 26)
+	pause_button.add_theme_font_size_override("font_size", 11)
+	pause_button.focus_mode = Control.FOCUS_NONE
+	pause_button.toggle_mode = true
+	pause_button.pressed.connect(func(): speed_requested.emit(0.0))
+	row1.add_child(pause_button)
+
 	# The speed buttons sit in their own tight group with no gaps, which
-	# reads as one control rather than five and gives the extra speed
-	# somewhere to go without pushing everything else off the bar.
+	# reads as one control rather than several and gives 8x somewhere to
+	# go without pushing everything else off the row when it's enabled.
 	var speed_group := HBoxContainer.new()
 	speed_group.add_theme_constant_override("separation", 1)
-	bar.add_child(speed_group)
+	row1.add_child(speed_group)
 
 	for entry in SPEEDS:
+		if entry.get("dev_only", false) and not Session.show_speed_8x:
+			continue
 		var btn := Button.new()
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
@@ -404,57 +451,134 @@ func _build_top_right_bar() -> void:
 		speed_group.add_child(btn)
 		speed_buttons.append({"button": btn, "scale": scale_value})
 
-	bar.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
+	row1.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
-	colony_button = Button.new()
-	colony_button.text = "Colony (C)"
-	colony_button.custom_minimum_size = Vector2(80, 26)
+	var row2 := HBoxContainer.new()
+	row2.alignment = BoxContainer.ALIGNMENT_END
+	row2.add_theme_constant_override("separation", 6)
+	bar.add_child(row2)
+
+	colony_button = _icon_button("bee", "Colony", 92.0)
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
-	bar.add_child(colony_button)
+	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
-	bar.add_child(colony_info)
+	row2.add_child(colony_info)
 
-	nursery_button = Button.new()
-	nursery_button.text = "Nursery (N)"
-	nursery_button.custom_minimum_size = Vector2(84, 26)
+	nursery_button = _icon_button("hex", "Nursery", 96.0)
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
-	bar.add_child(nursery_button)
+	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
-	bar.add_child(nursery_info)
+	row2.add_child(nursery_info)
 
 	# Only appears once a winter has been scheduled -- until then there is
 	# nothing for it to say, and a permanently dead button is worse than
-	# no button.
+	# no button. No icon of its own yet (section 8 names one for each of
+	# the other three, not this one), so it stays a plain text button.
 	winter_button = Button.new()
 	winter_button.text = "Winter"
 	winter_button.custom_minimum_size = Vector2(62, 26)
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
-	bar.add_child(winter_button)
+	row2.add_child(winter_button)
 
-	view_button = Button.new()
-	view_button.text = "Hive"
-	view_button.custom_minimum_size = Vector2(64, 26)
+	# Only the *other* view's icon and word ever show (UI_PLAN.md section
+	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
+	view_button = _icon_button("hive", "Hive", 78.0)
+	view_icon = view_button.get_child(0).get_child(0)
+	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
-	bar.add_child(view_button)
+	row2.add_child(view_button)
 	view_info = _info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at.")
-	bar.add_child(view_info)
+	row2.add_child(view_info)
 
-	# Sits directly under the button row, anchored and widened the same
-	# way -- see set_settings_button_width. Hidden outside a Challenge;
-	# challenge_runner.gd is the only caller of set_challenge_goal.
-	goal_label = Label.new()
-	goal_label.visible = false
-	goal_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	goal_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	goal_label.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
-	goal_label.offset_top = 38
-	goal_label.custom_minimum_size = Vector2(320, 0)
-	goal_label.add_theme_font_size_override("font_size", 13)
-	goal_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6))
-	add_child(goal_label)
+## A small icon-plus-label button for the top-right bar's window/view
+## row. The icon is a procedural UiIcon (UI_PLAN.md section 8's
+## placeholder-art rule) rather than a sprite; the label stays alongside
+## it rather than replacing it outright, since a rough drawn shape isn't
+## yet legible enough to stand alone. Both live inside the Button
+## itself, with mouse_filter set to IGNORE, so the whole button area
+## stays clickable rather than only the space around them.
+func _icon_button(shape: String, label: String, min_width: float) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(min_width, 28)
+	btn.focus_mode = Control.FOCUS_NONE
+
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 4)
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn.add_child(row)
+
+	var icon := UiIcon.new()
+	icon.shape = shape
+	icon.custom_minimum_size = Vector2(16, 16)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	var text := Label.new()
+	text.text = label
+	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text.add_theme_font_size_override("font_size", 12)
+	row.add_child(text)
+
+	return btn
+
+## The goal shelf (UI_PLAN.md section 5): sits directly under the
+## top-right button row, anchored and widened the same way -- see
+## set_settings_button_width. Hidden outside a Challenge;
+## challenge_runner.gd is the only caller of set_challenge_goal.
+func _build_goal_shelf() -> void:
+	goal_shelf = VBoxContainer.new()
+	goal_shelf.visible = false
+	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
+	goal_shelf.offset_top = 46
+	goal_shelf.custom_minimum_size = Vector2(320, 0)
+	goal_shelf.add_theme_constant_override("separation", 1)
+	add_child(goal_shelf)
+
+	# Secondary: the goal just completed, struck through and faded, per
+	# section 5. A RichTextLabel rather than a Label since Label has no
+	# strikethrough of its own -- BBCode's [s] tag is the plain way to get
+	# one without hand-drawing a line.
+	completed_goal_label = RichTextLabel.new()
+	completed_goal_label.bbcode_enabled = true
+	completed_goal_label.fit_content = true
+	completed_goal_label.scroll_active = false
+	completed_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	completed_goal_label.custom_minimum_size = Vector2(320, 0)
+	completed_goal_label.add_theme_font_size_override("normal_font_size", 12)
+	completed_goal_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.6, 0.55))
+	completed_goal_label.visible = false
+	goal_shelf.add_child(completed_goal_label)
+
+	# Primary: the current goal.
+	current_goal_label = Label.new()
+	current_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	current_goal_label.custom_minimum_size = Vector2(320, 0)
+	current_goal_label.add_theme_font_size_override("font_size", 13)
+	current_goal_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6))
+	goal_shelf.add_child(current_goal_label)
+
+	# Tertiary: numeric progress, only for a goal with a countable target.
+	goal_progress_row = HBoxContainer.new()
+	goal_progress_row.visible = false
+	goal_progress_row.alignment = BoxContainer.ALIGNMENT_END
+	goal_progress_row.add_theme_constant_override("separation", 6)
+	goal_shelf.add_child(goal_progress_row)
+
+	goal_progress_bar = ProgressBar.new()
+	goal_progress_bar.custom_minimum_size = Vector2(160, 8)
+	goal_progress_bar.show_percentage = false
+	goal_progress_row.add_child(goal_progress_bar)
+
+	goal_progress_label = Label.new()
+	goal_progress_label.add_theme_font_size_override("font_size", 11)
+	goal_progress_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.75))
+	goal_progress_row.add_child(goal_progress_label)
 
 ## Called by debug_panel.gd whenever its settings cog's actual width
 ## changes (including the first layout pass), so this bar sits exactly
@@ -464,15 +588,33 @@ func set_settings_button_width(width: float) -> void:
 	if top_right_bar == null:
 		return
 	top_right_bar.offset_right = -(width + SETTINGS_BUTTON_GAP)
-	goal_label.offset_right = -(width + SETTINGS_BUTTON_GAP)
+	goal_shelf.offset_right = -(width + SETTINGS_BUTTON_GAP)
 
 ## Shown under the top-right button row for the length of a Challenge --
-## see TUTORIAL_PLAN.md. Empty text hides it again.
-func set_challenge_goal(text: String) -> void:
-	goal_label.text = text
-	goal_label.visible = not text.is_empty()
+## see TUTORIAL_PLAN.md and UI_PLAN.md section 5. `text` is the current
+## goal (empty hides the whole shelf). `completed_text`, when given,
+## shows the goal just finished, struck through and faded, underneath
+## it. `progress_current`/`progress_target` add a compact bar and count,
+## shown only when `progress_target` is a real target -- both default to
+## -1.0 ("no countable target") rather than 0.0, since 0 is itself a
+## valid amount of progress.
+func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
+	goal_shelf.visible = not text.is_empty()
+	current_goal_label.text = text
+
+	completed_goal_label.visible = not completed_text.is_empty()
+	if not completed_text.is_empty():
+		completed_goal_label.text = "[s]%s[/s]" % completed_text
+
+	var has_progress: bool = progress_target > 0.0
+	goal_progress_row.visible = has_progress
+	if has_progress:
+		goal_progress_bar.max_value = progress_target
+		goal_progress_bar.value = clampf(progress_current, 0.0, progress_target)
+		goal_progress_label.text = "%d / %d" % [int(round(progress_current)), int(round(progress_target))]
 
 func set_speed_display(speed_scale: float) -> void:
+	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
 	for entry in speed_buttons:
 		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
 
@@ -1781,8 +1923,12 @@ func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:
 		winter_button.visible = value
 
+## Only the *other* view's icon and word ever show -- never both, never
+## neither -- per UI_PLAN.md section 2.
 func set_view_label(in_hive: bool) -> void:
-	view_button.text = "Meadow" if in_hive else "Hive"
+	view_button_label.text = "Meadow" if in_hive else "Hive"
+	view_icon.shape = "flower" if in_hive else "hive"
+	view_icon.queue_redraw()
 
 func set_colony_button_visible(value: bool) -> void:
 	if colony_button != null:

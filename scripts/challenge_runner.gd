@@ -257,6 +257,10 @@ var active: bool = false
 var _stage_index: int = 0
 var _meadow_view_seen: bool = false
 var _marker: Polygon2D
+## The previous stage's goal_text, fed to hud.gd's goal shelf as the
+## "just completed" line (UI_PLAN.md section 5) -- blank at the very
+## first stage, since nothing has been completed yet.
+var _last_completed_goal_text: String = ""
 
 ## Challenge 2 only -- counters/snapshots reset in _enter_stage() so a
 ## goal can ask "has this happened since this stage began" rather than
@@ -281,6 +285,7 @@ func start() -> void:
 	_stage_index = 0
 	_meadow_view_seen = false
 	_c2_rescue_used = false
+	_last_completed_goal_text = ""
 	main.stage_gate.start()
 	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
 	# so a load mid-Challenge would silently drop it -- disabled for the
@@ -379,7 +384,7 @@ func _check_c2_failure() -> void:
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
 		_apply_stage_gate_to_ui()
-		main.hud.set_challenge_goal(_stages()[_stage_index].goal_text)
+		_show_goal(_stages()[_stage_index])
 		main.gallerin_panel.clear_queue()
 		main.gallerin_panel.show_now({
 			"id": "challenge_2_recovery_%d" % _stage_index, "trigger": "recovery", "repeatable": false,
@@ -396,7 +401,7 @@ func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	main.stage_gate.set_unlocked_keys(stage.unlocked_keys)
 	_apply_stage_gate_to_ui()
-	main.hud.set_challenge_goal(stage.goal_text)
+	_show_goal(stage)
 	main.hud.set_queen_build_button_visible(stage.id == "1.3")
 	_update_marker(stage.id)
 	main.gallerin_panel.queue_prompts(stage.prompts)
@@ -416,6 +421,15 @@ func _c2_built_cell_count() -> int:
 			count += 1
 	return count
 
+## Shared by _goal_met's "eggs_laid" and _goal_progress's numeric
+## readout, so the two never drift apart on what counts as an egg.
+func _c2_brood_cell_count() -> int:
+	var count := 0
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.content_type == "brood":
+			count += 1
+	return count
+
 ## The marker sits in hive_root, so it's only ever actually seen while
 ## looking at the hive -- exactly when it's relevant (the meadow-side
 ## flowers need no such pointer). Challenge 2 has no single "go here"
@@ -431,8 +445,20 @@ func _update_marker(stage_id: String) -> void:
 	else:
 		_marker.visible = false
 
+## Feeds the goal shelf (hud.gd's set_challenge_goal / UI_PLAN.md section
+## 5): the stage's own goal text, the goal that was just completed
+## (blank at the very first stage), and numeric progress for a goal with
+## a countable target.
+func _show_goal(stage: Dictionary) -> void:
+	var progress: Dictionary = _goal_progress(stage.goal)
+	main.hud.set_challenge_goal(
+		stage.goal_text, _last_completed_goal_text,
+		progress.get("current", -1.0), progress.get("target", -1.0)
+	)
+
 func _advance() -> void:
 	main.gallerin_panel.clear_queue()
+	_last_completed_goal_text = _stages()[_stage_index].goal_text
 	_stage_index += 1
 	if _stage_index >= _stages().size():
 		_complete()
@@ -558,11 +584,7 @@ func _goal_met(goal: String) -> bool:
 			return true
 		# --- Challenge 2 ---------------------------------------------
 		"eggs_laid":
-			var brood_cells := 0
-			for cell in main.hive.cells:
-				if is_instance_valid(cell) and cell.content_type == "brood":
-					brood_cells += 1
-			return brood_cells >= 2
+			return _c2_brood_cell_count() >= 2
 		"nectar_forager_hatched":
 			return main._role_counts().get(Roles.count_key(Roles.FORAGER, "nectar"), 0) >= 1
 		"nectar_stabilized":
@@ -610,3 +632,19 @@ func _goal_met(goal: String) -> bool:
 				and counts.get(Roles.count_key(Roles.MINER), 0) >= C2_COMPLETE_MINERS
 			)
 	return false
+
+## Numeric progress for a goal with a single countable target -- feeds
+## the goal shelf's tertiary progress bar (UI_PLAN.md section 5). Most
+## goals here have nothing to count ("select the queen" is a yes/no), so
+## this only covers the handful that do; an empty Dictionary tells
+## _show_goal there's no bar to show.
+func _goal_progress(goal: String) -> Dictionary:
+	match goal:
+		"nectar_target":
+			return {"current": main.hive.total("nectar"), "target": NECTAR_TARGET}
+		"pollen_target":
+			return {"current": main.hive.total("pollen"), "target": POLLEN_TARGET}
+		"eggs_laid":
+			return {"current": _c2_brood_cell_count(), "target": 2.0}
+		_:
+			return {}

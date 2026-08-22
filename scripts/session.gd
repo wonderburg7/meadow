@@ -122,6 +122,12 @@ var show_forager_labels: bool = true
 ## section 7. Same pattern as show_flower_amounts.
 var show_crab_spiders: bool = false
 
+## Dev-only: shows the 8x speed button in the top-right bar. Off by
+## default -- UI_PLAN.md section 2 lists 8x as a parenthetical, optional
+## entry, not one every player needs on screen. Same pattern as
+## show_crab_spiders.
+var show_speed_8x: bool = false
+
 ## Saved selections, 1-9. Each is a list of bee ids rather than node
 ## references, so the group survives bees dying and the scene reloading.
 var control_groups: Dictionary = {}
