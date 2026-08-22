@@ -203,7 +203,11 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 
 ## Calls orders_zones._designate_one directly -- the per-cell command
 ## function _on_cell_designation_requested itself calls once it's worked
-## out which cell(s) a click meant.
+## out which cell(s) a click meant. CHATGPT_INSIGHTS_PLAN.md's B3: checks
+## the cell's own designated_type afterwards, since _designate_one can
+## silently no-op (a conflicting occupant with Session.warn_on_discard on
+## just shows a dialog headlessly can't answer, and leaves the cell as it
+## was) -- the old version logged "accepted" regardless.
 static func _do_designate_cell(main: Node2D, action: Dictionary) -> void:
 	var hex: Array = action.get("hex", [])
 	var cell: Node2D = _resolve_cell(main, hex)
@@ -212,12 +216,22 @@ static func _do_designate_cell(main: Node2D, action: Dictionary) -> void:
 		_log("designate_cell", str(hex), "rejected", "no cell at that hex")
 		return
 	main.orders_zones._designate_one(cell, content)
+	if cell.designated_type != content:
+		_log("designate_cell", "%s -> %s" % [hex, content], "rejected",
+			"cell ended up designated '%s'" % cell.designated_type)
+		return
 	_log("designate_cell", "%s -> %s" % [hex, content], "accepted", "")
 
 ## Calls bee.gd's own build-target functions -- the same ones
 ## input_selection.gd::_place_build_cell calls once a click resolves to a
 ## hex. "append": true matches ctrl-click's queue_build_target; the
 ## default matches a plain click's set_manual_build_target.
+## CHATGPT_INSIGHTS_PLAN.md's B3: checks each bee's own build_queue
+## afterwards, so a hex that can't actually be built on (already filled,
+## dug away) shows up as a rejection instead of a false "accepted" --
+## set_manual_build_target/queue_build_target both queue unconditionally,
+## the check only happens later when the bee actually tries to take the
+## target (_take_next_build_target).
 static func _do_queue_build(main: Node2D, action: Dictionary) -> void:
 	var bees: Array = _resolve_bees(main, action.get("target", {}))
 	var hex_arr: Array = action.get("hex", [])
@@ -231,11 +245,19 @@ static func _do_queue_build(main: Node2D, action: Dictionary) -> void:
 			b.queue_build_target(hex)
 		else:
 			b.set_manual_build_target(hex)
+	var bad: Array = bees.filter(func(b):
+		return not is_instance_valid(b) or not b.build_queue.has(hex)
+	)
+	if not bad.is_empty():
+		_log("queue_build", "%d bees -> %s" % [bees.size(), hex], "rejected",
+			"%d bee(s) didn't end up with that tile queued" % bad.size())
+		return
 	_log("queue_build", "%d bees -> %s" % [bees.size(), hex], "accepted", "")
 
 ## Same idea as _do_queue_build for miners -- bee.gd's set_mine_target /
 ## queue_mine_target, the functions input_selection.gd::_place_mine_target
 ## calls, targeting a block resolved by _resolve_soil_block above.
+## CHATGPT_INSIGHTS_PLAN.md's B3: checks each bee's own mine_queue.
 static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 	var bees: Array = _resolve_bees(main, action.get("target", {}))
 	var hex: Array = action.get("hex", [])
@@ -249,6 +271,13 @@ static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 			b.queue_mine_target(block)
 		else:
 			b.set_mine_target(block)
+	var bad: Array = bees.filter(func(b):
+		return not is_instance_valid(b) or not b.mine_queue.has(block)
+	)
+	if not bad.is_empty():
+		_log("queue_mine", "%d bees -> %s" % [bees.size(), hex], "rejected",
+			"%d bee(s) didn't end up with that block queued" % bad.size())
+		return
 	_log("queue_mine", "%d bees -> %s" % [bees.size(), hex], "accepted", "")
 
 ## Calls DebugPanel.apply_setting -- the same setting-plus-cascade function

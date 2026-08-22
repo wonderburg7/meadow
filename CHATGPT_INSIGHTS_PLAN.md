@@ -1,7 +1,7 @@
 # ChatGPT insights — implementation plan
 
-Status: Group C fully built and verified, 22 Aug 2026. B1 and B2 built
-and verified, 22 Aug 2026. B3-B5 and Group A still planned, not started.
+Status: Group C fully built and verified, 22 Aug 2026. B1-B3 built and
+verified, 22 Aug 2026. B4-B5 and Group A still planned, not started.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -239,15 +239,42 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   (which already exercises a combined key, `forager_pollen`, on bees
   already foragers) still runs clean through the changed function too.
 
-### B3. Postcondition evidence for the remaining verbs
+### B3. Postcondition evidence for the remaining verbs -- done, 22 Aug 2026
 - **File:** `scenario_actions.gd` (`_do_designate_cell`,
   `_do_queue_build`, `_do_queue_mine`).
 - **Fix:** each verb checks its own smallest useful postcondition
   (resulting `designated_type`, stored build/mine target) before
   logging `accepted`, same as B2 does for role assignment.
-- **Verify:** `test_scenarios/slice7_action_driver_test.json` still
-  passes; a deliberately-wrong action logs a rejection, not a false
-  accept.
+- **Built:** `_do_designate_cell` now compares `cell.designated_type`
+  against the requested content after calling `_designate_one`, so the
+  silent no-op path (a conflicting occupant, `Session.warn_on_discard`
+  on, nothing headless to answer the dialog) logs `rejected` with the
+  cell's actual designation instead of a false `accepted` -- this is the
+  one verb where the postcondition is a real semantic check.
+  `_do_queue_build` and `_do_queue_mine` check `bee.build_queue.has(hex)`
+  / `bee.mine_queue.has(block)` on every targeted bee; `set_manual_build_target`
+  / `queue_build_target` / `set_mine_target` / `queue_mine_target` queue
+  unconditionally (the real validity check, `hive.can_build_on`, only
+  runs later when a bee actually takes the target off its own queue), so
+  in practice this catches "the call didn't reach this bee" rather than
+  "the tile turned out unbuildable" -- still the same "check state, don't
+  assume the call worked" pattern B2 established, just a narrower payoff
+  for these two verbs given how those setters are written.
+- **Verified:** `source_checks.py` and `balance_tests.py` both pass.
+  Re-ran `test_scenarios/slice7_action_driver_test.json`
+  (`tools/run_scenario.py --full`) end-to-end: still 4/4 actions
+  `accepted`, `problems: []` -- the existing `designate_cell` action
+  (a plain, non-conflicting case) is unaffected by the new check. New
+  scenario `test_scenarios/b3_postcondition_test.json` (one
+  `queue_build`, one `queue_mine`, one `designate_cell`, 2-day run) ran
+  end-to-end the same way: all 3 `accepted`, log lines confirm the real
+  postcondition values (`1 bees -> (3, 0)`, `1 bees -> [-5.0, -5.0]`,
+  `[1.0, 0.0] -> honey`). The genuine-rejection path for
+  `_do_designate_cell` (conflicting occupant, no room elsewhere) needs a
+  cell pre-filled with a specific resource before the action fires,
+  which isn't worth the scenario complexity here -- verified by reading
+  the code instead: `_designate_one` leaves `cell.designated_type`
+  unchanged on that path, so the new comparison catches it.
 
 ### B4. Live settings in analysis
 - **File:** `tools/analyze_session.py` (`_mechanic_firing`).

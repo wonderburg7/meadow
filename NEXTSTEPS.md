@@ -97,13 +97,14 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-8. **`CHATGPT_INSIGHTS_PLAN.md` -- Group C and B1-B2 built and verified,
+8. **`CHATGPT_INSIGHTS_PLAN.md` -- Group C and B1-B3 built and verified,
    22 Aug.** Full detail (what each slice fixed, how it was verified) is
    in the plan file itself, not repeated here -- read that before
-   picking the next slice back up. **Next concrete action:** B3
-   (postcondition evidence for the remaining verbs --
-   `_do_designate_cell`, `_do_queue_build`, `_do_queue_mine` in
-   `scenario_actions.gd`), then B4 (live settings in analysis,
-   `tools/analyze_session.py`) and B5 -- see the plan's Group B section.
-   Group A (harness speed/token efficiency) can follow in either order
-   once B is done.
+   picking the next slice back up. **Next concrete action:** B4 (live
+   settings in analysis -- `tools/analyze_session.py`'s
+   `_mechanic_firing` reads only the boot `config` entry, so a mid-run
+   `set_config` action doesn't update what the summary reports; build a
+   settings timeline from `action`-type log entries and use the last
+   live value before each check). B5 stays parked (backlog only, per the
+   plan). Group A (harness speed/token efficiency) can follow in either
+   order once B4 is done.
