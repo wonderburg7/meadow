@@ -20,7 +20,11 @@ func _apply_zone_glow() -> void:
 		if not is_instance_valid(cell):
 			continue
 		if cell.is_nursery_cell():
-			cell.set_zone_glow(true, main.NurseryPanel.colour_for(cell.hatch_role, cell.hatch_focus, cell.hatch_gyne))
+			cell.set_zone_glow(
+				true,
+				main.NurseryPanel.colour_for(cell.hatch_role, cell.hatch_focus, cell.hatch_gyne),
+				main.NurseryPanel.tag_for(cell.hatch_role, cell.hatch_focus, cell.hatch_gyne)
+			)
 		else:
 			cell.set_zone_glow(false)
 

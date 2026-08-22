@@ -169,6 +169,9 @@ var fill_shape: Polygon2D
 ## this as a zone cell, in the colour of the role it raises.
 var zone_glow: Line2D
 var zone_halo: Line2D
+## The role tag that stands in for the zone glow's colour when
+## Session.colour_blind_mode is on -- see set_zone_glow.
+var zone_glow_tag: String = ""
 ## A small seal drawn over a closed cell.
 var closed_mark: Line2D
 
@@ -307,14 +310,21 @@ func set_selected(value: bool) -> void:
 
 ## Turns the nursery-zone halo on or off. `glow_colour` is the colour of
 ## the role this cell raises, so the comb and the ring plot in the
-## nursery window use one palette between them.
-func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE) -> void:
+## nursery window use one palette between them. `tag` is the same role
+## as a short piece of text (see roles.gd::tag_for_key) -- the glow was
+## the one colour-only spot debug_panel.gd's colour-blind tooltip
+## promised and hive_cell.gd didn't yet deliver; the ring, the reserved-
+## cell ring and the comb overlays above all already spell theirs out.
+func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void:
 	if zone_glow == null or zone_halo == null:
 		return
 	zone_glow.visible = value
 	zone_halo.visible = value
 	zone_glow.default_color = Color(glow_colour.r, glow_colour.g, glow_colour.b, 0.95)
 	zone_halo.default_color = Color(glow_colour.r, glow_colour.g, glow_colour.b, 0.28)
+	zone_glow_tag = tag if value else ""
+	if Session.colour_blind_mode:
+		_refresh()
 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()
@@ -791,6 +801,12 @@ func _refresh() -> void:
 		var tag := _designation_tag()
 		if tag != "":
 			info_label.text = ("%s %s" % [tag, info_label.text]).strip_edges()
+		# The zone glow (see set_zone_glow) is a ring drawn outside the cell
+		# itself, colour-only in exactly the same way the designation ring
+		# above is -- so it gets the same treatment, in brackets so it
+		# doesn't read as part of the cell's own contents.
+		if zone_glow != null and zone_glow.visible and zone_glow_tag != "":
+			info_label.text = ("[%s] %s" % [zone_glow_tag, info_label.text]).strip_edges()
 
 	# An overlay replaces the cell's ordinary colour entirely, so the
 	# whole comb reads as one map of one property rather than as its

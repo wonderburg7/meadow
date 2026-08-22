@@ -286,6 +286,15 @@ static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:
 		return UNSET_COLOUR
 	return Roles.colour_for(role, focus)
 
+## The short tag standing in for colour_for's colour, given to the comb's
+## zone glow so it stays legible with Session.colour_blind_mode on.
+static func tag_for(role: int, focus: String, is_gyne: bool) -> String:
+	if is_gyne:
+		return "G"
+	if role < 0:
+		return "?"
+	return Roles.tag_for_key(Roles.count_key(role, focus))
+
 ## Called once a second by main.gd while the window is open.
 ##   `zone`          -- Hive.zone_summary()
 ##   `live`          -- "role|focus" -> how many bees exist now

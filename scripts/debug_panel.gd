@@ -946,6 +946,13 @@ var load_btn: Button
 ## show and hide it
 var sections: Dictionary = {}
 
+## The five states a plain Godot Button actually looks up -- see
+## colony_panel.gd's identical helper.
+func _style_button(button: BaseButton) -> BaseButton:
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	return button
+
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 10   # draw on top of the world
@@ -961,6 +968,7 @@ func _ready() -> void:
 	# Anchored to the top-right corner so it tracks window resizing.
 	# hud.gd keeps this width clear for us, so the two bars can't overlap.
 	toggle_button = Button.new()
+	_style_button(toggle_button)
 	# A plain cog glyph rather than a loaded texture, consistent with the
 	# rest of the game's placeholder-art approach of drawing everything
 	# rather than importing assets. Sized up with its own font override
@@ -995,6 +1003,7 @@ func _ready() -> void:
 	# its own scope, which failed to compile at all.
 	panel = PanelContainer.new()
 	panel.theme = UiTheme.build_theme()
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.offset_right = -8
@@ -1055,6 +1064,7 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	body.visible = start_open
 
 	var header := Button.new()
+	_style_button(header)
 	header.text = "%s  %s" % ["▾" if start_open else "▸", category]
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 24)
@@ -1124,11 +1134,13 @@ func _build_actions(column: VBoxContainer) -> void:
 	column.add_child(restart_row)
 
 	var restart_btn := Button.new()
+	_style_button(restart_btn)
 	restart_btn.text = "Restart Run"
 	restart_btn.pressed.connect(_on_restart_pressed)
 	restart_row.add_child(UI.with_info(restart_btn, "Rebuild the meadow and hive from scratch using the current values above, at whichever starting stage you last chose. Everything in progress is lost; the tuning numbers themselves are kept."))
 
 	var menu_btn := Button.new()
+	_style_button(menu_btn)
 	menu_btn.text = "Return to Main Menu"
 	menu_btn.pressed.connect(_on_main_menu_pressed)
 	restart_row.add_child(UI.with_info(menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have."))
@@ -1137,11 +1149,13 @@ func _build_actions(column: VBoxContainer) -> void:
 	column.add_child(save_row)
 
 	save_btn = Button.new()
+	_style_button(save_btn)
 	save_btn.text = "Save run"
 	save_btn.pressed.connect(_on_save_pressed)
 	save_row.add_child(UI.with_info(save_btn, "Write the current run to disk: the comb and everything in it, every bee and what it is doing, the meadow, the weather and the clock. There is one save slot, so saving again overwrites it."))
 
 	load_btn = Button.new()
+	_style_button(load_btn)
 	load_btn.text = "Load run"
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
@@ -1150,6 +1164,7 @@ func _build_actions(column: VBoxContainer) -> void:
 	column.add_child(winter_row)
 
 	var winter_btn := Button.new()
+	_style_button(winter_btn)
 	winter_btn.text = "Bring on winter"
 	winter_btn.pressed.connect(_on_winter_pressed)
 	winter_row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" below). A forecast opens in the top right showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
@@ -1226,12 +1241,14 @@ func _make_row(entry: Dictionary) -> Control:
 	row.add_child(UI.info_badge(entry.tip))
 
 	var minus := Button.new()
+	_style_button(minus)
 	minus.text = "-"
 	minus.custom_minimum_size = Vector2(26, 24)
 	minus.pressed.connect(func(): _adjust(entry, -entry.step))
 	row.add_child(minus)
 
 	var plus := Button.new()
+	_style_button(plus)
 	plus.text = "+"
 	plus.custom_minimum_size = Vector2(26, 24)
 	plus.pressed.connect(func(): _adjust(entry, entry.step))
@@ -1246,6 +1263,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	row.add_theme_constant_override("separation", 3)
 
 	var box := CheckBox.new()
+	_style_button(box)
 	box.text = entry.label
 	box.theme_type_variation = "Small"
 	box.button_pressed = setting_get(entry.key)
@@ -1304,12 +1322,14 @@ func _make_options_row(entry: Dictionary) -> Control:
 	row.add_child(UI.info_badge(entry.tip))
 
 	var prev := Button.new()
+	_style_button(prev)
 	prev.text = "‹"
 	prev.custom_minimum_size = Vector2(26, 24)
 	prev.pressed.connect(func(): _cycle_option(entry, -1))
 	row.add_child(prev)
 
 	var next := Button.new()
+	_style_button(next)
 	next.text = "›"
 	next.custom_minimum_size = Vector2(26, 24)
 	next.pressed.connect(func(): _cycle_option(entry, 1))
@@ -1355,6 +1375,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 
 	var key: String = entry.key
 	var star := Button.new()
+	_style_button(star)
 	star.toggle_mode = true
 	star.flat = true
 	star.focus_mode = Control.FOCUS_NONE
