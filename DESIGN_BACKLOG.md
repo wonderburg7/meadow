@@ -4,7 +4,13 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 21 Aug 2026 -- added section 13, a systems/language/
+Last updated: 22 Aug 2026 -- added section 14, a proposed foraging
+ecology overhaul (patchy meadow, local perception, probabilistic
+choice, species differentiation, proximity recruitment). Slices 0 and
+1 refined into implementation-ready tasks in `FORAGING_ECOLOGY_PLAN.md`;
+slices 2-9 are a scope index only, not yet detailed. Nothing built.
+
+Previously updated 21 Aug 2026 -- added section 13, a systems/language/
 architecture map reviewed against the current codebase. Parked as
 agreed-but-not-started, same status as sections 6-10. Nothing built.
 
@@ -598,4 +604,37 @@ separate from the rest of this section.
    glossary) — fill in incrementally when a system is next touched
    anyway, not as its own sprint.
 
-**Status:** parked, not started. Pick up slice 1 whenever Dave wants to.
+**Status:** slices 1-2 done (`GAME_MODEL.md`). Slice 2 piloted the
+9-part card on Foraging and the Availability/prerequisites mechanic —
+both surfaced a real gap (Foraging's trip-history state isn't saved;
+the prerequisite cascade lives entirely in a presentation file, which
+is what slice 3 below fixes). Slice 3 (the only slice that touches
+code) not started; pick up whenever Dave wants to.
+
+---
+
+## 14. Foraging ecology overhaul (proposed, Slices 0-1 refined)
+
+Dave brought a detailed design brief (22 Aug 2026) proposing a more
+realistic foraging model: a genuinely patchy meadow, local perception
+and expanding-loop search instead of omniscient nearest-flower choice,
+probabilistic flower selection, a proper species registry, and a
+proximity-based dance-floor recruitment model to eventually replace
+today's entrance-wait mechanism.
+
+**Full plan, corrected against the live repo, in
+`FORAGING_ECOLOGY_PLAN.md`.** Two corrections against the brief as
+written: the mentor-consumption recruitment fix it describes as
+"current uncommitted changes" already shipped and is committed (see
+`NEXTSTEPS.md`'s 22 Aug entry), and `recruit_start_point_jitter` is
+150, not 250. Ten slices total; only Slice 0 (a seeded, multi-run
+control baseline) and Slice 1 (trip/recruitment stats plus a new
+`foraging_panel.gd`, no behaviour change) are refined into
+implementation-ready tasks so far, per the brief's own instruction to
+refine only those two first. Slices 2-9 (species registry, patchy
+scalable meadow, local search, probabilistic choice/memory, handling
+experience, finite pollen, proximity recruitment) are a scope index
+only until 0 and 1 are built and reviewed.
+
+**Status:** proposed, Slice 0 not yet started. See `NEXTSTEPS.md` for
+whether it's next, given the existing hands-on-check queue.
