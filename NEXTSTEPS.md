@@ -97,14 +97,23 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-8. **`CHATGPT_INSIGHTS_PLAN.md` -- Group C and B1-B3 built and verified,
-   22 Aug.** Full detail (what each slice fixed, how it was verified) is
-   in the plan file itself, not repeated here -- read that before
-   picking the next slice back up. **Next concrete action:** B4 (live
-   settings in analysis -- `tools/analyze_session.py`'s
-   `_mechanic_firing` reads only the boot `config` entry, so a mid-run
-   `set_config` action doesn't update what the summary reports; build a
-   settings timeline from `action`-type log entries and use the last
-   live value before each check). B5 stays parked (backlog only, per the
-   plan). Group A (harness speed/token efficiency) can follow in either
-   order once B4 is done.
+8. **`CHATGPT_INSIGHTS_PLAN.md` is now fully built and verified, 22
+   Aug** -- Groups A, B and C all done; only A7 and B5 remain, both
+   intentionally parked (backlog, not slices). Full per-slice detail
+   (what each one fixed, how it was verified against the real Godot
+   install) is in the plan file itself. Headline results worth knowing
+   without re-reading the whole plan: **`--fixed-fps 30` is now
+   `run_scenario.py`'s default** -- it fixes a real determinism bug (A2
+   found that re-running the same seeded scenario under ordinary
+   wall-clock timing produced different outcomes each time; A3
+   confirmed `--fixed-fps` closes that gap, byte-for-bit, on top of
+   being faster) -- and **A6's headless presentation gate cut the same
+   benchmark scenario's wall time by roughly 7-8x** with no outcome
+   change. `run_scenario.py` also gained `--report {brief,balance,
+   behaviour,full}` (A5, `brief` is now the default), `stop.when`/
+   `stop.when_actions_resolved` scenario fields for early-success stops
+   (A5), and capped failure output (A4) -- see `--help` or the plan for
+   the full list of what changed under the hood. **Nothing here needs
+   picking back up** unless a future session wants A7 (release/dedicated
+   export) or B5 (observe-pause-act loop), and both should stay parked
+   until something concrete needs them, per the plan's own reasoning.
