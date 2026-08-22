@@ -395,7 +395,7 @@ The comb as a whole: cells, navigation, finding a cell.
 920  func announce() -> void
 ```
 
-## main.gd (1,016 lines)
+## main.gd (1,026 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -413,21 +413,21 @@ Per-frame entry point, everything not yet split out of main.
 559  func begin_winter_countdown() -> void
 562  # --- per-frame ----------------------------------------------------
 572  func _process(delta: float) -> void
-629  # --- the frame rate readout ----------------------------------------
-648  func _sample_fps() -> void
-671  func _reseed_meadow(delta: float) -> void
-686  func _hatch_ready_brood() -> void
-716  func _advance_weather(delta: float) -> void
-744  func _apply_rain_overlay() -> void
-759  func _check_for_loss() -> void
-781  func _check_colony_energy(delta: float) -> void
-810  func _role_counts() -> Dictionary
-824  func _update_population_readout(bees = null) -> void
-845  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-851  func _prune_selection() -> void
-864  func _on_restart_after_loss() -> void
-870  func _on_level_chosen(level: int) -> void
-883  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-900  func _apply_scenario_boot_arg() -> void
-1006 func _end_scenario_run(outcome: String) -> void
+639  # --- the frame rate readout ----------------------------------------
+658  func _sample_fps() -> void
+681  func _reseed_meadow(delta: float) -> void
+696  func _hatch_ready_brood() -> void
+726  func _advance_weather(delta: float) -> void
+754  func _apply_rain_overlay() -> void
+769  func _check_for_loss() -> void
+791  func _check_colony_energy(delta: float) -> void
+820  func _role_counts() -> Dictionary
+834  func _update_population_readout(bees = null) -> void
+855  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+861  func _prune_selection() -> void
+874  func _on_restart_after_loss() -> void
+880  func _on_level_chosen(level: int) -> void
+893  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+910  func _apply_scenario_boot_arg() -> void
+1016 func _end_scenario_run(outcome: String) -> void
 ```

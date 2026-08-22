@@ -29,7 +29,7 @@ below, which are ChatGPT's own record.
 | A3 | `--fixed-fps` benchmark | Done, 22 Aug 2026 -- `--fixed-fps 30` is now the default, closes A2's determinism gap, see `CHATGPT_INSIGHTS_PLAN.md` |
 | A4 | Cap failure output | Done, 22 Aug 2026 |
 | A5 | Early-success stop + brief reports | Done, 22 Aug 2026 |
-| A6 | Headless presentation gate | Not started |
+| A6 | Headless presentation gate | Done, 22 Aug 2026 -- ~7-8x wall-time cut on A3's benchmark, no outcome change |
 
 (B5 -- observe-pause-act loop -- and A7 -- release export -- are
 backlog, not slices; see the plan.)

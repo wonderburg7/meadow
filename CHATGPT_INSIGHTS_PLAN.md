@@ -1,10 +1,13 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked. Group A: A1-A5 built and
-verified, 22 Aug 2026 (A3 closes the determinism gap A2 surfaced --
-`--fixed-fps 30` is now the harness's default and gives genuine
-run-to-run reproducibility); A6 still planned, A7 stays parked.
+verified, 22 Aug 2026. B5 stays parked. Group A fully built and
+verified (A1-A6), 22 Aug 2026 (A3 closes the determinism gap A2
+surfaced -- `--fixed-fps 30` is now the harness's default and gives
+genuine run-to-run reproducibility; A6's presentation gate on top of it
+cut the same benchmark's wall time by roughly 7-8x with no outcome
+change). A7 stays parked. Everything in this plan is now built and
+verified except A7 (parked) and B5 (parked).
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -558,15 +561,37 @@ needs live mid-run decisions rather than a scripted policy.
   (`c6_nurse_feed_test.json`) still runs to its own `max_days`
   unaffected.
 
-### A6. Headless presentation gate
+### A6. Headless presentation gate -- done, 22 Aug 2026
 - **File:** `main.gd::_process`.
 - **Fix:** one `scenario_active` (or the existing headless flag) gate
   around camera following, selection redraws, scenery visibility and
   fog -- every state decision and resource transfer stays untouched
   either side of the gate, per the project's existing "presentation may
   be skipped, simulation may not" rule.
-- **Verify:** headless run outcome (population/deaths/resources) is
-  identical with the gate on vs off, at lower wall time.
+- **Built:** `if not scenario_active:` around
+  `camera_view._handle_pan`/`_handle_follow`, `selection_layer.queue_redraw()`
+  and `fog_of_war._update()` -- confirmed each is presentation-only
+  before gating: pan/follow only ever move a `Camera2D` or read
+  `Input.is_key_pressed` (and `_handle_follow` early-returns immediately
+  since nothing headless ever sets `main.following_bee`); the selection
+  layer is a pure redraw queue; fog-of-war's own "explored" state is
+  read only by rendering and `save_game.gd` (which no scenario run
+  calls). **`world_building._apply_scenery_setting()` deliberately
+  stays outside the gate**, unlike the plan's own "scenery visibility"
+  wording suggests -- reading it found it also sets `obstacle.solid`,
+  which changes bee navigation/collision, so skipping it under
+  `scenario_active` would have been a real principle-3 violation, not
+  a safe optimisation. It already early-returns cheaply when nothing's
+  changed, so it didn't need gating for cost reasons either.
+- **Verified:** `source_checks.py`/`balance_tests.py` pass,
+  `FUNCTION_MAP.md` regenerated, `mcp__godot__` boot clean. Direct A/B
+  against the real Godot install using A3's own pinned-seed benchmark
+  scenario at `--fixed-fps 30`: gate on (current code) and gate
+  temporarily forced off (`if true:` in place of `if not
+  scenario_active:`, reverted immediately after) produced byte-identical
+  `flower_visits` (324), `game_time` (580.75) and `total_deaths` (17) --
+  while wall time dropped from 36.3s (gate off) to 5.2s/4.6s (gate on,
+  two runs) -- roughly 7-8x faster, well beyond "lower wall time".
 
 ### A7. (Backlog) Release/dedicated export
 Only worth building if A3-A6's measurements still show material

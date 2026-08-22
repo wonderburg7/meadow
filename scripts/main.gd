@@ -571,15 +571,25 @@ func begin_winter_countdown() -> void:
 
 func _process(delta: float) -> void:
 	_sample_fps()
-	Perf.begin("camera_pan")
-	camera_view._handle_pan(delta)
-	camera_view._handle_follow(delta)
-	Perf.end("camera_pan")
-	selection_layer.queue_redraw()
+	# Headless presentation gate (CHATGPT_INSIGHTS_PLAN.md's A6) -- nothing
+	# is watching a --scenario= run, so camera following/panning, the
+	# selection layer's redraw and the fog-of-war overlay are pure
+	# wasted work there. `_apply_scenery_setting` stays outside the gate
+	# on purpose: unlike the others it isn't purely cosmetic -- it sets
+	# obstacle.solid, which changes bee navigation/collision, so skipping
+	# it would violate this project's "presentation may be skipped,
+	# simulation may not" rule (CLAUDE.md principle 3) rather than just
+	# save a redraw.
+	if not scenario_active:
+		Perf.begin("camera_pan")
+		camera_view._handle_pan(delta)
+		camera_view._handle_follow(delta)
+		Perf.end("camera_pan")
+		selection_layer.queue_redraw()
+		fog_of_war._update()
 	Perf.begin("scenery")
 	world_building._apply_scenery_setting()
 	Perf.end("scenery")
-	fog_of_war._update()
 
 	if not get_tree().paused:
 		Session.sim_time += delta
