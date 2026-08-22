@@ -15,6 +15,7 @@ const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
@@ -207,12 +208,15 @@ const CORNER_ORDER := [
 	"recruit_gap",
 	"nursery_zone", "nursery_mix", "nursery_output",
 ]
-## Font size per readout -- the day is the headline, the rest is detail.
+## Type variation per readout -- the day is the headline, the rest is
+## detail. Values are ui_theme.gd TYPE_SIZES names, not literal pixel
+## sizes, since text scale/typeface now come from the shared Theme.
 const CORNER_SIZES := {
-	"fps": 12,
-	"day": 22, "winter": 15, "stores": 16, "population": 13, "comb": 12,
-	"energy": 13, "rates": 12, "recruit_gap": 12,
-	"nursery_zone": 12, "nursery_mix": 12, "nursery_output": 12,
+	"fps": "Small",
+	"day": "Heading", "winter": "Heading", "stores": "Heading",
+	"population": "Body", "comb": "Small",
+	"energy": "Body", "rates": "Small", "recruit_gap": "Small",
+	"nursery_zone": "Small", "nursery_mix": "Small", "nursery_output": "Small",
 }
 ## What is currently drawn, so the column is only rebuilt when it would
 ## actually look different rather than every frame.
@@ -356,6 +360,19 @@ var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
 var pending_type: String = ""
 
+## hud.gd has no single Control root -- unlike colony_panel.gd/nursery_panel.gd
+## etc., which each hang everything off one PanelContainer and can set
+## `.theme` there, this CanvasLayer adds a dozen independent top-level
+## Controls (corner_column, top_right_bar, the popups...) directly. Godot's
+## theme lookup walks up to the nearest ancestor Control/Window with a theme
+## set, and skips straight past a CanvasLayer (it isn't a Control), so
+## without this every one of those roots would fall through to the engine
+## default theme regardless of Session.text_scale/ui_typeface. Built once
+## here and assigned to each root below, rather than each calling
+## UiTheme.build_theme() separately, so text scale changes update from one
+## Theme resource instead of a dozen out-of-step copies.
+var hud_theme: Theme
+
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
@@ -363,6 +380,8 @@ func _ready() -> void:
 	# a star is toggled, without either script holding a reference to the
 	# other.
 	add_to_group("huds")
+
+	hud_theme = UiTheme.build_theme()
 
 	# The controls used to be printed here permanently. They now live in
 	# the settings window's Interface section, which keeps the corner of the
@@ -374,6 +393,7 @@ func _ready() -> void:
 	# positioned at fixed pixels, because which readouts are showing
 	# changes as the player stars and unstars them.
 	corner_column = VBoxContainer.new()
+	corner_column.theme = hud_theme
 	corner_column.position = Vector2(16, 12)
 	corner_column.add_theme_constant_override("separation", 2)
 	add_child(corner_column)
@@ -386,7 +406,8 @@ func _ready() -> void:
 	perf_breakdown.visible = false
 	corner_column.add_child(perf_breakdown)
 
-	pause_label = _make_label(Vector2(16, 300), 18)
+	pause_label = _make_label(Vector2(16, 300), "Heading")
+	pause_label.theme = hud_theme
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
 
@@ -402,10 +423,10 @@ func _ready() -> void:
 	_build_warning_banner()
 	_build_discard_dialog()
 
-func _make_label(pos: Vector2, font_size: int) -> Label:
+func _make_label(pos: Vector2, variation: String) -> Label:
 	var l := Label.new()
 	l.position = pos
-	l.add_theme_font_size_override("font_size", font_size)
+	l.theme_type_variation = variation
 	add_child(l)
 	return l
 
@@ -434,6 +455,7 @@ func _with_info(control: Control, tip: String) -> HBoxContainer:
 func _build_top_right_bar() -> void:
 	var bar := VBoxContainer.new()
 	top_right_bar = bar
+	bar.theme = hud_theme
 	bar.add_theme_constant_override("separation", 4)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -450,7 +472,7 @@ func _build_top_right_bar() -> void:
 	pause_button.text = "❚❚"
 	pause_button.tooltip_text = PAUSE_TIP
 	pause_button.custom_minimum_size = Vector2(28, 26)
-	pause_button.add_theme_font_size_override("font_size", 11)
+	pause_button.theme_type_variation = "Small"
 	pause_button.focus_mode = Control.FOCUS_NONE
 	pause_button.toggle_mode = true
 	pause_button.pressed.connect(func(): speed_requested.emit(0.0))
@@ -469,7 +491,7 @@ func _build_top_right_bar() -> void:
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
 		btn.custom_minimum_size = Vector2(24, 26)
-		btn.add_theme_font_size_override("font_size", 11)
+		btn.theme_type_variation = "Small"
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.toggle_mode = true
 		# Built either way rather than skipped, so the settings window's
@@ -550,7 +572,7 @@ func _icon_button(shape: String, label: String, min_width: float) -> Button:
 	var text := Label.new()
 	text.text = label
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text.add_theme_font_size_override("font_size", 12)
+	text.theme_type_variation = "Small"
 	row.add_child(text)
 
 	return btn
@@ -561,6 +583,7 @@ func _icon_button(shape: String, label: String, min_width: float) -> Button:
 ## challenge_runner.gd is the only caller of set_challenge_goal.
 func _build_goal_shelf() -> void:
 	goal_shelf = VBoxContainer.new()
+	goal_shelf.theme = hud_theme
 	goal_shelf.visible = false
 	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -580,7 +603,7 @@ func _build_goal_shelf() -> void:
 	completed_goal_label.scroll_active = false
 	completed_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	completed_goal_label.custom_minimum_size = Vector2(320, 0)
-	completed_goal_label.add_theme_font_size_override("normal_font_size", 12)
+	completed_goal_label.theme_type_variation = "Small"
 	completed_goal_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.6, 0.55))
 	completed_goal_label.visible = false
 	goal_shelf.add_child(completed_goal_label)
@@ -590,7 +613,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	current_goal_label.custom_minimum_size = Vector2(320, 0)
-	current_goal_label.add_theme_font_size_override("font_size", 13)
+	current_goal_label.theme_type_variation = "Body"
 	current_goal_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6))
 	goal_shelf.add_child(current_goal_label)
 
@@ -607,7 +630,7 @@ func _build_goal_shelf() -> void:
 	goal_progress_row.add_child(goal_progress_bar)
 
 	goal_progress_label = Label.new()
-	goal_progress_label.add_theme_font_size_override("font_size", 11)
+	goal_progress_label.theme_type_variation = "Small"
 	goal_progress_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.75))
 	goal_progress_row.add_child(goal_progress_label)
 
@@ -655,6 +678,7 @@ func set_speed_display(speed_scale: float) -> void:
 ## it never moves as fields are shown or hidden.
 func _build_selection_panel() -> void:
 	selection_panel = PanelContainer.new()
+	selection_panel.theme = hud_theme
 	# anchored to the bottom-left so it stays put when the window resizes
 	selection_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	selection_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -672,22 +696,22 @@ func _build_selection_panel() -> void:
 	header.add_child(_build_selection_cog())
 
 	identity_label = Label.new()
-	identity_label.add_theme_font_size_override("font_size", 12)
+	identity_label.theme_type_variation = "Small"
 	column.add_child(identity_label)
 
 	energy_label = Label.new()
-	energy_label.add_theme_font_size_override("font_size", 12)
+	energy_label.theme_type_variation = "Small"
 	energy_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
 	column.add_child(energy_label)
 
 	# what the bee is doing right this second
 	activity_label = Label.new()
-	activity_label.add_theme_font_size_override("font_size", 12)
+	activity_label.theme_type_variation = "Small"
 	activity_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
 	column.add_child(activity_label)
 
 	trait_label = Label.new()
-	trait_label.add_theme_font_size_override("font_size", 12)
+	trait_label.theme_type_variation = "Small"
 	trait_label.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
 	column.add_child(trait_label)
 
@@ -701,7 +725,7 @@ func _build_selection_panel() -> void:
 func _build_selection_cog() -> Control:
 	var menu := MenuButton.new()
 	menu.text = "⚙"
-	menu.add_theme_font_size_override("font_size", 13)
+	menu.theme_type_variation = "Body"
 	menu.tooltip_text = "Choose which fields this panel shows for the selected bee."
 	menu.focus_mode = Control.FOCUS_NONE
 	var popup := menu.get_popup()
@@ -742,6 +766,7 @@ func _apply_selection_field_visibility() -> void:
 ## Gallerin reserve -- see _update_command_tray_width.
 func _build_command_tray() -> void:
 	command_tray = PanelContainer.new()
+	command_tray.theme = hud_theme
 	command_tray.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	command_tray.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	command_tray.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -763,7 +788,7 @@ func _build_command_tray() -> void:
 
 	more_button = Button.new()
 	more_button.text = "More…"
-	more_button.add_theme_font_size_override("font_size", 11)
+	more_button.theme_type_variation = "Small"
 	more_button.focus_mode = Control.FOCUS_NONE
 	more_button.toggle_mode = true
 	more_button.visible = false
@@ -803,6 +828,7 @@ var live_buttons: Dictionary = {}
 
 func _build_cell_popup() -> void:
 	cell_popup = PopupPanel.new()
+	cell_popup.theme = hud_theme
 	add_child(cell_popup)
 
 	var column := VBoxContainer.new()
@@ -810,7 +836,7 @@ func _build_cell_popup() -> void:
 	cell_popup.add_child(column)
 
 	cell_popup_label = Label.new()
-	cell_popup_label.add_theme_font_size_override("font_size", 12)
+	cell_popup_label.theme_type_variation = "Small"
 	column.add_child(cell_popup_label)
 
 	var row := HBoxContainer.new()
@@ -869,7 +895,7 @@ func _build_cell_popup() -> void:
 	raises.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
-	hatch_title.add_theme_font_size_override("font_size", 11)
+	hatch_title.theme_type_variation = "Small"
 	hatch_row.add_child(hatch_title)
 	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Roles that have a sub-mode -- a forager's resource, whether a miner starts automining -- offer it here, so the new bee arrives already set up."))
 
@@ -880,7 +906,7 @@ func _build_cell_popup() -> void:
 		if options.size() == 1:
 			var btn := Button.new()
 			btn.text = entry.label
-			btn.add_theme_font_size_override("font_size", 11)
+			btn.theme_type_variation = "Small"
 			var role_value: int = entry.role
 			var only: Dictionary = options[0]
 			btn.pressed.connect(func(): _request_hatch_role(role_value, only.focus, only.automine))
@@ -896,7 +922,7 @@ func _build_cell_popup() -> void:
 	raises.add_child(lock_row)
 	hatch_lock_box = CheckBox.new()
 	hatch_lock_box.text = "Keep for every bee"
-	hatch_lock_box.add_theme_font_size_override("font_size", 11)
+	hatch_lock_box.theme_type_variation = "Small"
 	hatch_lock_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
 			cell_hatch_lock_requested.emit(active_cell, pressed)
@@ -909,7 +935,7 @@ func _build_cell_popup() -> void:
 	raises.add_child(gyne_row)
 	gyne_box = CheckBox.new()
 	gyne_box.text = "Raise a gyne (a future queen)"
-	gyne_box.add_theme_font_size_override("font_size", 11)
+	gyne_box.theme_type_variation = "Small"
 	gyne_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
 			cell_gyne_requested.emit(active_cell, pressed)
@@ -928,7 +954,7 @@ func _cell_section(column: VBoxContainer, title: String, open_by_default: bool) 
 
 	var header := Button.new()
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	header.add_theme_font_size_override("font_size", 12)
+	header.theme_type_variation = "Small"
 	header.focus_mode = Control.FOCUS_NONE
 	column.add_child(header)
 
@@ -963,24 +989,24 @@ func _build_zone_controls(column: VBoxContainer) -> void:
 
 	var title := Label.new()
 	title.text = "Nursery zone:"
-	title.add_theme_font_size_override("font_size", 11)
+	title.theme_type_variation = "Small"
 	row.add_child(title)
 
 	var add_btn := Button.new()
 	add_btn.text = "Add"
-	add_btn.add_theme_font_size_override("font_size", 11)
+	add_btn.theme_type_variation = "Small"
 	add_btn.pressed.connect(func(): _request_zone(true))
 	row.add_child(_with_info(add_btn, "Put the selected cells into the nursery zone. They are reserved for brood, the queen lays in them ahead of ordinary comb, and foragers leave them alone. Set what each one raises with the \"Raises\" buttons below."))
 
 	var remove_btn := Button.new()
 	remove_btn.text = "Remove"
-	remove_btn.add_theme_font_size_override("font_size", 11)
+	remove_btn.theme_type_variation = "Small"
 	remove_btn.pressed.connect(func(): _request_zone(false))
 	row.add_child(_with_info(remove_btn, "Take the selected cells back out of the zone. They go back to holding whatever arrives first."))
 
 	var open_btn := Button.new()
 	open_btn.text = "Open zone window"
-	open_btn.add_theme_font_size_override("font_size", 11)
+	open_btn.theme_type_variation = "Small"
 	open_btn.pressed.connect(func(): nursery_window_requested.emit())
 	row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every zone cell glows in the colour of the role it raises."))
 
@@ -989,13 +1015,13 @@ func _build_zone_controls(column: VBoxContainer) -> void:
 
 	var tier_title := Label.new()
 	tier_title.text = "Priority:"
-	tier_title.add_theme_font_size_override("font_size", 11)
+	tier_title.theme_type_variation = "Small"
 	tier_row.add_child(tier_title)
 
 	for tier in range(3):
 		var btn := Button.new()
 		btn.text = ["Low", "Medium", "High"][tier]
-		btn.add_theme_font_size_override("font_size", 11)
+		btn.theme_type_variation = "Small"
 		btn.focus_mode = Control.FOCUS_NONE
 		var tier_value: int = tier
 		btn.pressed.connect(func(): _request_priority(tier_value))
@@ -1014,12 +1040,12 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 
 	var title := Label.new()
 	title.text = "Sealing:"
-	title.add_theme_font_size_override("font_size", 11)
+	title.theme_type_variation = "Small"
 	row.add_child(title)
 
 	var close_btn := Button.new()
 	close_btn.text = "Sealed"
-	close_btn.add_theme_font_size_override("font_size", 11)
+	close_btn.theme_type_variation = "Small"
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.pressed.connect(func(): _request_close(true))
 	row.add_child(_with_info(close_btn, "Seal the selected cells. Nothing can be added and nothing taken out until you open them again -- the contents are held in reserve. A sealed cell is drawn with a dark bar across it."))
@@ -1027,7 +1053,7 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 
 	var open_btn := Button.new()
 	open_btn.text = "Open"
-	open_btn.add_theme_font_size_override("font_size", 11)
+	open_btn.theme_type_variation = "Small"
 	open_btn.focus_mode = Control.FOCUS_NONE
 	open_btn.pressed.connect(func(): _request_close(false))
 	row.add_child(_with_info(open_btn, "Unseal the selected cells so the colony can use what is in them again."))
@@ -1035,7 +1061,7 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 
 	var fill_btn := Button.new()
 	fill_btn.text = "Fill then seal"
-	fill_btn.add_theme_font_size_override("font_size", 11)
+	fill_btn.theme_type_variation = "Small"
 	fill_btn.focus_mode = Control.FOCUS_NONE
 	fill_btn.pressed.connect(func(): _request_fill_close())
 	row.add_child(_with_info(fill_btn, "Keep taking deposits but refuse every withdrawal, and seal the cell the moment it is full. Without this a honey cell is sipped from as fast as it is filled and never quite gets to the top, so there is never a full pot to put by. A cell in this state is drawn with a yellow bar."))
@@ -1051,18 +1077,18 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 
 	var title := Label.new()
 	title.text = "Empty cell:"
-	title.add_theme_font_size_override("font_size", 11)
+	title.theme_type_variation = "Small"
 	empty_row.add_child(title)
 
 	var move_btn := Button.new()
 	move_btn.text = "To another cell"
-	move_btn.add_theme_font_size_override("font_size", 11)
+	move_btn.theme_type_variation = "Small"
 	move_btn.pressed.connect(func(): _request_empty("move"))
 	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
 
 	var discard_btn := Button.new()
 	discard_btn.text = "Discard outside"
-	discard_btn.add_theme_font_size_override("font_size", 11)
+	discard_btn.theme_type_variation = "Small"
 	discard_btn.pressed.connect(func(): _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
 
@@ -1075,7 +1101,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	column.add_child(keep_row)
 	keep_empty_box = CheckBox.new()
 	keep_empty_box.text = "Leave empty"
-	keep_empty_box.add_theme_font_size_override("font_size", 11)
+	keep_empty_box.theme_type_variation = "Small"
 	keep_empty_box.toggled.connect(func(pressed: bool):
 		if active_cell and is_instance_valid(active_cell):
 			cell_keep_empty_requested.emit(active_cell, pressed)
@@ -1088,7 +1114,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 func _make_hatch_menu(entry: Dictionary) -> Control:
 	var menu := MenuButton.new()
 	menu.text = entry.label
-	menu.add_theme_font_size_override("font_size", 11)
+	menu.theme_type_variation = "Small"
 	var options: Array = entry.options
 	var role_value: int = entry.role
 	var popup := menu.get_popup()
@@ -1103,10 +1129,11 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 
 func _build_flower_popup() -> void:
 	flower_popup = PopupPanel.new()
+	flower_popup.theme = hud_theme
 	add_child(flower_popup)
 
 	flower_popup_label = Label.new()
-	flower_popup_label.add_theme_font_size_override("font_size", 12)
+	flower_popup_label.theme_type_variation = "Small"
 	flower_popup.add_child(flower_popup_label)
 
 ## --- obstacle popup -----------------------------------------------
@@ -1122,6 +1149,7 @@ const WARNING_SECONDS := 18.0
 
 func _build_warning_banner() -> void:
 	warning_panel = PanelContainer.new()
+	warning_panel.theme = hud_theme
 	warning_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	warning_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	warning_panel.offset_top = 48
@@ -1134,7 +1162,7 @@ func _build_warning_banner() -> void:
 	warning_panel.add_child(row)
 
 	warning_label = Label.new()
-	warning_label.add_theme_font_size_override("font_size", 13)
+	warning_label.theme_type_variation = "Body"
 	warning_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
 	warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	warning_label.custom_minimum_size = Vector2(450, 0)
@@ -1160,10 +1188,11 @@ func set_warnings_muted(value: bool) -> void:
 
 func _build_obstacle_popup() -> void:
 	obstacle_popup = PopupPanel.new()
+	obstacle_popup.theme = hud_theme
 	add_child(obstacle_popup)
 
 	obstacle_popup_label = Label.new()
-	obstacle_popup_label.add_theme_font_size_override("font_size", 12)
+	obstacle_popup_label.theme_type_variation = "Small"
 	obstacle_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	obstacle_popup_label.custom_minimum_size = Vector2(260, 0)
 	obstacle_popup.add_child(obstacle_popup_label)
@@ -1208,13 +1237,14 @@ func _refresh_flower_popup() -> void:
 
 func _build_soil_popup() -> void:
 	soil_popup = PopupPanel.new()
+	soil_popup.theme = hud_theme
 	add_child(soil_popup)
 
 	var column := VBoxContainer.new()
 	soil_popup.add_child(column)
 
 	soil_popup_label = Label.new()
-	soil_popup_label.add_theme_font_size_override("font_size", 12)
+	soil_popup_label.theme_type_variation = "Small"
 	soil_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	soil_popup_label.custom_minimum_size = Vector2(280, 0)
 	column.add_child(soil_popup_label)
@@ -1251,10 +1281,11 @@ func show_soil_popup(count: int, reachable: int, screen_position: Vector2) -> vo
 
 func _build_death_popup() -> void:
 	death_popup = PopupPanel.new()
+	death_popup.theme = hud_theme
 	add_child(death_popup)
 
 	death_popup_label = Label.new()
-	death_popup_label.add_theme_font_size_override("font_size", 12)
+	death_popup_label.theme_type_variation = "Small"
 	death_popup_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	death_popup_label.custom_minimum_size = Vector2(260, 0)
 	death_popup.add_child(death_popup_label)
@@ -1474,6 +1505,7 @@ func _request_fill_close() -> void:
 ## the sturdier choice here.
 func _build_discard_dialog() -> void:
 	discard_dialog = ConfirmationDialog.new()
+	discard_dialog.theme = hud_theme
 	discard_dialog.title = "Nothing else can hold this"
 	discard_dialog.ok_button_text = "Discard it"
 	discard_dialog.cancel_button_text = "Leave the cell as it is"
@@ -1618,7 +1650,7 @@ func _refresh_corner() -> void:
 			continue
 		var label := Label.new()
 		label.text = text
-		label.add_theme_font_size_override("font_size", int(CORNER_SIZES.get(key, 12)))
+		label.theme_type_variation = CORNER_SIZES.get(key, "Small")
 		corner_column.add_child(label)
 
 	# Sits under whichever readouts are starred, same as the plan asked
@@ -1643,7 +1675,7 @@ func _refresh_corner() -> void:
 		line.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		line.flat = true
 		line.focus_mode = Control.FOCUS_NONE
-		line.add_theme_font_size_override("font_size", 12)
+		line.theme_type_variation = "Small"
 		line.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
 		line.add_theme_color_override("font_hover_color", Color.WHITE)
 		var action: String = entry[2] if entry.size() > 2 else ""
@@ -1741,7 +1773,7 @@ func _build_queen_build_row() -> void:
 	var button := Button.new()
 	button.text = "Build cell"
 	button.custom_minimum_size = Vector2(0, 26)
-	button.add_theme_font_size_override("font_size", 11)
+	button.theme_type_variation = "Small"
 	button.pressed.connect(func(): queen_build_cell_requested.emit())
 	command_flow.add_child(button)
 
@@ -1754,7 +1786,7 @@ func _build_follow_control(bees: Array, first) -> void:
 		return
 	var button := Button.new()
 	button.text = "Follow bee"
-	button.add_theme_font_size_override("font_size", 11)
+	button.theme_type_variation = "Small"
 	button.focus_mode = Control.FOCUS_NONE
 	button.toggle_mode = true
 	button.toggled.connect(func(pressed: bool): follow_bee_toggled.emit(first, pressed))
@@ -1779,7 +1811,7 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 	if common_role == -1:
 		var mixed := Label.new()
 		mixed.text = "mixed selection"
-		mixed.add_theme_font_size_override("font_size", 11)
+		mixed.theme_type_variation = "Small"
 		mixed.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
 		row.add_child(mixed)
 	else:
@@ -1913,7 +1945,7 @@ func _build_restock_row(first) -> void:
 	if first != null and first.has_restock_orders():
 		var summary := Label.new()
 		summary.text = "%d cells of %s" % [first.restock_targets.size(), first.restock_resource]
-		summary.add_theme_font_size_override("font_size", 11)
+		summary.theme_type_variation = "Small"
 		summary.add_theme_color_override("font_color", Color(0.6, 0.9, 0.7))
 		command_flow.add_child(summary)
 
@@ -1930,7 +1962,7 @@ func _build_fallback_row(common_role: int, first) -> void:
 
 	var finish_box := CheckBox.new()
 	finish_box.text = "Finish the job first"
-	finish_box.add_theme_font_size_override("font_size", 11)
+	finish_box.theme_type_variation = "Small"
 	finish_box.button_pressed = first.finish_task_first if first != null else false
 	finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
 	row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying, a comb worker finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts immediately."))
@@ -1941,7 +1973,7 @@ func _build_fallback_row(common_role: int, first) -> void:
 	if first != null and first.is_queen and common_role == Bee.Role.EGG_LAYER:
 		var any_cell_box := CheckBox.new()
 		any_cell_box.text = "Lay in plain comb too"
-		any_cell_box.add_theme_font_size_override("font_size", 11)
+		any_cell_box.theme_type_variation = "Small"
 		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
 		any_cell_box.toggled.connect(func(pressed: bool): queen_lay_any_cell_toggled.emit(pressed))
 		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in nursery zone cells and waits when they are full. Turn it off for exact control, and be ready to add zone cells or she stops laying."))
@@ -1966,7 +1998,7 @@ func _labelled_row(title: String) -> HBoxContainer:
 
 	var label := Label.new()
 	label.text = "%s:" % title
-	label.add_theme_font_size_override("font_size", 11)
+	label.theme_type_variation = "Small"
 	label.add_theme_color_override("font_color", Color(0.68, 0.74, 0.8))
 	label.custom_minimum_size = Vector2(48, 0)
 	row.add_child(label)
@@ -1979,7 +2011,7 @@ func _labelled_row(title: String) -> HBoxContainer:
 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	button.text = label
-	button.add_theme_font_size_override("font_size", 11)
+	button.theme_type_variation = "Small"
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(action)
 	if is_current:
@@ -1989,7 +2021,7 @@ func _toggle_button(label: String, is_current: bool, action: Callable, tip: Stri
 func _action_button(label: String, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	button.text = label
-	button.add_theme_font_size_override("font_size", 11)
+	button.theme_type_variation = "Small"
 	button.pressed.connect(action)
 	return _with_info(button, tip)
 
