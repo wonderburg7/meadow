@@ -1,0 +1,20 @@
+{
+  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 0,
+  "nurses": 0, "builders": 0, "miners": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "config_overrides": {
+    "energy_burn_rate": 0.0,
+    "flight_energy_burn": 0.0
+  },
+  "actions": [
+    {
+      "when": {"event_count_at_least": {"type": "flower_visit", "count": 10}},
+      "do": "assert",
+      "condition": {
+        "event_count_at_most": {"type": "death", "subtype": "starvation", "count": 0},
+        "queen_alive": true
+      }
+    }
+  ],
+  "stop": {"max_days": 10, "when_actions_resolved": true}
+}

@@ -4,107 +4,12 @@ extends Polygon2D
 ## collect and recharges over time. Only one bee may visit a given
 ## flower at a time (see `occupied_by`).
 ##
-## Two species now, so "which flower" is a real decision:
-##   Clover -- nectar-rich, pollen-poor, yellow
-##   Borage -- pollen-rich, nectar-poor, blue-violet
+## Six species now, so "which flower" is a real decision -- see
+## flower_species.gd for the full roster.
 
 const Shapes = preload("res://scripts/shapes.gd")
 const CrabSpider = preload("res://scripts/crab_spider.gd")
-
-## Flowering seasons.
-##
-## Each species is in flower over a window of the year, given as a
-## fraction of a season from 0 (first day) to 1 (the last before
-## winter). Outside its window a species produces nothing and new ones
-## don't seed.
-##
-## This is the cheapest way to make three systems that already exist
-## matter more than they did. Floral constancy becomes a real commitment
-## rather than a curiosity, because the species you pinned a forager to
-## will run out. Forage start points matter, because the best ground
-## moves. And the pollen supply has a genuine gap in it, which is what
-## makes storing ahead worth doing.
-const SPECIES := [
-	{
-		# Clover spreads by runners and seeds into dense mats -- real
-		# patches are tightly packed, so a small cluster radius.
-		"name": "Clover",
-		# Spans almost the whole year, which is why it is the backbone of
-		# a colony's. Between clover and borage something is always in
-		# flower -- simulating the windows found a stretch at the turn of
-		# the year with nothing at all out, which would have starved the
-		# colony for no reason worth playing.
-		"season_start": 0.00, "season_end": 0.85,
-		"nectar_capacity": 20.0,
-		"pollen_capacity": 10.0,
-		"weight": 40.0,
-		"cluster_radius": 45.0,
-		"cluster_chance": 0.85,
-		"color": Color(0.95, 0.85, 0.1),
-		"centre": Color(0.5, 0.35, 0.05),
-		# yellow -- the classic crab spider ambush colour (see
-		# CRAB_SPIDER_PLAN.md section 1); a different thing from "weight"
-		# above, which governs how common the species is
-		"crab_spider_weight": 40.0,
-	},
-	{
-		# Borage self-seeds readily and is often grown in blocks -- loose
-		# but still clearly patchy.
-		"name": "Borage",
-		# Comes in late and keeps going, so it carries the pollen supply
-		# through the part of the year when clover is finishing.
-		"season_start": 0.30, "season_end": 1.00,
-		"nectar_capacity": 8.0,
-		"pollen_capacity": 22.0,
-		"weight": 30.0,
-		"cluster_radius": 70.0,
-		"cluster_chance": 0.7,
-		"color": Color(0.45, 0.4, 0.85),
-		"centre": Color(0.15, 0.1, 0.4),
-		# blue-violet, least typical ambush colour, but not zero -- real
-		# crab spiders do occasionally turn up somewhere surprising
-		"crab_spider_weight": 5.0,
-	},
-	{
-		# rich but slow: rewards spreading out rather than camping a patch
-		# Biennial, colonises disturbed ground at wood edges -- loose,
-		# scattered stands rather than a tidy patch.
-		"name": "Foxglove",
-		# A short mid-summer window. Rich while it lasts, and worth
-		# reorganising around, which is the point of having it.
-		"season_start": 0.40, "season_end": 0.65,
-		"nectar_capacity": 34.0,
-		"pollen_capacity": 6.0,
-		"recharge_scale": 0.4,
-		"weight": 8.0,
-		"cluster_radius": 110.0,
-		"cluster_chance": 0.55,
-		"color": Color(0.78, 0.35, 0.6),
-		"centre": Color(0.42, 0.12, 0.3),
-		# pink/magenta, less typical ambush colour than clover's yellow
-		"crab_spider_weight": 10.0,
-	},
-	{
-		# no nectar at all, so pollen foraging becomes a spatial decision
-		# Annual of disturbed/arable ground, wind-scattered seed -- the
-		# least clustered species, closer to individual plants than a
-		# patch.
-		"name": "Poppy",
-		# Early, and the only pollen worth having before the borage
-		# arrives -- so the start of a run has a real constraint.
-		"season_start": 0.00, "season_end": 0.45,
-		"nectar_capacity": 0.0,
-		"pollen_capacity": 30.0,
-		"recharge_scale": 1.0,
-		"weight": 22.0,
-		"cluster_radius": 140.0,
-		"cluster_chance": 0.3,
-		"color": Color(0.85, 0.22, 0.18),
-		"centre": Color(0.15, 0.12, 0.1),
-		# red, but wide open and much-visited, so not a negligible risk
-		"crab_spider_weight": 25.0,
-	},
-]
+const FlowerSpecies = preload("res://scripts/flower_species.gd")
 
 ## The window of the year this species is in flower, as fractions of a
 ## season. Copied off the species table in setup.
@@ -119,6 +24,10 @@ var nectar_capacity: float = 20.0
 var pollen_capacity: float = 10.0
 var nectar_recharge_rate: float = 0.5
 var pollen_recharge_rate: float = 0.1
+## Multiplies flower_handling_time -- a fiddly flower (e.g. Bramble's ring
+## of stamens) takes longer per visit than a simple open one (e.g.
+## Dandelion's flat disc). 1.0 for species that don't specify it.
+var handling_time_scale: float = 1.0
 
 var nectar_amount: float
 var pollen_amount: float
@@ -146,13 +55,14 @@ func _ready() -> void:
 	add_to_group("flowers")
 
 func setup(index: int) -> void:
-	species_index = index % SPECIES.size()
-	var s: Dictionary = SPECIES[species_index]
+	species_index = index % FlowerSpecies.SPECIES.size()
+	var s: Dictionary = FlowerSpecies.SPECIES[species_index]
 	species_name = s.name
 	nectar_capacity = s.nectar_capacity
 	pollen_capacity = s.pollen_capacity
 	season_start = s.get("season_start", 0.0)
 	season_end = s.get("season_end", 1.0)
+	handling_time_scale = s.get("handling_time_scale", 1.0)
 	# some species refill more slowly than others
 	var recharge_scale: float = s.get("recharge_scale", 1.0)
 	nectar_recharge_rate = GameConfig.nectar_recharge_rate * recharge_scale
@@ -169,6 +79,28 @@ func setup(index: int) -> void:
 
 	polygon = Shapes.square_points(Vector2(28, 28))
 	color = s.color
+
+	# A "bushy" species (Bramble) is still one Flower node with one
+	# feeding slot, same as every other species -- but clustered flowers
+	# of the same bushy species get an irregular green backdrop each, so
+	# a cluster reads as one shared bush rather than loose blooms in a
+	# field. show_behind_parent keeps it under the petal shape above;
+	# per-flower jitter on the shape and position means overlapping
+	# backdrops from nearby cluster-mates blend into one ragged outline
+	# instead of a visible stack of identical circles.
+	if s.get("bushy", false):
+		var bush := Polygon2D.new()
+		var bush_points := PackedVector2Array()
+		var bush_segments := 10
+		for i in range(bush_segments):
+			var angle: float = TAU * i / bush_segments
+			var jitter: float = randf_range(0.75, 1.2)
+			bush_points.append(Vector2(cos(angle), sin(angle)) * 34.0 * jitter)
+		bush.polygon = bush_points
+		bush.color = Color(0.22, 0.32, 0.12, 0.6)
+		bush.show_behind_parent = true
+		bush.position = Vector2(randf_range(-10.0, 10.0), randf_range(-10.0, 10.0))
+		add_child(bush)
 
 	var centre_dot := Polygon2D.new()
 	centre_dot.polygon = Shapes.circle_points(5.0)
@@ -217,18 +149,6 @@ func setup(index: int) -> void:
 	add_child(pollen_label)
 
 	_update_labels()
-
-## Picks a species by rarity weight. Clover is common, foxglove scarce.
-static func pick_species_index() -> int:
-	var total := 0.0
-	for s in SPECIES:
-		total += s.get("weight", 1.0)
-	var roll := randf() * total
-	for i in range(SPECIES.size()):
-		roll -= SPECIES[i].get("weight", 1.0)
-		if roll <= 0.0:
-			return i
-	return 0
 
 ## As hive_cell.gd, and for the same reason: there are 250 of these and
 ## the two amount labels were being reformatted sixty times a second

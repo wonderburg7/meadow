@@ -30,17 +30,21 @@ plan file, full history in `git log`.
 3. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
-4. **Foraging ecology plan -- Slices 0 and 1 both done, awaiting Dave's
-   hands-on check.** `foraging_stats.gd` (trip timing, flowers/trip,
-   empty-return rate, per-species breakdown) plus a new read-only
-   Foraging panel (press **G**, or the button next to Nursery) --
-   `source_checks.py`/`balance_tests.py` pass and a Godot boot is clean,
-   but nothing headless can see `foraging_stats.gd`'s numbers (it's
-   never written to the `.jsonl` log), so this needs Dave to open a run
-   with Auto scouting or Auto-recruitment on and sanity-check the panel
-   against what he sees happening. Full detail in
-   `FORAGING_ECOLOGY_PLAN.md`'s "Slice 1 results". Dave still separately
-   owes a hand-recorded `perf.gd` baseline from Slice 0 (no
-   `mcp__godot__*` tools were available in that session). Slice 2
-   onward (species registry, new species, patchy meadow, local search...)
-   stays scope-indexed only until Dave picks the next one to refine.
+4. **Foraging ecology plan -- Slices 0-3 done and fully Dave-verified.**
+   Two rounds of playtest fixes landed and were re-confirmed in-game
+   (22 Aug): Bramble/Dandelion's recharge rate (`recharge_scale`,
+   0.7/1.4), Bramble now genuinely seeding 2-4 flower units as one bush
+   (`bush_min_units`/`bush_max_units`, `world_building.gd`'s
+   `_seed_flower`), Clover recoloured pinky-purple so it's no longer
+   the same yellow as Dandelion, and a new unused-for-now `microhabitat`
+   column on all six species for Slice 4 to build on. **Note for
+   balance, not yet simulated**: Bramble seeding several flowers per
+   weighted pick makes its real meadow share noticeably higher than
+   `weight: 18.0` alone suggests -- worth checking if it reads as
+   over-abundant with more play. Full detail in
+   `FORAGING_ECOLOGY_PLAN.md`. Dave still separately owes a
+   hand-recorded `perf.gd` baseline from Slice 0 -- the only open item
+   before this plan is cleanly caught up.
+   Slice 4 onward (patchy meadow, local search, probabilistic choice,
+   handling experience, finite pollen, proximity recruitment) stays
+   scope-indexed only until Dave picks the next one to refine.

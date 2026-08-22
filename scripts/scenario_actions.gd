@@ -64,6 +64,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_set_config(main, action)
 		"hatch_role":
 			_do_hatch_role(main, action)
+		"set_restock_order":
+			_do_set_restock_order(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -88,11 +90,21 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		var spec: Dictionary = when["event_count_at_least"]
 		if DiagnosticLog.event_count(spec.get("type", ""), spec.get("subtype", "")) < int(spec.get("count", 0)):
 			return false
+	if when.has("event_count_at_most"):
+		var spec: Dictionary = when["event_count_at_most"]
+		if DiagnosticLog.event_count(spec.get("type", ""), spec.get("subtype", "")) > int(spec.get("count", 0)):
+			return false
 	if when.has("cells_completed_at_least") and DiagnosticLog.cell_completed_count() < int(when["cells_completed_at_least"]):
 		return false
 	if when.has("queen_alive"):
 		var queen_alive: bool = main.queen != null and is_instance_valid(main.queen) and not main.colony_lost
 		if queen_alive != bool(when["queen_alive"]):
+			return false
+	if when.has("disease_at_least"):
+		if main.season == null or not is_instance_valid(main.season) or main.season.disease < float(when["disease_at_least"]):
+			return false
+	if when.has("disease_at_most"):
+		if main.season == null or not is_instance_valid(main.season) or main.season.disease > float(when["disease_at_most"]):
 			return false
 	return true
 
@@ -188,6 +200,15 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 	if role_id == -1:
 		_log("assign_role", str(action), "rejected", "unknown role")
 		return
+	if mode_key != "":
+		var mode_known := false
+		for mode in main.Roles.modes_for(role_id):
+			if mode.key == mode_key:
+				mode_known = true
+				break
+		if not mode_known:
+			_log("assign_role", str(action), "rejected", "unknown mode for role")
+			return
 
 	var previous: Array = main.selected_bees
 	main.selected_bees = bees
@@ -317,6 +338,50 @@ static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
 	var automine: bool = action.get("automine", false)
 	main.orders_zones._on_cell_hatch_role_requested(cell, role_id, focus, automine)
 	_log("hatch_role", "%s -> %s/%s" % [hex, role_key, focus], "accepted", "")
+
+## Calls the same two restock command functions as the comb-worker panel:
+## first choose the destination/resource, then the explicitly allowed source.
+## The temporary selections are the headless equivalent of the player's two
+## selection-and-button steps and are restored before the action is reported.
+static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void:
+	var bees: Array = _resolve_bees(main, action.get("target", {}))
+	var target_hex: Array = action.get("target_hex", [])
+	var source_hex: Array = action.get("source_hex", [])
+	var target_cell: Node2D = _resolve_cell(main, target_hex)
+	var source_cell: Node2D = _resolve_cell(main, source_hex)
+	var resource: String = action.get("resource", "")
+	if bees.is_empty() or target_cell == null or source_cell == null or resource == "":
+		_log("set_restock_order", str(action), "rejected", "no matching bees, named cell or resource")
+		return
+
+	var previous_bees: Array = main.selected_bees
+	var previous_cells: Array = main.selected_cells
+	main.selected_bees = bees
+	main.selected_cells = [target_cell]
+	main.orders_zones._on_restock_targets_requested(resource)
+	main.selected_cells = [source_cell]
+	main.orders_zones._on_restock_sources_requested(true)
+	main.selected_bees = previous_bees
+	main.selected_cells = previous_cells
+	for cell in previous_cells:
+		if is_instance_valid(cell):
+			cell.set_selected(true)
+	main.hud.update_selection(previous_bees)
+
+	var bad: Array = bees.filter(func(b):
+		return (
+			not is_instance_valid(b)
+			or b.architect_mode != "restock"
+			or b.restock_resource != resource
+			or not b.restock_targets.has(target_cell)
+			or not b.restock_sources.has(source_cell)
+		)
+	)
+	if not bad.is_empty() or target_cell.designated_type != resource:
+		_log("set_restock_order", "%d bees: %s -> %s" % [bees.size(), source_hex, target_hex], "rejected",
+			"restock target, source, resource or designation did not stick")
+		return
+	_log("set_restock_order", "%d bees: %s -> %s (%s)" % [bees.size(), source_hex, target_hex, resource], "accepted", "")
 
 ## Not gated -- checked once, the tick its own "when" (if any) is met.
 ## Returns whether the run should keep going, so run_pending can stop

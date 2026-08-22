@@ -1,8 +1,14 @@
 {
   "cells": 20, "nectar_foragers": 5, "pollen_foragers": 3,
   "nurses": 3, "builders": 2, "miners": 1,
+  "random_seed": 4242,
   "actions": [
-    {"do": "assign_role", "role": "nurse_both", "target": {"current_role": "nurse"}}
+    {"do": "assign_role", "role": "nurse_both", "target": {"current_role": "nurse"}},
+    {
+      "when": {"event_count_at_least": {"type": "brood_feed", "count": 5}},
+      "do": "assert",
+      "condition": {"event_count_at_most": {"type": "jelly_batches", "count": 0}}
+    }
   ],
-  "stop": {"max_days": 10}
+  "stop": {"when_actions_resolved": true, "max_days": 3}
 }

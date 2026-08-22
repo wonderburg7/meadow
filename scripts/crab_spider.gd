@@ -14,27 +14,11 @@ extends RefCounted
 ## than logic folded into flower.gd/bee_foraging.gd directly.
 
 const BeeEnums = preload("res://scripts/bee_enums.gd")
-## Not preloaded: bee_survival.gd already preloads bee_foraging.gd, which
-## preloads this file -- a preload() here would close a compile-time
-## cycle (see the species_table parameter above for the same reasoning
-## applied to flower.gd). load() resolves at runtime instead, once every
-## script involved has already finished compiling.
-
-## Picks this run's target species, weighted by crab_spider_weight in
-## flower.gd's SPECIES table -- same shape as Flower.pick_species_index,
-## which weights by rarity instead. Takes the species table as a
-## parameter (rather than preloading flower.gd itself) so this file
-## doesn't create a preload cycle with the file that preloads it.
-static func roll_preferred_species(species_table: Array) -> String:
-	var total := 0.0
-	for s in species_table:
-		total += s.get("crab_spider_weight", 1.0)
-	var roll := randf() * total
-	for s in species_table:
-		roll -= s.get("crab_spider_weight", 1.0)
-		if roll <= 0.0:
-			return s.name
-	return species_table[0].name
+const FlowerSpecies = preload("res://scripts/flower_species.gd")
+## flower.gd preloads this file, so this file must not preload flower.gd
+## back (that would close a compile-time cycle) -- but flower_species.gd
+## is a plain data file with no dependency on flower.gd, so preloading
+## it here is safe.
 
 ## Called wherever a flower is created (world-seed and regrowth alike).
 ## Rolls this run's preferred species the first time it's needed, then
@@ -45,7 +29,7 @@ static func maybe_spawn(flower: Node2D) -> void:
 	if not GameConfig.predators_on:
 		return
 	if Session.crab_spider_preferred_species == "":
-		Session.crab_spider_preferred_species = roll_preferred_species(flower.SPECIES)
+		Session.crab_spider_preferred_species = FlowerSpecies.roll_preferred_species()
 	if flower.species_name != Session.crab_spider_preferred_species:
 		return
 	if randf() >= GameConfig.crab_spider_flower_fraction:

@@ -315,13 +315,231 @@ verified by anything above.
 
 ---
 
+### Dave's hands-on check (22 Aug 2026)
+
+Confirmed on a day-5 run with recruitment/scouting on. Panel numbers are
+internally consistent — the Overview's 106s average trip time is exactly
+the flowers-weighted average of the Species rows (82/62/13/8/3 trips at
+42/184/76/195/154s). Two things that looked odd on first read but check
+out against the code:
+
+- **search+flight (29s) + handling (18s) = 47s, well under the 106s trip
+  average.** Expected, not a bug — `foraging_stats.gd` only tracks
+  first-flower search/flight and cumulative handling time, per the Slice
+  1 spec; neither covers flight *between* flowers on a multi-flower trip
+  (avg 4.5/trip here) or the flight home. That ~59s residual is the
+  bucket Slice 5 (local search) would decompose further, not something
+  to fix now.
+- **0% empty returns across all 168 trips.** Plausible, not miswired —
+  `record_trip` only flags empty when delivered load is under
+  `GameConfig.min_worthwhile_amount` (1.0), the same threshold `collect()`
+  already uses. Worth re-checking on a deliberately harsh scenario (few
+  flowers, long distances) rather than a good day-5 run, if it stays at
+  0% there too.
+
+## Slice 2: Species registry — implementation-ready and built
+
+**Scope, on inspection.** The brief's "migrate existing species into
+`flower_species.gd`, then differentiate" turned out to be two separable
+pieces of work. Grepping every `species`/`resource_type` reference
+across the repo found ~18 files, but almost all of those touch
+`resource_type` ("nectar"/"pollen") or `preferred_species` (a bee's
+runtime pin) — genuinely unrelated to the species *data table* itself.
+Only three call sites ever touched `Flower.SPECIES`/`pick_species_index`
+directly: `flower.gd` (owns the table), `world_building.gd` (seeding a
+new flower), and `crab_spider.gd` (rolling this run's target species).
+"Differentiate" — giving species further behavioural distinctions beyond
+today's data columns — isn't specified anywhere in the brief with actual
+numbers or mechanics, so it stays out of this slice; it needs Dave's
+design input before it's implementation-ready, same as slices 3+.
+
+**Built:**
+- New `flower_species.gd` (`extends RefCounted`, plain data + two
+  `static func`s, no state) holds the `SPECIES` array and
+  `pick_species_index()`, moved verbatim out of `flower.gd`.
+- `crab_spider.gd`'s `roll_preferred_species()` moved alongside them in
+  the same file, since it's the same kind of species-table query
+  (weighted by `crab_spider_weight` instead of `weight`). This also
+  removed a workaround: `crab_spider.gd` previously took the species
+  table as a parameter rather than preloading `flower.gd`, specifically
+  to avoid a compile-time cycle (`flower.gd` preloads `crab_spider.gd`).
+  `flower_species.gd` has no dependency on `flower.gd`, so `crab_spider.gd`
+  now preloads it directly and the parameter is gone.
+- `flower.gd`, `main.gd` and `world_building.gd` updated to read the
+  table via a new `FlowerSpecies` preload const, same pattern as the
+  existing `Flower`/`CrabSpider` consts on `main.gd`.
+- Save format untouched — `flower.setup(index)`'s signature and
+  `species_index` (the int actually persisted) didn't change.
+- `tests/balance_tests.py`'s two regex-based readers of the species
+  table (`test_crab_spiders`, `test_seasons`) updated from
+  `source("flower.gd")` to `source("flower_species.gd")` — these read
+  GDScript source as text rather than importing it, so they needed
+  updating by hand; nothing else in either test file changed.
+
+**Checks:** `source_checks.py` and `balance_tests.py` both pass (16/16,
+including the crab-spider and season checks that read the moved table).
+A `mcp__godot__run_project` boot showed only pre-existing warnings (the
+same ones present before this slice, e.g. `_flower_visit_started_at`).
+A `tools/run_scenario.py` run against `c2_no_jelly_cell_test.json`
+confirmed flowers still spawn and get visited at runtime
+(`flower_visits: 59`, `unique_flowers_visited: 34`) — this exercises
+`world_building.gd`'s `pick_species_index()`/`SPECIES` call and
+`crab_spider.gd`'s `maybe_spawn` end to end.
+
+**Not done, deliberately:** no behaviour changed, no new species added,
+no "differentiation" beyond the existing data columns. This was a pure
+file-move refactor to give Slice 3 (new species) a clean home to add to,
+without also touching gameplay in the same slice.
+
+## Slice 3: Add new species — implementation-ready and built
+
+**Species chosen (Dave, 22 Aug):** Bramble and Dandelion, alongside the
+existing Clover/Borage/Foxglove/Poppy.
+
+**Differentiation, per Dave's steer:** beyond the existing
+season/cluster/colour/crab-spider-weight columns, this slice introduces
+one genuinely new column — `handling_time_scale`, a per-species
+multiplier on `flower_handling_time` — and uses `crab_spider_weight: 0.0`
+for the first time (Bramble), where the brief's existing "some species
+may have zero likelihood" allowance hadn't yet been used.
+
+**Built:**
+- `flower_species.gd`: two new `SPECIES` entries.
+  - **Bramble** — rich in both nectar (18) and pollen (16), a long
+    mid-to-late-summer window (0.45-0.90) bridging Foxglove into
+    Borage's back half, tightly clustered (hedgerow thicket:
+    `cluster_radius` 55, `cluster_chance` 0.75), slow to handle
+    (`handling_time_scale` 1.4 — a fiddly ring of stamens), and no crab
+    spiders at all (`crab_spider_weight` 0.0 — thorny growth gives a
+    spider nowhere flat to sit).
+  - **Dandelion** — low value (nectar 6, pollen 8), the earliest flush
+    of the year (0.00-0.35, alongside but ecologically distinct from
+    Poppy), very common (`weight` 35, the highest in the table),
+    loosely scattered rather than patchy (`cluster_radius` 90,
+    `cluster_chance` 0.35), quick to handle (`handling_time_scale` 0.6
+    — a flat open disc), and a classic ambush site
+    (`crab_spider_weight` 35, also the table's highest).
+- `flower.gd`: new `handling_time_scale` field, copied from the species
+  dict in `setup()` the same way `recharge_scale` already is, defaulting
+  to 1.0 for every species that doesn't specify it.
+- `bee_foraging.gd`'s `start_collecting` (the only place
+  `flower_handling_time` was ever read): now
+  `bee.timer = bee.flower_handling_time * bee.current_flower.handling_time_scale`.
+  This is the one behavioural change in the slice — every existing
+  species keeps its old handling time unchanged (scale 1.0), only
+  Bramble and Dandelion differ.
+- Both scripts' header comments updated from "two species" to point at
+  the roster rather than re-describing it in two places.
+
+**Checks:** `source_checks.py` and `balance_tests.py` both pass (15/15).
+Adding two species roughly halved every existing species' *share* of
+the meadow (Clover 40%→26% of total weight) — this correctly re-derives
+`crab_spider` risk numbers per species (all still within the existing
+5-200 days-between-kills / <20% lifetime-risk bounds) but broke one
+test assertion that had hardcoded CRAB_SPIDER_PLAN.md's original
+two-species worked example ("~4 spiders on Clover at ~40% share").
+That assertion was pinned to a species count, not a real invariant —
+updated to print Clover's current numbers instead of asserting a frozen
+figure, since the general per-species bounds already cover Clover at
+whatever share it currently holds. A `tools/run_scenario.py` run against
+`c2_no_jelly_cell_test.json` completed cleanly (74 flower visits, 37
+unique flowers, no errors), exercising `pick_species_index()` over the
+full six-species table and the new handling-time scaling end to end. No
+`mcp__godot__*` tools were connected this session, so a Godot boot
+wasn't done — **still needs Dave's hands-on check**: a normal playtest
+where Bramble (white/pale, slow to work) and Dandelion (bright yellow,
+quick, common, occasionally hosting a spider) both show up and behave
+distinctly from the existing four.
+
+## Slice 3 fixes from Dave's playtest (22 Aug 2026)
+
+Dave played a normal run with Bramble and Dandelion visible and flagged
+two things:
+
+- **Bramble and Dandelion showed the same recharge rate.** Neither set
+  `recharge_scale` in Slice 3, so both defaulted to the game-wide
+  0.50/s nectar, 0.10/s pollen rates — identical to each other and to
+  every other unscaled species, despite being pitched as differentiated.
+  Fixed with `recharge_scale` values following the existing
+  Foxglove/Poppy pattern: Bramble `0.7` (rich but slow to build back up,
+  matching its slow `handling_time_scale`), Dandelion `1.4` (low-value
+  and quick, never keeps a forager waiting).
+- **Bramble should look like a bush of individual flowers, not one
+  icon.** Confirmed with Dave this stays mechanically inside the
+  existing fixed rule (one Flower node = one feeding slot) — Bramble's
+  own tight clustering (`cluster_radius: 55`, `cluster_chance: 0.75`,
+  already in Slice 3) already places several individual Bramble flowers
+  close together, each already its own slot. What was missing was
+  purely visual. `flower.gd::setup()` now gives any species flagged
+  `"bushy": true` (Bramble only, so far) an irregular green backdrop
+  polygon per flower, drawn behind the bloom (`show_behind_parent`)
+  with jittered shape/position so nearby cluster-mates' backdrops
+  overlap into one ragged bush outline instead of a stack of identical
+  circles.
+
+**Checks:** `source_checks.py` (66/66) and `balance_tests.py` (15/15)
+both still pass. A `tools/run_scenario.py` run against
+`c2_no_jelly_cell_test.json` completed cleanly (66 flower visits, 28
+unique). No `mcp__godot__*` tools connected this session, so this
+still hasn't had a Godot boot — **needs Dave's hands-on check**: open a
+run, find a Bramble patch, confirm it now reads as a bush and that its
+summary panel's nectar/pollen `+X/s` no longer matches Dandelion's.
+
+## Second playtest round (22 Aug 2026)
+
+Dave played again and flagged three more things, all fixed:
+
+- **A Bramble "bush" was still only ever one flower unit.** The
+  previous round's fix was purely the drawn backdrop; whether a bush
+  got same-species neighbours nearby still depended on the normal
+  cluster-reseed odds over time. Fixed properly this round:
+  `flower_species.gd` gives Bramble `bush_min_units`/`bush_max_units`
+  (2-4), and `world_building.gd::_seed_flower` now plants that many
+  flower units together in one seeding event, tightly jittered
+  (`BUSH_UNIT_SPREAD`, 8-24px) around a shared anchor point, whenever a
+  Bramble bush is placed. Each unit is still its own `Flower` node with
+  its own feeding slot — the one-node-one-slot rule is unchanged; a
+  bush is now guaranteed to arrive as several of them at once instead
+  of maybe one. **Worth flagging for balance**: this makes Bramble's
+  effective share of meadow flowers noticeably higher than its
+  `weight: 18.0` alone implies (each weighted pick now yields 2-4
+  flowers, not 1) — not simulated against the economy numbers this
+  round; watch whether Bramble reads as over-abundant once Dave's
+  played more.
+- **Clover and Dandelion were both yellow, hard to tell apart.**
+  Clover changed to a pinky-purple (real red-clover colour) —
+  `Color(0.82, 0.42, 0.62)`, centre `Color(0.35, 0.12, 0.24)` — leaving
+  Dandelion as the only yellow species. The old "yellow, classic
+  ambush colour" comment justifying Clover's `crab_spider_weight` was
+  reworded rather than left describing a colour that no longer applies;
+  the weight itself (40.0) is untouched.
+- **New `microhabitat` column**, a plain descriptive string on all six
+  species (grassland, cultivated bed, wood edge, arable margin,
+  hedgerow thicket, open ground) — not read anywhere yet, added so a
+  later slice (patchy/microhabitat-aware meadow generation, part of
+  Slice 4's scope) has real per-species ground-type data to place from
+  instead of every species scattering uniformly.
+
+**Checks:** `source_checks.py` (66/66), `balance_tests.py` (15/15,
+unaffected — microhabitat and bush unit count are outside anything the
+suite reads), and a `run_scenario.py` run against
+`c2_no_jelly_cell_test.json` all pass (82 flower visits, 33 unique —
+higher than the previous round's 66/28, consistent with Bramble now
+seeding several flowers per bush).
+
+**Dave's hands-on check (22 Aug 2026): confirmed good.** Bramble bushes
+show multiple blooms over a shared backdrop, and Clover reads as
+pink/purple, distinct from Dandelion's yellow. Slices 2 and 3 (both
+playtest rounds) are now fully Dave-verified — no outstanding items on
+either.
+
 ## Next physical step
 
-Slices 0 and 1 are both done (see their results sections above). Next:
-Dave's hands-on check of the new Foraging panel (**G** key, or the
-button next to Nursery) with Auto scouting or Auto-recruitment on.
-After that, Slice 2 onward (species registry, new species, patchy
-meadow, local search, probabilistic choice, handling experience, finite
-pollen, proximity recruitment) are scope-indexed only, not yet
+Slices 0-3 are all built and Dave-verified. Slice 4 onward (patchy
+meadow, local search, probabilistic choice, handling experience,
+finite pollen, proximity recruitment) stay scope-indexed only, not yet
 refined — refine one at a time, in its own session, when Dave's ready
-to pick the next slice.
+to pick the next slice. Slice 4 in particular can build on the
+`microhabitat` column added above rather than starting that data from
+scratch. Dave still separately owes a hand-recorded `perf.gd`
+performance baseline from Slice 0.

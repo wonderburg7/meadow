@@ -137,39 +137,64 @@ func _spawn_starting_foragers() -> void:
 	for i in range(total_bees - 2):
 		_spawn_bee("nectar")
 
+## How far a bushy species' extra flower units land from the bush's
+## anchor point -- tight enough that their individual backdrop shapes
+## (flower.gd's ~25-41px jittered radius) overlap into one bush outline,
+## rather than reading as separate plants.
+const BUSH_UNIT_SPREAD := Vector2(8.0, 24.0)
+
 func _seed_flower() -> void:
-	var species_index = main.Flower.pick_species_index()
-	var species: Dictionary = main.Flower.SPECIES[species_index]
+	var species_index = main.FlowerSpecies.pick_species_index()
+	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
 	var cluster_chance: float = species.get("cluster_chance", 0.6)
 
 	var centers: Array = main.cluster_centers.get(species_name, [])
-	var pos: Vector2
+	var anchor: Vector2
 
 	if not centers.is_empty() and randf() < cluster_chance:
 		var center: Vector2 = centers[randi() % centers.size()]
 		var angle = randf() * TAU
 		var dist = sqrt(randf()) * cluster_radius
-		pos = center + Vector2(cos(angle), sin(angle)) * dist
+		anchor = center + Vector2(cos(angle), sin(angle)) * dist
 	else:
-		pos = _random_field_point()
-		centers.append(pos)
+		anchor = _random_field_point()
+		centers.append(anchor)
 		if centers.size() > main.MAX_CLUSTERS_PER_SPECIES:
 			centers.pop_front()
 		main.cluster_centers[species_name] = centers
 
-	for retry in range(8):
-		if _is_clear_ground(pos):
-			break
-		pos = _random_field_point()
-	pos = _clear_of_obstacles(pos)
+	# A bushy species (Bramble) plants several flower units together as
+	# one bush, rather than leaving it to chance whether a later re-seed
+	# lands close enough to read as the same plant.
+	var unit_count := 1
+	if species.get("bushy", false):
+		unit_count = randi_range(
+			species.get("bush_min_units", 2), species.get("bush_max_units", 4))
 
-	var flower = main.Flower.new()
-	flower.position = pos
-	main.meadow_root.add_child(flower)
-	flower.setup(species_index)
-	main.CrabSpider.maybe_spawn(flower)
+	for unit in range(unit_count):
+		var pos: Vector2 = anchor
+		if unit > 0:
+			var a := randf() * TAU
+			var d := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
+			pos = anchor + Vector2(cos(a), sin(a)) * d
+		for retry in range(8):
+			if _is_clear_ground(pos):
+				break
+			if unit == 0:
+				pos = _random_field_point()
+			else:
+				var a2 := randf() * TAU
+				var d2 := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
+				pos = anchor + Vector2(cos(a2), sin(a2)) * d2
+		pos = _clear_of_obstacles(pos)
+
+		var flower = main.Flower.new()
+		flower.position = pos
+		main.meadow_root.add_child(flower)
+		flower.setup(species_index)
+		main.CrabSpider.maybe_spawn(flower)
 
 func _is_clear_ground(point: Vector2) -> bool:
 	for obstacle in main.obstacles:

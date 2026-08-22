@@ -20,7 +20,7 @@ agreed-but-not-started, same status as sections 6-10. Nothing built.
 
 Previously updated 20 Aug 2026 -- section 12 (headless playtest/scenario
 harness) is now agreed, build starting. `NEXTSTEPS.md` points at slice 1
-as the next concrete action. See `AI_PLAYTEST_PLAN.md` for the full
+as the next concrete action. See `docs/archive/AI_PLAYTEST_PLAN.md` for the full
 design. Nothing built yet.
 
 Previously updated 20 Aug 2026 -- added section 12, a proposed headless
@@ -512,13 +512,13 @@ turns the result into an answer. `balance_tests.py` re-simulates only
 the arithmetic and says outright it can't test behaviour;
 `mcp__godot__run_project` only boots the project and watches for
 parser/crash errors; `DiagnosticLog` (built 19-20 Aug, see
-`DIAGNOSTIC_LOGGING_PLAN.md`) already writes rich per-run JSONL but only
+`docs/archive/DIAGNOSTIC_LOGGING_PLAN.md`) already writes rich per-run JSONL but only
 gets exercised by Dave's own hands-on play. So questions like "does
 recruitment actually reduce forager deaths once the meadow's stripped"
 or "does a 50-bee colony still clear winter with predators at 2x
 density" need either a live playtest or a guess.
 
-**Proposed direction (full design in `AI_PLAYTEST_PLAN.md`):** built from
+**Proposed direction (full design in `docs/archive/AI_PLAYTEST_PLAN.md`):** built from
 pieces already in the codebase rather than new architecture — a
 `--scenario=<path>` boot argument that skips the main menu, applies a
 `levels.gd`-shaped starting state plus a small `GameConfig`-allowlisted
@@ -541,7 +541,7 @@ plus Dave's own hands-on check, same as today.
 + auto-quit mechanism alone, reusing the existing `LEVELS` shape and the
 existing 8x speed cap, to prove the unattended run-to-collapse loop
 works before adding a new scenario format or higher speeds. See
-`NEXTSTEPS.md` for the concrete next action and `AI_PLAYTEST_PLAN.md`
+`NEXTSTEPS.md` for the concrete next action and `docs/archive/AI_PLAYTEST_PLAN.md`
 for the full design.
 
 ---
@@ -563,7 +563,7 @@ propose new work: the "does Meadow need a game manager?" question
 `input_selection.gd`, `camera_view.gd`, `orders_zones.gd`, `saving.gd`
 etc. split out) and the role/naming vocabulary (`roles.gd` as the single
 role authority, `GameConfig`/`Session` split) both match what
-`LANGUAGE_REVIEW.md` already got built. Costs nothing to adopt because
+`docs/archive/LANGUAGE_REVIEW.md` already got built. Costs nothing to adopt because
 there's nothing to change.
 
 **The one item backed by a real, live pain point:**

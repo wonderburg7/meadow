@@ -687,7 +687,7 @@ multipliers* (energy use, flower recharge rate, winter store duration,
 and similar `GameConfig` fields) applied on top of it. This reuses the
 exact allowlisted-override mechanism `Levels.apply_config_overrides`
 already implements for the headless playtest harness
-(`AI_PLAYTEST_PLAN.md`), which checks every key against
+(`docs/archive/AI_PLAYTEST_PLAN.md`), which checks every key against
 `SaveGame.SAVED_SETTINGS` before writing to `GameConfig` — the same
 safety property (`Custom` can only expose settings on that same
 allowlist), reused rather than reinvented.

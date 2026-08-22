@@ -1,0 +1,21 @@
+{
+  "cells": 15, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 1, "miners": 0,
+  "stock": {"nectar": 2},
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "set_restock_order",
+      "target": {"current_role": "comb_worker", "count": 1},
+      "target_hex": [0, 0],
+      "source_hex": [0, 2],
+      "resource": "nectar"
+    },
+    {
+      "when": {"event_count_at_least": {"type": "cells_restocked", "count": 1}},
+      "do": "assert",
+      "condition": {"event_count_at_least": {"type": "cells_restocked", "count": 1}}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 2}
+}

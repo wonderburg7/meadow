@@ -35,7 +35,7 @@ Previous update, 20 Aug 2026 -- added a row below for the AI playtest
 harness (Claude running its own headless, unattended scenarios to check
 balance and behaviour, rather than every question needing Dave's own
 hands-on play), now agreed and building, first slice in `NEXTSTEPS.md`.
-Full design in `AI_PLAYTEST_PLAN.md`.
+Full design in `docs/archive/AI_PLAYTEST_PLAN.md`.
 
 Previous update, 20 Aug 2026 -- the Predators row now points at a full
 design, `CRAB_SPIDER_PLAN.md`. Not started.
@@ -43,7 +43,7 @@ design, `CRAB_SPIDER_PLAN.md`. Not started.
 Previous update, 19 Aug 2026 — added a row below for the diagnostic
 logging system (post-run `.jsonl` files Claude can read back to help
 diagnose deaths/imbalance), now fully planned in
-`DIAGNOSTIC_LOGGING_PLAN.md`. Not started.
+`docs/archive/DIAGNOSTIC_LOGGING_PLAN.md`. Not started.
 
 Previous update, 19 Aug 2026 — added a row below for the two-report technical
 audit and its resulting `AUDIT_PLAN.md`, covering a confirmed state-leak
@@ -117,7 +117,7 @@ bundles are worth doing. Full detail, file lists, and validation steps in
 | **Claude Code context restructure** — root `CLAUDE.md` is ~550 lines against guidance of ~200; move history/bug-catalogue to `docs/`, add path-scoped `.claude/rules/`, fix the `.claudeignore` claim | M | Not started, highest-leverage single item. `AUDIT_PLAN.md` Bundle D. |
 | **Small housekeeping** — cache `Season` ref instead of a per-frame group lookup in `hive_cell.gd`; delete retired `egg.gd`/`queen.gd` | S | Done. `AUDIT_PLAN.md` Bundle E. |
 
-## Diagnostic logging — see DIAGNOSTIC_LOGGING_PLAN.md
+## Diagnostic logging — see docs/archive/DIAGNOSTIC_LOGGING_PLAN.md
 
 Post-run `.jsonl` files (one per run, last 5 kept) capturing a config
 snapshot, every death, hourly population/resource/cell snapshots, and
@@ -127,14 +127,14 @@ long trip") instead of just a population number going down. Fully
 planned against the actual code (death-cause tracking doesn't exist yet
 and needs a small fix first; no hive-temperature or weather-string
 systems exist yet, so those spec fields are substituted with what the
-game actually tracks). Full detail in `DIAGNOSTIC_LOGGING_PLAN.md` —
+game actually tracks). Full detail in `docs/archive/DIAGNOSTIC_LOGGING_PLAN.md` —
 update status there, not here.
 
 | | Size | Status |
 |---|---|---|
-| **Diagnostic logging system** — `DiagnosticLog` autoload, death-cause fix in `bee_survival.gd`, hourly snapshots, session summary | S/M | **Done.** Built and confirmed by Dave 19 Aug, reading a real `session_*.jsonl` back after a playtest. `DIAGNOSTIC_LOGGING_PLAN.md`. |
+| **Diagnostic logging system** — `DiagnosticLog` autoload, death-cause fix in `bee_survival.gd`, hourly snapshots, session summary | S/M | **Done.** Built and confirmed by Dave 19 Aug, reading a real `session_*.jsonl` back after a playtest. `docs/archive/DIAGNOSTIC_LOGGING_PLAN.md`. |
 
-## AI playtest harness — see AI_PLAYTEST_PLAN.md
+## AI playtest harness — see docs/archive/AI_PLAYTEST_PLAN.md
 
 Grew out of Dave asking whether Claude could "play the game" itself to
 gather insight and check things are working as intended, including
@@ -151,11 +151,11 @@ population curves, deaths, and whether specific mechanics actually
 fired. Explicitly not attempting real input injection or literal screen
 control — the installed Godot MCP server doesn't support it and it's a
 much bigger lift for a narrower payoff than the headless route. Full
-detail in `AI_PLAYTEST_PLAN.md` — update status there, not here.
+detail in `docs/archive/AI_PLAYTEST_PLAN.md` — update status there, not here.
 
 | | Size | Status |
 |---|---|---|
-| **Headless scenario boot path** — `--scenario=` arg, `levels.gd`-shaped starting state, auto-quit via `DiagnosticLog` | S | **Agreed 20 Aug 2026, building.** First slice, see `NEXTSTEPS.md`. `AI_PLAYTEST_PLAN.md`. |
+| **Headless scenario boot path** — `--scenario=` arg, `levels.gd`-shaped starting state, auto-quit via `DiagnosticLog` | S | **Agreed 20 Aug 2026, building.** First slice, see `NEXTSTEPS.md`. `docs/archive/AI_PLAYTEST_PLAN.md`. |
 | **Config-override block + allowlist check** | S | Not started, second slice. |
 | **Time_scale past the 8x player cap** — needs testing for steering/physics artifacts first | S | Not started, third slice. |
 | **`tools/run_scenario.py`** — headless launch, wait, parse the log | S | Not started, fourth slice. |
@@ -224,7 +224,7 @@ currently looks.
 | **Home-cell marker** — shows a selected builder/miner's assigned cell | S | **Shipped 14 Aug.** |
 | **Build-here hover border** — outlines a clear, buildable hex under the mouse while placing a build order | S | **Shipped 14 Aug.** |
 
-## Structural work (see LANGUAGE_REVIEW.md for detail)
+## Structural work (see docs/archive/LANGUAGE_REVIEW.md for detail)
 
 | | Size | Status |
 |---|---|---|

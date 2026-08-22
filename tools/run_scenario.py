@@ -109,7 +109,7 @@ def _report_failure(label: str, stdout: str, stderr: str, tail_lines: int = 15) 
 
 
 def run_once(scenario_path: Path, godot_path: str, timeout: int,
-             fixed_fps: int | None = None) -> Path | None:
+             fixed_fps: int | None = None, seed_override: int | None = None) -> Path | None:
     """Launch one headless run and return the session_*.jsonl it wrote,
     or None (with an error already printed to stderr) if it didn't
     produce one.
@@ -128,7 +128,9 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
         cmd += ["--fixed-fps", str(fixed_fps)]
     cmd += ["--path", str(ROOT), "--",
             "--scenario=%s" % scenario_path, "--run-id=%s" % run_id]
-    if not _scenario_declares_seed(scenario_path):
+    if seed_override is not None:
+        cmd.append("--random-seed=%d" % seed_override)
+    elif not _scenario_declares_seed(scenario_path):
         # No pinned seed -- hand this launch its own, so N repeats of the
         # same scenario are genuinely independent draws instead of N
         # identical replays of main.gd's DEFAULT_RANDOM_SEED.
@@ -186,17 +188,20 @@ def _warn_on_action_problems(analysis: dict) -> None:
 
 
 def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int,
-                  profile: str, fixed_fps: int | None = None) -> int:
+                  profile: str, fixed_fps: int | None = None,
+                  seeds: list[int] | None = None) -> int:
     if not scenario_path.is_file():
         print("error: scenario file not found: %s" % scenario_path, file=sys.stderr)
         return 1
 
     analyses = []
     had_action_problems = False
-    for i in range(repeat):
-        if repeat > 1:
-            print("--- run %d/%d ---" % (i + 1, repeat))
-        session_file = run_once(scenario_path, godot_path, timeout, fixed_fps)
+    run_count = len(seeds) if seeds is not None else repeat
+    for i in range(run_count):
+        if run_count > 1:
+            print("--- run %d/%d ---" % (i + 1, run_count))
+        seed_override = seeds[i] if seeds is not None else None
+        session_file = run_once(scenario_path, godot_path, timeout, fixed_fps, seed_override)
         if session_file is None:
             return 1
 
@@ -212,15 +217,15 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
         # printed at the end -- only print it per-run when repeat == 1,
         # or always for a profile a human/AI actually asked to see in
         # full each time.
-        if profile != "brief" or repeat == 1:
+        if profile != "brief" or run_count == 1:
             print(json.dumps(report(analysis, profile), indent=2))
         _warn_on_action_problems(analysis)
         had_action_problems = had_action_problems or bool(
             analysis.get("actions", {}).get("problems", []))
         analyses.append(analysis)
 
-    if repeat > 1:
-        print("--- aggregate over %d runs ---" % repeat)
+    if run_count > 1:
+        print("--- aggregate over %d runs ---" % run_count)
         print(json.dumps(aggregate_runs(analyses), indent=2))
 
     return 1 if had_action_problems else 0
@@ -237,6 +242,9 @@ def main() -> int:
     parser.add_argument("--repeat", type=int, default=1,
                          help="run the scenario this many times and report a range, not a "
                               "single point (default: %(default)s)")
+    parser.add_argument("--seeds", type=lambda value: [int(seed) for seed in value.split(",")],
+                         help="comma-separated seeds for matched causal runs; overrides a "
+                              "scenario's random_seed and cannot be combined with --repeat")
     parser.add_argument("--report", choices=sorted(REPORT_PROFILES), default=None,
                          help="which report profile to print: brief (summary + action "
                               "problems, the default -- meant for an AI caller), balance "
@@ -257,11 +265,14 @@ def main() -> int:
     if args.repeat < 1:
         print("error: --repeat must be at least 1", file=sys.stderr)
         return 1
+    if args.seeds is not None and args.repeat != 1:
+        print("error: --seeds cannot be combined with --repeat", file=sys.stderr)
+        return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
     profile = args.report or ("full" if args.full else "brief")
     return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, profile,
-                         fixed_fps)
+                         fixed_fps, args.seeds)
 
 
 if __name__ == "__main__":

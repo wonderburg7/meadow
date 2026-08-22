@@ -213,10 +213,10 @@ def test_crab_spiders():
     # share of the meadow), not "crab_spider_weight" (which only decided
     # the odds of being picked in the first place). So every species is
     # modelled here as if it were this run's unlucky pick.
-    flower = source("flower.gd")
+    flower_species = source("flower_species.gd")
     species = re.findall(
         r'"name": "(\w+)",.*?"weight": ([\d.]+),.*?"crab_spider_weight": ([\d.]+),',
-        flower, re.S)
+        flower_species, re.S)
     check(len(species) >= 3, "could not read the species weight table")
 
     total_weight = sum(float(w) for _, w, _ in species)
@@ -265,30 +265,35 @@ def test_crab_spiders():
           f"worst case, a forager has a {worst_lifetime_risk:.1%} chance of a spider "
           "beating old age to her -- present, not punishing")
 
-    # Section 1's own worked example: Clover at its ~40% share and the
-    # starting flower_fraction should land near "roughly 4 spiders".
+    # CRAB_SPIDER_PLAN.md section 1's worked example assumed a two-species
+    # meadow where Clover held ~40% of the weight and got "roughly 4
+    # spiders" -- a fixed number, not a rule. Each species added since
+    # (Foraging ecology plan, Slice 3 onward) dilutes every existing
+    # share by design, so pinning Clover to that original figure would
+    # make this test fail every time the roster grows, for no real bug.
+    # The per-species worst-case/lifetime-risk bounds above already cover
+    # Clover along with everything else at whatever share it currently
+    # holds, so no separate Clover-only assertion is needed here.
     clover = next((s for s in species if s[0] == "Clover"), None)
     if clover:
         clover_share = float(clover[1]) / total_weight
         clover_spiders = flower_count * clover_share * fraction
-        check(3.0 <= clover_spiders <= 5.0,
-              f"the plan's own worked example expects ~4 spiders on Clover; "
-              f"the current numbers give {clover_spiders:.1f}",
-              f"Clover gives {clover_spiders:.1f} spiders, matching the plan's own estimate")
+        print(f"  (worked example: Clover currently gives {clover_spiders:.1f} "
+              f"spiders at a {clover_share:.0%} share)")
 
 
 # --------------------------------------------------------------- seasons
 def test_seasons():
     section("Seasons: is there always something in flower?")
-    flower = source("flower.gd")
+    flower_species = source("flower_species.gd")
     species = re.findall(
         r'"name": "(\w+)",(?:.*?)"season_start": ([\d.]+), "season_end": ([\d.]+)',
-        flower, re.S)
+        flower_species, re.S)
     check(len(species) >= 3, "could not read the flowering windows")
 
     pollen_rich = []
     for name, start, end in species:
-        cap = re.search(rf'"name": "{name}",.*?"pollen_capacity": ([\d.]+)', flower, re.S)
+        cap = re.search(rf'"name": "{name}",.*?"pollen_capacity": ([\d.]+)', flower_species, re.S)
         if cap and float(cap.group(1)) >= 10.0:
             pollen_rich.append((name, float(start), float(end)))
         print(f"  {name:10} {float(start):.2f} -> {float(end):.2f}")

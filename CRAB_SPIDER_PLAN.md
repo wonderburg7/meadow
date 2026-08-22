@@ -691,7 +691,7 @@ ran in front of a player rather than a test:
   uses. Hooked into both places `worth_feeding()` can turn a bee away
   (`inspect()` and `drink_at_flower()` in `bee_foraging.gd`).
 - **No log evidence any of this was working.** See
-  `DIAGNOSTIC_LOGGING_PLAN.md`'s own changelog for the logging side of
+  `docs/archive/DIAGNOSTIC_LOGGING_PLAN.md`'s own changelog for the logging side of
   this fix -- a new `crab_spider_event` log line (kill/escape/alarm_flee)
   plus snapshot-level `crab_spiders`/`foraging_behaviour` sections now
   give direct evidence from `session_*.jsonl` that predators, alarm

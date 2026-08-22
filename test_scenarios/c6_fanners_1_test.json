@@ -1,13 +1,24 @@
 {
   "cells": 25, "nectar_foragers": 10, "pollen_foragers": 2,
   "nurses": 2, "builders": 2, "miners": 1,
+  "random_seed": 4242,
   "actions": [
     {
       "when": {"day_at_least": 1},
       "do": "assign_role",
       "target": {"current_role": "forager", "count": 1},
       "role": "honey"
+    },
+    {
+      "when": {"event_count_at_least": {"type": "honey_batches_deposited", "count": 1}},
+      "do": "assert",
+      "condition": {"event_count_at_least": {"type": "honey_batches_deposited", "count": 1}}
+    },
+    {
+      "when": {"event_count_at_least": {"type": "cells_ripened", "count": 1}},
+      "do": "assert",
+      "condition": {"event_count_at_least": {"type": "cells_ripened", "count": 1}}
     }
   ],
-  "stop": {"max_days": 6}
+  "stop": {"when_actions_resolved": true, "max_days": 3}
 }

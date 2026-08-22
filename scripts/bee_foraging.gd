@@ -309,7 +309,9 @@ static func start_collecting(bee: Node2D) -> void:
 	# `timer` now counts down the handling phase only -- finding the
 	# nectary after landing. Gathering itself happens gradually, in
 	# _collect(), so the flower's readout ticks down while you watch.
-	bee.timer = bee.flower_handling_time
+	# Scaled per species -- a fiddly flower takes longer to work over than
+	# a simple open one (Foraging ecology plan, Slice 3).
+	bee.timer = bee.flower_handling_time * bee.current_flower.handling_time_scale
 	bee.state = State.COLLECTING
 
 

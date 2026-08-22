@@ -6,9 +6,13 @@
 > session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
 > `NEXTSTEPS.md` remains exclusively Claude's source of work.
 
-Status: in progress 22 Aug 2026. H0 inventory, H1 smoke gate and H2 brood
-lifecycle completed; H3 is next. This is
-the execution hand-off for ChatGPT sessions. It turns Meadow's existing
+Status: **abandoned by Dave on 22 Aug 2026 because the plan was not especially
+useful. Do not resume H6, H7 or extend the suite.** H0 inventory, H1 smoke gate,
+H2 brood lifecycle, H3 hive production, H4 player-command routing and H5
+survival and adverse systems were completed before the plan was stopped. Their
+evidence remains below as a historical record; future ChatGPT sessions should
+run simulations only to answer a specific current question, not from this plan.
+This is the execution hand-off for ChatGPT sessions. It turns Meadow's existing
 headless harness into a small, stable mechanism-check suite without spending
 runs on systems that are about to change.
 
@@ -28,7 +32,7 @@ question.
 
 1. Read `CHATGPT_NEXTSTEPS.md`, then this file. Do not use or edit Claude's
    `NEXTSTEPS.md` as part of this work.
-2. Read only the relevant part of `AI_PLAYTEST_PLAN.md` and the header of
+2. Read only the relevant part of `docs/archive/AI_PLAYTEST_PLAN.md` and the header of
    `scripts/scenario_actions.gd` for the slice being built.
 3. Check `git log --oneline -10` and `git status --short` so this plan is not
    applied blindly across newer work.
@@ -231,9 +235,165 @@ run through normal game code. They do not judge nursery pacing or balance.
 
 Retain isolated checks for no undesignated jelly spill; an Anything-mode nurse
 feeding before making jelly when brood needs food; honey fanning doing real
-work and responding monotonically to 1, 2 and 4 workers; and restocking through
-the normal role loop. The C2/C6 scenarios cover much of this already. Consolidate
-the invocation and pass criteria rather than duplicating their JSON.
+work across matched 1, 2 and 4-worker cases; and restocking through the normal
+role loop. Record fanner throughput for diagnosis but do not require strict
+monotonic totals, for the reasons established below. The C2/C6 scenarios cover
+much of this already. Consolidate the invocation and pass criteria rather than
+duplicating their JSON.
+
+Baseline checkpoint 22 Aug 2026. Both Python gates passed before the Godot
+runs (`source_checks.py`: 63 scripts; `balance_tests.py`: all 16 checks). The
+unchanged scenarios use fixed FPS 30 and `brief`, but none yet has a protected
+gameplay postcondition:
+
+| Scenario | Seed | Result | Wall time | What it proves today |
+|---|---:|---|---:|---|
+| `c2_no_jelly_cell_test.json` | runner-selected `1869930731` | day 10; 99 brood feeds; 0 jelly batches; 2 starvation deaths | 35.1s | The present run made no jelly without a designated cell, but only the nurse assignment is enforced. |
+| `c6_fanners_1_test.json` | runner-selected `1833933892` | day 6; 17 deposits; 16 cells ripened; 0 deaths | 22.3s | Honey work fired, but this seed cannot be compared with the other two. |
+| `c6_fanners_2_test.json` | runner-selected `60366718` | day 6; 22 deposits; 12 cells ripened; 2 deaths | 13.5s | Same limitation. |
+| `c6_fanners_4_test.json` | runner-selected `610896351` | day 6; 56 deposits; 44 cells ripened; 0 deaths | 11.6s | Same limitation. |
+
+A read-only rerun of the unchanged fanner trio with seed `4242` removed that
+confound. The 1/2/4 cases produced 26/19/33 honey deposits and 26/15/20
+ripened cells; the 2- and 4-fanner wall times were 19.7s and 16.4s (the first
+direct launch was not externally timed). All reached day 6. This is useful
+moderate-validity evidence that every case performs real honey work, but it
+rejects strict monotonic final throughput as a stable regression oracle.
+Assigning extra fanners also removes active foragers and changes contention
+for shared nectar, cells and paths, so the comparison changes more than raw
+fanning capacity even though the JSON differs by one requested worker count.
+
+The smallest implementation hand-off is therefore:
+
+1. Expose the already-maintained `jelly_batches`,
+   `honey_batches_deposited`, `cells_ripened` and `cells_restocked` counters
+   through the generic `event_count` condition; do not add new telemetry.
+2. Pin seed `4242` in C2 and all three fanner files. Give each fanner case a
+   cheap real-work assertion/early stop (at least one deposit and one ripened
+   cell) plus a short safety ceiling. Treat 1/2/4 as matched execution checks,
+   not a monotonic balance threshold.
+3. Make C2 fail non-zero if any jelly batch occurs before a designated jelly
+   cell exists. The current positive-only condition language cannot express
+   that forbidden-event invariant, so add one generic maximum/equality
+   counter condition or a stop/failure condition rather than a C2-specific
+   verb. Keep the safety horizon only as long as needed to allow several brood
+   feeds, proving the Anything nurse had opportunities to work.
+4. Do not count `c4_stocking_hatch_test.json` as restocking coverage. It proves
+   a requested bee emerges in `BUILDER/restock` mode, but supplies no restock
+   target/source order and the baseline summary has zero deliveries. Either
+   add the smallest semantic restock-order action that calls the real
+   `orders_zones` path and stop on one `cells_restocked` event, or explicitly
+   leave delivery coverage as an H3 gap.
+
+Implementation-ready contract, checked against commit `fb5871f` and the live
+working tree on 22 Aug 2026:
+
+- Extend `DiagnosticLog.event_count()` with the existing flat counters under
+  the summary names `jelly_batches`, `honey_batches_deposited`,
+  `cells_ripened` and `cells_restocked`. Extend
+  `ScenarioActions._when_met()` with generic
+  `event_count_at_most: {type, subtype?, count}` alongside the existing
+  `event_count_at_least`. This is deliberately an assertion condition, not a
+  special jelly verb.
+- In C2, pin `random_seed: 4242`. Keep the immediate Anything-mode nurse
+  assignment, then gate an assertion on five real `brood_feed` events and
+  assert `jelly_batches <= 0`. Use `when_actions_resolved` and a short
+  `max_days` ceiling. A spill becomes `assert_failed`; missing brood work
+  becomes `never_fired`; both make the runner exit non-zero.
+- In each C6 fanner file, pin `random_seed: 4242`. Keep the matched starting
+  state and the day-1 assignment count of 1, 2 or 4. Add one assertion gated
+  on both `honey_batches_deposited >= 1` and `cells_ripened >= 1`, assert the
+  same two conditions, then use `when_actions_resolved` with a short ceiling.
+  Do not compare the final totals as a pass threshold.
+- Add a semantic `set_restock_order` action rather than mutating bee fields.
+  Resolve the chosen Comb worker and target/source comb cells, temporarily
+  populate the same `main.selected_bees` and `main.selected_cells` collections
+  the UI uses, and call
+  `orders_zones._on_restock_targets_requested(resource)` followed by
+  `_on_restock_sources_requested(true)`. Restore the previous selections and
+  reject the action unless the worker finishes with the requested target,
+  source and resource. This calls the real order path and keeps the action
+  useful beyond H3.
+- Prefer a new isolated `h3_restock_delivery_test.json` over extending C4.
+  A compact deterministic setup can use 15 cells, one Comb worker, seed 4242
+  and `stock: {"honey": 2}`. For a 15-cell starting spiral the last two stocked
+  cells are `[0, 2]` and `[1, 1]`; `[0, 0]` is a suitable empty target at boot.
+  Apply the restock order immediately, then gate/assert on
+  `cells_restocked >= 1` and stop when actions resolve. The scenario must
+  reject cleanly if any named cell is absent or the order did not stick.
+
+Before adopting those example coordinates, Claude should make one real run to
+confirm the queen has not occupied `[0, 0]` before the first action tick. If
+that race exists, choose another known-empty starting cell or let the semantic
+action select an empty target explicitly; do not add direct resource mutation
+to make the scenario pass.
+
+No scenario, game-code or harness file was changed in this checkpoint because
+`CHATGPT.md` restricts ChatGPT to ChatGPT-specific Markdown. H3 is not complete
+and should not be committed as a completed slice until the adapted scenarios
+pass, their final wall times are recorded, and both Python gates are rerun.
+
+Continuation checkpoint 22 Aug 2026. Rechecked commit `fb5871f` and the live
+working tree after newer Dave/Claude edits appeared elsewhere. The H3 contract
+has not landed: `DiagnosticLog.event_count()` still lacks the four production
+counter mappings; `ScenarioActions._when_met()` still has no
+`event_count_at_most`; there is no `set_restock_order` action or
+`h3_restock_delivery_test.json`; and C2 plus the three C6 fanner scenarios
+remain unpinned and without causal assertions or early stops. The relevant
+implementation and scenario files have no working-tree diff, so verification
+was deliberately not run against the unchanged baselines. H3 remains blocked
+at the existing implementation hand-off; the concurrent gameplay edits were
+not touched.
+
+Completed 22 Aug 2026 against commit `9c9466b` plus the live working tree.
+Dave authorised the narrow headless-check implementation exception now
+recorded in `CHATGPT.md`. H3 adds no balance values or production telemetry:
+it exposes four counters already maintained by `DiagnosticLog`, adds generic
+`event_count_at_most`, and adds one semantic `set_restock_order` action that
+uses the real two-step `orders_zones` command path and restores the prior
+selection afterwards.
+
+All retained scenarios use fixed FPS 30, seed `4242`, `brief`, causal
+postconditions and `when_actions_resolved`, with `max_days` only as a failure
+ceiling:
+
+| Scenario | Decisive result | Stop | Wall time |
+|---|---|---:|---:|
+| `c2_no_jelly_cell_test.json` | 5 real brood feeds; 0 jelly batches | day 1, game time 140.75s | 5.3s |
+| `c6_fanners_1_test.json` | 1 honey deposit; 1 cell ripened | day 1, game time 97.75s | 7.2s |
+| `c6_fanners_2_test.json` | 2 honey deposits; 1 cell ripened | day 1, game time 78.75s | 6.3s |
+| `c6_fanners_4_test.json` | 4 honey deposits; 1 cell ripened | day 1, game time 81.75s | 4.1s |
+| `h3_restock_delivery_test.json` | 1 real nectar restock delivery | day 1, game time 3.875s | 3.4s |
+
+The restock scenario deliberately uses starting nectar rather than the
+contract's provisional honey example. A real trial showed that starting honey
+has not been ripened, while the real restock loop correctly allows honey to be
+drawn only from `ripe_honey`; using nectar isolates delivery without weakening
+the command-path evidence. The named cells existed, `[0, 0]` remained a valid
+target at the first action tick, both semantic commands stuck, and the worker
+completed the delivery through its normal role loop.
+
+Disposable negative controls were run and deleted. One deliberately produced
+jelly batch made `event_count_at_most` fail with outcome `assert_failed` and
+runner exit 1. Removing honey-worker assignment left the deposit assertion
+`never_fired` and exit 1. Removing the restock order left the delivery
+assertion `never_fired` and exit 1. Thus a jelly spill, missing honey work and
+missing restock delivery cannot pass merely by reaching a time ceiling.
+
+Final verification passed: `source_checks.py` checked 65 scripts and
+`balance_tests.py` passed all 16 checks. The positive runs had no failed,
+rejected or unresolved actions. Named failures protected are an undesignated
+jelly spill after real brood-work opportunities, any fanner case ceasing to
+deposit or ripen honey, the semantic restock command failing to set its worker,
+target, source or resource, and the normal restock loop failing to deliver.
+This is moderate-validity integration evidence: starting colonies are
+artificial, but every protected mechanism and command path is real. It does
+not claim monotonic fanner throughput, balance quality or good presentation.
+
+No commit was made during closure because the ChatGPT-specific Markdown files
+already contained earlier uncommitted edits and Claude changed separate plan
+files concurrently; committing whole files would mix ownership. The H3 source
+and scenario changes remain distinct in the working tree.
 
 ### H4. Player-command routing
 
@@ -245,6 +405,46 @@ Do not test Challenge stages. Do not add auto-mining coverage until the
 Challenge revamp has landed. If work completion is not observable cheaply, test
 correct queuing now and leave completion to H7.
 
+Completed 22 Aug 2026 against commit `9c9466b` plus the live working tree.
+The retained B2/B3 fixtures now pin seed `4242`, issue their commands on the
+first valid action tick, and stop with `when_actions_resolved`; `max_days: 1`
+is only a failure ceiling. No completion telemetry was added. The semantic
+verbs already call the real player-command functions and verify their immediate
+postconditions before logging acceptance: selected bees hold the requested
+role and mode, the cell holds its designation, and the real worker queues hold
+the requested build tile or soil block.
+
+| Scenario | Decisive result | Stop | Wall time |
+|---|---|---:|---:|
+| `b2_combined_role_test.json` | 2 nurses became pollen foragers; explicit population assertion passed | day 1, game time 0.75s | 4.1s |
+| `b3_postcondition_test.json` | build target, mine target and honey designation all accepted after their live postconditions were checked | day 1, game time 0.75s | 4.3s |
+
+The B2 negative control exposed a real false-positive: an invented combined
+focus such as `forager_not_a_focus` was applied and then reported accepted,
+because the postcondition compared the bee's freely assigned string without
+first checking that it was a mode the role actually offers. The generic
+`assign_role` action now validates combined mode keys against
+`Roles.modes_for(role_id)` before calling the player path. A repeat rejected
+the invented focus with runner exit 1. Separate disposable negatives for a
+missing build worker, absent mine block and absent designation cell were all
+rejected and also produced runner exit 1; all temporary fixtures were deleted.
+
+Final verification passed: `source_checks.py` checked 66 scripts and
+`balance_tests.py` passed all 16 checks. Both positive runs had only accepted
+actions and no action problems. Named failures protected are a role change or
+focus change silently not sticking, an unknown focus being falsely accepted,
+designation silently not sticking, or build/mine commands failing to enter the
+real worker queues. This is high-validity command-routing evidence, because
+the actions use the same functions as player commands and inspect the resulting
+game objects. B3 deliberately proves queuing rather than completion; work
+completion, stalls and invalid hive positions remain H7 concerns.
+
+No commit was made during closure because `scenario_actions.gd` already
+contains the uncommitted H3 restock action and the ChatGPT plan files contain
+the earlier H3 record; committing whole files would mix completed slices while
+Claude also has unrelated live changes in the tree. The H4 changes remain
+small and identifiable in the working tree.
+
 ### H5. Survival and adverse systems
 
 Use paired on/off comparisons with matched seeds for a controlled energy/hunger
@@ -252,6 +452,62 @@ case, disease, and crab spiders. Check activation and direction of effect throug
 event counts, deaths and survival, not animation or exact tuning. Use three
 seeds per pair. Omit the hunger Godot run if the existing Python test fully
 answers it and the headless run adds no integration evidence.
+
+Completed 22 Aug 2026 against commit `9c9466b` plus the live working tree.
+The arithmetic suite covers energy budgets and default pathogen/predator risk,
+but does not execute a bee's real death path, so H5 retained a controlled
+energy pair rather than omitting it. The harness now exposes its existing
+death and flower-visit counters through generic `event_count` conditions,
+supports live `disease_at_least`/`disease_at_most` observations, and accepts a
+comma-separated `--seeds` list so both sides of a stochastic pair can replay
+the same launches without duplicating fixtures. An empty crab-spider subtype
+now means all outcomes, which makes the predator-off invariant cover kills,
+escapes and alarm flees rather than accidentally querying a nonexistent empty
+key.
+
+All pairs used fixed FPS 30, `brief`, matched seeds `101,202,303`, causal
+postconditions and `when_actions_resolved`; their short `max_days` values are
+failure ceilings only. Each pair differs in one causal setting:
+
+| Pair | On/adverse result across seeds | Off/control result across seeds | Final seed-101 stop / wall time |
+|---|---|---|---|
+| Energy (`flight_energy_burn` 10 vs 0) | One real forager starvation in every run; queen alive | Ten real flower visits, zero starvation deaths; queen alive | 24.75s / 3.2s vs 14.75s / 3.2s, day 1 |
+| Disease (`disease` true vs false) | Pressure exceeded 0.1 and all eight workers died early of old age in every run | Pressure stayed at 0 and no worker died by day 7 | 121.75s / 4.0s vs 120.75s / 4.7s, day 7 |
+| Crab spiders (`predators_on` true vs false) | At least one real ambush kill in every run (1-3 deaths) | Ten real flower visits and no predator outcome of any kind | 4.775s / 2.2s vs 5.75s / 2.3s, day 1 |
+
+Routine paired invocation shape is `python tools/run_scenario.py <scenario>
+--seeds 101,202,303 --report brief`. The six retained fixtures are
+`h5_energy_high_flight_burn_test.json`,
+`h5_energy_zero_flight_burn_test.json`, `h5_disease_on_test.json`,
+`h5_disease_off_test.json`, the adapted `slice6_crab_spider_test.json`, and
+`h5_crab_spider_off_test.json`.
+
+Disposable inverted controls were run and deleted. Removing high flight burn
+from the adverse energy case left its starvation assertion `never_fired` and
+runner exit 1. Turning disease off in the adverse pathogen case left its old-
+age assertion `never_fired` and exit 1. Turning predators on with a zero kill
+chance produced three escapes before the control horizon, making the generic
+no-predator-event assertion fail with `assert_failed` and exit 1. Thus none of
+the three pairs passes merely by reaching its safety ceiling.
+
+Final verification passed: `source_checks.py` checked 66 scripts and
+`balance_tests.py` passed all 15 checks in the current tree. All 18 positive
+Godot runs ended `actions_resolved` with no rejected, failed or unresolved
+actions. Named failures protected are flight energy no longer being charged or
+causing starvation, zero flight cost incorrectly causing starvation, pathogen
+pressure failing to activate or shorten lifespan, disease-disabled runs still
+accumulating pressure, crab-spider encounters failing to kill under a forced
+100% test setup, and any predator event occurring while predators are off.
+This is moderate-validity integration evidence: artificial settings amplify
+each mechanism for a fast causal check, while energy burn, disease progression,
+lifespan and ambush deaths all execute through normal game code. It deliberately
+does not bless the amplified values as balance or make a claim about visuals.
+
+No commit was made during closure because the shared diagnostic/action files
+still contain the earlier uncommitted H3/H4 changes and Claude has unrelated
+live ecology changes in the same working tree; committing whole files would
+mix ownership. H5 did not edit the changing foraging or crab-spider gameplay
+files.
 
 ### H6. Seasonal integration, milestone-only
 
@@ -314,3 +570,7 @@ commit the completed slice with a plain-language message. Delete an insight
 once it is resolved; Git history is the archive. Never put ChatGPT actions in
 `NEXTSTEPS.md`. Do not push; pushing depends on the GitKraken plugin being
 available.
+
+In every headless-run final response, explicitly tell Dave whether any
+recommendations were added to, updated in or removed from
+`insights_from_ChatGPT.md`. If there were none, say so directly.

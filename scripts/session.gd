@@ -79,7 +79,7 @@ var gynes_released: int = 0
 # --- crab spiders (see CRAB_SPIDER_PLAN.md) ------------------------
 ## Which flower species this run's crab spiders are hunting on. Rolled
 ## once, the first time GameConfig.predators_on is true and this is
-## still unset -- see CrabSpider.roll_preferred_species(). Run state,
+## still unset -- see FlowerSpecies.roll_preferred_species(). Run state,
 ## not a balance number: it's "which species this particular run
 ## picked", same reasoning as winter_coming above.
 var crab_spider_preferred_species: String = ""

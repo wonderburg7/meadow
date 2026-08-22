@@ -466,11 +466,30 @@ func event_count(type: String, subtype: String = "") -> int:
 			if subtype != "":
 				return int(_brood_hatches_by_role_mode.get(subtype, 0))
 			return _brood_hatches
+		"jelly_batches":
+			return _jelly_batches
+		"honey_batches_deposited":
+			return _honey_batches_deposited
+		"cells_ripened":
+			return _cells_ripened
+		"cells_restocked":
+			return _cells_restocked
+		"death":
+			if subtype != "":
+				return int(_deaths_by_cause.get(subtype, 0))
+			return _total_deaths
+		"flower_visit":
+			return _flower_visits
 		"recruitment_match":
 			return _recruitment_matches
 		"scouting_settled":
 			return _scouting_settled
 		"crab_spider_event":
+			if subtype == "":
+				var total := 0
+				for count in _crab_spider_events.values():
+					total += int(count)
+				return total
 			return int(_crab_spider_events.get(subtype, 0))
 		"orientation_flight":
 			return _orientation_flights
