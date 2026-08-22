@@ -35,7 +35,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts")
 # the check.
 KNOWN = set("""
 print push_error push_warning str int float bool abs max min clamp clampf clampi round roundi
-floor floori ceil ceili sqrt pow sin cos tan asin acos atan atan2 lerp lerpf inverse_lerp remap
+floor floori ceil ceili sqrt pow exp sin cos tan asin acos atan atan2 lerp lerpf inverse_lerp remap
 randf randi randf_range randi_range randomize seed snapped snappedf fmod fposmod posmod wrapf wrapi
 is_instance_valid is_equal_approx is_zero_approx typeof len range minf maxf mini maxi absf absi
 is_nan is_inf deg_to_rad rad_to_deg ease smoothstep move_toward rotate_toward angle_difference

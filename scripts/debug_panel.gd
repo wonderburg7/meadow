@@ -743,6 +743,11 @@ const TUNABLES := [
 		"category": "Bee life",
 		"tip": "How fast the wander oscillates, in radians per second. Higher is twitchier. Only matters when Bumble flight is on.",
 	},
+	{
+		"key": "bumble_flight_settle_seconds", "label": "Wander settle s", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "How long the visual offset takes to ease in when a bee starts flying outdoors, and back out when it lands -- this is what stops a landing bee snapping onto the flower. Only matters when Bumble flight is on.",
+	},
 
 	# --- Interface ---
 	{

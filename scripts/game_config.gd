@@ -491,9 +491,16 @@ var visual_tint_jitter_range: float = 0.05
 ## Gated on is_on_screen and outdoor flight, so it costs nothing off
 ## screen or indoors -- see bee.gd::_update_wander_flight and
 ## bee_movement.gd::move_towards.
+##
+## The offset eases towards its target (the wander, or zero once the bee
+## stops flying outdoors) over bumble_flight_settle_seconds rather than
+## snapping straight there -- a bee landing on a flower used to have its
+## visuals jump back onto the exact landing spot the instant it arrived,
+## which read as a teleport. Easing turns that into a smooth touchdown.
 var bumble_flight_on: bool = true
-var bumble_flight_amplitude: float = 6.0   # pixels either side of the flight line
-var bumble_flight_frequency: float = 1.6   # radians/second
+var bumble_flight_amplitude: float = 14.0   # pixels either side of the flight line
+var bumble_flight_frequency: float = 1.6    # radians/second
+var bumble_flight_settle_seconds: float = 0.35   # time to ease to/from the wander
 
 ## Milestone bees ("the hundredth bee this colony ever raised") get a
 ## deterministic fact instead of a rolled one -- see

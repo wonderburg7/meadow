@@ -917,7 +917,7 @@ func _process(delta: float) -> void:
 	Perf.end("bee_label")
 
 	Perf.begin("bee_wander")
-	_update_wander_flight()
+	_update_wander_flight(delta)
 	Perf.end("bee_wander")
 	Perf.end("bees")
 
@@ -1848,23 +1848,36 @@ func _update_alarm_ring() -> void:
 ## this, so arrival checks, obstacle steering and the stall watchdog are
 ## all unaffected -- only where the bee is *drawn* wobbles.
 ##
-## Two sines at slightly different rates (rather than one) so the path
-## traces a small drifting loop instead of a straight line back and
-## forth, which reads as idling in place rather than flight.
-func _update_wander_flight() -> void:
-	if not GameConfig.bumble_flight_on or not flying_outdoors:
-		if visual_root.position != Vector2.ZERO:
-			visual_root.position = Vector2.ZERO
+## Two sines at different rates (rather than one) so the path traces a
+## drifting loop instead of a straight line back and forth, which reads
+## as idling in place rather than flight.
+##
+## The offset is eased towards its target -- the wander itself while
+## flying, zero once it stops -- rather than set outright. Without this,
+## a bee arriving at a flower had its visuals jump back onto the exact
+## landing spot the instant flying_outdoors went false that frame, which
+## read as a teleport/snap rather than a landing. Easing over
+## GameConfig.bumble_flight_settle_seconds turns that into a smooth
+## touchdown, and does the same (less noticeably) when a bee sets off.
+func _update_wander_flight(delta: float) -> void:
+	var target_offset := Vector2.ZERO
+	if GameConfig.bumble_flight_on and flying_outdoors:
+		# Off screen: skip the trig and the ease both, same pattern as
+		# _update_label/_update_alarm_ring (rule 3) -- nothing to see.
+		if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+			return
+		var t: float = Session.sim_time * GameConfig.bumble_flight_frequency + wander_phase
+		target_offset = Vector2(
+			sin(t) * GameConfig.bumble_flight_amplitude,
+			sin(t * 1.7 + PI * 0.5) * GameConfig.bumble_flight_amplitude
+		)
+
+	if visual_root.position.distance_squared_to(target_offset) < 0.01:
+		if visual_root.position != target_offset:
+			visual_root.position = target_offset
 		return
-	# Off screen or indoors: skip the trig entirely, same pattern as
-	# _update_label/_update_alarm_ring (rule 3).
-	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
-		return
-	var t: float = Session.sim_time * GameConfig.bumble_flight_frequency + wander_phase
-	visual_root.position = Vector2(
-		sin(t) * GameConfig.bumble_flight_amplitude,
-		sin(t * 1.3 + PI * 0.5) * GameConfig.bumble_flight_amplitude
-	)
+	var blend: float = 1.0 - exp(-delta / max(0.001, GameConfig.bumble_flight_settle_seconds))
+	visual_root.position = visual_root.position.lerp(target_offset, blend)
 
 ## Bees inside the hive pick their way over the comb rather than flying
 ## straight, so standing on a cell slows them down. Out in the meadow
