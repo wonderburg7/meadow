@@ -158,9 +158,19 @@ static func feed_brood(bee: Node2D, cell: Node2D) -> void:
 ## in her head glands, then either carries it straight to a gyne larva or
 ## stores it in a cell set aside for it.
 
+## Where a jelly batch may go. A pending gyne need is urgent enough to
+## use any cell, same as other resources -- but with none pending, jelly
+## may only go in a cell the player has explicitly pinned to it, or it
+## spills into whatever ordinary comb happens to be empty.
+static func jelly_storage_cell(bee: Node2D, except: Node2D = null) -> Node2D:
+	if bee.hive.has_gyne_brood():
+		return bee.hive.find_cell_for("jelly", except)
+	return bee.hive.find_designated_cell_for("jelly", except)
+
+
 static func can_make_jelly(bee: Node2D) -> bool:
 	# no point making it if nothing needs it and there's nowhere to put it
-	if not bee.hive.has_gyne_brood() and bee.hive.find_cell_for("jelly") == null:
+	if not bee.hive.has_gyne_brood() and jelly_storage_cell(bee) == null:
 		return false
 	if bee.hive.total("pollen") < GameConfig.jelly_pollen_cost:
 		return false
@@ -188,14 +198,14 @@ static func nurse_make_jelly(bee: Node2D, delta: float) -> void:
 static func nurse_go_to_jelly_cell(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for("jelly") <= 0.0:
 		BeeForaging.release_cell_slot(bee)
-		bee.target_cell = bee.hive.find_cell_for("jelly")
+		bee.target_cell = jelly_storage_cell(bee)
 		if bee.target_cell == null:
 			bee.state = State.NURSE_IDLE
 		return
 
 	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
 	if approach < 0:
-		bee.target_cell = bee.hive.find_cell_for("jelly", bee.target_cell)
+		bee.target_cell = jelly_storage_cell(bee, bee.target_cell)
 		return
 	if approach == 1:
 		bee.timer = GameConfig.nurse_load_time

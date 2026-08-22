@@ -75,19 +75,29 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 built, 22 Aug.** Fixed
+7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 and C2 built, 22 Aug.** C1 fixed
    `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
    (the plan named `bee_nursery.gd`, but the actual match-statement
    dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
    hungry brood before falling back to jelly work, instead of trying
-   jelly first and starving larvae almost like Jelly mode does.
-   `source_checks.py`, `balance_tests.py` and a clean `mcp__godot__`
-   boot all pass. **Still open:** the plan's own verification step, a
-   headless 2-Feed-vs-2-Anything comparison via `run_scenario.py`
-   showing Anything no longer lags Feed on population growth -- worth
-   doing once, alongside C2/C3, as C6's combined re-run rather than
-   three separate scenario runs. **Next concrete action:** C2
-   (undesignated jelly spill) or C3 (honey fanning doesn't stack) --
-   see `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A (action-driver
-   correctness, then harness speed/token efficiency) can follow in
-   either order.
+   jelly first and starving larvae almost like Jelly mode does. C2
+   stopped jelly spilling into undesignated comb: added
+   [hive.gd](scripts/hive.gd:227) `find_designated_cell_for`, which
+   mirrors `find_cell_for` but never falls back to an ordinary empty
+   cell, and a `jelly_storage_cell` helper in
+   [bee_nursery.gd](scripts/bee_nursery.gd:161) that both
+   `can_make_jelly` and `nurse_go_to_jelly_cell` now call -- with no
+   gyne brood pending, jelly can only be made or stored in a cell the
+   player has explicitly designated for it; a pending gyne need still
+   overrides this and can use any cell, same as before.
+   `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
+   regeneration all pass. **`mcp__godot__` boot check not done this
+   session -- the Godot MCP server wasn't connected.** **Still open:**
+   both slices' own verification steps (2-Feed-vs-2-Anything for C1; a
+   headless run with no jelly cell marked, confirming jelly stops
+   appearing in generic empty cells, for C2) -- worth doing together,
+   alongside C3, as C6's combined re-run rather than three separate
+   scenario runs. **Next concrete action:** C3 (honey fanning doesn't
+   stack) -- see `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A
+   (action-driver correctness, then harness speed/token efficiency) can
+   follow in either order.

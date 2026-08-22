@@ -48,7 +48,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   comparison (2 Feed vs 2 Anything, same seed) showing Anything no
   longer lags Feed on population growth.
 
-### C2. Undesignated jelly spill
+### C2. Undesignated jelly spill -- done, 22 Aug
 - **File:** `bee_nursery.gd`, wherever reserve (non-gyne-brood) jelly
   work calls `hive.find_cell_for("jelly")`.
 - **Fix:** with no gyne brood pending, only produce/store jelly while an

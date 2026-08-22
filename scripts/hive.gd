@@ -239,6 +239,30 @@ func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 			best_empty = cell   # prefer a cell the player pinned to this
 	return best_empty if best_empty != null else almost_full
 
+## As find_cell_for, but only ever returns a cell the player has
+## explicitly pinned to `resource_type` -- no fallback to ordinary empty
+## comb. Used where that fallback would let a resource spill into cells
+## nobody designated for it (see the jelly-storage bug this fixed).
+func find_designated_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
+	var best_empty: Node2D = null
+	var almost_full: Node2D = null
+	for cell in cells:
+		if cell == except or not is_instance_valid(cell):
+			continue
+		if cell.designated_type != resource_type:
+			continue
+		if cell.space_for(resource_type) <= 0.0:
+			continue
+		if cell.content_type == resource_type:
+			if cell.amount < cell.capacity * GameConfig.cell_full_threshold:
+				return cell
+			elif almost_full == null:
+				almost_full = cell
+			continue
+		if best_empty == null:
+			best_empty = cell
+	return best_empty if best_empty != null else almost_full
+
 ## Where the queen should lay her next egg.
 ##
 ## The order is: configured nursery cells, shared out between the three
