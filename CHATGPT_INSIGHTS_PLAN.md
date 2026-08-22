@@ -1,10 +1,10 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked. Group A: A1-A4 built and
+verified, 22 Aug 2026. B5 stays parked. Group A: A1-A5 built and
 verified, 22 Aug 2026 (A3 closes the determinism gap A2 surfaced --
 `--fixed-fps 30` is now the harness's default and gives genuine
-run-to-run reproducibility); A5-A6 still planned, A7 stays parked.
+run-to-run reproducibility); A6 still planned, A7 stays parked.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -514,15 +514,49 @@ needs live mid-run decisions rather than a scripted policy.
   real Godot install was unaffected, confirming the change doesn't
   touch the non-failure path.
 
-### A5. Early-success stop conditions + brief reports
-- **Files:** `scenario_actions.gd` (stop condition),
-  `tools/analyze_session.py` (report profiles).
+### A5. Early-success stop conditions + brief reports -- done, 22 Aug 2026
+- **Files:** `main.gd` (`_process`, `_apply_scenario_boot_arg`,
+  `_end_scenario_run`), `tools/analyze_session.py` (report profiles),
+  `tools/run_scenario.py`.
 - **Fix:** add `stop_when_actions_resolved` plus threshold stops (event
   count, population, stores, completed work). Add `brief` / `balance`
   / `behaviour` / `full` report profiles, with `brief` as the default
   AI-facing one.
-- **Verify:** a scenario whose actions all resolve by day 10 stops
-  there instead of continuing to `max_days`.
+- **Built:** two new `stop` fields, both dev-only and erased from the
+  `level` dict the same way `max_days` already is. `"when": {...}`
+  reuses `scenario_actions.gd::_when_met`'s existing vocabulary
+  (`day_at_least`, `food_stores_at_least`, `population_at_least`,
+  `event_count_at_least`) rather than inventing a second one -- checked
+  every tick (not just on a day change, unlike `max_days`) right after
+  `ScenarioActions.run_pending`, ending the run with outcome
+  `"stop_condition_met"`. `"when_actions_resolved": true` ends the run
+  with outcome `"actions_resolved"` once every entry in the scenario's
+  `actions` array has its own `"_resolved"` flag set (fired, not
+  necessarily accepted -- same flag `scenario_actions.gd` already
+  tracks), skipped when there are no actions at all so a scenario with
+  none doesn't stop on tick one. `tools/analyze_session.py` gained
+  `REPORT_PROFILES` (a name -> which of `analyze()`'s top-level keys to
+  keep) and a `report()` function; `run_scenario.py`'s old boolean
+  `--full` is now a `--report {brief,balance,behaviour,full}` choice
+  (`--full` kept as a plain shorthand for `--report full`, since
+  earlier slices this session already used it in their own
+  verification write-ups) -- `brief` (summary + action problems) is
+  the new default in place of the old bare summary line.
+- **Verified:** `source_checks.py`/`balance_tests.py` pass,
+  `FUNCTION_MAP.md` regenerated (`main.gd` is mapped), `mcp__godot__`
+  boot clean. Two new scenarios run end-to-end through
+  `tools/run_scenario.py` against the real Godot install:
+  `test_scenarios/a5_stop_when_test.json` (`stop.when.day_at_least: 3`,
+  `max_days: 30`) ended at day 3 with `outcome: "stop_condition_met"`,
+  not day 30; `test_scenarios/a5_actions_resolved_test.json` (one
+  `set_config` action, `stop.when_actions_resolved: true`, `max_days:
+  30`) ended at day 1 (2.0s wall time) with `outcome:
+  "actions_resolved"` and the action still logged `accepted`/
+  `problems: []`. Confirmed all four `--report` profiles return exactly
+  their declared key sets, `--full` still works as `--report full`'s
+  shorthand, and an ordinary scenario with neither new `stop` field
+  (`c6_nurse_feed_test.json`) still runs to its own `max_days`
+  unaffected.
 
 ### A6. Headless presentation gate
 - **File:** `main.gd::_process`.

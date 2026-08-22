@@ -28,7 +28,7 @@ below, which are ChatGPT's own record.
 | A2 | Explicit `random_seed` field | Done, 22 Aug 2026 -- surfaced a real determinism gap A3 is scoped to close, see `CHATGPT_INSIGHTS_PLAN.md` |
 | A3 | `--fixed-fps` benchmark | Done, 22 Aug 2026 -- `--fixed-fps 30` is now the default, closes A2's determinism gap, see `CHATGPT_INSIGHTS_PLAN.md` |
 | A4 | Cap failure output | Done, 22 Aug 2026 |
-| A5 | Early-success stop + brief reports | Not started |
+| A5 | Early-success stop + brief reports | Done, 22 Aug 2026 |
 | A6 | Headless presentation gate | Not started |
 
 (B5 -- observe-pause-act loop -- and A7 -- release export -- are

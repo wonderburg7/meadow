@@ -216,6 +216,25 @@ def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None,
     return result
 
 
+# Which of analyze()'s top-level keys each report profile prints
+# (CHATGPT_INSIGHTS_PLAN.md's A5). "brief" is the default, AI-facing one
+# -- summary numbers plus anything that went wrong with the scenario's
+# own actions, without the token cost of the full per-day series a human
+# skimming a chart would want instead.
+REPORT_PROFILES = {
+    "brief": ["summary", "actions"],
+    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter"],
+    "behaviour": ["summary", "mechanic_firing", "actions"],
+    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter",
+             "mechanic_firing", "actions", "summary"],
+}
+
+
+def report(analysis: dict[str, Any], profile: str = "brief") -> dict[str, Any]:
+    keys = REPORT_PROFILES.get(profile, REPORT_PROFILES["brief"])
+    return {k: analysis[k] for k in keys}
+
+
 def aggregate_runs(analyses: list[dict[str, Any]]) -> dict[str, Any]:
     """N single-run analyses -> a range report, not a single point.
 

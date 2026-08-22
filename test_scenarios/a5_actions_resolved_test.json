@@ -1,0 +1,9 @@
+{
+  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
+  "nurses": 2, "builders": 2, "miners": 2,
+  "random_seed": 66,
+  "actions": [
+    {"do": "set_config", "key": "scouting_on", "value": true}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 30}
+}

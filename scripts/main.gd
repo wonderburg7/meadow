@@ -253,6 +253,19 @@ var current_speed: float = 1.0
 ## file's "stop.max_days" says otherwise.
 var scenario_active: bool = false
 var scenario_stop_max_days: int = -1
+## A "stop.when" dict (CHATGPT_INSIGHTS_PLAN.md's A5) -- the same
+## day_at_least/food_stores_at_least/population_at_least/
+## event_count_at_least shape an action's own "when"/an "assert"'s
+## condition already use (see ScenarioActions._when_met), checked every
+## tick so a scenario can end on a real threshold instead of always
+## running to max_days. Empty means no such condition is set.
+var scenario_stop_when: Dictionary = {}
+## True if the scenario's "stop" declares "when_actions_resolved": true --
+## ends the run once every entry in scenario_actions has fired (fired, not
+## necessarily "accepted" -- see ScenarioActions.run_pending's own
+## "_resolved" flag), instead of running on after a strategy script has
+## nothing left to do.
+var scenario_stop_when_actions_resolved: bool = false
 ## A scenario's "actions" array (insights_from_ChatGPT.md's 22 Aug 2026
 ## headless-action-driver extension) -- see scenario_actions.gd for the
 ## verbs/triggers and main.gd::_process for where it's ticked.
@@ -597,6 +610,17 @@ func _process(delta: float) -> void:
 
 		if scenario_active:
 			ScenarioActions.run_pending(self, scenario_actions)
+			# Early-success stops (CHATGPT_INSIGHTS_PLAN.md's A5) -- a
+			# scenario that's already got what it needs shouldn't have to
+			# burn the rest of max_days to say so.
+			if not scenario_stop_when.is_empty() and ScenarioActions._when_met(self, scenario_stop_when):
+				_end_scenario_run("stop_condition_met")
+				return
+			if scenario_stop_when_actions_resolved and not scenario_actions.is_empty():
+				var unresolved: Array = scenario_actions.filter(func(a): return not a.get("_resolved", false))
+				if unresolved.is_empty():
+					_end_scenario_run("actions_resolved")
+					return
 
 	Perf.begin("prune_selection")
 	_prune_selection()
@@ -953,6 +977,8 @@ func _apply_scenario_boot_arg() -> void:
 	scenario_active = true
 	scenario_actions = actions
 	scenario_stop_max_days = int(stop.get("max_days", -1))
+	scenario_stop_when = stop.get("when", {})
+	scenario_stop_when_actions_resolved = bool(stop.get("when_actions_resolved", false))
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
 	DiagnosticLog.run_id_override = run_id
@@ -971,8 +997,10 @@ func _apply_scenario_boot_arg() -> void:
 ## afterwards instead of showing game_over's UI, since nothing is watching
 ## it. `outcome` matches DiagnosticLog.end_session's existing vocabulary
 ## ("collapsed" is already used by _check_for_loss; "max_days" and
-## "assert_failed" are new -- the latter from a failed scenario_actions.gd
-## "assert"). Any action left unresolved (its "when" never met) is logged
+## "assert_failed" were added for the headless action driver, the latter
+## from a failed scenario_actions.gd "assert"; "stop_condition_met" and
+## "actions_resolved" are CHATGPT_INSIGHTS_PLAN.md's A5 early-success
+## stops). Any action left unresolved (its "when" never met) is logged
 ## before the summary line, same reasoning as a failed assert: a run
 ## should say plainly what it couldn't do, not just what it did.
 func _end_scenario_run(outcome: String) -> void:

@@ -35,7 +35,7 @@ import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analyze_session import aggregate_runs, analyze, load_entries  # noqa: E402
+from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_GODOT_PATH = r"C:\Program Files\Godot\Godot.exe"
@@ -185,7 +185,7 @@ def _warn_on_action_problems(analysis: dict) -> None:
 
 
 def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int,
-                  full: bool, fixed_fps: int | None = None) -> int:
+                  profile: str, fixed_fps: int | None = None) -> int:
     if not scenario_path.is_file():
         print("error: scenario file not found: %s" % scenario_path, file=sys.stderr)
         return 1
@@ -206,8 +206,12 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
             return 1
 
         print("session file: %s" % session_file)
-        if full or repeat == 1:
-            print(json.dumps(analysis if full else analysis["summary"], indent=2))
+        # A brief profile mid-repeat is redundant with the aggregate
+        # printed at the end -- only print it per-run when repeat == 1,
+        # or always for a profile a human/AI actually asked to see in
+        # full each time.
+        if profile != "brief" or repeat == 1:
+            print(json.dumps(report(analysis, profile), indent=2))
         _warn_on_action_problems(analysis)
         analyses.append(analysis)
 
@@ -229,10 +233,14 @@ def main() -> int:
     parser.add_argument("--repeat", type=int, default=1,
                          help="run the scenario this many times and report a range, not a "
                               "single point (default: %(default)s)")
+    parser.add_argument("--report", choices=sorted(REPORT_PROFILES), default=None,
+                         help="which report profile to print: brief (summary + action "
+                              "problems, the default -- meant for an AI caller), balance "
+                              "(summary + population/deaths/honey-fill series), behaviour "
+                              "(summary + mechanic-firing + actions), or full (everything) "
+                              "(CHATGPT_INSIGHTS_PLAN.md's A5)")
     parser.add_argument("--full", action="store_true",
-                         help="print the full per-run analysis (population curve, deaths "
-                              "over time, honey fill vs winter, mechanic-firing check) "
-                              "instead of just the summary line")
+                         help="shorthand for --report full")
     parser.add_argument("--fixed-fps", type=int, default=DEFAULT_FIXED_FPS,
                          help="advance the engine by a fixed 1/N seconds per frame instead of "
                               "measuring real wall-clock time (Godot's own --fixed-fps flag) -- "
@@ -247,7 +255,8 @@ def main() -> int:
         return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
-    return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, args.full,
+    profile = args.report or ("full" if args.full else "brief")
+    return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, profile,
                          fixed_fps)
 
 
