@@ -4,7 +4,9 @@ Slice 1 of `DESIGN_BACKLOG.md` section 13 (systems/language/architecture
 map). Trimmed on purpose: the 9-part system template, the bee-model
 vocabulary, and the core architecture terms. No gameplay-term table and
 no availability-state lifecycle yet — those are later slices, added only
-if slice 1 earns its keep (see section 13's slice order).
+if slice 1 earns its keep (see section 13's slice order). Slice 4 later
+added a two-term version of that vocabulary, but only for the one place
+it was needed — see "Availability-lifecycle terms" below.
 
 This file is a reference for describing systems consistently, not a
 rename of anything. Nothing here requires touching code.
@@ -35,9 +37,13 @@ a card, an onboarding note), cover these nine parts:
    simulation's outcome.
 7. **Availability** — whether the system is unlocked, gated behind a
    prerequisite, or hidden at the current stage (Challenge stage gates,
-   `TOGGLE_PREREQUISITE`). The full lifecycle vocabulary for this is a
-   later slice; for now this section just names *that* a system has an
-   availability state, without a fixed set of terms for it.
+   `Prerequisites`/`TOGGLE_PREREQUISITE`). The report's full 12-term
+   lifecycle stays parked (`DESIGN_BACKLOG.md` §13) — most systems here
+   still just get named as having *an* availability state, without a
+   fixed set of terms. The one exception is the settings-window
+   prerequisite tree itself, where "Locked" vs "Available" turned out to
+   be worth naming (slice 4) — see the Availability-lifecycle terms
+   section below and the Availability/prerequisites card's point 7.
 8. **Persistence** — what part of the system's state is saved and
    restored (`saving.gd`, `save_game.gd`), versus what's derived fresh
    each load.
@@ -233,11 +239,19 @@ over it (see Foraging's Persistence entry below).
    stay in `debug_panel.gd`, since that part genuinely is presentation
    — it needs `setting_get`/`setting_set` and the live `toggle_boxes`
    widgets, which only the settings window has.
-7. **Availability** — no lifecycle states yet beyond
-   on/off-and-cascading (the report's full 12-term Unimplemented →
-   Hidden vocabulary is explicitly parked, `DESIGN_BACKLOG.md` §13).
-   Whether a toggle *shows up at all* is separate and unrelated: that's
-   `stage_gate.gd` gating UI by Challenge stage, not this mechanic.
+7. **Availability** — every toggle in the tree is either **Available**
+   (no prerequisite, or its prerequisite is already on) or **Locked**
+   (its prerequisite is currently off). "Locked" describes the
+   dependency, not a click-block — the checkbox still responds, and
+   pressing it cascades the prerequisite on rather than refusing the
+   click (`_cascade_prerequisites_on`). These two terms are a slice-4
+   trim of the report's full 12-term Unimplemented → Hidden vocabulary,
+   which stays parked everywhere else (`DESIGN_BACKLOG.md` §13) — they
+   name only the one distinction this mechanic actually has. Whether a
+   toggle *shows up at all* is separate and unrelated: that's
+   `stage_gate.gd` gating UI by Challenge stage ("Hidden" in the
+   report's terms, not reused here since nothing in this tree is ever
+   hidden by it today).
 8. **Persistence** — nothing of its own; each cascaded toggle is saved
    or not exactly as any other `GameConfig`/`Session` field is (see
    `.claude/rules/saving.md`'s allowlist). The cascade itself doesn't
@@ -251,6 +265,36 @@ over it (see Foraging's Persistence entry below).
    watches directly, but worth naming as a gap per the template's
    ninth heading.
 
+## Availability-lifecycle terms (slice 4, trimmed)
+
+Two terms, applied to exactly one place: the settings-window
+prerequisite tree covered by the Availability/prerequisites card above
+(`orientation_flight_on → scouting_on → {floral_constancy_on,
+auto_recruitment_on}`, and `predators_on → {crab_spider_recruit_
+suppression_on, alarm_pheromone_on}`). Not a general-purpose vocabulary
+— every other system's Availability heading stays as slice 1 left it
+("names *that* a system has an availability state, without a fixed set
+of terms"), per `DESIGN_BACKLOG.md` §13's warning against a blanket
+relabelling of every toggle in the game.
+
+- **Available** — a toggle with no prerequisite, or whose prerequisite
+  is already switched on. Its own state (on or off) is separate from
+  this.
+- **Locked** — a toggle whose prerequisite is currently off
+  (`Prerequisites.direct_parent(key)` returns a key that's off). Doesn't
+  mean unclickable: switching a Locked toggle on cascades its
+  prerequisite on too (`_cascade_prerequisites_on`), same as before this
+  slice — nothing about the cascade's actual behaviour changed, only the
+  name for one of its states.
+
+Deliberately not reusing "Hidden" here: that's `stage_gate.gd` gating
+which rows appear in the settings window at all by Challenge stage, an
+unrelated mechanic from this tree's on/off cascade (see the card's
+point 7). No code changed for this slice — see `debug_panel.gd`'s
+`_make_toggle_row`/`_cascade_prerequisites_on`/`_cascade_dependents_off`
+and `scripts/prerequisites.gd` for the actual (unchanged) mechanic these
+two words describe.
+
 **Read against the template:** both cards surfaced something the
 prose plan didn't already say — Foraging's save gap, and the
 Availability card's "output" being checkbox widgets rather than a
@@ -259,4 +303,5 @@ actually open. Whether that's worth generalising to the other ~18
 systems in the original report's table is Dave's call — see
 `DESIGN_BACKLOG.md` §13's slice order for what's next either way
 (slice 3, extracting `TOGGLE_PREREQUISITE` into a non-visual catalogue,
-is now done -- see that section's Status line).
+and slice 4, naming the Available/Locked distinction above, are both
+now done -- see that section's Status line).

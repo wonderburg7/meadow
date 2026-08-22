@@ -7,34 +7,48 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **Game model slice 3 is built** (`DESIGN_BACKLOG.md` section 13,
-   the only slice that touches code) -- `TOGGLE_PREREQUISITE` and the
-   two lookups its cascade needs (`direct_parent`, `direct_dependents`)
-   are extracted out of `debug_panel.gd` into
+1. **Game model slices 1-4 are all built** (`DESIGN_BACKLOG.md` section
+   13). Slice 3 (the only slice that touches code) extracted
+   `TOGGLE_PREREQUISITE` and the two lookups its cascade needs
+   (`direct_parent`, `direct_dependents`) out of `debug_panel.gd` into
    `scripts/prerequisites.gd`, a plain `RefCounted` catalogue in the
-   `roles.gd` style. `debug_panel.gd` now reads from it instead of
-   owning the dictionary; the actual toggling and checkbox sync
-   (`_cascade_prerequisites_on`, `_cascade_dependents_off`) stayed
-   there, since that part needs `setting_get`/`setting_set` and the
-   live `toggle_boxes` widgets that only the settings window has.
-   Cascade behaviour itself is unchanged -- checked by comparing old
-   and new function bodies line for line, not just by the suites
-   passing. `source_checks.py`, `balance_tests.py` and a Godot boot (no
-   new warnings, same pre-existing ones as before) all pass;
-   `FUNCTION_MAP.md` regenerated and `--check` clean. `GAME_MODEL.md`
-   and `DESIGN_BACKLOG.md` §13 updated to match.
-   **Not yet hands-on checked** -- the cascade only fires from clicking
-   the settings-window checkboxes, which nothing automated here
-   drives, so that's the one thing left: open Settings, toggle
+   `roles.gd` style; `debug_panel.gd` now reads from it instead of
+   owning the dictionary, and still does the actual toggling/checkbox
+   sync (`_cascade_prerequisites_on`, `_cascade_dependents_off`) itself,
+   since that part needs `setting_get`/`setting_set` and the live
+   `toggle_boxes` widgets that only the settings window has. Cascade
+   behaviour itself is unchanged -- checked by comparing old and new
+   function bodies line for line, not just by the suites passing. Slice
+   4 then named the one real distinction that tree has -- **Available**
+   vs **Locked** -- in `GAME_MODEL.md`'s new "Availability-lifecycle
+   terms" section, without adopting the full parked 12-term vocabulary
+   elsewhere; doc-only, no `.gd` file touched. `source_checks.py`,
+   `balance_tests.py` and a Godot boot (no new warnings, same
+   pre-existing ones as before) all pass; `FUNCTION_MAP.md` regenerated
+   and `--check` clean.
+   **Not yet hands-on checked** -- slice 3's cascade only fires from
+   clicking the settings-window checkboxes, which nothing automated
+   here drives, so that's the one thing left: open Settings, toggle
    Orientation flight / Auto scouting / Floral constancy /
    Auto-recruitment on and off and confirm the cascade still
    walks correctly both ways, and the same for
-   Predators / Crab-spider suppression / Alarm pheromone.
+   Predators / Crab-spider suppression / Alarm pheromone. Slice 4 is
+   doc-only, so there's nothing of its own to click through -- but
+   since it names the cascade's states, worth re-reading against
+   whatever the click-through finds.
    The forager-history save gap slice 2 also surfaced (trip-history
    state like `avg_collection_rate`, `trips_scored`, `scout_*` fields
    and `hive.entrance_mentors` isn't in `save_game.gd`'s per-bee
    block) is still unactioned -- ask Dave whether it's worth its own
    slice.
+   **Slice 5 reviewed 22 Aug 2026, deliberately left undone**: it's
+   defined as opportunistic filler ("fill in incrementally when a
+   system is next touched anyway"), not a discrete task, so writing
+   cards for the ~18 remaining systems now would be speculative
+   documentation. `DESIGN_BACKLOG.md` §13 now records this -- section
+   13's dedicated-effort part (slices 1-4) is complete; nothing else
+   queued for it unless a system's card comes up naturally while
+   touching that system's file for another reason.
 2. **Bumble flight is built** (`ROADMAP.md`'s "Depth in what exists" row)
    -- outdoor flying bees now drift on a small two-sine wander instead of
    beelining. `bee.gd` gained a `visual_root` child node that every

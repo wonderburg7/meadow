@@ -604,7 +604,7 @@ separate from the rest of this section.
    glossary) — fill in incrementally when a system is next touched
    anyway, not as its own sprint.
 
-**Status:** slices 1-3 done. Slice 2 piloted the 9-part card on
+**Status:** slices 1-4 done. Slice 2 piloted the 9-part card on
 Foraging and the Availability/prerequisites mechanic (`GAME_MODEL.md`)
 -- both surfaced a real gap (Foraging's trip-history state isn't saved;
 the prerequisite cascade lived entirely in a presentation file, which
@@ -620,9 +620,33 @@ passing. `source_checks.py`, `balance_tests.py` and a Godot boot (no
 new warnings) all pass; `FUNCTION_MAP.md` regenerated. Not yet
 hands-on clicked through by Dave -- the cascade only fires from the
 settings-window checkboxes, which no automated check drives, so that
-click-through is the one thing still outstanding. Slice 4 (extend the
-availability-lifecycle terms to the debug panel's toggle rows) only
-worth it if slice 3 felt worth it -- ask Dave.
+click-through is still outstanding (see `NEXTSTEPS.md`).
+
+Slice 4 was built on top without waiting for that click-through, since
+Dave asked for it directly rather than answering the "is slice 3 worth
+it" question first -- worth flagging in case the click-through turns up
+a problem with the underlying cascade this slice's terms describe. It
+added exactly two words, **Available** and **Locked**, naming the one
+real distinction the prerequisite tree has (the full 12-term report
+lifecycle stays parked everywhere else) -- `GAME_MODEL.md`'s new
+"Availability-lifecycle terms" section and the Availability/
+prerequisites card's point 7. Doc-only, per this section's original
+slice order ("only if 1-3 felt worth it") -- no `.gd` file touched, so
+both check suites pass unchanged and there's nothing new to hands-on
+check.
+
+Slice 5 (22 Aug 2026): checked, deliberately not built as its own
+sprint. Its own definition above ("fill in incrementally when a system
+is next touched anyway") describes ongoing practice for future
+sessions, not a discrete deliverable like slices 1-4 -- writing cards
+for the ~18 remaining systems now would be speculative documentation
+for code nobody's actively changing, with the same staleness risk this
+section already flagged against ("don't commit to all of them up
+front"). Left as-is; no file changed. This closes out section 13 as a
+dedicated effort -- slices 1-4 are the discrete, now-complete part of
+the plan, and slice 5 continues silently whenever a system's file is
+next opened for other reasons, per the Foraging/Availability cards'
+own template.
 
 ---
 

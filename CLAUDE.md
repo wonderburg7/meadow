@@ -11,9 +11,10 @@ code here is read by a person who will want to change it himself. The
 point of the project is enjoying building it with AI tools; a polished
 Steam release is a stretch goal, not the bar.
 
-**Notion is the design source of truth** (Meadow teamspace only): Game
-Outline, V1 Design Doc, Decisions Log, Backlog / Parking Lot, Build Log.
-Check them before planning; log back to them after a session.
+**The repo is the design and build source of truth**: `CLAUDE.md`,
+`ROADMAP.md`, `DESIGN_BACKLOG.md` and `NEXTSTEPS.md` at the root. Notion
+(Meadow teamspace) is no longer kept in sync automatically -- only read
+or write it if Dave asks directly.
 
 ## Start here each session
 
