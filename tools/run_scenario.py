@@ -96,6 +96,25 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
     return session_file
 
 
+def _warn_on_action_problems(analysis: dict) -> None:
+    """Prints a short, hard-to-miss warning when a scenario's actions
+    block (scenario_actions.gd) didn't go cleanly -- a rejected action, an
+    action whose "when" never fired, or a failed "assert" ending the run.
+    Printed even when --full is off, since a strategy script silently not
+    doing what it said is exactly the failure mode
+    insights_from_ChatGPT.md's 22 Aug 2026 entry asked assertions to catch
+    loudly.
+    """
+    problems = analysis.get("actions", {}).get("problems", [])
+    if not problems:
+        return
+    print("warning: %d scenario action(s) did not complete cleanly:" % len(problems),
+          file=sys.stderr)
+    for p in problems:
+        print("  %s (%s): %s -- %s" % (p["do"], p["target"], p["result"], p["reason"]),
+              file=sys.stderr)
+
+
 def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int,
                   full: bool) -> int:
     if not scenario_path.is_file():
@@ -120,6 +139,7 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
         print("session file: %s" % session_file)
         if full or repeat == 1:
             print(json.dumps(analysis if full else analysis["summary"], indent=2))
+        _warn_on_action_problems(analysis)
         analyses.append(analysis)
 
     if repeat > 1:

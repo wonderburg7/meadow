@@ -200,3 +200,53 @@ All six done -- see `NEXTSTEPS.md` for what each slice actually built.
 
 Each slice keeps `source_checks.py`/`balance_tests.py` passing and a
 `mcp__godot__` boot clean, same as every other slice in this codebase.
+
+## 22 Aug 2026 extension: the headless action driver ("clicking equivalent")
+
+`insights_from_ChatGPT.md`'s 22 Aug 2026 entry pointed out the harness
+above only lets a scenario choose *starting* conditions -- there was no
+way for a run to act mid-run the way a player clicking through a
+strategy would. Built the same day as a slice 7 on top of the harness
+above:
+
+- A scenario JSON gains an optional `actions` array. Each action has a
+  `when` trigger (`day_at_least`, `food_stores_at_least`,
+  `population_at_least`, `event_count_at_least`) and a `do` verb
+  (`assign_role`, `designate_cell`, `queue_build`, `queue_mine`,
+  `set_config`, `assert`). See `scripts/scenario_actions.gd`'s header
+  comment for the full shape and `test_scenarios/slice7_action_driver_test.json`
+  for a real example.
+- Every verb calls the exact function the click-driven UI already calls
+  (`orders_zones._on_role_requested`/`_designate_one`,
+  `bee.gd`'s build/mine target functions, `DebugPanel.setting_set`) --
+  no reimplementation, so a headless action follows the same rules a
+  human action does, per the insight doc's recommendation #2.
+- `DiagnosticLog` gets a new `"action"` entry type (one line per attempt,
+  whatever the result) and an `event_count()` getter so `assert`/`when`
+  can read the counters the summary line already keeps.
+  `tools/analyze_session.py`'s `analyze()` surfaces these as an
+  `actions` block (counts by result, a `problems` list of anything not
+  cleanly `"accepted"`), and `run_scenario.py` prints a hard-to-miss
+  stderr warning whenever a run has any.
+- A failed `assert` ends the run immediately (`_end_scenario_run`'s
+  vocabulary gains `"assert_failed"`) and stops evaluating the rest of
+  that tick's actions; anything still unresolved when a run ends for any
+  reason is logged as `"never_fired"` rather than silently dropped.
+
+Verified both directions for real, not just source-checked:
+`test_scenarios/slice7_action_driver_test.json` (all four actions
+`accepted`, the assert passes, run reaches `max_days`) and a throwaway
+negative-path scenario (an assert with an impossible threshold ends the
+run instantly as `assert_failed` at day 1, and the one action after it
+in the file logs `never_fired` rather than firing) -- both runs' printed
+`actions` block and raw `session_*.jsonl` lines matched what the code
+should do. `source_checks.py`, `balance_tests.py`,
+`update_function_map.py --check` and a `mcp__godot__` boot (same
+pre-existing warnings, none new) all pass.
+
+Deliberately out of scope for this slice, per the insight doc's own
+framing: literal screen/mouse/input-event injection (the weaker, more
+brittle option, not the recommendation), a scenario-level random seed
+(orthogonal to action-scripting), and any bee selector beyond
+`bee_ids`/`current_role`+`count` -- can extend the vocabulary later if a
+scenario actually needs it.

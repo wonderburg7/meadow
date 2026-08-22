@@ -310,6 +310,46 @@ func log_scouting_settled(bee: Node2D) -> void:
 	_scouting_settled += 1
 
 
+## Called from scenario_actions.gd for every headless scenario action
+## attempted -- see AI_PLAYTEST_PLAN.md's action-driver extension and
+## insights_from_ChatGPT.md's 22 Aug 2026 entry. One line per action,
+## whatever the result, so a run states plainly what it tried to do and
+## whether it worked, not just what happened to the bees afterwards.
+func log_action(do: String, target_desc: String, result: String, reason: String) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "action",
+		"game_time": Session.sim_time,
+		"do": do,
+		"target": target_desc,
+		"result": result,
+		"reason": reason,
+	})
+
+
+## Read-side counterpart to the counters this file already keeps for its
+## own summary line -- lets a scenario's "when"/"assert" conditions ask
+## "has this actually happened N times yet" without scenario_actions.gd
+## reaching into this file's private counters. subtype only matters for
+## crab_spider_event ("kill"/"escape"/"alarm_flee"); the flat counters
+## ignore it.
+func event_count(type: String, subtype: String = "") -> int:
+	match type:
+		"recruitment_match":
+			return _recruitment_matches
+		"scouting_settled":
+			return _scouting_settled
+		"crab_spider_event":
+			return int(_crab_spider_events.get(subtype, 0))
+		"orientation_flight":
+			return _orientation_flights
+		"forager_settled":
+			return _foragers_settled
+		_:
+			return 0
+
+
 ## Called from main.gd's own per-frame block (only while unpaused, same
 ## as the rest of its housekeeping) -- see main.gd::_process. Only does
 ## real work once a full in-game hour has passed, same pattern as

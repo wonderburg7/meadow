@@ -61,6 +61,7 @@ const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Levels = preload("res://scripts/levels.gd")
 const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
+const ScenarioActions = preload("res://scripts/scenario_actions.gd")
 
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
@@ -237,6 +238,10 @@ var current_speed: float = 1.0
 ## file's "stop.max_days" says otherwise.
 var scenario_active: bool = false
 var scenario_stop_max_days: int = -1
+## A scenario's "actions" array (insights_from_ChatGPT.md's 22 Aug 2026
+## headless-action-driver extension) -- see scenario_actions.gd for the
+## verbs/triggers and main.gd::_process for where it's ticked.
+var scenario_actions: Array = []
 
 var dragging: bool = false
 var drag_start: Vector2 = Vector2.ZERO
@@ -563,6 +568,9 @@ func _process(delta: float) -> void:
 
 		DiagnosticLog.tick(delta, self)
 
+		if scenario_active:
+			ScenarioActions.run_pending(self, scenario_actions)
+
 	Perf.begin("prune_selection")
 	_prune_selection()
 	Perf.end("prune_selection")
@@ -846,6 +854,11 @@ func _apply_scenario_boot_arg() -> void:
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
 	level.erase("config_overrides")
+	# Dev-only headless action driver (insights_from_ChatGPT.md, 22 Aug
+	# 2026) -- see scenario_actions.gd. Not a levels.gd field, same
+	# reasoning as stop/config_overrides just above.
+	var actions: Array = level.get("actions", [])
+	level.erase("actions")
 	# Dev-only, not a GameConfig field so it doesn't go through the
 	# allowlist in Levels.apply_config_overrides -- see AI_PLAYTEST_PLAN.md
 	# slice 3. Default of 30x is the ceiling that slice 3 confirmed holds
@@ -872,6 +885,7 @@ func _apply_scenario_boot_arg() -> void:
 	Session.starting_level = Levels.SCENARIO_LEVEL_ID
 	Session.menu_pending = false
 	scenario_active = true
+	scenario_actions = actions
 	scenario_stop_max_days = int(stop.get("max_days", -1))
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
@@ -887,9 +901,13 @@ func _apply_scenario_boot_arg() -> void:
 ## DiagnosticLog gets its summary line either way -- but quits the process
 ## afterwards instead of showing game_over's UI, since nothing is watching
 ## it. `outcome` matches DiagnosticLog.end_session's existing vocabulary
-## ("collapsed" is already used by _check_for_loss; "max_days" is new,
-## slice 1's other stop condition).
+## ("collapsed" is already used by _check_for_loss; "max_days" and
+## "assert_failed" are new -- the latter from a failed scenario_actions.gd
+## "assert"). Any action left unresolved (its "when" never met) is logged
+## before the summary line, same reasoning as a failed assert: a run
+## should say plainly what it couldn't do, not just what it did.
 func _end_scenario_run(outcome: String) -> void:
+	ScenarioActions.log_unresolved(scenario_actions)
 	DiagnosticLog.end_session(outcome)
 	print("AI playtest: scenario ended (%s) at day %d" % [outcome, day])
 	get_tree().quit()

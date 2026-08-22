@@ -80,8 +80,22 @@ into a history. Full history lives in `git log`.
    now removes a mentor from the list the instant she's matched. Both
    check suites pass; see `git log` (commit `103d716`) for the full
    quantification.
-4. **AI playtest harness is built through slice 6**, still waiting on
-   review -- see `git log` for the slice-by-slice detail.
+4. **AI playtest harness is built through slice 6, plus a 22 Aug
+   extension (slice 7): the headless action driver** ChatGPT's
+   `insights_from_ChatGPT.md` note asked for -- a scenario's `actions`
+   array can now assign roles, designate cells, queue build/mine work
+   and toggle settings mid-run (not just choose starting conditions),
+   gated by day/resource/event triggers, checked with `assert`, and
+   logged as a new `"action"` entry type. See `AI_PLAYTEST_PLAN.md`'s
+   22 Aug section for the shape and `scripts/scenario_actions.gd` for
+   the implementation -- every verb calls the same function the
+   click-driven UI calls, no reimplementation. Verified for real (not
+   just source-checked): `test_scenarios/slice7_action_driver_test.json`
+   ran clean (all four actions accepted, assert passed), and a
+   throwaway negative-path scenario confirmed a failed assert ends the
+   run instantly as `"assert_failed"` and an unresolved action logs
+   `"never_fired"`. All of slice 1-7 is still waiting on review -- see
+   `git log` for the slice-by-slice detail.
 5. **Crab spiders: a second round of playtest fixes**, still waiting on
    Dave's hands-on re-check -- see `CRAB_SPIDER_PLAN.md`'s 20 Aug
    "Confirmed" entry.

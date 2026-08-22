@@ -1,0 +1,30 @@
+{
+  "cells": 15, "nectar_foragers": 4, "pollen_foragers": 2,
+  "nurses": 2, "builders": 2, "miners": 1,
+  "actions": [
+    {
+      "when": {"day_at_least": 1},
+      "do": "assign_role",
+      "target": {"current_role": "forager", "count": 2},
+      "role": "forager_pollen"
+    },
+    {
+      "when": {"day_at_least": 1},
+      "do": "designate_cell",
+      "hex": [0, 0],
+      "content": "pollen"
+    },
+    {
+      "when": {"day_at_least": 1},
+      "do": "set_config",
+      "key": "scouting_on",
+      "value": true
+    },
+    {
+      "when": {"day_at_least": 2},
+      "do": "assert",
+      "condition": {"population_at_least": {"role": "forager", "count": 1}}
+    }
+  ],
+  "stop": {"max_days": 3}
+}

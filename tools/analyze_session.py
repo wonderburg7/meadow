@@ -34,6 +34,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
     settings: dict[str, Any] = config["settings"] if config else {}
     snapshots = [e for e in entries if e["type"] == "snapshot"]
     deaths = [e for e in entries if e["type"] == "death"]
+    actions = [e for e in entries if e["type"] == "action"]
     summary = next((e for e in entries if e["type"] == "summary"), None)
 
     return {
@@ -41,6 +42,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "deaths_over_time": _deaths_over_time(deaths),
         "honey_fill_vs_winter": _honey_fill_vs_winter(snapshots),
         "mechanic_firing": _mechanic_firing(settings, summary),
+        "actions": _action_summary(actions),
         "summary": summary,
     }
 
@@ -108,6 +110,26 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
             "winter_here": s["environment"]["winter_here"],
         })
     return out
+
+
+def _action_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
+    """scenario_actions.gd's headless action driver (see
+    insights_from_ChatGPT.md's 22 Aug 2026 entry and
+    AI_PLAYTEST_PLAN.md's extension) logs one "action" entry per action
+    attempted, whatever the result. `problems` surfaces anything that
+    wasn't a clean "accepted" -- a rejected action, or one whose "when"
+    never fired before the run ended -- so a scenario author doesn't have
+    to grep the raw jsonl to find out a strategy script didn't do what it
+    said.
+    """
+    by_result: dict[str, int] = {}
+    for a in actions:
+        by_result[a["result"]] = by_result.get(a["result"], 0) + 1
+    problems = [
+        {"do": a["do"], "target": a["target"], "result": a["result"], "reason": a["reason"]}
+        for a in actions if a["result"] != "accepted"
+    ]
+    return {"total": len(actions), "by_result": by_result, "problems": problems}
 
 
 # Config keys that gate a mechanic, mapped to the summary/event-count keys
