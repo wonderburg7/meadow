@@ -6,10 +6,10 @@
 > session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
 > `NEXTSTEPS.md` remains exclusively Claude's source of work.
 
-Status: planned 22 Aug 2026, not started. This is the execution hand-off for a
-future ChatGPT session. It turns Meadow's existing headless harness into a
-small, stable mechanism-check suite without spending runs on systems that are
-about to change.
+Status: in progress 22 Aug 2026. H0 inventory completed; H1 is next. This is
+the execution hand-off for ChatGPT sessions. It turns Meadow's existing
+headless harness into a small, stable mechanism-check suite without spending
+runs on systems that are about to change.
 
 ## Goal
 
@@ -122,6 +122,37 @@ reusable starting points:
 Classify each existing scenario as `keep`, `adapt`, `historical baseline` or
 `one-off harness test`. Do not rename old scenarios merely for tidiness. Add a
 compact inventory table to this file before starting H1.
+
+Completed 22 Aug 2026. All 25 existing scenarios were read in full after
+checking the recent harness history. No scenario or game-code file changed.
+
+| Classification | Scenarios | Mechanism-suite use |
+|---|---|---|
+| Keep | `b2_combined_role_test.json`, `b3_postcondition_test.json` | H4: real role/mode routing plus accepted designation/build/mine queue postconditions. B3 proves queuing, not job completion. |
+| Keep | `c2_no_jelly_cell_test.json` | H3: no royal-jelly spill into undesignated comb; summary already distinguishes feeding from jelly work. |
+| Keep | `c4_stocking_hatch_test.json` | H2/H3: requested Stocking hatch resolves to `architect_mode=restock` through the real hatch-role command. |
+| Keep | `c6_nurse_feed_test.json`, `c6_nurse_both_test.json` | H2/H3 matched comparison: brood feeding and Anything-mode priority. |
+| Keep | `c6_fanners_1_test.json`, `c6_fanners_2_test.json`, `c6_fanners_4_test.json` | H3 matched comparison: honey work fires and throughput rises with more fanners. |
+| Adapt | `slice1_smoke_test.json` | H1 starting point. Pin its seed and add explicit cheap health/action pass criteria and an early decisive stop if the present summary cannot enforce them. |
+| Adapt | `slice6_crab_spider_test.json` | H5 starting point. Replace the single long predator-on run as regression evidence with matched on/off, three-seed direction-of-effect checks. |
+| Historical baseline | `foraging_features_off_test.json`, `foraging_features_on_test.json`, `forage_radius_wide_test.json`, `recruit_threshold_calibration_test.json` | Keep the files and their past findings, but do not treat their current outcomes as stable while the foraging ecology overhaul is pending. |
+| One-off harness test | `a2_seed_111_test.json`, `a2_seed_222_test.json`, `a3_fixedfps_benchmark_test.json`, `a5_actions_resolved_test.json`, `a5_stop_when_test.json` | Development fixtures for seed plumbing, fixed-FPS determinism and stop behaviour. Reuse only when changing the harness itself. |
+| One-off harness test | `slice2_config_overrides_test.json`, `slice3_timescale_8x_test.json`, `slice3_timescale_16x_test.json`, `slice3_timescale_30x_test.json`, `slice7_action_driver_test.json` | Historical harness build checks for config allowlisting, time-scale choice and the original action-driver demonstration. Superseded for mechanism coverage by the focused B/C scenarios above. |
+
+Coverage gaps deliberately left for their own slices: H2 still needs a concise
+development-progress postcondition; H5 has no disease or controlled survival
+pair; H6 has no winter-boundary scenario; H7 has queuing evidence but no cheap
+completion/stall/invalid-position signal yet. These gaps do not justify new
+files during H0.
+
+H0 verification: `source_checks.py` and `balance_tests.py` passed. A read-only
+baseline run of `slice1_smoke_test.json` with the default fixed FPS and `brief`
+report also passed (`day: 2`, no deaths, brood feeding and cell completion
+non-zero, no action problems), confirming the inventoried harness still works
+through real Godot. Wall time was 28.6s, so the existing file is not yet the
+few-second routine gate H1 requires. H0 protects against accidentally treating
+foraging experiments and harness-development fixtures as stable gameplay
+regressions; it adds no runtime test of its own.
 
 ### H1. Fast smoke gate
 
