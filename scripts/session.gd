@@ -180,6 +180,12 @@ var ui_typeface: String = "sans"
 ## 2.0, per UI_PLAN.md section 14's "every text scale up to 200%" check.
 var text_scale: float = 1.0
 
+## Whether the top-right bar's Colony/Nursery/Meadow-Hive buttons show
+## their text label alongside the icon. Off by default (icon-only) per
+## Dave's 22 Aug call -- the label is a settings opt-in, not the default,
+## now that the icons carry the meaning on their own.
+var show_interface_labels: bool = false
+
 ## Suppresses the neon attention flashes and any future drawer/marker
 ## animation (UI_PLAN.md section 7). Doesn't affect anything simulated.
 var reduced_motion: bool = false

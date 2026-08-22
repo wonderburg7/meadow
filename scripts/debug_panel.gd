@@ -791,6 +791,11 @@ const TUNABLES := [
 		"tip": "Adds an 8x button next to 1x/2x/4x in the top-right bar, for skipping a stretch you've already seen. Off by default -- most runs don't need it, and there is more happening per second at 8x than you can follow by watching the bees. Takes effect immediately.",
 	},
 	{
+		"key": "show_interface_labels", "label": "Show button labels", "toggle": true,
+		"category": "Appearance",
+		"tip": "Shows the word alongside the icon on the Colony/Nursery/Meadow-Hive buttons in the top-right bar. Off by default -- the icons alone carry the meaning once you know them. Takes effect immediately.",
+	},
+	{
 		"key": "scenery_on", "label": "Trees & raised ground", "toggle": true,
 		"category": "World & start",
 		"tip": "Turn the trees and raised areas in the meadow on or off. With them off they vanish and stop blocking anything, so bees fly in straight lines -- useful for seeing the foraging economics on their own. Takes effect immediately.",
@@ -875,7 +880,7 @@ const SESSION_KEYS := [
 	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
 	"gallerin_enabled", "show_crab_spiders",
 	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
-	"tooltip_delay", "show_speed_8x",
+	"tooltip_delay", "show_speed_8x", "show_interface_labels",
 ]
 
 static func setting_get(key: String):
@@ -1293,6 +1298,11 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			for hud in get_tree().get_nodes_in_group("huds"):
 				if is_instance_valid(hud) and hud.has_method("refresh_speed_visibility"):
 					hud.refresh_speed_visibility()
+		elif key == "show_interface_labels":
+			# same "huds" group dispatch as show_speed_8x above.
+			for hud in get_tree().get_nodes_in_group("huds"):
+				if is_instance_valid(hud) and hud.has_method("_apply_interface_label_visibility"):
+					hud._apply_interface_label_visibility()
 		elif Prerequisites.is_gated(key):
 			if pressed:
 				_cascade_prerequisites_on(key)

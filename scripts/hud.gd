@@ -232,6 +232,10 @@ var view_button_label: Label
 var winter_button: Button
 var colony_button: Button
 var nursery_button: Button
+## Every button built by _icon_button, so _apply_interface_label_visibility
+## can show/hide each one's text label together and restore its full
+## width -- winter_button is deliberately absent, it has no icon yet.
+var _labeled_buttons: Array = []
 ## The "i" badges next to colony_button/nursery_button/view_button --
 ## kept so the visibility setters below can hide the explanation
 ## alongside the control it explains, rather than leaving an orphaned
@@ -392,6 +396,7 @@ func _ready() -> void:
 	pause_label.visible = false
 
 	_build_top_right_bar()
+	_apply_interface_label_visibility()
 	_build_goal_shelf()
 	_build_selection_panel()
 	_build_command_tray()
@@ -567,7 +572,21 @@ func _icon_button(shape: String, label: String, min_width: float) -> Button:
 	text.theme_type_variation = "Body"
 	row.add_child(text)
 
+	# Icon-only width: button_stylebox's own content margins (8 left/right,
+	# ui_theme.gd) plus the icon itself, no room reserved for the label.
+	_labeled_buttons.append({"button": btn, "label": text, "full_width": min_width, "icon_width": 32.0})
+
 	return btn
+
+## Session.show_interface_labels (off by default -- Dave's 22 Aug icon-only
+## call): shows/hides each top-bar button's text label together and shrinks
+## the button to icon-only width when hidden. Called once after the row is
+## built and again whenever the setting changes.
+func _apply_interface_label_visibility() -> void:
+	for entry in _labeled_buttons:
+		entry.label.visible = Session.show_interface_labels
+		var width: float = entry.full_width if Session.show_interface_labels else entry.icon_width
+		entry.button.custom_minimum_size.x = width
 
 ## The goal shelf (UI_PLAN.md section 5): sits directly under the
 ## top-right button row, anchored and widened the same way -- see
