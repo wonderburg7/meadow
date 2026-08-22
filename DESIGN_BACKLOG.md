@@ -4,7 +4,11 @@ Ideas agreed but deliberately **not** built yet. Kept here so the code stays
 focused on what's actually in the game, and so nothing gets lost between
 sessions. Nothing in this file is implemented.
 
-Last updated: 22 Aug 2026 -- added section 14, a proposed foraging
+Last updated: 22 Aug 2026 -- section 1 and 7.3 now point to
+`SKILL_TREE_PLAN.md`, the reconciled skill-tree/Colony-Adaptations/
+progression design. Nothing built.
+
+Previously updated 22 Aug 2026 -- added section 14, a proposed foraging
 ecology overhaul (patchy meadow, local perception, probabilistic
 choice, species differentiation, proximity recruitment). Slices 0 and
 1 refined into implementation-ready tasks in `FORAGING_ECOLOGY_PLAN.md`;
@@ -91,6 +95,13 @@ planning conversation.
 ---
 
 ## 1. Progression structure (agreed direction)
+
+**Skill tree, Colony Adaptations and campaign meta progression now have a
+full reconciled design in `SKILL_TREE_PLAN.md`** (22 Aug 2026) — canonical
+for skill/adaptation catalogues, progression rules and the build sequence.
+That plan also formalises this section's "open world mode" as **Sandbox**,
+distinct from the `UI_PLAN.md` "Scenarios" presets. Not started; see
+`SKILL_TREE_PLAN.md` §10 for the phased sequence.
 
 The shape Dave proposed, recorded as the intended spine of the game:
 
@@ -378,7 +389,10 @@ left on the flower by any attack is the basis of an "alarm pheromone"
 sense that would let a bee notice and leave before ever feeding there --
 no skill tree exists yet to hang that on, so the plan builds it as a
 working global toggle explicitly labelled as a placeholder for a future
-per-bee/per-colony unlock. Floral constancy (already built) becomes the
+per-bee/per-colony unlock. **That future unlock is now designed:
+`SKILL_TREE_PLAN.md` §5.5's `skill.defense.alarm_pheromone` replaces this
+placeholder toggle as the normal delivery mechanism, in that plan's
+Phase C.** Floral constancy (already built) becomes the
 main defence for free, with no new code -- a forager pinned to a safe
 species never visits the dangerous one. Whole feature ships off by
 default (`GameConfig.predators_on = false`). Every quantity (spider

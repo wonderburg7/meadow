@@ -74,6 +74,22 @@ var _flower_visits: int = 0
 var _flowers_visited_ids: Dictionary = {}   # flower instance id -> true
 var _stall_recoveries: int = 0
 
+## Role outcome counters -- see CHATGPT_INSIGHTS_PLAN.md's C5. Cheap
+## counters bumped straight from bee_nursery.gd/bee_honey.gd/
+## bee_building.gd/bee_mining.gd at the moment each unit of work
+## actually completes, so a run's summary states plainly how much real
+## work each role got done, not just how many bees held that role.
+var _brood_feeds: int = 0
+var _jelly_batches: int = 0
+var _larval_deaths: int = 0
+var _cells_completed: int = 0
+var _cells_cleaned: int = 0
+var _cells_evicted: int = 0
+var _cells_restocked: int = 0
+var _blocks_mined: int = 0
+var _honey_batches_deposited: int = 0
+var _cells_ripened: int = 0
+
 
 func _ready() -> void:
 	Session.run_reset.connect(start_session)
@@ -115,6 +131,16 @@ func start_session() -> void:
 	_flower_visits = 0
 	_flowers_visited_ids.clear()
 	_stall_recoveries = 0
+	_brood_feeds = 0
+	_jelly_batches = 0
+	_larval_deaths = 0
+	_cells_completed = 0
+	_cells_cleaned = 0
+	_cells_evicted = 0
+	_cells_restocked = 0
+	_blocks_mined = 0
+	_honey_batches_deposited = 0
+	_cells_ripened = 0
 
 	_write({"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
 			"settings": _config_snapshot()})
@@ -331,6 +357,65 @@ func log_scouting_settled(bee: Node2D) -> void:
 	_scouting_settled += 1
 
 
+## Called from bee_nursery.gd::feed_brood() -- one real meal delivered to
+## a larva, whatever its type.
+func count_brood_feed() -> void:
+	_brood_feeds += 1
+
+
+## Called from bee_nursery.gd::nurse_make_jelly() when a batch finishes.
+func count_jelly_batch() -> void:
+	_jelly_batches += 1
+
+
+## Called from hive_cell.gd::_larva_dies().
+func count_larval_death() -> void:
+	_larval_deaths += 1
+
+
+## Called from hive_cell.gd::add_build_progress() the moment a cell
+## finishes building.
+func count_cell_completed() -> void:
+	_cells_completed += 1
+
+
+## Called from bee_building.gd::architect_clean() once a dead larva is
+## fully cleared out.
+func count_cell_cleaned() -> void:
+	_cells_cleaned += 1
+
+
+## Called from hive_cell.gd::take_resource() when an eviction-requested
+## cell is fully emptied -- covers both "discard" and "move" evict modes,
+## since both drain the source cell through take_resource.
+func count_cell_evicted() -> void:
+	_cells_evicted += 1
+
+
+## Called from bee_building.gd::restock_go_to_target() each time a
+## restock delivery is placed in its destination cell.
+func count_cell_restocked() -> void:
+	_cells_restocked += 1
+
+
+## Called from bee_mining.gd::miner_dig() the moment a soil block
+## finishes mining.
+func count_block_mined() -> void:
+	_blocks_mined += 1
+
+
+## Called from bee_honey.gd::honey_deposit() when a honey maker fully
+## empties her load into a cell.
+func count_honey_batch_deposited() -> void:
+	_honey_batches_deposited += 1
+
+
+## Called from hive_cell.gd::add_fanning_progress() the moment a cell
+## crosses honey_ripen_time and becomes ripe.
+func count_cell_ripened() -> void:
+	_cells_ripened += 1
+
+
 ## Called from scenario_actions.gd for every headless scenario action
 ## attempted -- see AI_PLAYTEST_PLAN.md's action-driver extension and
 ## insights_from_ChatGPT.md's 22 Aug 2026 entry. One line per action,
@@ -424,6 +509,16 @@ func end_session(outcome: String) -> void:
 		"flower_visits": _flower_visits,
 		"unique_flowers_visited": _flowers_visited_ids.size(),
 		"stall_recoveries": _stall_recoveries,
+		"brood_feeds": _brood_feeds,
+		"jelly_batches": _jelly_batches,
+		"larval_deaths": _larval_deaths,
+		"cells_completed": _cells_completed,
+		"cells_cleaned": _cells_cleaned,
+		"cells_evicted": _cells_evicted,
+		"cells_restocked": _cells_restocked,
+		"blocks_mined": _blocks_mined,
+		"honey_batches_deposited": _honey_batches_deposited,
+		"cells_ripened": _cells_ripened,
 	})
 	_file.close()
 	_file = null
@@ -504,6 +599,20 @@ func _snapshot(world: Node2D) -> Dictionary:
 		if is_instance_valid(cell) and cell.is_built and cell.is_closed:
 			sealed += 1
 
+	# Live, not cumulative -- how much diggable soil is left, split by
+	# whether a miner could reach it at all (is_edge) versus what the
+	# player has actually queued (marked_for_mining). blocks_mined below
+	# is the cumulative counterpart: how much has already come out.
+	var exposed_blocks := 0
+	var marked_blocks := 0
+	for block in world.get_tree().get_nodes_in_group("soil_blocks"):
+		if not is_instance_valid(block):
+			continue
+		if block.is_edge:
+			exposed_blocks += 1
+		if block.marked_for_mining:
+			marked_blocks += 1
+
 	return {
 		"type": "snapshot",
 		"game_time": Session.sim_time,
@@ -556,6 +665,20 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"recruit_suppression_on": GameConfig.crab_spider_recruit_suppression_on,
 			"preferred_species": Session.crab_spider_preferred_species,
 			"active_spiders": active_spiders,
+		},
+		"role_outcomes": {
+			"brood_feeds_total": _brood_feeds,
+			"jelly_batches_total": _jelly_batches,
+			"larval_deaths_total": _larval_deaths,
+			"cells_completed_total": _cells_completed,
+			"cells_cleaned_total": _cells_cleaned,
+			"cells_evicted_total": _cells_evicted,
+			"cells_restocked_total": _cells_restocked,
+			"blocks_mined_total": _blocks_mined,
+			"honey_batches_deposited_total": _honey_batches_deposited,
+			"cells_ripened_total": _cells_ripened,
+			"exposed_soil_blocks": exposed_blocks,
+			"marked_soil_blocks": marked_blocks,
 		},
 	}
 

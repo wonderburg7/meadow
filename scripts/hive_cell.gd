@@ -400,6 +400,7 @@ func _larva_dies() -> void:
 	unfed_seconds = 0.0
 	clean_progress = 0.0
 	brood_is_gyne = false
+	DiagnosticLog.count_larval_death()
 
 # --- working positions --------------------------------------------
 
@@ -455,6 +456,7 @@ func add_build_progress(delta: float) -> void:
 		build_progress = effective_build_time()
 		is_built = true
 		builders.clear()
+		DiagnosticLog.count_cell_completed()
 
 func build_fraction() -> float:
 	return clamp(build_progress / max(0.001, effective_build_time()), 0.0, 1.0)
@@ -569,6 +571,8 @@ func take_resource(resource_type: String, requested: float) -> float:
 		content_type = ""
 		amount = 0.0
 		ripen_progress = 0.0
+		if evict_requested:
+			DiagnosticLog.count_cell_evicted()
 		evict_requested = false
 		evict_mode = "move"
 	return taken
@@ -621,7 +625,10 @@ func needs_fanning() -> bool:
 func add_fanning_progress(delta: float) -> void:
 	if content_type != "honey":
 		return
+	var was_ripe: bool = is_ripe_honey()
 	ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
+	if is_ripe_honey() and not was_ripe:
+		DiagnosticLog.count_cell_ripened()
 
 func ripen_fraction() -> float:
 	return clamp(ripen_progress / max(0.001, GameConfig.honey_ripen_time), 0.0, 1.0)

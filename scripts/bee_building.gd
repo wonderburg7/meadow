@@ -225,6 +225,7 @@ static func restock_go_to_target(bee: Node2D, delta: float) -> void:
 	var placed: float = bee.haul_target.add_resource(bee.current_load_type, bee.current_load)
 	bee.current_load -= placed
 	bee.hive.announce()
+	DiagnosticLog.count_cell_restocked()
 	BeeForaging.release_cell_slot(bee)
 	bee.haul_target = null
 	if bee.current_load <= 0.001:
@@ -282,6 +283,7 @@ static func architect_clean(bee: Node2D, delta: float) -> void:
 	if bee.target_cell.add_clean_progress(delta):
 		bee.target_cell.clear_cell()
 		bee.hive.announce()
+		DiagnosticLog.count_cell_cleaned()
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = null
 		# the body goes out of the hive rather than back into the comb

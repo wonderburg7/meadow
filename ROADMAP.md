@@ -185,9 +185,12 @@ alongside the tutorial, so the systems already in could stabilise first.
 honeycomb visual language, theming and accessibility (text scale,
 typefaces, reduced motion), a configurable selection/command tray
 layout, a scenario-preset system, and a skill-tree framework. See
-`UI_PLAN.md` for the full spec and its nine-slice build sequence.
-Everything below this line is what has actually shipped so far, under
-the interface as it currently looks.
+`UI_PLAN.md` for the full spec and its nine-slice build sequence. The
+skill-tree framework's catalogue, Colony Adaptations and campaign meta
+progression now have a full reconciled design of their own —
+`SKILL_TREE_PLAN.md` (22 Aug 2026), not started. Everything below this
+line is what has actually shipped so far, under the interface as it
+currently looks.
 
 | | Size | Status |
 |---|---|---|

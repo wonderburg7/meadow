@@ -27,6 +27,13 @@ signal unlocked_changed(key: String)
 const ACCESSIBILITY_KEYS := [
 	"colour_blind_mode",
 	"settings_cog",
+	"ui_theme",
+	"text_scale",
+	"ui_typeface",
+	"reduced_motion",
+	"screen_shake",
+	"tooltip_delay",
+	"show_info_badges",
 ]
 
 var main: Node2D

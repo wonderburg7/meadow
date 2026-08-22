@@ -116,9 +116,20 @@ place at fixed coordinates). Eight zones, going round the screen:
   the current scale drops to a scrollable body rather than spilling
   over a neighbouring zone. This is the same `autowrap_mode =
   AUTOWRAP_WORD_SMART` + `custom_minimum_size` pattern already used
-  throughout `hud.gd`, `colony_panel.gd` and `nursery_panel.gd` — text
-  scaling is a multiplier applied to the font-size overrides those
-  already carry, not a new wrapping mechanism.
+  throughout `hud.gd`, `colony_panel.gd` and `nursery_panel.gd`; see
+  section 7 for how the scale itself is applied (a Theme resource, not
+  a multiplier).
+- **The bottom row specifically (Dave's rule, 21 Aug):** the selection
+  tray, command tray and Gallerin reserve sit side by side by default,
+  which is the one row with no spare horizontal room to reflow into.
+  At higher text scale these three grow **taller, not wider** — each
+  tray's own height increases with its content, never its width — and
+  once a tray's content would no longer fit at its current height even
+  after growing, it becomes a scrollable body instead of pushing its
+  neighbours sideways. This is what keeps the "command tray never
+  enters the Gallerin reserve" rule true at every text scale, without
+  the trays needing to renegotiate widths against each other as the
+  scale changes.
 
 ---
 
@@ -173,7 +184,11 @@ with `More…`, building on the existing `_secondary_items()` split);
 Accessibility categories, section 6/7); `stage_gate.gd`'s key list (no
 code change, just more call sites using it); `main_menu.gd` (honeycomb
 layout, preset descriptions, per-preset completion ticks, section 12);
-`session.gd` (every new player preference, section 6/7).
+`session.gd` (every new interface preference, loaded from/saved to the
+new player profile — section 12); `hive.gd`/`hive_cell.gd` (a new
+colony-wide brood-stage-count aggregation, reading each cell's existing
+per-cell brood/development state rather than tracking anything new in
+the simulation — section 15 slice 4).
 
 **New:**
 
@@ -184,7 +199,8 @@ layout, preset descriptions, per-preset completion ticks, section 12);
 | Temporary status banner | `hud.gd` (new small sub-section, same pattern as the warning banner) | top-middle |
 | Skill-tree window | `skill_tree_panel.gd` (new `CanvasLayer`, same shape as `colony_panel.gd`) + a small data table (`skill_tree.gd`, same shape as `roles.gd`) | full-screen or large drawer |
 | Scenario preset data (Relaxed/Standard/Demanding/Custom multiplier sets) | extend `levels.gd`, or a new sibling `scenario_presets.gd` if the table grows past a screenful | scenario selection |
-| Typeface switching (sans-serif / Atkinson Hyperlegible / dyslexia-friendly) | `ui_theme.gd`, reading a `Session.ui_typeface` field, plus the actual font files as new assets (section 8) | shared |
+| Text-scale/typeface architecture: a project `Theme` resource with named type variations (Heading/Body/Small/Tiny), replacing per-control font-size overrides | `ui_theme.gd` builds/updates the `Theme`; every panel migrates its `add_theme_font_size_override` calls to type variations (section 7, section 15 slice 1) | shared |
+| Typeface switching (sans-serif / Atkinson Hyperlegible / dyslexia-friendly / pixel) | same `Theme` resource, reading `Session.ui_typeface`, plus the actual font files as new assets (section 8) | shared |
 | Player profile (scenario/Challenge completion, persists across app launches) | `player_profile.gd` (new, `save_game.gd`-shaped, a second small `user://` JSON file — section 12) | scenario selection |
 | Challenge-completion screen | new script, `game_over.gd`-shaped `CanvasLayer` (section 15, slice 7 — confirmed nothing like this exists today) | full-screen overlay |
 
@@ -223,9 +239,9 @@ resource flow (the existing plot); historical detail only on request
 that way").
 
 **Nursery drawer**, in priority order: brood needing attention (new);
-nursery capacity/zone (existing "The zone" section); brood stages
-(new, needs `hive.gd`/`hive_cell.gd` to expose a per-stage brood count
-if one doesn't already exist — check before promising this row);
+nursery capacity/zone (existing "The zone" section); brood stages (new
+— a colony-wide count by stage, e.g. egg/larva/capped, built as part of
+this plan; see section 15 slice 4 for the tracking work this needs);
 priority distribution (existing tier lines); emerging bees (existing);
 intended roles (existing zone-by-role breakdown, already there).
 
@@ -295,11 +311,31 @@ final:
 | `panel_bg` (light) | `#F6DFC8` | Light-theme panel background |
 | `panel_line` (light) | `#B97A4E` | Light-theme honeycomb lines, darker/browner peach |
 
-**High-contrast palette:** still not specified by the brief. Maximises
-text/background contrast ratio (WCAG AA at minimum, ideally AAA for
-body text) and is the one theme where the top-left pulse gains a
-backing panel, per the brief. Exact values are a genuinely open
-decision — see section 16.
+**High-contrast palette (proposed, 21 Aug):** near-black backgrounds
+with near-white text and a small set of highly saturated, mutually
+distinct accent hues — the same approach OS-level high-contrast modes
+use, rather than a darker/lighter variant of the brand colours. Every
+pairing below exceeds WCAG AAA (7:1) for body text against `panel_bg`:
+
+| Token | Hex | Use | Contrast vs `panel_bg` |
+|---|---|---|---|
+| `panel_bg` | `#0A0A0A` | Panel background | — |
+| `text_primary` | `#FFFFFF` | Primary text | 20.1:1 |
+| `text_secondary` | `#E0E0E0` | Secondary text | 17.1:1 |
+| `focus_ring` | `#00E5FF` | Keyboard focus (cyan — distinct from the other three accents) | 15.9:1 |
+| `success` | `#00E676` | Success/on-track | 14.6:1 |
+| `warning` | `#FFD400` | Worth a look | 17.5:1 |
+| `danger` | `#FF6B6B` | Shortfall/failure | 8.3:1 |
+
+Resource accents (`accent_nectar`/`accent_honey`/`accent_wax`/
+`accent_grass`) keep their dark-theme hues brightened only as far as
+needed to clear AA (4.5:1) against `#0A0A0A`, since they are
+identifying colours (section 6's semantic-colour rule) rather than
+text — exact brightened values are a slice-1 task, not fixed here.
+This is the one theme where the top-left pulse gains a backing panel
+(`panel_bg`), per the brief, since floating white text with no backing
+surface has nothing to contrast against over a bright part of the
+meadow.
 
 All three themes share one semantic token *name* list (`panel_bg`,
 `panel_line`, `text_primary`, `text_secondary`, `accent_nectar`,
@@ -350,24 +386,60 @@ now. They stay their own "role identity" layer, independent of
 
 ## 7. Typography and accessibility specification
 
-**Fonts:** three typefaces as `Session.ui_typeface` options — standard
+**Fonts:** four typefaces as `Session.ui_typeface` options — standard
 sans-serif (current default, no asset change needed), Atkinson
-Hyperlegible, and OpenDyslexic (or an equivalent dyslexia-friendly
-face). Both new faces are placeholder assets until sourced and added
-under a new `assets/fonts/` folder (section 8) — the mechanism (a
-`Session` field read by `ui_theme.gd` when building any `Label`/
-`Button`'s theme override) does not depend on which files eventually
-fill it.
+Hyperlegible, OpenDyslexic (or an equivalent dyslexia-friendly face),
+and a pixel/retro face for players who want the whole interface to
+lean into the pixel-art aesthetic (Dave's addition, 21 Aug). Proposed:
+**Pixel Operator** (SIL Open Font License, free) — it stays legible at
+small body-text sizes, unlike the better-known **Press Start 2P**
+(also free, OFL), which reads well for short headings/labels but is
+genuinely hard to read in a sentence at UI sizes; Pixel Operator is the
+safer default for a face that has to carry tooltips and settings rows,
+not just headings. Both are real candidates; picking between them (or
+using Press Start 2P for headings only, Pixel Operator for body text)
+is a small, concrete choice for whichever slice sources the files, not
+a design question. All three new faces are placeholder assets until
+sourced and added under a new `assets/fonts/` folder (section 8) — the
+mechanism (a `Session` field read when building the project's Theme
+resource, see "Text scale" below) does not depend on which files
+eventually fill it. The pixel typeface is an aesthetic choice, not an
+accessibility one — it should never be silently forced on by an
+accessibility setting, and a player who wants both a dyslexia-friendly
+face and a pixel look can't have both at once, which is fine (they are
+one dropdown, not independent toggles).
 
-**Text scale:** `Session.text_scale` at 100/125/150/175/200%, applied
-as a multiplier over every existing `add_theme_font_size_override(...,
-N)` call. Because every panel already sets its font sizes this way
-(rather than relying on a project-wide default), the scale can be a
-single multiplier read at build/refresh time rather than a project
-theme resource swap — lower-risk given how many font-size overrides
-already exist across `hud.gd`, `colony_panel.gd`, `nursery_panel.gd`
-and the rest. Panels must reflow (wrap, grow) rather than clip at
-200% — see the responsive rules in section 2.
+**Text scale and typeface architecture (accessibility/future-proofing
+decision, 21 Aug):** a project-wide **Theme resource with named type
+variations**, not a per-call multiplier over each panel's existing
+`add_theme_font_size_override` calls. This was a genuine choice
+between two working approaches, and Dave asked for whichever is more
+accessible and more future-proof — that is the Theme resource:
+
+- A `Theme` is Godot's own mechanism for this, so it is what any future
+  Godot accessibility feature (and any assistive tooling that inspects
+  a project's theme) is built to work with — a bespoke multiplier
+  scattered across function calls is invisible to all of that.
+- It is future-proof for Meadow's own growth: a panel written after
+  this slice picks up the current text scale and typeface automatically
+  by using a named type variation (proposed: `Heading`, `Body`, `Small`,
+  `Tiny`) instead of a literal pixel size — nobody building a new panel
+  six months from now needs to remember to apply a scale multiplier by
+  hand, which a per-call approach would require forever.
+- Changing typeface (including the new pixel option above) becomes one
+  Theme swap instead of hunting down every font-size call across the
+  codebase.
+
+The real cost, stated plainly rather than hidden: every existing
+`add_theme_font_size_override("font_size", N)` call across `hud.gd`,
+`colony_panel.gd`, `nursery_panel.gd`, `debug_panel.gd` and the rest
+needs converting to a type-variation assignment instead of a literal
+size. This is a mechanical, file-by-file migration, not a redesign of
+any panel's logic, and section 15's slice 1 lays out how to do it
+without reading every file in full to find the call sites. Panels must
+reflow (wrap, grow taller) rather than clip at 200% — see the
+responsive rules in section 2, including the bottom-row-specific rule
+just added there.
 
 **Bee quotations:** italicised wherever shown (currently
 `colony_panel.gd`'s favourite-bee tooltip and the planned selection-tray
@@ -439,11 +511,12 @@ colour-only, per section 7), skill-tree central bee glyph, skill-tree
 per-area icons (Foraging confirmed; five more once their areas are
 named).
 
-**Fonts:** Atkinson Hyperlegible and a dyslexia-friendly face (e.g.
-OpenDyslexic) — both are freely licensed and downloadable; sourcing and
-adding the `.ttf`/`.otf` files under `assets/fonts/` is a concrete,
-small task for whichever slice implements section 7, not a design
-question.
+**Fonts:** Atkinson Hyperlegible, a dyslexia-friendly face (e.g.
+OpenDyslexic), and a pixel/retro face (Pixel Operator, proposed — see
+section 7) — all three are freely licensed (OFL) and downloadable;
+sourcing and adding the `.ttf`/`.otf` files under `assets/fonts/` is a
+concrete, small task for whichever slice implements section 7, not a
+design question.
 
 **Bespoke pixel-art components** (explicitly flagged by the brief as
 "may be created later" — placeholders, not blockers): the four window
@@ -654,19 +727,42 @@ in the codebase today:
   and closed by the player choosing Save/Load.
 - **Player profile** (new — nothing like this exists in the codebase
   yet; `save_game.gd` is the only file that writes anything under
-  `user://` today) — survives across every run and every save/load,
-  auto-updates the moment something worth remembering happens (a
-  preset completed, a Challenge finished), and is not something the
+  `user://` today) — survives across every run, every save/load, and
+  every time the game itself is closed and reopened; auto-updates the
+  moment something worth remembering happens (a preset completed, a
+  Challenge finished, a preference changed), and is not something the
   player opens or closes. Proposed home: a new `player_profile.gd`
   (same `RefCounted`/static-function shape as `save_game.gd`, a
-  second small JSON at e.g. `user://meadow_profile.json`), holding at
-  minimum the per-preset completion ticks and Challenge-completion
-  state. Whether interface preferences (theme, text scale, and the
-  rest of sections 6/7's `Session` fields) should live in this same
-  profile file — so they too survive closing and reopening the game,
-  not just a Restart Run within one session — is a natural follow-on
-  question this raises but which Dave hasn't specified; flagged in
-  section 16 rather than assumed.
+  second small JSON at e.g. `user://meadow_profile.json`).
+
+**Interface preferences live in the profile too (Dave's decision, 21
+Aug).** `Session`'s existing "interface preferences" block
+(`show_info_badges`, `colour_blind_mode`, `warn_on_discard`,
+`gallerin_enabled`, `show_flower_amounts`, `show_cell_contents_text`,
+`show_forager_labels`, `pinned_stats`, `perf_enabled`) and every new
+field from sections 6/7 (`ui_theme`, `text_scale`, `ui_typeface`,
+`reduced_motion`, `screen_shake`, `tooltip_delay`) move into
+`player_profile.gd`'s persisted data, alongside completion tracking.
+
+The lowest-risk way to do this keeps `Session` as the thing every
+existing call site already reads (`Session.show_info_badges` and the
+rest, unchanged across `hud.gd`, `ui.gd`, `debug_panel.gd` and
+everywhere else) rather than rewriting every read site to a new
+autoload: `Session`'s fields become a **runtime mirror** of the
+profile, loaded from `player_profile.gd` once at boot, and written
+back to disk whenever one changes. `debug_panel.gd::setting_set` is
+already the one choke point every settings-window change already
+passes through (section 15 slice 5's TUNABLES rows all call it) — that
+existing function is where a profile-save call belongs, rather than
+adding a new one at every call site.
+
+Two existing fields in that same "interface preferences" block —
+`control_groups` (saved bee ids, meaningless once a different colony's
+bees exist) and `comb_overlay` (which overlay the *current* hive view
+is showing) — read as run-scoped display state rather than a durable
+preference, despite sharing the comment header with the rest. They
+stay on `Session` only, not the profile; worth a second look during
+slice 6 to confirm that reading is right before moving everything else.
 
 This is genuinely new infrastructure, not a restyle — it is its own
 line in section 15's build sequence (slice 6) rather than a side
@@ -679,6 +775,12 @@ effect of the main-menu reskin.
 Wholly new — nothing in the codebase gates or displays a skill tree
 today (`DESIGN_BACKLOG.md`'s crab-spider write-up explicitly notes "no
 skill tree exists yet to hang that on").
+
+**`SKILL_TREE_PLAN.md` (22 Aug 2026) is now the canonical source for the
+skill catalogue, Colony Adaptations, campaign meta progression and the
+build sequence** — the visual/interaction spec below stays as the
+authoritative layout, but the data shape it drives is superseded (see
+"Data shape" below).
 
 **Structure**, per the brief: one fixed, contiguous hex grid. A central
 hexagon (pixel bee symbol) with six sectors radiating from its six
@@ -699,15 +801,16 @@ bug rather than as unbuilt content, which is the specific thing the
 brief's "clearly labelled as placeholders" instruction is guarding
 against.
 
-**Data shape** (a new sibling to `roles.gd`, same "one table, everyone
-reads it" principle): each node carries an id, its sector (one of the
-six areas), its tier (ring distance from centre), its axial position
-within the fixed grid, a label, description, cost, and a list of
-prerequisite node ids. A `skill_tree.gd` (`RefCounted`, static lookups)
-holds this table; a `skill_tree_panel.gd` (`CanvasLayer`) draws it,
-following `nursery_panel.gd`'s precedent for hand-drawn geometry (its
-donut ring) as the model for hand-drawing hex nodes rather than pulling
-in a graph-layout library.
+**Data shape — superseded by `SKILL_TREE_PLAN.md` §3.** That plan's
+`skills.gd` (still a `roles.gd`-shaped sibling: static data + lookup
+funcs) carries a richer node than originally sketched here — ranks,
+colony/meta costs, `all_of`/`any_of` prerequisite groups, feature
+dependency, typed effects per rank — needed for mastery, temporary
+purchases and Challenge grant/delay/ban policy. The panel drawing this
+data is still `skill_tree_panel.gd` (`CanvasLayer`), following
+`nursery_panel.gd`'s precedent for hand-drawn geometry (its donut ring)
+as the model for hand-drawing hex nodes rather than pulling in a
+graph-layout library — that part is unchanged.
 
 **Visual states**, generalising section 11's disabled/locked
 distinction: learned (filled, `success`-toned), reachable now
@@ -771,23 +874,89 @@ Nine slices, matching the brief's own suggested order, each with its
 own acceptance criteria (drawing on section 14) and likely files. Every
 slice should end the same way every slice in this project already does:
 checks pass, plain-language summary of what changed, propose the next
-step — nothing here changes that working style.
+step — nothing here changes that working style. (Slice 8 is superseded
+by `SKILL_TREE_PLAN.md` — see that slice's own entry below.)
+
+### Working through these slices without burning tokens
+
+This plan touches most of the panel scripts in the project at least
+once, so the same discipline `AGENTS.md`'s "Working here without
+burning tokens" already asks for matters more here than usual, not
+less:
+
+- **Open only a slice's own "Likely files."** Each slice below names
+  them; a session working slice 3 has no reason to open `debug_panel.gd`
+  (that's slice 5), even though both eventually touch `hud.gd`-adjacent
+  UI.
+- **Use `FUNCTION_MAP.md` first for `hud.gd` and `debug_panel.gd`** —
+  the two of the six mapped files this plan actually touches (slices 2,
+  3 and 5) — grep the map for the function you need, then jump straight
+  to that line rather than reading either file from the top.
+- **One slice per session.** Each slice above is scoped to be roughly
+  one session's worth of work; finishing early is a reason to stop and
+  hand back, not to start pulling in the next slice's files.
+- **Use `git log`/`git show` to recall what the previous slice did**
+  rather than re-reading its files to reconstruct it — the plain-
+  language slice summaries this project already writes at the end of
+  each session are exactly what a commit message search should surface.
+- **Verify with the test suites, not by re-reading.**
+  `python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
+  catch a broken `Session`/`GameConfig` reference far cheaper than
+  reading the diff again would.
+- **Regenerate `FUNCTION_MAP.md` only when a slice actually changes
+  `hud.gd` or `debug_panel.gd`** (slices 2, 3, 5) — the other six slices
+  don't touch either file and shouldn't trigger a regeneration.
+- **The slice-1 font-scaling migration has an exact, greppable
+  worklist.** Every call site that needs converting is the literal
+  string `add_theme_font_size_override("font_size",` — one grep across
+  `scripts/*.gd` returns the complete list, so there is no need to read
+  any panel file in full just to find where its font sizes are set.
+- **`ui_theme.gd`/`ui_layout.gd` become read-only-by-name for later
+  slices.** Once slice 1 is done, slices 2 onward only need to know
+  their public function names (this document names the intended ones
+  throughout) — not their internals — the same way any other slice
+  here treats an autoload it didn't just build.
 
 **Slice 1 — Shared design tokens, panel style, button states,
-accessibility foundations.**
-Build `ui_theme.gd` (palettes, seven-state stylebox builder) and
-`ui_layout.gd` (Gallerin-reserve constant, responsive breakpoints). Add
-the new `Session` fields from sections 6/7 (`ui_theme`, `text_scale`,
-`ui_typeface`, `reduced_motion`, `screen_shake`, `tooltip_delay`) with
-sensible defaults, and flip `show_info_badges`' default per section 9.
-No visible change yet beyond whatever a first restyle of one existing
-panel (proposed: the winter forecast, the smallest of the existing
-panels) demonstrates the tokens working end to end.
+text-scale/typeface architecture, accessibility foundations.**
+The accessibility decision below (a Theme resource, not a per-call
+multiplier) makes this the largest slice in the sequence — worth
+splitting into two clearly separate parts within the one slice, since
+1b has nothing to build on without 1a, rather than a bigger slice count
+overall.
+
+*1a — tokens and palette.* Build `ui_theme.gd` (the dark/light/high-
+contrast palettes from section 6, including the concrete high-contrast
+values now specified there; the seven-state stylebox builder) and
+`ui_layout.gd` (the Gallerin-reserve constant, responsive breakpoints).
+
+*1b — text-scale and typeface architecture.* Chosen over a per-call
+multiplier because it is more accessible and more future-proof (the
+full reasoning is in section 7): a project `Theme` resource with a
+small, named set of type variations (proposed: `Heading`, `Body`,
+`Small`, `Tiny`) that `ui_theme.gd` builds and updates, replacing every
+panel's own `add_theme_font_size_override` calls. `Session.text_scale`
+and `Session.ui_typeface` (including the new pixel typeface option)
+become a single Theme swap/rescale rather than a value threaded through
+every panel's build function by hand. Converting the existing call
+sites is mechanical (see the worklist note above) and should proceed
+file by file, verified by `source_checks.py` plus a quick visual check
+per file rather than a full re-read afterwards.
+
+Add the remaining new `Session` fields (`ui_theme`, `ui_typeface`,
+`reduced_motion`, `screen_shake`, `tooltip_delay`), and flip
+`show_info_badges`' default per section 9. No visible change yet beyond
+whatever a first restyle of one existing panel (proposed: the winter
+forecast, the smallest of the existing panels) demonstrates both the
+tokens and the type-variation approach working end to end.
 *Acceptance:* the demonstrated panel renders correctly in all three
-themes and at 200% text scale; `source_checks.py`/`balance_tests.py`
-clean.
+themes (dark/light/high-contrast, including the new high-contrast
+values) and at 200% text scale via the Theme resource; switching
+typeface actually changes the panel's font; `source_checks.py`/
+`balance_tests.py` clean.
 *Likely files:* new `ui_theme.gd`, `ui_layout.gd`; `session.gd`;
-`winter_panel.gd` (demonstration restyle).
+`winter_panel.gd` (demonstration restyle and first type-variation
+conversion).
 
 **Slice 2 — Top-left pulse, top-right controls, goal shelf.**
 Rebuild `hud.gd`'s top-right bar into two rows with icon buttons
@@ -809,22 +978,33 @@ Rework `hud.gd`'s selection panel into the compact configurable tray
 primary/`More…` command tray, adding `Follow bee`; wire both trays'
 maximum widths to `ui_layout.gd`'s Gallerin reserve.
 *Acceptance:* command tray never overlaps the Gallerin reserve at any
-tested width; selection tray's field cog actually hides/shows fields;
-paused state leaves both trays interactive.
+tested width, including 200%, where all three bottom-row zones grow
+taller rather than wider per section 2's rule, and drop to a scrollable
+body rather than push a neighbour sideways; selection tray's field cog
+actually hides/shows fields; paused state leaves both trays interactive.
 *Likely files:* `hud.gd`, `ui_layout.gd`, `gallerin_panel.gd` (only if
 its reserved width needs to become a named constant it currently
 hardcodes as `ICON_SIZE`/`ICON_MARGIN`).
 
-**Slice 4 — Colony and Nursery drawers.**
+**Slice 4 — Colony and Nursery drawers, plus brood-stage tracking.**
 Restyle under the new tokens; reorder each drawer's sections per the
 priority lists in section 5 (an "items/brood needing attention" block
 is genuinely new content, not just a restyle — needs a concrete
 definition of "needing attention" per drawer, a small design decision
-for this slice rather than this document).
+for this slice rather than this document). The Nursery drawer's new
+"brood stages" row (section 5) needs a colony-wide egg/larva/capped
+count, built here as a new aggregation function reading each cell's
+existing per-cell brood/development state (`hive_cell.gd`) and summing
+across the comb (`hive.gd`) — this is new *aggregation*, not new
+simulation data; no `.gd` file needs to start tracking anything it
+doesn't already track, only to add it up.
 *Acceptance:* both drawers keep their existing starred-readout-to-
 corner mechanism working unchanged; new "needing attention" block shows
-real, correct data in a colony with at least one problem present.
-*Likely files:* `colony_panel.gd`, `nursery_panel.gd`.
+real, correct data in a colony with at least one problem present; the
+brood-stage counts sum correctly against a manual count in a small test
+colony.
+*Likely files:* `colony_panel.gd`, `nursery_panel.gd`, `hive.gd`,
+`hive_cell.gd`.
 
 **Slice 5 — Settings and configurable speed/info controls.**
 Split the current "Interface" `TUNABLES` category into Appearance and
@@ -837,19 +1017,30 @@ writes` still passes (no new setting should ever be written outside
 `Session`, since none of them are balance numbers).
 *Likely files:* `debug_panel.gd`.
 
-**Slice 6 — Main menu and scenario selection.**
+**Slice 6 — Main menu, scenario selection, and the player profile.**
 Honeycomb layout for `main_menu.gd`; the Challenges/Scenarios group
 rename and descriptors (section 12); preset system (Relaxed/Standard/
 Demanding/Custom); the new `player_profile.gd` persistence layer and
-per-preset completion tracking on top of it.
+per-preset completion tracking on top of it. This slice also migrates
+`Session`'s interface-preferences block (section 12's full field list)
+into the profile: `Session` keeps every existing field name and every
+existing call site unchanged, but now loads its starting values from
+`player_profile.gd` at boot and saves back through
+`debug_panel.gd::setting_set`, the one choke point every settings-
+window change already passes through. `control_groups`/`comb_overlay`
+are the two exceptions confirmed to stay `Session`-only (run-scoped,
+not durable — section 12).
 *Acceptance:* group headings read "Challenges" and "Scenarios" with
 Dave's exact descriptor text; Custom preset only exposes its approved
 settings subset; plain-English descriptions render for every preset;
-completion ticks survive a full game restart (not just a Restart Run),
-proving the profile file actually persists rather than living in
-`Session`.
+completion ticks *and* every interface preference (theme, text scale,
+typeface, and the rest) survive a full game restart (not just a
+Restart Run), proving the profile file actually persists rather than
+living in `Session`; `control_groups`/`comb_overlay` correctly reset
+on restart rather than persisting.
 *Likely files:* `main_menu.gd`, `levels.gd` (or new
-`scenario_presets.gd`), new `player_profile.gd`.
+`scenario_presets.gd`), new `player_profile.gd`, `session.gd`,
+`debug_panel.gd`.
 
 **Slice 7 — Challenge completion (new) and winter forecast (restyle).**
 No Challenge-completion screen exists in the codebase today (confirmed
@@ -866,15 +1057,18 @@ theme/scale/contrast checks from section 14.
 `challenge_runner.gd` (its `_complete()`-equivalent call site);
 `winter_panel.gd`.
 
-**Slice 8 — Skill-tree framework, six named areas, one populated.**
-Build `skill_tree.gd` and `skill_tree_panel.gd` per section 13, with
-all six sectors labelled (Foraging, Brood, Hive, Colony, Defense,
-Ecology) and only the Foraging sector populated by even one or two
-illustrative nodes (enough to prove the fixed-grid, locked/reachable/
-preview states work) — populating Foraging for real, and designing
-content for the other five, is separate, later work once each area's
-actual mechanics are designed, tracked in `DESIGN_BACKLOG.md` rather
-than here.
+**Slice 8 — superseded by `SKILL_TREE_PLAN.md`'s Phase B slice 5
+("Foraging skill-tree vertical slice").** That plan now carries the
+full build: `skills.gd` (not the minimal `skill_tree.gd` originally
+sketched here) plus `skill_tree_panel.gd`, all six sectors labelled
+(Foraging, Brood, Hive, Colony, Defense, Ecology), Foraging populated
+for real by rewiring its already-working toggles (Orientation Flight,
+Auto Scouting, Floral Constancy, Auto-recruitment, Tarsal Secretions)
+rather than illustrative placeholder nodes — the other five sectors
+stay labelled-but-empty until their own mechanics are designed
+(`SKILL_TREE_PLAN.md` §12). See that plan's §10 for the phase this
+slice actually falls under; it now depends on that plan's Phase A
+(catalogue + resolver) landing first.
 *Acceptance:* all six sectors are visually distinct, correctly labelled
 and correctly placed around the centre hexagon; the five empty sectors
 read as "not built yet" rather than as a bug (section 13); `stage_gate`
@@ -883,13 +1077,82 @@ correctly locks/unlocks the Foraging demonstration nodes.
 `stage_gate.gd` (new keys only, no mechanism change).
 
 **Slice 9 — Final feature-gating, accessibility and layout
-verification.**
+verification (run 22 Aug 2026).**
 A dedicated pass through every acceptance-criterion combination in
 section 14 across every zone built in slices 1–8, plus the specific
 early-Challenge-gating and fully-unlocked-play checks. This is a
 verification slice, not a build slice — its "files" are the check
-suites and Dave's own hands-on pass, not new code.
-*Acceptance:* every row of section 14's list, for every zone.
+suites and Dave's own hands-on pass, not new code, though two small,
+unambiguous gaps the pass turned up were fixed in place rather than
+just logged (both one-line, both directly required by wording already
+agreed elsewhere in this document, neither a design decision):
+
+- `FUNCTION_MAP.md` was stale (drifted since an earlier slice touched
+  `hud.gd`/`debug_panel.gd` without regenerating it) — regenerated,
+  `--check` now clean.
+- `stage_gate.gd::ACCESSIBILITY_KEYS` only had `colour_blind_mode` and
+  `settings_cog` — the seven other accessibility keys section 10
+  already lists by name (`ui_theme`, `text_scale`, `ui_typeface`,
+  `reduced_motion`, `screen_shake`, `tooltip_delay`,
+  `show_info_badges`) were never actually added, so a Challenge could
+  in principle have gated one. Added; all seven `Session` fields they
+  cover already existed.
+
+`python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
+both pass; a `mcp__godot__` boot was clean both before and after the
+`stage_gate.gd` edit (only pre-existing warnings — `hive_cell.gd`
+`offset` shadowing, two unused bee-hook parameters, `bee.gd`'s unused
+`_grace_rate_sum` and a `label` shadow, a `hive.gd` `total` shadow, an
+unused `hud.gd` signal, `debug_panel.gd`'s `panel` loop-shadow twice —
+none new, none this slice's concern to fix).
+
+**One real, unfixed gap this pass found — the slice 1b Theme migration
+is far from complete.** Section 15's own working notes call the
+migration "mechanical and greppable"; running that exact grep
+(`add_theme_font_size_override` vs `theme_type_variation` per file)
+shows it was only carried through `colony_panel.gd`, `nursery_panel.gd`,
+`main_menu.gd`, `winter_panel.gd`, `challenge_complete.gd` and `ui.gd`.
+**`hud.gd` — the file slices 2 and 3 both target, and the single
+biggest source of on-screen UI text — still has all 50 of its original
+`add_theme_font_size_override` calls and zero `theme_type_variation`
+uses**, and `debug_panel.gd` (8 calls), `game_over.gd` (3) and
+`gallerin_panel.gd` (1) are the same. Concretely: `Session.text_scale`
+at 200% will correctly resize the Colony/Nursery drawers, main menu and
+winter forecast, but **not** the top-right controls, goal shelf,
+selection tray, command tray or settings window — i.e. most of what a
+player has open on screen most of the time. This fails section 14's
+"every text scale up to 200% reflows without clipping" criterion for
+those zones outright; it is not a maybe. Fixing it is real slice-1b
+build work (a mechanical but sizeable migration across ~60 more call
+sites), not something to wave through inside a verification-only
+slice — flagged here as the concrete next step rather than fixed
+silently.
+
+**One thing this pass could not settle and needs Dave's eyes rather
+than more reading:** `colony_panel.gd`, `nursery_panel.gd` and `ui.gd`
+all assign `theme_type_variation = "Small"` to `Button` nodes (e.g.
+`colony_panel.gd`'s role-row buttons, favourite-star buttons), but
+`ui_theme.gd::build_theme()` only registers `"Small"` (and the other
+three variations) against base type `"Label"` — `theme.set_type_
+variation("Small", "Label")`. Whether Godot's theme lookup actually
+serves a `"Small"`-variation font size to a `Button` in that situation,
+or silently falls back to the Button's own default, is a real-engine
+question this session's static checks can't answer either way — worth
+a specific eyes-on check (open Colony/Nursery, push text scale to
+200%, see whether the role-row and star buttons' text actually grows)
+rather than assuming either outcome.
+
+*Acceptance:* every row of section 14's list, for every zone —
+**met** for the zones slice 1b actually migrated (Colony/Nursery
+drawers, main menu, winter forecast, Challenge-completion screen);
+**not met** for `hud.gd`'s and `debug_panel.gd`'s zones at non-default
+text scale, pending the migration gap above. Feature-gating (early-
+Challenge vs fully-unlocked) and the two check suites are otherwise
+clean. Everything visual/behavioural in section 14 beyond what a
+static read and a clean boot can confirm — actual rendering at each
+resolution/theme/scale, the narrow-window reflow, the bottom-row
+grows-taller rule under real content — still needs Dave's own
+hands-on pass; nothing here substitutes for that.
 
 ---
 
@@ -897,38 +1160,35 @@ suites and Dave's own hands-on pass, not new code.
 
 **Risks:**
 
-- **Font-size-override multiplier vs. a project theme resource.**
-  Section 7 proposes multiplying the many existing per-control
-  `add_theme_font_size_override` calls rather than swapping a project-
-  wide `Theme` resource. This is lower-effort given how the codebase is
-  already written, but means text scale must be threaded through every
-  panel's build/refresh function rather than applied once centrally —
-  worth confirming this is genuinely cheaper once slice 1 is underway,
-  not just assumed here.
-- **Reflow at 200% on the bottom row.** With a compact selection tray,
-  a command tray, and the Gallerin reserve all sharing the bottom of
-  the screen, 200% text scale is the state most likely to break the
-  "command tray never enters the Gallerin reserve" rule. Section 15's
-  slice 3 acceptance criterion calls this out explicitly, but it is the
-  single highest layout-collision risk in the whole plan.
+- **Theme-resource migration cost.** Section 7's Theme-resource
+  decision (chosen over a per-call multiplier for accessibility and
+  future-proofing) is the right call, but it is not free: every
+  existing `add_theme_font_size_override` call site across `hud.gd`,
+  `colony_panel.gd`, `nursery_panel.gd`, `debug_panel.gd` and the rest
+  needs converting to a type-variation assignment. The migration is
+  mechanical and greppable (section 15's working-notes list the exact
+  call-site string), but it makes slice 1 the largest slice in the
+  sequence, and a converted panel needs a quick visual check per file
+  rather than being assumed correct from the source diff alone.
 - **Honeycomb-texture legibility.** The relief-only (no colour-contrast)
   texture approach in section 6 is a reasonable direction but genuinely
-  needs an eyes-on check once built — "will it actually read as texture
-  and not just look slightly noisy" cannot be confirmed on paper.
-- **Brood-stage data may not exist yet.** The Nursery drawer's "brood
-  stages" priority item (section 5) assumes `hive.gd`/`hive_cell.gd`
-  already track enough per-cell brood-stage detail to summarise; this
-  was not confirmed against the source during this pass (out of scope
-  for a planning-only session per the brief) and needs a quick check at
-  the start of slice 4 before promising the row.
+  needs an eyes-on check once built — Dave's own call is that this is
+  fine to check visually rather than resolve on paper, so it stays a
+  build-time check, not a blocking decision.
+- **Brood-stage naming.** Slice 4's new aggregation function (section
+  15) needs to read whichever stage names `hive_cell.gd` already uses
+  internally (egg/larva/capped, or its own equivalent terms) rather
+  than this document inventing new ones — a five-minute check at the
+  start of slice 4, not a design question.
 - **The player profile is new infrastructure, not a restyle.**
   `save_game.gd`'s `user://meadow_save.json` is currently the *only*
   thing Meadow writes to disk. Slice 6 adding a second persisted file
-  (section 12) is a genuinely new, if small, piece of architecture —
-  worth treating with the same care as any other new save-adjacent
-  code (`.claude/rules/saving.md`'s restore-safety rules were written
-  for `SaveGame`, not this new file, so slice 6 should establish its
-  own equivalent "what happens if this file is missing/corrupt/from an
+  (section 12), and moving `Session`'s interface preferences into it,
+  is a genuinely new, if small, piece of architecture — worth treating
+  with the same care as any other new save-adjacent code
+  (`.claude/rules/saving.md`'s restore-safety rules were written for
+  `SaveGame`, not this new file, so slice 6 should establish its own
+  equivalent "what happens if this file is missing/corrupt/from an
   older version" answer rather than assuming `SaveGame`'s answers
   automatically apply).
 
@@ -945,31 +1205,47 @@ session doesn't re-ask):
   players continue to save/load manually within a session. (Section
   12.)
 - The six skill-tree areas are named: Foraging, Brood, Hive, Colony,
-  Defense, Ecology. Only Foraging gets any node content in this plan.
-  (Section 13.)
+  Defense, Ecology. Only Foraging gets any node content in this plan
+  — the data shape and build sequence for that content now live in
+  `SKILL_TREE_PLAN.md`, this plan's layout/visual spec stays
+  authoritative (section 13).
 - No Challenge-completion screen exists yet — slice 7 builds one from
   scratch rather than restyling something already there. (Section 15,
   slice 7.)
 - The Challenges/Scenarios main-menu groups each get Dave's exact
   one-line descriptor (section 12).
+- Font-size-override multiplier vs. a project Theme resource: Theme
+  resource, for accessibility and future-proofing — full reasoning and
+  the real migration cost in section 7, slice 1b. (Section 7/15.)
+- A free, OFL-licensed pixel typeface (Pixel Operator, with Press Start
+  2P as a headings-only alternative) joins the font list. (Section 7/8.)
+- The bottom row (selection tray, command tray, Gallerin reserve) grows
+  taller rather than wider at higher text scale, dropping to a
+  scrollable body rather than pushing a neighbour sideways. (Section 2.)
+- High-contrast palette: a concrete, WCAG-AAA-checked set of values is
+  specified rather than left open. (Section 6.)
+- Interface preferences (theme, text scale, typeface, motion, tooltip
+  delay and the rest) move into the player-profile file alongside
+  completion tracking, with `Session` kept as a runtime mirror so no
+  existing call site needs rewriting; `control_groups`/`comb_overlay`
+  stay `Session`-only as run-scoped exceptions. (Section 12/15 slice 6.)
+- Brood-stage tracking: a new colony-wide aggregation (not new
+  simulation data) is added as part of slice 4, reading existing
+  per-cell state in `hive_cell.gd`/`hive.gd`. (Section 5/15 slice 4.)
 
 **Still genuinely unresolved** (Dave's call, not inferred here):
 
-1. Exact high-contrast palette values — the brief specifies dark, Dave
-   has now specified light; high-contrast is still open. (Section 6.)
-2. Whether interface preferences (theme, text scale, typeface, motion,
-   tooltip delay and the rest) should live in the new player-profile
-   file alongside completion tracking — so they survive closing and
-   reopening the game — or stay `Session`-only and reset each app
-   launch, as `Session` currently behaves. Raised by Dave's profile
-   decision but not itself specified. (Section 12.)
-3. Exact narrow-window-breakpoint and honeycomb-texture numeric values
+1. Exact narrow-window-breakpoint and honeycomb-texture numeric values
    proposed in sections 2 and 6 are starting points for the relevant
    slice to confirm visually, not settled figures.
-4. The visual treatment of the five empty skill-tree sectors (a
-   greyed-out centre hex with the area name, a "coming soon" tag, or
-   something else) — named now, but how an empty-but-labelled sector
-   should actually look is a small design call for slice 8.
+2. Press Start 2P for headings only, alongside Pixel Operator for body
+   text, vs. Pixel Operator alone for both — a small, concrete choice
+   for whichever slice sources the font files (section 7), not settled
+   here.
+3. Exact brightened values for the high-contrast theme's resource
+   accents (`accent_nectar`/`accent_honey`/`accent_wax`/`accent_grass`)
+   — the palette fixes everything else; these four are a slice-1 task
+   once built against the real backgrounds (section 6).
 
 ---
 
@@ -995,8 +1271,10 @@ session doesn't re-ask):
 | *(nothing — new)* | Challenge-completion screen, `game_over.gd`-shaped (section 15, slice 7) |
 | `stage_gate.gd` | Unchanged mechanism; more call sites, more keys, including every skill-tree node |
 | `gallerin_panel.gd` | Unchanged mechanism; its reserved corner becomes a named shared constant other trays read |
-| `session.gd` | Gains every new interface preference from sections 6/7/12 |
-| `roles.gd` | Unchanged mechanism; its colours are the section 16 open question against the new palette |
+| `session.gd` | Every existing field and call site unchanged; becomes a runtime mirror loaded from/saved to the new `player_profile.gd`, plus every new interface preference from sections 6/7/12 (section 15 slice 6) |
+| Every panel's `add_theme_font_size_override` calls | Converted to named Theme type variations (Heading/Body/Small/Tiny) built by `ui_theme.gd` (section 7/15 slice 1b) |
+| `roles.gd` | Unchanged mechanism; its colours stay separate from the new brand palette, for now (Dave's decision, section 6) |
+| *(nothing — new)* | `hive.gd`/`hive_cell.gd` colony-wide brood-stage aggregation, reading existing per-cell state (section 5/15 slice 4) |
 | `game_over.gd` | Restyled under new tokens only |
 | `challenge_runner.gd` | Gains optional per-sub-stage numeric progress for the goal shelf (section 15 slice 2) |
 

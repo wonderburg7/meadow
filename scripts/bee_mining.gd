@@ -52,6 +52,7 @@ static func miner_dig(bee: Node2D, delta: float) -> void:
 
 	if bee.target_block.add_mine_progress(delta):
 		bee.target_block.release_miner(bee)
+		DiagnosticLog.count_block_mined()
 		if bee.world:
 			bee.world.finish_mining(bee.target_block)
 		bee.target_block = null

@@ -139,6 +139,7 @@ static func feed_brood(bee: Node2D, cell: Node2D) -> void:
 			bee.nurse_carb = 0.0
 			bee.nurse_carb_type = ""
 		cell.feed_brood(GameConfig.brood_feed_seconds_gyne, true)
+		DiagnosticLog.count_brood_feed()
 		return
 
 	var on_honey: bool = bee.nurse_carb_type == "honey"
@@ -151,6 +152,7 @@ static func feed_brood(bee: Node2D, cell: Node2D) -> void:
 		GameConfig.brood_feed_seconds_honey if on_honey else GameConfig.brood_feed_seconds,
 		on_honey
 	)
+	DiagnosticLog.count_brood_feed()
 
 
 ## Only gyne larvae eat royal jelly, and only nurses set to make it
@@ -192,6 +194,7 @@ static func nurse_make_jelly(bee: Node2D, delta: float) -> void:
 	if bee.timer > 0.0:
 		return
 	bee.nurse_jelly += GameConfig.jelly_per_batch
+	DiagnosticLog.count_jelly_batch()
 	bee.state = State.NURSE_IDLE
 
 

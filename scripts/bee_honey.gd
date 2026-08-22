@@ -93,6 +93,7 @@ static func honey_deposit(bee: Node2D, delta: float) -> void:
 		bee.state = State.HONEY_IDLE   # still carrying -- find another pot
 	else:
 		bee.honey_load = 0.0
+		DiagnosticLog.count_honey_batch_deposited()
 		bee.state = State.FANNING if bee.fan_target != null else State.HONEY_IDLE
 
 
