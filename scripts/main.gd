@@ -50,6 +50,7 @@ const GameOver = preload("res://scripts/game_over.gd")
 const ChallengeComplete = preload("res://scripts/challenge_complete.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
 const NurseryPanel = preload("res://scripts/nursery_panel.gd")
+const ForagingPanel = preload("res://scripts/foraging_panel.gd")
 const DeathMarker = preload("res://scripts/death_marker.gd")
 const RainEffect = preload("res://scripts/rain_effect.gd")
 const RivalHive = preload("res://scripts/rival_hive.gd")
@@ -81,6 +82,7 @@ const WorldBuilding = preload("res://scripts/world_building.gd")
 const Saving = preload("res://scripts/saving.gd")
 const InputSelection = preload("res://scripts/input_selection.gd")
 const OrdersZones = preload("res://scripts/orders_zones.gd")
+const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
 const FogOfWar = preload("res://scripts/fog_of_war.gd")
@@ -91,6 +93,7 @@ var world_building: Node
 var saving: Node
 var input_selection: Node
 var orders_zones: Node
+var foraging_stats: Node
 var year_winter: Node
 var camera_view: Node
 var fog_of_war: Node
@@ -167,6 +170,7 @@ var game_over: CanvasLayer
 var challenge_complete: CanvasLayer
 var colony_panel: CanvasLayer
 var nursery_panel: CanvasLayer
+var foraging_panel: CanvasLayer
 var winter_panel: CanvasLayer
 var gallerin_panel: CanvasLayer
 var rival: Node2D = null
@@ -344,6 +348,8 @@ func _ready() -> void:
 	orders_zones = OrdersZones.new()
 	orders_zones.main = self
 	add_child(orders_zones)
+	foraging_stats = ForagingStats.new()
+	add_child(foraging_stats)
 	year_winter = YearWinter.new()
 	year_winter.main = self
 	add_child(year_winter)
@@ -415,6 +421,7 @@ func _ready() -> void:
 	hud.role_requested.connect(orders_zones._on_role_requested)
 	hud.view_toggle_requested.connect(camera_view._toggle_view)
 	hud.colony_panel_requested.connect(func(): year_winter._toggle_panel(colony_panel))
+	hud.foraging_panel_requested.connect(func(): year_winter._toggle_panel(foraging_panel))
 	hud.speed_requested.connect(camera_view._on_speed_requested)
 	hud.cell_designation_requested.connect(orders_zones._on_cell_designation_requested)
 	hud.cell_hatch_role_requested.connect(orders_zones._on_cell_hatch_role_requested)
@@ -473,6 +480,9 @@ func _ready() -> void:
 	# problem strip -- one place decides what a signal's action does.
 	colony_panel.signal_clicked.connect(year_winter._on_signal_clicked)
 	add_child(colony_panel)
+
+	foraging_panel = ForagingPanel.new()
+	add_child(foraging_panel)
 
 	nursery_panel = NurseryPanel.new()
 	# closing the window has to take the glow off the comb with it,

@@ -21,6 +21,7 @@ signal focus_requested(type: String)
 signal role_requested(role_name: String)
 signal view_toggle_requested()
 signal colony_panel_requested()
+signal foraging_panel_requested()
 signal speed_requested(speed_scale: float)
 signal cell_designation_requested(cell: Node2D, type: String)
 ## `focus` and `use_automine` carry the sub-mode the chosen role needs --
@@ -232,6 +233,7 @@ var view_button_label: Label
 var winter_button: Button
 var colony_button: Button
 var nursery_button: Button
+var foraging_button: Button
 ## Every button built by _icon_button, so _apply_interface_label_visibility
 ## can show/hide each one's text label together and restore its full
 ## width -- winter_button is deliberately absent, it has no icon yet.
@@ -526,6 +528,16 @@ func _build_top_right_bar() -> void:
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
 	row2.add_child(nursery_info)
+
+	# Plain text button, no icon of its own yet -- same fallback as
+	# winter_button below, until UI_PLAN.md section 8's icon set grows one.
+	foraging_button = Button.new()
+	_style_button(foraging_button)
+	foraging_button.text = "Foraging"
+	foraging_button.custom_minimum_size = Vector2(78, 26)
+	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
+	row2.add_child(foraging_button)
+	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
 
 	# Only appears once a winter has been scheduled -- until then there is
 	# nothing for it to say, and a permanently dead button is worse than

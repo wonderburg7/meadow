@@ -290,6 +290,9 @@ func _refresh_panels(bees: Array) -> void:
 	if main.colony_panel.is_open():
 		main.colony_panel.refresh(counts, main.hud.corner_texts, main.history_samples, main.hud.shown_signals)
 
+	if main.foraging_panel.is_open():
+		main.foraging_panel.refresh(main.foraging_stats)
+
 	if main.nursery_panel.is_open() or _nursery_stat_pinned():
 		main.nursery_panel.refresh(
 			main.hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds,

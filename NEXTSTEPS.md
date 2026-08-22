@@ -30,10 +30,17 @@ plan file, full history in `git log`.
 3. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
-4. **Foraging ecology plan -- Slice 0 done, Slice 1 next.** Multi-seed
-   on/off baseline recorded in `FORAGING_ECOLOGY_PLAN.md`'s "Slice 0
-   results". Dave still owes a hand-recorded `perf.gd` baseline (no
-   `mcp__godot__*` tools available to automate it). Start Slice 1
-   (foraging-stats instrumentation + read-only panel) in a **fresh
-   session** -- its own section is implementation-ready, and the plan
-   says not to combine slices.
+4. **Foraging ecology plan -- Slices 0 and 1 both done, awaiting Dave's
+   hands-on check.** `foraging_stats.gd` (trip timing, flowers/trip,
+   empty-return rate, per-species breakdown) plus a new read-only
+   Foraging panel (press **G**, or the button next to Nursery) --
+   `source_checks.py`/`balance_tests.py` pass and a Godot boot is clean,
+   but nothing headless can see `foraging_stats.gd`'s numbers (it's
+   never written to the `.jsonl` log), so this needs Dave to open a run
+   with Auto scouting or Auto-recruitment on and sanity-check the panel
+   against what he sees happening. Full detail in
+   `FORAGING_ECOLOGY_PLAN.md`'s "Slice 1 results". Dave still separately
+   owes a hand-recorded `perf.gd` baseline from Slice 0 (no
+   `mcp__godot__*` tools were available in that session). Slice 2
+   onward (species registry, new species, patchy meadow, local search...)
+   stays scope-indexed only until Dave picks the next one to refine.

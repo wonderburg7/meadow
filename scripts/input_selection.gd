@@ -17,6 +17,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				main.year_winter._toggle_panel(main.colony_panel)
 			KEY_N:
 				main.year_winter._toggle_panel(main.nursery_panel)
+			KEY_G:
+				main.year_winter._toggle_panel(main.foraging_panel)
 			KEY_F:
 				main.camera_view._zoom_to_fit()
 			KEY_O:

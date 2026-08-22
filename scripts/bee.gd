@@ -263,6 +263,22 @@ var entrance_wait_target: Vector2 = Vector2(INF, INF)
 ## cell's share). Both -1/0 sentinels outside a trip.
 var trip_start_time: float = 0.0
 var trip_load_amount: float = -1.0
+## Foraging ecology plan Slice 1 (FORAGING_ECOLOGY_PLAN.md): trip timing
+## broken into components, reset at the same points trip_start_time is
+## and read out by _score_trip. trip_first_flower_time is the sim_time
+## of this trip's first flower contact -- -1.0 means none yet, so
+## search+flight time (trip_first_flower_time - trip_start_time) is only
+## ever computed once it's real. trip_handling_seconds sums the time
+## spent between a start_collecting/finish_collecting pair, across every
+## flower visited this trip, not just the last one. trip_flowers_visited
+## is a plain per-trip count, distinct from DiagnosticLog's lifetime
+## total. _flower_visit_started_at is per-visit scratch, not per-trip --
+## it only ever needs to survive from one start_collecting call to its
+## matching finish_collecting.
+var trip_first_flower_time: float = -1.0
+var trip_handling_seconds: float = 0.0
+var trip_flowers_visited: int = 0
+var _flower_visit_started_at: float = -1.0
 ## Set on both bees the instant a recruitment match happens at the
 ## entrance (see BeeForaging.wait_at_entrance) so their next several
 ## scored trips can each be logged against the rate each had *before* the

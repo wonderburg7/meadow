@@ -247,13 +247,81 @@ happening on screen. Update `FUNCTION_MAP.md` only if `hud.gd` or
 another mapped file is touched — a new standalone panel file doesn't
 need an entry.
 
+### Slice 1 results (22 Aug 2026)
+
+**Built as specced**, all six tasks:
+
+- `foraging_stats.gd` — a plain `Node` child of `main` (`world_building.gd`/
+  `orders_zones.gd`'s pattern), holding running counters plus a
+  `"resource_type|species"` breakdown. Nothing scans the bee list; it's
+  fed one call per scored trip. No `reset()` — every reset path already
+  goes through `get_tree().reload_current_scene()`, which recreates
+  `main` and every sibling under it from scratch.
+- `bee.gd` gained four fields next to the existing
+  `trip_start_time`/`trip_load_amount`: `trip_first_flower_time`,
+  `trip_handling_seconds`, `trip_flowers_visited`, and a private
+  per-visit scratch stamp `_flower_visit_started_at`.
+- `bee_foraging.gd`: `start_collecting` stamps first-contact time and
+  bumps the flower count; `finish_collecting` accumulates handling
+  seconds; `_leave_hive_and_resume` and `start_scouting` reset the new
+  fields at the same point they already reset `trip_start_time`;
+  `_score_trip` reads them out and calls
+  `bee.world.foraging_stats.record_trip(...)` before `scout_species` is
+  cleared, so a still-scouting bee's in-progress species is captured.
+  **No decision logic touched anywhere** — every edit is either a stamp,
+  an accumulate, or a reset at a point that already existed.
+- `foraging_panel.gd` — new `CanvasLayer`, `colony_panel.gd`'s pattern
+  (code-built `PanelContainer`, collapsible sections, `toggle()`/
+  `is_open()`/`refresh()`). Overview (trips scored, flowers visited,
+  avg trip/search+flight/handling time, empty-return rate), Species
+  (same breakdown per `resource_type`/species), Recruitment (reads
+  `DiagnosticLog.event_count` for matches/settled/scouting/orientation —
+  no new DiagnosticLog fields needed). No heatmap, no patch memory, as
+  specced.
+- Wired into `main.gd` (new `foraging_stats`/`foraging_panel` fields,
+  instantiated alongside `orders_zones`/`colony_panel`), `hud.gd` (a
+  plain-text "Foraging" button next to Nursery, no icon yet — matches
+  `winter_button`'s own fallback), `input_selection.gd` (**G** key,
+  `C`/`N`/`F`/`O` were already taken), and `year_winter.gd` (refreshed
+  once a second alongside the colony panel, only while open).
+
+**Same gate as the existing trip-scoring mechanism, deliberately not
+loosened.** `trip_start_time`/`trip_load_amount`/`_score_trip` already
+only run when `GameConfig.scouting_on` or `auto_recruitment_on` is on —
+with both off, no trip has ever been scored, on any build before this
+slice. The new fields and the `foraging_stats.gd` call follow that same
+gate rather than running unconditionally, since "no behavioural change"
+also means "no new always-on per-frame bookkeeping that wasn't there
+before" — a bee with both toggles off pays nothing extra. This does mean
+the panel reads all zeroes with both toggles off; the panel's own hint
+label says so rather than looking broken.
+
+**Not verified headlessly, unlike Slice 0.** `foraging_stats.gd` is
+pure runtime state for the panel — nothing in this slice writes it to
+`DiagnosticLog`'s `.jsonl`, so `tools/run_scenario.py` (which only ever
+reads that file) has no way to see it. Adding a logging path for it
+wasn't in Slice 1's task list and would be scope creep onto Slice 1
+proper. Checked instead: `source_checks.py` and `balance_tests.py` both
+pass (16/16); a `mcp__godot__run_project` boot completed with no parser
+or runtime errors (only pre-existing warnings, plus one new "declared
+but never used" warning on `_flower_visit_started_at` that's the same
+false positive `_grace_rate_sum` already has — both are written from
+`bee.gd` and only ever read via `bee.<field>` from `bee_foraging.gd`,
+which Godot's static analysis doesn't trace across scripts). **Still
+needs Dave's hands-on check**: open a run with Auto scouting or
+Auto-recruitment on, press **G**, and confirm the numbers move and look
+sane against what's visibly happening — this was not and cannot be
+verified by anything above.
+
 ---
 
 ## Next physical step
 
-Slice 0 first: add the one-line seed override to `main.gd`, pick the
-fixed seed list, and re-run the existing on/off comparison across
-seeds. That's a single small Claude Code session. Slice 1 (the
-foraging panel) is a second, separate session once Slice 0's numbers
-are in and reviewed — don't combine them, per the brief's own "don't
-combine slices into one implementation pass" rule.
+Slices 0 and 1 are both done (see their results sections above). Next:
+Dave's hands-on check of the new Foraging panel (**G** key, or the
+button next to Nursery) with Auto scouting or Auto-recruitment on.
+After that, Slice 2 onward (species registry, new species, patchy
+meadow, local search, probabilistic choice, handling experience, finite
+pollen, proximity recruitment) are scope-indexed only, not yet
+refined — refine one at a time, in its own session, when Dave's ready
+to pick the next slice.

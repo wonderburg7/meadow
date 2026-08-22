@@ -277,6 +277,14 @@ static func reject_flower(bee: Node2D) -> void:
 
 static func start_collecting(bee: Node2D) -> void:
 	DiagnosticLog.count_flower_visit(bee.current_flower)
+	# Slice 1 trip-timing instrumentation -- gated the same as
+	# trip_start_time/trip_load_amount just below, since those are what
+	# _score_trip needs to actually be running for this to mean anything.
+	if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+		if bee.trip_first_flower_time < 0.0:
+			bee.trip_first_flower_time = Session.sim_time
+		bee.trip_flowers_visited += 1
+		bee._flower_visit_started_at = Session.sim_time
 	if GameConfig.tarsal_markers_on:
 		DiagnosticLog.count_tarsal_mark()
 	# Checked before this bee's own mark overwrites whatever was here --
@@ -355,6 +363,9 @@ static func collect(bee: Node2D, delta: float) -> void:
 
 
 static func finish_collecting(bee: Node2D) -> void:
+	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee._flower_visit_started_at >= 0.0:
+		bee.trip_handling_seconds += Session.sim_time - bee._flower_visit_started_at
+		bee._flower_visit_started_at = -1.0
 	if bee.current_flower and is_instance_valid(bee.current_flower):
 		# stay away until it's had time to fully recharge
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
@@ -506,6 +517,21 @@ static func _score_trip(bee: Node2D) -> void:
 	var amount: float = max(bee.trip_load_amount, 0.0)
 	var elapsed: float = max(Session.sim_time - bee.trip_start_time, 0.1)
 	var rate: float = amount / elapsed
+
+	# Slice 1 (FORAGING_ECOLOGY_PLAN.md): feed the same trip this rate was
+	# just computed from into foraging_stats.gd, before scout_species is
+	# cleared further down so a still-scouting bee's in-progress species
+	# is captured too. bee.world is main -- see bee.gd's own field
+	# comment -- and can be null very early (a bee scored before main has
+	# finished wiring itself up shouldn't happen, but this matches every
+	# other bee.world caller's null guard rather than assuming).
+	if bee.world != null and (GameConfig.scouting_on or GameConfig.auto_recruitment_on):
+		var search_flight: float = (bee.trip_first_flower_time - bee.trip_start_time) if bee.trip_first_flower_time >= 0.0 else 0.0
+		var species: String = bee.preferred_species if bee.preferred_species != "" else bee.scout_species
+		bee.world.foraging_stats.record_trip(
+			bee.resource_type, species, search_flight, bee.trip_handling_seconds,
+			elapsed, bee.trip_flowers_visited, amount
+		)
 	if bee.trips_scored < GameConfig.recruit_grace_trips:
 		# Plain mean, not the EMA below, while still inside the grace
 		# window -- an EMA started on trip one is ~49% decided by that
@@ -620,6 +646,9 @@ static func _leave_hive_and_resume(bee: Node2D) -> void:
 		bee.world.move_bee_out_of_hive(bee)
 	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.role == Role.FORAGER:
 		bee.trip_start_time = Session.sim_time
+		bee.trip_first_flower_time = -1.0
+		bee.trip_handling_seconds = 0.0
+		bee.trip_flowers_visited = 0
 		if bee.is_scouting:
 			_send_to_scout_point(bee)
 			return
@@ -658,6 +687,9 @@ static func start_scouting(bee: Node2D) -> void:
 	bee.scout_current_start_point = Vector2(INF, INF)
 	bee.scout_best_start_point = Vector2(INF, INF)
 	bee.trip_load_amount = -1.0
+	bee.trip_first_flower_time = -1.0
+	bee.trip_handling_seconds = 0.0
+	bee.trip_flowers_visited = 0
 	if not bee._is_inside_hive():
 		bee.trip_start_time = Session.sim_time
 		_send_to_scout_point(bee)
