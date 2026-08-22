@@ -62,6 +62,8 @@ const Shapes = preload("res://scripts/shapes.gd")
 const Levels = preload("res://scripts/levels.gd")
 const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
 const ScenarioActions = preload("res://scripts/scenario_actions.gd")
+const ScenarioPresets = preload("res://scripts/scenario_presets.gd")
+const PlayerProfile = preload("res://scripts/player_profile.gd")
 
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
@@ -437,6 +439,7 @@ func _ready() -> void:
 	# that only when the player asks for it from the settings window.
 	var menu := MainMenu.new()
 	menu.level_chosen.connect(_on_level_chosen)
+	menu.scenario_chosen.connect(_on_scenario_chosen)
 	add_child(menu)
 	if Session.menu_pending:
 		menu.open()
@@ -828,6 +831,21 @@ func _on_restart_after_loss() -> void:
 	get_tree().reload_current_scene()
 
 func _on_level_chosen(level: int) -> void:
+	Session.starting_level = level
+	Session.menu_pending = false
+	Session.reset_run_state()
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
+
+## Scenario counterpart of _on_level_chosen -- also applies the chosen
+## difficulty preset to GameConfig before the reload, and records that
+## this level+preset combination has been played (UI_PLAN.md section 12,
+## slice 6). The preset write has to land before reload_current_scene()
+## rebuilds the world, since world_building.gd reads GameConfig at boot.
+func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void:
+	ScenarioPresets.apply(preset_key, custom_overrides)
+	PlayerProfile.mark_scenario_played(level, preset_key)
 	Session.starting_level = level
 	Session.menu_pending = false
 	Session.reset_run_state()

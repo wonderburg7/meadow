@@ -249,6 +249,7 @@ func _set_pinned(key: String, pressed: bool) -> void:
 		Session.pinned_stats.append(key)
 	elif not pressed:
 		Session.pinned_stats.erase(key)
+	Session.save_preferences()
 	if star_buttons.has(key):
 		star_buttons[key].text = "★" if pressed else "☆"
 	pinned_changed.emit()

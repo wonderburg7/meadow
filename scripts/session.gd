@@ -2,6 +2,14 @@ extends Node
 ## Autoload. Everything that is *not* a balance number: the clock, flags
 ## that survive a scene reload, and the player's interface preferences.
 ##
+## The interface-preferences block below (and the appearance/accessibility
+## fields further down) are a runtime mirror of player_profile.gd's
+## persisted "preferences" block (UI_PLAN.md section 12): _ready() loads
+## whatever was last saved, and save_preferences() writes the current
+## values back. Every existing field name and call site stays exactly as
+## it was -- nothing outside this file and player_profile.gd needs to
+## know the durable copy exists.
+##
 ## These all used to live in GameConfig alongside `egg_pollen_cost` and
 ## `brood_develop_time`, which caused two real problems. The settings window
 ## had to keep a hand-written list of which keys were actually tunable,
@@ -22,6 +30,18 @@ extends Node
 ## DiagnosticLog's existence -- new call sites of reset_run_state() get
 ## covered automatically without Session needing to know why.
 signal run_reset()
+
+const PlayerProfile = preload("res://scripts/player_profile.gd")
+
+func _ready() -> void:
+	PlayerProfile.apply_to_session(PlayerProfile.read())
+
+## Writes every interface-preference field to the player profile file, so
+## it survives a full game restart, not just a Restart Run. Called
+## wherever one of those fields is actually set -- see the doc comment at
+## the top of this file for the full list of call sites.
+func save_preferences() -> void:
+	PlayerProfile.save_preferences()
 
 # --- the clock ----------------------------------------------------
 ## In-game seconds elapsed. Advanced by main.gd, saved with the run.

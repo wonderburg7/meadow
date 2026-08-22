@@ -31,6 +31,7 @@ extends Node
 
 const Roles = preload("res://scripts/roles.gd")
 const Shapes = preload("res://scripts/shapes.gd")
+const PlayerProfile = preload("res://scripts/player_profile.gd")
 
 ## How close to the cavity's centre counts as "moved there" for 1.2, and
 ## how much nectar/pollen counts as a "small" store for 1.5/1.6. All four
@@ -467,6 +468,7 @@ func _advance() -> void:
 
 func _complete() -> void:
 	active = false
+	PlayerProfile.mark_challenge_complete(Session.starting_level)
 	main.stage_gate.stop()
 	_apply_stage_gate_to_ui()
 	main.hud.set_challenge_goal("")

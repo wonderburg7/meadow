@@ -883,6 +883,7 @@ static func setting_get(key: String):
 static func setting_set(key: String, value) -> void:
 	if key in SESSION_KEYS:
 		Session.set(key, value)
+		Session.save_preferences()
 	else:
 		GameConfig.set(key, value)
 
@@ -1330,6 +1331,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 		elif not pressed:
 			Session.pinned_stats.erase(key)
 		star.text = "★" if pressed else "☆"
+		Session.save_preferences()
 		# The corner has to be told: no number changed, so nothing else
 		# would prompt it to redraw.
 		for hud in get_tree().get_nodes_in_group("huds"):

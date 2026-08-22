@@ -7,81 +7,88 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **UI Plan slices 1-5 are built** (`UI_PLAN.md` section 15). Slices
-   1-4 are as before (tokens/text-scale foundation, two-row top bar plus
-   goal shelf, selection/command trays, Colony/Nursery drawer restyle
-   and brood stages -- see `git log` for the slice-by-slice detail, or
-   the previous version of this file for slice 4's full description).
-   **Slice 5** splits the settings window's overloaded "Interface"
-   category into **Appearance** and **Accessibility** (`debug_panel.gd`
-   `CATEGORIES`/`TUNABLES`), and adds a row for every `Session` field
-   slices 1-3 introduced that didn't already have one:
-   - **Appearance**: history/plot settings, the low-energy warning
-     trio, "Frame rate" (star), "Dr Gallerin" (all moved from
-     "Interface" unchanged), plus two new rows -- **Theme**
-     (dark/light/high contrast) and **Show 8x speed button**
-     (`Session.show_speed_8x`, live -- see below).
-   - **Accessibility**: "Show info icons" and "Colour-blind labels"
-     (moved from "Interface" unchanged), plus five new rows --
-     **Typeface**, **Text scale** (100-200%), **Reduced motion**,
-     **Screen shake** (off/reduced/full), **Tooltip delay**.
-   Where an existing row went (which of the two categories it landed
-   in) was my judgement call, not something the plan pinned down --
-   worth a glance in case any of it reads wrong to you.
-   New control type: a small "‹ label ›" row (`_make_options_row`) for
-   settings whose value is one of a fixed set of strings, alongside the
-   existing toggle/star/+-numeric rows -- nothing like it existed
-   before, since every prior string-valued setting was still a plain
-   number or bool.
-   **What's actually live vs. a reserved slot:** Show 8x speed button is
-   fully wired -- `hud.gd`'s speed row now always builds the 8x button
-   and only toggles `.visible`, and a new `hud.gd::refresh_speed_
-   visibility()` (dispatched the same way `pinned_stats_changed()` is)
-   makes the settings-window toggle apply immediately rather than only
-   on the next reload. Tooltip delay is wired to Godot's own
-   `ProjectSettings` tooltip timer, applied on every +/- press and once
-   at boot. Theme/Typeface/Text scale change `Session` immediately but
-   only reach a panel the next time it's built (`colony_panel.gd`/
-   `nursery_panel.gd`/`winter_panel.gd` each build their `UiTheme.
-   build_theme()`/stylebox once in `_ready()`, and `hud.gd`'s own top
-   bar doesn't consume `UiTheme` yet) -- deliberately not wiring a
-   cross-panel live-refresh broadcast this slice, since two of those
-   three panels are drawers that are invisible until reopened anyway, so
-   in practice this is very close to "immediate" already; flag to Dave
-   if it should be tightened further. Reduced motion and Screen shake
-   are genuinely inert placeholders still -- nothing in the codebase
-   reads either yet (screen shake because no shake effect exists at
-   all; reduced motion because nothing has wired it to the existing
-   pulse/flash effects in `bee.gd`/`flower.gd`/`crab_spider.gd` despite
-   `UI_PLAN.md` section 7 describing that as the intent) -- both are
-   explicitly reserved slots per their own `session.gd` doc comments, so
-   this isn't a regression, but it's a real gap if Dave expected them to
-   do something yet.
+1. **UI Plan slices 1-6 are built** (`UI_PLAN.md` section 15). Slices 1-5
+   are as before -- see `git log` for the slice-by-slice detail, or the
+   previous version of this file for slice 5's full description.
+   **Slice 6** builds the main menu's honeycomb layout, the Challenges/
+   Scenarios rename, the Scenario difficulty-preset system, and a new
+   `player_profile.gd` persistence layer:
+   - `main_menu.gd` is rebuilt: each Challenge/Scenario is now a
+     hex-shaped tile (`Polygon2D` fill/border, same "flat shapes, no
+     imported art" placeholder approach as Dr Gallerin) laid out in a
+     short honeycomb strip per group, restyled under `ui_theme.gd`.
+     Clicking a tile opens a detail pane below (title, blurb, a
+     completion tick if it's been finished/played before, a Start
+     button). Group headings read "Challenges" and "Scenarios" with
+     Dave's exact one-line descriptors.
+   - New `scenario_presets.gd`: Relaxed/Standard/Demanding/Custom, each
+     an explicit (not delta) value for four `GameConfig` fields
+     (`energy_burn_rate`, `nectar_recharge_rate`, `pollen_recharge_rate`,
+     `winter_burn_factor`) plus a plain-English description per preset.
+     Applied via `levels.gd`'s existing `apply_config_overrides` (same
+     allowlisted-write mechanism the headless playtest harness uses).
+     Custom exposes the same four fields as +/- rows in the detail pane.
+     Only reachable from a Scenario tile, never a Challenge.
+   - New `player_profile.gd`: a second `user://` JSON file, separate
+     from `save_game.gd`'s per-colony save. Holds completed Challenge
+     levels, played Scenario+preset combinations, and a durable copy of
+     every interface preference from slices 1-5 (theme, typeface, text
+     scale, pinned stats, and the rest -- `control_groups`/`comb_overlay`
+     stay Session-only, run-scoped). `Session` keeps every existing
+     field and call site unchanged; it now loads from the profile in a
+     new `_ready()` and writes back via `Session.save_preferences()`,
+     called from `debug_panel.gd::setting_set` (the settings window's
+     existing choke point) plus the handful of preferences set outside
+     it (the pinned-stat stars in `colony_panel.gd`/`nursery_panel.gd`/
+     `debug_panel.gd`, the selection-tray field cog and the discard-
+     warning "don't show again" checkbox, both in `hud.gd`).
+   **Judgement calls made this slice, worth a look:**
+   - Scenarios have no win condition, so "completion" for them means
+     "started at least once", not "won" -- the honeycomb tick reads
+     "Played before." for a Scenario and "Completed." for a Challenge.
+   - The honeycomb is one row per group (2 Challenge tiles, 3 Scenario
+     tiles), not a packed multi-row grid -- reasonable for how few
+     entries either group has today, but would need revisiting if a
+     group ever grows past what one row comfortably fits.
+   - Each hex tile's click area is its full rectangular bounding box,
+     not the exact hexagon outline -- tiles are given a horizontal gap
+     specifically so neighbouring bounding boxes never overlap, at the
+     cost of true edge-to-edge honeycomb tessellation. Reasonable
+     placeholder-art tradeoff, flagged in case Dave wants true
+     tessellation once real art exists.
+   - Standard's preset restates the baseline value for all four fields
+     (rather than an empty override dict) specifically so picking
+     Standard after Relaxed/Demanding/Custom always resets those fields,
+     rather than leaving the previous preset's numbers sitting in
+     `GameConfig` -- this was a real correctness risk worth getting
+     right rather than reusing the dev `--scenario=` boot path's
+     leak-is-fine assumption as-is.
    `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
-   (regenerated) all pass/are clean. **No `mcp__godot__` boot check this
-   session** -- the Godot MCP tools weren't available, so this slice has
-   had no real GDScript parse, only the two Python check suites (which
-   are not a real parser -- see `.claude/rules/gdscript.md`).
-   **Not yet hands-on checked, any of slices 2-5** (slice 1 has had a
-   partial check; see `git log`). Open the settings window and confirm:
-   "Appearance" and "Accessibility" both appear where "Interface" used
-   to, each with the rows listed above and nothing missing; the Theme/
-   Typeface/Screen shake rows cycle correctly with the ‹/› buttons and
-   show a sensible label; Text scale and Tooltip delay step correctly
-   between their stated min/max; toggling "Show 8x speed button" adds/
-   removes the 8x button in the top-right bar straight away, with no
-   change to 1x/2x/4x's layout; every row's info badge reads sensibly.
-   Also still outstanding from before: slice 4's Colony/Nursery drawer
-   checks, and slices 2-3's top bar/goal shelf/selection tray/command
-   tray checks -- see the previous version of this file (`git log` /
-   `git show`) for those full lists, all of it still applies. Also
-   worth a look at a narrow window width (~800px) to confirm nothing
-   clips.
-   **Next slice** is slice 6 (main menu honeycomb layout, Challenges/
-   Scenarios rename, scenario presets, and the new `player_profile.gd`
-   persistence layer) -- `UI_PLAN.md` section 15 has the detail; likely
-   files `main_menu.gd`, `levels.gd`, new `player_profile.gd`,
-   `session.gd`, `debug_panel.gd`.
+   (regenerated) all pass/are clean. **A `mcp__godot__run_project` boot
+   check was clean this session** -- no new parse/runtime errors beyond
+   pre-existing warnings unrelated to this slice's files.
+   **Not yet hands-on checked.** Open the main menu and confirm: both
+   groups show as hex tiles with the right titles; clicking a tile opens
+   the detail pane with its blurb; a Scenario tile shows the four preset
+   buttons plus plain-English bullets, and Custom shows working +/- rows;
+   Start actually launches the chosen level (and, for a Scenario, with
+   the chosen preset's numbers actually in effect -- check via the
+   settings window's Appearance/Accessibility... actually the relevant
+   numbers are un-categorised `GameConfig` fields, so check via a fresh
+   colony's forager behaviour, or add a temporary star). Completing
+   Challenge 1 or 2, or starting any Scenario, then fully restarting the
+   game (not just Restart Run) should show a tick on that tile next time
+   the menu opens. Toggling any interface preference (a star, a settings
+   row, colour-blind mode) and fully restarting the game should keep
+   that preference. Also worth a look: the honeycomb at a narrow window
+   width (~800px) and at 200% text scale, per section 14's usual checks
+   -- not specifically verified this session.
+   Also still outstanding from before: slices 2-5's hands-on checks --
+   see `git log` for those lists, all of it still applies.
+   **Next slice** is slice 7 (a new Challenge-completion screen, plus a
+   restyle-only pass on the winter forecast) -- `UI_PLAN.md` section 15
+   has the detail; likely files a new completion-screen script (shape:
+   `game_over.gd`), `challenge_runner.gd`, `winter_panel.gd`.
 2. **Game model slices 1-4 are built** (`DESIGN_BACKLOG.md` section 13).
    **Not yet hands-on checked** -- slice 3's prerequisite cascade only
    fires from the settings-window checkboxes, which nothing automated

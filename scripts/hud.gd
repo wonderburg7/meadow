@@ -725,6 +725,7 @@ func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void:
 		1: Session.show_selection_energy = checked
 		2: Session.show_selection_activity = checked
 		3: Session.show_selection_trait = checked
+	Session.save_preferences()
 	_apply_selection_field_visibility()
 
 func _apply_selection_field_visibility() -> void:
@@ -1499,6 +1500,7 @@ func _on_discard_confirmed() -> void:
 func _on_discard_custom_action(action: StringName) -> void:
 	if action == "discard_always":
 		Session.warn_on_discard = false
+		Session.save_preferences()
 		discard_dialog.hide()
 		_apply_discard()
 
