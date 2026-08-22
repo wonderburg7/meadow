@@ -293,13 +293,21 @@ var trait_label: Label
 var speed_buttons: Array = []
 var shown_bees: Array = []
 
-## The bottom-centre command tray (UI_PLAN.md section 5): role-action
-## buttons ranked by how often they're used, wrapping in a flow rather
-## than overflowing width (see _update_command_tray_width); "More…"
-## reveals the rest (job change, backup role, finish-first, favourite)
-## underneath.
+## The bottom-centre command tray (UI_PLAN.md section 5): three ranked
+## columns -- Job (change role), Focus (the current sub-mode) and Orders
+## (click-a-spot actions/restocking) -- wrapping in height rather than
+## overflowing width (see _update_command_tray_width); "More…" reveals
+## the rest (queen's Build-cell, Follow bee, backup role, finish-first,
+## favourite) underneath. Each column hides itself when it has nothing
+## to show for the current selection (see _rebuild_role_controls).
 var command_tray: PanelContainer
-var command_flow: HFlowContainer
+var command_columns: HBoxContainer
+var job_column_wrapper: VBoxContainer
+var job_column: VBoxContainer
+var focus_column_wrapper: VBoxContainer
+var focus_column: VBoxContainer
+var orders_column_wrapper: VBoxContainer
+var orders_column: VBoxContainer
 var more_button: Button
 var more_panel: VBoxContainer
 ## Remembered for this session only, same spirit as colony_panel.gd's
@@ -794,13 +802,24 @@ func _build_command_tray() -> void:
 	column.add_theme_constant_override("separation", 4)
 	command_tray.add_child(column)
 
-	# Wraps onto more rows rather than growing wider than its cap --
-	# this is what lets the bottom row grow taller, not wider, at high
-	# text scale (UI_PLAN.md section 2's bottom-row rule).
-	command_flow = HFlowContainer.new()
-	command_flow.add_theme_constant_override("h_separation", 4)
-	command_flow.add_theme_constant_override("v_separation", 4)
-	column.add_child(command_flow)
+	# Three ranked columns rather than one flowing row, per Dave's 22 Aug
+	# call -- each one wraps onto more rows internally rather than the
+	# whole tray growing wider than its cap (see _update_command_tray_width),
+	# which is still what lets the bottom row grow taller, not wider, at
+	# high text scale (UI_PLAN.md section 2's bottom-row rule).
+	command_columns = HBoxContainer.new()
+	command_columns.add_theme_constant_override("separation", 16)
+	column.add_child(command_columns)
+
+	var job_group := _build_tray_column("Job")
+	job_column_wrapper = job_group[0]
+	job_column = job_group[1]
+	var focus_group := _build_tray_column("Focus")
+	focus_column_wrapper = focus_group[0]
+	focus_column = focus_group[1]
+	var orders_group := _build_tray_column("Orders")
+	orders_column_wrapper = orders_group[0]
+	orders_column = orders_group[1]
 
 	more_button = Button.new()
 	_style_button(more_button)
@@ -822,6 +841,29 @@ func _build_command_tray() -> void:
 	more_panel.add_theme_constant_override("separation", 3)
 	more_panel.visible = false
 	column.add_child(more_panel)
+
+## One of the command tray's three ranked columns: a small header label
+## plus the content VBox rows get added to. Returns [wrapper, content] --
+## the wrapper is what _rebuild_role_controls shows/hides depending on
+## whether the column has anything to say for the current selection, so
+## an empty column doesn't sit there as a blank gap.
+func _build_tray_column(title: String) -> Array:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 3)
+	wrapper.custom_minimum_size = Vector2(100, 0)
+	command_columns.add_child(wrapper)
+
+	var header := Label.new()
+	header.text = title
+	header.theme_type_variation = "Small"
+	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	wrapper.add_child(header)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 3)
+	wrapper.add_child(content)
+
+	return [wrapper, content]
 
 # --- cell popup ---------------------------------------------------
 
@@ -1777,16 +1819,19 @@ func update_selection(bees: Array) -> void:
 ## The command tray's controls, rebuilt from scratch whenever the
 ## selection changes.
 ##
-## Primary buttons (the command_flow row) are the ones actually used to
-## do the job -- Doing's sub-mode toggles, Orders' click-a-spot actions,
-## restocking, the queen's Build-cell button, and Follow bee -- ranked
-## by how often they're clicked during play, not alphabetically or by
-## internal role-mode order (UI_PLAN.md section 5). Job (change role),
-## the backup role, finish-first and Favourite are used far less often
-## and live under More… instead, in more_panel, using the same labelled-
-## row shape the whole tray used to use throughout.
+## Job, Focus and Orders are the three always-visible columns (Dave's 22
+## Aug call): Job is the role and "Change to…" dropdown, Focus is the
+## current sub-mode, Orders is the click-a-spot actions and restocking.
+## The queen's Build-cell button, Follow bee, the backup role, finish-
+## first and Favourite are used far less often and live under More…
+## instead, in more_panel, using the same labelled-row shape the whole
+## tray used to use throughout.
 func _rebuild_role_controls(bees: Array) -> void:
-	for child in command_flow.get_children():
+	for child in job_column.get_children():
+		child.queue_free()
+	for child in focus_column.get_children():
+		child.queue_free()
+	for child in orders_column.get_children():
 		child.queue_free()
 	for child in more_panel.get_children():
 		child.queue_free()
@@ -1815,12 +1860,16 @@ func _rebuild_role_controls(bees: Array) -> void:
 	if bees.size() == 1 and first != null:
 		_build_favourite_row(first)
 
+	job_column_wrapper.visible = job_column.get_child_count() > 0
+	focus_column_wrapper.visible = focus_column.get_child_count() > 0
+	orders_column_wrapper.visible = orders_column.get_child_count() > 0
 	more_button.visible = more_panel.get_child_count() > 0
 	more_button.button_pressed = more_button.visible and more_panel_open
 	more_panel.visible = more_button.button_pressed
 	_update_command_tray_width()
 
-## Challenge 1 only -- see set_queen_build_button_visible.
+## Challenge 1 only -- see set_queen_build_button_visible. Doesn't fit
+## Job/Focus/Orders, so it lives under More… like Follow bee below.
 func _build_queen_build_row() -> void:
 	var button := Button.new()
 	_style_button(button)
@@ -1828,12 +1877,13 @@ func _build_queen_build_row() -> void:
 	button.custom_minimum_size = Vector2(0, 26)
 	button.theme_type_variation = "Small"
 	button.pressed.connect(func(): queen_build_cell_requested.emit())
-	command_flow.add_child(button)
+	more_panel.add_child(button)
 
 ## Continuous camera tracking (UI_PLAN.md section 15 slice 3) -- only
 ## offered for a single selected bee, same condition as Favourite. The
 ## button always starts unpressed on a fresh selection; see
-## update_selection's follow_bee_toggled(null, false) emit.
+## update_selection's follow_bee_toggled(null, false) emit. Doesn't fit
+## Job/Focus/Orders, so it lives under More… like Build cell above.
 func _build_follow_control(bees: Array, first) -> void:
 	if bees.size() != 1 or first == null:
 		return
@@ -1844,7 +1894,7 @@ func _build_follow_control(bees: Array, first) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.toggle_mode = true
 	button.toggled.connect(func(pressed: bool): follow_bee_toggled.emit(first, pressed))
-	command_flow.add_child(_with_info(button, "Keeps the camera centred on this bee as it moves. Switches off the moment you select something else."))
+	more_panel.add_child(_with_info(button, "Keeps the camera centred on this bee as it moves. Switches off the moment you select something else."))
 
 ## The star toggle -- only offered for one bee at a time, so "favourite"
 ## always names one individual rather than a whole selection. Lets the
@@ -1859,9 +1909,10 @@ func _build_favourite_row(bee) -> void:
 	))
 
 ## Job: what the selection is, lit up, plus one dropdown holding every
-## role it could be switched to.
+## role it could be switched to. Builds into the Job column, not
+## more_panel, per Dave's 22 Aug three-column call.
 func _build_job_row(common_role: int, any_queen: bool) -> void:
-	var row := _labelled_row("Job")
+	var row := _column_row(job_column)
 	if common_role == -1:
 		var mixed := Label.new()
 		mixed.text = "mixed selection"
@@ -1907,7 +1958,7 @@ func _build_doing_row(common_role: int, first) -> void:
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
-		command_flow.add_child(_toggle_button(
+		focus_column.add_child(_toggle_button(
 			mode.label, current,
 			func(): role_requested.emit(command),
 			mode.tip
@@ -1936,25 +1987,25 @@ func _build_orders_row(common_role: int, first) -> void:
 	match common_role:
 		Bee.Role.FORAGER:
 			var has_start: bool = first != null and first.has_forage_start_point()
-			command_flow.add_child(_action_button("Clear start" if has_start else "Start here",
+			orders_column.add_child(_action_button("Clear start" if has_start else "Start here",
 				func(): forage_start_point_requested.emit(),
 				"Click this, then click a spot in the meadow. The selected foragers head there first on every trip out, so you can split them across different parts of the meadow instead of them all drifting to whichever flower is nearest the entrance."))
 			if GameConfig.floral_constancy_on:
 				var pref: String = first.preferred_species if first != null else ""
-				command_flow.add_child(_action_button(("Flower: %s" % pref) if pref != "" else "Pick a flower",
+				orders_column.add_child(_action_button(("Flower: %s" % pref) if pref != "" else "Pick a flower",
 					func(): floral_preference_requested.emit(),
 					"Click this, then click a flower. The selected foragers will only ever visit that species from then on, even walking past a nearer flower of something else -- real bees do this too."))
 		Bee.Role.BUILDER:
-			command_flow.add_child(_action_button("Build here",
+			orders_column.add_child(_action_button("Build here",
 				func(): build_cell_requested.emit(),
 				"Click this, then click any open tile -- including ground that has been mined out. Hold Ctrl and keep clicking to queue up several: they are built in the order you click them, and a faint line shows that order while this bee is selected."))
-			command_flow.add_child(_action_button("Keep clear",
+			orders_column.add_child(_action_button("Keep clear",
 				func(): keep_clear_requested.emit(),
 				"Click this, then click a tile to reserve it as open floor. No comb worker will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every comb worker, not just this one, and the reserved tiles show whenever any comb worker is selected."))
-			command_flow.add_child(_action_button("Work from here",
+			orders_column.add_child(_action_button("Work from here",
 				func(): home_cell_requested.emit(),
 				"Click this, then click a tile. That tile becomes the selected comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Applies to this one bee only, even if you have several selected -- use \"Set for all comb workers\" below to change every comb worker at once."))
-			command_flow.add_child(_action_button("Set for all comb workers",
+			orders_column.add_child(_action_button("Set for all comb workers",
 				func(): home_cell_all_requested.emit(),
 				"Click this, then click a tile. Every comb worker in the colony -- not just the selected ones -- gets that tile as its centre of operations. Use this to redirect the whole team at once; use \"Work from here\" above to give one bee its own spot."))
 
@@ -1963,10 +2014,10 @@ func _build_orders_row(common_role: int, first) -> void:
 			if first != null and first.architect_mode == "restock":
 				_build_restock_row(first)
 		Bee.Role.MINER:
-			command_flow.add_child(_action_button("Mine",
+			orders_column.add_child(_action_button("Mine",
 				func(): mine_target_requested.emit(),
 				"Click this, then click a soil block for the selected miners to dig. Hold Ctrl and keep clicking to queue several: they are dug in the order you click them, and a faint line shows that order while the miner is selected."))
-			command_flow.add_child(_action_button("Work from here",
+			orders_column.add_child(_action_button("Work from here",
 				func(): mine_home_requested.emit(),
 				"Click this, then click a tile. The selected miners will always dig whichever soil is nearest that tile, rather than whichever is nearest wherever they finished the last block. Keeps a team working through one face."))
 
@@ -1980,19 +2031,19 @@ func _build_restock_row(first) -> void:
 	for resource in ["nectar", "pollen", "honey", "jelly"]:
 		var value: String = resource
 		var current: bool = first != null and first.restock_resource == value
-		command_flow.add_child(_toggle_button(
+		orders_column.add_child(_toggle_button(
 			resource.capitalize(), current,
 			func(): restock_targets_requested.emit(value),
 			"Select comb first, then press this. Those cells become the ones this comb worker keeps full of %s, fetching it from elsewhere in the hive whenever they run down. This is how you get a resource to sit *somewhere* -- honey beside the brood before winter, pollen within reach of the nursery -- rather than wherever the foragers happened to drop it." % resource
 		))
 
-	command_flow.add_child(_action_button("Only these",
+	orders_column.add_child(_action_button("Only these",
 		func(): restock_sources_requested.emit(true),
 		"Select comb first, then press this. The comb worker will draw only on those cells when refilling. Use it to point restocking at the outer comb and leave the rest alone."))
-	command_flow.add_child(_action_button("Never these",
+	orders_column.add_child(_action_button("Never these",
 		func(): restock_sources_requested.emit(false),
 		"Select comb first, then press this. The comb worker will never take from those cells. This is what protects a winter store from being redistributed by your own bee."))
-	command_flow.add_child(_action_button("Clear orders",
+	orders_column.add_child(_action_button("Clear orders",
 		func(): restock_clear_requested.emit(),
 		"Forget this comb worker's restocking orders entirely -- the cells it keeps full, and the sources it may use."))
 
@@ -2001,7 +2052,7 @@ func _build_restock_row(first) -> void:
 		summary.text = "%d cells of %s" % [first.restock_targets.size(), first.restock_resource]
 		summary.theme_type_variation = "Small"
 		summary.add_theme_color_override("font_color", Color(0.6, 0.9, 0.7))
-		command_flow.add_child(summary)
+		orders_column.add_child(summary)
 
 ## The backup role and whether a reassignment waits for the current job.
 func _build_fallback_row(common_role: int, first) -> void:
@@ -2047,6 +2098,15 @@ func _secondary_items() -> Array:
 
 ## One row of the More… panel, with its heading. Returns the box the
 ## controls go into.
+## A bare row appended to one of the tray's Job/Focus/Orders columns --
+## no title label, since the column's own header already says what it
+## is. Same shape as _labelled_row below, minus the label.
+func _column_row(parent: Container) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	parent.add_child(row)
+	return row
+
 func _labelled_row(title: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
@@ -2188,14 +2248,15 @@ func _refresh_selection_text() -> void:
 ## tray's actual width and (above the responsive breakpoint) the
 ## Gallerin reserve -- ui_layout.gd computes it so this tray respects the
 ## reserve by construction rather than a magic-number width. Setting it
-## on command_flow rather than command_tray itself is what makes the
-## flow wrap onto more rows instead of growing wider than its cap.
+## on command_columns rather than command_tray itself is what makes the
+## columns wrap their own content onto more rows instead of the whole
+## tray growing wider than its cap.
 func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
 	var max_width: float = UiLayout.command_tray_max_width(viewport_width, selection_panel.size.x)
-	command_flow.custom_minimum_size.x = max(200.0, max_width - 32.0)
+	command_columns.custom_minimum_size.x = max(200.0, max_width - 32.0)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:
