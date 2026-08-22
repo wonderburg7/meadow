@@ -147,20 +147,58 @@ static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D:
 # --- verbs ------------------------------------------------------------
 
 ## Calls orders_zones._on_role_requested -- the exact function
-## hud.gd's role_requested signal is wired to (main.gd::_ready), so a
-## combined key like "forager_nectar" behaves identically to clicking
-## that HUD button. Temporarily borrows main.selected_bees since that's
-## what the command function reads.
+## hud.gd's role_requested signal is wired to (main.gd::_ready). A plain
+## key ("forager") behaves identically to clicking the Job row. A
+## combined key ("forager_nectar") only ever reaches _on_role_requested
+## from the real UI once a bee is already on that role -- the Doing row
+## only appears for the selection's current common role (hud.gd's
+## _build_doing_row) -- so clicking it in one step is a two-click human
+## action (Job row, then Doing row). CHATGPT_INSIGHTS_PLAN.md's B2: a
+## scenario author writing a combined key in one action expects both
+## steps, so this splits it into the same two calls a human would make,
+## then checks the bees actually ended up on both the role and the mode
+## before logging "accepted" -- the old version logged "accepted" for a
+## combined key on non-matching bees while silently changing nothing,
+## since _apply_mode's role-specific setters (e.g. set_focus) no-op on a
+## bee not already on that role.
 static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 	var bees: Array = _resolve_bees(main, action.get("target", {}))
 	var role: String = action.get("role", "")
 	if bees.is_empty() or role == "":
 		_log("assign_role", str(action), "rejected", "no matching bees or no role given")
 		return
+
+	var role_id: int = main.Roles.id_for_key(role)
+	var base_key: String = role
+	var mode_key: String = ""
+	if role_id == -1:
+		for r in main.Roles.ROLES:
+			var prefix: String = r.key + "_"
+			if role.begins_with(prefix):
+				role_id = r.id
+				base_key = r.key
+				mode_key = role.substr(prefix.length())
+				break
+	if role_id == -1:
+		_log("assign_role", str(action), "rejected", "unknown role")
+		return
+
 	var previous: Array = main.selected_bees
 	main.selected_bees = bees
-	main.orders_zones._on_role_requested(role)
+	main.orders_zones._on_role_requested(base_key)
+	if mode_key != "":
+		main.orders_zones._on_role_requested(role)
 	main.selected_bees = previous
+
+	var bad: Array = bees.filter(func(b):
+		if not is_instance_valid(b) or b.role != role_id:
+			return true
+		return mode_key != "" and not main.hud._mode_is_active(role_id, b, mode_key)
+	)
+	if not bad.is_empty():
+		_log("assign_role", "%d bees -> %s" % [bees.size(), role], "rejected",
+			"%d bee(s) did not end up with role/mode %s" % [bad.size(), role])
+		return
 	_log("assign_role", "%d bees -> %s" % [bees.size(), role], "accepted", "")
 
 ## Calls orders_zones._designate_one directly -- the per-cell command

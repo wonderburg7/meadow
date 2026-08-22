@@ -1,7 +1,7 @@
 # ChatGPT insights — implementation plan
 
-Status: Group C fully built and verified, 22 Aug 2026. B1 built and
-verified, 22 Aug 2026. B2-B5 and Group A still planned, not started.
+Status: Group C fully built and verified, 22 Aug 2026. B1 and B2 built
+and verified, 22 Aug 2026. B3-B5 and Group A still planned, not started.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -202,17 +202,42 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   source-level equivalence plus a clean end-to-end scenario run is
   the practical verification available before B4 lands.
 
-### B2. Split role assignment from role mode
+### B2. Split role assignment from role mode -- done, 22 Aug 2026
 - **Files:** `scenario_actions.gd` (`_do_assign_role`), `orders_zones.gd`
-  (`_on_role_requested`).
+  (`_on_role_requested`, unchanged -- see below).
 - **Bug:** a combined key like `forager_nectar` logs `accepted` but
   only changes mode, not role -- a scenario expecting a new forager
   sees no population change.
-- **Fix:** add explicit `assign_role` / `set_role_mode` verbs (or apply
-  both parts, in the right order, to the same resolved bee IDs), and
-  check the bees' actual resulting role/mode before logging `accepted`.
-- **Verify:** the driver's own postcondition check (B3) now fails
-  loudly on a bad combined key instead of silently accepting it.
+- **Root cause, more precisely:** `_on_role_requested`'s own two-branch
+  behaviour (plain key assigns role, combined key applies mode) exactly
+  mirrors the real UI -- hud.gd's Doing row only ever appears for the
+  selection's *current* common role, so a human always assigns role
+  first, then clicks a mode button in a second click once already on
+  it. `orders_zones.gd` didn't need changing; a scenario author writing
+  a combined key in one `assign_role` action was asking for both of
+  those clicks at once, which nothing on the calling side provided.
+- **Fix:** `_do_assign_role` now splits a combined key into its base
+  role and mode (same prefix-matching loop `_on_role_requested` already
+  used), calls `_on_role_requested` with the base key first and, if a
+  mode was present, again with the full combined key -- the same two
+  calls a human's two clicks would make, both against the same resolved
+  bee IDs. It then checks every bee actually ended up on that role
+  (`b.role`) and, if a mode was given, on that mode
+  (`hud._mode_is_active`, the same read the Doing row's own toggle
+  state uses) before logging `accepted`; a mismatch -- including
+  `can_take_role` silently refusing the change -- now logs `rejected`
+  with a count of the bees that didn't take.
+- **Verify:** `source_checks.py` and `balance_tests.py` both pass.
+  New scenario `test_scenarios/b2_combined_role_test.json` reassigns 2
+  nurses to `forager_pollen` in one `assign_role` action (previously:
+  silently a no-op, since `set_focus` no-ops on a bee whose `role` isn't
+  already `FORAGER`) and asserts `population_at_least` forager count 3+
+  the next day. Ran end-to-end through Godot itself
+  (`tools/run_scenario.py --full`): both actions logged `accepted`,
+  `by_role.nursery` dropped to 0 and `by_role.forager` rose to the
+  expected count on both days, `problems: []`. `slice7_action_driver_test.json`
+  (which already exercises a combined key, `forager_pollen`, on bees
+  already foragers) still runs clean through the changed function too.
 
 ### B3. Postcondition evidence for the remaining verbs
 - **File:** `scenario_actions.gd` (`_do_designate_cell`,
