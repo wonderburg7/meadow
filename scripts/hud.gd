@@ -330,7 +330,12 @@ var more_panel: VBoxContainer
 ## section_open (UI_PLAN.md section 11) -- not persisted.
 var more_panel_open: bool = false
 
-var cell_popup: PopupPanel
+## The command tray's cell content -- shares the tray with the Job/Focus/
+## Orders columns, mutually exclusive with them (UI_BUGFIX_PLAN.md Slice
+## 4/5, Dave's 22 Aug call: cell selection is "assign, not just look at",
+## so it belongs in the same drawer as the role-action columns, not the
+## bottom-left summary panel). See show_cell_popup/update_selection.
+var cell_group: VBoxContainer
 var cell_popup_label: Label
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
@@ -409,7 +414,6 @@ func _ready() -> void:
 	_build_goal_shelf()
 	_build_selection_panel()
 	_build_command_tray()
-	_build_cell_popup()
 	_build_warning_banner()
 	_build_discard_dialog()
 
@@ -856,6 +860,8 @@ func _build_command_tray() -> void:
 	more_panel.visible = false
 	column.add_child(more_panel)
 
+	_build_cell_group(column)
+
 ## One of the command tray's three ranked columns: a small header label
 ## plus the content VBox rows get added to. Returns [wrapper, content] --
 ## the wrapper is what _rebuild_role_controls shows/hides depending on
@@ -899,15 +905,21 @@ var cell_section_open: Dictionary = {}
 ## without hunting through the text above.
 var live_buttons: Dictionary = {}
 
-func _build_cell_popup() -> void:
-	cell_popup = PopupPanel.new()
-	cell_popup.theme = UiTheme.build_theme()
-	cell_popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	add_child(cell_popup)
+## Builds the tray's cell content into `parent` (command_tray's own
+## column, alongside command_columns and more_panel) rather than a
+## separate floating popup -- folded in per UI_BUGFIX_PLAN.md Slice 4/5,
+## Dave's 22 Aug call. Built once, like command_columns' rows aren't --
+## its five sections are refreshed in place by _refresh_cell_popup
+## rather than torn down and rebuilt per cell selection, since a cell's
+## controls (which designation, which sections are open) don't change
+## shape the way a bee's role-dependent rows do.
+func _build_cell_group(parent: VBoxContainer) -> void:
+	cell_group = VBoxContainer.new()
+	cell_group.add_theme_constant_override("separation", 2)
+	cell_group.visible = false
+	parent.add_child(cell_group)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 2)
-	cell_popup.add_child(column)
+	var column := cell_group
 
 	cell_popup_label = Label.new()
 	cell_popup_label.theme_type_variation = "Body"
@@ -1052,9 +1064,6 @@ func _cell_section(column: VBoxContainer, title: String, open_by_default: bool) 
 		cell_section_open[title] = not cell_section_open[title]
 		body.visible = cell_section_open[title]
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
-		# the popup was sized to the old contents, so let it shrink or
-		# grow to fit what's showing now
-		cell_popup.reset_size()
 	)
 
 	cell_sections[title] = body
@@ -1361,12 +1370,21 @@ func _show_death_summary(info: Dictionary) -> void:
 		trait_lines.append("\"%s\"" % info.get("bee_fact"))
 	trait_label.text = "\n".join(trait_lines)
 
-func show_cell_popup(cell: Node2D, screen_position: Vector2, count: int = 1) -> void:
+## Cell selection is "assign, not just look at" (Dave's 22 Aug call), so
+## it shares the command tray with Job/Focus/Orders rather than the
+## bottom-left summary panel -- mutually exclusive with them, same
+## content-swap spirit as show_object_summary. Leaves the bee columns'
+## own content untouched underneath (just hidden), so reselecting a bee
+## shows exactly what it did before, per update_selection.
+func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_cell = cell
 	selected_cell_count = count
+	command_columns.visible = false
+	more_button.visible = false
+	more_panel.visible = false
+	cell_group.visible = true
+	command_tray.visible = true
 	_refresh_cell_popup()
-	cell_popup.position = Vector2i(screen_position + Vector2(12, -10))
-	cell_popup.popup()
 
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
@@ -1507,7 +1525,7 @@ func _process(_delta: float) -> void:
 		warning_timer -= _delta
 		if warning_timer <= 0.0:
 			warning_panel.visible = false
-	if cell_popup.visible:
+	if cell_group.visible:
 		_refresh_cell_popup()
 	if selection_panel.visible:
 		if active_summary_kind == "flower":
@@ -1779,6 +1797,10 @@ func update_selection(bees: Array) -> void:
 	soil_summary_row.visible = false
 	selection_panel.visible = not bees.is_empty()
 	command_tray.visible = not bees.is_empty()
+	# Same thing for the tray itself -- a bee selection always wins over
+	# a cell selection's content, see show_cell_popup.
+	cell_group.visible = false
+	command_columns.visible = true
 	if bees.is_empty():
 		return
 
@@ -2274,7 +2296,7 @@ func set_allowed_mode_keys(keys: Array) -> void:
 ## does for the bee-selection panel.
 func set_allowed_designation_keys(keys: Array) -> void:
 	allowed_designation_keys = keys
-	if active_cell != null and is_instance_valid(active_cell) and cell_popup != null and cell_popup.visible:
+	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
 		_apply_cell_popup_gating()
 
 func set_hatch_lock_visible(value: bool) -> void:

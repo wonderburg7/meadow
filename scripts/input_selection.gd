@@ -195,7 +195,7 @@ func _select_cells(cells: Array, additive: bool) -> void:
 
 	if main.selected_cells.is_empty():
 		return
-	main.hud.show_cell_popup(main.selected_cells[0], main.get_viewport().get_mouse_position(), main.selected_cells.size())
+	main.hud.show_cell_popup(main.selected_cells[0], main.selected_cells.size())
 
 func _clear_cell_selection() -> void:
 	for cell in main.selected_cells:
