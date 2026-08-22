@@ -77,9 +77,11 @@ var pinned_stats: Array = ["day", "stores", "signals"]
 ## an Array scan repeated a dozen times a frame.
 var perf_enabled: bool = false
 
-## Turn the small "i" tooltip badges off once you know what everything
-## does.
-var show_info_badges: bool = true
+## Turn the small "i" tooltip badges on if you want a reminder of what
+## everything does. Off by default per UI_PLAN.md section 9 -- badges
+## used to default on, which is a real behaviour change for anyone
+## opening a fresh save.
+var show_info_badges: bool = false
 
 ## Adds a short text label wherever colour would otherwise be the only
 ## thing distinguishing two states -- cell contents, the nursery ring,
@@ -127,6 +129,35 @@ var control_groups: Dictionary = {}
 ## Which comb overlay the hive view is showing, if any. See
 ## main.gd's _apply_comb_overlay.
 var comb_overlay: String = ""
+
+# --- appearance and accessibility (UI_PLAN.md sections 6/7) --------
+## Read by ui_theme.gd's palette(). "dark" (default), "light" or
+## "high_contrast".
+var ui_theme: String = "dark"
+
+## Read by ui_theme.gd's build_theme(). "sans" (default, no asset
+## needed), "atkinson", "dyslexia" or "pixel" -- the three non-default
+## faces are placeholders until their font files are sourced under
+## assets/fonts/ (UI_PLAN.md section 8), and fall back to the default
+## font until then rather than erroring.
+var ui_typeface: String = "sans"
+
+## Multiplier applied to every UiTheme type-variation font size. 1.0 to
+## 2.0, per UI_PLAN.md section 14's "every text scale up to 200%" check.
+var text_scale: float = 1.0
+
+## Suppresses the neon attention flashes and any future drawer/marker
+## animation (UI_PLAN.md section 7). Doesn't affect anything simulated.
+var reduced_motion: bool = false
+
+## "off", "reduced" or "full". Reserved: no screen shake exists in the
+## codebase yet -- this is the settings slot so one is never shipped
+## without an off switch already in place.
+var screen_shake: String = "full"
+
+## Seconds a hovered control waits before showing its tooltip. 0.5
+## matches Godot's own default (gui/timers/tooltip_delay_sec).
+var tooltip_delay: float = 0.5
 
 # --- live weather state -------------------------------------------
 ## Advanced by main.gd. Not a setting: how likely rain is, is.

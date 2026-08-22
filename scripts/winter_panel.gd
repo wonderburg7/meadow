@@ -15,6 +15,7 @@ extends CanvasLayer
 ## several times its volume because that is what it is worth.
 
 const UI = preload("res://scripts/ui.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal closed()
 
@@ -32,6 +33,8 @@ func _ready() -> void:
 	add_to_group("winter_panel")
 
 	panel = PanelContainer.new()
+	panel.theme = UiTheme.build_theme()
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	# top-right, under the button bar, since that's where it's opened from
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -50,7 +53,7 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Winter"
-	title.add_theme_font_size_override("font_size", 16)
+	title.theme_type_variation = "Heading"
 	header.add_child(title)
 	header.add_child(UI.info_badge(
 		"What the colony will need to survive the winter, and whether it has it. The figures come from the colony's own size, so they move as it grows -- a bigger colony needs more, which is the tension: growing now costs you the stores that would have carried you through."
@@ -59,18 +62,23 @@ func _ready() -> void:
 	var close_btn := Button.new()
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(26, 22)
+	# Only the states a plain Godot Button actually looks up ("selected"
+	# and "locked" from UiTheme's seven apply to custom-drawn controls
+	# like the future skill tree, not a native Button).
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		close_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	close_btn.pressed.connect(func(): close())
 	header.add_child(close_btn)
 
 	column.add_child(HSeparator.new())
 
-	headline = _make_label(column, 15)
-	detail = _make_label(column, 12)
-	verdict = _make_label(column, 13)
+	headline = _make_label(column, "Body")
+	detail = _make_label(column, "Small")
+	verdict = _make_label(column, "Body")
 
-func _make_label(column: VBoxContainer, size: int) -> Label:
+func _make_label(column: VBoxContainer, variation: String) -> Label:
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", size)
+	label.theme_type_variation = variation
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(300, 0)
 	column.add_child(label)
@@ -116,12 +124,12 @@ func refresh(needs: Dictionary) -> void:
 	var shortfall: float = required - held
 	if shortfall <= 0.0:
 		verdict.text = "On track — about %d units spare." % int(-shortfall)
-		verdict.add_theme_color_override("font_color", Color(0.5, 0.95, 0.55))
+		verdict.add_theme_color_override("font_color", UiTheme.color("success"))
 		corner_text = "Winter in %d days — on track" % int(ceil(days_left))
 	else:
 		var per_day: float = shortfall / max(1.0, days_left)
 		verdict.text = "Short by about %d units. That is %d a day from now until winter." % [
 			int(shortfall), int(ceil(per_day)),
 		]
-		verdict.add_theme_color_override("font_color", Color(1.0, 0.6, 0.45))
+		verdict.add_theme_color_override("font_color", UiTheme.color("danger"))
 		corner_text = "Winter in %d days — short by %d" % [int(ceil(days_left)), int(shortfall)]
