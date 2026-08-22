@@ -1,0 +1,8 @@
+{
+  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
+  "nurses": 2, "builders": 2, "miners": 2,
+  "time_scale": 30,
+  "random_seed": 4242,
+  "config_overrides": {"seconds_per_day": 20},
+  "stop": {"max_days": 30}
+}

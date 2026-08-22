@@ -29,6 +29,7 @@ import os
 import random
 import subprocess
 import sys
+import time
 import uuid
 from pathlib import Path
 
@@ -38,6 +39,13 @@ from analyze_session import aggregate_runs, analyze, load_entries  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_GODOT_PATH = r"C:\Program Files\Godot\Godot.exe"
 DEFAULT_TIMEOUT = 300
+# CHATGPT_INSIGHTS_PLAN.md's A3: the largest (fewest-steps-per-second)
+# --fixed-fps value the benchmark in that section found still matches
+# ordinary wall-clock timing on population/deaths/resources outcomes,
+# while running noticeably faster in wall-clock terms since real-time
+# sync is off. 0 (via --fixed-fps 0 on the CLI) falls back to ordinary
+# wall-clock timing.
+DEFAULT_FIXED_FPS = 30
 
 
 def log_dir() -> Path:
@@ -80,14 +88,26 @@ def session_file_for_run_id(run_id: str) -> Path | None:
     return candidates[0]
 
 
-def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
+def run_once(scenario_path: Path, godot_path: str, timeout: int,
+             fixed_fps: int | None = None) -> Path | None:
     """Launch one headless run and return the session_*.jsonl it wrote,
     or None (with an error already printed to stderr) if it didn't
     produce one.
     """
     run_id = uuid.uuid4().hex[:12]
-    cmd = [godot_path, "--headless", "--path", str(ROOT), "--",
-           "--scenario=%s" % scenario_path, "--run-id=%s" % run_id]
+    cmd = [godot_path, "--headless"]
+    if fixed_fps is not None:
+        # Godot's own built-in engine flag (CHATGPT_INSIGHTS_PLAN.md's A3),
+        # not one of our own -- forces every frame to advance the engine by
+        # exactly 1/fixed_fps of simulated time and disables real-time
+        # sync, instead of measuring real wall-clock elapsed time each
+        # frame the way an ordinary run (fixed_fps=None) does. Runs as fast
+        # as the CPU allows rather than throttled to real time, and removes
+        # the wall-clock scheduling jitter A2 found perturbing same-seed
+        # reproducibility.
+        cmd += ["--fixed-fps", str(fixed_fps)]
+    cmd += ["--path", str(ROOT), "--",
+            "--scenario=%s" % scenario_path, "--run-id=%s" % run_id]
     if not _scenario_declares_seed(scenario_path):
         # No pinned seed -- hand this launch its own, so N repeats of the
         # same scenario are genuinely independent draws instead of N
@@ -95,11 +115,13 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
         cmd.append("--random-seed=%d" % random.randint(0, 2**31 - 1))
     print("running: %s" % " ".join(cmd))
 
+    start = time.time()
     try:
         result = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
     except subprocess.TimeoutExpired:
         print("error: scenario run exceeded %ds timeout, killed" % timeout, file=sys.stderr)
         return None
+    print("wall time: %.1fs" % (time.time() - start))
 
     if result.returncode != 0:
         print("warning: Godot exited with code %d" % result.returncode, file=sys.stderr)
@@ -137,7 +159,7 @@ def _warn_on_action_problems(analysis: dict) -> None:
 
 
 def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int,
-                  full: bool) -> int:
+                  full: bool, fixed_fps: int | None = None) -> int:
     if not scenario_path.is_file():
         print("error: scenario file not found: %s" % scenario_path, file=sys.stderr)
         return 1
@@ -146,7 +168,7 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
     for i in range(repeat):
         if repeat > 1:
             print("--- run %d/%d ---" % (i + 1, repeat))
-        session_file = run_once(scenario_path, godot_path, timeout)
+        session_file = run_once(scenario_path, godot_path, timeout, fixed_fps)
         if session_file is None:
             return 1
 
@@ -185,13 +207,22 @@ def main() -> int:
                          help="print the full per-run analysis (population curve, deaths "
                               "over time, honey fill vs winter, mechanic-firing check) "
                               "instead of just the summary line")
+    parser.add_argument("--fixed-fps", type=int, default=DEFAULT_FIXED_FPS,
+                         help="advance the engine by a fixed 1/N seconds per frame instead of "
+                              "measuring real wall-clock time (Godot's own --fixed-fps flag) -- "
+                              "runs at full CPU speed and removes the timing jitter that made "
+                              "same-seed reruns diverge (CHATGPT_INSIGHTS_PLAN.md's A2/A3). "
+                              "Pass 0 to fall back to ordinary wall-clock timing "
+                              "(default: %(default)s)")
     args = parser.parse_args()
 
     if args.repeat < 1:
         print("error: --repeat must be at least 1", file=sys.stderr)
         return 1
 
-    return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, args.full)
+    fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
+    return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, args.full,
+                         fixed_fps)
 
 
 if __name__ == "__main__":

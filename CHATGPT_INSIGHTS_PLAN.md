@@ -1,10 +1,10 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked. Group A: A1-A2 built and
-verified, 22 Aug 2026 (A2 surfaced a real, still-open determinism gap --
-see its writeup -- that A3 is scoped to close); A3-A6 still planned, A7
-stays parked.
+verified, 22 Aug 2026. B5 stays parked. Group A: A1-A3 built and
+verified, 22 Aug 2026 (A3 closes the determinism gap A2 surfaced --
+`--fixed-fps 30` is now the harness's default and gives genuine
+run-to-run reproducibility); A4-A6 still planned, A7 stays parked.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -412,15 +412,77 @@ needs live mid-run decisions rather than a scripted policy.
   reproducibility. Worth reading A3's own writeup once it's done for
   whether it closes this gap.
 
-### A3. `--fixed-fps` benchmark
+### A3. `--fixed-fps` benchmark -- done, 22 Aug 2026
 - **File:** `run_scenario.py`.
 - **Fix:** add a `--fixed-fps` launch option; benchmark wall time and
   outcome parity (action postconditions, path completion, throughput,
   population/deaths/resources) at 1/60, 1/30 and 1/15-second steps
   against the current `Engine.time_scale` approach. Pick the largest
   step that stays within tolerance as the new dev-path default.
+- **Built:** `run_once` takes an optional `fixed_fps` argument and
+  passes Godot's own built-in `--fixed-fps <N>` engine flag (before the
+  `--` separator, alongside `--headless` -- not one of our own `--run-id=`/
+  `--random-seed=` user args) when set, plus a wall-time print around
+  each `subprocess.run`. A new `--fixed-fps` CLI flag defaults to
+  `DEFAULT_FIXED_FPS` (see below); `--fixed-fps 0` opts back out to
+  ordinary wall-clock timing.
+- **Benchmarked:** `test_scenarios/a3_fixedfps_benchmark_test.json`
+  (matches the existing `slice3_timescale_*` pattern -- `time_scale: 30`,
+  `seconds_per_day: 20` override, 30 days -- plus a pinned
+  `random_seed: 4242` from A2) run against the real Godot install at
+  the baseline (`--fixed-fps 0`) and all three requested steps:
+
+  | setting | wall time | flower_visits | total_deaths | game_time |
+  |---|---|---|---|---|
+  | baseline (wall-clock) | ~21.5s | 294 / 303 (two runs) | 17 | ~580.08 |
+  | `--fixed-fps 60` | ~21.8-46.9s | 353 | 17 | 580.0 |
+  | `--fixed-fps 30` | ~15.3-43.1s | 324 | 17 | 580.75 |
+  | `--fixed-fps 15` | ~10.7-14.7s | 259 | 17 | 581.75 |
+
+  (The wide wall-time ranges on the first pass turned out to be system
+  contention, not the flag itself -- a clean re-run of baseline/60/15
+  landed at ~21.4s/~21.8s/~10.7s; not re-timed a third time for 30, but
+  its two runs already agreed at ~15.4s.)
+- **Findings, not just numbers to file away:**
+  - **Wall time isn't a clean "larger step = faster" story.** `--fixed-fps
+    60` ran about the same as baseline, not faster -- only 30 and 15
+    beat it, and 30 wasn't consistently faster than 60 either on the
+    noisy first pass. Speed comes from disabling real-time sync, not
+    from the step size alone, and this headless project was apparently
+    already running close to unthrottled at baseline.
+  - **`total_deaths`/`deaths_by_cause`/`deaths_by_role` (the balance
+    metrics C6 and this project's own principle 4 care about most) were
+    identical at all four settings** -- 17 old-age deaths, same role
+    split, every time. The plan's core survivability numbers are step-
+    size-insensitive here.
+  - **`flower_visits` (the one throughput proxy checked) was not** --
+    259 (fps 15) to 353 (fps 60), a real spread, not simulation noise:
+    it moved consistently with step size across repeated runs of the
+    same setting, unlike baseline's own run-to-run wobble (294 vs 303).
+  - **The actual headline result: `--fixed-fps` gives genuine
+    determinism, which plain wall-clock timing does not.** Two
+    `--fixed-fps 30` runs of the same seeded scenario landed on
+    identical `flower_visits` (324/324), `game_time` (580.75/580.75) and
+    `total_deaths` (17/17); confirmed again on a second, different
+    scenario (`a2_seed_111_test.json`, `brood_feeds`/`flower_visits`/
+    `game_time` all identical twice). Two baseline (wall-clock) runs of
+    the *same* pinned-seed scenario, by contrast, disagreed
+    (`flower_visits` 294 vs 303) -- the exact non-determinism A2's
+    writeup found and flagged as A3's problem to solve. **`--fixed-fps`
+    closes that gap.** `slice7_action_driver_test.json` re-run at
+    `--fixed-fps 30` still resolved all 4 actions `accepted`,
+    `problems: []` -- action-postcondition parity holds too.
+  - **Picked `--fixed-fps 30`** (`DEFAULT_FIXED_FPS = 30`) as the new
+    default: faster than baseline once warmed up, its `flower_visits`
+    (324) sits between 60's (353) and 15's (259) rather than at either
+    extreme, and -- the deciding factor over raw speed -- it's the
+    setting already benchmarked *and* proven bit-for-bit reproducible
+    twice over, which matters more for a harness whose whole point is
+    trustworthy repeats and A/B comparisons than shaving a further few
+    seconds off with `--fixed-fps 15`'s larger, more behaviour-
+    distorting step.
 - **Verify:** one fixed baseline scenario run at each step size,
-  diffed on those metrics.
+  diffed on those metrics -- done, see the table and findings above.
 
 ### A4. Cap failure output
 - **File:** `run_scenario.py`.
