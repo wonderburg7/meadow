@@ -80,6 +80,8 @@ var _stall_recoveries: int = 0
 ## actually completes, so a run's summary states plainly how much real
 ## work each role got done, not just how many bees held that role.
 var _brood_feeds: int = 0
+var _brood_hatches: int = 0
+var _brood_hatches_by_role_mode: Dictionary = {}
 var _jelly_batches: int = 0
 var _larval_deaths: int = 0
 var _cells_completed: int = 0
@@ -132,6 +134,8 @@ func start_session() -> void:
 	_flowers_visited_ids.clear()
 	_stall_recoveries = 0
 	_brood_feeds = 0
+	_brood_hatches = 0
+	_brood_hatches_by_role_mode.clear()
 	_jelly_batches = 0
 	_larval_deaths = 0
 	_cells_completed = 0
@@ -363,6 +367,15 @@ func count_brood_feed() -> void:
 	_brood_feeds += 1
 
 
+## Called from world_building.gd::_spawn_hatched_bee() after the new bee's
+## role-specific mode has been applied. This is the concise headless proof
+## that fed brood completed development and emerged as the requested job.
+func count_brood_hatch(role: int, mode: String) -> void:
+	_brood_hatches += 1
+	var key: String = "%s/%s" % [BeeEnums.Role.keys()[role], mode]
+	_brood_hatches_by_role_mode[key] = int(_brood_hatches_by_role_mode.get(key, 0)) + 1
+
+
 ## Called from bee_nursery.gd::nurse_make_jelly() when a batch finishes.
 func count_jelly_batch() -> void:
 	_jelly_batches += 1
@@ -447,6 +460,12 @@ func log_action(do: String, target_desc: String, result: String, reason: String)
 ## ignore it.
 func event_count(type: String, subtype: String = "") -> int:
 	match type:
+		"brood_feed":
+			return _brood_feeds
+		"brood_hatch":
+			if subtype != "":
+				return int(_brood_hatches_by_role_mode.get(subtype, 0))
+			return _brood_hatches
 		"recruitment_match":
 			return _recruitment_matches
 		"scouting_settled":
@@ -515,6 +534,8 @@ func end_session(outcome: String) -> void:
 		"unique_flowers_visited": _flowers_visited_ids.size(),
 		"stall_recoveries": _stall_recoveries,
 		"brood_feeds": _brood_feeds,
+		"brood_hatches": _brood_hatches,
+		"brood_hatches_by_role_mode": _brood_hatches_by_role_mode,
 		"jelly_batches": _jelly_batches,
 		"larval_deaths": _larval_deaths,
 		"cells_completed": _cells_completed,
@@ -673,6 +694,8 @@ func _snapshot(world: Node2D) -> Dictionary:
 		},
 		"role_outcomes": {
 			"brood_feeds_total": _brood_feeds,
+			"brood_hatches_total": _brood_hatches,
+			"brood_hatches_by_role_mode": _brood_hatches_by_role_mode,
 			"jelly_batches_total": _jelly_batches,
 			"larval_deaths_total": _larval_deaths,
 			"cells_completed_total": _cells_completed,

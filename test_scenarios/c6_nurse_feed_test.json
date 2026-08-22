@@ -1,5 +1,13 @@
 {
   "cells": 20, "nectar_foragers": 5, "pollen_foragers": 3,
   "nurses": 3, "builders": 2, "miners": 1,
-  "stop": {"max_days": 10}
+  "random_seed": 4242,
+  "actions": [
+    {
+      "when": {"event_count_at_least": {"type": "brood_hatch", "count": 1}},
+      "do": "assert",
+      "condition": {"event_count_at_least": {"type": "brood_feed", "count": 1}}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 10}
 }

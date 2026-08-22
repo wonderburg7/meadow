@@ -6,8 +6,8 @@
 > session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
 > `NEXTSTEPS.md` remains exclusively Claude's source of work.
 
-Status: in progress 22 Aug 2026. H0 inventory and H1 smoke gate completed; H2
-is next. This is
+Status: in progress 22 Aug 2026. H0 inventory, H1 smoke gate and H2 brood
+lifecycle completed; H3 is next. This is
 the execution hand-off for ChatGPT sessions. It turns Meadow's existing
 headless harness into a small, stable mechanism-check suite without spending
 runs on systems that are about to change.
@@ -193,6 +193,39 @@ development advances, at least one bee hatches into the requested role, and a
 stocking hatch can restock rather than silently falling back. Start from the C6
 nurse and C4 stocking scenarios. Add a generic assertion or stop counter only
 if the summary cannot distinguish progress from a stall.
+
+Completed 22 Aug 2026. The retained C6 nurse pair now shares seed `4242` and
+identical starting state, differing only in the nurse mode assignment. Each
+waits for the first real brood hatch, then asserts that at least one real brood
+feed occurred and exits via `when_actions_resolved`; `max_days: 10` is the
+safety ceiling that converts a feeding/development stall into a failed
+`never_fired` action. Both stopped on day 1 at game time 160.75s with six feeds,
+one nectar-forager hatch, no deaths and no action problems. Wall times were
+11.4s for Feed brood and 10.2s for Anything. Their exactly matched summaries
+also retain the useful H3 evidence that Anything mode services needy brood
+before doing lower-priority jelly work.
+
+`c4_stocking_hatch_test.json` uses the same seed and starting state, applies the
+real hatch-role command to the brood cell, and waits specifically for a
+`BUILDER/restock` emergence. It then makes the same feeding assertion and exits
+early. The final run stopped on day 1 at game time 160.75s with seven feeds,
+one `BUILDER/restock` hatch, no deaths and no action problems in 12.7s wall
+time. The old hatch diagnostic was logged as a pseudo-action with result
+`spawned`, which H1's deliberate fail-on-non-accepted rule correctly treated
+as a problem. H2 replaces that pseudo-action with one generic
+`brood_hatches_by_role_mode` summary/event counter, useful in ordinary
+diagnostic logs as well as scenarios.
+
+Invocations use the default fixed FPS 30 and `brief` report:
+`python tools/run_scenario.py test_scenarios/c6_nurse_feed_test.json --report
+brief`, the matching `c6_nurse_both_test.json` command, and the matching
+`c4_stocking_hatch_test.json` command. Named failures protected: nurses no
+longer delivering food, fed brood stalling before emergence, the Anything mode
+failing to give needy brood its feeding priority, a requested hatch role not
+being applied, or Stocking silently emerging as another Comb worker mode.
+These are moderate-validity integration checks: the starting colony is
+artificial, but feeding, development, emergence and role/mode application all
+run through normal game code. They do not judge nursery pacing or balance.
 
 ### H3. Hive production
 

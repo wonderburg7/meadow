@@ -8,15 +8,18 @@ items from here.
 
 ## Next up
 
-1. **Stable headless mechanism checks, H2 only** -- start from the retained
-   `c6_nurse_feed_test.json` / `c6_nurse_both_test.json` pair and
-   `c4_stocking_hatch_test.json`. Run them with `brief` first and confirm which
-   existing summary counters prove feeding, development and the requested
-   Stocking hatch before adding any telemetry.
-2. **Keep H2 narrow** -- add only the smallest missing development-progress
-   postcondition or stop counter, retain matched starting state where the nurse
-   modes are compared, record wall times and named protected failures in
-   `CHATGPT_HEADLESS_CHECK_PLAN.md`, then commit H2 separately.
+1. **Stable headless mechanism checks, H3 only** -- begin with brief baseline
+   runs of `c2_no_jelly_cell_test.json` and the matched
+   `c6_fanners_1_test.json` / `c6_fanners_2_test.json` /
+   `c6_fanners_4_test.json` set. The H2 nurse pair already supplies matched,
+   early-stop evidence that Anything mode feeds needy brood before making
+   jelly; the H2 Stocking scenario already proves its requested hatch mode.
+2. **Keep H3 selective** -- pin identical starting state and seed across the
+   fanner comparison, add only cheap real-work postconditions or early stops
+   needed to make a failure non-zero, and retain the no-undesignated-jelly
+   check without creating a general suite runner. Record wall times and named
+   protected failures in `CHATGPT_HEADLESS_CHECK_PLAN.md`, then commit H3
+   separately.
 
 At the end of each ChatGPT session, rewrite this file with ChatGPT's next 1-3
 actions. Never add ChatGPT actions to `NEXTSTEPS.md`.

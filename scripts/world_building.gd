@@ -411,14 +411,12 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 	if role == main.Bee.Role.BUILDER:
 		bee.architect_mode = focus if focus in ["build", "maintain", "both", "restock"] else "both"
 		bee.setup(main.hive, "nectar", main.next_bee_id, role, main)
-		# Dev-only visibility for CHATGPT_INSIGHTS_PLAN.md's C4 hatch test --
-		# lets a --scenario= run confirm which architect_mode a hatch focus
-		# actually resolved to, without inferring it from behaviour.
-		DiagnosticLog.log_action("hatch_comb_worker", "focus=%s" % focus, "spawned", "architect_mode=%s" % bee.architect_mode)
 	else:
 		bee.setup(main.hive, focus, main.next_bee_id, role, main)
 	if role == main.Bee.Role.MINER:
 		bee.automine = cell.hatch_automine
+	var hatch_mode: String = bee.architect_mode if role == main.Bee.Role.BUILDER else focus
+	DiagnosticLog.count_brood_hatch(role, hatch_mode)
 	main.next_bee_id += 1
 	if role == main.Bee.Role.FORAGER:
 		bee.state = main.Bee.State.IN_HIVE_TO_EXIT
