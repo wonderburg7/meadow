@@ -29,8 +29,36 @@ var pollen_recharge_rate: float = 0.1
 ## Dandelion's flat disc). 1.0 for species that don't specify it.
 var handling_time_scale: float = 1.0
 
-var nectar_amount: float
-var pollen_amount: float
+## Backing fields for the lazy-recharge properties below. Recharge is
+## computed on demand (whenever code reads nectar_amount/pollen_amount)
+## rather than accumulated every frame -- see _sync_recharge(). This is
+## an approximation, not an exact replay of the old per-frame Euler
+## accumulation: it multiplies the *instantaneous* season_strength() at
+## read-time by the elapsed time since the last read/write, rather than
+## integrating the strength curve across that gap. That only differs
+## from the old behaviour while a flower's season window is ramping in
+## or out (season_strength is flat everywhere else), and the result is
+## still capped at capacity either way, so the drift can't compound.
+var _nectar_amount: float = 0.0
+var _pollen_amount: float = 0.0
+var _last_recharge_update: float = 0.0
+
+var nectar_amount: float:
+	get:
+		_sync_recharge()
+		return _nectar_amount
+	set(value):
+		_sync_recharge()
+		_nectar_amount = value
+
+var pollen_amount: float:
+	get:
+		_sync_recharge()
+		return _pollen_amount
+	set(value):
+		_sync_recharge()
+		_pollen_amount = value
+
 var occupied_by: Node2D = null   # the bee currently visiting this flower, if any
 var marked_at: float = -999.0    # sim-time of the last tarsal scent mark
 var marked_by: Node2D = null     # which bee left it
@@ -157,17 +185,24 @@ func setup(index: int) -> void:
 const PRESENTATION_PER_SECOND := 6.0
 var presentation_timer: float = 0.0
 
-func _process(delta: float) -> void:
-	Perf.begin("flowers")
-	# Out of season a plant produces nothing; at the edges of its window
-	# it produces a little. The plant stays where it is either way --
-	# flowers popping in and out of existence would read as a glitch
-	# rather than as a season.
+## Catches nectar_amount/pollen_amount up to the current sim time,
+## before either is read or written. Out of season this adds nothing
+## (season_strength is 0), matching the old per-frame gate. The plant
+## stays where it is whether it's recharging or not -- flowers popping
+## in and out of existence would read as a glitch rather than as a
+## season.
+func _sync_recharge() -> void:
+	var elapsed: float = Session.sim_time - _last_recharge_update
+	if elapsed <= 0.0:
+		return
 	var strength: float = season_strength()
 	if strength > 0.0:
-		nectar_amount = min(nectar_capacity, nectar_amount + nectar_recharge_rate * strength * delta)
-		pollen_amount = min(pollen_capacity, pollen_amount + pollen_recharge_rate * strength * delta)
+		_nectar_amount = min(nectar_capacity, _nectar_amount + nectar_recharge_rate * strength * elapsed)
+		_pollen_amount = min(pollen_capacity, _pollen_amount + pollen_recharge_rate * strength * elapsed)
+	_last_recharge_update = Session.sim_time
 
+func _process(delta: float) -> void:
+	Perf.begin("flowers")
 	if GameConfig.predators_on:
 		CrabSpider.update(self, delta)
 
@@ -183,8 +218,9 @@ func _process(delta: float) -> void:
 		Perf.end("flowers")
 		return
 
-	# Everything above runs every frame: a flower recharges and ages at
-	# the same rate whether it is on screen or not. Only the drawing
+	# Ageing above runs every frame regardless of visibility; recharge is
+	# lazy (see _sync_recharge) so it isn't computed here at all unless
+	# something below reads nectar_amount/pollen_amount. Only the drawing
 	# below is throttled.
 	if not is_visible_in_tree():
 		Perf.end("flowers")
@@ -194,9 +230,7 @@ func _process(delta: float) -> void:
 		Perf.end("flowers")
 		return
 	presentation_timer = (1.0 / PRESENTATION_PER_SECOND) * randf_range(0.85, 1.15)
-	# `strength` is passed in rather than asked for again -- it was being
-	# computed twice per flower per frame.
-	_update_fade(strength)
+	_update_fade(season_strength())
 	_update_labels()
 	_update_crab_spider_marker()
 	Perf.end("flowers")

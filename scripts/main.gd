@@ -288,6 +288,7 @@ var reseed_timer: float = 0.0
 var rate_samples: Array = []
 var rate_sample_timer: float = 10.0 + randf() * 2.0
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
+var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre": Vector2, "radius": float}]
 var panning: bool = false          # middle mouse button held
 var pan_anchor: Vector2 = Vector2.ZERO
 

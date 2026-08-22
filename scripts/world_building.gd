@@ -36,6 +36,7 @@ func _build_meadow() -> void:
 	main.meadow_root.add_child(main.hive)
 
 	_scatter_obstacles()
+	_build_microhabitat_zones()
 
 	for i in range(int(GameConfig.flower_count)):
 		_seed_flower()
@@ -143,6 +144,44 @@ func _spawn_starting_foragers() -> void:
 ## rather than reading as separate plants.
 const BUSH_UNIT_SPREAD := Vector2(8.0, 24.0)
 
+## One or two soft zones per microhabitat string on the species table,
+## scattered across the field and built once per run (before any flower is
+## seeded, so it stays reproducible off the run's seed). `_seed_flower`
+## biases a species' *first* cluster anchor toward a matching zone --
+## existing clusters (main.cluster_centers) are untouched by this.
+const MICROHABITAT_ZONE_RADIUS := Vector2(300.0, 450.0)
+const MICROHABITAT_ZONE_CHANCE := 0.75
+
+func _build_microhabitat_zones() -> void:
+	main.microhabitat_zones.clear()
+	var microhabitats: Array = []
+	for species in main.FlowerSpecies.SPECIES:
+		var habitat: String = species.get("microhabitat", "")
+		if habitat != "" and not microhabitats.has(habitat):
+			microhabitats.append(habitat)
+
+	for habitat in microhabitats:
+		var zone_count := randi_range(1, 2)
+		var zones: Array = []
+		for i in range(zone_count):
+			zones.append({
+				"centre": _random_field_point(),
+				"radius": randf_range(MICROHABITAT_ZONE_RADIUS.x, MICROHABITAT_ZONE_RADIUS.y),
+			})
+		main.microhabitat_zones[habitat] = zones
+
+## A random point inside one of `habitat`'s zones, or an empty Vector2 flag
+## (via the returned bool) if that habitat has no zones -- callers fall
+## back to `_random_field_point()` in that case.
+func _random_point_in_zone(habitat: String) -> Vector2:
+	var zones: Array = main.microhabitat_zones.get(habitat, [])
+	var zone: Dictionary = zones[randi() % zones.size()]
+	var centre: Vector2 = zone.centre
+	var radius: float = zone.radius
+	var angle := randf() * TAU
+	var dist := sqrt(randf()) * radius
+	return centre + Vector2(cos(angle), sin(angle)) * dist
+
 func _seed_flower() -> void:
 	var species_index = main.FlowerSpecies.pick_species_index()
 	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
@@ -159,7 +198,16 @@ func _seed_flower() -> void:
 		var dist = sqrt(randf()) * cluster_radius
 		anchor = center + Vector2(cos(angle), sin(angle)) * dist
 	else:
-		anchor = _random_field_point()
+		var habitat: String = species.get("microhabitat", "")
+		var zones: Array = main.microhabitat_zones.get(habitat, [])
+		if not zones.is_empty() and randf() < MICROHABITAT_ZONE_CHANCE:
+			anchor = _random_point_in_zone(habitat)
+			for retry in range(6):
+				if anchor.distance_to(main.hive.position) >= main.FLOWER_MIN_DISTANCE:
+					break
+				anchor = _random_point_in_zone(habitat)
+		else:
+			anchor = _random_field_point()
 		centers.append(anchor)
 		if centers.size() > main.MAX_CLUSTERS_PER_SPECIES:
 			centers.pop_front()

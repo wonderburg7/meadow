@@ -60,7 +60,12 @@ set_deferred call_deferred connect disconnect is_connected emit_signal has_signa
 NOT_CALLS = set("""
 if elif else while for return match await in and or not assert func preload load
 signal var const enum class extends breakpoint pass break continue when is as
+get set
 """.split())
+# `get`/`set` are keywords here, not calls -- GDScript 4's inline property
+# getter/setter syntax (`var x: T: get: ... set(value): ...`) puts them in
+# exactly the position this checker treats as a function call. See
+# flower.gd's nectar_amount/pollen_amount for the pattern.
 
 
 def strip_code(line):

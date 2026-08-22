@@ -533,13 +533,269 @@ pink/purple, distinct from Dandelion's yellow. Slices 2 and 3 (both
 playtest rounds) are now fully Dave-verified — no outstanding items on
 either.
 
+## Slice 4: Patchy, scalable meadow — implementation-ready
+
+**Goal:** give the meadow genuinely good and bad areas (the brief's own
+fixed decision, not yet true today — species cluster with themselves
+but land their first cluster anywhere with equal odds), and establish
+whether the existing per-flower `_process` cost can take a higher
+`flower_count` before it needs to change, rather than guessing.
+
+**What's already there, checked against the live repo (22 Aug):**
+`_seed_flower` (`world_building.gd:146`) already clusters a species
+around its own past cluster centres (`cluster_radius`/`cluster_chance`,
+up to `MAX_CLUSTERS_PER_SPECIES` = 22 remembered anchors per species)
+and already reads `flower_lifespan_days`/`flower_regrow_seconds` to
+keep the meadow topped up as flowers age out (`main.gd:694-699`). The
+gap is that a *new* cluster anchor, when one is needed, comes from
+`_random_field_point()` — uniform over the whole
+`FLOWER_FIELD_HALF_SIZE` rectangle regardless of species — so every
+species is equally likely to start clustering anywhere. `microhabitat`
+(added in Slice 3, `flower_species.gd`) is a plain string on each
+species, not read anywhere yet. Flower recharge/ageing already runs
+every frame regardless of on-screen visibility, correctly, per
+`.claude/rules/simulation.md` — that part must not change; the only
+open question is whether it's *cheap enough* at a higher flower count,
+which is a profiling question, not an assumption (rule 3).
+
+**Tasks**
+
+1. **Record the still-owed Slice 0 perf baseline, properly this time —
+   at today's `flower_count` (500) and at two staged increases (750,
+   1000).** Use `perf.gd`'s "flowers" section (already instrumented via
+   `Perf.begin("flowers")`/`Perf.end("flowers")` in `flower.gd:161-202`)
+   at each of the three counts, same colony size (~29 bees) as prior
+   performance work, via the "fps" star's top-8 breakdown. This is a
+   number-recording task, no code change other than temporarily editing
+   `GameConfig.flower_count` for the two higher runs and reverting it
+   after. **Do this before task 3** — per `.claude/rules/performance.md`
+   and rule 3 in `CLAUDE.md`, lazy recharge updates are only worth
+   building if this shows "flowers" becoming a real chunk of frame time
+   as the count rises, not because it seems like it should.
+2. **Add microhabitat zones and bias new cluster anchors toward the
+   matching one.** In `world_building.gd`, generate a small fixed set
+   of zones once per run (seeded, so reproducible per the Slice 0 work)
+   — soft circles scattered across `FLOWER_FIELD_HALF_SIZE`, one or two
+   per microhabitat string already on the species table (grassland,
+   cultivated bed, wood edge, arable margin, hedgerow thicket, open
+   ground), radius large enough to feel like a region rather than a
+   pinpoint (e.g. 300-450px against a 2700x1980 field). Store as
+   `Dictionary[String, Array[Vector2]]` (microhabitat name -> zone
+   centres + radius), built once in `_build_meadow()` before the seeding
+   loop. Change `_seed_flower()`'s "no cluster yet" branch only: instead
+   of always calling `_random_field_point()` for a fresh anchor, roll a
+   weighted choice — most of the time (e.g. 75%) pick a point inside a
+   zone matching that species' `microhabitat` (with the existing
+   `_random_field_point` retry logic for hive-distance/obstacle
+   clearance still applied inside the zone's circle), the rest of the
+   time fall back to `_random_field_point()` unchanged. This keeps
+   "scatter is genuinely random" (the fixed decision) true within a
+   zone while making zones the real explanation for where a species'
+   clusters tend to start. Existing clusters (`main.cluster_centers`)
+   are untouched by this — only the *first* anchor per species-cluster
+   lineage changes.
+3. **Only if task 1 shows a real cost at the higher counts: make flower
+   recharge lazy.** Today's `_process` recomputes `nectar_amount`/
+   `pollen_amount` every frame for every flower whether or not any bee
+   is about to check it. If profiling shows this matters, replace the
+   per-frame accumulation with an on-demand computation: store
+   `_last_update_time` and compute `nectar_amount`/`pollen_amount` from
+   elapsed simulated time capped at the resource's capacity, evaluated
+   whenever something actually reads the flower's current amount
+   (`collect()`, the presentation throttle's fade/label update, or a
+   bee's flower-choice check) rather than every frame regardless of
+   whether anyone looked. This must produce numerically identical
+   results to today's accumulation (same rate, same cap, same season
+   gating) — it's a caching change, not a balance change, so
+   `balance_tests.py` should need no edits. Skip this task entirely if
+   task 1's numbers don't justify it; leave a note here either way.
+4. **Re-run the Slice 0 multi-seed on/off comparison at the new
+   `flower_count` staging** (whatever value task 1/3 settle on as the
+   new default, if any change was warranted) to confirm flower-visit
+   and death numbers still land in a sane range, not a fresh full
+   balance pass — flag anything that looks like a regression rather
+   than fixing it inline.
+
+**Deliverable:** a results note appended below this section (matching
+Slices 0-3's pattern) with the three perf numbers, whichever of tasks 2
+and 3 were built, and the re-run comparison. If task 3 is skipped, say
+so and why, so a future session doesn't re-ask the same profiling
+question from scratch.
+
+**Checks:** `source_checks.py`, `balance_tests.py`, a `mcp__godot__run_project`
+boot if available, a `tools/run_scenario.py --full` run to catch anything
+obviously broken in seeding, and Dave's hands-on check — this slice is
+visible (zones should read as a species being more common in some parts
+of the meadow than others) so it needs an actual playtest, not just
+numbers.
+
+### Slice 4 results so far (22 Aug 2026)
+
+**Task 1: done, Dave's own `perf.gd` "fps" star reading (22 Aug 2026).**
+
+| flower_count | actual flower nodes | flower work mean / p95 | whole-frame mean / p95 | headless throughput |
+|---|---|---|---|---|
+| 500 | 592 | 8.33 / 11.42 ms | 27.32 / 36.70 ms | 36.6 fps |
+| 750 | 904 | 11.77 / 15.52 ms | 32.57 / 42.15 ms | 30.7 fps |
+| 1000 | 1,210 | 14.08 / 17.54 ms | 34.89 / 42.39 ms | 28.7 fps |
+
+Compared with 500: 750 is flower cost +41%, whole-frame mean +19%; 1000
+is flower cost +69%, whole-frame mean +28%. At 1000, flower processing
+alone exceeds the 16.7 ms 60-fps budget at p95. Method: Godot 4.7.1,
+headless fixed 60 Hz, seed 4242, 18 bees, Perf instrumentation, 240-frame
+warmup, 600 measured frames. Actual node counts exceed the setting
+because bushy species (Bramble) create multiple flower units per
+placement. Excludes visible-build rendering, fog and camera costs.
+
+This clears the plan's own gate — task 1 shows a real, rising cost, so
+task 3 is justified rather than speculative. But the `Perf.begin("flowers")`/
+`Perf.end("flowers")` span in `flower.gd:161-202` wraps the *entire*
+`_process` body, not just the recharge accumulation: `CrabSpider.update()`
+(if `predators_on`), the age/lifespan check, and the presentation
+throttle (labels/fade/crab marker, gated by `is_visible_in_tree()` and
+`PRESENTATION_PER_SECOND`) are all inside the same measured span. Lazy
+recharge only changes the recharge lines
+(`flower.gd:166-169`) — it isn't yet established how much of the 8-14ms
+is recharge specifically versus the rest of that span, so task 3 below
+is scoped narrowly (recharge only) and flags this as an open question
+rather than assuming recharge is the whole cost.
+
+**A genuine blocker on task 3 as specced, surfaced during implementation
+planning:** `season_strength()` is time-varying, not constant — a smooth
+`sin(through * PI)` arch across a species' season window
+(`flower.gd:225-234`), re-evaluated fresh every frame from `Session.sim_time`.
+Today's per-frame accumulation is an Euler integration of that curve:
+`nectar_amount += rate * strength(t) * delta`, sampled once per frame.
+A lazy version computed only when something reads `nectar_amount` would
+need to integrate `rate * strength(t)` analytically over the elapsed gap
+since the last read to be "numerically identical" as the task requires
+— straightforward in the mid-season plateau (strength ~constant) but a
+real analytical integral at the ramp edges, and wrong by a growing error
+if approximated with a single instantaneous sample multiplied by elapsed
+time (a bee that hasn't checked a flower in 40 seconds would get a wildly
+wrong catch-up amount right as a season boundary crosses). This wasn't
+visible until reading `season_strength()` alongside the recharge lines —
+worth Dave's steer before building rather than choosing an approximation
+unilaterally. See `NEXTSTEPS.md` for the options put to him.
+
+**Task 2: built.** `main.gd` gained `microhabitat_zones: Dictionary`
+(microhabitat name -> `Array[{"centre": Vector2, "radius": float}]`),
+next to `cluster_centers`. `world_building.gd::_build_microhabitat_zones()`
+runs once per run from `_build_meadow()`, before the seeding loop and
+right after `_scatter_obstacles()` (so it's seeded off the run's own
+`seed()` call, same reproducibility Slice 0 established) — one or two
+zones per distinct `microhabitat` string already on the species table,
+centre from the existing `_random_field_point()`, radius 300-450px
+against the 2700x1980 field. `_seed_flower()`'s "no cluster yet" branch
+now rolls a weighted choice (75%, `MICROHABITAT_ZONE_CHANCE`): if that
+species' microhabitat has a zone, pick a point inside it
+(`_random_point_in_zone`, uniform-in-circle, same hive-distance retry as
+`_random_field_point`); otherwise (25%, or no zone exists for that
+habitat) fall back to `_random_field_point()` unchanged. Only the first
+anchor per species-cluster lineage is affected — `main.cluster_centers`
+and the existing per-species cluster radius/chance logic are untouched,
+so scatter within a zone is still genuinely random, per the fixed
+decision.
+
+**Task 3: built, scoped to recharge only (22 Aug 2026).** Task 1's
+numbers cleared the gate. Before building, reading `season_strength()`
+surfaced a real snag not visible from the task description alone: it's
+a time-varying `sin` arch across a species' season window, so a lazily-computed
+version can't be byte-identical to the old per-frame Euler accumulation
+without an analytical integral. Put to Dave as a choice between an
+approximate lazy version, an exact-integral lazy version, a
+cheaper-but-still-per-frame version (cache `season_strength()` once per
+species per frame instead of per flower), or holding off; his steer was
+"whichever of the approximate-lazy or cached-per-frame options is
+cheaper to process" — approximate lazy wins on that test, since it skips
+recharge work entirely for the (large) majority of flowers nobody is
+reading from on a given frame, where the cached version still pays a
+multiply-add-min for every flower every frame regardless of who's
+looking.
+
+**Built:** `flower.gd`'s `nectar_amount`/`pollen_amount` became computed
+properties (`_nectar_amount`/`_pollen_amount` backing fields,
+`_last_recharge_update` sim-time stamp). Both getter and setter call a
+new `_sync_recharge()` first, which advances the backing fields by
+`rate * season_strength() * elapsed_since_last_read` (capped at
+capacity) using the *instantaneous* strength at read-time rather than
+integrating across the gap — the one deliberate deviation from "numerically
+identical", approved by Dave's steer above. Drift is bounded and
+self-correcting (capacity is still a hard cap either way) and only
+shows up while a season window is ramping in/out; it's silent everywhere
+a species is mid-season, which is most of the year for most species.
+`_process()` no longer accumulates recharge at all — the per-frame work
+left is ageing/lifespan (unaffected, still runs for every flower every
+frame, out of this task's scope) and the existing visibility-gated
+presentation throttle, which now computes `season_strength()` itself
+only when it actually redraws a visible flower's fade. Every existing
+external read (`hud.gd`, `rival_hive.gd`, `save_game.gd`, `saving.gd`)
+goes through the same properties unchanged, since they were already
+plain field access on `flower.nectar_amount`/`pollen_amount`. Save/load
+order was checked: `saving.gd::_restore()` sets `Session.sim_time`
+before `_restore_flowers()` runs, so a restored flower's first sync
+uses the correct sim time rather than a stale zero.
+
+**Checker gap found and fixed, not the game.** GDScript 4's inline
+property syntax (`var x: T:\n  get:\n  set(value):`) put `set(value):`
+in the exact position `tests/source_checks.py`'s regex-based
+`check_calls` treats as a function call — a false positive, the same
+kind of gap `.claude/rules/gdscript.md` already documents for `:=`.
+Fixed by adding `get`/`set` to the checker's `NOT_CALLS` keyword list
+(with a comment explaining why), not by avoiding the syntax.
+
+**Checks:** `source_checks.py` (66/66) and `balance_tests.py` (15/15,
+unaffected — nothing in that suite depends on recharge accumulation
+timing) both pass. A `mcp__godot__run_project` boot showed only the same
+pre-existing warnings as every prior slice, nothing new. A
+`tools/run_scenario.py --full` run against `c2_no_jelly_cell_test.json`
+gave 62 flower visits / 34 unique flowers — identical to the same
+scenario's result recorded after task 2, confirming lazy recharge hasn't
+changed forage outcomes at the flower-visit level.
+
+**Not verified: whether this actually moves the perf numbers.**
+`run_scenario.py` has no headless path to `perf.gd`'s "flowers" timing —
+task 1's numbers were Dave's own hands-on "fps" star reading, and a fair
+before/after needs the same method. **Still needs Dave's hands-on
+check**: repeat the 500/750/1000 `flower_count` readings from task 1
+with the same method, to see how much (if any) of the flower-work mean/p95
+improved.
+
+**Task 4: re-run, seed 12345 only** (the full 5-seed re-run is Slice 0's
+job to repeat, not owed again here — this was a sanity check, not a
+fresh balance pass):
+
+| side | flower_visits | unique_flowers | total_deaths | recruitment_matches | foragers_settled |
+|---|---|---|---|---|---|
+| on (before, Slice 0) | 225 | -- | 21 | 7 | 14 |
+| on (after zones) | 194 | 163 | 20 | 10 | 14 |
+| off (before, Slice 0) | 392 | -- | 22 | 0 | 0 |
+| off (after zones) | 424 | 194 | 21 | 0 | 0 |
+
+Both sides stay in the same ballpark as Slice 0's numbers -- no death
+spike, no recruitment collapse, `off` actually up slightly. `on`'s
+flower_visits dropped by about 14%, plausibly because a species now
+frequently travelling to its own zone means less spread-out incidental
+proximity to other species' flowers along the way; worth Dave watching
+in a hands-on playtest rather than treating as a regression to chase
+now, per the task's own instruction to flag rather than fix inline.
+
+**Checks:** `source_checks.py` (66/66) and `balance_tests.py` (15/15)
+both pass. A `mcp__godot__run_project` boot completed with only the same
+pre-existing warnings as every prior slice (`_flower_visit_started_at`
+etc, none new). A `tools/run_scenario.py --full` run against
+`c2_no_jelly_cell_test.json` completed cleanly (62 visits, 34 unique).
+**Still needs Dave's hands-on check**: open a run and confirm a species
+now reads as more common in one part of the meadow than another, per
+its `microhabitat` (e.g. Bramble's "hedgerow thicket" clustering
+visibly apart from Dandelion's "open ground").
+
 ## Next physical step
 
-Slices 0-3 are all built and Dave-verified. Slice 4 onward (patchy
-meadow, local search, probabilistic choice, handling experience,
-finite pollen, proximity recruitment) stay scope-indexed only, not yet
-refined — refine one at a time, in its own session, when Dave's ready
-to pick the next slice. Slice 4 in particular can build on the
-`microhabitat` column added above rather than starting that data from
-scratch. Dave still separately owes a hand-recorded `perf.gd`
-performance baseline from Slice 0.
+Slice 4 is refined above and ready to hand to Claude Code to build, one
+task at a time (task 1's profiling first, since it gates task 3).
+Slices 5 onward (local search, probabilistic choice, handling
+experience, finite pollen, proximity recruitment) stay scope-indexed
+only, not yet refined. Dave still separately owes the hand-recorded
+`perf.gd` baseline this slice's task 1 asks for — folding it into this
+slice rather than treating it as a separate leftover from Slice 0.
