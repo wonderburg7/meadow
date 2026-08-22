@@ -464,8 +464,7 @@ func _build_top_right_bar() -> void:
 	row1.add_child(speed_group)
 
 	for entry in SPEEDS:
-		if entry.get("dev_only", false) and not Session.show_speed_8x:
-			continue
+		var dev_only: bool = entry.get("dev_only", false)
 		var btn := Button.new()
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
@@ -473,10 +472,15 @@ func _build_top_right_bar() -> void:
 		btn.add_theme_font_size_override("font_size", 11)
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.toggle_mode = true
+		# Built either way rather than skipped, so the settings window's
+		# "Show 8x speed button" toggle can show/hide it live (see
+		# refresh_speed_visibility) instead of only taking effect on the
+		# next scene reload.
+		btn.visible = not dev_only or Session.show_speed_8x
 		var scale_value: float = entry.scale
 		btn.pressed.connect(func(): speed_requested.emit(scale_value))
 		speed_group.add_child(btn)
-		speed_buttons.append({"button": btn, "scale": scale_value})
+		speed_buttons.append({"button": btn, "scale": scale_value, "dev_only": dev_only})
 
 	row1.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
@@ -1656,6 +1660,15 @@ func pinned_stats_changed() -> void:
 	Session.perf_enabled = Session.pinned_stats.has("fps")
 	corner_signature = ""
 	_refresh_corner()
+
+## Called by debug_panel.gd when "Show 8x speed button" is toggled, so the
+## button appears or disappears in the running bar straight away rather
+## than only on the next scene reload -- same "huds" group dispatch
+## set_settings_button_width already uses.
+func refresh_speed_visibility() -> void:
+	for entry in speed_buttons:
+		if entry.dev_only:
+			entry.button.visible = Session.show_speed_8x
 
 ## For callers that have written into `corner_texts` directly, rather
 ## than through one of the update_* setters.

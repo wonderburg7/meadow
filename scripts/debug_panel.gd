@@ -38,7 +38,8 @@ const CATEGORIES := [
 	"Predators",
 	"Mining",
 	"Bee life",
-	"Interface",
+	"Appearance",
+	"Accessibility",
 ]
 
 const TUNABLES := [
@@ -750,31 +751,43 @@ const TUNABLES := [
 		"tip": "How long the visual offset takes to ease in when a bee starts flying outdoors, and back out when it lands -- this is what stops a landing bee snapping onto the flower. Only matters when Bumble flight is on.",
 	},
 
-	# --- Interface ---
+	# --- Appearance ---
 	{
 		"key": "history_sample_seconds", "label": "History sample s", "step": 1.0, "min": 1.0,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "How often the colony window's over-time plot takes a reading. Together with the number of points below, this sets how far back the plot reaches.",
 	},
 	{
 		"key": "history_points", "label": "History points", "step": 10.0, "min": 10.0,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "How many readings the plot keeps. Sample seconds multiplied by this is the span it covers, in in-game seconds.",
 	},
 	{
 		"key": "low_energy_warning_fraction", "label": "Warn at share", "step": 0.05, "min": 0.05,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "What fraction of the colony has to be running low on energy before the game warns you. The warning does not pause anything.",
 	},
 	{
 		"key": "low_energy_warning_level", "label": "Low energy is", "step": 0.05, "min": 0.05,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "What counts as a bee running low, as a fraction of its energy capacity.",
 	},
 	{
 		"key": "low_energy_gap", "label": "Warn every s", "step": 30.0, "min": 10.0,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "Shortest gap between low-energy warnings, so a colony that stays hungry is told once and then left alone to be dealt with.",
+	},
+	{
+		"key": "ui_theme", "label": "Theme",
+		"options": ["dark", "light", "high_contrast"],
+		"option_labels": {"dark": "Dark", "light": "Light", "high_contrast": "High contrast"},
+		"category": "Appearance",
+		"tip": "Which colour palette every panel draws from. High contrast swaps in a near-black background, near-white text and a small set of highly saturated accent colours, clearing WCAG AAA for body text. Applies to a window the next time it opens.",
+	},
+	{
+		"key": "show_speed_8x", "label": "Show 8x speed button", "toggle": true,
+		"category": "Appearance",
+		"tip": "Adds an 8x button next to 1x/2x/4x in the top-right bar, for skipping a stretch you've already seen. Off by default -- most runs don't need it, and there is more happening per second at 8x than you can follow by watching the bees. Takes effect immediately.",
 	},
 	{
 		"key": "scenery_on", "label": "Trees & raised ground", "toggle": true,
@@ -803,23 +816,53 @@ const TUNABLES := [
 	},
 	{
 		"key": "fps", "label": "Frame rate", "star": true,
-		"category": "Interface",
+		"category": "Appearance",
 		"tip": "Show the frame rate in the top-right corner, alongside whatever else you have starred. Three numbers: the average, how long the last frame took in milliseconds, and the longest frame in the last second. The last one is the one that matters for smoothness -- a run that averages 60 but spikes to 50ms every so often will feel choppy, and only the worst-frame figure shows it.",
 	},
 	{
+		"key": "gallerin_enabled", "label": "Dr Gallerin", "toggle": true,
+		"category": "Appearance",
+		"tip": "The moth mentor who offers hints and encouragement during a Challenge. Turning him off changes nothing about how a Challenge plays -- he can be switched back on here at any time. Takes effect immediately.",
+	},
+	# --- Accessibility ---
+	{
 		"key": "show_info_badges", "label": "Show info icons", "toggle": true,
-		"category": "Interface",
+		"category": "Accessibility",
 		"tip": "Show the small round 'i' buttons next to controls. Turn them off once you know what everything does and the panels get a lot quieter. Takes effect immediately.",
 	},
 	{
 		"key": "colour_blind_mode", "label": "Colour-blind labels", "toggle": true,
-		"category": "Interface",
+		"category": "Accessibility",
 		"tip": "Add a short text label wherever colour would otherwise be the only thing telling two states apart: what a cell holds, the nursery ring, the comb overlays and the zone glow. Around one man in twelve has some colour vision deficiency, and several of the palettes here are exactly the ones that fail -- but the labels are clearer for everyone at small sizes, so it is worth trying either way. Takes effect immediately.",
 	},
 	{
-		"key": "gallerin_enabled", "label": "Dr Gallerin", "toggle": true,
-		"category": "Interface",
-		"tip": "The moth mentor who offers hints and encouragement during a Challenge. Turning him off changes nothing about how a Challenge plays -- he can be switched back on here at any time. Takes effect immediately.",
+		"key": "ui_typeface", "label": "Typeface",
+		"options": ["sans", "atkinson", "dyslexia", "pixel"],
+		"option_labels": {"sans": "Standard", "atkinson": "Atkinson Hyperlegible", "dyslexia": "Dyslexia-friendly", "pixel": "Pixel"},
+		"category": "Accessibility",
+		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and the dyslexia-friendly face are both designed to stay readable at small sizes; Pixel is a look, not an accessibility choice, and can't be combined with either of the other two. Until their font files are added under assets/fonts/, the three non-standard options fall back to the standard font rather than erroring -- so no visible change yet is expected. Applies to a window the next time it opens.",
+	},
+	{
+		"key": "text_scale", "label": "Text scale", "step": 0.1, "min": 1.0, "max": 2.0,
+		"category": "Accessibility",
+		"tip": "Multiplies every panel's font size, from 100% up to 200%. Panels reflow -- wrap, grow taller -- rather than clip at any scale. Applies to a window the next time it opens.",
+	},
+	{
+		"key": "reduced_motion", "label": "Reduced motion", "toggle": true,
+		"category": "Accessibility",
+		"tip": "Suppresses attention flashes and pulsing animation, once a panel actually uses either. Nothing reads this yet -- it is a settings slot reserved ahead of that work, so an animation is never shipped without an off switch already in place.",
+	},
+	{
+		"key": "screen_shake", "label": "Screen shake",
+		"options": ["off", "reduced", "full"],
+		"option_labels": {"off": "Off", "reduced": "Reduced", "full": "Full"},
+		"category": "Accessibility",
+		"tip": "No screen shake exists in the game yet -- this is the settings slot reserved ahead of that work, so a shake effect is never shipped without an off switch already in place.",
+	},
+	{
+		"key": "tooltip_delay", "label": "Tooltip delay s", "step": 0.1, "min": 0.0, "max": 3.0,
+		"category": "Accessibility",
+		"tip": "Seconds a hovered control waits before showing its tooltip. Godot's own default is half a second -- raise it if tooltips keep popping up before you meant to see them, or lower it towards zero to see them straight away. Takes effect immediately.",
 	},
 ]
 
@@ -830,6 +873,8 @@ const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
 	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
 	"gallerin_enabled", "show_crab_spiders",
+	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
+	"tooltip_delay", "show_speed_8x",
 ]
 
 static func setting_get(key: String):
@@ -858,6 +903,12 @@ var sections: Dictionary = {}
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 10   # draw on top of the world
+
+	# Syncs Godot's own tooltip timer to whatever Session carried in from
+	# the last time it was changed -- harmless while Session always
+	# starts at the default (0.5s, which matches Godot's own default
+	# anyway), and ready for once player_profile.gd persists it.
+	ProjectSettings.set("gui/timers/tooltip_delay_sec", Session.tooltip_delay)
 
 	var vp := get_viewport().get_visible_rect().size
 
@@ -972,13 +1023,15 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 			body.add_child(_make_star_row(entry))
 		elif entry.get("toggle", false):
 			body.add_child(_make_toggle_row(entry))
+		elif entry.has("options"):
+			body.add_child(_make_options_row(entry))
 		else:
 			body.add_child(_make_row(entry))
 
 	# The controls used to be printed permanently in the top-left corner
 	# of the screen. They live here instead, so they're available when
 	# you want them and out of the way when you don't.
-	if category == "Interface":
+	if category == "Appearance":
 		body.add_child(HSeparator.new())
 		body.add_child(_make_controls_help())
 
@@ -1168,6 +1221,12 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			for panel in get_tree().get_nodes_in_group("gallerin"):
 				if is_instance_valid(panel):
 					panel.visible = pressed
+		elif key == "show_speed_8x":
+			# the button only exists once in the top-right bar per hud --
+			# same "huds" group dispatch set_settings_button_width uses.
+			for hud in get_tree().get_nodes_in_group("huds"):
+				if is_instance_valid(hud) and hud.has_method("refresh_speed_visibility"):
+					hud.refresh_speed_visibility()
 		elif Prerequisites.is_gated(key):
 			if pressed:
 				_cascade_prerequisites_on(key)
@@ -1177,6 +1236,52 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	row.add_child(box)
 	row.add_child(UI.info_badge(entry.tip))
 	return row
+
+## A setting whose value is one of a small fixed set of strings (e.g.
+## Session.ui_theme's "dark"/"light"/"high_contrast"), shown as a label
+## plus "‹"/"›" buttons that step through entry.options -- the same shape
+## as the numeric row's -/+ buttons, but stepping through a list instead
+## of by an amount.
+func _make_options_row(entry: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+
+	var lbl := Label.new()
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.custom_minimum_size = Vector2(140, 0)
+	lbl.text = "%s: %s" % [entry.label, _option_display(entry, setting_get(entry.key))]
+	value_labels[entry.key] = lbl
+	row.add_child(lbl)
+
+	row.add_child(UI.info_badge(entry.tip))
+
+	var prev := Button.new()
+	prev.text = "‹"
+	prev.custom_minimum_size = Vector2(26, 24)
+	prev.pressed.connect(func(): _cycle_option(entry, -1))
+	row.add_child(prev)
+
+	var next := Button.new()
+	next.text = "›"
+	next.custom_minimum_size = Vector2(26, 24)
+	next.pressed.connect(func(): _cycle_option(entry, 1))
+	row.add_child(next)
+
+	return row
+
+func _option_display(entry: Dictionary, value) -> String:
+	var labels: Dictionary = entry.get("option_labels", {})
+	return labels.get(value, value)
+
+func _cycle_option(entry: Dictionary, direction: int) -> void:
+	var options: Array = entry.options
+	var idx: int = options.find(setting_get(entry.key))
+	if idx == -1:
+		idx = 0
+	idx = (idx + direction + options.size()) % options.size()
+	var new_value: String = options[idx]
+	setting_set(entry.key, new_value)
+	value_labels[entry.key].text = "%s: %s" % [entry.label, _option_display(entry, new_value)]
 
 ## Walks up Prerequisites from `key`, turning on everything it depends
 ## on -- e.g. switching on Floral constancy also switches on Auto
@@ -1243,8 +1348,15 @@ func _make_star_row(entry: Dictionary) -> Control:
 func _adjust(entry: Dictionary, delta: float) -> void:
 	var new_value: float = setting_get(entry.key) + delta
 	new_value = max(new_value, entry.min)
+	if entry.has("max"):
+		new_value = min(new_value, entry.max)
 	setting_set(entry.key, new_value)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _format_value(new_value)]
+	if entry.key == "tooltip_delay":
+		# Godot's own project-wide tooltip timer, rather than something
+		# every tooltip_text assignment would otherwise need to read
+		# individually -- see UI_PLAN.md section 7.
+		ProjectSettings.set("gui/timers/tooltip_delay_sec", new_value)
 
 func _format_value(v) -> String:
 	if v is bool:

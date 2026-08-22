@@ -7,70 +7,81 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **UI Plan slices 1-4 are built** (`UI_PLAN.md` section 15). Slices
-   1-3 are as before (tokens/text-scale foundation, two-row top bar plus
-   goal shelf, selection/command trays). **Slice 4** restyles the Colony
-   and Nursery drawers under `ui_theme.gd`'s tokens and reorders each
-   per section 5's priority list. Colony drawer: a new "Needing
-   attention" section now leads (repurposing `main.hud.shown_signals` --
-   the same list the corner problem strip already builds from -- as a
-   clickable, severity-coloured list via a new shared
-   `UI.signal_line_button()` helper), then "Who is doing what", then
-   "Readouts", then "Favourites", then "Over time" last. Nursery drawer:
-   a new "Brood needing attention" section leads (the same signals list,
-   filtered to a new "brood" category tag `year_winter.gd` now attaches
-   to the hungry-brood/dead-cell/no-pollen/no-nurse lines), then "The
-   zone" (now capacity only -- cell counts, not the by-role breakdown),
-   then a new **"Brood stages"** row (egg/larva/capped counts from a new
-   `Hive.brood_stage_counts()`, which buckets each cell's existing
-   `development_percent()` into thirds -- presentation only, no new
-   simulation state), then "Priority tiers", "The colony now" (ring),
-   "Emerging", and "Intended roles" (the by-role breakdown, moved to its
-   own section) last. Both drawers' new signal sections share one click
-   handler (`colony_panel.gd`/`nursery_panel.gd`'s new `signal_clicked`
-   signal, wired in `main.gd` to `year_winter.gd::_on_signal_clicked`,
-   the same handler the corner strip already uses).
-   **While boot-checking this slice, found and fixed a real parser bug
-   in `hud.gd` left over from slice 3** (never boot-tested until this
-   session, since no Godot MCP tools were available before now): a local
-   variable named `trait` at `hud.gd:2066` (`trait` is a reserved
-   GDScript word) plus a `:=` type-inference failure on the same line
-   once renamed (the documented landmine in `.claude/rules/gdscript.md`
-   -- `b` isn't statically typed as `Bee`) were both blocking the whole
-   project from parsing at all. Fixed by renaming to `trait_line` and
-   giving it an explicit `: String` type. This means **slices 2 and 3
-   have now had their first real boot check too**, not just slice 4 --
-   the project loads and runs with no parser/compile errors and no new
-   warnings.
+1. **UI Plan slices 1-5 are built** (`UI_PLAN.md` section 15). Slices
+   1-4 are as before (tokens/text-scale foundation, two-row top bar plus
+   goal shelf, selection/command trays, Colony/Nursery drawer restyle
+   and brood stages -- see `git log` for the slice-by-slice detail, or
+   the previous version of this file for slice 4's full description).
+   **Slice 5** splits the settings window's overloaded "Interface"
+   category into **Appearance** and **Accessibility** (`debug_panel.gd`
+   `CATEGORIES`/`TUNABLES`), and adds a row for every `Session` field
+   slices 1-3 introduced that didn't already have one:
+   - **Appearance**: history/plot settings, the low-energy warning
+     trio, "Frame rate" (star), "Dr Gallerin" (all moved from
+     "Interface" unchanged), plus two new rows -- **Theme**
+     (dark/light/high contrast) and **Show 8x speed button**
+     (`Session.show_speed_8x`, live -- see below).
+   - **Accessibility**: "Show info icons" and "Colour-blind labels"
+     (moved from "Interface" unchanged), plus five new rows --
+     **Typeface**, **Text scale** (100-200%), **Reduced motion**,
+     **Screen shake** (off/reduced/full), **Tooltip delay**.
+   Where an existing row went (which of the two categories it landed
+   in) was my judgement call, not something the plan pinned down --
+   worth a glance in case any of it reads wrong to you.
+   New control type: a small "‹ label ›" row (`_make_options_row`) for
+   settings whose value is one of a fixed set of strings, alongside the
+   existing toggle/star/+-numeric rows -- nothing like it existed
+   before, since every prior string-valued setting was still a plain
+   number or bool.
+   **What's actually live vs. a reserved slot:** Show 8x speed button is
+   fully wired -- `hud.gd`'s speed row now always builds the 8x button
+   and only toggles `.visible`, and a new `hud.gd::refresh_speed_
+   visibility()` (dispatched the same way `pinned_stats_changed()` is)
+   makes the settings-window toggle apply immediately rather than only
+   on the next reload. Tooltip delay is wired to Godot's own
+   `ProjectSettings` tooltip timer, applied on every +/- press and once
+   at boot. Theme/Typeface/Text scale change `Session` immediately but
+   only reach a panel the next time it's built (`colony_panel.gd`/
+   `nursery_panel.gd`/`winter_panel.gd` each build their `UiTheme.
+   build_theme()`/stylebox once in `_ready()`, and `hud.gd`'s own top
+   bar doesn't consume `UiTheme` yet) -- deliberately not wiring a
+   cross-panel live-refresh broadcast this slice, since two of those
+   three panels are drawers that are invisible until reopened anyway, so
+   in practice this is very close to "immediate" already; flag to Dave
+   if it should be tightened further. Reduced motion and Screen shake
+   are genuinely inert placeholders still -- nothing in the codebase
+   reads either yet (screen shake because no shake effect exists at
+   all; reduced motion because nothing has wired it to the existing
+   pulse/flash effects in `bee.gd`/`flower.gd`/`crab_spider.gd` despite
+   `UI_PLAN.md` section 7 describing that as the intent) -- both are
+   explicitly reserved slots per their own `session.gd` doc comments, so
+   this isn't a regression, but it's a real gap if Dave expected them to
+   do something yet.
    `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
-   (regenerated) all pass/are clean; a full `mcp__godot__run_project`
-   boot was clean (no errors, only pre-existing warnings unrelated to
-   this session's files).
-   **Not yet hands-on checked, any of slices 2-4** -- a boot check only
-   confirms the game loads and runs, not that any of this looks or
-   behaves right. Start or continue Challenge 1 and a Starter-mode run
-   and confirm, for slice 4 specifically: opening the Colony drawer
-   shows "Needing attention" first with real problems (or the "nothing
-   needs attention" message when the colony's fine), and clicking a line
-   selects/focuses what it's about; the Nursery drawer's "Brood needing
-   attention" only shows brood-relevant problems (not the full list);
-   "Brood stages" shows sensible egg/larva/capped counts against a
-   manual count in a small colony, and its star still pins it to the
-   corner; "The zone" and "Intended roles" between them still show
-   everything the old combined "zone" block used to; nothing in either
-   drawer looks wrong in light/high-contrast theme or at 200% text
-   scale. For slices 2-3 (first real check of any kind this session):
-   the two-row top-right bar, the goal shelf's strikethrough/progress,
-   the bottom-left selection tray's four fields and cog, the
-   bottom-centre command tray's primary buttons and "More…" panel, and
-   "Follow bee" -- see the previous version of this file (`git log` /
-   `git show`) for the full acceptance list, all of it still applies.
-   Also worth a look at a narrow window width (~800px) to confirm
-   nothing clips.
-   **Next slice** is slice 5 (Settings drawer: split "Interface" into
-   Appearance/Accessibility, add rows for every new `Session` field from
-   slices 1-4) -- `UI_PLAN.md` section 15 has the detail; likely file
-   `debug_panel.gd`.
+   (regenerated) all pass/are clean. **No `mcp__godot__` boot check this
+   session** -- the Godot MCP tools weren't available, so this slice has
+   had no real GDScript parse, only the two Python check suites (which
+   are not a real parser -- see `.claude/rules/gdscript.md`).
+   **Not yet hands-on checked, any of slices 2-5** (slice 1 has had a
+   partial check; see `git log`). Open the settings window and confirm:
+   "Appearance" and "Accessibility" both appear where "Interface" used
+   to, each with the rows listed above and nothing missing; the Theme/
+   Typeface/Screen shake rows cycle correctly with the ‹/› buttons and
+   show a sensible label; Text scale and Tooltip delay step correctly
+   between their stated min/max; toggling "Show 8x speed button" adds/
+   removes the 8x button in the top-right bar straight away, with no
+   change to 1x/2x/4x's layout; every row's info badge reads sensibly.
+   Also still outstanding from before: slice 4's Colony/Nursery drawer
+   checks, and slices 2-3's top bar/goal shelf/selection tray/command
+   tray checks -- see the previous version of this file (`git log` /
+   `git show`) for those full lists, all of it still applies. Also
+   worth a look at a narrow window width (~800px) to confirm nothing
+   clips.
+   **Next slice** is slice 6 (main menu honeycomb layout, Challenges/
+   Scenarios rename, scenario presets, and the new `player_profile.gd`
+   persistence layer) -- `UI_PLAN.md` section 15 has the detail; likely
+   files `main_menu.gd`, `levels.gd`, new `player_profile.gd`,
+   `session.gd`, `debug_panel.gd`.
 2. **Game model slices 1-4 are built** (`DESIGN_BACKLOG.md` section 13).
    **Not yet hands-on checked** -- slice 3's prerequisite cascade only
    fires from the settings-window checkboxes, which nothing automated
