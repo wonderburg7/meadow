@@ -34,6 +34,14 @@ var _hour_accum: float = 0.0
 ## the game plays (.claude/rules/simulation.md's GameConfig/Session
 ## test), and mirrors how "time_scale" is already handled the same way.
 var snapshot_interval_override: float = -1.0
+## Set by main.gd from a --run-id= boot argument (CHATGPT_INSIGHTS_PLAN.md's
+## A1) -- the headless harness's own per-launch identifier, not a scenario
+## JSON field, since it names *this process's launch*, not the scenario
+## being run. Folded into the session filename so run_scenario.py can pick
+## its own file by exact match instead of by newest mtime, which two runs
+## started in the same wall-clock second (or a stray manual play session)
+## could otherwise race.
+var run_id_override: String = ""
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -76,7 +84,9 @@ func start_session() -> void:
 	DirAccess.make_dir_recursive_absolute(LOG_DIR)
 	_prune_old_sessions()
 
-	var path: String = "%s/session_%d.jsonl" % [LOG_DIR, int(Time.get_unix_time_from_system())]
+	var stamp: String = str(int(Time.get_unix_time_from_system()))
+	var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
+	var path: String = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
 	_file = FileAccess.open(path, FileAccess.WRITE)
 	_ended = false
 	_hour_accum = 0.0

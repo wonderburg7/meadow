@@ -28,7 +28,7 @@ import json
 import os
 import subprocess
 import sys
-import time
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -48,20 +48,20 @@ def log_dir() -> Path:
     return Path(appdata) / "Godot" / "app_userdata" / "Meadow" / "logs"
 
 
-def newest_session_file(after: float) -> Path | None:
-    """The session_*.jsonl with the newest mtime, if it's newer than `after`.
-
-    `after` should be the wall-clock time just before the run started, so
-    a stale file left over from an earlier run (or Dave's own play)
-    doesn't get mistaken for this run's output.
+def session_file_for_run_id(run_id: str) -> Path | None:
+    """The session_*.jsonl this exact run wrote, found by the --run-id we
+    passed at launch (CHATGPT_INSIGHTS_PLAN.md's A1) rather than by
+    newest mtime -- two runs can share a filesystem mtime, and mtime alone
+    can't tell this run's log apart from a stale file or Dave's own live
+    play session either.
     """
     d = log_dir()
     if not d.is_dir():
         return None
-    candidates = [p for p in d.glob("session_*.jsonl") if p.stat().st_mtime >= after]
+    candidates = list(d.glob("session_*_%s.jsonl" % run_id))
     if not candidates:
         return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return candidates[0]
 
 
 def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
@@ -69,9 +69,9 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
     or None (with an error already printed to stderr) if it didn't
     produce one.
     """
-    start = time.time()
+    run_id = uuid.uuid4().hex[:12]
     cmd = [godot_path, "--headless", "--path", str(ROOT), "--",
-           "--scenario=%s" % scenario_path]
+           "--scenario=%s" % scenario_path, "--run-id=%s" % run_id]
     print("running: %s" % " ".join(cmd))
 
     try:
@@ -85,9 +85,9 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
         if result.stderr.strip():
             print(result.stderr, file=sys.stderr)
 
-    session_file = newest_session_file(start)
+    session_file = session_file_for_run_id(run_id)
     if session_file is None:
-        print("error: no session_*.jsonl written after this run", file=sys.stderr)
+        print("error: no session_*_%s.jsonl written after this run" % run_id, file=sys.stderr)
         if result.stdout.strip():
             print("--- Godot stdout ---", file=sys.stderr)
             print(result.stdout, file=sys.stderr)

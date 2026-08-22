@@ -869,10 +869,16 @@ func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dicti
 ## optional "time_scale" field (defaults to 30x, see slice 3 below).
 func _apply_scenario_boot_arg() -> void:
 	var scenario_path: String = ""
+	# --run-id=: the headless harness's own per-launch identifier
+	# (CHATGPT_INSIGHTS_PLAN.md's A1), not a scenario JSON field -- it names
+	# this process's launch, not the scenario. Optional; a manual
+	# --scenario= launch with no --run-id still works, same as before.
+	var run_id: String = ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--scenario="):
 			scenario_path = arg.substr("--scenario=".length())
-			break
+		elif arg.begins_with("--run-id="):
+			run_id = arg.substr("--run-id=".length())
 	if scenario_path.is_empty():
 		return
 
@@ -925,6 +931,7 @@ func _apply_scenario_boot_arg() -> void:
 	scenario_stop_max_days = int(stop.get("max_days", -1))
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
+	DiagnosticLog.run_id_override = run_id
 	# DiagnosticLog only ever opens a session file off Session.run_reset
 	# (see diagnostic_log.gd) -- fired at the end of every reset_run_state(),
 	# which a normal boot never calls (only Restart/New Run/Load do). A

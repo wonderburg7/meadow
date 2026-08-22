@@ -1,8 +1,8 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked; Group A still planned, not
-started.
+verified, 22 Aug 2026. B5 stays parked. Group A: A1 built and verified,
+22 Aug 2026; A2-A6 still planned, A7 stays parked.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -321,17 +321,42 @@ needs live mid-run decisions rather than a scripted policy.
 
 ## Group A -- harness speed and token efficiency
 
-### A1. Unique run IDs (a real correctness bug, not just efficiency)
-- **File:** `run_scenario.py` (`newest_session_file`).
+### A1. Unique run IDs (a real correctness bug, not just efficiency) -- done, 22 Aug 2026
+- **Files:** `run_scenario.py` (`newest_session_file` -> replaced),
+  `diagnostic_log.gd` (`start_session`), `main.gd`
+  (`_apply_scenario_boot_arg`).
 - **Bug:** two sessions can share a filesystem mtime, so a scenario run
   can pick up another process's (e.g. Dave's live play) unfinished log
   instead of its own.
-- **Fix:** generate a run ID per headless launch, pass it into the
-  scenario boot argument, have `DiagnosticLog` include it in the
-  filename or first `config` entry, and select by ID rather than
-  newest-mtime.
-- **Verify:** run a scenario while a normal game session is also open;
-  the analyser picks up the correct file.
+- **Built:** `run_scenario.py::run_once` generates a short hex run ID
+  (`uuid.uuid4().hex[:12]`) per launch and passes it as a second
+  `--run-id=` boot argument alongside the existing `--scenario=` one --
+  a separate cmdline arg, not a scenario JSON field, since it names this
+  *process's launch*, not the scenario being run (so two `--repeat`
+  iterations of the same scenario file still get distinct IDs).
+  `main.gd::_apply_scenario_boot_arg` reads it into `DiagnosticLog.run_id_override`
+  before `Session.reset_run_state()` triggers `start_session()`.
+  `diagnostic_log.gd::start_session` folds the override into the
+  filename as a suffix -- `session_<unix_time>_<run_id>.jsonl` -- rather
+  than replacing the timestamp prefix, so `_prune_old_sessions`' existing
+  "unix-time filenames sort chronologically as plain strings" assumption
+  still holds; an ordinary (non-scenario) play session keeps the old
+  `session_<unix_time>.jsonl` shape unchanged, since `run_id_override`
+  defaults to empty. `newest_session_file` (mtime-based) is gone,
+  replaced by `session_file_for_run_id`, an exact glob match on
+  `session_*_<run_id>.jsonl` -- no more racing against mtime at all.
+- **Verified:** `source_checks.py` and `balance_tests.py` pass;
+  `FUNCTION_MAP.md` regenerated (`main.gd` is one of the six mapped
+  files); a `mcp__godot__` boot is clean (same pre-existing warning set,
+  nothing new). Then two real end-to-end runs through
+  `tools/run_scenario.py` against `test_scenarios/slice1_smoke_test.json`
+  (Godot actually installed at `C:\Program Files\Godot\Godot.exe`): a
+  single run picked up `session_1787410260_bc28ce5b54a2.jsonl` by its own
+  run ID and printed a normal summary; a `--repeat 2` run confirmed each
+  iteration gets a distinct run ID (`4318991aef65` then `3e387bcd1a07`)
+  and its own correctly-matched session file -- the scenario this slice
+  exists to fix (two runs close enough together to blur mtime ordering)
+  exercised directly, not just read from the code.
 
 ### A2. Explicit `random_seed` scenario field
 - **Files:** `main.gd` (`_ready`'s `seed(12345)`), the scenario JSON
