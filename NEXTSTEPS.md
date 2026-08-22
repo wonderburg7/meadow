@@ -7,25 +7,34 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **Game model slice 2 is built** (`DESIGN_BACKLOG.md` section 13) --
-   `GAME_MODEL.md` now has two 9-part cards piloting the template:
-   Foraging, and the settings-window Availability/prerequisites
-   cascade (`debug_panel.gd::TOGGLE_PREREQUISITE`). Both cards are
-   checked against the live code, not written from the plan alone, and
-   both surfaced a real gap rather than just describing what's already
-   known: Foraging's trip-history state (`avg_collection_rate`,
-   `trips_scored`, every `scout_*` field, `hive.entrance_mentors`)
-   isn't in `save_game.gd`'s per-bee block, so a reload mid-scout or
-   mid-recruitment silently resets that bee's history; and the
-   Availability card's whole "output" is checkbox widgets, because the
-   cascade lives entirely inside `debug_panel.gd`, a presentation file
-   -- confirming section 13's one flagged live pain point. Doc-only,
-   no code touched; both check suites re-run clean (unaffected, as
-   expected). Two follow-ups this surfaced, not yet actioned: whether
-   the forager-history save gap is worth fixing on its own, and slice
-   3 itself (extracting `TOGGLE_PREREQUISITE` into a non-visual
-   catalogue -- the one slice in section 13 that touches code). Ask
-   Dave which of those two, if either, is next before picking one.
+1. **Game model slice 3 is built** (`DESIGN_BACKLOG.md` section 13,
+   the only slice that touches code) -- `TOGGLE_PREREQUISITE` and the
+   two lookups its cascade needs (`direct_parent`, `direct_dependents`)
+   are extracted out of `debug_panel.gd` into
+   `scripts/prerequisites.gd`, a plain `RefCounted` catalogue in the
+   `roles.gd` style. `debug_panel.gd` now reads from it instead of
+   owning the dictionary; the actual toggling and checkbox sync
+   (`_cascade_prerequisites_on`, `_cascade_dependents_off`) stayed
+   there, since that part needs `setting_get`/`setting_set` and the
+   live `toggle_boxes` widgets that only the settings window has.
+   Cascade behaviour itself is unchanged -- checked by comparing old
+   and new function bodies line for line, not just by the suites
+   passing. `source_checks.py`, `balance_tests.py` and a Godot boot (no
+   new warnings, same pre-existing ones as before) all pass;
+   `FUNCTION_MAP.md` regenerated and `--check` clean. `GAME_MODEL.md`
+   and `DESIGN_BACKLOG.md` §13 updated to match.
+   **Not yet hands-on checked** -- the cascade only fires from clicking
+   the settings-window checkboxes, which nothing automated here
+   drives, so that's the one thing left: open Settings, toggle
+   Orientation flight / Auto scouting / Floral constancy /
+   Auto-recruitment on and off and confirm the cascade still
+   walks correctly both ways, and the same for
+   Predators / Crab-spider suppression / Alarm pheromone.
+   The forager-history save gap slice 2 also surfaced (trip-history
+   state like `avg_collection_rate`, `trips_scored`, `scout_*` fields
+   and `hive.entrance_mentors` isn't in `save_game.gd`'s per-bee
+   block) is still unactioned -- ask Dave whether it's worth its own
+   slice.
 2. **Bumble flight is built** (`ROADMAP.md`'s "Depth in what exists" row)
    -- outdoor flying bees now drift on a small two-sine wander instead of
    beelining. `bee.gd` gained a `visual_root` child node that every

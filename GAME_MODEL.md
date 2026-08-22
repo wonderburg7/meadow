@@ -221,13 +221,18 @@ over it (see Foraging's Persistence entry below).
    presentation file — which is section 13's one confirmed live pain
    point (`DESIGN_BACKLOG.md` §13): the cascade rule is data, not UI,
    and nothing outside the settings window can currently ask "is X
-   actually available" without going through a checkbox widget.
-6. **Presentation** — is *entirely* presentation right now: the
-   dictionary, the cascade functions and the checkbox sync all live in
-   `debug_panel.gd`. That's the mismatch slice 3 (`DESIGN_BACKLOG.md`
-   §13) proposes fixing, by extracting `TOGGLE_PREREQUISITE` and the
-   cascade into a small non-visual catalogue the settings window reads
-   from instead of owning.
+   actually available" without going through a checkbox widget --
+   fixed by slice 3, see point 6 below.
+6. **Presentation** — split as of slice 3 (`DESIGN_BACKLOG.md` §13):
+   the dictionary and the two lookups the cascade needs
+   (`direct_parent`, `direct_dependents`) now live in
+   `scripts/prerequisites.gd`, a non-visual `RefCounted` catalogue in
+   the `roles.gd` style, so any future caller can ask "what does X
+   depend on" without going through a checkbox. The actual toggling and
+   checkbox sync (`_cascade_prerequisites_on`, `_cascade_dependents_off`)
+   stay in `debug_panel.gd`, since that part genuinely is presentation
+   — it needs `setting_get`/`setting_set` and the live `toggle_boxes`
+   widgets, which only the settings window has.
 7. **Availability** — no lifecycle states yet beyond
    on/off-and-cascading (the report's full 12-term Unimplemented →
    Hidden vocabulary is explicitly parked, `DESIGN_BACKLOG.md` §13).
@@ -253,5 +258,5 @@ distinct data write. Neither took long to write once the code was
 actually open. Whether that's worth generalising to the other ~18
 systems in the original report's table is Dave's call — see
 `DESIGN_BACKLOG.md` §13's slice order for what's next either way
-(slice 3: extract `TOGGLE_PREREQUISITE` into a non-visual catalogue,
-the one slice that touches code).
+(slice 3, extracting `TOGGLE_PREREQUISITE` into a non-visual catalogue,
+is now done -- see that section's Status line).

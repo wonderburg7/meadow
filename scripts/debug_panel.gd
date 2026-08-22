@@ -20,6 +20,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
+const Prerequisites = preload("res://scripts/prerequisites.gd")
 
 ## Section order here is the order they appear in the panel.
 const CATEGORIES := [
@@ -822,18 +823,6 @@ const TUNABLES := [
 	},
 ]
 
-## Foraging-automation prerequisite tree (see SCOUTING_TOGGLE_PLAN.md):
-## each key's value is the toggle it depends on. Empty string means no
-## prerequisite. Mirrors the intended research order for a future skills
-## tree, not built yet.
-const TOGGLE_PREREQUISITE := {
-	"scouting_on": "orientation_flight_on",
-	"floral_constancy_on": "scouting_on",
-	"auto_recruitment_on": "scouting_on",
-	"crab_spider_recruit_suppression_on": "predators_on",
-	"alarm_pheromone_on": "predators_on",
-}
-
 ## Settings that live in Session rather than GameConfig -- the player's
 ## own preferences, as opposed to numbers that change how the game plays.
 ## The panel edits both, so it needs to know which object to ask.
@@ -1179,7 +1168,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			for panel in get_tree().get_nodes_in_group("gallerin"):
 				if is_instance_valid(panel):
 					panel.visible = pressed
-		elif TOGGLE_PREREQUISITE.has(key) or TOGGLE_PREREQUISITE.values().has(key):
+		elif Prerequisites.is_gated(key):
 			if pressed:
 				_cascade_prerequisites_on(key)
 			else:
@@ -1189,25 +1178,25 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	row.add_child(UI.info_badge(entry.tip))
 	return row
 
-## Walks up TOGGLE_PREREQUISITE from `key`, turning on everything it
-## depends on -- e.g. switching on Floral constancy also switches on
-## Auto scouting, which also switches on Orientation flight.
+## Walks up Prerequisites from `key`, turning on everything it depends
+## on -- e.g. switching on Floral constancy also switches on Auto
+## scouting, which also switches on Orientation flight.
 func _cascade_prerequisites_on(key: String) -> void:
-	var parent: String = TOGGLE_PREREQUISITE.get(key, "")
+	var parent: String = Prerequisites.direct_parent(key)
 	while parent != "":
 		if not setting_get(parent):
 			setting_set(parent, true)
 			if toggle_boxes.has(parent):
 				toggle_boxes[parent].button_pressed = true
-		parent = TOGGLE_PREREQUISITE.get(parent, "")
+		parent = Prerequisites.direct_parent(parent)
 
-## Walks TOGGLE_PREREQUISITE's values to find anything whose prerequisite
-## is `key` (directly or transitively) and turns it off too -- e.g.
-## switching off Auto scouting also switches off Floral constancy and
+## Walks Prerequisites to find anything whose prerequisite is `key`
+## (directly or transitively) and turns it off too -- e.g. switching off
+## Auto scouting also switches off Floral constancy and
 ## Auto-recruitment.
 func _cascade_dependents_off(key: String) -> void:
-	for child in TOGGLE_PREREQUISITE:
-		if TOGGLE_PREREQUISITE[child] == key and setting_get(child):
+	for child in Prerequisites.direct_dependents(key):
+		if setting_get(child):
 			setting_set(child, false)
 			if toggle_boxes.has(child):
 				toggle_boxes[child].button_pressed = false

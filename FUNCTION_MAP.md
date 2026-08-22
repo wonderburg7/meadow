@@ -211,36 +211,36 @@ A bee's dispatch loop, player commands, display text, vars.
 1917 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (1,284 lines)
+## debug_panel.gd (1,273 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-846  static func setting_get(key: String)
-849  static func setting_set(key: String, value) -> void
-869  func _ready() -> void
-935  func _report_settings_button_width() -> void
-940  func _rows_in(category: String) -> Array
-962  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-999  func _make_controls_help() -> Control
-1032 func _build_actions(column: VBoxContainer) -> void
-1072 func _on_winter_pressed() -> void
-1083 func set_save_load_enabled(enabled: bool) -> void
-1091 func set_toggle(key: String, value: bool) -> void
-1096 func _on_save_pressed() -> void
-1107 func _on_load_pressed() -> void
-1119 func _toggle_panel() -> void
-1125 func _make_row(entry: Dictionary) -> Control
-1154 func _make_toggle_row(entry: Dictionary) -> Control
-1195 func _cascade_prerequisites_on(key: String) -> void
-1208 func _cascade_dependents_off(key: String) -> void
-1220 func _make_star_row(entry: Dictionary) -> Control
-1254 func _adjust(entry: Dictionary, delta: float) -> void
-1260 func _format_value(v) -> String
-1267 func _on_restart_pressed() -> void
-1272 func _on_main_menu_pressed() -> void
-1280 func _restart() -> void
+835  static func setting_get(key: String)
+838  static func setting_set(key: String, value) -> void
+858  func _ready() -> void
+924  func _report_settings_button_width() -> void
+929  func _rows_in(category: String) -> Array
+951  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+988  func _make_controls_help() -> Control
+1021 func _build_actions(column: VBoxContainer) -> void
+1061 func _on_winter_pressed() -> void
+1072 func set_save_load_enabled(enabled: bool) -> void
+1080 func set_toggle(key: String, value: bool) -> void
+1085 func _on_save_pressed() -> void
+1096 func _on_load_pressed() -> void
+1108 func _toggle_panel() -> void
+1114 func _make_row(entry: Dictionary) -> Control
+1143 func _make_toggle_row(entry: Dictionary) -> Control
+1184 func _cascade_prerequisites_on(key: String) -> void
+1197 func _cascade_dependents_off(key: String) -> void
+1209 func _make_star_row(entry: Dictionary) -> Control
+1243 func _adjust(entry: Dictionary, delta: float) -> void
+1249 func _format_value(v) -> String
+1256 func _on_restart_pressed() -> void
+1261 func _on_main_menu_pressed() -> void
+1269 func _restart() -> void
 ```
 
 ## hive_cell.gd (859 lines)

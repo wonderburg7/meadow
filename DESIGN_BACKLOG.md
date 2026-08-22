@@ -604,12 +604,25 @@ separate from the rest of this section.
    glossary) — fill in incrementally when a system is next touched
    anyway, not as its own sprint.
 
-**Status:** slices 1-2 done (`GAME_MODEL.md`). Slice 2 piloted the
-9-part card on Foraging and the Availability/prerequisites mechanic —
-both surfaced a real gap (Foraging's trip-history state isn't saved;
-the prerequisite cascade lives entirely in a presentation file, which
-is what slice 3 below fixes). Slice 3 (the only slice that touches
-code) not started; pick up whenever Dave wants to.
+**Status:** slices 1-3 done. Slice 2 piloted the 9-part card on
+Foraging and the Availability/prerequisites mechanic (`GAME_MODEL.md`)
+-- both surfaced a real gap (Foraging's trip-history state isn't saved;
+the prerequisite cascade lived entirely in a presentation file, which
+slice 3 then fixed). Slice 3 extracted `TOGGLE_PREREQUISITE` and its
+two lookups (`direct_parent`, `direct_dependents`) into
+`scripts/prerequisites.gd`, a plain `RefCounted` catalogue in the
+`roles.gd` style; `debug_panel.gd` now reads from it instead of owning
+the dictionary, and still does the actual toggling/checkbox sync
+itself since that part is genuinely presentation. Cascade logic (which
+toggles get walked, and when) is unchanged -- confirmed by comparing
+old and new function bodies line for line, not just by the checks
+passing. `source_checks.py`, `balance_tests.py` and a Godot boot (no
+new warnings) all pass; `FUNCTION_MAP.md` regenerated. Not yet
+hands-on clicked through by Dave -- the cascade only fires from the
+settings-window checkboxes, which no automated check drives, so that
+click-through is the one thing still outstanding. Slice 4 (extend the
+availability-lifecycle terms to the debug panel's toggle rows) only
+worth it if slice 3 felt worth it -- ask Dave.
 
 ---
 
