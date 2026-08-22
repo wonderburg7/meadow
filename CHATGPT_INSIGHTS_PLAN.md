@@ -9,6 +9,45 @@ cut the same benchmark's wall time by roughly 7-8x with no outcome
 change). A7 stays parked. Everything in this plan is now built and
 verified except A7 (parked) and B5 (parked).
 
+## 22 Aug 2026 follow-up: stable, token-cheap mechanism checks
+
+Dave asked which important parts of Meadow are worth checking through cheap
+headless runs without investing in areas that upcoming work will change. The
+execution hand-off is in `CHATGPT_HEADLESS_CHECK_PLAN.md`, a ChatGPT-only file
+which Claude Code must ignore unless Dave explicitly reverses that instruction.
+
+Durable insights and recommendations:
+
+- Headless evidence is strongest for stable simulation mechanisms: brood and
+  nursing, hive production, role/command routing, survival/adverse systems and
+  a narrow seasonal integration check. These run real game paths and can expose
+  regressions without needing visual judgement.
+- Do not expand regression expectations around current foraging, recruitment,
+  rival competition or flower ecology before the planned ecology overhaul.
+  Preserve existing scenarios as control/history where useful, but do not let
+  their current outcomes harden into a future design constraint.
+- Do not spend headless effort on the imminent Challenge 1 sequence revamp or
+  unfinished UI/text-scale work. Tutorial pacing, layout, motion, fog appearance
+  and feedback clarity remain hands-on questions even after those changes land.
+- Use layers: Python source/balance checks first; a seconds-long real-Godot smoke
+  run routinely; focused early-stop scenarios only for a touched mechanism; and
+  winter/whole-cycle integration only at milestones.
+- Token cost and simulation cost are separate. Keep output on the brief report,
+  request curves only for a timing question, stop on decisive postconditions,
+  and use one pinned seed for deterministic plumbing. Use three matched seeds
+  for stochastic comparisons, rising to five only when results disagree.
+- A scenario should protect a named plausible failure. Avoid a large always-run
+  suite and avoid duplicating `balance_tests.py`; a headless run earns its cost
+  when it proves that real Godot objects, state machines and command routes work
+  together.
+- Interpret results honestly: a real command plus a real state/resource
+  postcondition has good regression validity; a synthetic colony is weaker for
+  whole-game balance; visuals, comprehension, pacing and subjective feel cannot
+  be certified headlessly.
+
+Status: plan written, not initiated. Dave will start it with ChatGPT in a new
+session.
+
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
 one or two files, has its own verification step, and can be built and
