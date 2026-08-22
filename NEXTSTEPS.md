@@ -75,7 +75,7 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1, C2 and C3 built, 22 Aug.** C1 fixed
+7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1, C2, C3 and C4 built, 22 Aug.** C1 fixed
    `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
    (the plan named `bee_nursery.gd`, but the actual match-statement
    dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
@@ -99,11 +99,26 @@ into a history. Full history lives in `git log`.
    fanners genuinely add up instead of duplicating one bee's contribution.
    `source_checks.py`, `balance_tests.py`, `FUNCTION_MAP.md` regeneration
    and a `mcp__godot__` boot (clean, only pre-existing warnings) all pass.
-   **Still open:** all three slices' own verification steps (2-Feed-vs-
+   C4 fixed the Stocking hatch fallback: [world_building.gd:412](scripts/world_building.gd:412)'s
+   `_spawn_hatched_bee` only accepted `["build", "maintain", "both"]` as a
+   valid `architect_mode`, so a nursery cell configured to hatch a Stocking
+   worker silently hatched an Anything comb worker instead -- `"restock"`
+   is now in the accepted list, matching the mode `orders_zones.gd` already
+   sets when a player manually assigns Stocking. **One open question for
+   Dave, not decided here:** `orders_zones.gd`'s
+   `architect_mode != "build"` condition already lets Stocking-mode comb
+   workers do maintenance work (clearing dead larvae, evicting redesignated
+   cells) ahead of restocking -- is that wanted, or should Stocking be
+   restock-only?
+   **Still open:** all four slices' own verification steps (2-Feed-vs-
    2-Anything for C1; a headless run with no jelly cell marked for C2;
-   a 1-fanner-vs-4-fanner comparison for C3) -- worth doing together as
-   C6's combined re-run rather than three separate scenario runs.
-   **Next concrete action:** C4 (Stocking hatch fallback) -- see
+   a 1-fanner-vs-4-fanner comparison for C3; a hatch test confirming a
+   Stocking-configured cell produces a Stocking worker for C4) -- worth
+   doing together as C6's combined re-run rather than four separate
+   scenario runs. No `mcp__godot__` tools were available this session, so
+   C4 has only been checked by source-reading and the two Python suites,
+   not a live boot.
+   **Next concrete action:** C5 (role outcome telemetry) -- see
    `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A (action-driver
    correctness, then harness speed/token efficiency) can follow in
    either order.

@@ -409,7 +409,7 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 	if focus == "":
 		focus = "nectar"
 	if role == main.Bee.Role.BUILDER:
-		bee.architect_mode = focus if focus in ["build", "maintain", "both"] else "both"
+		bee.architect_mode = focus if focus in ["build", "maintain", "both", "restock"] else "both"
 		bee.setup(main.hive, "nectar", main.next_bee_id, role, main)
 	else:
 		bee.setup(main.hive, focus, main.next_bee_id, role, main)

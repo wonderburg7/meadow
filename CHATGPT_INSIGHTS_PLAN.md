@@ -70,7 +70,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Verify:** headless 1-fanner vs 4-fanner comparison should show
   close to linear speed-up, not near-identical timing.
 
-### C4. Stocking hatch fallback
+### C4. Stocking hatch fallback -- done, 22 Aug
 - **File:** `world_building.gd` (`_spawn_hatched_bee`, the
   `["build", "maintain", "both"]` check).
 - **Bug:** a nursery cell configured to hatch a Stocking worker is

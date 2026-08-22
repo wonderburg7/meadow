@@ -17,7 +17,7 @@ below, which are ChatGPT's own record.
 | C1 | Anything nurses feed before jelly | Built, 22 Aug -- headless comparison still open |
 | C2 | Stop undesignated jelly spill | Built, 22 Aug -- headless comparison still open |
 | C3 | Honey fanning stacks | Built, 22 Aug -- headless comparison still open |
-| C4 | Stocking hatch fallback | Not started |
+| C4 | Stocking hatch fallback | Built, 22 Aug -- hatch test still open |
 | C5 | Role outcome telemetry | Not started |
 | C6 | Re-run balance comparisons | Not started |
 | B1 | Shared settings-cascade command | Not started |
