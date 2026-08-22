@@ -75,7 +75,7 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 and C2 built, 22 Aug.** C1 fixed
+7. **`CHATGPT_INSIGHTS_PLAN.md` -- C1, C2 and C3 built, 22 Aug.** C1 fixed
    `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
    (the plan named `bee_nursery.gd`, but the actual match-statement
    dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
@@ -89,15 +89,21 @@ into a history. Full history lives in `git log`.
    `can_make_jelly` and `nurse_go_to_jelly_cell` now call -- with no
    gyne brood pending, jelly can only be made or stored in a cell the
    player has explicitly designated for it; a pending gyne need still
-   overrides this and can use any cell, same as before.
-   `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
-   regeneration all pass. **`mcp__godot__` boot check not done this
-   session -- the Godot MCP server wasn't connected.** **Still open:**
-   both slices' own verification steps (2-Feed-vs-2-Anything for C1; a
-   headless run with no jelly cell marked, confirming jelly stops
-   appearing in generic empty cells, for C2) -- worth doing together,
-   alongside C3, as C6's combined re-run rather than three separate
-   scenario runs. **Next concrete action:** C3 (honey fanning doesn't
-   stack) -- see `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A
-   (action-driver correctness, then harness speed/token efficiency) can
-   follow in either order.
+   overrides this and can use any cell, same as before. C3 made honey
+   fanning stack: replaced [hive_cell.gd](scripts/hive_cell.gd)'s
+   `being_fanned` boolean (every fanner set the same flag, so the cell
+   only ever advanced by one `delta` a frame) with an
+   `add_fanning_progress(delta)` call, mirroring the existing
+   `add_build_progress` pattern -- [bee_honey.gd](scripts/bee_honey.gd)'s
+   `honey_fan` now calls it once per fanning bee each frame, so several
+   fanners genuinely add up instead of duplicating one bee's contribution.
+   `source_checks.py`, `balance_tests.py`, `FUNCTION_MAP.md` regeneration
+   and a `mcp__godot__` boot (clean, only pre-existing warnings) all pass.
+   **Still open:** all three slices' own verification steps (2-Feed-vs-
+   2-Anything for C1; a headless run with no jelly cell marked for C2;
+   a 1-fanner-vs-4-fanner comparison for C3) -- worth doing together as
+   C6's combined re-run rather than three separate scenario runs.
+   **Next concrete action:** C4 (Stocking hatch fallback) -- see
+   `CHATGPT_INSIGHTS_PLAN.md` Group C. Groups B and A (action-driver
+   correctness, then harness speed/token efficiency) can follow in
+   either order.

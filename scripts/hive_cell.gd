@@ -80,7 +80,6 @@ var brood_is_gyne: bool = false
 ## water off; `ripen_progress` counts bee-seconds of fanning, and the
 ## contents only count as real honey once it reaches honey_ripen_time.
 var ripen_progress: float = 0.0
-var being_fanned: bool = false
 
 ## Building state. Cells the hive starts with are already finished.
 var is_built: bool = true
@@ -334,10 +333,9 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 ##
 ## Presentation only, and skipped entirely when the comb is not on
 ## screen. Everything above this line -- brood developing, honey
-## ripening, the fanned and tended flags the workers re-assert -- runs
-## every frame regardless of whether anyone is looking, which is the
-## rule this project keeps: culling may skip presentation, never
-## simulation.
+## ripening, the tended flag workers re-assert -- runs every frame
+## regardless of whether anyone is looking, which is the rule this
+## project keeps: culling may skip presentation, never simulation.
 const REFRESHES_PER_SECOND := 6.0
 var refresh_timer: float = 0.0
 
@@ -345,10 +343,6 @@ func _process(delta: float) -> void:
 	Perf.begin("cells")
 	if content_type == "brood":
 		_develop_brood(delta)
-	elif content_type == "honey":
-		if being_fanned:
-			ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
-		being_fanned = false   # honey makers re-assert this each frame
 
 	# `is_visible_in_tree` covers the view switch for free: main.gd hides
 	# whichever root is not being looked at, so this is false for every
@@ -621,6 +615,13 @@ func is_ripe_honey() -> bool:
 ## Honey makers fan cells that still hold wet mix.
 func needs_fanning() -> bool:
 	return content_type == "honey" and amount > 0.0 and not is_ripe_honey()
+
+## Called once per frame by every bee fanning this cell, so contributions
+## from several bees simply add up -- same pattern as add_build_progress.
+func add_fanning_progress(delta: float) -> void:
+	if content_type != "honey":
+		return
+	ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
 
 func ripen_fraction() -> float:
 	return clamp(ripen_progress / max(0.001, GameConfig.honey_ripen_time), 0.0, 1.0)

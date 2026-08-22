@@ -59,7 +59,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Verify:** headless run with no jelly cell marked -- jelly should
   stop appearing in generic empty cells.
 
-### C3. Honey fanning doesn't stack
+### C3. Honey fanning doesn't stack -- done, 22 Aug
 - **Files:** `bee_honey.gd` (`honey_fan`, the `being_fanned = true`
   line) and the cell's fan-progress code (likely `hive_cell.gd`).
 - **Bug:** every fanning bee sets the same boolean; the cell advances

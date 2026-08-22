@@ -112,5 +112,5 @@ static func honey_fan(bee: Node2D, delta: float) -> void:
 		bee.state = State.HONEY_IDLE
 		return
 	if approach == 1:
-		bee.fan_target.being_fanned = true   # cell reads this each frame
+		bee.fan_target.add_fanning_progress(delta)
 
