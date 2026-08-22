@@ -66,6 +66,12 @@ const ScenarioActions = preload("res://scripts/scenario_actions.gd")
 const ScenarioPresets = preload("res://scripts/scenario_presets.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 
+## Every boot's RNG seed, scenario or manual play alike -- see _ready().
+## A scenario's own "random_seed" field (CHATGPT_INSIGHTS_PLAN.md's A2)
+## overrides this; DiagnosticLog logs whichever value actually ends up
+## seeding a given run.
+const DEFAULT_RANDOM_SEED := 12345
+
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
 ## via Main.tscn, since main.gd is still the only node the scene defines
@@ -289,7 +295,7 @@ func _ready() -> void:
 	add_to_group("world")   # so the settings window can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
 	Engine.time_scale = 1.0
-	seed(12345)   # fixed layout while tuning -- delete for a random meadow each run
+	seed(DEFAULT_RANDOM_SEED)   # fixed layout while tuning -- delete for a random meadow each run
 
 	# Every path back to this function -- a fresh boot, Restart Run, the
 	# main menu's level picker, a load, a post-game-over restart -- reloads
@@ -874,11 +880,18 @@ func _apply_scenario_boot_arg() -> void:
 	# this process's launch, not the scenario. Optional; a manual
 	# --scenario= launch with no --run-id still works, same as before.
 	var run_id: String = ""
+	# --random-seed=: run_scenario.py's own per-launch override
+	# (CHATGPT_INSIGHTS_PLAN.md's A2) -- lets it hand each --repeat
+	# iteration a fresh seed without editing the scenario file. Wins over
+	# the scenario's own "random_seed" field below when both are given.
+	var cmdline_seed: String = ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--scenario="):
 			scenario_path = arg.substr("--scenario=".length())
 		elif arg.begins_with("--run-id="):
 			run_id = arg.substr("--run-id=".length())
+		elif arg.begins_with("--random-seed="):
+			cmdline_seed = arg.substr("--random-seed=".length())
 	if scenario_path.is_empty():
 		return
 
@@ -919,6 +932,17 @@ func _apply_scenario_boot_arg() -> void:
 	# ordinary hourly cadence. See DiagnosticLog.snapshot_interval_override.
 	var scenario_snapshot_seconds: float = float(level.get("snapshot_seconds", -1.0))
 	level.erase("snapshot_seconds")
+	# Dev-only, same reasoning as time_scale/snapshot_seconds above. An
+	# explicit field instead of always reusing DEFAULT_RANDOM_SEED (the one
+	# every manual-play boot also gets) lets a headless comparison declare
+	# the same seed on both sides to cancel randomness out, or -- via
+	# --random-seed=, which wins if both are present -- let run_scenario.py
+	# hand each --repeat iteration its own fresh seed instead of every
+	# repeat replaying identically.
+	var scenario_random_seed: int = int(level.get("random_seed", DEFAULT_RANDOM_SEED))
+	if cmdline_seed != "":
+		scenario_random_seed = int(cmdline_seed)
+	level.erase("random_seed")
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
 
@@ -932,13 +956,15 @@ func _apply_scenario_boot_arg() -> void:
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
 	DiagnosticLog.run_id_override = run_id
+	seed(scenario_random_seed)
+	DiagnosticLog.scenario_random_seed = scenario_random_seed
 	# DiagnosticLog only ever opens a session file off Session.run_reset
 	# (see diagnostic_log.gd) -- fired at the end of every reset_run_state(),
 	# which a normal boot never calls (only Restart/New Run/Load do). A
 	# scenario boot needs the same session file every other run gets, so it
 	# has to trigger that itself.
 	Session.reset_run_state()
-	print("AI playtest: loaded scenario %s (stop.max_days=%s, time_scale=%s)" % [scenario_path, scenario_stop_max_days, scenario_time_scale])
+	print("AI playtest: loaded scenario %s (stop.max_days=%s, time_scale=%s, random_seed=%s)" % [scenario_path, scenario_stop_max_days, scenario_time_scale, scenario_random_seed])
 
 ## Ends a headless scenario run the same way a normal loss does --
 ## DiagnosticLog gets its summary line either way -- but quits the process

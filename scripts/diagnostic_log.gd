@@ -42,6 +42,16 @@ var snapshot_interval_override: float = -1.0
 ## started in the same wall-clock second (or a stray manual play session)
 ## could otherwise race.
 var run_id_override: String = ""
+## The RNG seed actually in effect for this run (CHATGPT_INSIGHTS_PLAN.md's
+## A2). main.gd's own manual-play boot always seeds with
+## main.DEFAULT_RANDOM_SEED (12345, duplicated here rather than shared --
+## a stable literal, not worth a cross-autoload reference), so this starts
+## at that same value and only changes when _apply_scenario_boot_arg
+## resolves a scenario's "random_seed" field or run_scenario.py's
+## --random-seed= override. Logged in the "config" entry so a headless
+## comparison can confirm afterwards which seed each side actually ran
+## with, not just which one it asked for.
+var scenario_random_seed: int = 12345
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -106,7 +116,8 @@ func start_session() -> void:
 	_flowers_visited_ids.clear()
 	_stall_recoveries = 0
 
-	_write({"type": "config", "game_time": Session.sim_time, "settings": _config_snapshot()})
+	_write({"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
+			"settings": _config_snapshot()})
 
 
 func log_death(bee: Node2D) -> void:

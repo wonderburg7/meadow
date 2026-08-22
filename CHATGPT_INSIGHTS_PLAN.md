@@ -1,8 +1,10 @@
 # ChatGPT insights — implementation plan
 
 Status: Group C fully built and verified, 22 Aug 2026. B1-B4 built and
-verified, 22 Aug 2026. B5 stays parked. Group A: A1 built and verified,
-22 Aug 2026; A2-A6 still planned, A7 stays parked.
+verified, 22 Aug 2026. B5 stays parked. Group A: A1-A2 built and
+verified, 22 Aug 2026 (A2 surfaced a real, still-open determinism gap --
+see its writeup -- that A3 is scoped to close); A3-A6 still planned, A7
+stays parked.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -358,16 +360,57 @@ needs live mid-run decisions rather than a scripted policy.
   exists to fix (two runs close enough together to blur mtime ordering)
   exercised directly, not just read from the code.
 
-### A2. Explicit `random_seed` scenario field
-- **Files:** `main.gd` (`_ready`'s `seed(12345)`), the scenario JSON
-  schema, `run_scenario.py`.
+### A2. Explicit `random_seed` scenario field -- done, 22 Aug 2026
+- **Files:** `main.gd` (`_ready`'s `seed(12345)`,
+  `_apply_scenario_boot_arg`), `diagnostic_log.gd`, `run_scenario.py`.
 - **Fix:** make the seed an explicit, logged scenario field instead of
   a hardcoded constant, so repeats can be genuinely independent (a new
   seed per repeat) or genuinely paired (same seed both sides of an
   A/B comparison).
-- **Verify:** two runs of one scenario with different declared seeds
-  produce different outcomes; same seed on both sides of a before/after
-  comparison cancels randomness.
+- **Built:** `main.gd` names the old inline `12345` literal
+  `DEFAULT_RANDOM_SEED` and still seeds with it unconditionally in
+  `_ready` (manual play is unchanged). `_apply_scenario_boot_arg` reads
+  an optional `"random_seed"` scenario JSON field (falling back to
+  `DEFAULT_RANDOM_SEED` if absent), then a `--random-seed=` cmdline
+  argument if given -- which wins over the JSON field -- and calls
+  `seed()` again with whichever value resolves, logging it into the new
+  `random_seed` key on `diagnostic_log.gd`'s `"config"` entry
+  (`DiagnosticLog.scenario_random_seed`, defaulting to
+  `DEFAULT_RANDOM_SEED` so even a non-scenario boot's config entry states
+  the real seed truthfully) and into the existing "AI playtest: loaded
+  scenario" print line. `run_scenario.py::run_once` peeks the scenario
+  JSON (`_scenario_declares_seed`) and, only when it has no pinned
+  `random_seed` of its own, generates a fresh `--random-seed=` per launch
+  -- so an unpinned scenario's `--repeat N` draws N independent seeds
+  instead of N replays of `DEFAULT_RANDOM_SEED`, while a scenario that
+  does pin one keeps reproducing that exact value every launch.
+- **Verified:** `source_checks.py`/`balance_tests.py` pass,
+  `FUNCTION_MAP.md` regenerated, `mcp__godot__` boot clean (same
+  pre-existing warnings only). Two new scenarios,
+  `test_scenarios/a2_seed_111_test.json` /
+  `a2_seed_222_test.json` (otherwise identical, 3-day runs), confirmed
+  end-to-end through `tools/run_scenario.py` against the real Godot
+  install: both sessions' `"config"` entries log the exact declared
+  `random_seed` (111, 222); seed 111 vs seed 222 produce different
+  outcomes (`flower_visits` 223/217 vs 213 across two 111 runs and one
+  222 run) -- confirming a declared seed changes what happens.
+  **Genuine finding, not just a checklist pass:** re-running
+  `a2_seed_111_test.json` twice did *not* reproduce a byte-identical
+  trajectory -- the very first snapshot already shows different
+  `game_time` (8.5 vs 9.35846) between the two runs, though the
+  RNG-driven *initial* state each seed controls (role assignment, cell
+  layout) matched. Cause, confirmed by inspection rather than assumed:
+  this project drives simulation speed through `Engine.time_scale`
+  (30x by default for scenarios) rather than a fixed per-frame step, so
+  real wall-clock scheduling jitter changes how much sim time elapses
+  per frame and therefore how the RNG's draws interleave with gameplay
+  events across a run -- a pre-existing determinism gap this slice's
+  seed plumbing can't close on its own. This is exactly the problem
+  A3's `--fixed-fps` step exists to solve; until A3 lands, "same seed
+  cancels randomness" holds for a run's *initial* random draws (meadow
+  layout, role assignment, trait rolls) but not for full run-length
+  reproducibility. Worth reading A3's own writeup once it's done for
+  whether it closes this gap.
 
 ### A3. `--fixed-fps` benchmark
 - **File:** `run_scenario.py`.

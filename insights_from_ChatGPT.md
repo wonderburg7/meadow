@@ -25,7 +25,7 @@ below, which are ChatGPT's own record.
 | B3 | Postcondition evidence for remaining verbs | Done, 22 Aug 2026 |
 | B4 | Live settings in analysis | Done, 22 Aug 2026 |
 | A1 | Unique run IDs | Done, 22 Aug 2026 |
-| A2 | Explicit `random_seed` field | Not started |
+| A2 | Explicit `random_seed` field | Done, 22 Aug 2026 -- surfaced a real determinism gap A3 is scoped to close, see `CHATGPT_INSIGHTS_PLAN.md` |
 | A3 | `--fixed-fps` benchmark | Not started |
 | A4 | Cap failure output | Not started |
 | A5 | Early-success stop + brief reports | Not started |

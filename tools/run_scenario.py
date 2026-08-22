@@ -26,6 +26,7 @@ Usage:
 import argparse
 import json
 import os
+import random
 import subprocess
 import sys
 import uuid
@@ -46,6 +47,21 @@ def log_dir() -> Path:
     if not appdata:
         raise RuntimeError("%APPDATA% not set -- can't find the Godot user:// dir")
     return Path(appdata) / "Godot" / "app_userdata" / "Meadow" / "logs"
+
+
+def _scenario_declares_seed(scenario_path: Path) -> bool:
+    """True if the scenario JSON pins its own "random_seed" -- in which
+    case run_once leaves it alone so every repeat (and either side of a
+    paired A/B comparison naming the same value) replays identically.
+    Absent, run_once hands each launch a fresh seed instead of letting
+    every run silently share main.gd's DEFAULT_RANDOM_SEED
+    (CHATGPT_INSIGHTS_PLAN.md's A2).
+    """
+    try:
+        data = json.loads(scenario_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(data, dict) and "random_seed" in data
 
 
 def session_file_for_run_id(run_id: str) -> Path | None:
@@ -72,6 +88,11 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int) -> Path | None:
     run_id = uuid.uuid4().hex[:12]
     cmd = [godot_path, "--headless", "--path", str(ROOT), "--",
            "--scenario=%s" % scenario_path, "--run-id=%s" % run_id]
+    if not _scenario_declares_seed(scenario_path):
+        # No pinned seed -- hand this launch its own, so N repeats of the
+        # same scenario are genuinely independent draws instead of N
+        # identical replays of main.gd's DEFAULT_RANDOM_SEED.
+        cmd.append("--random-seed=%d" % random.randint(0, 2**31 - 1))
     print("running: %s" % " ".join(cmd))
 
     try:
