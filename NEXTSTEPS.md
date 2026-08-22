@@ -97,88 +97,13 @@ into a history. Full history lives in `git log`.
    (`FORAGING_ECOLOGY_PLAN.md`, `DESIGN_BACKLOG.md` section 14). Slice 0
    (seed the meadow layout per scenario) is the next concrete action for
    that plan once the hands-on-check backlog above has room.
-8. **`CHATGPT_INSIGHTS_PLAN.md` -- C1 through C6 built, 22 Aug.** C1 fixed
-   `_try_role_work`'s nurse dispatch in [bee.gd](scripts/bee.gd:1027)
-   (the plan named `bee_nursery.gd`, but the actual match-statement
-   dispatch lives in `bee.gd`) -- Anything-mode nurses now check for
-   hungry brood before falling back to jelly work, instead of trying
-   jelly first and starving larvae almost like Jelly mode does. C2
-   stopped jelly spilling into undesignated comb: added
-   [hive.gd](scripts/hive.gd:227) `find_designated_cell_for`, which
-   mirrors `find_cell_for` but never falls back to an ordinary empty
-   cell, and a `jelly_storage_cell` helper in
-   [bee_nursery.gd](scripts/bee_nursery.gd:161) that both
-   `can_make_jelly` and `nurse_go_to_jelly_cell` now call -- with no
-   gyne brood pending, jelly can only be made or stored in a cell the
-   player has explicitly designated for it; a pending gyne need still
-   overrides this and can use any cell, same as before. C3 made honey
-   fanning stack: replaced [hive_cell.gd](scripts/hive_cell.gd)'s
-   `being_fanned` boolean (every fanner set the same flag, so the cell
-   only ever advanced by one `delta` a frame) with an
-   `add_fanning_progress(delta)` call, mirroring the existing
-   `add_build_progress` pattern -- [bee_honey.gd](scripts/bee_honey.gd)'s
-   `honey_fan` now calls it once per fanning bee each frame, so several
-   fanners genuinely add up instead of duplicating one bee's contribution.
-   C4 fixed the Stocking hatch fallback: [world_building.gd:412](scripts/world_building.gd:412)'s
-   `_spawn_hatched_bee` only accepted `["build", "maintain", "both"]` as a
-   valid `architect_mode`, so a nursery cell configured to hatch a Stocking
-   worker silently hatched an Anything comb worker instead -- `"restock"`
-   is now in the accepted list, matching the mode `orders_zones.gd` already
-   sets when a player manually assigns Stocking. **One open question for
-   Dave, not decided here:** `orders_zones.gd`'s
-   `architect_mode != "build"` condition already lets Stocking-mode comb
-   workers do maintenance work (clearing dead larvae, evicting redesignated
-   cells) ahead of restocking -- is that wanted, or should Stocking be
-   restock-only?
-   C5 (role outcome telemetry) added ten cumulative counters -- brood
-   feeds, jelly batches, larval deaths, cells completed/cleaned/evicted/
-   restocked, blocks mined, honey batches deposited, cells ripened -- to
-   [diagnostic_log.gd](scripts/diagnostic_log.gd)'s summary line, plus a
-   live `role_outcomes` snapshot section. **Verified with an actual
-   headless run.** C6 (re-run the balance comparisons) is done -- found
-   and fixed a follow-on bug C1 itself introduced
-   ([bee.gd:1067](scripts/bee.gd:1067), `"anything"` vs the real sub-mode
-   key `"both"`); with the fix in, nurse and fanner comparisons both
-   behave as expected. `source_checks.py`, `balance_tests.py`,
-   `FUNCTION_MAP.md` regeneration and a `mcp__godot__` boot all pass
-   throughout.
-   **C2's and C4's own verification steps are done too, 22 Aug --
-   Group C is now fully built and verified.** C2: ran
-   `test_scenarios/c2_no_jelly_cell_test.json` (3 nurses switched to
-   Anything mode day 0, no jelly cell designated, no gyne brood, 10
-   days) -- summary line reads `jelly_batches: 0`. C4: the headless
-   action driver had no way to configure a cell's hatch role at all, so
-   this needed two small additions first -- a `hatch_role` verb in
-   [scenario_actions.gd](scripts/scenario_actions.gd) (calls
-   `orders_zones._on_cell_hatch_role_requested`, the same function the
-   nursery panel's role buttons call) and a one-line dev-only log in
-   [world_building.gd](scripts/world_building.gd)`::_spawn_hatched_bee`
-   reporting the resolved `architect_mode` on hatch, since behaviour
-   alone can't tell "restock" apart from the old "both" fallback (both
-   still restock). `test_scenarios/c4_stocking_hatch_test.json`
-   hatch-configured cell `[0,0]` as Stocking and the run logged
-   `architect_mode=restock`, confirming the fix. Full detail in
-   `CHATGPT_INSIGHTS_PLAN.md`'s C2/C4 sections. `source_checks.py` and
-   `balance_tests.py` both still pass; no `mcp__godot__` boot tool was
-   available this session, but both new scenarios ran clean end-to-end
-   through Godot itself, which is stronger evidence than a boot check.
-   **B1 (shared settings-cascade command) is now also done, 22 Aug.**
-   `debug_panel.gd` gained a static `apply_setting(key, value)` plus two
-   static `Prerequisites`-walking helpers that both the settings
-   checkbox handler and `scenario_actions.gd::_do_set_config` now call --
-   one cascade implementation instead of two that could drift. Verified:
-   both check suites pass, `FUNCTION_MAP.md` regenerated, a clean
-   `mcp__godot__` boot (same pre-existing warnings, nothing new), and
-   `test_scenarios/slice7_action_driver_test.json` (already exercises
-   `set_config scouting_on=true`) still runs clean end-to-end through
-   the new shared path. One honest gap: this is source-level
-   verification of a pure extraction, not a live before/after read of
-   the cascaded value -- the diagnostic log's `config` snapshot is
-   boot-time only, which is exactly the gap B4 (live settings in
-   analysis) exists to close. Full detail in `CHATGPT_INSIGHTS_PLAN.md`'s
-   B1 section. **Next concrete action:** B2 (split role assignment from
-   role mode in `scenario_actions.gd`/`orders_zones.gd`), then B3
-   (postcondition evidence for the remaining verbs) and B4 (live
-   settings in analysis) -- see the plan's Group B section. Group A
-   (harness speed/token efficiency) can follow in either order once B
-   is done.
+8. **`CHATGPT_INSIGHTS_PLAN.md` -- Group C and B1-B2 built and verified,
+   22 Aug.** Full detail (what each slice fixed, how it was verified) is
+   in the plan file itself, not repeated here -- read that before
+   picking the next slice back up. **Next concrete action:** B3
+   (postcondition evidence for the remaining verbs --
+   `_do_designate_cell`, `_do_queue_build`, `_do_queue_mine` in
+   `scenario_actions.gd`), then B4 (live settings in analysis,
+   `tools/analyze_session.py`) and B5 -- see the plan's Group B section.
+   Group A (harness speed/token efficiency) can follow in either order
+   once B is done.
