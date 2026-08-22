@@ -27,6 +27,13 @@ const Shapes = preload("res://scripts/shapes.gd")
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
 const BUBBLE_WIDTH := 260.0
+
+## The reserved bottom-right footprint every other tray subtracts --
+## the bubble, not the icon, is the widest thing that can appear in this
+## corner, plus its own margin from the screen edge. ui_layout.gd reads
+## this rather than duplicating the number (UI_PLAN.md section 15,
+## slice 3).
+const RESERVE_WIDTH := BUBBLE_WIDTH + ICON_MARGIN
 const BUBBLE_GAP := 8.0
 const BUBBLE_SECONDS := 6.0
 ## The first line of a sub-stage (its "welcome" prompt) is meant to be

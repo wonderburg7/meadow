@@ -5,16 +5,13 @@ extends RefCounted
 ## Usage: const UiLayout = preload("res://scripts/ui_layout.gd")
 ##        var max_w := UiLayout.command_tray_max_width(viewport_width, tray_w)
 
+const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
+
 ## Width of Dr Gallerin's bottom-right reserve above the responsive
 ## breakpoint -- every other bottom-row tray subtracts this rather than
-## guessing at his footprint. Matches gallerin_panel.gd's current
-## BUBBLE_WIDTH (260) plus its ICON_MARGIN (16) from the screen edge,
-## since the speech bubble, not the icon, is the widest thing that can
-## appear in that corner. Becoming a constant gallerin_panel.gd itself
-## reads is a follow-up for whichever slice touches that file next
-## (UI_PLAN.md section 15, slice 3) -- for now this is the number every
-## *other* tray is built against.
-const GALLERIN_RESERVE_WIDTH := 276.0
+## guessing at his footprint. Reads gallerin_panel.gd's own
+## RESERVE_WIDTH constant rather than duplicating the number.
+const GALLERIN_RESERVE_WIDTH := GallerinPanel.RESERVE_WIDTH
 
 ## Below this viewport width, the Gallerin reserve stops being a
 ## bottom-right box and becomes a full-width strip under the command

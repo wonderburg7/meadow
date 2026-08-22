@@ -220,6 +220,11 @@ var signal_timer: float = randf()
 
 var in_hive_view: bool = false
 var selected_bees: Array = []
+## The bee the "Follow bee" command tray toggle is tracking, if any --
+## see camera_view.gd::_handle_follow. Cleared on every selection change
+## (hud.gd's follow_bee_toggled(null, false) emit) and self-clears if the
+## bee dies mid-follow.
+var following_bee: Node2D = null
 ## Comb cells and soil blocks the player has selected. Anything the cell
 ## or soil popup does applies to the whole list, not just the one clicked.
 var selected_cells: Array = []
@@ -417,6 +422,7 @@ func _ready() -> void:
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
 	hud.floral_preference_requested.connect(input_selection._on_floral_preference_requested)
 	hud.favourite_requested.connect(orders_zones._on_favourite_requested)
+	hud.follow_bee_toggled.connect(camera_view._on_follow_bee_toggled)
 	add_child(hud)
 	# Syncs Session.perf_enabled and the corner to whatever "fps" was
 	# left starred as, rather than assuming a fresh run starts unstarred.
@@ -534,6 +540,7 @@ func _process(delta: float) -> void:
 	_sample_fps()
 	Perf.begin("camera_pan")
 	camera_view._handle_pan(delta)
+	camera_view._handle_follow(delta)
 	Perf.end("camera_pan")
 	selection_layer.queue_redraw()
 	Perf.begin("scenery")

@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Top-left readouts (day, stores, bee count), the view switcher, the
-## game-speed controls, the panel that appears when bees are selected,
-## and the popup for inspecting a single comb cell.
+## game-speed controls, the selection tray and its command tray that
+## appear when bees are selected, and the popup for inspecting a single
+## comb cell.
 ##
 ## Every control carries a small "i" badge whose tooltip explains what
 ## it does -- see `_info()`. Kept separate from main.gd so the
@@ -13,6 +14,7 @@ const Roles = preload("res://scripts/roles.gd")
 const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 
 signal focus_requested(type: String)
 signal role_requested(role_name: String)
@@ -97,6 +99,12 @@ signal floral_preference_requested()
 ## The star in the single-bee panel -- only offered for one bee at a
 ## time, see BEE_INDIVIDUALITY_PLAN.md section 7.
 signal favourite_requested(value: bool)
+## The command tray's "Follow bee" toggle -- only offered for a single
+## selected bee. `following` true starts continuous camera tracking;
+## false stops it. Also emitted with `bee` null and `following` false
+## on every selection change, so camera_view.gd never keeps tracking a
+## bee the player has since deselected.
+signal follow_bee_toggled(bee: Node2D, following: bool)
 ## The queen panel's "Lay in plain comb too" checkbox -- a second place to
 ## flip the same GameConfig.queen_lays_in_any_cell the settings window
 ## offers. hud.gd doesn't write GameConfig directly (see CLAUDE.md rule 2);
@@ -268,12 +276,30 @@ var soil_marking_visible: bool = true
 ## anchored clear of whatever debug_panel.gd's settings cog currently
 ## measures -- see set_settings_button_width.
 var top_right_bar: VBoxContainer
+## The bottom-left selection tray (UI_PLAN.md section 5): four ranked
+## fields -- identity/job, energy/load, activity, trait/quote -- each
+## independently hideable via the tray's own cog. See
+## _apply_selection_field_visibility.
 var selection_panel: PanelContainer
-var selection_label: Label
-var task_label: Label
+var identity_label: Label
+var energy_label: Label
+var activity_label: Label
+var trait_label: Label
 var speed_buttons: Array = []
-var role_row: VBoxContainer
 var shown_bees: Array = []
+
+## The bottom-centre command tray (UI_PLAN.md section 5): role-action
+## buttons ranked by how often they're used, wrapping in a flow rather
+## than overflowing width (see _update_command_tray_width); "More…"
+## reveals the rest (job change, backup role, finish-first, favourite)
+## underneath.
+var command_tray: PanelContainer
+var command_flow: HFlowContainer
+var more_button: Button
+var more_panel: VBoxContainer
+## Remembered for this session only, same spirit as colony_panel.gd's
+## section_open (UI_PLAN.md section 11) -- not persisted.
+var more_panel_open: bool = false
 
 var cell_popup: PopupPanel
 var cell_popup_label: Label
@@ -367,6 +393,7 @@ func _ready() -> void:
 	_build_top_right_bar()
 	_build_goal_shelf()
 	_build_selection_panel()
+	_build_command_tray()
 	_build_cell_popup()
 	_build_flower_popup()
 	_build_obstacle_popup()
@@ -618,6 +645,10 @@ func set_speed_display(speed_scale: float) -> void:
 	for entry in speed_buttons:
 		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
 
+## Four ranked labels (UI_PLAN.md section 5) rather than the old two --
+## identity/job leads, energy/load and activity follow, trait/quote is
+## last. The cog sits in its own row, apart from the ranked fields, so
+## it never moves as fields are shown or hidden.
 func _build_selection_panel() -> void:
 	selection_panel = PanelContainer.new()
 	# anchored to the bottom-left so it stays put when the window resizes
@@ -631,28 +662,119 @@ func _build_selection_panel() -> void:
 	var column := VBoxContainer.new()
 	selection_panel.add_child(column)
 
-	selection_label = Label.new()
-	selection_label.add_theme_font_size_override("font_size", 12)
-	column.add_child(selection_label)
+	var header := HBoxContainer.new()
+	header.alignment = BoxContainer.ALIGNMENT_END
+	column.add_child(header)
+	header.add_child(_build_selection_cog())
+
+	identity_label = Label.new()
+	identity_label.add_theme_font_size_override("font_size", 12)
+	column.add_child(identity_label)
+
+	energy_label = Label.new()
+	energy_label.add_theme_font_size_override("font_size", 12)
+	energy_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
+	column.add_child(energy_label)
 
 	# what the bee is doing right this second
-	task_label = Label.new()
-	task_label.add_theme_font_size_override("font_size", 12)
-	task_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
-	column.add_child(task_label)
+	activity_label = Label.new()
+	activity_label.add_theme_font_size_override("font_size", 12)
+	activity_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+	column.add_child(activity_label)
 
-	# Rebuilt from scratch on every selection change -- which controls make
-	# sense depends on what's currently selected. See
-	# _rebuild_role_controls.
-	#
-	# A column of short rows rather than one long row of everything: the
-	# panel had grown to a dozen controls side by side, which ran off the
-	# screen and gave no clue which control belonged to which idea. The
-	# rows are now grouped by question -- what is it, how is it doing it,
-	# what should it do next -- which is roughly the order you think in.
-	role_row = VBoxContainer.new()
-	role_row.add_theme_constant_override("separation", 3)
-	column.add_child(role_row)
+	trait_label = Label.new()
+	trait_label.add_theme_font_size_override("font_size", 12)
+	trait_label.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	column.add_child(trait_label)
+
+	_apply_selection_field_visibility()
+
+## The tray's own configuration cog (UI_PLAN.md section 5) -- a plain
+## gear glyph, same placeholder-art approach as debug_panel.gd's
+## settings cog. Its popup stays open across clicks
+## (hide_on_checkable_item_selection = false) so several fields can be
+## toggled in one go.
+func _build_selection_cog() -> Control:
+	var menu := MenuButton.new()
+	menu.text = "⚙"
+	menu.add_theme_font_size_override("font_size", 13)
+	menu.tooltip_text = "Choose which fields this panel shows for the selected bee."
+	menu.focus_mode = Control.FOCUS_NONE
+	var popup := menu.get_popup()
+	popup.hide_on_checkable_item_selection = false
+	popup.add_check_item("Identity & job", 0)
+	popup.add_check_item("Energy & load", 1)
+	popup.add_check_item("Activity", 2)
+	popup.add_check_item("Trait & quote", 3)
+	popup.set_item_checked(0, Session.show_selection_identity)
+	popup.set_item_checked(1, Session.show_selection_energy)
+	popup.set_item_checked(2, Session.show_selection_activity)
+	popup.set_item_checked(3, Session.show_selection_trait)
+	popup.id_pressed.connect(func(id: int): _on_selection_field_toggled(id, popup))
+	return menu
+
+func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void:
+	var checked: bool = not popup.is_item_checked(id)
+	popup.set_item_checked(id, checked)
+	match id:
+		0: Session.show_selection_identity = checked
+		1: Session.show_selection_energy = checked
+		2: Session.show_selection_activity = checked
+		3: Session.show_selection_trait = checked
+	_apply_selection_field_visibility()
+
+func _apply_selection_field_visibility() -> void:
+	identity_label.visible = Session.show_selection_identity
+	energy_label.visible = Session.show_selection_energy
+	activity_label.visible = Session.show_selection_activity
+	trait_label.visible = Session.show_selection_trait
+
+## The command tray (UI_PLAN.md section 5): a wrapping row of role-action
+## buttons, ranked by how often they're used for the current selection
+## rather than alphabetically or by internal role-mode order, with
+## "More…" revealing the rest underneath. Anchored bottom-centre and
+## capped to ui_layout.gd's shared max width so it never grows into the
+## Gallerin reserve -- see _update_command_tray_width.
+func _build_command_tray() -> void:
+	command_tray = PanelContainer.new()
+	command_tray.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	command_tray.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	command_tray.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	command_tray.offset_bottom = -16
+	command_tray.visible = false
+	add_child(command_tray)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	command_tray.add_child(column)
+
+	# Wraps onto more rows rather than growing wider than its cap --
+	# this is what lets the bottom row grow taller, not wider, at high
+	# text scale (UI_PLAN.md section 2's bottom-row rule).
+	command_flow = HFlowContainer.new()
+	command_flow.add_theme_constant_override("h_separation", 4)
+	command_flow.add_theme_constant_override("v_separation", 4)
+	column.add_child(command_flow)
+
+	more_button = Button.new()
+	more_button.text = "More…"
+	more_button.add_theme_font_size_override("font_size", 11)
+	more_button.focus_mode = Control.FOCUS_NONE
+	more_button.toggle_mode = true
+	more_button.visible = false
+	more_button.pressed.connect(func():
+		more_panel_open = more_button.button_pressed
+		more_panel.visible = more_panel_open
+	)
+	column.add_child(more_button)
+
+	# Holds the rest: job change, backup role, finish-first, favourite --
+	# built the same way the tray's primary rows used to be, just into
+	# this container instead. See _labelled_row.
+	more_panel = VBoxContainer.new()
+	more_panel.add_theme_constant_override("separation", 3)
+	more_panel.visible = false
+	column.add_child(more_panel)
 
 # --- cell popup ---------------------------------------------------
 
@@ -1541,30 +1663,33 @@ func refresh_corner() -> void:
 	_refresh_corner()
 
 func update_selection(bees: Array) -> void:
+	# Any selection change stops camera-follow -- see the field comment
+	# on follow_bee_toggled.
+	follow_bee_toggled.emit(null, false)
 	shown_bees = bees
 	selection_panel.visible = not bees.is_empty()
+	command_tray.visible = not bees.is_empty()
 	if bees.is_empty():
 		return
 
 	_rebuild_role_controls(bees)
 	_refresh_selection_text()
 
-## The selection panel's controls, rebuilt from scratch whenever the
+## The command tray's controls, rebuilt from scratch whenever the
 ## selection changes.
 ##
-## Laid out as a short column of labelled rows rather than one long strip
-## of buttons. The rows answer, in order, the three things you want to
-## know about a selected bee:
-##
-##   Job      what it is, and what else it could be
-##   Doing    the sub-mode of that job, where it has one
-##   Orders   the "click a spot" actions that apply to it
-##
-## with the backup role and the finish-first switch underneath. Roles it
-## isn't doing now live inside one dropdown instead of a button each,
-## which is what was making the panel wider than the screen.
+## Primary buttons (the command_flow row) are the ones actually used to
+## do the job -- Doing's sub-mode toggles, Orders' click-a-spot actions,
+## restocking, the queen's Build-cell button, and Follow bee -- ranked
+## by how often they're clicked during play, not alphabetically or by
+## internal role-mode order (UI_PLAN.md section 5). Job (change role),
+## the backup role, finish-first and Favourite are used far less often
+## and live under More… instead, in more_panel, using the same labelled-
+## row shape the whole tray used to use throughout.
 func _rebuild_role_controls(bees: Array) -> void:
-	for child in role_row.get_children():
+	for child in command_flow.get_children():
+		child.queue_free()
+	for child in more_panel.get_children():
 		child.queue_free()
 
 	var common_role: int = _common_role(bees)
@@ -1578,25 +1703,47 @@ func _rebuild_role_controls(bees: Array) -> void:
 	var show_queen_build_row: bool = show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
 	if show_queen_build_row:
 		_build_queen_build_row()
-	_build_job_row(common_role, any_queen)
 	_build_doing_row(common_role, first)
 	# Skipped while the queen's own "Build cell" button is showing --
 	# that button is the one build control Challenge 1 wants here, not
 	# also the ordinary placement/home-cell controls this row offers.
 	if not show_queen_build_row:
 		_build_orders_row(common_role, first)
+	_build_follow_control(bees, first)
+
+	_build_job_row(common_role, any_queen)
 	_build_fallback_row(common_role, first)
 	if bees.size() == 1 and first != null:
 		_build_favourite_row(first)
 
+	more_button.visible = more_panel.get_child_count() > 0
+	more_button.button_pressed = more_button.visible and more_panel_open
+	more_panel.visible = more_button.button_pressed
+	_update_command_tray_width()
+
 ## Challenge 1 only -- see set_queen_build_button_visible.
 func _build_queen_build_row() -> void:
-	var row := _labelled_row("Build")
 	var button := Button.new()
 	button.text = "Build cell"
 	button.custom_minimum_size = Vector2(0, 26)
+	button.add_theme_font_size_override("font_size", 11)
 	button.pressed.connect(func(): queen_build_cell_requested.emit())
-	row.add_child(button)
+	command_flow.add_child(button)
+
+## Continuous camera tracking (UI_PLAN.md section 15 slice 3) -- only
+## offered for a single selected bee, same condition as Favourite. The
+## button always starts unpressed on a fresh selection; see
+## update_selection's follow_bee_toggled(null, false) emit.
+func _build_follow_control(bees: Array, first) -> void:
+	if bees.size() != 1 or first == null:
+		return
+	var button := Button.new()
+	button.text = "Follow bee"
+	button.add_theme_font_size_override("font_size", 11)
+	button.focus_mode = Control.FOCUS_NONE
+	button.toggle_mode = true
+	button.toggled.connect(func(pressed: bool): follow_bee_toggled.emit(first, pressed))
+	command_flow.add_child(_with_info(button, "Keeps the camera centred on this bee as it moves. Switches off the moment you select something else."))
 
 ## The star toggle -- only offered for one bee at a time, so "favourite"
 ## always names one individual rather than a whole selection. Lets the
@@ -1644,7 +1791,6 @@ func _build_doing_row(common_role: int, first) -> void:
 	var modes: Array = Roles.modes_for(common_role)
 	if modes.is_empty() or first == null:
 		return
-	var row := _labelled_row("Doing")
 
 	# What counts as "the mode this bee is on" differs by role -- a
 	# forager's is the resource it collects, a miner's is a switch rather
@@ -1660,7 +1806,7 @@ func _build_doing_row(common_role: int, first) -> void:
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
-		row.add_child(_toggle_button(
+		command_flow.add_child(_toggle_button(
 			mode.label, current,
 			func(): role_requested.emit(command),
 			mode.tip
@@ -1685,71 +1831,67 @@ func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
 func _build_orders_row(common_role: int, first) -> void:
 	if common_role != Bee.Role.FORAGER and common_role != Bee.Role.BUILDER and common_role != Bee.Role.MINER:
 		return
-	var row := _labelled_row("Orders")
 
 	match common_role:
 		Bee.Role.FORAGER:
 			var has_start: bool = first != null and first.has_forage_start_point()
-			row.add_child(_action_button("Clear start" if has_start else "Start here",
+			command_flow.add_child(_action_button("Clear start" if has_start else "Start here",
 				func(): forage_start_point_requested.emit(),
 				"Click this, then click a spot in the meadow. The selected foragers head there first on every trip out, so you can split them across different parts of the meadow instead of them all drifting to whichever flower is nearest the entrance."))
 			if GameConfig.floral_constancy_on:
 				var pref: String = first.preferred_species if first != null else ""
-				row.add_child(_action_button(("Flower: %s" % pref) if pref != "" else "Pick a flower",
+				command_flow.add_child(_action_button(("Flower: %s" % pref) if pref != "" else "Pick a flower",
 					func(): floral_preference_requested.emit(),
 					"Click this, then click a flower. The selected foragers will only ever visit that species from then on, even walking past a nearer flower of something else -- real bees do this too."))
 		Bee.Role.BUILDER:
-			row.add_child(_action_button("Build here",
+			command_flow.add_child(_action_button("Build here",
 				func(): build_cell_requested.emit(),
 				"Click this, then click any open tile -- including ground that has been mined out. Hold Ctrl and keep clicking to queue up several: they are built in the order you click them, and a faint line shows that order while this bee is selected."))
-			row.add_child(_action_button("Keep clear",
+			command_flow.add_child(_action_button("Keep clear",
 				func(): keep_clear_requested.emit(),
 				"Click this, then click a tile to reserve it as open floor. No comb worker will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every comb worker, not just this one, and the reserved tiles show whenever any comb worker is selected."))
-			row.add_child(_action_button("Work from here",
+			command_flow.add_child(_action_button("Work from here",
 				func(): home_cell_requested.emit(),
 				"Click this, then click a tile. That tile becomes the selected comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Applies to this one bee only, even if you have several selected -- use \"Set for all comb workers\" below to change every comb worker at once."))
-			row.add_child(_action_button("Set for all comb workers",
+			command_flow.add_child(_action_button("Set for all comb workers",
 				func(): home_cell_all_requested.emit(),
 				"Click this, then click a tile. Every comb worker in the colony -- not just the selected ones -- gets that tile as its centre of operations. Use this to redirect the whole team at once; use \"Work from here\" above to give one bee its own spot."))
 
-			# Restocking needs three things chosen, so it gets its own row
-			# rather than crowding the general orders.
+			# Restocking needs three things chosen, so it gets its own
+			# batch of buttons rather than crowding the general orders.
 			if first != null and first.architect_mode == "restock":
 				_build_restock_row(first)
 		Bee.Role.MINER:
-			row.add_child(_action_button("Mine",
+			command_flow.add_child(_action_button("Mine",
 				func(): mine_target_requested.emit(),
 				"Click this, then click a soil block for the selected miners to dig. Hold Ctrl and keep clicking to queue several: they are dug in the order you click them, and a faint line shows that order while the miner is selected."))
-			row.add_child(_action_button("Work from here",
+			command_flow.add_child(_action_button("Work from here",
 				func(): mine_home_requested.emit(),
 				"Click this, then click a tile. The selected miners will always dig whichever soil is nearest that tile, rather than whichever is nearest wherever they finished the last block. Keeps a team working through one face."))
 
-## The restock sub-mode's own row: which cells to keep full, of what, and
-## where the contents may come from.
+## The restock sub-mode's own buttons: which cells to keep full, of what,
+## and where the contents may come from.
 ##
 ## All three act on the current comb selection, which is why there is no
 ## "click a spot" mode here -- you select cells the ordinary way first,
 ## then press the button that says what they are for.
 func _build_restock_row(first) -> void:
-	var row := _labelled_row("Keep full")
-
 	for resource in ["nectar", "pollen", "honey", "jelly"]:
 		var value: String = resource
 		var current: bool = first != null and first.restock_resource == value
-		row.add_child(_toggle_button(
+		command_flow.add_child(_toggle_button(
 			resource.capitalize(), current,
 			func(): restock_targets_requested.emit(value),
 			"Select comb first, then press this. Those cells become the ones this comb worker keeps full of %s, fetching it from elsewhere in the hive whenever they run down. This is how you get a resource to sit *somewhere* -- honey beside the brood before winter, pollen within reach of the nursery -- rather than wherever the foragers happened to drop it." % resource
 		))
 
-	var source_row := _labelled_row("Take from")
-	source_row.add_child(_action_button("Only these",
+	command_flow.add_child(_action_button("Only these",
 		func(): restock_sources_requested.emit(true),
 		"Select comb first, then press this. The comb worker will draw only on those cells when refilling. Use it to point restocking at the outer comb and leave the rest alone."))
-	source_row.add_child(_action_button("Never these",
+	command_flow.add_child(_action_button("Never these",
 		func(): restock_sources_requested.emit(false),
 		"Select comb first, then press this. The comb worker will never take from those cells. This is what protects a winter store from being redistributed by your own bee."))
-	source_row.add_child(_action_button("Clear orders",
+	command_flow.add_child(_action_button("Clear orders",
 		func(): restock_clear_requested.emit(),
 		"Forget this comb worker's restocking orders entirely -- the cells it keeps full, and the sources it may use."))
 
@@ -1758,7 +1900,7 @@ func _build_restock_row(first) -> void:
 		summary.text = "%d cells of %s" % [first.restock_targets.size(), first.restock_resource]
 		summary.add_theme_font_size_override("font_size", 11)
 		summary.add_theme_color_override("font_color", Color(0.6, 0.9, 0.7))
-		source_row.add_child(summary)
+		command_flow.add_child(summary)
 
 ## The backup role and whether a reassignment waits for the current job.
 func _build_fallback_row(common_role: int, first) -> void:
@@ -1800,12 +1942,12 @@ func _secondary_items() -> Array:
 		items.append({"text": role.label, "action": func(): secondary_role_requested.emit(key)})
 	return items
 
-## One row of the panel, with its heading. Returns the box the controls
-## go into.
+## One row of the More… panel, with its heading. Returns the box the
+## controls go into.
 func _labelled_row(title: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
-	role_row.add_child(row)
+	more_panel.add_child(row)
 
 	var label := Label.new()
 	label.text = "%s:" % title
@@ -1868,56 +2010,82 @@ func _make_role_menu(label: String, tip: String, items: Array) -> Control:
 	popup.id_pressed.connect(func(id: int): items[id].action.call())
 	return menu
 
-## Re-read every frame so the task line tracks what the bee is doing.
+## Re-read every frame so the activity field tracks what the bee is
+## doing. Fields are grouped per UI_PLAN.md section 5's ranking --
+## identity/job, energy/load, activity, trait/quote -- each its own
+## label so _apply_selection_field_visibility can hide any one of them.
 func _refresh_selection_text() -> void:
 	shown_bees = shown_bees.filter(func(b): return is_instance_valid(b))
 	if shown_bees.is_empty():
 		selection_panel.visible = false
+		command_tray.visible = false
 		return
 	if shown_bees.size() == 1:
 		var b = shown_bees[0]
-		var line := "%s%s — %s — energy %d%%" % [
+
+		var identity := "%s%s — %s" % [
 			"Queen " if b.is_queen else "Bee ",
 			"" if b.is_queen else str(b.bee_id),
 			b.role_name_text(),
-			int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
 		]
-		# Name and rolled trait first -- this is what turns "Bee 214" into
-		# someone the player can recognise. See BEE_INDIVIDUALITY_PLAN.md.
+		# Name first -- this is what turns "Bee 214" into someone the
+		# player can recognise. See BEE_INDIVIDUALITY_PLAN.md.
 		if b.bee_name != "":
-			line = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, line]
-		if b.trait_text() != "":
-			line += "\n%s" % b.trait_text()
+			identity = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, identity]
 		if b.is_queen:
-			line += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
+			identity += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
 		else:
-			line += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
-		line += "\n%s" % b.carrying_text()
-		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
-			line += "\nPreferred flower: %s" % b.preferred_species
-		if b.bee_fact != "":
-			line += "\n\"%s\"" % b.bee_fact
-		# the queen's pollen store is the thing that gates egg-laying,
-		# so it's worth showing as a running total
-		if b.is_queen:
-			line += "\nPollen eaten: %d / %d needed for an egg" % [
-				int(b.pollen_eaten), int(GameConfig.egg_pollen_cost),
-			]
-		selection_label.text = line
-		task_label.text = "Now: %s" % b.task_description()
+			identity += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
+		identity_label.text = identity
 
+		energy_label.text = "Energy %d%%\n%s" % [
+			int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
+			b.carrying_text(),
+		]
+
+		var activity := "Now: %s" % b.task_description()
 		# If it isn't doing anything, say why. A bee standing still looks
 		# identical whatever the reason, and "nothing is happening and I
 		# can't tell why" is the worst state to leave a player in.
 		var stuck: String = b.idle_reason()
 		if stuck != "":
-			task_label.text += "\n%s" % stuck
-			task_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
+			activity += "\n%s" % stuck
+			activity_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
 		else:
-			task_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+			activity_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
+			activity += "\nPreferred flower: %s" % b.preferred_species
+		# the queen's pollen store is the thing that gates egg-laying,
+		# so it's worth showing as a running total
+		if b.is_queen:
+			activity += "\nPollen eaten: %d / %d needed for an egg" % [
+				int(b.pollen_eaten), int(GameConfig.egg_pollen_cost),
+			]
+		activity_label.text = activity
+
+		var trait := b.trait_text()
+		if b.bee_fact != "":
+			trait += ("\n" if trait != "" else "") + "\"%s\"" % b.bee_fact
+		trait_label.text = trait
 	else:
-		selection_label.text = "%d bees selected" % shown_bees.size()
-		task_label.text = ""
+		identity_label.text = "%d bees selected" % shown_bees.size()
+		energy_label.text = ""
+		activity_label.text = ""
+		trait_label.text = ""
+	_update_command_tray_width()
+
+## The command tray's max width is the viewport minus the selection
+## tray's actual width and (above the responsive breakpoint) the
+## Gallerin reserve -- ui_layout.gd computes it so this tray respects the
+## reserve by construction rather than a magic-number width. Setting it
+## on command_flow rather than command_tray itself is what makes the
+## flow wrap onto more rows instead of growing wider than its cap.
+func _update_command_tray_width() -> void:
+	if command_tray == null or not command_tray.visible:
+		return
+	var viewport_width: float = get_viewport().get_visible_rect().size.x
+	var max_width: float = UiLayout.command_tray_max_width(viewport_width, selection_panel.size.x)
+	command_flow.custom_minimum_size.x = max(200.0, max_width - 32.0)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

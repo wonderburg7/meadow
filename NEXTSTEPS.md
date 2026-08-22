@@ -7,48 +7,54 @@ into a history. Full history lives in `git log`.
 
 ## Next up
 
-1. **UI Plan slices 1-2 are built** (`UI_PLAN.md` section 15). Slice 1
+1. **UI Plan slices 1-3 are built** (`UI_PLAN.md` section 15). Slice 1
    is the shared design-token/layout/text-scale foundation
    (`scripts/ui_theme.gd`, `scripts/ui_layout.gd`, the six new
    `Session` interface-preference fields, `show_info_badges` defaulting
-   off, `winter_panel.gd` restyled as the demonstration panel).
-   Slice 2 reworks `hud.gd`'s top-right bar into two rows per section
-   2: row one is an explicit Pause button (split out of the old speed
-   button group, which now reads `SPEEDS` for 1x/2x/4x only) plus the
-   speed multipliers, with 8x now dev-only and hidden unless
-   `Session.show_speed_8x` is set (new field, off by default, same
-   pattern as `show_crab_spiders`); row two is Colony/Nursery/Winter/
-   view-switch, with the first three plus the view switch now built via
-   a new `_icon_button()` helper pairing a small procedural shape
-   (new `scripts/ui_icon.gd`, a placeholder per section 8 -- bee, hex,
-   flower, hive -- until bespoke art exists) with its existing text
-   label, since a rough drawn shape alone isn't legible yet. The goal
-   shelf (`set_challenge_goal`) now takes an optional completed-goal
-   string (struck through via a `RichTextLabel`, shown underneath the
-   current goal) and optional numeric progress (a compact bar), and
-   `challenge_runner.gd` feeds both -- the previous stage's `goal_text`
-   as "just completed", and progress for the three goals with a
-   countable target (`nectar_target`, `pollen_target`, Challenge 2's
-   `eggs_laid`). `source_checks.py`, `balance_tests.py`,
-   `FUNCTION_MAP.md` (regenerated) and a Godot boot all pass/are clean
-   (same pre-existing warnings as before, nothing new).
-   **Not yet hands-on checked** -- start or continue Challenge 1 and
-   confirm: the two-row bar looks right and doesn't overlap the
-   settings cog; the Colony/Nursery/Winter/Hive buttons' icon
-   placeholders are at least legible next to their labels; the goal
-   shelf shows the current goal, and once 1.4 finishes and 1.5 begins,
-   shows "Goal: collect a little nectar." struck through underneath
-   once you're on to 1.6, with a progress bar while 1.5/1.6 are active;
-   the explicit Pause button toggles correctly and 8x stays hidden
-   until `Session.show_speed_8x` is set true in code (no settings-UI
-   toggle for it yet -- that's slice 5, same as slice 1's theme/scale
-   fields). Also worth a look at a narrow window width (~800px) to
-   confirm the two rows don't clip against the corner.
-   **Next slice** is slice 3 (selection/command trays and Dr Gallerin's
-   reserved width) -- `UI_PLAN.md` section 15 has the detail; per its
-   own "working through these slices" note, only `hud.gd`,
-   `ui_layout.gd` and (only if its reserved width needs to become a
-   named constant) `gallerin_panel.gd` should need opening for it.
+   off, `winter_panel.gd` restyled as the demonstration panel). Slice 2
+   reworks `hud.gd`'s top-right bar into two rows (pause/speed, then
+   Colony/Nursery/Winter/view-switch via icon-plus-label buttons) and
+   extends the goal shelf with a struck-through last-completed goal and
+   optional progress bar. Slice 3 splits the old selection panel into
+   two trays (`UI_PLAN.md` section 5): a bottom-left **selection tray**
+   with four independently hideable fields (identity/job, energy/load,
+   activity, trait/quote -- toggled from a `⚙` cog, new `Session`
+   fields `show_selection_*`), and a bottom-centre **command tray**
+   whose primary row (Doing/Orders/restock/queen-build/the new "Follow
+   bee" toggle) wraps in an `HFlowContainer` capped to
+   `ui_layout.gd::command_tray_max_width()` so it can never grow into
+   Dr Gallerin's reserve; Job, backup role, finish-first and Favourite
+   moved into a collapsible "More…" panel below. `gallerin_panel.gd`
+   now exposes `RESERVE_WIDTH` as a real constant, which `ui_layout.gd`
+   reads instead of duplicating the number. "Follow bee" is new
+   camera-tracking behaviour in `camera_view.gd`
+   (`_handle_follow`/`_on_follow_bee_toggled`, driven by `main.gd`'s new
+   `following_bee` field) -- continuous centring, not a one-off snap;
+   it stops automatically on any selection change.
+   `source_checks.py`, `balance_tests.py` and `FUNCTION_MAP.md`
+   (regenerated) all pass/are clean. **No Godot MCP tools were available
+   this session, so slice 3 has not had even a boot-level check** --
+   worth doing before the hands-on pass below.
+   **Not yet hands-on checked, any of slices 2-3** -- start or continue
+   Challenge 1 and confirm: the two-row top-right bar looks right and
+   doesn't overlap the settings cog; the goal shelf's strikethrough and
+   progress bar behave across a sub-stage transition; selecting a bee
+   shows the new bottom-left tray with all four fields, and the cog
+   actually hides/shows each one and remembers the choice for the rest
+   of the session; the bottom-centre command tray shows the right
+   primary buttons per role and never visually overlaps Dr Gallerin's
+   bottom-right corner, including at 200% text scale (Settings ->
+   Appearance, once slice 5 adds a toggle -- for now `Session.text_scale`
+   can be set directly); "More…" reveals Job/backup-role/Favourite and
+   remembers open/closed across reselection within the session; "Follow
+   bee" (single-bee selection only) keeps the camera centred as the bee
+   moves and switches meadow/hive view with it, and turns itself off the
+   moment you select something else. Also worth a look at a narrow
+   window width (~800px) to confirm nothing clips.
+   **Next slice** is slice 4 (Colony/Nursery drawer restyle plus a new
+   colony-wide brood-stage count) -- `UI_PLAN.md` section 15 has the
+   detail; likely files `colony_panel.gd`, `nursery_panel.gd`,
+   `hive.gd`, `hive_cell.gd`.
 2. **Game model slices 1-4 are built** (`DESIGN_BACKLOG.md` section 13).
    **Not yet hands-on checked** -- slice 3's prerequisite cascade only
    fires from the settings-window checkboxes, which nothing automated

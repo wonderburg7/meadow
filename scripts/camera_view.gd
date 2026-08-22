@@ -106,6 +106,28 @@ func _focus_on_bee(bee: Node2D) -> void:
 	var fit: float = min(view.x / bounds.size.x, view.y / bounds.size.y)
 	cam.zoom = Vector2(clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM), clampf(fit, main.MIN_ZOOM, main.MAX_ZOOM))
 
+## The command tray's "Follow bee" toggle. `bee` null (or `following`
+## false) stops tracking -- hud.gd emits exactly that on every selection
+## change, so following never silently outlives the selection it started
+## from.
+func _on_follow_bee_toggled(bee: Node2D, following: bool) -> void:
+	main.following_bee = bee if following else null
+
+## Continuous camera tracking, called every frame from main._process
+## alongside _handle_pan. Deliberately just re-centres position, not
+## zoom -- a player who has zoomed in or out to look at something wants
+## to keep that framing while the view follows the bee around in it.
+func _handle_follow(_delta: float) -> void:
+	if main.following_bee == null:
+		return
+	if not is_instance_valid(main.following_bee):
+		main.following_bee = null
+		return
+	var bee_indoors: bool = main.following_bee.get_parent() == main.hive_root
+	if bee_indoors != main.in_hive_view:
+		_toggle_view()
+	_active_camera().position = main.following_bee.global_position
+
 func _zoom_by(factor: float) -> void:
 	var cam = _active_camera()
 	var z: float = clamp(cam.zoom.x * factor, main.MIN_ZOOM, main.MAX_ZOOM)

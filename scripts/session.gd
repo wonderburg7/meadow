@@ -136,6 +136,14 @@ var control_groups: Dictionary = {}
 ## main.gd's _apply_comb_overlay.
 var comb_overlay: String = ""
 
+## Selection tray field visibility (UI_PLAN.md section 5's four-group
+## ranking), toggled from the tray's own cog rather than the settings
+## window -- same spirit as pinned_stats' stars.
+var show_selection_identity: bool = true
+var show_selection_energy: bool = true
+var show_selection_activity: bool = true
+var show_selection_trait: bool = true
+
 # --- appearance and accessibility (UI_PLAN.md sections 6/7) --------
 ## Read by ui_theme.gd's palette(). "dark" (default), "light" or
 ## "high_contrast".
