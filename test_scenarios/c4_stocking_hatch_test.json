@@ -1,0 +1,8 @@
+{
+  "cells": 20, "nectar_foragers": 5, "pollen_foragers": 3,
+  "nurses": 3, "builders": 2, "miners": 1,
+  "actions": [
+    {"do": "hatch_role", "hex": [0, 0], "role": "comb_worker", "focus": "restock", "automine": false}
+  ],
+  "stop": {"max_days": 12}
+}

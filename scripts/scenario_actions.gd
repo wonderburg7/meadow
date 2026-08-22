@@ -62,6 +62,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_queue_mine(main, action)
 		"set_config":
 			_do_set_config(main, action)
+		"hatch_role":
+			_do_hatch_role(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -222,6 +224,24 @@ static func _do_set_config(main: Node2D, action: Dictionary) -> void:
 		return
 	main.DebugPanel.setting_set(key, action["value"])
 	_log("set_config", "%s = %s" % [key, action["value"]], "accepted", "")
+
+## Calls orders_zones._on_cell_hatch_role_requested -- the same function
+## nursery_panel.gd's role buttons call once a cell is selected. Added for
+## CHATGPT_INSIGHTS_PLAN.md's C4 hatch test (no way to configure a hatch
+## role headlessly before this), same "call the real command function"
+## pattern as every other verb here.
+static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
+	var hex: Array = action.get("hex", [])
+	var cell: Node2D = _resolve_cell(main, hex)
+	var role_key: String = action.get("role", "")
+	if cell == null or role_key == "":
+		_log("hatch_role", str(action), "rejected", "no cell at that hex or no role given")
+		return
+	var role_id: int = main.Roles.id_for_key(role_key)
+	var focus: String = action.get("focus", "")
+	var automine: bool = action.get("automine", false)
+	main.orders_zones._on_cell_hatch_role_requested(cell, role_id, focus, automine)
+	_log("hatch_role", "%s -> %s/%s" % [hex, role_key, focus], "accepted", "")
 
 ## Not gated -- checked once, the tick its own "when" (if any) is met.
 ## Returns whether the run should keep going, so run_pending can stop

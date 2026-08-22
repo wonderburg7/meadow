@@ -1,0 +1,8 @@
+{
+  "cells": 20, "nectar_foragers": 5, "pollen_foragers": 3,
+  "nurses": 3, "builders": 2, "miners": 1,
+  "actions": [
+    {"do": "assign_role", "role": "nurse_both", "target": {"current_role": "nurse"}}
+  ],
+  "stop": {"max_days": 10}
+}

@@ -1,6 +1,7 @@
 # ChatGPT insights — implementation plan
 
-Status: planned, not started. 22 Aug 2026.
+Status: Group C fully built and verified, 22 Aug 2026. Groups B and A
+still planned, not started.
 
 Turns `insights_from_ChatGPT.md`'s three 22 Aug entries into small,
 independently-committable slices for Claude Code. Each slice touches
@@ -48,7 +49,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   comparison (2 Feed vs 2 Anything, same seed) showing Anything no
   longer lags Feed on population growth.
 
-### C2. Undesignated jelly spill -- done, 22 Aug
+### C2. Undesignated jelly spill -- done, 22 Aug; verified 22 Aug
 - **File:** `bee_nursery.gd`, wherever reserve (non-gyne-brood) jelly
   work calls `hive.find_cell_for("jelly")`.
 - **Fix:** with no gyne brood pending, only produce/store jelly while an
@@ -58,6 +59,11 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   condition, not incidental fallback order.
 - **Verify:** headless run with no jelly cell marked -- jelly should
   stop appearing in generic empty cells.
+- **Verified:** `test_scenarios/c2_no_jelly_cell_test.json` (3 nurses
+  switched to Anything mode day 0 via `assign_role`, no cell designated
+  `jelly`, no gyne brood pending, 10 days). Summary line:
+  `jelly_batches: 0`, `brood_feeds: 96`, `cells_completed: 21` -- nurses
+  fed brood and had nothing else to fall back on, matching the fix.
 
 ### C3. Honey fanning doesn't stack -- done, 22 Aug
 - **Files:** `bee_honey.gd` (`honey_fan`, the `being_fanned = true`
@@ -70,7 +76,7 @@ re-simulate in C6 before tuning any constant these bugs were masking.
 - **Verify:** headless 1-fanner vs 4-fanner comparison should show
   close to linear speed-up, not near-identical timing.
 
-### C4. Stocking hatch fallback -- done, 22 Aug
+### C4. Stocking hatch fallback -- done, 22 Aug; verified 22 Aug
 - **File:** `world_building.gd` (`_spawn_hatched_bee`, the
   `["build", "maintain", "both"]` check).
 - **Bug:** a nursery cell configured to hatch a Stocking worker is
@@ -82,6 +88,21 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   condition currently lets it, ahead of any answer.
 - **Verify:** `source_checks.py`, plus a hatch test confirming a
   Stocking-configured cell actually produces a Stocking worker.
+- **Verified:** the headless action driver had no way to configure a
+  cell's hatch role at all, so this needed two small additions first:
+  a `hatch_role` verb in `scenario_actions.gd` (calls
+  `orders_zones._on_cell_hatch_role_requested`, the same function the
+  nursery panel's role buttons call -- same "call the real command
+  function" pattern every other verb there follows), and a one-line
+  dev-only log in `world_building.gd::_spawn_hatched_bee`
+  (`DiagnosticLog.log_action("hatch_comb_worker", ...)`) reporting the
+  resolved `architect_mode` directly, since inferring it from behaviour
+  alone can't distinguish "restock" from the old "both" fallback (both
+  still perform restocking). `test_scenarios/c4_stocking_hatch_test.json`
+  hatch-configures cell `[0,0]` as Stocking (`role=comb_worker,
+  focus=restock`) at day 0, 12-day run. Logged line: `hatch_comb_worker
+  (focus=restock): spawned -- architect_mode=restock` -- confirms the
+  fix; before it, this would have read `architect_mode=both`.
 
 ### C5. Role outcome telemetry -- done, 22 Aug
 - **File:** `diagnostic_log.gd` (new counters), fed from
@@ -128,8 +149,9 @@ re-simulate in C6 before tuning any constant these bugs were masking.
   `jelly_pollen_cost`, `jelly_honey_cost`, `jelly_per_batch`,
   `honey_ripen_time`, `nectar_per_honey` or `honey_energy_factor` off
   the back of this alone -- these five scenarios are a bugfix check,
-  not a balance pass; C2's "no jelly cell marked" run and C4's hatch
-  test are still open (see `NEXTSTEPS.md`).
+  not a balance pass. C2's "no jelly cell marked" run and C4's hatch
+  test are both now done too, see those sections above -- Group C is
+  fully verified.
 
 ---
 
