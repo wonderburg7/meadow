@@ -785,7 +785,7 @@ const TUNABLES := [
 		"options": ["dark", "light", "high_contrast"],
 		"option_labels": {"dark": "Dark", "light": "Light", "high_contrast": "High contrast"},
 		"category": "Appearance",
-		"tip": "Which colour palette every panel draws from. High contrast swaps in a near-black background, near-white text and a small set of highly saturated accent colours, clearing WCAG AAA for body text. Applies to a window the next time it opens.",
+		"tip": "Which colour palette every panel draws from. High contrast swaps in a near-black background, near-white text and a small set of highly saturated accent colours, clearing WCAG AAA for body text. Takes effect immediately.",
 	},
 	{
 		"key": "show_speed_8x", "label": "Show 8x speed button", "toggle": true,
@@ -848,12 +848,12 @@ const TUNABLES := [
 		"options": ["sans", "atkinson", "dyslexia", "pixel"],
 		"option_labels": {"sans": "Standard", "atkinson": "Atkinson Hyperlegible", "dyslexia": "Dyslexia-friendly", "pixel": "Pixel"},
 		"category": "Appearance",
-		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and the dyslexia-friendly face are both designed to stay readable at small sizes; Pixel is a look, not an accessibility choice, and can't be combined with either of the other two. Until their font files are added under assets/fonts/, the three non-standard options fall back to the standard font rather than erroring -- so no visible change yet is expected. Applies to a window the next time it opens.",
+		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and the dyslexia-friendly face are both designed to stay readable at small sizes; Pixel is a look, not an accessibility choice, and can't be combined with either of the other two. Until their font files are added under assets/fonts/, the three non-standard options fall back to the standard font rather than erroring -- so no visible change yet is expected. Takes effect immediately.",
 	},
 	{
 		"key": "text_scale", "label": "Text scale", "step": 0.1, "min": 1.0, "max": 2.0,
 		"category": "Appearance",
-		"tip": "Multiplies every panel's font size, from 100% up to 200%. Panels reflow -- wrap, grow taller -- rather than clip at any scale. Applies to a window the next time it opens.",
+		"tip": "Multiplies every panel's font size, from 100% up to 200%. Panels reflow -- wrap, grow taller -- rather than clip at any scale. Takes effect immediately.",
 	},
 	{
 		"key": "reduced_motion", "label": "Reduced motion", "toggle": true,
@@ -1426,6 +1426,8 @@ func _cycle_option(entry: Dictionary, direction: int) -> void:
 	idx = (idx + direction + options.size()) % options.size()
 	var new_value: String = options[idx]
 	setting_set(entry.key, new_value)
+	if entry.key == "ui_theme" or entry.key == "ui_typeface":
+		UiTheme.refresh()
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _option_display(entry, new_value)]
 
 ## UI-syncing wrapper over `_cascade_prerequisites_on_static` -- ticks the
@@ -1488,6 +1490,8 @@ func _adjust(entry: Dictionary, delta: float) -> void:
 	if entry.has("max"):
 		new_value = min(new_value, entry.max)
 	setting_set(entry.key, new_value)
+	if entry.key == "text_scale":
+		UiTheme.refresh()
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _format_value(new_value)]
 	if entry.key == "tooltip_delay":
 		# Godot's own project-wide tooltip timer, rather than something

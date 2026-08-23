@@ -12,7 +12,7 @@ extends RefCounted
 ##
 ## Usage: const UiTheme = preload("res://scripts/ui_theme.gd")
 ##        panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-##        label.theme = UiTheme.build_theme()
+##        label.theme = UiTheme.active_theme()
 ##        label.theme_type_variation = "Body"
 
 # --- token palettes --------------------------------------------------
@@ -108,8 +108,17 @@ static func color(token: String) -> Color:
 ## its own StyleBoxFlat. Corner radius is deliberately modest (not a
 ## smooth circular arc) so the pixel-art language survives the rounding,
 ## per UI_PLAN.md section 6.
+static var _panel_stylebox: StyleBoxFlat
+static var _button_styleboxes: Dictionary = {}
+static var _active_theme: Theme
+
 static func panel_stylebox() -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
+	if _panel_stylebox == null:
+		_panel_stylebox = StyleBoxFlat.new()
+		_refresh_panel_stylebox(_panel_stylebox)
+	return _panel_stylebox
+
+static func _refresh_panel_stylebox(box: StyleBoxFlat) -> void:
 	box.bg_color = color("panel_bg")
 	box.set_corner_radius_all(10)
 	box.set_border_width_all(2)
@@ -118,7 +127,6 @@ static func panel_stylebox() -> StyleBoxFlat:
 	box.content_margin_right = 10
 	box.content_margin_top = 8
 	box.content_margin_bottom = 8
-	return box
 
 ## The seven interaction states every interactive control should draw
 ## from (UI_PLAN.md section 11), rather than each panel inventing its
@@ -128,6 +136,13 @@ const BUTTON_STATES := [
 ]
 
 static func button_stylebox(state: String) -> StyleBoxFlat:
+	if not _button_styleboxes.has(state):
+		_button_styleboxes[state] = StyleBoxFlat.new()
+	var box: StyleBoxFlat = _button_styleboxes[state]
+	_refresh_button_stylebox(box, state)
+	return box
+
+static func _refresh_button_stylebox(box: StyleBoxFlat, state: String) -> void:
 	var base: Color = color("panel_bg")
 	var bg: Color = base.lightened(0.10)
 	var border: Color = Color(0, 0, 0, 0)
@@ -151,7 +166,6 @@ static func button_stylebox(state: String) -> StyleBoxFlat:
 			border_width = 2
 		_:
 			pass  # "normal" -- the defaults above already cover it
-	var box := StyleBoxFlat.new()
 	box.bg_color = bg
 	box.set_corner_radius_all(6)
 	box.set_border_width_all(border_width)
@@ -160,7 +174,6 @@ static func button_stylebox(state: String) -> StyleBoxFlat:
 	box.content_margin_right = 8
 	box.content_margin_top = 4
 	box.content_margin_bottom = 4
-	return box
 
 # --- text scale and typeface architecture -------------------------------
 ## A project Theme resource with named type variations, per UI_PLAN.md
@@ -176,16 +189,48 @@ const TYPE_SIZES := {
 	"Tiny": 9,
 }
 
+## Returns the shared mutable Theme used by every panel. Keeping one resource
+## means refresh() updates controls that are already open, rather than only
+## controls created after an appearance setting changes.
+static func active_theme() -> Theme:
+	if _active_theme == null:
+		_active_theme = Theme.new()
+		_refresh_theme_resource(_active_theme)
+	return _active_theme
+
+## Compatibility wrapper for existing panel call sites. New code should use
+## active_theme() to make the shared-resource behaviour explicit.
 static func build_theme() -> Theme:
-	var theme := Theme.new()
+	return active_theme()
+
+## Reapplies all palette, scale and typeface values to the same resources.
+## Theme and StyleBox resources emit change notifications as they mutate, so
+## controls already holding them redraw without being rebuilt.
+static func refresh() -> void:
+	var theme := active_theme()
+	_refresh_theme_resource(theme)
+	if _panel_stylebox != null:
+		_refresh_panel_stylebox(_panel_stylebox)
+	for state in _button_styleboxes:
+		_refresh_button_stylebox(_button_styleboxes[state], state)
+
+static func _refresh_theme_resource(theme: Theme) -> void:
 	var scale: float = Session.text_scale
 	var font: Font = _typeface_font(Session.ui_typeface)
 	for variation in TYPE_SIZES:
 		theme.set_type_variation(variation, "Label")
 		theme.set_font_size("font_size", variation, int(round(TYPE_SIZES[variation] * scale)))
+		theme.set_color("font_color", variation, color("text_primary"))
 		if font != null:
 			theme.set_font("font", variation, font)
-	return theme
+		elif theme.has_font("font", variation):
+			theme.clear_font("font", variation)
+	for base_type in ["Label", "Button"]:
+		theme.set_color("font_color", base_type, color("text_primary"))
+		if font != null:
+			theme.set_font("font", base_type, font)
+		elif theme.has_font("font", base_type):
+			theme.clear_font("font", base_type)
 
 ## The three non-default faces are placeholder options until their font
 ## files are sourced under assets/fonts/ (UI_PLAN.md section 8) --
