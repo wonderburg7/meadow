@@ -35,9 +35,9 @@ signal scenario_chosen(level: int, preset_key: String, custom_overrides: Diction
 ## starting-point presets this menu always had -- no sub-stages, no win
 ## condition, no Dr Gallerin, just a different-sized colony to begin from,
 ## now with a difficulty preset layered on top (scenario_presets.gd).
-## Internal level ids stay exactly as they were (1-5) so existing saves
-## and the LEVELS dictionary don't need to change shape; only the menu's
-## grouping and labels do.
+## Existing internal level ids stay unchanged for save/profile stability;
+## new run definitions receive new ids even when their player-facing order is
+## earlier. The menu's Scenario number is presentation, not an array index.
 const STAGES := [
 	{
 		"level": 1,
@@ -52,27 +52,33 @@ const STAGES := [
 		"blurb": "Grow the colony from stored food into a working hive. Lay eggs, raise specialist bees, keep nectar flowing, and expand the hive enough to support a balanced workforce.",
 	},
 	{
+		"level": 7,
+		"group": "starter",
+		"title": "Scenario 1 — Queen alone",
+		"blurb": "One queen, no workers and no comb. There is no scripted guidance: she must take on the colony's first jobs herself and build everything from nothing.",
+	},
+	{
 		"level": 3,
 		"group": "starter",
-		"title": "Scenario 1 — A working colony",
+		"title": "Scenario 2 — A working colony",
 		"blurb": "The queen, three cells, and two foragers — one on nectar, one on pollen. Both resources are coming in from the first moment.",
 	},
 	{
 		"level": 4,
 		"group": "starter",
-		"title": "Scenario 2 — Established nest",
+		"title": "Scenario 3 — Established nest",
 		"blurb": "Fifteen cells and a full crew: eleven foragers (eight on nectar, three on pollen), two nurses, two comb workers on both jobs, and two miners. Enough colony that keeping it fed is the challenge, not starting it.",
 	},
 	{
 		"level": 5,
 		"group": "starter",
-		"title": "Scenario 3 — In full swing",
+		"title": "Scenario 4 — In full swing",
 		"blurb": "Twenty-two foragers (sixteen on nectar, six on pollen), four nurses, three comb workers and three miners already digging. Twelve cells, four of them full of nectar and two of pollen, so the queen can lay from the first second. A colony big enough that what to do with it is the question.",
 	},
 	{
 		"level": 6,
 		"group": "starter",
-		"title": "Scenario 4 — Thirty strong",
+		"title": "Scenario 5 — Thirty strong",
 		"blurb": "Thirty bees: twenty foragers (fourteen on nectar, six on pollen), three nurses, three comb workers, two miners and two honey makers. Eighteen cells in three ring-layers around the centre, half of them already stocked with nectar, pollen and honey.",
 	},
 ]

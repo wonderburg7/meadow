@@ -5,6 +5,10 @@ extends Node
 ## state; reads and writes main's fields through the `main` reference.
 
 var main: Node2D
+## Flowers and obstacles use the same single-selection presentation contract
+## as bees/cells/soil, without joining the simulation's persistent selection
+## arrays. Object summaries and this glow always move together.
+var selected_world_object: Node2D = null
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -113,6 +117,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
+				_clear_world_object_selection()
 				main.hud.show_object_summary("death", marker.death_info)
 				return
 			_clear_cell_selection()
@@ -120,14 +125,15 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		else:
 			var flower = main.world_building._flower_at(main.drag_start)
 			if flower:
-				main.hud.show_object_summary("flower", flower)
+				_select_world_object("flower", flower)
 				return
 			var obstacle = main.world_building._obstacle_at(main.drag_start)
 			if obstacle:
-				main.hud.show_object_summary("obstacle", obstacle)
+				_select_world_object("obstacle", obstacle)
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
+				_clear_world_object_selection()
 				main.hud.show_object_summary("death", marker.death_info)
 				return
 	else:
@@ -160,8 +166,11 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				if box.has_point(m.global_position):
 					boxed_markers.append(m)
 			if not boxed_markers.is_empty():
+				_clear_world_object_selection()
 				main.hud.show_object_summary("death", boxed_markers[0].death_info)
 				return
+
+	_clear_world_object_selection()
 
 	if not picked.is_empty():
 		_clear_cell_selection()
@@ -181,6 +190,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 func _select_cells(cells: Array, additive: bool) -> void:
+	_clear_world_object_selection()
 	_clear_block_selection()
 	if not additive:
 		_clear_cell_selection()
@@ -206,6 +216,7 @@ func _clear_cell_selection() -> void:
 	main.selected_cells.clear()
 
 func _select_blocks(blocks: Array, additive: bool) -> void:
+	_clear_world_object_selection()
 	_clear_cell_selection()
 	if not additive:
 		_clear_block_selection()
@@ -233,6 +244,19 @@ func _clear_block_selection() -> void:
 		if is_instance_valid(block):
 			block.set_selected(false)
 	main.selected_blocks.clear()
+
+func _select_world_object(kind: String, object: Node2D) -> void:
+	if selected_world_object != object:
+		_clear_world_object_selection()
+	selected_world_object = object
+	if is_instance_valid(selected_world_object) and selected_world_object.has_method("set_selected"):
+		selected_world_object.set_selected(true)
+	main.hud.show_object_summary(kind, object)
+
+func _clear_world_object_selection() -> void:
+	if is_instance_valid(selected_world_object) and selected_world_object.has_method("set_selected"):
+		selected_world_object.set_selected(false)
+	selected_world_object = null
 
 func _on_soil_mark_requested(mark: bool) -> void:
 	for block in main.selected_blocks:

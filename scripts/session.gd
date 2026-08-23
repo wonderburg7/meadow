@@ -57,7 +57,8 @@ var menu_pending: bool = true
 ## Replay a saved run over the newly built world. See save_game.gd.
 var load_pending: bool = false
 ## Which starting stage the next run builds. 0 means "use the tuning
-## numbers as they are"; 1-5 are the fixed stages the main menu offers.
+## numbers as they are"; the positive ids are fixed run definitions offered
+## by the main menu (Challenges and Scenarios, currently 1-7 with stable ids).
 ## Left as-is after a run starts, so a plain Restart Run repeats whatever
 ## stage you last chose.
 var starting_level: int = 0

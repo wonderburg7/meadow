@@ -14,8 +14,9 @@ Built solo, with AI, one small slice at a time.
 2. Import this folder (the one with `project.godot`).
 3. Press **F5**.
 
-The main menu offers five starting levels, from a lone queen with
-nothing (level 1) up to an established colony (level 5).
+The main menu separates guided Challenges from free-form Scenarios. The
+Scenarios range from a queen alone with no comb or workers to an established
+thirty-bee colony, with difficulty presets layered on top.
 
 ---
 

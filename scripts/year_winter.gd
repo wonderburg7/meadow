@@ -10,6 +10,8 @@ extends Node
 ## `worlds[0].begin_winter_countdown()` directly, so main.gd keeps a
 ## one-line wrapper for it.
 
+const ProblemMessages = preload("res://scripts/problem_messages.gd")
+
 var main: Node2D
 
 func _winter_forecast() -> Dictionary:
@@ -225,7 +227,7 @@ func _refresh_signals(delta: float) -> void:
 	# corner strip. The two can differ: a line worth flagging in the
 	# nursery drawer isn't always one with something sensible to select.
 	if starving > 0:
-		lines.append(["%d bees are about to starve" % starving, 2, "starving"])
+		lines.append([ProblemMessages.starving(bees, starving), 2, "starving"])
 	if hungry_brood > 0:
 		lines.append(["%d larvae are going hungry" % hungry_brood, 2, "hungry_brood", "brood"])
 	if dead_cells > 0:
@@ -237,11 +239,11 @@ func _refresh_signals(delta: float) -> void:
 	if nurses == 0 and main.hive.cells_holding("brood").size() > 0:
 		lines.append(["No nurses — brood will not develop at all", 2, "", "brood"])
 	if free_cells == 0:
-		lines.append(["No free cells — nowhere to store or lay", 1])
+		lines.append([ProblemMessages.no_free_cells(bees, main.queen), 1])
 	if hungry > 0:
-		lines.append(["%d bees running low on energy" % hungry, 1, "hungry"])
+		lines.append([ProblemMessages.hungry(bees, hungry), 1, "hungry"])
 	if foragers == 0:
-		lines.append(["No foragers — nothing is coming in", 1, ""])
+		lines.append([ProblemMessages.no_foragers(main.queen), 1, ""])
 	if comb_workers == 0 and dead_cells > 0:
 		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells", "brood"])
 	if Session.rain_intensity > GameConfig.rain_forage_limit:

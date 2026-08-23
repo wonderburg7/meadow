@@ -10,6 +10,23 @@ the integrator confirms it against `master` when merging.
 
 ## Current status
 
+On 24 Aug, Dave assigned continuation of `UI_BUGFIX_PLAN.md` plus seven new
+UI/design requirements. Work is isolated on `codex/ui-issues-continuation`
+from baseline `534b029`. The branch revises the plan with Slices 9-13 and
+implements the first coherent group: the cell inspector now puts state in the
+bottom-left summary and frequent actions in low, wide Reserve/Nursery/Sealing
+columns with Emptying/Raises under More; flowers, trees and raised ground have
+a presentation-only selection outline; four high-value problem signals use a
+stable affected bee/queen through the new `problem_messages.gd` formatter; and
+free-form Scenario 1 is a queen alone with no workers or cells (stable level id
+7, separate from Challenge 1). `Session.ui_theme` was already `"dark"` for a
+fresh profile, so no competing default was added. Python source/balance/unit
+checks and a real Godot 4.7.1 headless boot pass. Visible checks remain for the
+cell proportions at 100/150/200% text, the object-outline appearance and the
+queen-alone start/restart flow. Slice 10 (responsive main-menu composition,
+pre-run boot boundary and shared pre-world accessibility surface) is fully
+specified but not implemented in this branch's first group.
+
 On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
 `CHALLENGE1_REVAMP_PLAN.md`. Bundles A-C are implemented and validated in the
 dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline
@@ -33,8 +50,9 @@ primary worktree's current gameplay/config/menu edits do not overlap Bundle C;
 the Codex worktree's pre-existing `project.godot` and generated `.uid` changes
 were preserved and excluded from the slice.
 
-Outside that explicitly assigned sequence, there is no standing ChatGPT work
-queue. Dave abandoned the headless mechanism-check plan on 22 Aug 2026 because
+Outside the explicitly assigned UI and Challenge sequences above, there is no
+standing ChatGPT work queue. Dave abandoned the headless mechanism-check plan
+on 22 Aug 2026 because
 it was not especially useful. Do not resume
 H6, H7 or any other slice from `CHATGPT_HEADLESS_CHECK_PLAN.md`.
 
@@ -59,19 +77,23 @@ deterministic evidence are sufficient.
 
 ## Next actions, only if Dave asks
 
-1. Continue the explicitly assigned Challenge 1 revamp with Bundle D:
+1. Continue Dave's UI assignment with `UI_BUGFIX_PLAN.md` Slice 10: extract
+   the reusable appearance/accessibility surface, make the fresh menu a true
+   pre-world boot state, then recompose the menu around larger hexes and a
+   separate detail region. Recheck both worktrees for overlap first.
+2. Continue the explicitly assigned Challenge 1 revamp with Bundle D:
    meadow arrival and three-stop tour, two manual flower visits, and the
    general return-and-deposit command. Recheck both worktrees for overlap
    before editing, especially `bee.gd`/`bee_foraging.gd`, which currently have
    primary-worktree changes.
-2. If Dave wants the workflow fixes implemented, assign
+3. If Dave wants the workflow fixes implemented, assign
    `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code or Codex and start with the three
    path-scoped rule files. Use the risk-proportional hand-off and verify their
    activation in a fresh Claude session before continuing with queue and plan
    hygiene.
-3. After a flower-path performance change, rerun the same fixed-step sample and
+4. After a flower-path performance change, rerun the same fixed-step sample and
    compare the raw `flowers` mean/p95 rather than a single whole-frame result.
-4. If player-facing FPS is the decision metric, take a visible-build baseline
+5. If player-facing FPS is the decision metric, take a visible-build baseline
    at a fixed camera/zoom as well; the headless path deliberately omits fog and
    rendering work.
 
