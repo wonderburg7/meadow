@@ -1,9 +1,9 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Not built yet. Written for a future Claude Code session (or several) to
-execute bundle by bundle, each bundle sized for one session with its own
-check before the next starts — same shape as `CRAB_SPIDER_PLAN.md`'s
-"Implementation bundles".
+Implementation in progress on `codex/meadow-work`. Bundles A and B are
+built as of 23 Aug 2026; Bundles C-H remain. Each bundle is sized for one
+session with its own check before the next starts — the same shape as
+`CRAB_SPIDER_PLAN.md`'s "Implementation bundles".
 
 **Source**: a design pass with Dave, 22 Aug 2026, plus three scope
 decisions he made that morning (recorded in "Decisions resolved" below).
@@ -131,6 +131,15 @@ the debug panel (even with placeholder goals) without getting stuck.
 ---
 
 ## Bundle B — Locked-down opening: auto-mine, restricted selection
+
+**Built on the Codex branch, 23 Aug 2026; hands-on timing/visual check
+still required.** The inner five of the 15 entrance tiles are temporarily
+sealed for Challenge 1. Their per-block `mine_time_override` values total
+30 seconds; the queen follows the ordinary mining states through them
+without changing role. `challenge_runner.gd` owns the queen command lock,
+`input_selection.gd` rejects her right-click commands, and `hud.gd` keeps
+the selection summary while suppressing only the command tray. Fog uses a
+run-local permanent-reveal override rather than writing `GameConfig`.
 
 **Goal**: stages 1.1-1.2. Queen starts at world_building's tunnel
 geometry, **2/3 of the way** from the outside to the cavity (compute

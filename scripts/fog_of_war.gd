@@ -110,6 +110,11 @@ extends Node
 
 var main: Node2D
 
+## A run-local equivalent of GameConfig.fog_permanent_reveal. Challenges
+## can keep explored ground visible without mutating the shared autoload and
+## leaking that choice into the next run.
+var permanent_reveal_override: bool = false
+
 var explored: Dictionary = {}      # Vector2i tile -> true, saved
 var _lit_count: Dictionary = {}    # Vector2i tile -> int, bees currently covering it
 
@@ -263,7 +268,7 @@ func _update() -> void:
 		var cam: Camera2D = main.camera_view._active_camera()
 		_last_draw_cam_pos = cam.position
 		_last_draw_cam_zoom = cam.zoom.x
-		_last_draw_permanent = GameConfig.fog_permanent_reveal
+		_last_draw_permanent = permanent_reveal_enabled()
 
 ## True once the camera's moved, zoomed, or `fog_permanent_reveal` has
 ## flipped since the last frame we actually redrew.
@@ -272,8 +277,11 @@ func _camera_view_changed() -> bool:
 	return (
 		cam.position != _last_draw_cam_pos
 		or cam.zoom.x != _last_draw_cam_zoom
-		or GameConfig.fog_permanent_reveal != _last_draw_permanent
+		or permanent_reveal_enabled() != _last_draw_permanent
 	)
+
+func permanent_reveal_enabled() -> bool:
+	return GameConfig.fog_permanent_reveal or permanent_reveal_override
 
 ## Rebuilds the shared offset disc only when the reveal radius has
 ## actually changed (it's a live-tunable debug-panel slider).
@@ -455,7 +463,7 @@ func _draw_fog_body() -> void:
 		_mask_dirty = false
 		Perf.end("fog_of_war_draw_upload")
 
-	_mask_material.set_shader_parameter("permanent_reveal", GameConfig.fog_permanent_reveal)
+	_mask_material.set_shader_parameter("permanent_reveal", permanent_reveal_enabled())
 
 	var cam: Camera2D = main.camera_view._active_camera()
 	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x

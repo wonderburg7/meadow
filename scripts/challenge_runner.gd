@@ -39,6 +39,12 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 ## (a forager's stomach holds 50 nectar or 15 pollen -- see GameConfig).
 const NECTAR_TARGET := 30.0
 const POLLEN_TARGET := 10.0
+const CENTRE_RADIUS := 40.0
+
+## The opening seals the inner third of world_building's entrance tunnel.
+## Each temporary block gets an equal share of this duration through its
+## own mine_time_override; normal mining keeps GameConfig.block_mine_time.
+const OPENING_MINE_SECONDS := 30.0
 
 ## Seconds of no progress before a hint, then a stronger hint -- the
 ## "Timing pattern" in TUTORIAL_PLAN.md's Dr Gallerin section. Also first
@@ -354,6 +360,14 @@ var main: Node2D
 var active: bool = false
 var _stage_index: int = 0
 var _marker: Polygon2D
+## True only during 1.1. input_selection.gd rejects right-click commands
+## for this queen, while hud.gd keeps her summary visible but hides the
+## separate command tray.
+var queen_command_locked: bool = false
+## Temporary tunnel blocks, ordered from the queen's starting point toward
+## the cavity. Invalid entries have been mined and freed.
+var _opening_blocks: Array = []
+var _opening_started: bool = false
 ## The previous stage's goal_text, fed to hud.gd's goal shelf as the
 ## "just completed" line (UI_PLAN.md section 5) -- blank at the very
 ## first stage, since nothing has been completed yet.
@@ -388,6 +402,10 @@ func start() -> void:
 	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
 	# rollback instead. Re-enabled in _complete().
 	main.debug_panel.set_save_load_enabled(false)
+	main.fog_of_war.permanent_reveal_override = Session.starting_level == 1
+	queen_command_locked = false
+	_opening_blocks.clear()
+	_opening_started = false
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -400,10 +418,10 @@ func start() -> void:
 		# role is reset explicitly here (TUTORIAL_PLAN.md's start state).
 		main.queen.set_role(main.Bee.Role.EGG_LAYER)
 	else:
-		# The queen starts at the inner entrance and is walked to the
-		# centre marker by the player (1.1-1.2), rather than starting
-		# already there.
-		main.queen.position = main.hive_entrance_inside()
+		# Seal the inner third of the already-built straight entrance and
+		# put the queen at its newly exposed face. She mines inward during
+		# 1.1; the player takes over only after the cavity opens.
+		_setup_opening_tunnel()
 
 	# hive_camera's parent is main itself (see world_building.gd's
 	# _build_cameras), not hive_root, so it sits in the same coordinate
@@ -437,6 +455,8 @@ func start() -> void:
 func _process(_delta: float) -> void:
 	if not active:
 		return
+	if Session.starting_level == 1 and _stage_index == 0:
+		_drive_opening_mine()
 	if Session.starting_level == 2:
 		_c2_nectar_low_seen = min(_c2_nectar_low_seen, main.hive.total("nectar"))
 		_check_c2_failure()
@@ -516,6 +536,7 @@ func _stage_unlock_keys(entries: Array) -> Array:
 
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
+	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
@@ -591,6 +612,8 @@ func debug_advance_stage() -> void:
 
 func _complete() -> void:
 	active = false
+	queen_command_locked = false
+	main.fog_of_war.permanent_reveal_override = false
 	PlayerProfile.mark_challenge_complete(Session.starting_level)
 	main.stage_gate.stop()
 	_apply_stage_gate_to_ui()
@@ -691,10 +714,84 @@ func _apply_stage_gate_to_ui() -> void:
 	))
 	main.hud.set_hatch_lock_visible(main.stage_gate.is_unlocked("hatch_lock"))
 	main.hud.set_soil_marking_visible(main.stage_gate.is_unlocked("miner"))
+	main.hud.set_command_locked_bees([main.queen] if queen_command_locked and is_instance_valid(main.queen) else [])
 	main.hud.update_selection(main.selected_bees)
+
+## Whether player-issued commands should be rejected for this bee. Kept as
+## a Challenge-runner query so input_selection.gd does not need to know what
+## a stage id means or carry a second copy of the lock state.
+func is_bee_command_locked(bee: Node2D) -> bool:
+	return active and queen_command_locked and is_instance_valid(main.queen) and bee == main.queen
+
+## world_building opens the whole entrance for ordinary runs. Challenge 1
+## temporarily puts soil back into its inner third, computed from that same
+## geometry, and positions the queen two-thirds of the way in from outside.
+## The floor polygons underneath are harmless and become visible again as
+## each temporary soil block is removed through the ordinary mining path.
+func _setup_opening_tunnel() -> void:
+	var interior_rings: int = int(GameConfig.hive_interior_rings)
+	var tunnel_depth: int = int(GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
+	var entrance_tiles: Dictionary = main.world_building._entrance_tiles(interior_rings, tunnel_depth)
+	var blocked_count: int = maxi(1, ceili(float(entrance_tiles.size()) / 3.0))
+	var seconds_per_block: float = OPENING_MINE_SECONDS / float(blocked_count)
+	var inner_ring: int = interior_rings - 1
+
+	# Add inner-to-outer so all blocks exist before edge flags/navigation
+	# are rebuilt, then retain the opposite order for the queen to follow.
+	var inner_to_outer: Array = []
+	for offset in range(blocked_count):
+		var hex := Vector2i(0, -(inner_ring + offset))
+		main.world_building._add_soil_block(
+			hex, main.world_building._hive_centre_local(), GameConfig.hive_cell_spacing
+		)
+		var block = main.hive.occupied_tiles.get(hex)
+		if block != null and is_instance_valid(block):
+			block.mine_time_override = seconds_per_block
+			block.set_marked(true)
+			inner_to_outer.append(block)
+
+	_opening_blocks = inner_to_outer.duplicate()
+	_opening_blocks.reverse()
+	_opening_started = not _opening_blocks.is_empty()
+	main.hive.build_navigation()
+	main.hive.refresh_edge_flags()
+	var queen_ring: int = inner_ring + blocked_count
+	main.queen.position = main.world_building._hive_centre_local() + Shapes.hex_to_pixel(
+		0, -queen_ring, GameConfig.hive_cell_spacing
+	)
+	_drive_opening_mine()
+
+## Drives the same TO_MINE_SITE -> MINING states ordinary miners use, but
+## supplies the next ordered tunnel block itself instead of exposing mining
+## controls or changing the queen's role.
+func _drive_opening_mine() -> void:
+	if not _opening_started or not is_instance_valid(main.queen):
+		return
+	while not _opening_blocks.is_empty() and not is_instance_valid(_opening_blocks[0]):
+		_opening_blocks.pop_front()
+	if _opening_blocks.is_empty():
+		return
+	var next_block: Node2D = _opening_blocks[0]
+	if main.queen.target_block != next_block:
+		main.queen.target_block = next_block
+		main.queen.state = main.Bee.State.TO_MINE_SITE
+
+func _opening_tunnel_cleared() -> bool:
+	if not _opening_started:
+		return false
+	for block in _opening_blocks:
+		if is_instance_valid(block):
+			return false
+	return true
 
 func _goal_met(goal: String) -> bool:
 	match goal:
+		"entrance_tunnel_cleared":
+			return _opening_tunnel_cleared()
+		"queen_reached_cavity":
+			return is_instance_valid(main.queen) and main.queen.position.distance_to(
+				main.world_building._hive_centre_local()
+			) <= CENTRE_RADIUS
 		"queen_selected":
 			return main.selected_bees.size() == 1 and main.selected_bees[0] == main.queen
 		"first_cell_built":
@@ -709,8 +806,7 @@ func _goal_met(goal: String) -> bool:
 			return main.hive.total("pollen") >= POLLEN_TARGET
 		"first_egg_laid":
 			return _brood_cell_count() >= 1
-		"entrance_tunnel_cleared", "queen_reached_cavity", "hive_points_visited", \
-		"queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
+		"hive_points_visited", "queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
 		"second_flower_collected", "harvest_deposited", "new_bee_selected", \
 		"new_bee_left_hive":
 			# Structural placeholders: Bundles B-D and F replace these with

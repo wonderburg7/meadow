@@ -11,15 +11,17 @@ the integrator confirms it against `master` when merging.
 ## Current status
 
 On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
-`CHALLENGE1_REVAMP_PLAN.md`. Bundle A is implemented and validated in the
+`CHALLENGE1_REVAMP_PLAN.md`. Bundles A-B are implemented and validated in the
 dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline
-`5bf8ab3`. It adds the 1.1–1.19 stage skeleton, Challenge-local mixed-shape
-unlock descriptors, a debug stage-advance seam and the documented trigger
-convention. New-mechanic goals deliberately remain false-returning placeholders
-for Bundles B–D/F. At isolation check time, `master` was clean and the Codex
-worktree had no pre-existing changes; the earlier untracked
-`.claude/settings.local.json` seen in the primary worktree disappeared before
-implementation and was never touched by Codex.
+`5bf8ab3`. Bundle A adds the 1.1-1.19 stage skeleton, Challenge-local
+mixed-shape unlock descriptors, a debug stage-advance seam and the documented
+trigger convention. Bundle B adds the five-block/30-second opening auto-mine,
+queen movement-command lock with selection-panel-only UI, causal 1.1/1.2
+goals, and a run-local permanent-fog-reveal override. New-mechanic goals for
+Bundles C-D/F remain false-returning placeholders. Before Bundle B, the Codex
+worktree was clean; primary-worktree changes in `levels.gd`, `main_menu.gd`
+and two unrelated untracked files did not overlap the slice and were not
+touched.
 
 Outside that explicitly assigned sequence, there is no standing ChatGPT work
 queue. Dave abandoned the headless mechanism-check plan on 22 Aug 2026 because
@@ -47,9 +49,9 @@ deterministic evidence are sufficient.
 
 ## Next actions, only if Dave asks
 
-1. Continue the explicitly assigned Challenge 1 revamp with Bundle B:
-   opening auto-mine, queen command lock/selection-panel-only state and
-   permanent fog reveal. Recheck both worktrees for overlap before editing.
+1. Continue the explicitly assigned Challenge 1 revamp with Bundle C:
+   the reusable ordered-point visit helper, three hive inspection points and
+   the first-cell beat. Recheck both worktrees for overlap before editing.
 2. If Dave wants the workflow fixes implemented, assign
    `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code or Codex and start with the three
    path-scoped rule files. Use the risk-proportional hand-off and verify their

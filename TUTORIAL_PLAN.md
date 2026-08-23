@@ -209,12 +209,19 @@ approach.
 
 ## Challenge 1: First Stores
 
-**Built and playable, 19 Aug 2026** (`challenge_runner.gd`, plus hooks
-into `hud.gd`, `stage_gate.gd`, `bee.gd` and `input_selection.gd`). The
-stage-by-stage design below is what was actually built, with the
-divergences and additions found along the way called out inline. Two
-rounds of hands-on testing in Godot turned up fixes that go a bit
-beyond "wire up the plan":
+**Original version built and playable, 19 Aug 2026; revamp in progress.**
+Bundles A-B of `CHALLENGE1_REVAMP_PLAN.md` are now built on the Codex
+branch: the 1.1-1.19 stage skeleton, trigger descriptors, the 30-second
+opening auto-mine, restricted queen commands/selection-panel-only state,
+and run-local permanent fog reveal. Bundles C-H remain, including the
+final rewrite of the detailed legacy stage-by-stage account below. Until
+that copy pass, the revamp plan and `challenge_runner.gd::STAGES_1` are the
+authority for new numbering; the older notes below remain useful history
+for reused mechanics and prior playtest findings.
+
+The original implementation (`challenge_runner.gd`, plus hooks into
+`hud.gd`, `stage_gate.gd`, `bee.gd` and `input_selection.gd`) produced
+fixes that go a bit beyond "wire up the plan":
 
 - **1.3's "assign Comb worker, then click a spot" flow was replaced**
   with one direct "Build cell" button in the queen's own selection
