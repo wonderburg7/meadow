@@ -202,6 +202,30 @@ var preferred_species: String = ""
 ## drifting to whatever's nearest the entrance. INF means "not set".
 var forage_start_point: Vector2 = Vector2(INF, INF)
 
+## Slice 5 (local search): where SEARCHING's spiral is centred. Reset to
+## forage_start_point at every point that (re)sets forage_start_point
+## itself -- see FORAGING_ECOLOGY_PLAN.md's Slice 5 -- so manual/scouting/
+## recruitment control over where a forager starts stays authoritative.
+## Between resets it drifts toward flowers she actually commits to (see
+## start_collecting in bee_foraging.gd), so a run of good luck in one
+## corner of her patch shifts where she searches from next, without ever
+## overriding the pin itself.
+var local_search_anchor: Vector2 = Vector2(INF, INF)
+
+## Slice 5 (local search): SEARCHING's own progress through its expanding
+## spiral. search_angle only ever grows while in SEARCHING (it drives both
+## radius growth and direction -- see _spiral_point), reset to 0 whenever
+## seek_flower puts a bee into that state fresh. search_start_direction is
+## a fresh random offset per bout, so a bee whose anchor sits near an
+## obstacle in one fixed direction doesn't spiral into the same wall on
+## every single bout from that anchor. Neither is saved -- not saved, same
+## as timer/move_target for every other in-progress state, so a reload
+## just restarts the spiral from her current anchor rather than losing
+## anything that matters.
+var search_angle: float = 0.0
+var search_start_direction: float = 0.0
+var search_waypoint: Vector2 = Vector2(INF, INF)
+
 ## Scouting (see GameConfig.scouting_on) -- a brand-new forager's phase
 ## of trying a few different start points, timed, so it can settle on
 ## whichever paid off best rather than the player having to click "Pick
@@ -774,6 +798,10 @@ func _process(delta: float) -> void:
 			Perf.begin("bee_seek_flower")
 			BeeForaging.seek_flower(self)
 			Perf.end("bee_seek_flower")
+		State.SEARCHING:
+			Perf.begin("bee_search")
+			BeeForaging.search_for_flower(self, delta)
+			Perf.end("bee_search")
 		State.TO_FLOWER:
 			Perf.begin("bee_to_flower")
 			# is_instance_valid too, not just null -- a flower that died
@@ -986,7 +1014,7 @@ func _apply_pending_role() -> bool:
 ## except the "waiting for work" states and standing idle.
 func _is_busy() -> bool:
 	match state:
-		State.IDLING, State.NURSE_IDLE, State.BUILD_IDLE, State.MINE_IDLE, State.HONEY_IDLE, State.SEEK_FLOWER:
+		State.IDLING, State.NURSE_IDLE, State.BUILD_IDLE, State.MINE_IDLE, State.HONEY_IDLE, State.SEEK_FLOWER, State.SEARCHING:
 			return false
 	return true
 
@@ -1311,6 +1339,7 @@ func command_exit_hive() -> void:
 ## command_move_to for why that distinction matters elsewhere).
 func set_forage_start_point(meadow_point: Vector2) -> void:
 	forage_start_point = meadow_point
+	local_search_anchor = meadow_point
 
 func has_forage_start_point() -> bool:
 	return forage_start_point.x != INF
@@ -1598,7 +1627,7 @@ func idle_reason() -> String:
 				if Session.winter_here:
 					return "Winter. Nothing is out, so the foragers are staying in."
 				return "Raining too hard to fly. They'll go out when it eases."
-			if BeeForaging.nearest_flower(self, false) == null:
+			if BeeForaging.nearest_flower(self, false, GameConfig.forage_search_radius) == null:
 				return "Nothing worth visiting. Every flower nearby is empty, out of season, or already taken."
 			return ""
 		State.IDLING:
@@ -1612,6 +1641,8 @@ func task_description() -> String:
 	match state:
 		State.SEEK_FLOWER:
 			return "looking for a %s flower" % resource_type
+		State.SEARCHING:
+			return "flying a search loop, looking for a %s flower" % resource_type
 		State.TO_FLOWER:
 			return "flying to a flower for %s" % resource_type
 		State.INSPECTING:

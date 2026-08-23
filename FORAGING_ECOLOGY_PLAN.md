@@ -790,12 +790,331 @@ now reads as more common in one part of the meadow than another, per
 its `microhabitat` (e.g. Bramble's "hedgerow thicket" clustering
 visibly apart from Dandelion's "open ground").
 
+**Task 4 full 5-seed re-run (23 Aug 2026), now owed and done.** One run
+per seed per side (not 5 repeats — Dave's small-batch steer from Slice 0,
+[[feedback_headless_run_batches]]), same seeds and scenario files as
+Slice 0, run *after* both task 2 (zones) and task 3 (lazy recharge),
+via a ~25-line driver script (`run_once`/`analyze` imported directly,
+one summary line per run printed) rather than the CLI's full JSON dump:
+
+| side | seed | flower_visits | unique_flowers | total_deaths | recruitment_matches | foragers_settled |
+|---|---|---|---|---|---|---|
+| on | 12345 | 255 | 180 | 20 | 5 | 14 |
+| on | 7 | 226 | 171 | 21 | 2 | 11 |
+| on | 2026 | 256 | 200 | 20 | 4 | 12 |
+| on | 90210 | 229 | 189 | 20 | 2 | 12 |
+| on | 555 | 253 | 168 | 20 | 2 | 12 |
+| off | 12345 | 349 | 204 | 22 | 0 | 0 |
+| off | 7 | 392 | 193 | 22 | 0 | 0 |
+| off | 2026 | 362 | 214 | 21 | 0 | 0 |
+| off | 90210 | 388 | 214 | 21 | 0 | 0 |
+| off | 555 | 359 | 196 | 21 | 0 | 0 |
+
+Mean flower_visits: `on` ≈244 (was ≈215 in Slice 0's pre-zones baseline),
+`off` ≈370 (was ≈375 in Slice 0) — the on/off gap is intact and, if
+anything, `on` reads slightly *higher* than before, not lower. This
+corrects the single-seed sanity check above: seed 12345 alone (194,
+zones-only, no lazy recharge yet) looked like a 14% drop, but across all
+5 seeds with both task 2 and task 3 in, there's no drop to explain.
+Deaths stay flat (20-22 both sides, matching Slice 0). One real shift
+worth flagging, not fixing: mean `recruitment_matches` on `on` fell from
+≈6.2 (Slice 0) to ≈3.0 here — plausibly the same zone-clustering effect
+(bees now often already at the right patch, less need for a recruitment
+dance to redirect a nestmate) rather than a bug, but it's a bigger
+change than the flower-visits numbers and worth Dave's eye in a
+hands-on playtest. `foragers_settled` on `on` is essentially unchanged
+(≈13.4 to ≈12.2).
+
+**Checks:** all 10 runs exited 0, each produced a summary line (no
+`FAILED` rows). `source_checks.py`/`balance_tests.py` unaffected (no
+code changed this task, re-run only).
+
+**Both remaining hands-on items Dave-confirmed (23 Aug 2026):** the
+task 2 microhabitat-clustering visual check, and the task 1/3
+500/750/1000 `perf.gd` flower-work re-read to see how much lazy recharge
+helped -- no specific numbers recorded against the latter, just Dave's
+confirmation it holds up. Slice 4 is now fully closed.
+
+## Slice 5: Local search — implementation-ready
+
+**What's already there, checked against the live repo (23 Aug):**
+`seek_flower` (`bee_foraging.gd:69`) and `nearest_flower` (`bee_foraging.gd:108`)
+make an instant, single-frame, omniscient-within-radius decision — one
+spatial-grid query centred on the bee's *current position*, radius
+`GameConfig.forage_search_radius` (900px), and if that finds nothing the
+fallback is a full unbounded scan of every flower in the meadow. There is
+no search *behaviour* today: a bee either already knows where to go this
+frame, or she's checked literally everything that exists. Slice 1's
+results flagged the gap this leaves — a scored trip's search+flight time
+and handling time only account for ~47s of a 106s average trip, and the
+unexplained ~59s residual (flight between flowers on a multi-flower trip,
+plus whatever "not finding one immediately" actually costs) has no
+behaviour behind it to decompose further. This slice gives it one.
+
+**Design decisions (Dave, 23 Aug):**
+- **Real spiral flight**, not an invisible widened-query change. A bee
+  who can't see a flower flies a visible expanding loop until she spots
+  one or gives up, rather than the decision staying a single frame with
+  a bigger number plugged in.
+- **A new, genuinely separate search anchor** (`bee.local_search_anchor`),
+  not a reuse of `forage_start_point`. The anchor drifts to follow where
+  she's actually finding flowers; `forage_start_point` stays the fixed,
+  manually/scouting/recruitment-authoritative pin the existing fixed
+  decision already protects — resetting the anchor back to it at every
+  point that already resets `forage_start_point` is what keeps "manual
+  stays authoritative" true even though the anchor itself can drift
+  in between.
+- **`forage_perception_radius` gets simulated, not guessed** — a new,
+  smaller number than today's 900px, which is repurposed rather than
+  replaced (see task 3).
+
+**Tasks**
+
+1. **Generalise `nearest_flower` to take a radius parameter**, defaulting
+   call sites to today's `GameConfig.forage_search_radius` so this task
+   alone changes nothing observable. Pure refactor, cheap to verify in
+   isolation before anything else in this slice touches behaviour.
+2. **Add `local_search_anchor: Vector2` to `bee.gd`**, saved next to
+   `forage_start_point` (`save_game.gd:243`, same pattern). Reset it to
+   `forage_start_point` at every existing point that sets/clears
+   `forage_start_point` itself: orientation flight (`take_orientation_flight`),
+   scouting settling (`_score_trip`'s settle branch), a recruitment match
+   or the entrance-timeout reset (`wait_at_entrance`), and a manual
+   "Set start point" control if `input_selection.gd` has one — grep for
+   `forage_start_point =` to find every site rather than trusting this
+   list is exhaustive. In `start_collecting`, nudge the anchor toward the
+   flower just committed to — `local_search_anchor = local_search_anchor.lerp(current_flower.position, GameConfig.local_search_drift_rate)`
+   (new `GameConfig` constant, provisional value, simulated alongside the
+   perception radius in task 4). Still no visible behaviour change this
+   task — the anchor is tracked and drifting but nothing reads it yet.
+3. **Add the `SEARCHING` state and the spiral itself.** `SEARCHING`
+   appended to the end of `BeeEnums.State` (never inserted mid-list — the
+   enum is saved as a plain int, per its own header comment). Rewrite
+   `seek_flower`'s empty-handed branch: today's fallback to a full
+   meadow scan only fires once the spiral gives up, not immediately.
+   - `nearest_flower(bee, true/false, GameConfig.forage_perception_radius)`
+     centred on current position, exactly as today just with the smaller
+     radius (task 1's new parameter).
+   - Nothing found → `State.SEARCHING`, seeded from `local_search_anchor`:
+     an Archimedean spiral (`radius = forage_perception_radius * (1 + turns * step)`,
+     angle advancing each waypoint reached) walked via
+     `BeeMovement.move_towards` exactly like any other move — obstacle
+     avoidance and indoor/outdoor handling come for free. Each frame in
+     `SEARCHING`, re-run the same bounded `nearest_flower` query from
+     current position; a hit transitions straight to `TO_FLOWER`, same
+     as `seek_flower` does today.
+   - Cap: once the spiral radius exceeds `GameConfig.forage_search_radius`
+     (900px, repurposed from "how far the instant query looked" to "how
+     far the expanding loop is allowed to travel before giving up"),
+     fall back to today's relaxed full-scan (`nearest_flower(bee, false)`,
+     unbounded) once; if that's also empty, go home (`State.TO_HIVE`),
+     matching today's genuinely-empty behaviour exactly.
+   - New `Perf.begin("bee_search")`/`Perf.end("bee_search")` span
+     covering the whole `SEARCHING` per-frame cost, per
+     `.claude/rules/performance.md` — this is a new hot-path state that
+     can now run for many consecutive frames per bee where the old
+     decision was one frame, and needs its own measurement rather than
+     an assumption either way.
+4. **Simulate `forage_perception_radius` and `local_search_drift_rate`
+   before locking them** (`CLAUDE.md` rule 4) — a throwaway Python model
+   or a `tools/run_scenario.py` multi-seed sweep (Slice 0's five seeds)
+   comparing candidate perception radii against flower-visits/trip-time
+   outcomes, plus a `perf.gd` "bee_search" reading at the existing ~29-bee
+   baseline to check the new per-frame state doesn't reintroduce the
+   Slice 4-style cost jump. Record the numbers and the chosen values
+   here before task 5.
+5. **Re-run Slice 0's multi-seed on/off comparison** at the locked values,
+   same five seeds, same "flag don't fix inline" instruction as every
+   prior slice's task 4/5.
+
+**Deliverable:** a results note appended below this section, matching
+Slices 0/1/4's pattern — the perception-radius/drift-rate numbers chosen
+and why, the perf reading, and the re-run comparison. Visibly: a
+foraging bee who can't see a flower should now fly a widening loop
+rather than beelining the instant she leaves the hive.
+
+**Checks:** `source_checks.py`, `balance_tests.py`, a
+`mcp__godot__run_project` boot if available, a `tools/run_scenario.py --full`
+run, and Dave's hands-on check — this is a visible behaviour change
+(watch a bee search) so it needs an actual playtest, not just numbers.
+Update `FUNCTION_MAP.md` only if `bee.gd` is touched (it will be, for
+the new field and state).
+
+### Slice 5 results (23 Aug 2026)
+
+**Task 1: built.** `nearest_flower` gained a `radius: float` parameter
+(no default), and both `seek_flower` call sites and the status-hint call
+in `bee.gd` (found by grepping every `nearest_flower(` call site, not
+just the two in `seek_flower` — a third existed at `bee.gd`'s
+`idle_reason()`) now pass `GameConfig.forage_search_radius` explicitly.
+Pure refactor: `source_checks.py`/`balance_tests.py` both passed
+unchanged before task 3 touched any behaviour.
+
+**Task 2: built.** `bee.local_search_anchor` added next to
+`forage_start_point`, reset alongside it at every site that sets or
+clears `forage_start_point` (`take_orientation_flight`, scouting's settle
+branch, a recruitment match, the entrance-timeout reset, and
+`set_forage_start_point` for the manual control) — found by grepping
+`forage_start_point =` per the task's own instruction. Drifts toward a
+committed flower in `start_collecting` via
+`GameConfig.local_search_drift_rate`; a bee with no start point yet
+(anchor still `INF`) has its first commit plant the anchor there instead
+of lerping from `INF`. Saved next to `forage_start_point` in
+`save_game.gd`/`saving.gd`, with an old-save fallback to the just-restored
+`forage_start_point` rather than `INF`, so a pre-Slice-5 save doesn't
+lose it on first load. No behaviour change — nothing read the anchor yet.
+
+**Task 3: built, with two real bugs found and fixed during the same
+scenario run that verified it.** `State.SEARCHING` appended to
+`bee_enums.gd`. `nearest_flower` gained an `allow_full_scan: bool = true`
+parameter — needed because the existing "fall back to a full unbounded
+scan whenever the grid finds nothing" behaviour was unconditional inside
+`nearest_flower` itself, at every call, regardless of the `radius`
+passed in; `seek_flower`/`search_for_flower` now call it via a shared
+`_perceive_flower` helper with `allow_full_scan: false`, so a bounded,
+in-sight-only check actually stays bounded. `seek_flower` now commits
+immediately to anything within `forage_perception_radius`, and otherwise
+seeds `State.SEARCHING` from `local_search_anchor` (falling back to the
+bee's own position if she's never had a start point). `search_for_flower`
+re-runs the same bounded check every frame, walks an Archimedean spiral
+(`_spiral_point`) via ordinary `BeeMovement.move_towards`, and once the
+spiral's radius exceeds `forage_search_radius` falls back to the old
+relaxed full scan once before giving up and heading home — matching
+`seek_flower`'s pre-Slice-5 genuinely-empty behaviour exactly. `SEARCHING`
+added to `_is_busy()`'s not-busy list (same as `SEEK_FLOWER` — nothing's
+committed yet), `bee_survival.gd::is_flying()` (she's flying under her own
+power), and `current_goal()` (`search_waypoint`, so the stall watchdog
+tracks her properly) — found by grepping every other place `SEEK_FLOWER`/
+`TO_FLOWER` were already handled outside `bee.gd`/`bee_foraging.gd`,
+rather than assuming the new state only needed touching in the state
+dispatch. New `Perf.begin("bee_search")`/`Perf.end("bee_search")` span in
+`bee.gd`'s dispatch, per the task's own instruction.
+
+A first scenario run (`foraging_features_on_seed12345_test.json`, 60
+days) surfaced two genuine bugs, not tuning:
+- **The stall watchdog never reset its baseline when SEARCHING advanced
+  to a new (further) waypoint.** `watch_for_stalls` only resets
+  `stall_best_distance`/`stall_timer` when distance-to-goal *improves*;
+  advancing to a fresh spiral waypoint makes the goal jump further away
+  by design, which the watchdog read as "stopped progressing" and fired
+  almost immediately on every leg. `stall_recoveries` went from a
+  baseline of 3 (pre-Slice-5, same scenario/seed) to 500. Fixed by
+  calling `bee._reset_stall_watch()` whenever `search_for_flower`
+  advances the waypoint (now factored into a shared
+  `advance_search_waypoint`, used by both the normal-arrival path and the
+  stall-recovery path below).
+- **An unclamped spiral point can land beyond the meadow's hard world
+  boundary**, which is permanently unreachable to within `arrive_distance`
+  and reads as a stall that never resolves. `_spiral_point` now clamps
+  its result to `main.FLOWER_FIELD_HALF_SIZE`, the same rectangle
+  `_random_field_point()` already scatters within.
+- Even after both fixes, `stall_recoveries` was still 73 (vs baseline 3),
+  with the watchdog's own escape shove (`escape_nearest_obstacle`) doing
+  nothing for `SEARCHING` specifically — `TO_FLOWER` rejects the flower
+  and `MOVE_TO_POINT` resets to a default state after an escape shove, so
+  the deadlock actually breaks, but `SEARCHING` had no equivalent and just
+  re-aimed at the same unreachable waypoint forever. Session-log evidence
+  (`diagnostic_log.gd`'s `stall_recovery` events, which record
+  state/position/goal) showed one bee frozen at a bit-identical position
+  and goal across a dozen consecutive stall checks. Fixed by calling the
+  new `advance_search_waypoint` from `watch_for_stalls`'s `SEARCHING`
+  branch too, so an escaped-but-still-unreachable waypoint is abandoned
+  like any other, not retried forever. This brought `stall_recoveries` to
+  56.
+- One more contributing factor, not a bug but a design gap: `search_angle`
+  always started at exactly `0.0` (due east of the anchor), so a bee whose
+  anchor sat near an obstacle in that fixed direction hit the same wall on
+  every single bout from that anchor — session logs showed several bees
+  repeatedly stalling at bit-identical points across different bouts,
+  seconds or minutes apart. Fixed by adding `bee.search_start_direction`,
+  a fresh `randf() * TAU` offset per bout, kept separate from
+  `search_angle` itself (which still starts at 0 and only measures
+  progress through the spiral, so radius growth stays independent of
+  which way the spiral happens to open). Brought `stall_recoveries` to 56
+  with a much flatter per-bee distribution (max 7 on one bee, vs 12+
+  before).
+
+**Task 4: built.** Both new constants were provisional guesses pending
+simulation; per CLAUDE.md rule 4, swept before locking rather than left
+as guesses:
+- `forage_perception_radius` — swept 150/250/400 on
+  `foraging_features_on_seed12345_test.json`, cross-checked 250/400 on
+  seed 7 (one run each, not 5 repeats, per the plan's established
+  small-batch steer — see `[[feedback_headless_run_batches]]`). 400 beat
+  both smaller candidates on `flower_visits` and
+  `unique_flowers_visited` on both seeds, at a similar or lower
+  `stall_recoveries` count than 250 — a tighter radius meant `SEARCHING`
+  fired often enough to cost real throughput without covering
+  meaningfully more ground. Locked at 400, up from the provisional 250.
+- `local_search_drift_rate` — swept 0.15/0.3/0.5 at
+  `forage_perception_radius` 400 on seed 12345 (one run each). 0.3 (the
+  original provisional value) gave the best `flower_visits`/
+  `unique_flowers_visited` of the three, so kept rather than changed on a
+  single noisy run either way.
+- The spiral's own shape constants (`forage_search_spiral_step`,
+  `forage_search_angle_step`) aren't named in the task list for formal
+  simulation, but needed real values during task 3's debugging regardless
+  — locked at 1.0 and `TAU/6` (a ~13-waypoint, ~2-loop spiral before
+  falling back), chosen and verified against the same scenario runs that
+  found the stall-watchdog bugs above, documented on the fields
+  themselves in `game_config.gd`.
+- **Not done: the `perf.gd` "bee_search" hands-on reading** the task also
+  asked for, at the existing ~29-bee baseline, to confirm the new
+  per-frame `SEARCHING` state doesn't reintroduce a Slice-4-style cost
+  jump. `run_scenario.py` has no headless path to `perf.gd` timing (same
+  gap Slice 4's task 1 hit) — this is Dave's own hands-on reading to take,
+  the same way Slice 4's baseline was.
+
+**Task 5: built.** Full 5-seed on/off re-run at the locked values (one
+run per seed per side, same seeds as every prior slice's re-run):
+
+| side | seed | flower_visits | unique_flowers | total_deaths | recruitment_matches | foragers_settled | stall_recoveries |
+|---|---|---|---|---|---|---|---|
+| on | 12345 | 232 | 152 | 20 | 3 | 9 | 39 |
+| on | 7 | 199 | 118 | 19 | 3 | 5 | 11 |
+| on | 2026 | 228 | 151 | 20 | 2 | 10 | 7 |
+| on | 90210 | 226 | 148 | 19 | 5 | 9 | 14 |
+| on | 555 | 288 | 145 | 20 | 4 | 10 | 19 |
+| off | 12345 | 322 | 140 | 21 | 0 | 0 | 23 |
+| off | 7 | 440 | 213 | 22 | 0 | 0 | 2 |
+| off | 2026 | 417 | 194 | 21 | 0 | 0 | 1 |
+| off | 90210 | 582 | 197 | 22 | 0 | 0 | 0 |
+| off | 555 | 401 | 193 | 21 | 0 | 0 | 2 |
+
+Mean flower_visits: `on` ≈235 (was ≈244 in Slice 4's post-zones baseline
+— a real but modest ~4% drop, the expected cost of `SEARCHING` actually
+taking simulated time now instead of an instant lookup). `off` ≈432 (was
+≈370 in Slice 4) — up, not down, despite `off` having no automation to
+offset any new search cost. `SEARCHING` is unconditional (not gated
+behind `scouting_on`/`auto_recruitment_on`, matching how Slice 4's zones
+and lazy recharge also shipped without a toggle despite the brief's
+general "every new realism feature is toggleable" steer), so `off`-side
+bees run it too; the rise most plausibly comes from the old unconditional
+full-scan fallback sometimes handing a bee the single globally-nearest
+flower in the whole meadow (however far that actually was), where the
+spiral now more often finds *a* usable flower nearby before it ever
+widens that far. Deaths flat both sides (19-22, matching every prior
+slice's range). `stall_recoveries` sit in a modest, unevenly-distributed
+range (0-39) consistent with the watchdog firing on genuine occasional
+obstacle encounters rather than a systemic problem — nothing here reads
+as a regression to flag.
+
+**Checks:** `source_checks.py` (66/66) and `balance_tests.py` (15/15)
+passed after every task. No `mcp__godot__*` tools were connected this
+session, so no Godot boot — **still needs Dave's hands-on check**: watch
+a foraging bee fly a widening loop when nothing's immediately visible
+(most noticeable with a low-density or heavily-preferred-species
+scenario), confirm it reads as searching rather than erratic, and take
+the owed `perf.gd` "bee_search" reading at ~29 bees. `FUNCTION_MAP.md`
+regenerated (`bee.gd` was touched, for the new fields/state) and verified
+with `--check`.
+
 ## Next physical step
 
-Slice 4 is refined above and ready to hand to Claude Code to build, one
-task at a time (task 1's profiling first, since it gates task 3).
-Slices 5 onward (local search, probabilistic choice, handling
-experience, finite pollen, proximity recruitment) stay scope-indexed
-only, not yet refined. Dave still separately owes the hand-recorded
-`perf.gd` baseline this slice's task 1 asks for — folding it into this
-slice rather than treating it as a separate leftover from Slice 0.
+Slice 5 is built and simulated; only Dave's hands-on check and the
+`perf.gd` "bee_search" reading remain (see Slice 5 results above).
+Slices 6 onward (probabilistic choice, handling experience, finite
+pollen, proximity recruitment) stay scope-indexed only, not yet refined.
+Dave still separately owes the hand-recorded `perf.gd` baseline Slice
+4's task 1 asked for — already folded into that slice rather than
+treated as a separate leftover from Slice 0.

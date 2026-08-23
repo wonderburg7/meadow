@@ -95,7 +95,7 @@ static func is_flying(bee: Node2D) -> bool:
 	if bee._is_inside_hive():
 		return false
 	match bee.state:
-		State.SEEK_FLOWER, State.TO_FLOWER, State.TO_HIVE, State.MOVE_TO_POINT:
+		State.SEEK_FLOWER, State.TO_FLOWER, State.TO_HIVE, State.MOVE_TO_POINT, State.SEARCHING:
 			return true
 	return false
 
@@ -271,6 +271,10 @@ static func watch_for_stalls(bee: Node2D, delta: float) -> void:
 		BeeForaging.reject_flower(bee)          # give up on this one and pick another
 	elif bee.state == State.MOVE_TO_POINT:
 		bee.state = bee._default_state_for_role()
+	elif bee.state == State.SEARCHING:
+		# Same reasoning as TO_FLOWER's reject_flower above: a waypoint the
+		# escape shove couldn't clear is abandoned, not retried forever.
+		BeeForaging.advance_search_waypoint(bee)
 
 
 ## Pushes this bee clear of whatever solid thing it is closest to. A last
@@ -314,6 +318,8 @@ static func current_goal(bee: Node2D) -> Vector2:
 			return bee.hive.position
 		State.MOVE_TO_POINT:
 			return bee.move_target
+		State.SEARCHING:
+			return bee.search_waypoint
 	return Vector2(INF, INF)
 
 

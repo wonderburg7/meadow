@@ -255,6 +255,12 @@ func _restore_bees(bees: Array) -> Array:
 		bee.pending_role = int(entry.get("pending_role", -1))
 		bee.preferred_species = str(entry.get("preferred", ""))
 		bee.forage_start_point = Vector2(float(entry.get("start_x", INF)), float(entry.get("start_y", INF)))
+		# Older saves have no search_anchor_x/y -- fall back to the
+		# start point just restored above rather than INF, so a save made
+		# before Slice 5 doesn't silently lose her anchor on first load.
+		bee.local_search_anchor = Vector2(
+			float(entry.get("search_anchor_x", bee.forage_start_point.x)),
+			float(entry.get("search_anchor_y", bee.forage_start_point.y)))
 
 		bee.build_queue = []
 		for pair in entry.get("build_queue", []):

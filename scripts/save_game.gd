@@ -242,6 +242,8 @@ static func _bees_data(world) -> Array:
 			"preferred": b.preferred_species,
 			"start_x": b.forage_start_point.x,
 			"start_y": b.forage_start_point.y,
+			"search_anchor_x": b.local_search_anchor.x,
+			"search_anchor_y": b.local_search_anchor.y,
 			# Bee individuality -- see BEE_INDIVIDUALITY_PLAN.md. Without
 			# these, reloading a save would silently re-roll every bee's
 			# name, fact and trait, which breaks the whole point.

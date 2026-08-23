@@ -58,6 +58,7 @@ static func _jittered_point(base: Vector2, radius: float) -> Vector2:
 static func take_orientation_flight(bee: Node2D) -> void:
 	var point: Vector2 = _random_point_near_hive(bee)
 	bee.forage_start_point = point
+	bee.local_search_anchor = point
 	DiagnosticLog.log_orientation_flight(bee)
 	if not bee._is_inside_hive():
 		bee.move_target = point
@@ -66,6 +67,12 @@ static func take_orientation_flight(bee: Node2D) -> void:
 		bee.state = bee._default_state_for_role()
 
 
+## Only ever an instant decision now -- a flower already in sight
+## (forage_perception_radius) is taken immediately, exactly as before
+## Slice 5. Anything further than that no longer falls straight through
+## to a full-meadow scan: it hands off to State.SEARCHING's spiral
+## instead. See search_for_flower below, which re-runs this same bounded
+## check every frame while the spiral widens.
 static func seek_flower(bee: Node2D) -> void:
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
@@ -74,38 +81,139 @@ static func seek_flower(bee: Node2D) -> void:
 		bee.state = State.TO_HIVE
 		return
 
-	# First pass respects this bee's own memory of what it has drained,
-	# and (if the marker option is on) other bees' scent marks too.
-	var best := nearest_flower(bee, true)
-	if best == null:
-		# Nothing passes the filters. Rather than hovering over a spent
-		# flower, relax the memory and take the best of what's left.
-		best = nearest_flower(bee, false)
+	var best := _perceive_flower(bee)
+	if best != null:
+		_commit_to_flower(bee, best)
+		return
 
-	if best == null:
-		# Genuinely nothing to visit -- go home rather than sitting on an
-		# empty flower, which looked like the bee was stuck.
+	# Nothing in sight from right here -- fly a widening loop rather than
+	# deciding in one frame that the meadow is empty. Seeded from the
+	# drifting local_search_anchor, falling back to her current position
+	# if she has never had a start point at all. search_start_direction is
+	# randomised fresh each bout -- a fixed starting direction sent a bee
+	# whose anchor sits near an obstacle in that exact direction into the
+	# same wall on every single bout from that anchor, found via a 60-day
+	# scenario run where a handful of bees repeatedly stalled at identical
+	# points. search_angle itself still starts at 0 -- it drives radius
+	# growth (see _spiral_point), which should always start from scratch
+	# regardless of which direction the spiral opens in.
+	bee.search_angle = 0.0
+	bee.search_start_direction = randf() * TAU
+	var anchor: Vector2 = bee.local_search_anchor if bee.local_search_anchor.x != INF else bee.position
+	bee.search_waypoint = _spiral_point(bee, anchor, bee.search_angle)
+	bee.state = State.SEARCHING
+
+
+## SEARCHING's per-frame step. Walks the expanding spiral via the normal
+## steering (obstacle avoidance and indoor/outdoor handling come free),
+## re-checking for a flower in perception range from wherever she's
+## actually got to each frame -- a bee flying past one shouldn't have to
+## reach the next waypoint before noticing it. Once the spiral's radius
+## outgrows forage_search_radius, give the search up and fall back to the
+## old relaxed full-meadow scan once; if that's also empty, go home,
+## matching seek_flower's pre-Slice-5 genuinely-empty behaviour exactly.
+static func search_for_flower(bee: Node2D, delta: float) -> void:
+	if BeeStatus.grounded(bee):
 		bee.state = State.TO_HIVE
 		return
 
-	best.occupied_by = bee
-	bee.current_flower = best
+	var best := _perceive_flower(bee)
+	if best != null:
+		_commit_to_flower(bee, best)
+		return
+
+	var turns: float = bee.search_angle / TAU
+	var radius: float = GameConfig.forage_perception_radius * (1.0 + turns * GameConfig.forage_search_spiral_step)
+	if radius > GameConfig.forage_search_radius:
+		best = nearest_flower(bee, false, GameConfig.forage_search_radius, true)
+		if best != null:
+			_commit_to_flower(bee, best)
+		else:
+			bee.state = State.TO_HIVE
+		return
+
+	BeeMovement.move_towards(bee, bee.search_waypoint, delta)
+	if bee.position.distance_to(bee.search_waypoint) < bee.arrive_distance:
+		advance_search_waypoint(bee)
+
+
+## Moves SEARCHING on to its next spiral waypoint -- reached normally
+## (search_for_flower above) or, via the stall watchdog, given up on: a
+## waypoint an obstacle has pinned the bee against for STALL_SECONDS is
+## exactly as abandoned as a waypoint she flew to, not retried forever.
+## Without this, watch_for_stalls's own escape_nearest_obstacle nudge
+## (the same for every state) has nothing else to change for SEARCHING --
+## TO_FLOWER rejects the flower, MOVE_TO_POINT resets to a default state,
+## but SEARCHING would just re-aim at the same unreachable point and stall
+## again next cycle, forever.
+static func advance_search_waypoint(bee: Node2D) -> void:
+	bee.search_angle += GameConfig.forage_search_angle_step
+	var anchor: Vector2 = bee.local_search_anchor if bee.local_search_anchor.x != INF else bee.position
+	bee.search_waypoint = _spiral_point(bee, anchor, bee.search_angle)
+	# The stall watchdog tracks progress toward current_goal(), which just
+	# jumped further away by moving to the next waypoint -- reset its
+	# baseline here, the same way a fresh MOVE_TO_POINT target would, so
+	# "the goal changed" doesn't read as "stopped progressing".
+	bee._reset_stall_watch()
+
+
+## The bounded, in-sight-only query shared by seek_flower and
+## search_for_flower: strict first (respects this bee's own memory of
+## what it has drained, and scent marks if that option is on), relaxed
+## if that finds nothing, neither ever falling through to a full scan --
+## see nearest_flower's allow_full_scan parameter.
+static func _perceive_flower(bee: Node2D) -> Node2D:
+	var best := nearest_flower(bee, true, GameConfig.forage_perception_radius, false)
+	if best == null:
+		best = nearest_flower(bee, false, GameConfig.forage_perception_radius, false)
+	return best
+
+
+static func _commit_to_flower(bee: Node2D, flower: Node2D) -> void:
+	flower.occupied_by = bee
+	bee.current_flower = flower
 	bee.state = State.TO_FLOWER
 	if GameConfig.floral_constancy_on and bee.is_scouting and bee.scout_species == "":
-		bee.scout_species = best.species_name
+		bee.scout_species = flower.species_name
+
+
+## A point on an Archimedean spiral centred on `anchor`: radius grows
+## with each full turn (forage_search_spiral_step) of `angle`, which
+## always starts at 0 and only ever measures progress through the spiral
+## -- the actual compass direction is angle + bee.search_start_direction,
+## a fresh random offset per bout (see seek_flower), so radius growth
+## stays independent of which way the spiral happens to open.
+## Clamped to the meadow field -- an anchor near the field's edge can put
+## an unclamped point beyond the world's hard boundary, which is
+## unreachable to within arrive_distance and reads as a permanent stall
+## rather than a widening search. Found via a 60-day scenario run: an
+## unclamped spiral took stall_recoveries from 3 to 500+.
+static func _spiral_point(bee: Node2D, anchor: Vector2, angle: float) -> Vector2:
+	var turns: float = angle / TAU
+	var radius: float = GameConfig.forage_perception_radius * (1.0 + turns * GameConfig.forage_search_spiral_step)
+	var direction: float = angle + bee.search_start_direction
+	var point: Vector2 = anchor + Vector2(cos(direction), sin(direction)) * radius
+	if bee.world != null and is_instance_valid(bee.world):
+		var half: Vector2 = bee.world.FLOWER_FIELD_HALF_SIZE
+		point.x = clamp(point.x, -half.x, half.x)
+		point.y = clamp(point.y, -half.y, half.y)
+	return point
 
 
 ## `strict` applies the avoidance rules; without it only the hard
-## constraints (occupied, empty) are checked.
+## constraints (occupied, empty) are checked. `radius` bounds the grid
+## query. `allow_full_scan` controls the honest-scan fallback below: true
+## (the default, and every call site outside the SEARCHING pipeline) lets
+## a bee whose preferred species has nothing in range still find one
+## eventually rather than deciding the meadow is empty; seek_flower and
+## search_for_flower pass false so a bounded, in-sight-only check stays
+## bounded -- widening the search is SEARCHING's job, not a side effect of
+## asking nearest_flower a question.
 ## Searched through main.gd's spatial grid rather than by walking every
 ## flower in the meadow. This was a scan of 250 nodes per bee per
 ## decision; with the grid it looks at the handful in the buckets
 ## nearest the bee and widens only if it finds nothing.
-##
-## The fallback to a full scan matters: a bee whose preferred species has
-## nothing in range should still find one eventually rather than deciding
-## the meadow is empty and going home.
-static func nearest_flower(bee: Node2D, strict: bool) -> Node2D:
+static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_scan: bool = true) -> Node2D:
 	var accept := func(f) -> bool:
 		if f.occupied_by != null:
 			return false
@@ -148,9 +256,12 @@ static func nearest_flower(bee: Node2D, strict: bool) -> Node2D:
 
 	var grid = flower_grid(bee)
 	if grid != null:
-		var found = grid.nearest(bee.position, GameConfig.forage_search_radius, accept)
+		var found = grid.nearest(bee.position, radius, accept)
 		if found != null:
 			return found
+
+	if not allow_full_scan:
+		return null
 
 	# Nothing close enough, or no grid yet. Fall back to the honest scan.
 	var best: Node2D = null
@@ -277,6 +388,15 @@ static func reject_flower(bee: Node2D) -> void:
 
 static func start_collecting(bee: Node2D) -> void:
 	DiagnosticLog.count_flower_visit(bee.current_flower)
+	# Slice 5 (local search): the anchor drifts toward wherever she's
+	# actually finding flowers, so SEARCHING starts from real recent
+	# experience rather than staying pinned to forage_start_point forever.
+	# A bee with no forage_start_point yet (anchor still INF) has nothing
+	# to drift from, so the first commit just plants the anchor there.
+	if bee.local_search_anchor.x == INF:
+		bee.local_search_anchor = bee.current_flower.position
+	else:
+		bee.local_search_anchor = bee.local_search_anchor.lerp(bee.current_flower.position, GameConfig.local_search_drift_rate)
 	# Slice 1 trip-timing instrumentation -- gated the same as
 	# trip_start_time/trip_load_amount just below, since those are what
 	# _score_trip needs to actually be running for this to mean anything.
@@ -582,6 +702,7 @@ static func _score_trip(bee: Node2D) -> void:
 		if bee.scout_best_rate > 0.0:
 			if bee.scout_best_start_point.x != INF:
 				bee.forage_start_point = bee.scout_best_start_point
+				bee.local_search_anchor = bee.scout_best_start_point
 			if GameConfig.floral_constancy_on:
 				bee.preferred_species = bee.scout_best_species
 		DiagnosticLog.log_scouting_settled(bee)
@@ -750,6 +871,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		# corner of it, so the seeker isn't funnelled onto the exact same
 		# handful of flowers the mentor is still working.
 		bee.forage_start_point = _jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter)
+		bee.local_search_anchor = bee.forage_start_point
 		if GameConfig.floral_constancy_on:
 			bee.preferred_species = mentor.preferred_species
 		# Captured here, before the new patch has had a single trip on it,
@@ -800,6 +922,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		else:
 			bee.preferred_species = ""
 			bee.forage_start_point = Vector2(INF, INF)
+			bee.local_search_anchor = Vector2(INF, INF)
 			_leave_hive_and_resume(bee)
 
 

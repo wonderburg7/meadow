@@ -79,11 +79,53 @@ var crab_spider_alarm_marker_seconds: float = 40.0
 var min_worthwhile_amount: float = 1.0
 
 ## How far a forager looks for a flower before giving up and falling back
-## to a full search of the meadow. Bounds the spatial-grid query: without
-## a limit, a bee whose species is nowhere nearby would widen its search
-## to the whole map every time and cost more than the plain scan it
-## replaced.
+## to a full search of the meadow. Slice 5 (local search) repurposed this
+## from "how far the instant query looked" to "how far the SEARCHING
+## spiral is allowed to travel before giving up" -- see
+## forage_perception_radius below for the (smaller) per-glance radius.
+## Bounds the spatial-grid query: without a limit, a bee whose species is
+## nowhere nearby would widen its search to the whole map every time and
+## cost more than the plain scan it replaced.
 var forage_search_radius: float = 900.0
+
+## How far a bee can actually "see" a flower from her current position in
+## a single glance -- the radius nearest_flower() is called with while
+## SEEK_FLOWER/SEARCHING run, as opposed to forage_search_radius above,
+## which now only bounds how far the SEARCHING spiral is allowed to
+## widen before giving up.
+## Simulation-backed (Slice 5 task 4, CLAUDE.md rule 4): swept 150/250/400
+## on test_scenarios/foraging_features_on_seed{12345,7}_test.json (one run
+## each, not 5 repeats -- see FORAGING_ECOLOGY_PLAN.md's small-batch
+## steer). 400 beat both smaller candidates on flower_visits and
+## unique_flowers_visited on both seeds, at a similar or lower
+## stall_recoveries count than 250 -- a tighter radius meant SEARCHING
+## fired often enough to cost real throughput without a matching gain in
+## how much ground actually got covered. Not swept above 400; there may
+## be a better point further out, closer to the old 900px omniscient
+## radius, but 400 is the one with real data behind it.
+var forage_perception_radius: float = 400.0
+
+## How fast bee.local_search_anchor drifts toward a flower she's just
+## committed to (lerp weight per commit, not per second) -- see
+## start_collecting in bee_foraging.gd.
+## Simulation-backed (Slice 5 task 4): swept 0.15/0.3/0.5 at
+## forage_perception_radius 400 on seed 12345 (one run each). 0.3 gave
+## the best flower_visits/unique_flowers_visited of the three, so kept as
+## the provisional value rather than changed on a single noisy run either
+## way.
+var local_search_drift_rate: float = 0.3
+
+## SEARCHING's Archimedean spiral: how much each full turn widens the
+## loop (radius = forage_perception_radius * (1 + turns * step)) and how
+## far the angle advances each time a waypoint is reached. Provisional,
+## pending Slice 5 task 4's simulation sweep -- see FORAGING_ECOLOGY_PLAN.md.
+## An early tuning of 0.15/(TAU/8) took ~139 waypoints (~17 full loops) to
+## reach the forage_search_radius cap and collapsed a 5-seed on/off run's
+## flower_visits by nearly half -- these grow the loop fast enough that a
+## bee gives it a real but bounded go (~13 waypoints, ~2 loops) before
+## falling back, rather than circling for most of a trip.
+var forage_search_spiral_step: float = 1.0
+var forage_search_angle_step: float = TAU / 6.0
 
 ## When on, a forager can be given a fixed species preference (see the
 ## "Set preference" control in a forager's selection panel) and will

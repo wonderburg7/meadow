@@ -49,4 +49,5 @@ enum State {
 	# state after it and corrupt old saves. Same reasoning as HONEY_MAKER
 	# on the Role enum above.
 	AT_ENTRANCE_SEEKING, AT_ENTRANCE_MENTORING,            # forager, entrance recruitment exchange
+	SEARCHING,                                             # forager, Slice 5 local-search spiral
 }
