@@ -6,7 +6,7 @@ extends Node
 ## "Restart Run" respawns everything using whatever values are set here.
 
 # --- world ---
-var flower_count: float = 500.0         # the meadow is topped back up to this
+var flower_count: float = 800.0         # the meadow is topped back up to this
 ## Flowers age and die, and a replacement seeds elsewhere, so the meadow
 ## shifts around underneath the colony while staying roughly this full.
 var flower_lifespan_days: float = 6.0

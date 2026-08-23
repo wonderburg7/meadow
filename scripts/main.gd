@@ -111,7 +111,11 @@ const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
 ## Widened alongside the jump from 250 to 500 flowers (see
 ## GameConfig.flower_count) so the meadow spreads out rather than just
 ## getting denser -- roughly double the area, same rough density.
-const FLOWER_FIELD_HALF_SIZE := Vector2(1350.0, 990.0)
+## Widened again 23 Aug 2026 to match the grass background (4000x3000):
+## Dave wanted more variation between good and bad patches, so this went
+## up further than flower_count did -- area is ~2.24x, flower_count only
+## ~1.6x, so density is deliberately lower than before.
+const FLOWER_FIELD_HALF_SIZE := Vector2(2000.0, 1500.0)
 const FLOWER_MIN_DISTANCE := 90.0     # keep the ground by the hive clear
 const MAX_CLUSTERS_PER_SPECIES := 22
 ## A few large plateaus rather than many small mounds: raised ground is

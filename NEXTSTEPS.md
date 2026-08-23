@@ -30,37 +30,34 @@ plan file, full history in `git log`.
 3. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
-4. **Foraging ecology plan -- Slice 4 tasks 1-3 are now all done (22
-   Aug).** Task 1: Dave's `perf.gd` "fps" star readings at flower_count
-   500/750/1000 came in (flower work mean/p95 8.33/11.42ms ->
-   14.08/17.54ms, whole-frame 27.32/36.70ms -> 34.89/42.39ms, 36.6fps ->
-   28.7fps) -- a real, rising cost that clears the plan's own gate for
-   task 3. Task 2 (microhabitat zones, built last session) is unchanged.
-   Task 3 (lazy flower recharge): built this session, scoped to recharge
-   only -- `flower.gd`'s `nectar_amount`/`pollen_amount` are now
-   computed properties that catch up via `_sync_recharge()` on read/write
-   instead of accumulating every frame for every flower. One deliberate
-   approximation, chosen by Dave's own steer over the alternatives
-   offered: uses the *instantaneous* `season_strength()` at read-time
-   rather than an exact integral across the elapsed gap, since
-   `season_strength()` turned out to be a time-varying `sin` curve, not
-   constant -- bounded, capacity-capped drift only during a season's
-   ramp-in/out, silent the rest of the year. Also fixed a
-   `tests/source_checks.py` false positive along the way (GDScript 4's
-   `set(value):` inline-property syntax was being flagged as an
-   undefined call -- added `get`/`set` to the checker's keyword list).
-   Checks pass (66/66, 15/15), a Godot boot showed only pre-existing
-   warnings, and a `run_scenario.py --full` run gave identical
-   flower-visit numbers to before the change (62/34). **Needs Dave's
-   hands-on check, two things**: (a) open a run and confirm a species
-   reads as more common in one part of the meadow than another (task 2,
-   still outstanding from last session); (b) re-take the same
-   500/750/1000 `perf.gd` readings from task 1 to see how much the
-   flower-work numbers actually improved -- `run_scenario.py` has no
-   headless path to `perf.gd`, so this can only be measured the same
-   hands-on way task 1 was. Task 4 (full 5-seed on/off re-run) is still
-   owed once both of those land. Full detail in
-   `FORAGING_ECOLOGY_PLAN.md`'s "Slice 4 results so far" section.
-   Slice 5 onward (local search, probabilistic choice, handling
-   experience, finite pollen, proximity recruitment) stays
-   scope-indexed only until Dave picks the next one to refine.
+4. **Foraging ecology plan -- Slice 4 tasks 1-3 done, plus an unplanned
+   field-size/overspill fix (23 Aug).** Task 1-3 detail unchanged from
+   before, see `FORAGING_ECOLOGY_PLAN.md`'s "Slice 4 results so far"
+   section. New this session, from Dave's own `perf.gd` screenshots at
+   700/1000/1200 flowers plus a look at the meadow itself: he wanted more
+   spread between good and bad patches, so `main.FLOWER_FIELD_HALF_SIZE`
+   went from (1350, 990) to (2000, 1500) (matches the grass background,
+   ~2.24x area) and `GameConfig.flower_count` from 500 to 800 (~1.6x --
+   deliberately below the area increase, so density is lower, per his
+   steer). That surfaced two follow-on bugs, both fixed: the grass
+   polygon was a hardcoded 4000x3000 at a separately hand-picked offset,
+   now out of sync with the field size it's meant to contain -- it's now
+   derived from `FLOWER_FIELD_HALF_SIZE` plus a margin and centred on the
+   actual hive marker (`world_building.gd::_build_meadow`). That alone
+   didn't fully fix it -- the real cause of continuing overspill was
+   microhabitat zones (task 2, last session): a zone's centre was picked
+   anywhere in the field with no clearance kept for its own radius
+   (300-450px), so a zone rolled near the boundary put flowers up to
+   450px past the grass. Fixed with a new `_random_zone_centre()` that
+   keeps the whole zone circle inside the field rectangle. Both fixes
+   Dave-confirmed in-game (no overspill). Checks pass (66/66, 15/15).
+   **Still open, from before**: Task 2's own claim (a species reading as
+   more common in one part of the meadow) hasn't had its own hands-on
+   check yet, separate from the overspill fix. Task 4 (full 5-seed
+   on/off re-run) is still owed. Re-running the 500/750/1000 `perf.gd`
+   comparison to see how much task 3 (lazy recharge) actually helped is
+   also still owed -- this session's readings were at different counts
+   (700/1000/1200) so aren't a like-for-like comparison to the pre-task-3
+   table. Slice 5 onward (local search, probabilistic choice, handling
+   experience, finite pollen, proximity recruitment) stays scope-indexed
+   only until Dave picks the next one to refine.

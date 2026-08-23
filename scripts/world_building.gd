@@ -22,10 +22,19 @@ var main: Node2D
 var _view_rect: Rect2 = Rect2()
 var _view_frame: int = -1
 
+## Clusters can seed a flower up to this far outside the flower field
+## rectangle (their anchor is inside it, but the offset from anchor isn't
+## clamped) -- the widest species' cluster_radius is 140 (flower_species.gd),
+## rounded up with headroom so the grass never shows a flower spilling onto
+## grey ground.
+const GRASS_MARGIN := 200.0
+
 func _build_meadow() -> void:
 	var grass = Polygon2D.new()
-	grass.polygon = main.Shapes.square_points(Vector2(4000, 3000))
-	grass.position = Vector2(700, 325)
+	grass.polygon = main.Shapes.square_points(
+		(main.FLOWER_FIELD_HALF_SIZE + Vector2(GRASS_MARGIN, GRASS_MARGIN)) * 2.0
+	)
+	grass.position = main.HIVE_MARKER_POSITION
 	grass.color = main.MEADOW_COLOR
 	grass.z_index = -10
 	main.meadow_root.add_child(grass)
@@ -164,9 +173,10 @@ func _build_microhabitat_zones() -> void:
 		var zone_count := randi_range(1, 2)
 		var zones: Array = []
 		for i in range(zone_count):
+			var radius: float = randf_range(MICROHABITAT_ZONE_RADIUS.x, MICROHABITAT_ZONE_RADIUS.y)
 			zones.append({
-				"centre": _random_field_point(),
-				"radius": randf_range(MICROHABITAT_ZONE_RADIUS.x, MICROHABITAT_ZONE_RADIUS.y),
+				"centre": _random_zone_centre(radius),
+				"radius": radius,
 			})
 		main.microhabitat_zones[habitat] = zones
 
@@ -265,6 +275,17 @@ func _clear_of_obstacles(point: Vector2) -> Vector2:
 			offset = Vector2.RIGHT
 		result = obstacle.position + offset.normalized() * edge
 	return result
+
+## Like `_random_field_point()`, but keeps the whole zone circle inside the
+## field rectangle rather than just its centre -- otherwise a zone rolled
+## near the field edge lets `_random_point_in_zone` place flowers past the
+## grass, up to `radius` (300-450px) outside the boundary.
+func _random_zone_centre(radius: float) -> Vector2:
+	var half: Vector2 = (main.FLOWER_FIELD_HALF_SIZE - Vector2(radius, radius)).max(Vector2.ZERO)
+	return main.hive.position + Vector2(
+		randf_range(-half.x, half.x),
+		randf_range(-half.y, half.y)
+	)
 
 func _random_field_point() -> Vector2:
 	var point: Vector2
