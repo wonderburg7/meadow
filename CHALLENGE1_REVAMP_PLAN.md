@@ -141,10 +141,12 @@ without changing role. `challenge_runner.gd` owns the queen command lock,
 the selection summary while suppressing only the command tray. Fog uses a
 run-local permanent-reveal override rather than writing `GameConfig`, with
 a separate hive mask because the ordinary fog renderer is meadow-only.
-During 1.1 the queen paints a trail no wider than one hex. Entering 1.2
-rebuilds the mask from walkable hive tiles instead, revealing about 1.8
-block widths beyond each open tile; later rebuilds occur only when mining
-actually removes another soil block. The meadow fog path is unchanged.
+During 1.1 the queen paints a tight trail with twice the original reveal
+radius, and the already-travelled tunnel from the hive exit to her starting
+position is revealed immediately. Entering 1.2 rebuilds the mask from
+walkable hive tiles instead, revealing about 1.8 block widths beyond each
+open tile; later rebuilds occur only when mining actually removes another
+soil block. The meadow fog path is unchanged.
 
 **Goal**: stages 1.1-1.2. Queen starts at world_building's tunnel
 geometry, **2/3 of the way** from the outside to the cavity (compute

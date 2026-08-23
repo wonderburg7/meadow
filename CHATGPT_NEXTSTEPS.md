@@ -20,8 +20,9 @@ queen movement-command lock with selection-panel-only UI, causal 1.1/1.2
 goals, and a run-local permanent-fog-reveal override with its own hive mask
 (the ordinary fog renderer is meadow-only). Dave hands-on checked the mining
 flow and wall-clock pace; the redundant innermost fifth block found in that
-playtest was removed. A follow-up tightened the 1.1 queen trail to one hex,
-switches 1.2 onward to an open-space-derived ~1.8-block reveal, and makes
+playtest was removed. Follow-ups give the 1.1 queen trail a local 2x radius,
+pre-reveal the tunnel she already travelled from the exit to her starting
+point, switch 1.2 onward to an open-space-derived ~1.8-block reveal, and make
 topology recomputation causal on soil removal. Dr Gallerin's bubble is now
 360px wide with 17px dialogue. New-mechanic goals for Bundles C-D/F remain
 false-returning placeholders. Before Bundle B, the Codex

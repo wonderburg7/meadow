@@ -109,6 +109,7 @@ extends Node
 ## edge between them needs touching.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const HIVE_QUEEN_REVEAL_RADIUS_MULTIPLIER := 2.0
 const HIVE_OPEN_SPACE_REVEAL_BLOCKS := 1.8
 
 var main: Node2D
@@ -340,9 +341,9 @@ func _update_hive_fog() -> void:
 	if hive_reveal_mode == "queen" and is_instance_valid(main.queen) and main.queen.get_parent() == main.hive_root:
 		var queen_pos: Vector2 = main.queen.position
 		if _last_hive_reveal_pos.x == INF or queen_pos.distance_to(_last_hive_reveal_pos) >= GameConfig.hive_cell_size * 0.5:
-			# Diameter equals one hex's height to within the placeholder
-			# geometry's rounding, so the trail cannot expose the cavity early.
-			_reveal_hive_around(queen_pos, GameConfig.hive_cell_size)
+			_reveal_hive_around(
+				queen_pos, GameConfig.hive_cell_size * HIVE_QUEEN_REVEAL_RADIUS_MULTIPLIER
+			)
 			_last_hive_reveal_pos = queen_pos
 	var cam: Camera2D = main.hive_camera
 	var camera_changed: bool = cam.position != _last_hive_cam_pos or cam.zoom.x != _last_hive_cam_zoom
@@ -363,6 +364,30 @@ func set_hive_reveal_mode(mode: String) -> void:
 		_rebuild_hive_open_space_mask()
 	else:
 		_clear_hive_mask()
+		if mode == "queen":
+			_reveal_hive_entrance_to_queen()
+
+## The queen begins partway down a tunnel she has already traversed. Seed that
+## history immediately, rather than making the route behind her inexplicably
+## dark until she walks over it again.
+func _reveal_hive_entrance_to_queen() -> void:
+	if not is_instance_valid(main.queen):
+		return
+	var interior_rings: int = int(GameConfig.hive_interior_rings)
+	var tunnel_depth: int = int(GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
+	var entrance_tiles: Dictionary = main.world_building._entrance_tiles(interior_rings, tunnel_depth)
+	var queen_hex: Vector2i = Shapes.pixel_to_hex(
+		main.queen.position - main.hive.comb_centre, GameConfig.hive_cell_spacing
+	)
+	var queen_ring: int = Shapes.hex_ring_index(queen_hex)
+	var reveal_radius: float = GameConfig.hive_cell_size * HIVE_QUEEN_REVEAL_RADIUS_MULTIPLIER
+	for hex in entrance_tiles.keys():
+		if Shapes.hex_ring_index(hex) < queen_ring:
+			continue
+		var point: Vector2 = main.hive.comb_centre + Shapes.hex_to_pixel(
+			hex.x, hex.y, GameConfig.hive_cell_spacing
+		)
+		_reveal_hive_around(point, reveal_radius)
 
 ## Called after a soil block is actually removed. No per-frame topology scan:
 ## an open-space mask is rebuilt only on this causal event (or mode entry).
