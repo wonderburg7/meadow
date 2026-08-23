@@ -336,12 +336,14 @@ var more_panel: VBoxContainer
 var more_panel_open: bool = false
 
 ## The command tray's cell content -- shares the tray with the Job/Focus/
-## Orders columns, mutually exclusive with them (UI_BUGFIX_PLAN.md Slice
-## 4/5, Dave's 22 Aug call: cell selection is "assign, not just look at",
-## so it belongs in the same drawer as the role-action columns, not the
-## bottom-left summary panel). See show_cell_popup/update_selection.
+## Orders columns, mutually exclusive with them. Cell actions belong here;
+## the state those actions apply to is summarised in the bottom-left panel.
+## See show_cell_popup/update_selection and UI_BUGFIX_PLAN.md Slice 9.
 var cell_group: VBoxContainer
-var cell_popup_label: Label
+var cell_primary_columns: HBoxContainer
+var cell_more_button: Button
+var cell_more_panel: HBoxContainer
+var cell_more_open: bool = false
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
 var hatch_lock_box: CheckBox
@@ -902,18 +904,6 @@ func _build_tray_column(title: String) -> Array:
 
 # --- cell popup ---------------------------------------------------
 
-## The popup had grown to five rows of buttons plus two checkboxes, all
-## on screen at once, which is more than anyone can scan while a click is
-## in progress. It's now grouped into collapsible sections, the same
-## pattern the settings window uses.
-##
-## Only "Reserve for" starts open, because that is the one thing you do
-## to nearly every cell. The rest are things you do occasionally and
-## deliberately, so they're one click away rather than always in the way.
-## Which sections are open is remembered for the session, so a player who
-## works in the zone a lot doesn't reopen it every time.
-var cell_sections: Dictionary = {}     # title -> the VBox holding its rows
-var cell_section_open: Dictionary = {}
 ## Popup buttons whose appearance tracks the state of the cell being
 ## shown, keyed by what they represent. Lit up in _refresh_cell_popup, so
 ## "which priority is this cell on" and "is this one sealed" are readable
@@ -934,14 +924,16 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_group.visible = false
 	parent.add_child(cell_group)
 
-	var column := cell_group
+	# The frequent actions form one low, wide row, mirroring the selected-
+	# bee Job/Focus/Orders composition. The state they act on belongs in the
+	# bottom-left summary panel; repeating it here was what made the centre
+	# tray unnecessarily tall.
+	cell_primary_columns = HBoxContainer.new()
+	cell_primary_columns.add_theme_constant_override("separation", 16)
+	cell_group.add_child(cell_primary_columns)
 
-	cell_popup_label = Label.new()
-	cell_popup_label.theme_type_variation = "Body"
-	column.add_child(cell_popup_label)
-
-	var row := HBoxContainer.new()
-	_cell_section(column, "Reserve for", true).add_child(row)
+	var row := HFlowContainer.new()
+	_build_cell_action_column(cell_primary_columns, "Reserve for").add_child(row)
 
 	var nectar_btn := Button.new()
 	_style_button(nectar_btn)
@@ -991,14 +983,32 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	live_buttons["designation_any"] = auto_btn
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
-	_build_zone_controls(_cell_section(column, "Nursery zone", false))
-	_build_closing_controls(_cell_section(column, "Sealing", false))
-	_build_empty_controls(_cell_section(column, "Emptying", false))
+	_build_zone_controls(_build_cell_action_column(cell_primary_columns, "Nursery zone"))
+	_build_closing_controls(_build_cell_action_column(cell_primary_columns, "Sealing"))
 
-	var raises := _cell_section(column, "Raises", false)
+	cell_more_button = Button.new()
+	_style_button(cell_more_button)
+	cell_more_button.text = "More…"
+	cell_more_button.theme_type_variation = "Small"
+	cell_more_button.focus_mode = Control.FOCUS_NONE
+	cell_more_button.toggle_mode = true
+	cell_more_button.pressed.connect(func():
+		cell_more_open = cell_more_button.button_pressed
+		cell_more_panel.visible = cell_more_open
+	)
+	cell_group.add_child(cell_more_button)
+
+	cell_more_panel = HBoxContainer.new()
+	cell_more_panel.add_theme_constant_override("separation", 16)
+	cell_more_panel.visible = false
+	cell_group.add_child(cell_more_panel)
+
+	_build_empty_controls(_build_cell_action_column(cell_more_panel, "Emptying"))
+
+	var raises := _build_cell_action_column(cell_more_panel, "Raises")
 
 	# Which role a bee raised here comes out as.
-	var hatch_row := HBoxContainer.new()
+	var hatch_row := HFlowContainer.new()
 	raises.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
@@ -1055,33 +1065,24 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
-## Adds a collapsible section to the popup and returns the container its
-## rows should go into. The header button toggles it; the arrow says
-## which way it will go, which is the convention everywhere else.
-func _cell_section(column: VBoxContainer, title: String, open_by_default: bool) -> VBoxContainer:
-	if not cell_section_open.has(title):
-		cell_section_open[title] = open_by_default
+## A stable logical column in the cell tray. These are headings rather than
+## independent accordions: the whole row is meant to scan like the selected-
+## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
+func _build_cell_action_column(parent: HBoxContainer, title: String) -> VBoxContainer:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 3)
+	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(wrapper)
 
-	var header := Button.new()
-	_style_button(header)
-	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	header.theme_type_variation = "Body"
-	header.focus_mode = Control.FOCUS_NONE
-	column.add_child(header)
+	var header := Label.new()
+	header.text = title
+	header.theme_type_variation = "Small"
+	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	wrapper.add_child(header)
 
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 2)
-	body.visible = cell_section_open[title]
-	column.add_child(body)
-
-	header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
-	header.pressed.connect(func():
-		cell_section_open[title] = not cell_section_open[title]
-		body.visible = cell_section_open[title]
-		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
-	)
-
-	cell_sections[title] = body
+	wrapper.add_child(body)
 	return body
 
 ## The nursery zone: which cells the queen lays in, and how hard she
@@ -1385,84 +1386,94 @@ func _show_death_summary(info: Dictionary) -> void:
 		trait_lines.append("\"%s\"" % info.get("bee_fact"))
 	trait_label.text = "\n".join(trait_lines)
 
-## Cell selection is "assign, not just look at" (Dave's 22 Aug call), so
-## it shares the command tray with Job/Focus/Orders rather than the
-## bottom-left summary panel -- mutually exclusive with them, same
-## content-swap spirit as show_object_summary. Leaves the bee columns'
-## own content untouched underneath (just hidden), so reselecting a bee
-## shows exactly what it did before, per update_selection.
+## Cell state now uses the bottom-left summary, while its actions share the
+## command tray with Job/Focus/Orders and are mutually exclusive with those
+## bee controls. Leaves the bee columns' own content untouched underneath
+## (just hidden), so reselecting a bee restores exactly what it showed before.
 func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_cell = cell
 	selected_cell_count = count
+	active_summary_kind = "cell"
+	active_flower = null
+	soil_summary_row.visible = false
+	selection_panel.visible = true
 	command_columns.visible = false
 	more_button.visible = false
 	more_panel.visible = false
 	cell_group.visible = true
 	command_tray.visible = true
 	_refresh_cell_popup()
+	_update_command_tray_width()
+	call_deferred("_update_command_tray_width")
 
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
 		return
-	var lines := []
+	identity_label.text = "%d cells selected\nShowing the first cell; every action applies to all" % selected_cell_count \
+		if selected_cell_count > 1 else "Cell selected"
+
+	var content_lines := []
 	if selected_cell_count > 1:
-		lines.append("%d cells selected — everything below applies to all of them" % selected_cell_count)
-		lines.append("Showing: the first one")
+		content_lines.append("Bulk selection")
 	if not active_cell.is_built:
-		lines.append("Unfinished cell -- %d%% built" % int(active_cell.build_fraction() * 100.0))
+		content_lines.append("Unfinished — %d%% built" % int(active_cell.build_fraction() * 100.0))
 	else:
 		match active_cell.content_type:
 			"nectar":
-				lines.append("Nectar: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+				content_lines.append("Nectar: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"pollen":
-				lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+				content_lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"jelly":
-				lines.append("Royal jelly: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+				content_lines.append("Royal jelly: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"honey":
 				if active_cell.is_ripe_honey():
-					lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+					content_lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 				else:
-					lines.append("Honey mix: %d / %d -- %d%% fanned dry" % [
+					content_lines.append("Honey mix: %d / %d — %d%% fanned dry" % [
 						int(round(active_cell.amount)),
 						int(active_cell.capacity),
 						int(active_cell.ripen_fraction() * 100.0),
 					])
-					lines.append("Not edible until it is fully dried out.")
+					content_lines.append("Not edible until fully dried")
 			"brood":
-				lines.append("%s -- %d%%" % [
+				content_lines.append("%s — %d%%" % [
 					"Developing gyne" if active_cell.brood_is_gyne else "Developing bee",
 					int(active_cell.development_percent()),
 				])
 				if active_cell.brood_is_gyne:
-					lines.append("Needs royal jelly, pollen and honey. Nothing else will do.")
+					content_lines.append("Needs royal jelly, pollen and honey")
 				if active_cell.brood_fed_seconds > 0.0:
-					lines.append("Fed on %s -- %ds of development left in it" % [
+					content_lines.append("Fed on %s — %ds of development left" % [
 						"honey" if active_cell.fed_on_honey else "nectar",
 						int(active_cell.brood_fed_seconds),
 					])
 				else:
-					lines.append("Hungry -- development has stopped. It dies in %ds if nobody feeds it" % int(active_cell.seconds_until_death()))
+					content_lines.append("Hungry — development stopped; dies in %ds" % int(active_cell.seconds_until_death()))
 			"corpse":
-				lines.append("A larva starved here. The body blocks the cell.")
-				lines.append("Being cleared: %d%% -- a comb worker on cell maintenance has to carry it out" % int(active_cell.clean_fraction() * 100.0))
+				content_lines.append("A dead larva blocks this cell")
+				content_lines.append("Being cleared: %d%%" % int(active_cell.clean_fraction() * 100.0))
 			_:
-				lines.append("Empty")
+				content_lines.append("Empty")
+	energy_label.text = "\n".join(content_lines)
+
+	var state_lines := []
 	var reserved := "any resource"
 	if active_cell.keep_empty:
-		reserved = "nothing -- kept empty"
+		reserved = "nothing — kept empty"
 	elif active_cell.designated_type == "brood":
 		reserved = "raising eggs"
 	elif active_cell.designated_type != "":
 		reserved = active_cell.designated_type
-	lines.append("Takes: %s" % reserved)
+	state_lines.append("Takes: %s" % reserved)
 	if active_cell.is_nursery_cell():
-		lines.append("Nursery zone — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
+		state_lines.append("Nursery zone — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
 	if active_cell.is_closed:
-		lines.append("Sealed — nothing goes in or comes out")
+		state_lines.append("Sealed — nothing goes in or comes out")
 	elif active_cell.fill_then_close:
-		lines.append("Filling to the top, then sealing. Withdrawals refused meanwhile")
+		state_lines.append("Filling to the top, then sealing")
 	if active_cell.evict_requested:
-		lines.append("Waiting for a builder to carry the contents out")
+		state_lines.append("Waiting for a comb worker to empty it")
+	activity_label.text = "\n".join(state_lines)
 
 	var hatch_name := "colony default"
 	for entry in hatch_options():
@@ -1473,11 +1484,10 @@ func _refresh_cell_popup() -> void:
 			elif entry.role == 5 and active_cell.hatch_automine:
 				hatch_name += " (automine)"
 			break
-	lines.append("Raises: %s%s" % [
+	trait_label.text = "Raises: %s%s" % [
 		hatch_name,
-		" -- every bee" if active_cell.hatch_role_locked else "",
-	])
-	cell_popup_label.text = "\n".join(lines)
+		" — every bee" if active_cell.hatch_role_locked else "",
+	]
 
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
@@ -2280,6 +2290,10 @@ func _update_command_tray_width() -> void:
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
 	var max_width: float = UiLayout.command_tray_max_width(viewport_width, selection_panel.size.x)
 	command_columns.custom_minimum_size.x = max(200.0, max_width - 32.0)
+	if cell_primary_columns != null:
+		cell_primary_columns.custom_minimum_size.x = max(520.0, max_width - 32.0)
+	if cell_more_panel != null:
+		cell_more_panel.custom_minimum_size.x = max(520.0, max_width - 32.0)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

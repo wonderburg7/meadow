@@ -26,6 +26,8 @@ var radius: float = 30.0
 ## rather than derived from `kind` so a future "can cross raised ground"
 ## upgrade can simply clear it on every raised area in the meadow.
 var solid: bool = true
+## Presentation-only selection outline, sized from this obstacle's geometry.
+var selection_ring: Line2D
 
 func _ready() -> void:
 	add_to_group("obstacles")
@@ -47,6 +49,20 @@ func setup(obstacle_kind: int, obstacle_radius: float) -> void:
 		_build_tree()
 	else:
 		_build_raised_area()
+	_build_selection_ring()
+
+func _build_selection_ring() -> void:
+	selection_ring = Line2D.new()
+	_close_loop(selection_ring, Shapes.circle_points(radius * 1.12, 32))
+	selection_ring.width = 4.0
+	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.visible = false
+	selection_ring.z_index = 20
+	add_child(selection_ring)
+
+func set_selected(value: bool) -> void:
+	if selection_ring != null:
+		selection_ring.visible = value
 
 func _build_tree() -> void:
 	# trunk

@@ -68,6 +68,10 @@ var lifespan_seconds: float = 1800.0
 
 var nectar_label: Label
 var pollen_label: Label
+## Presentation-only selection outline. InputSelection owns which meadow
+## object is selected and calls set_selected; the flower simulation never
+## reads this node.
+var selection_ring: Line2D
 
 # --- crab spiders (see CRAB_SPIDER_PLAN.md) -------------------------
 ## Whether this flower currently carries a spider. False for essentially
@@ -107,6 +111,15 @@ func setup(index: int) -> void:
 
 	polygon = Shapes.square_points(Vector2(28, 28))
 	color = s.color
+
+	selection_ring = Line2D.new()
+	selection_ring.points = Shapes.circle_points(24.0, 28)
+	selection_ring.closed = true
+	selection_ring.width = 3.5
+	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.visible = false
+	selection_ring.z_index = 10
+	add_child(selection_ring)
 
 	# A "bushy" species (Bramble) is still one Flower node with one
 	# feeding slot, same as every other species -- but clustered flowers
@@ -300,6 +313,10 @@ func collect(resource_type: String, amount: float) -> float:
 func release(bee: Node2D) -> void:
 	if occupied_by == bee:
 		occupied_by = null
+
+func set_selected(value: bool) -> void:
+	if selection_ring != null:
+		selection_ring.visible = value
 
 # --- tarsal secretion markers -------------------------------------
 ## Real bees leave a scent from their feet on flowers they land on, and

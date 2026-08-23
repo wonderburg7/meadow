@@ -12,7 +12,8 @@ extends RefCounted
 ## fields that were already here, so Challenge 1 and 2 can fill those in
 ## without a second restructure. Levels 1 and 2 are the ones TUTORIAL_PLAN.md
 ## says will eventually be superseded by full Challenge definitions;
-## levels 3-5 stay as plain starter-mode presets.
+## levels 3-7 stay as plain Scenario presets (level ids remain stable even
+## though their player-facing Scenario numbers are ordered independently).
 ##
 ## `weather`, `disease`, `rival_hive` and `winter` are read directly by
 ## the systems they gate (main.gd::_advance_weather, season.gd::
@@ -77,6 +78,15 @@ const LEVELS := {
 		"cells": 18, "nectar_foragers": 14, "pollen_foragers": 6,
 		"nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
 		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
+		"unlocks": [], "win_conditions": [],
+	},
+	# Free-form extreme start: deliberately distinct from Challenge 1 even
+	# though both begin with the queen and no comb. There is no staged guide or
+	# Challenge-local build command here; the player assigns the queen the
+	# colony's first jobs through the ordinary role controls.
+	7: {
+		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
+		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"unlocks": [], "win_conditions": [],
 	},
 }
