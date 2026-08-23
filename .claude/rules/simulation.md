@@ -1,10 +1,10 @@
 ---
 paths:
-  - "bee*.gd"
-  - "hive*.gd"
-  - "flower.gd"
-  - "season.gd"
-  - "spatial_grid.gd"
+  - "scripts/bee*.gd"
+  - "scripts/hive*.gd"
+  - "scripts/flower.gd"
+  - "scripts/season.gd"
+  - "scripts/spatial_grid.gd"
 ---
 
 # Simulation rules

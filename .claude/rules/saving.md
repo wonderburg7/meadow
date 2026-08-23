@@ -1,9 +1,9 @@
 ---
 paths:
-  - "saving.gd"
-  - "save_game.gd"
-  - "tutorial_checkpoint.gd"
-  - "challenge_runner.gd"
+  - "scripts/saving.gd"
+  - "scripts/save_game.gd"
+  - "scripts/tutorial_checkpoint.gd"
+  - "scripts/challenge_runner.gd"
 ---
 
 # Save/restore safety
