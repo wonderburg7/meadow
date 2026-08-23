@@ -211,9 +211,10 @@ approach.
 
 **Original version built and playable, 19 Aug 2026; revamp in progress.**
 Bundles A-B of `CHALLENGE1_REVAMP_PLAN.md` are now built on the Codex
-branch: the 1.1-1.19 stage skeleton, trigger descriptors, the 30-second
-opening auto-mine, restricted queen commands/selection-panel-only state,
-and run-local permanent fog reveal. Bundles C-H remain, including the
+branch: the 1.1-1.19 stage skeleton, trigger descriptors, the four-block,
+30-second opening auto-mine, restricted queen commands/selection-panel-only
+state, and run-local permanent fog reveal (including a Challenge-only hive
+mask; ordinary fog is meadow-only). Bundles C-H remain, including the
 final rewrite of the detailed legacy stage-by-stage account below. Until
 that copy pass, the revamp plan and `challenge_runner.gd::STAGES_1` are the
 authority for new numbering; the older notes below remain useful history

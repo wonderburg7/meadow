@@ -15,10 +15,13 @@ On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
 dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline
 `5bf8ab3`. Bundle A adds the 1.1-1.19 stage skeleton, Challenge-local
 mixed-shape unlock descriptors, a debug stage-advance seam and the documented
-trigger convention. Bundle B adds the five-block/30-second opening auto-mine,
+trigger convention. Bundle B adds the four-block/30-second opening auto-mine,
 queen movement-command lock with selection-panel-only UI, causal 1.1/1.2
-goals, and a run-local permanent-fog-reveal override. New-mechanic goals for
-Bundles C-D/F remain false-returning placeholders. Before Bundle B, the Codex
+goals, and a run-local permanent-fog-reveal override with its own hive mask
+(the ordinary fog renderer is meadow-only). Dave hands-on checked the mining
+flow and wall-clock pace; the redundant innermost fifth block found in that
+playtest was removed. New-mechanic goals for Bundles C-D/F remain
+false-returning placeholders. Before Bundle B, the Codex
 worktree was clean; primary-worktree changes in `levels.gd`, `main_menu.gd`
 and two unrelated untracked files did not overlap the slice and were not
 touched.

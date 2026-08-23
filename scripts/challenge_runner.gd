@@ -732,15 +732,19 @@ func _setup_opening_tunnel() -> void:
 	var interior_rings: int = int(GameConfig.hive_interior_rings)
 	var tunnel_depth: int = int(GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
 	var entrance_tiles: Dictionary = main.world_building._entrance_tiles(interior_rings, tunnel_depth)
-	var blocked_count: int = maxi(1, ceili(float(entrance_tiles.size()) / 3.0))
+	# The innermost entrance tile already touches the cavity: clearing the
+	# block immediately outside it opens a route in, so sealing that final
+	# tile only adds an unnecessary fifth dig.
+	var blocked_count: int = maxi(1, ceili(float(entrance_tiles.size()) / 3.0) - 1)
 	var seconds_per_block: float = OPENING_MINE_SECONDS / float(blocked_count)
 	var inner_ring: int = interior_rings - 1
+	var first_block_ring: int = inner_ring + 1
 
 	# Add inner-to-outer so all blocks exist before edge flags/navigation
 	# are rebuilt, then retain the opposite order for the queen to follow.
 	var inner_to_outer: Array = []
 	for offset in range(blocked_count):
-		var hex := Vector2i(0, -(inner_ring + offset))
+		var hex := Vector2i(0, -(first_block_ring + offset))
 		main.world_building._add_soil_block(
 			hex, main.world_building._hive_centre_local(), GameConfig.hive_cell_spacing
 		)
@@ -755,7 +759,7 @@ func _setup_opening_tunnel() -> void:
 	_opening_started = not _opening_blocks.is_empty()
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()
-	var queen_ring: int = inner_ring + blocked_count
+	var queen_ring: int = first_block_ring + blocked_count
 	main.queen.position = main.world_building._hive_centre_local() + Shapes.hex_to_pixel(
 		0, -queen_ring, GameConfig.hive_cell_spacing
 	)

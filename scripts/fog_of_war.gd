@@ -136,6 +136,19 @@ var _disc_offsets_set: Dictionary = {}
 var _disc_offsets_radius: float = -1.0
 
 var _layer: Node2D
+## Challenge 1's opening happens in hive_root, while the ordinary fog layer
+## belongs to meadow_root and is hidden in hive view. A separate small mask
+## gives that tutorial beat real fog without changing ordinary hive runs.
+var _hive_layer: Node2D
+var _hive_mask_material: ShaderMaterial
+var _hive_mask_image: Image
+var _hive_mask_texture: ImageTexture
+var _hive_origin_tile: Vector2i = Vector2i.ZERO
+var _hive_mask_dirty: bool = false
+var _hive_explored: Dictionary = {}
+var _last_hive_reveal_pos: Vector2 = Vector2(INF, INF)
+var _last_hive_cam_pos: Vector2 = Vector2(INF, INF)
+var _last_hive_cam_zoom: float = -1.0
 ## Tracked so `_update` only queues a redraw when something actually
 ## changed, instead of every frame -- see the 19 Aug perf note below.
 var _last_layer_visible: bool = false
@@ -217,6 +230,30 @@ func _build_layer() -> void:
 	_mask_material.set_shader_parameter("tex_world_size", Vector2(world_w, world_h) * FOG_TILE_SIZE)
 
 	reveal_around(main.hive.position, START_CLEAR_RADIUS)
+	_build_hive_layer()
+
+func _build_hive_layer() -> void:
+	_hive_layer = Node2D.new()
+	_hive_layer.z_index = 90
+	_hive_layer.draw.connect(_draw_hive_fog)
+	_hive_mask_material = ShaderMaterial.new()
+	_hive_mask_material.shader = preload("res://shaders/fog_mask.gdshader")
+	_hive_layer.material = _hive_mask_material
+	_hive_layer.visible = false
+	main.hive_root.add_child(_hive_layer)
+
+	var rings: float = GameConfig.hive_interior_rings + GameConfig.hive_soil_depth + GameConfig.hive_rock_rings
+	var half_extent: float = (rings + 3.0) * GameConfig.hive_cell_spacing * 1.5
+	var centre: Vector2 = main.world_building._hive_centre_local()
+	_hive_origin_tile = _tile_of(centre - Vector2(half_extent, half_extent))
+	var side: int = int(ceil(half_extent * 2.0 / FOG_TILE_SIZE))
+	_hive_mask_image = Image.create_empty(side, side, false, Image.FORMAT_R8)
+	_hive_mask_image.fill(Color8(MASK_UNEXPLORED, MASK_UNEXPLORED, MASK_UNEXPLORED, 255))
+	_hive_mask_texture = ImageTexture.create_from_image(_hive_mask_image)
+	_hive_mask_material.set_shader_parameter("mask_tex", _hive_mask_texture)
+	_hive_mask_material.set_shader_parameter("tex_world_pos", Vector2(_hive_origin_tile) * FOG_TILE_SIZE)
+	_hive_mask_material.set_shader_parameter("tex_world_size", Vector2(side, side) * FOG_TILE_SIZE)
+	_hive_mask_material.set_shader_parameter("permanent_reveal", true)
 
 ## Part of main's public surface for this system: called once from
 ## main._process each frame.
@@ -224,8 +261,11 @@ func _update() -> void:
 	if not GameConfig.fog_of_war_on:
 		if _layer.visible:
 			_layer.visible = false
+		if _hive_layer != null:
+			_hive_layer.visible = false
 		_last_layer_visible = false
 		return
+	_update_hive_fog()
 	var just_shown: bool = not _last_layer_visible
 	_layer.visible = true
 	_last_layer_visible = true
@@ -282,6 +322,56 @@ func _camera_view_changed() -> bool:
 
 func permanent_reveal_enabled() -> bool:
 	return GameConfig.fog_permanent_reveal or permanent_reveal_override
+
+## Challenge-local hive reveal. Only the queen paints this mask: the opening
+## is about the path she has personally made visible, and no worker exists yet.
+func _update_hive_fog() -> void:
+	if _hive_layer == null:
+		return
+	_hive_layer.visible = permanent_reveal_override
+	if not permanent_reveal_override or not is_instance_valid(main.queen) or main.queen.get_parent() != main.hive_root:
+		return
+	var queen_pos: Vector2 = main.queen.position
+	if _last_hive_reveal_pos.x == INF or queen_pos.distance_to(_last_hive_reveal_pos) >= RELIGHT_DISTANCE:
+		_reveal_hive_around(queen_pos, GameConfig.fog_reveal_radius)
+		_last_hive_reveal_pos = queen_pos
+	var cam: Camera2D = main.hive_camera
+	var camera_changed: bool = cam.position != _last_hive_cam_pos or cam.zoom.x != _last_hive_cam_zoom
+	if main.in_hive_view and (_hive_mask_dirty or camera_changed):
+		_hive_layer.queue_redraw()
+		_last_hive_cam_pos = cam.position
+		_last_hive_cam_zoom = cam.zoom.x
+
+func _reveal_hive_around(pos: Vector2, radius: float) -> void:
+	for tile in _disc(pos, radius):
+		if _hive_explored.has(tile):
+			continue
+		_hive_explored[tile] = true
+		var px: Vector2i = tile - _hive_origin_tile
+		if px.x < 0 or px.y < 0 or px.x >= _hive_mask_image.get_width() or px.y >= _hive_mask_image.get_height():
+			continue
+		_hive_mask_image.set_pixel(px.x, px.y, Color8(MASK_EXPLORED, MASK_EXPLORED, MASK_EXPLORED, 255))
+		_hive_mask_dirty = true
+
+func _draw_hive_fog() -> void:
+	if not main.in_hive_view or not permanent_reveal_override:
+		return
+	if _hive_mask_dirty:
+		_hive_mask_texture.update(_hive_mask_image)
+		_hive_mask_dirty = false
+	var cam: Camera2D = main.hive_camera
+	var span: Vector2 = main.get_viewport_rect().size / cam.zoom.x
+	var local_cam_pos: Vector2 = cam.position - main.hive_root.position
+	var view: Rect2 = Rect2(local_cam_pos - span * 0.5, span).grow(FOG_TILE_SIZE)
+	var min_tile: Vector2i = _tile_of(view.position)
+	var max_tile: Vector2i = _tile_of(view.position + view.size)
+	var size_tiles := Vector2i(max_tile.x - min_tile.x + 1, max_tile.y - min_tile.y + 1)
+	if size_tiles.x <= 0 or size_tiles.y <= 0:
+		return
+	var dest := Rect2(Vector2(min_tile) * FOG_TILE_SIZE, Vector2(size_tiles) * FOG_TILE_SIZE)
+	_hive_mask_material.set_shader_parameter("view_world_pos", dest.position)
+	_hive_mask_material.set_shader_parameter("view_world_size", dest.size)
+	_hive_layer.draw_texture_rect(_hive_mask_texture, dest, false)
 
 ## Rebuilds the shared offset disc only when the reveal radius has
 ## actually changed (it's a live-tunable debug-panel slider).
