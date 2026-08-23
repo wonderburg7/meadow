@@ -1,0 +1,14 @@
+{
+  "cells": 18, "nectar_foragers": 14, "pollen_foragers": 6,
+  "nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
+  "stock": {"nectar": 6, "pollen": 2, "honey": 1},
+  "unlocks": [], "win_conditions": [],
+  "config_overrides": {
+    "seconds_per_day": 20
+  },
+  "snapshot_seconds": 20,
+  "stop": {
+    "max_days": 20
+  },
+  "random_seed": 12345
+}

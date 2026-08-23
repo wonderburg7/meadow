@@ -290,11 +290,13 @@ static func block_obstacles(bee: Node2D, wanted: Vector2) -> Vector2:
 static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	Perf.begin("bee_move")
 	var step: float = bee.speed * bee._terrain_speed_factor() * delta
+	var before: Vector2 = bee.position
 
 	if not bee._is_inside_hive():
 		var wanted: Vector2 = bee.position.move_toward(avoid_obstacles(bee, target), step)
 		bee.position = block_obstacles(bee, wanted)
 		bee.flying_outdoors = true   # bumble flight -- see bee.gd::_update_wander_flight
+		_update_heading(bee, before)
 		Perf.end("bee_move")
 		return
 
@@ -323,4 +325,18 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 			step = 0.0
 	if bee.path_index >= bee.path_points.size():
 		bee.position = bee.position.move_toward(target, step)
+	_update_heading(bee, before)
 	Perf.end("bee_move")
+
+
+## Slice 6: bee.heading tracks the direction she actually just moved in,
+## not the direction of her target -- avoid_obstacles/block_obstacles and
+## hive pathfinding can both bend the real path away from a straight
+## line to target, and it's the real path that should weight her next
+## flower choice. Left unchanged on a frame with no real movement (e.g.
+## blocked solid against an obstacle), rather than snapping to a zero
+## vector.
+static func _update_heading(bee: Node2D, before: Vector2) -> void:
+	var moved: Vector2 = bee.position - before
+	if moved.length_squared() > 0.0001:
+		bee.heading = moved.normalized()

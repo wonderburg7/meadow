@@ -225,6 +225,49 @@ var local_search_anchor: Vector2 = Vector2(INF, INF)
 var search_angle: float = 0.0
 var search_start_direction: float = 0.0
 var search_waypoint: Vector2 = Vector2(INF, INF)
+## Slice 6: the point the current SEARCHING bout's spiral is actually
+## centred on -- normally local_search_anchor, but a bout that outgrows
+## forage_search_radius tries one known_patches entry before giving up
+## for real (see search_for_flower), which recentres this without
+## disturbing local_search_anchor itself. Not saved, same as the other
+## SEARCHING-only fields above.
+var search_origin: Vector2 = Vector2(INF, INF)
+## Slice 6: whether this SEARCHING bout has already spent its one
+## known_patches retry -- see search_for_flower. Reset fresh each bout.
+var search_tried_patch: bool = false
+
+## Slice 6 (probabilistic choice and memory): the direction she's
+## actually moving in, updated every frame she moves (see
+## BeeMovement.move_towards). Only ever a unit vector (or the default,
+## for a bee that hasn't moved yet) -- used to weight flower choice
+## toward "ahead of me" over "behind me" at similar distances.
+var heading: Vector2 = Vector2.RIGHT
+
+## Slice 6 (probabilistic choice and memory): a small ring buffer of
+## distinct locations she's actually fed from, most-recent last.
+## Consulted only when a SEARCHING bout gives up and needs a fresh
+## anchor (see search_for_flower in bee_foraging.gd), before falling
+## back to a full meadow scan. Reset to empty at every point that resets
+## local_search_anchor to forage_start_point -- a fresh assignment
+## shouldn't carry memory of a completely different part of the meadow.
+var known_patches: Array[Vector2] = []
+
+## Slice 7 (handling experience): visit count per species this bee has
+## actually finished handling, only tracked when
+## GameConfig.handling_experience_on is on -- see finish_collecting in
+## bee_foraging.gd. Keyed by the same species-name strings
+## flower.species_name/flower_species.gd already use. Persisted, same
+## pattern as known_patches above.
+var species_experience: Dictionary = {}
+
+## Slice 7 (adaptive constancy): a 0..1 confidence score per species,
+## rising on a completed handling bout (finish_collecting) and falling on
+## a rejection (reject_flower), only tracked when
+## GameConfig.adaptive_constancy_on is on. Feeds
+## bee_foraging.gd::_weighted_flower_choice as an extra multiplier when
+## probabilistic_choice_on is also on. Persisted, same pattern as
+## known_patches above.
+var species_confidence: Dictionary = {}
 
 ## Scouting (see GameConfig.scouting_on) -- a brand-new forager's phase
 ## of trying a few different start points, timed, so it can settle on
@@ -430,6 +473,20 @@ var body: Polygon2D
 var outline_ring: Polygon2D
 var centre_dot: Polygon2D
 
+## A bright wedge pointing along bee.heading, foragers only, outdoors
+## only. Slice 5's probabilistic flower choice already weighs on heading
+## (bee_foraging.gd) but nothing showed it on screen -- there was no way
+## to watch a forager favour the flower ahead of her over a nearer one
+## behind. See _update_heading_marker.
+var heading_marker: Polygon2D
+
+## A pulsing ring, shown only in State.SEARCHING (Slice 5's expanding
+## spiral). task_description() already named this state in the selection
+## panel, but nothing distinguished a searching bee from one still
+## seeking or already committed at a glance, in a crowd, without
+## clicking her. See _update_search_ring.
+var search_ring: Polygon2D
+
 func _ready() -> void:
 	add_to_group("bees")
 	# Newly built cells and freshly-mined floor tiles get added to
@@ -508,6 +565,15 @@ func _ready() -> void:
 	attack_ring.visible = false
 	visual_root.add_child(attack_ring)
 
+	# Further out than selection/alarm/attack (none of which overlap it in
+	# practice -- SEARCHING is a foraging-only state) and a colour none of
+	# them use, so it never reads as one of those instead.
+	search_ring = Polygon2D.new()
+	search_ring.polygon = Shapes.circle_points(outline_radius + 14.0)
+	search_ring.color = Color(0.65, 0.25, 0.95, 0.85)
+	search_ring.visible = false
+	visual_root.add_child(search_ring)
+
 	var outline := Polygon2D.new()
 	outline.polygon = Shapes.circle_points(outline_radius)
 	outline.color = Color(0.05, 0.05, 0.05)   # black outline
@@ -533,6 +599,23 @@ func _ready() -> void:
 	centre_dot.polygon = Shapes.circle_points(body_radius * 0.35)
 	centre_dot.visible = false
 	visual_root.add_child(centre_dot)
+
+	# A wedge pointing along heading, deliberately brighter/larger than
+	# the role markers so it reads from a distance rather than needing a
+	# close look. Rest shape points along local +X; _update_heading_marker
+	# rotates the whole node to the live heading each frame.
+	heading_marker = Polygon2D.new()
+	var tip: float = outline_radius + 7.0
+	var wedge_base: float = outline_radius - 1.0
+	var half_width: float = 4.5
+	heading_marker.polygon = PackedVector2Array([
+		Vector2(tip, 0.0),
+		Vector2(wedge_base, -half_width),
+		Vector2(wedge_base, half_width),
+	])
+	heading_marker.color = Color(1.0, 1.0, 1.0, 0.95)
+	heading_marker.visible = false
+	visual_root.add_child(heading_marker)
 
 	label = Label.new()
 	label.position = Vector2(-16, -32 if not is_queen else -40)
@@ -958,6 +1041,8 @@ func _process(delta: float) -> void:
 	Perf.begin("bee_label")
 	_update_label()
 	_update_alarm_ring()
+	_update_heading_marker()
+	_update_search_ring()
 	Perf.end("bee_label")
 
 	Perf.begin("bee_wander")
@@ -1340,6 +1425,7 @@ func command_exit_hive() -> void:
 func set_forage_start_point(meadow_point: Vector2) -> void:
 	forage_start_point = meadow_point
 	local_search_anchor = meadow_point
+	known_patches.clear()
 
 func has_forage_start_point() -> bool:
 	return forage_start_point.x != INF
@@ -1901,6 +1987,36 @@ func _update_alarm_ring() -> void:
 		return
 	alarm_ring.visible = Session.sim_time < alarm_flash_until
 	attack_ring.visible = Session.sim_time < attack_flash_until
+
+## Foragers only, outdoors only -- heading only ever influences a
+## forager's own flower choice, and showing it indoors/for other roles
+## would just be visual noise pointing at whatever direction she last
+## happened to move. Same off-screen skip as _update_label/_update_alarm_ring
+## (rule 3).
+func _update_heading_marker() -> void:
+	if heading_marker == null:
+		return
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	var should_show: bool = role == Role.FORAGER and not _is_inside_hive()
+	heading_marker.visible = should_show
+	if should_show and heading != Vector2.ZERO:
+		heading_marker.rotation = heading.angle()
+
+## Pulses (scale, not just a static ring) so a searching bee catches the
+## eye in a crowd rather than being one more small circle to spot. Same
+## off-screen skip as the other presentation-only updates (rule 3).
+const SEARCH_RING_PULSE_HZ := 1.6
+func _update_search_ring() -> void:
+	if search_ring == null:
+		return
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	var searching: bool = state == State.SEARCHING
+	search_ring.visible = searching
+	if searching:
+		var pulse: float = 0.5 + 0.5 * sin(Session.sim_time * TAU * SEARCH_RING_PULSE_HZ)
+		search_ring.scale = Vector2.ONE * (1.0 + 0.2 * pulse)
 
 ## Bumble flight (see ROADMAP.md): a small Lissajous drift on visual_root
 ## while the bee is actually flying outdoors, so movement reads as

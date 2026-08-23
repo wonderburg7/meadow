@@ -39,4 +39,12 @@ func _process(_delta: float) -> void:
 		worst_parts.append("%s %dms" % [key, roundi(float(Perf.last_worst_breakdown[key]))])
 	if not worst_parts.is_empty():
 		lines.append("worst frame (%dms): %s" % [roundi(Perf.last_worst_ms), "  ·  ".join(worst_parts)])
+
+	# p95 across the plotted window-worst samples -- the average line
+	# hides a frame-in-twenty spike, and the worst-frame line only ever
+	# shows the single worst one; this is the middle ground, "how bad
+	# does it get regularly" rather than "on average" or "at its worst
+	# ever seen".
+	if not Perf.frame_history.is_empty():
+		lines.append("p95 worst-frame: %dms" % roundi(Perf.percentile_ms(0.95)))
 	text = "\n".join(lines)

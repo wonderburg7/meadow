@@ -59,6 +59,7 @@ static func take_orientation_flight(bee: Node2D) -> void:
 	var point: Vector2 = _random_point_near_hive(bee)
 	bee.forage_start_point = point
 	bee.local_search_anchor = point
+	bee.known_patches.clear()
 	DiagnosticLog.log_orientation_flight(bee)
 	if not bee._is_inside_hive():
 		bee.move_target = point
@@ -99,8 +100,9 @@ static func seek_flower(bee: Node2D) -> void:
 	# regardless of which direction the spiral opens in.
 	bee.search_angle = 0.0
 	bee.search_start_direction = randf() * TAU
-	var anchor: Vector2 = bee.local_search_anchor if bee.local_search_anchor.x != INF else bee.position
-	bee.search_waypoint = _spiral_point(bee, anchor, bee.search_angle)
+	bee.search_tried_patch = false
+	bee.search_origin = bee.local_search_anchor if bee.local_search_anchor.x != INF else bee.position
+	bee.search_waypoint = _spiral_point(bee, bee.search_origin, bee.search_angle)
 	bee.state = State.SEARCHING
 
 
@@ -125,6 +127,17 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 	var turns: float = bee.search_angle / TAU
 	var radius: float = GameConfig.forage_perception_radius * (1.0 + turns * GameConfig.forage_search_spiral_step)
 	if radius > GameConfig.forage_search_radius:
+		# Slice 6 patch memory: one retry from a remembered good spot
+		# before giving this bout up for real -- a bee who's fed
+		# somewhere before shouldn't have to stumble back onto it by
+		# the same odds as anywhere else in the meadow.
+		if not bee.search_tried_patch and not bee.known_patches.is_empty():
+			bee.search_tried_patch = true
+			bee.search_origin = _pick_known_patch(bee)
+			bee.search_angle = 0.0
+			bee.search_start_direction = randf() * TAU
+			bee.search_waypoint = _spiral_point(bee, bee.search_origin, bee.search_angle)
+			return
 		best = nearest_flower(bee, false, GameConfig.forage_search_radius, true)
 		if best != null:
 			_commit_to_flower(bee, best)
@@ -148,8 +161,8 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 ## again next cycle, forever.
 static func advance_search_waypoint(bee: Node2D) -> void:
 	bee.search_angle += GameConfig.forage_search_angle_step
-	var anchor: Vector2 = bee.local_search_anchor if bee.local_search_anchor.x != INF else bee.position
-	bee.search_waypoint = _spiral_point(bee, anchor, bee.search_angle)
+	var origin: Vector2 = bee.search_origin if bee.search_origin.x != INF else bee.position
+	bee.search_waypoint = _spiral_point(bee, origin, bee.search_angle)
 	# The stall watchdog tracks progress toward current_goal(), which just
 	# jumped further away by moving to the next waypoint -- reset its
 	# baseline here, the same way a fresh MOVE_TO_POINT target would, so
@@ -175,6 +188,37 @@ static func _commit_to_flower(bee: Node2D, flower: Node2D) -> void:
 	bee.state = State.TO_FLOWER
 	if GameConfig.floral_constancy_on and bee.is_scouting and bee.scout_species == "":
 		bee.scout_species = flower.species_name
+
+
+## Slice 6 patch memory: append `position` to bee.known_patches (a small
+## ring buffer, most-recent last) unless it's too close to something
+## already remembered -- working one rich cluster shouldn't fill the
+## buffer with near-duplicates of the same spot. Oldest entry evicted
+## once the buffer is full.
+static func _remember_patch(bee: Node2D, position: Vector2) -> void:
+	for known in bee.known_patches:
+		if known.distance_to(position) < GameConfig.known_patch_min_spacing:
+			return
+	bee.known_patches.append(position)
+	while bee.known_patches.size() > int(GameConfig.known_patches_max):
+		bee.known_patches.pop_front()
+
+
+## Recency-weighted random pick from bee.known_patches -- the most
+## recently remembered patch is the most likely, but not the only,
+## choice. Only called with a non-empty array (search_for_flower checks
+## first).
+static func _pick_known_patch(bee: Node2D) -> Vector2:
+	var total := 0.0
+	for i in bee.known_patches.size():
+		total += float(i + 1)
+	var roll := randf() * total
+	var acc := 0.0
+	for i in bee.known_patches.size():
+		acc += float(i + 1)
+		if roll <= acc:
+			return bee.known_patches[i]
+	return bee.known_patches[-1]
 
 
 ## A point on an Archimedean spiral centred on `anchor`: radius grows
@@ -256,7 +300,15 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 
 	var grid = flower_grid(bee)
 	if grid != null:
-		var found = grid.nearest(bee.position, radius, accept)
+		var found: Node2D
+		if GameConfig.probabilistic_choice_on:
+			# grid.near() returns everything in range (plus a few extras
+			# from the touched buckets' corners) rather than stopping at
+			# the first match, so there's a real candidate set to weigh --
+			# see _weighted_flower_choice.
+			found = _weighted_flower_choice(bee, grid.near(bee.position, radius), accept, radius)
+		else:
+			found = grid.nearest(bee.position, radius, accept)
 		if found != null:
 			return found
 
@@ -264,16 +316,68 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 		return null
 
 	# Nothing close enough, or no grid yet. Fall back to the honest scan.
+	var candidates: Array = []
+	for f in bee.get_tree().get_nodes_in_group("flowers"):
+		if is_instance_valid(f) and accept.call(f):
+			candidates.append(f)
+
+	if GameConfig.probabilistic_choice_on:
+		return _weighted_flower_choice(bee, candidates, func(f): return true, INF)
+
 	var best: Node2D = null
 	var best_dist := INF
-	for f in bee.get_tree().get_nodes_in_group("flowers"):
-		if not is_instance_valid(f) or not accept.call(f):
-			continue
+	for f in candidates:
 		var d := bee.position.distance_to(f.position)
 		if d < best_dist:
 			best_dist = d
 			best = f
 	return best
+
+
+## Slice 6 (probabilistic choice): weighted-random pick among every
+## flower in `nodes` that passes `accept` and sits within `radius` --
+## score = (1/(1+distance)) * (1 - heading_weight + heading_weight * alignment),
+## alignment = 0.5+0.5*cos(angle to candidate) in [0,1] against bee.heading.
+## Distance still dominates a candidate directly behind her (alignment
+## floors at 0.5, never zeroes a candidate out), so this reshapes the
+## odds toward "ahead of me" rather than replacing "nearest" outright.
+## Returns null if nothing qualifies.
+static func _weighted_flower_choice(bee: Node2D, nodes: Array, accept: Callable, radius: float) -> Node2D:
+	var heading: Vector2 = bee.heading if bee.heading != Vector2.ZERO else Vector2.RIGHT
+	var heading_weight: float = GameConfig.probabilistic_choice_heading_weight
+	var candidates: Array = []
+	var weights: Array = []
+	var total := 0.0
+	for f in nodes:
+		if not is_instance_valid(f) or not accept.call(f):
+			continue
+		var d: float = bee.position.distance_to(f.position)
+		if d > radius:
+			continue
+		var alignment := 1.0
+		if d > 0.001:
+			alignment = 0.5 + 0.5 * heading.dot((f.position - bee.position) / d)
+		var w: float = (1.0 / (1.0 + d)) * (1.0 - heading_weight + heading_weight * alignment)
+		# Slice 7 (adaptive constancy): a species this bee has been doing
+		# well with recently gets a further boost on top of the
+		# distance/heading score above, rather than replacing it -- a
+		# confident bee still prefers a close, well-aligned flower of her
+		# trusted species over a far one of the same species.
+		if GameConfig.adaptive_constancy_on:
+			var confidence: float = float(bee.species_confidence.get(f.species_name, 0.0))
+			w *= (1.0 + GameConfig.adaptive_constancy_weight * confidence)
+		candidates.append(f)
+		weights.append(w)
+		total += w
+	if candidates.is_empty():
+		return null
+	var roll := randf() * total
+	var acc := 0.0
+	for i in candidates.size():
+		acc += weights[i]
+		if roll <= acc:
+			return candidates[i]
+	return candidates[-1]
 
 
 static func flower_grid(bee: Node2D):
@@ -381,6 +485,13 @@ static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
 static func reject_flower(bee: Node2D) -> void:
 	if bee.current_flower and is_instance_valid(bee.current_flower):
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + REJECTED_AVOID_SECONDS
+		# Slice 7 (adaptive constancy): a rejection erodes trust in this
+		# species specifically, faster than a good visit builds it (see
+		# GameConfig.adaptive_constancy_decay) -- a species that's turned
+		# unrewarding should lose favour quickly.
+		if GameConfig.adaptive_constancy_on:
+			var species: String = bee.current_flower.species_name
+			bee.species_confidence[species] = max(0.0, float(bee.species_confidence.get(species, 0.0)) - GameConfig.adaptive_constancy_decay)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
 	bee.state = State.SEEK_FLOWER
@@ -397,6 +508,7 @@ static func start_collecting(bee: Node2D) -> void:
 		bee.local_search_anchor = bee.current_flower.position
 	else:
 		bee.local_search_anchor = bee.local_search_anchor.lerp(bee.current_flower.position, GameConfig.local_search_drift_rate)
+	_remember_patch(bee, bee.current_flower.position)
 	# Slice 1 trip-timing instrumentation -- gated the same as
 	# trip_start_time/trip_load_amount just below, since those are what
 	# _score_trip needs to actually be running for this to mean anything.
@@ -430,9 +542,26 @@ static func start_collecting(bee: Node2D) -> void:
 	# nectary after landing. Gathering itself happens gradually, in
 	# _collect(), so the flower's readout ticks down while you watch.
 	# Scaled per species -- a fiddly flower takes longer to work over than
-	# a simple open one (Foraging ecology plan, Slice 3).
-	bee.timer = bee.flower_handling_time * bee.current_flower.handling_time_scale
+	# a simple open one (Foraging ecology plan, Slice 3) -- and, under
+	# Slice 7's handling experience, further scaled by how practised this
+	# particular bee is with this particular species.
+	var experience_scale := 1.0
+	if GameConfig.handling_experience_on:
+		experience_scale = _handling_experience_scale(bee, bee.current_flower.species_name)
+	bee.timer = bee.flower_handling_time * bee.current_flower.handling_time_scale * experience_scale
 	bee.state = State.COLLECTING
+
+
+## Slice 7 (handling experience): how much faster this bee handles
+## `species` compared to a first-timer, as a multiplier on handling time
+## (1.0 = no speed-up yet, GameConfig.handling_experience_floor = fully
+## practised). Diminishing returns -- lerps toward the floor as visits
+## approach handling_experience_visits_to_floor rather than a hard
+## cutoff, so the first few visits matter more than the tenth.
+static func _handling_experience_scale(bee: Node2D, species: String) -> float:
+	var visits: float = float(bee.species_experience.get(species, 0))
+	var t: float = clampf(visits / GameConfig.handling_experience_visits_to_floor, 0.0, 1.0)
+	return lerpf(1.0, GameConfig.handling_experience_floor, t)
 
 
 ## Draws resource out of the flower a little each frame. Previously the
@@ -489,6 +618,15 @@ static func finish_collecting(bee: Node2D) -> void:
 		bee.trip_handling_seconds += Session.sim_time - bee._flower_visit_started_at
 		bee._flower_visit_started_at = -1.0
 	if bee.current_flower and is_instance_valid(bee.current_flower):
+		var species: String = bee.current_flower.species_name
+		# Slice 7: a completed handling bout is what "experience"/
+		# "confidence" mean here -- she got far enough into working this
+		# flower to be timed out or run it dry, as opposed to reject_flower
+		# below, which is a species she looked at and turned down.
+		if GameConfig.handling_experience_on:
+			bee.species_experience[species] = int(bee.species_experience.get(species, 0)) + 1
+		if GameConfig.adaptive_constancy_on:
+			bee.species_confidence[species] = minf(1.0, float(bee.species_confidence.get(species, 0.0)) + GameConfig.adaptive_constancy_gain)
 		# stay away until it's had time to fully recharge
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
 		bee.current_flower.release(bee)
@@ -703,6 +841,7 @@ static func _score_trip(bee: Node2D) -> void:
 			if bee.scout_best_start_point.x != INF:
 				bee.forage_start_point = bee.scout_best_start_point
 				bee.local_search_anchor = bee.scout_best_start_point
+				bee.known_patches.clear()
 			if GameConfig.floral_constancy_on:
 				bee.preferred_species = bee.scout_best_species
 		DiagnosticLog.log_scouting_settled(bee)
@@ -872,6 +1011,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		# handful of flowers the mentor is still working.
 		bee.forage_start_point = _jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter)
 		bee.local_search_anchor = bee.forage_start_point
+		bee.known_patches.clear()
 		if GameConfig.floral_constancy_on:
 			bee.preferred_species = mentor.preferred_species
 		# Captured here, before the new patch has had a single trip on it,
@@ -923,6 +1063,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 			bee.preferred_species = ""
 			bee.forage_start_point = Vector2(INF, INF)
 			bee.local_search_anchor = Vector2(INF, INF)
+			bee.known_patches.clear()
 			_leave_hive_and_resume(bee)
 
 

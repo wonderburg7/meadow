@@ -44,3 +44,13 @@ instead.
 ## AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.
+
+## Foraging ecology Slice 7 -- handling experience and adaptive constancy
+- [ ] Watch a forager get visibly faster at working a familiar species
+      (turn on Handling experience in Settings > Flowers).
+- [ ] Watch an unpinned forager (Floral constancy off) gravitate toward
+      whichever species has been paying off, rather than sampling every
+      species equally (turn on Weighted flower choice and Adaptive
+      constancy together -- confidence only has an effect when weighted
+      choice is also on). See `FORAGING_ECOLOGY_PLAN.md`'s Slice 7
+      section for why floral constancy pinned on masks this entirely.

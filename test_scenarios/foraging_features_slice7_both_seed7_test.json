@@ -1,0 +1,28 @@
+{
+  "cells": 15,
+  "nectar_foragers": 8,
+  "pollen_foragers": 3,
+  "nurses": 2,
+  "builders": 2,
+  "miners": 2,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "winter": false,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "orientation_flight_on": true,
+    "scouting_on": true,
+    "auto_recruitment_on": true,
+    "floral_constancy_on": true,
+    "tarsal_markers_on": true,
+    "probabilistic_choice_on": true,
+    "handling_experience_on": true,
+    "adaptive_constancy_on": true
+  },
+  "snapshot_seconds": 20,
+  "stop": {
+    "max_days": 60
+  },
+  "random_seed": 7
+}

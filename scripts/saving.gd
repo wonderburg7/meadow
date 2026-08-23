@@ -261,6 +261,17 @@ func _restore_bees(bees: Array) -> Array:
 		bee.local_search_anchor = Vector2(
 			float(entry.get("search_anchor_x", bee.forage_start_point.x)),
 			float(entry.get("search_anchor_y", bee.forage_start_point.y)))
+		# Older saves (pre-Slice-6) have no known_patches at all -- an
+		# empty array is the correct fallback, not an error, same as a
+		# freshly spawned bee who hasn't fed anywhere yet.
+		bee.known_patches = []
+		for pair in entry.get("known_patches", []):
+			bee.known_patches.append(Vector2(float(pair[0]), float(pair[1])))
+		# Older saves (pre-Slice-7) have neither key at all -- an empty
+		# dictionary is correct, same as a bee who hasn't earned any
+		# experience/confidence yet.
+		bee.species_experience = entry.get("species_experience", {})
+		bee.species_confidence = entry.get("species_confidence", {})
 
 		bee.build_queue = []
 		for pair in entry.get("build_queue", []):

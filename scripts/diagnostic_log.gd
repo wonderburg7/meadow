@@ -690,6 +690,9 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"scouting_on": GameConfig.scouting_on,
 			"auto_recruitment_on": GameConfig.auto_recruitment_on,
 			"tarsal_markers_on": GameConfig.tarsal_markers_on,
+			"probabilistic_choice_on": GameConfig.probabilistic_choice_on,
+			"handling_experience_on": GameConfig.handling_experience_on,
+			"adaptive_constancy_on": GameConfig.adaptive_constancy_on,
 			"scouting_now": scouting_now,
 			"with_preferred_species": by_preferred_species,
 			"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
@@ -711,6 +714,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"preferred_species": Session.crab_spider_preferred_species,
 			"active_spiders": active_spiders,
 		},
+		"performance": _performance_snapshot(world),
 		"role_outcomes": {
 			"brood_feeds_total": _brood_feeds,
 			"brood_hatches_total": _brood_hatches,
@@ -728,6 +732,35 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"marked_soil_blocks": marked_blocks,
 		},
 	}
+
+
+## fps and game_speed are free reads (Engine.get_frames_per_second(),
+## world.current_speed) that cost nothing beyond what main.gd already
+## tracks for its own HUD readout -- included on every snapshot,
+## whatever the "fps" star is set to, since neither needs Perf running.
+## The per-section breakdown only gets added on top when Session.perf_enabled
+## is already true: perf.gd keeps those averages every frame regardless,
+## so this is a dictionary read, not new measurement, and only fires when
+## someone was already paying that cost for the HUD. Together this turns
+## the once-an-hour snapshot into the low-cost way to see a run's
+## performance pattern over its whole length, not just a single instant
+## a human happened to be looking at the "fps" star.
+const PERFORMANCE_SNAPSHOT_SECTIONS := 8
+
+func _performance_snapshot(world: Node2D) -> Dictionary:
+	var perf: Dictionary = {
+		"fps": Engine.get_frames_per_second(),
+		"game_speed": world.current_speed,
+		"paused": world.get_tree().paused,
+	}
+	if Session.perf_enabled:
+		perf["worst_frame_ms"] = Perf.last_worst_ms
+		perf["p95_worst_frame_ms"] = Perf.percentile_ms(0.95)
+		var sections: Dictionary = {}
+		for key in Perf.top_sections(PERFORMANCE_SNAPSHOT_SECTIONS):
+			sections[key] = Perf.averages[key]
+		perf["top_sections_ms"] = sections
+	return perf
 
 
 ## Reuses main.gd's own rate-sampling window (rate_samples: a "t" plus

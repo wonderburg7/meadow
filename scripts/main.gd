@@ -688,7 +688,7 @@ func _sample_fps() -> void:
 	# rebuilding the corner does not, so that part is skipped unless the
 	# readout is actually starred.
 	if Session.pinned_stats.has("fps"):
-		hud.update_fps(Engine.get_frames_per_second(), frame_ms, fps_worst_ms)
+		hud.update_fps(Engine.get_frames_per_second(), frame_ms, fps_worst_ms, current_speed)
 	fps_worst_ms = 0.0
 
 ## Flowers wither on their own; this quietly seeds replacements so the

@@ -128,6 +128,21 @@ const TUNABLES := [
 		"tip": "Foragers compare notes at the hive entrance -- a good performer can pass its start point (and species, if Floral constancy is also on) to a struggling one of the same resource type. Off by default; off means no bee ever waits at the door. Turning this on also turns Auto scouting on.",
 	},
 	{
+		"key": "probabilistic_choice_on", "label": "Weighted flower choice", "toggle": true,
+		"category": "Flowers",
+		"tip": "A forager choosing between several flowers she can see weighs distance and heading (ahead of her over behind her) instead of always taking the literal nearest one. Off by default; off is the old exact nearest-wins behaviour. Missing from this panel since it was built (Slice 6) -- added now because Adaptive constancy below only has a visible effect when this is also on.",
+	},
+	{
+		"key": "handling_experience_on", "label": "Handling experience", "toggle": true,
+		"category": "Flowers",
+		"tip": "A forager gets faster at working a flower species the more she's actually fed from it, up to a practised-expert floor. Off by default; off means handling time is exactly what the species alone sets, with no per-bee learning curve.",
+	},
+	{
+		"key": "adaptive_constancy_on", "label": "Adaptive constancy", "toggle": true,
+		"category": "Flowers",
+		"tip": "A forager grows more confident in a species that keeps paying off, and loses confidence in one that doesn't -- unlike Floral constancy's fixed pin, she can still drift away if a trusted species dries up. Off by default. Only visible when the flower-choice-weighting toggle (probabilistic_choice) is also on -- confidence only ever biases a weighted choice, it never overrides Floral constancy's outright pin.",
+	},
+	{
 		"key": "forage_start_radius", "label": "Start point radius", "step": 20.0, "min": 20.0,
 		"category": "Flowers",
 		"tip": "How far from the hive a new forager's start point (Orientation flight or Auto scouting) is scattered -- how spread apart different foragers' patches are. Not how far a forager will fly to find a flower once she's working an area (that's forage_search_radius, tuned separately and much larger). Only matters when Orientation flight or Auto scouting is on.",

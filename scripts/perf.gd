@@ -102,6 +102,18 @@ func worst_sections(n: int) -> Array:
 	keys.sort_custom(func(a, b): return last_worst_breakdown[a] > last_worst_breakdown[b])
 	return keys.slice(0, n)
 
+## The p-th percentile (0-1) of the plotted window-worst samples
+## (frame_history) -- e.g. percentile_ms(0.95) for p95. Read-only and
+## cheap: at most HISTORY_SLOTS (120) floats, sorted only when asked for,
+## not maintained continuously.
+func percentile_ms(p: float) -> float:
+	if frame_history.is_empty():
+		return 0.0
+	var sorted: Array = frame_history.duplicate()
+	sorted.sort()
+	var idx: int = clampi(int(ceil(p * sorted.size())) - 1, 0, sorted.size() - 1)
+	return sorted[idx]
+
 func _process(_delta: float) -> void:
 	if not Session.perf_enabled:
 		# Dropped rather than carried over: re-enabling later shouldn't

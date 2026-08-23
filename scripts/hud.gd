@@ -1690,9 +1690,13 @@ func update_recruit_gap(text: String) -> void:
 ## fast enough, the current frame time tells you what that average is
 ## made of, and the worst frame in the last second is the one you
 ## actually felt. Smooth play with an occasional 60ms frame reads as
-## choppy while the average still says 60.
-func update_fps(average: int, frame_ms: float, worst_ms: float) -> void:
-	corner_texts["fps"] = "%d fps   %.1f ms   worst %.0f ms" % [average, frame_ms, worst_ms]
+## choppy while the average still says 60. Game speed is folded in too --
+## a slow reading at 4x speed means something different from the same
+## reading at 1x, and this was previously left to be inferred from
+## whichever speed button looked pressed.
+func update_fps(average: int, frame_ms: float, worst_ms: float, game_speed: float) -> void:
+	var speed_text: String = "paused" if is_equal_approx(game_speed, 0.0) else "%.1fx" % game_speed
+	corner_texts["fps"] = "%d fps   %s   %.1f ms   worst %.0f ms" % [average, speed_text, frame_ms, worst_ms]
 	_refresh_corner()
 
 ## `lines` is an array of [text, severity] pairs from main.gd.

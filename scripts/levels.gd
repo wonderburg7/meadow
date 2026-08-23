@@ -68,6 +68,17 @@ const LEVELS := {
 		"stock": {"nectar": 4, "pollen": 2},
 		"unlocks": [], "win_conditions": [],
 	},
+	# 30-bee colony, three ring-layers of comb (18 cells) with half of them
+	# stocked -- 6 nectar-full, 2 pollen-full, 1 honey-full, the closest
+	# whole-cell approximation to a 2/3 : 1/6 : 1/6 split of the 9 filled
+	# cells (exact would be 6 / 1.5 / 1.5). Same role mix as
+	# test_scenarios/colony_30_bees_test.json.
+	6: {
+		"cells": 18, "nectar_foragers": 14, "pollen_foragers": 6,
+		"nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
+		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
+		"unlocks": [], "win_conditions": [],
+	},
 }
 
 ## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md). main.gd's

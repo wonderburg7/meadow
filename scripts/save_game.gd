@@ -92,6 +92,21 @@ const SAVED_SETTINGS := [
 	# predators_on/attack chance survive an ordinary save/load too,
 	# which they didn't before.
 	"predators_on", "crab_spider_attack_success_chance",
+	# Slices 5/6 (local search, probabilistic choice/patch memory) were
+	# missing from this list entirely, same gap as orientation/scouting
+	# and the winter numbers above -- discovered while adding Slice 7's
+	# own new keys below. Added together so tuning any of these in the
+	# panel, or turning them on via a scenario's config_overrides, now
+	# actually survives a save/load.
+	"forage_perception_radius", "local_search_drift_rate",
+	"forage_search_spiral_step", "forage_search_angle_step",
+	"probabilistic_choice_on", "probabilistic_choice_heading_weight",
+	"known_patches_max", "known_patch_min_spacing",
+	# Slice 7 (handling experience, adaptive constancy).
+	"handling_experience_on", "handling_experience_floor",
+	"handling_experience_visits_to_floor",
+	"adaptive_constancy_on", "adaptive_constancy_gain",
+	"adaptive_constancy_decay", "adaptive_constancy_weight",
 ]
 
 static func has_save(path: String = SAVE_PATH) -> bool:
@@ -244,6 +259,15 @@ static func _bees_data(world) -> Array:
 			"start_y": b.forage_start_point.y,
 			"search_anchor_x": b.local_search_anchor.x,
 			"search_anchor_y": b.local_search_anchor.y,
+			# Slice 6 patch memory: array of [x, y] pairs, most recent
+			# last, same order as bee.known_patches and the same [x, y]
+			# shape _hex_list already uses below.
+			"known_patches": _point_list(b.known_patches),
+			# Slice 7: plain String->number dictionaries, already
+			# JSON-safe as-is -- no [x,y]-pair helper needed like the
+			# points above.
+			"species_experience": b.species_experience,
+			"species_confidence": b.species_confidence,
 			# Bee individuality -- see BEE_INDIVIDUALITY_PLAN.md. Without
 			# these, reloading a save would silently re-roll every bee's
 			# name, fact and trait, which breaks the whole point.
@@ -272,6 +296,14 @@ static func _hex_list(hexes: Array) -> Array:
 	var out: Array = []
 	for hex in hexes:
 		out.append([hex.x, hex.y])
+	return out
+
+## Same [x, y]-pairs shape as _hex_list above, for a plain Array[Vector2]
+## rather than hex coordinates -- see bee.known_patches (Slice 6).
+static func _point_list(points: Array) -> Array:
+	var out: Array = []
+	for p in points:
+		out.append([p.x, p.y])
 	return out
 
 ## Cells are referred to by their tile, not by node, since the nodes are

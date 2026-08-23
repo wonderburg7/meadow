@@ -100,10 +100,12 @@ var forage_search_radius: float = 900.0
 ## unique_flowers_visited on both seeds, at a similar or lower
 ## stall_recoveries count than 250 -- a tighter radius meant SEARCHING
 ## fired often enough to cost real throughput without a matching gain in
-## how much ground actually got covered. Not swept above 400; there may
-## be a better point further out, closer to the old 900px omniscient
-## radius, but 400 is the one with real data behind it.
-var forage_perception_radius: float = 400.0
+## how much ground actually got covered.
+## Adjusted 23 Aug 2026, Dave's hands-on playtest steer (not a fresh
+## simulation sweep): confirmed foragers pick flowers ahead of them more
+## than not and the SEARCHING spiral behaves as expected, but the vision
+## field read as too generous -- taken down ~20% (400 -> 320).
+var forage_perception_radius: float = 320.0
 
 ## How fast bee.local_search_anchor drifts toward a flower she's just
 ## committed to (lerp weight per commit, not per second) -- see
@@ -127,12 +129,88 @@ var local_search_drift_rate: float = 0.3
 var forage_search_spiral_step: float = 1.0
 var forage_search_angle_step: float = TAU / 6.0
 
+## Slice 6: weighted probabilistic flower choice instead of always
+## taking the literal nearest accepted candidate out of nearest_flower's
+## grid query. Off by default, per the toggle tree's own "off means
+## foraging works exactly as it does with none of this present"
+## convention above -- off keeps today's exact nearest-wins behaviour.
+var probabilistic_choice_on: bool = false
+## How much heading alignment matters relative to raw distance when
+## probabilistic_choice_on scores a candidate:
+## score = (1/(1+distance)) * (1 - heading_weight + heading_weight * alignment),
+## alignment in [0,1] via 0.5+0.5*cos(angle to candidate). 0 = distance
+## only (same ranking as nearest-wins, just sampled rather than argmax'd);
+## 1 = heading only. Provisional, pending Slice 6 task 4's simulation
+## sweep -- see FORAGING_ECOLOGY_PLAN.md.
+var probabilistic_choice_heading_weight: float = 0.5
+
+## Slice 6 patch memory: a small ring buffer of a bee's own past
+## fed-from locations, consulted only when a SEARCHING bout gives up and
+## needs a fresh anchor, before falling back to a full meadow scan --
+## see bee.known_patches. Provisional size, pending Slice 6 task 4.
+var known_patches_max: float = 4.0
+## A new patch is only remembered if it's at least this far from every
+## patch already known, so working one rich cluster doesn't fill the
+## ring buffer with near-duplicates of the same spot. Provisional,
+## pending Slice 6 task 4.
+var known_patch_min_spacing: float = 150.0
+
 ## When on, a forager can be given a fixed species preference (see the
 ## "Set preference" control in a forager's selection panel) and will
 ## only ever visit that species from then on, even if it means walking
 ## past a nearer flower of something else. Real bees show this kind of
 ## floral constancy -- sticking with one species while it's rewarding.
 var floral_constancy_on: bool = false
+
+## Slice 7 (handling experience): a forager gets faster at handling a
+## species the more she's actually fed from it -- see
+## bee.species_experience and start_collecting/finish_collecting in
+## bee_foraging.gd. Off by default; off means every species'
+## handling_time_scale is used exactly as Slice 3 set it, with no
+## per-bee learning curve on top. Independent of Floral constancy/Auto
+## scouting -- experience is tracked for any species a bee happens to
+## visit, pinned or not.
+var handling_experience_on: bool = false
+## How much a fully-experienced bee's handling time shrinks, as a
+## multiplier stacked on top of the species' own handling_time_scale
+## (1.0 = no change at all; 0.75 = 25% faster at the floor). Provisional,
+## pending Slice 7's simulation sweep.
+var handling_experience_floor: float = 0.75
+## How many visits to one species it takes a bee to reach
+## handling_experience_floor, on a diminishing-returns curve (lerp toward
+## the floor by visits/this, capped at 1.0) rather than a hard cutoff.
+## Provisional, pending Slice 7's simulation sweep.
+var handling_experience_visits_to_floor: float = 10.0
+
+## Slice 7 (adaptive constancy): a continuous per-bee-species confidence
+## score that grows with a completed handling bout and decays on
+## rejection, nudging probabilistic_choice_on's weighted flower choice
+## toward a species that's been paying off -- see bee.species_confidence.
+## A genuinely different mechanism from Floral constancy above: that pins
+## a bee to one species outright (she never visits anything else again);
+## this only ever biases the odds, so a confident bee can still drift to
+## a new species if the one she trusts dries up. Off by default,
+## independent toggle so both can be A/B compared. Only has a visible
+## effect when probabilistic_choice_on is also on -- that's the only
+## place a candidate is ever weighted rather than argmax'd.
+var adaptive_constancy_on: bool = false
+## Confidence gained (0..1 scale, capped at 1.0) for a species on every
+## completed handling bout (finish_collecting) of that species.
+## Provisional, pending Slice 7's simulation sweep.
+var adaptive_constancy_gain: float = 0.12
+## Confidence lost (floored at 0.0) for a species on every rejection
+## (reject_flower) of that species. Larger than the gain by design -- a
+## forager should be quicker to give up on a species turning bad than she
+## was to trust it in the first place. Provisional, pending Slice 7's
+## simulation sweep.
+var adaptive_constancy_decay: float = 0.2
+## How much confidence multiplies a candidate's weighted-choice score
+## under probabilistic_choice_on: score *= (1.0 + this * confidence). 0 =
+## confidence tracked but never affects choice; higher values make a
+## confident species increasingly likely to win over an equally
+## close/aligned candidate of a different species. Provisional, pending
+## Slice 7's simulation sweep.
+var adaptive_constancy_weight: float = 0.5
 
 ## Foraging-automation dependency tree (see SCOUTING_TOGGLE_PLAN.md):
 ## Orientation flight (tier 0, a new forager's one semi-random start-point

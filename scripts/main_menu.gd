@@ -69,6 +69,12 @@ const STAGES := [
 		"title": "Scenario 3 — In full swing",
 		"blurb": "Twenty-two foragers (sixteen on nectar, six on pollen), four nurses, three comb workers and three miners already digging. Twelve cells, four of them full of nectar and two of pollen, so the queen can lay from the first second. A colony big enough that what to do with it is the question.",
 	},
+	{
+		"level": 6,
+		"group": "starter",
+		"title": "Scenario 4 — Thirty strong",
+		"blurb": "Thirty bees: twenty foragers (fourteen on nectar, six on pollen), three nurses, three comb workers, two miners and two honey makers. Eighteen cells in three ring-layers around the centre, half of them already stocked with nectar, pollen and honey.",
+	},
 ]
 
 ## Shown above each group of STAGES rows, in the same order the groups
