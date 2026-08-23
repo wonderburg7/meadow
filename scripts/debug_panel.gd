@@ -1249,17 +1249,49 @@ func _make_row(entry: Dictionary) -> Control:
 	_style_button(minus)
 	minus.text = "-"
 	minus.custom_minimum_size = Vector2(26, 24)
-	minus.pressed.connect(func(): _adjust(entry, -entry.step))
+	_wire_repeat_button(minus, entry, -1.0)
 	row.add_child(minus)
 
 	var plus := Button.new()
 	_style_button(plus)
 	plus.text = "+"
 	plus.custom_minimum_size = Vector2(26, 24)
-	plus.pressed.connect(func(): _adjust(entry, entry.step))
+	_wire_repeat_button(plus, entry, 1.0)
 	row.add_child(plus)
 
 	return row
+
+## Repeat tuning for held -/+ buttons: how long to wait before the first
+## repeat, the fastest interval it accelerates to, and how long it takes
+## to get there. Lets a large-range setting (Flowers, Cell capacity...)
+## be held down rather than clicked dozens of times.
+const REPEAT_INITIAL_DELAY := 0.4
+const REPEAT_MIN_INTERVAL := 0.03
+const REPEAT_ACCEL_SECONDS := 2.0
+
+## Wires a +/- button so a single click steps once as before, but holding
+## it down repeats the step, speeding up the longer it's held.
+func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void:
+	var timer := Timer.new()
+	timer.one_shot = true
+	button.add_child(timer)
+	var start_ms := 0
+
+	var schedule_next := func():
+		var held_seconds: float = (Time.get_ticks_msec() - start_ms) / 1000.0
+		var t: float = clamp(held_seconds / REPEAT_ACCEL_SECONDS, 0.0, 1.0)
+		timer.start(lerp(REPEAT_INITIAL_DELAY, REPEAT_MIN_INTERVAL, t))
+
+	timer.timeout.connect(func():
+		_adjust(entry, direction * entry.step)
+		schedule_next.call()
+	)
+	button.pressed.connect(func(): _adjust(entry, direction * entry.step))
+	button.button_down.connect(func():
+		start_ms = Time.get_ticks_msec()
+		timer.start(REPEAT_INITIAL_DELAY)
+	)
+	button.button_up.connect(func(): timer.stop())
 
 ## An on/off setting rather than a number, shown as a checkbox. Takes
 ## effect immediately -- no Restart Run needed.

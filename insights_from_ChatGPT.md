@@ -9,8 +9,29 @@ as prose history; Git already preserves that history. Keep each entry to
 evidence, consequence and next action. Do not add implementation diaries or
 status tables.
 
-Last refreshed: 22 Aug 2026, from the day 1-116 long run
-`session_1787414045.jsonl` and its day-112 performance overlay.
+Simulation findings last refreshed: 22 Aug 2026, from the day 1-116 long run
+`session_1787414045.jsonl` and its day-112 performance overlay. Workflow
+findings last refreshed: 23 Aug 2026.
+
+## Workflow/tooling
+
+### P0. The agent-routing layer has drifted from the repository
+
+**Evidence:** three `.claude/rules/` files name root-level `.gd` paths although
+the code lives in `scripts/`; the performance rule still says the fog baseline
+is pending although it has now been measured; `CLAUDE.md`'s hand-maintained
+line counts are substantially stale; and `NEXTSTEPS.md` has four long items
+despite defining a one-to-three-item limit. The global Codex default is Sol
+with high reasoning even for routine tasks.
+
+**Consequence:** intended rules may not auto-load, stale status can steer work
+incorrectly, and simple review/extraction work uses more context and reasoning
+than it needs.
+
+**Recommendation:** implement the ordered maintenance pass in
+`CHATGPT_WORKFLOW_AUDIT.md`: repair and verify rule scopes first, then trim the
+queue and stale plan headers, add one portable verification command, and use a
+routine Terra/medium Codex profile with Sol/high as an explicit escalation.
 
 ## Highest-value work
 
