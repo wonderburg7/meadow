@@ -1,9 +1,9 @@
 ---
 paths:
-  - "fog_of_war.gd"
-  - "perf.gd"
-  - "bee_movement.gd"
-  - "spatial_grid.gd"
+  - "scripts/fog_of_war.gd"
+  - "scripts/perf.gd"
+  - "scripts/bee_movement.gd"
+  - "scripts/spatial_grid.gd"
 ---
 
 # Measure first on the hot path
