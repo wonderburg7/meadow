@@ -108,6 +108,9 @@ extends Node
 ## tiles), so consecutive discs overlap almost entirely and only the thin
 ## edge between them needs touching.
 
+const Shapes = preload("res://scripts/shapes.gd")
+const HIVE_OPEN_SPACE_REVEAL_BLOCKS := 1.8
+
 var main: Node2D
 
 ## A run-local equivalent of GameConfig.fog_permanent_reveal. Challenges
@@ -146,6 +149,9 @@ var _hive_mask_texture: ImageTexture
 var _hive_origin_tile: Vector2i = Vector2i.ZERO
 var _hive_mask_dirty: bool = false
 var _hive_explored: Dictionary = {}
+## "queen" during the opening dig, then "open_space" after breakthrough.
+## Empty outside Challenge 1.
+var hive_reveal_mode: String = ""
 var _last_hive_reveal_pos: Vector2 = Vector2(INF, INF)
 var _last_hive_cam_pos: Vector2 = Vector2(INF, INF)
 var _last_hive_cam_zoom: float = -1.0
@@ -328,19 +334,61 @@ func permanent_reveal_enabled() -> bool:
 func _update_hive_fog() -> void:
 	if _hive_layer == null:
 		return
-	_hive_layer.visible = permanent_reveal_override
-	if not permanent_reveal_override or not is_instance_valid(main.queen) or main.queen.get_parent() != main.hive_root:
+	_hive_layer.visible = permanent_reveal_override and hive_reveal_mode != ""
+	if not _hive_layer.visible:
 		return
-	var queen_pos: Vector2 = main.queen.position
-	if _last_hive_reveal_pos.x == INF or queen_pos.distance_to(_last_hive_reveal_pos) >= RELIGHT_DISTANCE:
-		_reveal_hive_around(queen_pos, GameConfig.fog_reveal_radius)
-		_last_hive_reveal_pos = queen_pos
+	if hive_reveal_mode == "queen" and is_instance_valid(main.queen) and main.queen.get_parent() == main.hive_root:
+		var queen_pos: Vector2 = main.queen.position
+		if _last_hive_reveal_pos.x == INF or queen_pos.distance_to(_last_hive_reveal_pos) >= GameConfig.hive_cell_size * 0.5:
+			# Diameter equals one hex's height to within the placeholder
+			# geometry's rounding, so the trail cannot expose the cavity early.
+			_reveal_hive_around(queen_pos, GameConfig.hive_cell_size)
+			_last_hive_reveal_pos = queen_pos
 	var cam: Camera2D = main.hive_camera
 	var camera_changed: bool = cam.position != _last_hive_cam_pos or cam.zoom.x != _last_hive_cam_zoom
 	if main.in_hive_view and (_hive_mask_dirty or camera_changed):
 		_hive_layer.queue_redraw()
 		_last_hive_cam_pos = cam.position
 		_last_hive_cam_zoom = cam.zoom.x
+
+func set_hive_reveal_mode(mode: String) -> void:
+	if mode == hive_reveal_mode:
+		return
+	if mode not in ["", "queen", "open_space"]:
+		push_error("fog_of_war: unknown hive reveal mode '%s'" % mode)
+		return
+	hive_reveal_mode = mode
+	_last_hive_reveal_pos = Vector2(INF, INF)
+	if mode == "open_space":
+		_rebuild_hive_open_space_mask()
+	else:
+		_clear_hive_mask()
+
+## Called after a soil block is actually removed. No per-frame topology scan:
+## an open-space mask is rebuilt only on this causal event (or mode entry).
+func notify_hive_open_space_changed() -> void:
+	if hive_reveal_mode == "open_space":
+		_rebuild_hive_open_space_mask()
+
+func _clear_hive_mask() -> void:
+	_hive_explored.clear()
+	_hive_mask_image.fill(Color8(MASK_UNEXPLORED, MASK_UNEXPLORED, MASK_UNEXPLORED, 255))
+	_hive_mask_dirty = true
+
+func _rebuild_hive_open_space_mask() -> void:
+	_clear_hive_mask()
+	var reach: int = int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
+	# About 1.8 block widths: enough to show the whole first soil block
+	# bordering floor and a slice of the one behind it.
+	var reveal_radius: float = GameConfig.hive_cell_size * 2.0 * HIVE_OPEN_SPACE_REVEAL_BLOCKS
+	for ring in range(reach + 1):
+		for hex in Shapes.hex_ring(ring):
+			if not main.hive.tile_is_walkable(hex):
+				continue
+			var point: Vector2 = main.hive.comb_centre + Shapes.hex_to_pixel(
+				hex.x, hex.y, GameConfig.hive_cell_spacing
+			)
+			_reveal_hive_around(point, reveal_radius)
 
 func _reveal_hive_around(pos: Vector2, radius: float) -> void:
 	for tile in _disc(pos, radius):
@@ -354,7 +402,7 @@ func _reveal_hive_around(pos: Vector2, radius: float) -> void:
 		_hive_mask_dirty = true
 
 func _draw_hive_fog() -> void:
-	if not main.in_hive_view or not permanent_reveal_override:
+	if not main.in_hive_view or not permanent_reveal_override or hive_reveal_mode == "":
 		return
 	if _hive_mask_dirty:
 		_hive_mask_texture.update(_hive_mask_image)

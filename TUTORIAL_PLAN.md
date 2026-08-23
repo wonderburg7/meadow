@@ -165,8 +165,9 @@ never interrupts play.
 
 **UI behaviour.**
 
-- Appears bottom-right: top half of body plus a speech bubble.
-- Never pauses the game. Small screen footprint. Fully ignorable.
+- Appears bottom-right: top half of body plus a conspicuous 360px-wide
+  speech bubble with 17px dialogue text.
+- Never pauses the game. Fully ignorable.
 - Speech bubble stays a few seconds, longer while hovered.
 - Clicking Dr Gallerin re-shows the most recent message, with options to
   dismiss it and to turn off future appearances.

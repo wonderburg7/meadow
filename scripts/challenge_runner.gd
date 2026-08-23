@@ -537,6 +537,8 @@ func _stage_unlock_keys(entries: Array) -> Array:
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
+	if Session.starting_level == 1:
+		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
@@ -613,6 +615,7 @@ func debug_advance_stage() -> void:
 func _complete() -> void:
 	active = false
 	queen_command_locked = false
+	main.fog_of_war.set_hive_reveal_mode("")
 	main.fog_of_war.permanent_reveal_override = false
 	PlayerProfile.mark_challenge_complete(Session.starting_level)
 	main.stage_gate.stop()

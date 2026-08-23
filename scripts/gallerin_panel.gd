@@ -26,7 +26,8 @@ const Shapes = preload("res://scripts/shapes.gd")
 
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
-const BUBBLE_WIDTH := 260.0
+const BUBBLE_WIDTH := 360.0
+const BUBBLE_TEXT_SIZE := 17
 
 ## The reserved bottom-right footprint every other tray subtracts --
 ## the bubble, not the icon, is the widest thing that can appear in this
@@ -143,8 +144,8 @@ func _build_bubble() -> void:
 
 	_bubble_label = Label.new()
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 20.0, 0)
-	_bubble_label.add_theme_font_size_override("font_size", 13)
+	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 28.0, 0)
+	_bubble_label.add_theme_font_size_override("font_size", BUBBLE_TEXT_SIZE)
 	column.add_child(_bubble_label)
 
 	var row := HBoxContainer.new()
