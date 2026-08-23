@@ -1,9 +1,9 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Not built yet. Written for a future Claude Code session (or several) to
-execute bundle by bundle, each bundle sized for one session with its own
-check before the next starts — same shape as `CRAB_SPIDER_PLAN.md`'s
-"Implementation bundles".
+Implementation in progress on `codex/meadow-work`. Bundles A-C are
+built as of 23 Aug 2026; Bundles D-H remain. Each bundle is sized for one
+session with its own check before the next starts — the same shape as
+`CRAB_SPIDER_PLAN.md`'s "Implementation bundles".
 
 **Source**: a design pass with Dave, 22 Aug 2026, plus three scope
 decisions he made that morning (recorded in "Decisions resolved" below).
@@ -132,6 +132,22 @@ the debug panel (even with placeholder goals) without getting stuck.
 
 ## Bundle B — Locked-down opening: auto-mine, restricted selection
 
+**Built and hands-on checked on the Codex branch, 23 Aug 2026.** Four of
+the inner 15 entrance tiles are temporarily sealed for Challenge 1. Their
+per-block `mine_time_override` values total
+30 seconds; the queen follows the ordinary mining states through them
+without changing role. `challenge_runner.gd` owns the queen command lock,
+`input_selection.gd` rejects her right-click commands, and `hud.gd` keeps
+the selection summary while suppressing only the command tray. Fog uses a
+run-local permanent-reveal override rather than writing `GameConfig`, with
+a separate hive mask because the ordinary fog renderer is meadow-only.
+During 1.1 the queen paints a tight trail with twice the original reveal
+radius, and the already-travelled tunnel from the hive exit to her starting
+position is revealed immediately. Entering 1.2 rebuilds the mask from
+walkable hive tiles instead, revealing about 1.8 block widths beyond each
+open tile; later rebuilds occur only when mining actually removes another
+soil block. The meadow fog path is unchanged.
+
 **Goal**: stages 1.1-1.2. Queen starts at world_building's tunnel
 geometry, **2/3 of the way** from the outside to the cavity (compute
 this off `_entrance_tiles`' known length). Dr Gallerin gives a
@@ -174,6 +190,15 @@ cavity opens.
 ---
 
 ## Bundle C — Reusable "visit N flagged points" + hive inspection + first cell
+
+**Built and engine-checked on the Codex branch, 23 Aug 2026.** Stage 1.4
+now initializes three ordered inspection stops on guaranteed-open hive hexes.
+The shared marker advances only when the queen reaches the current stop; each
+point carries its own arrival radius, and the helper accepts a marker parent
+so Bundle D can reuse it in the meadow. A disposable Godot scene verified that
+visiting point 3 early makes no progress and that 1 -> 2 -> 3 completes and
+hides the marker. Stage 1.5 still uses the existing direct queen build button,
+15-second per-cell override and centre marker without a parallel build path.
 
 **Goal**: stages 1.4-1.5. Generalise the existing single-marker "move to
 here" pattern (old 1.2's cavity-centre check, `_update_marker()`) into a

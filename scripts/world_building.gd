@@ -590,6 +590,7 @@ func finish_mining(block: Node2D) -> void:
 	var centre_local = _hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
 	main.hive.remove_block(block, func(hex: Vector2i): _add_floor_tile(hex, centre_local, spacing))
+	main.fog_of_war.notify_hive_open_space_changed()
 
 func _obstacle_at(point: Vector2) -> Node2D:
 	for o in main.obstacles:

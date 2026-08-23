@@ -310,6 +310,10 @@ var soil_mark_btn: Button
 var soil_clear_btn: Button
 var speed_buttons: Array = []
 var shown_bees: Array = []
+## Challenge-owned command restrictions are passed in as bee references.
+## Their summary remains useful, but the command tray is suppressed whenever
+## a locked bee is in the selection. Empty outside the locked tutorial beat.
+var command_locked_bees: Array = []
 
 ## The bottom-centre command tray (UI_PLAN.md section 5): three ranked
 ## columns -- Job (change role), Focus (the current sub-mode) and Orders
@@ -1812,7 +1816,7 @@ func update_selection(bees: Array) -> void:
 	active_summary_kind = ""
 	soil_summary_row.visible = false
 	selection_panel.visible = not bees.is_empty()
-	command_tray.visible = not bees.is_empty()
+	command_tray.visible = not bees.is_empty() and not _selection_has_command_lock(bees)
 	# Same thing for the tray itself -- a bee selection always wins over
 	# a cell selection's content, see show_cell_popup.
 	cell_group.visible = false
@@ -1822,6 +1826,13 @@ func update_selection(bees: Array) -> void:
 
 	_rebuild_role_controls(bees)
 	_refresh_selection_text()
+
+func _selection_has_command_lock(bees: Array) -> bool:
+	command_locked_bees = command_locked_bees.filter(func(b): return is_instance_valid(b))
+	for bee in bees:
+		if command_locked_bees.has(bee):
+			return true
+	return false
 
 ## The command tray's controls, rebuilt from scratch whenever the
 ## selection changes.
@@ -2301,6 +2312,14 @@ func set_allowed_role_keys(keys: Array) -> void:
 	allowed_role_keys = keys
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+
+## The Challenge runner owns the lock decision; HUD only applies it to the
+## two already-separate pieces of selection UI. Re-applying the current
+## selection makes a stage transition lift the tray immediately.
+func set_command_locked_bees(bees: Array) -> void:
+	command_locked_bees = bees
+	if not shown_bees.is_empty():
+		update_selection(shown_bees)
 
 func set_allowed_mode_keys(keys: Array) -> void:
 	allowed_mode_keys = keys

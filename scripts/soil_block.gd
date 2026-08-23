@@ -23,6 +23,11 @@ var mine_progress: float = 0.0
 var marked_for_mining: bool = false
 var miners: Array = []
 
+## -1 means "use GameConfig.block_mine_time as normal". Challenge 1's
+## opening gives only its temporary tunnel blocks a shorter time, so the
+## tutorial pace cannot leak into ordinary mining or another run.
+var mine_time_override: float = -1.0
+
 ## True only for blocks touching open space -- you can't mark a block
 ## buried behind other soil, because nothing could reach it.
 var is_edge: bool = false
@@ -96,10 +101,13 @@ func add_mine_progress(delta: float) -> bool:
 		return false
 	mine_progress += delta
 	_refresh()
-	return mine_progress >= GameConfig.block_mine_time
+	return mine_progress >= effective_mine_time()
+
+func effective_mine_time() -> float:
+	return mine_time_override if mine_time_override > 0.0 else GameConfig.block_mine_time
 
 func mine_fraction() -> float:
-	return clamp(mine_progress / max(0.001, GameConfig.block_mine_time), 0.0, 1.0)
+	return clamp(mine_progress / max(0.001, effective_mine_time()), 0.0, 1.0)
 
 func _refresh() -> void:
 	if not marked_for_mining:

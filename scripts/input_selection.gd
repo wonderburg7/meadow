@@ -423,16 +423,18 @@ const EXIT_CLICK_RADIUS := 26.0
 func _issue_command(world_point: Vector2) -> void:
 	if main.selected_bees.is_empty():
 		return
+	var commandable: Array = main.selected_bees.filter(
+		func(b): return is_instance_valid(b) and not main.challenge_runner.is_bee_command_locked(b)
+	)
+	if commandable.is_empty():
+		return
 	_show_click_marker(world_point)
 	if main.in_hive_view and world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
-		for b in main.selected_bees:
-			if is_instance_valid(b):
-				b.command_exit_hive()
+		for b in commandable:
+			b.command_exit_hive()
 		return
 	var flower = main.world_building._flower_at(world_point) if not main.in_hive_view else null
-	for b in main.selected_bees:
-		if not is_instance_valid(b):
-			continue
+	for b in commandable:
 		if flower:
 			b.command_collect_from(flower)
 		else:
