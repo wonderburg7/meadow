@@ -377,12 +377,12 @@ func record_lay(cell: Node2D) -> void:
 	if not is_instance_valid(cell) or not cell.is_nursery_cell():
 		return
 	var weights := _tier_weights()
-	var total: float = weights[0] + weights[1] + weights[2]
-	if total <= 0.0:
-		total = 1.0
+	var weight_sum: float = weights[0] + weights[1] + weights[2]
+	if weight_sum <= 0.0:
+		weight_sum = 1.0
 	for tier in range(3):
 		_tier_credit[tier] += weights[tier]
-	_tier_credit[clampi(cell.nursery_priority, 0, 2)] -= total
+	_tier_credit[clampi(cell.nursery_priority, 0, 2)] -= weight_sum
 	_brood_pointer += 1
 
 ## How many zone cells sit in each tier, and how many of those are free,
