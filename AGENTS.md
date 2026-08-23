@@ -10,8 +10,8 @@ The primary Meadow worktree and `master` belong to Claude Project and Claude
 Code. ChatGPT/Codex must treat that worktree as advisory-only. Codex may
 implement an explicitly assigned task only from a separate worktree on a
 `codex/...` branch, after satisfying every isolation and overlap check in
-`CHATGPT.md`. It must commit there for Claude to review and must not merge into
-`master` itself.
+`CHATGPT.md`. It must commit there for Claude to integrate and must not merge
+into `master` itself.
 
 Do not use `NEXTSTEPS.md` as ChatGPT's work queue and do not implement work
 from Claude plans. `NEXTSTEPS.md` is the canonical queue for integrated
@@ -35,5 +35,7 @@ short next-steps hand-off as the only record.
 
 Claude Project and Claude Code should continue to use `CLAUDE.md` and
 `NEXTSTEPS.md` as their project instructions and canonical integrated work
-queue, and remain responsible for reviewing Codex commits and recording the
-resulting state when integrating them.
+queue. When integrating Codex commits, use `CHATGPT.md`'s low/medium/high risk
+protocol: low-risk evidence-backed changes do not require a full diff reread;
+medium-risk review is selective; high-risk changes receive full review.
+Record the resulting state only after integration.

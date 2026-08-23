@@ -12,7 +12,7 @@ ChatGPT/Codex may work with Meadow in either of two modes:
   files.
 - **Isolated implementation mode:** implement an explicitly assigned task in
   a dedicated Git worktree and `codex/...` branch, then hand committed changes
-  to Claude for review and integration.
+  to Claude for risk-proportional integration.
 
 Claude Project and Claude Code own the primary Meadow worktree and the
 integration branch. Codex must never implement directly in Claude's worktree.
@@ -50,8 +50,8 @@ part of that change. In isolated implementation mode, Codex should update the
 relevant README, design, architecture, testing and feature-plan Markdown files
 on its `codex/...` branch when leaving them unchanged would make the branch
 incomplete or inaccurate. Those documentation edits travel in the same focused
-commit or commit series as the implementation and are reviewed before
-integration.
+commit or commit series as the implementation and follow the same
+risk-proportional integration path.
 
 Canonical coordination files describe the state of the integrated `master`
 branch, so their ownership is stricter:
@@ -73,6 +73,50 @@ branch, so their ownership is stricter:
 In short: an implementation branch documents what it changes; the integrator
 records what is true on `master`.
 
+### Risk-proportional hand-off and integration
+
+Claude does not need to perform a full model review of every Codex diff. Codex
+must classify the completed branch at the lowest tier whose conditions it
+meets, explain the classification and provide reproducible evidence. Claude
+uses that tier to spend review effort where it can change the outcome:
+
+- **Low risk:** documentation, tests, fixtures, tooling or a small mechanical
+  change with no intended runtime-behaviour change; no save-format,
+  cross-system, balance, hot-path, dependency, generated-file or player-facing
+  impact; no ownership overlap or merge conflict; and every relevant
+  deterministic check passes. Claude may use the fast path: verify the commit
+  and clean integration state, read the hand-off and `git show --stat`, rerun a
+  cheap check if useful, then integrate without rereading the full diff.
+- **Medium risk:** a bounded gameplay or UI change with clear ownership,
+  focused tests and no high-risk trigger. Claude reviews only changed
+  interfaces, surprising logic, reported weak spots and any manual acceptance
+  requirement before integrating.
+- **High risk:** save/schema/migration work, simulation architecture,
+  cross-system behaviour, balance-sensitive logic, performance hot paths,
+  dependencies, broad refactors, large/generated diffs, unresolved failures,
+  ownership overlap or merge conflicts. Claude performs a full diff review and
+  the relevant validation before integration.
+
+Uncertainty alone is not a reason to default everything to high risk: use the
+lowest tier supported by the concrete diff and evidence. Escalate when a named
+trigger is present, checks are missing or failing, the hand-off does not match
+the diff, or integration reveals a conflict. Claude may raise a tier, but should
+state the specific trigger rather than repeat Codex's work by default.
+
+Every implementation hand-off must contain only the information needed to
+integrate it:
+
+1. task and exact scope;
+2. baseline and final commit hash, plus changed-file summary;
+3. checks run and their results;
+4. risk tier and short evidence-based reason; and
+5. remaining risk, manual check or explicit `none`.
+
+Deterministic check output and the committed diff are the evidence; a second
+agent need not re-derive the implementation narrative. After integration,
+Claude updates canonical project-state files only when the merged state makes
+that necessary.
+
 Codex must not:
 
 - edit files in the primary worktree, switch the primary worktree's branch or
@@ -86,8 +130,9 @@ Codex must not:
 - run broad formatters, generators or cleanup commands that affect files
   outside the assigned task.
 
-Claude remains responsible for reviewing and merging or cherry-picking Codex
-commits into the integration branch.
+Claude remains responsible for merging or cherry-picking Codex commits into
+the integration branch, using the risk tier above rather than applying a
+blanket full-review requirement.
 
 ### Worktree setup exception
 
@@ -96,8 +141,9 @@ may work from the primary worktree only to:
 
 - inspect repository and worktree state;
 - edit and commit `CHATGPT.md` and `AGENTS.md` when the request includes a
-  policy change, plus directly affected `CHATGPT_*.md` hand-offs when Dave
-  asks for the relevant policy documentation to be reconciled; and
+  policy change, plus `CLAUDE.md` and directly affected `CHATGPT_*.md`
+  hand-offs when Dave explicitly asks for a cross-tool policy or orientation
+  change to be reconciled; and
 - create or remove a separate worktree and its `codex/...` branch.
 
 Before doing so, verify the exact target path and existing worktrees. Never
@@ -141,7 +187,7 @@ commits distinct from Claude's work.
 - Before implementation, record the current branch, baseline commit, both
   worktree statuses and the task scope. Before finishing, run relevant checks,
   review the diff, commit the result on the `codex/...` branch and report the
-  commit hash plus any remaining risks to Dave and Claude.
+  concise hand-off required by the risk-proportional integration section.
 - In advisory mode, before finishing, check the working tree and make sure the
   session changed only allowed ChatGPT-specific Markdown files.
 - Never alter or clean up pre-existing changes belonging to Dave or Claude.

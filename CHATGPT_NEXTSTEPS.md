@@ -27,12 +27,19 @@ frames with the in-game Perf instrumentation enabled. Results were reported in
 the conversation; the temporary harness and scenarios were kept outside the
 repository.
 
+Later on 23 Aug, Dave adopted risk-proportional integration for Codex branches.
+`CHATGPT.md` owns the full low/medium/high classification and hand-off contract;
+`CLAUDE.md` contains Claude's token-efficient integration fast path. Do not
+create a separate per-task review report when the required concise hand-off and
+deterministic evidence are sufficient.
+
 ## Next actions, only if Dave asks
 
-1. If Dave wants the workflow fixes implemented, hand
-   `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code and start with the three
-   path-scoped rule files. Verify their activation in a fresh session before
-   continuing with queue and plan hygiene.
+1. If Dave wants the workflow fixes implemented, assign
+   `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code or Codex and start with the three
+   path-scoped rule files. Use the risk-proportional hand-off and verify their
+   activation in a fresh Claude session before continuing with queue and plan
+   hygiene.
 2. After a flower-path performance change, rerun the same fixed-step sample and
    compare the raw `flowers` mean/p95 rather than a single whole-frame result.
 3. If player-facing FPS is the decision metric, take a visible-build baseline

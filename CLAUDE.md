@@ -26,6 +26,35 @@ stays short and current. If a plan needs to survive past the current
 session, it goes in its own file, not just in `NEXTSTEPS.md` or the
 conversation.
 
+## Integrating Codex branches
+
+When Dave asks Claude to integrate a `codex/...` branch, do not automatically
+repeat Codex's complete investigation or reread every changed file. Read the
+hand-off and `git show --stat` first, confirm the named commit and that the
+integration worktree has no overlapping edits, then apply review proportional
+to the reported risk:
+
+- **Low:** documentation, tests, fixtures, tooling or a small
+  runtime-neutral mechanical change, with all relevant checks passing and no
+  overlap or sensitive-system trigger. The commit/stat, concise hand-off and
+  check evidence are sufficient unless they disagree; a full model diff review
+  is optional.
+- **Medium:** bounded gameplay or UI behaviour with focused tests. Inspect the
+  changed interfaces, surprising logic, reported weak spots and manual-check
+  needs, rather than re-deriving the whole change.
+- **High:** saves/migrations, simulation architecture, cross-system or
+  balance-sensitive behaviour, performance hot paths, dependencies, broad or
+  generated changes, failed/missing checks, overlap or conflicts. Review the
+  full diff and relevant validation before integration.
+
+Use the lowest tier supported by the actual diff and evidence. Raise Codex's
+tier only for a concrete trigger or a mismatch between its hand-off and the
+commit. The complete classification and required hand-off fields live in
+`CHATGPT.md` under “Risk-proportional hand-off and integration”; read that
+section only when integrating Codex work. After merging or cherry-picking,
+update `NEXTSTEPS.md` or other canonical status documents only if the
+integrated state requires it.
+
 ## Standing checklist — apply these without being asked
 
 Three things Dave used to have to ask for by name, every session. They

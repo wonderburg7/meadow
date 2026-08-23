@@ -11,6 +11,8 @@ Meadow already has the right broad division of labour:
 - Claude Code and Codex can each implement one explicitly assigned playable
   slice at a time in their own branches and worktrees;
 - ChatGPT/Codex also reviews, analyses runs and records independent findings;
+- Claude integrates Codex branches with review proportional to concrete risk,
+  using concise hand-offs and deterministic evidence for the low-risk path;
 - `NEXTSTEPS.md` and `CHATGPT_NEXTSTEPS.md` are separate hand-offs;
 - Notion and external tools are opt-in rather than automatic dependencies;
 - performance work is supposed to begin with measurement.
