@@ -781,6 +781,29 @@ against the comb built by 2.9/2.10.
 **General rule**: hide unavailable UI completely, never show it
 disabled.
 
+Challenge stage data records cumulative unlocks in `unlocked_keys`.
+The usual entry is a bare key string, whose implicit trigger is
+`"stage"`. When the reason for an unlock matters, the entry may instead
+be `{"key": "meadow_view", "trigger": "interaction"}`. The five
+documented trigger reasons are:
+
+- `"design"` — visible from the start by design and therefore not
+  actually gated (the hive view and settings cog are examples).
+- `"skill"` — reserved for an adaptation/skill unlock. Challenge code
+  records the vocabulary but does not consume this trigger yet.
+- `"stage"` — the default: entering a Challenge sub-stage reveals it.
+- `"event"` — an in-game event reveals it; Challenge 1 uses this for
+  queen commands when the opening mining sequence completes.
+- `"interaction"` — a specific player/bee action earns it; Challenge 1
+  uses this for `meadow_view` when the queen physically reaches the
+  meadow.
+
+`challenge_runner.gd` normalises both entry shapes before passing bare
+keys to `stage_gate.gd`. The gate itself is intentionally unchanged:
+these trigger values document Challenge-scoped unlock reasons, not a
+new cross-mode resolver. Skill and sandbox gating remain the scope of
+`SKILL_TREE_PLAN.md`.
+
 **Hard exemption — accessibility is never gated.** Colour-blind mode
 (`Session.colour_blind_mode`, already shipped and global) and any other
 accessibility toggle are visible and usable from the settings cog in
@@ -790,12 +813,15 @@ scope entirely — not "unlocked early" but never inside the hide/reveal
 list at all. This applies to whatever accessibility options exist now
 or get added later, not just colour-blind mode.
 
-**Challenge 1** — visible at start: hive view, queen selection,
-settings cog (with accessibility options, always), overlays, problem
-strip. Unlocked during play: Comb worker role button (1.3), meadow view
-switch (1.4), Forager role button + nectar/pollen mode (1.5–1.6).
-Hidden: colony window, nursery window, the rest of the role panel
-(Nurse, Miner, Honey), advanced cell controls, later-mechanic windows.
+**Challenge 1 revamp** — visible at start: hive view, queen selection
+and summary, settings cog (with accessibility options, always),
+overlays and problem strip; the queen's command tray is suppressed only
+during the opening auto-mine. Queen commands unlock on the mining event
+(1.2), the first-cell build control at 1.5, meadow view when the queen
+reaches it (1.6), Forager + nectar at 1.11, pollen at 1.13 and Laying at
+1.15. Hidden: colony window, nursery window, the rest of the role panel
+(Nurse, Miner, Honey), advanced cell controls and later-mechanic
+windows.
 
 **Challenge 2** — unlocked as needed: egg-laying control, brood/egg
 status, cell designation, Nurse role + modes, "keep this role" checkbox,

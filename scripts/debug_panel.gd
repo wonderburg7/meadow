@@ -1165,6 +1165,15 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
 
+	var challenge_row := HBoxContainer.new()
+	column.add_child(challenge_row)
+
+	var challenge_advance_btn := Button.new()
+	_style_button(challenge_advance_btn)
+	challenge_advance_btn.text = "Advance Challenge stage"
+	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
+	challenge_row.add_child(UI.with_info(challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder."))
+
 	var winter_row := HBoxContainer.new()
 	column.add_child(winter_row)
 
@@ -1184,6 +1193,12 @@ func _on_winter_pressed() -> void:
 	if worlds.is_empty():
 		return
 	worlds[0].begin_winter_countdown()
+
+func _on_challenge_advance_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	worlds[0].challenge_runner.debug_advance_stage()
 
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an

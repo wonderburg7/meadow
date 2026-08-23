@@ -10,8 +10,20 @@ the integrator confirms it against `master` when merging.
 
 ## Current status
 
-There is no standing ChatGPT work queue. Dave abandoned the headless mechanism-
-check plan on 22 Aug 2026 because it was not especially useful. Do not resume
+On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
+`CHALLENGE1_REVAMP_PLAN.md`. Bundle A is implemented and validated in the
+dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline
+`5bf8ab3`. It adds the 1.1–1.19 stage skeleton, Challenge-local mixed-shape
+unlock descriptors, a debug stage-advance seam and the documented trigger
+convention. New-mechanic goals deliberately remain false-returning placeholders
+for Bundles B–D/F. At isolation check time, `master` was clean and the Codex
+worktree had no pre-existing changes; the earlier untracked
+`.claude/settings.local.json` seen in the primary worktree disappeared before
+implementation and was never touched by Codex.
+
+Outside that explicitly assigned sequence, there is no standing ChatGPT work
+queue. Dave abandoned the headless mechanism-check plan on 22 Aug 2026 because
+it was not especially useful. Do not resume
 H6, H7 or any other slice from `CHATGPT_HEADLESS_CHECK_PLAN.md`.
 
 On 23 Aug, ChatGPT completed a cross-tool workflow and context-efficiency
@@ -35,14 +47,17 @@ deterministic evidence are sufficient.
 
 ## Next actions, only if Dave asks
 
-1. If Dave wants the workflow fixes implemented, assign
+1. Continue the explicitly assigned Challenge 1 revamp with Bundle B:
+   opening auto-mine, queen command lock/selection-panel-only state and
+   permanent fog reveal. Recheck both worktrees for overlap before editing.
+2. If Dave wants the workflow fixes implemented, assign
    `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code or Codex and start with the three
    path-scoped rule files. Use the risk-proportional hand-off and verify their
    activation in a fresh Claude session before continuing with queue and plan
    hygiene.
-2. After a flower-path performance change, rerun the same fixed-step sample and
+3. After a flower-path performance change, rerun the same fixed-step sample and
    compare the raw `flowers` mean/p95 rather than a single whole-frame result.
-3. If player-facing FPS is the decision metric, take a visible-build baseline
+4. If player-facing FPS is the decision metric, take a visible-build baseline
    at a fixed camera/zoom as well; the headless path deliberately omits fog and
    rendering work.
 

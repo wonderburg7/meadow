@@ -5,8 +5,8 @@ extends Node
 ## First Stores" and "Challenge 2: Brood, Roles and Expansion" sections
 ## for the design this follows stage by stage.
 ##
-## Both Challenges share this one file: STAGES_1 is Challenge 1's seven
-## sub-stages (1.1-1.7), STAGES_2 is Challenge 2's ten (2.1-2.10) --
+## Both Challenges share this one file: STAGES_1 is Challenge 1's nineteen
+## sub-stages (1.1-1.19), STAGES_2 is Challenge 2's eleven (2.1-2.11) --
 ## `_stages()` picks between them by `Session.starting_level`. Where the
 ## two Challenges' shapes actually differ (Challenge 1 walks the queen
 ## from the entrance to a marker before she can build; Challenge 2 starts
@@ -33,12 +33,10 @@ const Roles = preload("res://scripts/roles.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 
-## How close to the cavity's centre counts as "moved there" for 1.2, and
-## how much nectar/pollen counts as a "small" store for 1.5/1.6. All four
+## How much nectar/pollen counts as a "small" store for 1.11/1.13. Both
 ## are first guesses -- TUTORIAL_PLAN.md doesn't pin down numbers, and
 ## these are small enough to reach in a trip or two at default balance
 ## (a forager's stomach holds 50 nectar or 15 pollen -- see GameConfig).
-const CENTRE_RADIUS := 40.0
 const NECTAR_TARGET := 30.0
 const POLLEN_TARGET := 10.0
 
@@ -51,79 +49,178 @@ const STRONGER_HINT_DELAY := 45.0
 ## The normal cell_build_time (90s by default) makes sense once a colony
 ## has many comb workers splitting the wait -- for a lone queen building
 ## her very first cell it's just standing around. Set only on the one
-## cell site the queen builds in 1.3 (via HiveCell.build_time_override),
+## cell site the queen builds in 1.5 (via HiveCell.build_time_override),
 ## never on the GameConfig autoload -- a global write there used to leak
 ## the tutorial's fast build speed into normal play (and into a save) if
 ## the Challenge was left or restarted before 1.3 completed.
 const FAST_BUILD_TIME := 15.0
 
 ## A soft gold ring, distinct from the build-hover/home-cell colours
-## already used elsewhere on the comb, shown at the centre while 1.2
-## asks the player to move the queen there, and at the entrance while
-## 1.4-1.6 want her heading out through it.
+## already used elsewhere on the comb, shown at the centre for the early
+## inspection/build beats and at the entrance for departure/return beats.
 const MARKER_COLOUR := Color(1.0, 0.85, 0.3, 0.55)
 
 ## Each stage: `goal` is a key _goal_met() switches on. `unlocked_keys` is
-## the *cumulative* set of stage_gate keys visible from this stage on
-## (role keys and mode keys double as stage_gate keys directly, plus
-## "meadow_view" -- see _apply_stage_gate_to_ui). `goal_text` feeds the
-## corner readout (hud.gd's set_challenge_goal). `prompts` feeds
-## gallerin_panel.queue_prompts() straight through.
+## the *cumulative* set of stage_gate keys visible from this stage on.
+## Entries are normally bare strings (implicit trigger reason "stage"), but
+## may be {"key": String, "trigger": String} when the reason is worth making
+## explicit. _stage_unlock_keys() normalises both shapes before stage_gate sees
+## them; stage_gate itself deliberately remains string-keyed and unchanged.
+## `goal_text` feeds the corner readout (hud.gd's set_challenge_goal).
+## `prompts` feeds gallerin_panel.queue_prompts() straight through.
+const UNLOCK_TRIGGER_TYPES := ["design", "skill", "stage", "event", "interaction"]
+
 const STAGES_1 := [
 	{
-		"id": "1.1", "goal": "queen_selected", "unlocked_keys": [],
+		"id": "1.1", "goal": "entrance_tunnel_cleared", "unlocked_keys": [],
+		"goal_text": "Goal: watch the queen open the way into the hive.",
+		"prompts": [
+			{"id": "1.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Dr Gallerin, at your service. And there she is: one queen, arriving with a whole colony still only a possibility."},
+			{"id": "1.1_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "For the moment, let her finish opening the tunnel. You are not one bee here; you are the colony's whole intention."},
+		],
+	},
+	{
+		"id": "1.2", "goal": "queen_reached_cavity",
+		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"goal_text": "Goal: guide the queen into the newly opened cavity.",
+		"prompts": [
+			{"id": "1.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "The cavity is open. Pan with the arrow keys or by dragging with the middle mouse button, then guide her inside."},
+			{"id": "1.2_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The marked space is her destination. A right-click gives a selected bee somewhere to go."},
+		],
+	},
+	{
+		"id": "1.3", "goal": "queen_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"goal_text": "Goal: select the queen.",
 		"prompts": [
-			{"id": "1.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Ah, there she is. One queen, one possible colony. Start by selecting her -- gently, of course."},
-			{"id": "1.1_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen is the large bee in the hive. Select her and we'll see what she can begin."},
+			{"id": "1.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "Select her for a closer look. Queens are not merely larger bees; this colony's entire future begins with this one."},
+			{"id": "1.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the large bee in the hive to open her summary."},
 		],
 	},
 	{
-		"id": "1.2", "goal": "queen_near_centre", "unlocked_keys": [],
-		"goal_text": "Goal: move the queen to the marked centre.",
+		"id": "1.4", "goal": "hive_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"goal_text": "Goal: inspect the three marked places in the cavity.",
 		"prompts": [
-			{"id": "1.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "A good colony begins with a sensible centre. Move her into the open space."},
-			{"id": "1.2_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try guiding the queen toward the middle of the cavity. It gives the first cell room to matter."},
+			{"id": "1.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "Before furnishing the place, let us inspect it. A hive is architecture, climate, nursery and pantry all at once."},
+			{"id": "1.4_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Visit the marked points in order; each shows a different part of the colony's new home."},
 		],
 	},
 	{
-		"id": "1.3", "goal": "first_cell_built", "unlocked_keys": ["comb_worker"],
-		"goal_text": "Goal: build one comb cell.",
+		"id": "1.5", "goal": "first_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker"],
+		"goal_text": "Goal: build the colony's first comb cell.",
 		"prompts": [
-			{"id": "1.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "Now for architecture. One cell is enough to turn empty space into a beginning."},
-			{"id": "1.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Press \"Build cell\" in the queen's panel to place one in the open centre. The colony needs somewhere to put what it gathers."},
+			{"id": "1.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "Now for architecture. One wax cell is enough to turn empty space into the beginning of a working hive."},
+			{"id": "1.5_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use Build cell in the queen's panel and place the first cell at the marked centre."},
 		],
 	},
 	{
-		"id": "1.4", "goal": "meadow_view_opened", "unlocked_keys": ["comb_worker", "meadow_view"],
-		"goal_text": "Goal: switch to the meadow view.",
+		"id": "1.6", "goal": "queen_reached_meadow",
+		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker"],
+		"goal_text": "Goal: send the queen out to the meadow.",
 		"prompts": [
-			{"id": "1.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell is useful only if there is something to store. Time to look outside."},
-			{"id": "1.4_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use the meadow view. The flowers are doing the generous part of the work."},
+			{"id": "1.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "A beautiful cell, and presently an empty one. The meadow can remedy that. Send the queen through the entrance."},
+			{"id": "1.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the queen and right-click the marked doorway to send her outside."},
 		],
 	},
 	{
-		"id": "1.5", "goal": "nectar_target",
-		"unlocked_keys": ["comb_worker", "meadow_view", "forager", "nectar"],
-		"goal_text": "Goal: collect a little nectar.",
+		"id": "1.7", "goal": "meadow_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"goal_text": "Goal: explore the three marked places in the meadow.",
 		"prompts": [
-			{"id": "1.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar first. It is quick energy: sweet, portable, and very persuasive."},
-			{"id": "1.5_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The marked doorway leads to the meadow. Select the queen and assign her the Forager job, or right-click the doorway to send her straight out."},
-			{"id": "1.5_stronger", "trigger": "stronger_hint", "delay": STRONGER_HINT_DELAY, "text": "Select the queen and assign her the Forager job -- she'll fly out, find a flower, and bring nectar back on her own."},
+			{"id": "1.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "Flowers, distance, weather, other wings -- the meadow is the colony's wider world. Let us take a short tour."},
+			{"id": "1.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Guide the queen through the marked points in order. Flying costs more energy than crawling, so routes matter."},
 		],
 	},
 	{
-		"id": "1.6", "goal": "pollen_target",
-		"unlocked_keys": ["comb_worker", "meadow_view", "forager", "nectar", "pollen"],
-		"goal_text": "Goal: collect a little pollen.",
+		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"goal_text": "Goal: gather from the first marked flower.",
 		"prompts": [
-			{"id": "1.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar keeps the lights on. Pollen is different: it is protein, and larvae are demanding little parcels of need."},
-			{"id": "1.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try changing the foraging focus. This time, the colony needs pollen."},
+			{"id": "1.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "There: a flower with nectar to spare. Right-click it and the queen will gather what she can carry."},
+			{"id": "1.8_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the queen selected, right-click the marked flower."},
 		],
 	},
 	{
-		"id": "1.7", "goal": "complete",
-		"unlocked_keys": ["comb_worker", "meadow_view", "forager", "nectar", "pollen"],
+		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"goal_text": "Goal: gather from a second marked flower.",
+		"prompts": [
+			{"id": "1.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "One flower is a meal; a landscape of them is a supply network. Try another."},
+			{"id": "1.9_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Send the queen to the next marked flower before returning home."},
+		],
+	},
+	{
+		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"goal_text": "Goal: return to the hive and deposit the harvest.",
+		"prompts": [
+			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home and deposit the harvest."},
+			{"id": "1.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use Return and deposit to send the queen back to the hive's first cell."},
+		],
+	},
+	{
+		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"goal_text": "Goal: automate nectar gathering.",
+		"prompts": [
+			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
+			{"id": "1.11_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Assign the Forager role with nectar selected and let her build a small store."},
+			{"id": "1.11_stronger", "trigger": "stronger_hint", "delay": STRONGER_HINT_DELAY, "text": "Select the queen, choose Forager, and leave her focus on nectar."},
+		],
+	},
+	{
+		"id": "1.12", "goal": "second_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"goal_text": "Goal: build a second comb cell.",
+		"prompts": [
+			{"id": "1.12_welcome", "trigger": "welcome", "delay": 0.0, "text": "Stores need space. Add another cell by hand; bees are tiny logistics departments with wings, but even they need shelving."},
+			{"id": "1.12_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use Build cell and place a second cell beside the first."},
+		],
+	},
+	{
+		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"goal_text": "Goal: automate pollen gathering.",
+		"prompts": [
+			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar is fuel. Pollen is protein: less immediately glamorous, biologically indispensable."},
+			{"id": "1.13_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Keep the Forager role, switch the focus to pollen, and gather a small store."},
+		],
+	},
+	{
+		"id": "1.14", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"goal_text": "Goal: build a third cell for the colony's next generation.",
+		"prompts": [
+			{"id": "1.14_welcome", "trigger": "welcome", "delay": 0.0, "text": "Here is pollen's deeper purpose: making more bees. Build a third cell, and we can turn provisions into a future."},
+			{"id": "1.14_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Place one more comb cell with the queen's Build cell command."},
+		],
+	},
+	{
+		"id": "1.15", "goal": "first_egg_laid", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"goal_text": "Goal: let the queen lay the colony's first egg.",
+		"prompts": [
+			{"id": "1.15_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying, with Nursing as her backup. A queen who only seeks empty cells would overlook the hungry brood already depending on her."},
+			{"id": "1.15_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose Laying as the queen's role and Nursing as her backup, then keep one cell free."},
+		],
+	},
+	{
+		"id": "1.16", "goal": "nectar_forager_hatched", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"goal_text": "Goal: care for the egg until the first worker hatches.",
+		"prompts": [
+			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "An egg is a promise with a feeding schedule. Keep the young bee supplied and watch what pollen becomes."},
+			{"id": "1.16_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen's Nursing backup lets her feed developing brood whenever laying is blocked."},
+		],
+	},
+	{
+		"id": "1.17", "goal": "new_bee_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"goal_text": "Goal: select the new worker.",
+		"prompts": [
+			{"id": "1.17_welcome", "trigger": "welcome", "delay": 0.0, "text": "A daughter, and the colony's first worker. Select her and inspect the summary and role panels."},
+			{"id": "1.17_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the smaller new bee. She begins as a nectar Forager, ready to turn one route into a routine."},
+		],
+	},
+	{
+		"id": "1.18", "goal": "new_bee_left_hive", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"goal_text": "Goal: send the new worker out into the meadow.",
+		"prompts": [
+			{"id": "1.18_welcome", "trigger": "welcome", "delay": 0.0, "text": "Her first journey awaits. Send the new worker through the hive entrance."},
+			{"id": "1.18_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the new worker selected, command her to leave the hive."},
+		],
+	},
+	{
+		"id": "1.19", "goal": "complete",
+		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "",
 		"prompts": [],
 	},
@@ -256,7 +353,6 @@ const STAGES_2 := [
 var main: Node2D
 var active: bool = false
 var _stage_index: int = 0
-var _meadow_view_seen: bool = false
 var _marker: Polygon2D
 ## The previous stage's goal_text, fed to hud.gd's goal shelf as the
 ## "just completed" line (UI_PLAN.md section 5) -- blank at the very
@@ -284,7 +380,6 @@ func _stages() -> Array:
 func start() -> void:
 	active = true
 	_stage_index = 0
-	_meadow_view_seen = false
 	_c2_rescue_used = false
 	_last_completed_goal_text = ""
 	main.stage_gate.start()
@@ -342,8 +437,6 @@ func start() -> void:
 func _process(_delta: float) -> void:
 	if not active:
 		return
-	if not main.in_hive_view:
-		_meadow_view_seen = true
 	if Session.starting_level == 2:
 		_c2_nectar_low_seen = min(_c2_nectar_low_seen, main.hive.total("nectar"))
 		_check_c2_failure()
@@ -398,12 +491,35 @@ func _c2_index(stage_id: String) -> int:
 			return i
 	return 0
 
+## Keeps trigger metadata local to Challenge stage data. stage_gate.gd remains
+## a general string-key store; the trigger explains *why* a Challenge unlocks
+## something, but does not change the gate's behaviour yet. "skill" and
+## "event" therefore remain documentation hooks for their eventual consumers.
+func _stage_unlock_keys(entries: Array) -> Array:
+	var keys: Array = []
+	for entry in entries:
+		if entry is String:
+			keys.append(entry)
+		elif entry is Dictionary:
+			var key: String = entry.get("key", "")
+			var trigger: String = entry.get("trigger", "stage")
+			if key.is_empty():
+				push_error("challenge_runner: unlock descriptor is missing a key: %s" % entry)
+				continue
+			if trigger not in UNLOCK_TRIGGER_TYPES:
+				push_error("challenge_runner: unknown unlock trigger '%s' for '%s'" % [trigger, key])
+				continue
+			keys.append(key)
+		else:
+			push_error("challenge_runner: unlock entry must be a String or Dictionary: %s" % entry)
+	return keys
+
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
-	main.stage_gate.set_unlocked_keys(stage.unlocked_keys)
+	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
-	main.hud.set_queen_build_button_visible(stage.id == "1.3")
+	main.hud.set_queen_build_button_visible(stage.id in ["1.5", "1.12", "1.14"])
 	_update_marker(stage.id)
 	main.gallerin_panel.queue_prompts(stage.prompts)
 	main.TutorialCheckpoint.save(main)
@@ -411,20 +527,20 @@ func _enter_stage() -> void:
 	if Session.starting_level == 2:
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
-		_c2_cells_built_at_stage_entry = _c2_built_cell_count()
+		_c2_cells_built_at_stage_entry = _built_cell_count()
 		_c2_soil_blocks_at_stage_entry = main.get_tree().get_nodes_in_group("soil_blocks").size()
 		_c2_nurses_at_stage_entry = main._role_counts().get(Roles.count_key(Roles.NURSE), 0)
 
-func _c2_built_cell_count() -> int:
+func _built_cell_count() -> int:
 	var count := 0
 	for cell in main.hive.cells:
 		if is_instance_valid(cell) and cell.is_built:
 			count += 1
 	return count
 
-## Shared by _goal_met's "eggs_laid" and _goal_progress's numeric
-## readout, so the two never drift apart on what counts as an egg.
-func _c2_brood_cell_count() -> int:
+## Shared by both Challenges' laying goals and _goal_progress's numeric
+## readout, so the checks never drift apart on what counts as an egg.
+func _brood_cell_count() -> int:
 	var count := 0
 	for cell in main.hive.cells:
 		if is_instance_valid(cell) and cell.content_type == "brood":
@@ -437,10 +553,10 @@ func _c2_brood_cell_count() -> int:
 ## point the way Challenge 1's queen-centric early stages do, so it never
 ## shows one.
 func _update_marker(stage_id: String) -> void:
-	if stage_id == "1.2":
+	if stage_id in ["1.2", "1.4", "1.5"]:
 		_marker.position = main.world_building._hive_centre_local()
 		_marker.visible = true
-	elif stage_id in ["1.4", "1.5", "1.6"]:
+	elif stage_id in ["1.6", "1.10", "1.18"]:
 		_marker.position = main.hive_entrance_inside()
 		_marker.visible = true
 	else:
@@ -465,6 +581,13 @@ func _advance() -> void:
 		_complete()
 		return
 	_enter_stage()
+
+## Debug-panel seam for exercising a newly scaffolded Challenge sequence before
+## every causal goal exists. It deliberately uses the ordinary transition path
+## so gates, prompts, checkpoints, markers and completion are all exercised.
+func debug_advance_stage() -> void:
+	if active:
+		_advance()
 
 func _complete() -> void:
 	active = false
@@ -500,7 +623,8 @@ func _complete() -> void:
 		)
 
 ## Challenge 1 only -- the queen's panel shows a direct "Build cell"
-## button during 1.3 instead of the usual assign-role-then-click-a-spot
+## button during its manual-build stages instead of the usual
+## assign-role-then-click-a-spot
 ## flow (see hud.gd's set_queen_build_button_visible).
 ##
 ## Assigns the site directly (hive.create_cell_site_at + target_cell +
@@ -573,27 +697,31 @@ func _goal_met(goal: String) -> bool:
 	match goal:
 		"queen_selected":
 			return main.selected_bees.size() == 1 and main.selected_bees[0] == main.queen
-		"queen_near_centre":
-			if not is_instance_valid(main.queen):
-				return false
-			var centre: Vector2 = main.world_building._hive_centre_local()
-			return main.queen.position.distance_to(centre) <= CENTRE_RADIUS
 		"first_cell_built":
-			for cell in main.hive.cells:
-				if is_instance_valid(cell) and cell.is_built:
-					return true
-			return false
-		"meadow_view_opened":
-			return _meadow_view_seen
+			return _built_cell_count() >= 1
+		"second_cell_built":
+			return _built_cell_count() >= 2
+		"third_cell_built":
+			return _built_cell_count() >= 3
 		"nectar_target":
 			return main.hive.total("nectar") >= NECTAR_TARGET
 		"pollen_target":
 			return main.hive.total("pollen") >= POLLEN_TARGET
+		"first_egg_laid":
+			return _brood_cell_count() >= 1
+		"entrance_tunnel_cleared", "queen_reached_cavity", "hive_points_visited", \
+		"queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
+		"second_flower_collected", "harvest_deposited", "new_bee_selected", \
+		"new_bee_left_hive":
+			# Structural placeholders: Bundles B-D and F replace these with
+			# causal checks as each underlying mechanic lands. Keeping them
+			# false prevents accidental stage skips in an ordinary playthrough.
+			return false
 		"complete":
 			return true
 		# --- Challenge 2 ---------------------------------------------
 		"eggs_laid":
-			return _c2_brood_cell_count() >= 2
+			return _brood_cell_count() >= 2
 		"nectar_forager_hatched":
 			return main._role_counts().get(Roles.count_key(Roles.FORAGER, "nectar"), 0) >= 1
 		"nectar_stabilized":
@@ -622,12 +750,12 @@ func _goal_met(goal: String) -> bool:
 			return locked >= 2 and nurses > _c2_nurses_at_stage_entry
 		"comb_worker_building":
 			var has_builder: bool = main._role_counts().get(Roles.count_key(Roles.COMB_WORKER), 0) >= 1
-			return has_builder and _c2_built_cell_count() >= _c2_cells_built_at_stage_entry + 2
+			return has_builder and _built_cell_count() >= _c2_cells_built_at_stage_entry + 2
 		"miner_expansion":
 			var has_miner: bool = main._role_counts().get(Roles.count_key(Roles.MINER), 0) >= 1
 			var soil_now: int = main.get_tree().get_nodes_in_group("soil_blocks").size()
 			var dug: bool = soil_now < _c2_soil_blocks_at_stage_entry
-			var built: bool = _c2_built_cell_count() > _c2_cells_built_at_stage_entry
+			var built: bool = _built_cell_count() > _c2_cells_built_at_stage_entry
 			return has_miner and dug and built
 		"c2_complete":
 			var counts: Dictionary = main._role_counts()
@@ -653,7 +781,9 @@ func _goal_progress(goal: String) -> Dictionary:
 			return {"current": main.hive.total("nectar"), "target": NECTAR_TARGET}
 		"pollen_target":
 			return {"current": main.hive.total("pollen"), "target": POLLEN_TARGET}
+		"first_egg_laid":
+			return {"current": _brood_cell_count(), "target": 1.0}
 		"eggs_laid":
-			return {"current": _c2_brood_cell_count(), "target": 2.0}
+			return {"current": _brood_cell_count(), "target": 2.0}
 		_:
 			return {}
