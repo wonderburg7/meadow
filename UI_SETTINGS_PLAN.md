@@ -39,6 +39,13 @@ each symptom.
 
 ## Slice 1 — make appearance settings apply live
 
+**DONE on `codex/ui-settings-reorg` (23 Aug).** `build_theme()` remains as a
+compatibility wrapper so the existing panel call sites all receive the shared
+resource without a broad mechanical edit. Panel and button styleboxes are
+shared and refreshed in place as well, which makes palette changes reach open
+panel backgrounds and theme-managed text. Per-control colour overrides remain
+part of Slice 2's audit. Manual in-game verification remains for integration.
+
 Change `UiTheme` from "build a new Theme on request" to "hold one
 shared Theme and mutate it in place" — Theme resources are mutable and
 shared by reference, so every control already holding it updates the
@@ -69,6 +76,12 @@ tray, colony window, nursery window, settings window itself) changes
 without closing or restarting anything.
 
 ## Slice 2 — light-mode contrast
+
+**CENTRAL FIX DONE on `codex/ui-settings-reorg` (23 Aug); hardcoded-colour
+audit remains.** The shared theme now supplies `text_primary` for every named
+text variation and the base Label/Button types, and palette changes refresh
+those colours live. The per-panel hardcoded status/accent colours below still
+need their visual contrast pass.
 
 - `build_theme()` sets `theme.set_color("font_color", variation,
   UiTheme.color("text_primary"))` for every `TYPE_SIZES` variation, plus
@@ -182,6 +195,13 @@ opening a collection shows its category list, opening a category shows
 its rows, same two-click depth either way rather than a longer path.
 
 ## Slice 4 — control alignment and layout
+
+**PARTIAL on `codex/ui-settings-reorg` (23 Aug).** The non-overlapping
+settings-window portion is done: toggles render first, stars last, and every
+row type now uses the same label width and right-aligned control slot. The
+top-right HUD button sizing remains because `hud.gd` is being edited in the
+primary worktree; resize collision-avoidance remains the separate bugfix
+slice noted below. Manual alignment verification remains for integration.
 
 - **All row controls move to a fixed position at the row's right
   edge.** Today `_make_row`/`_make_options_row` put label → badge →
