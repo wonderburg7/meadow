@@ -448,12 +448,6 @@ func _show_click_marker(world_point: Vector2) -> void:
 	marker.position = root.to_local(world_point)
 	root.add_child(marker)
 
-func _on_focus_requested(type: String) -> void:
-	for b in main.selected_bees:
-		if is_instance_valid(b):
-			b.set_focus(type)
-	main.hud.update_selection(main.selected_bees)
-
 func _on_role_selection_requested(role: int, focus: String) -> void:
 	for b in main.selected_bees:
 		if is_instance_valid(b):

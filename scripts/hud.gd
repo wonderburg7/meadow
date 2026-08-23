@@ -17,7 +17,6 @@ const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 
-signal focus_requested(type: String)
 signal role_requested(role_name: String)
 signal view_toggle_requested()
 signal colony_panel_requested()

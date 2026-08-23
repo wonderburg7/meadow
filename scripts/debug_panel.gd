@@ -1365,10 +1365,16 @@ func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) ->
 	var timer := Timer.new()
 	timer.one_shot = true
 	button.add_child(timer)
-	var start_ms := 0
+	# Boxed in a single-element array rather than a plain var: lambdas
+	# capture by value, so a bare `var start_ms` reassigned inside the
+	# button_down lambda below would never be seen by schedule_next's own
+	# copy -- the repeat would always compute held_seconds from a stale
+	# start time. An array's contents are shared across every lambda that
+	# captures it, so mutating start_ms[0] is visible to all of them.
+	var start_ms := [0]
 
 	var schedule_next := func():
-		var held_seconds: float = (Time.get_ticks_msec() - start_ms) / 1000.0
+		var held_seconds: float = (Time.get_ticks_msec() - start_ms[0]) / 1000.0
 		var t: float = clamp(held_seconds / REPEAT_ACCEL_SECONDS, 0.0, 1.0)
 		timer.start(lerp(REPEAT_INITIAL_DELAY, REPEAT_MIN_INTERVAL, t))
 
@@ -1378,7 +1384,7 @@ func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) ->
 	)
 	button.pressed.connect(func(): _adjust(entry, direction * entry.step))
 	button.button_down.connect(func():
-		start_ms = Time.get_ticks_msec()
+		start_ms[0] = Time.get_ticks_msec()
 		timer.start(REPEAT_INITIAL_DELAY)
 	)
 	button.button_up.connect(func(): timer.stop())
@@ -1413,16 +1419,16 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 		elif key == "colour_blind_mode":
 			# every cell relabels itself on its next frame; the panels are
 			# told so they can redraw their keys straight away
-			for panel in get_tree().get_nodes_in_group("colour_blind_listeners"):
-				if is_instance_valid(panel) and panel.has_method("colour_blind_changed"):
-					panel.colour_blind_changed()
+			for listener in get_tree().get_nodes_in_group("colour_blind_listeners"):
+				if is_instance_valid(listener) and listener.has_method("colour_blind_changed"):
+					listener.colour_blind_changed()
 		elif key == "gallerin_enabled":
 			# gallerin_panel.gd only reads this once, in its own _ready() --
 			# toggling it here has to reach the live node directly, same
 			# idea as the colour-blind broadcast above.
-			for panel in get_tree().get_nodes_in_group("gallerin"):
-				if is_instance_valid(panel):
-					panel.visible = pressed
+			for gallerin_panel in get_tree().get_nodes_in_group("gallerin"):
+				if is_instance_valid(gallerin_panel):
+					gallerin_panel.visible = pressed
 		elif key == "show_speed_8x":
 			# the button only exists once in the top-right bar per hud --
 			# same "huds" group dispatch set_settings_button_width uses.
