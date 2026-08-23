@@ -43,8 +43,8 @@ each symptom.
 compatibility wrapper so the existing panel call sites all receive the shared
 resource without a broad mechanical edit. Panel and button styleboxes are
 shared and refreshed in place as well, which makes palette changes reach open
-panel backgrounds as well as their text. Manual in-game verification remains
-for integration.
+panel backgrounds and theme-managed text. Per-control colour overrides remain
+part of Slice 2's audit. Manual in-game verification remains for integration.
 
 Change `UiTheme` from "build a new Theme on request" to "hold one
 shared Theme and mutate it in place" — Theme resources are mutable and
@@ -195,6 +195,13 @@ opening a collection shows its category list, opening a category shows
 its rows, same two-click depth either way rather than a longer path.
 
 ## Slice 4 — control alignment and layout
+
+**PARTIAL on `codex/ui-settings-reorg` (23 Aug).** The non-overlapping
+settings-window portion is done: toggles render first, stars last, and every
+row type now uses the same label width and right-aligned control slot. The
+top-right HUD button sizing remains because `hud.gd` is being edited in the
+primary worktree; resize collision-avoidance remains the separate bugfix
+slice noted below. Manual alignment verification remains for integration.
 
 - **All row controls move to a fixed position at the row's right
   edge.** Today `_make_row`/`_make_options_row` put label → badge →

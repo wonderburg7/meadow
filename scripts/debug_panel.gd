@@ -1112,7 +1112,19 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	wrapper.add_child(header)
 	wrapper.add_child(body)
 
+	var ordered_entries := []
+	# Preserve the authored order inside each group while putting the most
+	# frequently changed on/off controls first and passive readout stars last.
 	for entry in entries:
+		if entry.get("toggle", false):
+			ordered_entries.append(entry)
+	for entry in entries:
+		if not entry.get("toggle", false) and not entry.get("star", false):
+			ordered_entries.append(entry)
+	for entry in entries:
+		if entry.get("star", false):
+			ordered_entries.append(entry)
+	for entry in ordered_entries:
 		if entry.get("star", false):
 			body.add_child(_make_star_row(entry))
 		elif entry.get("toggle", false):
@@ -1273,26 +1285,30 @@ func _make_row(entry: Dictionary) -> Control:
 
 	var lbl := Label.new()
 	lbl.theme_type_variation = "Small"
-	lbl.custom_minimum_size = Vector2(140, 0)
+	lbl.custom_minimum_size = Vector2(ROW_LABEL_WIDTH, 0)
 	lbl.text = "%s: %s" % [entry.label, _format_value(setting_get(entry.key))]
 	value_labels[entry.key] = lbl
 	row.add_child(lbl)
 
 	row.add_child(UI.info_badge(entry.tip))
+	row.add_spacer(false)
+
+	var controls := _make_control_slot()
+	row.add_child(controls)
 
 	var minus := Button.new()
 	_style_button(minus)
 	minus.text = "-"
 	minus.custom_minimum_size = Vector2(26, 24)
 	_wire_repeat_button(minus, entry, -1.0)
-	row.add_child(minus)
+	controls.add_child(minus)
 
 	var plus := Button.new()
 	_style_button(plus)
 	plus.text = "+"
 	plus.custom_minimum_size = Vector2(26, 24)
 	_wire_repeat_button(plus, entry, 1.0)
-	row.add_child(plus)
+	controls.add_child(plus)
 
 	return row
 
@@ -1303,6 +1319,15 @@ func _make_row(entry: Dictionary) -> Control:
 const REPEAT_INITIAL_DELAY := 0.4
 const REPEAT_MIN_INTERVAL := 0.03
 const REPEAT_ACCEL_SECONDS := 2.0
+const ROW_LABEL_WIDTH := 140.0
+const ROW_CONTROL_WIDTH := 55.0
+
+func _make_control_slot() -> HBoxContainer:
+	var controls := HBoxContainer.new()
+	controls.custom_minimum_size = Vector2(ROW_CONTROL_WIDTH, 0)
+	controls.alignment = BoxContainer.ALIGNMENT_END
+	controls.add_theme_constant_override("separation", 3)
+	return controls
 
 ## Wires a +/- button so a single click steps once as before, but holding
 ## it down repeats the step, speeding up the longer it's held.
@@ -1334,10 +1359,19 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 
+	var label := Label.new()
+	label.text = entry.label
+	label.theme_type_variation = "Small"
+	label.custom_minimum_size = Vector2(ROW_LABEL_WIDTH, 0)
+	row.add_child(label)
+	row.add_child(UI.info_badge(entry.tip))
+	row.add_spacer(false)
+
+	var controls := _make_control_slot()
+	row.add_child(controls)
+
 	var box := CheckBox.new()
 	_style_button(box)
-	box.text = entry.label
-	box.theme_type_variation = "Small"
 	box.button_pressed = setting_get(entry.key)
 	var key: String = entry.key
 	toggle_boxes[key] = box
@@ -1376,8 +1410,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			else:
 				_cascade_dependents_off(key)
 	)
-	row.add_child(box)
-	row.add_child(UI.info_badge(entry.tip))
+	controls.add_child(box)
 	return row
 
 ## A setting whose value is one of a small fixed set of strings (e.g.
@@ -1391,26 +1424,30 @@ func _make_options_row(entry: Dictionary) -> Control:
 
 	var lbl := Label.new()
 	lbl.theme_type_variation = "Small"
-	lbl.custom_minimum_size = Vector2(140, 0)
+	lbl.custom_minimum_size = Vector2(ROW_LABEL_WIDTH, 0)
 	lbl.text = "%s: %s" % [entry.label, _option_display(entry, setting_get(entry.key))]
 	value_labels[entry.key] = lbl
 	row.add_child(lbl)
 
 	row.add_child(UI.info_badge(entry.tip))
+	row.add_spacer(false)
+
+	var controls := _make_control_slot()
+	row.add_child(controls)
 
 	var prev := Button.new()
 	_style_button(prev)
 	prev.text = "‹"
 	prev.custom_minimum_size = Vector2(26, 24)
 	prev.pressed.connect(func(): _cycle_option(entry, -1))
-	row.add_child(prev)
+	controls.add_child(prev)
 
 	var next := Button.new()
 	_style_button(next)
 	next.text = "›"
 	next.custom_minimum_size = Vector2(26, 24)
 	next.pressed.connect(func(): _cycle_option(entry, 1))
-	row.add_child(next)
+	controls.add_child(next)
 
 	return row
 
@@ -1452,6 +1489,17 @@ func _make_star_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 
+	var label := Label.new()
+	label.text = entry.label
+	label.theme_type_variation = "Small"
+	label.custom_minimum_size = Vector2(ROW_LABEL_WIDTH, 0)
+	row.add_child(label)
+	row.add_child(UI.info_badge(entry.tip))
+	row.add_spacer(false)
+
+	var controls := _make_control_slot()
+	row.add_child(controls)
+
 	var key: String = entry.key
 	var star := Button.new()
 	_style_button(star)
@@ -1475,13 +1523,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 			if is_instance_valid(hud) and hud.has_method("pinned_stats_changed"):
 				hud.pinned_stats_changed()
 	)
-	row.add_child(star)
-
-	var label := Label.new()
-	label.text = entry.label
-	label.theme_type_variation = "Small"
-	row.add_child(label)
-	row.add_child(UI.info_badge(entry.tip))
+	controls.add_child(star)
 	return row
 
 func _adjust(entry: Dictionary, delta: float) -> void:
