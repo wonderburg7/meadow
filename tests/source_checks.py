@@ -178,17 +178,30 @@ def check_indentation(name, lines, problems):
 
 
 def check_brackets(name, lines, problems):
-    depth = {"(": 0, "[": 0, "{": 0}
+    stack = []
     pairs = {")": "(", "]": "[", "}": "{"}
-    for line in lines:
+    closing = {"(": ")", "[": "]", "{": "}"}
+    for line_number, line in enumerate(lines, 1):
         for ch in strip_code(line):
-            if ch in depth:
-                depth[ch] += 1
+            if ch in closing:
+                stack.append((ch, line_number))
             elif ch in pairs:
-                depth[pairs[ch]] -= 1
-    for opener, count in depth.items():
-        if count != 0:
-            problems.append("%s  unbalanced %s (%+d)" % (name, opener, count))
+                if not stack:
+                    problems.append(
+                        "%s:%d  unexpected closing %s" % (name, line_number, ch)
+                    )
+                    continue
+                opener, opener_line = stack.pop()
+                if opener != pairs[ch]:
+                    problems.append(
+                        "%s:%d  closing %s does not match %s opened at line %d"
+                        % (name, line_number, ch, opener, opener_line)
+                    )
+    for opener, line_number in stack:
+        problems.append(
+            "%s:%d  unclosed %s (expected %s)"
+            % (name, line_number, opener, closing[opener])
+        )
 
 
 def check_autoloads(problems):
