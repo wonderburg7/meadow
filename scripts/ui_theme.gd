@@ -55,9 +55,12 @@ const LIGHT := {
 	"accent_wax": Color("#D58936"),
 	"accent_grass": Color("#678D58"),
 	"accent_soil": Color("#3C1518"),
-	"success": Color(0.5, 0.95, 0.55),
-	"warning": Color(1.0, 0.85, 0.4),
-	"danger": Color(1.0, 0.45, 0.4),
+	# Status colours double as small-text colours. These darker light-theme
+	# variants clear WCAG AA against panel_bg; the bright variants used by the
+	# dark and high-contrast palettes do not.
+	"success": Color("#2F6B36"),
+	"warning": Color("#7A5100"),
+	"danger": Color("#A12A2A"),
 	"focus_ring": Color("#1E7A87"),
 	"disabled": Color("#B8A08C"),
 	"locked": Color("#8B6FA8"),
@@ -101,6 +104,13 @@ static func palette() -> Dictionary:
 ## name is obvious on screen instead of just blending into the panel.
 static func color(token: String) -> Color:
 	return palette().get(token, Color(1.0, 0.0, 1.0))
+
+## Preserve an accent's identity while making it readable as small panel text.
+## Light mode needs a stronger blend towards its dark primary text: 0.65 keeps
+## even the palest role colour above 4.5:1 against the cream panel background.
+static func readable_accent(accent: Color) -> Color:
+	var blend := 0.65 if Session.ui_theme == "light" else 0.35
+	return accent.lerp(color("text_primary"), blend)
 
 # --- panel construction ------------------------------------------------
 ## Rounded, pixel-built panel background with visible thickness -- the

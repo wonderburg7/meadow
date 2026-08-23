@@ -10,6 +10,15 @@ the integrator confirms it against `master` when merging.
 
 ## Current status
 
+On 23 Aug, Dave asked Codex to continue the UI issues plan where ownership was
+clear. The primary worktree has local changes in `debug_panel.gd`, `hud.gd`,
+`input_selection.gd` and `main.gd`, so Codex left the resize, top-bar,
+popup/favourite and follow-bee slices untouched. The isolated
+`codex/ui-contrast-pass` branch completes the non-overlapping Light-theme
+contrast audit in `ui_theme.gd` and `colony_panel.gd`; see
+`UI_SETTINGS_PLAN.md` Slice 2. It still needs integration and a hands-on Light
+theme check.
+
 On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
 `CHALLENGE1_REVAMP_PLAN.md`. Bundles A-C are implemented and validated in the
 dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline

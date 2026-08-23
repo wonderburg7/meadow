@@ -77,27 +77,30 @@ without closing or restarting anything.
 
 ## Slice 2 — light-mode contrast
 
-**CENTRAL FIX DONE on `codex/ui-settings-reorg` (23 Aug); hardcoded-colour
-audit remains.** The shared theme now supplies `text_primary` for every named
-text variation and the base Label/Button types, and palette changes refresh
-those colours live. The per-panel hardcoded status/accent colours below still
-need their visual contrast pass.
+**CENTRAL FIX DONE on `codex/ui-settings-reorg`; non-overlapping panel audit
+done on `codex/ui-contrast-pass` (23 Aug).** The shared theme supplies
+`text_primary` for every named text variation and the base Label/Button types,
+and palette changes refresh those colours live. The later audit found that the
+menu/panel call sites already route through theme tokens, but Light's shared
+success/warning/danger tokens themselves did not clear text contrast. The
+contrast branch gives those three Light tokens darker variants and makes the
+colony role-tally accent blend theme-aware. The hardcoded HUD sites remain for
+a later pass because `hud.gd` has overlapping primary-worktree edits.
 
 - `build_theme()` sets `theme.set_color("font_color", variation,
   UiTheme.color("text_primary"))` for every `TYPE_SIZES` variation, plus
   the base `Label`/`Button` types (covers any label that never got a
   `theme_type_variation` at all).
-- Audit the remaining hardcoded `add_theme_color_override("font_color",
-  ...)` calls that don't route through `UiTheme.color()` — `hud.gd` has
-  17 left (down from 50), plus `main_menu.gd` (4), `colony_panel.gd`
-  (5), `gallerin_panel.gd` (1), `nursery_panel.gd` (1). Most of these
-  are warm mid-tones (gold/mint/pale-blue status colours) that likely
-  read fine on both palettes already — the job is checking each one
-  against `LIGHT`'s `#F6DFC8` background and swapping only the ones that
-  don't clear contrast, not converting all 28 on principle.
+- The non-HUD audit found `main_menu.gd`, `colony_panel.gd` and
+  `nursery_panel.gd` already using `UiTheme` tokens for their status text;
+  `gallerin_panel.gd` has no local text-colour override. Fixing the Light
+  status tokens centrally therefore covers those panels. The one remaining
+  non-HUD exception was the colony's dynamic role colour, now routed through
+  `UiTheme.readable_accent()`. Audit the remaining hardcoded HUD overrides
+  after the overlapping primary-worktree changes have landed.
 
-*Files:* `ui_theme.gd`, then whichever of the 28 sites in the audit
-above actually fail contrast.
+*Files:* `ui_theme.gd`, `colony_panel.gd`; `hud.gd` remains for the
+separate overlapping audit.
 *Check:* switch to Light in the settings window (now live, per Slice
 1) and read every panel — nothing should require guessing at pale text
 on a pale background.
