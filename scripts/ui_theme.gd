@@ -135,12 +135,22 @@ const BUTTON_STATES := [
 	"normal", "hover", "pressed", "focus", "selected", "disabled", "locked",
 ]
 
+## Builds and refreshes the box only the first time a given state is
+## requested -- every later call just returns the same cached resource,
+## same as panel_stylebox() above. Re-mutating it on every lookup (the
+## previous behaviour) emitted a `changed` signal every single time any
+## button anywhere called _style_button(), which every other button
+## sharing that state's box picks up as a redraw/minimum-size recalc --
+## with hundreds of buttons across the settings/debug panels alone, that
+## turned every fresh button creation into an O(all buttons) cascade.
+## `refresh()` below remains the one deliberate path that re-mutates an
+## already-built box, for an actual theme/palette/scale change.
 static func button_stylebox(state: String) -> StyleBoxFlat:
 	if not _button_styleboxes.has(state):
-		_button_styleboxes[state] = StyleBoxFlat.new()
-	var box: StyleBoxFlat = _button_styleboxes[state]
-	_refresh_button_stylebox(box, state)
-	return box
+		var box := StyleBoxFlat.new()
+		_refresh_button_stylebox(box, state)
+		_button_styleboxes[state] = box
+	return _button_styleboxes[state]
 
 static func _refresh_button_stylebox(box: StyleBoxFlat, state: String) -> void:
 	var base: Color = color("panel_bg")

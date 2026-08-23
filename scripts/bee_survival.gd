@@ -167,7 +167,7 @@ static func go_to_feed_cell(bee: Node2D, delta: float) -> void:
 		bee.state = State.FEEDING
 
 
-static func is_edible(bee: Node2D, cell: Node2D) -> bool:
+static func is_edible(_bee: Node2D, cell: Node2D) -> bool:
 	if cell.amount <= 0.0:
 		return false
 	if cell.content_type == "nectar":

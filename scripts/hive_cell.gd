@@ -440,8 +440,8 @@ func slot_position(index: int) -> Vector2:
 	if index < 0:
 		return position
 	var midpoints := Shapes.hexagon_edge_midpoints(cell_size)
-	var offset: Vector2 = midpoints[index % 6]
-	return position + offset * 1.35
+	var edge_offset: Vector2 = midpoints[index % 6]
+	return position + edge_offset * 1.35
 
 # --- building -----------------------------------------------------
 

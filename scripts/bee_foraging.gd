@@ -322,7 +322,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 			candidates.append(f)
 
 	if GameConfig.probabilistic_choice_on:
-		return _weighted_flower_choice(bee, candidates, func(f): return true, INF)
+		return _weighted_flower_choice(bee, candidates, func(_f): return true, INF)
 
 	var best: Node2D = null
 	var best_dist := INF
@@ -456,7 +456,7 @@ static func drink_at_flower(bee: Node2D, delta: float) -> void:
 
 ## How much a unit of nectar is actually worth right now. Rain dilutes
 ## what's standing in an open flower.
-static func nectar_strength(bee: Node2D) -> float:
+static func nectar_strength(_bee: Node2D) -> float:
 	return lerpf(1.0, 1.0 - GameConfig.rain_nectar_dilution, Session.rain_intensity)
 
 
@@ -516,7 +516,7 @@ static func start_collecting(bee: Node2D) -> void:
 		if bee.trip_first_flower_time < 0.0:
 			bee.trip_first_flower_time = Session.sim_time
 		bee.trip_flowers_visited += 1
-		bee._flower_visit_started_at = Session.sim_time
+		bee.flower_visit_started_at = Session.sim_time
 	if GameConfig.tarsal_markers_on:
 		DiagnosticLog.count_tarsal_mark()
 	# Checked before this bee's own mark overwrites whatever was here --
@@ -614,9 +614,9 @@ static func collect(bee: Node2D, delta: float) -> void:
 
 
 static func finish_collecting(bee: Node2D) -> void:
-	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee._flower_visit_started_at >= 0.0:
-		bee.trip_handling_seconds += Session.sim_time - bee._flower_visit_started_at
-		bee._flower_visit_started_at = -1.0
+	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.flower_visit_started_at >= 0.0:
+		bee.trip_handling_seconds += Session.sim_time - bee.flower_visit_started_at
+		bee.flower_visit_started_at = -1.0
 	if bee.current_flower and is_instance_valid(bee.current_flower):
 		var species: String = bee.current_flower.species_name
 		# Slice 7: a completed handling bout is what "experience"/
@@ -802,8 +802,8 @@ static func _score_trip(bee: Node2D) -> void:
 		# whether the patch itself is actually good before recruitment
 		# starts trusting the number. See the recruitment-competition
 		# investigation, NEXTSTEPS.md.
-		bee._grace_rate_sum += rate
-		bee.avg_collection_rate = bee._grace_rate_sum / (bee.trips_scored + 1)
+		bee.grace_rate_sum += rate
+		bee.avg_collection_rate = bee.grace_rate_sum / (bee.trips_scored + 1)
 	else:
 		bee.avg_collection_rate = lerpf(bee.avg_collection_rate, rate, bee.RATE_EMA_WEIGHT)
 	bee.trips_scored += 1

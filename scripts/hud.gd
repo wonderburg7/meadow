@@ -1727,6 +1727,7 @@ func _refresh_corner() -> void:
 		return
 	corner_signature = signature
 
+	Perf.begin("corner_rebuild_free")
 	for child in corner_column.get_children():
 		# perf_plot and perf_breakdown are persistent -- see their
 		# declaration -- so their own redraw timing survives a rebuild
@@ -1734,7 +1735,9 @@ func _refresh_corner() -> void:
 		if child == perf_plot or child == perf_breakdown:
 			continue
 		child.queue_free()
+	Perf.end("corner_rebuild_free")
 
+	Perf.begin("corner_rebuild_labels")
 	for key in CORNER_ORDER:
 		if not Session.pinned_stats.has(key):
 			continue
@@ -1748,6 +1751,7 @@ func _refresh_corner() -> void:
 		# variations, so it scales directly instead.
 		label.add_theme_font_size_override("font_size", int(round(CORNER_SIZES.get(key, 12) * Session.text_scale)))
 		corner_column.add_child(label)
+	Perf.end("corner_rebuild_labels")
 
 	# Sits under whichever readouts are starred, same as the plan asked
 	# for "under the three fps numbers" in the common case where fps is
@@ -1765,6 +1769,7 @@ func _refresh_corner() -> void:
 	# Each line is a button rather than a label, so it can take you to
 	# what it is about. Being told there are hungry larvae and then having
 	# to go and find them yourself is most of the work of acting on it.
+	Perf.begin("corner_rebuild_signals")
 	for entry in shown_signals:
 		var line := Button.new()
 		_style_button(line)
@@ -1780,6 +1785,7 @@ func _refresh_corner() -> void:
 			line.tooltip_text = "Click to select what this is about."
 			line.pressed.connect(func(): signal_clicked.emit(action))
 		corner_column.add_child(line)
+	Perf.end("corner_rebuild_signals")
 	Perf.end("corner_refresh")
 
 ## Called when the player stars or unstars something in either window:

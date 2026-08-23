@@ -300,7 +300,7 @@ var scout_best_start_point: Vector2 = Vector2(INF, INF)
 ## whenever scouting or auto-recruitment is on, not just while scouting
 ## -- scouting just reads the same per-trip rate to score its bouts.
 ## Only becomes the EMA described above once past the grace window --
-## see _grace_rate_sum immediately below.
+## see grace_rate_sum immediately below.
 var avg_collection_rate: float = 0.0
 const RATE_EMA_WEIGHT := 0.3
 ## Running sum of trip rates while still inside the grace window (see
@@ -308,7 +308,7 @@ const RATE_EMA_WEIGHT := 0.3
 ## until she's settled, only switching to the EMA above once there are
 ## enough real trips behind it to smooth one lucky/unlucky trip out
 ## rather than being decided by it. See BeeForaging._score_trip.
-var _grace_rate_sum: float = 0.0
+var grace_rate_sum: float = 0.0
 ## How many trips this forager has actually been scored on since it last
 ## started being tracked (scouting or auto-recruitment turned on, or the
 ## bee created while either already was). Below GameConfig.recruit_grace_trips,
@@ -339,13 +339,13 @@ var trip_load_amount: float = -1.0
 ## spent between a start_collecting/finish_collecting pair, across every
 ## flower visited this trip, not just the last one. trip_flowers_visited
 ## is a plain per-trip count, distinct from DiagnosticLog's lifetime
-## total. _flower_visit_started_at is per-visit scratch, not per-trip --
+## total. flower_visit_started_at is per-visit scratch, not per-trip --
 ## it only ever needs to survive from one start_collecting call to its
 ## matching finish_collecting.
 var trip_first_flower_time: float = -1.0
 var trip_handling_seconds: float = 0.0
 var trip_flowers_visited: int = 0
-var _flower_visit_started_at: float = -1.0
+var flower_visit_started_at: float = -1.0
 ## Set on both bees the instant a recruitment match happens at the
 ## entrance (see BeeForaging.wait_at_entrance) so their next several
 ## scored trips can each be logged against the rate each had *before* the
@@ -1903,10 +1903,10 @@ func nurse_mode_name() -> String:
 			return "feeding brood"
 
 func architect_mode_name() -> String:
-	var label: String = Roles.mode_label(Roles.COMB_WORKER, architect_mode).to_lower()
+	var mode_text: String = Roles.mode_label(Roles.COMB_WORKER, architect_mode).to_lower()
 	if architect_mode == "restock":
-		label += " %s" % (restock_resource if restock_resource != "" else "-- nothing set")
-	return label
+		mode_text += " %s" % (restock_resource if restock_resource != "" else "-- nothing set")
+	return mode_text
 
 func carrying_text() -> String:
 	if carrying_corpse:
