@@ -8,39 +8,41 @@ extends CanvasLayer
 ## press "Restart Run" to respawn everything with the new numbers
 ## (they live in the GameConfig autoload, so they survive the reload).
 ##
-## The settings are grouped into collapsible sections, because the flat
-## list had grown long enough that finding anything meant scrolling past
-## everything. Every section starts closed, so opening the panel shows a
-## short menu rather than a wall of numbers.
+## The settings are grouped into three collapsible collections, each of
+## which contains the smaller topic sections. Everything starts closed,
+## so opening the panel shows a short menu rather than a wall of numbers.
 ##
 ## Every row carries an "i" badge explaining what the number actually
 ## does, so you can tune without holding the whole model in your head.
 ## Those badges can be switched off once you know your way around -- see
-## the Interface section.
+## the Accessibility section.
 
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Prerequisites = preload("res://scripts/prerequisites.gd")
 
-## Section order here is the order they appear in the panel.
-const CATEGORIES := [
-	"World & start",
-	"Flowers",
-	"Foraging",
-	"Hive & comb",
-	"Brood & the queen",
-	"Honey",
-	"Gynes & royal jelly",
-	"Weather",
-	"Seasons & health",
-	"Winter",
-	"The rival colony",
-	"Predators",
-	"Mining",
-	"Bee life",
-	"Appearance",
-	"Accessibility",
+## Collection and section order here is the order they appear in the panel.
+const COLLECTIONS := [
+	{
+		"name": "Game Settings",
+		"categories": [
+			"World & start", "Interface", "Appearance", "Accessibility", "Controls",
+		],
+	},
+	{
+		"name": "Hive",
+		"categories": [
+			"Hive & comb", "Brood & the queen", "Honey", "Gynes & royal jelly", "Bee life",
+		],
+	},
+	{
+		"name": "Meadow",
+		"categories": [
+			"Flowers", "Foraging", "Weather", "Seasons & health", "Winter",
+			"The rival colony", "Predators", "Mining",
+		],
+	},
 ]
 
 const TUNABLES := [
@@ -99,72 +101,72 @@ const TUNABLES := [
 	},
 	{
 		"key": "tarsal_markers_on", "label": "Tarsal markers", "toggle": true,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "Bees leave a scent mark from their feet on every flower they land on. With this on, other bees avoid a flower marked in the last few seconds, so the colony spreads out instead of crowding the same patch. Real bumblebees and honeybees both do this.",
 	},
 	{
 		"key": "tarsal_marker_seconds", "label": "Marker lasts s", "step": 5.0, "min": 1.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "How long a scent mark keeps other bees away. Only matters when Tarsal markers is on.",
 	},
 	{
 		"key": "orientation_flight_on", "label": "Orientation flight", "toggle": true,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "A new forager makes a short flight to a random spot near the hive before her first trip, and keeps working that spot from then on, rather than beelining for whatever's nearest the door -- real bees do this too, learning the area before they start foraging properly. Off by default. Turning on Auto scouting turns this on too.",
 	},
 	{
 		"key": "scouting_on", "label": "Auto scouting", "toggle": true,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "A new forager tries a few start points near the hive (see Orientation flight) and settles on whichever collected best, instead of just keeping the first one. Off by default. Turning on Floral constancy or Auto-recruitment turns this on too, since both rely on a forager having actually scouted. Turning this off also turns off Floral constancy and Auto-recruitment.",
 	},
 	{
 		"key": "floral_constancy_on", "label": "Floral constancy", "toggle": true,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "Lets you pin a forager to one flower species via 'Set preference' in its selection panel -- it will only ever visit that species from then on. Also makes Auto scouting sample a different species each bout, so a scouted forager settles on the best start point AND species together, not just the best spot. Off by default; existing preferences are kept even if you turn this off, they just stop being offered as a new option. Turning this on also turns Auto scouting on.",
 	},
 	{
 		"key": "auto_recruitment_on", "label": "Auto-recruitment", "toggle": true,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "Foragers compare notes at the hive entrance -- a good performer can pass its start point (and species, if Floral constancy is also on) to a struggling one of the same resource type. Off by default; off means no bee ever waits at the door. Turning this on also turns Auto scouting on.",
 	},
 	{
 		"key": "forage_start_radius", "label": "Start point radius", "step": 20.0, "min": 20.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "How far from the hive a new forager's start point (Orientation flight or Auto scouting) is scattered -- how spread apart different foragers' patches are. Not how far a forager will fly to find a flower once she's working an area (that's forage_search_radius, tuned separately and much larger). Only matters when Orientation flight or Auto scouting is on.",
 	},
 	{
 		"key": "recruit_lower_threshold_nectar", "label": "Recruit: seek below (nectar)", "step": 0.1, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "A nectar forager collecting less than this (units/second) waits at the entrance hoping a better-performing forager tells it where to go. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_upper_threshold_nectar", "label": "Recruit: offer above (nectar)", "step": 0.1, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "A nectar forager collecting more than this (units/second) waits at the entrance, willing to pass on its start point. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_lower_threshold_pollen", "label": "Recruit: seek below (pollen)", "step": 0.1, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "Same as the nectar version, for pollen foragers. Pollen's base collection rate is lower than nectar's, so this needs its own number rather than sharing the nectar threshold. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_upper_threshold_pollen", "label": "Recruit: offer above (pollen)", "step": 0.1, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "Same as the nectar version, for pollen foragers. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_wait_seconds", "label": "Recruit wait s", "step": 1.0, "min": 1.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "How long a forager waits at the entrance for a match before giving up and heading out on its own. Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_start_point_jitter", "label": "Recruit start point spread", "step": 10.0, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "A recruited forager's inherited start point is nudged this far from her mentor's exact one, in a random direction -- still the same general proven area, but not the same handful of flowers. At 0, she starts from exactly the mentor's point, which measurably cost the mentor her own rate in testing (both bees converging on one patch). Only matters when Auto-recruitment is on.",
 	},
 	{
 		"key": "recruit_grace_trips", "label": "Recruit grace trips", "step": 1.0, "min": 0.0,
-		"category": "Flowers",
+		"category": "Foraging",
 		"tip": "How many trips a forager must complete before it's judged against the thresholds above. Only matters when Auto-recruitment is on.",
 	},
 	{
@@ -752,30 +754,30 @@ const TUNABLES := [
 		"tip": "How long the visual offset takes to ease in when a bee starts flying outdoors, and back out when it lands -- this is what stops a landing bee snapping onto the flower. Only matters when Bumble flight is on.",
 	},
 
-	# --- Appearance ---
+	# --- Interface ---
 	{
 		"key": "history_sample_seconds", "label": "History sample s", "step": 1.0, "min": 1.0,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "How often the colony window's over-time plot takes a reading. Together with the number of points below, this sets how far back the plot reaches.",
 	},
 	{
 		"key": "history_points", "label": "History points", "step": 10.0, "min": 10.0,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "How many readings the plot keeps. Sample seconds multiplied by this is the span it covers, in in-game seconds.",
 	},
 	{
 		"key": "low_energy_warning_fraction", "label": "Warn at share", "step": 0.05, "min": 0.05,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "What fraction of the colony has to be running low on energy before the game warns you. The warning does not pause anything.",
 	},
 	{
 		"key": "low_energy_warning_level", "label": "Low energy is", "step": 0.05, "min": 0.05,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "What counts as a bee running low, as a fraction of its energy capacity.",
 	},
 	{
 		"key": "low_energy_gap", "label": "Warn every s", "step": 30.0, "min": 10.0,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "Shortest gap between low-energy warnings, so a colony that stays hungry is told once and then left alone to be dealt with.",
 	},
 	{
@@ -787,12 +789,12 @@ const TUNABLES := [
 	},
 	{
 		"key": "show_speed_8x", "label": "Show 8x speed button", "toggle": true,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "Adds an 8x button next to 1x/2x/4x in the top-right bar, for skipping a stretch you've already seen. Off by default -- most runs don't need it, and there is more happening per second at 8x than you can follow by watching the bees. Takes effect immediately.",
 	},
 	{
 		"key": "show_interface_labels", "label": "Show button labels", "toggle": true,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "Shows the word alongside the icon on the Colony/Nursery/Meadow-Hive buttons in the top-right bar. Off by default -- the icons alone carry the meaning once you know them. Takes effect immediately.",
 	},
 	{
@@ -822,12 +824,12 @@ const TUNABLES := [
 	},
 	{
 		"key": "fps", "label": "Frame rate", "star": true,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "Show the frame rate in the top-right corner, alongside whatever else you have starred. Three numbers: the average, how long the last frame took in milliseconds, and the longest frame in the last second. The last one is the one that matters for smoothness -- a run that averages 60 but spikes to 50ms every so often will feel choppy, and only the worst-frame figure shows it.",
 	},
 	{
 		"key": "gallerin_enabled", "label": "Dr Gallerin", "toggle": true,
-		"category": "Appearance",
+		"category": "Interface",
 		"tip": "The moth mentor who offers hints and encouragement during a Challenge. Turning him off changes nothing about how a Challenge plays -- he can be switched back on here at any time. Takes effect immediately.",
 	},
 	# --- Accessibility ---
@@ -845,12 +847,12 @@ const TUNABLES := [
 		"key": "ui_typeface", "label": "Typeface",
 		"options": ["sans", "atkinson", "dyslexia", "pixel"],
 		"option_labels": {"sans": "Standard", "atkinson": "Atkinson Hyperlegible", "dyslexia": "Dyslexia-friendly", "pixel": "Pixel"},
-		"category": "Accessibility",
+		"category": "Appearance",
 		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and the dyslexia-friendly face are both designed to stay readable at small sizes; Pixel is a look, not an accessibility choice, and can't be combined with either of the other two. Until their font files are added under assets/fonts/, the three non-standard options fall back to the standard font rather than erroring -- so no visible change yet is expected. Applies to a window the next time it opens.",
 	},
 	{
 		"key": "text_scale", "label": "Text scale", "step": 0.1, "min": 1.0, "max": 2.0,
-		"category": "Accessibility",
+		"category": "Appearance",
 		"tip": "Multiplies every panel's font size, from 100% up to 200%. Panels reflow -- wrap, grow taller -- rather than clip at any scale. Applies to a window the next time it opens.",
 	},
 	{
@@ -1026,13 +1028,12 @@ func _ready() -> void:
 
 	_build_actions(column)
 
-	# Every section starts closed, so opening the panel shows a short menu
-	# of headings rather than every number at once.
-	for category in CATEGORIES:
-		var rows := _rows_in(category)
-		if rows.is_empty():
-			continue
-		column.add_child(_make_section(category, rows, false))
+	# Collections and their topic sections both start closed. The first
+	# click chooses an area of the game; the second opens the relevant rows.
+	for collection in COLLECTIONS:
+		column.add_child(_make_collection(
+			collection.name, collection.categories, false
+		))
 
 func _report_settings_button_width() -> void:
 	for hud in get_tree().get_nodes_in_group("huds"):
@@ -1058,6 +1059,36 @@ func _rows_in(category: String) -> Array:
 			continue
 		found.append(entry)
 	return found
+
+## The wide first-level dropdown. Its body contains the existing topic
+## dropdowns so the player never has to scan all settings at once.
+func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 0)
+
+	var body := VBoxContainer.new()
+	body.visible = start_open
+
+	var header := Button.new()
+	_style_button(header)
+	header.text = "%s  %s" % ["▾" if start_open else "▸", collection_name]
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.custom_minimum_size = Vector2(0, 30)
+	header.theme_type_variation = "Body"
+	header.pressed.connect(func():
+		body.visible = not body.visible
+		header.text = "%s  %s" % ["▾" if body.visible else "▸", collection_name]
+	)
+	wrapper.add_child(header)
+	wrapper.add_child(body)
+
+	for category in categories:
+		var rows := _rows_in(category)
+		if rows.is_empty() and category != "Controls":
+			continue
+		body.add_child(_make_section(category, rows, false))
+
+	return wrapper
 
 ## A clickable heading with its rows underneath, hidden until the heading
 ## is clicked.
@@ -1091,12 +1122,16 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 		else:
 			body.add_child(_make_row(entry))
 
-	# The controls used to be printed permanently in the top-left corner
-	# of the screen. They live here instead, so they're available when
-	# you want them and out of the way when you don't.
-	if category == "Appearance":
-		body.add_child(HSeparator.new())
+	# The controls used to be printed permanently in the top-left corner.
+	# They are now a real topic rather than an appendix to Appearance.
+	if category == "Controls":
 		body.add_child(_make_controls_help())
+
+	# Keep this action beside the seasonal settings instead of floating
+	# above all three collections.
+	if category == "Seasons & health":
+		body.add_child(HSeparator.new())
+		body.add_child(_make_winter_action())
 
 	sections[category] = body
 	return wrapper
@@ -1165,16 +1200,16 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
 
-	var winter_row := HBoxContainer.new()
-	column.add_child(winter_row)
+	column.add_child(HSeparator.new())
 
+func _make_winter_action() -> Control:
+	var row := HBoxContainer.new()
 	var winter_btn := Button.new()
 	_style_button(winter_btn)
 	winter_btn.text = "Bring on winter"
 	winter_btn.pressed.connect(_on_winter_pressed)
-	winter_row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" below). A forecast opens in the top right showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
-
-	column.add_child(HSeparator.new())
+	row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" in the Winter section). A forecast opens in the top right showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
+	return row
 
 ## Starts the countdown on the running world. Winter is scheduled
 ## relative to the current day rather than a fixed date, so pressing this
