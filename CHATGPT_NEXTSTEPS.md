@@ -11,7 +11,7 @@ the integrator confirms it against `master` when merging.
 ## Current status
 
 On 23 Aug, Dave explicitly assigned the slice-by-slice implementation of
-`CHALLENGE1_REVAMP_PLAN.md`. Bundles A-B are implemented and validated in the
+`CHALLENGE1_REVAMP_PLAN.md`. Bundles A-C are implemented and validated in the
 dedicated `meadow-codex` worktree on `codex/meadow-work`, from baseline
 `5bf8ab3`. Bundle A adds the 1.1-1.19 stage skeleton, Challenge-local
 mixed-shape unlock descriptors, a debug stage-advance seam and the documented
@@ -24,11 +24,14 @@ playtest was removed. Follow-ups give the 1.1 queen trail a local 2x radius,
 pre-reveal the tunnel she already travelled from the exit to her starting
 point, switch 1.2 onward to an open-space-derived ~1.8-block reveal, and make
 topology recomputation causal on soil removal. Dr Gallerin's bubble is now
-360px wide with 17px dialogue. New-mechanic goals for Bundles C-D/F remain
-false-returning placeholders. Before Bundle B, the Codex
-worktree was clean; primary-worktree changes in `levels.gd`, `main_menu.gd`
-and two unrelated untracked files did not overlap the slice and were not
-touched.
+360px wide with 17px dialogue. Bundle C adds a reusable ordered-point helper,
+three guaranteed-open hive inspection stops and a causal 1.4 goal; a focused
+Godot assertion verified that visiting stop 3 early does not advance the
+sequence. The existing first-cell build flow remains unchanged for 1.5.
+New-mechanic goals for Bundles D/F remain false-returning placeholders. The
+primary worktree's current gameplay/config/menu edits do not overlap Bundle C;
+the Codex worktree's pre-existing `project.godot` and generated `.uid` changes
+were preserved and excluded from the slice.
 
 Outside that explicitly assigned sequence, there is no standing ChatGPT work
 queue. Dave abandoned the headless mechanism-check plan on 22 Aug 2026 because
@@ -56,9 +59,11 @@ deterministic evidence are sufficient.
 
 ## Next actions, only if Dave asks
 
-1. Continue the explicitly assigned Challenge 1 revamp with Bundle C:
-   the reusable ordered-point visit helper, three hive inspection points and
-   the first-cell beat. Recheck both worktrees for overlap before editing.
+1. Continue the explicitly assigned Challenge 1 revamp with Bundle D:
+   meadow arrival and three-stop tour, two manual flower visits, and the
+   general return-and-deposit command. Recheck both worktrees for overlap
+   before editing, especially `bee.gd`/`bee_foraging.gd`, which currently have
+   primary-worktree changes.
 2. If Dave wants the workflow fixes implemented, assign
    `CHATGPT_WORKFLOW_AUDIT.md` to Claude Code or Codex and start with the three
    path-scoped rule files. Use the risk-proportional hand-off and verify their

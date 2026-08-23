@@ -40,6 +40,7 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 const NECTAR_TARGET := 30.0
 const POLLEN_TARGET := 10.0
 const CENTRE_RADIUS := 40.0
+const VISIT_POINT_RADIUS := 30.0
 
 ## The opening seals the inner third of world_building's entrance tunnel.
 ## Each temporary block gets an equal share of this duration through its
@@ -360,6 +361,12 @@ var main: Node2D
 var active: bool = false
 var _stage_index: int = 0
 var _marker: Polygon2D
+## Ordered-point visit state shared by the hive inspection in 1.4 and the
+## meadow tour in 1.7. Points stay local to their marker parent so the same
+## helper works in either world without hard-coding the two worlds' offset.
+var _visit_points: Array = []
+var _visit_point_index: int = 0
+var _visit_marker_parent: Node2D
 ## True only during 1.1. input_selection.gd rejects right-click commands
 ## for this queen, while hud.gd keeps her summary visible but hides the
 ## separate command tray.
@@ -406,6 +413,7 @@ func start() -> void:
 	queen_command_locked = false
 	_opening_blocks.clear()
 	_opening_started = false
+	_clear_ordered_visit()
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -543,6 +551,10 @@ func _enter_stage() -> void:
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
 	main.hud.set_queen_build_button_visible(stage.id in ["1.5", "1.12", "1.14"])
+	if stage.id == "1.4":
+		_begin_ordered_visit(_hive_inspection_points(), main.hive_root)
+	else:
+		_clear_ordered_visit()
 	_update_marker(stage.id)
 	main.gallerin_panel.queue_prompts(stage.prompts)
 	main.TutorialCheckpoint.save(main)
@@ -570,13 +582,65 @@ func _brood_cell_count() -> int:
 			count += 1
 	return count
 
-## The marker sits in hive_root, so it's only ever actually seen while
-## looking at the hive -- exactly when it's relevant (the meadow-side
-## flowers need no such pointer). Challenge 2 has no single "go here"
-## point the way Challenge 1's queen-centric early stages do, so it never
-## shows one.
+## Three deliberately separated floor tiles, all safely inside the guaranteed
+## open part of the chamber. Keeping them in axial space makes the tour follow
+## the hive geometry if its pixel spacing changes later.
+func _hive_inspection_points() -> Array:
+	var centre: Vector2 = main.world_building._hive_centre_local()
+	var spacing: float = GameConfig.hive_cell_spacing
+	return [
+		{"position": centre + Shapes.hex_to_pixel(0, -3, spacing), "radius": VISIT_POINT_RADIUS},
+		{"position": centre + Shapes.hex_to_pixel(-3, 1, spacing), "radius": VISIT_POINT_RADIUS},
+		{"position": centre + Shapes.hex_to_pixel(3, 0, spacing), "radius": VISIT_POINT_RADIUS},
+	]
+
+## Starts an ordered tour. Each entry owns its arrival radius so a later use
+## (Bundle D's meadow tour) can mix broad scenic stops with precise targets.
+## Visiting a future point early has no effect: only the current index is ever
+## tested by _ordered_visit_complete().
+func _begin_ordered_visit(points: Array, marker_parent: Node2D) -> void:
+	_visit_points = points.duplicate(true)
+	_visit_point_index = 0
+	_visit_marker_parent = marker_parent
+	_show_current_visit_point()
+
+func _clear_ordered_visit() -> void:
+	_visit_points.clear()
+	_visit_point_index = 0
+	_visit_marker_parent = null
+
+func _ordered_visit_complete(traveller: Node2D) -> bool:
+	if _visit_points.is_empty() or not is_instance_valid(traveller):
+		return false
+	if _visit_point_index >= _visit_points.size():
+		return true
+	var point: Dictionary = _visit_points[_visit_point_index]
+	var target_global: Vector2 = _visit_marker_parent.to_global(point.position)
+	if traveller.global_position.distance_to(target_global) > float(point.radius):
+		return false
+	_visit_point_index += 1
+	_show_current_visit_point()
+	return _visit_point_index >= _visit_points.size()
+
+func _show_current_visit_point() -> void:
+	if _marker == null or not is_instance_valid(_marker):
+		return
+	if _visit_point_index >= _visit_points.size():
+		_marker.visible = false
+		return
+	if _marker.get_parent() != _visit_marker_parent:
+		_marker.reparent(_visit_marker_parent, false)
+	_marker.position = _visit_points[_visit_point_index].position
+	_marker.visible = true
+
+## Places the shared marker for the current beat. The ordered-visit helper can
+## reparent it to either world; Bundle C uses the hive root, and Bundle D can
+## reuse the same path in the meadow without adding a second marker. Challenge
+## 2 has no single "go here" point, so it never shows one.
 func _update_marker(stage_id: String) -> void:
-	if stage_id in ["1.2", "1.4", "1.5"]:
+	if stage_id == "1.4":
+		_show_current_visit_point()
+	elif stage_id in ["1.2", "1.5"]:
 		_marker.position = main.world_building._hive_centre_local()
 		_marker.visible = true
 	elif stage_id in ["1.6", "1.10", "1.18"]:
@@ -801,6 +865,8 @@ func _goal_met(goal: String) -> bool:
 			) <= CENTRE_RADIUS
 		"queen_selected":
 			return main.selected_bees.size() == 1 and main.selected_bees[0] == main.queen
+		"hive_points_visited":
+			return _ordered_visit_complete(main.queen)
 		"first_cell_built":
 			return _built_cell_count() >= 1
 		"second_cell_built":
@@ -813,7 +879,7 @@ func _goal_met(goal: String) -> bool:
 			return main.hive.total("pollen") >= POLLEN_TARGET
 		"first_egg_laid":
 			return _brood_cell_count() >= 1
-		"hive_points_visited", "queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
+		"queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
 		"second_flower_collected", "harvest_deposited", "new_bee_selected", \
 		"new_bee_left_hive":
 			# Structural placeholders: Bundles B-D and F replace these with
