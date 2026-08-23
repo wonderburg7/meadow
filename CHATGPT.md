@@ -43,14 +43,45 @@ needed for the assigned task, run relevant checks, remove disposable artifacts
 created by its own commands and commit its changes on its own `codex/...`
 branch. It must keep changes focused and preserve all pre-existing work.
 
+### Documentation and project-state ownership
+
+Documentation that describes or is directly affected by an assigned change is
+part of that change. In isolated implementation mode, Codex should update the
+relevant README, design, architecture, testing and feature-plan Markdown files
+on its `codex/...` branch when leaving them unchanged would make the branch
+incomplete or inaccurate. Those documentation edits travel in the same focused
+commit or commit series as the implementation and are reviewed before
+integration.
+
+Canonical coordination files describe the state of the integrated `master`
+branch, so their ownership is stricter:
+
+- `NEXTSTEPS.md` is the canonical integrated-project queue. Claude, or whoever
+  is acting as integrator, updates it on `master` after reviewing and
+  integrating a Codex branch.
+- Codex must not independently curate, reorder or complete `NEXTSTEPS.md` from
+  its private work queue. It may edit the file on its branch only when Dave
+  explicitly includes that exact update in the assignment. Such an edit is a
+  proposal until the integrator confirms it still describes `master` at merge
+  time.
+- `CHATGPT_NEXTSTEPS.md` is Codex's separate hand-off and never establishes the
+  state of unmerged work as integrated project truth.
+- `CLAUDE.md`, `CHATGPT.md` and `AGENTS.md` are tool-policy and orientation
+  files, not ordinary feature documentation. Change them only when Dave
+  explicitly requests the corresponding policy or orientation change.
+
+In short: an implementation branch documents what it changes; the integrator
+records what is true on `master`.
+
 Codex must not:
 
 - edit files in the primary worktree, switch the primary worktree's branch or
   stage, commit, discard, clean or otherwise manipulate its changes;
 - merge its branch into `master`, push changes or rewrite shared history unless
   Dave explicitly requests that specific action;
-- edit `CLAUDE.md`, Claude plans or `NEXTSTEPS.md` unless Dave explicitly asks
-  for that exact documentation change;
+- edit `CLAUDE.md`, Claude-owned plans or `NEXTSTEPS.md` unless Dave explicitly
+  asks for that exact documentation change; ordinary task-relevant Markdown is
+  governed by the documentation rule above;
 - adopt work from Claude plans as its own work queue; or
 - run broad formatters, generators or cleanup commands that affect files
   outside the assigned task.
@@ -64,15 +95,17 @@ When Dave explicitly asks Codex to set up or maintain this isolation, Codex
 may work from the primary worktree only to:
 
 - inspect repository and worktree state;
-- edit and commit only `CHATGPT.md` and `AGENTS.md` when the request includes a
-  policy change; and
+- edit and commit `CHATGPT.md` and `AGENTS.md` when the request includes a
+  policy change, plus directly affected `CHATGPT_*.md` hand-offs when Dave
+  asks for the relevant policy documentation to be reconciled; and
 - create or remove a separate worktree and its `codex/...` branch.
 
 Before doing so, verify the exact target path and existing worktrees. Never
-stage or commit any other primary-worktree file, switch its branch, or disturb
-uncommitted Dave/Claude changes. Worktree removal is allowed only after Dave
-explicitly requests it or the branch has been integrated and its recoverability
-has been verified.
+stage or commit any other primary-worktree file under this exception, switch
+its branch, or disturb uncommitted Dave/Claude changes. This exception does not
+permit feature, game or canonical project-state documentation changes on
+`master`. Worktree removal is allowed only after Dave explicitly requests it
+or the branch has been integrated and its recoverability has been verified.
 
 ## Headless-check work
 

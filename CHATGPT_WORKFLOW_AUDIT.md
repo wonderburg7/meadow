@@ -1,6 +1,6 @@
 # Meadow AI workflow audit
 
-Status: current recommendation | Owner for implementation: Dave / Claude Code
+Status: current recommendation | Owner for integration: Dave / Claude Code
 | Audited: 23 Aug 2026
 
 ## Outcome
@@ -8,8 +8,9 @@ Status: current recommendation | Owner for implementation: Dave / Claude Code
 Meadow already has the right broad division of labour:
 
 - the repository is the source of truth;
-- Claude Code implements one playable slice at a time;
-- ChatGPT/Codex reviews, analyses runs and records independent findings;
+- Claude Code and Codex can each implement one explicitly assigned playable
+  slice at a time in their own branches and worktrees;
+- ChatGPT/Codex also reviews, analyses runs and records independent findings;
 - `NEXTSTEPS.md` and `CHATGPT_NEXTSTEPS.md` are separate hand-offs;
 - Notion and external tools are opt-in rather than automatic dependencies;
 - performance work is supposed to begin with measurement.
@@ -135,7 +136,7 @@ Recommended routing:
 | Work | Model / effort | Tool owner |
 |---|---|---|
 | Ambiguous architecture, cross-plan audit, hard causal diagnosis | Sol, high; Max only when genuinely needed | Codex or Claude's strongest planning mode |
-| Ordinary Meadow review, bounded diagnosis, implementation of a clear slice | Terra, medium in Codex; the existing Claude Code everyday default | Codex reviews, Claude Code implements |
+| Ordinary Meadow review, bounded diagnosis, implementation of a clear slice | Terra, medium in Codex; the existing Claude Code everyday default | Codex or Claude Code in its own assigned branch/worktree |
 | Repetitive JSON, log extraction, status-table reconciliation, mechanical summaries | Luna, low or medium; Claude's fast model for its own equivalent tasks | Whichever tool already owns the files |
 | Independent read-heavy investigations with clearly separable outputs | Explicit subagents only when wall-clock saving justifies extra tokens | Main agent retains decisions |
 | Tests and deterministic checks | Scripts/tools, not a stronger model | Local shell / Godot |

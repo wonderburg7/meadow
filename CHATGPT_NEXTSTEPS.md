@@ -3,8 +3,10 @@
 > **CHATGPT-ONLY HAND-OFF. Claude Code must ignore this file.**
 
 Read this first in a new ChatGPT session. This file contains only ChatGPT work.
-Claude's work remains in `NEXTSTEPS.md`; do not copy, reorder or complete those
-items from here.
+The integrated project's canonical queue remains in `NEXTSTEPS.md`; do not
+copy, reorder or complete those items from here. Codex may propose an edit to
+that queue only when Dave explicitly assigns the exact documentation change;
+the integrator confirms it against `master` when merging.
 
 ## Current status
 
@@ -43,5 +45,6 @@ durable implementation recommendation in `insights_from_ChatGPT.md` only when
 the evidence and next action will still matter outside the conversation.
 
 Update this file when ChatGPT's durable status or next actions change; do not
-rewrite it after a no-op advisory session. Never add ChatGPT actions to
-`NEXTSTEPS.md`.
+rewrite it after a no-op advisory session. Do not independently add ChatGPT
+actions to `NEXTSTEPS.md`; follow the explicit-assignment and integration rule
+in `CHATGPT.md`.

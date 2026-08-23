@@ -4,7 +4,8 @@
 > Do not read it for orientation, implement it, maintain it, or fold it into
 > Claude's plans. Dave will explicitly start this work with ChatGPT in a new
 > session. `CHATGPT_NEXTSTEPS.md` is ChatGPT's separate short hand-off;
-> `NEXTSTEPS.md` remains exclusively Claude's source of work.
+> `NEXTSTEPS.md` is the canonical integrated-project queue and is not a source
+> of work for this plan.
 
 Status: **abandoned by Dave on 22 Aug 2026 because the plan was not especially
 useful. Do not resume H6, H7 or extend the suite.** H0 inventory, H1 smoke gate,
@@ -30,8 +31,9 @@ question.
 
 ## Start of the new ChatGPT session
 
-1. Read `CHATGPT_NEXTSTEPS.md`, then this file. Do not use or edit Claude's
-   `NEXTSTEPS.md` as part of this work.
+1. Read `CHATGPT_NEXTSTEPS.md`, then this file. Do not use or independently
+   curate `NEXTSTEPS.md` as part of this work; the exception for an explicitly
+   assigned queue edit is defined in `CHATGPT.md`.
 2. Read only the relevant part of `docs/archive/AI_PLAYTEST_PLAN.md` and the header of
    `scripts/scenario_actions.gd` for the slice being built.
 3. Check `git log --oneline -10` and `git status --short` so this plan is not
@@ -329,9 +331,10 @@ action select an empty target explicitly; do not add direct resource mutation
 to make the scenario pass.
 
 No scenario, game-code or harness file was changed in this checkpoint because
-`CHATGPT.md` restricts ChatGPT to ChatGPT-specific Markdown. H3 is not complete
-and should not be committed as a completed slice until the adapted scenarios
-pass, their final wall times are recorded, and both Python gates are rerun.
+that session was in advisory mode, where `CHATGPT.md` restricts ChatGPT to
+ChatGPT-specific Markdown. H3 is not complete and should not be committed as a
+completed slice until the adapted scenarios pass, their final wall times are
+recorded, and both Python gates are rerun.
 
 Continuation checkpoint 22 Aug 2026. Rechecked commit `fb5871f` and the live
 working tree after newer Dave/Claude edits appeared elsewhere. The H3 contract
@@ -567,9 +570,10 @@ non-zero” into “the feature feels good”.
 At the end, update this file's status/results, add only unresolved durable
 conclusions to `insights_from_ChatGPT.md`, rewrite `CHATGPT_NEXTSTEPS.md`, and
 commit the completed slice with a plain-language message. Delete an insight
-once it is resolved; Git history is the archive. Never put ChatGPT actions in
-`NEXTSTEPS.md`. Do not push; pushing depends on the GitKraken plugin being
-available.
+once it is resolved; Git history is the archive. Do not independently put
+ChatGPT actions in `NEXTSTEPS.md`; follow `CHATGPT.md` if Dave explicitly
+assigns a queue update. Do not push; pushing depends on the GitKraken plugin
+being available.
 
 In every headless-run final response, explicitly tell Dave whether any
 recommendations were added to, updated in or removed from
