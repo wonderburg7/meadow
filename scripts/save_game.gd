@@ -39,6 +39,7 @@ const SAVED_SETTINGS := [
 	"flower_count", "hive_cell_count", "starting_bees", "starting_nurses",
 	"starting_builders", "starting_miners", "starting_honey_makers",
 	"seconds_per_day", "nectar_recharge_rate", "pollen_recharge_rate",
+	"flower_senescence_on", "flower_senescence_floor",
 	"tarsal_markers_on", "tarsal_marker_seconds", "floral_constancy_on",
 	# Orientation flight/scouting/auto-recruitment were missing from this
 	# list entirely -- same gap as the winter numbers below: tuning any of

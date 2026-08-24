@@ -1549,12 +1549,86 @@ without eyes on a live run. Both toggles, plus the newly-added Weighted
 flower choice toggle, are off by default, so nothing about today's
 default experience changes until Dave turns them on.
 
+## Slice 8: Flower senescence — implementation-ready and built
+
+**What's already there, checked against the live repo (24 Aug):** most of
+this slice's title turned out to already exist. `flower.gd` already has
+finite pollen (`pollen_capacity`/`pollen_amount`/`pollen_recharge_rate`,
+drained per visit via `collect()`, fed into jelly/brood/queen-egg costs
+in `bee_nursery.gd`), a flower lifespan (`age_seconds`/`lifespan_seconds`,
+`queue_free()`s on expiry), and seasonal scheduling
+(`season_start`/`season_end`/`season_strength()`). No day/night cycle
+exists anywhere in the game today, only that per-species season window.
+
+**Design decisions put to Dave before writing this up, matching the
+pattern for every prior slice:**
+
+1. **Is there a genuinely new pollen mechanic to add, given the above
+   already exists?** **Dave's steer: yes — senescence (recharge slows as
+   a flower ages, not just full-until-it-dies), toggleable so the old
+   behaviour stays available for comparison.**
+2. **Does "ecological time / schedules in simulated time" need a new
+   day/night mechanic?** **Dave's steer: no — the existing season window
+   already covers it; skip a diurnal cycle.**
+
+So Slice 8 is scoped down to one lever: flower senescence.
+
+**Tasks, as built:**
+
+1. **`GameConfig.flower_senescence_on`** (off by default, same
+   toggle-tree convention as every other slice — off means recharge
+   follows exactly the season-only curve it always has) plus
+   `flower_senescence_floor` (0.3) — the recharge-rate multiplier a
+   flower has reached by the end of its life. Eases linearly from 1.0 at
+   age 0 to the floor at `lifespan_seconds`, a single lever (no separate
+   curve-shape constant), matching Slice 7's "faster only" steer of
+   keeping a new mechanic to one dial where possible.
+2. **`flower.gd::_senescence_scale()`** multiplies `_sync_recharge()`'s
+   existing `season_strength()` term, so a flower recharges at
+   `nectar_recharge_rate * season_strength() * senescence_scale`. Applies
+   to both nectar and pollen together — a plant losing vigour affects
+   both, not just one.
+3. **Settings panel, save/load, diagnostics.** Two `debug_panel.gd`
+   entries under "Flowers"; both keys added to `save_game.gd`'s
+   `SAVED_SETTINGS` (same "don't repeat the missing-from-this-list gap"
+   check every slice since Slice 6 has made); `flower_senescence_on`
+   added to `diagnostic_log.gd`'s `foraging_behaviour` snapshot alongside
+   the other toggles.
+
+**Simulated before locking, per `CLAUDE.md` rule 4** (small-batch steer,
+[[feedback_headless_run_batches]]), single seed, no other foraging
+toggles on so the effect isn't confounded, 60 days at
+`seconds_per_day=20`:
+
+| scenario | flower_visits | unique | deaths | stalls | starvation |
+|---|---|---|---|---|---|
+| seed 12345, senescence off | 234 | 121 | 20 | 31 | 2 |
+| seed 12345, senescence on (floor 0.3) | 188 | 119 | 20 | 44 | 4 |
+
+A real, plausible, one-directional effect, same shape as Slice 7's
+handling-experience finding: flower_visits down 20% (234→188),
+`stall_recoveries` up 42% (31→44) — a flower that's slower to refill late
+in its life pushes foragers into more `SEARCHING` bouts, the same
+dynamic Slice 5 built to handle. Starvation deaths ticked up slightly (2→4)
+but total deaths stayed flat (20→20, both still dominated by "old age").
+**Locked `flower_senescence_floor` at its provisional default (0.3)** —
+not swept further given the small-batch steer, flagged rather than
+silently accepted as final; worth a proper sweep if a playtest suggests
+0.3 is too harsh or not harsh enough.
+
+**Checks:** `source_checks.py` (67/67) and `balance_tests.py` (15/15)
+both pass. A `mcp__godot__run_project` boot is clean. `FUNCTION_MAP.md`
+regenerated (`debug_panel.gd` touched) and verified with `--check`.
+**Needs Dave's hands-on check**: watch an old flower visibly stay
+half-drained for longer than a young one nearby. Off by default, so
+nothing about today's default experience changes until Dave turns it on.
+
 ## Next physical step
 
-Per the 23 Aug decision above ("keep drafting the rest of this plan's
-slices first, then re-review starvation once all of them are in"), Slice
-7 is now built and needs Dave's hands-on check (see above) before Slice
-8 (finite pollen and ecological time) starts. Slice 9 stays scope-indexed
-after that. Dave still separately owes the hand-recorded `perf.gd`
-baseline Slice 4's task 1 asked for — already folded into that slice
-rather than treated as a separate leftover from Slice 0.
+Slice 8 is built and needs Dave's hands-on check (see above). Slice 9
+(proximity recruitment) stays scope-indexed, the last slice in the plan
+— pick it up once Slice 8's check is back, alongside the still-owed 23
+Aug starvation re-review now that Slices 5-8 are all in (see that section
+above). Dave still separately owes the hand-recorded `perf.gd` baseline
+Slice 4's task 1 asked for — already folded into that slice rather than
+treated as a separate leftover from Slice 0.

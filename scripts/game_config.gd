@@ -22,6 +22,19 @@ var seconds_per_day: float = 200.0      # real seconds in one in-game day
 var nectar_recharge_rate: float = 0.5   # per second
 var pollen_recharge_rate: float = 0.1   # per second
 
+## Foraging ecology plan, Slice 8: a flower's recharge slows as it nears
+## the end of its life, rather than refilling at full strength right up
+## until it dies -- real flowers get less productive as they senesce. Off
+## by default; off means recharge follows exactly the same
+## season_strength()-only curve it always has, no age term at all. See
+## flower.gd::_senescence_scale().
+var flower_senescence_on: bool = false
+## The recharge-rate multiplier a flower has reached by the end of its
+## life (1.0 = no decline at all; 0.3 = down to 30% of full recharge
+## speed by the time it dies). Eases linearly from 1.0 at age 0 to this
+## value at lifespan_seconds. Provisional, pending a simulation sweep.
+var flower_senescence_floor: float = 0.3
+
 ## Tarsal secretion markers. Bees leave a scent from their feet on every
 ## flower they land on; with this on, other bees avoid a flower marked
 ## recently rather than wasting a trip on one just stripped. Real

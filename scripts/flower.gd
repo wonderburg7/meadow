@@ -208,11 +208,21 @@ func _sync_recharge() -> void:
 	var elapsed: float = Session.sim_time - _last_recharge_update
 	if elapsed <= 0.0:
 		return
-	var strength: float = season_strength()
+	var strength: float = season_strength() * _senescence_scale()
 	if strength > 0.0:
 		_nectar_amount = min(nectar_capacity, _nectar_amount + nectar_recharge_rate * strength * elapsed)
 		_pollen_amount = min(pollen_capacity, _pollen_amount + pollen_recharge_rate * strength * elapsed)
 	_last_recharge_update = Session.sim_time
+
+## Slice 8: how much slower this flower recharges as it nears the end of
+## its life. 1.0 (full speed) at age 0, easing linearly down to
+## GameConfig.flower_senescence_floor at lifespan_seconds. Off by default
+## via GameConfig.flower_senescence_on -- see the toggle's own comment.
+func _senescence_scale() -> float:
+	if not GameConfig.flower_senescence_on:
+		return 1.0
+	var age_fraction: float = clampf(age_seconds / max(1.0, lifespan_seconds), 0.0, 1.0)
+	return lerp(1.0, GameConfig.flower_senescence_floor, age_fraction)
 
 func _process(delta: float) -> void:
 	Perf.begin("flowers")

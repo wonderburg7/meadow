@@ -100,6 +100,16 @@ const TUNABLES := [
 		"tip": "How fast a drained flower refills its pollen, per second. Deliberately slower than nectar, so pollen is the scarcer resource.",
 	},
 	{
+		"key": "flower_senescence_on", "label": "Flower senescence", "toggle": true,
+		"category": "Flowers",
+		"tip": "A flower recharges more slowly as it nears the end of its life instead of refilling at full strength right up until it dies -- real flowers get less productive as they age.",
+	},
+	{
+		"key": "flower_senescence_floor", "label": "Senescence floor", "step": 0.05, "min": 0.0, "max": 1.0,
+		"category": "Flowers",
+		"tip": "How slow a flower's recharge has become by the end of its life, as a fraction of full speed (1.0 = no decline, 0.3 = down to 30%). Only matters with Flower senescence on.",
+	},
+	{
 		"key": "tarsal_markers_on", "label": "Tarsal markers", "toggle": true,
 		"category": "Foraging",
 		"tip": "Bees leave a scent mark from their feet on every flower they land on. With this on, other bees avoid a flower marked in the last few seconds, so the colony spreads out instead of crowding the same patch. Real bumblebees and honeybees both do this.",

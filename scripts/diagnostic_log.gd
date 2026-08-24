@@ -693,6 +693,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"probabilistic_choice_on": GameConfig.probabilistic_choice_on,
 			"handling_experience_on": GameConfig.handling_experience_on,
 			"adaptive_constancy_on": GameConfig.adaptive_constancy_on,
+			"flower_senescence_on": GameConfig.flower_senescence_on,
 			"scouting_now": scouting_now,
 			"with_preferred_species": by_preferred_species,
 			"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
