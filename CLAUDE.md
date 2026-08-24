@@ -53,7 +53,10 @@ commit. The complete classification and required hand-off fields live in
 `CHATGPT.md` under “Risk-proportional hand-off and integration”; read that
 section only when integrating Codex work. After merging or cherry-picking,
 update `NEXTSTEPS.md` or other canonical status documents only if the
-integrated state requires it.
+integrated state requires it. If the hand-off names a remaining manual
+check, add it to `HANDS_ON_CHECKS.md` as part of the same integration --
+don't leave it sitting only in the Codex hand-off doc, which Dave won't
+routinely re-read.
 
 ## Standing checklist — apply these without being asked
 
@@ -107,6 +110,8 @@ docs/                 known-pitfalls.md, performance.md, history.md, archive/
 DESIGN_BACKLOG.md     agreed but unbuilt: progression, winter debate
 ROADMAP.md            candidate features, sized and prioritised
 NEXTSTEPS.md          read this first -- see "Start here" above
+HANDS_ON_CHECKS.md    checklist of shipped work only Dave can confirm --
+                       add to it, don't just mention it in chat
 FUNCTION_MAP.md       func index for the six biggest scripts (regenerate
                        with tools/update_function_map.py)
 AUDIT_PLAN.md         the 19 Aug technical audit plan -- read before
@@ -239,6 +244,18 @@ checks for parser/type errors before telling Dave it's ready to test —
 or visual/behavioural can only be confirmed by him actually playing it,
 even with Godot tooling available — say so rather than implying it's
 verified.
+
+**Every item needing a hands-on check goes in `HANDS_ON_CHECKS.md`, not
+just the conversation.** Dave isn't always able to check something the
+moment it ships, so a check mentioned only in chat gets lost. Add a
+checklist line there (grouped under an existing heading if one fits,
+otherwise a new one) whenever a change needs him to actually play it —
+don't just say so and move on. Group related items under one heading
+rather than one heading per item, so a session of checking covers one
+coherent bit of the game at a time. Keep entries short: what to do,
+what "working" looks like, and a pointer (`git log`/plan file) for more
+detail — the file is meant to shrink as Dave ticks or deletes items, not
+accumulate write-ups.
 
 ## Performance, pitfalls, and the `.claudeignore` fix
 

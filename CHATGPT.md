@@ -110,7 +110,10 @@ integrate it:
 2. baseline and final commit hash, plus changed-file summary;
 3. checks run and their results;
 4. risk tier and short evidence-based reason; and
-5. remaining risk, manual check or explicit `none`.
+5. remaining risk, manual check or explicit `none` -- Claude copies any
+   manual-check item into `HANDS_ON_CHECKS.md` on integration, so state
+   it as a concrete, checkable action rather than a vague "needs
+   testing".
 
 Deterministic check output and the committed diff are the evidence; a second
 agent need not re-derive the implementation narrative. After integration,

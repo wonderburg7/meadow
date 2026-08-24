@@ -45,6 +45,17 @@ instead.
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.
 
+## Light theme contrast (Settings > Appearance)
+- [ ] Switch to Light theme and check colony panel and general panel
+      text is readable -- fixes `ui_theme.gd`/`colony_panel.gd`, see
+      `UI_SETTINGS_PLAN.md` Slice 2.
+
+## Foraging ecology Slice 8 -- flower senescence
+- [ ] Turn on Flower senescence (Settings > Flowers) and watch an old
+      flower's nectar/pollen bars refill visibly slower than a young
+      one's, easing down towards the Senescence floor by the end of its
+      life.
+
 ## Foraging ecology Slice 7 -- handling experience and adaptive constancy
 - [ ] Watch a forager get visibly faster at working a familiar species
       (turn on Handling experience in Settings > Flowers).
