@@ -1,7 +1,8 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: proposed | Owner: Dave / implementer to be assigned | Next: approve
-the recommended staged scope | Evidence checked: 2026-08-24 at `9cadca4`
+Status: Slice 0 ready for integration | Owner: Dave / Codex | Next: integrate
+the Slice 0 baseline, then assign Slice 1 | Evidence checked: 2026-08-24 at
+`6715881`
 
 > **CHATGPT-OWNED PLANNING FILE.**
 > This plan does not revive the abandoned mechanism-check queue in
@@ -534,6 +535,24 @@ not copies of this plan. Any eventual edits to `CLAUDE.md`, `CHATGPT.md` or
 
 Each slice should be a focused commit in an isolated worktree. Do not combine
 this with gameplay, balance or the old H6/H7 mechanism-check plan.
+
+### Implementation record: Slice 0 (2026-08-24)
+
+- Scope: contracts, synthetic evidence and compatibility baselines only; no
+  Godot, scenario, diagnostic-log or runner behaviour changes.
+- Isolated branch/baseline: `codex/headless-efficiency-slice-0` at
+  `6715881fc5a1897fd47285062a353773ae08a5cf`.
+- Primary worktree baseline: `master` at the same commit, with its pre-existing
+  untracked `.claude/settings.local.json` left untouched. The isolated branch
+  started clean. Existing Codex worktrees had no overlapping tracked edits;
+  one had an unrelated untracked diagnostic artefact directory.
+- The synthetic success fixture records deterministic current runner stdout
+  sizes of 396 bytes (`brief`), 522 bytes (`behaviour`) and 808 bytes
+  (`full`) using a stable fixture session path. The test locks these
+  compatibility baselines while the new one-line verdict is built.
+- `docs/headless-run-contract.md` is the schema source for Slice 1;
+  `tools.headless.contracts` holds the version, allowed vocabulary and
+  executable 1 KiB / 4 KiB output-budget limits.
 
 ### Slice 0: measurements and contracts, no game behaviour change
 

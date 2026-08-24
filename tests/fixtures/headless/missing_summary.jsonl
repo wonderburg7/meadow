@@ -1,0 +1,2 @@
+{"type":"config","settings":{"predators_on":false}}
+{"type":"snapshot","day":1,"population":{"total":3,"by_role":{"forager":2,"nurse":1}},"cells":{"total":10,"by_contents":{"honey":4}},"environment":{"winter_here":false}}

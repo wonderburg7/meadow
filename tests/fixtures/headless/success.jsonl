@@ -1,0 +1,4 @@
+{"type":"config","settings":{"predators_on":false}}
+{"type":"snapshot","day":1,"population":{"total":3,"by_role":{"forager":2,"nurse":1}},"cells":{"total":10,"by_contents":{"honey":4}},"environment":{"winter_here":false}}
+{"type":"action","do":"assign_role","target":"bee 1","result":"accepted","reason":"","game_time":1.0}
+{"type":"summary","outcome":"actions_resolved","game_time":12.5,"total_deaths":0,"gynes_released":0,"deaths_by_cause":{},"deaths_by_role":{},"crab_spider_events":{},"queen_alive":true}

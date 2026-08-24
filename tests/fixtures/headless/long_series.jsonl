@@ -1,0 +1,14 @@
+{"type":"config","settings":{"predators_on":false}}
+{"type":"snapshot","day":1,"population":{"total":10,"by_role":{"forager":6,"nurse":4}},"cells":{"total":20,"by_contents":{"honey":1}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":2,"population":{"total":11,"by_role":{"forager":7,"nurse":4}},"cells":{"total":20,"by_contents":{"honey":2}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":3,"population":{"total":12,"by_role":{"forager":8,"nurse":4}},"cells":{"total":20,"by_contents":{"honey":3}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":4,"population":{"total":13,"by_role":{"forager":8,"nurse":5}},"cells":{"total":20,"by_contents":{"honey":4}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":5,"population":{"total":14,"by_role":{"forager":9,"nurse":5}},"cells":{"total":20,"by_contents":{"honey":5}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":6,"population":{"total":15,"by_role":{"forager":9,"nurse":6}},"cells":{"total":20,"by_contents":{"honey":6}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":7,"population":{"total":16,"by_role":{"forager":10,"nurse":6}},"cells":{"total":20,"by_contents":{"honey":7}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":8,"population":{"total":17,"by_role":{"forager":10,"nurse":7}},"cells":{"total":20,"by_contents":{"honey":8}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":9,"population":{"total":18,"by_role":{"forager":11,"nurse":7}},"cells":{"total":20,"by_contents":{"honey":9}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":10,"population":{"total":19,"by_role":{"forager":11,"nurse":8}},"cells":{"total":20,"by_contents":{"honey":10}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":11,"population":{"total":20,"by_role":{"forager":12,"nurse":8}},"cells":{"total":20,"by_contents":{"honey":11}},"environment":{"winter_here":false}}
+{"type":"snapshot","day":12,"population":{"total":21,"by_role":{"forager":12,"nurse":9}},"cells":{"total":20,"by_contents":{"honey":12}},"environment":{"winter_here":false}}
+{"type":"summary","outcome":"max_days","game_time":86400.0,"total_deaths":0,"gynes_released":1,"deaths_by_cause":{},"deaths_by_role":{},"crab_spider_events":{}}
