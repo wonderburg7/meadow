@@ -469,6 +469,15 @@ var nectar_drink_rate: float = 20.0     # energy per second while drinking
 ## bee that has to do this a lot is one that is ranging too far.
 var crop_drink_threshold: float = 0.25
 
+## The self-rescues above only work for a bee already carrying nectar
+## (crop_drink_threshold) or standing at a flower (forager_drink_threshold)
+## -- one still hunting with an empty crop had no rescue at all and would
+## starve mid-search (found from a real 23 Aug 2026 session log: 43 of 53
+## starvation deaths were in exactly this state). Below this share of
+## capacity, a bee still out looking abandons the search and heads for
+## the hive instead of continuing to burn energy hunting.
+var critical_recall_threshold: float = 0.20
+
 # --- gynes ---
 ## A gyne is a future queen: bigger than a worker, slower, hungrier, and
 ## far more expensive to raise. She can do any worker job in the

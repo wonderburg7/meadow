@@ -32,64 +32,32 @@ plan file, full history in `git log`.
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
 4. **Foraging ecology plan -- Slices 5-8 built, needs Dave's hands-on
    check.** Full detail and results tables for every slice are in
-   `FORAGING_ECOLOGY_PLAN.md`; summary of where things stand:
-   - **Slice 5 (local search):** `nearest_flower` takes a radius,
-     `bee.local_search_anchor` tracks and drifts, `State.SEARCHING`
-     flies an expanding spiral when nothing's in sight.
-     `forage_perception_radius` (locked at 320 after Dave's playtest
-     read it as too generous, down from a simulation-swept 400) and
-     `local_search_drift_rate` (0.3) are locked. **Dave-verified.**
-   - **Slice 6 (probabilistic choice and memory):** heading-weighted
-     flower choice (`probabilistic_choice_on`) and a small patch-memory
-     ring buffer (`bee.known_patches`), both off by default.
-     `probabilistic_choice_heading_weight` locked at 0.5. **Dave-verified**
-     (a forager picks the one ahead of her over a nearer one behind, and
-     returns to a known patch on a later search).
-   - **Slice 7 (handling experience and adaptive constancy):**
-     `handling_experience_on` (faster handling with practice) and
-     `adaptive_constancy_on` (a continuous per-species confidence score,
-     separate from the existing `floral_constancy_on` pin), both off by
-     default. Locked at their provisional defaults. **Still needs Dave's
-     hands-on check** -- watch a forager get visibly quicker at a
-     familiar species, and watch an unpinned forager gravitate toward
-     whatever's been paying off (only visible with Weighted flower choice
-     also on).
-   - **Slice 8 (flower senescence):** a flower's recharge slows as it
-     nears the end of its life (`flower_senescence_on`, floor 0.3), off
-     by default -- most of the slice's original "finite pollen and
-     ecological time" title turned out to already exist (pollen, flower
-     lifespan and season windows were all already built), so this slice
-     was scoped down to just senescence per Dave's steer, skipping a
-     day/night mechanic he judged unnecessary. Simulated single-seed
-     on/off: flower_visits down 20%, stall_recoveries up 42%, deaths
-     flat -- a real, one-directional effect, not swept further per the
-     small-batch steer. **Still needs Dave's hands-on check** -- watch an
-     old flower stay half-drained longer than a young one nearby.
-
-   All four slices' checks pass (`source_checks.py` 67/67,
-   `balance_tests.py` 15/15), `FUNCTION_MAP.md` is current, and every new
-   toggle is off by default so nothing about today's default experience
-   has changed. `tools/run_scenario.py`'s hardcoded `log_dir()` still
-   assumes `config/name="Meadow"`; this sandbox's `project.godot` says
-   "Meadow - Claude", so headless scenario runs here need a small
+   `FORAGING_ECOLOGY_PLAN.md`; all four pass `source_checks.py` (67/67)
+   and `balance_tests.py` (15/15). Slices 5 and 6 are Dave-verified;
+   Slices 7 (handling experience / adaptive constancy) and 8 (flower
+   senescence) still need his hands-on check -- see
+   `HANDS_ON_CHECKS.md`. `tools/run_scenario.py`'s hardcoded `log_dir()`
+   still assumes `config/name="Meadow"`; this sandbox's `project.godot`
+   says "Meadow - Claude", so headless scenario runs here need a small
    `log_dir()`-monkeypatch driver script (not part of the repo) -- will
    recur next session doing headless verification here.
 
-   **Root cause found from a real session log (23 Aug), remedy
-   deliberately deferred until now.** Dave's real "Thirty strong"
-   playthrough log had 580 death events, 53 starvation, 81% of them
-   (43/53) died still hunting with an empty crop -- `bee_survival.gd`'s
-   `sip_from_crop` self-rescue only fires if the bee is already carrying
-   nectar. Bursts at day ~5-10 (young-colony ramp-up, unrelated to
-   Slices 5-8), day ~51-63 (nothing-nearby wandering -- Slice 5's
-   target), and day ~109-115 (foragers ranging too far from a depleted
-   local patch). **Decision (Dave, 23 Aug):** draft the rest of the
-   plan's slices first, then re-review starvation once they're all in,
-   since some may remedy this incidentally. **That point has now been
-   reached** -- Slices 5-8 are all built (5 and 6 Dave-verified; 7 and 8
-   still owed). Next session, once 7 and 8's checks are back: either
-   re-review starvation against this same log now that local
-   search/probabilistic choice/senescence are all available, or start
-   Slice 9 (proximity recruitment, the last slice, superseding today's
-   entrance-wait mechanism only after a proven A/B win) -- Dave's call
-   which comes first.
+   Slice 9 (proximity recruitment) is the last slice, still only
+   scope-indexed -- no implementation-ready section written yet, and it
+   should only replace the current mentor-consumption recruitment after
+   an A/B comparison shows an actual improvement (see the plan's "Next
+   physical step"). Pick it up once Slice 8's check is back.
+5. **Starvation fix shipped 24 Aug, needs Dave's hands-on check.** The
+   23 Aug real-session root cause (43/53 starvation deaths were foragers
+   still hunting with an empty crop -- `sip_from_crop`'s self-rescue only
+   fires once a bee is carrying nectar) is fixed:
+   `bee_survival.gd::check_critical_recall`, called from `age_and_burn`,
+   sends a bee still hunting (`SEEK_FLOWER`/`SEARCHING`/`TO_FLOWER`/
+   `MOVE_TO_POINT`) with nothing to sip home once she drops below
+   `GameConfig.critical_recall_threshold` (0.20 of capacity, a starting
+   guess -- not simulation-swept). A 150-day headless re-run of the
+   "Thirty strong" setup went from 2 starvation deaths to 0 after the
+   fix. Note: the original 23 Aug log itself no longer exists in this
+   sandbox (it was on Dave's own machine), so this was a fresh re-run
+   against the same starting setup, not a direct diff of that log.
+   Check added to `HANDS_ON_CHECKS.md`.

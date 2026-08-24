@@ -59,6 +59,7 @@ static func age_and_burn(bee: Node2D, delta: float) -> void:
 		bee.energy -= GameConfig.build_energy_burn * delta
 
 	sip_from_crop(bee, delta)
+	check_critical_recall(bee)
 
 	# Death is checked here, at the end of the one function every bee runs
 	# every frame.
@@ -122,6 +123,26 @@ static func sip_from_crop(bee: Node2D, delta: float) -> void:
 	# carried in -- it was quietly eating most of it straight back out of
 	# the cell it had just filled. Eating is now a real trip to a real
 	# cell; see _should_go_and_eat and _feed_self.
+
+
+## A bee still out hunting (nothing found yet, or flying to a candidate
+## she hasn't reached) has no other self-rescue: sip_from_crop only helps
+## once she is carrying nectar, and drink_at_flower only helps once she
+## has actually reached one. Below critical_recall_threshold, give up the
+## search and fly home instead -- the same "go home empty" transition
+## search_for_flower already uses when it runs out of meadow to check.
+static func check_critical_recall(bee: Node2D) -> void:
+	if bee._is_inside_hive():
+		return
+	if bee.current_load_type == "nectar" and bee.current_load > 0.0:
+		return          # sip_from_crop is already keeping her topped up
+	if bee.energy > GameConfig.energy_capacity * GameConfig.critical_recall_threshold:
+		return
+	if bee.state == State.TO_FLOWER and bee.current_flower and is_instance_valid(bee.current_flower):
+		bee.current_flower.release(bee)
+		bee.current_flower = null
+	if bee.state in [State.SEEK_FLOWER, State.SEARCHING, State.TO_FLOWER, State.MOVE_TO_POINT]:
+		bee.state = State.TO_HIVE
 
 
 ## True when this bee should break off and go and eat. Only inside the

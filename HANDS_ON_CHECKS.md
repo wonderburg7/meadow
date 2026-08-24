@@ -56,6 +56,17 @@ instead.
       one's, easing down towards the Senescence floor by the end of its
       life.
 
+## Starvation fix -- empty-crop critical recall
+- [ ] Play a session long enough to see a forager get low on energy while
+      still hunting (nothing found yet, or flying to a candidate flower)
+      rather than carrying nectar home -- she should give up and fly
+      straight for the hive instead of continuing to search and dying
+      mid-air. `GameConfig.critical_recall_threshold` (0.20 of capacity)
+      is a starting guess, not simulation-swept -- if it fires too early
+      (foragers giving up on searches that would soon have paid off) or
+      too late (still seeing starvation deaths), it's the number to
+      retune. See `NEXTSTEPS.md` for the root-cause log this closes.
+
 ## Foraging ecology Slice 7 -- handling experience and adaptive constancy
 - [ ] Watch a forager get visibly faster at working a familiar species
       (turn on Handling experience in Settings > Flowers).
