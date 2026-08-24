@@ -130,74 +130,154 @@ slices C and D) rather than done separately -- Dave's answer to Slice
 "fold into the panels that already exist", which touched the same
 files as Slice 4's column rework.
 
-**Slice 6 -- Panel overlap on window resize.**
-Audit whether `ui_layout.gd`'s responsive-breakpoint helpers are
-actually called by `hud.gd`/`colony_panel.gd`/`nursery_panel.gd`/
-`debug_panel.gd` on resize, and add collision-avoidance between open
-drawers where it's missing.
-*Model: Sonnet -- geometry/layout reasoning, not mechanical.*
-*Files:* `ui_layout.gd`, `hud.gd`, `colony_panel.gd`, `nursery_panel.gd`,
-`debug_panel.gd`.
+**Slice 6 -- Panel width consistency (rewritten 24 Aug, supersedes the
+original "collision-avoidance" framing).**
+Root cause, found by reading `hud.gd::_build_selection_panel`: the
+selection panel (used for both a bee's summary and a cell's summary) is
+a bare `PanelContainer` with no `custom_minimum_size.x` at all -- it
+sizes itself off whatever text `identity_label`/`energy_label`/
+`activity_label`/`trait_label` currently hold, so it's a different width
+for a bee with a long trait/quote than one without, and the same panel
+repurposed for a cell (`show_object_summary`/`show_cell_popup`) behaves
+identically. `command_tray`'s own width is capped relative to
+`selection_panel.size.x` (`_update_command_tray_width` ->
+`UiLayout.command_tray_max_width`), so when the summary panel grows, the
+gap between the two shrinks or the tray shifts -- that's the summary/job
+panel overlap, the "job panel is a different size for some bees" report,
+and the cell-popup/summary overlap all traced to the one cause, not
+three separate bugs.
 
-**Slice 7 -- Meadow/Hive button hit-area bug.**
-Likely cause: `hud.gd::set_settings_button_width` recalculates the
-top-right row's layout off measured widths, but `set_view_label` swaps
-`view_button`'s text between "Meadow" and "Hive" (different lengths)
-without necessarily re-triggering that recalculation -- leaving the
-button's actual clickable `Control` rect sized for the old label while
-the new, wider label renders visually beyond it. That would explain
-why only part of the button responds, and why it doesn't happen in
-Challenge scenarios (where the label may not be swapping mid-session
-the same way).
+Dave's steer: give every summary panel and every job/command panel
+(bee and cell alike) a fixed width, computed from the viewport the way
+`cell_primary_columns`/`cell_more_panel` already do at the bottom of
+`hud.gd` (`custom_minimum_size.x = max(520.0, max_width - 32.0)`) --
+that pattern already exists for the cell action tray, it just isn't
+applied to `selection_panel`/`command_tray` yet. The only thing that
+should change a panel's width is a window resize, never which bee or
+cell is selected or how much text it has. Move this fixed-width
+calculation into `ui_layout.gd` as a shared helper both the bee/cell
+summary panel and the cell action tray call, rather than duplicating the
+`max(520, viewport - 32)` formula a third time.
+*Model: Sonnet -- geometry/layout reasoning, not mechanical.*
+*Files:* `hud.gd` (`_build_selection_panel`, `_update_command_tray_width`,
+the cell popup builders), `ui_layout.gd` (new shared width helper).
+*Check:* select several bees with very different amounts of trait/quote
+text and confirm the summary panel and command tray are the same width
+throughout, don't visually overlap, and only change size on an actual
+window resize; repeat for a cell selection against the summary panel.
+
+**Slice 7 -- Meadow/Hive (and other top-right) button hit-area bug --
+corrected direction, 24 Aug.**
+The original 22 Aug guess had the direction backwards: Dave's 24 Aug
+check found the smaller hit area happens **inside** a Challenge, not in
+a Scenario, and affects other top-right buttons too, not just
+Meadow/Hive -- "these should have the same areas as in the scenarios."
+The original hypothesis (`set_view_label` swapping "Meadow"/"Hive" text
+without re-triggering `set_settings_button_width`'s recalculation) isn't
+ruled out, but it doesn't explain a Challenge-specific, multi-button
+symptom on its own -- re-trace against this corrected direction rather
+than assuming the old write-up still holds. New prime suspect worth
+checking first: `stage_gate.gd` is the mechanism that hides/reveals
+top-right buttons specifically during a Challenge (Scenarios never call
+it -- `stage_gate.active` stays `false`, `is_unlocked()` always returns
+`true`); if a button's container recalculates its own minimum size only
+from currently-visible siblings at the moment `unlock()`/`lock()` toggles
+`.visible`, a button revealed mid-Challenge could end up with a stale,
+smaller measured rect than the same button gets when it's visible from
+the start (as in a Scenario). Confirm by comparing `hud.gd`'s top-right
+row construction against every `stage_gate.gd` `unlock()`/`lock()` call
+site touching those buttons, not by re-guessing.
 *Model: Sonnet -- needs tracing signal/layout timing, not a fixed
 pattern.*
-*Files:* `hud.gd` (the top-right row functions only -- no need to read
-the rest of the file).
-*Check:* toggle view repeatedly outside a Challenge and confirm the
-whole button stays clickable each time, not just the top edge.
+*Files:* `hud.gd` (the top-right row functions), `stage_gate.gd` (read
+only -- don't change its general mechanism for one symptom).
+*Check:* start a Challenge and a Scenario side by side (or in
+succession), click every top-right button (view toggle, Colony, Nursery,
+Foraging, Winter, settings cog) right at its rendered edges in both, and
+confirm the clickable area matches the visible area in both -- not just
+that the button responds somewhere in the middle.
 
-**Slice 8 -- Follow-bee stops on hive-to-meadow.**
-`hud.gd::update_selection()` unconditionally emits
-`follow_bee_toggled(null, false)` on every call -- by design, so
-following doesn't outlive a selection change. Something calls
-`update_selection()` asymmetrically around the hive-exit transition but
-not the hive-entry one (candidates: `camera_view.gd` lines 53/96,
-`input_selection.gd` lines 179/339/368/384/410/451/467 -- one of these
-fires when a bee reparents out of `hive_root` via
-`world_building.gd`'s exit-hive function but has no matching call on
-the entry-hive function). Trace which call site fires on exit, confirm
-it's re-filtering "bees in the current view" rather than reacting to
-the followed bee specifically, and either skip the follow-cancelling
-emit when the selection hasn't actually changed, or have
-`_handle_follow`'s own view-toggle (`camera_view.gd::_handle_follow`,
-already correct on paper) run before that call fires.
-*Model: Sonnet first; escalate to Opus only if the trace doesn't
-resolve in one session -- this is the one bug here where the cause
-isn't already narrowed to a single line.*
-*Files:* `camera_view.gd`, `input_selection.gd`, `hud.gd` (just
-`update_selection`), `world_building.gd` (just the two reparent
-functions).
+**Slice 8 -- Follow-bee stops on hive-to-meadow. CLOSED, confirmed
+working 24 Aug.**
+Dave's hands-on check: "Follow-bee works as expected." Whatever the
+suspected asymmetric `update_selection()` call site was, it's not
+producing the reported symptom any more -- closed with no code change,
+rather than chased further on a hunch. If it resurfaces, re-open with a
+fresh repro (what bee, what transition, what was different) rather than
+restarting from this write-up's original trace, which is now unconfirmed
+either way.
 
-**Slice 9 -- Cell inspector: summary plus a low, wide action tray.**
-Implemented on `codex/ui-issues-continuation`; pending Dave's hands-on layout
-check at the three text scales below.
-This supersedes Slice 4D's first pass. Selecting comb should use the
-bottom-left selection panel for the cell's at-a-glance state (contents,
-reservation, nursery/sealing state and what it raises), just as selecting a
-bee uses that panel for identity and activity. The bottom-centre tray should
-then contain actions only, arranged in three stable logical columns:
-**Reserve for**, **Nursery zone** and **Sealing**. Less frequent or destructive
-actions (**Emptying** and **Raises**) belong under one **More...** disclosure.
-Keep the existing bulk-selection semantics: the summary identifies the first
-cell being described and every action still applies to the whole selected
-set. This is a composition change, not a second cell-control implementation;
-the existing signals and order handlers remain the only mutation path.
-*Files:* `hud.gd`; `ui_layout.gd` only if a shared responsive measurement is
-needed.
-*Check:* at 100/150/200% text scale the tray stays in the lower portion of the
-screen, the world remains visible through the centre, the left summary and
-action columns do not overlap, and More... can be opened and closed without
-losing selection or cell state.
+**Slice 9 -- Cell inspector: two-column action tray, nursery zone
+removed. Rewritten 24 Aug from Dave's own design pass** -- supersedes
+the three-column version below entirely, not just its layout.
+
+**What's changing, and why this is more than a layout tweak.** The
+nursery zone is a real reservation mechanic today, not just a panel
+section: `hive_cell.gd::is_nursery_cell()`/`nursery_priority` mark a
+cell as reserved for brood ahead of ordinary comb, and the queen's own
+laying logic reads it directly (`hive.gd` -- `_tier_credit`, the
+per-tier free-cell counts, `by_tier` bucketing at line 341, all keyed off
+`nursery_priority`; `game_config.gd`'s comment on a zone cell with no
+role set being "the fallback... queen only lays in one once every zone
+cell that *does* name a role is full"). `orders_zones.gd` and
+`save_game.gd` also read/write `nursery_priority`/`is_nursery_cell()`
+directly. Removing the mechanic "for now" therefore isn't a `hud.gd`-only
+change -- it changes where the queen lays without it, and that needs
+its own small decision (fall back to `any_cell_box`'s existing
+"lay in any spare undesignated cell" behaviour becoming the *only*
+behaviour, most likely, but confirm rather than assume) before writing
+this up as fully implementation-ready. Medium risk per `CLAUDE.md`'s
+routing table (bounded gameplay behaviour, not just UI) -- read the
+affected functions in `hive.gd`/`orders_zones.gd` before touching them,
+don't just delete the reads.
+
+**The panel change, once the mechanic question above is settled:**
+- Drop the **Nursery zone** primary column entirely (no more "add
+  cells to the zone" toggle in the tray).
+- Rename the **Raises** section (currently in More…) to **Nursery**,
+  and move the Priority low/medium/high control into it -- so priority
+  survives as a per-cell setting even though the zone-membership toggle
+  it used to live under is gone. (If the queen no-longer reads
+  `nursery_priority` at all post-removal, decide whether Priority stays
+  as a still-meaningful control or is dropped too -- don't leave a
+  control on screen that does nothing.)
+- Bottom-centre tray becomes **two** primary columns instead of three:
+  **Reserve for** and **Nursery** (the renamed, relocated section).
+  More… reveals **Sealing** and **Emptying**, one per column (Sealing
+  under the Reserve-for column, Emptying under the Nursery column, or
+  the reverse -- whichever reads better once built; not load-bearing
+  either way).
+- Keep the existing bulk-selection semantics: the summary identifies the
+  first cell being described and every action still applies to the
+  whole selected set. This stays a composition change against the
+  existing signals/order handlers, not a second cell-control
+  implementation.
+*Files:* `hud.gd` (`_build_cell_action_column`, `_build_zone_controls`,
+the `cell_primary_columns`/`cell_more_panel` construction), `hive.gd`
+(queen laying's tier/zone reads), `orders_zones.gd`, `save_game.gd`
+(both already read/write `nursery_priority` -- confirm what a save with
+no zone cells at all does on load, especially an *old* save that still
+has zone cells marked from before this slice).
+*Check:* the panel shows the two-column/More… layout above at
+100/150/200% text scale without overlap (reuses Slice 6's fixed-width
+fix); a fresh colony with no nursery-zone cells still raises brood
+somewhere sensible; loading a pre-slice save with zone cells already set
+doesn't crash and behaves sensibly (falls back cleanly, doesn't silently
+strand cells in a "reserved" state nothing can ever clear).
+
+<details>
+<summary>Superseded 22 Aug three-column version (kept for the audit
+trail, not the current plan)</summary>
+
+Implemented on `codex/ui-issues-continuation`; was pending Dave's hands-on
+layout check at three text scales. Selecting comb used the bottom-left
+selection panel for the cell's at-a-glance state (contents, reservation,
+nursery/sealing state and what it raises), just as selecting a bee uses
+that panel for identity and activity. The bottom-centre tray held actions
+only, arranged in three stable logical columns: **Reserve for**,
+**Nursery zone** and **Sealing**. Less frequent or destructive actions
+(**Emptying** and **Raises**) sat under one **More...** disclosure.
+</details>
 
 **Slice 10 -- Pre-run main menu and shared accessibility surface.**
 Do not construct the meadow, hive, simulation services or run HUD while the
@@ -283,28 +363,49 @@ the colony's first jobs.
 activate `challenge_runner`, accepts all Scenario presets, and restart repeats
 the same run definition.
 
+**Slice 14 -- Scent-mark text should disappear once undetectable.**
+`hud.gd::_refresh_flower_summary` shows "Scent mark: Xs old" whenever
+`active_flower.marker_age() >= 0.0` -- that's true forever once a bee has
+ever marked the flower, even long after the mark has decayed past
+`GameConfig.tarsal_marker_seconds` (the point `flower.gd::is_marked()`
+itself stops counting it as fresh, i.e. the point bees stop reacting to
+it at all). Today only the "(bees avoiding)" qualifier drops off when
+stale; the line itself never does. Fix: only show the Scent mark line
+while `age < GameConfig.tarsal_marker_seconds`, matching `is_marked()`'s
+own freshness window, rather than showing a mark's age indefinitely.
+*Model: Haiku -- single conditional change, exact line already found.*
+*Files:* `hud.gd` (`_refresh_flower_summary` only).
+*Check:* mark a flower, wait past `tarsal_marker_seconds`, confirm the
+Scent mark line disappears from its summary rather than continuing to
+count up.
+
 ## What needs no further work
 
 Confirmed already correct by the audit, no slice needed:
 - `camera_view.gd::_handle_follow`'s view-toggle logic is symmetric on
   paper (checks `bee_indoors != in_hive_view` the same way both
-  directions) -- the Slice 8 bug is in what cancels following
-  beforehand, not in this function.
+  directions) -- Slice 8 is now confirmed closed anyway (24 Aug), so this
+  was never the live bug either way.
 - `ui_theme.gd` itself needs no changes -- it's the target every other
   slice migrates panels onto, not something broken.
 
-## Suggested session grouping
+## Suggested session grouping (revised 24 Aug)
 
-1. Slice 0 (quick, get answers) -- then Slices 1+2 together (same
-   mechanical pattern, same session, Haiku for the bulk of it).
-2. Slice 3 (needs 1+2 done first to judge visually).
-3. Slice 5 + Slice 7 together (both small, isolated, don't touch each
-   other's lines).
-4. Slice 8 alone (the one real investigation -- give it its own
-   session rather than splitting attention).
-5. Slice 6, then Slice 4 last (Slice 4 depends on Slice 0's answers and
-   benefits from the panel styling in 1-3 already being in place).
+1. Slice 6 (panel width consistency) -- do this before Slice 9's panel
+   work so the new two-column cell tray is built on the fixed-width
+   pattern from the start, not retrofitted onto it.
+2. Slice 9 (nursery zone removal + two-column tray) -- its own session,
+   Medium risk, needs the `hive.gd` laying-behaviour question settled
+   first (see the slice's own note).
+3. Slice 7 (Challenge hit-area, corrected direction) -- the one real
+   investigation left, give it its own session rather than splitting
+   attention, same treatment Slice 8 got before it closed.
+4. Slice 14 (scent-mark visibility) -- small, bundle with whichever
+   session next touches `hud.gd`'s summary-panel functions rather than
+   opening a session just for it.
 
 Not included here: the recruitment-process items Dave is deferring
 until the update lands, and anything from `CHALLENGE1_REVAMP_PLAN.md`
--- that stays a separate, already-planned piece of work.
+-- that stays a separate, already-planned piece of work. Slices 0-5,
+8 and 10-13 above are done or closed; see each slice's own status line
+rather than this grouping note for what's still open.

@@ -62,6 +62,16 @@ audit. The evidence, prioritised recommendations and exact hand-off are in
 `insights_from_ChatGPT.md`. ChatGPT did not change Claude instructions,
 configuration, plans or game files.
 
+On 24 Aug, Dave requested a shared implementation plan for cheaper headless
+runs and scenario-selectable diagnostics. The proposed architecture and staged
+scope are in `CHATGPT_HEADLESS_EFFICIENCY_PLAN.md`. It separates diagnostic
+capture, machine verdicts and AI-visible report projection; gives both AIs a
+five-fact deterministic route helper; and recommends Slices 0-4 (compact
+verdict/result path, route helper, diagnostic profiles and experiment
+manifests) as the core. This is a new infrastructure proposal, not a revival of
+the abandoned H6/H7 mechanism-check queue. No implementation has been assigned
+or completed.
+
 On 23 Aug, Dave requested a headless performance baseline at `flower_count`
 500/750/1000. The comparable retained samples used the same current working
 tree, seed 4242, 18 bees, fixed 60 Hz steps, a 240-frame warmup and 600 measured
@@ -96,6 +106,10 @@ deterministic evidence are sufficient.
 5. If player-facing FPS is the decision metric, take a visible-build baseline
    at a fixed camera/zoom as well; the headless path deliberately omits fog and
    rendering work.
+6. If Dave approves the headless-efficiency implementation, assign
+   `CHATGPT_HEADLESS_EFFICIENCY_PLAN.md` Slices 0-4 in an isolated worktree.
+   Keep background jobs, triggered capture and checkpointed AI as later,
+   evidence-gated follow-ups.
 
 Start future sessions from Dave's specific research, code-review, run-analysis
 or token-efficiency question. Read only the files needed to answer it. Record a

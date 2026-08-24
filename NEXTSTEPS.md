@@ -6,58 +6,129 @@ plan file, full history in `git log`.
 
 ## Next up
 
-1. **UI settings & polish plan** -- new, from Dave's 22 Aug second pass
-   (screenshots of the settings window and a bee selected). Full detail
-   in `UI_SETTINGS_PLAN.md`. Two root causes explain most symptoms:
-   `UiTheme.build_theme()` is only ever applied once per panel at
-   construction, so theme/typeface/text-scale changes need a Restart
-   Run to show; and `build_theme()` never sets a font colour at all, so
-   light mode falls back to invisible white text. Dave's chosen order
-   (his call, not the plan's default suggestion): **start with Slice 3
-   (settings reorganised into Game Settings / Hive / Meadow collections,
-   plus a content audit -- e.g. foraging-behaviour tunables currently
-   filed under "Flowers")**, then Slice 1 (live theme apply), Slice 2
-   (light contrast), Slice 4 (control alignment/sizing), Slice 6
-   (favourite as a header icon), Slice 5 (panel texture, needs Dave's
-   steer on look before building). Three open questions for Dave are in
-   the plan's "Open decisions" section -- check before Slice 3 if they
-   haven't been answered yet.
-2. **UI bugfix plan** -- Slice 4 and the popup-repositioning part of
-   Slice 5 are done, **not yet Dave-verified in-game**. Slices 6
-   (resize overlap), 7 (Meadow/Hive hit-area) and 8 (follow-bee-stops)
-   are the remaining, unrelated slices. Full detail in
-   `UI_BUGFIX_PLAN.md`.
-3. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
+1. **UI polish batch -- top-right bar and small display fixes.** Several
+   small, independent items Dave found in his 24 Aug hands-on pass, all
+   mechanical once traced, all touching the same `hud.gd`/`ui_theme.gd`
+   region -- worth one session rather than one slice each:
+   - Tooltip text on hover for Colony/Nursery/Meadow-Hive
+     (`hud.gd::_icon_button` never sets `tooltip_text`), and on the
+     Foraging/Winter buttons (same gap).
+   - Foraging button becomes an icon, not the word "Foraging" (matches
+     the icon-only pattern the other top-bar buttons already use).
+   - Speed buttons become right-pointing play-icon stacks (▶/▶▶/▶▶▶/▶▶▶▶
+     for 1x/2x/4x/8x) instead of the numeral text.
+   - Every top-right button (pause, speed, foraging, winter, cog, and the
+     Colony/Nursery/Meadow-Hive icon buttons) becomes one consistent
+     height and a bit bigger -- traced to two different `custom_minimum_size`
+     constants in play today (26px in `hud.gd`'s plain buttons and the
+     settings cog, 28px in `_icon_button`); pick one and apply it everywhere
+     rather than guessing which is "right."
+   - Font choice still doing nothing: not a code bug, just missing asset
+     files -- add the three typeface files under `assets/fonts/`
+     (`UI_PLAN.md` section 8 already named them: Atkinson Hyperlegible,
+     OpenDyslexic, Pixel Operator, all OFL-licensed).
+   - Hover text unreadable in any theme, in any panel: `ui_theme.gd`'s
+     `_refresh_theme_resource` sets `font_color` but never
+     `font_hover_color`/`font_pressed_color`/`font_focus_color`, so a
+     hovered control falls back to Godot's engine-default colour instead
+     of the active palette's. One `ui_theme.gd` fix covers every panel at
+     once, plus finish the `hud.gd` hardcoded-light-text audit
+     `UI_SETTINGS_PLAN.md` Slice 2 already flagged as remaining.
+   - Scent-mark text on a flower's summary should disappear once the mark
+     is no longer detectable (`hud.gd::_refresh_flower_summary` currently
+     shows "Scent mark: Xs old" forever once a bee has ever marked it --
+     should only show while `age < GameConfig.tarsal_marker_seconds`,
+     matching `flower.gd::is_marked()`'s own definition of fresh).
+   Full detail: `UI_SETTINGS_PLAN.md` Slice 4 (top-right bar: tooltips,
+   icons, heights, font assets) and Slice 2 (hover colour), plus
+   `UI_BUGFIX_PLAN.md`'s new Slice 14 (scent-mark visibility).
+2. **Panel width consistency (supersedes the old Slice 6).** Root cause
+   found: `hud.gd::_build_selection_panel`'s `PanelContainer` has no
+   `custom_minimum_size.x` at all, so it (and the cell version of the same
+   panel) sizes itself off whatever text the current bee/cell has -- which
+   is both "the job panel is a different size for some bees" and the
+   summary/command-tray overlap, from one cause. Dave's steer: give every
+   summary panel and job/command panel a fixed width, driven by
+   `ui_layout.gd` off the viewport, that only changes on a window resize.
+   Also closes the cell-popup/summary overlap the same way. Full detail:
+   `UI_BUGFIX_PLAN.md` Slice 6 (rewritten 24 Aug).
+3. **Nursery zone removal + cell action-tray redesign (supersedes Slice
+   9).** Dave's steer: drop the nursery-zone reservation mechanic for now
+   (keep the Priority low/medium/high control, move it under a renamed
+   "Nursery" section alongside what a cell raises); the bottom-centre cell
+   popup becomes two columns -- Reserve for, Nursery -- with More…
+   revealing Sealing and Emptying, one per column. This is a real feature
+   removal, not just a layout change -- `is_nursery_cell()`/
+   `nursery_priority` are read by the queen's own laying logic in
+   `hive.gd`, not just the panel, so it touches more than `hud.gd`. Medium
+   risk per `CLAUDE.md`'s routing table. Full detail: `UI_BUGFIX_PLAN.md`
+   Slice 9 (rewritten 24 Aug).
+4. **Meadow/Hive button hit-area bug -- Slice 7, corrected direction.**
+   Dave's 24 Aug check found the opposite of the original 22 Aug guess:
+   the smaller hit area happens *inside* a Challenge, not in a Scenario,
+   and affects other top-right buttons too, not just Meadow/Hive. The
+   original trace (a label-swap recalculation race) needs re-checking
+   against this, not re-guessed -- `stage_gate.gd`'s Challenge-only
+   visibility toggling is the new prime suspect. Give this its own
+   investigation session, same as the old follow-bee slice got. Full
+   detail: `UI_BUGFIX_PLAN.md` Slice 7 (revised 24 Aug).
+5. **Foraging window: no data.** Confirmed working with real numbers on
+   22 Aug, reported empty on 24 Aug. First check whether Auto
+   scouting/Auto-recruitment were both off (the panel is correctly all-
+   zero then, by design -- see `FORAGING_ECOLOGY_PLAN.md` Slice 1's
+   results) before treating this as a regression from the Slice 6-9 work
+   that touched `bee_foraging.gd` since. `HANDS_ON_CHECKS.md`.
+6. **Forager-history save-gap slice -- approved, not designed yet.**
+   Dave's answer: yes, worth its own slice. `avg_collection_rate`,
+   `trips_scored`, `scout_*` fields and `hive.entrance_mentors` aren't in
+   `save_game.gd`'s per-bee block today, so a save/load loses a forager's
+   accumulated history. Needs an implementation-ready writeup (which
+   fields, save-format version bump if any, old-save fallback) before
+   building -- not started. See `DESIGN_BACKLOG.md` section 5.
+7. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
-4. **Foraging ecology plan -- Slices 5-8 built, needs Dave's hands-on
-   check.** Full detail and results tables for every slice are in
-   `FORAGING_ECOLOGY_PLAN.md`; all four pass `source_checks.py` (67/67)
-   and `balance_tests.py` (15/15). Slices 5 and 6 are Dave-verified;
-   Slices 7 (handling experience / adaptive constancy) and 8 (flower
-   senescence) still need his hands-on check -- see
-   `HANDS_ON_CHECKS.md`. `tools/run_scenario.py`'s hardcoded `log_dir()`
-   still assumes `config/name="Meadow"`; this sandbox's `project.godot`
-   says "Meadow - Claude", so headless scenario runs here need a small
-   `log_dir()`-monkeypatch driver script (not part of the repo) -- will
-   recur next session doing headless verification here.
+8. **Foraging ecology plan -- Slice 9 (proximity recruitment) has a full
+   implementation-ready spec**, written from Dave's own design pass:
+   no waiting states at all, recruitment triggers on proximity between a
+   mentor and a seeker while both are already moving through the hive on
+   ordinary business, the mentor physically circles the seeker, one
+   recruit per mentor per hive visit, angle/distance rather than a fuzzed
+   point. Full detail in `FORAGING_ECOLOGY_PLAN.md`'s Slice 9 section. One
+   interpretive call (angle/distance relative to the hive entrance, not
+   the seeker's live position) still wants Dave's one-line confirmation
+   before building -- not otherwise blocked. Should only replace the
+   current entrance-wait mechanism once the plan's own three-way A/B
+   comparison (task 8) shows it doing at least as well.
+   `tools/run_scenario.py`'s hardcoded `log_dir()` still assumes
+   `config/name="Meadow"`; this sandbox's `project.godot` says "Meadow -
+   Claude," so headless runs here still need the small `log_dir()`-
+   monkeypatch driver script (not part of the repo).
+9. **Handling experience and flower senescence: verify headlessly, not
+   by eye.** Dave can't perceive either effect directly in play (flower
+   handling is too fast; flowers carry no visible age tell) -- both
+   should be confirmed through the diagnostic log and headless runs
+   instead of a hands-on check, same treatment adaptive constancy already
+   got (see `HANDS_ON_CHECKS_ARCHIVE.md`). Senescence has one single-seed
+   headless run already (`FORAGING_ECOLOGY_PLAN.md` Slice 8, 24 Aug);
+   handling experience's existing evidence is indirect (inferred from
+   `stall_recoveries` rising, not a direct handling-time-per-visit
+   measurement). A small follow-up -- log or print average handling
+   seconds bucketed by `species_experience` visit count, plus a second
+   senescence seed or two -- would make both a clean direct check rather
+   than an inference. Reuses the same monkeypatch driver as task 8.
 
-   Slice 9 (proximity recruitment) is the last slice, still only
-   scope-indexed -- no implementation-ready section written yet, and it
-   should only replace the current mentor-consumption recruitment after
-   an A/B comparison shows an actual improvement (see the plan's "Next
-   physical step"). Pick it up once Slice 8's check is back.
-5. **Starvation fix shipped 24 Aug, needs Dave's hands-on check.** The
-   23 Aug real-session root cause (43/53 starvation deaths were foragers
-   still hunting with an empty crop -- `sip_from_crop`'s self-rescue only
-   fires once a bee is carrying nectar) is fixed:
-   `bee_survival.gd::check_critical_recall`, called from `age_and_burn`,
-   sends a bee still hunting (`SEEK_FLOWER`/`SEARCHING`/`TO_FLOWER`/
-   `MOVE_TO_POINT`) with nothing to sip home once she drops below
-   `GameConfig.critical_recall_threshold` (0.20 of capacity, a starting
-   guess -- not simulation-swept). A 150-day headless re-run of the
-   "Thirty strong" setup went from 2 starvation deaths to 0 after the
-   fix. Note: the original 23 Aug log itself no longer exists in this
-   sandbox (it was on Dave's own machine), so this was a fresh re-run
-   against the same starting setup, not a direct diff of that log.
-   Check added to `HANDS_ON_CHECKS.md`.
+## Settled from this session, no action needed
+
+- Follow-bee (old Slice 8) confirmed already working 24 Aug -- closed, no
+  code change required.
+- Settings-window sections, cell popup position, text scale, dark/light
+  toggle, colour-blind cell labels and the empty-crop critical recall all
+  confirmed working 24 Aug -- see `HANDS_ON_CHECKS_ARCHIVE.md`.
+- Weighted flower choice and adaptive constancy should move from the
+  Flowers settings category to Foraging, alongside `handling_experience_on`
+  and `flower_senescence_on` -- these four toggles landed under Flowers
+  after `UI_SETTINGS_PLAN.md` Slice 3's own content audit ran, so they were
+  missed rather than deliberately left. Small follow-up inside whichever
+  session next touches `debug_panel.gd`'s categories, not a slice of its
+  own.

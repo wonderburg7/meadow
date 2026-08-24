@@ -5,74 +5,52 @@ reading and automated tests can confirm. Nothing here needs more building
 -- it needs Dave to actually play it. Tick items off (or delete them) as
 they're checked; this file is meant to shrink, not accumulate write-ups.
 See `git log` for the commit that shipped each item if more detail is
-needed.
+needed. Everything confirmed working, or superseded by a headless/
+diagnostic-log check instead, moves to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`
+rather than sitting here -- that file doesn't need re-reading, this one does.
 
-## UI Plan slices 1-7 (see `UI_PLAN.md`)
-**Checked 22 Aug by Dave -- found broken, not just unconfirmed.** Text
-scale, font choice, dark/light theme toggle, colour-blind labels beyond
-the nursery ring, panel background/frame/spacing, settings-window
-sections, cell popup position, meadow/hive button hit area, and
-follow-bee-on-view-change all failed. Root cause and an eight-slice fix
-plan are in `UI_BUGFIX_PLAN.md` -- don't re-check these again here until
-that plan lands; re-check against that plan's own acceptance notes
-instead.
-- [x] Challenge-completion screen's actual play test -- confirmed 22 Aug,
-      Challenge 1 completes as intended.
-- [ ] Narrow-window reflow and panel-overlap-on-resize -- still open,
-      see `UI_BUGFIX_PLAN.md` Slice 6.
+## UI Plan slices 1-7 -- 24 Aug re-check against `UI_BUGFIX_PLAN.md`
+Dave re-checked the 22 Aug "found broken" list item by item. Text scale,
+dark/light toggle, colour-blind labels (cells), settings-window sections,
+cell popup position and follow-bee-on-view-change all now confirmed working
+-- see the archive for detail. Two items are still open:
+- [ ] Font choice still doesn't change -- **not a code bug**: the three
+      non-default typefaces have no font files under `assets/fonts/` yet
+      (`ui_theme.gd::_typeface_path`, `UI_PLAN.md` section 8 already flagged
+      this as "a concrete, small task"). Bundled into the UI polish batch --
+      see `UI_SETTINGS_PLAN.md` Slice 4.
+- [ ] Meadow/Hive (and other top-right) button hit areas are smaller inside
+      a Challenge than in a Scenario -- corrected finding, opposite of the
+      original guess. See `UI_BUGFIX_PLAN.md` Slice 7 (revised 24 Aug).
 
-## Game model slices 1-4 (see `DESIGN_BACKLOG.md` section 13)
-- [x] Slice 3's prerequisite cascade -- confirmed 22 Aug by Dave, both
-      chains (Orientation flight/Scouting/Floral constancy/Auto-
-      recruitment and Predators/Crab-spider suppression/Alarm pheromone)
-      walk correctly both ways.
-- [ ] Decision needed, not just a check: is the forager-history save gap
-      (`avg_collection_rate`, `trips_scored`, `scout_*` fields,
-      `hive.entrance_mentors` missing from `save_game.gd`'s per-bee
-      block) worth its own slice? Ask Dave.
+## Panel sizing and overlap
+- [ ] Summary panel (bee or cell) and command tray/job panel no longer
+      overlap, and both hold a fixed width that doesn't change with how
+      much text the current bee/cell has -- only a window resize should
+      change it. See `UI_BUGFIX_PLAN.md` Slice 6 (revised 24 Aug, folds in
+      the cell-popup/summary overlap too). Not built yet.
 
-## Bumble flight
-- [x] Confirmed 22 Aug by Dave -- the two-sine wander reads as bee-like.
+## Nursery zone removal and cell action-tray redesign
+- [ ] Cell bottom-centre popup is two columns (Reserve for / Nursery) with
+      More… revealing Sealing and Emptying, one per column; the nursery
+      zone reservation mechanic itself is gone; Priority low/medium/high
+      now lives under Nursery. See `UI_BUGFIX_PLAN.md` Slice 9 (rewritten
+      24 Aug). Not built yet -- also touches queen egg-laying (`hive.gd`),
+      so check laying still behaves sensibly with no zone cells at all,
+      not just the panel layout.
 
-## Recruitment and crab-spider fixes
-- [ ] Recruitment competition fix (commit `103d716`) -- **not** re-checked;
-      Dave is deferring this until the planned recruitment update lands
-      (see `FORAGING_ECOLOGY_PLAN.md`), so don't chase it before then.
-- [x] Crab-spider second-round fixes -- confirmed 22 Aug by Dave, predator
-      behaviour works as intended.
+## Foraging window
+- [ ] Foraging window (**G**) showed real numbers when Dave checked it 22
+      Aug (see archive) but on 24 Aug showed no data at all -- check
+      whether Auto scouting/Auto-recruitment were both off (the panel is
+      correctly all-zero then) before treating this as a regression. See
+      `FORAGING_ECOLOGY_PLAN.md` Slice 1.
 
 ## AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.
 
-## Light theme contrast (Settings > Appearance)
-- [ ] Switch to Light theme and check colony panel and general panel
-      text is readable -- fixes `ui_theme.gd`/`colony_panel.gd`, see
-      `UI_SETTINGS_PLAN.md` Slice 2.
-
-## Foraging ecology Slice 8 -- flower senescence
-- [ ] Turn on Flower senescence (Settings > Flowers) and watch an old
-      flower's nectar/pollen bars refill visibly slower than a young
-      one's, easing down towards the Senescence floor by the end of its
-      life.
-
-## Starvation fix -- empty-crop critical recall
-- [ ] Play a session long enough to see a forager get low on energy while
-      still hunting (nothing found yet, or flying to a candidate flower)
-      rather than carrying nectar home -- she should give up and fly
-      straight for the hive instead of continuing to search and dying
-      mid-air. `GameConfig.critical_recall_threshold` (0.20 of capacity)
-      is a starting guess, not simulation-swept -- if it fires too early
-      (foragers giving up on searches that would soon have paid off) or
-      too late (still seeing starvation deaths), it's the number to
-      retune. See `NEXTSTEPS.md` for the root-cause log this closes.
-
-## Foraging ecology Slice 7 -- handling experience and adaptive constancy
-- [ ] Watch a forager get visibly faster at working a familiar species
-      (turn on Handling experience in Settings > Flowers).
-- [ ] Watch an unpinned forager (Floral constancy off) gravitate toward
-      whichever species has been paying off, rather than sampling every
-      species equally (turn on Weighted flower choice and Adaptive
-      constancy together -- confidence only has an effect when weighted
-      choice is also on). See `FORAGING_ECOLOGY_PLAN.md`'s Slice 7
-      section for why floral constancy pinned on masks this entirely.
+## Recruitment and crab-spider fixes
+- [ ] Recruitment competition fix (commit `103d716`) -- **not** re-checked;
+      Dave is deferring this until the planned recruitment update lands
+      (see `FORAGING_ECOLOGY_PLAN.md`), so don't chase it before then.

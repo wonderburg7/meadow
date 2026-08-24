@@ -337,6 +337,20 @@ out against the code:
   flowers, long distances) rather than a good day-5 run, if it stays at
   0% there too.
 
+### 24 Aug 2026: reported empty, needs re-investigation
+
+Working with real numbers on 22 Aug (above), reported showing no data at
+all on 24 Aug. Before treating this as a regression: `foraging_stats.gd`
+only ever receives a call from `_score_trip`, which is itself gated on
+`GameConfig.scouting_on` or `GameConfig.auto_recruitment_on` — with both
+off, the panel is correctly all-zero, by design, and the panel's own hint
+label says so (see the Slice 1 results above). Check that gate first. If
+both toggles were genuinely on and the panel is still empty, the prime
+suspects are the Slice 6-9 edits to `bee_foraging.gd` (local search,
+probabilistic choice, handling experience, senescence) landing between
+the two checks — confirm `_score_trip` is still reached and still calls
+`record_trip` on whichever code path a bee now takes to finish a trip.
+
 ## Slice 2: Species registry — implementation-ready and built
 
 **Scope, on inspection.** The brief's "migrate existing species into
@@ -1539,15 +1553,34 @@ playtest raises a concrete question.
 **Checks:** `source_checks.py` (66/66) and `balance_tests.py` (15/15)
 both pass. A `mcp__godot__run_project` boot showed only the same
 pre-existing warnings as every prior slice, nothing new. `FUNCTION_MAP.md`
-regenerated (`bee.gd` touched) and verified with `--check`. **Still needs
-Dave's hands-on check**: watch a forager get visibly quicker at working a
-familiar species (Handling experience) and watch an unpinned forager
-gravitate toward whichever species has been paying off rather than
-sampling every species equally (Adaptive constancy, only visible with
-both that toggle and Weighted flower choice on) — neither is verifiable
-without eyes on a live run. Both toggles, plus the newly-added Weighted
-flower choice toggle, are off by default, so nothing about today's
-default experience changes until Dave turns them on.
+regenerated (`bee.gd` touched) and verified with `--check`. Both new
+toggles, plus the newly-added Weighted flower choice toggle, are off by
+default, so nothing about today's default experience changes until Dave
+turns them on.
+
+**24 Aug 2026: hands-on verification replaced with headless, per Dave.**
+Both effects are too subtle to see by eye in ordinary play (flower
+handling is fast enough that a speed-up doesn't read as visible; an
+unpinned forager's species drift is gradual, not a moment you can watch
+happen) — Dave's steer is to confirm both through the diagnostic log and
+headless runs instead of a hands-on check.
+- **Adaptive constancy: already closed on existing evidence.** The
+  no-species-pin re-run above (23 Aug) already shows the mechanism
+  working directly — +18% flower_visits (232 → 274, seed 12345) with
+  `probabilistic_choice_on` + `adaptive_constancy_on` and
+  `floral_constancy_on` off. No further run needed; this table *is* the
+  check.
+- **Handling experience: existing evidence is indirect, worth a direct
+  follow-up.** The 179-vs-206 flower_visits/44-vs-28 stall_recoveries
+  comparison above shows a real downstream effect but doesn't measure
+  the thing itself (handling seconds per visit falling as
+  `species_experience` rises). A small addition — log or print average
+  handling seconds bucketed by visit count for one species, one seed,
+  toggle on vs off — would confirm `_handling_experience_scale`'s curve
+  directly rather than inferring it from a second-order effect. Small
+  enough to fold into whichever session next runs a headless batch,
+  reusing the same `log_dir()`-monkeypatch driver Slices 6/7/8 already
+  needed for this sandbox.
 
 ## Slice 8: Flower senescence — implementation-ready and built
 
@@ -1618,17 +1651,249 @@ silently accepted as final; worth a proper sweep if a playtest suggests
 
 **Checks:** `source_checks.py` (67/67) and `balance_tests.py` (15/15)
 both pass. A `mcp__godot__run_project` boot is clean. `FUNCTION_MAP.md`
-regenerated (`debug_panel.gd` touched) and verified with `--check`.
-**Needs Dave's hands-on check**: watch an old flower visibly stay
-half-drained for longer than a young one nearby. Off by default, so
-nothing about today's default experience changes until Dave turns it on.
+regenerated (`debug_panel.gd` touched) and verified with `--check`. Off
+by default, so nothing about today's default experience changes until
+Dave turns it on.
+
+**24 Aug 2026: hands-on verification replaced with headless, per Dave.**
+There's no visible "age" tell on a flower today, so there's nothing to
+compare an old one against a young one by eye — Dave's steer is to
+confirm the effect through the diagnostic log and headless runs instead.
+The single-seed 60-day run above already shows a real, one-directional
+effect (flower_visits down 20%, stall_recoveries up 42% with senescence
+on); a second seed or two would turn that into a proper small sweep
+rather than a single sample, same shape as Slice 7's handling-experience
+follow-up above — worth bundling into the same headless session rather
+than a separate one.
+
+## Slice 9: Proximity recruitment — implementation-ready
+
+**What's already there, checked against the live repo (24 Aug):**
+today's recruitment is a flat list match, not proximity of any kind. A
+forager who reaches the hive exit (`bee_foraging.gd:855-886`) and
+qualifies as a seeker (scouting, or `past_grace` and
+`avg_collection_rate` below the resource's lower threshold) or a mentor
+(`past_grace`, above the upper threshold, not
+`CrabSpider.recruitment_suppressed`) stops there and either waits
+(`State.AT_ENTRANCE_SEEKING`/`AT_ENTRANCE_MENTORING`,
+`GameConfig.recruit_wait_seconds` = 15s) or joins
+`hive.entrance_mentors`. `wait_at_entrance()` (`bee_foraging.gd:964`)
+checks that array once per frame for a same-`resource_type` entry —
+the first one found matches, regardless of where either bee physically
+is. Both bees always wait at one of two fixed points
+(`world_building.gd::entrance_wait_point(side)`, ±1) a couple of rows
+inside the entrance tunnel; nobody's actual position has ever mattered
+to a match. The matched seeker inherits
+`_jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter)`
+— the mentor's exact point, fudged by 150px only after the fact, not a
+genuinely uncertain area from the start. `RECRUIT_FOLLOWUP_TRIPS`
+before/after logging (`recruit_partner`/`recruit_role`/
+`recruit_rate_before`, `DiagnosticLog.log_recruitment_match`/
+`log_recruitment_followup`) already exists and is generic to any match,
+not tied to how the match happened — this slice reuses it rather than
+rebuilding it.
+
+**Dave's steer (24 Aug 2026), replacing the brief's original
+entrance-adjacent framing entirely:**
+
+1. **No waiting states at all.** Recruitment happens while a forager is
+   already inside the hive doing her normal business — walking to a
+   cell to deposit, depositing, walking back to the door — not a
+   dedicated queue. If a mentor-eligible and a seeker-eligible forager
+   come within a set distance of each other during that ordinary
+   indoor movement, the mentor breaks off and physically circles the
+   seeker; when the circle finishes, the seeker's info is transferred.
+   No bee ever stops and hopes, the way `AT_ENTRANCE_SEEKING` does
+   today.
+2. **One recruit per mentor per hive visit.** Not scaled by how far
+   above the upper threshold she is, not a dance that runs longer for
+   a better patch — a flat cap, kept deliberately simple for now. This
+   also replaces the old system's separate "one match per mentor per
+   waiting cycle" patch (`bee_foraging.gd:996-1007`) with something
+   structural rather than a bolt-on fix.
+3. **The advertised info is a rough angle and a rough distance, not a
+   fuzzed point.** The dance encodes direction and distance for the
+   seeker to work from — each independently uncertain — rather than
+   today's "exact point, then Cartesian-jittered."
+
+**One interpretive call made while writing this up, flagged rather
+than assumed silently:** angle and distance from *what*? A literal
+reading of "the mentor circles the seeker" could put the seeker's own
+position at the centre of the encoded directions, but real waggle
+dances encode direction and distance from the hive regardless of where
+on the comb the dance happens (gravity/sun-relative, not
+dancer-relative) — and a hive-relative encoding is also what lets a
+seeker who gets danced at near the door end up with a start point
+anchored the same way a mentor's own `forage_start_point` already is
+(hive-relative, set by orientation flight/scouting). **This plan
+recommends encoding relative to `hive_entrance_inside()`**: the
+mentor's own `forage_start_point` is decomposed into
+`(mentor.forage_start_point - hive_entrance_inside()).angle()` and
+`.length()` at the moment the dance completes, each gets independent
+fuzz applied, and the seeker's new start point is reconstructed as
+`hive_entrance_inside() + Vector2.from_angle(fuzzed_angle) * fuzzed_distance`.
+The circling visual stays centred on the seeker (that part is pure
+presentation, see task 3) — only the *information* the dance encodes
+is hive-relative. Worth Dave's one-line confirmation before Claude Code
+builds it, since it's a real design choice this write-up made rather
+than one he specified.
+
+**Tasks**
+
+1. **New toggle, mutually exclusive with `auto_recruitment_on`.**
+   `GameConfig.proximity_recruitment_on` (off by default), sitting
+   beside `auto_recruitment_on` in the existing toggle-tree comment
+   (`game_config.gd:228-245`) as a second, alternate child of
+   `scouting_on` — not stacked on top of it. Since both mechanisms
+   compete for the same eligible bees, turning one on in the settings
+   panel should turn the other off automatically (whichever UI code
+   already exists for the toggle tree's parent/child turn-off
+   propagation is the place to add this — grep how `scouting_on`
+   turning off already cascades to `auto_recruitment_on` and mirror
+   it sideways rather than downward). Running both at once would
+   confound the very A/B comparison this slice exists to produce, so
+   this isn't optional polish.
+2. **Track dance-eligible mentors and seekers by presence, not by a
+   single decision point.** Under `auto_recruitment_on`, eligibility is
+   only checked once, at the exit (`bee_foraging.gd:871-886`). Under
+   `proximity_recruitment_on`, a forager becomes eligible as soon as
+   her trip is scored (`finish_depositing()` → `_score_trip()`,
+   `bee_foraging.gd:739-769`) and stays eligible for the rest of her
+   indoor dwell — through `IN_HIVE_TO_CELL`/depositing/
+   `IN_HIVE_TO_EXIT` — not just for one instant at the door. Add a
+   `hive.dance_eligible_mentors`/`hive.dance_eligible_seekers`
+   pair (same shape as today's `entrance_mentors`, `hive.gd:46-53`),
+   populated/pruned at the same points eligibility is decided and at
+   `move_bee_into_hive`/`move_bee_out_of_hive`. A mentor who already
+   used her one recruit this visit (task 4's flag) is never added.
+3. **The proximity check itself and the `DANCING` state.** Each frame a
+   bee is in one of these lists, check distance against the *other*
+   list, filtered to matching `resource_type`, against a new
+   `GameConfig.recruit_dance_radius` (provisional, simulated in task
+   6). This is a bounded scan against two small lists, not every bee
+   in the hive — cheap by construction, same reasoning as why
+   `entrance_mentors` was never a performance concern. Only reach for
+   `SpatialGrid` (`spatial_grid.gd`, currently only used for the
+   mostly-static meadow flowers, not moving bees — read its own header
+   comment before assuming it fits) if profiling in task 7 shows this
+   scan actually costs something, not because it seems like it should.
+   On a hit, both bees enter a new `BeeEnums.State.DANCING` (appended
+   to the end, same append-only rule Slice 5 followed for
+   `SEARCHING`), for `GameConfig.recruit_dance_seconds` (provisional,
+   short — a few seconds, matching "no waiting", not a long
+   performance). **Per `.claude/rules/simulation.md` rule 3, the
+   circling visual and the information transfer are two different
+   things and must not be gated on the same condition**: the mentor
+   physically orbiting the seeker's position is presentation only —
+   build it the way Bumble flight built its wander offset (a
+   `visual_root` child node, `bee.position` itself untouched,
+   `is_on_screen`-gated) — while the actual `forage_start_point`/
+   species handoff must happen deterministically when the dance timer
+   completes regardless of whether either bee is on screen, exactly
+   like every other simulation step in this codebase. Grep every other
+   place `AT_ENTRANCE_SEEKING`/`AT_ENTRANCE_MENTORING` are handled
+   outside `bee_foraging.gd` (`bee.gd:927,1780,1784,1888,1890` at
+   least — confirm with a fresh grep, don't trust this list is
+   exhaustive) and add the equivalent `DANCING` handling at each,
+   the same instruction Slice 5 followed for `SEARCHING`. The old
+   `AT_ENTRANCE_*` states, `wait_at_entrance()`, `entrance_mentors`
+   and `entrance_wait_point` are **not removed or touched** — they
+   stay exactly as they are, reachable only via `auto_recruitment_on`,
+   so the old mechanism survives intact for task 8's comparison.
+4. **Info transfer and the one-recruit-per-visit cap.** When the dance
+   timer completes: compute the fuzzed angle/distance pair from the
+   mentor's `forage_start_point` per the interpretive call above (new
+   `GameConfig.recruit_dance_angle_fuzz_degrees` and
+   `recruit_dance_distance_fuzz_fraction`, both provisional), set the
+   seeker's `forage_start_point`/`local_search_anchor` from the
+   decoded point, clear `known_patches`, copy `preferred_species` if
+   `floral_constancy_on` — same handful of fields `wait_at_entrance`
+   already sets (`bee_foraging.gd:1012-1016`), just fed from the
+   decoded point instead of the jittered one. Set
+   `recruit_partner`/`recruit_role`/`recruit_rate_before`/
+   `recruit_followup_remaining` on both bees exactly as today, and
+   call the existing `DiagnosticLog.log_recruitment_match` — reused
+   as-is, since it's generic to "a match happened," not to how. Clear
+   `is_scouting` on the seeker, same as today. Set a new
+   `mentor.has_danced_this_visit = true` (or equivalent), checked in
+   task 2 before adding her to `dance_eligible_mentors`, reset at
+   `move_bee_into_hive` (her next return) — this is what makes "one
+   recruit per hive visit" structural rather than a timing accident.
+5. **Diagnostics, settings panel, save/load.** Add
+   `proximity_recruitment_on` to `debug_panel.gd`'s toggle list
+   (beside `auto_recruitment_on`), `save_game.gd`'s `SAVED_SETTINGS`
+   (together with every new numeric constant from tasks 3-4 — this
+   plan has hit the "forgot to add it to that list" bug four times
+   already, per Slice 7's own note; don't make it five), and
+   `diagnostic_log.gd`'s `foraging_behaviour` snapshot booleans
+   alongside `scouting_on`/`auto_recruitment_on`. Consider a
+   `via: "dance"` vs `via: "queue"` field on
+   `log_recruitment_match`'s existing payload so a session log can
+   tell the two mechanisms' matches apart without needing to also
+   check which toggle was on at the time.
+6. **New `Perf.begin("recruitment_dance")`/`Perf.end("recruitment_dance")`
+   span** around task 3's proximity scan, per
+   `.claude/rules/performance.md` — this runs for every indoor
+   forager on every frame she's eligible, a new per-frame cost with no
+   existing measurement to lean on.
+7. **Simulate before locking, per `CLAUDE.md` rule 4.** Sweep
+   `recruit_dance_radius`, `recruit_dance_seconds`, and the two fuzz
+   constants on Slice 0's five seeds (small-batch steer,
+   `[[feedback_headless_run_batches]]`) with `proximity_recruitment_on`
+   on and `auto_recruitment_on` off. Worth watching in particular
+   whether `recruitment_matches` comes in far lower than today's
+   mechanism — a seeker and a mentor now have to be indoors at the
+   same moment purely by chance, where today's seeker could wait up to
+   15s specifically hoping for one. If matches collapse to near zero,
+   that's a real finding to flag (per every prior slice's
+   flag-don't-fix instruction), not a bug to silently work around by
+   loosening the radius past what the sweep supports.
+8. **The actual A/B gate this slice's own title promises.** Re-run
+   Slice 0's five seeds three ways: today's baseline (`auto_recruitment_on`
+   on, `proximity_recruitment_on` off — the existing "on" column in
+   every prior slice's results table), the new mechanism
+   (`auto_recruitment_on` off, `proximity_recruitment_on` on), and
+   both off (the existing "off" column, already on record). Compare
+   `flower_visits`, `unique_flowers_visited`, `recruitment_matches`,
+   `foragers_settled`, `total_deaths`. **Proximity recruitment only
+   supersedes `auto_recruitment_on` as the default if this comparison
+   shows it doing at least as well** — per the plan's own scope-index
+   line for this slice. If it's a genuine step down (plausible, given
+   task 7's flagged risk above), the right outcome is documenting that
+   and leaving `auto_recruitment_on` as the shipped default with
+   `proximity_recruitment_on` available but off, not forcing a win
+   that isn't there.
+
+**Deliverable:** nothing built yet — this is the implementation-ready
+spec, same status Slices 2-8 each had before their own build session.
+Once built: a results note appended below this section matching every
+prior slice's pattern (constants chosen and why, the perf reading, the
+three-way comparison table), and visibly, a forager who crosses paths
+with a good performer indoors should now circle her briefly before
+heading out to roughly the right area — a real behaviour to watch for,
+not just a number.
+
+**Checks:** `source_checks.py`, `balance_tests.py`, a
+`mcp__godot__run_project` boot if available, `tools/run_scenario.py --full`
+runs for the sweep and the three-way comparison, and Dave's hands-on
+check — this is a highly visible behaviour change (watch a mentor
+circle a seeker near the comb) so it needs an actual playtest, not just
+numbers. `FUNCTION_MAP.md` update if `bee.gd`, `hive.gd` or `hud.gd`
+are touched (likely, for the new state and toggle). Add the hands-on
+item to `HANDS_ON_CHECKS.md` once built, per `CLAUDE.md`'s own rule —
+don't leave it only in this file's results note.
 
 ## Next physical step
 
-Slice 8 is built and needs Dave's hands-on check (see above). Slice 9
-(proximity recruitment) stays scope-indexed, the last slice in the plan
-— pick it up once Slice 8's check is back, alongside the still-owed 23
-Aug starvation re-review now that Slices 5-8 are all in (see that section
-above). Dave still separately owes the hand-recorded `perf.gd` baseline
-Slice 4's task 1 asked for — already folded into that slice rather than
-treated as a separate leftover from Slice 0.
+Slice 9 (proximity recruitment) now has a full implementation-ready
+spec, above — the last slice in the plan. Before Claude Code starts
+building it, Dave should confirm the one interpretive call flagged
+above (angle/distance encoded relative to the hive entrance, not the
+seeker's position) — everything else in the spec is his own steer from
+the 24 Aug design pass. Slice 8 still needs Dave's hands-on check (see
+its own section above), and the still-owed 23 Aug starvation re-review
+is unblocked now that Slices 5-8 are all in (see that section above) —
+Dave's call which of the three (Slice 9 build, Slice 8 check, starvation
+re-review) comes first. Dave still separately owes the hand-recorded
+`perf.gd` baseline Slice 4's task 1 asked for — already folded into
+that slice rather than treated as a separate leftover from Slice 0.

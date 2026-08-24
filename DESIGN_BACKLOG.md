@@ -272,11 +272,26 @@ the player manages *against* as well as with.
 - **Bee update budgeting.** Every bee runs its full state machine every
   frame. At several hundred bees, staggering the expensive checks (work
   searches, not movement) across frames would be the next thing to do.
-- **A Foraging window.** Deferred from the auto-scouting/recruitment work
-  (17 Aug) — collection-rate data broken down by flower/species and area,
-  plus a heatmap, so the player can judge whether the mechanism (and their
-  `recruit_lower/upper_threshold` settings) are actually working rather
-  than trusting it blindly.
+- **A Foraging window — built (`FORAGING_ECOLOGY_PLAN.md` Slice 1, 22
+  Aug), confirmed working that day, then reported empty on 24 Aug.**
+  `foraging_panel.gd` (press **G**) shows Overview/Species/Recruitment
+  stats read from `foraging_stats.gd`. Correctly reads all-zero when
+  both Auto scouting and Auto-recruitment are off (deliberate — see the
+  slice's own results); check that isn't the explanation before treating
+  the 24 Aug report as a regression from the Slice 6-9 foraging work that
+  touched `bee_foraging.gd` since. No heatmap or patch-memory display yet
+  — still "later version," per the original brief.
+- **Forager-history save gap — decision made 24 Aug: yes, worth its own
+  slice.** `avg_collection_rate`, `trips_scored`, the `scout_*` fields and
+  `hive.entrance_mentors` aren't in `save_game.gd`'s per-bee block, so a
+  save/load silently loses a forager's accumulated history (including
+  everything `FORAGING_ECOLOGY_PLAN.md` Slice 1's stats and Slice 7's
+  `species_experience`/`species_confidence` dictionaries track — those
+  two *are* saved already, per Slice 7's own writeup; it's the older
+  fields that were never added). Not written up as implementation-ready
+  yet — needs a pass deciding exactly which fields, whether a save-format
+  version bump is needed, and what an old save without them should do on
+  load, before it's buildable. See `NEXTSTEPS.md`.
 - **Per-hive-cell flower preference.** Also deferred from the same work —
   a cell already sets a hatching bee's role and focus (`hatch_role`,
   `hatch_focus` in `hive_cell.gd`/`hud.gd`); a preferred species should

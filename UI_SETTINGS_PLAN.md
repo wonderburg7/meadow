@@ -78,14 +78,16 @@ without closing or restarting anything.
 ## Slice 2 — light-mode contrast
 
 **CENTRAL FIX DONE on `codex/ui-settings-reorg`; non-overlapping panel audit
-done on `codex/ui-contrast-pass` (23 Aug).** The shared theme supplies
-`text_primary` for every named text variation and the base Label/Button types,
-and palette changes refresh those colours live. The later audit found that the
-menu/panel call sites already route through theme tokens, but Light's shared
-success/warning/danger tokens themselves did not clear text contrast. The
-contrast branch gives those three Light tokens darker variants and makes the
-colony role-tally accent blend theme-aware. The hardcoded HUD sites remain for
-a later pass because `hud.gd` has overlapping primary-worktree edits.
+done on `codex/ui-contrast-pass` (23 Aug). Two gaps remain, found from Dave's
+24 Aug check ("some text in light theme is sufficiently dark, but a lot in
+the summary and job panels is still light, and when hovering over text/
+options in any panel, the text becomes light and unreadable").** The shared
+theme supplies `text_primary` for every named text variation and the base
+Label/Button types, and palette changes refresh those colours live. The later
+audit found that the menu/panel call sites already route through theme
+tokens, but Light's shared success/warning/danger tokens themselves did not
+clear text contrast. The contrast branch gives those three Light tokens
+darker variants and makes the colony role-tally accent blend theme-aware.
 
 - `build_theme()` sets `theme.set_color("font_color", variation,
   UiTheme.color("text_primary"))` for every `TYPE_SIZES` variation, plus
@@ -96,18 +98,57 @@ a later pass because `hud.gd` has overlapping primary-worktree edits.
   `gallerin_panel.gd` has no local text-colour override. Fixing the Light
   status tokens centrally therefore covers those panels. The one remaining
   non-HUD exception was the colony's dynamic role colour, now routed through
-  `UiTheme.readable_accent()`. Audit the remaining hardcoded HUD overrides
-  after the overlapping primary-worktree changes have landed.
+  `UiTheme.readable_accent()`.
+- **Gap 1, still open: the hardcoded `hud.gd` overrides.** This is exactly
+  "the summary and job panels" Dave's 24 Aug check flagged -- `selection_panel`
+  and its labels (`energy_label`/`activity_label`/`trait_label`) each set
+  their own `add_theme_color_override("font_color", Color(...))` at
+  construction (`_build_selection_panel`, three literal `Color(...)` calls)
+  instead of reading `UiTheme.color("text_primary")` or a variant of it --
+  fixed values that were presumably picked against the dark palette and never
+  re-checked against light. Flagged as remaining in the 23 Aug write-up
+  because `hud.gd` had overlapping primary-worktree edits at the time; that's
+  no longer a blocker.
+- **Gap 2, newly found 24 Aug: hover state has no theme colour at all, in
+  any theme.** `ui_theme.gd::_refresh_theme_resource` sets `font_color` for
+  every type variation and the base `Label`/`Button` types, but never
+  `font_hover_color`, `font_pressed_color` or `font_focus_color`. Godot falls
+  back to its own engine-default hover colour (not palette-aware) whenever a
+  control has no explicit override for that state -- which is why hovering
+  goes pale-on-pale even in Dark, not just Light: it was never about the
+  Light palette specifically, it's that hover was never wired to any palette
+  at all. Fix: set the same three colour keys (`font_hover_color`,
+  `font_pressed_color`, `font_focus_color`) alongside the existing
+  `font_color` line, for every `TYPE_SIZES` variation and the base
+  `Label`/`Button` types -- same shape as the fix already there, just three
+  more calls per variation.
 
-*Files:* `ui_theme.gd`, `colony_panel.gd`; `hud.gd` remains for the
-separate overlapping audit.
-*Check:* switch to Light in the settings window (now live, per Slice
-1) and read every panel — nothing should require guessing at pale text
-on a pale background.
+*Files:* `ui_theme.gd` (hover/pressed/focus colours), `hud.gd`
+(`_build_selection_panel`'s three hardcoded overrides, and a grep for
+`add_theme_color_override` elsewhere in the file to catch any sibling
+instances the same audit would otherwise miss one at a time).
+*Check:* switch to Light in the settings window (live, per Slice 1) and
+read every panel including the bee/cell summary panel -- nothing should
+require guessing at pale text on a pale background; then, in both Dark
+and Light, hover over every button/toggle/label that responds to hover
+and confirm the text stays readable rather than turning pale.
 
 ## Slice 3 — settings reorganisation: three collections of collections
 
-Dave's ask: nest today's 16 flat categories into three named
+**DONE and confirmed. Built (`git log` commits `a1ed2d0`/`6873ba9`/
+`791804c`, merge `codex/ui-settings-reorg`); Dave's 24 Aug hands-on check:
+"settings-window sections are good."** One small follow-up, not a reason
+to re-open the slice: `handling_experience_on`, `adaptive_constancy_on`,
+`flower_senescence_on` and `probabilistic_choice_on`
+(`FORAGING_ECOLOGY_PLAN.md` Slices 6-8) were all added to `debug_panel.gd`
+*after* this slice's own Flowers-vs-Foraging content audit ran, so they
+landed under "Flowers" by default rather than being swept into the
+"Foraging" move this slice already did for `tarsal_markers_on`/
+`orientation_flight_on`/`scouting_on` and friends. Move those four
+alongside them next time `debug_panel.gd`'s categories are touched --
+small enough to fold into another session rather than needing its own.
+
+Dave's original ask: nest today's 16 flat categories into three named
 collections — Game Settings, Hive, Meadow — each a wider dropdown
 holding the existing per-topic ones, plus fix categories that are
 already a grab-bag under the wrong name. Reading `TUNABLES`' `category`
@@ -199,12 +240,62 @@ its rows, same two-click depth either way rather than a longer path.
 
 ## Slice 4 — control alignment and layout
 
-**PARTIAL on `codex/ui-settings-reorg` (23 Aug).** The non-overlapping
+**PARTIAL on `codex/ui-settings-reorg` (23 Aug); top-right bar work below is
+new from Dave's 24 Aug pass, not started.** The non-overlapping
 settings-window portion is done: toggles render first, stars last, and every
 row type now uses the same label width and right-aligned control slot. The
-top-right HUD button sizing remains because `hud.gd` is being edited in the
-primary worktree; resize collision-avoidance remains the separate bugfix
-slice noted below. Manual alignment verification remains for integration.
+top-right HUD button sizing remains because `hud.gd` was being edited in the
+primary worktree at the time; resize collision-avoidance is
+`UI_BUGFIX_PLAN.md` Slice 6, not this slice. Manual alignment verification
+remains for integration.
+
+**New from Dave's 24 Aug pass, all in the same `hud.gd` top-right-row
+region -- worth doing together:**
+
+- **Hover tooltips are missing on the icon buttons.** `_icon_button`
+  (used for Colony/Nursery and the Meadow/Hive view toggle) never sets
+  `tooltip_text` at all; neither do `foraging_button` or `winter_button`.
+  `pause_button` and the speed buttons already do this correctly (see
+  `PAUSE_TIP`/`entry.tip`) -- extend the same pattern rather than
+  inventing a new one: `_icon_button` should default its `tooltip_text`
+  to the `label` argument it's already given, and `foraging_button`/
+  `winter_button` want one line each.
+- **Foraging button becomes an icon, not the word "Foraging."** Today
+  it's plain text (`foraging_button.text = "Foraging"`) with a comment
+  noting it has no icon yet. Give it one via the same `_icon_button`
+  construction the other top-bar buttons already use (a simple procedural
+  `shapes.gd` shape, per `UI_PLAN.md` section 8's "interim placeholder"
+  convention -- a magnifying glass or compass reads as "foraging data,"
+  but that's a design call, not a blocker).
+- **Speed buttons become play-icon stacks, not numerals.** Replace the
+  "1"/"2"/"4"/"8" text on the `speed_group` buttons with right-pointing
+  play-triangle icons: one ▶ for 1x, two overlapping for 2x, three for
+  4x, four for 8x. Keep the existing `tooltip_text` (already descriptive)
+  and `toggle_mode`/pressed-state wiring untouched -- this is a label
+  swap on already-correct buttons, not a rebuild.
+- **All top-right buttons become one consistent height, and a bit
+  bigger.** Two different heights are in play today: `pause_button`
+  (28×26), the speed buttons (24×26), `foraging_button` (78×26),
+  `winter_button` (62×26) and the settings cog in `debug_panel.gd`
+  (36×26) are all 26px tall, while `_icon_button` (Colony 92×28, Nursery
+  96×28, the Meadow/Hive view button 78×28) is 28px -- so the icon-row
+  buttons are already 2px taller than everything else, not the reverse
+  Dave's wording suggested; the actual fix is the same either way, pick
+  one height constant (28 is the natural pick, since it's already the
+  larger of the two and "bigger" is also being asked for separately) and
+  apply it to every top-right control including the settings cog in
+  `debug_panel.gd`, rather than guessing which group is "correct" from
+  the numbers alone.
+- **Font choice still doesn't change.** Not a code bug: `ui_theme.gd::
+  _typeface_path` already resolves `atkinson`/`dyslexia`/`pixel` to real
+  paths under `assets/fonts/`, and `_typeface_font` already falls back to
+  the default font when a path doesn't resolve -- there just are no font
+  files there yet (`ls assets/fonts/` -- directory doesn't exist).
+  `UI_PLAN.md` section 8 already named the three: Atkinson Hyperlegible,
+  a dyslexia-friendly face (OpenDyslexic), Pixel Operator -- all
+  OFL-licensed, freely downloadable, and already flagged there as "a
+  concrete, small task... not a design question." Source and add the
+  three `.ttf`/`.otf` files; no `ui_theme.gd` change needed.
 
 - **All row controls move to a fixed position at the row's right
   edge.** Today `_make_row`/`_make_options_row` put label → badge →
@@ -234,12 +325,18 @@ slice noted below. Manual alignment verification remains for integration.
   settings dropdown; the settings scroll area overlapping the corner
   readouts).
 
-*Files:* `debug_panel.gd` (row builders, section ordering), `hud.gd`
-(top-right button sizing). Slice 6 of `UI_BUGFIX_PLAN.md` covers
-`ui_layout.gd` separately.
+*Files:* `debug_panel.gd` (row builders, section ordering, the settings
+cog's height), `hud.gd` (top-right button sizing, tooltips, foraging
+icon, speed-icon glyphs), `assets/fonts/` (the three new font files, no
+code change). Slice 6 of `UI_BUGFIX_PLAN.md` covers `ui_layout.gd`
+separately.
 *Check:* every row's control sits in the same horizontal position
-scrolling down a section; toggles appear before number rows; top-right
-buttons visibly grow with text scale.
+scrolling down a section; toggles appear before number rows; every
+top-right button (including the settings cog) is the same height and
+visibly bigger than today, and grows further with text scale; hovering
+each one shows its name; the Foraging button and all four speed buttons
+read as icons rather than words/numerals; switching typeface in
+Settings > Appearance visibly changes the font.
 
 ## Slice 5 — panel background texture, toggleable
 
@@ -323,25 +420,22 @@ shows the tooltip.
 3. Favourite tooltip wording (Slice 6) — short version from his message
    or the fuller existing copy.
 
-## Suggested order
+## Suggested order (revised 24 Aug)
 
-**Dave's call (22 Aug): reorg first**, ahead of the theme fixes below —
-noted so a session doesn't second-guess the ordering. One consequence
-worth knowing going in: until Slice 1 lands, a theme/typeface/text-scale
-change still needs Restart Run to actually see, so checking Slice 3's
-new section layout in each of the three themes means restarting between
-checks rather than flipping the dropdown live.
+Slices 1, 2 (central fix), 3 and 4 (partial) all landed already —
+Slice 3 is now Dave-confirmed. What's left:
 
-1. Slice 3 (reorg) — three-tier hierarchy, the Flowers/Foraging content
-   audit, Controls promoted to its own section, "Bring on winter" moved.
-2. Slice 1 (live theme) — unlocks seeing every later slice's result
-   without a restart.
-3. Slice 2 (light contrast) — quick once Slice 1 lands, same file.
-4. Slice 4 (alignment/sizing) — mechanical, independent of the rest.
-5. Slice 6 (favourite icon) — small, independent, `hud.gd` only.
-6. Slice 5 (texture) — last, needs Dave's steer from the open question
-   above before writing any code.
+1. Slice 4's new top-right-bar work (tooltips, foraging icon, speed
+   icons, consistent height, font assets) — all one `hud.gd` region,
+   worth one session together rather than one slice each.
+2. Slice 2's two remaining gaps (hardcoded `hud.gd` summary-panel text,
+   hover colour in `ui_theme.gd`) — small, can ride along with 1 if the
+   session has room, since both touch `hud.gd`/`ui_theme.gd`.
+3. Slice 6 (favourite icon) — small, independent, `hud.gd` only.
+4. Slice 5 (texture) — last, still needs Dave's steer from the open
+   question below before writing any code.
 
-Not included here: `UI_BUGFIX_PLAN.md` Slices 6-8 (resize overlap,
-Meadow/Hive hit-area, follow-bee-stops) — still open, unrelated to this
-pass, referenced above only where they explain a symptom Dave reported.
+Not included here: `UI_BUGFIX_PLAN.md`'s revised Slices 6, 7 and 9
+(panel width consistency, Challenge hit-area, nursery-zone removal) —
+unrelated to this pass, referenced above only where they explain a
+symptom Dave reported. Slice 8 (follow-bee) is closed.
