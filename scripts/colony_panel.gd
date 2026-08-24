@@ -193,7 +193,7 @@ func _make_role_row(key: String) -> Control:
 	button.text = "%s: 0" % Roles.label_for_key(key)
 	# A colour chip in the label so the tallies, the ring plot and the
 	# comb overlays all read as one palette.
-	button.add_theme_color_override("font_color", Roles.colour_for_key(key).lerp(Color.WHITE, 0.35))
+	button.add_theme_color_override("font_color", UiTheme.readable_accent(Roles.colour_for_key(key)))
 
 	var parts: PackedStringArray = key.split("|")
 	var role_value: int = int(parts[0])
@@ -376,6 +376,11 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array, signals: Arr
 
 	for key in Roles.count_keys():
 		count_labels[key].text = "%s: %d" % [Roles.label_for_key(key), counts.get(key, 0)]
+		# This is a per-control override, so refresh it after a live theme change;
+		# the shared Theme resource cannot replace local overrides itself.
+		count_labels[key].add_theme_color_override(
+			"font_color", UiTheme.readable_accent(Roles.colour_for_key(key))
+		)
 
 	for stat_key in stat_labels.keys():
 		stat_labels[stat_key].text = str(texts.get(stat_key, ""))
