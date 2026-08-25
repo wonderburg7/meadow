@@ -11,8 +11,9 @@ PROFILE_VERSION = 1
 PROFILE_NAMES = frozenset({"standard", "verdict", "behaviour", "balance", "performance", "custom"})
 EVENT_TYPES = frozenset({
     "action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup",
-    "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled",
+    "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "build_target",
 })
+DEFAULT_EVENT_TYPES = EVENT_TYPES - {"build_target"}
 SNAPSHOT_FIELDS = frozenset({
     "population.total", "resources.food_stores", "environment.winter_here",
     "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms",
@@ -23,9 +24,9 @@ SUMMARY_FIELDS = frozenset({
 })
 
 _DEFAULTS = {
-    "standard": {"events": sorted(EVENT_TYPES), "snapshots": None},
+    "standard": {"events": sorted(DEFAULT_EVENT_TYPES), "snapshots": None},
     "verdict": {"events": ["action", "death"], "snapshots": None},
-    "behaviour": {"events": sorted(EVENT_TYPES), "snapshots": None},
+    "behaviour": {"events": sorted(DEFAULT_EVENT_TYPES), "snapshots": None},
     "balance": {"events": ["action", "death"], "snapshots": {
         "every_sim_seconds": "day", "fields": ["population.total", "resources.food_stores", "environment.winter_here"],
     }},
@@ -39,7 +40,7 @@ _DEFAULTS = {
 def validate_diagnostics(raw: Any) -> dict[str, Any]:
     """Return a normalised selection or raise a contract error before launch."""
     if raw is None:
-        return {"profile": "standard", "version": PROFILE_VERSION, "events": sorted(EVENT_TYPES), "snapshots": None,
+        return {"profile": "standard", "version": PROFILE_VERSION, "events": sorted(DEFAULT_EVENT_TYPES), "snapshots": None,
                 "limits": {"event_lines_per_type": None, "snapshot_lines": None}}
     if not isinstance(raw, dict):
         raise ContractError("diagnostics must be an object")

@@ -1305,6 +1305,7 @@ func _try_role_work(r: int) -> bool:
 			if site:
 				target_cell = site
 				state = State.TO_BUILD_SITE
+				DiagnosticLog.log_build_target(self, site, "assigned", "build_work_selected", "pending", "not_checked")
 				return true
 			return false
 

@@ -223,6 +223,11 @@ limits are `contract_error` before process launch. Counters and summary facts
 remain available to actions and expectations even when their raw event lines
 are filtered.
 
+`build_target` is a custom-only event for diagnosing a comb-worker target. It
+records the target hex, transition, release reason, approach/path outcome and
+the number of builders already sharing that unfinished cell. It does not imply
+an exclusive reservation.
+
 ## Output budgets
 
 The Slice 0 fixtures make the baseline projections reproducible, and

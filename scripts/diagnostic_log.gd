@@ -374,6 +374,33 @@ func log_stall_recovery(bee: Node2D, goal: Vector2) -> void:
 	_stall_recoveries += 1
 
 
+## Slice 3's bounded build-stall evidence. Builders deliberately share an
+## unfinished cell, so `claimed_builders` is an observation, not an exclusive
+## reservation. This is selectable only through a custom diagnostic profile:
+## normal runs retain their existing compact output.
+func log_build_target(bee: Node2D, cell: Node2D, transition: String, reason: String,
+		approach_result: String, path_result: String) -> void:
+	if _file == null or bool(_diagnostics.get("legacy_standard", true)):
+		return
+	var target_hex: Array = []
+	var claimed_builders := 0
+	if cell != null and is_instance_valid(cell):
+		target_hex = [cell.axial.x, cell.axial.y]
+		claimed_builders = cell.builders.size()
+	_write({
+		"type": "build_target",
+		"game_time": Session.sim_time,
+		"bee_id": bee.bee_id,
+		"state": BeeEnums.State.keys()[bee.state],
+		"target_hex": target_hex,
+		"transition": transition,
+		"reason": reason,
+		"approach_result": approach_result,
+		"path_result": path_result,
+		"claimed_builders": claimed_builders,
+	})
+
+
 ## Called from bee_foraging.gd::_score_trip() when a scouting bee's three
 ## bouts are all in and she commits (or fails to). `found_patch: false`
 ## with scouting otherwise looking healthy in the snapshot counts is the

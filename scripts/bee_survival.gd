@@ -245,7 +245,8 @@ static func after_feeding(bee: Node2D) -> void:
 ## abandons the errand rather than leaving it hovering until the player
 ## notices and moves it by hand.
 static func watch_for_stalls(bee: Node2D, delta: float) -> void:
-	if bee._is_inside_hive() or current_goal(bee).x == INF:
+	var goal: Vector2 = current_goal(bee)
+	if (bee._is_inside_hive() and bee.state != State.TO_BUILD_SITE) or goal.x == INF:
 		bee._reset_stall_watch()
 		return
 
@@ -253,10 +254,6 @@ static func watch_for_stalls(bee: Node2D, delta: float) -> void:
 	# catches a bee shuffling back and forth between two obstacles as
 	# well as one standing perfectly still. Either way it isn't getting
 	# any closer, which is the thing that matters.
-	var goal: Vector2 = current_goal(bee)
-	if goal.x == INF:
-		bee._reset_stall_watch()
-		return
 	var remaining: float = bee.position.distance_to(goal)
 	if bee.stall_best_distance == INF or remaining < bee.stall_best_distance - 2.0:
 		bee.stall_best_distance = remaining
@@ -265,6 +262,18 @@ static func watch_for_stalls(bee: Node2D, delta: float) -> void:
 
 	bee.stall_timer += delta
 	if bee.stall_timer < bee.STALL_SECONDS:
+		return
+	if bee.state == State.TO_BUILD_SITE:
+		# A build site is normally created only on walkable ground. If a
+		# topology/path defect nevertheless leaves it unreachable, make the
+		# abandonment explicit and return this worker to selection instead of
+		# shoving it to a random point or allowing it to wait forever.
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "no_progress_to_build_approach", "stalled", "stalled")
+		if bee.target_cell != null and is_instance_valid(bee.target_cell):
+			bee.target_cell.release_builder(bee)
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		bee._reset_stall_watch()
 		return
 	# Logged before recovery touches anything -- position/goal/state at the
 	# exact moment the watchdog judged this bee stuck, so a run where
@@ -339,6 +348,10 @@ static func current_goal(bee: Node2D) -> Vector2:
 			return bee.hive.position
 		State.MOVE_TO_POINT:
 			return bee.move_target
+		State.TO_BUILD_SITE:
+			if bee.target_cell != null and is_instance_valid(bee.target_cell):
+				return bee.target_cell.slot_position(0)
+			return Vector2(INF, INF)
 		State.SEARCHING:
 			return bee.search_waypoint
 	return Vector2(INF, INF)
