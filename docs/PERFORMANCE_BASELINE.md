@@ -30,6 +30,13 @@ order is added or removed, a block is marked or unmarked, a reservation is
 acquired/released/expires, work completes, or topology changes. Idle miners
 may compare that epoch, but may not invent a separate polling owner.
 
+Miner dispatch is capped at 8 Hz and phase-offset by the stable bee ID, so a
+new mark or other epoch change is observed within 125 ms. A miner that has
+confirmed there is no suitable work records that epoch and does no further
+global work search until the Hive invalidates it (or its automine mode changes).
+The existing shared-progress rule is intentional: multiple miners may still
+dig one marked block together after reaching it.
+
 Fog owns temporary reveal contributions. A contribution is invalidated when
 its source moves beyond the relight threshold, disappears/goes indoors, its
 reveal radius changes, or world/fog topology changes. Permanent discovery is

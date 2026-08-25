@@ -1072,10 +1072,10 @@ func _parse_scenario_performance_capture(raw: Variant) -> Dictionary:
 			return {}
 	var warmup = raw.warmup_frames
 	var measurement = raw.measurement_frames
-	if not (warmup is int) or warmup < 0:
+	if not _is_whole_number(warmup) or warmup < 0:
 		push_error("scenario performance_capture.warmup_frames must be a non-negative integer")
 		return {}
-	if not (measurement is int) or measurement <= 0:
+	if not _is_whole_number(measurement) or measurement <= 0:
 		push_error("scenario performance_capture.measurement_frames must be a positive integer")
 		return {}
 	if not (raw.sections is Array) or raw.sections.is_empty():
@@ -1093,6 +1093,10 @@ func _parse_scenario_performance_capture(raw: Variant) -> Dictionary:
 		return {}
 	return {"warmup_frames": warmup, "measurement_frames": measurement,
 		"sections": sections, "include_fog": include_fog}
+
+
+func _is_whole_number(value: Variant) -> bool:
+	return (value is int) or (value is float and is_equal_approx(value, round(value)))
 
 ## Ends a headless scenario run the same way a normal loss does --
 ## DiagnosticLog gets its summary line either way -- but quits the process
