@@ -2,6 +2,7 @@
   "cells": 10, "nectar_foragers": 3, "pollen_foragers": 2,
   "nurses": 1, "builders": 1, "miners": 1,
   "random_seed": 4242,
+  "diagnostics": {"profile": "verdict"},
   "actions": [
     {
       "do": "assert",

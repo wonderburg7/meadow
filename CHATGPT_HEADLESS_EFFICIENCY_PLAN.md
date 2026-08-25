@@ -1,8 +1,8 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: Slice 2 ready for integration | Owner: Dave / Codex | Next: integrate
-Slices 0-2 complete; assign Slice 3 | Evidence checked: 2026-08-25 at
-`6e3ee01`
+Status: Slice 3 ready for integration | Owner: Dave / Codex | Next: integrate
+Slices 0-3 complete; assign Slice 4 | Evidence checked: 2026-08-25 at
+`5e7a03b`
 
 > **CHATGPT-OWNED PLANNING FILE.**
 > This plan does not revive the abandoned mechanism-check queue in
@@ -609,6 +609,33 @@ this with gameplay, balance or the old H6/H7 mechanism-check plan.
   interpreter emitted the expected single verdict line. `source_checks.py`
   checked 67 scripts and `balance_tests.py` passed all 15 checks. No Godot
   run was needed because Slice 2 does not alter launch or game behaviour.
+
+### Implementation record: Slice 3 (2026-08-25)
+
+- Scope: scenario-selectable capture profiles only. The slice adds a shared
+  pre-launch Python validator, matching Godot-side validation, central event
+  filtering, selected snapshot construction and bounded capture. It does not
+  alter simulation decisions, normal action counters, save data or manual-play
+  logging.
+- Baseline: `5e7a03b4d47e415dfe225a91c9d96770d12feac6` on
+  `codex/headless-efficiency-slice-0`. The primary worktree contained an
+  unrelated recruitment-log edit in `diagnostic_log.gd`; its separate lines
+  were inspected before this isolated change, and Dave confirmed no further
+  primary-tree edits would occur during the slice.
+- Delivered: built-in `standard`, `verdict`, `behaviour`, `balance`,
+  `performance` and `custom` profiles have a versioned allowlist. `verdict`
+  retains action/death evidence but has no periodic snapshots by default;
+  custom selection accepts only named events and six typed snapshot fields.
+  Per-event and snapshot caps plus `only_when_changed` are enforced in
+  `DiagnosticLog`, while counters and the final summary remain available to
+  action assertions and Python expectations. Partial selected snapshots no
+  longer make the legacy report parser crash.
+- Evidence: 23 focused headless contract tests passed; `source_checks.py`
+  checked 69 scripts and `balance_tests.py` passed all 15 checks. A real
+  fixed-FPS-30 verdict smoke run passed with a JSONL containing only config,
+  the accepted action and final summary (no snapshot). A real custom run
+  passed with exactly `population.total`, `resources.food_stores` and
+  `role_outcomes.cells_completed_total` in its two capped snapshots.
 
 ### Slice 0: measurements and contracts, no game behaviour change
 

@@ -960,6 +960,8 @@ func _apply_scenario_boot_arg() -> void:
 		return
 
 	var level: Dictionary = parsed.duplicate(true)
+	var scenario_diagnostics = level.get("diagnostics", null)
+	level.erase("diagnostics")
 	var stop: Dictionary = level.get("stop", {})
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
@@ -1012,6 +1014,9 @@ func _apply_scenario_boot_arg() -> void:
 	scenario_stop_when_actions_resolved = bool(stop.get("when_actions_resolved", false))
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
+	if not DiagnosticLog.configure_scenario_diagnostics(scenario_diagnostics):
+		get_tree().quit(2)
+		return
 	DiagnosticLog.run_id_override = run_id
 	DiagnosticLog.session_path_override = session_output_path
 	seed(scenario_random_seed)

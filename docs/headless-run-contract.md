@@ -1,6 +1,6 @@
 # Headless-run contract
 
-Status: Slice 2 implemented | Schema version: `1`
+Status: Slice 3 implemented | Schema version: `1`
 
 This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
@@ -151,6 +151,37 @@ and `op`. `eq`, `ne`, `lt`, `lte`, `gt`, `gte` require `value`; `between`
 requires numeric `min` and `max`; and `empty`, `not_empty`, `all_true`, and
 `exists` take no comparison value. Unknown paths, unsupported operators and
 type mismatches are `contract_error`, not failed game assertions.
+
+## Diagnostic capture profiles
+
+`diagnostics` is optional and applies only to a `--scenario` session; ordinary
+manual play keeps its existing standard event and hourly-snapshot schema.
+The runner validates the profile before it launches Godot, and the game applies
+the same allowlist at boot. `verdict` retains action/death evidence and writes
+no periodic snapshots by default. `behaviour` retains the named mechanic event
+channels; `balance` and `performance` take a daily selected snapshot; `custom`
+requires explicit allowlisted events and fields.
+
+```json
+"diagnostics": {
+  "profile": "custom",
+  "events": ["stall_recovery"],
+  "snapshots": {
+    "every_sim_seconds": 30,
+    "fields": ["population.total", "resources.food_stores", "role_outcomes.cells_completed_total"],
+    "only_when_changed": true
+  },
+  "limits": {"event_lines_per_type": 100, "snapshot_lines": 200}
+}
+```
+
+Available snapshot fields are deliberately small and typed: `population.total`,
+`resources.food_stores`, `environment.winter_here`,
+`role_outcomes.cells_completed_total`, `performance.fps`, and
+`performance.top_sections_ms`. Unknown fields, event names, profiles or invalid
+limits are `contract_error` before process launch. Counters and summary facts
+remain available to actions and expectations even when their raw event lines
+are filtered.
 
 ## Output budgets
 

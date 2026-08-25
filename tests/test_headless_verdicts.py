@@ -91,6 +91,15 @@ class HeadlessVerdictTest(unittest.TestCase):
             self.assertEqual({"kind": "expectation", "id": "wrong_deaths", "expected": 1, "actual": 0},
                              failure["reason"])
 
+    def test_invalid_diagnostics_are_rejected_before_launch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scenario = root / "scenario.json"
+            scenario.write_text(json.dumps({"diagnostics": {"profile": "typo"}}), encoding="utf-8")
+            with mock.patch("run_scenario.subprocess.run") as launch, contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(1, run_verdict_scenario(scenario, "unused", 1, 30, root / "results"))
+            launch.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

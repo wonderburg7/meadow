@@ -39,6 +39,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
+from headless.profiles import validate_diagnostics  # noqa: E402
 from headless.route import ROUTING_CARD  # noqa: E402
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
 
@@ -240,6 +241,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     artefacts = {"session": session_path.name, "process_log": process_log.name}
     metadata: dict[str, Any] = {"path": str(scenario_path), "sha256": "", "seed": None}
     entries: list[dict[str, Any]] = []
+    diagnostics: dict[str, Any] = validate_diagnostics(None)
 
     try:
         if not scenario_path.is_file():
@@ -248,6 +250,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         if not isinstance(data, dict):
             raise ContractError("scenario must be a JSON object")
         expectations = validate_expectations(data.get("expect"))
+        diagnostics = validate_diagnostics(data.get("diagnostics"))
         raw_seed = data.get("random_seed")
         requested_seed = raw_seed if isinstance(raw_seed, int) and not isinstance(raw_seed, bool) else None
         metadata = _scenario_metadata(scenario_path, requested_seed)
@@ -258,7 +261,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         result = {
             "schema_version": SCHEMA_VERSION, "status": "contract_error", "run_id": run_id,
             "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
-            "seed": metadata["seed"], "diagnostics": {"profile": "standard", "version": 1},
+            "seed": metadata["seed"], "diagnostics": {"profile": diagnostics["profile"], "version": diagnostics["version"]},
             "outcome": None, "simulated": {"seconds": None, "day": None},
             "actions": {"rejected": 0, "failed": 0, "unresolved": 0},
             "expectations": {"passed": [], "failed": []}, "process": {"exit_code": None},
@@ -348,7 +351,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     result = {
         "schema_version": SCHEMA_VERSION, "status": status, "run_id": run_id,
         "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
-        "seed": metadata["seed"], "diagnostics": {"profile": "standard", "version": 1},
+        "seed": metadata["seed"], "diagnostics": {"profile": diagnostics["profile"], "version": diagnostics["version"]},
         "outcome": summary.get("outcome") if summary else None,
         "simulated": {"seconds": summary.get("game_time") if summary else None,
                       "day": summary.get("day") if summary else None},

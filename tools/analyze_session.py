@@ -66,10 +66,15 @@ def _last_snapshot_per_day(snapshots: list[dict[str, Any]]) -> list[dict[str, An
 
 
 def _population_curve(snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    # Slice 3 profiles may intentionally request population.total without
+    # the old full by-role section. Partial snapshots are valid evidence, not
+    # malformed logs, so legacy expanded reports simply omit unavailable
+    # points rather than crashing the compact verdict path.
     return [
         {"day": s["day"], "total": s["population"]["total"],
-         "by_role": s["population"]["by_role"]}
+         "by_role": s["population"].get("by_role", {})}
         for s in _last_snapshot_per_day(snapshots)
+        if isinstance(s.get("population"), dict) and "total" in s["population"]
     ]
 
 
@@ -101,6 +106,10 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
     """
     out = []
     for s in _last_snapshot_per_day(snapshots):
+        if not all(isinstance(s.get(key), dict) for key in ("cells", "environment")):
+            continue
+        if "total" not in s["cells"] or "by_contents" not in s["cells"] or "winter_here" not in s["environment"]:
+            continue
         total_cells = s["cells"]["total"]
         honey_cells = s["cells"]["by_contents"].get("honey", 0)
         fraction = (honey_cells / total_cells) if total_cells > 0 else 0.0
