@@ -1,8 +1,8 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: Slice 0 ready for integration | Owner: Dave / Codex | Next: integrate
-the Slice 0 baseline, then assign Slice 1 | Evidence checked: 2026-08-24 at
-`6715881`
+Status: Slice 1 ready for integration | Owner: Dave / Codex | Next: integrate
+Slices 0-1, then assign Slice 2 | Evidence checked: 2026-08-25 at
+`2e44bb7`
 
 > **CHATGPT-OWNED PLANNING FILE.**
 > This plan does not revive the abandoned mechanism-check queue in
@@ -553,6 +553,37 @@ this with gameplay, balance or the old H6/H7 mechanism-check plan.
 - `docs/headless-run-contract.md` is the schema source for Slice 1;
   `tools.headless.contracts` holds the version, allowed vocabulary and
   executable 1 KiB / 4 KiB output-budget limits.
+
+### Implementation record: Slice 1 (2026-08-25)
+
+- Scope: explicit per-run artefact paths, compact single-run verdicts and
+  typed `expect` evaluation only. Existing explicit `brief`, `behaviour`,
+  `balance` and `full` reports remain available; profiles and aggregate
+  experiments remain later slices.
+- Baseline: `2e44bb73d2fa772902f00e8205c9989251019d71` on
+  `codex/headless-efficiency-slice-0`. The primary worktree had unrelated
+  gameplay changes; this slice touched only the named headless runner,
+  logger/main command-line boundary, smoke scenario, tests and contract docs.
+- `run_scenario.py` now creates a unique directory under a managed temporary
+  artefact root, supplies Godot an exact `--headless-session-path`, retains
+  `session.jsonl` and `process.log`, writes `result.json` (plus `report.json`
+  on success or bounded `failure.json` otherwise), and makes one-line
+  `verdict` the default for one run. It verifies Godot's
+  `MEADOW_RESULT_PATH` sentinel rather than inferring a `user://` directory
+  from the project name.
+- `expect` is evaluated after the final summary through a small allowlist of
+  final summary/action facts. Invalid contracts return `contract_error`; a
+  false expectation or an action problem returns non-zero with a focused
+  failure capsule. The smoke scenario now protects clean actions, a living
+  queen and zero deaths. `queen_alive` was added to the ordinary final
+  summary, with no per-frame observation work.
+- Evidence: 9 Python contract/baseline tests passed; `source_checks.py`
+  checked 67 scripts; `balance_tests.py` passed all 15 checks. A real fixed
+  FPS-30 smoke run (seed 4242) passed in 7.1s, stopped at simulated 92.75s on
+  day 1, and produced the one-line result plus all expected artefacts. A
+  disposable inverted zero-deaths expectation failed in 8.1s with
+  `status=failed`, exit 1 and expected/actual evidence. The fixture was
+  restored before final verification.
 
 ### Slice 0: measurements and contracts, no game behaviour change
 

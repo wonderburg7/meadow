@@ -42,6 +42,11 @@ var snapshot_interval_override: float = -1.0
 ## started in the same wall-clock second (or a stray manual play session)
 ## could otherwise race.
 var run_id_override: String = ""
+## Dev-only exact JSONL path created by the Python headless runner. It is
+## command-line supplied, never scenario supplied, so a fixture cannot choose
+## where it writes. Empty retains ordinary manual-session logging unchanged.
+var session_path_override: String = ""
+var _session_path: String = ""
 ## The RNG seed actually in effect for this run (CHATGPT_INSIGHTS_PLAN.md's
 ## A2). main.gd's own manual-play boot always seeds with
 ## main.DEFAULT_RANDOM_SEED (12345, duplicated here rather than shared --
@@ -52,6 +57,7 @@ var run_id_override: String = ""
 ## comparison can confirm afterwards which seed each side actually ran
 ## with, not just which one it asked for.
 var scenario_random_seed: int = 12345
+var _queen_alive: bool = true
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -109,13 +115,16 @@ func _notification(what: int) -> void:
 func start_session() -> void:
 	end_session("quit")   # no-op if nothing was open, or already ended by a collapse
 
-	DirAccess.make_dir_recursive_absolute(LOG_DIR)
-	_prune_old_sessions()
-
-	var stamp: String = str(int(Time.get_unix_time_from_system()))
-	var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
-	var path: String = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
-	_file = FileAccess.open(path, FileAccess.WRITE)
+	if session_path_override != "":
+		DirAccess.make_dir_recursive_absolute(session_path_override.get_base_dir())
+		_session_path = session_path_override
+	else:
+		DirAccess.make_dir_recursive_absolute(LOG_DIR)
+		_prune_old_sessions()
+		var stamp: String = str(int(Time.get_unix_time_from_system()))
+		var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
+		_session_path = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
+	_file = FileAccess.open(_session_path, FileAccess.WRITE)
 	_ended = false
 	_hour_accum = 0.0
 	_total_deaths = 0
@@ -145,6 +154,7 @@ func start_session() -> void:
 	_blocks_mined = 0
 	_honey_batches_deposited = 0
 	_cells_ripened = 0
+	_queen_alive = true
 
 	_write({"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
 			"settings": _config_snapshot()})
@@ -168,6 +178,8 @@ func log_death(bee: Node2D) -> void:
 		"stats": {"energy": bee.energy, "age_seconds": bee.age_seconds},
 	})
 	_total_deaths += 1
+	if bee.is_queen:
+		_queen_alive = false
 	_deaths_by_cause[bee.death_cause] = int(_deaths_by_cause.get(bee.death_cause, 0)) + 1
 	_deaths_by_role[role_name] = int(_deaths_by_role.get(role_name, 0)) + 1
 
@@ -536,6 +548,7 @@ func end_session(outcome: String) -> void:
 		"game_time": Session.sim_time,
 		"day": _current_day(),
 		"outcome": outcome,
+		"queen_alive": _queen_alive,
 		"total_deaths": _total_deaths,
 		"deaths_by_cause": _deaths_by_cause,
 		"deaths_by_role": _deaths_by_role,
@@ -568,6 +581,14 @@ func end_session(outcome: String) -> void:
 	_file.close()
 	_file = null
 	_ended = true
+
+
+func session_path() -> String:
+	return _session_path
+
+
+func set_queen_alive(alive: bool) -> void:
+	_queen_alive = alive
 
 
 # --- building entries -----------------------------------------------

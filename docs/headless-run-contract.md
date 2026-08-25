@@ -1,11 +1,23 @@
 # Headless-run contract
 
-Status: Slice 0 baseline | Schema version: `1`
+Status: Slice 1 implemented | Schema version: `1`
 
-This is the single contract reference for the headless runner. It records the
-formats that Slice 1 will produce; it does not change the current runner yet.
-The runner remains the compatibility entry point, and existing scenario JSON
-continues to work without any of the optional fields below.
+This is the single contract reference for the headless runner. The runner
+remains the compatibility entry point, and existing scenario JSON continues
+to work without an `expect` block.
+
+Run one deterministic scenario with the compact default:
+
+```
+python tools/run_scenario.py test_scenarios/slice1_smoke_test.json
+```
+
+It creates a unique result directory under the system temporary directory
+(`meadow-headless-results` by default), passes Godot an exact JSONL path, and
+prints one line such as `status=passed run_id=... outcome=actions_resolved
+result=.../result.json`. `--result-root` changes the managed artefact root;
+the scenario cannot supply an output path. Explicit `--report brief`,
+`behaviour`, `balance`, or `full` keeps the legacy presentation path.
 
 ## Artefacts
 
@@ -66,6 +78,11 @@ absolute paths.
 `timeout`, `crash`, or `missing_summary`. Event and action tails are bounded;
 when data is omitted, `truncated` is true and the relevant artefact path is
 present.
+
+Godot prints `MEADOW_RESULT_PATH=<exact path>` after it closes the scenario
+JSONL. The runner requires that sentinel and never infers a session directory
+from the Godot project name, so `Meadow` and `Meadow - Claude` worktrees and
+concurrent launches cannot select one another's logs.
 
 ## Scenario expectations
 

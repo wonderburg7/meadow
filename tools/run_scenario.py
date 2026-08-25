@@ -24,6 +24,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -33,9 +34,12 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
+from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
+from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_GODOT_PATH = r"C:\Program Files\Godot\Godot.exe"
@@ -47,6 +51,7 @@ DEFAULT_TIMEOUT = 300
 # sync is off. 0 (via --fixed-fps 0 on the CLI) falls back to ordinary
 # wall-clock timing.
 DEFAULT_FIXED_FPS = 30
+DEFAULT_RESULT_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-results"
 
 
 def log_dir() -> Path:
@@ -167,6 +172,206 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
     return session_file
 
 
+def _scenario_metadata(scenario_path: Path, seed: int | None) -> dict[str, Any]:
+    content = scenario_path.read_bytes()
+    return {"path": str(scenario_path), "sha256": hashlib.sha256(content).hexdigest(), "seed": seed}
+
+
+def _write_json(path: Path, data: dict[str, Any]) -> None:
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _failure_capsule(*, status: str, run_id: str, reason: dict[str, Any],
+                     entries: list[dict[str, Any]], artefacts: dict[str, str]) -> dict[str, Any]:
+    """Bounded evidence for an unsuccessful run; raw data stays on disk."""
+    capsule = {
+        "schema_version": SCHEMA_VERSION, "status": status, "run_id": run_id, "reason": reason,
+        "actions": [entry for entry in entries if entry.get("type") == "action"][-5:],
+        "events": [entry for entry in entries if entry.get("type") not in
+                   {"config", "snapshot", "summary", "action"}][-5:],
+        "snapshot": next((entry for entry in reversed(entries)
+                          if entry.get("type") == "snapshot"), None),
+        "artefacts": artefacts, "truncated": False,
+    }
+    if len(json.dumps(capsule, separators=(",", ":")).encode("utf-8")) > 4096:
+        capsule["actions"] = []
+        capsule["events"] = []
+        capsule["snapshot"] = None
+        capsule["truncated"] = True
+    return capsule
+
+
+def _write_failure(run_dir: Path, *, status: str, run_id: str, reason: dict[str, Any],
+                   entries: list[dict[str, Any]], artefacts: dict[str, str]) -> Path:
+    capsule = _failure_capsule(status=status, run_id=run_id, reason=reason,
+                               entries=entries, artefacts=artefacts)
+    path = run_dir / "failure.json"
+    _write_json(path, capsule)
+    if not fits_stdout_budget(path.read_bytes(), failed=True):
+        capsule["actions"] = []
+        capsule["events"] = []
+        capsule["snapshot"] = None
+        capsule["truncated"] = True
+        _write_json(path, capsule)
+    return path
+
+
+def _terminal_line(status: str, run_id: str, result_path: Path, *,
+                   outcome: str | None = None, reason: str | None = None) -> str:
+    fields = ["status=%s" % status, "run_id=%s" % run_id]
+    if outcome is not None:
+        fields.append("outcome=%s" % outcome)
+    if reason is not None:
+        fields.append("reason=%s" % reason)
+    fields.append("result=%s" % result_path)
+    return " ".join(fields)
+
+
+def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
+                         fixed_fps: int | None, result_root: Path) -> int:
+    """Launch one scenario into its own artefact directory and print one verdict."""
+    run_id = uuid.uuid4().hex[:12]
+    run_dir = result_root / ("run-%d-%s" % (int(time.time() * 1000), run_id))
+    run_dir.mkdir(parents=True, exist_ok=False)
+    process_log = run_dir / "process.log"
+    session_path = run_dir / "session.jsonl"
+    result_path = run_dir / "result.json"
+    artefacts = {"session": session_path.name, "process_log": process_log.name}
+    metadata: dict[str, Any] = {"path": str(scenario_path), "sha256": "", "seed": None}
+    entries: list[dict[str, Any]] = []
+
+    try:
+        if not scenario_path.is_file():
+            raise ContractError("scenario file not found: %s" % scenario_path)
+        data = json.loads(scenario_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ContractError("scenario must be a JSON object")
+        expectations = validate_expectations(data.get("expect"))
+        raw_seed = data.get("random_seed")
+        requested_seed = raw_seed if isinstance(raw_seed, int) and not isinstance(raw_seed, bool) else None
+        metadata = _scenario_metadata(scenario_path, requested_seed)
+    except (OSError, json.JSONDecodeError, ContractError) as error:
+        reason = {"kind": "contract", "message": str(error)}
+        failure_path = _write_failure(run_dir, status="contract_error", run_id=run_id,
+                                      reason=reason, entries=entries, artefacts=artefacts)
+        result = {
+            "schema_version": SCHEMA_VERSION, "status": "contract_error", "run_id": run_id,
+            "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
+            "seed": metadata["seed"], "diagnostics": {"profile": "standard", "version": 1},
+            "outcome": None, "simulated": {"seconds": None, "day": None},
+            "actions": {"rejected": 0, "failed": 0, "unresolved": 0},
+            "expectations": {"passed": [], "failed": []}, "process": {"exit_code": None},
+            "artefacts": dict(artefacts, failure=failure_path.name),
+        }
+        _write_json(result_path, result)
+        line = _terminal_line("contract_error", run_id, result_path, reason="contract")
+        assert fits_stdout_budget(line + "\n", failed=True)
+        print(line)
+        return 1
+
+    seed = requested_seed if requested_seed is not None else random.randint(0, 2**31 - 1)
+    metadata["seed"] = seed
+    cmd = [godot_path, "--headless"]
+    if fixed_fps is not None:
+        cmd += ["--fixed-fps", str(fixed_fps)]
+    cmd += ["--path", str(ROOT), "--", "--scenario=%s" % scenario_path,
+            "--run-id=%s" % run_id, "--random-seed=%d" % seed,
+            "--headless-session-path=%s" % session_path]
+    returncode: int | None = None
+    process_stdout = ""
+    status = "passed"
+    reason: dict[str, Any] | None = None
+    try:
+        completed = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        returncode = completed.returncode
+        process_stdout = completed.stdout
+        process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" %
+                               (completed.stdout, completed.stderr), encoding="utf-8")
+    except subprocess.TimeoutExpired as error:
+        status = "timed_out"
+        reason = {"kind": "timeout", "timeout_seconds": timeout}
+        stdout = error.stdout.decode() if isinstance(error.stdout, bytes) else (error.stdout or "")
+        stderr = error.stderr.decode() if isinstance(error.stderr, bytes) else (error.stderr or "")
+        process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" % (stdout, stderr), encoding="utf-8")
+    except OSError as error:
+        status = "crashed"
+        reason = {"kind": "crash", "message": str(error)}
+        process_log.write_text(str(error) + "\n", encoding="utf-8")
+
+    if session_path.is_file():
+        try:
+            entries = load_entries(session_path)
+        except (OSError, json.JSONDecodeError) as error:
+            status = "crashed"
+            reason = {"kind": "crash", "message": "invalid session JSONL: %s" % error}
+    if status == "passed" and not session_path.is_file():
+        status = "crashed"
+        reason = {"kind": "missing_summary", "message": "Godot wrote no session file"}
+    if status == "passed" and "MEADOW_RESULT_PATH=%s" % session_path not in process_stdout:
+        status = "crashed"
+        reason = {"kind": "crash", "message": "Godot did not confirm the requested session path"}
+    analysis: dict[str, Any] | None = analyze(entries) if entries else None
+    if status == "passed" and (analysis is None or analysis["summary"] is None):
+        status = "crashed"
+        reason = {"kind": "missing_summary", "message": "session has no final summary"}
+    if status == "passed" and returncode != 0:
+        status = "crashed"
+        reason = {"kind": "crash", "exit_code": returncode}
+
+    expectation_results = []
+    if status == "passed" and analysis is not None:
+        try:
+            expectation_results = evaluate_expectations(analysis, expectations)
+        except ContractError as error:
+            status = "contract_error"
+            reason = {"kind": "contract", "message": str(error)}
+        action_problems = analysis["actions"]["problems"]
+        if status == "passed" and action_problems:
+            status = "failed"
+            reason = {"kind": "action", "action": action_problems[0]}
+        failed_expectations = [item for item in expectation_results if not item.passed]
+        if status == "passed" and failed_expectations:
+            item = failed_expectations[0]
+            status = "failed"
+            reason = {"kind": "expectation", "id": item.identifier,
+                      "expected": item.expected, "actual": item.actual}
+
+    summary = analysis["summary"] if analysis is not None else None
+    actions = analysis["actions"] if analysis is not None else {"problems": []}
+    action_counts = {"rejected": 0, "failed": 0, "unresolved": 0}
+    for problem in actions.get("problems", []):
+        problem_kind = {"assert_failed": "failed", "never_fired": "unresolved"}.get(
+            problem["result"], problem["result"]
+        )
+        action_counts[problem_kind] = action_counts.get(problem_kind, 0) + 1
+    result = {
+        "schema_version": SCHEMA_VERSION, "status": status, "run_id": run_id,
+        "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
+        "seed": metadata["seed"], "diagnostics": {"profile": "standard", "version": 1},
+        "outcome": summary.get("outcome") if summary else None,
+        "simulated": {"seconds": summary.get("game_time") if summary else None,
+                      "day": summary.get("day") if summary else None},
+        "actions": action_counts,
+        "expectations": {"passed": [item.identifier for item in expectation_results if item.passed],
+                         "failed": [item.identifier for item in expectation_results if not item.passed]},
+        "process": {"exit_code": returncode}, "artefacts": artefacts,
+    }
+    if status != "passed":
+        failure_path = _write_failure(run_dir, status=status, run_id=run_id,
+                                      reason=reason or {"kind": "crash"}, entries=entries,
+                                      artefacts=artefacts)
+        result["artefacts"] = dict(artefacts, failure=failure_path.name)
+    elif analysis is not None:
+        _write_json(run_dir / "report.json", report(analysis, "brief"))
+        result["artefacts"] = dict(artefacts, report="report.json")
+    _write_json(result_path, result)
+    line = _terminal_line(status, run_id, result_path, outcome=result["outcome"],
+                          reason=reason.get("kind") if reason else None)
+    assert fits_stdout_budget(line + "\n", failed=status != "passed")
+    print(line)
+    return 0 if status == "passed" else 1
+
+
 def _warn_on_action_problems(analysis: dict) -> None:
     """Prints a short, hard-to-miss warning when a scenario's actions
     block (scenario_actions.gd) didn't go cleanly -- a rejected action, an
@@ -245,12 +450,14 @@ def main() -> int:
     parser.add_argument("--seeds", type=lambda value: [int(seed) for seed in value.split(",")],
                          help="comma-separated seeds for matched causal runs; overrides a "
                               "scenario's random_seed and cannot be combined with --repeat")
-    parser.add_argument("--report", choices=sorted(REPORT_PROFILES), default=None,
-                         help="which report profile to print: brief (summary + action "
+    parser.add_argument("--report", choices=sorted(set(REPORT_PROFILES) | {"verdict"}), default=None,
+                         help="which report profile to print: verdict (one-line default), brief (summary + action "
                               "problems, the default -- meant for an AI caller), balance "
                               "(summary + population/deaths/honey-fill series), behaviour "
                               "(summary + mechanic-firing + actions), or full (everything) "
                               "(CHATGPT_INSIGHTS_PLAN.md's A5)")
+    parser.add_argument("--result-root", type=Path, default=DEFAULT_RESULT_ROOT,
+                        help="directory for isolated verdict artefacts (default: %(default)s)")
     parser.add_argument("--full", action="store_true",
                          help="shorthand for --report full")
     parser.add_argument("--fixed-fps", type=int, default=DEFAULT_FIXED_FPS,
@@ -270,7 +477,13 @@ def main() -> int:
         return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
-    profile = args.report or ("full" if args.full else "brief")
+    profile = args.report or ("full" if args.full else ("brief" if args.repeat > 1 or args.seeds else "verdict"))
+    if profile == "verdict":
+        if args.repeat != 1 or args.seeds is not None:
+            print("error: verdict accepts one run; use --report brief for repeats", file=sys.stderr)
+            return 1
+        return run_verdict_scenario(args.scenario, args.godot_path, args.timeout,
+                                    fixed_fps, args.result_root)
     return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, profile,
                          fixed_fps, args.seeds)
 

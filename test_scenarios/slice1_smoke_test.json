@@ -12,5 +12,10 @@
       }
     }
   ],
+  "expect": [
+    {"id": "clean_actions", "metric": "actions.problems", "op": "empty"},
+    {"id": "queen_alive", "metric": "summary.queen_alive", "op": "eq", "value": true},
+    {"id": "population_survives", "metric": "summary.total_deaths", "op": "eq", "value": 0}
+  ],
   "stop": {"when_actions_resolved": true, "max_days": 3}
 }
