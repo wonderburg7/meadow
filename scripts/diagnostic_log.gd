@@ -64,6 +64,9 @@ var _diagnostics: Dictionary = HeadlessDiagnosticProfile.standard()
 var _diagnostic_event_lines: Dictionary = {}
 var _diagnostic_snapshot_lines: int = 0
 var _diagnostic_last_snapshot: Dictionary = {}
+## Empty outside a scenario baseline. It produces one final aggregate, never a
+## per-frame diagnostic stream.
+var _performance_capture_config: Dictionary = {}
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -167,6 +170,8 @@ func start_session() -> void:
 
 	var config := {"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
 		"settings": _config_snapshot()}
+	if not _performance_capture_config.is_empty():
+		config["performance_capture"] = _performance_capture_config
 	if not bool(_diagnostics.get("legacy_standard", true)):
 		config["diagnostics"] = effective_diagnostics()
 	_write(config)
@@ -570,7 +575,7 @@ func end_session(outcome: String) -> void:
 	if _ended or _file == null:
 		_ended = true
 		return
-	_write({
+	var summary := {
 		"type": "summary",
 		"game_time": Session.sim_time,
 		"day": _current_day(),
@@ -604,7 +609,10 @@ func end_session(outcome: String) -> void:
 		"blocks_mined": _blocks_mined,
 		"honey_batches_deposited": _honey_batches_deposited,
 		"cells_ripened": _cells_ripened,
-	})
+	}
+	if not _performance_capture_config.is_empty():
+		summary["performance"] = Perf.capture_summary()
+	_write(summary)
 	_file.close()
 	_file = null
 	_ended = true
@@ -625,6 +633,10 @@ func configure_scenario_diagnostics(raw: Variant) -> bool:
 		return false
 	_diagnostics = parsed
 	return true
+
+
+func configure_performance_capture(config: Dictionary) -> void:
+	_performance_capture_config = config.duplicate(true)
 
 
 func effective_diagnostics() -> Dictionary:

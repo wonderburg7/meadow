@@ -58,6 +58,17 @@ var _window_worst_totals: Dictionary = {}
 var _window_start_usec: int = 0
 var _frame_start_usec: int = 0
 
+# --- bounded headless capture -----------------------------------------
+## A scenario can request one bounded sample window. This stays
+## aggregate-only: per-frame log rows would change the cost being measured.
+var _capture_warmup_remaining: int = 0
+var _capture_warmup_frames: int = 0
+var _capture_frames_remaining: int = 0
+var _capture_frame_times: Array = []
+var _capture_sections: Array = []
+var _capture_section_samples: Dictionary = {}
+var _capture_complete: bool = false
+
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 
@@ -114,6 +125,68 @@ func percentile_ms(p: float) -> float:
 	var idx: int = clampi(int(ceil(p * sorted.size())) - 1, 0, sorted.size() - 1)
 	return sorted[idx]
 
+
+## Start one scenario-owned measurement window. Normal play never calls this,
+## retaining the existing cheap rolling HUD instrumentation.
+func start_capture(warmup_frames: int, measurement_frames: int, sections: Array) -> void:
+	_capture_warmup_remaining = warmup_frames
+	_capture_warmup_frames = warmup_frames
+	_capture_frames_remaining = measurement_frames
+	_capture_frame_times.clear()
+	_capture_sections = sections.duplicate()
+	_capture_section_samples.clear()
+	for section in _capture_sections:
+		_capture_section_samples[section] = []
+	_capture_complete = false
+
+
+func capture_complete() -> bool:
+	return _capture_complete
+
+
+## Section values are inclusive spans, so callers must not sum them into the
+## frame time: bee_state_miner is nested inside bee_state, for example.
+func capture_summary() -> Dictionary:
+	var sections := {}
+	for section in _capture_sections:
+		sections[section] = _capture_metric(_capture_section_samples.get(section, []))
+	return {
+		"warmup_frames": _capture_warmup_frames,
+		"measurement_frames": _capture_frame_times.size(),
+		"frame_time_ms": _capture_metric(_capture_frame_times),
+		"sections_ms": sections,
+		"section_totals_are_overlapping": true,
+	}
+
+
+func _capture_metric(samples: Array) -> Dictionary:
+	if samples.is_empty():
+		return {"mean": 0.0, "p95": 0.0}
+	var total := 0.0
+	for sample in samples:
+		total += float(sample)
+	var sorted := samples.duplicate()
+	sorted.sort()
+	var index := clampi(int(ceil(0.95 * sorted.size())) - 1, 0, sorted.size() - 1)
+	return {"mean": total / samples.size(), "p95": float(sorted[index])}
+
+
+func _capture_frame(frame_ms: float) -> void:
+	if _capture_complete:
+		return
+	if _capture_warmup_remaining > 0:
+		_capture_warmup_remaining -= 1
+		return
+	if _capture_frames_remaining <= 0:
+		_capture_complete = true
+		return
+	_capture_frame_times.append(frame_ms)
+	for section in _capture_sections:
+		_capture_section_samples[section].append(float(_totals.get(section, 0)) / 1000.0)
+	_capture_frames_remaining -= 1
+	if _capture_frames_remaining == 0:
+		_capture_complete = true
+
 func _process(_delta: float) -> void:
 	if not Session.perf_enabled:
 		# Dropped rather than carried over: re-enabling later shouldn't
@@ -130,6 +203,7 @@ func _process(_delta: float) -> void:
 	var now: int = Time.get_ticks_usec()
 	if _frame_start_usec != 0:
 		var frame_ms: float = float(now - _frame_start_usec) / 1000.0
+		_capture_frame(frame_ms)
 		if frame_ms >= _window_worst_ms:
 			_window_worst_ms = frame_ms
 			_window_worst_totals = _totals.duplicate()
