@@ -39,6 +39,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
+from headless.route import ROUTING_CARD  # noqa: E402
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -439,7 +440,9 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("scenario", type=Path, help="path to a scenario JSON file")
+    parser.add_argument("scenario", type=Path, nargs="?", help="path to a scenario JSON file")
+    parser.add_argument("--route-help", action="store_true",
+                        help="print the deterministic headless routing card and exit")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
                          help="real-world seconds to wait before giving up, per run (default: %(default)s)")
     parser.add_argument("--godot-path", default=DEFAULT_GODOT_PATH,
@@ -468,6 +471,12 @@ def main() -> int:
                               "Pass 0 to fall back to ordinary wall-clock timing "
                               "(default: %(default)s)")
     args = parser.parse_args()
+
+    if args.route_help:
+        print(ROUTING_CARD)
+        return 0
+    if args.scenario is None:
+        parser.error("scenario is required unless --route-help is used")
 
     if args.repeat < 1:
         print("error: --repeat must be at least 1", file=sys.stderr)

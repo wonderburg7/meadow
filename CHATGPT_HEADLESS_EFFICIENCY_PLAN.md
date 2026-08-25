@@ -1,8 +1,8 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: Slice 1 ready for integration | Owner: Dave / Codex | Next: integrate
-Slices 0-1, then assign Slice 2 | Evidence checked: 2026-08-25 at
-`2e44bb7`
+Status: Slice 2 ready for integration | Owner: Dave / Codex | Next: integrate
+Slices 0-2 complete; assign Slice 3 | Evidence checked: 2026-08-25 at
+`6e3ee01`
 
 > **CHATGPT-OWNED PLANNING FILE.**
 > This plan does not revive the abandoned mechanism-check queue in
@@ -584,6 +584,31 @@ this with gameplay, balance or the old H6/H7 mechanism-check plan.
   disposable inverted zero-deaths expectation failed in 8.1s with
   `status=failed`, exit 1 and expected/actual evidence. The fixture was
   restored before final verification.
+
+### Implementation record: Slice 2 (started 2026-08-25)
+
+- Scope: deterministic route helper, runner routing card and a portable
+  Windows entry point only. No Godot, scenario, diagnostic-log or simulation
+  behaviour changes are in scope.
+- Isolated branch/baseline: `codex/headless-efficiency-slice-0` at
+  `6e3ee01975e9db2f8815de8f384de4c7649d1704`; the dedicated worktree started
+  clean.
+- Primary worktree check: `master` is at
+  `6715881fc5a1897fd47285062a353773ae08a5cf` with pre-existing edits in
+  gameplay and canonical project-state files. None overlap this Slice 2
+  tooling/documentation scope. No primary-worktree file will be edited.
+- Delivered: `tools/headless/route.py` maps only the five explicit facts to
+  stable `python`, `verdict`, `experiment`, `trend` or `checkpointed` route
+  lines; `--explain` adds the matched rule but the default stays one line.
+  `run_scenario.py --route-help` prints the shared seven-rule card and exits
+  before requiring a scenario or launching Godot. `tools/run_headless.ps1`
+  provides the Windows shared entry point, resolving `python`, `python3` or
+  `py -3`, with an explicit `-PythonPath` escape hatch and `-Route` mode.
+- Evidence: the route decision table, CLI/card and existing verdict baselines
+  passed (17 tests). A live wrapper route launch using an explicit bundled
+  interpreter emitted the expected single verdict line. `source_checks.py`
+  checked 67 scripts and `balance_tests.py` passed all 15 checks. No Godot
+  run was needed because Slice 2 does not alter launch or game behaviour.
 
 ### Slice 0: measurements and contracts, no game behaviour change
 

@@ -1,6 +1,6 @@
 # Headless-run contract
 
-Status: Slice 1 implemented | Schema version: `1`
+Status: Slice 2 implemented | Schema version: `1`
 
 This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
@@ -18,6 +18,52 @@ prints one line such as `status=passed run_id=... outcome=actions_resolved
 result=.../result.json`. `--result-root` changes the managed artefact root;
 the scenario cannot supply an output path. Explicit `--report brief`,
 `behaviour`, `balance`, or `full` keeps the legacy presentation path.
+
+## Choosing a run
+
+Use the routing card instead of reading project plans or runner source:
+
+```powershell
+.\tools\run_headless.ps1 --route-help
+```
+
+It prints the seven short routing rules and exits without launching Godot. To
+turn the five explicit facts into one deterministic route, use:
+
+```powershell
+.\tools\run_headless.ps1 -Route --needs-godot yes --adaptive no --comparison paired --time-series no --expected-seconds 12
+```
+
+The default response is exactly one line, for example
+`route=experiment capture=behaviour seeds=3 background=no report=verdict`.
+Pass `--explain` only when a human needs the matched rule. The facts are:
+
+- `needs-godot`: whether Python/source checks cannot answer the question;
+- `adaptive`: whether a required mid-run decision cannot be expressed by the
+  existing semantic actions, triggers and assertions;
+- `comparison`: `none`, `stochastic` or `paired`;
+- `time-series`: whether a series is necessary rather than a final summary;
+  and
+- `expected-seconds`: expected wall-clock duration, which enables the
+  background modifier above 30 seconds.
+
+`adaptive=yes` with `needs-godot=no`, a negative duration and unknown enum
+values are contract errors. The helper does not inspect a scenario, project
+plan or natural-language task, and never calls a model.
+
+`tools/run_headless.ps1` is the supported Windows entry point for the runner:
+
+```powershell
+.\tools\run_headless.ps1 test_scenarios/slice1_smoke_test.json
+```
+
+It resolves `python`, `python3` or the Windows `py -3` launcher, in that
+order. If none is available, supply an explicit interpreter without embedding
+a machine-specific path in repository instructions:
+
+```powershell
+.\tools\run_headless.ps1 -PythonPath C:\path\to\python.exe test_scenarios/slice1_smoke_test.json
+```
 
 ## Artefacts
 

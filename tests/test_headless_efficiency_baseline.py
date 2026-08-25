@@ -93,7 +93,8 @@ class HeadlessEfficiencyBaselineTest(unittest.TestCase):
             text=True,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        for flag in ("--timeout", "--godot-path", "--repeat", "--seeds", "--report", "--full", "--fixed-fps"):
+        for flag in ("--timeout", "--godot-path", "--repeat", "--seeds", "--report", "--full", "--fixed-fps",
+                     "--route-help"):
             self.assertIn(flag, result.stdout)
 
 
