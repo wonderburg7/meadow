@@ -107,10 +107,11 @@ plan file, full history in `git log`.
    per the spec's own rule. Needs a session with Godot (or Dave running
    `tools/run_scenario.py` himself) plus his hands-on check
    (`HANDS_ON_CHECKS.md`) before this can supersede the old mechanism.
-   `tools/run_scenario.py`'s hardcoded `log_dir()` still assumes
-   `config/name="Meadow"`; this sandbox's `project.godot` says "Meadow -
-   Claude," so headless runs here still need the small `log_dir()`-
-   monkeypatch driver script (not part of the repo).
+   The project-name-dependent `log_dir()` monkeypatch is no longer
+   needed for headless runs: `codex/headless-efficiency-wrap` (merged
+   25 Aug) added `--headless-session-path`, so the Python runner tells
+   Godot exactly where to write rather than guessing from
+   `config/name`. See `docs/headless-run-contract.md`.
 9. **Handling experience and flower senescence: verify headlessly, not
    by eye.** Dave can't perceive either effect directly in play (flower
    handling is too fast; flowers carry no visible age tell) -- both
@@ -127,6 +128,14 @@ plan file, full history in `git log`.
 
 ## Settled from this session, no action needed
 
+- Headless-run efficiency and selective diagnostics (ChatGPT's
+  `codex/headless-efficiency-wrap`) merged 25 Aug: compact verdicts,
+  deterministic routing, diagnostic profiles, experiment manifests and
+  bounded background jobs. Dev-only tooling, no hands-on check needed;
+  see `CHATGPT_HEADLESS_EFFICIENCY_PLAN.md` and
+  `docs/headless-run-contract.md`. No standing headless-efficiency work
+  remains -- Slice 6 (triggered capture) is deferred until a named
+  diagnostic gap needs it.
 - Follow-bee (old Slice 8) confirmed already working 24 Aug -- closed, no
   code change required.
 - Settings-window sections, cell popup position, text scale, dark/light
