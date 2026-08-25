@@ -39,6 +39,9 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
+from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
+                                  compose_case_scenario, evaluate_aggregate_expectations,
+                                  required_metrics, validate_manifest)  # noqa: E402
 from headless.profiles import validate_diagnostics  # noqa: E402
 from headless.route import ROUTING_CARD  # noqa: E402
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
@@ -230,7 +233,8 @@ def _terminal_line(status: str, run_id: str, result_path: Path, *,
 
 
 def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
-                         fixed_fps: int | None, result_root: Path) -> int:
+                         fixed_fps: int | None, result_root: Path,
+                         seed_override: int | None = None, emit: bool = True) -> int:
     """Launch one scenario into its own artefact directory and print one verdict."""
     run_id = uuid.uuid4().hex[:12]
     run_dir = result_root / ("run-%d-%s" % (int(time.time() * 1000), run_id))
@@ -270,10 +274,13 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         _write_json(result_path, result)
         line = _terminal_line("contract_error", run_id, result_path, reason="contract")
         assert fits_stdout_budget(line + "\n", failed=True)
-        print(line)
+        if emit:
+            print(line)
         return 1
 
-    seed = requested_seed if requested_seed is not None else random.randint(0, 2**31 - 1)
+    seed = seed_override if seed_override is not None else (
+        requested_seed if requested_seed is not None else random.randint(0, 2**31 - 1)
+    )
     metadata["seed"] = seed
     cmd = [godot_path, "--headless"]
     if fixed_fps is not None:
@@ -372,7 +379,124 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     line = _terminal_line(status, run_id, result_path, outcome=result["outcome"],
                           reason=reason.get("kind") if reason else None)
     assert fits_stdout_budget(line + "\n", failed=status != "passed")
+    if emit:
+        print(line)
+    return 0 if status == "passed" else 1
+
+
+def _experiment_terminal_line(status: str, name: str, result_path: Path, *, reason: str | None = None) -> str:
+    fields = ["status=%s" % status, "experiment=%s" % name]
+    if reason is not None:
+        fields.append("reason=%s" % reason)
+    fields.append("result=%s" % result_path)
+    return " ".join(fields)
+
+
+def run_experiment_manifest(manifest_path: Path, godot_path: str, timeout: int,
+                            fixed_fps: int | None, result_root: Path) -> int:
+    """Run every named case/seed quietly, then print one aggregate verdict."""
+    result_root.mkdir(parents=True, exist_ok=True)
+    experiment_id = uuid.uuid4().hex[:12]
+    experiment_dir = result_root / ("experiment-%d-%s" % (int(time.time() * 1000), experiment_id))
+    experiment_dir.mkdir(parents=True, exist_ok=False)
+    result_path = experiment_dir / "result.json"
+    manifest_sha = ""
+    name = manifest_path.stem
+    try:
+        raw_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        manifest = validate_manifest(raw_manifest)
+        name = manifest.name
+        base_path = Path(manifest.base_scenario)
+        if not base_path.is_absolute():
+            base_path = (manifest_path.parent / base_path).resolve()
+            if not base_path.is_file():
+                base_path = (ROOT / manifest.base_scenario).resolve()
+        base = json.loads(base_path.read_text(encoding="utf-8"))
+        if not isinstance(base, dict):
+            raise ExperimentContractError("base scenario must be a JSON object")
+        # Validate every merge before the first launch: a malformed base
+        # config block is a manifest contract error, never a partial
+        # experiment that has already spent a case/seed run.
+        for overlay in manifest.cases.values():
+            compose_case_scenario(base, overlay)
+    except (OSError, json.JSONDecodeError, ExperimentContractError) as error:
+        result = {"schema_version": SCHEMA_VERSION, "status": "contract_error", "experiment_id": experiment_id,
+                  "name": name, "manifest": {"path": str(manifest_path), "sha256": manifest_sha},
+                  "reason": {"kind": "contract", "message": str(error)}, "cases": {}, "expectations": []}
+        _write_json(result_path, result)
+        line = _experiment_terminal_line("contract_error", name, result_path, reason="contract")
+        assert fits_stdout_budget(line + "\n", failed=True)
+        print(line)
+        return 1
+
+    summaries: dict[str, list[dict[str, Any]]] = {case: [] for case in manifest.cases}
+    case_runs: dict[str, list[dict[str, Any]]] = {case: [] for case in manifest.cases}
+    run_failed = False
+    for case_name, overlay in manifest.cases.items():
+        scenario = compose_case_scenario(base, overlay)
+        for seed in manifest.seeds:
+            seed_dir = experiment_dir / "cases" / case_name / ("seed-%d" % seed)
+            seed_dir.mkdir(parents=True, exist_ok=False)
+            scenario_path = seed_dir / "scenario.json"
+            scenario_path.write_text(json.dumps(scenario, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            exit_code = run_verdict_scenario(scenario_path, godot_path, timeout, fixed_fps,
+                                             seed_dir, seed_override=seed, emit=False)
+            run_dirs = sorted(seed_dir.glob("run-*/result.json"))
+            if len(run_dirs) != 1:
+                raise RuntimeError("experiment run did not create exactly one result artefact")
+            run_result_path = run_dirs[0]
+            run_result = json.loads(run_result_path.read_text(encoding="utf-8"))
+            case_runs[case_name].append({"seed": seed, "status": run_result["status"],
+                                         "result": str(run_result_path.relative_to(experiment_dir))})
+            if exit_code != 0:
+                run_failed = True
+                continue
+            report_path = run_result_path.parent / "report.json"
+            report_data = json.loads(report_path.read_text(encoding="utf-8"))
+            summary = report_data.get("summary")
+            if not isinstance(summary, dict):
+                run_failed = True
+                continue
+            summaries[case_name].append(summary)
+
+    aggregate: dict[str, Any] = {}
+    expectation_results: list[dict[str, Any]] = []
+    reason: dict[str, Any] | None = None
+    status = "passed"
+    try:
+        if run_failed:
+            status = "failed"
+            reason = {"kind": "run", "message": "one or more case runs failed"}
+        else:
+            aggregate = aggregate_case_metrics(summaries, required_metrics(manifest))
+            expectation_results = evaluate_aggregate_expectations(aggregate, manifest.expectations)
+            failed = [item["id"] for item in expectation_results if not item["passed"]]
+            if failed:
+                status = "failed"
+                reason = {"kind": "expectation", "id": failed[0]}
+    except ExperimentContractError as error:
+        status = "contract_error"
+        reason = {"kind": "contract", "message": str(error)}
+
+    report_data = {"mode": manifest.report["mode"], "metrics": manifest.report["metrics"],
+                   "aggregate": aggregate}
+    _write_json(experiment_dir / "report.json", report_data)
+    result = {
+        "schema_version": SCHEMA_VERSION, "status": status, "experiment_id": experiment_id, "name": manifest.name,
+        "manifest": {"path": str(manifest_path), "sha256": manifest_sha}, "seeds": list(manifest.seeds),
+        "cases": case_runs, "aggregate": aggregate, "expectations": expectation_results,
+        "artefacts": {"report": "report.json"},
+    }
+    if reason is not None:
+        result["reason"] = reason
+    _write_json(result_path, result)
+    line = _experiment_terminal_line(status, manifest.name, result_path,
+                                     reason=reason.get("kind") if reason else None)
+    assert fits_stdout_budget(line + "\n", failed=status != "passed")
     print(line)
+    if manifest.report["mode"] == "table":
+        print(json.dumps(aggregate, sort_keys=True, separators=(",", ":")))
     return 0 if status == "passed" else 1
 
 
@@ -444,6 +568,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("scenario", type=Path, nargs="?", help="path to a scenario JSON file")
+    parser.add_argument("--experiment", type=Path,
+                        help="run an experiment manifest with matched seeds and one aggregate verdict")
     parser.add_argument("--route-help", action="store_true",
                         help="print the deterministic headless routing card and exit")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
@@ -478,8 +604,10 @@ def main() -> int:
     if args.route_help:
         print(ROUTING_CARD)
         return 0
-    if args.scenario is None:
-        parser.error("scenario is required unless --route-help is used")
+    if args.scenario is None and args.experiment is None:
+        parser.error("scenario or --experiment is required unless --route-help is used")
+    if args.scenario is not None and args.experiment is not None:
+        parser.error("scenario and --experiment cannot be combined")
 
     if args.repeat < 1:
         print("error: --repeat must be at least 1", file=sys.stderr)
@@ -489,6 +617,12 @@ def main() -> int:
         return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
+    if args.experiment is not None:
+        if args.repeat != 1 or args.seeds is not None or args.report is not None or args.full:
+            print("error: --experiment controls seeds and report through its manifest", file=sys.stderr)
+            return 1
+        return run_experiment_manifest(args.experiment, args.godot_path, args.timeout,
+                                       fixed_fps, args.result_root)
     profile = args.report or ("full" if args.full else ("brief" if args.repeat > 1 or args.seeds else "verdict"))
     if profile == "verdict":
         if args.repeat != 1 or args.seeds is not None:

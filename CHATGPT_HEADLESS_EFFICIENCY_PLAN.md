@@ -1,8 +1,8 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: Slice 3 ready for integration | Owner: Dave / Codex | Next: integrate
-Slices 0-3 complete; assign Slice 4 | Evidence checked: 2026-08-25 at
-`5e7a03b`
+Status: Slice 4 ready for integration | Owner: Dave / Codex | Next: integrate
+Slices 0-4 complete | Evidence checked: 2026-08-25 from Slice 3 baseline
+`6611871`
 
 > **CHATGPT-OWNED PLANNING FILE.**
 > This plan does not revive the abandoned mechanism-check queue in
@@ -636,6 +636,31 @@ this with gameplay, balance or the old H6/H7 mechanism-check plan.
   the accepted action and final summary (no snapshot). A real custom run
   passed with exactly `population.total`, `resources.food_stores` and
   `role_outcomes.cells_completed_total` in its two capped snapshots.
+
+### Implementation record: Slice 4 (2026-08-25)
+
+- Scope: `tools/headless/experiments.py`, the compatibility runner, focused
+  Python tests and the shared contract document only. No scenario, Godot,
+  logger, gameplay, balance or save-data change is included.
+- Delivered: `--experiment <manifest>` accepts a named base scenario, shared
+  integer seeds, cases restricted to `config_overrides`, aggregate
+  expectations and a verdict/table report projection. Every case receives
+  each exact seed; its merged scenario and normal single-run result remain
+  addressable at `cases/<case>/seed-<seed>/`. The runner prints only one
+  aggregate verdict (plus one compact table when requested), and emits a
+  non-zero result for a malformed manifest, any failed case run or a failed
+  aggregate expectation. The explicit current-summary allowlist rejects a
+  misspelled metric before any Godot launch, and starting-state overlays are
+  rejected before launch as well.
+- Evidence: 29 focused headless Python tests passed, including matched seeds,
+  retained per-run artefacts, pre-launch contract rejection and a non-zero
+  aggregate negative control. `source_checks.py` checked 69 scripts and
+  `balance_tests.py` passed all 15 checks. A real same-seed two-case smoke
+  experiment could not complete because the local Godot 4.7.1 executable
+  crashed with signal 11 before it wrote a session; the unchanged single smoke
+  command crashed identically, so this is not evidence of an experiment
+  verdict or a Slice 4 regression. Its temporary manifest, artefacts and
+  crash-handler process were removed after inspection.
 
 ### Slice 0: measurements and contracts, no game behaviour change
 

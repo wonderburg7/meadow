@@ -1,6 +1,6 @@
 # Headless-run contract
 
-Status: Slice 3 implemented | Schema version: `1`
+Status: Slice 4 implemented | Schema version: `1`
 
 This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
@@ -195,3 +195,56 @@ must apply it to the terminal presentation:
 
 The current `brief`, `behaviour`, and `full` projections are compatibility
 baselines only; they are intentionally more verbose than the future verdict.
+
+## Experiment manifests
+
+Use an experiment when a claim needs matched seeds across configuration cases:
+
+```powershell
+.\tools\run_headless.ps1 --experiment test_scenarios\example_experiment.json
+```
+
+The manifest names one unchanged base scenario, one shared seed list, and
+case-specific `config_overrides`. A case cannot override cells, population,
+actions, stop conditions, diagnostics, or any other starting-state field. This
+makes the base setup identical across every case while retaining Meadow's
+existing GameConfig validation at launch.
+
+```json
+{
+  "name": "predator direction",
+  "base_scenario": "test_scenarios/predator_base.json",
+  "seeds": [101, 202, 303],
+  "cases": {
+    "on": {"config_overrides": {"predators_on": true}},
+    "off": {"config_overrides": {"predators_on": false}}
+  },
+  "expect": [
+    {
+      "id": "predator_events_increase",
+      "left": "on.crab_spider_events.mean",
+      "op": "gt",
+      "right": "off.crab_spider_events.mean"
+    }
+  ],
+  "report": {"mode": "table", "metrics": ["crab_spider_events", "total_deaths"]}
+}
+```
+
+Expectation paths have exactly three components:
+`case.summary_field.statistic`, where `statistic` is `min`, `mean`, or `max`.
+The summary field is a numeric final-summary value; a summary dictionary of
+numeric outcome counts (such as `crab_spider_events`) is summed before its
+statistics are calculated. `eq`, `ne`, `lt`, `lte`, `gt`, and `gte` compare a
+left path against either a right path or a numeric `value`. Fields are the
+current `DiagnosticLog` numeric/count summary allowlist, so unknown fields
+fail the manifest check before any case is launched.
+
+The runner validates the complete manifest and base scenario before launching
+Godot. Every case receives every seed, writes its merged scenario and normal
+single-run artefacts under `cases/<case>/seed-<seed>/`, and records those
+relative result paths in the experiment `result.json`. Any individual run,
+contract, or aggregate expectation failure returns non-zero. Successful runs
+print only one verdict; `report.mode: "table"` adds one compact aggregate JSON
+table, never one summary per launched case/seed. The experiment-level
+`report.json` always retains the selected aggregate projection.
