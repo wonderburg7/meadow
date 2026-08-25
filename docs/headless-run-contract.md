@@ -1,6 +1,6 @@
 # Headless-run contract
 
-Status: Slice 4 implemented | Schema version: `1`
+Status: Slice 5 implemented | Schema version: `1`
 
 This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
@@ -64,6 +64,46 @@ a machine-specific path in repository instructions:
 ```powershell
 .\tools\run_headless.ps1 -PythonPath C:\path\to\python.exe test_scenarios/slice1_smoke_test.json
 ```
+
+## Background jobs
+
+Add `--background` when the same foreground command will take long enough
+that waiting is wasteful. Submission returns immediately with one durable job
+handle, for example:
+
+```powershell
+.\tools\run_headless.ps1 --experiment test_scenarios\predator_direction.json --background
+# status=queued job_id=... status_file=...\status.json
+```
+
+The worker runs the ordinary foreground runner with the same timeout and
+verdict rules; it does not tail a JSONL or invent a second Godot launch path.
+The managed root permits one queued or running job at a time, so two Godot
+simulations cannot contend accidentally.
+Read its state without opening a log:
+
+```powershell
+& C:\path\to\python.exe tools\headless\jobs.py status C:\Temp\meadow-headless-jobs\job-...
+```
+
+Each job has `job.json` (the submitted foreground arguments), `status.json`
+(`queued`, `running`, or a terminal `passed`, `failed`, `timed_out`, `crashed`
+or `stale` state), `process.log`, the normal per-run artefacts under `runs/`,
+and a job-level `result.json` that points to the underlying normal verdict.
+The worker records a PID and process-start token solely to identify a vanished
+or reused worker as `stale`; it does not expose a command to kill a Godot PID.
+
+Jobs use a dedicated marked directory under the operating system temporary
+folder. `--job-root` may choose another child of that temporary folder, but a
+background job owns its internal `--result-root`, so the two options cannot be
+combined. To remove terminal job directories only, use:
+
+```powershell
+& C:\path\to\python.exe tools\headless\jobs.py prune --older-than-seconds 86400
+```
+
+Pruning refuses unmarked roots, ignores non-job children and never stops a
+process. Failed job artefacts remain until explicitly pruned.
 
 ## Artefacts
 

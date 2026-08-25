@@ -42,6 +42,7 @@ from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
                                   compose_case_scenario, evaluate_aggregate_expectations,
                                   required_metrics, validate_manifest)  # noqa: E402
+from headless.jobs import DEFAULT_JOB_ROOT, JobError, submit_job  # noqa: E402
 from headless.profiles import validate_diagnostics  # noqa: E402
 from headless.route import ROUTING_CARD  # noqa: E402
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
@@ -564,6 +565,38 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
     return 1 if had_action_problems else 0
 
 
+def _background_command(argv: list[str]) -> list[str]:
+    """Re-run this exact request in a worker, minus job-only arguments."""
+    command = [sys.executable, str(Path(__file__).resolve())]
+    skip_value = False
+    for argument in argv:
+        if skip_value:
+            skip_value = False
+            continue
+        if argument == "--background":
+            continue
+        if argument == "--job-root":
+            skip_value = True
+            continue
+        if argument.startswith("--job-root="):
+            continue
+        command.append(argument)
+    return command
+
+
+def submit_background_job(argv: list[str], job_root: Path) -> int:
+    """Submit the normal foreground command and print its compact job handle."""
+    try:
+        job_dir, status = submit_job(_background_command(argv), job_root)
+    except JobError as error:
+        print("error: %s" % error, file=sys.stderr)
+        return 1
+    print("status=%s job_id=%s status_file=%s" % (
+        status["status"], status["job_id"], job_dir / "status.json",
+    ))
+    return 0 if status["status"] == "queued" else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -590,6 +623,10 @@ def main() -> int:
                               "(CHATGPT_INSIGHTS_PLAN.md's A5)")
     parser.add_argument("--result-root", type=Path, default=DEFAULT_RESULT_ROOT,
                         help="directory for isolated verdict artefacts (default: %(default)s)")
+    parser.add_argument("--background", action="store_true",
+                        help="submit this foreground run as one managed background job")
+    parser.add_argument("--job-root", type=Path, default=DEFAULT_JOB_ROOT,
+                        help="managed temporary root for --background job state (default: %(default)s)")
     parser.add_argument("--full", action="store_true",
                          help="shorthand for --report full")
     parser.add_argument("--fixed-fps", type=int, default=DEFAULT_FIXED_FPS,
@@ -615,6 +652,11 @@ def main() -> int:
     if args.seeds is not None and args.repeat != 1:
         print("error: --seeds cannot be combined with --repeat", file=sys.stderr)
         return 1
+    if args.background:
+        if args.result_root != DEFAULT_RESULT_ROOT:
+            print("error: --background owns its result root; do not combine it with --result-root", file=sys.stderr)
+            return 1
+        return submit_background_job(sys.argv[1:], args.job_root)
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
     if args.experiment is not None:

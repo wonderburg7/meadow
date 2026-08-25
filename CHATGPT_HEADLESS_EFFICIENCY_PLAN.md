@@ -1,7 +1,7 @@
 # Headless-run efficiency and selective diagnostics plan
 
-Status: Slice 4 ready for integration | Owner: Dave / Codex | Next: integrate
-Slices 0-4 complete | Evidence checked: 2026-08-25 from Slice 3 baseline
+Status: Slice 5 ready for integration | Owner: Dave / Codex | Next: integrate
+Slices 0-5 complete | Evidence checked: 2026-08-25 from baseline `efc28f4`.
 `6611871`
 
 > **CHATGPT-OWNED PLANNING FILE.**
@@ -800,6 +800,38 @@ Acceptance:
 Risk: low to medium, confined mainly to tooling.
 
 ### Slice 5: background job modifier
+
+Implementation start record (2026-08-25): isolated branch
+`codex/headless-efficiency-slice-0`, baseline
+`efc28f44e6f43d8657d7b9f55d3aced39fa7b38c`, clean dedicated worktree. The
+primary `master` worktree remains at `6715881fc5a1897fd47285062a353773ae08a5cf`
+with pre-existing gameplay and canonical-plan changes. Slice 5 is restricted
+to the headless Python runner/job wrapper, focused tests and this contract
+documentation; it will not touch those primary-tree files.
+
+Completed 25 Aug 2026. `tools/headless/jobs.py` submits the existing
+foreground runner to a windowless worker and immediately returns a durable
+job ID/status path. The worker owns a marked, dedicated subdirectory of the
+system temporary folder; it records `job.json`, atomic `status.json`, full
+`process.log`, normal nested runner artefacts and a job-level `result.json`
+which points to the normal verdict. `--background` and `--job-root` expose the
+modifier through the compatibility runner, while `jobs.py status` reads only
+state and `prune` can remove terminal direct-child jobs only. No command
+targets a Godot process. A worker PID/start token is used only to turn a
+vanished or reused worker into a terminal `stale` state; cleanup refuses an
+unmarked or non-temporary root and never stops a process.
+
+Focused evidence passed: 35 headless contract/baseline tests, including prompt
+submission, completed verdict discovery, timeout propagation, runner-crash
+terminal status, stale-worker identification, safe pruning, one-active-job
+enforcement and background argument isolation. `source_checks.py` checked 69 scripts and
+`balance_tests.py` passed all 15 checks. A live smoke submission returned its
+one-line queued handle. In this Codex command sandbox its descendant was
+terminated before finalising (the local Godot executable had already been
+observed to crash identically in Slice 4), so the completed job record could
+not serve as a production Godot validation. It did reach a terminal state
+rather than hanging. This slice changes tooling only; no gameplay, balance,
+save-data or ordinary diagnostic path changed.
 
 Deliver:
 
