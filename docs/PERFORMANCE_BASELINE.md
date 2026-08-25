@@ -41,3 +41,17 @@ Fog owns temporary reveal contributions. A contribution is invalidated when
 its source moves beyond the relight threshold, disappears/goes indoors, its
 reveal radius changes, or world/fog topology changes. Permanent discovery is
 separate and survives contribution removal.
+
+## Slice 2 relight contract
+
+The moving-disc path represents the shared reveal disc as exact horizontal
+row spans. On a normal move it updates only the entering and leaving pieces
+of each row; overlapping sources still use `_lit_count`, so removing one
+source never unlights tiles lit by another. A first source, a departed source,
+or a changed radius uses the complete row spans. `_paint_tile` always writes
+the resulting temporary state, including `MASK_LIT`, to the persistent mask.
+
+Manual acceptance remains necessary: with fog enabled at the target zoom,
+move a bee one tile horizontally and diagonally, overlap two bees, then return
+one indoors. The visible disc must not flicker, a tile covered by the remaining
+bee must stay lit, and a tile discovered by either bee must remain explored.

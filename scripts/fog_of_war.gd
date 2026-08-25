@@ -58,8 +58,8 @@ extends Node
 ## measurement rather than guessed:
 ##   - `_bee_light` used to store each bee's full translated tile array
 ##     (thousands of Vector2i at today's reveal radius). It now stores
-##     only a centre tile; `_disc_offsets` holds one shared array of
-##     relative offsets, rebuilt only if `fog_reveal_radius` changes, and
+##     only a centre tile; `_disc_row_spans` holds one shared set of
+##     relative horizontal spans, rebuilt only if `fog_reveal_radius` changes, and
 ##     `_light_center` applies it to whichever centre needs lighting or
 ##     unlighting. Same tiles get lit, far less stored and reallocated.
 ##   - `_update` used to call `_layer.queue_redraw()` unconditionally
@@ -124,20 +124,20 @@ var _lit_count: Dictionary = {}    # Vector2i tile -> int, bees currently coveri
 
 ## bee instance id -> {"pos": Vector2, "center": Vector2i} -- the position
 ## and lit-disc centre as of that bee's last recompute. The disc itself
-## isn't stored per bee any more -- see `_disc_offsets` below.
+## isn't stored per bee any more -- see `_disc_row_spans` below.
 var _bee_light: Dictionary = {}
 
-## Every bee shares one disc of tile offsets (relative to its own centre
-## tile), rebuilt only when `GameConfig.fog_reveal_radius` changes rather
-## than translated and stored fresh per bee per relight -- see the 19 Aug
-## perf note below.
-var _disc_offsets: Array[Vector2i] = []
-## Same offsets as `_disc_offsets`, as Dictionary keys -- lets
-## `_relight_delta` ask "is this offset part of the disc" in O(1) instead
-## of scanning the array, which is what makes an incremental relight worth
-## doing at all. Rebuilt alongside `_disc_offsets` in `_ensure_disc_offsets`.
-var _disc_offsets_set: Dictionary = {}
+## Every bee shares one disc as compact horizontal row spans, keyed by
+## relative y.  Rebuilt only when `GameConfig.fog_reveal_radius` changes.
+## A span is Vector2i(min_x, max_x), inclusive.  This preserves the exact
+## tile disc while allowing a moved source to touch only its entering and
+## leaving edges instead of testing every disc tile for membership.
+var _disc_row_spans: Dictionary = {}
 var _disc_offsets_radius: float = -1.0
+## Set when a radius change removes cached contributions before the normal
+## source loop relights them. `_update` consumes it to redraw even if no bee
+## remains outdoors to make the loop dirty on its own.
+var _contributions_invalidated: bool = false
 
 var _layer: Node2D
 ## Challenge 1's opening happens in hive_root, while the ordinary fog layer
@@ -278,7 +278,9 @@ func _update() -> void:
 	_last_layer_visible = true
 
 	Perf.begin("fog_of_war_update")
-	var dirty: bool = just_shown
+	_ensure_disc_offsets()
+	var dirty: bool = just_shown or _contributions_invalidated
+	_contributions_invalidated = false
 	var seen_ids: Dictionary = {}
 	for b in get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b) or b.get_parent() != main.meadow_root:
@@ -450,18 +452,27 @@ func _draw_hive_fog() -> void:
 ## actually changed (it's a live-tunable debug-panel slider).
 func _ensure_disc_offsets() -> void:
 	var radius: float = GameConfig.fog_reveal_radius
-	if radius == _disc_offsets_radius and not _disc_offsets.is_empty():
+	if radius == _disc_offsets_radius and not _disc_row_spans.is_empty():
 		return
-	_disc_offsets.clear()
-	_disc_offsets_set.clear()
+	# The cached centres were lit with the old radius. Remove those exact old
+	# spans before replacing the shared shape; each outdoor source will receive
+	# a first-light pass below. This is the radius invalidation contract, rather
+	# than diffing two discs that no longer share a definition.
+	if not _disc_row_spans.is_empty():
+		for light in _bee_light.values():
+			_light_center(light.center, -1)
+		_bee_light.clear()
+		_contributions_invalidated = true
+	_disc_row_spans.clear()
 	var span: int = int(ceil(radius / FOG_TILE_SIZE))
-	for dx in range(-span, span + 1):
-		for dy in range(-span, span + 1):
+	for dy in range(-span, span + 1):
+		var row_half_width: int = -1
+		for dx in range(span + 1):
 			if Vector2(dx, dy).length() * FOG_TILE_SIZE > radius:
-				continue
-			var off: Vector2i = Vector2i(dx, dy)
-			_disc_offsets.append(off)
-			_disc_offsets_set[off] = true
+				break
+			row_half_width = dx
+		if row_half_width >= 0:
+			_disc_row_spans[dy] = Vector2i(-row_half_width, row_half_width)
 	_disc_offsets_radius = radius
 
 ## Recomputes and swaps in the disc centre bee `id` currently lights.
@@ -490,37 +501,45 @@ func _relight(id: int, pos: Vector2) -> void:
 ## lights whichever new-disc tiles the old disc didn't already cover --
 ## the symmetric difference between the two discs, not their full areas.
 ##
-## For an old-disc tile at `off` (world position `old_center + off`): it's
-## still covered by the new disc iff `off - delta` is itself a valid disc
-## offset (that's the offset the same world tile would have relative to
-## `new_center`). Only unlight it if not. Mirror argument for a new-disc
-## tile at `off`: it was already covered by the old disc iff `delta + off`
-## is a valid offset. Still walks every entry in `_disc_offsets` twice (so
-## this doesn't reduce the O(disc_size) iteration itself, only the
-## `_lit_count`/`_paint_tile` writes -- those are the expensive part, and
-## for a typical small `delta` only a thin edge fails either membership
-## test). A genuinely O(edge) version would need per-row circle geometry;
-## deliberately not attempted here -- correctness of a hand-derived edge
-## algorithm is much harder to verify without Dave's hands-on check of the
-## reveal shape than this membership-test version, which can't produce a
-## different disc shape than `_light_center` already does, only reach it
-## with less redundant work. Re-measure before going further.
+## Each old/new row pair has two inclusive x spans.  Subtracting their
+## overlap gives at most two short edge spans, so normal movement is bounded
+## by the circumference times the displacement rather than the disc area.
+## The row spans are built from the same distance predicate as the previous
+## offset array, so the reveal shape is unchanged.
 func _relight_delta(old_center: Vector2i, new_center: Vector2i, delta: Vector2i) -> void:
-	for off in _disc_offsets:
-		if not _disc_offsets_set.has(off - delta):
-			_apply_light(Vector2i(old_center.x + off.x, old_center.y + off.y), -1)
-	for off in _disc_offsets:
-		if not _disc_offsets_set.has(delta + off):
-			_apply_light(Vector2i(new_center.x + off.x, new_center.y + off.y), 1)
+	for y in _disc_row_spans:
+		var old_span: Vector2i = _disc_row_spans[y]
+		var new_span: Vector2i = _disc_row_spans.get(y - delta.y, Vector2i(1, 0))
+		_apply_span_difference(old_center.x + old_span.x, old_center.x + old_span.y,
+			new_center.x + new_span.x, new_center.x + new_span.y, old_center.y + int(y), -1)
+	for y in _disc_row_spans:
+		var new_span: Vector2i = _disc_row_spans[y]
+		var old_span: Vector2i = _disc_row_spans.get(y + delta.y, Vector2i(1, 0))
+		_apply_span_difference(new_center.x + new_span.x, new_center.x + new_span.y,
+			old_center.x + old_span.x, old_center.x + old_span.y, new_center.y + int(y), 1)
 
-## Applies the shared disc offsets around `center`, lighting (delta 1) or
+## Applies the inclusive part of [start_x, end_x] not covered by
+## [covered_start, covered_end]. An inverted covered range means no overlap.
+func _apply_span_difference(start_x: int, end_x: int, covered_start: int,
+		covered_end: int, y: int, delta: int) -> void:
+	if covered_start > start_x:
+		_apply_span(start_x, min(end_x, covered_start - 1), y, delta)
+	if covered_end < end_x:
+		_apply_span(max(start_x, covered_end + 1), end_x, y, delta)
+
+func _apply_span(start_x: int, end_x: int, y: int, delta: int) -> void:
+	for x in range(start_x, end_x + 1):
+		_apply_light(Vector2i(x, y), delta)
+
+## Applies the shared disc row spans around `center`, lighting (delta 1) or
 ## unlighting (delta -1) every tile it covers. Used for a bee's first
 ## light (no "old" position to diff against yet) and for a departed bee's
 ## full unlight -- `_relight_delta` above handles the common case of a bee
 ## that's already lighting somewhere and just moved.
 func _light_center(center: Vector2i, delta: int) -> void:
-	for off in _disc_offsets:
-		_apply_light(Vector2i(center.x + off.x, center.y + off.y), delta)
+	for y in _disc_row_spans:
+		var row: Vector2i = _disc_row_spans[y]
+		_apply_span(center.x + row.x, center.x + row.y, center.y + int(y), delta)
 
 ## One tile's actual state change: updates the reference count (and
 ## `explored`, on a light) and repaints the tile in the persistent mask
