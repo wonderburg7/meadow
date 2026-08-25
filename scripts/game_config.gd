@@ -514,7 +514,12 @@ var crop_drink_threshold: float = 0.25
 ## starvation deaths were in exactly this state). Below this share of
 ## capacity, a bee still out looking abandons the search and heads for
 ## the hive instead of continuing to burn energy hunting.
-var critical_recall_threshold: float = 0.20
+## Return energy is calculated from the current distance, rather than a
+## fixed percentage of the crop.  The route allowance covers the bounded
+## detours around scenery; the margin is deliberately a player-facing
+## reserve, not a hidden refill.
+var forager_return_route_factor: float = 1.25
+var forager_return_safety_margin: float = 0.12
 
 # --- gynes ---
 ## A gyne is a future queen: bigger than a worker, slower, hungrier, and

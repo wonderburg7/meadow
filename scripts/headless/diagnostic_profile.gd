@@ -4,7 +4,7 @@ extends RefCounted
 
 const HeadlessDiagnosticProbes = preload("res://scripts/headless/diagnostic_probes.gd")
 const VERSION := 1
-const EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled"]
+const EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "forager_return", "flight_start_resolved"]
 const PROFILE_NAMES := ["standard", "verdict", "behaviour", "balance", "performance", "custom"]
 
 static func standard() -> Dictionary:

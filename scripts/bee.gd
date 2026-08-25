@@ -201,6 +201,10 @@ var preferred_species: String = ""
 ## foragers across different parts of the meadow instead of them all
 ## drifting to whatever's nearest the entrance. INF means "not set".
 var forage_start_point: Vector2 = Vector2(INF, INF)
+## Set only while a forager has abandoned an outdoor errand to preserve the
+## energy needed to get home.  It is intentionally transient: it explains
+## this trip, not a new saved simulation state.
+var emergency_return_reason: String = ""
 
 ## Slice 5 (local search): where SEARCHING's spiral is centred. Reset to
 ## forage_start_point at every point that (re)sets forage_start_point
@@ -1451,10 +1455,13 @@ func command_exit_hive() -> void:
 ## `meadow_point` is global/meadow-space (meadow_root sits at the origin,
 ## so global and local-to-meadow coincide -- see the note on
 ## command_move_to for why that distinction matters elsewhere).
-func set_forage_start_point(meadow_point: Vector2) -> void:
-	forage_start_point = meadow_point
-	local_search_anchor = meadow_point
+func set_forage_start_point(meadow_point: Vector2, source: String = "manual") -> Vector2:
+	var resolved := BeeMovement.resolve_flight_start(self, meadow_point)
+	forage_start_point = resolved.point
+	local_search_anchor = resolved.point
 	known_patches.clear()
+	DiagnosticLog.log_flight_start_resolved(self, source, meadow_point, resolved)
+	return resolved.point
 
 func has_forage_start_point() -> bool:
 	return forage_start_point.x != INF

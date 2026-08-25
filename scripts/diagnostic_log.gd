@@ -369,6 +369,25 @@ func log_stall_recovery(bee: Node2D, goal: Vector2) -> void:
 	_stall_recoveries += 1
 
 
+## Exactly two events for an emergency trip: the decision and its arrival.
+## They are profile-selectable rather than a per-frame energy trace.
+func log_forager_return(bee: Node2D, phase: String, required_energy: float) -> void:
+	if _file == null:
+		return
+	_write({"type": "forager_return", "game_time": Session.sim_time,
+		"bee_id": bee.bee_id, "phase": phase, "reason": bee.emergency_return_reason,
+		"energy": bee.energy, "required_energy": required_energy,
+		"load": bee.current_load, "distance_home": bee.position.distance_to(bee.hive.position)})
+
+
+func log_flight_start_resolved(bee: Node2D, source: String, requested: Vector2, resolved: Dictionary) -> void:
+	if _file == null or str(resolved.reason) == "accepted":
+		return
+	_write({"type": "flight_start_resolved", "game_time": Session.sim_time, "bee_id": bee.bee_id,
+		"source": source, "reason": resolved.reason, "obstacle_id": resolved.obstacle,
+		"requested": [requested.x, requested.y], "resolved": [resolved.point.x, resolved.point.y]})
+
+
 ## Called from bee_foraging.gd::_score_trip() when a scouting bee's three
 ## bouts are all in and she commits (or fails to). `found_patch: false`
 ## with scouting otherwise looking healthy in the snapshot counts is the

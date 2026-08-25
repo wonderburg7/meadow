@@ -38,6 +38,14 @@ class HeadlessProfileTest(unittest.TestCase):
         self.assertEqual(30.0, selection["snapshots"]["every_sim_seconds"])
         self.assertTrue(selection["snapshots"]["only_when_changed"])
 
+    def test_forager_survival_events_remain_opt_in_and_bounded(self):
+        selection = validate_diagnostics({
+            "profile": "custom", "events": ["forager_return", "flight_start_resolved"],
+            "limits": {"event_lines_per_type": 2},
+        })
+        self.assertEqual(["forager_return", "flight_start_resolved"], selection["events"])
+        self.assertEqual(2, selection["limits"]["event_lines_per_type"])
+
     def test_day_interval_is_retained_only_for_its_supported_profiles(self):
         selection = validate_diagnostics({"profile": "balance"})
         self.assertEqual("day", selection["snapshots"]["every_sim_seconds"])

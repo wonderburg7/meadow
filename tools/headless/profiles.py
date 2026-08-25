@@ -12,6 +12,7 @@ PROFILE_NAMES = frozenset({"standard", "verdict", "behaviour", "balance", "perfo
 EVENT_TYPES = frozenset({
     "action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup",
     "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled",
+    "forager_return", "flight_start_resolved",
 })
 SNAPSHOT_FIELDS = frozenset({
     "population.total", "resources.food_stores", "environment.winter_here",

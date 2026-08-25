@@ -57,9 +57,7 @@ static func _jittered_point(base: Vector2, radius: float) -> Vector2:
 ## handling in _leave_hive_and_resume.
 static func take_orientation_flight(bee: Node2D) -> void:
 	var point: Vector2 = _random_point_near_hive(bee)
-	bee.forage_start_point = point
-	bee.local_search_anchor = point
-	bee.known_patches.clear()
+	point = bee.set_forage_start_point(point, "orientation")
 	DiagnosticLog.log_orientation_flight(bee)
 	if not bee._is_inside_hive():
 		bee.move_target = point
@@ -645,6 +643,9 @@ static func enter_hive(bee: Node2D) -> void:
 		deposit_everything_remotely(bee)
 		return
 	bee.world.move_bee_into_hive(bee)
+	if bee.emergency_return_reason != "":
+		DiagnosticLog.log_forager_return(bee, "arrived", 0.0)
+		bee.emergency_return_reason = ""
 	bee.target_cell = null
 	# A bee that came home because its job is now indoors (see set_role)
 	# starts that job at the door rather than running the forager's
@@ -844,8 +845,7 @@ static func _score_trip(bee: Node2D) -> void:
 		bee.is_scouting = false
 		if bee.scout_best_rate > 0.0:
 			if bee.scout_best_start_point.x != INF:
-				bee.forage_start_point = bee.scout_best_start_point
-				bee.local_search_anchor = bee.scout_best_start_point
+				bee.set_forage_start_point(bee.scout_best_start_point, "scouting_settled")
 				bee.known_patches.clear()
 			if GameConfig.floral_constancy_on:
 				bee.preferred_species = bee.scout_best_species
@@ -934,6 +934,10 @@ static func _leave_hive_and_resume(bee: Node2D) -> void:
 ## best one seen so far and keep the winning point.
 static func _send_to_scout_point(bee: Node2D) -> void:
 	var point: Vector2 = _random_point_near_hive(bee)
+	var requested := point
+	var resolved := BeeMovement.resolve_flight_start(bee, point)
+	point = resolved.point
+	DiagnosticLog.log_flight_start_resolved(bee, "scouting", requested, resolved)
 	bee.move_target = point
 	bee.scout_current_start_point = point
 	bee.state = State.MOVE_TO_POINT
@@ -1014,9 +1018,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		# comment in game_config.gd. Same general proven area, different
 		# corner of it, so the seeker isn't funnelled onto the exact same
 		# handful of flowers the mentor is still working.
-		bee.forage_start_point = _jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter)
-		bee.local_search_anchor = bee.forage_start_point
-		bee.known_patches.clear()
+		bee.set_forage_start_point(_jittered_point(mentor.forage_start_point, GameConfig.recruit_start_point_jitter), "recruitment")
 		if GameConfig.floral_constancy_on:
 			bee.preferred_species = mentor.preferred_species
 		# Captured here, before the new patch has had a single trip on it,
@@ -1189,9 +1191,7 @@ static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void:
 	var fuzzed_distance: float = offset.length() * (1.0 + randf_range(-GameConfig.recruit_dance_distance_fuzz_fraction, GameConfig.recruit_dance_distance_fuzz_fraction))
 	var decoded: Vector2 = hive_point + Vector2.from_angle(fuzzed_angle) * fuzzed_distance
 
-	seeker.forage_start_point = decoded
-	seeker.local_search_anchor = decoded
-	seeker.known_patches.clear()
+	seeker.set_forage_start_point(decoded, "dance_recruitment")
 	if GameConfig.floral_constancy_on:
 		seeker.preferred_species = mentor.preferred_species
 	seeker.is_scouting = false
