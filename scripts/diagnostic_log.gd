@@ -205,7 +205,7 @@ func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void
 ## delivering rather than trusted on the strength of the starting guess
 ## alone. seeker_rate_before is also the baseline log_recruitment_followup
 ## compares this bee's next few trips on the new patch against.
-func log_recruitment_match(seeker: Node2D, mentor: Node2D) -> void:
+func log_recruitment_match(seeker: Node2D, mentor: Node2D, via: String = "queue") -> void:
 	if _file == null:
 		return
 	_write({
@@ -220,6 +220,11 @@ func log_recruitment_match(seeker: Node2D, mentor: Node2D) -> void:
 		"seeker_trips_scored": seeker.trips_scored,
 		"mentor_rate": mentor.avg_collection_rate,
 		"mentor_trips_scored": mentor.trips_scored,
+		# Slice 9: "queue" is the pre-existing entrance-wait mechanism
+		# (auto_recruitment_on), "dance" is proximity_recruitment_on's indoor
+		# exchange -- lets a session log tell the two apart without also
+		# needing to know which toggle was on at the time.
+		"via": via,
 	})
 	_recruitment_matches += 1
 
@@ -689,6 +694,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"floral_constancy_on": GameConfig.floral_constancy_on,
 			"scouting_on": GameConfig.scouting_on,
 			"auto_recruitment_on": GameConfig.auto_recruitment_on,
+			"proximity_recruitment_on": GameConfig.proximity_recruitment_on,
 			"tarsal_markers_on": GameConfig.tarsal_markers_on,
 			"probabilistic_choice_on": GameConfig.probabilistic_choice_on,
 			"handling_experience_on": GameConfig.handling_experience_on,

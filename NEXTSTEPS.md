@@ -88,18 +88,25 @@ plan file, full history in `git log`.
 7. **Challenge 1 revamp** -- start Bundle A (stage-array skeleton +
    trigger tag), then Bundle B (auto-mine sequence). Full plan:
    `CHALLENGE1_REVAMP_PLAN.md`; read "What already exists" first.
-8. **Foraging ecology plan -- Slice 9 (proximity recruitment) has a full
-   implementation-ready spec**, written from Dave's own design pass:
-   no waiting states at all, recruitment triggers on proximity between a
-   mentor and a seeker while both are already moving through the hive on
-   ordinary business, the mentor physically circles the seeker, one
-   recruit per mentor per hive visit, angle/distance rather than a fuzzed
-   point. Full detail in `FORAGING_ECOLOGY_PLAN.md`'s Slice 9 section. One
-   interpretive call (angle/distance relative to the hive entrance, not
-   the seeker's live position) still wants Dave's one-line confirmation
-   before building -- not otherwise blocked. Should only replace the
-   current entrance-wait mechanism once the plan's own three-way A/B
-   comparison (task 8) shows it doing at least as well.
+8. **Foraging ecology plan -- Slice 9 (proximity recruitment) is built,
+   not yet swept.** `proximity_recruitment_on` (off by default, mutually
+   exclusive with `auto_recruitment_on`), the indoor dance itself
+   (`State.DANCING`, `hive.dance_eligible_mentors/seekers`,
+   `BeeForaging.check_dance_proximity`/`_complete_dance`), and the
+   circling visual are all in -- `source_checks.py`/`balance_tests.py`
+   pass, `FUNCTION_MAP.md` regenerated. See `FORAGING_ECOLOGY_PLAN.md`'s
+   24 Aug build note under the Slice 9 section for the full detail.
+   **Not done:** this build session had no Godot available (no
+   `mcp__godot__*` tools, no `godot`/`godot4` binary), so the spec's own
+   task 7 (sweep `recruit_dance_radius`/`recruit_dance_seconds`/the two
+   fuzz constants) and task 8 (the three-way A/B against
+   `auto_recruitment_on`) haven't run -- there's no real results table
+   yet, and the four new constants are reasoned defaults, not measured
+   ones. `auto_recruitment_on` stays the shipped default until that
+   comparison actually shows the new mechanism doing at least as well,
+   per the spec's own rule. Needs a session with Godot (or Dave running
+   `tools/run_scenario.py` himself) plus his hands-on check
+   (`HANDS_ON_CHECKS.md`) before this can supersede the old mechanism.
    `tools/run_scenario.py`'s hardcoded `log_dir()` still assumes
    `config/name="Meadow"`; this sandbox's `project.godot` says "Meadow -
    Claude," so headless runs here still need the small `log_dir()`-

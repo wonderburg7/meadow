@@ -47,10 +47,15 @@ const SAVED_SETTINGS := [
 	# config_overrides (checked against this same list -- see
 	# Levels.apply_config_overrides) couldn't turn them on either.
 	"orientation_flight_on", "scouting_on", "auto_recruitment_on",
+	"proximity_recruitment_on",
 	"forage_start_radius", "forage_search_radius",
 	"recruit_lower_threshold_nectar", "recruit_upper_threshold_nectar",
 	"recruit_lower_threshold_pollen", "recruit_upper_threshold_pollen",
 	"recruit_wait_seconds", "recruit_grace_trips", "recruit_start_point_jitter",
+	# Slice 9 (proximity recruitment) -- added alongside the toggle itself
+	# this time, not after the fact (see the comment above this list).
+	"recruit_dance_radius", "recruit_dance_seconds",
+	"recruit_dance_angle_fuzz_degrees", "recruit_dance_distance_fuzz_fraction",
 	"bee_speed", "flower_handling_time", "nectar_collection_rate",
 	"pollen_collection_rate", "deposit_time", "nectar_stomach_capacity",
 	"pollen_stomach_capacity", "cell_capacity", "cell_full_threshold",

@@ -532,6 +532,9 @@ func move_bee_into_hive(bee: Node2D) -> void:
 	bee.reparent(main.hive_root)
 	bee.position = hive_entrance_inside()
 	bee.visible = true
+	# Slice 9 (proximity recruitment): a fresh hive visit gets a fresh shot
+	# at recruiting -- see hive.gd's add_dance_eligible_mentor.
+	bee.has_danced_this_visit = false
 	main._update_population_readout()
 	Perf.end("hive_transition")
 
@@ -544,6 +547,11 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 	bee.reparent(main.meadow_root)
 	bee.position = main.hive.position
 	bee.visible = true
+	# Slice 9 (proximity recruitment): she's leaving, so she's no longer a
+	# candidate for either side of the indoor dance.
+	if bee.hive != null and is_instance_valid(bee.hive):
+		bee.hive.remove_dance_eligible_mentor(bee)
+		bee.hive.remove_dance_eligible_seeker(bee)
 	main._update_population_readout()
 	Perf.end("hive_transition")
 

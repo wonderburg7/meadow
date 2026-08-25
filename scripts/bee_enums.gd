@@ -50,4 +50,9 @@ enum State {
 	# on the Role enum above.
 	AT_ENTRANCE_SEEKING, AT_ENTRANCE_MENTORING,            # forager, entrance recruitment exchange
 	SEARCHING,                                             # forager, Slice 5 local-search spiral
+	# Slice 9 (FORAGING_ECOLOGY_PLAN.md): proximity recruitment's indoor
+	# dance, alternate to AT_ENTRANCE_SEEKING/MENTORING above -- see
+	# GameConfig.proximity_recruitment_on. Appended for the same reason
+	# as every other state on this list: state is saved as a plain int.
+	DANCING,
 }

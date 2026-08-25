@@ -137,7 +137,12 @@ const TUNABLES := [
 	{
 		"key": "auto_recruitment_on", "label": "Auto-recruitment", "toggle": true,
 		"category": "Foraging",
-		"tip": "Foragers compare notes at the hive entrance -- a good performer can pass its start point (and species, if Floral constancy is also on) to a struggling one of the same resource type. Off by default; off means no bee ever waits at the door. Turning this on also turns Auto scouting on.",
+		"tip": "Foragers compare notes at the hive entrance -- a good performer can pass its start point (and species, if Floral constancy is also on) to a struggling one of the same resource type. Off by default; off means no bee ever waits at the door. Turning this on also turns Auto scouting on and turns Proximity recruitment off.",
+	},
+	{
+		"key": "proximity_recruitment_on", "label": "Proximity recruitment", "toggle": true,
+		"category": "Foraging",
+		"tip": "An alternate to Auto-recruitment, not stacked on top of it: instead of waiting at the door, a good performer physically dances with a struggling one of the same resource type the moment they cross paths during ordinary indoor movement, passing on a rough direction and distance rather than an exact point. Off by default; mutually exclusive with Auto-recruitment -- turning one on turns the other off, since both compete for the same eligible bees. Turning this on also turns Auto scouting on.",
 	},
 	{
 		"key": "probabilistic_choice_on", "label": "Weighted flower choice", "toggle": true,
@@ -192,7 +197,27 @@ const TUNABLES := [
 	{
 		"key": "recruit_grace_trips", "label": "Recruit grace trips", "step": 1.0, "min": 0.0,
 		"category": "Foraging",
-		"tip": "How many trips a forager must complete before it's judged against the thresholds above. Only matters when Auto-recruitment is on.",
+		"tip": "How many trips a forager must complete before it's judged against the thresholds above. Shared with Proximity recruitment, which judges eligibility the same way.",
+	},
+	{
+		"key": "recruit_dance_radius", "label": "Dance trigger radius", "step": 10.0, "min": 10.0,
+		"category": "Foraging",
+		"tip": "How close a mentor-eligible and a seeker-eligible forager (same resource type) must be, indoors, before they dance. Only matters when Proximity recruitment is on.",
+	},
+	{
+		"key": "recruit_dance_seconds", "label": "Dance duration s", "step": 0.5, "min": 0.5,
+		"category": "Foraging",
+		"tip": "How long the dance itself lasts once triggered. Only matters when Proximity recruitment is on.",
+	},
+	{
+		"key": "recruit_dance_angle_fuzz_degrees", "label": "Dance angle fuzz", "step": 5.0, "min": 0.0, "max": 180.0,
+		"category": "Foraging",
+		"tip": "How far off, in degrees, the direction a dance encodes can drift from the mentor's own start-point direction. Only matters when Proximity recruitment is on.",
+	},
+	{
+		"key": "recruit_dance_distance_fuzz_fraction", "label": "Dance distance fuzz", "step": 0.05, "min": 0.0, "max": 1.0,
+		"category": "Foraging",
+		"tip": "How far off, as a fraction of the mentor's own distance from the hive, the distance a dance encodes can drift. 0.25 means anywhere from 75% to 125% of the mentor's distance. Only matters when Proximity recruitment is on.",
 	},
 	{
 		"key": "show_flower_amounts", "label": "Show flower amounts", "toggle": true,
@@ -930,6 +955,8 @@ static func setting_set(key: String, value) -> void:
 ## implementation, not two that can drift (CHATGPT_INSIGHTS_PLAN.md B1).
 static func apply_setting(key: String, value) -> void:
 	setting_set(key, value)
+	if value:
+		_cascade_mutual_exclusion_static(key)
 	if not Prerequisites.is_gated(key):
 		return
 	if value:
@@ -962,6 +989,21 @@ static func _cascade_dependents_off_static(key: String) -> Array[String]:
 			setting_set(child, false)
 			changed.append(child)
 			changed.append_array(_cascade_dependents_off_static(child))
+	return changed
+
+## Turns off whatever's mutually exclusive with `key` (Prerequisites.
+## MUTUALLY_EXCLUSIVE), if anything is and it's currently on -- e.g.
+## switching on Proximity recruitment also switches off Auto-recruitment.
+## Returns the keys it actually changed, same shape as the two cascades
+## above, so a UI caller can sync their checkboxes.
+static func _cascade_mutual_exclusion_static(key: String) -> Array[String]:
+	var changed: Array[String] = []
+	var sibling: String = Prerequisites.mutually_exclusive_with(key)
+	if sibling != "" and setting_get(sibling):
+		setting_set(sibling, false)
+		changed.append(sibling)
+		if Prerequisites.is_gated(sibling):
+			changed.append_array(_cascade_dependents_off_static(sibling))
 	return changed
 
 var value_labels: Dictionary = {}
@@ -1452,6 +1494,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 					hud._apply_interface_label_visibility()
 		elif Prerequisites.is_gated(key):
 			if pressed:
+				_cascade_mutual_exclusion(key)
 				_cascade_prerequisites_on(key)
 			else:
 				_cascade_dependents_off(key)
@@ -1524,6 +1567,13 @@ func _cascade_prerequisites_on(key: String) -> void:
 ## checkbox for every key the cascade actually changed.
 func _cascade_dependents_off(key: String) -> void:
 	for changed in _cascade_dependents_off_static(key):
+		if toggle_boxes.has(changed):
+			toggle_boxes[changed].button_pressed = false
+
+## UI-syncing wrapper over `_cascade_mutual_exclusion_static` -- unticks
+## the checkbox for whatever it turned off.
+func _cascade_mutual_exclusion(key: String) -> void:
+	for changed in _cascade_mutual_exclusion_static(key):
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = false
 

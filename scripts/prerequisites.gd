@@ -22,9 +22,27 @@ const TOGGLE_PREREQUISITE := {
 	"scouting_on": "orientation_flight_on",
 	"floral_constancy_on": "scouting_on",
 	"auto_recruitment_on": "scouting_on",
+	"proximity_recruitment_on": "scouting_on",
 	"crab_spider_recruit_suppression_on": "predators_on",
 	"alarm_pheromone_on": "predators_on",
 }
+
+## Toggles that are alternate mechanisms for the same job and must never
+## both run at once -- see FORAGING_ECOLOGY_PLAN.md Slice 9 task 1.
+## auto_recruitment_on and proximity_recruitment_on are both children of
+## scouting_on above, not a parent/child pair of each other, so this
+## relationship doesn't fit TOGGLE_PREREQUISITE -- it's a separate, flat
+## map queried the same way. debug_panel.gd's apply_setting and its UI
+## toggle handler both turn off whichever side isn't being switched on.
+const MUTUALLY_EXCLUSIVE := {
+	"auto_recruitment_on": "proximity_recruitment_on",
+	"proximity_recruitment_on": "auto_recruitment_on",
+}
+
+## The one toggle that must be off whenever `key` is switched on, or ""
+## if `key` has no such relationship.
+static func mutually_exclusive_with(key: String) -> String:
+	return MUTUALLY_EXCLUSIVE.get(key, "")
 
 ## True if `key` takes part in the tree at all, either as something with
 ## a prerequisite or as something else's prerequisite.

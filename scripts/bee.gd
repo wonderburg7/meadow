@@ -360,6 +360,22 @@ var recruit_partner: Node2D = null
 var recruit_role: String = ""
 var recruit_rate_before: float = -1.0
 var recruit_followup_remaining: int = 0
+## Slice 9 (proximity recruitment): the other bee in an in-progress
+## State.DANCING exchange, and which side of it this bee is ("mentor" or
+## "seeker") -- see BeeForaging.dance/_complete_dance. pre_dance_state/
+## pre_dance_timer stash whatever this bee was doing (and how far into
+## it) the moment the dance interrupted her, so she resumes exactly
+## there rather than being sent anywhere new -- -1 means "not dancing".
+## Not save-persisted, same as the rest of the recruitment block.
+var dance_partner: Node2D = null
+var dance_role: String = ""
+var pre_dance_state: int = -1
+var pre_dance_timer: float = 0.0
+## One recruit per mentor per hive visit -- see hive.gd's
+## add_dance_eligible_mentor and world_building.gd's move_bee_into_hive
+## (where this resets). Not save-persisted; a bee saved mid-visit just
+## gets a fresh chance to dance again on load, which is harmless.
+var has_danced_this_visit: bool = false
 ## Set the first time trips_scored reaches recruit_grace_trips, so
 ## DiagnosticLog.log_forager_settled fires exactly once per bee -- see
 ## BeeForaging._score_trip. Gives a standing, always-on source for the
@@ -926,6 +942,8 @@ func _process(delta: float) -> void:
 			BeeForaging.shelter(self, delta)
 		State.AT_ENTRANCE_SEEKING, State.AT_ENTRANCE_MENTORING:
 			BeeForaging.wait_at_entrance(self, delta)
+		State.DANCING:
+			BeeForaging.dance(self, delta)
 
 		# --- nursery, making royal jelly ---
 		State.MAKING_JELLY:
@@ -1038,6 +1056,16 @@ func _process(delta: float) -> void:
 	Perf.end(role_section)
 	Perf.end("bee_state")
 
+	# Slice 9 (proximity recruitment): checked continuously, not on a
+	# single decision point, since a mentor/seeker pair can cross paths at
+	# any moment during ordinary indoor movement -- see
+	# BeeForaging.check_dance_proximity. New per-frame cost, so its own
+	# span per .claude/rules/performance.md.
+	if GameConfig.proximity_recruitment_on and role == Role.FORAGER and state != State.DANCING:
+		Perf.begin("recruitment_dance")
+		BeeForaging.check_dance_proximity(self, delta)
+		Perf.end("recruitment_dance")
+
 	Perf.begin("bee_label")
 	_update_label()
 	_update_alarm_ring()
@@ -1047,6 +1075,7 @@ func _process(delta: float) -> void:
 
 	Perf.begin("bee_wander")
 	_update_wander_flight(delta)
+	_update_dance_circle(delta)
 	Perf.end("bee_wander")
 	Perf.end("bees")
 
@@ -1783,6 +1812,10 @@ func task_description() -> String:
 			return "waiting at the entrance, hoping to be told a better patch (%ds)" % int(max(0.0, timer))
 		State.AT_ENTRANCE_MENTORING:
 			return "waiting at the entrance, willing to recruit a struggling forager (%ds)" % int(max(0.0, timer))
+		State.DANCING:
+			if dance_role == "mentor":
+				return "dancing to show a struggling forager a better patch (%ds)" % int(max(0.0, timer))
+			return "being shown a better patch by a forager nearby (%ds)" % int(max(0.0, timer))
 		State.MAKING_JELLY:
 			return "working pollen and honey into royal jelly (%ds)" % int(max(0.0, timer))
 		State.TO_JELLY_CELL:
@@ -1889,6 +1922,8 @@ func role_name_text() -> String:
 				base += " -- waiting to be told a better patch"
 			elif state == State.AT_ENTRANCE_MENTORING:
 				base += " -- waiting to recruit a struggling forager"
+			elif state == State.DANCING:
+				base += " -- dancing to recruit a struggling forager" if dance_role == "mentor" else " -- being danced at"
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base
@@ -2052,6 +2087,28 @@ func _update_wander_flight(delta: float) -> void:
 		if visual_root.position != target_offset:
 			visual_root.position = target_offset
 		return
+	var blend: float = 1.0 - exp(-delta / max(0.001, GameConfig.bumble_flight_settle_seconds))
+	visual_root.position = visual_root.position.lerp(target_offset, blend)
+
+## Slice 9 (proximity recruitment): the mentor's drawn body orbits the
+## seeker's real position while State.DANCING -- pure presentation (rule
+## 3), same visual_root-offset technique as bumble flight above.
+## bee.position itself never moves for this: the proximity check, the
+## dance timer and the eventual info transfer (BeeForaging._complete_dance)
+## all happen exactly the same whether or not either bee is ever drawn.
+## Only the mentor's sprite moves; the seeker's own visual_root just eases
+## back to zero (nothing here touches hers), so this reads as one bee
+## visiting the other rather than both drifting.
+const DANCE_ORBIT_RADIUS := 14.0
+const DANCE_ORBIT_HZ := 0.8
+func _update_dance_circle(delta: float) -> void:
+	if state != State.DANCING or dance_role != "mentor" or dance_partner == null or not is_instance_valid(dance_partner):
+		return
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	var t: float = Session.sim_time * TAU * DANCE_ORBIT_HZ
+	var orbit := Vector2(cos(t), sin(t)) * DANCE_ORBIT_RADIUS
+	var target_offset: Vector2 = (dance_partner.position - position) + orbit
 	var blend: float = 1.0 - exp(-delta / max(0.001, GameConfig.bumble_flight_settle_seconds))
 	visual_root.position = visual_root.position.lerp(target_offset, blend)
 

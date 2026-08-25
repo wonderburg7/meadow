@@ -821,6 +821,11 @@ static func _score_trip(bee: Node2D) -> void:
 			bee.recruit_partner = null
 			bee.recruit_role = ""
 
+	# Slice 9 (proximity recruitment): eligibility is decided here, the
+	# instant a trip is scored, not just once at the door -- see
+	# _update_dance_eligibility.
+	_update_dance_eligibility(bee)
+
 	if not bee.is_scouting:
 		return
 	if rate > bee.scout_best_rate:
@@ -1065,6 +1070,145 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 			bee.local_search_anchor = Vector2(INF, INF)
 			bee.known_patches.clear()
 			_leave_hive_and_resume(bee)
+
+
+## Slice 9 (proximity recruitment, GameConfig.proximity_recruitment_on):
+## same eligibility test auto-recruitment's go_to_exit already uses (past
+## the grace window, above/below the resource-specific threshold, not
+## already-suppressed), just evaluated continuously from the moment a
+## trip is scored rather than once at the door -- see _score_trip above.
+## A bee never sits in both lists; scouting always reads as seeker-side,
+## same as go_to_exit's own ordering (checked before the mentor branch).
+static func _update_dance_eligibility(bee: Node2D) -> void:
+	if not GameConfig.proximity_recruitment_on or bee.role != Role.FORAGER:
+		return
+	bee.hive.remove_dance_eligible_mentor(bee)
+	bee.hive.remove_dance_eligible_seeker(bee)
+	var past_grace: bool = bee.trips_scored >= GameConfig.recruit_grace_trips
+	if not past_grace and not bee.is_scouting:
+		return
+	var lower: float = GameConfig.recruit_lower_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_lower_threshold_pollen
+	var upper: float = GameConfig.recruit_upper_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_upper_threshold_pollen
+	if bee.is_scouting or (past_grace and bee.avg_collection_rate < lower):
+		bee.hive.add_dance_eligible_seeker(bee)
+	elif past_grace and bee.avg_collection_rate > upper and not CrabSpider.recruitment_suppressed(bee):
+		bee.hive.add_dance_eligible_mentor(bee)
+
+## Called once a frame for every indoor forager while proximity
+## recruitment is on (see bee.gd's per-frame dispatch) -- cheap by
+## construction, same reasoning as entrance_mentors before it: this is a
+## bounded scan against two small lists, not every bee in the hive.
+## Scanned mentor-side only (each dance-eligible mentor checks the seeker
+## list), not both directions, so a matching pair is only ever found
+## once per frame rather than twice. Dead seekers are pruned as they're
+## found, same while-loop-with-remove_at shape wait_at_entrance uses for
+## entrance_mentors above.
+static func check_dance_proximity(bee: Node2D, _delta: float) -> void:
+	if not bee.hive.dance_eligible_mentors.has(bee):
+		return
+	var seekers: Array = bee.hive.dance_eligible_seekers
+	var i := 0
+	while i < seekers.size():
+		var seeker: Node2D = seekers[i]
+		if not is_instance_valid(seeker):
+			seekers.remove_at(i)
+			continue
+		if seeker.resource_type == bee.resource_type and seeker.state != State.DANCING \
+				and bee.position.distance_to(seeker.position) <= GameConfig.recruit_dance_radius:
+			_start_dance(bee, seeker)
+			return
+		i += 1
+
+## Both bees enter State.DANCING -- neither one waits or hopes; this
+## fires the instant proximity is detected. Their pre-dance state and
+## its in-progress timer are stashed so `dance` below can resume exactly
+## where each was (this matters for DEPOSITING in particular, whose
+## timer is mid-countdown and would otherwise be clobbered by the dance's
+## own timer). Removed from both dance-eligible lists immediately -- a
+## bee mid-dance is neither offering nor looking any more, and this is
+## also what enforces "one recruit per mentor per hive visit" (see
+## has_danced_this_visit, set in _complete_dance below).
+static func _start_dance(mentor: Node2D, seeker: Node2D) -> void:
+	mentor.hive.remove_dance_eligible_mentor(mentor)
+	seeker.hive.remove_dance_eligible_seeker(seeker)
+	mentor.dance_partner = seeker
+	mentor.dance_role = "mentor"
+	mentor.pre_dance_state = mentor.state
+	mentor.pre_dance_timer = mentor.timer
+	seeker.dance_partner = mentor
+	seeker.dance_role = "seeker"
+	seeker.pre_dance_state = seeker.state
+	seeker.pre_dance_timer = seeker.timer
+	mentor.timer = GameConfig.recruit_dance_seconds
+	seeker.timer = GameConfig.recruit_dance_seconds
+	mentor.state = State.DANCING
+	seeker.state = State.DANCING
+
+## State.DANCING's own per-frame handler (see bee.gd's dispatch). Only
+## the mentor side actually performs the info transfer, once, when her
+## own timer completes -- both bees' timers were set to the same value in
+## _start_dance, but only one of them should ever run _complete_dance.
+static func dance(bee: Node2D, delta: float) -> void:
+	bee.timer -= delta
+	if bee.timer > 0.0:
+		return
+	if bee.dance_role == "mentor" and bee.dance_partner != null and is_instance_valid(bee.dance_partner):
+		_complete_dance(bee, bee.dance_partner)
+	_end_dance(bee)
+
+## Resumes whatever this bee was doing before the dance interrupted her
+## -- the whole point of "no waiting states": she was already walking to
+## a cell, depositing, or walking back out, and picks that straight back
+## up rather than being sent anywhere new.
+static func _end_dance(bee: Node2D) -> void:
+	var resume_state: int = bee.pre_dance_state
+	var resume_timer: float = bee.pre_dance_timer
+	bee.dance_partner = null
+	bee.dance_role = ""
+	bee.pre_dance_state = -1
+	bee.pre_dance_timer = 0.0
+	if resume_state != -1:
+		bee.state = resume_state
+		bee.timer = resume_timer
+	else:
+		bee.state = bee._default_state_for_role()
+
+## The info transfer itself -- see the interpretive call in
+## FORAGING_ECOLOGY_PLAN.md Slice 9: angle and distance are decomposed
+## relative to hive_entrance_inside(), not the seeker's own position, so
+## the encoding matches how mentor.forage_start_point is itself set
+## (hive-relative, via orientation flight/scouting) regardless of where
+## in the hive the dance actually happened. Sets the same handful of
+## fields wait_at_entrance's match branch already does, just fed from
+## the decoded point instead of the jittered one -- see that function's
+## own comments for why each field is set.
+static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void:
+	var hive_point: Vector2 = mentor.world.hive_entrance_inside() if mentor.world else mentor.position
+	var offset: Vector2 = mentor.forage_start_point - hive_point
+	var fuzzed_angle: float = offset.angle() + deg_to_rad(randf_range(-GameConfig.recruit_dance_angle_fuzz_degrees, GameConfig.recruit_dance_angle_fuzz_degrees))
+	var fuzzed_distance: float = offset.length() * (1.0 + randf_range(-GameConfig.recruit_dance_distance_fuzz_fraction, GameConfig.recruit_dance_distance_fuzz_fraction))
+	var decoded: Vector2 = hive_point + Vector2.from_angle(fuzzed_angle) * fuzzed_distance
+
+	seeker.forage_start_point = decoded
+	seeker.local_search_anchor = decoded
+	seeker.known_patches.clear()
+	if GameConfig.floral_constancy_on:
+		seeker.preferred_species = mentor.preferred_species
+	seeker.is_scouting = false
+
+	seeker.recruit_partner = mentor
+	seeker.recruit_role = "seeker"
+	seeker.recruit_rate_before = seeker.avg_collection_rate
+	seeker.recruit_followup_remaining = RECRUIT_FOLLOWUP_TRIPS
+	mentor.recruit_partner = seeker
+	mentor.recruit_role = "mentor"
+	mentor.recruit_rate_before = mentor.avg_collection_rate
+	mentor.recruit_followup_remaining = RECRUIT_FOLLOWUP_TRIPS
+	# The structural half of "one recruit per mentor per hive visit" --
+	# checked by add_dance_eligible_mentor, reset at move_bee_into_hive.
+	mentor.has_danced_this_visit = true
+
+	DiagnosticLog.log_recruitment_match(seeker, mentor, "dance")
 
 
 ## Fallback only -- deposits without the walk-in animation.

@@ -52,6 +52,34 @@ func add_entrance_mentor(bee: Node2D) -> void:
 func remove_entrance_mentor(bee: Node2D) -> void:
 	entrance_mentors.erase(bee)
 
+## Slice 9 (proximity recruitment, GameConfig.proximity_recruitment_on):
+## the indoor-dwell counterpart of entrance_mentors above -- a forager
+## becomes eligible as soon as her trip is scored (see
+## BeeForaging._score_trip/_update_dance_eligibility) and stays eligible
+## through the rest of her indoor dwell, not just for one instant at the
+## door. Same "who's currently offering/looking" shape as entrance_mentors,
+## not a queue. Populated/pruned by BeeForaging wherever eligibility is
+## decided, and at move_bee_into_hive/move_bee_out_of_hive
+## (world_building.gd). A mentor who already used her one recruit this
+## hive visit (bee.has_danced_this_visit) is never added -- see
+## add_dance_eligible_mentor.
+var dance_eligible_mentors: Array = []
+var dance_eligible_seekers: Array = []
+
+func add_dance_eligible_mentor(bee: Node2D) -> void:
+	if not bee.has_danced_this_visit and not dance_eligible_mentors.has(bee):
+		dance_eligible_mentors.append(bee)
+
+func remove_dance_eligible_mentor(bee: Node2D) -> void:
+	dance_eligible_mentors.erase(bee)
+
+func add_dance_eligible_seeker(bee: Node2D) -> void:
+	if not dance_eligible_seekers.has(bee):
+		dance_eligible_seekers.append(bee)
+
+func remove_dance_eligible_seeker(bee: Node2D) -> void:
+	dance_eligible_seekers.erase(bee)
+
 func record_collection(resource_type: String, amount: float) -> void:
 	if resource_type == "nectar":
 		lifetime_nectar_collected += amount

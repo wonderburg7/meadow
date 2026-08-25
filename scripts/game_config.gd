@@ -238,11 +238,25 @@ var adaptive_constancy_weight: float = 0.5
 ## one off turns everything that depends on it off too, recursively.
 ## Floral constancy and Auto-recruitment sit side by side -- each depends
 ## on Scouting, not on each other, so "recruit without constancy, start
-## point only" is a real working combination. All four off by default;
-## off means foraging works exactly as it does with none of this present.
+## point only" is a real working combination. Proximity recruitment (see
+## below) is a second, alternate child of Scouting alongside
+## Auto-recruitment -- the two are mutually exclusive rather than a
+## parent/child pair of each other, since both are competing mechanisms
+## for the same job. All off by default; off means foraging works
+## exactly as it does with none of this present.
 var orientation_flight_on: bool = false
 var scouting_on: bool = false
 var auto_recruitment_on: bool = false
+## Slice 9 (FORAGING_ECOLOGY_PLAN.md): an alternate to auto_recruitment_on,
+## not stacked on top of it -- a second, alternate child of scouting_on.
+## Instead of a waiting queue at the entrance, a mentor-eligible and a
+## seeker-eligible forager physically dance when they cross paths during
+## ordinary indoor movement. Mutually exclusive with auto_recruitment_on
+## (Prerequisites.MUTUALLY_EXCLUSIVE) -- turning one on turns the other
+## off, since both compete for the same eligible bees and running both
+## at once would confound the very A/B comparison this slice exists to
+## produce. Off by default.
+var proximity_recruitment_on: bool = false
 ## How far from the hive a new forager's start point (Orientation flight
 ## or Scouting) is scattered -- not to be confused with
 ## forage_search_radius below, which is how far *from wherever she
@@ -352,6 +366,30 @@ var recruit_start_point_jitter: float = 150.0
 ## the number means nothing yet, and pile up waiting at the door with no
 ## mentors ever able to form either -- see bee.gd's trips_scored.
 var recruit_grace_trips: float = 3.0
+
+## Slice 9 (proximity recruitment): how close a dance-eligible mentor and
+## seeker of the same resource_type must be, indoors, before the dance
+## triggers -- see hive.gd's dance_eligible_mentors/dance_eligible_seekers
+## and BeeForaging.check_dance_proximity. Provisional -- not yet swept
+## (FORAGING_ECOLOGY_PLAN.md Slice 9 task 7); re-check with a real
+## multi-seed run before trusting this number.
+var recruit_dance_radius: float = 100.0
+## How long the DANCING state lasts once triggered. Short by design --
+## Dave's steer for this slice was "no waiting states", so this is a
+## brief in-passing exchange, not a performance to sit through.
+## Provisional, not yet swept.
+var recruit_dance_seconds: float = 4.0
+## Fuzz applied to the mentor's forage_start_point angle (decomposed
+## relative to hive_entrance_inside(), not the seeker's own position --
+## see the interpretive call in FORAGING_ECOLOGY_PLAN.md Slice 9) when
+## encoding it into the dance. Degrees, applied both directions.
+## Provisional, not yet swept.
+var recruit_dance_angle_fuzz_degrees: float = 25.0
+## Fuzz applied to the same decomposition's distance, as a fraction of
+## the mentor's own distance from the hive -- e.g. 0.25 means the
+## decoded distance lands anywhere from 75% to 125% of the mentor's.
+## Provisional, not yet swept.
+var recruit_dance_distance_fuzz_fraction: float = 0.25
 
 # --- foraging ---
 var bee_speed: float = 110.0

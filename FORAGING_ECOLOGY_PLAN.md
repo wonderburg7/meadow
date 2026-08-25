@@ -1883,6 +1883,78 @@ are touched (likely, for the new state and toggle). Add the hands-on
 item to `HANDS_ON_CHECKS.md` once built, per `CLAUDE.md`'s own rule —
 don't leave it only in this file's results note.
 
+### Slice 9 build note (24 Aug 2026) -- built, not yet swept
+
+All eight tasks from the spec above are built: `proximity_recruitment_on`
+(mutually exclusive with `auto_recruitment_on` via a new
+`Prerequisites.MUTUALLY_EXCLUSIVE` map, since the two are alternate
+children of `scouting_on` rather than a parent/child pair -- turning one
+on in the settings panel or via `set_config` now turns the other off,
+both in `debug_panel.gd::apply_setting` and its UI checkbox handler);
+`hive.dance_eligible_mentors`/`dance_eligible_seekers`, populated the
+instant a trip is scored (`bee_foraging.gd::_score_trip` ->
+`_update_dance_eligibility`, same eligibility test `go_to_exit`'s
+auto-recruitment branch already used) and pruned at
+`move_bee_into_hive`/`move_bee_out_of_hive`; a new `State.DANCING`
+(appended, per the save-format rule every other state on that enum
+follows), triggered by `BeeForaging.check_dance_proximity` -- a
+mentor-side-only scan against the seeker list, its own
+`Perf.begin("recruitment_dance")` span, called every frame (not gated on
+the `THINKS_PER_SECOND` stagger, same as the rest of the state machine)
+for every forager not already dancing; the interpretive call confirmed
+by Dave (angle/distance decomposed relative to `hive_entrance_inside()`,
+not the seeker's position) implemented in `_complete_dance`, each fuzzed
+independently by the two new constants below; one recruit per mentor per
+hive visit via `bee.has_danced_this_visit`, reset on her next return; the
+circling visual (`bee._update_dance_circle`) is a `visual_root` offset
+only, same technique as Bumble flight, gated on `is_on_screen` and never
+touching `bee.position` -- confirmed by grepping every existing
+`AT_ENTRANCE_SEEKING`/`AT_ENTRANCE_MENTORING` site and adding the
+`DANCING` equivalent alongside each (state dispatch, `task_description`,
+`role_name_text`; the old entrance-queue mechanism itself is untouched).
+`proximity_recruitment_on` and the four new constants are in
+`save_game.gd`'s `SAVED_SETTINGS` and `debug_panel.gd`'s toggle list from
+the start (not added after the fact, unlike the gap this plan already
+flagged four times for the older toggles); `diagnostic_log.gd`'s
+`foraging_behaviour` snapshot carries the new toggle, and
+`log_recruitment_match` grew an optional `via: "queue"|"dance"` field so
+a session log can tell the two mechanisms' matches apart -- the existing
+entrance-wait call site is untouched and keeps defaulting to `"queue"`.
+
+Constants chosen, all provisional pending a real sweep (task 7, below):
+`recruit_dance_radius` 100px, `recruit_dance_seconds` 4s (short, per
+Dave's "no waiting states" steer -- a brief in-passing exchange, not a
+performance), `recruit_dance_angle_fuzz_degrees` 25, and
+`recruit_dance_distance_fuzz_fraction` 0.25 (mirrors
+`recruit_start_point_jitter`'s existing "nudged, not identical" framing,
+just expressed as a fraction of distance and an angle rather than a flat
+pixel radius, since the dance encodes those two independently rather
+than a Cartesian point). None of the four have real data behind them --
+they're reasoned defaults, not measured ones.
+
+`python3 tests/source_checks.py` and `python3 tests/balance_tests.py`
+both pass; `FUNCTION_MAP.md` is regenerated and up to date
+(`tools/update_function_map.py --check`).
+
+**Not done, and flagged rather than faked:** this session had no
+`mcp__godot__*` tools and no `godot`/`godot4` binary anywhere reachable,
+so neither task 7's parameter sweep nor task 8's three-way A/B gate could
+actually be run -- there is no real results table to append here, and
+this note doesn't pretend otherwise. `proximity_recruitment_on` ships
+**off by default**, `auto_recruitment_on` unchanged as the still-shipped
+default, exactly as the spec's own task 8 says to do when the comparison
+hasn't (yet) shown proximity recruitment at least as good. Before this
+can supersede the old mechanism: run the five-seed sweep and the
+three-way comparison (`tools/run_scenario.py`, `flower_visits`,
+`unique_flowers_visited`, `recruitment_matches`, `foragers_settled`,
+`total_deaths` -- same shape as every earlier slice's table) in a
+session that actually has Godot, and watch in particular whether
+`recruitment_matches` collapses relative to today's mechanism, per the
+spec's own flagged risk (a seeker and mentor now only match by
+coincidentally being indoors at the same moment, not by one waiting up
+to 15s hoping for one). Also needs Dave's hands-on check -- see
+`HANDS_ON_CHECKS.md`.
+
 ## Next physical step
 
 Slice 9 (proximity recruitment) now has a full implementation-ready
