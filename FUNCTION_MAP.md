@@ -412,7 +412,7 @@ The comb as a whole: cells, navigation, finding a cell.
 948  func announce() -> void
 ```
 
-## main.gd (1,041 lines)
+## main.gd (1,056 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -446,5 +446,5 @@ Per-frame entry point, everything not yet split out of main.
 895  func _on_level_chosen(level: int) -> void
 908  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
 925  func _apply_scenario_boot_arg() -> void
-1031 func _end_scenario_run(outcome: String) -> void
+1043 func _end_scenario_run(outcome: String) -> void
 ```

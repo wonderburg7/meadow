@@ -1,0 +1,20 @@
+{
+  "cells": 10, "nectar_foragers": 3, "pollen_foragers": 2,
+  "nurses": 1, "builders": 1, "miners": 1,
+  "random_seed": 4242,
+  "diagnostics": {
+    "profile": "custom",
+    "events": [],
+    "snapshots": {
+      "every_sim_seconds": 10,
+      "fields": ["population.total", "resources.food_stores", "role_outcomes.cells_completed_total"],
+      "only_when_changed": true
+    },
+    "limits": {"snapshot_lines": 2}
+  },
+  "actions": [
+    {"do": "assert", "when": {"cells_completed_at_least": 1}, "condition": {"queen_alive": true}}
+  ],
+  "expect": [{"id": "clean_actions", "metric": "actions.problems", "op": "empty"}],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
+}

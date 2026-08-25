@@ -934,6 +934,10 @@ func _apply_scenario_boot_arg() -> void:
 	# iteration a fresh seed without editing the scenario file. Wins over
 	# the scenario's own "random_seed" field below when both are given.
 	var cmdline_seed: String = ""
+	# Created only by tools/run_scenario.py. Keeping the output location off
+	# scenario JSON makes concurrent runs unambiguous and cannot grant a
+	# scenario fixture arbitrary file-write authority.
+	var session_output_path: String = ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--scenario="):
 			scenario_path = arg.substr("--scenario=".length())
@@ -941,6 +945,8 @@ func _apply_scenario_boot_arg() -> void:
 			run_id = arg.substr("--run-id=".length())
 		elif arg.begins_with("--random-seed="):
 			cmdline_seed = arg.substr("--random-seed=".length())
+		elif arg.begins_with("--headless-session-path="):
+			session_output_path = arg.substr("--headless-session-path=".length())
 	if scenario_path.is_empty():
 		return
 
@@ -954,6 +960,8 @@ func _apply_scenario_boot_arg() -> void:
 		return
 
 	var level: Dictionary = parsed.duplicate(true)
+	var scenario_diagnostics = level.get("diagnostics", null)
+	level.erase("diagnostics")
 	var stop: Dictionary = level.get("stop", {})
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
@@ -1006,7 +1014,11 @@ func _apply_scenario_boot_arg() -> void:
 	scenario_stop_when_actions_resolved = bool(stop.get("when_actions_resolved", false))
 	Engine.time_scale = scenario_time_scale
 	DiagnosticLog.snapshot_interval_override = scenario_snapshot_seconds
+	if not DiagnosticLog.configure_scenario_diagnostics(scenario_diagnostics):
+		get_tree().quit(2)
+		return
 	DiagnosticLog.run_id_override = run_id
+	DiagnosticLog.session_path_override = session_output_path
 	seed(scenario_random_seed)
 	DiagnosticLog.scenario_random_seed = scenario_random_seed
 	# DiagnosticLog only ever opens a session file off Session.run_reset
@@ -1030,7 +1042,10 @@ func _apply_scenario_boot_arg() -> void:
 ## should say plainly what it couldn't do, not just what it did.
 func _end_scenario_run(outcome: String) -> void:
 	ScenarioActions.log_unresolved(scenario_actions)
+	DiagnosticLog.set_queen_alive(is_instance_valid(queen))
 	DiagnosticLog.end_session(outcome)
+	if DiagnosticLog.session_path_override != "":
+		print("MEADOW_RESULT_PATH=%s" % DiagnosticLog.session_path())
 	print("AI playtest: scenario ended (%s) at day %d" % [outcome, day])
 	get_tree().quit()
 

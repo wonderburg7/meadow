@@ -1,0 +1,2 @@
+{"type":"config","settings":{"predators_on":false}}
+{"type":"failure","kind":"timeout","run_id":"timeout-fixture","timeout_seconds":30,"message":"scenario run exceeded 30s timeout"}

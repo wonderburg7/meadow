@@ -17,6 +17,8 @@ extends Node
 
 const BeeEnums = preload("res://scripts/bee_enums.gd")
 const Flower = preload("res://scripts/flower.gd")
+const HeadlessDiagnosticProfile = preload("res://scripts/headless/diagnostic_profile.gd")
+const HeadlessDiagnosticProbes = preload("res://scripts/headless/diagnostic_probes.gd")
 
 const LOG_DIR := "user://logs"
 const MAX_SESSION_FILES := 5
@@ -42,6 +44,11 @@ var snapshot_interval_override: float = -1.0
 ## started in the same wall-clock second (or a stray manual play session)
 ## could otherwise race.
 var run_id_override: String = ""
+## Dev-only exact JSONL path created by the Python headless runner. It is
+## command-line supplied, never scenario supplied, so a fixture cannot choose
+## where it writes. Empty retains ordinary manual-session logging unchanged.
+var session_path_override: String = ""
+var _session_path: String = ""
 ## The RNG seed actually in effect for this run (CHATGPT_INSIGHTS_PLAN.md's
 ## A2). main.gd's own manual-play boot always seeds with
 ## main.DEFAULT_RANDOM_SEED (12345, duplicated here rather than shared --
@@ -52,6 +59,11 @@ var run_id_override: String = ""
 ## comparison can confirm afterwards which seed each side actually ran
 ## with, not just which one it asked for.
 var scenario_random_seed: int = 12345
+var _queen_alive: bool = true
+var _diagnostics: Dictionary = HeadlessDiagnosticProfile.standard()
+var _diagnostic_event_lines: Dictionary = {}
+var _diagnostic_snapshot_lines: int = 0
+var _diagnostic_last_snapshot: Dictionary = {}
 
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
@@ -109,13 +121,16 @@ func _notification(what: int) -> void:
 func start_session() -> void:
 	end_session("quit")   # no-op if nothing was open, or already ended by a collapse
 
-	DirAccess.make_dir_recursive_absolute(LOG_DIR)
-	_prune_old_sessions()
-
-	var stamp: String = str(int(Time.get_unix_time_from_system()))
-	var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
-	var path: String = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
-	_file = FileAccess.open(path, FileAccess.WRITE)
+	if session_path_override != "":
+		DirAccess.make_dir_recursive_absolute(session_path_override.get_base_dir())
+		_session_path = session_path_override
+	else:
+		DirAccess.make_dir_recursive_absolute(LOG_DIR)
+		_prune_old_sessions()
+		var stamp: String = str(int(Time.get_unix_time_from_system()))
+		var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
+		_session_path = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
+	_file = FileAccess.open(_session_path, FileAccess.WRITE)
 	_ended = false
 	_hour_accum = 0.0
 	_total_deaths = 0
@@ -145,9 +160,16 @@ func start_session() -> void:
 	_blocks_mined = 0
 	_honey_batches_deposited = 0
 	_cells_ripened = 0
+	_queen_alive = true
+	_diagnostic_event_lines.clear()
+	_diagnostic_snapshot_lines = 0
+	_diagnostic_last_snapshot.clear()
 
-	_write({"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
-			"settings": _config_snapshot()})
+	var config := {"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
+		"settings": _config_snapshot()}
+	if not bool(_diagnostics.get("legacy_standard", true)):
+		config["diagnostics"] = effective_diagnostics()
+	_write(config)
 
 
 func log_death(bee: Node2D) -> void:
@@ -168,6 +190,8 @@ func log_death(bee: Node2D) -> void:
 		"stats": {"energy": bee.energy, "age_seconds": bee.age_seconds},
 	})
 	_total_deaths += 1
+	if bee.is_queen:
+		_queen_alive = false
 	_deaths_by_cause[bee.death_cause] = int(_deaths_by_cause.get(bee.death_cause, 0)) + 1
 	_deaths_by_role[role_name] = int(_deaths_by_role.get(role_name, 0)) + 1
 
@@ -511,6 +535,8 @@ func event_count(type: String, subtype: String = "") -> int:
 func tick(delta: float, world: Node2D) -> void:
 	if _file == null:
 		return
+	if not bool(_diagnostics.get("legacy_standard", true)) and _diagnostics.snapshots.is_empty():
+		return
 	_hour_accum += delta
 	# snapshot_interval_override lets a --scenario= run pick a fixed
 	# sim-second cadence instead -- see main.gd::_apply_scenario_boot_arg
@@ -525,11 +551,19 @@ func tick(delta: float, world: Node2D) -> void:
 	# population and rates barely move between one snapshot and the next
 	# at that resolution, so nothing analyze_session.py or a human
 	# actually reads was lost by spacing them out.
-	var interval: float = snapshot_interval_override if snapshot_interval_override > 0.0 else GameConfig.seconds_per_day / 24.0
+	var interval: float = _snapshot_interval()
 	if _hour_accum < interval:
 		return
 	_hour_accum = 0.0
-	_write(_snapshot(world))
+	var snapshot: Dictionary = _snapshot(world) if bool(_diagnostics.get("legacy_standard", true)) else _selected_snapshot(world)
+	if bool(_diagnostics.get("only_when_changed", false)):
+		var comparable := snapshot.duplicate(true)
+		comparable.erase("game_time")
+		comparable.erase("day")
+		if comparable == _diagnostic_last_snapshot:
+			return
+		_diagnostic_last_snapshot = comparable
+	_write(snapshot)
 
 
 func end_session(outcome: String) -> void:
@@ -541,6 +575,7 @@ func end_session(outcome: String) -> void:
 		"game_time": Session.sim_time,
 		"day": _current_day(),
 		"outcome": outcome,
+		"queen_alive": _queen_alive,
 		"total_deaths": _total_deaths,
 		"deaths_by_cause": _deaths_by_cause,
 		"deaths_by_role": _deaths_by_role,
@@ -573,6 +608,48 @@ func end_session(outcome: String) -> void:
 	_file.close()
 	_file = null
 	_ended = true
+
+
+func session_path() -> String:
+	return _session_path
+
+
+func set_queen_alive(alive: bool) -> void:
+	_queen_alive = alive
+
+
+func configure_scenario_diagnostics(raw: Variant) -> bool:
+	var parsed := HeadlessDiagnosticProfile.parse(raw)
+	if not parsed.ok:
+		push_error("scenario diagnostics: %s" % parsed.error)
+		return false
+	_diagnostics = parsed
+	return true
+
+
+func effective_diagnostics() -> Dictionary:
+	return {"profile": _diagnostics.profile, "version": _diagnostics.version,
+		"events": _diagnostics.events, "snapshots": _diagnostics.snapshots,
+		"limits": _diagnostics.limits}
+
+
+func _snapshot_interval() -> float:
+	if bool(_diagnostics.get("legacy_standard", true)):
+		return snapshot_interval_override if snapshot_interval_override > 0.0 else GameConfig.seconds_per_day / 24.0
+	var snapshots: Dictionary = _diagnostics.snapshots
+	var requested = snapshots.get("every_sim_seconds", -1.0)
+	# Godot treats equality between a number and a String as a script error,
+	# even when the comparison would naturally be false.  The profile contract
+	# permits the "day" sentinel alongside a positive numeric interval.
+	if requested is String and requested == "day":
+		return GameConfig.seconds_per_day
+	return float(requested)
+
+
+func _selected_snapshot(world: Node2D) -> Dictionary:
+	return HeadlessDiagnosticProbes.selected_snapshot(world, _diagnostics.snapshots.get("fields", []), {
+		"cells_completed": _cells_completed,
+	})
 
 
 # --- building entries -----------------------------------------------
@@ -814,5 +891,30 @@ func _prune_old_sessions() -> void:
 func _write(entry: Dictionary) -> void:
 	if _file == null:
 		return
+	if not _capture_entry(entry):
+		return
 	_file.store_line(JSON.stringify(entry))
 	_file.flush()
+
+
+func _capture_entry(entry: Dictionary) -> bool:
+	if bool(_diagnostics.get("legacy_standard", true)):
+		return true
+	var type: String = str(entry.get("type", ""))
+	if type in ["config", "summary"]:
+		return true
+	if type == "snapshot":
+		var snapshot_limit = _diagnostics.limits.get("snapshot_lines", null)
+		if snapshot_limit != null and _diagnostic_snapshot_lines >= int(snapshot_limit):
+			return false
+		_diagnostic_snapshot_lines += 1
+		return true
+	if type == "action":
+		return true
+	if not type in _diagnostics.events:
+		return false
+	var event_limit = _diagnostics.limits.get("event_lines_per_type", null)
+	if event_limit != null and int(_diagnostic_event_lines.get(type, 0)) >= int(event_limit):
+		return false
+	_diagnostic_event_lines[type] = int(_diagnostic_event_lines.get(type, 0)) + 1
+	return true
