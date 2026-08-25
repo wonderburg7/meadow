@@ -71,6 +71,7 @@ class HeadlessVerdictTest(unittest.TestCase):
             )
 
             def fake_godot(command, **_kwargs):
+                self.assertIn("--disable-crash-handler", command)
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(fixture, encoding="utf-8")

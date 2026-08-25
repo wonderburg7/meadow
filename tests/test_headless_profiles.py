@@ -38,6 +38,14 @@ class HeadlessProfileTest(unittest.TestCase):
         self.assertEqual(30.0, selection["snapshots"]["every_sim_seconds"])
         self.assertTrue(selection["snapshots"]["only_when_changed"])
 
+    def test_day_interval_is_retained_only_for_its_supported_profiles(self):
+        selection = validate_diagnostics({"profile": "balance"})
+        self.assertEqual("day", selection["snapshots"]["every_sim_seconds"])
+        with self.assertRaisesRegex(ContractError, "positive number"):
+            validate_diagnostics({"profile": "custom", "snapshots": {
+                "every_sim_seconds": "day", "fields": ["population.total"],
+            }})
+
     def test_unknown_or_expensive_requests_fail_before_godot_launch(self):
         with self.assertRaisesRegex(ContractError, "unknown diagnostic profile"):
             validate_diagnostics({"profile": "everything"})

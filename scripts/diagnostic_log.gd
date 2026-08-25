@@ -633,7 +633,10 @@ func _snapshot_interval() -> float:
 		return snapshot_interval_override if snapshot_interval_override > 0.0 else GameConfig.seconds_per_day / 24.0
 	var snapshots: Dictionary = _diagnostics.snapshots
 	var requested = snapshots.get("every_sim_seconds", -1.0)
-	if requested == "day":
+	# Godot treats equality between a number and a String as a script error,
+	# even when the comparison would naturally be false.  The profile contract
+	# permits the "day" sentinel alongside a positive numeric interval.
+	if requested is String and requested == "day":
 		return GameConfig.seconds_per_day
 	return float(requested)
 

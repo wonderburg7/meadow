@@ -283,7 +283,10 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         requested_seed if requested_seed is not None else random.randint(0, 2**31 - 1)
     )
     metadata["seed"] = seed
-    cmd = [godot_path, "--headless"]
+    # An unattended check must fail through its captured exit status rather
+    # than leave Godot's native crash UI open on the desktop.  The process log
+    # remains the diagnostic artefact when an engine crash occurs.
+    cmd = [godot_path, "--headless", "--disable-crash-handler"]
     if fixed_fps is not None:
         cmd += ["--fixed-fps", str(fixed_fps)]
     cmd += ["--path", str(ROOT), "--", "--scenario=%s" % scenario_path,
