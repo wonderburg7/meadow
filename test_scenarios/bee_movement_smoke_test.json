@@ -1,0 +1,13 @@
+{
+  "cells": 3,
+  "nectar_foragers": 2,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "time_scale": 1,
+  "random_seed": 12345,
+  "config_overrides": {"seconds_per_day": 15},
+  "snapshot_seconds": 5,
+  "stop": {"max_days": 2}
+}
