@@ -178,6 +178,10 @@ const SETTINGS_BUTTON_GAP := 8.0
 ## set_settings_button_width) -- close to the cog's own custom_minimum_size
 ## so there's no visible jump on the first frame.
 const SETTINGS_BUTTON_DEFAULT_WIDTH := 36.0
+## All primary controls in the top-right bar use this measured height.
+## Keeping it in one place prevents a new text or icon button from making a
+## row visibly uneven at a different UI scale.
+const TOP_BAR_CONTROL_HEIGHT := 28.0
 
 ## The top-left corner. Every readout lives in the colony window now;
 ## this shows only the ones the player has starred there, in a fixed
@@ -372,11 +376,14 @@ var shown_signals: Array = []
 
 ## Severity colours for the at-a-glance strip: 0 is background
 ## information, 1 is worth looking at, 2 is losing you something now.
-const SIGNAL_COLOURS := [
-	Color(0.75, 0.82, 0.9),
-	Color(1.0, 0.85, 0.4),
-	Color(1.0, 0.45, 0.4),
-]
+## These resolve through UiTheme so Light and High Contrast do not inherit
+## the bright-on-dark literals that the original HUD used.
+func _signal_color(severity: int) -> Color:
+	if severity <= 0:
+		return UiTheme.color("text_secondary")
+	if severity == 1:
+		return UiTheme.color("warning")
+	return UiTheme.color("danger")
 
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
@@ -481,7 +488,7 @@ func _build_top_right_bar() -> void:
 	_style_button(pause_button)
 	pause_button.text = "❚❚"
 	pause_button.tooltip_text = PAUSE_TIP
-	pause_button.custom_minimum_size = Vector2(28, 26)
+	pause_button.custom_minimum_size = Vector2(28, TOP_BAR_CONTROL_HEIGHT)
 	pause_button.theme_type_variation = "Small"
 	pause_button.focus_mode = Control.FOCUS_NONE
 	pause_button.toggle_mode = true
@@ -501,7 +508,7 @@ func _build_top_right_bar() -> void:
 		_style_button(btn)
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
-		btn.custom_minimum_size = Vector2(24, 26)
+		btn.custom_minimum_size = Vector2(24, TOP_BAR_CONTROL_HEIGHT)
 		btn.theme_type_variation = "Small"
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.toggle_mode = true
@@ -522,13 +529,13 @@ func _build_top_right_bar() -> void:
 	row2.add_theme_constant_override("separation", 6)
 	bar.add_child(row2)
 
-	colony_button = _icon_button("bee", "Colony", 92.0)
+	colony_button = _icon_button("bee", "Colony", 92.0, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
 
-	nursery_button = _icon_button("hex", "Nursery", 96.0)
+	nursery_button = _icon_button("hex", "Nursery", 96.0, "Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
@@ -539,7 +546,8 @@ func _build_top_right_bar() -> void:
 	foraging_button = Button.new()
 	_style_button(foraging_button)
 	foraging_button.text = "Foraging"
-	foraging_button.custom_minimum_size = Vector2(78, 26)
+	foraging_button.custom_minimum_size = Vector2(78, TOP_BAR_CONTROL_HEIGHT)
+	foraging_button.tooltip_text = "Open the foraging window: trip timing, flowers visited per trip, empty-return rate, and recruitment/scouting counts."
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
 	row2.add_child(foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
@@ -551,14 +559,15 @@ func _build_top_right_bar() -> void:
 	winter_button = Button.new()
 	_style_button(winter_button)
 	winter_button.text = "Winter"
-	winter_button.custom_minimum_size = Vector2(62, 26)
+	winter_button.custom_minimum_size = Vector2(62, TOP_BAR_CONTROL_HEIGHT)
+	winter_button.tooltip_text = "Open the winter forecast: what the colony will need, and how far short it is."
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
-	view_button = _icon_button("hive", "Hive", 78.0)
+	view_button = _icon_button("hive", "Hive", 78.0, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
@@ -573,10 +582,11 @@ func _build_top_right_bar() -> void:
 ## yet legible enough to stand alone. Both live inside the Button
 ## itself, with mouse_filter set to IGNORE, so the whole button area
 ## stays clickable rather than only the space around them.
-func _icon_button(shape: String, label: String, min_width: float) -> Button:
+func _icon_button(shape: String, label: String, min_width: float, tip: String) -> Button:
 	var btn := Button.new()
 	_style_button(btn)
-	btn.custom_minimum_size = Vector2(min_width, 28)
+	btn.custom_minimum_size = Vector2(min_width, TOP_BAR_CONTROL_HEIGHT)
+	btn.tooltip_text = tip
 	btn.focus_mode = Control.FOCUS_NONE
 
 	var row := HBoxContainer.new()
@@ -643,7 +653,7 @@ func _build_goal_shelf() -> void:
 	# RichTextLabel has no Label-based theme_type_variation to draw on, so
 	# this scales directly rather than joining the Small/Body/Heading set.
 	completed_goal_label.add_theme_font_size_override("normal_font_size", int(round(12 * Session.text_scale)))
-	completed_goal_label.add_theme_color_override("default_color", Color(1.0, 0.9, 0.6, 0.55))
+	completed_goal_label.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55))
 	completed_goal_label.visible = false
 	goal_shelf.add_child(completed_goal_label)
 
@@ -653,7 +663,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	current_goal_label.custom_minimum_size = Vector2(320, 0)
 	current_goal_label.theme_type_variation = "Body"
-	current_goal_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6))
+	current_goal_label.add_theme_color_override("font_color", UiTheme.color("warning"))
 	goal_shelf.add_child(current_goal_label)
 
 	# Tertiary: numeric progress, only for a goal with a countable target.
@@ -670,7 +680,7 @@ func _build_goal_shelf() -> void:
 
 	goal_progress_label = Label.new()
 	goal_progress_label.theme_type_variation = "Small"
-	goal_progress_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.75))
+	goal_progress_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	goal_progress_row.add_child(goal_progress_label)
 
 ## Called by debug_panel.gd whenever its settings cog's actual width
@@ -741,18 +751,18 @@ func _build_selection_panel() -> void:
 
 	energy_label = Label.new()
 	energy_label.theme_type_variation = "Body"
-	energy_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
+	energy_label.add_theme_color_override("font_color", UiTheme.color("success"))
 	column.add_child(energy_label)
 
 	# what the bee is doing right this second
 	activity_label = Label.new()
 	activity_label.theme_type_variation = "Body"
-	activity_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+	activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 	column.add_child(activity_label)
 
 	trait_label = Label.new()
 	trait_label.theme_type_variation = "Body"
-	trait_label.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
+	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
 
 	# Only shown for a soil summary -- see show_object_summary.
@@ -1271,7 +1281,7 @@ func _build_warning_banner() -> void:
 
 	warning_label = Label.new()
 	warning_label.theme_type_variation = "Body"
-	warning_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
+	warning_label.add_theme_color_override("font_color", UiTheme.color("warning"))
 	warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	warning_label.custom_minimum_size = Vector2(450, 0)
 	row.add_child(warning_label)
@@ -1338,10 +1348,12 @@ func _refresh_flower_summary() -> void:
 	else:
 		activity_label.text = "No bee here"
 	var age: float = active_flower.marker_age()
-	if age >= 0.0:
-		var fresh := age < GameConfig.tarsal_marker_seconds
-		trait_label.text = "Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if (fresh and GameConfig.tarsal_markers_on) else ""]
+	if age >= 0.0 and age < GameConfig.tarsal_marker_seconds:
+		trait_label.text = "Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if GameConfig.tarsal_markers_on else ""]
 	else:
+		# The marker remains a timestamp on the flower for simulation
+		# bookkeeping, but it is no longer useful player-facing information
+		# once bees have stopped reacting to it.
 		trait_label.text = ""
 
 ## Clicking a tree or a bank of raised ground says what it is, so the
@@ -1787,8 +1799,9 @@ func _refresh_corner() -> void:
 		line.flat = true
 		line.focus_mode = Control.FOCUS_NONE
 		line.theme_type_variation = "Body"
-		line.add_theme_color_override("font_color", SIGNAL_COLOURS[clampi(entry[1], 0, 2)])
-		line.add_theme_color_override("font_hover_color", Color.WHITE)
+		line.add_theme_color_override("font_color", _signal_color(int(entry[1])))
+		line.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
+		line.add_theme_color_override("font_pressed_color", UiTheme.color("text_primary"))
 		var action: String = entry[2] if entry.size() > 2 else ""
 		if action != "":
 			line.tooltip_text = "Click to select what this is about."
@@ -1950,7 +1963,7 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		var mixed := Label.new()
 		mixed.text = "mixed selection"
 		mixed.theme_type_variation = "Small"
-		mixed.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
+		mixed.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 		row.add_child(mixed)
 	else:
 		row.add_child(_current_role_marker(Roles.label_for(common_role)))
@@ -2084,7 +2097,7 @@ func _build_restock_row(first) -> void:
 		var summary := Label.new()
 		summary.text = "%d cells of %s" % [first.restock_targets.size(), first.restock_resource]
 		summary.theme_type_variation = "Small"
-		summary.add_theme_color_override("font_color", Color(0.6, 0.9, 0.7))
+		summary.add_theme_color_override("font_color", UiTheme.color("success"))
 		orders_column.add_child(summary)
 
 ## The backup role and whether a reassignment waits for the current job.
@@ -2250,9 +2263,9 @@ func _refresh_selection_text() -> void:
 		var stuck: String = b.idle_reason()
 		if stuck != "":
 			activity += "\n%s" % stuck
-			activity_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.45))
+			activity_label.add_theme_color_override("font_color", UiTheme.color("warning"))
 		else:
-			activity_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+			activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
 			activity += "\nPreferred flower: %s" % b.preferred_species
 		# the queen's pollen store is the thing that gates egg-laying,
@@ -2304,6 +2317,7 @@ func set_winter_button_visible(value: bool) -> void:
 func set_view_label(in_hive: bool) -> void:
 	view_button_label.text = "Meadow" if in_hive else "Hive"
 	view_icon.shape = "flower" if in_hive else "hive"
+	view_button.tooltip_text = "Switch to the meadow, or press Tab. Both views keep simulating while you look at the other one." if in_hive else "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one."
 	view_icon.queue_redraw()
 
 func set_colony_button_visible(value: bool) -> void:

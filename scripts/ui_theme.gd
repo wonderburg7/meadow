@@ -251,6 +251,14 @@ static func _refresh_theme_resource(theme: Theme) -> void:
 			theme.set_font("font", base_type, font)
 		elif theme.has_font("font", base_type):
 			theme.clear_font("font", base_type)
+	# Button state colours are explicit rather than inherited from Godot's
+	# default Theme. That default is not designed for our dark/light palettes
+	# and can turn text illegible while a control is hovered or pressed.
+	# Focus uses the ordinary font colour plus the focus-ring StyleBox above.
+	theme.set_color("font_hover_color", "Button", color("text_primary"))
+	theme.set_color("font_pressed_color", "Button", color("text_primary"))
+	theme.set_color("font_hover_pressed_color", "Button", color("text_primary"))
+	theme.set_color("font_disabled_color", "Button", color("disabled"))
 
 ## The three non-default faces are placeholder options until their font
 ## files are sourced under assets/fonts/ (UI_PLAN.md section 8) --
