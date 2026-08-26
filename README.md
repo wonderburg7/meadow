@@ -80,12 +80,17 @@ save/load and restart.
 
 ## Verifying a change
 
-There are two Python suites. Neither needs Godot, and both should pass
-before you commit:
+Run the portable verification command before committing. It runs the two
+Python suites concurrently, then checks `FUNCTION_MAP.md`:
 
+```powershell
+.\tools\verify.ps1
 ```
-python3 tests/source_checks.py    # does it parse and resolve
-python3 tests/balance_tests.py    # are the numbers survivable
+
+If Python is not on `PATH`, give the command an explicit interpreter:
+
+```powershell
+.\tools\verify.ps1 -PythonPath C:\path\to\python.exe
 ```
 
 `source_checks.py` checks that every declaration is a single legal

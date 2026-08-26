@@ -1,5 +1,7 @@
 # Meadow — orientation for a new session
 
+Status: current | Owner: Dave / Claude Code | Verified: 2026-08-26
+
 Read this first. It's the shortest path to being useful on this project
 without re-deriving everything. Detail this file used to hold now lives
 in `docs/` and `.claude/rules/`, loaded automatically when relevant
@@ -103,7 +105,7 @@ assuming their content will surface on its own.
 
 ```
 scenes/Main.tscn      one scene, one node, points at main.gd
-scripts/              all game code, ~16,700 lines
+scripts/              all game code
 tests/                two Python suites, no Godot needed
 docs/                 known-pitfalls.md, performance.md, history.md, archive/
 .claude/rules/        path-scoped guidance, loaded only for matching files
@@ -179,7 +181,7 @@ Every long script is divided by `# --- section name ---` headers -- grep
 those rather than reading top to bottom. For the six biggest scripts
 (`hud.gd`, `bee.gd`, `debug_panel.gd`, `hive_cell.gd`, `hive.gd`,
 `main.gd`), `FUNCTION_MAP.md` indexes every function/header by line
-number instead; regenerate with `python3 tools/update_function_map.py`
+number instead; regenerate with `tools/update_function_map.py`
 after touching one of those six (`--check` fails if it's drifted).
 
 **Read one file, not the folder; use git and the tests instead of
@@ -222,12 +224,19 @@ set the constant.
 
 ## Verifying without Godot
 
-Two suites stand in for a Godot install, and both must pass before
-committing:
+Run the portable verification command before committing. It runs the two
+independent suites concurrently, then checks `FUNCTION_MAP.md`:
 
+```powershell
+.\tools\verify.ps1
 ```
-python3 tests/source_checks.py    # does it parse and resolve
-python3 tests/balance_tests.py    # are the numbers survivable
+
+If Python is not on `PATH`, pass its executable explicitly. Codex users can
+obtain the bundled path with workspace-dependency discovery, rather than
+adding a versioned runtime path to this repository:
+
+```powershell
+.\tools\verify.ps1 -PythonPath C:\path\to\python.exe
 ```
 
 `source_checks.py` checks names rather than structure (every declaration

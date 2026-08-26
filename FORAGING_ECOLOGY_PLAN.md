@@ -1,5 +1,7 @@
 # Foraging ecology plan
 
+Status: partially delivered | Owner: Dave / Claude Code | Next: run Slice 9's sweep and A/B comparison | Verified: 2026-08-26
+
 Source: Dave's design brief, 22 Aug 2026 (pasted into the Meadow Cowork
 session, not Notion — Notion is not consulted, per the repo's own
 source-of-truth rule, now corrected in `CLAUDE.md`/`AGENTS.md` alongside
@@ -9,9 +11,10 @@ asked to produce before Claude Code touches any code, refining Slice 0
 and Slice 1 only for now, as the brief itself instructs. Slices 2-9 are
 kept below as a scope index, deliberately not detailed further yet.
 
-**Nothing in this file is built.** Hand one slice at a time to Claude
-Code, review the test results and a hands-on playtest description, then
-come back here for the next one.
+Slices have since been delivered through Slice 9. Hand one remaining
+evidence or implementation slice at a time to Claude Code, review the test
+results and any hands-on playtest description, then return here for the next
+decision.
 
 ## What's changed since the brief was written (checked against the live repo, 22 Aug)
 

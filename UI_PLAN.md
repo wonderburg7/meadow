@@ -1,10 +1,12 @@
 # Meadow — UI Plan
 
+Status: partially delivered | Owner: Claude Code | Next: use current UI plans for remaining slices | Verified: 2026-08-26
+
 Planning document for a coherent interface redesign, written so a later
 Claude Code build session can implement it in small, testable slices
-without having to rediscover the design first. **Nothing in this
-document has been built.** No `.gd`/`.tscn` file, test or asset changes
-were made while writing it.
+without having to rediscover the design first. Several UI slices have since
+shipped; use the current UI plans and Git history to establish the state of a
+specific slice before acting.
 
 Sources consulted: `AGENTS.md`, `NEXTSTEPS.md`, `ROADMAP.md`,
 `DESIGN_BACKLOG.md`, `FUNCTION_MAP.md`, `AUDIT_PLAN.md`, `docs/known-

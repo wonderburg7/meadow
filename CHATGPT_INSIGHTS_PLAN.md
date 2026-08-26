@@ -9,9 +9,9 @@ history with their verification evidence; duplicating their implementation
 diaries here cost tokens without changing the next decision.
 
 Current unresolved advisory findings live in `insights_from_ChatGPT.md`.
-Active ChatGPT-only mechanism-check work lives in
-`CHATGPT_HEADLESS_CHECK_PLAN.md`, with its short hand-off in
-`CHATGPT_NEXTSTEPS.md`.
+There is no standing ChatGPT headless-check queue. Triggered capture may be
+assigned only for a named diagnostic gap; `CHATGPT_NEXTSTEPS.md` holds the
+current short hand-off.
 
 Two old ideas remain deliberately parked, not scheduled:
 

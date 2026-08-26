@@ -36,8 +36,8 @@ Movement is `speed * delta`, so uneven frame times show up as bees
 lurching rather than as a clean slowdown. If something looks twitchy
 before it looks slow, suspect per-frame allocation first.
 
-**Fog-of-war is currently mid-investigation** (`AUDIT_PLAN.md` Bundle
-C) — instrumentation is split into `fog_of_war_update` and
-`fog_of_war_draw`, but the baseline measurement is still pending. Don't
-write optimisation code for it without a fresh baseline showing a real
-cost; "measured, not a bottleneck" is a valid outcome.
+**Fog-of-war is a measured hot path, not a standing optimisation
+instruction.** Its profiler spans are `fog_of_war_update` and
+`fog_of_war_relight`; the 22 Aug baseline and current follow-up are
+recorded in `insights_from_ChatGPT.md`. Take a fresh comparable baseline
+before changing it. "Measured, not a bottleneck" remains a valid outcome.

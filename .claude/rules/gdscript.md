@@ -5,13 +5,14 @@ paths:
 
 # GDScript conventions for Meadow
 
-Full bug catalogue: `docs/known-pitfalls.md`. Two check suites exist for
-a reason — run both before calling a change done:
+Full bug catalogue: `docs/known-pitfalls.md`. Run the combined check before
+calling a change done:
 
+```powershell
+.\tools\verify.ps1
 ```
-python3 tests/source_checks.py    # does it parse and resolve
-python3 tests/balance_tests.py    # are the numbers survivable
-```
+
+Pass `-PythonPath` when Python is not on `PATH`.
 
 Neither is a real GDScript parser (see "Verifying without Godot" in
 `CLAUDE.md`). If `mcp__godot__*` tools are available this session, boot

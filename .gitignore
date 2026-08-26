@@ -4,3 +4,6 @@
 NVIDIA Corporation/
 # Manual pre-slice snapshots -- git history replaces these
 _backups/
+# Per-user Claude permissions and temporary task state
+.claude/settings.local.json
+.claude/scheduled-task*.lock
