@@ -16,6 +16,17 @@ says the fix has shipped.
 
 ## Checkable now
 
+### Safe forager return reserve (recommendation Slice 4)
+- [ ] Foragers now turn for home based on a calculated return-energy
+      estimate (distance x route factor x flight/upkeep rate, plus a
+      safety margin) instead of a fixed 20% energy threshold -- watch a
+      run with foragers ranging far from the hive and confirm they still
+      turn back with a sensible margin rather than cutting it fine or
+      turning back too early on short trips. `source_checks.py`/
+      `balance_tests.py` pass; no headless A/B against the old fixed
+      threshold has run yet. See `git log` (merge commit for
+      `codex/recommendation-slice-4`).
+
 ### AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.

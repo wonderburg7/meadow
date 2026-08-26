@@ -128,6 +128,21 @@ plan file, full history in `git log`.
 
 ## Settled from this session, no action needed
 
+- ChatGPT's `codex/recommendation-slice-3` (idle miner dispatch, fog
+  relight row spans, stalled build target diagnosis) and
+  `codex/recommendation-slice-5` (stall-recovery obstacle/flower identity,
+  project-name-derived headless log dir) merged 26 Aug -- both are
+  performance/diagnostic tooling, checks pass, no hands-on check needed.
+  `codex/recommendation-slice-4` (safe forager return reserve, replacing
+  the fixed `critical_recall_threshold` with a distance-based estimate)
+  also merged 26 Aug -- this one is a real behaviour change and needs a
+  hands-on check; see `HANDS_ON_CHECKS.md`. `codex/recommendation-slice-6`
+  was **not** merged -- it rewrites this file down to 3 items, silently
+  dropping items 3-9 below (nursery redesign, hit-area bug, foraging
+  window, forager-history save gap, Challenge 1 revamp, handling/
+  senescence verification), none of which are actually done. Held for
+  Dave to say whether to take its CLAUDE.md/tooling changes without the
+  NEXTSTEPS.md rewrite.
 - Headless-run efficiency and selective diagnostics (ChatGPT's
   `codex/headless-efficiency-wrap`) merged 25 Aug: compact verdicts,
   deterministic routing, diagnostic profiles, experiment manifests and
