@@ -1,6 +1,7 @@
 # Crab spiders -- plan
 
-Status: plan only | Owner: Dave / Claude Code | Next: Dave to select a bundle | Verified: 2026-08-26
+Status: plan only | Owner: Dave / Claude Code | Next: Dave to select a bundle
+| Dependency: no active product selection | Verified: 2026-08-26
 
 Full design for `DESIGN_BACKLOG.md` §7.3 / `ROADMAP.md`'s "Predators" row
 (confirmed wanted 14 Aug, detail worked out 20 Aug, extended same day

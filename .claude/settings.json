@@ -2,7 +2,8 @@
   "permissions": {
     "deny": [
       "Read(./.godot/**)",
-      "Read(./_backups/**)"
+      "Read(./_backups/**)",
+      "Read(./docs/archive/**)"
     ]
   }
 }

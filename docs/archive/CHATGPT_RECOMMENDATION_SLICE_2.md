@@ -1,4 +1,4 @@
-# Recommendation Slice 2 — fog relight
+# Archived — recommendation Slice 2: fog relight
 
 Status: implemented, pending integration | Branch: `codex/recommendation-slice-2` | Baseline: `59a00ab`
 

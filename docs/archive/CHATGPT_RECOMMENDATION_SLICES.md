@@ -1,4 +1,4 @@
-# Insights recommendation implementation plan
+# Archived — insights recommendation implementation plan
 
 Status: proposed | Owner: Dave / implementer to be assigned | Next: Slice 0, establish the comparable performance baseline | Evidence: `insights_from_ChatGPT.md`, refreshed 22–23 Aug 2026
 

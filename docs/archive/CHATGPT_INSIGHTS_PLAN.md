@@ -1,4 +1,4 @@
-# Retired ChatGPT insights implementation ledger
+# Archived — retired ChatGPT insights implementation ledger
 
 > **CHATGPT-ONLY FILE. Claude Code must ignore this file unless Dave
 > explicitly points to it.**

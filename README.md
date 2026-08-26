@@ -81,7 +81,8 @@ save/load and restart.
 ## Verifying a change
 
 Run the portable verification command before committing. It runs the two
-Python suites concurrently, then checks `FUNCTION_MAP.md`:
+Python suites concurrently, then checks `FUNCTION_MAP.md` and the current
+planning metadata:
 
 ```powershell
 .\tools\verify.ps1

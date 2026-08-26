@@ -1,5 +1,9 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
+Status: designed, not scheduled | Owner: Dave | Next: select Phase A only
+when progression becomes the active product direction | Dependency: no active
+implementation slice | Verified: 2026-08-26
+
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Reconciled against `DESIGN_BACKLOG.md`, `ROADMAP.md`, `UI_PLAN.md` and the codebase as it stood 22 Aug 2026, from Dave's original design brief. This file is now the source of truth for skill-tree/adaptation design — `UI_PLAN.md` §13, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
 Documentation only. No game code changes in this pass — see section 10 for the build sequence Claude Code will work through separately.

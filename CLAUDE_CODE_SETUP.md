@@ -31,9 +31,9 @@ on what it already reads.
 `.claudeignore` does *not* port over the way you might expect — Claude
 Code doesn't apply file-based ignore lists that way. The actual
 mechanism is a permissions deny rule in `.claude/settings.json` (already
-set up in this repo to keep `.godot/` and `_backups/` out of context) —
-extend that file's `deny` list, not `.claudeignore`, if more paths need
-excluding later.
+set up in this repo to keep `.godot/`, `_backups/` and completed
+`docs/archive/` records out of routine context) — extend that file's
+`deny` list, not `.claudeignore`, if more paths need excluding later.
 
 ## 4. Trim what loads into every session
 
@@ -72,8 +72,9 @@ This is the biggest lever, bigger than any settings file:
    the same "small playable slices" rule already in `CLAUDE.md`.
 3. When it's done: run the two test suites, confirm they pass, commit
    with a plain-language message.
-4. Have Claude rewrite `NEXTSTEPS.md` (overwrite, not append) with
-   what's next.
+4. Have Claude rewrite `NEXTSTEPS.md` (overwrite, not append) with exactly
+   the current slice, one successor and one blocker; update only the owning
+   plan and any real hands-on check alongside it.
 5. `/clear` the session, or just start a fresh one next time. A new
    session reads `NEXTSTEPS.md` (a few hundred words) instead of
    re-deriving "what's next" from the whole project.
@@ -109,8 +110,8 @@ staged copy.
 
 ## 8. First things to try
 
-- Open a session, let it read `CLAUDE.md` then `NEXTSTEPS.md`, and ask it
-  to summarise what it now knows about the project in a couple of
+- Open a session, let it read `NEXTSTEPS.md` then `CLAUDE.md`, and ask it
+  to summarise the selected slice and its routed files in a couple of
   sentences — a quick check that the routing table and function map are
   doing their job before you trust them with a real change.
 - Pick the smallest item on `NEXTSTEPS.md` and run one full slice

@@ -1,4 +1,4 @@
-# Headless-run efficiency and selective diagnostics
+# Archived — headless-run efficiency and selective diagnostics
 
 Status: **complete through the approved core scope** (Slices 0-5) | Deferred:
 Slice 6 only with a named diagnostic question | Updated: 2026-08-25

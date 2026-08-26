@@ -62,4 +62,9 @@ if ($failed) {
 }
 
 & $python (Join-Path $repoRoot "tools/update_function_map.py") --check
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+
+& $python (Join-Path $repoRoot "tools/check_docs.py")
 exit $LASTEXITCODE

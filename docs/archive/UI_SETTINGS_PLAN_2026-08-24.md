@@ -1,4 +1,4 @@
-# UI settings & polish plan — Dave's 22 Aug second pass
+# Archived — UI settings and polish plan (24 Aug 2026 snapshot)
 
 Written from six screenshots Dave sent after playing with the settings
 window and a bee selected. `UI_BUGFIX_PLAN.md` Slices 1-5 are already

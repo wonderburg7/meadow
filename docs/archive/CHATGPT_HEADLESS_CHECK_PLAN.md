@@ -1,4 +1,4 @@
-# ChatGPT-only headless mechanism check plan
+# Archived — ChatGPT-only headless mechanism check plan
 
 > **CHATGPT-ONLY WORKING FILE. Claude Code must ignore this file.**
 > Do not read it for orientation, implement it, maintain it, or fold it into
