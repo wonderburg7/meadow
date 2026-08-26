@@ -35,8 +35,8 @@ says the fix has shipped.
 - [ ] Foraging window (**G**) showed real numbers when Dave checked it 22
       Aug (see archive) but on 24 Aug showed no data at all -- check
       whether Auto scouting/Auto-recruitment were both off (the panel is
-      correctly all-zero then) before treating this as a regression. See
-      `FORAGING_ECOLOGY_PLAN.md` Slice 1.
+      correctly all-zero then) before treating this as a regression. See the
+      current campaign in `FORAGING_ECOLOGY_PLAN.md`.
 
 ### Proximity recruitment (Slice 9)
 - [ ] Turn on Proximity recruitment (settings cog, Foraging section) --
@@ -45,19 +45,18 @@ says the fix has shipped.
       indoors (near the comb, not at the door) rather than either bee
       ever waiting anywhere; check the selection panel reads "dancing
       to..."/"being shown a better patch" during it. See
-      `FORAGING_ECOLOGY_PLAN.md`'s Slice 9 build note -- this hasn't been
-      through a real headless sweep yet (no Godot available in the build
-      session), so this is also the first real look at whether it feels
-      right, not just a confirmation of numbers already checked.
+      current `FORAGING_ECOLOGY_PLAN.md` campaign -- this has not been
+      through a real headless sweep yet, so it is also the first real look at
+      whether it feels right, not just a confirmation of numbers already
+      checked.
 
 ## Blocked -- waiting on a fix or an unbuilt slice
 
 ### UI Plan slices 1-7 -- two items still open from the 24 Aug re-check
 - [ ] Font choice still doesn't change -- **not a code bug**: the three
       non-default typefaces have no font files under `assets/fonts/` yet
-      (`ui_theme.gd::_typeface_path`, `UI_PLAN.md` section 8 already flagged
-      this as "a concrete, small task"). Blocked on `UI_SETTINGS_PLAN.md`
-      Slice 4 (part of the UI polish batch, `NEXTSTEPS.md` item 1). Dave's
+      (`ui_theme.gd::_typeface_path`; the UI archive records the original
+      asset decision). Blocked on UI-A in `UI_PLAN.md`. Dave's
       25 Aug check: choosing a non-default font causes a visible pause,
       as if something's loading, but no on-screen text updates -- worth
       checking during the Slice 4 fix whether the theme-reload path is
@@ -66,15 +65,13 @@ says the fix has shipped.
 - [ ] Meadow/Hive (and other top-right) button hit areas are smaller
       inside a Challenge than in a Scenario -- corrected finding, opposite
       of the original guess. Needs its own investigation session before
-      there's a fix to check. See `UI_BUGFIX_PLAN.md` Slice 7 (revised 24
-      Aug) and `NEXTSTEPS.md` item 4.
+      there's a fix to check. See UI-D in `UI_PLAN.md`.
 
 ### Panel sizing and overlap
 - [ ] Summary panel (bee or cell) and command tray/job panel no longer
       overlap, and both hold a fixed width that doesn't change with how
       much text the current bee/cell has -- only a window resize should
-      change it. Not built yet. See `UI_BUGFIX_PLAN.md` Slice 6 (revised
-      24 Aug) and `NEXTSTEPS.md` item 2.
+      change it. Not built yet. See UI-B in `UI_PLAN.md`.
 
 ### Nursery zone removal and cell action-tray redesign
 - [ ] Cell bottom-centre popup is two columns (Reserve for / Nursery) with
@@ -82,9 +79,8 @@ says the fix has shipped.
       zone reservation mechanic itself is gone; Priority low/medium/high
       now lives under Nursery. Not built yet -- also touches queen
       egg-laying (`hive.gd`), so check laying still behaves sensibly with
-      no zone cells at all, not just the panel layout. See
-      `UI_BUGFIX_PLAN.md` Slice 9 (rewritten 24 Aug) and `NEXTSTEPS.md`
-      item 3.
+      no zone cells at all, not just the panel layout. See UI-C in
+      `UI_PLAN.md`.
 
 ### Recruitment and crab-spider fixes
 - [ ] Recruitment competition fix (commit `103d716`) -- **not** re-checked;

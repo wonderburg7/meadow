@@ -1,4 +1,4 @@
-# Codex parallel-development trial
+# Archived — Codex parallel-development trial
 
 ## Assignment
 

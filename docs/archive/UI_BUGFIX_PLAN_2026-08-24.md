@@ -1,4 +1,4 @@
-# UI bugfix plan — from Dave's 22 Aug hands-on pass
+# Archived — UI bugfix plan from Dave's 22 Aug hands-on pass
 
 Written after Dave played through Challenge 1 and the settings window and
 found that several things `NEXTSTEPS.md`/`ROADMAP.md` listed as "built"

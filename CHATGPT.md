@@ -174,6 +174,10 @@ commits distinct from Claude's work.
 - For current ChatGPT work, read `CHATGPT_NEXTSTEPS.md` rather than
   `NEXTSTEPS.md`. In implementation mode, work only from Dave's explicit task
   or an active `CHATGPT_` plan that Dave explicitly asks Codex to continue.
+- Treat `NEXTSTEPS.md` as the only canonical current queue: current slice,
+  one successor and one blocker. Update the owning plan, the queue and any
+  hands-on check only at a real slice transition; archive terminal execution
+  records instead of retaining them at the root.
 - Read other Meadow files only as evidence needed for the requested analysis.
 - Do not adopt or complete tasks from Claude's plans.
 - Keep recommendations clearly labelled as recommendations, not completed

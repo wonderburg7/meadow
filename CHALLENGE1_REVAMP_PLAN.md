@@ -1,9 +1,12 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Implementation in progress on `codex/meadow-work`. Bundles A-C are
-built as of 23 Aug 2026; Bundles D-H remain. Each bundle is sized for one
-session with its own check before the next starts — the same shape as
-`CRAB_SPIDER_PLAN.md`'s "Implementation bundles".
+Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle D,
+meadow arrival and manual foraging | Dependency: explicit selection in
+`NEXTSTEPS.md` | Verified: 2026-08-26
+
+Bundles A-C are built; Bundles D-H remain. Each bundle is sized for one session
+with its own check before the next starts — the same shape as
+`CRAB_SPIDER_PLAN.md`'s “Implementation bundles”.
 
 **Source**: a design pass with Dave, 22 Aug 2026, plus three scope
 decisions he made that morning (recorded in "Decisions resolved" below).

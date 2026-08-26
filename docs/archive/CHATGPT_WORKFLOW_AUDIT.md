@@ -1,4 +1,4 @@
-# Meadow AI workflow audit
+# Archived — Meadow AI workflow audit
 
 Status: current recommendation | Owner for integration: Dave / Claude Code
 | Audited: 23 Aug 2026
