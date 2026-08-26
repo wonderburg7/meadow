@@ -136,13 +136,18 @@ plan file, full history in `git log`.
   `codex/recommendation-slice-4` (safe forager return reserve, replacing
   the fixed `critical_recall_threshold` with a distance-based estimate)
   also merged 26 Aug -- this one is a real behaviour change and needs a
-  hands-on check; see `HANDS_ON_CHECKS.md`. `codex/recommendation-slice-6`
-  was **not** merged -- it rewrites this file down to 3 items, silently
-  dropping items 3-9 below (nursery redesign, hit-area bug, foraging
-  window, forager-history save gap, Challenge 1 revamp, handling/
-  senescence verification), none of which are actually done. Held for
-  Dave to say whether to take its CLAUDE.md/tooling changes without the
-  NEXTSTEPS.md rewrite.
+  hands-on check; see `HANDS_ON_CHECKS.md`. `codex/recommendation-slice-6`'s
+  tooling/doc changes (CLAUDE.md/README.md wording, `.gitignore` entries,
+  pinned godot-mcp version, new `tools/verify.ps1`) were merged 26 Aug too,
+  with a working-directory bug in `verify.ps1` fixed along the way. Its
+  rewrite of this file was deliberately **not** taken -- it collapsed this
+  file down to 3 items, dropping items 3-9 below (nursery redesign,
+  hit-area bug, foraging window, forager-history save gap, Challenge 1
+  revamp, handling/senescence verification) even though none of that work
+  is done. Checked: all nine items' "Full detail" pointers already live in
+  `UI_BUGFIX_PLAN.md`, `HANDS_ON_CHECKS.md`, `DESIGN_BACKLOG.md` section 5,
+  `CHALLENGE1_REVAMP_PLAN.md` and `FORAGING_ECOLOGY_PLAN.md`, so nothing
+  was lost by skipping that rewrite.
 - Headless-run efficiency and selective diagnostics (ChatGPT's
   `codex/headless-efficiency-wrap`) merged 25 Aug: compact verdicts,
   deterministic routing, diagnostic profiles, experiment manifests and
