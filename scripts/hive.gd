@@ -133,8 +133,23 @@ func cells_holding(content: String) -> Array:
 ## Keys are axial Vector2i, values are the node sitting there.
 var occupied_tiles: Dictionary = {}
 
+## The single invalidation source for miners waiting for work.  A miner may
+## remember a failed search only while this value is unchanged; mutations that
+## can make a job appear, disappear or become reachable advance it.
+var mining_work_epoch: int = 0
+
 func register_tile(hex: Vector2i, node: Node2D) -> void:
 	occupied_tiles[hex] = node
+	if node.has_signal("mining_work_changed"):
+		node.connect("mining_work_changed", _advance_mining_work_epoch)
+
+
+func invalidate_mining_work() -> void:
+	_advance_mining_work_epoch()
+
+
+func _advance_mining_work_epoch() -> void:
+	mining_work_epoch += 1
 
 func tile_is_free(hex: Vector2i) -> bool:
 	return not occupied_tiles.has(hex)
@@ -830,6 +845,7 @@ const NEIGHBOUR_STEPS := [
 ## A soil block is on the edge if any neighbouring tile is walkable --
 ## otherwise no bee could ever stand next to it to dig.
 func refresh_edge_flags() -> void:
+	var topology_changed := false
 	for node in occupied_tiles.values():
 		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
 			continue
@@ -838,7 +854,11 @@ func refresh_edge_flags() -> void:
 			if tile_is_walkable(node.axial + step):
 				edge = true
 				break
-		node.is_edge = edge
+		if node.is_edge != edge:
+			node.is_edge = edge
+			topology_changed = true
+	if topology_changed:
+		_advance_mining_work_epoch()
 
 ## A block the player has flagged for digging. Blocks the player marked
 ## always come first, whether or not the miner is on automine -- an
@@ -940,6 +960,7 @@ func remove_block(block: Node2D, floor_maker: Callable) -> void:
 		return
 	var hex: Vector2i = block.axial
 	occupied_tiles.erase(hex)
+	_advance_mining_work_epoch()
 	block.queue_free()
 	floor_maker.call(hex)
 	build_navigation()

@@ -17,6 +17,7 @@ const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
 static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.is_built:
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "target_invalid_or_already_built", "not_attempted", "not_checked")
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
@@ -34,8 +35,15 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 	# existed before.
 	var stand_point: Vector2 = bee.target_cell.slot_position(0)
 	BeeMovement.move_towards(bee, stand_point, delta)
+	if bee.path_points.is_empty():
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "no_route_to_build_approach", "unreachable", "no_route")
+		bee.target_cell.release_builder(bee)
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		return
 	if bee.position.distance_to(stand_point) < 12.0:
 		bee.target_cell.claim_builder(bee)
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "claimed", "arrived_at_build_approach", "arrived", "route_ok")
 		bee.state = State.BUILDING
 
 
@@ -49,6 +57,7 @@ static func builder_build(bee: Node2D, delta: float) -> void:
 		return
 	bee.target_cell.add_build_progress(delta)
 	if bee.target_cell.is_built:
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "completed", "build_progress_finished", "arrived", "route_ok")
 		bee.target_cell.release_builder(bee)
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE

@@ -645,6 +645,9 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	world = world_node
 	resource_type = type
 	bee_id = id
+	# Mining dispatch has its own stable phase.  Keep the older general think
+	# jitter untouched: it also schedules stall and survival checks.
+	_miner_dispatch_timer = float(bee_id % int(THINKS_PER_SECOND)) / THINKS_PER_SECOND
 	role = bee_role
 	if is_queen:
 		# The queen's day used to be eat, lay, wait, eat, lay. Nursing is
@@ -817,6 +820,14 @@ var since_last_think: float = 0.0
 ## True on the frames where the slow work is allowed to happen.
 var thinking: bool = false
 
+## A failed mining search stays valid only until the Hive work owner says
+## otherwise.  This prevents every idle miner from walking the global soil
+## collection again on every think tick when there is no work.
+var _mining_no_work_epoch: int = -1
+var _mining_no_work_automine: bool = false
+var _miner_dispatch_timer: float = 0.0
+var _miner_dispatch_due: bool = false
+
 func _process(delta: float) -> void:
 	Perf.begin("bees")
 	if hive == null or is_dying:
@@ -832,6 +843,15 @@ func _process(delta: float) -> void:
 	if thinking:
 		think_timer = (1.0 / THINKS_PER_SECOND) * randf_range(0.85, 1.15)
 		since_last_think = 0.0
+
+	# Miner job selection is deliberately independent from the general think
+	# jitter: stable IDs spread dispatches deterministically across the same
+	# bounded 8 Hz cadence without perturbing any other random decisions.
+	_miner_dispatch_due = false
+	_miner_dispatch_timer -= delta
+	while _miner_dispatch_timer <= 0.0:
+		_miner_dispatch_timer += 1.0 / THINKS_PER_SECOND
+		_miner_dispatch_due = true
 
 	Perf.begin("bee_burn")
 	BeeSurvival.age_and_burn(self, delta)
@@ -1018,7 +1038,8 @@ func _process(delta: float) -> void:
 
 		# --- miner ---
 		State.MINE_IDLE:
-			_idle_dispatch()
+			if _miner_dispatch_due:
+				_idle_dispatch()
 		State.TO_MINE_SITE:
 			BeeMining.miner_go_to_site(self, delta)
 		State.MINING:
@@ -1284,10 +1305,13 @@ func _try_role_work(r: int) -> bool:
 			if site:
 				target_cell = site
 				state = State.TO_BUILD_SITE
+				DiagnosticLog.log_build_target(self, site, "assigned", "build_work_selected", "pending", "not_checked")
 				return true
 			return false
 
 		Role.MINER:
+			if _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine:
+				return false
 			# Blocks the player marked always come first, automine or
 			# not -- an explicit instruction outranks the automatic
 			# choice, so switching automine on doesn't make a miner
@@ -1306,9 +1330,12 @@ func _try_role_work(r: int) -> bool:
 				if block != null:
 					block.set_marked(true)
 			if block != null:
+				_mining_no_work_epoch = -1
 				target_block = block
 				state = State.TO_MINE_SITE
 				return true
+			_mining_no_work_epoch = hive.mining_work_epoch
+			_mining_no_work_automine = automine
 			return false
 
 		Role.HONEY_MAKER:
@@ -1510,15 +1537,21 @@ func set_mine_target(block: Node2D) -> void:
 	mine_queue = [block] if is_instance_valid(block) else []
 	if is_instance_valid(block):
 		block.set_marked(true)
+	if hive != null:
+		hive.invalidate_mining_work()
 
 func queue_mine_target(block: Node2D) -> void:
 	if not is_instance_valid(block) or mine_queue.has(block):
 		return
 	mine_queue.append(block)
 	block.set_marked(true)
+	if hive != null:
+		hive.invalidate_mining_work()
 
 func clear_mine_queue() -> void:
 	mine_queue.clear()
+	if hive != null:
+		hive.invalidate_mining_work()
 
 ## The next block this miner should dig from its own order, skipping any
 ## that have been dug out or unmarked since.

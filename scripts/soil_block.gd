@@ -14,6 +14,8 @@ const Shapes = preload("res://scripts/shapes.gd")
 
 const SOIL_COLOR := Color(0.30, 0.22, 0.12)
 
+signal mining_work_changed
+
 var axial: Vector2i = Vector2i.ZERO
 var block_size: float = 17.0
 
@@ -83,16 +85,22 @@ func setup(hex: Vector2i) -> void:
 ## reprioritise -- silently reset it to 0% and wasted every miner-second
 ## spent on it.
 func set_marked(value: bool) -> void:
+	if marked_for_mining == value:
+		return
 	marked_for_mining = value
 	marker.visible = value
 	_refresh()
+	mining_work_changed.emit()
 
 func claim_miner(bee: Node2D) -> void:
 	if not miners.has(bee):
 		miners.append(bee)
+		mining_work_changed.emit()
 
 func release_miner(bee: Node2D) -> void:
-	miners.erase(bee)
+	if miners.has(bee):
+		miners.erase(bee)
+		mining_work_changed.emit()
 
 ## Called once per frame by each miner working here, so contributions add
 ## up. Returns true when the block is finished and should be removed.

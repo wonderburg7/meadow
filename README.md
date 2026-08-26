@@ -103,6 +103,10 @@ spotless colony, and a stretch of the year with nothing in flower.
 Neither can check anything click-driven or visual. That still needs
 playing.
 
+For repeatable hot-path measurements, use the Slice-0 baseline fixture and
+its capture contract in `docs/PERFORMANCE_BASELINE.md`. Its output is a
+bounded aggregate in the headless session summary, not a per-frame trace.
+
 ---
 
 ## Layout

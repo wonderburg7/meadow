@@ -275,6 +275,9 @@ var scenario_stop_when: Dictionary = {}
 ## "_resolved" flag), instead of running on after a strategy script has
 ## nothing left to do.
 var scenario_stop_when_actions_resolved: bool = false
+## Dev-only bounded wall-clock profiler window. It observes a pinned scenario
+## without changing simulation timing or player settings.
+var scenario_performance_capture: Dictionary = {}
 ## A scenario's "actions" array (insights_from_ChatGPT.md's 22 Aug 2026
 ## headless-action-driver extension) -- see scenario_actions.gd for the
 ## verbs/triggers and main.gd::_process for where it's ticked.
@@ -462,6 +465,15 @@ func _ready() -> void:
 	# Syncs Session.perf_enabled and the corner to whatever "fps" was
 	# left starred as, rather than assuming a fresh run starts unstarred.
 	hud.pinned_stats_changed()
+	if not scenario_performance_capture.is_empty():
+		# A headless run has no HUD interaction to pin fps. Keep this explicit
+		# so a player's saved preference cannot alter a baseline capture.
+		Session.perf_enabled = true
+		Perf.start_capture(
+			int(scenario_performance_capture.warmup_frames),
+			int(scenario_performance_capture.measurement_frames),
+			scenario_performance_capture.sections,
+		)
 
 	debug_panel = DebugPanel.new()
 	add_child(debug_panel)
@@ -602,6 +614,10 @@ func _process(delta: float) -> void:
 		Perf.end("camera_pan")
 		selection_layer.queue_redraw()
 		fog_of_war._update()
+	elif bool(scenario_performance_capture.get("include_fog", false)):
+		# Performance captures may opt back into just the fog simulation
+		# path. Camera/input presentation stays disabled for headless runs.
+		fog_of_war._update()
 	Perf.begin("scenery")
 	world_building._apply_scenery_setting()
 	Perf.end("scenery")
@@ -650,6 +666,8 @@ func _process(delta: float) -> void:
 	Perf.begin("prune_selection")
 	_prune_selection()
 	Perf.end("prune_selection")
+	if scenario_active and not scenario_performance_capture.is_empty() and Perf.capture_complete():
+		_end_scenario_run("performance_capture_complete")
 
 # --- the frame rate readout ----------------------------------------
 ## Measured off the wall clock rather than off `delta`.
@@ -960,6 +978,12 @@ func _apply_scenario_boot_arg() -> void:
 		return
 
 	var level: Dictionary = parsed.duplicate(true)
+	var performance_capture = level.get("performance_capture", null)
+	level.erase("performance_capture")
+	scenario_performance_capture = _parse_scenario_performance_capture(performance_capture)
+	if performance_capture != null and scenario_performance_capture.is_empty():
+		get_tree().quit(2)
+		return
 	var scenario_diagnostics = level.get("diagnostics", null)
 	level.erase("diagnostics")
 	var stop: Dictionary = level.get("stop", {})
@@ -1017,6 +1041,7 @@ func _apply_scenario_boot_arg() -> void:
 	if not DiagnosticLog.configure_scenario_diagnostics(scenario_diagnostics):
 		get_tree().quit(2)
 		return
+	DiagnosticLog.configure_performance_capture(scenario_performance_capture)
 	DiagnosticLog.run_id_override = run_id
 	DiagnosticLog.session_path_override = session_output_path
 	seed(scenario_random_seed)
@@ -1028,6 +1053,50 @@ func _apply_scenario_boot_arg() -> void:
 	# has to trigger that itself.
 	Session.reset_run_state()
 	print("AI playtest: loaded scenario %s (stop.max_days=%s, time_scale=%s, random_seed=%s)" % [scenario_path, scenario_stop_max_days, scenario_time_scale, scenario_random_seed])
+
+
+func _parse_scenario_performance_capture(raw: Variant) -> Dictionary:
+	if raw == null:
+		return {}
+	if not (raw is Dictionary):
+		push_error("scenario performance_capture must be an object")
+		return {}
+	var allowed := ["warmup_frames", "measurement_frames", "sections", "include_fog"]
+	for key in raw:
+		if not key in allowed:
+			push_error("scenario performance_capture has unknown key: %s" % key)
+			return {}
+	for required in ["warmup_frames", "measurement_frames", "sections"]:
+		if not raw.has(required):
+			push_error("scenario performance_capture missing %s" % required)
+			return {}
+	var warmup = raw.warmup_frames
+	var measurement = raw.measurement_frames
+	if not _is_whole_number(warmup) or warmup < 0:
+		push_error("scenario performance_capture.warmup_frames must be a non-negative integer")
+		return {}
+	if not _is_whole_number(measurement) or measurement <= 0:
+		push_error("scenario performance_capture.measurement_frames must be a positive integer")
+		return {}
+	if not (raw.sections is Array) or raw.sections.is_empty():
+		push_error("scenario performance_capture.sections must be a non-empty array")
+		return {}
+	var sections: Array = []
+	for section in raw.sections:
+		if not (section is String) or section.is_empty() or section in sections:
+			push_error("scenario performance_capture.sections must contain unique non-empty strings")
+			return {}
+		sections.append(section)
+	var include_fog = raw.get("include_fog", false)
+	if not (include_fog is bool):
+		push_error("scenario performance_capture.include_fog must be boolean")
+		return {}
+	return {"warmup_frames": warmup, "measurement_frames": measurement,
+		"sections": sections, "include_fog": include_fog}
+
+
+func _is_whole_number(value: Variant) -> bool:
+	return (value is int) or (value is float and is_equal_approx(value, round(value)))
 
 ## Ends a headless scenario run the same way a normal loss does --
 ## DiagnosticLog gets its summary line either way -- but quits the process
