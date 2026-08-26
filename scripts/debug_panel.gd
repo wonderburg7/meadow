@@ -1050,7 +1050,9 @@ func _ready() -> void:
 	toggle_button.text = "⚙"
 	toggle_button.theme = UiTheme.build_theme()
 	toggle_button.theme_type_variation = "Heading"
-	toggle_button.custom_minimum_size = Vector2(36, 26)
+	# Match HUD's primary top-right controls so the two anchored groups form
+	# one deliberate bar rather than visibly different rows.
+	toggle_button.custom_minimum_size = Vector2(36, 28)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toggle_button.offset_right = -8
