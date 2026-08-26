@@ -12,6 +12,12 @@ This file governs the remaining evidence, not a second build of the system.
 
 Use one pinned-seed experiment manifest and compact verdict artefacts to run:
 
+`test_scenarios/foraging_evidence_campaign.json` pins the five established
+seeds and a common 15-cell/11-forager, 60-day setup. Launch it with
+`tools/run_headless.ps1 --experiment` and pass the resulting `result.json` to
+`tools/foraging_evidence_report.py`; that creates the reviewable
+`foraging-evidence-verdict.json` beside the run artefacts.
+
 1. **Recruitment comparison.** Compare no automation, entrance recruitment
    and proximity recruitment at matched seeds/population. Sweep the documented
    dance radius, duration and fuzz constants. Keep entrance recruitment as the

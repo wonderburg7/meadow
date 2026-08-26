@@ -170,6 +170,23 @@ JSONL. The runner requires that sentinel and never infers a session directory
 from the Godot project name, so `Meadow` and `Meadow - Claude` worktrees and
 concurrent launches cannot select one another's logs.
 
+### Foraging evidence campaign
+
+`test_scenarios/foraging_evidence_campaign.json` is the pinned five-seed
+campaign for recruitment, handling experience and flower senescence. Run it
+without changing its seed list or base scenario, then render its compact
+verdict artefact:
+
+```powershell
+.\tools\run_headless.ps1 --experiment test_scenarios\foraging_evidence_campaign.json
+python tools\foraging_evidence_report.py <experiment-result.json>
+```
+
+The verdict reports outcome means/ranges, starvation deaths, handling-time
+averages by prior `species_experience` bucket, and flower senescence counts.
+A required zero-event channel is listed as `not_exercised`, not treated as
+evidence that the mechanic had no effect.
+
 ## Scenario expectations
 
 `expect` is optional. It is evaluated by Python only after the final evidence

@@ -303,6 +303,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     process_stdout = ""
     status = "passed"
     reason: dict[str, Any] | None = None
+    started_at = time.monotonic()
     try:
         completed = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
         returncode = completed.returncode
@@ -376,7 +377,8 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         "actions": action_counts,
         "expectations": {"passed": [item.identifier for item in expectation_results if item.passed],
                          "failed": [item.identifier for item in expectation_results if not item.passed]},
-        "process": {"exit_code": returncode}, "artefacts": artefacts,
+        "process": {"exit_code": returncode,
+                    "wall_seconds": round(time.monotonic() - started_at, 6)}, "artefacts": artefacts,
     }
     if status != "passed":
         failure_path = _write_failure(run_dir, status=status, run_id=run_id,
