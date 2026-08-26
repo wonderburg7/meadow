@@ -143,15 +143,19 @@ but could indicate avoidable search churn.
 - This run did not meaningfully exercise winter, weather, predators, rivals,
   disease or the newly enabled automation, so it is not evidence for them.
 
-## Older unresolved design questions
+## Resolved product direction (26 Aug 2026)
 
-- The Nurse tooltip says a colony cannot grow without a nurse, while the queen
-  is deliberately a capable backup nurse. Align the wording or the mechanic.
-- Decide whether a Stocking specialist should also be diverted into
-  clearing/eviction; the current tooltip describes stocking only.
-- `nectar_per_honey = 2` with `honey_energy_factor = 4` doubles stored energy
-  before worker costs. Keep it if honey making is meant to create energy;
-  otherwise model the whole colony/winter economy before changing it.
+- The queen remains the default emergency/backup nurse. Challenges and
+  scenarios may explicitly replace that default. Future tooltip/teaching and
+  tests must describe the fallback rather than remove it.
+- Stocking is an indoor resource-moving role for assigned cell workers. A
+  worker can move resources from its cell to one or more other cells; player
+  management of those routes/rules is a separate future feature. It is neither
+  clearing nor eviction nor a generic indoor fallback.
+- Nectar-to-honey work converts and stores nectar only; it must not create
+  energy. A future nectar-spoilage feature remains separate. Before changing
+  the current conversion values, model the whole colony/winter economy and
+  validate the result over multiple seasons.
 
 ## Suggested order
 
