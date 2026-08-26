@@ -6,13 +6,13 @@ archive and Git history.
 
 ## Next up
 
-1. **Current — UI-A HUD integrity batch.** Implement the narrow top-bar,
-   theme-state, summary-contrast and stale scent-mark fixes in `UI_PLAN.md`.
-   Keep font assets in their own licensing/asset commit.
-2. **Successor — foraging evidence campaign.** Run the matched recruitment,
+1. **Current — foraging evidence campaign.** Run the matched recruitment,
    handling-experience and senescence experiments in
    `FORAGING_ECOLOGY_PLAN.md`. Do not change recruitment defaults without
    the comparison.
+2. **Successor — UI-B fixed panel widths.** Make summary and command/cell
+   trays use viewport-derived widths in `UI_PLAN.md`, closing the
+   summary/tray overlap.
 3. **Blocked — forager-history save persistence.** It is approved in
    `DESIGN_BACKLOG.md`, but must first have a focused save-format design:
    exact fields, old-save fallback, versioning and deterministic tests.

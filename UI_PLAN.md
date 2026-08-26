@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
-Status: active | Owner: Dave / Claude Code | Next: UI-A HUD integrity batch |
-Dependency: none | Verified: 2026-08-26
+Status: active | Owner: Dave / Claude Code | Next: UI-B fixed panel widths |
+Dependency: none | Verified: 2026-08-27
 
 The delivered redesign and hands-on investigation records are archived at
 `docs/archive/UI_PLAN_2026-08-26.md`,
@@ -22,7 +22,7 @@ execution plan.
 - A visual/UI slice requires a targeted hands-on check even when static checks
   and a Godot boot pass.
 
-## UI-A — HUD integrity batch
+## UI-A — HUD integrity batch (shipped 27 Aug 2026)
 
 **Scope:** top-right tooltips/icons/consistent sizing, palette-aware
 hover/pressed/focus text, remaining HUD summary text contrast, stale scent-mark

@@ -16,6 +16,16 @@ says the fix has shipped.
 
 ## Checkable now
 
+### HUD integrity batch (UI-A)
+- [ ] Hover/press every top-right button (pause, speed, Colony, Nursery,
+      Foraging, Winter, Meadow/Hive, settings cog) in Dark, Light and High
+      Contrast -- text should stay readable, not fall back to the engine
+      default. Confirm Colony/Nursery/Foraging/Winter/Meadow-Hive all show a
+      useful tooltip on hover and sit at one consistent height. Click a
+      flower with an old scent mark and confirm the "Scent mark: Xs old"
+      line disappears once the mark expires rather than staying forever.
+      See `git log` (merge commit for `codex/ui-a-hud-integrity`).
+
 ### Safe forager return reserve (recommendation Slice 4)
 - [ ] Foragers now turn for home based on a calculated return-energy
       estimate (distance x route factor x flight/upkeep rate, plus a
@@ -56,7 +66,9 @@ says the fix has shipped.
 - [ ] Font choice still doesn't change -- **not a code bug**: the three
       non-default typefaces have no font files under `assets/fonts/` yet
       (`ui_theme.gd::_typeface_path`; the UI archive records the original
-      asset decision). Blocked on UI-A in `UI_PLAN.md`. Dave's
+      asset decision). UI-A shipped without them by design (separate
+      licensing/asset commit); blocked on sourcing the font files, not on
+      any more code. Dave's
       25 Aug check: choosing a non-default font causes a visible pause,
       as if something's loading, but no on-screen text updates -- worth
       checking during the Slice 4 fix whether the theme-reload path is
