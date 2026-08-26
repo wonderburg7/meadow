@@ -148,6 +148,12 @@ plan file, full history in `git log`.
   `UI_BUGFIX_PLAN.md`, `HANDS_ON_CHECKS.md`, `DESIGN_BACKLOG.md` section 5,
   `CHALLENGE1_REVAMP_PLAN.md` and `FORAGING_ECOLOGY_PLAN.md`, so nothing
   was lost by skipping that rewrite.
+- `codex/fix-bee-movement` merged 26 Aug: mechanical GDScript type-inference
+  fix in `bee_movement.gd::resolve_flight_start` (three `:=` inferences
+  replaced with explicit `Vector2` annotations -- the gap `gdtoolkit`
+  partly closes per `.claude/rules/gdscript.md`), plus a new
+  `test_scenarios/bee_movement_smoke_test.json`. No logic change, checks
+  pass, no hands-on check needed.
 - Headless-run efficiency and selective diagnostics (ChatGPT's
   `codex/headless-efficiency-wrap`) merged 25 Aug: compact verdicts,
   deterministic routing, diagnostic profiles, experiment manifests and
