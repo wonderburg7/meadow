@@ -128,21 +128,40 @@ static func sip_from_crop(bee: Node2D, delta: float) -> void:
 ## A bee still out hunting (nothing found yet, or flying to a candidate
 ## she hasn't reached) has no other self-rescue: sip_from_crop only helps
 ## once she is carrying nectar, and drink_at_flower only helps once she
-## has actually reached one. Below critical_recall_threshold, give up the
-## search and fly home instead -- the same "go home empty" transition
-## search_for_flower already uses when it runs out of meadow to check.
+## has actually reached one. When the calculated return reserve is no longer
+## available, give up the search and fly home instead -- the same "go home
+## empty" transition search_for_flower already uses when it runs out of
+## meadow to check.
 static func check_critical_recall(bee: Node2D) -> void:
-	if bee._is_inside_hive():
+	if bee._is_inside_hive() or bee.role != Role.FORAGER:
 		return
 	if bee.current_load_type == "nectar" and bee.current_load > 0.0:
 		return          # sip_from_crop is already keeping her topped up
-	if bee.energy > GameConfig.energy_capacity * GameConfig.critical_recall_threshold:
+	if not (bee.state in [State.SEEK_FLOWER, State.SEARCHING, State.TO_FLOWER, State.MOVE_TO_POINT]):
+		return
+	var required: float = estimated_return_energy(bee)
+	if bee.energy > required:
 		return
 	if bee.state == State.TO_FLOWER and bee.current_flower and is_instance_valid(bee.current_flower):
 		bee.current_flower.release(bee)
 		bee.current_flower = null
-	if bee.state in [State.SEEK_FLOWER, State.SEARCHING, State.TO_FLOWER, State.MOVE_TO_POINT]:
-		bee.state = State.TO_HIVE
+	bee.emergency_return_reason = "reserve_below_estimated_return"
+	DiagnosticLog.log_forager_return(bee, "started", required)
+	bee.state = State.TO_HIVE
+
+
+## Conservative, monotonic reserve: straight-line distance is inflated for
+## obstacle detours, then paid at the actual flight/upkeep rate plus a
+## config-owned safety margin.  Carrying nectar remains handled by the crop
+## sip above, so an already-fuelled bee is not needlessly recalled.
+static func estimated_return_energy(bee: Node2D) -> float:
+	var distance: float = bee.position.distance_to(bee.hive.position) * GameConfig.forager_return_route_factor
+	var seconds: float = distance / max(1.0, bee.speed)
+	var flight: float = GameConfig.flight_energy_burn * lerpf(1.0, GameConfig.rain_flight_burn_factor, Session.rain_intensity)
+	if bee.is_gyne:
+		flight *= GameConfig.gyne_energy_factor
+	var upkeep: float = GameConfig.energy_burn_rate * (GameConfig.gyne_energy_factor if bee.is_gyne else 1.0)
+	return seconds * (flight + upkeep) + GameConfig.energy_capacity * GameConfig.forager_return_safety_margin
 
 
 ## True when this bee should break off and go and eat. Only inside the

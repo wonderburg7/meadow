@@ -83,6 +83,43 @@ const SWEEP_STEP := 0.6
 ## ever read on a frame where there *is* a blocker.
 const SKIRT_FORGET_FRAMES := 3
 
+## One deterministic gateway for points that send a bee out into the
+## meadow.  Projection deals with the usual one-obstacle case; the small,
+## fixed radial search handles overlapping margins.  A clear current point
+## is the final fallback, so a malformed external point can never place a
+## bee inside scenery.
+static func resolve_flight_start(bee: Node2D, candidate: Vector2) -> Dictionary:
+	if _clear_flight_point(bee, candidate):
+		return {"point": candidate, "reason": "accepted", "obstacle": -1}
+	var projected := block_obstacles(bee, candidate)
+	if _clear_flight_point(bee, projected):
+		return {"point": projected, "reason": "projected", "obstacle": _blocking_obstacle_id(bee, candidate)}
+	for radius in [40.0, 80.0, 120.0]:
+		for direction in [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP,
+				Vector2(1, 1).normalized(), Vector2(-1, 1).normalized(),
+				Vector2(-1, -1).normalized(), Vector2(1, -1).normalized()]:
+			var probe := projected + direction * radius
+			if _clear_flight_point(bee, probe):
+				return {"point": probe, "reason": "nearby_clear", "obstacle": _blocking_obstacle_id(bee, candidate)}
+	var fallback := bee.position
+	if not _clear_flight_point(bee, fallback):
+		fallback = block_obstacles(bee, fallback)
+	return {"point": fallback, "reason": "fallback_current_position", "obstacle": _blocking_obstacle_id(bee, candidate)}
+
+static func _clear_flight_point(bee: Node2D, point: Vector2) -> bool:
+	for obstacle in obstacles(bee):
+		if is_instance_valid(obstacle) and obstacle.solid \
+				and point.distance_to(obstacle.position) < obstacle.radius + BLOCK_MARGIN:
+			return false
+	return true
+
+static func _blocking_obstacle_id(bee: Node2D, point: Vector2) -> int:
+	for obstacle in obstacles(bee):
+		if is_instance_valid(obstacle) and obstacle.solid \
+				and point.distance_to(obstacle.position) < obstacle.radius + BLOCK_MARGIN:
+			return obstacle.get_instance_id()
+	return -1
+
 ## Returns where the bee should actually head this frame: the target
 ## itself when the way is clear, or a tangent point past whatever is in
 ## the way.

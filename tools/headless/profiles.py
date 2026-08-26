@@ -12,8 +12,9 @@ PROFILE_NAMES = frozenset({"standard", "verdict", "behaviour", "balance", "perfo
 EVENT_TYPES = frozenset({
     "action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup",
     "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "build_target",
+    "forager_return", "flight_start_resolved",
 })
-DEFAULT_EVENT_TYPES = EVENT_TYPES - {"build_target"}
+DEFAULT_EVENT_TYPES = EVENT_TYPES - {"build_target", "forager_return", "flight_start_resolved"}
 SNAPSHOT_FIELDS = frozenset({
     "population.total", "resources.food_stores", "environment.winter_here",
     "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms",

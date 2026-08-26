@@ -4,7 +4,7 @@ extends RefCounted
 
 const HeadlessDiagnosticProbes = preload("res://scripts/headless/diagnostic_probes.gd")
 const VERSION := 1
-const EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "build_target"]
+const EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "build_target", "forager_return", "flight_start_resolved"]
 const DEFAULT_EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled"]
 const PROFILE_NAMES := ["standard", "verdict", "behaviour", "balance", "performance", "custom"]
 
