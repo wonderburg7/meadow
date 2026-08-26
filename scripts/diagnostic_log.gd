@@ -362,6 +362,14 @@ func count_tarsal_rejection() -> void:
 func log_stall_recovery(bee: Node2D, goal: Vector2) -> void:
 	if _file == null:
 		return
+	# This is deliberately computed only after the watchdog has established a
+	# real stall.  The normal movement path remains free of diagnostic scans,
+	# while one bounded event tells a reproduction whether the same flower or
+	# piece of scenery keeps causing the recovery.
+	var flower_id := ""
+	if bee.current_flower != null and is_instance_valid(bee.current_flower):
+		flower_id = "%s@%d,%d" % [bee.current_flower.species_name, roundi(bee.current_flower.position.x), roundi(bee.current_flower.position.y)]
+	var obstacle_id := _nearby_obstacle_identity(bee)
 	_write({
 		"type": "stall_recovery",
 		"game_time": Session.sim_time,
@@ -370,6 +378,8 @@ func log_stall_recovery(bee: Node2D, goal: Vector2) -> void:
 		"state": BeeEnums.State.keys()[bee.state],
 		"position": [bee.position.x, bee.position.y],
 		"goal": [goal.x, goal.y],
+		"flower_id": flower_id,
+		"nearby_obstacle_id": obstacle_id,
 	})
 	_stall_recoveries += 1
 
@@ -418,6 +428,27 @@ func log_flight_start_resolved(bee: Node2D, source: String, requested: Vector2, 
 	_write({"type": "flight_start_resolved", "game_time": Session.sim_time, "bee_id": bee.bee_id,
 		"source": source, "reason": resolved.reason, "obstacle_id": resolved.obstacle,
 		"requested": [requested.x, requested.y], "resolved": [resolved.point.x, resolved.point.y]})
+
+
+## A scenery node has no save-stable numeric id, so its kind and rounded
+## location are the useful identity in a pinned-seed diagnostic.  It is
+## intentionally empty when no solid obstacle is close enough to explain the
+## stall.
+func _nearby_obstacle_identity(bee: Node2D) -> String:
+	if bee.world == null or not is_instance_valid(bee.world):
+		return ""
+	var nearest: Node2D = null
+	var nearest_gap := INF
+	for obstacle in bee.world.obstacles:
+		if not is_instance_valid(obstacle) or not obstacle.solid:
+			continue
+		var gap: float = bee.position.distance_to(obstacle.position) - obstacle.radius
+		if gap < nearest_gap:
+			nearest_gap = gap
+			nearest = obstacle
+	if nearest == null or nearest_gap > bee.ESCAPE_RANGE:
+		return ""
+	return "%s@%d,%d" % [nearest.display_name(), roundi(nearest.position.x), roundi(nearest.position.y)]
 
 
 ## Called from bee_foraging.gd::_score_trip() when a scouting bee's three
@@ -777,7 +808,11 @@ func _snapshot(world: Node2D) -> Dictionary:
 
 	var hive: Node2D = world.hive
 	var by_contents: Dictionary = {}
-	for content_type in ["", "nectar", "pollen", "honey", "jelly", "brood", "corpse"]:
+	# "" is the internal empty-cell sentinel.  Publish it under a printable
+	# key so JSON-object consumers do not need a special case for an empty
+	# property name.
+	by_contents["empty"] = hive.cells_holding("").size()
+	for content_type in ["nectar", "pollen", "honey", "jelly", "brood", "corpse"]:
 		by_contents[content_type] = hive.cells_holding(content_type).size()
 	var sealed := 0
 	for cell in hive.cells:

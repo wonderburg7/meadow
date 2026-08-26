@@ -1,0 +1,27 @@
+{
+  "cells": 30,
+  "nectar_foragers": 10,
+  "pollen_foragers": 5,
+  "nurses": 2,
+  "builders": 0,
+  "miners": 0,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "winter": false,
+  "random_seed": 12345,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "orientation_flight_on": true,
+    "scouting_on": true,
+    "auto_recruitment_on": true,
+    "floral_constancy_on": true,
+    "tarsal_markers_on": true
+  },
+  "diagnostics": {
+    "profile": "custom",
+    "events": ["death", "orientation_flight", "scouting_settled", "forager_settled", "recruitment_match", "stall_recovery"],
+    "limits": {"event_lines_per_type": 20}
+  },
+  "stop": {"max_days": 45}
+}

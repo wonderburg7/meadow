@@ -1,0 +1,20 @@
+{
+  "cells": 30,
+  "nectar_foragers": 10,
+  "pollen_foragers": 5,
+  "nurses": 2,
+  "builders": 0,
+  "miners": 0,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "winter": false,
+  "random_seed": 12345,
+  "config_overrides": {"seconds_per_day": 20},
+  "diagnostics": {
+    "profile": "custom",
+    "events": ["death", "stall_recovery"],
+    "limits": {"event_lines_per_type": 20}
+  },
+  "stop": {"max_days": 45}
+}

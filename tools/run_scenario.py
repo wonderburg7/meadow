@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -61,12 +62,18 @@ DEFAULT_RESULT_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-results"
 
 
 def log_dir() -> Path:
-    # Matches diagnostic_log.gd's LOG_DIR ("user://logs"), resolved the
-    # same way Godot resolves user:// for this project on Windows.
+    # Matches diagnostic_log.gd's LOG_DIR ("user://logs"), resolved from the
+    # project name rather than a stale literal.  Godot uses config/name for
+    # the app_userdata directory, and a renamed project must not make a
+    # completed scenario look as though it wrote no result.
     appdata = os.environ.get("APPDATA")
     if not appdata:
         raise RuntimeError("%APPDATA% not set -- can't find the Godot user:// dir")
-    return Path(appdata) / "Godot" / "app_userdata" / "Meadow" / "logs"
+    project_text = (ROOT / "project.godot").read_text(encoding="utf-8")
+    name_match = re.search(r'^config/name="([^"]+)"$', project_text, re.MULTILINE)
+    if name_match is None:
+        raise RuntimeError("project.godot has no config/name -- can't find the Godot user:// dir")
+    return Path(appdata) / "Godot" / "app_userdata" / name_match.group(1) / "logs"
 
 
 def _scenario_declares_seed(scenario_path: Path) -> bool:
