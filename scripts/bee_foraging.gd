@@ -80,22 +80,37 @@ static func seek_flower(bee: Node2D) -> void:
 		bee.state = State.TO_HIVE
 		return
 
+	# A run of thin or rejected flowers means whatever's merely nearby has
+	# already proven disappointing several visits running -- go straight
+	# to SEARCHING's widening spiral rather than grabbing the next one
+	# from this same picked-over patch. See bee.thin_visit_streak.
+	if bee.thin_visit_streak >= GameConfig.poor_patch_search_streak:
+		bee.thin_visit_streak = 0
+		_start_searching(bee)
+		return
+
 	var best := _perceive_flower(bee)
 	if best != null:
 		_commit_to_flower(bee, best)
 		return
 
-	# Nothing in sight from right here -- fly a widening loop rather than
-	# deciding in one frame that the meadow is empty. Seeded from the
-	# drifting local_search_anchor, falling back to her current position
-	# if she has never had a start point at all. search_start_direction is
-	# randomised fresh each bout -- a fixed starting direction sent a bee
-	# whose anchor sits near an obstacle in that exact direction into the
-	# same wall on every single bout from that anchor, found via a 60-day
-	# scenario run where a handful of bees repeatedly stalled at identical
-	# points. search_angle itself still starts at 0 -- it drives radius
-	# growth (see _spiral_point), which should always start from scratch
-	# regardless of which direction the spiral opens in.
+	# Nothing in sight from right here either -- same widening loop.
+	_start_searching(bee)
+
+
+## A fresh SEARCHING bout from scratch -- shared by seek_flower's "nothing
+## in sight" fallback and its poor_patch_search_streak shortcut above.
+static func _start_searching(bee: Node2D) -> void:
+	# Seeded from the drifting local_search_anchor, falling back to her
+	# current position if she has never had a start point at all.
+	# search_start_direction is randomised fresh each bout -- a fixed
+	# starting direction sent a bee whose anchor sits near an obstacle in
+	# that exact direction into the same wall on every single bout from
+	# that anchor, found via a 60-day scenario run where a handful of bees
+	# repeatedly stalled at identical points. search_angle itself still
+	# starts at 0 -- it drives radius growth (see _spiral_point), which
+	# should always start from scratch regardless of which direction the
+	# spiral opens in.
 	bee.search_angle = 0.0
 	bee.search_start_direction = randf() * TAU
 	bee.search_tried_patch = false
@@ -242,8 +257,12 @@ static func _spiral_point(bee: Node2D, anchor: Vector2, angle: float) -> Vector2
 	return point
 
 
-## `strict` applies the avoidance rules; without it only the hard
-## constraints (occupied, empty) are checked. `radius` bounds the grid
+## `strict` applies the soft, social avoidance rule (another bee's tarsal
+## mark); without it only the hard constraints (occupied, empty) and this
+## bee's own memory -- her personal flower_cooldowns and, if predators are
+## on, predator_flower_cooldowns -- are checked. Those two are never
+## relaxed: they're what she actually learned by being there, not a
+## guess, so scarcity is no reason to forget them. `radius` bounds the grid
 ## query. `allow_full_scan` controls the honest-scan fallback below: true
 ## (the default, and every call site outside the SEARCHING pipeline) lets
 ## a bee whose preferred species has nothing in range still find one
@@ -278,6 +297,17 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 				return false
 		elif bee.preferred_species != "" and f.species_name != bee.preferred_species:
 			return false
+		# Checked outside the `if strict:` block below, same as the
+		# predator check just under it -- her own memory of a flower she
+		# personally just drained or turned down isn't something scarcity
+		# should override either. Without this, a bee with nothing else in
+		# range fell straight back onto the exact flower she'd just left
+		# (the only "available" thing the relaxed pass could see), and did
+		# it again the moment that visit ended -- landing on the same
+		# flower forever instead of ever giving SEARCHING a chance to run.
+		# See bee.gd's flower_cooldowns field comment.
+		if bee.flower_cooldowns.has(f) and Session.sim_time < bee.flower_cooldowns[f]:
+			return false
 		# Checked outside the `if strict:` block below -- unlike an
 		# ordinary rejection, memory of a spider attack isn't something
 		# scarcity should override. See bee.gd's predator_flower_cooldowns
@@ -286,11 +316,12 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 				and Session.sim_time < bee.predator_flower_cooldowns[f]:
 			return false
 		if strict:
-			if bee.flower_cooldowns.has(f) and Session.sim_time < bee.flower_cooldowns[f]:
-				return false
 			# Tarsal secretion: bees leave a scent mark on flowers they
 			# land on, and other bees avoid a recently marked flower
-			# rather than wasting a trip on one already stripped.
+			# rather than wasting a trip on one already stripped. Soft,
+			# social evidence (it might not even be this bee's own mark) --
+			# unlike the two checks above, worth relaxing once nothing else
+			# is in range rather than treating it as a hard no.
 			if GameConfig.tarsal_markers_on and f.is_marked(bee):
 				DiagnosticLog.count_tarsal_rejection()
 				return false
@@ -481,6 +512,9 @@ static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
 ## anything, so there's no reason to wait for a refill. A short "don't
 ## bother rechecking immediately" pause is enough.
 static func reject_flower(bee: Node2D) -> void:
+	# A turned-down flower is as telling as a thin one -- see
+	# start_collecting's own streak update just below.
+	bee.thin_visit_streak += 1
 	if bee.current_flower and is_instance_valid(bee.current_flower):
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + REJECTED_AVOID_SECONDS
 		# Slice 7 (adaptive constancy): a rejection erodes trust in this
@@ -497,6 +531,18 @@ static func reject_flower(bee: Node2D) -> void:
 
 static func start_collecting(bee: Node2D) -> void:
 	DiagnosticLog.count_flower_visit(bee.current_flower)
+	# Only known now, on arrival -- accepted (worth_feeding passed) doesn't
+	# mean rich, just above min_worthwhile_amount. A flower this picked
+	# over still costs a full handling bout for very little, so it counts
+	# against the same streak a rejection does; a properly stocked flower
+	# clears it, on the theory that a real find means the patch is fine
+	# again. See GameConfig.thin_flower_fraction and bee.thin_visit_streak.
+	var available: float = bee.current_flower.get_available(bee.resource_type)
+	var capacity: float = bee.current_flower.get_capacity(bee.resource_type)
+	if capacity > 0.0 and available < capacity * GameConfig.thin_flower_fraction:
+		bee.thin_visit_streak += 1
+	else:
+		bee.thin_visit_streak = 0
 	# Slice 5 (local search): the anchor drifts toward wherever she's
 	# actually finding flowers, so SEARCHING starts from real recent
 	# experience rather than staying pinned to forage_start_point forever.

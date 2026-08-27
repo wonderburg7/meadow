@@ -91,6 +91,23 @@ var crab_spider_alarm_marker_seconds: float = 40.0
 ## exhausted flower indefinitely.
 var min_worthwhile_amount: float = 1.0
 
+## A flower counts as "thin" -- picked over, not literally worthless --
+## once what's available is under this fraction of its own capacity,
+## checked the moment a bee actually commits to it in start_collecting
+## (bee_foraging.gd). Never checked before she's physically there and
+## inspected it -- selection itself stays blind to amount, only to
+## whether a flower is empty outright. This just gives her something to
+## remember about a visit that technically cleared min_worthwhile_amount
+## but wasn't worth the handling time it cost.
+var thin_flower_fraction: float = 0.25
+
+## How many thin or rejected flowers in a row send a forager into
+## SEARCHING's widening spiral instead of grabbing the next merely-nearby
+## one -- see bee.thin_visit_streak and seek_flower (bee_foraging.gd). A
+## patch that's kept disappointing her this many visits running is worth
+## leaving rather than picking over one more flower from.
+var poor_patch_search_streak: int = 3
+
 ## How far a forager looks for a flower before giving up and falling back
 ## to a full search of the meadow. Slice 5 (local search) repurposed this
 ## from "how far the instant query looked" to "how far the SEARCHING

@@ -240,6 +240,19 @@ var search_origin: Vector2 = Vector2(INF, INF)
 ## known_patches retry -- see search_for_flower. Reset fresh each bout.
 var search_tried_patch: bool = false
 
+## How many flowers in a row she's inspected and found already picked
+## over (thin) or turned down outright -- see start_collecting and
+## reject_flower in bee_foraging.gd. This is never known before she
+## actually lands and inspects (nearest_flower's own pre-flight check
+## only ever rules out a literally empty flower); it's purely a record
+## of what her last few visits actually taught her. Once it reaches
+## GameConfig.poor_patch_search_streak, seek_flower stops trying
+## whatever's merely nearby and sends her straight into SEARCHING's
+## widening spiral instead, on the theory that a patch that's kept
+## disappointing her several visits running is worth leaving rather
+## than picking over one more flower from.
+var thin_visit_streak: int = 0
+
 ## Slice 6 (probabilistic choice and memory): the direction she's
 ## actually moving in, updated every frame she moves (see
 ## BeeMovement.move_towards). Only ever a unit vector (or the default,

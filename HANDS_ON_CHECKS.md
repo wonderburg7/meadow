@@ -16,6 +16,19 @@ says the fix has shipped.
 
 ## Checkable now
 
+### Same-flower ping-pong / thin-patch escape (foraging)
+- [ ] Watch a forager worked into an isolated flower (nothing else within
+      `forage_perception_radius`), and separately one in a busy patch
+      (e.g. `foraging_evidence_base.json`'s 3-pollen-forager setup).
+      Before: selection panel could sit alternating "inspecting a flower
+      before deciding whether to feed" / "landing on a flower" for a long
+      stretch with the carried amount barely moving -- worst case, forever,
+      on the exact same flower. After: once nothing worthwhile is left to
+      try (the same flower still on her own cooldown, or a run of thin
+      finds), she should switch to "flying a search loop, looking for a
+      ... flower" instead. See `FORAGING_ECOLOGY_PLAN.md`'s "Recent
+      fixes".
+
 ### HUD integrity batch (UI-A)
 - [ ] Hover/press every top-right button (pause, speed, Colony, Nursery,
       Foraging, Winter, Meadow/Hive, settings cog) in Dark, Light and High

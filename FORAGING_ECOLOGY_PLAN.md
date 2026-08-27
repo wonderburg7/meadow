@@ -32,6 +32,33 @@ Report flower visits, orientation/scouting/recruitment events, deliveries,
 starvation, stalls and runtime together. A missing event means “not exercised”
 until the scenario proves otherwise.
 
+## Recent fixes
+
+- **Same-flower ping-pong when nothing else is in range (27 Aug 2026).**
+  The actual bug behind foragers sitting at a flower alternating
+  "inspecting a flower before deciding" / "landing on a flower" with no
+  progress: `nearest_flower`'s `strict` flag bundled two very different
+  things -- another bee's tarsal mark (soft, social, fine to relax under
+  scarcity) and this bee's own `flower_cooldowns` memory of a flower she
+  personally just drained or rejected (not a guess, and never something
+  scarcity should override -- `predator_flower_cooldowns` already got this
+  treatment, for the same reason). `_perceive_flower`'s relaxed second
+  pass, meant only to loosen the tarsal check, was relaxing her own
+  cooldown too. With no other flower in her perception radius, that
+  relaxed pass kept re-finding the exact flower she'd just left the moment
+  she cleared it, so `SEARCHING` never got a chance to run. Fixed by
+  making her own `flower_cooldowns` an unconditional check, same tier as
+  the predator one. See `nearest_flower` in `bee_foraging.gd`.
+  Not yet run through a headless comparison -- see `HANDS_ON_CHECKS.md`.
+- **Thin-patch escape (27 Aug 2026, complementary).** Separately, a bee
+  cycling several *different* nearby flowers that each only just clear
+  `min_worthwhile_amount` now tracks that in `bee.thin_visit_streak`
+  (`GameConfig.thin_flower_fraction`, checked only on arrival --
+  selection itself stays blind to amount) and routes into `SEARCHING`
+  once `GameConfig.poor_patch_search_streak` is reached, rather than
+  trying the next merely-nearby flower. This doesn't cover the lone-flower
+  case above -- see `start_collecting`/`reject_flower`/`seek_flower`.
+
 ## Operating rules
 
 - Keep feature toggles independent and defaults unchanged until comparisons
