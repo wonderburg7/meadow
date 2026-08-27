@@ -13,6 +13,29 @@ Planning/context findings last refreshed: 26 Aug 2026. Completed simulation
 recommendations are recorded in Git history and their current checks/plans,
 not retained here as an advisory queue.
 
+## UI
+
+### P1. Challenge goal shelf overlays the top-bar controls
+
+**Evidence:** `hud.gd::_build_top_right_bar()` places two 28px rows at y=8
+with 4px separation, so the second row occupies y=40–68. The Challenge-only
+`goal_shelf` is visible whenever `set_challenge_goal()` receives text, begins
+at fixed y=46, and is a `VBoxContainer` with the default input-blocking
+`Control.MOUSE_FILTER_STOP`. It therefore overlaps and captures the lower
+22px of the top-bar row. Scenario runs leave the shelf hidden, matching the
+reported reproduction. `stage_gate.gd` only controls which buttons are
+visible; it does not create the overlapping rectangle.
+
+**Consequence:** Meadow/Hive and the other top-right buttons have a much
+smaller effective hit area during Challenges, despite retaining their normal
+measured button rects.
+
+**Recommendation:** make a focused follow-up UI fix: place the shelf below
+the full two-row bar using the shared top-bar geometry (and keep it
+input-transparent unless it gains interactive children), then manually check
+every top-right control in a Challenge and Scenario at normal and enlarged
+text scales. Do not fold this into cosmetic top-bar work.
+
 ## Workflow/tooling
 
 ### P0. Planning state is split, stale and more expensive than the work
