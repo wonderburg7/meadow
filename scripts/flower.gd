@@ -233,6 +233,7 @@ func _process(delta: float) -> void:
 	# so the meadow drifts around while staying about as full.
 	age_seconds += delta
 	if age_seconds >= lifespan_seconds:
+		DiagnosticLog.count_flower_senescence()
 		if occupied_by != null and is_instance_valid(occupied_by):
 			occupied_by.release_flower_reference(self)
 		if has_crab_spider:

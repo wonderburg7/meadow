@@ -88,6 +88,13 @@ var _tarsal_rejections: int = 0
 var _flower_visits: int = 0
 var _flowers_visited_ids: Dictionary = {}   # flower instance id -> true
 var _stall_recoveries: int = 0
+## Campaign-level evidence is accumulated at the simulation boundary.  These
+## remain counters/aggregates so ordinary diagnostics do not gain a hot-path
+## stream of one line per handling bout or flower expiry.
+var _forager_deliveries: int = 0
+var _forager_delivery_amount: float = 0.0
+var _flowers_senesced: int = 0
+var _handling_by_experience: Dictionary = {}
 
 ## Role outcome counters -- see CHATGPT_INSIGHTS_PLAN.md's C5. Cheap
 ## counters bumped straight from bee_nursery.gd/bee_honey.gd/
@@ -151,6 +158,10 @@ func start_session() -> void:
 	_flower_visits = 0
 	_flowers_visited_ids.clear()
 	_stall_recoveries = 0
+	_forager_deliveries = 0
+	_forager_delivery_amount = 0.0
+	_flowers_senesced = 0
+	_handling_by_experience.clear()
 	_brood_feeds = 0
 	_brood_hatches = 0
 	_brood_hatches_by_role_mode.clear()
@@ -337,6 +348,46 @@ func count_flower_visit(flower: Node2D) -> void:
 	_flower_visits += 1
 	if flower != null and is_instance_valid(flower):
 		_flowers_visited_ids[flower.get_instance_id()] = true
+
+
+## Records a completed handling bout against the experience the bee had
+## before this visit.  The summary retains seconds and visit counts together
+## so a campaign report can calculate a true weighted average per bucket.
+func record_handling_visit(species: String, prior_experience: int, seconds: float) -> void:
+	if seconds < 0.0:
+		return
+	var bucket := _experience_bucket(prior_experience)
+	var row: Dictionary = _handling_by_experience.get(bucket, {"visits": 0, "seconds": 0.0, "species": {}})
+	row.visits = int(row.visits) + 1
+	row.seconds = float(row.seconds) + seconds
+	var species_row: Dictionary = row.species.get(species, {"visits": 0, "seconds": 0.0})
+	species_row.visits = int(species_row.visits) + 1
+	species_row.seconds = float(species_row.seconds) + seconds
+	row.species[species] = species_row
+	_handling_by_experience[bucket] = row
+
+
+func count_forager_delivery(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	_forager_deliveries += 1
+	_forager_delivery_amount += amount
+
+
+func count_flower_senescence() -> void:
+	_flowers_senesced += 1
+
+
+func _experience_bucket(prior_experience: int) -> String:
+	if prior_experience <= 0:
+		return "0"
+	if prior_experience <= 2:
+		return "1-2"
+	if prior_experience <= 5:
+		return "3-5"
+	if prior_experience <= 9:
+		return "6-9"
+	return "10+"
 
 
 func count_tarsal_mark() -> void:
@@ -674,6 +725,10 @@ func end_session(outcome: String) -> void:
 		"flower_visits": _flower_visits,
 		"unique_flowers_visited": _flowers_visited_ids.size(),
 		"stall_recoveries": _stall_recoveries,
+		"forager_deliveries": _forager_deliveries,
+		"forager_delivery_amount": _forager_delivery_amount,
+		"flowers_senesced": _flowers_senesced,
+		"handling_by_experience": _handling_by_experience,
 		"brood_feeds": _brood_feeds,
 		"brood_hatches": _brood_hatches,
 		"brood_hatches_by_role_mode": _brood_hatches_by_role_mode,

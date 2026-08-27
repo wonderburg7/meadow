@@ -27,6 +27,7 @@ SUMMARY_METRICS = frozenset({
     "gynes_released", "crab_spider_events", "recruitment_matches", "scouting_settled",
     "orientation_flights", "recruitment_followups", "recruit_partner_overlaps", "foragers_settled",
     "tarsal_marks", "tarsal_rejections", "flower_visits", "unique_flowers_visited", "stall_recoveries",
+    "forager_deliveries", "forager_delivery_amount", "flowers_senesced",
     "brood_feeds", "brood_hatches", "brood_hatches_by_role_mode", "jelly_batches", "larval_deaths",
     "cells_completed", "cells_cleaned", "cells_evicted", "cells_restocked", "blocks_mined",
     "honey_batches_deposited", "cells_ripened",

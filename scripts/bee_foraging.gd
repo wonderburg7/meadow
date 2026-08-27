@@ -514,7 +514,7 @@ static func start_collecting(bee: Node2D) -> void:
 		if bee.trip_first_flower_time < 0.0:
 			bee.trip_first_flower_time = Session.sim_time
 		bee.trip_flowers_visited += 1
-		bee.flower_visit_started_at = Session.sim_time
+	bee.flower_visit_started_at = Session.sim_time
 	if GameConfig.tarsal_markers_on:
 		DiagnosticLog.count_tarsal_mark()
 	# Checked before this bee's own mark overwrites whatever was here --
@@ -612,11 +612,18 @@ static func collect(bee: Node2D, delta: float) -> void:
 
 
 static func finish_collecting(bee: Node2D) -> void:
-	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.flower_visit_started_at >= 0.0:
-		bee.trip_handling_seconds += Session.sim_time - bee.flower_visit_started_at
+	var handling_seconds := -1.0
+	if bee.flower_visit_started_at >= 0.0:
+		handling_seconds = Session.sim_time - bee.flower_visit_started_at
+	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and handling_seconds >= 0.0:
+		bee.trip_handling_seconds += handling_seconds
+	if handling_seconds >= 0.0:
 		bee.flower_visit_started_at = -1.0
 	if bee.current_flower and is_instance_valid(bee.current_flower):
 		var species: String = bee.current_flower.species_name
+		var prior_experience := int(bee.species_experience.get(species, 0))
+		if handling_seconds >= 0.0:
+			DiagnosticLog.record_handling_visit(species, prior_experience, handling_seconds)
 		# Slice 7: a completed handling bout is what "experience"/
 		# "confidence" mean here -- she got far enough into working this
 		# flower to be timed out or run it dry, as opposed to reject_flower
@@ -743,10 +750,12 @@ static func finish_depositing(bee: Node2D) -> void:
 	# Needed by either scouting or auto-recruitment, not just the latter.
 	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.trip_load_amount < 0.0:
 		bee.trip_load_amount = bee.current_load
+	var placed := 0.0
 	if bee.target_cell and is_instance_valid(bee.target_cell):
-		var placed: float = bee.target_cell.add_resource(bee.current_load_type, bee.current_load)
+		placed = bee.target_cell.add_resource(bee.current_load_type, bee.current_load)
 		bee.current_load -= placed
 		bee.hive.announce()
+	DiagnosticLog.count_forager_delivery(placed)
 	release_cell_slot(bee)
 	bee.target_cell = null
 

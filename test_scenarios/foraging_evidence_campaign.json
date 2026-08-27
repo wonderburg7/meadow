@@ -1,0 +1,22 @@
+{
+  "name": "foraging evidence campaign",
+  "base_scenario": "foraging_evidence_base.json",
+  "seeds": [12345, 7, 2026, 90210, 555],
+  "cases": {
+    "no_automation": {"config_overrides": {"orientation_flight_on": false, "scouting_on": false, "auto_recruitment_on": false, "proximity_recruitment_on": false}},
+    "entrance": {"config_overrides": {"auto_recruitment_on": true, "proximity_recruitment_on": false}},
+    "proximity_default": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true}},
+    "dance_radius_75": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_radius": 75}},
+    "dance_radius_125": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_radius": 125}},
+    "dance_seconds_2": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_seconds": 2}},
+    "dance_seconds_6": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_seconds": 6}},
+    "dance_angle_15": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_angle_fuzz_degrees": 15}},
+    "dance_angle_35": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_angle_fuzz_degrees": 35}},
+    "dance_distance_015": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_distance_fuzz_fraction": 0.15}},
+    "dance_distance_035": {"config_overrides": {"auto_recruitment_on": false, "proximity_recruitment_on": true, "recruit_dance_distance_fuzz_fraction": 0.35}},
+    "handling_experience": {"config_overrides": {"auto_recruitment_on": true, "proximity_recruitment_on": false, "handling_experience_on": true}},
+    "senescence_off": {"config_overrides": {"orientation_flight_on": false, "scouting_on": false, "auto_recruitment_on": false, "proximity_recruitment_on": false, "flower_senescence_on": false}},
+    "senescence_on": {"config_overrides": {"orientation_flight_on": false, "scouting_on": false, "auto_recruitment_on": false, "proximity_recruitment_on": false, "flower_senescence_on": true, "flower_senescence_floor": 0.3}}
+  },
+  "report": {"mode": "artifact", "metrics": ["flower_visits", "unique_flowers_visited", "orientation_flights", "scouting_settled", "recruitment_matches", "forager_deliveries", "forager_delivery_amount", "deaths_by_cause", "stall_recoveries", "flowers_senesced"]}
+}
