@@ -74,14 +74,6 @@ func _clear_zone_glow() -> void:
 		if is_instance_valid(cell):
 			cell.set_zone_glow(false)
 
-func _on_cell_zone_requested(anchor: Node2D, in_zone: bool) -> void:
-	_remember_designations(_cells_to_act_on(anchor))
-	for cell in _cells_to_act_on(anchor):
-		if in_zone:
-			_designate_one(cell, "brood")
-		elif cell.is_nursery_cell():
-			cell.set_designation("")
-
 func _on_cell_priority_requested(anchor: Node2D, tier: int) -> void:
 	for cell in _cells_to_act_on(anchor):
 		cell.nursery_priority = clampi(tier, 0, 2)

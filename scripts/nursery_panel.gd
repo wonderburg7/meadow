@@ -347,7 +347,7 @@ func _refresh_zone(zone: Dictionary) -> void:
 	var total_free := int(free[0]) + int(free[1]) + int(free[2])
 
 	if total_cells <= 0:
-		zone_label.text = "No cells in the zone yet. Select comb and use \"Add to nursery zone\"."
+		zone_label.text = "No cells in the zone yet. Select comb and reserve it for eggs (\"Reserve for\" -> Eggs)."
 	else:
 		zone_label.text = "%d cells in the zone, %d free" % [total_cells, total_free]
 

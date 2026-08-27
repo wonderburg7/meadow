@@ -16,6 +16,34 @@ says the fix has shipped.
 
 ## Checkable now
 
+### Challenge 1 Bundle G -- trim Challenge 2's opening (stages renumbered 2.1-2.9)
+- [ ] Start Challenge 2 fresh from the main menu. Confirm it opens with
+      the queen (role Laying) plus one nectar Forager already out in the
+      meadow, 5 cells (2 nectar-full, 1 pollen-full, 2 empty), and the
+      goal shelf showing stage 2.1's "watch the nectar stores fall, then
+      recover them" (the old eggs_laid/nectar_forager_hatched opening is
+      gone). Play through a couple more stages and confirm the ids/goals
+      line up with `CHALLENGE1_REVAMP_PLAN.md`'s Bundle G section and
+      nothing about the soft-failure/rescue (2.1's own goal) misfires on
+      the very first stage.
+
+### Challenge 1 Bundle F -- laying, backup nursing, the first daughter (stages 1.15-1.18)
+- [ ] Play Challenge 1 through to the first egg: set the queen to Laying
+      (Nursing backup is automatic, no picker interaction needed) and let
+      her lay one egg (1.15), then keep her fed until it hatches (1.16).
+      Confirm: the new worker doesn't dart straight for the exit on
+      hatching; she instead circles the queen once and settles near her
+      while pink hearts rise and fade above the queen; the queen doesn't
+      immediately walk off to re-lay into the empty cell during that
+      beat. Select the new worker (1.17) and check her summary/role panel
+      read as expected (nectar Forager). Right-click the entrance to send
+      her out (1.18) and confirm her farewell line ("Thanks for giving me
+      life, Mum... I mean... my Queen...") appears as a speech bubble
+      anchored above her (not the corner) and doesn't visually collide
+      with Dr Gallerin's own bottom-right bubble, then that the Challenge
+      completes once she's outside. See `CHALLENGE1_REVAMP_PLAN.md`'s
+      Bundle F section.
+
 ### Challenge 1 Bundle E -- automate nectar, then pollen (stages 1.11-1.14)
 - [ ] Play Challenge 1 from the meadow-harvest deposit onward: assign the
       queen Forager/nectar and let her reach the 30-nectar target (1.11),
@@ -98,6 +126,26 @@ says the fix has shipped.
       whether it feels right, not just a confirmation of numbers already
       checked.
 
+### Panel sizing and overlap (UI-B)
+- [ ] Select a bee, then a cell, and watch the bottom-left summary panel
+      and the bottom-centre command tray while resizing the window and
+      raising the text scale: neither panel's width should change with
+      what the current bee/cell shows (long idle-reason lines, a bee fact
+      quote, a long obstacle description), only with the window size, and
+      the two should never overlap. See UI-B in `UI_PLAN.md`.
+
+### Nursery zone removal and cell action-tray redesign (UI-C)
+- [ ] Select a hive cell: the tray is now two primary columns, "Reserve
+      for" and "Nursery" (priority Low/Medium/High, "Open nursery window",
+      and the Raises controls -- hatch role, "Keep for every bee", "Raise a
+      gyne" -- all together), with More… revealing Emptying and Sealing.
+      There is no separate "Add"/"Remove" zone button anywhere -- reserving
+      a cell for eggs is done from Reserve for's Eggs/Unreserve buttons.
+      Confirm pressing a Priority button still reserves the cell for brood
+      if it wasn't already, and that the queen still lays eggs sensibly
+      (respects the priority-tier proportions, `queen_lays_in_any_cell`
+      still behaves as documented). See UI-C in `UI_PLAN.md`.
+
 ## Blocked -- waiting on a fix or an unbuilt slice
 
 ### UI Plan slices 1-7 -- two items still open from the 24 Aug re-check
@@ -116,21 +164,6 @@ says the fix has shipped.
       inside a Challenge than in a Scenario -- corrected finding, opposite
       of the original guess. Needs its own investigation session before
       there's a fix to check. See UI-D in `UI_PLAN.md`.
-
-### Panel sizing and overlap
-- [ ] Summary panel (bee or cell) and command tray/job panel no longer
-      overlap, and both hold a fixed width that doesn't change with how
-      much text the current bee/cell has -- only a window resize should
-      change it. Not built yet. See UI-B in `UI_PLAN.md`.
-
-### Nursery zone removal and cell action-tray redesign
-- [ ] Cell bottom-centre popup is two columns (Reserve for / Nursery) with
-      More… revealing Sealing and Emptying, one per column; the nursery
-      zone reservation mechanic itself is gone; Priority low/medium/high
-      now lives under Nursery. Not built yet -- also touches queen
-      egg-laying (`hive.gd`), so check laying still behaves sensibly with
-      no zone cells at all, not just the panel layout. See UI-C in
-      `UI_PLAN.md`.
 
 ### Recruitment and crab-spider fixes
 - [ ] Recruitment competition fix (commit `103d716`) -- **not** re-checked;

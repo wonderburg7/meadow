@@ -448,7 +448,6 @@ func _ready() -> void:
 	hud.restock_sources_requested.connect(orders_zones._on_restock_sources_requested)
 	hud.restock_clear_requested.connect(orders_zones._on_restock_clear_requested)
 	hud.soil_mark_requested.connect(input_selection._on_soil_mark_requested)
-	hud.cell_zone_requested.connect(orders_zones._on_cell_zone_requested)
 	hud.cell_priority_requested.connect(orders_zones._on_cell_priority_requested)
 	hud.cell_close_requested.connect(orders_zones._on_cell_close_requested)
 	hud.cell_fill_close_requested.connect(orders_zones._on_cell_fill_close_requested)
@@ -739,7 +738,8 @@ func _hatch_ready_brood() -> void:
 		var as_gyne: bool = cell.brood_is_gyne
 		_record_emergence(role, focus, as_gyne)
 		cell.clear_cell()
-		world_building._spawn_hatched_bee(role, cell, as_gyne, focus)
+		var hatched: Node2D = world_building._spawn_hatched_bee(role, cell, as_gyne, focus)
+		challenge_runner.on_worker_hatched(hatched)
 		# Unless the player pinned it, a role set on a cell applies to that
 		# one bee and then clears, so a one-off choice doesn't quietly
 		# govern everything the cell ever raises. "Keep for every bee" in

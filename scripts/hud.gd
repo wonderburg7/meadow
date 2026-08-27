@@ -69,9 +69,7 @@ signal restock_targets_requested(resource: String)
 ## true) or the cells it must never touch (false).
 signal restock_sources_requested(allowed: bool)
 signal restock_clear_requested()
-## Adds the selected cells to the nursery zone, or takes them out of it.
-signal cell_zone_requested(cell: Node2D, in_zone: bool)
-## Sets the priority tier on the selected zone cells: 0 low, 1 medium,
+## Sets the priority tier on the selected nursery cells: 0 low, 1 medium,
 ## 2 high.
 signal cell_priority_requested(cell: Node2D, tier: int)
 ## Seals the selected cells, or opens them back up.
@@ -79,7 +77,7 @@ signal cell_close_requested(cell: Node2D, closed: bool)
 ## Fill the cell to the top and then seal it, refusing withdrawals in the
 ## meantime so it can actually get there.
 signal cell_fill_close_requested(cell: Node2D)
-## Opens the nursery zone window.
+## Opens the nursery window.
 signal nursery_window_requested()
 ## Opens the winter forecast. Only offered once a winter is scheduled.
 signal winter_window_requested()
@@ -308,7 +306,10 @@ var active_summary_kind: String = ""
 var active_flower: Node2D = null
 ## Only shown for a soil summary -- see show_object_summary and
 ## set_soil_marking_visible.
-var soil_summary_row: HBoxContainer
+## The selection panel's own content column -- kept as a member so
+## _apply_selection_tray_width can re-cap its width without a fresh build.
+var selection_column: VBoxContainer
+var soil_summary_row: BoxContainer
 var soil_mark_btn: Button
 var soil_clear_btn: Button
 var speed_buttons: Array = []
@@ -430,6 +431,14 @@ func _ready() -> void:
 	_build_command_tray()
 	_build_warning_banner()
 	_build_discard_dialog()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+
+## Re-caps the selection and command trays to the new viewport width
+## (UI_PLAN.md UI-B) -- a window resize is the only thing allowed to change
+## either tray's width; bee/cell/flower content must not.
+func _on_viewport_size_changed() -> void:
+	_apply_selection_tray_width()
+	_update_command_tray_width()
 
 func _make_label(pos: Vector2, variation: String = "Body") -> Label:
 	var l := Label.new()
@@ -535,10 +544,10 @@ func _build_top_right_bar() -> void:
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
 
-	nursery_button = _icon_button("hex", "Nursery", 96.0, "Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
+	nursery_button = _icon_button("hex", "Nursery", 96.0, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
-	nursery_info = _info("Open the nursery zone window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the zone cells glow on the comb.")
+	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	row2.add_child(nursery_info)
 
 	# Plain text button, no icon of its own yet -- same fallback as
@@ -737,36 +746,48 @@ func _build_selection_panel() -> void:
 	selection_panel.visible = false
 	add_child(selection_panel)
 
-	var column := VBoxContainer.new()
-	selection_panel.add_child(column)
+	selection_column = VBoxContainer.new()
+	selection_panel.add_child(selection_column)
+	var column := selection_column
+	_apply_selection_tray_width()
 
 	var header := HBoxContainer.new()
 	header.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(header)
 	header.add_child(_build_selection_cog())
 
+	# Fixed, viewport-derived width (UiLayout.selection_tray_width) rather
+	# than sizing from label text -- see _apply_selection_tray_width. Every
+	# label below autowraps within it so a long line never stretches the
+	# panel (UI_PLAN.md UI-B).
 	identity_label = Label.new()
 	identity_label.theme_type_variation = "Body"
+	identity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(identity_label)
 
 	energy_label = Label.new()
 	energy_label.theme_type_variation = "Body"
+	energy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	energy_label.add_theme_color_override("font_color", UiTheme.color("success"))
 	column.add_child(energy_label)
 
 	# what the bee is doing right this second
 	activity_label = Label.new()
 	activity_label.theme_type_variation = "Body"
+	activity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 	column.add_child(activity_label)
 
 	trait_label = Label.new()
 	trait_label.theme_type_variation = "Body"
+	trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
 
-	# Only shown for a soil summary -- see show_object_summary.
-	soil_summary_row = HBoxContainer.new()
+	# Only shown for a soil summary -- see show_object_summary. Stacked
+	# vertically (rather than side by side) so the two buttons can never
+	# push the panel past its fixed width at a large text scale.
+	soil_summary_row = VBoxContainer.new()
 	soil_summary_row.visible = false
 	column.add_child(soil_summary_row)
 
@@ -924,7 +945,7 @@ var live_buttons: Dictionary = {}
 ## column, alongside command_columns and more_panel) rather than a
 ## separate floating popup -- folded in per UI_BUGFIX_PLAN.md Slice 4/5,
 ## Dave's 22 Aug call. Built once, like command_columns' rows aren't --
-## its five sections are refreshed in place by _refresh_cell_popup
+## its four sections are refreshed in place by _refresh_cell_popup
 ## rather than torn down and rebuilt per cell selection, since a cell's
 ## controls (which designation, which sections are open) don't change
 ## shape the way a bee's role-dependent rows do.
@@ -993,8 +1014,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	live_buttons["designation_any"] = auto_btn
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
-	_build_zone_controls(_build_cell_action_column(cell_primary_columns, "Nursery zone"))
-	_build_closing_controls(_build_cell_action_column(cell_primary_columns, "Sealing"))
+	_build_nursery_controls(_build_cell_action_column(cell_primary_columns, "Nursery"))
 
 	cell_more_button = Button.new()
 	_style_button(cell_more_button)
@@ -1014,12 +1034,68 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_group.add_child(cell_more_panel)
 
 	_build_empty_controls(_build_cell_action_column(cell_more_panel, "Emptying"))
+	_build_closing_controls(_build_cell_action_column(cell_more_panel, "Sealing"))
 
-	var raises := _build_cell_action_column(cell_more_panel, "Raises")
+## A stable logical column in the cell tray. These are headings rather than
+## independent accordions: the whole row is meant to scan like the selected-
+## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
+func _build_cell_action_column(parent: HBoxContainer, title: String) -> VBoxContainer:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 3)
+	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(wrapper)
+
+	var header := Label.new()
+	header.text = title
+	header.theme_type_variation = "Small"
+	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	wrapper.add_child(header)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	wrapper.add_child(body)
+	return body
+
+## The nursery: how hard the queen favours a reserved cell, and what it
+## raises. Reserving the cell itself is done from the "Reserve for" column's
+## Eggs/Unreserve buttons -- this column used to duplicate that with its own
+## "Nursery zone" Add/Remove pair, which UI-C removed (UI_PLAN.md).
+func _build_nursery_controls(column: VBoxContainer) -> void:
+	var tier_row := HBoxContainer.new()
+	column.add_child(tier_row)
+
+	var tier_title := Label.new()
+	tier_title.text = "Priority:"
+	tier_title.theme_type_variation = "Small"
+	tier_row.add_child(tier_title)
+
+	for tier in range(3):
+		var btn := Button.new()
+		_style_button(btn)
+		btn.text = ["Low", "Medium", "High"][tier]
+		btn.theme_type_variation = "Small"
+		btn.focus_mode = Control.FOCUS_NONE
+		var tier_value: int = tier
+		btn.pressed.connect(func(): _request_priority(tier_value))
+		tier_row.add_child(btn)
+		# tracked so _refresh_cell_popup can light up whichever is in
+		# force on the cell being shown
+		live_buttons["priority_%d" % tier] = btn
+
+	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the settings window."))
+
+	var open_row := HBoxContainer.new()
+	column.add_child(open_row)
+	var open_btn := Button.new()
+	_style_button(open_btn)
+	open_btn.text = "Open nursery window"
+	open_btn.theme_type_variation = "Small"
+	open_btn.pressed.connect(func(): nursery_window_requested.emit())
+	open_row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every reserved cell glows in the colour of the role it raises."))
 
 	# Which role a bee raised here comes out as.
 	var hatch_row := HFlowContainer.new()
-	raises.add_child(hatch_row)
+	column.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
 	hatch_title.theme_type_variation = "Small"
@@ -1047,7 +1123,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
-	raises.add_child(lock_row)
+	column.add_child(lock_row)
 	hatch_lock_box = CheckBox.new()
 	_style_button(hatch_lock_box)
 	hatch_lock_box.text = "Keep for every bee"
@@ -1061,7 +1137,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 
 	# Whether the queen lays a gyne here rather than a worker.
 	var gyne_row := HBoxContainer.new()
-	raises.add_child(gyne_row)
+	column.add_child(gyne_row)
 	gyne_box = CheckBox.new()
 	_style_button(gyne_box)
 	gyne_box.text = "Raise a gyne (a future queen)"
@@ -1074,86 +1150,6 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
-
-## A stable logical column in the cell tray. These are headings rather than
-## independent accordions: the whole row is meant to scan like the selected-
-## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
-func _build_cell_action_column(parent: HBoxContainer, title: String) -> VBoxContainer:
-	var wrapper := VBoxContainer.new()
-	wrapper.add_theme_constant_override("separation", 3)
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(wrapper)
-
-	var header := Label.new()
-	header.text = title
-	header.theme_type_variation = "Small"
-	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
-	wrapper.add_child(header)
-
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 2)
-	wrapper.add_child(body)
-	return body
-
-## The nursery zone: which cells the queen lays in, and how hard she
-## favours each one.
-##
-## The reason this is a zone rather than a per-cell setting is that
-## setting twenty cells one at a time is admin, not strategy. Select a
-## block of comb, put it in the zone, give it a role and a tier, and the
-## proportions look after themselves from then on.
-func _build_zone_controls(column: VBoxContainer) -> void:
-	var row := HBoxContainer.new()
-	column.add_child(row)
-
-	var title := Label.new()
-	title.text = "Nursery zone:"
-	title.theme_type_variation = "Small"
-	row.add_child(title)
-
-	var add_btn := Button.new()
-	_style_button(add_btn)
-	add_btn.text = "Add"
-	add_btn.theme_type_variation = "Small"
-	add_btn.pressed.connect(func(): _request_zone(true))
-	row.add_child(_with_info(add_btn, "Put the selected cells into the nursery zone. They are reserved for brood, the queen lays in them ahead of ordinary comb, and foragers leave them alone. Set what each one raises with the \"Raises\" buttons below."))
-
-	var remove_btn := Button.new()
-	_style_button(remove_btn)
-	remove_btn.text = "Remove"
-	remove_btn.theme_type_variation = "Small"
-	remove_btn.pressed.connect(func(): _request_zone(false))
-	row.add_child(_with_info(remove_btn, "Take the selected cells back out of the zone. They go back to holding whatever arrives first."))
-
-	var open_btn := Button.new()
-	_style_button(open_btn)
-	open_btn.text = "Open zone window"
-	open_btn.theme_type_variation = "Small"
-	open_btn.pressed.connect(func(): nursery_window_requested.emit())
-	row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every zone cell glows in the colour of the role it raises."))
-
-	var tier_row := HBoxContainer.new()
-	column.add_child(tier_row)
-
-	var tier_title := Label.new()
-	tier_title.text = "Priority:"
-	tier_title.theme_type_variation = "Small"
-	tier_row.add_child(tier_title)
-
-	for tier in range(3):
-		var btn := Button.new()
-		_style_button(btn)
-		btn.text = ["Low", "Medium", "High"][tier]
-		btn.theme_type_variation = "Small"
-		btn.focus_mode = Control.FOCUS_NONE
-		var tier_value: int = tier
-		btn.pressed.connect(func(): _request_priority(tier_value))
-		tier_row.add_child(btn)
-		# tracked so _refresh_cell_popup can light up whichever is in
-		# force on the cell being shown
-		live_buttons["priority_%d" % tier] = btn
-
-	tier_row.add_child(_info("How much of the queen's laying this cell gets. She shares eggs between the three tiers in proportion to their weights -- by default 1 : 2 : 3 -- so a high cell receives three eggs for every one a low cell receives, and they come out interleaved rather than in streaks. Twelve high forager cells beside three low nurse cells is how you say \"mostly foragers, a few nurses\" once and then leave it alone. The weights themselves are in the settings window."))
 
 ## Sealing a cell. A colony with honey in it drinks the honey; this is
 ## how you set some aside for a hard stretch instead.
@@ -1478,7 +1474,7 @@ func _refresh_cell_popup() -> void:
 		reserved = active_cell.designated_type
 	state_lines.append("Takes: %s" % reserved)
 	if active_cell.is_nursery_cell():
-		state_lines.append("Nursery zone — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
+		state_lines.append("Nursery — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
 	if active_cell.is_closed:
 		state_lines.append("Sealed — nothing goes in or comes out")
 	elif active_cell.fill_then_close:
@@ -1584,11 +1580,6 @@ func _request_hatch_role(role: int, focus: String, use_automine: bool) -> void:
 func _request_empty(method: String) -> void:
 	if active_cell and is_instance_valid(active_cell):
 		cell_empty_requested.emit(active_cell, method, keep_empty_box.button_pressed)
-		_refresh_cell_popup()
-
-func _request_zone(in_zone: bool) -> void:
-	if active_cell and is_instance_valid(active_cell):
-		cell_zone_requested.emit(active_cell, in_zone)
 		_refresh_cell_popup()
 
 func _request_priority(tier: int) -> void:
@@ -2129,7 +2120,7 @@ func _build_fallback_row(common_role: int, first) -> void:
 		any_cell_box.theme_type_variation = "Small"
 		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
 		any_cell_box.toggled.connect(func(pressed: bool): queen_lay_any_cell_toggled.emit(pressed))
-		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in nursery zone cells and waits when they are full. Turn it off for exact control, and be ready to add zone cells or she stops laying."))
+		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in cells reserved for eggs and waits when they are full. Turn it off for exact control, and be ready to reserve more cells for eggs or she stops laying."))
 
 ## The "when idle" menu, built from the role table so a new role turns
 ## up here without anyone remembering to add it.
@@ -2290,8 +2281,20 @@ func _refresh_selection_text() -> void:
 		trait_label.text = ""
 	_update_command_tray_width()
 
+## Sets the selection panel's fixed width for the current viewport
+## (UiLayout.selection_tray_width) -- called at build time and again from
+## _on_viewport_size_changed, never from content. See _build_selection_panel
+## and the durable rule in UI_PLAN.md UI-B.
+func _apply_selection_tray_width() -> void:
+	var width: float = UiLayout.selection_tray_width(get_viewport().get_visible_rect().size.x)
+	selection_panel.custom_minimum_size.x = width
+	if selection_column != null:
+		selection_column.custom_minimum_size.x = width
+
 ## The command tray's max width is the viewport minus the selection
-## tray's actual width and (above the responsive breakpoint) the
+## tray's fixed width (UiLayout.selection_tray_width, not the panel's
+## actual rendered size -- that still fluctuates a frame behind whatever
+## bee/cell text it last showed) and, above the responsive breakpoint, the
 ## Gallerin reserve -- ui_layout.gd computes it so this tray respects the
 ## reserve by construction rather than a magic-number width. Setting it
 ## on command_columns rather than command_tray itself is what makes the
@@ -2301,7 +2304,7 @@ func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var max_width: float = UiLayout.command_tray_max_width(viewport_width, selection_panel.size.x)
+	var max_width: float = UiLayout.command_tray_max_width(viewport_width, UiLayout.selection_tray_width(viewport_width))
 	command_columns.custom_minimum_size.x = max(200.0, max_width - 32.0)
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = max(520.0, max_width - 32.0)
