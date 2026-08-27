@@ -444,6 +444,10 @@ func _place_floral_preference(global_point: Vector2) -> void:
 ## a role change to route a bee there automatically.
 const EXIT_CLICK_RADIUS := 26.0
 
+## The hive's meadow-side marker is a 60x60 square (hive.gd) -- comfortably
+## covers its corners at distance-from-centre checks.
+const HIVE_CLICK_RADIUS := 40.0
+
 func _issue_command(world_point: Vector2) -> void:
 	if main.selected_bees.is_empty():
 		return
@@ -456,6 +460,13 @@ func _issue_command(world_point: Vector2) -> void:
 	if main.in_hive_view and world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
 		for b in commandable:
 			b.command_exit_hive()
+		return
+	# Right-clicking the meadow-side hive marker sends a loaded bee home to
+	# deposit directly, the same direct-command spirit as the entrance-click
+	# case above (Bee.command_return_and_deposit).
+	if not main.in_hive_view and world_point.distance_to(main.hive.global_position) <= HIVE_CLICK_RADIUS:
+		for b in commandable:
+			b.command_return_and_deposit()
 		return
 	var flower = main.world_building._flower_at(world_point) if not main.in_hive_view else null
 	for b in commandable:

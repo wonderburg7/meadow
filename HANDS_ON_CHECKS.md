@@ -16,6 +16,18 @@ says the fix has shipped.
 
 ## Checkable now
 
+### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
+- [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
+      the marked doorway), tour the three marked meadow points, gather
+      from two flowers via right-click (`Bee.command_collect_from`), then
+      right-click the hive's meadow-side marker to send the queen home
+      and deposit (new `Bee.command_return_and_deposit`, wired in
+      `input_selection.gd`). Confirm each stage's goal actually advances
+      (queen reaching the meadow, the 3-point tour, each flower, the
+      deposit) and that the queen never gets auto-assigned a role she
+      wasn't manually given. See `CHALLENGE1_REVAMP_PLAN.md`'s Bundle D
+      section.
+
 ### Same-flower ping-pong / thin-patch escape (foraging)
 - [ ] Watch a forager worked into an isolated flower (nothing else within
       `forage_perception_radius`), and separately one in a busy patch

@@ -1,8 +1,8 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle D,
-meadow arrival and manual foraging | Dependency: explicit selection in
-`NEXTSTEPS.md` | Verified: 2026-08-26
+Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle E,
+automate nectar then pollen | Dependency: explicit selection in
+`NEXTSTEPS.md` | Verified: 2026-08-27
 
 Bundles A-C are built; Bundles D-H remain. Each bundle is sized for one session
 with its own check before the next starts — the same shape as

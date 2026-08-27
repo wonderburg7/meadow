@@ -553,6 +553,8 @@ func _enter_stage() -> void:
 	main.hud.set_queen_build_button_visible(stage.id in ["1.5", "1.12", "1.14"])
 	if stage.id == "1.4":
 		_begin_ordered_visit(_hive_inspection_points(), main.hive_root)
+	elif stage.id == "1.7":
+		_begin_ordered_visit(_meadow_inspection_points(), main.meadow_root)
 	else:
 		_clear_ordered_visit()
 	_update_marker(stage.id)
@@ -592,6 +594,18 @@ func _hive_inspection_points() -> Array:
 		{"position": centre + Shapes.hex_to_pixel(0, -3, spacing), "radius": VISIT_POINT_RADIUS},
 		{"position": centre + Shapes.hex_to_pixel(-3, 1, spacing), "radius": VISIT_POINT_RADIUS},
 		{"position": centre + Shapes.hex_to_pixel(3, 0, spacing), "radius": VISIT_POINT_RADIUS},
+	]
+
+## Three scenic waypoints out from the hive's meadow-side marker (where a
+## bee appears the moment she exits) -- Bundle D's reuse of the same
+## ordered-visit helper Bundle C built for the hive tour, just parented to
+## meadow_root instead of hive_root.
+func _meadow_inspection_points() -> Array:
+	var origin: Vector2 = main.hive.position
+	return [
+		{"position": origin + Vector2(220.0, -160.0), "radius": VISIT_POINT_RADIUS},
+		{"position": origin + Vector2(-280.0, 140.0), "radius": VISIT_POINT_RADIUS},
+		{"position": origin + Vector2(140.0, 380.0), "radius": VISIT_POINT_RADIUS},
 	]
 
 ## Starts an ordered tour. Each entry owns its arrival radius so a later use
@@ -638,13 +652,26 @@ func _show_current_visit_point() -> void:
 ## reuse the same path in the meadow without adding a second marker. Challenge
 ## 2 has no single "go here" point, so it never shows one.
 func _update_marker(stage_id: String) -> void:
-	if stage_id == "1.4":
+	if stage_id in ["1.4", "1.7"]:
 		_show_current_visit_point()
 	elif stage_id in ["1.2", "1.5"]:
 		_marker.position = main.world_building._hive_centre_local()
 		_marker.visible = true
-	elif stage_id in ["1.6", "1.10", "1.18"]:
+	elif stage_id in ["1.6", "1.18"]:
+		# Both beats are walked from inside the hive view -- the marker
+		# may still be parked in meadow_root from 1.7/1.10's tour, so pull
+		# it back before pointing at the interior doorway.
+		if _marker.get_parent() != main.hive_root:
+			_marker.reparent(main.hive_root, false)
 		_marker.position = main.hive_entrance_inside()
+		_marker.visible = true
+	elif stage_id == "1.10":
+		# Unlike 1.6/1.18, this beat is walked from the meadow: point at
+		# the hive's meadow-side marker instead of the (meaningless out
+		# here) interior doorway coordinate.
+		if _marker.get_parent() != main.meadow_root:
+			_marker.reparent(main.meadow_root, false)
+		_marker.position = main.hive.position
 		_marker.visible = true
 	else:
 		_marker.visible = false
@@ -879,11 +906,19 @@ func _goal_met(goal: String) -> bool:
 			return main.hive.total("pollen") >= POLLEN_TARGET
 		"first_egg_laid":
 			return _brood_cell_count() >= 1
-		"queen_reached_meadow", "meadow_points_visited", "first_flower_collected", \
-		"second_flower_collected", "harvest_deposited", "new_bee_selected", \
-		"new_bee_left_hive":
-			# Structural placeholders: Bundles B-D and F replace these with
-			# causal checks as each underlying mechanic lands. Keeping them
+		"queen_reached_meadow":
+			return is_instance_valid(main.queen) and not main.queen._is_inside_hive()
+		"meadow_points_visited":
+			return _ordered_visit_complete(main.queen)
+		"first_flower_collected":
+			return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 1
+		"second_flower_collected":
+			return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 2
+		"harvest_deposited":
+			return is_instance_valid(main.queen) and main.queen._is_inside_hive() and main.queen.current_load <= 0.0
+		"new_bee_selected", "new_bee_left_hive":
+			# Structural placeholders: Bundle F replaces these with causal
+			# checks once the hatching/greeting mechanics land. Keeping them
 			# false prevents accidental stage skips in an ordinary playthrough.
 			return false
 		"complete":

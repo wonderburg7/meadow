@@ -1624,6 +1624,20 @@ func command_collect_from(flower: Node2D) -> void:
 	current_flower = flower
 	state = State.TO_FLOWER
 
+## Sends a bee straight home to deposit whatever she's carrying, without
+## waiting for a role's own trip-end logic to notice. Outside, this is
+## the same State.TO_HIVE a full stomach already triggers on its own in
+## BeeForaging.collect(); inside, it jumps straight to the same
+## go_to_deposit_cell dispatch a returning forager already runs every
+## time. General, not Challenge-1-only, the same direct-command spirit
+## as command_exit_hive and command_collect_from above.
+func command_return_and_deposit() -> void:
+	_release_everything()
+	if _is_inside_hive():
+		state = State.IN_HIVE_TO_CELL if current_load > 0.0 else State.IN_HIVE_TO_EXIT
+	else:
+		state = State.TO_HIVE
+
 func set_focus(type: String) -> void:
 	if type == resource_type or role != Role.FORAGER:
 		return
