@@ -1,10 +1,10 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle E,
-automate nectar then pollen | Dependency: explicit selection in
-`NEXTSTEPS.md` | Verified: 2026-08-27
+Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle F,
+laying, backup nursing, the first daughter | Dependency: explicit selection
+in `NEXTSTEPS.md` | Verified: 2026-08-27
 
-Bundles A-C are built; Bundles D-H remain. Each bundle is sized for one session
+Bundles A-E are built; Bundles F-H remain. Each bundle is sized for one session
 with its own check before the next starts — the same shape as
 `CRAB_SPIDER_PLAN.md`'s “Implementation bundles”.
 

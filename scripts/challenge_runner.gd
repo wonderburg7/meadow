@@ -654,7 +654,11 @@ func _show_current_visit_point() -> void:
 func _update_marker(stage_id: String) -> void:
 	if stage_id in ["1.4", "1.7"]:
 		_show_current_visit_point()
-	elif stage_id in ["1.2", "1.5"]:
+	elif stage_id in ["1.2", "1.5", "1.12", "1.14"]:
+		# The actual site 1.12/1.14 land on spirals out from here rather
+		# than sitting exactly on it (see _on_queen_build_cell_requested),
+		# but the centre is still the honest "build near here" anchor --
+		# same marker 1.5 already uses for the first cell.
 		_marker.position = main.world_building._hive_centre_local()
 		_marker.visible = true
 	elif stage_id in ["1.6", "1.18"]:
@@ -744,7 +748,7 @@ func _complete() -> void:
 ## assign-role-then-click-a-spot
 ## flow (see hud.gd's set_queen_build_button_visible).
 ##
-## Assigns the site directly (hive.create_cell_site_at + target_cell +
+## Assigns the site directly (hive.create_next_cell_site + target_cell +
 ## State.TO_BUILD_SITE) rather than going through the usual manual-
 ## build-queue-then-idle-dispatch route bee.gd's Comb worker uses for a
 ## player's own placement click. That route needs at least one
@@ -758,12 +762,18 @@ func _complete() -> void:
 ## resetting it after she finishes, closes that off completely: none of
 ## _idle_dispatch's Role.BUILDER branch ever runs for her while it's set,
 ## so there's no path back into auto-building regardless of frame timing.
+##
+## Shared by 1.5, 1.12 and 1.14 (Bundle E) -- create_next_cell_site()
+## spirals outward from the centre for the next open tile rather than
+## always the centre itself, the same helper bee.gd's own Comb workers
+## use for automatic placement, so the second and third calls succeed
+## instead of failing silently against the now-occupied first cell.
 func _on_queen_build_cell_requested() -> void:
 	if not is_instance_valid(main.queen):
 		return
 	main.queen.architect_mode = "maintain"
 	main.queen.set_role(main.Bee.Role.BUILDER)
-	var site: Node2D = main.hive.create_cell_site_at(Vector2i.ZERO)
+	var site: Node2D = main.hive.create_next_cell_site()
 	if site:
 		site.build_time_override = FAST_BUILD_TIME
 		main.queen.target_cell = site
