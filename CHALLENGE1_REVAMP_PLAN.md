@@ -1,10 +1,10 @@
 # Challenge 1 revamp + trigger-property convention — implementation plan
 
-Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle F,
-laying, backup nursing, the first daughter | Dependency: explicit selection
-in `NEXTSTEPS.md` | Verified: 2026-08-27
+Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle H,
+copy pass and doc updates | Dependency: explicit selection in
+`NEXTSTEPS.md` | Verified: 2026-08-27
 
-Bundles A-E are built; Bundles F-H remain. Each bundle is sized for one session
+Bundles A-G are built; Bundle H remains. Each bundle is sized for one session
 with its own check before the next starts — the same shape as
 `CRAB_SPIDER_PLAN.md`'s “Implementation bundles”.
 
@@ -265,6 +265,33 @@ renumber of already-tested logic.
 
 ## Bundle F — Laying, backup nursing, the first daughter
 
+**Built, source-checked and balance-tested; not yet hands-on played, 27 Aug
+2026.** 1.15 needed no new code at all: `_goal_met("first_egg_laid")`
+already existed at target 1 (Bundle A had already parameterised it
+separately from Challenge 2's `eggs_laid`), and the queen's
+`secondary_role` defaults to Nursing in `bee.gd::setup()` regardless of
+which role she's later switched through, so the backup never needed
+UI interaction to work. `world_building.gd::_spawn_hatched_bee` now
+returns the bee it creates; `main.gd::_hatch_ready_brood` passes it to a
+new `challenge_runner.on_worker_hatched()`, a no-op unless Challenge 1 is
+actually on stage 1.16. That hook overrides her spawn-time
+`IN_HIVE_TO_EXIT` to `IDLING` (which never self-dispatches — see
+`bee.gd`'s `State.IDLING` case — so nothing fights external control of
+her position), drives a 2.4s scripted circle around the queen
+(`_drive_greeting`), and spawns a new self-contained
+`queen_hearts_vfx.gd` node (click_marker.gd's pattern: a few small
+squares that rise and fade). A new `bee.laying_paused` flag (same
+single-setter convention as `energy_immune`) holds the queen's laying AI
+off for 3s so she doesn't re-lay into the just-emptied cell mid-beat.
+1.17/1.18 got real goals (`new_bee_selected`, `new_bee_left_hive`,
+replacing the Bundle A stubs) and a new `bee_speech_bubble.gd` (also
+click_marker.gd's self-contained/self-freeing shape, reusing
+gallerin_panel.gd's `PanelContainer` + `Label` shape but reparented to
+follow whichever root the bee is currently in) shown once entering
+1.18. No new "leave the hive" command was needed --
+`input_selection.gd` already calls `command_exit_hive()` directly for any
+selected, commandable bee when the entrance is right-clicked.
+
 **Goal**: stages 1.15-1.18. 1.15 reuses old `STAGES_2` 2.1's mechanism
 (`Role.EGG_LAYER`, `secondary_role` falling back to Nursing when laying
 is blocked, `nurse_pollen`/`nurse_carb` feeding) at a target of **1**
@@ -307,6 +334,22 @@ own bottom-right bubble on screen.
 ---
 
 ## Bundle G — Trim Challenge 2, since its opening now duplicates this
+
+**Built, source-checked and balance-tested; not yet hands-on played, 27 Aug
+2026.** The old 2.1/2.2 entries are gone from `STAGES_2` and 2.3-2.11 are
+renumbered 2.1-2.9 (ids, prompt ids, and the two `_c2_index("2.3")` reads
+inside `_check_c2_failure` all moved together); the dead `eggs_laid`
+match-cases in `_goal_met`/`_goal_progress` were removed rather than left
+unreachable. `nectar_forager_hatched` itself stays in `_goal_met` --
+Challenge 1's 1.16 is now its only caller. `levels.gd`'s level 2 gained
+`"nectar_foragers": 1`; that's the whole change needed, since
+`world_building.gd::_spawn_starting_foragers` already reads
+`level.nectar_foragers` generically (the same field levels 3-6 already
+use) and spawns her outdoors via the existing `_spawn_bee` path -- no new
+world_building code. `challenge_runner.gd::start()`'s Challenge-2 branch
+still only resets the queen's role: every path that can (re-)enter
+Challenge 2 already does a full `reload_current_scene()` first, so the
+starting worker is always freshly spawned and has nothing stale to reset.
 
 Per decision §1: Challenge 2's `STAGES_2` currently opens with 2.1
 (`eggs_laid`, target 2) and 2.2 (`nectar_forager_hatched`) — both now

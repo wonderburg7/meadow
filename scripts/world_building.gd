@@ -494,7 +494,7 @@ func _spawn_bee(focus: String) -> void:
 	bee.setup(main.hive, focus, main.next_bee_id, main.Bee.Role.FORAGER, main)
 	main.next_bee_id += 1
 
-func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> void:
+func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> Node2D:
 	var bee = main.Bee.new()
 	bee.is_gyne = as_gyne
 	bee.position = cell.position
@@ -514,6 +514,7 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 	main.next_bee_id += 1
 	if role == main.Bee.Role.FORAGER:
 		bee.state = main.Bee.State.IN_HIVE_TO_EXIT
+	return bee
 
 func _spawn_indoor_bee(role: int) -> Node2D:
 	var bee = main.Bee.new()

@@ -44,7 +44,7 @@ var_to_str str_to_var weakref instance_from_id hash type_string error_string sig
 Color Vector2 Vector2i Vector3 Rect2 Rect2i Transform2D Callable Signal StringName NodePath
 PackedStringArray PackedVector2Array PackedFloat32Array PackedInt32Array Array Dictionary String
 
-add_child remove_child get_parent get_children get_child get_node find_child has_node
+add_child remove_child reparent get_parent get_children get_child get_node find_child has_node
 add_to_group remove_from_group is_in_group get_tree get_viewport get_viewport_rect
 get_global_mouse_position get_local_mouse_position is_inside_tree queue_free set_process
 is_visible_in_tree show hide

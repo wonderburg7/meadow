@@ -6,7 +6,8 @@ extends Node
 ## for the design this follows stage by stage.
 ##
 ## Both Challenges share this one file: STAGES_1 is Challenge 1's nineteen
-## sub-stages (1.1-1.19), STAGES_2 is Challenge 2's eleven (2.1-2.11) --
+## sub-stages (1.1-1.19), STAGES_2 is Challenge 2's nine (2.1-2.9, per
+## Bundle G's trim -- see STAGES_2's own comment) --
 ## `_stages()` picks between them by `Session.starting_level`. Where the
 ## two Challenges' shapes actually differ (Challenge 1 walks the queen
 ## from the entrance to a marker before she can build; Challenge 2 starts
@@ -25,13 +26,15 @@ extends Node
 ## checkpoint at every stage boundary, both because the plan asks for one
 ## regardless and so the mechanism was exercised for real ahead of
 ## Challenge 2 actually needing the rollback half of it. Challenge 2's
-## own restore path (2.3 onward, see _check_failure) is the first thing
+## own restore path (2.1 onward, see _check_c2_failure) is the first thing
 ## that ever calls TutorialCheckpoint.restore() for real -- see its
 ## comment for what a restore does and doesn't reset.
 
 const Roles = preload("res://scripts/roles.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
+const QueenHeartsVfx = preload("res://scripts/queen_hearts_vfx.gd")
+const BeeSpeechBubble = preload("res://scripts/bee_speech_bubble.gd")
 
 ## How much nectar/pollen counts as a "small" store for 1.11/1.13. Both
 ## are first guesses -- TUTORIAL_PLAN.md doesn't pin down numbers, and
@@ -61,6 +64,23 @@ const STRONGER_HINT_DELAY := 45.0
 ## the tutorial's fast build speed into normal play (and into a save) if
 ## the Challenge was left or restarted before 1.3 completed.
 const FAST_BUILD_TIME := 15.0
+
+## 1.16's hatchling greeting: the new worker circles the queen once and
+## settles just in front of her, while a normal FORAGER hatch would
+## otherwise already be walking for the exit (world_building's
+## _spawn_hatched_bee sets IN_HIVE_TO_EXIT immediately) -- on_worker_hatched
+## overrides that to IDLING for the length of this beat and until the
+## player sends her out herself (1.17/1.18).
+const GREETING_RADIUS := 30.0
+const GREETING_DURATION := 2.4
+const GREETING_REST_OFFSET := Vector2(0.0, 18.0)
+
+## How long the queen's laying AI stays paused after the hatch, so she
+## doesn't immediately walk off to lay into the cell that just emptied
+## while the hearts VFX is still playing (bee.gd's laying_paused).
+const HEARTS_DURATION := 3.0
+
+const FAREWELL_LINE := "Thanks for giving me life, Mum... I mean... my Queen..."
 
 ## A soft gold ring, distinct from the build-hover/home-cell colours
 ## already used elsewhere on the comb, shown at the centre for the early
@@ -238,11 +258,11 @@ const STAGES_1 := [
 ## against GameConfig (cell_capacity is 200, so the 2 nectar-full starting
 ## cells already hold 400 -- comfortably above the 300 completion target,
 ## which is deliberate: the colony spends that nest egg growing the
-## workforce through 2.1-2.6 and earns it back easily once 10 nectar
+## workforce through 2.1-2.4 and earns it back easily once 10 nectar
 ## Foragers exist). Like Challenge 1's own constants, easy to retune once
 ## this is actually played.
-const C2_INTERIM_NECTAR := 175.0        # 2.6: doc range 150-200
-const C2_INTERIM_POLLEN := 90.0         # 2.6: doc range 75-100
+const C2_INTERIM_NECTAR := 175.0        # 2.4: doc range 150-200
+const C2_INTERIM_POLLEN := 90.0         # 2.4: doc range 75-100
 const C2_COMPLETE_NECTAR := 300.0
 const C2_COMPLETE_POLLEN := 150.0
 const C2_COMPLETE_NECTAR_FORAGERS := 10
@@ -250,107 +270,98 @@ const C2_COMPLETE_POLLEN_FORAGERS := 4
 const C2_COMPLETE_NURSES := 2
 const C2_COMPLETE_BUILDERS := 2
 const C2_COMPLETE_MINERS := 2
-## How far nectar has to have dropped below its level at 2.3's start, and
+## How far nectar has to have dropped below its level at 2.1's start, and
 ## then recovered back above, for "stability demonstrated" to count.
 const C2_STABILITY_DROP := 30.0
 const C2_STABILITY_RECOVERY := 30.0
-## Soft-failure floor (checkpoint restore) once 2.3 is active.
+## Soft-failure floor (checkpoint restore) once 2.1 is active.
 const C2_FAILURE_FLOOR := 15.0
 ## One-time rescue: triggers once nectar first falls below this floor
-## after 2.3 has completed. Doc range 25-50.
+## after 2.1 has completed. Doc range 25-50.
 const C2_RESCUE_THRESHOLD := 40.0
 const C2_RESCUE_AMOUNT := 150.0
 
+## Bundle G (CHALLENGE1_REVAMP_PLAN.md): the old 2.1 (eggs_laid) and 2.2
+## (nectar_forager_hatched) are gone -- Challenge 1's own 1.15-1.16 now
+## teach exactly that (laying, backup nursing, the first hatch), and
+## levels.gd's level 2 starts with that first nectar Forager already
+## hatched (see world_building.gd::_spawn_starting_foragers). What was
+## 2.3 is renumbered to 2.1 so the sequence still starts at "2.1" rather
+## than opening on a stage id that looks like two are missing.
 const STAGES_2 := [
 	{
-		"id": "2.1", "goal": "eggs_laid", "unlocked_keys": ["laying"],
-		"goal_text": "Goal: let the queen lay in both empty cells.",
-		"prompts": [
-			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have stores, space, and a queen. That is enough to begin making a workforce -- provided someone lays the eggs."},
-			{"id": "2.1_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "She's already on Laying duty. Make sure she has pollen to eat and a free cell to lay in, and she'll take care of the rest."},
-		],
-	},
-	{
-		"id": "2.2", "goal": "nectar_forager_hatched", "unlocked_keys": ["laying"],
-		"goal_text": "Goal: wait for the first egg to hatch into a nectar Forager.",
-		"prompts": [
-			{"id": "2.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "Left to their own devices, these first eggs will become nectar foragers. Sensible. A hungry colony needs energy before ambition."},
-			{"id": "2.2_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Developing bees still need care. A little attention now becomes wings later."},
-		],
-	},
-	{
-		"id": "2.3", "goal": "nectar_stabilized", "unlocked_keys": ["laying", "colony_window"],
+		"id": "2.1", "goal": "nectar_stabilized", "unlocked_keys": ["laying", "colony_window"],
 		"goal_text": "Goal: watch the nectar stores fall, then recover them.",
 		"prompts": [
-			{"id": "2.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},
-			{"id": "2.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Your stores are falling. That is not automatically bad -- but it does mean the colony needs nectar coming in."},
+			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},
+			{"id": "2.1_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Your stores are falling. That is not automatically bad -- but it does mean the colony needs nectar coming in."},
 		],
 	},
 	{
-		"id": "2.4", "goal": "pollen_foragers_raised",
+		"id": "2.2", "goal": "pollen_foragers_raised",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen"],
 		"goal_text": "Goal: raise a pollen Forager.",
 		"prompts": [
-			{"id": "2.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar keeps bees moving. Pollen helps make more bees. A colony that wants a future needs both."},
-			{"id": "2.4_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try raising a pollen forager. The next generation will need protein, not just sweetness."},
+			{"id": "2.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar keeps bees moving. Pollen helps make more bees. A colony that wants a future needs both."},
+			{"id": "2.2_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try raising a pollen forager. The next generation will need protein, not just sweetness."},
 		],
 	},
 	{
-		"id": "2.5", "goal": "cell_designated",
+		"id": "2.3", "goal": "cell_designated",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: designate a cell.",
 		"prompts": [
-			{"id": "2.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be more than empty space. Give it a purpose, and the colony becomes easier to steer."},
-			{"id": "2.5_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try designating a cell. Bees are marvellous, but they do appreciate a labelled cupboard."},
+			{"id": "2.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be more than empty space. Give it a purpose, and the colony becomes easier to steer."},
+			{"id": "2.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try designating a cell. Bees are marvellous, but they do appreciate a labelled cupboard."},
 		],
 	},
 	{
-		"id": "2.6", "goal": "interim_reserve",
+		"id": "2.4", "goal": "interim_reserve",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: build a reserve of ~175 nectar and ~90 pollen.",
 		"prompts": [
-			{"id": "2.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "Before growing further, build a small reserve. Colonies with no buffer are simply dramatic accidents waiting to happen."},
-			{"id": "2.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Prioritise nectar for now. Every bee you raise will add to the colony's energy demand."},
+			{"id": "2.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "Before growing further, build a small reserve. Colonies with no buffer are simply dramatic accidents waiting to happen."},
+			{"id": "2.4_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Prioritise nectar for now. Every bee you raise will add to the colony's energy demand."},
 		],
 	},
 	{
-		"id": "2.7", "goal": "nurse_raised",
+		"id": "2.5", "goal": "nurse_raised",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both"],
 		"goal_text": "Goal: raise a nurse.",
 		"prompts": [
-			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The queen can begin a colony, but she should not have to do every nursery shift. Raise a nurse."},
-			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Designate an egg or brood cell for a nurse. Once grown, they can tend developing bees automatically."},
+			{"id": "2.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "The queen can begin a colony, but she should not have to do every nursery shift. Raise a nurse."},
+			{"id": "2.5_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Designate an egg or brood cell for a nurse. Once grown, they can tend developing bees automatically."},
 		],
 	},
 	{
-		"id": "2.8", "goal": "persistent_designation_used",
+		"id": "2.6", "goal": "persistent_designation_used",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock"],
 		"goal_text": "Goal: keep two cells raising foragers, and raise one more nurse as a one-off.",
 		"prompts": [
-			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Some cells can remember what they are for. Useful, if one prefers planning to mild panic."},
-			{"id": "2.8_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Set a cell to keep producing foragers, then make a nurse as a one-off. Repeating some jobs and choosing others is the trick."},
+			{"id": "2.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "Some cells can remember what they are for. Useful, if one prefers planning to mild panic."},
+			{"id": "2.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Set a cell to keep producing foragers, then make a nurse as a one-off. Repeating some jobs and choosing others is the trick."},
 		],
 	},
 	{
-		"id": "2.9", "goal": "comb_worker_building",
+		"id": "2.7", "goal": "comb_worker_building",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain"],
 		"goal_text": "Goal: raise a Comb worker and build more comb.",
 		"prompts": [
-			{"id": "2.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
-			{"id": "2.9_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose where the next cell should go, then let a comb worker take on some building automatically once the pattern is obvious."},
+			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
+			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose where the next cell should go, then let a comb worker take on some building automatically once the pattern is obvious."},
 		],
 	},
 	{
-		"id": "2.10", "goal": "miner_expansion",
+		"id": "2.8", "goal": "miner_expansion",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
 		"goal_text": "Goal: raise a miner, dig new space, and build a cell in it.",
 		"prompts": [
-			{"id": "2.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},
-			{"id": "2.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Raise a miner, then mark a little soil for digging. Space first, cells second."},
+			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},
+			{"id": "2.8_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Raise a miner, then mark a little soil for digging. Space first, cells second."},
 		],
 	},
 	{
-		"id": "2.11", "goal": "c2_complete",
+		"id": "2.9", "goal": "c2_complete",
 		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
 		"goal_text": "Goal: 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen Foragers, 2 nurses, 2 Comb workers, 2 miners.",
 		"prompts": [],
@@ -395,6 +406,19 @@ var _c2_nurses_at_stage_entry: int = 0
 ## nectar grant itself needs its own guard.
 var _c2_rescue_used: bool = false
 
+## Challenge 1's first daughter (1.16-1.18) -- the one bee on-screen every
+## goal/animation/bubble from here on refers to. Set once, by
+## on_worker_hatched(), and never reassigned within a run.
+var _new_worker: Node2D = null
+var _greeting_active: bool = false
+var _greeting_elapsed: float = 0.0
+var _greeting_start_angle: float = 0.0
+## Counts down from HEARTS_DURATION once the hatch fires; clears the
+## queen's laying_paused the moment it reaches zero. Independent of the
+## greeting timer above -- the two beats overlap but don't have to finish
+## together.
+var _hearts_timer: float = 0.0
+
 func _stages() -> Array:
 	return STAGES_2 if Session.starting_level == 2 else STAGES_1
 
@@ -414,6 +438,9 @@ func start() -> void:
 	_opening_blocks.clear()
 	_opening_started = false
 	_clear_ordered_visit()
+	_new_worker = null
+	_greeting_active = false
+	_hearts_timer = 0.0
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -460,11 +487,17 @@ func start() -> void:
 
 	_enter_stage()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not active:
 		return
 	if Session.starting_level == 1 and _stage_index == 0:
 		_drive_opening_mine()
+	if _greeting_active:
+		_drive_greeting(delta)
+	if _hearts_timer > 0.0:
+		_hearts_timer -= delta
+		if _hearts_timer <= 0.0 and is_instance_valid(main.queen):
+			main.queen.laying_paused = false
 	if Session.starting_level == 2:
 		_c2_nectar_low_seen = min(_c2_nectar_low_seen, main.hive.total("nectar"))
 		_check_c2_failure()
@@ -473,19 +506,20 @@ func _process(_delta: float) -> void:
 	if _goal_met(_stages()[_stage_index].goal):
 		_advance()
 
-## Challenge 2's soft-failure/rescue, from 2.3 onward (TUTORIAL_PLAN.md's
+## Challenge 2's soft-failure/rescue, from 2.1 onward (TUTORIAL_PLAN.md's
 ## "Failure and rescue"). Runs every frame once active, but only actually
-## checks anything from stage 2.3 onward -- indices below that never had
-## a nectar collapse be possible in the first place.
+## checks anything from stage 2.1 onward -- indices below that never had
+## a nectar collapse be possible in the first place. (Since Bundle G, 2.1
+## is the very first stage, so this now applies from the start of the run.)
 func _check_c2_failure() -> void:
-	if _stage_index < _c2_index("2.3"):
+	if _stage_index < _c2_index("2.1"):
 		return
 	var nectar: float = main.hive.total("nectar")
 
-	# The one-time rescue only ever applies once 2.3 itself is behind us
-	# (its own goal *is* "recover from a dip", so a rescue mid-2.3 would
+	# The one-time rescue only ever applies once 2.1 itself is behind us
+	# (its own goal *is* "recover from a dip", so a rescue mid-2.1 would
 	# short-circuit the very thing it's meant to teach).
-	if not _c2_rescue_used and _stage_index > _c2_index("2.3") and nectar < C2_RESCUE_THRESHOLD:
+	if not _c2_rescue_used and _stage_index > _c2_index("2.1") and nectar < C2_RESCUE_THRESHOLD:
 		_c2_rescue_used = true
 		main.hive.deposit("nectar", C2_RESCUE_AMOUNT)
 		main.gallerin_panel.show_now({
@@ -558,6 +592,10 @@ func _enter_stage() -> void:
 	else:
 		_clear_ordered_visit()
 	_update_marker(stage.id)
+	if stage.id == "1.18" and is_instance_valid(_new_worker):
+		var bubble := BeeSpeechBubble.new()
+		_new_worker.get_parent().add_child(bubble)
+		bubble.show_text(_new_worker, FAREWELL_LINE)
 	main.gallerin_panel.queue_prompts(stage.prompts)
 	main.TutorialCheckpoint.save(main)
 
@@ -892,6 +930,47 @@ func _opening_tunnel_cleared() -> bool:
 			return false
 	return true
 
+## Called by main.gd right after every brood hatch, for every hatch in the
+## game -- a no-op unless Challenge 1 is actually waiting on this one
+## (stage 1.16, the colony's first daughter). Keeps her from immediately
+## walking to the exit the way an ordinary hatch does, and starts the
+## greeting animation and the queen's hearts VFX.
+func on_worker_hatched(bee: Node2D) -> void:
+	if not active or Session.starting_level != 1 or not is_instance_valid(bee):
+		return
+	if _stages()[_stage_index].id != "1.16":
+		return
+	_new_worker = bee
+	bee.state = main.Bee.State.IDLING
+	_greeting_active = true
+	_greeting_elapsed = 0.0
+	_greeting_start_angle = randf() * TAU
+	if is_instance_valid(main.queen):
+		main.queen.laying_paused = true
+		_hearts_timer = HEARTS_DURATION
+		var hearts := QueenHeartsVfx.new()
+		hearts.position = main.queen.position
+		main.hive_root.add_child(hearts)
+
+## Walks _new_worker on a scripted circle around the queen rather than
+## through her own state machine (she's parked on IDLING, which never
+## calls _idle_dispatch -- see bee.gd's State.IDLING case -- so nothing
+## fights this for control of her position). Settles her just below the
+## queen once the circle completes, reading as having arrived to greet her.
+func _drive_greeting(delta: float) -> void:
+	if not is_instance_valid(_new_worker) or not is_instance_valid(main.queen):
+		_greeting_active = false
+		return
+	_greeting_elapsed += delta
+	var t: float = clampf(_greeting_elapsed / GREETING_DURATION, 0.0, 1.0)
+	var centre: Vector2 = main.queen.position
+	if t >= 1.0:
+		_greeting_active = false
+		_new_worker.position = centre + GREETING_REST_OFFSET
+		return
+	var angle: float = _greeting_start_angle + t * TAU
+	_new_worker.position = centre + Vector2(cos(angle), sin(angle)) * GREETING_RADIUS
+
 func _goal_met(goal: String) -> bool:
 	match goal:
 		"entrance_tunnel_cleared":
@@ -926,18 +1005,20 @@ func _goal_met(goal: String) -> bool:
 			return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 2
 		"harvest_deposited":
 			return is_instance_valid(main.queen) and main.queen._is_inside_hive() and main.queen.current_load <= 0.0
-		"new_bee_selected", "new_bee_left_hive":
-			# Structural placeholders: Bundle F replaces these with causal
-			# checks once the hatching/greeting mechanics land. Keeping them
-			# false prevents accidental stage skips in an ordinary playthrough.
-			return false
+		"new_bee_selected":
+			return (
+				is_instance_valid(_new_worker) and main.selected_bees.size() == 1
+				and main.selected_bees[0] == _new_worker
+			)
+		"new_bee_left_hive":
+			return is_instance_valid(_new_worker) and not _new_worker._is_inside_hive()
 		"complete":
 			return true
-		# --- Challenge 2 ---------------------------------------------
-		"eggs_laid":
-			return _brood_cell_count() >= 2
+		# --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
+		# Forager by default, and the goal doesn't care which Challenge asked.
 		"nectar_forager_hatched":
 			return main._role_counts().get(Roles.count_key(Roles.FORAGER, "nectar"), 0) >= 1
+		# --- Challenge 2 ---------------------------------------------
 		"nectar_stabilized":
 			# It has to have actually dropped and come back, not just sat
 			# above the recovery line the whole time -- see C2_STABILITY_*.
@@ -997,7 +1078,5 @@ func _goal_progress(goal: String) -> Dictionary:
 			return {"current": main.hive.total("pollen"), "target": POLLEN_TARGET}
 		"first_egg_laid":
 			return {"current": _brood_cell_count(), "target": 1.0}
-		"eggs_laid":
-			return {"current": _brood_cell_count(), "target": 2.0}
 		_:
 			return {}

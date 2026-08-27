@@ -110,6 +110,12 @@ var energy: float = 100.0
 ## pressure" start state (see TUTORIAL_PLAN.md). Never touched anywhere
 ## else, so ordinary play is completely unaffected.
 var energy_immune: bool = false
+## True only for the few seconds after Challenge 1's first hatch (1.16) --
+## challenge_runner.gd sets this on the queen so she doesn't immediately
+## lay into the cell that just emptied while the hatchling greeting/hearts
+## beat is still playing. Only ever set by challenge_runner.gd; ordinary
+## play never touches it.
+var laying_paused: bool = false
 var age_seconds: float = 0.0
 var selected: bool = false
 ## queue_free only takes effect at the end of the frame, so without this
@@ -1387,7 +1393,7 @@ func _try_role_work(r: int) -> bool:
 			# the moment there's both pollen to eat and somewhere to put
 			# an egg; the rest of the time her backup role (nursing, by
 			# default) picks up the slack.
-			if not is_queen:
+			if not is_queen or laying_paused:
 				return false
 			if hive.has_room_for_egg() and hive.find_cell_with("pollen") != null:
 				state = State.SEEK_POLLEN
