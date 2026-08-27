@@ -13,6 +13,32 @@ Planning/context findings last refreshed: 26 Aug 2026. Completed simulation
 recommendations are recorded in Git history and their current checks/plans,
 not retained here as an advisory queue.
 
+## Architecture/performance
+
+### P0. Consolidate availability and move high-value derived state to invalidation
+
+**Evidence:** feature availability is split between `GameConfig`,
+`prerequisites.gd`, level flags, `stage_gate.gd` and Challenge/UI filtering;
+roles also deliberately mirror persisted integer IDs in `roles.gd` and
+`bee_enums.gd`. `Hive` rebuilds its content buckets once per queried frame,
+while `year_winter.gd` rescans bees/cells for derived HUD/panel facts each
+second and `hud.gd` refreshes an open selection popup every frame. Meadow
+already has a flower spatial grid, miner epoch, staggered thinking and
+throttled hidden presentation, so this is not evidence for a broad ECS
+rewrite.
+
+**Consequence:** new resources, orders or gated mechanics require duplicated
+rules; unchanged state still triggers repeated collection scans and UI work as
+the colony grows.
+
+**Recommendation:** first choose one measured runtime target and implement a
+mutation-owned Hive/colony snapshot with revision-driven UI refreshes. In a
+separate slice, introduce a non-visual availability query and a small resource
+catalogue, retaining stable string keys and adding save migration coverage
+before schema changes. Full evidence and a decision-gated six-slice plan are
+in `CHATGPT_EFFICIENCY_AUDIT.md` and
+`CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`.
+
 ## UI
 
 ### P1. Challenge goal shelf overlays the top-bar controls
