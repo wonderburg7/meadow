@@ -128,6 +128,9 @@ var death_cause: String = ""
 
 var move_target: Vector2 = Vector2.ZERO   # for player-commanded movement
 var target_cell: Node2D = null
+## Challenge 1's manual-forage arc stops the queen at the hive entrance so
+## the player chooses the receiving cell. False everywhere else.
+var manual_deposit_pending: bool = false
 var haul_target: Node2D = null
 var target_block: Node2D = null
 var automine: bool = false
@@ -1645,6 +1648,18 @@ func command_return_and_deposit() -> void:
 		state = State.IN_HIVE_TO_CELL if current_load > 0.0 else State.IN_HIVE_TO_EXIT
 	else:
 		state = State.TO_HIVE
+
+## Returns an outdoor bee to the hive without selecting a receiving cell.
+## Challenge 1 uses this during its manual deposit lesson only.
+func command_return_only() -> void:
+	_release_everything()
+	state = State.TO_HIVE
+
+## Deposits the carried load into the cell the player selected.
+func command_deposit_at(cell: Node2D) -> void:
+	target_cell = cell
+	manual_deposit_pending = false
+	state = State.IN_HIVE_TO_CELL
 
 func set_focus(type: String) -> void:
 	if type == resource_type or role != Role.FORAGER:

@@ -700,6 +700,9 @@ static func enter_hive(bee: Node2D) -> void:
 		DiagnosticLog.log_forager_return(bee, "arrived", 0.0)
 		bee.emergency_return_reason = ""
 	bee.target_cell = null
+	if bee.manual_deposit_pending:
+		bee.state = State.IDLING
+		return
 	# A bee that came home because its job is now indoors (see set_role)
 	# starts that job at the door rather than running the forager's
 	# deposit-and-leave sequence.

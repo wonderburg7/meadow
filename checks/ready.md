@@ -102,7 +102,7 @@ feature and run only its check. Move a confirmed or superseded entry to
       gone). Play through a couple more stages and confirm the ids/goals
       line up with `plans/archive/CHALLENGE1_REVAMP_PLAN.md`'s Bundle G section and
       nothing about the soft-failure/rescue (2.1's own goal) misfires on
-      the very first stage.
+      the very first stage. See `plans/now/challenge-1.md`.
 
 ### Challenge 1 Bundle F -- laying, backup nursing, the first daughter (stages 1.15-1.18)
 - [ ] Play Challenge 1 through to the first egg: set the queen to Laying
@@ -118,8 +118,10 @@ feature and run only its check. Move a confirmed or superseded entry to
       life, Mum... I mean... my Queen...") appears as a speech bubble
       anchored above her (not the corner) and doesn't visually collide
       with Dr Gallerin's own bottom-right bubble, then that the Challenge
-      completes once she's outside. See `plans/archive/CHALLENGE1_REVAMP_PLAN.md`'s
-      Bundle F section.
+      completion window offers Continue to Challenge 2, Restart Challenge 1,
+      and Main menu (not Continue playing). Choose each option in separate
+      runs and confirm it starts Challenge 2, restarts Challenge 1, and opens
+      the menu respectively. See `plans/now/challenge-1.md` Slices 6-7.
 
 ### Challenge 1 Bundle E -- automate nectar, then pollen (stages 1.11-1.14)
 - [ ] Play Challenge 1 from the meadow-harvest deposit onward: assign the
@@ -131,20 +133,19 @@ feature and run only its check. Move a confirmed or superseded entry to
       build a third cell (1.14). Confirm each stage's goal advances, the
       second and third cells land beside the first rather than failing,
       and 1.13's Gallerin copy withholds "pollen makes new workers" while
-      1.14's reveals it. See `plans/archive/CHALLENGE1_REVAMP_PLAN.md`'s Bundle E
-      section.
+      1.14's reveals it. See `plans/now/challenge-1.md` Slices 4-5.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
       the marked doorway), tour the three marked meadow points, gather
       from two flowers via right-click (`Bee.command_collect_from`), then
-      right-click the hive's meadow-side marker to send the queen home
-      and deposit (new `Bee.command_return_and_deposit`, wired in
-      `input_selection.gd`). Confirm each stage's goal actually advances
-      (queen reaching the meadow, the 3-point tour, each flower, the
-      deposit) and that the queen never gets auto-assigned a role she
-      wasn't manually given. See `plans/archive/CHALLENGE1_REVAMP_PLAN.md`'s Bundle D
-      section.
+      right-click the hive's meadow-side marker to send the queen home.
+      Once she arrives, right-click the wax cell to deposit the load.
+      Confirm each stage's goal actually advances (queen reaching the
+      meadow, the 3-point tour, each flower, the deposit), automatic
+      movement/collection/deposit never clears a manual stage, and the
+      queen never gets auto-assigned a role she wasn't manually given. See
+      `plans/now/challenge-1.md` Slice 3.
 
 ### Same-flower ping-pong / thin-patch escape (foraging)
 - [ ] Watch a forager worked into an isolated flower (nothing else within

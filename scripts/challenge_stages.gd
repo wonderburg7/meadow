@@ -12,12 +12,13 @@ extends RefCounted
 ## their differences.
 class_name ChallengeStages
 
-## How much nectar/pollen counts as a "small" store for 1.11/1.13. Both
-## are first guesses -- TUTORIAL_PLAN.md doesn't pin down numbers, and
-## these are small enough to reach in a trip or two at default balance
-## (a forager's stomach holds 50 nectar or 15 pollen -- see GameConfig).
-const NECTAR_TARGET := 30.0
-const POLLEN_TARGET := 10.0
+## Challenge 1's 1.13 pollen lesson completes when its pollen cell reaches
+## this amount. Unlike the preceding nectar lesson, it teaches a meaningful
+## reserve rather than filling the cell completely.
+const POLLEN_TARGET := 75.0
+## Challenge 1's automatic nectar/pollen lesson runs at double each queen's
+## current rate. challenge_runner.gd restores the saved per-bee values on exit.
+const CHALLENGE1_FORAGE_SPEED_MULTIPLIER := 2.0
 const CENTRE_RADIUS := 40.0
 const VISIT_POINT_RADIUS := 30.0
 
@@ -152,8 +153,8 @@ const STAGES_1 := [
 		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: return to the hive and deposit the harvest.",
 		"prompts": [
-			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home and deposit the harvest."},
-			{"id": "1.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use Return and deposit to send the queen back to the hive's first cell."},
+			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home, then choose the wax cell that receives the harvest."},
+			{"id": "1.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Right-click the hive to bring the queen home, then right-click the wax cell to deposit her load."},
 		],
 	},
 	{

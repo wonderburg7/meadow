@@ -102,6 +102,12 @@ var _greeting_start_angle: float = 0.0
 ## together.
 var _hearts_timer: float = 0.0
 
+## Challenge 1 only: the queen gathers at twice her normal rate once the
+## automatic-foraging lesson begins. Keep the actual pre-override values so
+## traits and debug-tuned rates are restored exactly when the Challenge ends.
+var _c1_base_nectar_rate: float = -1.0
+var _c1_base_pollen_rate: float = -1.0
+
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
 
@@ -126,6 +132,9 @@ func start() -> void:
 	_greeting_active = false
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
+	main.queen.manual_deposit_pending = false
+	_c1_base_nectar_rate = -1.0
+	_c1_base_pollen_rate = -1.0
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -258,6 +267,13 @@ func _stage_unlock_keys(entries: Array) -> Array:
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
+	if Session.starting_level == 1:
+		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
+		if stage.id == "1.11":
+			_c1_base_nectar_rate = main.queen.nectar_collection_rate
+			_c1_base_pollen_rate = main.queen.pollen_collection_rate
+			main.queen.nectar_collection_rate *= Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+			main.queen.pollen_collection_rate *= Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
 	if Session.starting_level == 1:
 		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
@@ -439,6 +455,9 @@ func _complete() -> void:
 		_marker.visible = false
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
+		if _c1_base_nectar_rate >= 0.0:
+			main.queen.nectar_collection_rate = _c1_base_nectar_rate
+			main.queen.pollen_collection_rate = _c1_base_pollen_rate
 	main.hud.set_warnings_muted(false)
 	main.debug_panel.set_save_load_enabled(true)
 	main.TutorialCheckpoint.clear()
@@ -735,10 +754,16 @@ func _goal_check_third_cell_built() -> bool:
 	return _built_cell_count() >= 3
 
 func _goal_check_nectar_target() -> bool:
-	return main.hive.total("nectar") >= Stages.NECTAR_TARGET
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.content_type == "nectar" and cell.fill_fraction() >= 1.0:
+			return true
+	return false
 
 func _goal_check_pollen_target() -> bool:
-	return main.hive.total("pollen") >= Stages.POLLEN_TARGET
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.content_type == "pollen" and cell.amount >= Stages.POLLEN_TARGET:
+			return true
+	return false
 
 func _goal_check_first_egg_laid() -> bool:
 	return _brood_cell_count() >= 1
@@ -840,9 +865,15 @@ func _goal_check_c2_complete() -> bool:
 func _goal_progress(goal: String) -> Dictionary:
 	match goal:
 		"nectar_target":
-			return {"current": main.hive.total("nectar"), "target": Stages.NECTAR_TARGET}
+			for cell in main.hive.cells:
+				if is_instance_valid(cell) and cell.content_type == "nectar":
+					return {"current": cell.amount, "target": cell.capacity_for("nectar")}
+			return {}
 		"pollen_target":
-			return {"current": main.hive.total("pollen"), "target": Stages.POLLEN_TARGET}
+			for cell in main.hive.cells:
+				if is_instance_valid(cell) and cell.content_type == "pollen":
+					return {"current": cell.amount, "target": Stages.POLLEN_TARGET}
+			return {}
 		"first_egg_laid":
 			return {"current": _brood_cell_count(), "target": 1.0}
 		_:
