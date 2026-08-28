@@ -11,11 +11,11 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 
 | Area | Current source | State |
 | --- | --- | --- |
-| Progression, colony adaptations and skills | `SKILL_TREE_PLAN.md` | designed, not scheduled |
-| Challenge 1 revamp / Challenge 2 boundary | `CHALLENGE1_REVAMP_PLAN.md`, `TUTORIAL_PLAN.md` | Challenge 1 A-C delivered; further work optional |
-| Foraging ecology | `FORAGING_ECOLOGY_PLAN.md` | mechanics built; evidence campaign remains |
-| Predators | `CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
-| UI and accessibility | `UI_PLAN.md` | active, narrow slices only |
+| Progression, colony adaptations and skills | `plans/design/progression.md` | designed, not scheduled |
+| Challenge 1 revamp / Challenge 2 boundary | `plans/now/challenge-1.md` | Bundle H current |
+| Foraging ecology | `plans/active/foraging-evidence.md` | mechanics built; evidence campaign remains |
+| Predators | `plans/archive/CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
+| UI and accessibility | `plans/now/ui.md` | active, narrow slices only |
 
 ## Deferred product decisions
 

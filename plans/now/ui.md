@@ -1,12 +1,13 @@
 # Meadow UI — active slices and durable rules
 
+<!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: UI-D Challenge top-bar
 hit-area diagnosis | Dependency: none | Verified: 2026-08-28
 
 The delivered redesign and hands-on investigation records are archived at
-`docs/archive/UI_PLAN_2026-08-26.md`,
-`docs/archive/UI_BUGFIX_PLAN_2026-08-24.md` and
-`docs/archive/UI_SETTINGS_PLAN_2026-08-24.md`. This is the only current UI
+`plans/archive/UI_PLAN_2026-08-26.md`,
+`plans/archive/UI_BUGFIX_PLAN_2026-08-24.md` and
+`plans/archive/UI_SETTINGS_PLAN_2026-08-24.md`. This is the only current UI
 execution plan.
 
 ## Durable rules

@@ -16,7 +16,13 @@ MD_LINK_PATTERN = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 
 
 def current_plans() -> list[Path]:
-    return sorted(ROOT.glob("*_PLAN.md"))
+    """Return the small, routable plan layers; history is intentionally excluded."""
+    layers = ("now", "active", "design", "reference")
+    return sorted(
+        path
+        for layer in layers
+        for path in (ROOT / "plans" / layer).glob("*.md")
+    )
 
 
 def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
@@ -25,17 +31,17 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
         first_lines = "\n".join(text.splitlines()[:8])
         match = PLAN_PATTERN.search(first_lines)
         if not match:
-            errors.append(f"{plan.name}: active root plan has no Status line in its first 8 lines")
+            errors.append(f"{plan.relative_to(ROOT)}: active plan has no Status line in its first 8 lines")
             continue
 
         status = match.group(1).lower()
         metadata = first_lines.lower()
         if any(state in status for state in TERMINAL_STATES):
-            errors.append(f"{plan.name}: terminal plan belongs in docs/archive, not the root")
+            errors.append(f"{plan.relative_to(ROOT)}: terminal plan belongs in plans/archive, not a live layer")
 
         missing = [field[:-1].title() for field in REQUIRED_STATUS_FIELDS if field not in metadata]
         if missing:
-            errors.append(f"{plan.name}: Status line is missing {', '.join(missing)}")
+            errors.append(f"{plan.relative_to(ROOT)}: Status line is missing {', '.join(missing)}")
 
         verified = re.search(r"verified:\s*(\d{4}-\d{2}-\d{2})", metadata)
         if not verified:
@@ -43,13 +49,22 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
         try:
             verified_on = date.fromisoformat(verified.group(1))
         except ValueError:
-            errors.append(f"{plan.name}: Verified must use YYYY-MM-DD")
+            errors.append(f"{plan.relative_to(ROOT)}: Verified must use YYYY-MM-DD")
             continue
         age = (date.today() - verified_on).days
         if age > 28:
-            warnings.append(f"{plan.name}: verification date is {age} days old")
+            warnings.append(f"{plan.relative_to(ROOT)}: verification date is {age} days old")
         elif age < 0:
-            warnings.append(f"{plan.name}: verification date is in the future")
+            warnings.append(f"{plan.relative_to(ROOT)}: verification date is in the future")
+
+
+def check_context_layout(errors: list[str]) -> None:
+    legacy_root_plans = sorted(ROOT.glob("*_PLAN.md"))
+    if legacy_root_plans:
+        names = ", ".join(path.name for path in legacy_root_plans)
+        errors.append(f"root planning files must move under plans/: {names}")
+    if (ROOT / "CHATGPT_NEXTSTEPS.md").exists():
+        errors.append("CHATGPT_NEXTSTEPS.md is retired; use the shared NEXTSTEPS.md and plans/")
 
 
 def check_next_steps(errors: list[str]) -> None:
@@ -65,7 +80,17 @@ def check_next_steps(errors: list[str]) -> None:
 
 
 def check_markdown_links(errors: list[str]) -> None:
-    files = list(ROOT.glob("*.md")) + list((ROOT / "docs").glob("*.md"))
+    files = (
+        list(ROOT.glob("*.md"))
+        + list((ROOT / "docs").glob("*.md"))
+        + list((ROOT / "plans").glob("*.md"))
+        + [
+            path
+            for layer in ("now", "active", "design", "reference")
+            for path in (ROOT / "plans" / layer).glob("*.md")
+        ]
+        + list((ROOT / "checks").glob("*.md"))
+    )
     for path in files:
         text = path.read_text(encoding="utf-8")
         for raw_target in MD_LINK_PATTERN.findall(text):
@@ -80,6 +105,7 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
     check_plan_metadata(errors, warnings)
+    check_context_layout(errors)
     check_next_steps(errors)
     check_markdown_links(errors)
 

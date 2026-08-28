@@ -1,8 +1,9 @@
-# Challenge 1 revamp + trigger-property convention — implementation plan
+# Archived — Challenge 1 revamp + trigger-property implementation ledger
 
-Status: partially delivered | Owner: Dave / Claude Code | Next: Bundle H,
-copy pass and doc updates | Dependency: explicit selection in
-`NEXTSTEPS.md` | Verified: 2026-08-27
+<!-- CONTEXT: historical-record | LAYER: history | LOAD: search Bundle only -->
+Archived: 2026-08-28. Bundles A–G are delivered. The only live scope is
+Bundle H in `plans/now/challenge-1.md`; this ledger preserves its detailed
+specification and delivery evidence.
 
 Bundles A-G are built; Bundle H remains. Each bundle is sized for one session
 with its own check before the next starts — the same shape as

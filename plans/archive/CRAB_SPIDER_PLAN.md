@@ -1,8 +1,9 @@
-# Crab spiders -- plan
+# Archived — Crab spiders implementation ledger
 
-Status: built, off by default | Owner: Dave / Claude Code | Next: Dave's
-hands-on re-check (see `HANDS_ON_CHECKS.md`) | Dependency: none
-| Verified: 2026-08-28
+<!-- CONTEXT: historical-record | LAYER: history | LOAD: provenance-only -->
+Archived: 2026-08-28. All bundles are built and the feature is off by default.
+The remaining player re-check is in `checks/ready.md`; do not use this file as
+an active plan.
 
 Full design for `DESIGN_BACKLOG.md` §7.3 / `ROADMAP.md`'s "Predators" row
 (confirmed wanted 14 Aug, detail worked out 20 Aug, extended same day

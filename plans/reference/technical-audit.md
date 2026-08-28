@@ -1,11 +1,12 @@
 # Technical audit — current contracts
 
+<!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
 Status: reference | Owner: Dave / Claude Code | Next: measure before any new
 hot-path work | Dependency: a named measured bottleneck | Verified: 2026-08-26
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at
-`docs/archive/AUDIT_PLAN_AUG_2026.md`; it is not a session starting point.
+`plans/archive/AUDIT_PLAN_AUG_2026.md`; it is not a session starting point.
 
 ## Contracts retained from the audit
 

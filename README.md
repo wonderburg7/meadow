@@ -134,7 +134,7 @@ tests/                the two suites above
 _backups/             snapshots taken before large changes
 ```
 
-Design notes live in `DESIGN_BACKLOG.md` (progression, the winter
-question), `ROADMAP.md` (sized candidate features) and
-`docs/archive/LANGUAGE_REVIEW.md` (naming and structure). `CLAUDE.md` is the
+Design direction lives in `DESIGN_BACKLOG.md` and `ROADMAP.md`; selected work
+and on-demand history are routed through `plans/README.md`. Naming and
+structure history is in `docs/archive/LANGUAGE_REVIEW.md`. `CLAUDE.md` is the
 orientation file for an AI session.

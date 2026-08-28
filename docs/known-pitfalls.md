@@ -1,7 +1,7 @@
 # Bugs this project keeps having
 
 Moved out of root `CLAUDE.md` in the Aug 2026 context restructure
-(`AUDIT_PLAN.md` Bundle D) so the always-loaded file stays short.
+(`plans/reference/technical-audit.md`) so the always-loaded file stays short.
 `.claude/rules/gdscript.md` and `.claude/rules/simulation.md` point here
 automatically when a `.gd` file is touched. Worth knowing, because each
 of these has bitten more than once:
@@ -41,7 +41,7 @@ of these has bitten more than once:
   used to be before something got renamed or moved out from under it.
   (The function is `bee_status.gd::grounded()` since the bee.gd split;
   this bug predates that move.)
-  This was the entire cause of a 4fps drop (see `docs/archive/PERF_PLAN.md`):
+   This was the entire cause of a 4fps drop (see `plans/archive/PERF_PLAN.md`):
   GDScript's call stack recursed until it errored out, every single
   call. Nothing crashed and nothing looked obviously wrong from
   outside the function, which is what made it worth `perf.gd` finding

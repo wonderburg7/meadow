@@ -175,7 +175,7 @@ over it (see Foraging's Persistence entry below).
    simulation rule). What *is* presentation: the label/colour driven by
    `current_flower`/`current_load` (gated by `main.gd.is_on_screen`),
    and the stats readout `foraging_panel.gd` would add
-   (`FORAGING_ECOLOGY_PLAN.md` Slice 1, not built yet).
+    (`plans/active/foraging-evidence.md`, built; evidence campaign remains).
 7. **Availability** — `orientation_flight_on` unlocks first;
    `scouting_on` requires it; `floral_constancy_on` and
    `auto_recruitment_on` both require `scouting_on`. All off by

@@ -12,7 +12,7 @@ Full method and current do-not-change list: `docs/performance.md`. The
 short version: **profile before changing.** This project has twice
 disproved a confident guess about what was slow (A* pathfinding cleared
 as a suspect; the real 4fps cause was a recursive `_grounded()` call —
-`docs/archive/PERF_PLAN.md`) and found the real bug by measuring with
+`plans/archive/PERF_PLAN.md`) and found the real bug by measuring with
 `perf.gd` instead.
 
 **Give any new hot per-frame system its own `Perf.begin("name")` /

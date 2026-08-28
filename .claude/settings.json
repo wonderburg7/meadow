@@ -3,7 +3,8 @@
     "deny": [
       "Read(./.godot/**)",
       "Read(./_backups/**)",
-      "Read(./docs/archive/**)"
+      "Read(./docs/archive/**)",
+      "Read(./plans/archive/**)"
     ]
   }
 }

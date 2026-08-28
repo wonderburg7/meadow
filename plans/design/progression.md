@@ -1,18 +1,19 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
+<!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
 Status: designed, not scheduled | Owner: Dave | Next: select Phase A only
 when progression becomes the active product direction | Dependency: no active
 implementation slice | Verified: 2026-08-26
 
-Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Reconciled against `DESIGN_BACKLOG.md`, `ROADMAP.md`, `UI_PLAN.md` and the codebase as it stood 22 Aug 2026, from Dave's original design brief. This file is now the source of truth for skill-tree/adaptation design — `UI_PLAN.md` §13, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
+Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Reconciled against `DESIGN_BACKLOG.md`, `ROADMAP.md`, `plans/now/ui.md` and the codebase as it stood 22 Aug 2026, from Dave's original design brief. This file is now the source of truth for skill-tree/adaptation design — `plans/now/ui.md` §13, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
 Documentation only. No game code changes in this pass — see section 10 for the build sequence Claude Code will work through separately.
 
 ## 0. Terminology reconciled with existing docs
 
-- **Scenarios** (not "Starter Mode") stays the name for preset runs — already shipped in `UI_PLAN.md` (21 Aug), with Relaxed/Standard/Demanding/Custom presets.
+- **Scenarios** (not "Starter Mode") stays the name for preset runs — already shipped in `plans/now/ui.md` (21 Aug), with Relaxed/Standard/Demanding/Custom presets.
 - **Sandbox** is a distinct, separate mode: post-campaign, no win conditions, toggle every mechanic unlocked across the campaign. This is `DESIGN_BACKLOG.md` §1's "open world mode," renamed and formalised here. It is a **different concept from Scenarios**, not a replacement for the name — Scenarios are curated presets with settings limits; Sandbox is unrestricted. Sandbox has no build plan yet (see section 11).
-- **Defense** spelling is already settled (`UI_PLAN.md`, 21 Aug, "the six areas... named 21 Aug") — used consistently below.
+- **Defense** spelling is already settled (`plans/now/ui.md`, 21 Aug, "the six areas... named 21 Aug") — used consistently below.
 - Run kinds, for the rest of this document: **Challenge**, **Scenario**, **Sandbox**.
 
 ## 1. Purpose
@@ -30,13 +31,13 @@ The main lever on build risk and effort. Most of what a from-scratch architectur
 
 | Need | Existing precedent | Decision |
 |---|---|---|
-| Availability/visibility resolver | `stage_gate.gd` — per-string-key unlock/lock, already what every panel/button checks; `UI_PLAN.md` §13 already plans every skill node as a `stage_gate` key | Keep `stage_gate.gd` unchanged as the **visibility** layer. Layer a new, thin resolver on top for ownership/afford/feature-validity questions — see section 3. |
+| Availability/visibility resolver | `stage_gate.gd` — per-string-key unlock/lock, already what every panel/button checks; `plans/now/ui.md` §13 already plans every skill node as a `stage_gate` key | Keep `stage_gate.gd` unchanged as the **visibility** layer. Layer a new, thin resolver on top for ownership/afford/feature-validity questions — see section 3. |
 | Run-definition catalogue (Challenge/Scenario/Sandbox) | `levels.gd`'s `LEVELS` dict already carries empty `unlocks`/`win_conditions` arrays per entry, built for exactly this (`DESIGN_BACKLOG.md` §1, "done 19 Aug"); `challenge_runner.gd`'s `STAGES` already applies deltas per sub-stage | Extend this existing shape with skill-related fields (grants/bans/delays) rather than inventing a parallel `run_definitions.gd`. |
 | Checkpoint-shaped save/restore | `tutorial_checkpoint.gd` reuses `save_game.gd`'s serialise/restore against a separate path | Same pattern for skill/adaptation state — extend `save_game.gd`'s save shape and its settings-allowlist discipline (`.claude/rules/saving.md`), not a second save path. |
 | "One table, everyone reads it" catalogue shape | `roles.gd` — static data + lookup functions, `RefCounted`, one file per concept, exactly the shape the brief describes for `skills.gd` etc. | Model every new catalogue directly on `roles.gd`. |
 | Appending a new role safely | `bee_enums.gd`'s `Role` enum already documents append-only discipline (`HONEY_MAKER` was added this way; a comment warns renumbering would corrupt saves) | Add `Role.GUARD` (section 5.5) the same documented way. |
 | Foraging skill chain | Orientation Flight, Auto Scouting, Floral Constancy and Auto-recruitment already exist as separate, working toggles (`orientation_flight_on`, `scouting_on`, `auto_recruitment_on`) after last week's split | First vertical slice (section 10, Phase B) rewires ownership of existing toggles rather than building new behaviour. |
-| Skill-tree visual spec | `UI_PLAN.md` §13 (honeycomb layout, six sectors, node states, `skill_tree_panel.gd`) is already fully specced and Dave-approved, 21 Aug | Keep the visual/interaction spec as-is. This plan supersedes only the **data shape** behind it (`skill_tree.gd`'s minimal node table → this plan's richer `skills.gd`, section 3). |
+| Skill-tree visual spec | `plans/now/ui.md` §13 (honeycomb layout, six sectors, node states, `skill_tree_panel.gd`) is already fully specced and Dave-approved, 21 Aug | Keep the visual/interaction spec as-is. This plan supersedes only the **data shape** behind it (`skill_tree.gd`'s minimal node table → this plan's richer `skills.gd`, section 3). |
 | Alarm Pheromone | Already built as a global placeholder toggle, explicitly documented as "a placeholder for a future per-bee/per-colony unlock" (`DESIGN_BACKLOG.md` §7.3) | Section 5.5 / Phase C formalises the expected migration — not new scope. |
 
 Net effect: Phase A of the build (section 10) is mostly *extension*, not new systems.
@@ -50,7 +51,7 @@ Only what has no existing home. Each modelled on `roles.gd`'s shape (static cons
 - **`features.gd`** — feature IDs and their technical dependencies. Small: mostly a lookup for systems that already exist as `GameConfig` toggles (predators, weather, seasons, fog of war) plus the newer ones (foraging chain, nursing, etc.).
 - **A thin resolver** (name to be settled at implementation time — `progression.gd` is a reasonable default) — the only place that answers ownership/afford/feature-validity questions and resolves effective numeric values (base `GameConfig` + additive + multiplicative modifiers, with source tracking: skill rank / adaptation / Challenge rule / developer override). Reads `skills.gd`/`adaptations.gd`/`features.gd` and `stage_gate.gd`; nothing else computes these. **Nothing writes to `GameConfig` from a skill or adaptation effect** — this matches `source_checks.py`'s existing `check_gameconfig_writes` allowlist discipline, just extended.
 
-`settings_catalog.gd` and `controls.gd` (full extraction out of `debug_panel.gd`) are lower priority — `UI_PLAN.md` Slice 5 already plans a lighter reorganisation of `debug_panel.gd`'s settings categories. Defer the full catalogue extraction until a setting actually needs skill-gating (Phase B), rather than doing it speculatively in Phase A.
+`settings_catalog.gd` and `controls.gd` (full extraction out of `debug_panel.gd`) are lower priority — `plans/now/ui.md` Slice 5 already plans a lighter reorganisation of `debug_panel.gd`'s settings categories. Defer the full catalogue extraction until a setting actually needs skill-gating (Phase B), rather than doing it speculatively in Phase A.
 
 Stable-ID convention (unchanged from the brief): `feature.predators`, `skill.foraging.orientation_flight`, `role.nurse`, `adaptation.general.stronger_wings`, `run.challenge.02`, `stage.challenge.02.03`, `milestone.colony.established`. Display text is never a save key or dependency.
 
@@ -117,7 +118,7 @@ Workforce coordination, not a duplicate of role unlocks elsewhere.
 | `skill.colony.backup_roles` | 1 | 1 | Existing | — | Secondary-role assignment. |
 | `skill.colony.standing_instructions` | 2 | 1 | Existing foundation | Backup Roles or Work Priorities (layout TBD) | Bundles persistent instructions (role retention, work-from-here). One meaningful capability, not a skill per button. |
 | `skill.colony.workforce_planning` | 3 | TBD | New | Backup Roles + Standing Instructions | Higher-level workforce targets or shortage response. Exact player interaction must be defined before build — must not simply auto-play the game. |
-| `skill.colony.lineage` | 3+ | TBD | **Future** | — | Gynes inherit limited traits/colony identity. Starting point: the existing bee-individuality plan (`docs/archive/BEE_INDIVIDUALITY_PLAN.md`). |
+| `skill.colony.lineage` | 3+ | TBD | **Future** | — | Gynes inherit limited traits/colony identity. Starting point: the existing bee-individuality plan (`plans/archive/BEE_INDIVIDUALITY_PLAN.md`). |
 
 ### 5.5 Defense
 
@@ -215,7 +216,7 @@ Automated validation (extend `tests/source_checks.py`/`balance_tests.py` rather 
 
 ## 9. Settings and controls
 
-Settings normally govern player choice within an owned capability; skills govern the capability itself. E.g. owning Auto-recruitment enables the behaviour; a related setting may let Sandbox/developer mode tune its threshold — the threshold itself is not a skill. Individual buttons are consequences of capability ownership, not separate nodes. Full `settings_catalog.gd` extraction is deferred (section 3) until a setting genuinely needs skill-gating. The HUD gets an in-run Skill Tree button using the existing measured-width top-right layout (`UI_PLAN.md`'s pattern); the main menu holds the meta tree.
+Settings normally govern player choice within an owned capability; skills govern the capability itself. E.g. owning Auto-recruitment enables the behaviour; a related setting may let Sandbox/developer mode tune its threshold — the threshold itself is not a skill. Individual buttons are consequences of capability ownership, not separate nodes. Full `settings_catalog.gd` extraction is deferred (section 3) until a setting genuinely needs skill-gating. The HUD gets an in-run Skill Tree button using the existing measured-width top-right layout (`plans/now/ui.md`'s pattern); the main menu holds the meta tree.
 
 ## 10. Implementation sequence
 
@@ -230,7 +231,7 @@ Same three-phase shape as the original brief, reordered so each slice is provabl
 
 **Phase B — prove the progression systems, in this order**
 
-5. **Foraging skill-tree vertical slice.** Orientation Flight, Auto Scouting, Floral Constancy, Auto-recruitment, Tarsal Secretions move from always-on toggles to skill-gated. Reuses `UI_PLAN.md` §13's honeycomb spec and `skill_tree_panel.gd` shape, backed by `skills.gd`. This is the brief's stated first success criterion — prove prerequisites, cost, effects, controls, node states and saving before adding other branches.
+5. **Foraging skill-tree vertical slice.** Orientation Flight, Auto Scouting, Floral Constancy, Auto-recruitment, Tarsal Secretions move from always-on toggles to skill-gated. Reuses `plans/now/ui.md` §13's honeycomb spec and `skill_tree_panel.gd` shape, backed by `skills.gd`. This is the brief's stated first success criterion — prove prerequisites, cost, effects, controls, node states and saving before adding other branches.
 6. **Colony Adaptations vertical slice.** One milestone, one choice of three (Stronger Wings / Deeper Stores / Fuller Crops), deferred choice, save/restore, modifier display.
 7. **Campaign meta tree.** Discovery, meta rewards, mastered ranks, full between-run reallocation. Only after 5 and 6 are proven — this is where save-format risk concentrates.
 8. **Full save integration.** Extend `save_game.gd` per section 8 above, following its existing allowlist/migration pattern. Covers Challenges, ordinary saves, checkpoints, skill state, adaptations, idempotent rewards.

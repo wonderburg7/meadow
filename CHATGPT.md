@@ -64,8 +64,9 @@ branch, so their ownership is stricter:
   explicitly includes that exact update in the assignment. Such an edit is a
   proposal until the integrator confirms it still describes `master` at merge
   time.
-- `CHATGPT_NEXTSTEPS.md` is Codex's separate hand-off and never establishes the
-  state of unmerged work as integrated project truth.
+- `NEXTSTEPS.md` and `plans/` are shared with Claude. They state the
+  integrated project priority but never authorise Codex work by themselves;
+  Dave's explicit assignment still controls Codex implementation.
 - `CLAUDE.md`, `CHATGPT.md` and `AGENTS.md` are tool-policy and orientation
   files, not ordinary feature documentation. Change them only when Dave
   explicitly requests the corresponding policy or orientation change.
@@ -111,7 +112,7 @@ integrate it:
 3. checks run and their results;
 4. risk tier and short evidence-based reason; and
 5. remaining risk, manual check or explicit `none` -- Claude copies any
-   manual-check item into `HANDS_ON_CHECKS.md` on integration, so state
+   manual-check item into `checks/ready.md` on integration, so state
    it as a concrete, checkable action rather than a vague "needs
    testing".
 
@@ -158,26 +159,25 @@ or the branch has been integrated and its recoverability has been verified.
 
 ## Headless-check work
 
-When Dave asks Codex to continue an active slice from
-`CHATGPT_HEADLESS_CHECK_PLAN.md`, the work must still use isolated
+When Dave asks Codex to continue a named diagnostic slice, the work must still use isolated
 implementation mode. Limit it to the existing headless harness, diagnostic
 observations needed by the check and `test_scenarios` fixtures, plus the
 smallest source, runner, test and scenario changes necessary to make the named
 check causal and runnable. Do not expand into unrelated gameplay, balance, UI,
 asset, project-plan or Claude-work-queue changes.
 
-Record the result in the relevant `CHATGPT_` plan and keep the resulting
+Record the result in the relevant shared `plans/` file and keep the resulting
 commits distinct from Claude's work.
 
 ## Session routing
 
-- For current ChatGPT work, read `CHATGPT_NEXTSTEPS.md` rather than
-  `NEXTSTEPS.md`. In implementation mode, work only from Dave's explicit task
-  or an active `CHATGPT_` plan that Dave explicitly asks Codex to continue.
+- Read `NEXTSTEPS.md` and its named shared `plans/` file only to orient an
+  explicitly assigned Codex task. Do not independently adopt a queue item or
+  implement work merely because it is current.
 - Treat `NEXTSTEPS.md` as the only canonical current queue: current slice,
-  one successor and one blocker. Update the owning plan, the queue and any
-  hands-on check only at a real slice transition; archive terminal execution
-  records instead of retaining them at the root.
+  one successor and one blocker. Update the owning shared plan, the queue and
+  any player check only at a real slice transition; archive terminal execution
+  records in `plans/archive/` rather than retaining them at the root.
 - Read other Meadow files only as evidence needed for the requested analysis.
 - Do not adopt or complete tasks from Claude's plans.
 - Keep recommendations clearly labelled as recommendations, not completed
@@ -185,9 +185,9 @@ commits distinct from Claude's work.
 - If useful implementation is blocked by the hard editing boundary, record
   the durable, evidence-backed recommendation in `insights_from_ChatGPT.md`
   before finishing. Do this automatically; do not leave the only copy in the
-  conversation, a temporary plan or `CHATGPT_NEXTSTEPS.md`. Keep execution
-  detail in the relevant `CHATGPT_` plan and put only the current finding,
-  consequence and recommended next action in the insights file.
+  conversation or a temporary plan. Keep execution detail in the relevant
+  shared plan if Dave selects it, and put only the current finding, consequence
+  and recommended next action in the insights file.
 - Do not duplicate transient notes or completed/rejected work in
   `insights_from_ChatGPT.md`. Update or remove an existing related insight
   when new evidence supersedes it; Git history is the archive.

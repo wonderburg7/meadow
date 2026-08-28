@@ -1,38 +1,38 @@
 # Meadow — orientation for a new session
 
-Status: current | Owner: Dave / Claude Code | Verified: 2026-08-26
+<!-- CONTEXT: session-orientation | LOAD: every session -->
+Status: current | Owner: Dave / Claude Code | Verified: 2026-08-28
 
-Meadow is a solo Godot 4 / GDScript bee-colony simulation. The repository is
-the source of truth. Read narrowly, keep one playable slice in focus and use
-deterministic evidence instead of re-deriving project history.
+Meadow is a solo Godot 4 / GDScript bee-colony simulation. Read narrowly,
+keep one playable slice in focus, and use deterministic evidence instead of
+reconstructing history.
 
-## Start here each session
+## Session route
 
-1. Read `NEXTSTEPS.md`. It has exactly the current slice, one successor and
-   one blocker. Do not expand it into a backlog.
-2. Open the named plan's status line and the exact relevant section, using
-   headings/search rather than reading the whole file.
-3. For code work, read the path-scoped rule that Claude loads automatically.
-   For a Project/ChatGPT session without that feature, read the relevant
-   `.claude/rules/` file directly.
+<!-- LAYER: immediate-task -->
 
-Do not reconstruct “what is next” from `ROADMAP.md`, `DESIGN_BACKLOG.md`,
-the archive or Git history. They answer different questions.
+1. Read `NEXTSTEPS.md` (current slice, successor, blocker).
+2. Open only the named file and heading in `plans/`; `plans/README.md` defines
+   the layers and on-demand fetch rules.
+3. For code work, load the relevant path-scoped `.claude/rules/` file and use
+   `FUNCTION_MAP.md`/search to read only the affected source section.
+
+Do not choose work from `ROADMAP.md`, `DESIGN_BACKLOG.md`, `plans/archive/`,
+`checks/`, or Git history. They are on-demand references, not queues.
 
 ## Documentation lifecycle
 
-- `NEXTSTEPS.md` is the only current queue. Rewrite, do not append.
-- Every active `*_PLAN.md` starts with Status, Owner, Next, Dependency and
-  Verified. Update its status only when a real state transition occurs.
-- At slice close-out, update the owning plan, queue, hands-on backlog if a
-  player check remains, and a durable contract only if it changed. Put the
-  detailed execution narrative in Git/the archive, not another root file.
-- Completed, abandoned and superseded execution plans belong in
-  `docs/archive/`; the root contains current entry points and stable
-  references only.
-- Run `tools/check_docs.py` (included in `tools/verify.ps1`) after a
-  documentation change. It rejects queue overflow, missing active-plan status
-  and terminal plans left at the root; it warns about stale verification dates.
+<!-- LAYER: durable-rules -->
+
+- `NEXTSTEPS.md` is the only current queue. Rewrite it; do not append.
+- New plans live in `plans/`, use its status/schema, and must be shared by
+  Claude and Codex. Tool-specific rules belong in `CLAUDE.md`/`CHATGPT.md`,
+  not a parallel plan or backlog.
+- At a real slice transition update the owning plan, the queue, a player check
+  if required, and a durable contract only if it changed. Archive execution
+  detail in `plans/archive/`.
+- Run `tools/check_docs.py` after documentation work; it validates live-plan
+  metadata, queue size, and routed Markdown links.
 
 ## Integrating Codex branches
 
@@ -49,7 +49,7 @@ supported by evidence:
   diff and validation.
 
 After integration update canonical state only if the merge makes it necessary.
-Copy any stated manual check to `HANDS_ON_CHECKS.md`. The full Codex
+Copy any stated manual check to `checks/ready.md`. The full Codex
 handoff policy is in `CHATGPT.md`.
 
 ## Rules that apply without being requested
@@ -70,12 +70,11 @@ handoff policy is in `CHATGPT.md`.
 | Change | Read first |
 | --- | --- |
 | Current work selection | `NEXTSTEPS.md` |
-| UI, theme, layout or accessibility | `UI_PLAN.md` |
-| Challenge 1 | `CHALLENGE1_REVAMP_PLAN.md` |
-| Challenge boundaries / Challenge 2 | `TUTORIAL_PLAN.md` |
-| Foraging behaviour or evidence | `FORAGING_ECOLOGY_PLAN.md` |
-| Skills/progression | `SKILL_TREE_PLAN.md` |
-| Predators | `CRAB_SPIDER_PLAN.md` |
+| UI, theme, layout or accessibility | `plans/now/ui.md` |
+| Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
+| Foraging behaviour or evidence | `plans/active/foraging-evidence.md` |
+| Skills/progression | `plans/design/progression.md` |
+| Predators (built) | `checks/ready.md` or `plans/archive/CRAB_SPIDER_PLAN.md` |
 | Save/restore | `.claude/rules/saving.md` |
 | Simulation | `.claude/rules/simulation.md` |
 | Hot-path performance | `.claude/rules/performance.md` |
@@ -100,8 +99,9 @@ balance suites concurrently, checks the function map, then validates planning
 metadata. It does not replace a Godot boot when parser/type feedback matters,
 or Dave's hands-on check for click-driven, visual or feel-sensitive work.
 
-Every needed hands-on check belongs in `HANDS_ON_CHECKS.md`: short action,
-expected result and a pointer. Remove or archive it after confirmation.
+Every needed hands-on check belongs in `checks/ready.md`: short action,
+expected result and a pointer. Move blocked checks to `checks/blocked.md` and
+confirmed entries to the archive.
 
 ## Working style
 

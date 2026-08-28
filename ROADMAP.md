@@ -11,10 +11,10 @@ completion state, detailed slice specifications or the canonical queue. The
 
 | Direction | Source |
 | --- | --- |
-| UI integrity and accessibility | `UI_PLAN.md` |
-| Challenge 1 revamp, then Challenge 2 | `CHALLENGE1_REVAMP_PLAN.md`, `TUTORIAL_PLAN.md` |
-| Foraging evidence and default decision | `FORAGING_ECOLOGY_PLAN.md` |
-| Skills and colony adaptations | `SKILL_TREE_PLAN.md` |
+| UI integrity and accessibility | `plans/now/ui.md` |
+| Challenge 1 revamp, then Challenge 2 | `plans/now/challenge-1.md` |
+| Foraging evidence and default decision | `plans/active/foraging-evidence.md` |
+| Skills and colony adaptations | `plans/design/progression.md` |
 
 ## Later, requiring a new design or evidence pass
 
