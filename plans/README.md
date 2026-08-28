@@ -80,9 +80,6 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 3. Run the matched foraging evidence campaign before changing recruitment
    defaults or using the existing foraging chain as the first progression
    vertical slice.
-4. Keep forager-history persistence blocked until its save-format design is
-   explicit and tested; it must not ride along with unrelated UI or foraging
-   work.
-5. If progression is selected, follow `plans/design/progression.md`'s order:
+4. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not
    begin adaptations, campaign meta, or legacy-path removal first.

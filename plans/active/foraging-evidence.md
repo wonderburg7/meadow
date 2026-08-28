@@ -74,5 +74,6 @@ until the scenario proves otherwise.
 
 ## Future work
 
-Per-cell flower preference and forager-history save persistence remain separate
-future slices. They must not be folded into this validation campaign.
+Per-cell flower preference remains a separate future slice. It must not be
+folded into this validation campaign. (Forager-history save persistence is
+resolved -- see `plans/reference/technical-audit.md`.)
