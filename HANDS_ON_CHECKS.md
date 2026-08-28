@@ -16,6 +16,48 @@ says the fix has shipped.
 
 ## Checkable now
 
+### HUD popups bound to revisions, not frames (efficiency Slice 2)
+- [ ] Cell popup, flower summary and the bee selection panel now refresh
+      at a 10Hz cadence (or instantly on a real change) instead of every
+      render frame. Select a cell and, while its popup is open, have
+      another mechanism change it without touching that popup's own
+      buttons -- e.g. open the Nursery panel and bulk-designate a zone
+      that includes it, or let a forager finish a deposit into it, or let
+      a builder finish building it -- and confirm the popup's numbers
+      (fill amount, build %, "Raises:", Sealed/Filling state) update
+      within a heartbeat, not a full second later or only on reselect.
+      Do the same with a flower summary open (watch nectar/pollen tick)
+      and a bee selected (watch age/energy tick, then give it an order
+      from the tray and confirm the activity line changes immediately,
+      not on a delay). See `CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`
+      Slice 2.
+
+### Cell/colony dirty-index refactor (efficiency Slice 1)
+- [ ] `hive.gd`'s cell-content buckets and the comb/nursery panel's
+      free/brood/gyne/hungry counts now rebuild only when a mutation says
+      they might be stale, not once a frame/second regardless -- headless
+      scenarios (`b3_postcondition_test.json`, `c4_stocking_hatch_test.json`,
+      `b2_combined_role_test.json`) still pass unchanged, but watch for
+      staleness on a real playthrough: build a cell, let brood hatch, kill
+      a bee (debug panel), designate/clear a cell, and save+load -- the
+      Comb line, nursery ring counts and colony window's role counts
+      should all update the moment each of those happens, not lag a
+      second behind. See `CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`
+      Slice 1.
+
+### Crab spiders (all bundles) -- final re-check
+- [ ] Turn on `predators_on` and `show_crab_spiders` (settings cog,
+      Predators section). Confirm: `crab_spider_attack_success_chance`
+      appears as its own tunable setting; an escaped bee's exact flower
+      stays off-limits even when forage is tight nearby
+      (`predator_flower_cooldowns`, not the ordinary relaxed-fallback
+      pool); every attack -- not just an alarm-pheromone avoidance --
+      flashes red on the bee (`attack_ring`), distinct from the orange
+      `alarm_ring`; and the dev marker reads as a bright magenta ring
+      around the flower, not a filled blob competing with it visually.
+      See `CRAB_SPIDER_PLAN.md` Bundle 5's 20 Aug follow-up notes for
+      what was fixed and why.
+
 ### Challenge 1 Bundle G -- trim Challenge 2's opening (stages renumbered 2.1-2.9)
 - [ ] Start Challenge 2 fresh from the main menu. Confirm it opens with
       the queen (role Laying) plus one nectar Forager already out in the

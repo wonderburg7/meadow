@@ -1,17 +1,18 @@
 # Crab spiders -- plan
 
-Status: plan only | Owner: Dave / Claude Code | Next: Dave to select a bundle
-| Dependency: no active product selection | Verified: 2026-08-26
+Status: built, off by default | Owner: Dave / Claude Code | Next: Dave's
+hands-on re-check (see `HANDS_ON_CHECKS.md`) | Dependency: none
+| Verified: 2026-08-28
 
 Full design for `DESIGN_BACKLOG.md` §7.3 / `ROADMAP.md`'s "Predators" row
 (confirmed wanted 14 Aug, detail worked out 20 Aug, extended same day
 with movement, a narrower recruitment rule, and this bundle breakdown).
-**Nothing in this file is built.** Written so Claude Code can implement
-it directly against the code as it stands today, one bundle at a time,
-without a separate planning pass.
-
-Status: plan only. When built, the whole feature stays off by default
-(`GameConfig.predators_on = false`) until Dave turns it on to test.
+**All six bundles are built** -- `scripts/crab_spider.gd` plus the hooks
+into `flower.gd`, `bee.gd`, `bee_foraging.gd`, `session.gd`,
+`game_config.gd`, `debug_panel.gd` and `save_game.gd`, and
+`test_crab_spiders()` in `tests/balance_tests.py`. The feature stays off
+by default (`GameConfig.predators_on = false`) until Dave turns it on to
+test.
 
 ---
 

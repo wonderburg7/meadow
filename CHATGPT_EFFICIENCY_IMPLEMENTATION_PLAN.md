@@ -1,6 +1,6 @@
 # Efficiency implementation plan
 
-Status: proposed | Owner: Dave / Codex | Next: Dave decision on which target(s) in `CHATGPT_EFFICIENCY_AUDIT.md` to approve | Dependency: `CHATGPT_EFFICIENCY_AUDIT.md` | Verified: 2026-08-27
+Status: in progress (Slices 1-3 done) | Owner: Dave / Claude Code | Next: Slice 4 (data-drive Challenge definitions), only once Challenge 3 is actively assigned | Dependency: `CHATGPT_EFFICIENCY_AUDIT.md` (Dave's decisions confirmed 2026-08-28) | Verified: 2026-08-28
 
 Requires Dave's decisions in `CHATGPT_EFFICIENCY_AUDIT.md` and an isolated
 `codex/...` worktree before any implementation. This plan deliberately does
@@ -36,7 +36,7 @@ slice.
 
 **Risk:** low.
 
-## Slice 1 — Make cell and colony derived state dirty-driven
+## Slice 1 — Make cell and colony derived state dirty-driven (done 2026-08-28)
 
 **Purpose:** eliminate repeat work where multiple systems need the same cell
 or colony facts.
@@ -54,7 +54,7 @@ values remain correct after build, hatch, death, designation and load.
 
 **Risk:** medium — shared simulation-derived state.
 
-## Slice 2 — Bind views to revisions, not frames
+## Slice 2 — Bind views to revisions, not frames (done 2026-08-28)
 
 **Purpose:** let visible UI pull updates only when something it shows changes.
 
@@ -69,7 +69,7 @@ revision changed; corner signature behaviour remains intact.
 
 **Risk:** medium — player-facing UI freshness.
 
-## Slice 3 — Establish catalogues and availability authority
+## Slice 3 — Establish catalogues and availability authority (done 2026-08-28)
 
 **Purpose:** make a mechanic's identity, availability and resource semantics
 answerable from one place.

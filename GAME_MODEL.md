@@ -71,7 +71,7 @@ each maps to a specific field or pattern in `bee.gd`.
 - **Focus** — a sub-choice within a role that's tracked separately
   wherever bees are counted, because the role alone doesn't say enough.
   Today that's just the forager's nectar/pollen split
-  (`roles.gd::FORAGER_FOCUS_COLOURS`, `count_key(role_id, focus)`) —
+  (`resources.gd` for colour, `roles.gd::count_key(role_id, focus)`) —
   "twenty foragers" means much less than "sixteen on nectar, four on
   pollen".
 - **Work mode** — the sub-modes listed per role in `roles.gd::ROLES`

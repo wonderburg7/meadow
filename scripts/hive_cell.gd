@@ -411,6 +411,29 @@ func _larva_dies() -> void:
 	clean_progress = 0.0
 	brood_is_gyne = false
 	DiagnosticLog.count_larval_death()
+	_invalidate_hive_index()
+
+## The single call-through every content_type/is_built mutator below uses
+## to tell the hive's cell-content buckets (hive.gd's `_content_index`)
+## they're stale. `main` is set by hive.gd/world_building.gd the moment a
+## cell is created -- see hive.gd's `_start_site_at`.
+func _invalidate_hive_index() -> void:
+	if main != null and is_instance_valid(main) and main.hive != null:
+		main.hive.invalidate_index()
+	bump_display_epoch()
+
+## Bumped on every discrete change to a field the cell popup shows
+## (hud.gd::_refresh_cell_popup) -- content/build/ripe changes through
+## _invalidate_hive_index above, plus close/fill-close here and the
+## keep-empty/priority/hatch-role fields orders_zones.gd writes directly.
+## hud.gd polls this instead of rebuilding the popup every frame; the
+## ticking fields (build/ripen/development percent, countdowns) stay on
+## an explicit cadence rather than this epoch, since they change whether
+## or not a discrete field does.
+var display_epoch: int = 0
+
+func bump_display_epoch() -> void:
+	display_epoch += 1
 
 # --- working positions --------------------------------------------
 
@@ -448,6 +471,7 @@ func slot_position(index: int) -> Vector2:
 func start_as_site() -> void:
 	is_built = false
 	build_progress = 0.0
+	_invalidate_hive_index()
 
 func claim_builder(bee: Node2D) -> void:
 	if not builders.has(bee):
@@ -467,6 +491,7 @@ func add_build_progress(delta: float) -> void:
 		is_built = true
 		builders.clear()
 		DiagnosticLog.count_cell_completed()
+		_invalidate_hive_index()
 
 func build_fraction() -> float:
 	return clamp(build_progress / max(0.001, effective_build_time()), 0.0, 1.0)
@@ -550,6 +575,8 @@ func add_resource(resource_type: String, requested: float) -> float:
 	var added: float = min(space, requested)
 	if content_type == "" and designated_type == "":
 		designated_type = resource_type
+	var was_content_type: String = content_type
+	var was_ripe: bool = is_ripe_honey()
 	if resource_type == "honey":
 		# fresh mix is wet: topping a drying cell up sets it back
 		if content_type == "honey":
@@ -564,6 +591,11 @@ func add_resource(resource_type: String, requested: float) -> float:
 	if fill_then_close and amount >= capacity - 0.001:
 		fill_then_close = false
 		is_closed = true
+	# A fresh deposit changes which content-type/ripe-honey bucket this
+	# cell belongs in either by switching content_type outright, or (for
+	# honey) by rewetting it out of the ripe_honey bucket.
+	if was_content_type != content_type or was_ripe != is_ripe_honey():
+		_invalidate_hive_index()
 	return added
 
 ## Removes up to `requested`, returns how much came out.
@@ -585,6 +617,7 @@ func take_resource(resource_type: String, requested: float) -> float:
 			DiagnosticLog.count_cell_evicted()
 		evict_requested = false
 		evict_mode = "move"
+		_invalidate_hive_index()
 	return taken
 
 ## Can anything actually be drawn out of here right now? The hive's
@@ -600,11 +633,13 @@ func set_closed(value: bool) -> void:
 	is_closed = value
 	if not value:
 		fill_then_close = false
+	bump_display_epoch()
 
 func set_fill_then_close(value: bool) -> void:
 	fill_then_close = value
 	if value:
 		is_closed = false   # it has to be able to take deposits to fill
+	bump_display_epoch()
 
 ## How full the cell is, 0 to 1, for the fill shading. Brood reports its
 ## development instead, which is the equivalent "how far along is this".
@@ -620,6 +655,7 @@ func set_designation(resource_type: String) -> void:
 	if resource_type != "":
 		# choosing what a cell is for overrides "leave it empty"
 		keep_empty = false
+	bump_display_epoch()
 
 # --- honey ---------------------------------------------------------
 
@@ -639,6 +675,7 @@ func add_fanning_progress(delta: float) -> void:
 	ripen_progress = min(ripen_progress + delta, GameConfig.honey_ripen_time)
 	if is_ripe_honey() and not was_ripe:
 		DiagnosticLog.count_cell_ripened()
+		_invalidate_hive_index()
 
 func ripen_fraction() -> float:
 	return clamp(ripen_progress / max(0.001, GameConfig.honey_ripen_time), 0.0, 1.0)
@@ -653,6 +690,7 @@ func start_brood(as_gyne: bool = false) -> void:
 	unfed_seconds = 0.0
 	fed_on_honey = false
 	brood_is_gyne = as_gyne
+	_invalidate_hive_index()
 
 ## How long this larva needs in total. A gyne takes several times as long
 ## as a worker, which is what makes raising one a commitment rather than
@@ -710,6 +748,7 @@ func clear_cell() -> void:
 	ripen_progress = 0.0
 	evict_requested = false
 	evict_mode = "move"
+	_invalidate_hive_index()
 
 # --- display ------------------------------------------------------
 

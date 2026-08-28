@@ -14,6 +14,8 @@ extends RefCounted
 ## Everything about a role now lives here and every other file reads it.
 ## Adding a role means adding one entry below.
 
+const Resources = preload("res://scripts/resources.gd")
+
 # --- role ids -----------------------------------------------------
 ## These match Bee.Role exactly and must stay in that order. Kept as
 ## plain constants so files that only need to name a role (the panels)
@@ -91,10 +93,9 @@ const ROLES := [
 ## Foragers are split by what they are collecting wherever bees are
 ## counted, because "twenty foragers" tells you much less than "sixteen
 ## on nectar, four on pollen". These are the extra keys that creates.
-const FORAGER_FOCUS_COLOURS := {
-	"nectar": Color(0.95, 0.72, 0.20),
-	"pollen": Color(0.55, 0.48, 0.90),
-}
+## The colours themselves live in resources.gd now (Slice 3 of
+## CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md) -- colour_for() below reads
+## them from there rather than repeating the values here.
 
 # --- lookups ------------------------------------------------------
 
@@ -114,8 +115,8 @@ static func tip_for(role_id: int) -> String:
 	return entry(role_id).tip
 
 static func colour_for(role_id: int, focus: String = "") -> Color:
-	if role_id == FORAGER and FORAGER_FOCUS_COLOURS.has(focus):
-		return FORAGER_FOCUS_COLOURS[focus]
+	if role_id == FORAGER and Resources.is_valid(focus):
+		return Resources.colour_for(focus)
 	return entry(role_id).colour
 
 static func modes_for(role_id: int) -> Array:
@@ -160,7 +161,7 @@ static func count_keys() -> Array:
 	var keys: Array = []
 	for role in ROLES:
 		if role.id == FORAGER:
-			for focus in ["nectar", "pollen"]:
+			for focus in Resources.keys():
 				keys.append(count_key(FORAGER, focus))
 		else:
 			keys.append(count_key(role.id))

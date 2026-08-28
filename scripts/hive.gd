@@ -92,18 +92,26 @@ func record_birth() -> void:
 # --- cell index ---------------------------------------------------
 ## Every bee used to walk the whole cell list several times a frame
 ## looking for work -- fine at twenty bees, not at two hundred. The list
-## is now bucketed by what each cell holds, once per frame, and the
-## find_* functions read the buckets instead. One pass for the colony
-## rather than one pass per bee per question.
+## is bucketed by what each cell holds, and the find_* functions read
+## the buckets instead. One pass for the colony rather than one pass per
+## bee per question.
+##
+## The buckets used to be rebuilt once per frame regardless of whether
+## anything had changed; they're now rebuilt only when a cell mutation
+## says they might be stale, same shape as `mining_work_epoch` below.
+## `index_epoch` is bumped by `invalidate_index()`, called from every
+## cell mutator that can change a cell's content_type/is_built bucket
+## (hive_cell.gd) and from the load-restore path (saving.gd), which
+## writes those fields directly.
 
 var _index: Dictionary = {}      # content type -> Array of cells
-var _index_frame: int = -1
+var index_epoch: int = 0
+var _index_built_epoch: int = -1
 
 func _content_index() -> Dictionary:
-	var frame := Engine.get_process_frames()
-	if _index_frame == frame:
+	if _index_built_epoch == index_epoch:
 		return _index
-	_index_frame = frame
+	Perf.begin("hive_index_rebuild")
 
 	var buckets := {
 		"": [], "nectar": [], "pollen": [], "honey": [], "jelly": [],
@@ -119,12 +127,15 @@ func _content_index() -> Dictionary:
 		if cell.is_ripe_honey():
 			buckets["ripe_honey"].append(cell)
 	_index = buckets
+	_index_built_epoch = index_epoch
+	Perf.end("hive_index_rebuild")
 	return _index
 
-## Drops the cached buckets, for the rare case where a caller changes
-## cells and needs the next read in the same frame to see it.
+## The single invalidation source for the content buckets: any mutation
+## that changes a cell's content_type, is_built or ripeness calls this
+## so the next read rebuilds rather than trusting a stale bucket.
 func invalidate_index() -> void:
-	_index_frame = -1
+	index_epoch += 1
 
 func cells_holding(content: String) -> Array:
 	return _content_index().get(content, [])

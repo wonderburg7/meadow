@@ -65,6 +65,7 @@ func _undo_last_designation() -> void:
 		cell.set_designation(entry.designated)
 		cell.keep_empty = entry.keep_empty
 		cell.nursery_priority = entry.priority
+		cell.bump_display_epoch()
 		restored += 1
 	_designation_undo = []
 	main.hud.show_warning("Undone — %d cells put back." % restored)
@@ -77,6 +78,7 @@ func _clear_zone_glow() -> void:
 func _on_cell_priority_requested(anchor: Node2D, tier: int) -> void:
 	for cell in _cells_to_act_on(anchor):
 		cell.nursery_priority = clampi(tier, 0, 2)
+		cell.bump_display_epoch()
 		if not cell.is_nursery_cell():
 			_designate_one(cell, "brood")
 
@@ -217,12 +219,14 @@ func _on_cell_hatch_role_requested(anchor: Node2D, role: int, focus: String, use
 		cell.hatch_role = role
 		cell.hatch_focus = focus
 		cell.hatch_automine = use_automine
+		cell.bump_display_epoch()
 		if role >= 0 and cell.designated_type != "brood":
 			_designate_one(cell, "brood")
 
 func _on_cell_hatch_lock_requested(anchor: Node2D, locked: bool) -> void:
 	for cell in _cells_to_act_on(anchor):
 		cell.hatch_role_locked = locked
+		cell.bump_display_epoch()
 
 func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) -> void:
 	for cell in _cells_to_act_on(anchor):
@@ -238,10 +242,12 @@ func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 
 	cell.evict_mode = "discard" if method == "discard" else "move"
 	cell.evict_requested = true
+	cell.bump_display_epoch()
 
 func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
 	for cell in _cells_to_act_on(anchor):
 		cell.hatch_gyne = as_gyne
+		cell.bump_display_epoch()
 		if as_gyne and cell.designated_type != "brood":
 			_designate_one(cell, "brood")
 
@@ -255,3 +261,4 @@ func _set_keep_empty(cell: Node2D, keep_empty: bool) -> void:
 	if keep_empty:
 		cell.set_designation("")
 	cell.keep_empty = keep_empty
+	cell.bump_display_epoch()

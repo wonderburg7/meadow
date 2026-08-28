@@ -746,6 +746,7 @@ func _hatch_ready_brood() -> void:
 		# the cell popup is what locks it in.
 		if not cell.hatch_role_locked:
 			cell.hatch_role = -1
+			cell.bump_display_epoch()
 		hive.record_birth()
 		_update_population_readout()
 	Perf.end("hatch")
@@ -848,9 +849,27 @@ func _check_colony_energy(delta: float) -> void:
 		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)]
 	)
 
+## Bumped whenever the live population's role assignment changes -- birth
+## (bee.gd::setup), death (bee_survival.gd::die) or role change
+## (bee.gd::_apply_role) -- so `_role_counts()` below knows its cache is
+## stale. Same "epoch, not per-frame" shape as hive.gd's
+## index_epoch/mining_work_epoch.
+var _population_epoch: int = 0
+
+func invalidate_population() -> void:
+	_population_epoch += 1
+
+var _role_counts_cache: Dictionary = {}
+var _role_counts_built_epoch: int = -1
+
 ## The live population, keyed by job. Shared by the colony window, the
-## nursery ring and the corner readouts so they can't drift apart.
+## nursery ring and the corner readouts so they can't drift apart. Cached
+## against `_population_epoch`: challenge_runner.gd asks this several
+## times over the course of one stage-check, so a repeat ask gets the
+## same scan rather than repeating the group walk.
 func _role_counts() -> Dictionary:
+	if _role_counts_built_epoch == _population_epoch:
+		return _role_counts_cache
 	var counts := {}
 	for b in get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b):
@@ -859,12 +878,15 @@ func _role_counts() -> Dictionary:
 		if b.role == Bee.Role.FORAGER:
 			key = "%d|%s" % [b.role, b.resource_type]
 		counts[key] = int(counts.get(key, 0)) + 1
-	return counts
+	_role_counts_cache = counts
+	_role_counts_built_epoch = _population_epoch
+	return _role_counts_cache
 
 ## `bees` lets a caller pass an explicit list instead of a live group query
 ## -- saving.gd's restore path uses this, since a mid-frame group query
 ## would still catch the just-retired old bees alongside their replacements.
 func _update_population_readout(bees = null) -> void:
+	invalidate_population()
 	var foragers := 0
 	var nurses := 0
 	var builders := 0

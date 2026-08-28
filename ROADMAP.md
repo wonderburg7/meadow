@@ -14,7 +14,6 @@ completion state, detailed slice specifications or the canonical queue. The
 | UI integrity and accessibility | `UI_PLAN.md` |
 | Challenge 1 revamp, then Challenge 2 | `CHALLENGE1_REVAMP_PLAN.md`, `TUTORIAL_PLAN.md` |
 | Foraging evidence and default decision | `FORAGING_ECOLOGY_PLAN.md` |
-| Crab-spider predator | `CRAB_SPIDER_PLAN.md` |
 | Skills and colony adaptations | `SKILL_TREE_PLAN.md` |
 
 ## Later, requiring a new design or evidence pass

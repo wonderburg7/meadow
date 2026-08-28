@@ -31,6 +31,7 @@ extends Node
 ## comment for what a restore does and doesn't reset.
 
 const Roles = preload("res://scripts/roles.gd")
+const Availability = preload("res://scripts/availability.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const QueenHeartsVfx = preload("res://scripts/queen_hearts_vfx.gd")
@@ -830,16 +831,18 @@ func _apply_stage_gate_to_ui() -> void:
 	var role_keys: Array = Roles.ROLES.map(func(r): return r.key)
 	main.hud.set_allowed_role_keys(role_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
 
-	# Every role's mode keys, not just Forager's -- bare for Forager
-	# ("nectar", "pollen"), "<role_key>_<mode_key>" for the rest (Nurse
-	# and Comb worker both have a mode keyed "both", so a bare key would
-	# let one role's unlock leak into the other's). Must match hud.gd's
-	# own gate_key computation in _build_doing_row exactly.
+	# Every role's mode keys, not just Forager's. Availability.mode_query
+	# owns the bare-vs-namespaced gate key formula (Nurse and Comb worker
+	# both have a mode keyed "both", so a bare key would let one role's
+	# unlock leak into the other's) -- hud.gd's own gate check in
+	# _build_doing_row reads the same formula via Availability.mode_gate_key,
+	# so the two can no longer drift apart by hand.
 	var mode_keys: Array = []
 	for role in Roles.ROLES:
 		for mode in role.modes:
-			mode_keys.append(mode.key if role.id == Roles.FORAGER else "%s_%s" % [role.key, mode.key])
-	main.hud.set_allowed_mode_keys(mode_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
+			if Availability.mode_query(role.id, mode.key, main.stage_gate).available:
+				mode_keys.append(Availability.mode_gate_key(role.id, mode.key))
+	main.hud.set_allowed_mode_keys(mode_keys)
 
 	# Designation types: nectar/pollen/brood and Unreserve all become
 	# available together once "cell_designation" is taught (2.5) --

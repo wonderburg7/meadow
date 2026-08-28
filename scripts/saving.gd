@@ -143,6 +143,12 @@ func _restore_cells(cells: Array) -> void:
 		main.hive.cells.append(cell)
 		main.hive.register_tile(hex, cell)
 
+	# Every field above was written straight onto the cell rather than
+	# through its mutator methods, so none of the invalidate_index() calls
+	# those methods make ran during restore -- the content buckets need
+	# one explicit bump once the whole cell list is back, not per cell.
+	main.hive.invalidate_index()
+
 func _restore_hive_state(state: Dictionary) -> void:
 	main.hive.keep_clear_tiles.clear()
 	for pair in state.get("keep_clear", []):

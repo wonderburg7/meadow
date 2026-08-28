@@ -243,6 +243,75 @@ def check_gameconfig_writes(name, code, problems):
             )
 
 
+def check_catalogue_alignment(problems):
+    """roles.gd's role ids must match bee_enums.gd's Role enum order
+    exactly (see roles.gd's own comment on FORAGER..HONEY) -- a role
+    added to one without the other silently corrupts saved integer
+    state. Also checks the ROLES table lists entries in that same id
+    order, and that resources.gd's catalogue keys line up with the
+    forager mode keys the CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md
+    Slice 3 vertical path ties them to.
+    """
+    roles_path = os.path.join(ROOT, "roles.gd")
+    enums_path = os.path.join(ROOT, "bee_enums.gd")
+    resources_path = os.path.join(ROOT, "resources.gd")
+    for path in (roles_path, enums_path, resources_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for catalogue alignment check" % os.path.basename(path))
+            return
+    roles_src = open(roles_path, encoding="utf-8").read()
+    enums_src = open(enums_path, encoding="utf-8").read()
+    resources_src = open(resources_path, encoding="utf-8").read()
+
+    enum_match = re.search(r"enum\s+Role\s*\{([^}]*)\}", enums_src, re.S)
+    if not enum_match:
+        problems.append("bee_enums.gd: could not find 'enum Role { ... }'")
+        return
+    enum_members = [m.strip() for m in enum_match.group(1).split(",") if m.strip()]
+
+    roles_array_start = roles_src.find("const ROLES")
+    header = roles_src[:roles_array_start] if roles_array_start != -1 else roles_src
+    const_ids = re.findall(r"^const\s+(\w+)\s*:=\s*(\d+)\s*$", header, re.M)
+
+    if len(const_ids) != len(enum_members):
+        problems.append(
+            "roles.gd declares %d role id(s) but bee_enums.gd's Role enum has "
+            "%d -- add/remove a role in both places together"
+            % (len(const_ids), len(enum_members))
+        )
+    else:
+        for i, (name, value) in enumerate(const_ids):
+            if int(value) != i:
+                problems.append(
+                    "roles.gd: const %s := %s is out of order for bee_enums.gd's "
+                    "Role enum position %d -- role ids must be declared 0..N-1 in "
+                    "the same order as BeeEnums.Role" % (name, value, i)
+                )
+
+    id_by_name = {name: int(value) for name, value in const_ids}
+    entry_ids = re.findall(r'"id":\s*(\w+)', roles_src)
+    for i, name in enumerate(entry_ids):
+        if name not in id_by_name:
+            problems.append('roles.gd: ROLES entry "id": %s is not a declared role id' % name)
+            continue
+        if id_by_name[name] != i:
+            problems.append(
+                'roles.gd: ROLES entry "id": %s (id %d) is not in id order at '
+                "table position %d" % (name, id_by_name[name], i)
+            )
+
+    const_strs = dict(re.findall(r'const\s+(\w+)\s*:=\s*"([^"]+)"', resources_src))
+    key_names = re.findall(r'"key":\s*(\w+),', resources_src)
+    resource_keys = [const_strs[n] for n in key_names if n in const_strs]
+    mode_keys = set(re.findall(r'\{"key":\s*"(\w+)",\s*"label"', roles_src))
+    for key in resource_keys:
+        if key not in mode_keys:
+            problems.append(
+                "resources.gd: resource key %r has no matching forager mode key "
+                "in roles.gd's ROLES table" % key
+            )
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -265,6 +334,7 @@ def main():
         check_calls(name, code, funcs, problems)
 
     check_autoloads(problems)
+    check_catalogue_alignment(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))

@@ -672,6 +672,8 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	# jitter untouched: it also schedules stall and survival checks.
 	_miner_dispatch_timer = float(bee_id % int(THINKS_PER_SECOND)) / THINKS_PER_SECOND
 	role = bee_role
+	if world != null and is_instance_valid(world):
+		world.invalidate_population()
 	if is_queen:
 		# The queen's day used to be eat, lay, wait, eat, lay. Nursing is
 		# her natural second job -- she is in the brood nest anyway -- so
@@ -1706,6 +1708,13 @@ func _apply_role(new_role: int) -> void:
 	working_secondary = false
 
 	role = new_role
+	# The one place `role` actually changes, so it's the one place to tell
+	# main.gd's cached _role_counts() it's stale -- callers like
+	# orders_zones.gd already refresh the HUD readout separately, but a
+	# "finish current task first" bee applies its queued role change here
+	# (see _apply_pending_role) without going through any of them.
+	if world != null and is_instance_valid(world):
+		world.invalidate_population()
 	visible = true
 	# brood food a nurse was carrying isn't any use in another job
 	nurse_pollen = 0.0

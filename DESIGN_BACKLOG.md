@@ -14,7 +14,7 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | Progression, colony adaptations and skills | `SKILL_TREE_PLAN.md` | designed, not scheduled |
 | Challenge 1 revamp / Challenge 2 boundary | `CHALLENGE1_REVAMP_PLAN.md`, `TUTORIAL_PLAN.md` | Challenge 1 A-C delivered; further work optional |
 | Foraging ecology | `FORAGING_ECOLOGY_PLAN.md` | mechanics built; evidence campaign remains |
-| Predators | `CRAB_SPIDER_PLAN.md` | designed, not scheduled |
+| Predators | `CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
 | UI and accessibility | `UI_PLAN.md` | active, narrow slices only |
 
 ## Deferred product decisions

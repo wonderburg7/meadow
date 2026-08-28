@@ -394,6 +394,13 @@ static func die(bee: Node2D, cause: String) -> void:
 	if bee.world != null and is_instance_valid(bee.world):
 		bee.world.mark_death(bee)
 		_announce_death(bee)
+		# Birth, role change and load all mark main.gd's cached
+		# _role_counts() stale (see invalidate_population) -- death was the
+		# one population mutation that never did. queue_free() below is
+		# deferred, so this bee is still in the "bees" group for the rest of
+		# this frame; harmless, since the cache is only read later, on
+		# year_winter.gd's 1-second tick.
+		bee.world.invalidate_population()
 	bee.queue_free()
 
 

@@ -207,17 +207,18 @@ func _refresh_signals(delta: float) -> void:
 			main.Bee.Role.BUILDER:
 				comb_workers += 1
 
+	# Reads hive.gd's mutation-owned content buckets rather than walking
+	# every cell fresh -- same buckets _refresh_panels below reads, so the
+	# hive only re-scans its cells when a build/hatch/designation/load
+	# actually changed one, not once a second regardless.
+	var dead_cells: int = main.hive.cells_holding("corpse").size()
 	var hungry_brood = 0
-	var dead_cells = 0
-	var free_cells = 0
-	for cell in main.hive.cells:
-		if not is_instance_valid(cell):
-			continue
-		if cell.needs_cleaning():
-			dead_cells += 1
-		elif cell.content_type == "brood" and cell.brood_fed_seconds <= 0.0:
+	for cell in main.hive.cells_holding("brood"):
+		if cell.brood_fed_seconds <= 0.0:
 			hungry_brood += 1
-		elif cell.is_empty() and not cell.keep_empty:
+	var free_cells = 0
+	for cell in main.hive.cells_holding(""):
+		if not cell.keep_empty:
 			free_cells += 1
 
 	# A 4th element, where present, is a "category" used to sort a signal
@@ -261,20 +262,19 @@ func _refresh_panels(bees: Array) -> void:
 	for b in bees:
 		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
 
-	var brood_count = 0
+	# Same bucketed reads as _refresh_signals above -- see its comment.
+	var brood_cells: Array = main.hive.cells_holding("brood")
+	var brood_count: int = brood_cells.size()
 	var gyne_count = 0
 	var hungry_brood = 0
+	for cell in brood_cells:
+		if cell.brood_is_gyne:
+			gyne_count += 1
+		if cell.brood_fed_seconds <= 0.0:
+			hungry_brood += 1
 	var free_cells = 0
-	for cell in main.hive.cells:
-		if not is_instance_valid(cell):
-			continue
-		if cell.content_type == "brood":
-			brood_count += 1
-			if cell.brood_is_gyne:
-				gyne_count += 1
-			if cell.brood_fed_seconds <= 0.0:
-				hungry_brood += 1
-		elif cell.is_empty() and not cell.keep_empty:
+	for cell in main.hive.cells_holding(""):
+		if not cell.keep_empty:
 			free_cells += 1
 
 	var mean_energy: float = energy_share / max(1, bees.size())

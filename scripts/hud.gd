@@ -12,6 +12,7 @@ const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Availability = preload("res://scripts/availability.gd")
 const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
@@ -362,6 +363,23 @@ var hatch_option_controls: Array = []
 ## How many cells the popup's buttons will act on. 1 unless the player
 ## has a multi-cell selection.
 var selected_cell_count: int = 1
+
+## Slice 2 of CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md: the popups below
+## used to rebuild every render frame regardless of whether anything
+## shown had changed. Every player-triggered edit already calls its
+## _refresh_*() directly (request handlers, show_cell_popup,
+## update_selection), so `_process` below only needs to catch changes
+## that happen without going through hud.gd -- a bulk nursery-panel edit,
+## a forager filling the open cell, a bee's ticking age/energy/task text.
+## The cell popup refreshes the moment its cell's display_epoch or
+## identity changes; everything (including the ticking numeric fields
+## all three popups show) is also caught on POPUP_REFRESH_CADENCE, well
+## under a human's ~100ms change-blindness threshold.
+const POPUP_REFRESH_CADENCE := 0.1
+var _popup_cadence_elapsed: float = 0.0
+var _cell_popup_last_cell: Node2D = null
+var _cell_popup_last_count: int = -1
+var _cell_popup_last_epoch: int = -1
 
 var warning_panel: PanelContainer
 var warning_label: Label
@@ -1416,6 +1434,9 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
+		_cell_popup_last_cell = active_cell
+		_cell_popup_last_count = selected_cell_count
+		_cell_popup_last_epoch = -1
 		return
 	identity_label.text = "%d cells selected\nShowing the first cell; every action applies to all" % selected_cell_count \
 		if selected_cell_count > 1 else "Cell selected"
@@ -1504,6 +1525,10 @@ func _refresh_cell_popup() -> void:
 	_light_current_options()
 	_apply_cell_popup_gating()
 
+	_cell_popup_last_cell = active_cell
+	_cell_popup_last_count = selected_cell_count
+	_cell_popup_last_epoch = active_cell.display_epoch
+
 ## Hides whichever "Reserve for" buttons and hatch-role choices a
 ## Challenge hasn't taught yet, and the "Keep for every bee" row until
 ## its own stage unlocks it. allowed_designation_keys/allowed_role_keys
@@ -1558,9 +1583,19 @@ func _process(_delta: float) -> void:
 		warning_timer -= _delta
 		if warning_timer <= 0.0:
 			warning_panel.visible = false
+
+	_popup_cadence_elapsed -= _delta
+	var cadence_due := _popup_cadence_elapsed <= 0.0
+	if cadence_due:
+		_popup_cadence_elapsed = POPUP_REFRESH_CADENCE
+
 	if cell_group.visible:
-		_refresh_cell_popup()
-	if selection_panel.visible:
+		var stale: bool = active_cell != _cell_popup_last_cell \
+			or selected_cell_count != _cell_popup_last_count \
+			or (is_instance_valid(active_cell) and active_cell.display_epoch != _cell_popup_last_epoch)
+		if cadence_due or stale:
+			_refresh_cell_popup()
+	if selection_panel.visible and cadence_due:
 		if active_summary_kind == "flower":
 			_refresh_flower_summary()
 		elif active_summary_kind == "":
@@ -1986,11 +2021,11 @@ func _build_doing_row(common_role: int, first) -> void:
 	# than a choice between modes -- so each role says how to read it.
 	for mode in modes:
 		var key: String = mode.key
-		# Forager's keys are checked bare ("nectar", "pollen"); every other
-		# role's are namespaced "<role_key>_<mode_key>" -- see the
-		# allowed_mode_keys field comment for why (Nurse and Comb worker
-		# both have a mode keyed "both").
-		var gate_key: String = key if common_role == Roles.FORAGER else "%s_%s" % [Roles.key_for(common_role), key]
+		# Availability.mode_gate_key owns the bare-vs-namespaced formula --
+		# see the allowed_mode_keys field comment for why it's namespaced
+		# for every role but Forager (Nurse and Comb worker both have a
+		# mode keyed "both").
+		var gate_key: String = Availability.mode_gate_key(common_role, key)
 		if not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
