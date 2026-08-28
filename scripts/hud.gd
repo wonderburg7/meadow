@@ -662,6 +662,10 @@ func _build_goal_shelf() -> void:
 	goal_shelf = VBoxContainer.new()
 	goal_shelf.theme = UiTheme.build_theme()
 	goal_shelf.visible = false
+	# The shelf overlaps the second top-bar row while a Challenge is active.
+	# It is display-only, so every part must pass pointer input through to
+	# the controls underneath instead of leaving only their exposed edge live.
+	goal_shelf.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
@@ -692,6 +696,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	current_goal_label.custom_minimum_size = Vector2(320, 0)
+	current_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	current_goal_label.theme_type_variation = "Body"
 	current_goal_label.add_theme_color_override("font_color", UiTheme.color("warning"))
 	goal_shelf.add_child(current_goal_label)
@@ -701,16 +706,19 @@ func _build_goal_shelf() -> void:
 	goal_progress_row.visible = false
 	goal_progress_row.alignment = BoxContainer.ALIGNMENT_END
 	goal_progress_row.add_theme_constant_override("separation", 6)
+	goal_progress_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.add_child(goal_progress_row)
 
 	goal_progress_bar = ProgressBar.new()
 	goal_progress_bar.custom_minimum_size = Vector2(160, 8)
 	goal_progress_bar.show_percentage = false
+	goal_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_bar)
 
 	goal_progress_label = Label.new()
 	goal_progress_label.theme_type_variation = "Small"
 	goal_progress_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	goal_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_label)
 
 ## Called by debug_panel.gd whenever its settings cog's actual width
