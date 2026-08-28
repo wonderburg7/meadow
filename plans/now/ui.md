@@ -84,9 +84,20 @@ hint (it named the deleted Add button).
 
 ## UI-D — Challenge top-bar hit-area diagnosis
 
-Investigate with the observed Challenge-only reproduction before changing
-layout. `stage_gate.gd` visibility is a lead, not a conclusion. Keep this
-separate from cosmetic top-bar work.
+**Confirmed reproduction (hands-on, 28 Aug):** In a Challenge, only a thin
+strip along the top of the second-row top-bar buttons responds to a click; the
+same controls are fully clickable in a Scenario.
+
+**Cause:** Challenge stage entry calls `hud.gd::set_challenge_goal()`, making
+the goal shelf visible. Its `offset_top = 46` overlaps the second top-bar row
+(roughly y=40–68), and the shelf itself retains Godot's default input-blocking
+mouse filter. Because it is added after the top bar, it receives clicks over
+that overlap, leaving only the exposed button top clickable. Scenarios keep
+the goal shelf hidden. `stage_gate.gd` controls which buttons are visible, but
+is not the cause of the hit-area loss.
+
+**Next:** make the goal shelf input-transparent, preserving its geometry and
+visual layout; then repeat the Challenge/Scenario click comparison.
 
 ## Deferred decisions
 
