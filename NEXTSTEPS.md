@@ -18,8 +18,11 @@ archive and Git history.
    layout; `stage_gate.gd` visibility is a lead, not a conclusion. UI-B and
    UI-C are both shipped (28 Aug 2026).
 3. **Blocked — forager-history save persistence.** It is approved in
-   `DESIGN_BACKLOG.md`, but must first have a focused save-format design:
-   exact fields, old-save fallback, versioning and deterministic tests.
+   `DESIGN_BACKLOG.md`. The generic versioning/old-save-fallback/
+   deterministic-test infrastructure now exists (`save_migrations.gd`,
+   efficiency Slice 5, 28 Aug 2026) but this still needs its own focused
+   save-format design: the exact forager-history fields and their
+   migration step.
 
 All other unprioritised work remains in its owning plan. Do not copy it into
 this queue merely to keep it visible.
