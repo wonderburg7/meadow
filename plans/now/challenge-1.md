@@ -1,8 +1,8 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 — fix-first (role-panel
-hit areas, remove Poppy) | Dependency: none | Verified: 2026-08-28
+Status: active | Owner: Dave / Claude Code | Next: Slice 3 — manual nectar
+collection (1.10's deposit split) | Dependency: none | Verified: 2026-08-28
 
 Supersedes the old Bundle H (copy/doc pass). That pass is folded into Slice 7
 below, run *after* the mechanics change, not before — updating docs to match

@@ -7,6 +7,18 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### Challenge 1 Slices 1-2 -- role-panel hit areas, Poppy removal, manual cell building
+- [ ] Play Challenge 1 from the start through building the first two cells
+      (1.5 and 1.12). Confirm: the role-panel "Change to..." control responds
+      to a click anywhere across its full row, not just over the text; no
+      Poppy ever appears in this Challenge's meadow; pressing "Build cell"
+      highlights valid tiles and does nothing until you click one; the build
+      takes about 5 seconds; the queen's role/letter never becomes Comb
+      Worker during or after building, and she resumes her prior job
+      afterwards with no second cell starting on its own; the Job column and
+      the cell popup's "Raises:" row offer only Forager and Egg Layer for the
+      whole Challenge. See `plans/now/challenge-1.md` Slices 1-2.
+
 ### Save migrations and domain-event boundaries (efficiency Slice 5)
 - [ ] Pure refactor: bee death, day rollover and a Challenge stage clear
       now reach their listeners via a Godot signal (`main.bee_died`,
