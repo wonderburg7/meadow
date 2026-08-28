@@ -760,7 +760,10 @@ func _goal_check_nectar_target() -> bool:
 	return false
 
 func _goal_check_pollen_target() -> bool:
-	return main.hive.total("pollen") >= Stages.POLLEN_TARGET
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.content_type == "pollen" and cell.amount >= Stages.POLLEN_TARGET:
+			return true
+	return false
 
 func _goal_check_first_egg_laid() -> bool:
 	return _brood_cell_count() >= 1
@@ -867,7 +870,10 @@ func _goal_progress(goal: String) -> Dictionary:
 					return {"current": cell.amount, "target": cell.capacity_for("nectar")}
 			return {}
 		"pollen_target":
-			return {"current": main.hive.total("pollen"), "target": Stages.POLLEN_TARGET}
+			for cell in main.hive.cells:
+				if is_instance_valid(cell) and cell.content_type == "pollen":
+					return {"current": cell.amount, "target": Stages.POLLEN_TARGET}
+			return {}
 		"first_egg_laid":
 			return {"current": _brood_cell_count(), "target": 1.0}
 		_:
