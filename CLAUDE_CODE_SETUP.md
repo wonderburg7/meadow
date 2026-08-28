@@ -82,8 +82,8 @@ This is the biggest lever, bigger than any settings file:
 Short sessions with a clean handoff file beat one long session that
 accumulates context it doesn't need any more. If a plan is bigger than
 one session — spans several slices — write it to its own file in the
-repo first (the way `TUTORIAL_PLAN.md` and the archived `*_SPLIT_PLAN.md`
-files in `docs/archive/` already work here) rather than trying to hold
+repo first (the way a focused file in `plans/now/` and the archived
+`*_SPLIT_PLAN.md` files in `plans/archive/` already work here) rather than trying to hold
 it in conversation.
 
 ## 6. Model choice

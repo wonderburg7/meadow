@@ -1,10 +1,9 @@
-# Efficiency implementation plan
+# Archived — Efficiency implementation ledger
 
-Status: in progress (Slices 1-5 done) | Owner: Dave / Claude Code | Next: Slice 6 has no standing mandate, starts only with a named measured span | Dependency: `CHATGPT_EFFICIENCY_AUDIT.md` (Dave's decisions confirmed 2026-08-28) | Verified: 2026-08-28
-
-Requires Dave's decisions in `CHATGPT_EFFICIENCY_AUDIT.md` and an isolated
-`codex/...` worktree before any implementation. This plan deliberately does
-not make `NEXTSTEPS.md` a Codex work queue.
+<!-- CONTEXT: historical-record | LAYER: history | LOAD: search a slice only -->
+Archived: 2026-08-28. Slices 1–5 are complete; Slice 6 has no standing
+mandate. Reopen only after a named measured span, using
+`plans/reference/technical-audit.md` and the shared `plans/` structure.
 
 ## Acceptance rules for every slice
 

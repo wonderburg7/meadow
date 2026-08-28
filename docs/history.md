@@ -1,7 +1,7 @@
 # Shipped-feature history
 
 Moved out of root `CLAUDE.md` in the Aug 2026 context restructure
-(`AUDIT_PLAN.md` Bundle D) so the always-loaded file stays short. This is
+(`plans/reference/technical-audit.md`) so the always-loaded file stays short. This is
 a chronology, not a to-do list — see `NEXTSTEPS.md` for what's next and
 `ROADMAP.md`/`DESIGN_BACKLOG.md` for what's planned but unbuilt.
 
@@ -15,8 +15,8 @@ pressure from neglect, weather, save/load, five starting levels and a
 full settings window (the cog icon, top right).
 
 `main.gd` and `bee.gd` have both been split (see the file-routing table
-in `CLAUDE.md`, and `docs/archive/BEE_SPLIT_PLAN.md` /
-`docs/archive/MAIN_SPLIT_PLAN.md` for why each boundary is where it is)
+in `CLAUDE.md`, and `plans/archive/BEE_SPLIT_PLAN.md` /
+`plans/archive/MAIN_SPLIT_PLAN.md` for why each boundary is where it is)
 and confirmed working in Godot 14 Aug -- that was the last item on the
 "deferred on purpose" list from the previous state-of-play note.
 
@@ -76,14 +76,14 @@ pass, `docs/archive/NEW_FEATURES_BLUEPRINT.md`):**
   and its dependents off (`debug_panel.gd`'s `TOGGLE_PREREQUISITE`).
   Recruitment thresholds are now nectar/pollen pairs, matched
   resource-specific in both directions. See
-  `docs/archive/SCOUTING_TOGGLE_PLAN.md`.
+  `plans/archive/SCOUTING_TOGGLE_PLAN.md`.
 - **Bee individuality** — every bee gets a generated name, one rolled
   stat trait (small, leaning positive), and a fact about herself,
   shown in the single-bee selection panel and survived across
   save/load. A star toggle pins a favourite into the colony window's
   Favourites list. A death shows a one-line epitaph, throttled so a bad
   night doesn't spam toasts. See `bee_identity.gd` and
-  `docs/archive/BEE_INDIVIDUALITY_PLAN.md`. Lineage inheritance for
+  `plans/archive/BEE_INDIVIDUALITY_PLAN.md`. Lineage inheritance for
   gynes is still deferred (`DESIGN_BACKLOG.md` §10).
 - **Fog of war reworked** — finer 5-unit tiles (was 20), a genuinely
   opaque colour, and a "Fog stays revealed" setting choosing between a
@@ -96,7 +96,7 @@ All three were last known to need Dave's hands-on check; none has had
 a specific correction since, but none has an explicit "confirmed
 working" either — see `NEXTSTEPS.md`.
 
-**Shipped 19 Aug — the opening tutorial, `TUTORIAL_PLAN.md`:**
+**Shipped 19 Aug — the opening tutorial, `plans/archive/TUTORIAL_PLAN_2026-08-24.md`:**
 
 Challenge 1 ("First Stores") is playable end to end: found a colony
 from a lone queen, build the first cell, gather nectar then pollen,
@@ -117,7 +117,7 @@ Two rounds of hands-on testing turned up real fixes along the way,
 including a general navigation bug (bees could path into the empty
 space outside the hive's rock wall — see `docs/known-pitfalls.md`) and
 a load-destroying deposit bug, both fixed for every level, not just the
-tutorial. Full list in `TUTORIAL_PLAN.md`'s "Built and playable" note
+tutorial. Full list in `plans/archive/TUTORIAL_PLAN_2026-08-24.md`'s "Built and playable" note
 and in `NEXTSTEPS.md`.
 
 Challenge 2 (Brood, Roles and Expansion) has no stage data yet — same
@@ -125,7 +125,7 @@ menu entry, still just its plain `levels.gd` starting-state preset
 underneath.
 
 **Shipped 19 Aug — the technical audit and its first bundles,
-`AUDIT_PLAN.md`:** two external audits found one confirmed state-leak
+`plans/reference/technical-audit.md`:** two external audits found one confirmed state-leak
 bug (Challenge 1's fast build time could leak into normal play/saves —
 Bundle A, fixed) and a save/restore determinism gap (old flowers/bees
 briefly visible to a group query mid-restore because Godot defers
@@ -134,7 +134,7 @@ briefly visible to a group query mid-restore because Godot defers
 instrumented but not yet measured. The Claude Code context restructure
 itself (Bundle D — this file is part of it) followed as the
 highest-leverage remaining item, since it costs nothing in gameplay
-risk. Full detail and status: `AUDIT_PLAN.md`.
+risk. Full detail and status: `plans/reference/technical-audit.md`.
 
 See `DESIGN_BACKLOG.md` for the progression/levels design and the
 unresolved argument about whether winter should be a played scene or a

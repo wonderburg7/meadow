@@ -1,11 +1,12 @@
 # Foraging ecology — operations and evidence plan
 
+<!-- CONTEXT: plan | LAYER: active -->
 Status: validation active | Owner: Dave / Claude Code | Next: run the matched
 foraging evidence campaign | Dependency: Godot/headless scenario access |
 Verified: 2026-08-26
 
 Slices 0-9 are built. Their detailed specifications, results and implementation
-notes are retained in `docs/archive/FORAGING_ECOLOGY_PLAN_2026-08-26.md`.
+notes are retained in `plans/archive/FORAGING_ECOLOGY_PLAN_2026-08-26.md`.
 This file governs the remaining evidence, not a second build of the system.
 
 ## Current campaign
@@ -49,7 +50,7 @@ until the scenario proves otherwise.
   she cleared it, so `SEARCHING` never got a chance to run. Fixed by
   making her own `flower_cooldowns` an unconditional check, same tier as
   the predator one. See `nearest_flower` in `bee_foraging.gd`.
-  Not yet run through a headless comparison -- see `HANDS_ON_CHECKS.md`.
+  Not yet run through a headless comparison -- see `checks/ready.md`.
 - **Thin-patch escape (27 Aug 2026, complementary).** Separately, a bee
   cycling several *different* nearby flowers that each only just clear
   `min_worthwhile_amount` now tracks that in `bee.thin_visit_streak`
@@ -68,7 +69,7 @@ until the scenario proves otherwise.
 - Reprofile any new per-bee search or visual update at the same population and
   record the remaining bottleneck rather than assuming the foraging path is
   slow.
-- Route a manual check to `HANDS_ON_CHECKS.md`; route a diagnostic-only claim
+- Route a manual check to `checks/ready.md`; route a diagnostic-only claim
   to the headless contract in `docs/headless-run-contract.md`.
 
 ## Future work

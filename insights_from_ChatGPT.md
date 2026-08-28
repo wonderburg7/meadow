@@ -35,9 +35,9 @@ the colony grows.
 mutation-owned Hive/colony snapshot with revision-driven UI refreshes. In a
 separate slice, introduce a non-visual availability query and a small resource
 catalogue, retaining stable string keys and adding save migration coverage
-before schema changes. Full evidence and a decision-gated six-slice plan are
-in `CHATGPT_EFFICIENCY_AUDIT.md` and
-`CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`.
+before schema changes. The durable reopening contract is in
+`plans/reference/technical-audit.md`; completed slice evidence is on demand in
+`plans/archive/CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN_2026-08-28.md`.
 
 ## UI
 

@@ -1,10 +1,9 @@
-# Tutorial and Challenges — current plan
+# Archived — Tutorial and Challenges routing snapshot
 
-Status: active design reference | Owner: Dave / Claude Code | Next: continue
-Challenge 1 only when explicitly selected | Dependency: Challenge 1 revamp
-sequence | Verified: 2026-08-26
-
-Challenge 1 is playable; its revamp has delivered Bundles A-C. The historical
+<!-- CONTEXT: historical-record | LAYER: history -->
+Archived: 2026-08-28. Its live boundaries are now in
+`plans/now/challenge-1.md`. Challenge 1 is playable and Bundles A–G are
+delivered. The historical
 Challenge 1/2 design and delivered mechanics are preserved in
 `docs/archive/TUTORIAL_PLAN_2026-08-24.md`.
 

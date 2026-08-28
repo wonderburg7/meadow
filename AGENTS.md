@@ -13,13 +13,13 @@ implement an explicitly assigned task only from a separate worktree on a
 `CHATGPT.md`. It must commit there for Claude to integrate and must not merge
 into `master` itself.
 
-Do not use `NEXTSTEPS.md` as ChatGPT's work queue and do not implement work
-from Claude plans. `NEXTSTEPS.md` is the canonical queue for integrated
-`master`, maintained by Claude or the current integrator. Codex may propose an
-explicitly assigned change to it on a `codex/...` branch, but must not
-independently curate it or treat unmerged work as completed. In advisory mode,
-ChatGPT may write only to the ChatGPT-specific Markdown files allowed by
-`CHATGPT.md`.
+`NEXTSTEPS.md` and `plans/` are the shared planning and implementation
+records for Claude and Codex. They establish integrated-project priority, but
+they do **not** authorise Codex to start a slice: Codex still needs Dave's
+explicit assignment and must follow `CHATGPT.md`'s isolation rules. Codex may
+propose an explicitly assigned queue update on a `codex/...` branch, but must
+not independently curate it or treat unmerged work as completed. In advisory
+mode, ChatGPT may write only to the Markdown files allowed by `CHATGPT.md`.
 
 In an isolated implementation task, relevant Markdown documentation is part of
 the change: Codex should update the README, design, architecture, testing or
@@ -30,8 +30,8 @@ retain the stricter ownership rules in `CHATGPT.md`.
 When that boundary prevents implementation, follow `CHATGPT.md`'s durable
 recommendation routing automatically: preserve the current evidence,
 consequence and next action in `insights_from_ChatGPT.md`, with detailed
-execution steps kept in a relevant `CHATGPT_` plan. Do not rely on the chat or
-short next-steps hand-off as the only record.
+execution steps kept in the relevant shared `plans/` file if Dave selects the
+work. Do not rely on the chat as the only record.
 
 Claude Project and Claude Code should continue to use `CLAUDE.md` and
 `NEXTSTEPS.md` as their project instructions and canonical integrated work

@@ -1,7 +1,7 @@
 # Measuring performance, not guessing at it
 
 Moved out of root `CLAUDE.md` in the Aug 2026 context restructure
-(`AUDIT_PLAN.md` Bundle D) so the always-loaded file stays short. Read
+(`plans/reference/technical-audit.md`) so the always-loaded file stays short. Read
 this before touching `fog_of_war.gd`, `bee_movement.gd`, or anything else
 on the hot per-frame path — `.claude/rules/performance.md` also points
 here automatically when those files are opened.
@@ -11,7 +11,7 @@ the worst frame times as a plot plus a top-8 breakdown in the corner,
 behind the "fps" star (`Session.perf_enabled`, kept in sync by
 `hud.gd::pinned_stats_changed`). It exists because this project has
 had two performance regressions caused by confident guesses that were
-wrong — see `docs/archive/PERF_PLAN.md` for the full writeup of the
+wrong — see `plans/archive/PERF_PLAN.md` for the full writeup of the
 second one, a 4fps drop that turned out to be `_grounded()` calling
 itself instead of checking rain -- that function is
 `bee_status.gd::grounded()` now, moved there in the bee.gd split, but
@@ -60,8 +60,8 @@ name overwrites the first one's start time.
 
 ## Explicitly do not change
 
-Carried forward from `docs/archive/PERF_PLAN.md`'s own findings, and
-reaffirmed by the Aug 2026 technical audit (`AUDIT_PLAN.md`):
+Carried forward from `plans/archive/PERF_PLAN.md`'s own findings, and
+reaffirmed by the Aug 2026 technical audit (`plans/reference/technical-audit.md`):
 
 - Don't re-add spatial indexing for obstacles (14 objects; already
   measured as slower than a linear scan — see `ROADMAP.md`).

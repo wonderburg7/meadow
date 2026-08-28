@@ -8,7 +8,8 @@ paths:
 
 # Save/restore safety
 
-Background and full "Done" writeups: `AUDIT_PLAN.md` Bundles A and B.
+On-demand background and completed writeups: `plans/reference/technical-audit.md`
+and `plans/archive/AUDIT_PLAN_AUG_2026.md` Bundles A and B.
 
 **Restore is all-or-nothing.** A save either fails validation and
 changes nothing, or succeeds and leaves every collection, index,
