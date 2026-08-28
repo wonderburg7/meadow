@@ -27,6 +27,11 @@ DEFAULT_JOB_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-jobs"
 MARKER_NAME = ".meadow-headless-job-root"
 JOB_NAME = re.compile(r"^job-[0-9]+-[0-9a-f]{12}$")
 TERMINAL_STATUSES = frozenset({"passed", "failed", "contract_error", "timed_out", "crashed", "stale"})
+# On Windows, process identity queries start a short PowerShell child.  Under
+# concurrent test or desktop load that can outlast the original two-second
+# terminal serialisation window even though the worker is finishing normally.
+# Fifteen seconds stays bounded while allowing several identity-query retries.
+TERMINAL_WRITE_GRACE_SECONDS = 15
 
 
 class JobError(ValueError):
@@ -257,7 +262,8 @@ def refresh_status(job_dir: Path, job_root: Path = DEFAULT_JOB_ROOT) -> dict[str
                 actual = _process_start_token(launcher_pid)
                 if launcher_token is None or actual == launcher_token:
                     return status
-        if status.get("status") == "queued" and time.time() - status.get("submitted_at", 0) < 5:
+        if (status.get("status") == "queued"
+                and time.time() - status.get("submitted_at", 0) < TERMINAL_WRITE_GRACE_SECONDS):
             return status
         status.update({"status": "stale", "reason": {"kind": "worker_missing"}})
         _write_status(job_dir, status)
@@ -266,7 +272,8 @@ def refresh_status(job_dir: Path, job_root: Path = DEFAULT_JOB_ROOT) -> dict[str
         # The foreground child can finish just before the worker serialises
         # result.json/status.json.  Give that tiny terminal-write window time
         # to settle before classifying a genuinely vanished worker as stale.
-        if time.time() - status.get("updated_at", status.get("started_at", 0)) < 2:
+        if (time.time() - status.get("updated_at", status.get("started_at", 0))
+                < TERMINAL_WRITE_GRACE_SECONDS):
             return status
         status.update({"status": "stale", "reason": {"kind": "worker_missing"}})
         _write_status(job_dir, status)
@@ -291,7 +298,9 @@ def prune_terminal_jobs(job_root: Path = DEFAULT_JOB_ROOT, older_than_seconds: f
         status = refresh_status(candidate, root)
         if status.get("status") not in TERMINAL_STATUSES:
             continue
-        if candidate.stat().st_mtime > cutoff:
+        # A zero retention period means "prune every terminal job now".  Do
+        # not race the terminal status write against a filesystem timestamp.
+        if older_than_seconds > 0 and candidate.stat().st_mtime > cutoff:
             continue
         # _validate_job_dir above proves this is a direct child of our marked
         # temp root. No process is stopped as part of cleanup.
