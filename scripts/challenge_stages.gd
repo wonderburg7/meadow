@@ -152,8 +152,8 @@ const STAGES_1 := [
 		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: return to the hive and deposit the harvest.",
 		"prompts": [
-			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home and deposit the harvest."},
-			{"id": "1.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Use Return and deposit to send the queen back to the hive's first cell."},
+			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home, then choose the wax cell that receives the harvest."},
+			{"id": "1.10_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Right-click the hive to bring the queen home, then right-click the wax cell to deposit her load."},
 		],
 	},
 	{

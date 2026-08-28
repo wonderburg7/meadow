@@ -126,6 +126,7 @@ func start() -> void:
 	_greeting_active = false
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
+	main.queen.manual_deposit_pending = false
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -258,6 +259,8 @@ func _stage_unlock_keys(entries: Array) -> Array:
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
+	if Session.starting_level == 1:
+		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 	if Session.starting_level == 1:
 		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
