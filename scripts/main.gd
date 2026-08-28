@@ -542,7 +542,9 @@ func _ready() -> void:
 
 	challenge_complete = ChallengeComplete.new()
 	challenge_complete.continue_requested.connect(func(): challenge_complete.visible = false; get_tree().paused = false)
+	challenge_complete.continue_to_next_requested.connect(func(): _on_level_chosen(2))
 	challenge_complete.menu_requested.connect(func(): challenge_complete.visible = false; menu.open())
+	challenge_complete.restart_requested.connect(func(): _on_level_chosen(1))
 	add_child(challenge_complete)
 
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))

@@ -13,11 +13,20 @@ const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal continue_requested()
+signal continue_to_next_requested()
 signal menu_requested()
+signal restart_requested()
 
 var headline_label: Label
 var flavour_label: Label
 var summary_label: Label
+var reward_label: Label
+var continue_btn: Button
+var continue_to_next_btn: Button
+var restart_btn: Button
+var continue_row: HBoxContainer
+var continue_to_next_row: HBoxContainer
+var restart_row: HBoxContainer
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # still works while the run is paused
@@ -62,15 +71,43 @@ func _ready() -> void:
 	summary_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	column.add_child(summary_label)
 
+	reward_label = Label.new()
+	reward_label.theme_type_variation = "Small"
+	reward_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	reward_label.text = "+ [meta-currency placeholder] earned"
+	reward_label.visible = false
+	column.add_child(reward_label)
+
 	column.add_child(HSeparator.new())
 
-	var continue_btn := Button.new()
+	continue_btn = Button.new()
 	continue_btn.text = "Continue playing"
 	continue_btn.custom_minimum_size = Vector2(0, 32)
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		continue_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	continue_btn.pressed.connect(func(): continue_requested.emit())
-	column.add_child(UI.with_info(continue_btn, "Keep playing this colony -- everything the Challenge was gating is now unlocked."))
+	continue_row = UI.with_info(continue_btn, "Keep playing this colony -- everything the Challenge was gating is now unlocked.")
+	column.add_child(continue_row)
+
+	continue_to_next_btn = Button.new()
+	continue_to_next_btn.text = "Continue to Challenge 2"
+	continue_to_next_btn.custom_minimum_size = Vector2(0, 32)
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		continue_to_next_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	continue_to_next_btn.pressed.connect(func(): continue_to_next_requested.emit())
+	continue_to_next_row = UI.with_info(continue_to_next_btn, "Begin Challenge 2 with a fresh colony.")
+	continue_to_next_row.visible = false
+	column.add_child(continue_to_next_row)
+
+	restart_btn = Button.new()
+	restart_btn.text = "Restart Challenge 1"
+	restart_btn.custom_minimum_size = Vector2(0, 32)
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		restart_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	restart_btn.pressed.connect(func(): restart_requested.emit())
+	restart_row = UI.with_info(restart_btn, "Start Challenge 1 again from the beginning.")
+	restart_row.visible = false
+	column.add_child(restart_row)
 
 	var menu_btn := Button.new()
 	menu_btn.text = "Main menu"
@@ -88,10 +125,15 @@ func _ready() -> void:
 ## game_over.gd's epitaph, just framed as what got achieved rather than
 ## what was lost.
 func open(headline: String, flavour: String, day: int, bees: int, nectar: float, pollen: float) -> void:
+	var is_challenge_one := Session.starting_level == 1
 	headline_label.text = headline
 	flavour_label.text = flavour
 	summary_label.text = "Day %d · %d bees · %d nectar and %d pollen in the comb" % [
 		day, bees, int(round(nectar)), int(round(pollen)),
 	]
+	reward_label.visible = is_challenge_one
+	continue_row.visible = not is_challenge_one
+	continue_to_next_row.visible = is_challenge_one
+	restart_row.visible = is_challenge_one
 	visible = true
 	get_tree().paused = true

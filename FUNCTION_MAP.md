@@ -421,43 +421,43 @@ The comb as a whole: cells, navigation, finding a cell.
 989  func announce() -> void
 ```
 
-## main.gd (1,174 lines)
+## main.gd (1,176 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
 ```
 334  func _ready() -> void
-570  # --- public surface other scripts call directly -------------------
-577  func is_on_screen(node: Node2D) -> bool
-580  func hive_entrance_inside() -> Vector2
-583  func entrance_wait_point(side: int) -> Vector2
-586  func move_bee_into_hive(bee: Node2D) -> void
-589  func move_bee_out_of_hive(bee: Node2D) -> void
-592  func mark_death(bee: Node2D) -> void
-600  func _on_bee_died(bee: Node2D) -> void
-604  func finish_mining(block: Node2D) -> void
-607  func save_run() -> void
-610  func begin_winter_countdown() -> void
-613  # --- per-frame ----------------------------------------------------
-623  func _process(delta: float) -> void
-696  # --- the frame rate readout ----------------------------------------
-715  func _sample_fps() -> void
-738  func _reseed_meadow(delta: float) -> void
-753  func _hatch_ready_brood() -> void
-785  func _advance_weather(delta: float) -> void
-815  func _apply_rain_overlay() -> void
-830  func _check_for_loss() -> void
-852  func _check_colony_energy(delta: float) -> void
-886  func invalidate_population() -> void
-897  func _role_counts() -> Dictionary
-915  func _update_population_readout(bees = null) -> void
-937  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-943  func _prune_selection() -> void
-956  func _on_restart_after_loss() -> void
-962  func _on_level_chosen(level: int) -> void
-975  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-992  func _apply_scenario_boot_arg() -> void
-1107 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1147 func _is_whole_number(value: Variant) -> bool
-1161 func _end_scenario_run(outcome: String) -> void
+572  # --- public surface other scripts call directly -------------------
+579  func is_on_screen(node: Node2D) -> bool
+582  func hive_entrance_inside() -> Vector2
+585  func entrance_wait_point(side: int) -> Vector2
+588  func move_bee_into_hive(bee: Node2D) -> void
+591  func move_bee_out_of_hive(bee: Node2D) -> void
+594  func mark_death(bee: Node2D) -> void
+602  func _on_bee_died(bee: Node2D) -> void
+606  func finish_mining(block: Node2D) -> void
+609  func save_run() -> void
+612  func begin_winter_countdown() -> void
+615  # --- per-frame ----------------------------------------------------
+625  func _process(delta: float) -> void
+698  # --- the frame rate readout ----------------------------------------
+717  func _sample_fps() -> void
+740  func _reseed_meadow(delta: float) -> void
+755  func _hatch_ready_brood() -> void
+787  func _advance_weather(delta: float) -> void
+817  func _apply_rain_overlay() -> void
+832  func _check_for_loss() -> void
+854  func _check_colony_energy(delta: float) -> void
+888  func invalidate_population() -> void
+899  func _role_counts() -> Dictionary
+917  func _update_population_readout(bees = null) -> void
+939  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+945  func _prune_selection() -> void
+958  func _on_restart_after_loss() -> void
+964  func _on_level_chosen(level: int) -> void
+977  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+994  func _apply_scenario_boot_arg() -> void
+1109 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1149 func _is_whole_number(value: Variant) -> bool
+1163 func _end_scenario_run(outcome: String) -> void
 ```
