@@ -350,6 +350,9 @@ var cell_primary_columns: HBoxContainer
 var cell_more_button: Button
 var cell_more_panel: HBoxContainer
 var cell_more_open: bool = false
+## The wrapped "Raises:" controls are built while their cell group is hidden.
+## Keep this reference so showing the group can run its first visible layout.
+var hatch_row: HFlowContainer
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
 var hatch_lock_box: CheckBox
@@ -1112,7 +1115,7 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 	open_row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every reserved cell glows in the colour of the role it raises."))
 
 	# Which role a bee raised here comes out as.
-	var hatch_row := HFlowContainer.new()
+	hatch_row = HFlowContainer.new()
 	column.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
@@ -1427,6 +1430,9 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	more_button.visible = false
 	more_panel.visible = false
 	cell_group.visible = true
+	# FlowContainer skips sorting while hidden. Its first visible sort updates
+	# the cached wrapped height, so every row stays inside the hit-test rect.
+	hatch_row.queue_sort()
 	command_tray.visible = true
 	_refresh_cell_popup()
 	_update_command_tray_width()
