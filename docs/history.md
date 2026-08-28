@@ -96,22 +96,25 @@ All three were last known to need Dave's hands-on check; none has had
 a specific correction since, but none has an explicit "confirmed
 working" either — see `NEXTSTEPS.md`.
 
-**Shipped 19 Aug — the opening tutorial, `plans/archive/TUTORIAL_PLAN_2026-08-24.md`:**
+**Updated 28 Aug — Challenge 1: First Stores, `plans/now/challenge-1.md`:**
 
 Challenge 1 ("First Stores") is playable end to end: found a colony
-from a lone queen, build the first cell, gather nectar then pollen,
-guided by Dr Gallerin (a moth mentor popup) through seven scripted
-sub-stages with UI that unlocks as you go. New infrastructure this
-needed, all reusable for Challenge 2 once that gets written:
+from a lone queen, place comb cells by hand, collect and deposit nectar
+manually, then unlock automatic nectar and pollen foraging before raising
+the first worker. Dr Gallerin guides this nineteen-stage sequence while
+the interface reveals only the control needed for the current lesson:
+the Meadow view appears after the queen reaches it, and only Forager and
+Egg Layer are selectable roles. Completing the Challenge offers Continue
+to Challenge 2, Restart Challenge 1, or Main menu.
+
+The reusable tutorial infrastructure is:
 `levels.gd` (level/Challenge presets, extracted out of `main.gd`),
 `stage_gate.gd` (the UI unlock/lock mechanism), `tutorial_checkpoint.gd`
 (a rolling autosave, separate from the player's own save, for a
-Challenge's soft-failure rollback — built but not yet exercised, since
-Challenge 1 has no failure condition), `gallerin_panel.gd` (the mentor
-popup and its prompt scheduler), and `challenge_runner.gd` (the
-sub-stage logic itself). The opening menu now groups **Challenges**
-(scripted, Dr Gallerin, a win condition) separately from **Starter
-modes** (the plain presets Levels 3-5 used to be, relabelled).
+Challenge's soft-failure rollback), `gallerin_panel.gd` (the mentor popup
+and its prompt scheduler), and `challenge_runner.gd` (the stage logic).
+The opening menu groups **Challenges** (scripted, Dr Gallerin, a win
+condition) separately from **Starter modes** (plain presets).
 
 Two rounds of hands-on testing turned up real fixes along the way,
 including a general navigation bug (bees could path into the empty
@@ -120,9 +123,8 @@ a load-destroying deposit bug, both fixed for every level, not just the
 tutorial. Full list in `plans/archive/TUTORIAL_PLAN_2026-08-24.md`'s "Built and playable" note
 and in `NEXTSTEPS.md`.
 
-Challenge 2 (Brood, Roles and Expansion) has no stage data yet — same
-menu entry, still just its plain `levels.gd` starting-state preset
-underneath.
+Challenge 2 (Brood, Roles and Expansion) follows the first-worker hand-off
+with its own scripted stages, including a soft-failure recovery path.
 
 **Shipped 19 Aug — the technical audit and its first bundles,
 `plans/reference/technical-audit.md`:** two external audits found one confirmed state-leak
