@@ -181,14 +181,22 @@ const SPECIES := [
 ]
 
 ## Picks a species by rarity weight. Clover is common, foxglove scarce.
-static func pick_species_index() -> int:
+## `exclude` is used by Challenge 1, whose meadow deliberately has no Poppies.
+static func pick_species_index(exclude: Array = []) -> int:
 	var total := 0.0
 	for s in SPECIES:
+		if s.name in exclude:
+			continue
 		total += s.get("weight", 1.0)
 	var roll := randf() * total
 	for i in range(SPECIES.size()):
+		if SPECIES[i].name in exclude:
+			continue
 		roll -= SPECIES[i].get("weight", 1.0)
 		if roll <= 0.0:
+			return i
+	for i in range(SPECIES.size()):
+		if not SPECIES[i].name in exclude:
 			return i
 	return 0
 

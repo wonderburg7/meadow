@@ -193,7 +193,8 @@ func _random_point_in_zone(habitat: String) -> Vector2:
 	return centre + Vector2(cos(angle), sin(angle)) * dist
 
 func _seed_flower() -> void:
-	var species_index = main.FlowerSpecies.pick_species_index()
+	var excluded_species: Array = ["Poppy"] if Session.starting_level == 1 else []
+	var species_index = main.FlowerSpecies.pick_species_index(excluded_species)
 	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
