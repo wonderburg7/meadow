@@ -125,15 +125,17 @@ feature and run only its check. Move a confirmed or superseded entry to
 
 ### Challenge 1 Bundle E -- automate nectar, then pollen (stages 1.11-1.14)
 - [ ] Play Challenge 1 from the meadow-harvest deposit onward: assign the
-      queen Forager/nectar and let her reach the 30-nectar target (1.11),
-      use her "Build cell" button for a second cell (1.12 -- this is the
-      fix: it used to try to rebuild at the hive centre, which was already
+      queen Forager/nectar and let her fill the nectar cell (1.11 -- runs
+      at 2x her normal rate and stops on her own once it reads full), use
+      her "Build cell" button for a second cell (1.12 -- this is the fix:
+      it used to try to rebuild at the hive centre, which was already
       occupied by the first cell, so the button silently did nothing),
-      switch her to Forager/pollen for the 10-pollen target (1.13), then
-      build a third cell (1.14). Confirm each stage's goal advances, the
-      second and third cells land beside the first rather than failing,
-      and 1.13's Gallerin copy withholds "pollen makes new workers" while
-      1.14's reveals it. See `plans/now/challenge-1.md` Slices 4-5.
+      switch her to Forager/pollen until its cell holds 75 (1.13, also 2x
+      rate), then build a third cell (1.14). Confirm each stage's goal
+      advances, the second and third cells land beside the first rather
+      than failing, and 1.13's Gallerin copy withholds "pollen makes new
+      workers" while 1.14's reveals it. See `plans/now/challenge-1.md`
+      Slices 4-5.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click

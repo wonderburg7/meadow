@@ -8,10 +8,10 @@ on demand in `plans/archive/`.
 
 ## Next up
 
-1. **Current — Challenge 1 manual-teaching revamp.** Work Slices 1–7 in
-   `plans/now/challenge-1.md` in order (fix-first, manual cell building,
-   manual nectar/deposit, automatic-nectar unlock, pollen, win screen, then
-   the doc/acceptance pass that replaces the old Bundle H copy pass).
+1. **Current — Challenge 1 manual-teaching revamp.** Slices 1–7 in
+   `plans/now/challenge-1.md` are code-complete and merged. What remains is
+   Dave's hands-on acceptance playthrough against `checks/ready.md`'s
+   Challenge 1 Bundles D–G, then the plan's own status/archive rewrite.
 2. **Successor — UI-D Challenge top-bar hit-area diagnosis.** Follow the
    reproduction-first investigation in `plans/now/ui.md`; no layout change
    before the cause is evidenced.
