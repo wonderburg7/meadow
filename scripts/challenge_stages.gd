@@ -35,11 +35,11 @@ const STRONGER_HINT_DELAY := 45.0
 ## The normal cell_build_time (90s by default) makes sense once a colony
 ## has many comb workers splitting the wait -- for a lone queen building
 ## her very first cell it's just standing around. Set only on the one
-## cell site the queen builds in 1.5 (via HiveCell.build_time_override),
+## cell site the queen builds in Challenge 1 (via HiveCell.build_time_override),
 ## never on the GameConfig autoload -- a global write there used to leak
 ## the tutorial's fast build speed into normal play (and into a save) if
 ## the Challenge was left or restarted before 1.3 completed.
-const FAST_BUILD_TIME := 15.0
+const FAST_BUILD_TIME := 5.0
 
 ## 1.16's hatchling greeting: the new worker circles the queen once and
 ## settles just in front of her, while a normal FORAGER hatch would
@@ -108,7 +108,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.5", "goal": "first_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker"],
+		"id": "1.5", "goal": "first_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"goal_text": "Goal: build the colony's first comb cell.",
 		"prompts": [
 			{"id": "1.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "Now for architecture. One wax cell is enough to turn empty space into the beginning of a working hive."},
@@ -117,7 +117,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.6", "goal": "queen_reached_meadow",
-		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker"],
+		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"goal_text": "Goal: send the queen out to the meadow.",
 		"prompts": [
 			{"id": "1.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "A beautiful cell, and presently an empty one. The meadow can remedy that. Send the queen through the entrance."},
@@ -125,7 +125,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.7", "goal": "meadow_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"id": "1.7", "goal": "meadow_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: explore the three marked places in the meadow.",
 		"prompts": [
 			{"id": "1.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "Flowers, distance, weather, other wings -- the meadow is the colony's wider world. Let us take a short tour."},
@@ -133,7 +133,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: gather from the first marked flower.",
 		"prompts": [
 			{"id": "1.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "There: a flower with nectar to spare. Right-click it and the queen will gather what she can carry."},
@@ -141,7 +141,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: gather from a second marked flower.",
 		"prompts": [
 			{"id": "1.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "One flower is a meal; a landscape of them is a supply network. Try another."},
@@ -149,7 +149,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}],
+		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"goal_text": "Goal: return to the hive and deposit the harvest.",
 		"prompts": [
 			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home and deposit the harvest."},
@@ -157,7 +157,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"goal_text": "Goal: automate nectar gathering.",
 		"prompts": [
 			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
@@ -166,7 +166,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.12", "goal": "second_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"id": "1.12", "goal": "second_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"goal_text": "Goal: build a second comb cell.",
 		"prompts": [
 			{"id": "1.12_welcome", "trigger": "welcome", "delay": 0.0, "text": "Stores need space. Add another cell by hand; bees are tiny logistics departments with wings, but even they need shelving."},
@@ -174,7 +174,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"goal_text": "Goal: automate pollen gathering.",
 		"prompts": [
 			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar is fuel. Pollen is protein: less immediately glamorous, biologically indispensable."},
@@ -182,7 +182,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.14", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"id": "1.14", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"goal_text": "Goal: build a third cell for the colony's next generation.",
 		"prompts": [
 			{"id": "1.14_welcome", "trigger": "welcome", "delay": 0.0, "text": "Here is pollen's deeper purpose: making more bees. Build a third cell, and we can turn provisions into a future."},
@@ -190,7 +190,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.15", "goal": "first_egg_laid", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.15", "goal": "first_egg_laid", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: let the queen lay the colony's first egg.",
 		"prompts": [
 			{"id": "1.15_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying, with Nursing as her backup. A queen who only seeks empty cells would overlook the hungry brood already depending on her."},
@@ -198,7 +198,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.16", "goal": "nectar_forager_hatched", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.16", "goal": "nectar_forager_hatched", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: care for the egg until the first worker hatches.",
 		"prompts": [
 			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "An egg is a promise with a feeding schedule. Keep the young bee supplied and watch what pollen becomes."},
@@ -206,7 +206,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.17", "goal": "new_bee_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.17", "goal": "new_bee_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: select the new worker.",
 		"prompts": [
 			{"id": "1.17_welcome", "trigger": "welcome", "delay": 0.0, "text": "A daughter, and the colony's first worker. Select her and inspect the summary and role panels."},
@@ -214,7 +214,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.18", "goal": "new_bee_left_hive", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.18", "goal": "new_bee_left_hive", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: send the new worker out into the meadow.",
 		"prompts": [
 			{"id": "1.18_welcome", "trigger": "welcome", "delay": 0.0, "text": "Her first journey awaits. Send the new worker through the hive entrance."},
@@ -223,7 +223,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.19", "goal": "complete",
-		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, "comb_worker", {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "",
 		"prompts": [],
 	},

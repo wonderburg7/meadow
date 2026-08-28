@@ -1125,6 +1125,8 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 
 	hatch_option_controls.clear()
 	for entry in hatch_options():
+		if entry.role != -1 and not allowed_role_keys.is_empty() and not allowed_role_keys.has(Roles.key_for(entry.role)):
+			continue
 		var options: Array = entry.options
 		var control: Control
 		if options.size() == 1:
@@ -1900,10 +1902,8 @@ func _selection_has_command_lock(bees: Array) -> bool:
 ## Job, Focus and Orders are the three always-visible columns (Dave's 22
 ## Aug call): Job is the role and "Change to…" dropdown, Focus is the
 ## current sub-mode, Orders is the click-a-spot actions and restocking.
-## The queen's Build-cell button, Follow bee, the backup role, finish-
-## first and Favourite are used far less often and live under More…
-## instead, in more_panel, using the same labelled-row shape the whole
-## tray used to use throughout.
+## Follow bee, the backup role, finish-first and Favourite are used far less
+## often and live under More…; Challenge 1's Build cell command stays primary.
 func _rebuild_role_controls(bees: Array) -> void:
 	for child in job_column.get_children():
 		child.queue_free()
@@ -1924,7 +1924,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 
 	var show_queen_build_row: bool = show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
 	if show_queen_build_row:
-		_build_queen_build_row()
+		_build_queen_build_row(job_column)
 	_build_doing_row(common_role, first)
 	# Skipped while the queen's own "Build cell" button is showing --
 	# that button is the one build control Challenge 1 wants here, not
@@ -1946,16 +1946,16 @@ func _rebuild_role_controls(bees: Array) -> void:
 	more_panel.visible = more_button.button_pressed
 	_update_command_tray_width()
 
-## Challenge 1 only -- see set_queen_build_button_visible. Doesn't fit
-## Job/Focus/Orders, so it lives under More… like Follow bee below.
-func _build_queen_build_row() -> void:
+## Challenge 1 only -- see set_queen_build_button_visible. It is a primary
+## Job-column action so the manual placement lesson never hides behind More….
+func _build_queen_build_row(column: VBoxContainer) -> void:
 	var button := Button.new()
 	_style_button(button)
 	button.text = "Build cell"
 	button.custom_minimum_size = Vector2(0, 26)
 	button.theme_type_variation = "Small"
 	button.pressed.connect(func(): queen_build_cell_requested.emit())
-	more_panel.add_child(button)
+	column.add_child(button)
 
 ## Continuous camera tracking (UI_PLAN.md section 15 slice 3) -- only
 ## offered for a single selected bee, same condition as Favourite. The

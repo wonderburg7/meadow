@@ -78,6 +78,9 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	if main.awaiting_build_cell:
 		_place_build_cell(main.drag_start, add_to_group_selection)
 		return
+	if main.awaiting_queen_build_cell:
+		_place_queen_build_cell(main.drag_start)
+		return
 	if main.awaiting_mine_target:
 		_place_mine_target(main.drag_start, add_to_group_selection)
 		return
@@ -312,6 +315,10 @@ func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
 		return
 	main.awaiting_build_cell = false
 	main.pending_builder_bees = []
+
+func _place_queen_build_cell(global_point: Vector2) -> void:
+	main.awaiting_queen_build_cell = false
+	main.challenge_runner.on_queen_build_site_chosen(_hex_at(global_point))
 
 func _on_build_cell_requested() -> void:
 	main.pending_builder_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.BUILDER)
@@ -565,7 +572,7 @@ func _draw_hive_orders() -> void:
 		for hex in main.hive.keep_clear_tiles.keys():
 			_draw_tile_outline(_tile_centre(hex), main.KEEP_CLEAR_COLOUR, 2.0, true)
 
-	if main.awaiting_build_cell:
+	if main.awaiting_build_cell or main.awaiting_queen_build_cell:
 		_draw_build_hover()
 
 ## Which tile the mouse is over right now, drawn only while "Build here"

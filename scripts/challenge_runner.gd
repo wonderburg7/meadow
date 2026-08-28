@@ -125,6 +125,7 @@ func start() -> void:
 	_new_worker = null
 	_greeting_active = false
 	_hearts_timer = 0.0
+	main.awaiting_queen_build_cell = false
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -465,36 +466,24 @@ func _complete() -> void:
 ## assign-role-then-click-a-spot
 ## flow (see hud.gd's set_queen_build_button_visible).
 ##
-## Assigns the site directly (hive.create_next_cell_site + target_cell +
-## State.TO_BUILD_SITE) rather than going through the usual manual-
-## build-queue-then-idle-dispatch route bee.gd's Comb worker uses for a
-## player's own placement click. That route needs at least one
-## BUILD_IDLE tick to notice the queued target, and once she goes
-## BUILD_IDLE again after finishing (bee.gd::_idle_dispatch, Role.BUILDER)
-## it also happily starts a brand new cell outward from the centre if
-## nothing else is queued -- which is exactly what kept producing a
-## second, unfinished cell next to the first no matter how quickly this
-## file's own stage-advance logic tried to react afterwards. Setting
-## architect_mode to "maintain" *before* she ever starts, rather than
-## resetting it after she finishes, closes that off completely: none of
-## _idle_dispatch's Role.BUILDER branch ever runs for her while it's set,
-## so there's no path back into auto-building regardless of frame timing.
-##
-## Shared by 1.5, 1.12 and 1.14 (Bundle E) -- create_next_cell_site()
-## spirals outward from the centre for the next open tile rather than
-## always the centre itself, the same helper bee.gd's own Comb workers
-## use for automatic placement, so the second and third calls succeed
-## instead of failing silently against the now-occupied first cell.
+## Arms a Challenge-only player placement mode. The queen keeps her real
+## role: TO_BUILD_SITE and BUILDING work from target_cell, while assigning
+## BUILDER would make idle dispatch auto-start another build after this one.
 func _on_queen_build_cell_requested() -> void:
 	if not is_instance_valid(main.queen):
 		return
-	main.queen.architect_mode = "maintain"
-	main.queen.set_role(main.Bee.Role.BUILDER)
-	var site: Node2D = main.hive.create_next_cell_site()
-	if site:
-		site.build_time_override = Stages.FAST_BUILD_TIME
-		main.queen.target_cell = site
-		main.queen.state = main.Bee.State.TO_BUILD_SITE
+	main.awaiting_queen_build_cell = true
+	main.input_selection._ensure_hive_view()
+
+func on_queen_build_site_chosen(hex: Vector2i) -> void:
+	if not is_instance_valid(main.queen) or not main.hive.can_build_on(hex):
+		return
+	var site: Node2D = main.hive.create_cell_site_at(hex)
+	if site == null:
+		return
+	site.build_time_override = Stages.FAST_BUILD_TIME
+	main.queen.target_cell = site
+	main.queen.state = main.Bee.State.TO_BUILD_SITE
 
 ## Pushes the current stage_gate state into hud.gd via its setters,
 ## rather than hud.gd reading stage_gate directly -- hud.gd stays

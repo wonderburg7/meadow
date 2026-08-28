@@ -316,6 +316,7 @@ var pan_anchor: Vector2 = Vector2.ZERO
 ## active the next left click in the relevant view is consumed as the
 ## placement rather than a normal select/drag.
 var awaiting_build_cell: bool = false
+var awaiting_queen_build_cell: bool = false
 var awaiting_home_cell: bool = false
 var awaiting_home_cell_all: bool = false
 var awaiting_mine_home: bool = false
