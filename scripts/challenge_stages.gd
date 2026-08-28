@@ -12,12 +12,15 @@ extends RefCounted
 ## their differences.
 class_name ChallengeStages
 
-## How much nectar/pollen counts as a "small" store for 1.11/1.13. Both
-## are first guesses -- TUTORIAL_PLAN.md doesn't pin down numbers, and
-## these are small enough to reach in a trip or two at default balance
-## (a forager's stomach holds 50 nectar or 15 pollen -- see GameConfig).
-const NECTAR_TARGET := 30.0
+## How much pollen counts as a "small" store for 1.13. It is a first guess --
+## TUTORIAL_PLAN.md doesn't pin down a number, and it is small enough to reach
+## in a trip or two at default balance (a forager's stomach holds 15 pollen --
+## see GameConfig). Challenge 1's 1.11 nectar goal instead fills its first
+## nectar cell, so it has no fixed global target.
 const POLLEN_TARGET := 10.0
+## Challenge 1's automatic nectar/pollen lesson runs at double each queen's
+## current rate. challenge_runner.gd restores the saved per-bee values on exit.
+const CHALLENGE1_FORAGE_SPEED_MULTIPLIER := 2.0
 const CENTRE_RADIUS := 40.0
 const VISIT_POINT_RADIUS := 30.0
 
