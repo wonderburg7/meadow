@@ -12,9 +12,10 @@ on demand in `plans/archive/`.
    `plans/now/challenge-1.md` are code-complete and merged. What remains is
    Dave's hands-on acceptance playthrough against `checks/ready.md`'s
    Challenge 1 Bundles D–G, then the plan's own status/archive rewrite.
-2. **Successor — UI-D Challenge top-bar hit-area diagnosis.** Follow the
-   reproduction-first investigation in `plans/now/ui.md`; no layout change
-   before the cause is evidenced.
+2. **Successor — UI-D Challenge top-bar hit-area fix, needs Dave's hands-on
+   confirmation.** Cause found and fixed in `plans/now/ui.md`: the goal
+   shelf now passes pointer input through to the top-bar buttons beneath
+   it. Check against `checks/ready.md`.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

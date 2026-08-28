@@ -7,6 +7,14 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-D -- Challenge top-bar goal-shelf hit area
+- [ ] Start a Challenge and try clicking the second-row top-bar buttons
+      (Colony, Nursery, Foraging, etc.) while the goal shelf is visible in
+      the top-right -- every part of each button should respond to a click,
+      not just its exposed top edge. Compare against a Scenario, where the
+      goal shelf is hidden and this never showed up. See UI-D in
+      `plans/now/ui.md`.
+
 ### Challenge 1 Slices 1-2 -- role-panel hit areas, Poppy removal, manual cell building
 - [ ] Play Challenge 1 from the start through building the first two cells
       (1.5 and 1.12). Confirm: the role-panel "Change to..." control responds
