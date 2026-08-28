@@ -280,6 +280,13 @@ func _restore_bees(bees: Array) -> Array:
 		# experience/confidence yet.
 		bee.species_experience = entry.get("species_experience", {})
 		bee.species_confidence = entry.get("species_confidence", {})
+		# Forager-history save design (28 Aug 2026): older saves have
+		# none of these three keys -- 0.0/0.0/0 is exactly a fresh bee's
+		# starting value (see bee.gd), so falling back to it on an old
+		# save is correct, not a loss.
+		bee.avg_collection_rate = float(entry.get("avg_collection_rate", 0.0))
+		bee.grace_rate_sum = float(entry.get("grace_rate_sum", 0.0))
+		bee.trips_scored = int(entry.get("trips_scored", 0))
 
 		bee.build_queue = []
 		for pair in entry.get("build_queue", []):

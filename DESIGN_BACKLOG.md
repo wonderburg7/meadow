@@ -24,9 +24,6 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 - **Save/load during an active Challenge:** keep ordinary save/load disabled.
   A Challenge-aware save schema is a separate high-risk design and migration
   task, not an incidental UI change.
-- **Forager-history persistence:** preserving trip/scout history across saves
-  is approved in principle but needs its own save-format design: exact fields,
-  old-save defaults, versioning and deterministic tests.
 - **Sprites:** procedural shapes remain the rendering baseline. A sprite pass
   must preserve a simple-graphics fallback and measure performance rather than
   assuming sprites are cheaper.

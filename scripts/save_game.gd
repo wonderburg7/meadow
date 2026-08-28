@@ -276,6 +276,12 @@ static func _bees_data(world) -> Array:
 			# points above.
 			"species_experience": b.species_experience,
 			"species_confidence": b.species_confidence,
+			# Forager-history save design (28 Aug 2026): recruitment's
+			# rolling collection-rate history. Additive, same pattern as
+			# the Slice 6/7 fields above -- no FORMAT_VERSION bump.
+			"avg_collection_rate": b.avg_collection_rate,
+			"grace_rate_sum": b.grace_rate_sum,
+			"trips_scored": b.trips_scored,
 			# Bee individuality -- see BEE_INDIVIDUALITY_PLAN.md. Without
 			# these, reloading a save would silently re-roll every bee's
 			# name, fact and trait, which breaks the whole point.
