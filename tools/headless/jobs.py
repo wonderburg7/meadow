@@ -26,7 +26,7 @@ from typing import Any
 DEFAULT_JOB_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-jobs"
 MARKER_NAME = ".meadow-headless-job-root"
 JOB_NAME = re.compile(r"^job-[0-9]+-[0-9a-f]{12}$")
-TERMINAL_STATUSES = frozenset({"passed", "failed", "timed_out", "crashed", "stale"})
+TERMINAL_STATUSES = frozenset({"passed", "failed", "contract_error", "timed_out", "crashed", "stale"})
 
 
 class JobError(ValueError):
@@ -228,6 +228,20 @@ def refresh_status(job_dir: Path, job_root: Path = DEFAULT_JOB_ROOT) -> dict[str
     status = _read_json(job_dir / "status.json")
     if status.get("status") not in {"queued", "running"}:
         return status
+    # The worker writes its durable result before its final status update.  On
+    # Windows, a monitor may be unable to query a just-exited worker owned by
+    # another process, so prefer that durable terminal record to labelling a
+    # completed job stale during this small write window.
+    result_path = job_dir / "result.json"
+    if result_path.is_file():
+        result = _read_json(result_path)
+        terminal_status = result.get("status")
+        if terminal_status in TERMINAL_STATUSES:
+            status.update({"status": terminal_status, "result": "result.json"})
+            if isinstance(result.get("reason"), dict):
+                status["reason"] = result["reason"]
+            _write_status(job_dir, status)
+            return status
     worker = status.get("worker") if isinstance(status.get("worker"), dict) else {}
     pid = worker.get("pid")
     expected = worker.get("start_token")
