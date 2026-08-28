@@ -15,12 +15,12 @@ on demand in `plans/archive/`.
 2. **Successor — UI-D Challenge top-bar hit-area diagnosis.** Follow the
    reproduction-first investigation in `plans/now/ui.md`; no layout change
    before the cause is evidenced.
-3. **Blocked — forager-history save persistence.** It is approved in
-   `DESIGN_BACKLOG.md`. The generic versioning/old-save-fallback/
-   deterministic-test infrastructure now exists (`save_migrations.gd`,
-   efficiency Slice 5, 28 Aug 2026) but this still needs its own focused
-   save-format design: the exact forager-history fields and their
-   migration step.
+3. **Ready — forager-history save persistence.** Design complete:
+   `plans/design/forager-history.md` (28 Aug 2026) names the exact fields
+   (`avg_collection_rate`, `grace_rate_sum`, `trips_scored`,
+   `settled_rate_logged`), the `FORMAT_VERSION` 3→4 migration step and the
+   deterministic-test additions. Not yet implemented; no longer blocked on
+   design.
 
 All other unprioritised work remains in its owning plan. Do not copy it into
 this queue merely to keep it visible.

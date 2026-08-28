@@ -63,6 +63,7 @@ alternatives out of live plans. Git and `plans/archive/` retain them.
 | UI-D diagnosis | `plans/now/ui.md` |
 | Foraging evidence | `plans/active/foraging-evidence.md` |
 | Progression/skills design | `plans/design/progression.md` |
+| Forager-history save persistence | `plans/design/forager-history.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 
 Create a new file in `plans/now/` only when a selected slice cannot fit in the
@@ -80,8 +81,9 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 3. Run the matched foraging evidence campaign before changing recruitment
    defaults or using the existing foraging chain as the first progression
    vertical slice.
-4. Keep forager-history persistence blocked until its save-format design is
-   explicit and tested; it must not ride along with unrelated UI or foraging
+4. Forager-history persistence's save-format design is now explicit
+   (`plans/design/forager-history.md`); implement it as its own slice with
+   its own deterministic tests, not folded into unrelated UI or foraging
    work.
 5. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not
