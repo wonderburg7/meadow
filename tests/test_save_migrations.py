@@ -1,0 +1,106 @@
+"""Regression tests for the save-format migration ladder.
+
+Same approach as balance_tests.py: no Godot here, so this re-implements
+the (deliberately trivial) migration logic in Python and checks it against
+the GDScript source and the JSON fixtures, rather than executing GDScript.
+If save_migrations.gd's migration steps ever stop being trivial pass-
+throughs, this test's Python mirror needs updating alongside it.
+"""
+
+import json
+import re
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS = ROOT / "scripts"
+FIXTURES = ROOT / "tests" / "fixtures"
+
+FORMAT_VERSION = 3  # must match scripts/save_game.gd's FORMAT_VERSION
+
+
+def load_fixture(name):
+    with open(FIXTURES / name, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def migrate_1_to_2(data):
+    return data  # geometry-only change, defended at restore time
+
+
+def migrate_2_to_3(data):
+    data.setdefault("fog", [])
+    return data
+
+
+def upgrade(data, target_version=FORMAT_VERSION):
+    version = int(data.get("version", 0))
+    out = data
+    while version < target_version:
+        if version == 1:
+            out = migrate_1_to_2(out)
+            version = 2
+        elif version == 2:
+            out = migrate_2_to_3(out)
+            version = 3
+        else:
+            return out
+        out["version"] = version
+    return out
+
+
+class SaveMigrationsSourceTest(unittest.TestCase):
+    """Checks the actual GDScript keeps the same version ladder these
+    tests assume, so the Python mirror above can't silently drift from
+    what ships."""
+
+    def setUp(self):
+        with open(SCRIPTS / "save_migrations.gd", encoding="utf-8") as handle:
+            self.source = handle.read()
+
+    def test_format_version_matches(self):
+        with open(SCRIPTS / "save_game.gd", encoding="utf-8") as handle:
+            save_game_source = handle.read()
+        match = re.search(r"const FORMAT_VERSION := (\d+)", save_game_source)
+        self.assertIsNotNone(match, "FORMAT_VERSION not found in save_game.gd")
+        self.assertEqual(FORMAT_VERSION, int(match.group(1)))
+
+    def test_migration_ladder_is_contiguous_up_to_format_version(self):
+        steps = re.findall(r"_migrate_(\d+)_to_(\d+)", self.source)
+        pairs = sorted({(int(a), int(b)) for a, b in steps})
+        self.assertEqual([(1, 2), (2, 3)], pairs)
+        self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
+
+    def test_read_never_weakens_the_newer_than_current_rejection(self):
+        with open(SCRIPTS / "save_game.gd", encoding="utf-8") as handle:
+            save_game_source = handle.read()
+        self.assertIn("save_version > FORMAT_VERSION", save_game_source)
+        self.assertIn("return {}", save_game_source)
+
+
+class SaveMigrationsFixtureTest(unittest.TestCase):
+    def test_v1_fixture_upgrades_to_current_format(self):
+        data = upgrade(load_fixture("save_v1.json"))
+        self.assertEqual(FORMAT_VERSION, data["version"])
+        self.assertIn("fog", data)
+        self.assertEqual([], data["fog"])
+
+    def test_v2_fixture_upgrades_to_current_format(self):
+        data = upgrade(load_fixture("save_v2.json"))
+        self.assertEqual(FORMAT_VERSION, data["version"])
+        self.assertIn("fog", data)
+        self.assertEqual([], data["fog"])
+
+    def test_upgrade_is_idempotent_on_a_current_fixture(self):
+        once = upgrade(load_fixture("save_v1.json"))
+        twice = upgrade(dict(once))
+        self.assertEqual(once, twice)
+
+    def test_unknown_future_version_is_left_untouched(self):
+        data = upgrade({"version": 99, "marker": "future"})
+        self.assertEqual(99, data["version"])
+        self.assertEqual("future", data["marker"])
+
+
+if __name__ == "__main__":
+    unittest.main()

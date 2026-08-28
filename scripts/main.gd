@@ -34,6 +34,19 @@ extends Node2D
 ## they read and write this file's fields through their own `main`
 ## reference, the same way bee.gd already did.
 
+## Slice 5 (persistence/event boundaries, CHATGPT_EFFICIENCY_
+## IMPLEMENTATION_PLAN.md). Each is emitted once at its existing single
+## mutation chokepoint -- these replace three direct cross-script calls
+## that used to reach straight into main.gd (bee_died) or straight out to
+## hud.gd (day_changed), and give rain a defined boundary even though
+## nothing else listens yet. saving.gd::_restore() must never emit any of
+## these: a load sets state directly and rebuilds caches once at the end
+## (invalidate_index(), _update_population_readout()) rather than
+## replaying events.
+signal bee_died(bee: Node2D)
+signal day_changed(day: int)
+signal rain_changed(raining: bool)
+
 const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Hive = preload("res://scripts/hive.gd")
@@ -532,6 +545,8 @@ func _ready() -> void:
 	add_child(challenge_complete)
 
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
+	bee_died.connect(_on_bee_died)
+	day_changed.connect(func(d): hud.update_day(d, year_winter._season_text()))
 	hud.update_day(day, year_winter._season_text())
 	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
@@ -575,6 +590,15 @@ func move_bee_out_of_hive(bee: Node2D) -> void:
 
 func mark_death(bee: Node2D) -> void:
 	world_building.mark_death(bee)
+
+## bee_died's one connected listener (Slice 5) -- replaces the two direct
+## calls bee_survival.gd::die() used to make into this script. Epitaph
+## announcement stays a direct call inside die() itself: it's a bee-domain
+## concern (throttled by GameConfig.epitaph_min_gap) rather than a
+## cross-system reach-through.
+func _on_bee_died(bee: Node2D) -> void:
+	mark_death(bee)
+	invalidate_population()
 
 func finish_mining(block: Node2D) -> void:
 	world_building.finish_mining(block)
@@ -626,7 +650,7 @@ func _process(delta: float) -> void:
 		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
 		if new_day != day:
 			day = new_day
-			hud.update_day(day, year_winter._season_text())
+			day_changed.emit(day)
 			if scenario_active and scenario_stop_max_days >= 0 and day >= scenario_stop_max_days:
 				_end_scenario_run("max_days")
 				return
@@ -768,6 +792,7 @@ func _advance_weather(delta: float) -> void:
 		rain_seconds_left -= delta
 		if rain_seconds_left <= 0.0:
 			rain_target = 0.0
+			rain_changed.emit(false)
 	else:
 		# one roll per in-game day, spread evenly over it
 		weather_timer -= delta
@@ -776,6 +801,7 @@ func _advance_weather(delta: float) -> void:
 			if randf() < GameConfig.rain_chance_per_day / 6.0:
 				rain_target = randf_range(0.35, 1.0)
 				rain_seconds_left = randf_range(GameConfig.rain_min_seconds, GameConfig.rain_max_seconds)
+				rain_changed.emit(true)
 				hud.show_warning(
 					"Rain is coming in. Nectar in the open flowers is being watered down, wet wings cost more to fly on, and if it gets heavy enough your foragers will stay at the hive."
 				)

@@ -1,6 +1,6 @@
 # Efficiency implementation plan
 
-Status: in progress (Slices 1-3 done) | Owner: Dave / Claude Code | Next: Slice 4 (data-drive Challenge definitions), only once Challenge 3 is actively assigned | Dependency: `CHATGPT_EFFICIENCY_AUDIT.md` (Dave's decisions confirmed 2026-08-28) | Verified: 2026-08-28
+Status: in progress (Slices 1-5 done) | Owner: Dave / Claude Code | Next: Slice 6 has no standing mandate, starts only with a named measured span | Dependency: `CHATGPT_EFFICIENCY_AUDIT.md` (Dave's decisions confirmed 2026-08-28) | Verified: 2026-08-28
 
 Requires Dave's decisions in `CHATGPT_EFFICIENCY_AUDIT.md` and an isolated
 `codex/...` worktree before any implementation. This plan deliberately does
@@ -89,37 +89,77 @@ rule; no save format change unless a newly persisted field was approved.
 **Risk:** medium; high if it introduces a save migration or changes unlocked
 content.
 
-## Slice 4 — Data-drive Challenge definitions and feedback
+## Slice 4 — Data-drive Challenge definitions and feedback (done 2026-08-28)
 
 **Purpose:** prepare Challenge 3 without making the runner a larger hotspot.
+Done as extraction-only tech-debt prep ahead of the plan's own trigger
+("only once Challenge 3 is actively assigned") -- Dave asked for the
+structural groundwork now, with no Challenge 3 content added; Challenge 3
+itself is still not scheduled (`NEXTSTEPS.md` has no Challenge 3 entry).
 
-**Work:** extract stage records, prompt records and static target data from
-`challenge_runner.gd` into a keyed table. Keep goal predicates in a small
-registry and make each goal declare its cadence (event, throttled poll or
-frame/position). Introduce named feedback definitions for at least Challenge
-stage clear and one warning/toast; views render them while simulation emits
-facts.
+**Work:** `challenge_stages.gd` now holds STAGES_1/STAGES_2, all prompt
+records and every static target/timing constant as pure data (no `main`/tree
+access). `challenge_feedback.gd` holds named feedback definitions
+(`stage_cleared`, `challenge_2_rescue`, `challenge_2_recovery`) -- the two
+Challenge 2 ad-hoc `gallerin_panel.show_now()` dictionaries are now built
+from named defs via `ChallengeFeedback.gallerin_prompt()`. `challenge_runner.gd`
+keeps only the runner logic: its 28 goal predicates moved from one large
+`match` into a `_goal_registry` Dictionary of bound `_goal_check_*` methods,
+each with a declared `GOAL_CADENCE` entry (frame/event/poll) -- cadence is
+documentation for a future optimisation pass only; every goal is still
+checked once per `_process`, unchanged from before this slice.
 
-**Exit:** adding a simple new stage needs a data row, a named predicate and
-view binding—not edits across runner, HUD and debug panel. Existing Challenge
-1/2 checkpoints and unlock state load exactly as before.
+**Exit:** adding a simple new stage needs a data row in `challenge_stages.gd`,
+a `_goal_check_*` predicate plus registry/cadence row in `challenge_runner.gd`,
+and (if needed) a feedback def in `challenge_feedback.gd` -- not edits
+scattered across the runner, HUD and debug panel. Verified: `verify.ps1`
+passes (75 scripts), every stage's `goal` id has a matching registry and
+cadence entry (cross-checked by grep), a full Godot boot shows no new parse
+errors, and no other script referenced the moved constants directly (grepped
+clean). No save/behaviour change was intended; a hands-on Challenge 1/2
+playthrough check is queued in `HANDS_ON_CHECKS.md` to confirm goals,
+prompts and the rescue/recovery messages still fire exactly as before.
 
-**Risk:** medium. Do not mix tutorial text/product changes with this extraction.
+**Risk:** medium. Deliberately did not mix tutorial text/product changes into
+this extraction -- no stage text, target number or goal rule changed.
 
-## Slice 5 — Persistence and event boundaries
+## Slice 5 — Persistence and event boundaries (done 2026-08-28)
 
-**Purpose:** make future catalogue/status additions safe to iterate.
+**Purpose:** make future catalogue/status additions safe to iterate. Done as
+groundwork ahead of the plan's own trigger ("only once a schema change is
+actually needed") -- Dave asked for the full scope now regardless, a
+deliberate one-off exception to `.claude/rules/saving.md`'s normal guidance
+against building a migration framework without a second format to bridge.
 
-**Work:** create ordered save migrations from every supported older format;
-write tests for each fixture. Define the minimal domain events required by
-Slices 1–4 (`BeeDied`, `CellChanged`, `StorageChanged`, `DayChanged`,
-`RainChanged`, `ChallengeStageCleared`) with emitter, allowed listener and
-save/load reconstruction rules. Replace only the direct reach-throughs that
-these slices exposed.
+**Work:** `scripts/save_migrations.gd` holds an ordered, version-numbered
+migration ladder (1→2, 2→3) run once by `save_game.gd::read()` before a
+parsed save reaches `saving.gd`; `tests/fixtures/save_v1.json` and
+`save_v2.json` plus `tests/test_save_migrations.py` cover both steps and
+idempotency. `saving.gd`'s existing per-field `.get()` defaults (for the
+several field additions that never bumped `FORMAT_VERSION`) were
+deliberately left untouched -- they're already correct and unrelated to the
+version ladder. Of the six named events, only `StorageChanged` pre-existed
+(`hive.gd`); `BeeDied` (`main.gd`, replacing two direct calls from
+`bee_survival.gd::die()`), `DayChanged` (`main.gd`, replacing a direct HUD
+call in the day-advance loop) and `ChallengeStageCleared`
+(`challenge_runner.gd`, no listener yet) are now real Godot signals.
+`RainChanged` emits only on the two discrete start/stop transitions in
+`_advance_weather()`, not every frame. `CellChanged` was deliberately **not**
+turned into a signal: `Hive.invalidate_index()` is already the mutation
+chokepoint every cell mutator calls several times per frame at real colony
+sizes, so a real signal there would be pure per-mutation overhead with no
+consumer -- it's documented as the event boundary instead, matching Slice
+1/2's own choice of epoch/revision polling over push notification.
 
-**Exit:** old fixtures migrate deterministically; a save with unavailable but
-persisted state has specified treatment; caches/snapshots rebuild directly on
-load rather than relying on event replay.
+**Exit:** the two real fixtures migrate deterministically and idempotently
+(`tests/test_save_migrations.py`); `saving.gd::_restore()` was audited and
+confirmed to never emit any of the new signals -- a load sets state directly
+and rebuilds caches once at the end (`invalidate_index()`,
+`_update_population_readout()`), same as before this slice. `verify.ps1`
+passes (76 scripts, `FUNCTION_MAP.md` regenerated). No Godot boot was
+available this session to confirm parser-level correctness; a hands-on check
+(death epitaph/marker, day rollover, rain start/stop, a Challenge stage
+clear, save/load) is queued in `HANDS_ON_CHECKS.md`.
 
 **Risk:** high — persistence and cross-system contracts.
 
@@ -141,9 +181,11 @@ seeded outcome regression; index invalidation has tests.
 
 Execute Slices 0–2 first only if Dave selects the runtime target. Stop after
 Slice 2 if the measured headroom is sufficient. Execute Slice 3 before adding
-another resource, mode or availability-gated feature. Execute Slice 4 only
-when Challenge 3 is actively assigned. Slice 5 precedes any schema change.
-Slice 6 has no standing mandate: it starts only with a named measured span.
+another resource, mode or availability-gated feature. Slice 4 is done (see its
+own status note on why it landed ahead of Challenge 3 being assigned). Slice 5
+is done (see its own status note on why it landed ahead of a concrete schema
+change). Slice 6 has no standing mandate: it starts only with a named
+measured span.
 
 ## Manual acceptance checklist
 

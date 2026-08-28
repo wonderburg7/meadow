@@ -16,6 +16,8 @@ extends RefCounted
 ## touched, and cosmetic scenery. Those are regenerated from the same
 ## fixed seed, so they come back identical anyway.
 
+const SaveMigrations = preload("res://scripts/save_migrations.gd")
+
 const SAVE_PATH := "user://meadow_save.json"
 ## Bumped 16 Aug 2026: added fog of war's explored-cells map. A save from
 ## before this version simply has no "fog" key, and read() below already
@@ -362,7 +364,10 @@ static func read(path: String = SAVE_PATH) -> Dictionary:
 		return {}
 	if save_version != FORMAT_VERSION:
 		push_warning("Save file is from a different version of the game; loading it may not work.")
-	return parsed
+	# Bridges any known older format up to FORMAT_VERSION before saving.gd
+	# ever sees it -- a no-op for a save that's already current (Slice 5,
+	# CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md).
+	return SaveMigrations.upgrade(parsed, FORMAT_VERSION)
 
 ## Puts the saved tuning values back before anything is built, so the
 ## world comes out the same shape it was saved in.

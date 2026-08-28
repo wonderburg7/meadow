@@ -16,6 +16,38 @@ says the fix has shipped.
 
 ## Checkable now
 
+### Save migrations and domain-event boundaries (efficiency Slice 5)
+- [ ] Pure refactor: bee death, day rollover and a Challenge stage clear
+      now reach their listeners via a Godot signal (`main.bee_died`,
+      `main.day_changed`, `challenge_runner.challenge_stage_cleared`)
+      instead of direct cross-script calls; rain start/stop gets a signal
+      too (`main.rain_changed`) though nothing listens to it yet. No
+      behaviour was meant to change. Play a session and confirm: a bee's
+      epitaph toast and the death marker both still appear the moment she
+      dies; the day counter/season text in the HUD still updates exactly
+      on the day boundary; rain still starts/stops with its usual warning
+      and overlay; a Challenge stage still clears, checkpoints and shows
+      the next goal normally. Also save, then load that save, and confirm
+      nothing looks different immediately after a load (the restore path
+      was deliberately left setting state directly, not replaying any of
+      these signals). See `CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`
+      Slice 5.
+
+### Challenge data/goal-registry extraction (efficiency Slice 4)
+- [ ] Pure refactor: stage/prompt/target data moved to `challenge_stages.gd`,
+      goal predicates moved from one `match` into a registry of bound
+      methods in `challenge_runner.gd`, and the two Challenge 2 rescue/
+      recovery prompts now come from named defs in `challenge_feedback.gd`.
+      No stage text, target number or goal rule was meant to change. Play
+      Challenge 1 through a few stages and Challenge 2 into a deliberate
+      nectar collapse (spend down stores fast) and confirm: goal shelf text/
+      progress still advances stage by stage exactly as before, Dr
+      Gallerin's prompts still queue and show, and the rescue message
+      ("Ahem. Field ecologists...") then the recovery/checkpoint-restore
+      message ("A brief ecological wobble...") still fire at the same
+      thresholds as before. See `CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md`
+      Slice 4.
+
 ### HUD popups bound to revisions, not frames (efficiency Slice 2)
 - [ ] Cell popup, flower summary and the bee selection panel now refresh
       at a 10Hz cadence (or instantly on a real change) instead of every

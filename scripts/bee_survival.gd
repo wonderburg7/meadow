@@ -392,15 +392,16 @@ static func die(bee: Node2D, cause: String) -> void:
 	# A mark is left where it fell, so losses show up in the place they
 	# happened rather than only as a number going down.
 	if bee.world != null and is_instance_valid(bee.world):
-		bee.world.mark_death(bee)
-		_announce_death(bee)
-		# Birth, role change and load all mark main.gd's cached
-		# _role_counts() stale (see invalidate_population) -- death was the
-		# one population mutation that never did. queue_free() below is
+		# bee_died's one listener (main.gd::_on_bee_died) does mark_death()
+		# and invalidate_population() -- see that function's own comment for
+		# why the order between them doesn't matter (queue_free() below is
 		# deferred, so this bee is still in the "bees" group for the rest of
-		# this frame; harmless, since the cache is only read later, on
-		# year_winter.gd's 1-second tick.
-		bee.world.invalidate_population()
+		# this frame; harmless, since the population cache is only read
+		# later, on year_winter.gd's 1-second tick). Epitaph announcement
+		# stays a direct call: it's bee-domain logic (throttled by
+		# GameConfig.epitaph_min_gap), not a cross-system reach-through.
+		bee.world.bee_died.emit(bee)
+		_announce_death(bee)
 	bee.queue_free()
 
 

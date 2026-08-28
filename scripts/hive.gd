@@ -134,6 +134,15 @@ func _content_index() -> Dictionary:
 ## The single invalidation source for the content buckets: any mutation
 ## that changes a cell's content_type, is_built or ripeness calls this
 ## so the next read rebuilds rather than trusting a stale bucket.
+##
+## This is Slice 5's `CellChanged` event boundary (CHATGPT_EFFICIENCY_
+## IMPLEMENTATION_PLAN.md) -- deliberately not a separate Godot `signal`.
+## Every cell mutator and the load-restore path already call this on every
+## change, several times per frame at real colony sizes, so a real signal
+## here would add per-mutation emit overhead with no consumer: Slice 1/2
+## already chose epoch-based polling (index_epoch, corner_signature) over
+## push notification for exactly this reason. `index_epoch` bumping is the
+## event; a future consumer should compare epochs, not connect a signal.
 func invalidate_index() -> void:
 	index_epoch += 1
 
