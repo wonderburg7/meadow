@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D/E/F/G | Dependency: none | Verified: 2026-08-29
+UI-D/E/F/G/H | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -203,7 +203,7 @@ the right.
 `balance_tests.py` pass; still needs Dave's hands-on look (see
 `checks/ready.md`).
 
-## UI-H — role panel narrower, summary panel wider
+## UI-H — role panel narrower, summary panel wider (shipped 29 Aug 2026)
 
 **Scope:** shift width from the bottom-centre role/command tray to the
 bottom-left summary panel (`selection_panel` — `ui_layout.gd` already calls
@@ -225,6 +225,11 @@ wrong on Dave's screen.
 bottom-centre role/command tray's maximum width is visibly narrower by
 roughly 30%; neither panel overlaps the other or the Gallerin reserve at
 any viewport width down to `MIN_SUPPORTED_WIDTH`.
+
+**Delivered:** both steps applied as written. `source_checks.py` and
+`balance_tests.py` pass; still needs Dave's hands-on look, and possibly a
+tuning pass on the two multipliers once he can compare on his own screen
+(see `checks/ready.md`).
 
 ## UI-I — Dr Gallerin bubble: bigger, persistent, updates immediately
 

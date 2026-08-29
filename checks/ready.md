@@ -7,6 +7,18 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-H -- role panel narrower, summary panel wider
+- [ ] Select a bee or cell (so the bottom-left summary panel shows
+      content) and select several bees at once (so the command tray
+      shows Job/Focus/Orders): confirm the summary panel is visibly
+      wider and the command tray's maximum width is visibly narrower by
+      roughly 30% than before, with no overlap between the two or the
+      Gallerin reserve at any viewport width down to
+      `MIN_SUPPORTED_WIDTH`. The two multipliers (`SELECTION_TRAY_WIDTH`
+      x1.3, `command_tray_max_width` x0.7) are a first-pass split, not an
+      exact pixel conservation -- flag if the balance looks wrong so they
+      can be retuned. See UI-H in `plans/now/ui.md`.
+
 ### UI-G -- centre role panels use the full tray width
 - [ ] Select several bees at once (so Job/Focus/Orders all show content)
       and confirm the three command-tray columns and their buttons

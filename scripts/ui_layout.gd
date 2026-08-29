@@ -26,12 +26,12 @@ const MIN_SUPPORTED_WIDTH := 800.0
 ## responsive breakpoint. Bee/cell/flower content must never change this
 ## (UI_PLAN.md UI-B) -- callers pair it with autowrap on every label rather
 ## than letting a long line stretch the panel.
-const SELECTION_TRAY_WIDTH := 300.0
+const SELECTION_TRAY_WIDTH := 390.0
 
 ## Selection tray width once narrow, matching the command tray's own
 ## breakpoint so the two rows still fit side by side down to
 ## MIN_SUPPORTED_WIDTH.
-const SELECTION_TRAY_WIDTH_NARROW := 240.0
+const SELECTION_TRAY_WIDTH_NARROW := 312.0
 
 static func is_narrow(viewport_width: float) -> bool:
 	return viewport_width < NARROW_BREAKPOINT
@@ -48,5 +48,5 @@ static func selection_tray_width(viewport_width: float) -> float:
 ## the row, so the command tray only gives up the selection tray's width.
 static func command_tray_max_width(viewport_width: float, selection_tray_width: float) -> float:
 	if is_narrow(viewport_width):
-		return viewport_width - selection_tray_width
-	return viewport_width - selection_tray_width - GALLERIN_RESERVE_WIDTH
+		return (viewport_width - selection_tray_width) * 0.7
+	return (viewport_width - selection_tray_width - GALLERIN_RESERVE_WIDTH) * 0.7
