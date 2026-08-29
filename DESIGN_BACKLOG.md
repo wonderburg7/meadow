@@ -16,7 +16,6 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | Foraging ecology | `plans/active/foraging-evidence.md` | mechanics built; evidence campaign remains |
 | Predators | `plans/archive/CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
 | UI and accessibility | `plans/now/ui.md` | active, narrow slices only |
-| Forager-history save persistence | `plans/design/forager-history.md` | designed, not scheduled |
 
 ## Deferred product decisions
 

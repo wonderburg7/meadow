@@ -1,11 +1,19 @@
-# Forager-history save persistence — design
+# Forager-history save persistence — design (superseded)
 
-<!-- CONTEXT: plan | LAYER: design | LOAD: only when this slice is picked up -->
-Status: designed, not scheduled | Owner: Dave / Claude Code | Next: implement
-as one slice (save_game.gd, saving.gd, save_migrations.gd, fixture + test
-additions) when selected off `NEXTSTEPS.md` | Dependency: SaveMigrations
-framework (`scripts/save_migrations.gd`, efficiency Slice 5, 28 Aug 2026) |
-Verified: 2026-08-28
+<!-- CONTEXT: plan | LAYER: archive -->
+Status: superseded, archived | Owner: Dave / Claude Code | Next: none |
+Dependency: none | Verified: 2026-08-29
+
+**Superseded.** While this design was in progress on a separate branch,
+`c60259b` ("Persist forager recruitment history across saves", merged to
+master via `d053f5f`) independently shipped the same feature using a
+simpler approach: the four fields are an additive save key with **no**
+`FORMAT_VERSION` bump, instead of the `3->4` migration step designed below.
+`DESIGN_BACKLOG.md` and `plans/reference/technical-audit.md` record the
+approach that actually shipped; this file is kept only as the rejected
+design's historical record.
+
+---
 
 Approved in principle in `DESIGN_BACKLOG.md` ("Forager-history persistence").
 This is the focused save-format design that approval was waiting on: exact

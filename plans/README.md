@@ -62,7 +62,6 @@ alternatives out of live plans. Git and `plans/archive/` retain them.
 | Challenge 1 Bundle H | `plans/now/challenge-1.md` |
 | UI-D diagnosis | `plans/now/ui.md` |
 | Progression/skills design | `plans/design/progression.md` |
-| Forager-history save persistence | `plans/design/forager-history.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 
 Create a new file in `plans/now/` only when a selected slice cannot fit in the
