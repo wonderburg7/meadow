@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D through UI-J | Dependency: none | Verified: 2026-08-29
+UI-D through UI-K | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -336,7 +336,7 @@ real headless Godot boot (`Godot.exe --headless --path .`) -- no parse or
 script errors, so the preload-cycle risk this slice was written to avoid
 did not materialise.
 
-## UI-K — remove the Foraging button from Challenge 1
+## UI-K — remove the Foraging button from Challenge 1 (shipped 29 Aug 2026)
 
 **Scope:** hide the top-right "Foraging" button for the whole of a
 Challenge 1 run, using the same `stage_gate` mechanism that already gates
@@ -364,6 +364,10 @@ every Challenge 1 stage; it reappears the moment Challenge 1 completes
 ("Continue playing"), exactly like the colony/nursery/view buttons; it
 remains visible throughout Challenge 2 and ordinary Scenarios, unchanged
 from today.
+
+**Delivered:** all three steps applied as written. `source_checks.py` and
+`balance_tests.py` pass; still needs Dave's hands-on look (see
+`checks/ready.md`).
 
 ## Deferred decisions
 

@@ -2401,6 +2401,10 @@ func set_view_button_visible(value: bool) -> void:
 	if view_info != null:
 		view_info.visible = value
 
+func set_foraging_button_visible(value: bool) -> void:
+	if foraging_button != null:
+		foraging_button.visible = value
+
 ## See the `allowed_role_keys` field comment. Rebuilds the selection
 ## panel immediately so a stage unlocking a new role shows it without
 ## waiting for the next unrelated selection change.

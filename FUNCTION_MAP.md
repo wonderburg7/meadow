@@ -26,7 +26,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (2,451 lines)
+## hud.gd (2,455 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -129,13 +129,14 @@ Challenge goal readout.
 2386 func set_colony_button_visible(value: bool) -> void
 2392 func set_nursery_button_visible(value: bool) -> void
 2398 func set_view_button_visible(value: bool) -> void
-2407 func set_allowed_role_keys(keys: Array) -> void
-2415 func set_command_locked_bees(bees: Array) -> void
-2420 func set_allowed_mode_keys(keys: Array) -> void
-2428 func set_allowed_designation_keys(keys: Array) -> void
-2433 func set_hatch_lock_visible(value: bool) -> void
-2438 func set_soil_marking_visible(value: bool) -> void
-2448 func set_queen_build_button_visible(value: bool) -> void
+2404 func set_foraging_button_visible(value: bool) -> void
+2411 func set_allowed_role_keys(keys: Array) -> void
+2419 func set_command_locked_bees(bees: Array) -> void
+2424 func set_allowed_mode_keys(keys: Array) -> void
+2432 func set_allowed_designation_keys(keys: Array) -> void
+2437 func set_hatch_lock_visible(value: bool) -> void
+2442 func set_soil_marking_visible(value: bool) -> void
+2452 func set_queen_build_button_visible(value: bool) -> void
 ```
 
 ## bee.gd (2,255 lines)

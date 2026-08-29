@@ -7,6 +7,14 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-K -- Foraging button hidden for Challenge 1
+- [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
+      absent for every stage. Finish Challenge 1 ("Continue playing") and
+      confirm it reappears immediately, exactly like the colony/nursery/
+      view buttons. Separately confirm it stays visible throughout
+      Challenge 2 (present from stage 2.1 onward) and in ordinary
+      Scenarios. See UI-K in `plans/now/ui.md`.
+
 ### UI-J -- Dr Gallerin bubble matches the summary panel's layout behaviour
 - [ ] Narrow the window below roughly 1000px width (`NARROW_BREAKPOINT`):
       confirm Dr Gallerin's bubble visibly shrinks and the role/command

@@ -514,6 +514,7 @@ func _apply_stage_gate_to_ui() -> void:
 	main.hud.set_colony_button_visible(main.stage_gate.is_unlocked("colony_window"))
 	main.hud.set_nursery_button_visible(main.stage_gate.is_unlocked("nursery_window"))
 	main.hud.set_view_button_visible(main.stage_gate.is_unlocked("meadow_view"))
+	main.hud.set_foraging_button_visible(main.stage_gate.is_unlocked("foraging_window"))
 	var role_keys: Array = Roles.ROLES.map(func(r): return r.key)
 	main.hud.set_allowed_role_keys(role_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
 

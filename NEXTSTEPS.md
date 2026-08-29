@@ -12,18 +12,20 @@ on demand in `plans/archive/`.
    `plans/now/challenge-1.md` are code-complete and merged. What remains is
    Dave's hands-on acceptance playthrough against `checks/ready.md`'s
    Challenge 1 Bundles D–G, then the plan's own status/archive rewrite.
-2. **Successor — UI-D through UI-J top-bar, tray-width and Gallerin-bubble
-   work, needs Dave's hands-on confirmation.** All seven implemented in
-   `plans/now/ui.md`: the goal shelf passes pointer input through to the
-   top-bar buttons beneath it (UI-D), every top-right control is doubled
-   in size (UI-E), the goal shelf's vertical offset is now derived instead
-   of hardcoded (UI-F), the command tray's three columns now share its
-   full width instead of clustering left (UI-G), width shifted from the
-   command tray to the summary panel (UI-H, may need Dave's tuning pass on
-   the multipliers), Dr Gallerin's bubble is bigger, text-scale-aware and
-   no longer auto-hides (UI-I), and it now shrinks at a narrow window size
-   like the summary panel does (UI-J, confirmed with a headless Godot boot
-   as well as static checks). Check against `checks/ready.md`.
+2. **Successor — UI-D through UI-K top-bar, tray-width, Gallerin-bubble
+   and Challenge-1 button work, needs Dave's hands-on confirmation.** All
+   eight implemented in `plans/now/ui.md`: the goal shelf passes pointer
+   input through to the top-bar buttons beneath it (UI-D), every top-right
+   control is doubled in size (UI-E), the goal shelf's vertical offset is
+   now derived instead of hardcoded (UI-F), the command tray's three
+   columns now share its full width instead of clustering left (UI-G),
+   width shifted from the command tray to the summary panel (UI-H, may
+   need Dave's tuning pass on the multipliers), Dr Gallerin's bubble is
+   bigger, text-scale-aware and no longer auto-hides (UI-I), it now
+   shrinks at a narrow window size like the summary panel does (UI-J,
+   confirmed with a headless Godot boot as well as static checks), and the
+   Foraging button is hidden for the whole of Challenge 1 (UI-K). Check
+   against `checks/ready.md`.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps
