@@ -29,6 +29,7 @@ Do not load this entire directory, `plans/archive/`, `ROADMAP.md`,
 | `plans/design/` | Agreed, unscheduled product design. | Only after that product direction is selected. |
 | `plans/reference/` | Durable technical contracts and reopening criteria. | Only for the matching kind of change. |
 | `plans/archive/` | Completed, superseded, and detailed execution records. | Never for orientation; search for provenance only. |
+| `plans/workstreams.md` | Live ledger of open branches/worktrees, their scope and status. | Only when creating or integrating parallel work, never as part of ordinary session routing. |
 
 ## Plan schema
 
@@ -54,6 +55,12 @@ Then use these tagged sections only when needed:
 
 Keep execution diary, pasted command output, completed bundles and rejected
 alternatives out of live plans. Git and `plans/archive/` retain them.
+
+A hands-on-check finding against a plan that is still open (unshipped
+slices remain) becomes that plan's next slice. Once a plan's `Next:` says
+`None — plan complete` and it has moved to `plans/archive/`, a new finding
+against that area starts a fresh `plans/now/` (or `plans/design/`) file --
+the archived plan is never reopened or extended.
 
 ## Current routing
 

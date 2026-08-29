@@ -2,8 +2,12 @@
 
 <!-- CONTEXT: player-checks | LAYER: on-demand -->
 
-These are shipped behaviours that static checks cannot prove. Search for the
-feature and run only its check. Move a confirmed or superseded entry to
+These are shipped behaviours that static checks cannot prove. An entry here
+exists specifically so the branch/worktree that produced it could close
+without waiting on a human to play-test it (see `CLAUDE.md`, "Coordinating
+and closing out workstreams") -- landing a check here, not leaving the
+worktree open, is what "done" means. Search for the feature and run only
+its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 

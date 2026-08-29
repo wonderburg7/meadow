@@ -32,9 +32,27 @@ Do not choose work from `ROADMAP.md`, `DESIGN_BACKLOG.md`, `plans/archive/`,
   if required, and a durable contract only if it changed. Archive execution
   detail in `plans/archive/`.
 - Run `tools/check_docs.py` after documentation work; it validates live-plan
-  metadata, queue size, and routed Markdown links.
+  metadata, queue size, routed Markdown links, and open-worktree bookkeeping.
+- After landing a slice, state the next slice by name (the plan's `Next:`
+  field and the session summary). After landing a plan's last slice, state
+  explicitly that the plan is finished, set `Next: None — plan complete`,
+  and list every follow-up with the plan/NEXTSTEPS entry it was filed
+  under. A finding from that plan's own hands-on checks becomes its next
+  slice while the plan is still open; a finding that surfaces after the
+  plan is archived starts a new plan file — the archived plan is never
+  reopened.
 
-## Integrating Codex branches
+## Coordinating and closing out workstreams
+
+Before creating a new branch or worktree (Codex or Claude's own), check
+`plans/workstreams.md` for scope overlap with open rows. No overlap: add a
+row from the primary checkout and start. Deliberate overlap (comparing two
+approaches): mark both rows `competing` with the comparison criterion, and
+delete the loser's branch/worktree the moment the decision is made.
+Accidental overlap: don't start a second branch — extend the existing row's
+work instead. `plans/workstreams.md` is edited only from the primary
+checkout, never from inside a feature branch — parallel branches editing it
+would conflict with each other on merge.
 
 Read the hand-off and `git show --stat` first. Use the lowest review tier
 supported by evidence:
@@ -48,9 +66,23 @@ supported by evidence:
   broad refactors, failed/missing checks, overlap or conflict. Review the full
   diff and validation.
 
-After integration update canonical state only if the merge makes it necessary.
-Copy any stated manual check to `checks/ready.md`. The full Codex
-handoff policy is in `CHATGPT.md`.
+After integration update canonical state only if the merge makes it
+necessary. The full Codex handoff policy is in `CHATGPT.md`.
+
+**Closeout checklist** — run immediately after integrating any branch
+(Codex hand-off or Claude's own worktree), never deferred:
+
+1. Run `tools/verify.ps1`.
+2. Copy any stated manual check into `checks/ready.md`.
+3. Remove the worktree (`git worktree remove`) and delete the branch
+   (local, and remote if pushed).
+4. Delete its row from `plans/workstreams.md`.
+
+A worktree or branch is never kept open solely because a hands-on check is
+still outstanding — the check moves to `checks/ready.md`; the worktree
+closes regardless. Claude is responsible for this closeout, including for
+Codex branches, since Codex does not merge, push or delete shared branches
+itself.
 
 ## Rules that apply without being requested
 
@@ -70,6 +102,7 @@ handoff policy is in `CHATGPT.md`.
 | Change | Read first |
 | --- | --- |
 | Current work selection | `NEXTSTEPS.md` |
+| Parallel branch/worktree coordination | `plans/workstreams.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Foraging behaviour or evidence | `plans/active/foraging-evidence.md` |
@@ -100,8 +133,10 @@ metadata. It does not replace a Godot boot when parser/type feedback matters,
 or Dave's hands-on check for click-driven, visual or feel-sensitive work.
 
 Every needed hands-on check belongs in `checks/ready.md`: short action,
-expected result and a pointer. Move blocked checks to `checks/blocked.md` and
-confirmed entries to the archive.
+expected result and a pointer. A check landing there is what lets its
+branch/worktree close (see "Coordinating and closing out workstreams") —
+the check is never a reason to keep the branch open. Move blocked checks to
+`checks/blocked.md` and confirmed entries to the archive.
 
 ## Working style
 
