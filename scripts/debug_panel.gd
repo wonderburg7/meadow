@@ -21,6 +21,7 @@ const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Prerequisites = preload("res://scripts/prerequisites.gd")
+const Hud = preload("res://scripts/hud.gd")
 
 ## Collection and section order here is the order they appear in the panel.
 const COLLECTIONS := [
@@ -1052,7 +1053,7 @@ func _ready() -> void:
 	toggle_button.theme_type_variation = "Heading"
 	# Match HUD's primary top-right controls so the two anchored groups form
 	# one deliberate bar rather than visibly different rows.
-	toggle_button.custom_minimum_size = Vector2(36, 28)
+	toggle_button.custom_minimum_size = Vector2(72, Hud.TOP_BAR_CONTROL_HEIGHT)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toggle_button.offset_right = -8

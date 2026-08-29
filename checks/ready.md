@@ -7,13 +7,18 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
-### UI-D -- Challenge top-bar goal-shelf hit area
+### UI-D/E/F -- Challenge top-bar hit area, doubled buttons, goal shelf placement
 - [ ] Start a Challenge and try clicking the second-row top-bar buttons
       (Colony, Nursery, Foraging, etc.) while the goal shelf is visible in
       the top-right -- every part of each button should respond to a click,
-      not just its exposed top edge. Compare against a Scenario, where the
-      goal shelf is hidden and this never showed up. See UI-D in
-      `plans/now/ui.md`.
+      not just its exposed top edge (UI-D). Compare against a Scenario,
+      where the goal shelf is hidden and this never showed up.
+- [ ] Confirm every top-right control (pause, each speed multiplier,
+      Colony, Nursery, Foraging, Winter, Meadow/Hive, settings cog) is
+      visibly twice its old size and all sit at one consistent height
+      (UI-E), and that the goal shelf starts clearly below both top-bar
+      rows with a visible gap at every window size and text scale, never
+      overlapping a button (UI-F). See UI-D/E/F in `plans/now/ui.md`.
 
 ### Challenge 1 Slices 1-2 -- role-panel hit areas, Poppy removal, manual cell building
 - [ ] Play Challenge 1 from the start through building the first two cells
