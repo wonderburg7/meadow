@@ -3,7 +3,7 @@
 <!-- CONTEXT: plan | LAYER: active -->
 Status: validation active | Owner: Dave / Claude Code | Next: run the matched
 foraging evidence campaign | Dependency: Godot/headless scenario access |
-Verified: 2026-08-26
+Verified: 2026-08-29
 
 Slices 0-9 are built. Their detailed specifications, results and implementation
 notes are retained in `plans/archive/FORAGING_ECOLOGY_PLAN_2026-08-26.md`.
@@ -32,6 +32,37 @@ seeds and a common 15-cell/11-forager, 60-day setup. Launch it with
 Report flower visits, orientation/scouting/recruitment events, deliveries,
 starvation, stalls and runtime together. A missing event means “not exercised”
 until the scenario proves otherwise.
+
+## Campaign result — 29 Aug 2026
+
+The unchanged pinned manifest completed successfully: all 70 runs (14 cases ×
+the five declared seeds) passed with manifest SHA-256
+`1fa94161d9d18cf94083c099b2b8b872aa153dad2a70079d27f2b62c2c166511`.
+The runner wrote its experiment result and compact verdict under
+`C:\Users\dl13860\AppData\Local\Temp\meadow-headless-results\experiment-1787967858903-fdf3662f489e`
+(the verdict is `foraging-evidence-verdict.json`). Reproduce with the command
+in `docs/headless-run-contract.md`, then pass the emitted `result.json` to
+`tools/foraging_evidence_report.py`.
+
+- **Recruitment:** entrance recruitment exercised at 2.2 matches/run on
+  average (0–4); default proximity recruitment and every proximity sweep but
+  radius 125 had zero matches. Radius 125 produced one match across five runs
+  (0.2/run), with deliveries 41.0/run and 1228.5 delivered on average versus
+  entrance's 40.4 and 1271.5. This does not support replacing entrance
+  recruitment as the default; the proximity cases are `not_exercised` rather
+  than negative evidence.
+- **Handling experience:** the enabled case recorded 144 visits at experience
+  0 (7.0484 s average), 225 at 1–2 (6.0756 s), 168 at 3–5 (5.9405 s), 74 at
+  6–9 (4.2027 s), and 10 at 10+ (6.7 s). The effect is exercised and improves
+  through 6–9 visits; the final bucket is too small and non-monotonic to make
+  a stronger claim.
+- **Flower senescence:** `senescence_on` versus `senescence_off` gave 1685.6
+  versus 1690.4 reported `flowers_senesced`, 2133.9 versus 2308.7 delivery
+  amount, 65.6 versus 70.6 deliveries, 0.6 versus 0.6 starvation deaths and
+  13.0 versus 9.2 stalls per run. The lifecycle counter firing in both cases
+  means this campaign does not yet establish a causal senescence-on effect;
+  retain the current default and treat the output as a diagnostic-contract
+  follow-up, not a balance conclusion.
 
 ## Recent fixes
 
