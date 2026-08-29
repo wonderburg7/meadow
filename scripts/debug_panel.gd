@@ -1053,7 +1053,7 @@ func _ready() -> void:
 	toggle_button.theme_type_variation = "Heading"
 	# Match HUD's primary top-right controls so the two anchored groups form
 	# one deliberate bar rather than visibly different rows.
-	toggle_button.custom_minimum_size = Vector2(72, Hud.TOP_BAR_CONTROL_HEIGHT)
+	toggle_button.custom_minimum_size = Vector2(Hud.TOP_BAR_BUTTON_WIDTH, Hud.TOP_BAR_CONTROL_HEIGHT)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toggle_button.offset_right = -8

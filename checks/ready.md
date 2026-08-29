@@ -7,6 +7,17 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-N -- top-right button group shares one gap constant
+- [ ] In-run, look at the top-right bar's row 2 (Colony, Nursery, Foraging,
+      Winter, Meadow/Hive) and settings cog: confirm every gap between
+      them looks the same and slightly larger than before, the 1x/2x/4x
+      speed-button trio still sits noticeably tighter than the rest, and
+      Foraging/Winter now show a small icon plus their tooltip (Foraging:
+      a flower; Winter: a snowflake) at the same footprint as
+      Colony/Nursery/Hive rather than full text. Confirm every label is
+      still legible via tooltip at a higher accessibility text scale. See
+      UI-N in `plans/now/ui.md`.
+
 ### UI-K -- Foraging button hidden for Challenge 1
 - [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
       absent for every stage. Finish Challenge 1 ("Continue playing") and

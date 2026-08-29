@@ -6,7 +6,7 @@ extends Control
 ## gallerin_panel.gd uses for Dr Gallerin's body.
 ##
 ## Usage: var icon := UiIcon.new()
-##        icon.shape = "bee"   # "bee", "hex", "flower" or "hive"
+##        icon.shape = "bee"   # "bee", "hex", "flower", "hive" or "snow"
 ##        icon.custom_minimum_size = Vector2(16, 16)
 
 const Shapes = preload("res://scripts/shapes.gd")
@@ -43,3 +43,9 @@ func _draw() -> void:
 				c + Vector2(-size.x * 0.22, -size.y * 0.10),
 			])
 			draw_colored_polygon(pts, col)
+		"snow":
+			# Six-pointed snowflake: three lines through the centre at 60°.
+			for i in range(3):
+				var angle: float = PI / 3.0 * i
+				var dir: Vector2 = Vector2(cos(angle), sin(angle)) * size.x * 0.38
+				draw_line(c - dir, c + dir, col, 2.0)
