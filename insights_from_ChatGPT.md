@@ -86,6 +86,24 @@ error mode to `SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX` through
 for the shared command and the Windows-error-mode wrapper. Run the headless
 Python tests, commit the focused change, and have Claude integrate it.
 
+### P0. Foraging evidence campaign cannot complete a first case
+
+**Evidence:** On 29 Aug 2026, the pinned
+`test_scenarios/foraging_evidence_campaign.json` launched its first
+`no_automation` case at seed `12345`, then Godot exited with code
+`4294967295` after 48.578 seconds. The run wrote no session summary or
+diagnostic events (`status: crashed`); an independent 30-second foreground
+base-scenario probe timed out rather than reporting a game assertion.
+
+**Consequence:** no recruitment, handling-experience or flower-senescence
+comparison is available. A zero event count would be misleading because the
+simulation has not completed.
+
+**Recommendation:** reproduce one pinned base scenario interactively or with
+Godot crash logging enabled, identify the native/runtime failure before
+rerunning the matched campaign, then render the verdict only from a completed
+experiment `result.json`.
+
 ### P0. Planning state is split, stale and more expensive than the work
 
 **Evidence:** the root Markdown corpus is about 678 KB (roughly 169k tokens if
