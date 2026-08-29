@@ -19,3 +19,4 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
+| claude/ui-o-handson-followups | UI-O: fixes from Dave's 29 Aug hands-on pass over UI-A..N (hud.gd, debug_panel.gd, gallerin_panel.gd, ui_layout.gd, main_menu.gd, new hex_hit_area.gd) | Claude Code | in progress | none | plans/now/ui.md UI-O |
