@@ -3,7 +3,7 @@
 <!-- CONTEXT: planning-routing | LOAD: on-demand | OWNER: Dave / implementer -->
 
 Use this directory for all future product planning and implementation work.
-Claude and Codex share these files; their different worktree and hand-off rules
+Claude and Codex share these files; their branch and hand-off conventions
 remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 ## Read order

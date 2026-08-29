@@ -4,10 +4,8 @@
 > explicitly points to it.**
 
 Purpose: a small, current-only queue of evidence-backed findings for Dave to
-hand to Claude when useful. Completed or rejected items are deleted, not kept
-as prose history; Git already preserves that history. Keep each entry to
-evidence, consequence and next action. Do not add implementation diaries or
-status tables.
+implement. Keep each entry to
+evidence, consequence and next action.
 
 Planning/context findings last refreshed: 26 Aug 2026. Completed simulation
 recommendations are recorded in Git history and their current checks/plans,
@@ -63,6 +61,30 @@ every top-right control in a Challenge and Scenario at normal and enlarged
 text scales. Do not fold this into cosmetic top-bar work.
 
 ## Workflow/tooling
+
+### P0. Legacy headless report route can still open Godot crash dialogs
+
+**Evidence:** the screenshot is Windows' native `Godot.exe - Application
+Error` dialog for an access violation, not a regular GDScript error.
+`tools/run_scenario.py::run_verdict_scenario()` launches Godot with
+`--headless --disable-crash-handler`, but the older `run_once()` launch used
+by `--report brief`, `--report full`, repeats and seed comparisons builds only
+`--headless`. More importantly, Godot documents that flag only as disabling
+its own crash handler. Microsoft documents `SEM_NOGPFAULTERRORBOX` as the
+process error mode that suppresses the Application Error/Windows Error
+Reporting dialog, and child processes inherit that error mode.
+
+**Consequence:** an unattended ChatGPT run can block indefinitely behind a
+modal desktop dialog; its Python timeout cannot recover the check while the
+dialog is waiting for input.
+
+**Recommendation:** in a dedicated `codex/...` worktree, centralise the
+Godot launch path; retain `--disable-crash-handler` on every route and, on
+Windows immediately before each spawn, temporarily set the inherited process
+error mode to `SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX` through
+`ctypes`, restoring the runner's prior mode after spawning. Add focused tests
+for the shared command and the Windows-error-mode wrapper. Run the headless
+Python tests, commit the focused change, and have Claude integrate it.
 
 ### P0. Planning state is split, stale and more expensive than the work
 
