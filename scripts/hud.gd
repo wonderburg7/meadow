@@ -454,6 +454,13 @@ func _ready() -> void:
 	corner_column = VBoxContainer.new()
 	corner_column.position = Vector2(16, 12)
 	corner_column.add_theme_constant_override("separation", 2)
+	# CanvasLayer (self) isn't a Control, so nothing above this in the
+	# tree carries a theme for it to inherit -- without this, the corner
+	# readouts always draw in Godot's built-in default font regardless
+	# of Session.ui_typeface. UiTheme.build_theme() returns the one
+	# shared, live-mutated Theme resource, so this stays in sync with
+	# every other panel's typeface/colour/scale without a refresh call.
+	corner_column.theme = UiTheme.build_theme()
 	add_child(corner_column)
 
 	perf_plot = PerfPlot.new()
