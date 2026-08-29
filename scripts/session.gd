@@ -171,10 +171,10 @@ var show_selection_trait: bool = true
 var ui_theme: String = "dark"
 
 ## Read by ui_theme.gd's build_theme(). "sans" (default, no asset
-## needed), "atkinson", "dyslexia" or "pixel" -- the three non-default
-## faces are placeholders until their font files are sourced under
-## assets/fonts/ (UI_PLAN.md section 8), and fall back to the default
-## font until then rather than erroring.
+## needed), "atkinson", "opensans", "opendyslexic", "munro" or
+## "silkscreen" -- each of the non-default faces loads its font file
+## from assets/fonts/ and falls back to the default font if the file
+## is ever missing rather than erroring.
 var ui_typeface: String = "sans"
 
 ## Multiplier applied to every UiTheme type-variation font size. 1.0 to

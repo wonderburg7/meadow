@@ -902,10 +902,10 @@ const TUNABLES := [
 	},
 	{
 		"key": "ui_typeface", "label": "Typeface",
-		"options": ["sans", "atkinson", "dyslexia", "pixel"],
-		"option_labels": {"sans": "Standard", "atkinson": "Atkinson Hyperlegible", "dyslexia": "Dyslexia-friendly", "pixel": "Pixel"},
+		"options": ["sans", "atkinson", "opensans", "opendyslexic", "munro", "silkscreen"],
+		"option_labels": {"sans": "Standard", "atkinson": "Atkinson Hyperlegible", "opensans": "Open Sans", "opendyslexic": "OpenDyslexic", "munro": "Munro", "silkscreen": "Silkscreen"},
 		"category": "Appearance",
-		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and the dyslexia-friendly face are both designed to stay readable at small sizes; Pixel is a look, not an accessibility choice, and can't be combined with either of the other two. Until their font files are added under assets/fonts/, the three non-standard options fall back to the standard font rather than erroring -- so no visible change yet is expected. Takes effect immediately.",
+		"tip": "The font every panel draws its text in. Atkinson Hyperlegible and OpenDyslexic are both designed to stay readable at small sizes; Munro and Silkscreen are pixel-style looks, not accessibility choices. Takes effect immediately.",
 	},
 	{
 		"key": "text_scale", "label": "Text scale", "step": 0.1, "min": 1.0, "max": 2.0,
