@@ -22,6 +22,16 @@ or a dedicated worktree if one is already set up). It must keep changes
 focused, preserve all pre-existing work, and follow the same branch discipline
 as Claude: never leave or commit edits directly on `master`.
 
+Before starting, check `plans/workstreams.md` for a row whose scope overlaps
+the assigned task, so the same fix or investigation isn't duplicated across
+branches. That file is maintained only from the primary checkout — Codex
+reads it to check for overlap but does not edit it from inside a work
+branch; Claude adds the row when the worktree is created and removes it
+when the branch is closed out. Closing out a Codex branch or worktree once
+it is integrated — including deleting it — is Claude's responsibility,
+consistent with Codex not merging, pushing or deleting shared branches
+itself.
+
 ### Documentation and project-state ownership
 
 Documentation that describes or is directly affected by an assigned change is
@@ -82,11 +92,13 @@ integrate it:
 1. task and exact scope;
 2. baseline and final commit hash, plus changed-file summary;
 3. checks run and their results;
-4. risk tier and short evidence-based reason; and
+4. risk tier and short evidence-based reason;
 5. remaining risk, manual check or explicit `none` -- Claude copies any
    manual-check item into `checks/ready.md` on integration, so state
    it as a concrete, checkable action rather than a vague "needs
-   testing".
+   testing"; and
+6. whether this hand-off completes the plan's final slice -- if so, name it
+   and list every follow-up; if not, name the next slice.
 
 Deterministic check output and the committed diff are the evidence; a second
 agent need not re-derive the implementation narrative. After integration,

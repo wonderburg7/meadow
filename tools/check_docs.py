@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 
@@ -101,6 +102,75 @@ def check_markdown_links(errors: list[str]) -> None:
                 errors.append(f"{path.relative_to(ROOT)}: broken Markdown link: {raw_target}")
 
 
+def git_worktree_paths() -> set[Path] | None:
+    """Resolved paths of every worktree Git currently knows about, or None if git is unavailable."""
+    try:
+        result = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    paths: set[Path] = set()
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            paths.add(Path(line[len("worktree "):]).resolve())
+    return paths
+
+
+def ledger_worktree_rows() -> list[tuple[str, Path]]:
+    """(raw path as written, resolved path) for each data row in plans/workstreams.md."""
+    ledger = ROOT / "plans" / "workstreams.md"
+    if not ledger.exists():
+        return []
+    rows: list[tuple[str, Path]] = []
+    for line in ledger.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = line.split("|")
+        if len(cells) < 2:
+            continue
+        match = re.search(r"`([^`]+)`", cells[1])
+        if not match:
+            continue
+        raw_path = match.group(1)
+        rows.append((raw_path, (ROOT / raw_path).resolve()))
+    return rows
+
+
+def check_workstreams(errors: list[str]) -> None:
+    """A worktree/branch is registered in plans/workstreams.md for exactly as long as it exists."""
+    registered = git_worktree_paths()
+    if registered is None:
+        errors.append("could not run 'git worktree list' to validate plans/workstreams.md")
+        return
+
+    worktree_dir = (ROOT / ".worktrees").resolve()
+    if worktree_dir.is_dir():
+        for entry in sorted(worktree_dir.iterdir()):
+            if entry.is_dir() and entry.resolve() not in registered:
+                errors.append(
+                    f".worktrees/{entry.name}: orphaned directory, not registered with 'git worktree' -- remove it"
+                )
+
+    ledger_rows = ledger_worktree_rows()
+    for raw_path, resolved in ledger_rows:
+        if resolved not in registered:
+            errors.append(f"plans/workstreams.md: stale row, worktree no longer exists: {raw_path}")
+
+    ledger_paths = {resolved for _, resolved in ledger_rows}
+    for wt_path in registered:
+        try:
+            wt_path.relative_to(worktree_dir)
+        except ValueError:
+            continue
+        if wt_path not in ledger_paths:
+            errors.append(f"plans/workstreams.md: worktree {wt_path} is registered with Git but has no ledger row")
+
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
@@ -108,6 +178,7 @@ def main() -> int:
     check_context_layout(errors)
     check_next_steps(errors)
     check_markdown_links(errors)
+    check_workstreams(errors)
 
     for warning in warnings:
         print(f"WARNING: {warning}")
