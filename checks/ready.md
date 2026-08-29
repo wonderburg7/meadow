@@ -7,6 +7,16 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-L -- pre-run menu no longer runs the simulation behind it
+- [ ] Launch the game fresh (or Restart Run from the OS, not "Return to
+      Main Menu" mid-session): confirm no bee, flower, day advance or
+      weather change happens before Start is pressed -- only the menu is
+      visible. Choose a Challenge and confirm it still loads only that
+      Challenge's configuration; choose a Scenario and confirm the same.
+      Confirm the existing in-run "Return to Main Menu" still just pauses
+      the live session (world stays alive underneath) rather than this
+      fresh-boot path. See UI-L in `plans/now/ui.md`.
+
 ### UI-K -- Foraging button hidden for Challenge 1
 - [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
       absent for every stage. Finish Challenge 1 ("Continue playing") and
