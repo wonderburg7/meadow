@@ -11,6 +11,14 @@ its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### Accessibility fonts -- Typeface setting now has five real faces
+- [ ] Open Settings > Appearance > Typeface and step through each option
+      (Standard, Atkinson Hyperlegible, Open Sans, OpenDyslexic, Munro,
+      Silkscreen): confirm every panel's text visibly changes face (not
+      just size) and stays readable at 100% and 200% text scale. Font
+      files newly added under `assets/fonts/` and wired in
+      `scripts/ui_theme.gd`/`scripts/debug_panel.gd`.
+
 ### UI-N -- top-right button group gap and row-2 tooltips (re-check after fix)
 - [ ] Row 1 (pause/speed buttons): confirm a real, visible gap now exists
       between the last speed button (1x/2x/4x, or 8x if enabled) and the
