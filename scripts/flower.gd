@@ -208,10 +208,23 @@ func _sync_recharge() -> void:
 	var elapsed: float = Session.sim_time - _last_recharge_update
 	if elapsed <= 0.0:
 		return
-	var strength: float = season_strength() * _senescence_scale()
+	var seasonal_strength: float = season_strength()
+	var senescence_scale: float = _senescence_scale()
+	var strength: float = seasonal_strength * senescence_scale
 	if strength > 0.0:
-		_nectar_amount = min(nectar_capacity, _nectar_amount + nectar_recharge_rate * strength * elapsed)
-		_pollen_amount = min(pollen_capacity, _pollen_amount + pollen_recharge_rate * strength * elapsed)
+		var base_nectar: float = nectar_recharge_rate * seasonal_strength * elapsed
+		var base_pollen: float = pollen_recharge_rate * seasonal_strength * elapsed
+		var actual_nectar: float = min(nectar_capacity, _nectar_amount + base_nectar * senescence_scale)
+		var actual_pollen: float = min(pollen_capacity, _pollen_amount + base_pollen * senescence_scale)
+		if senescence_scale < 1.0:
+			# Count only resource that could actually have been stored. This is
+			# zero while the feature is off and excludes recharge lost to a full
+			# flower, so the campaign measures the active gameplay effect.
+			var unsenesced_nectar: float = min(nectar_capacity, _nectar_amount + base_nectar)
+			var unsenesced_pollen: float = min(pollen_capacity, _pollen_amount + base_pollen)
+			DiagnosticLog.count_flower_senescence_loss(unsenesced_nectar - actual_nectar, unsenesced_pollen - actual_pollen)
+		_nectar_amount = actual_nectar
+		_pollen_amount = actual_pollen
 	_last_recharge_update = Session.sim_time
 
 ## Slice 8: how much slower this flower recharges as it nears the end of

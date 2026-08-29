@@ -11,7 +11,8 @@ from typing import Any
 
 METRICS = ("flower_visits", "unique_flowers_visited", "orientation_flights",
            "scouting_settled", "recruitment_matches", "forager_deliveries",
-           "forager_delivery_amount", "stall_recoveries", "flowers_senesced", "runtime_seconds")
+           "forager_delivery_amount", "stall_recoveries", "flowers_senesced",
+           "senescence_nectar_lost", "senescence_pollen_lost", "runtime_seconds")
 
 
 def _mean(values: list[float]) -> float:
@@ -59,10 +60,12 @@ def main(argv: list[str]) -> int:
 		rows = [_summary(run, root) for run in runs if run["status"] == "passed"]
 		case = {"runs": len(rows), "metrics": _metrics(rows) if rows else {}, "handling_by_experience": _handling(rows)}
 		cases[name] = case
-		if name != "no_automation" and rows and case["metrics"]["recruitment_matches"]["mean"] == 0:
+		if (name == "entrance" or name == "proximity_default" or name.startswith("dance_")) and rows and case["metrics"]["recruitment_matches"]["mean"] == 0:
 			not_exercised.append("%s recruitment" % name)
-		if name == "senescence_on" and rows and case["metrics"]["flowers_senesced"]["mean"] == 0:
-			not_exercised.append("senescence lifecycle")
+		if name == "senescence_on" and rows and (
+				case["metrics"]["senescence_nectar_lost"]["mean"] == 0
+				and case["metrics"]["senescence_pollen_lost"]["mean"] == 0):
+			not_exercised.append("senescence recharge effect")
 		if name == "handling_experience" and rows and not case["handling_by_experience"]:
 			not_exercised.append("handling experience")
 	verdict = {"schema_version": 1, "experiment": experiment["name"], "status": experiment["status"],

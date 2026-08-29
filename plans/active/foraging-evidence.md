@@ -1,8 +1,8 @@
 # Foraging ecology — operations and evidence plan
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: validation active | Owner: Dave / Claude Code | Next: run the matched
-foraging evidence campaign | Dependency: Godot/headless scenario access |
+Status: evidence complete | Owner: Dave / Claude Code | Next: retain defaults;
+open a separate balance slice only if selected | Dependency: none |
 Verified: 2026-08-29
 
 Slices 0-9 are built. Their detailed specifications, results and implementation
@@ -35,11 +35,12 @@ until the scenario proves otherwise.
 
 ## Campaign result — 29 Aug 2026
 
-The unchanged pinned manifest completed successfully: all 70 runs (14 cases ×
-the five declared seeds) passed with manifest SHA-256
-`1fa94161d9d18cf94083c099b2b8b872aa153dad2a70079d27f2b62c2c166511`.
-The runner wrote its experiment result and compact verdict under
-`C:\Users\dl13860\AppData\Local\Temp\meadow-headless-results\experiment-1787967858903-fdf3662f489e`
+All 70 runs (14 cases × the five declared seeds) passed. The rerun adds only
+causal senescence telemetry; it keeps the same seeds, base scenario and
+configuration cases. Its manifest SHA-256 is
+`97030d4acd3ffff08cb89402073a4017f00fbd701199955e3f079a248b0816e0`; the
+result is under
+`C:\Users\dl13860\AppData\Local\Temp\meadow-headless-jobs\job-1787969794300-9ed1c6b9d838\runs\experiment-1787969794864-3228fff91eb5`
 (the verdict is `foraging-evidence-verdict.json`). Reproduce with the command
 in `docs/headless-run-contract.md`, then pass the emitted `result.json` to
 `tools/foraging_evidence_report.py`.
@@ -56,13 +57,15 @@ in `docs/headless-run-contract.md`, then pass the emitted `result.json` to
   6–9 (4.2027 s), and 10 at 10+ (6.7 s). The effect is exercised and improves
   through 6–9 visits; the final bucket is too small and non-monotonic to make
   a stronger claim.
-- **Flower senescence:** `senescence_on` versus `senescence_off` gave 1685.6
-  versus 1690.4 reported `flowers_senesced`, 2133.9 versus 2308.7 delivery
-  amount, 65.6 versus 70.6 deliveries, 0.6 versus 0.6 starvation deaths and
-  13.0 versus 9.2 stalls per run. The lifecycle counter firing in both cases
-  means this campaign does not yet establish a causal senescence-on effect;
-  retain the current default and treat the output as a diagnostic-contract
-  follow-up, not a balance conclusion.
+- **Flower senescence:** flower replacement is deliberately independent of
+  the toggle (1685.6 `flowers_senesced` on versus 1690.4 off), so it is a
+  lifecycle observation rather than feature-effect evidence. The new causal
+  counters show 868.3412 nectar and 33.335 pollen units of effective recharge
+  foregone per enabled run (ranges 701.4816–1161.9236 and 17.8898–67.8365);
+  both are exactly zero off. Enabled runs delivered 2133.9 versus 2308.7
+  amount, with 65.6 versus 70.6 deliveries, 0.6 versus 0.6 starvation deaths
+  and 13.0 versus 9.2 stalls. This verifies the intended mechanism but is not
+  enough balance evidence to change the provisional off-by-default setting.
 
 ## Recent fixes
 

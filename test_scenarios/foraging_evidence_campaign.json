@@ -18,5 +18,5 @@
     "senescence_off": {"config_overrides": {"orientation_flight_on": false, "scouting_on": false, "auto_recruitment_on": false, "proximity_recruitment_on": false, "flower_senescence_on": false}},
     "senescence_on": {"config_overrides": {"orientation_flight_on": false, "scouting_on": false, "auto_recruitment_on": false, "proximity_recruitment_on": false, "flower_senescence_on": true, "flower_senescence_floor": 0.3}}
   },
-  "report": {"mode": "artifact", "metrics": ["flower_visits", "unique_flowers_visited", "orientation_flights", "scouting_settled", "recruitment_matches", "forager_deliveries", "forager_delivery_amount", "deaths_by_cause", "stall_recoveries", "flowers_senesced"]}
+  "report": {"mode": "artifact", "metrics": ["flower_visits", "unique_flowers_visited", "orientation_flights", "scouting_settled", "recruitment_matches", "forager_deliveries", "forager_delivery_amount", "deaths_by_cause", "stall_recoveries", "flowers_senesced", "senescence_nectar_lost", "senescence_pollen_lost"]}
 }
