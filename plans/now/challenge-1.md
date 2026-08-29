@@ -1,16 +1,21 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on
-acceptance playthrough (Slice 7's checklist, `checks/ready.md` Challenge 1
-Bundles D-G) — Slices 1-7's code is merged | Dependency: none |
-Verified: 2026-08-28
+Status: active | Owner: Dave / Claude Code | Next: implement Slice 8
+(acceptance-playthrough findings below), then resume Slice 7's checklist —
+Slices 1-6's code is merged, Slice 7's playthrough surfaced six bugs now
+scoped as Slice 8 | Dependency: none | Verified: 2026-08-29
 
 Supersedes the old Bundle H (copy/doc pass). That pass is folded into Slice 7
 below, run *after* the mechanics change, not before — updating docs to match
 mechanics that are about to be rewritten would be wasted work. Bundle A–G's
 delivery evidence is still at `plans/archive/CHALLENGE1_REVAMP_PLAN.md` for
 provenance only.
+
+Slice 7's own hands-on pass (29 Aug 2026) found six bugs in the "code-
+complete" Slices 1-6. All six were traced against live source (not just the
+plan's description of what Slices 1-6 were supposed to do) before Slice 8
+below was written — see each entry for confirmed-vs-hypothesis evidence.
 
 ## Why
 
@@ -459,9 +464,239 @@ placeholder).
 
 ---
 
+## Slice 8 — Acceptance-playthrough findings
+
+Six bugs found during Slice 7's hands-on pass. 8a-8d are bug fixes to shared
+or Challenge-1 mechanics; 8e is a new feature (the brief always described the
+1.11 camera/speed presentation, but no code implements it yet). None of these
+are Challenge-1-specific except where noted — fix the shared mechanism, not a
+Challenge-only branch, per `CLAUDE.md`'s "reusable, data-driven" steer.
+
+### 8a — Shared full-storage bug: carried resource silently discarded
+
+**Confirmed, shared-system (affects every forager, not just Challenge 1).**
+`bee_foraging.gd::go_to_deposit_cell()`, when `hive.find_cell_for()` returns
+null and `hive.cells` is non-empty (comb genuinely full, as opposed to the
+already-handled "nothing built yet" case just above it):
+
+```gdscript
+bee.current_load = 0.0
+bee.current_load_type = ""
+bee.state = State.IN_HIVE_TO_EXIT
+```
+
+The load is thrown away with no deposit having happened, and
+`_default_state_for_role()` sends her straight back to `SEEK_FLOWER`
+(`bee.gd`), so she repeats the collect-and-lose cycle indefinitely. This is
+Challenge 1's "queen appears to return with nectar, then it disappears and
+foraging restarts" bug, and it is *also* an ordinary-play bug: any forager
+whose compatible cells fill up loses her next several loads.
+
+**Fix — reuse the miner role's existing epoch-guard shape**, not a new
+polling timer or a new `State`. Miners already do exactly this for "I looked
+for a job and there wasn't one" (`_mining_no_work_epoch` compared against
+`hive.mining_work_epoch`, `bee.gd` ~line 1348). `hive.gd` already has an
+equivalent for cell content (`index_epoch`, bumped by `invalidate_index()`
+from every cell mutator — `hive.gd:108,146`). Add a per-bee
+`_deposit_blocked_epoch: int = -1` and change the full-comb branch to:
+
+```gdscript
+if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
+    if bee._deposit_blocked_epoch == bee.hive.index_epoch:
+        return   # nothing about the comb has changed since we last looked
+    bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
+    if bee.target_cell == null:
+        if bee.hive.cells.is_empty():
+            return   # unchanged: nothing built yet at all
+        bee._deposit_blocked_epoch = bee.hive.index_epoch
+        return   # still carrying it -- retry once the comb changes
+```
+
+She stays in `State.IN_HIVE_TO_CELL`, keeps her `current_load`, and the
+epoch guard means she isn't re-scanning every frame while blocked (a
+performance win, not just a correctness one). No new bee state, no
+Challenge-specific branch — Challenge 1's "stop cleanly when the nectar cell
+fills" falls out of this for free (she just stops losing nectar and stops
+finding a next task, which is 8e's job to notice and freeze cleanly).
+
+### 8b — Manual nectar collection: queen auto-flies home
+
+**Confirmed.** `bee_foraging.gd::finish_collecting()` unconditionally sets
+`state = State.TO_HIVE if current_load >= max_capacity else SEEK_FLOWER`
+once her stomach is full — no reference to `manual_deposit_pending`
+anywhere in the collection-finish path. The existing guard Slice 3 added
+(`bee_foraging.gd::enter_hive()`, "if `manual_deposit_pending`: `IDLING`;
+return") only fires *after* she's already flown home; it correctly blocks
+the auto-*deposit* but nothing blocks the auto-*travel*, so she visibly
+flies home on her own the moment she's full — the reported bug.
+
+**Fix:** in `finish_collecting()` (and the resource-type-mismatch branch a
+few lines above it, `bee_foraging.gd` ~line 627-630, which has the same
+unconditional `state = State.TO_HIVE`), route through
+`State.IDLING` instead of `State.TO_HIVE` when `bee.manual_deposit_pending`
+is true. She then waits at the flower, fully loaded, until the player
+right-clicks the hive marker (`command_return_only()`, already wired).
+
+### 8c — Re-verify Nectar/Pollen unlock gating live
+
+**Not reproducible in static code — likely a symptom of 8b, not an
+independent bug.** Traced both goal predicates against real code:
+`harvest_deposited` (`challenge_runner.gd::_goal_check_harvest_deposited`)
+only reads true once `current_load` actually reaches zero, which only
+happens via a real `finish_depositing()` call; `second_cell_built` only
+reads true once `HiveCell.is_built` flips, which only happens once
+`build_progress` reaches the time target. No code path unlocks on
+arrival/full-load/build-start, and no code path auto-assigns the sub-role
+to the queen (the only `set_role`/`set_focus`/`architect_mode` writes in
+Challenge 1 are player-signal handlers or the Challenge-2 EGG_LAYER reset).
+
+**Action:** no code change proposed here. Once 8b lands, replay Bundle D/E
+(`checks/ready.md`) live — watching the queen auto-fly home and idle
+without depositing plausibly *read* as "the game already finished this
+stage," even though the actual `harvest_deposited`/`second_cell_built`
+checks were never satisfied. If it still reproduces after 8b, that's new
+information and needs its own investigation, not a guess now.
+
+### 8d — Manual cell-building: 0% progress on every empty space, one after another
+
+**Confirmed-plausible mechanism, precise enough to fix, pending a live-boot
+confirmation.** Dave's own observation was the key: the sites appear in the
+same hex-spiral order `hive.gd::create_next_cell_site()` uses for ordinary
+Comb Worker auto-building — meaning that function, not the player-placement
+one (`create_cell_site_at()`), is firing repeatedly. Traced the only way the
+queen can reach it:
+
+`hud.gd::_secondary_items()` (feeds `_build_fallback_row()`'s "If idle"
+backup-role menu) builds its options straight from `Roles.ROLES` with **no
+`allowed_role_keys` filtering** — unlike `_build_job_row()`'s "Change to…"
+menu, which does filter (`hud.gd:2026`,
+`if not allowed_role_keys.is_empty() and not allowed_role_keys.has(key): continue`).
+So during Challenge 1, the queen's "If idle" menu still offers Comb Worker
+as a backup role even though Slice 2e removed `"comb_worker"` from every
+`STAGES_1` entry's `unlocked_keys`.
+
+If a player picks it (`secondary_role = Role.BUILDER`, via
+`orders_zones.gd::_on_secondary_role_requested`), `_idle_dispatch()`'s
+queen-priority branch (`bee.gd` ~line 1200) calls `_try_role_work(Role.
+BUILDER)` the next time she goes idle — including landing in
+`State.BUILD_IDLE` right after completing her *own* player-placed cell.
+With `architect_mode` defaulting to `"both"` (`bee.gd:141`, never set
+otherwise for the queen), that branch falls through the
+maintenance/restock checks to the auto-site-selection chain
+(`bee.gd:1327-1345`): no manual queue, no unfinished cell of her own, so it
+calls `hive.create_next_cell_site()` — the hex-spiral auto-placement
+function. Each site she builds this way completes back into the same
+shared `State.BUILD_IDLE` (`bee_building.gd:63`) → `_idle_dispatch()` →
+same branch → next spiral hex. This matches the reported symptom exactly,
+including the spiral ordering.
+
+**Two-part fix, matching Dave's "make this more standalone" steer:**
+
+- **8d-i (closes the hole):** filter `_secondary_items()` by
+  `allowed_role_keys`, the identical pattern `_build_job_row()` already
+  uses. This is a general fix — any future stage-gated role restriction
+  benefits, not just Challenge 1 — closing a gap in an existing convention
+  rather than inventing a new one. (This is the third place role choices
+  are offered; `_build_job_row` and `hatch_options()`/Slice 2f were already
+  fixed — this menu was the one gap left.)
+- **8d-ii (defense in depth, reusable beyond this one bug):** add
+  `var role_restricted_to: Array = []` to `Bee` — an allow-list of `Role`
+  ints, empty by default (unrestricted, exactly like `allowed_role_keys`'s
+  own empty-means-unrestricted convention). `challenge_runner.gd::
+  _enter_stage()` sets `main.queen.role_restricted_to = [Role.EGG_LAYER,
+  Role.FORAGER, Role.NURSERY]` for the whole of Challenge 1 (mirroring how
+  `manual_deposit_pending`/`energy_immune`/the forage-rate multiplier are
+  already set-on-entry, restored-on-exit), cleared to `[]` in `start()`'s
+  reset block and `_complete()`. `_idle_dispatch()` checks it before each
+  secondary-role dispatch attempt:
+  ```gdscript
+  if is_queen and role == Role.EGG_LAYER and secondary_role != -1 and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
+      if _try_role_work(secondary_role):
+          return
+  ...
+  if secondary_role != -1 and secondary_role != role and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
+      working_secondary = _try_role_work(secondary_role)
+  ```
+  This closes off *any* wrong-role-via-secondary-role path for the
+  Challenge-1 queen in one place — not just Comb Worker — so the same class
+  of bug can't reappear if a future stage similarly restricts, say, Miner or
+  Honey Maker. It never touches her manual build flow at all (that path
+  sets `target_cell`/`state` directly from `challenge_runner.gd`, bypassing
+  `_try_role_work` entirely), and it's a no-op for every bee/mode outside
+  Challenge 1 (empty array, same as `allowed_role_keys`).
+- Also route `bee_building.gd::builder_build()`'s completion through
+  `bee._default_state_for_role()` instead of the hardcoded
+  `State.BUILD_IDLE` — small, low-risk, and means a bee without the real
+  Comb Worker role never lands in a Comb-Worker-shaped idle state at all,
+  regardless of what future code does with secondary roles.
+
+**Acceptance:** live Godot boot, reproduce today's build first (confirm the
+"If idle" menu genuinely offers Comb Worker to the queen mid-Challenge and
+that picking it reproduces the spiral), then confirm 8d-i alone closes the
+UI hole and 8d-ii holds even if some future code sets `secondary_role`
+directly without going through the UI.
+
+### 8e — Automatic nectar foraging: camera/speed presentation (1.11)
+
+**Feature genuinely missing, not buggy** — the brief describes behaviour no
+code implements yet. Camera-follow (`camera_view.gd::_on_follow_bee_toggled`
+/ `_handle_follow`, already driven every frame from `main._process`) and
+game speed (`camera_view.gd::_on_speed_requested`, sets real
+`Engine.time_scale`) both already exist as callable primitives independent
+of their HUD buttons — `challenge_runner.gd` can call them directly. Confirm
+the distinction already documented in Slice 4b: `CHALLENGE1_FORAGE_SPEED_
+MULTIPLIER` is a **per-bee collection-rate** multiplier, not game speed —
+this is a separate, new mechanism.
+
+**Depends on 8a** (otherwise the queen loses nectar and keeps looping
+instead of cleanly stopping when the cell fills).
+
+**Implement as a small, reusable stage-effects table** rather than more
+`if stage.id == "1.11":` branches in `_enter_stage()`/`_advance()` — this is
+the general pattern worth establishing now (see "Proposed architecture"
+below): add optional `on_enter`/`on_exit` string-key arrays to a
+`challenge_stages.gd` stage record, and one small dispatcher in
+`challenge_runner.gd` that recognises a handful of named actions
+(`"camera_follow_queen"`, `"speed_multiplier:4.0"`, `"freeze_bee:queen"`).
+1.11 gets `"on_enter": ["camera_follow_queen", "speed_multiplier:4.0"]`;
+the 1.11→1.12 transition (i.e. `_advance()` when `nectar_target`'s goal
+fires) undoes both — `main.following_bee = null`,
+`camera_view._on_speed_requested(1.0)` — and freezes the queen exactly
+once: `_release_everything()`, `clear_navigation_state()`,
+`state = State.IDLING` (confirmed the correct "do nothing further" target —
+the one state `_process`'s big `match` does nothing with, so
+`_idle_dispatch` cannot restart automatic foraging on the next frame; her
+`role` stays `FORAGER`, only `state` changes). Camera-follow and speed
+always switch off on this edge — no case where either should persist into
+1.12 (confirmed with Dave).
+
+**Acceptance:** selecting Forager→Nectar at 1.11 starts camera-follow and
+4x speed exactly once; filling the nectar cell stops foraging, resets both
+exactly once (not reapplied per frame), and leaves the queen standing
+beside the full cell waiting for the next command.
+
+<!-- LAYER: durable-rules -->
+
+- **Manual command ownership must be checked where automatic work starts,
+  not only where it ends.** Both 8b and 8d were the same shape: a
+  `manual_*_pending`/role-restriction guard existed at the point automatic
+  work would *finish* (arrival, build-completion) but not at the point it
+  would *begin* (`finish_collecting`'s state assignment, secondary-role
+  idle dispatch). Any future manual-teaching stage needs the guard at both
+  ends.
+- **A Challenge that restricts a bee's primary role must restrict its
+  secondary/backup role the same way** — `role_restricted_to` (8d-ii) is
+  the reusable mechanism; don't reintroduce a primary-role-only check.
+
+---
+
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 
-Once Slices 1–6 are in:
+**Blocked on Slice 8** — the first attempt at this pass (29 Aug 2026) is
+what found the six bugs Slice 8 now fixes; re-run the checklist below only
+after Slice 8 lands, not before.
+
+Once Slices 1–6 (and now 8) are in:
 
 - Run `.\tools\verify.ps1` (source + balance suites, function map,
   planning-metadata checks).
@@ -498,9 +733,14 @@ Once Slices 1–6 are in:
   `STAGES_1` entry's `unlocked_keys`, and remember `hatch_options()` needs
   the same `allowed_role_keys` filter the Job column already has (Slice 2f).
 - Challenge 1 cell building must never assign `Role.BUILDER` to the queen —
-  the state machine (`State.TO_BUILD_SITE`/`BUILDING`) doesn't need it, and
-  `_idle_dispatch`'s auto-rebuild behaviour is exactly what assigning it
-  would reintroduce.
+  neither as her primary role nor, per Slice 8d, her secondary/backup role
+  (`Bee.role_restricted_to`) — the state machine (`State.TO_BUILD_SITE`/
+  `BUILDING`) doesn't need it, and `_idle_dispatch`'s auto-rebuild behaviour
+  is exactly what assigning it would reintroduce, via either role field.
+- Any UI menu that offers a role choice (Job column, hatch options, the "If
+  idle" backup-role menu) must filter by `allowed_role_keys` — three such
+  menus exist; keep all three in sync, don't just fix the one a bug report
+  named (Slice 8d-i closed the third).
 - Challenge-local numeric overrides live on the object they affect
   (`HiveCell.build_time_override`, a per-bee collection-rate multiplier),
   never on `GameConfig` — see `.claude/rules/saving.md`'s write allowlist.
@@ -511,7 +751,12 @@ Once Slices 1–6 are in:
 <!-- LAYER: on-demand -->
 
 - Full stage data: `scripts/challenge_stages.gd` (`STAGES_1`, `FAST_BUILD_TIME`,
-  `NECTAR_TARGET`/`POLLEN_TARGET`).
+  `NECTAR_TARGET`/`POLLEN_TARGET`, and Slice 8e's new `on_enter`/`on_exit`
+  action arrays once added).
+- Shared full-storage/epoch-guard fix (Slice 8a): `scripts/bee_foraging.gd`
+  (`go_to_deposit_cell`), `scripts/hive.gd` (`index_epoch`,
+  `invalidate_index`), and the existing miner precedent for the same shape
+  (`bee.gd`'s `_mining_no_work_epoch`/`hive.mining_work_epoch`).
 - Stage sequencing/goals: `scripts/challenge_runner.gd` (`_enter_stage`,
   `_goal_registry`, `_on_queen_build_cell_requested`,
   `_apply_stage_gate_to_ui`).
