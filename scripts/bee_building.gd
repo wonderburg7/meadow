@@ -53,14 +53,14 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 ## abandoned and picked up again later.
 static func builder_build(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell):
-		bee.state = State.BUILD_IDLE
+		bee.state = bee._default_state_for_role()
 		return
 	bee.target_cell.add_build_progress(delta)
 	if bee.target_cell.is_built:
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "completed", "build_progress_finished", "arrived", "route_ok")
 		bee.target_cell.release_builder(bee)
 		bee.target_cell = null
-		bee.state = State.BUILD_IDLE
+		bee.state = bee._default_state_for_role()
 
 
 static func builder_go_to_haul_source(bee: Node2D, delta: float) -> void:

@@ -191,6 +191,11 @@ const ESCAPE_RANGE := 60.0
 ## tasks and drops it the instant primary work turns up again.
 var secondary_role: int = -1
 
+## Optional allow-list for the backup role's actual work dispatch. Empty is
+## unrestricted, matching the HUD's allowed_role_keys convention. Challenges
+## use it as a second line of defence when their taught-role list matters.
+var role_restricted_to: Array = []
+
 ## True while the bee is currently doing secondary_role's work rather than
 ## its own. Building and mining are the two secondary jobs long enough
 ## (up to a full cell or block) that "drops it the instant primary work
@@ -863,6 +868,11 @@ var _mining_no_work_automine: bool = false
 var _miner_dispatch_timer: float = 0.0
 var _miner_dispatch_due: bool = false
 
+## A full comb makes a failed deposit search valid until a cell-content
+## mutation changes Hive.index_epoch.  Keeping the carried load is essential:
+## it must never turn a full store into an invisible discarded foraging trip.
+var _deposit_blocked_epoch: int = -1
+
 func _process(delta: float) -> void:
 	Perf.begin("bees")
 	if hive == null or is_dying:
@@ -1197,14 +1207,14 @@ func _idle_dispatch() -> void:
 	# only time -- so she feeds the brood she already has before making
 	# more. Any other bee, and a queen whose backup the player has
 	# changed, still works its own role first.
-	if is_queen and role == Role.EGG_LAYER and secondary_role != -1:
+	if is_queen and role == Role.EGG_LAYER and secondary_role != -1 and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
 		if _try_role_work(secondary_role):
 			return
 
 	working_secondary = false
 	if _try_role_work(role):
 		return
-	if secondary_role != -1 and secondary_role != role:
+	if secondary_role != -1 and secondary_role != role and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
 		working_secondary = _try_role_work(secondary_role)
 
 ## Called on a think tick while working_secondary and "Finish the job

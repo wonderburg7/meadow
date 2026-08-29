@@ -626,7 +626,10 @@ static func collect(bee: Node2D, delta: float) -> void:
 	# than mixing the two in its stomach.
 	if bee.current_load > 0.0 and bee.current_load_type != "" and bee.current_load_type != bee.resource_type:
 		finish_collecting(bee)
-		bee.state = State.TO_HIVE
+		# Challenge 1's manual deposit lesson owns the journey home too.
+		# A focus change must not bypass that rule and fly a loaded queen
+		# home before the player has issued the return command.
+		bee.state = State.IDLING if bee.manual_deposit_pending else State.TO_HIVE
 		return
 
 	var space_left: float = max_capacity(bee) - bee.current_load
@@ -682,7 +685,13 @@ static func finish_collecting(bee: Node2D) -> void:
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
-	bee.state = State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER
+	# Manual deposit stages require an explicit return command. Stop at the
+	# flower once the crop is full rather than automatically starting the trip
+	# home; command_return_only() resumes it when the player asks.
+	if bee.manual_deposit_pending and bee.current_load >= max_capacity(bee):
+		bee.state = State.IDLING
+	else:
+		bee.state = State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER
 
 
 
@@ -766,6 +775,11 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		return
 
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
+		# A full comb cannot receive this trip yet.  As with a miner that
+		# remembers no work, avoid repeating the same global search on every
+		# think tick until a cell mutation makes a new answer possible.
+		if bee._deposit_blocked_epoch == bee.hive.index_epoch:
+			return
 		bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
 		if bee.target_cell == null:
 			if bee.hive.cells.is_empty():
@@ -776,11 +790,9 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 				# here (still carrying it) and recheck next frame, so a
 				# cell finishing mid-wait picks her straight back up.
 				return
-			# comb is full -- the load is lost, which is the signal that
-			# the hive needs more cells built
-			bee.current_load = 0.0
-			bee.current_load_type = ""
-			bee.state = State.IN_HIVE_TO_EXIT
+			# Keep the load until a cell changes.  Discarding it here made a
+			# full comb silently erase every later foraging trip.
+			bee._deposit_blocked_epoch = bee.hive.index_epoch
 			return
 
 	var approach := approach_cell(bee, bee.target_cell, delta)

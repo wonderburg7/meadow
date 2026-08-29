@@ -133,6 +133,7 @@ func start() -> void:
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
 	main.queen.manual_deposit_pending = false
+	main.queen.role_restricted_to = []
 	_c1_base_nectar_rate = -1.0
 	_c1_base_pollen_rate = -1.0
 
@@ -266,8 +267,12 @@ func _stage_unlock_keys(entries: Array) -> Array:
 
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
+	_run_stage_effects(stage.get("on_enter", []))
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
 	if Session.starting_level == 1:
+		# Challenge 1's manual building drives the queen's state directly;
+		# her backup role must never start the ordinary auto-builder loop.
+		main.queen.role_restricted_to = [Roles.QUEEN, Roles.FORAGER, Roles.NURSE]
 		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 		if stage.id == "1.11":
 			_c1_base_nectar_rate = main.queen.nectar_collection_rate
@@ -426,13 +431,36 @@ func _show_goal(stage: Dictionary) -> void:
 
 func _advance() -> void:
 	main.gallerin_panel.clear_queue()
-	_last_completed_goal_text = _stages()[_stage_index].goal_text
-	challenge_stage_cleared.emit(_stages()[_stage_index].id)
+	var completed_stage: Dictionary = _stages()[_stage_index]
+	_run_stage_effects(completed_stage.get("on_exit", []))
+	_last_completed_goal_text = completed_stage.goal_text
+	challenge_stage_cleared.emit(completed_stage.id)
 	_stage_index += 1
 	if _stage_index >= _stages().size():
 		_complete()
 		return
 	_enter_stage()
+
+## Runs small, named stage-boundary effects declared in challenge_stages.gd.
+## They belong here rather than the data file because each touches live scene
+## state; unknown actions remain visible in Godot's debugger instead of being
+## silently ignored when a stage record is mistyped.
+func _run_stage_effects(effects: Array) -> void:
+	for effect_value in effects:
+		var effect: String = str(effect_value)
+		match effect:
+			"camera_follow_queen":
+				main.camera_view._on_follow_bee_toggled(main.queen, true)
+			"camera_follow_off":
+				main.following_bee = null
+			"speed_multiplier:1.0", "speed_multiplier:4.0":
+				main.camera_view._on_speed_requested(effect.trim_prefix("speed_multiplier:").to_float())
+			"freeze_bee:queen":
+				main.queen._release_everything()
+				main.queen.clear_navigation_state()
+				main.queen.state = main.Bee.State.IDLING
+			_:
+				push_error("challenge_runner: unknown stage effect '%s'" % effect)
 
 ## Debug-panel seam for exercising a newly scaffolded Challenge sequence before
 ## every causal goal exists. It deliberately uses the ordinary transition path
@@ -455,6 +483,7 @@ func _complete() -> void:
 		_marker.visible = false
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
+		main.queen.role_restricted_to = []
 		if _c1_base_nectar_rate >= 0.0:
 			main.queen.nectar_collection_rate = _c1_base_nectar_rate
 			main.queen.pollen_collection_rate = _c1_base_pollen_rate
