@@ -62,30 +62,6 @@ text scales. Do not fold this into cosmetic top-bar work.
 
 ## Workflow/tooling
 
-### P0. Legacy headless report route can still open Godot crash dialogs
-
-**Evidence:** the screenshot is Windows' native `Godot.exe - Application
-Error` dialog for an access violation, not a regular GDScript error.
-`tools/run_scenario.py::run_verdict_scenario()` launches Godot with
-`--headless --disable-crash-handler`, but the older `run_once()` launch used
-by `--report brief`, `--report full`, repeats and seed comparisons builds only
-`--headless`. More importantly, Godot documents that flag only as disabling
-its own crash handler. Microsoft documents `SEM_NOGPFAULTERRORBOX` as the
-process error mode that suppresses the Application Error/Windows Error
-Reporting dialog, and child processes inherit that error mode.
-
-**Consequence:** an unattended ChatGPT run can block indefinitely behind a
-modal desktop dialog; its Python timeout cannot recover the check while the
-dialog is waiting for input.
-
-**Recommendation:** in a dedicated `codex/...` worktree, centralise the
-Godot launch path; retain `--disable-crash-handler` on every route and, on
-Windows immediately before each spawn, temporarily set the inherited process
-error mode to `SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX` through
-`ctypes`, restoring the runner's prior mode after spawning. Add focused tests
-for the shared command and the Windows-error-mode wrapper. Run the headless
-Python tests, commit the focused change, and have Claude integrate it.
-
 ### P0. Foraging evidence campaign cannot complete a first case
 
 **Evidence:** On 29 Aug 2026, the pinned
