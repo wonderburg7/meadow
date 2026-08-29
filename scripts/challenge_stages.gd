@@ -72,6 +72,9 @@ const MARKER_COLOUR := Color(1.0, 0.85, 0.3, 0.55)
 ## them; stage_gate itself deliberately remains string-keyed and unchanged.
 ## `goal_text` feeds the corner readout (hud.gd's set_challenge_goal).
 ## `prompts` feeds gallerin_panel.queue_prompts() straight through.
+## `on_enter`/`on_exit` optionally name runner-owned presentation or one-shot
+## stage effects. They keep stage-boundary behaviour in the data alongside the
+## goal it belongs to instead of growing id-specific branches in the runner.
 const UNLOCK_TRIGGER_TYPES := ["design", "skill", "stage", "event", "interaction"]
 
 const STAGES_1 := [
@@ -160,6 +163,8 @@ const STAGES_1 := [
 	{
 		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"goal_text": "Goal: automate nectar gathering.",
+		"on_enter": ["camera_follow_queen", "speed_multiplier:4.0"],
+		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
 		"prompts": [
 			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
 			{"id": "1.11_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Assign the Forager role with nectar selected and let her build a small store."},
