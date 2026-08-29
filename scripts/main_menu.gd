@@ -91,19 +91,34 @@ const GROUPS := [
 	{"key": "starter", "heading": "Scenarios", "note": "Low stakes scenarios as starting points for your colony."},
 ]
 
-## Centre-to-corner distance of one hex tile.
-const HEX_SIZE := 56.0
+## Centre-to-corner distance of one hex tile. 1.5x the original 56 (UI-M)
+## now that each honeycomb strip has a whole half of the left pane to
+## itself instead of sharing a single narrow scrolling column.
+const HEX_SIZE := 84.0
 ## Horizontal air between two tiles' bounding boxes, so neighbouring
 ## tiles' click areas never overlap -- see NEXTSTEPS.md for why this is a
 ## row of separated hexes rather than true edge-to-edge tessellation.
-const HEX_GAP := 14.0
+## Scaled with HEX_SIZE (UI-M) so the gap stays proportional.
+const HEX_GAP := 21.0
 ## Purely cosmetic vertical zigzag between alternating tiles in a row, so
 ## a row of two or three still reads as "honeycomb" rather than a plain
-## strip of rounded buttons.
-const HEX_STAGGER := 18.0
+## strip of rounded buttons. Scaled with HEX_SIZE (UI-M).
+const HEX_STAGGER := 27.0
 
-var panel: PanelContainer
+## Floor width for the right-hand detail pane (blurb/preset/Start), so it
+## can't compress unreadably at the game's minimum supported width the
+## way a pure 2:1 stretch ratio would. Same floor-below-a-ratio pattern
+## ui_layout.gd already uses for the in-run HUD's narrow breakpoint, sized
+## here for this pane's actual content instead of reusing a HUD-specific
+## constant that governs different panels.
+## 4 preset buttons (90 wide, 6 gap) is this pane's widest row at 378px --
+## the floor sits just above that so the preset row never has to
+## overflow or wrap mid-button.
+const DETAIL_PANE_MIN_WIDTH := 390.0
+
+var root: Control
 var backdrop: ColorRect
+var settings_button: Button
 var _detail_column: VBoxContainer
 ## level -> {"border": Polygon2D, "fill": Polygon2D, "tick": Label}
 var _hex_nodes: Dictionary = {}
@@ -131,70 +146,111 @@ func _ready() -> void:
 	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP   # swallow clicks on the world behind
 	add_child(backdrop)
 
-	panel = PanelContainer.new()
-	panel.theme = UiTheme.build_theme()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	panel.custom_minimum_size = Vector2(640, 0)
-	add_child(panel)
+	# Full-viewport control replacing the old single centred panel (UI-M) --
+	# left:right stretch ratio 2:1, matching hud.gd's existing
+	# SIZE_EXPAND_FILL + stretch-ratio pattern (UI-G) instead of fixed
+	# pixel widths, so the split holds at any window size.
+	root = Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.theme = UiTheme.build_theme()
+	add_child(root)
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(640, 600)
-	panel.add_child(scroll)
+	var split := HBoxContainer.new()
+	split.set_anchors_preset(Control.PRESET_FULL_RECT)
+	split.add_theme_constant_override("separation", 24)
+	root.add_child(split)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
-	scroll.add_child(column)
+	var left_pane := VBoxContainer.new()
+	left_pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_pane.size_flags_stretch_ratio = 2.0
+	left_pane.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left_pane.add_theme_constant_override("separation", 10)
+	split.add_child(left_pane)
+
+	var right_pane := VBoxContainer.new()
+	right_pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_pane.size_flags_stretch_ratio = 1.0
+	right_pane.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_pane.custom_minimum_size = Vector2(DETAIL_PANE_MIN_WIDTH, 0)
+	right_pane.add_theme_constant_override("separation", 10)
+	split.add_child(right_pane)
+
+	_build_settings_button(right_pane)
 
 	var title := Label.new()
 	title.text = "Meadow"
 	title.theme_type_variation = "Heading"
-	column.add_child(title)
+	left_pane.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "Choose where to start. Everything else uses your current tuning values."
 	subtitle.theme_type_variation = "Small"
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	subtitle.custom_minimum_size = Vector2(600, 0)
-	column.add_child(subtitle)
+	left_pane.add_child(subtitle)
 
+	# Challenges upper-left, Scenarios lower-left (UI-M) -- each group gets
+	# an equal EXPAND_FILL half instead of today's single stacked order.
 	for group in GROUPS:
+		var group_column := VBoxContainer.new()
+		group_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		group_column.add_theme_constant_override("separation", 6)
+		left_pane.add_child(group_column)
+
 		var heading := Label.new()
 		heading.text = group.heading
 		heading.theme_type_variation = "Heading"
-		column.add_child(heading)
+		group_column.add_child(heading)
 
 		var note := Label.new()
 		note.text = group.note
 		note.theme_type_variation = "Small"
 		note.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		note.custom_minimum_size = Vector2(600, 0)
-		column.add_child(note)
+		group_column.add_child(note)
 
-		column.add_child(_make_honeycomb_strip(group.key))
-		column.add_child(HSeparator.new())
+		# The Scenarios strip (5 tiles at 1.5x size) is wider than the left
+		# pane can offer down at MIN_SUPPORTED_WIDTH -- a horizontal
+		# scroll keeps every tile reachable and unclipped there without
+		# giving up the honeycomb's absolute-positioned stagger, rather
+		# than rebuilding it as a wrapping flow layout.
+		var strip_scroll := ScrollContainer.new()
+		strip_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		strip_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		# Vertical scrolling is off (the stagger is the only reason a strip
+		# isn't a flat row), so the ScrollContainer needs its own floor
+		# height or the surrounding VBoxContainer could squeeze it below
+		# the tiles' real height and clip the lower row instead of
+		# scrolling to it.
+		strip_scroll.custom_minimum_size.y = _hex_row_height()
+		strip_scroll.add_child(_make_honeycomb_strip(group.key))
+		group_column.add_child(strip_scroll)
+
+		if group.key != GROUPS[-1].key:
+			left_pane.add_child(HSeparator.new())
+
+	var right_scroll := ScrollContainer.new()
+	right_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_pane.add_child(right_scroll)
 
 	var detail_placeholder := Label.new()
-	detail_placeholder.text = "Choose a Challenge or Scenario above."
+	detail_placeholder.text = "Choose a Challenge or Scenario on the left."
 	detail_placeholder.theme_type_variation = "Body"
 	detail_placeholder.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	detail_placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	_detail_column = VBoxContainer.new()
 	_detail_column.add_theme_constant_override("separation", 6)
 	_detail_column.add_child(detail_placeholder)
-	column.add_child(_detail_column)
+	right_scroll.add_child(_detail_column)
 
-	column.add_child(HSeparator.new())
+	right_pane.add_child(HSeparator.new())
 
 	var close_btn := Button.new()
 	close_btn.text = "Back to the run"
 	close_btn.custom_minimum_size = Vector2(0, 30)
 	_style_button(close_btn)
 	close_btn.pressed.connect(close)
-	column.add_child(UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted."))
+	right_pane.add_child(UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted."))
 
 func open() -> void:
 	# Re-read rather than trust whatever was loaded at _ready() -- a
@@ -212,7 +268,48 @@ func close() -> void:
 	get_tree().paused = false
 	Session.menu_pending = false
 
+# --- settings ----------------------------------------------------------
+
+## Top-right Settings button (UI-M) -- opens the same settings window
+## hud.gd's in-run cog does, expanded straight to Accessibility and
+## Appearance, so a player can fix contrast/text-scale/colour-blind mode
+## before ever starting a run without this menu duplicating those controls.
+## Placed as the first row of the right pane (itself the rightmost column
+## of the full-viewport split) rather than free-floated over the top of
+## everything else, so it reserves its own space instead of risking an
+## overlap with whatever the right pane's ScrollContainer scrolls to.
+func _build_settings_button(right_pane: VBoxContainer) -> void:
+	settings_button = Button.new()
+	_style_button(settings_button)
+	settings_button.text = "Settings"
+	settings_button.custom_minimum_size = Vector2(120, 44)
+	settings_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	settings_button.pressed.connect(_on_settings_pressed)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(UI.with_info(settings_button, "Accessibility and appearance settings -- text scale, contrast, colour-blind mode and the rest of the settings window."))
+	right_pane.add_child(row)
+
+## debug_panel.gd is already built and in the "debug_panel" group by the
+## time this menu shows (main.gd builds it before the menu, so it exists
+## on a fresh boot too) -- same reach-across-the-tree pattern debug_panel.gd
+## already uses the other way for its own "Return to Main Menu" button.
+func _on_settings_pressed() -> void:
+	var panels := get_tree().get_nodes_in_group("debug_panel")
+	if panels.is_empty():
+		push_warning("No settings window in the scene to open")
+		return
+	panels[0].open_to_categories(["Accessibility", "Appearance"])
+
 # --- the honeycomb ------------------------------------------------------
+
+## Full pixel height one honeycomb strip needs -- a plain tile row plus
+## the stagger offset the odd tiles drop by. Shared by the strip itself
+## and by the ScrollContainer wrapping it (_ready()), so the two can never
+## drift out of sync.
+func _hex_row_height() -> float:
+	return HEX_SIZE * sqrt(3.0) + HEX_STAGGER
 
 func _make_honeycomb_strip(group_key: String) -> Control:
 	var stages_in_group: Array = []
@@ -351,7 +448,6 @@ func _rebuild_detail_pane(stage: Dictionary) -> void:
 	blurb.text = stage.blurb
 	blurb.theme_type_variation = "Body"
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	blurb.custom_minimum_size = Vector2(600, 0)
 	_detail_column.add_child(blurb)
 
 	if stage.group == "starter":

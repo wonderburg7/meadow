@@ -353,6 +353,32 @@ func _ready() -> void:
 	# skips the main menu entirely.
 	_apply_scenario_boot_arg()
 
+	# The main menu sits above everything and pauses the run behind it. It
+	# opens by itself the first time the game is launched, and after that
+	# only when the player asks for it from the settings window. Built and
+	# checked before any world-building below, and standalone (extends
+	# CanvasLayer, reads no `main`/world state), so it needs nothing else
+	# to exist yet -- letting a fresh boot show only the menu instead of
+	# simulating a whole hidden colony behind it (UI-L).
+	var menu := MainMenu.new()
+	menu.level_chosen.connect(_on_level_chosen)
+	menu.scenario_chosen.connect(_on_scenario_chosen)
+	add_child(menu)
+
+	# Built here rather than down with the rest of the HUD (UI-M): the
+	# menu's own Settings button reaches this panel via the "debug_panel"
+	# group to jump straight to Accessibility/Appearance, and that has to
+	# work on a fresh boot too, before the early return below. Standalone
+	# like MainMenu -- holds no `main` pointer and reaches the rest of the
+	# scene lazily via get_tree().get_nodes_in_group() at call time, not at
+	# _ready(), so building it this early is safe.
+	debug_panel = DebugPanel.new()
+	add_child(debug_panel)
+
+	if Session.menu_pending:
+		menu.open()
+		return
+
 	# The split-out files, created first so everything below can call into
 	# them. They hold no state of their own beyond a `main` pointer back
 	# here (fog_of_war and stage_gate are the exceptions -- their
@@ -488,19 +514,9 @@ func _ready() -> void:
 			scenario_performance_capture.sections,
 		)
 
-	debug_panel = DebugPanel.new()
-	add_child(debug_panel)
+	# debug_panel itself is built earlier, alongside the menu (UI-L/UI-M) --
+	# only this wiring, which needs hud to already exist, waits until here.
 	hud.queen_lay_any_cell_toggled.connect(func(value: bool): debug_panel.set_toggle("queen_lays_in_any_cell", value))
-
-	# The main menu sits above everything and pauses the run behind it.
-	# It opens by itself the first time the game is launched, and after
-	# that only when the player asks for it from the settings window.
-	var menu := MainMenu.new()
-	menu.level_chosen.connect(_on_level_chosen)
-	menu.scenario_chosen.connect(_on_scenario_chosen)
-	add_child(menu)
-	if Session.menu_pending:
-		menu.open()
 
 	colony_panel = ColonyPanel.new()
 	colony_panel.role_selection_requested.connect(input_selection._on_role_selection_requested)
@@ -623,6 +639,15 @@ func begin_winter_countdown() -> void:
 ## worst-ms figure and the sections summed.
 
 func _process(delta: float) -> void:
+	# _ready() returns early while the pre-run menu is up (UI-L) -- nothing
+	# below has been built yet, so there's nothing to sample or step.
+	# Godot still calls _process every frame regardless (process_mode is
+	# ALWAYS, precisely so this keeps running once a real session is
+	# paused mid-run) -- Session.menu_pending only stays true across
+	# this one fresh-boot window, never during an in-run "Return to Main
+	# Menu", so this guard cannot affect a live pause.
+	if Session.menu_pending:
+		return
 	_sample_fps()
 	# Headless presentation gate (CHATGPT_INSIGHTS_PLAN.md's A6) -- nothing
 	# is watching a --scenario= run, so camera following/panning, the
