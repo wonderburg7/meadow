@@ -24,6 +24,7 @@ Usage:
 """
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -34,6 +35,7 @@ import sys
 import tempfile
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +61,30 @@ DEFAULT_TIMEOUT = 300
 # wall-clock timing.
 DEFAULT_FIXED_FPS = 30
 DEFAULT_RESULT_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-results"
+_WINDOWS_HEADLESS_ERROR_MODE = 0x0001 | 0x0002  # SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX
+
+
+@contextmanager
+def _suppress_windows_crash_dialogs():
+    """Keep a crashed unattended Godot child from opening a Windows modal.
+
+    The process error mode is inherited when subprocess starts Godot. It is
+    restored immediately afterwards so the Python runner does not alter the
+    caller's normal error-dialog behaviour.
+    """
+    if os.name != "nt":
+        yield
+        return
+    kernel32 = ctypes.windll.kernel32
+    kernel32.GetErrorMode.restype = ctypes.c_uint
+    kernel32.SetErrorMode.argtypes = [ctypes.c_uint]
+    kernel32.SetErrorMode.restype = ctypes.c_uint
+    previous = kernel32.GetErrorMode()
+    kernel32.SetErrorMode(previous | _WINDOWS_HEADLESS_ERROR_MODE)
+    try:
+        yield
+    finally:
+        kernel32.SetErrorMode(previous)
 
 
 def log_dir() -> Path:
@@ -133,7 +159,7 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
     produce one.
     """
     run_id = uuid.uuid4().hex[:12]
-    cmd = [godot_path, "--headless"]
+    cmd = [godot_path, "--headless", "--disable-crash-handler"]
     if fixed_fps is not None:
         # Godot's own built-in engine flag (CHATGPT_INSIGHTS_PLAN.md's A3),
         # not one of our own -- forces every frame to advance the engine by
@@ -157,7 +183,8 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
 
     start = time.time()
     try:
-        result = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        with _suppress_windows_crash_dialogs():
+            result = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
     except subprocess.TimeoutExpired:
         print("error: scenario run exceeded %ds timeout, killed" % timeout, file=sys.stderr)
         return None
@@ -305,7 +332,8 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     reason: dict[str, Any] | None = None
     started_at = time.monotonic()
     try:
-        completed = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+        with _suppress_windows_crash_dialogs():
+            completed = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
         returncode = completed.returncode
         process_stdout = completed.stdout
         process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" %

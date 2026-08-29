@@ -65,6 +65,12 @@ a machine-specific path in repository instructions:
 .\tools\run_headless.ps1 -PythonPath C:\path\to\python.exe test_scenarios/slice1_smoke_test.json
 ```
 
+On Windows, every Godot launch is unattended: the runner disables Godot's
+crash handler and temporarily applies the inherited no-dialog error mode while
+starting the child process. An engine crash therefore returns an exit status
+and is captured in the run artefacts; it must not leave an `Application Error`
+dialog waiting for input.
+
 ## Background jobs
 
 Add `--background` when the same foreground command will take long enough
