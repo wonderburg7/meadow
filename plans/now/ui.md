@@ -1,8 +1,9 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D through UI-N | Dependency: none | Verified: 2026-08-29
+Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on re-check of
+UI-O (below) -- UI-A through UI-G, UI-D/E/F, UI-K and UI-L are confirmed and
+closed | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -536,6 +537,130 @@ brief was explicit about not truncating text ad hoc as the fallback.
 Godot boot (no new warnings or errors beyond three pre-existing, unrelated
 ones in `ui_layout.gd`/`input_selection.gd`). Still needs Dave's hands-on
 look (see `checks/ready.md`).
+
+## UI-O — 29 Aug hands-on check follow-ups (shipped 29 Aug 2026)
+
+**Scope:** Dave's 29 Aug hands-on pass through checks/ready.md's UI-A
+through UI-N confirmed UI-A, UI-B, UI-C, UI-D/E/F, UI-G, UI-K and UI-L
+outright (their check entries are removed below -- `docs/archive/
+HANDS_ON_CHECKS_ARCHIVE.md` should get them too, but this session has no
+read access to that path per `.claude/settings.json`'s deny list, so it
+wasn't touched). UI-N, UI-M, UI-I and UI-H each turned up real bugs or
+tuning asks, plus two new areas (the in-run Settings window and the main
+menu) that weren't their own slices yet. All fixed here in one pass.
+
+**Files:** `hud.gd`, `debug_panel.gd`, `gallerin_panel.gd`, `ui_layout.gd`,
+`main_menu.gd`, `scripts/hex_hit_area.gd` (new).
+
+**UI-N -- row 1 touched the settings cog; row 2 tooltips too long.**
+Real bug, not a rendering illusion: `top_right_bar.offset_right` (and the
+goal shelf's matching offset, and `set_settings_button_width`'s live
+update) computed `-(cog_width + TOP_BAR_BUTTON_GAP)`, but the cog itself
+already sits `TOP_BAR_BUTTON_GAP` in from the viewport's own right edge
+(`debug_panel.gd`'s `toggle_button.offset_right`) -- the two terms
+cancelled exactly, so the bar's right edge landed flush on the cog's left
+edge with zero visible gap in *both* rows. Row 2's icon buttons happened
+to mask it (generous internal icon padding); row 1's small glyph buttons
+didn't. Fixed by reserving `TOP_BAR_BUTTON_GAP` twice in the bar/goal-shelf
+formula -- one to clear the cog's own margin, one for the actual visible
+gap. Row 2's on-hover tooltips are now short ("Opens the Nursery window.")
+per Dave's ask; the full explanation stays on each button's own "i" info
+badge, unchanged.
+
+**UI-M -- settings panel opened invisibly behind the menu; hexagons now
+touch.** `main_menu.gd`'s CanvasLayer (`layer = 20`) sits above
+`debug_panel.gd`'s (`layer = 10`), so opening the settings window from the
+menu's own Settings button drew it *behind* the menu's backdrop --
+invisible. `debug_panel.gd::_apply_layer_for_context()` now raises its
+layer to 21 (above the menu) only while `main_menu` is actually visible,
+leaving the normal in-run ordering (below gallerin/menu/game-over)
+untouched otherwise. Separately, the honeycomb now genuinely tessellates:
+`HEX_STEP_X := HEX_SIZE * 1.5` (was `HEX_SIZE * 2.0 + HEX_GAP`, a
+deliberately separated row) and the odd-tile vertical offset is now
+`HEX_SIZE * sqrt(3.0) / 2.0` (was a flat cosmetic `HEX_STAGGER`) -- the
+standard hex-grid step for `shapes.gd::hexagon_points`' left/right-vertex
+hexagon, so each tile's slanted edge meets its neighbour's exactly.
+Touching tiles' *bounding boxes* now overlap even though the hexagons
+themselves only touch, so the old rectangular `Button` hit test would let
+one tile steal clicks meant for its neighbour in the overlapping corners
+-- `scripts/hex_hit_area.gd` (new) is a `Button` subclass overriding
+`_has_point()` against the real hexagon polygon
+(`Geometry2D.is_point_in_polygon`), giving each tile an exact click
+region regardless of bbox overlap.
+
+**UI-I -- bubble still overlapped the command tray at a narrow width; text
+scale not live.** `ui_layout.gd::command_tray_max_width()` used to skip
+subtracting the Gallerin reserve entirely below `NARROW_BREAKPOINT`
+(intending a "full-width strip below" that was never actually built), so
+narrowing the window *removed* the tray's reserve for the bubble instead
+of just shrinking it -- the exact overlap Dave saw. It now always
+subtracts `gallerin_reserve_width(viewport_width)`, narrow or not (see
+UI-H below for the rest of this function's rework). Text scale: the
+bubble's font-size override was set once in `_build_bubble()` and only
+that Session.text_scale value ever applied again -- unlike most labels,
+which read a `theme_type_variation` that `UiTheme.refresh()` updates
+globally, this one bypasses the theme system with a direct override, so
+nothing re-applied it. `gallerin_panel.gd::_process()` (already running
+every frame for the prompt scheduler) now polls `Session.text_scale`
+against a stored `_last_text_scale` and re-applies the override on
+change -- cheap, and correct whether the message changes or the setting
+does.
+
+**UI-H -- summary panel's cog left empty space at the top; width formula
+reworked.** The panel's own configuration cog used to sit in a row by
+itself above `identity_label` (the bee-name line), pushing every field
+down for no reason -- it's now inline with `identity_label` in one
+`HBoxContainer` (the label `SIZE_EXPAND_FILL`, the cog after it), removing
+that empty row entirely. The width split itself is reworked per Dave's
+tuning-pass numbers: `ui_layout.gd::command_tray_max_width()` no longer
+takes `selection_tray_width` as an input (that direction was backwards --
+see below) and its multiplier is 0.77, not 0.7 (10% more, as asked).
+`selection_tray_width()` is no longer a fixed per-breakpoint constant; it
+now fills whatever room is left between the panel's own fixed left margin
+(`SELECTION_TRAY_LEFT_MARGIN`, matching `hud.gd`'s
+`selection_panel.offset_left`) and the command tray's reserved zone, minus
+a `SELECTION_TRAY_GAP` of 16px -- the tray is centred, so its reserved
+zone's left edge is symmetric about the viewport's centre, which is what
+`selection_tray_width()` derives from. `SELECTION_TRAY_RESERVE`/`_NARROW`
+(the old `SELECTION_TRAY_WIDTH` constants) still exist, now only as
+`command_tray_max_width`'s own nominal budget for the summary panel's
+zone, not the panel's actual rendered width. First-pass numbers again, per
+UI-H's original framing -- if the summary panel reads too wide on a very
+large screen, that's a further tuning note, not a bug.
+
+**Settings window (new) -- opened underneath the HUD buttons; "Show info
+icons" forced an unwanted horizontal scroll.** `debug_panel.gd`'s
+`panel.offset_top` was a flat `40`, clearing only the cog's own single-row
+height, not the HUD's full two-row bar -- it now clears both rows plus a
+`TOP_BAR_BUTTON_GAP` gap, matching the horizontal gap between buttons per
+Dave's ask. The panel/scroll's fixed width went 300 -> 320
+(`PANEL_WIDTH`), and the scroll got `SCROLL_MODE_DISABLED` on its
+horizontal axis: `UI.info_badge`'s badges are invisible by default
+(`Session.show_info_badges`), so turning that setting on adds ~19px to
+every row at once, which was enough to push some rows' toggle controls
+past the old 300px and into a scrollbar rather than the room that was
+actually available.
+
+**Main menu (new) -- Settings button read as plain text; placeholder text
+printed one letter per line.** The Settings button now shows the same "⚙"
+glyph the in-run cog uses (`theme_type_variation = "Heading"`) instead of
+a text label, so the two read as one control. The right pane's
+`ScrollContainer` didn't stretch its child to the pane's width (Godot
+sizes a `ScrollContainer`'s child to its own minimum size unless
+horizontal scrolling is explicitly disabled), so the placeholder Label's
+autowrap computed against almost no width and printed one character per
+line -- `right_scroll.horizontal_scroll_mode = SCROLL_MODE_DISABLED` plus
+`_detail_column.size_flags_horizontal = SIZE_EXPAND_FILL` fixes it for
+the placeholder and every later blurb/preset row alike.
+
+`source_checks.py` and `balance_tests.py` pass; `FUNCTION_MAP.md` and
+`check_docs.py` were regenerated/re-run clean. Confirmed with two headless
+Godot boots (`Godot.exe --headless --path .`, fresh and with
+`--scenario=test_scenarios/bee_movement_smoke_test.json`) -- no script or
+runtime errors on either path, exercising the fresh-boot main menu (hex
+tiles, settings button, text-wrap fix) and the in-run HUD/Gallerin/settings
+paths respectively. Still needs Dave's hands-on look at every item above
+-- see `checks/ready.md`.
 
 ## Deferred decisions
 

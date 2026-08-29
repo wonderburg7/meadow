@@ -23,6 +23,12 @@ const SaveGame = preload("res://scripts/save_game.gd")
 const Prerequisites = preload("res://scripts/prerequisites.gd")
 const Hud = preload("res://scripts/hud.gd")
 
+## Fixed panel/scroll width -- widened from 300 (Dave's 29 Aug report:
+## turning on "Show info icons" pushed some rows' toggle controls past
+## 300 and into an unwanted horizontal scrollbar) to comfortably fit a
+## row's longest label plus its now-visible info badge.
+const PANEL_WIDTH := 320.0
+
 ## Collection and section order here is the order they appear in the panel.
 const COLLECTIONS := [
 	{
@@ -1067,7 +1073,7 @@ func _ready() -> void:
 	toggle_button.custom_minimum_size = Vector2(Hud.TOP_BAR_BUTTON_WIDTH, Hud.TOP_BAR_CONTROL_HEIGHT)
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	toggle_button.offset_right = -8
+	toggle_button.offset_right = -Hud.TOP_BAR_BUTTON_GAP
 	toggle_button.offset_top = 8
 	toggle_button.tooltip_text = "Open the settings window. Changing a value here affects bees and flowers created from then on -- press Restart Run to rebuild the whole world with the new numbers."
 	toggle_button.pressed.connect(_toggle_panel)
@@ -1094,14 +1100,25 @@ func _ready() -> void:
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	panel.offset_right = -8
-	panel.offset_top = 40
-	panel.custom_minimum_size = Vector2(300, 0)
+	panel.offset_right = -Hud.TOP_BAR_BUTTON_GAP
+	# Clears the HUD's full two-row button bar (not just this cog's own
+	# single-row height) plus a gap the same size as the buttons' own
+	# horizontal gap -- previously a flat 40, which only cleared row 1 and
+	# left the panel opening underneath row 2 (Dave's 29 Aug report).
+	panel.offset_top = 8 + Hud.TOP_BAR_CONTROL_HEIGHT * 2.0 + Hud.TOP_BAR_ROW_SEPARATION + Hud.TOP_BAR_BUTTON_GAP
+	panel.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	panel.visible = false
 	add_child(panel)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(300, min(560.0, vp.y - 80.0))
+	scroll.custom_minimum_size = Vector2(PANEL_WIDTH, min(560.0, vp.y - 80.0))
+	# A row's info badge (UI.info_badge) is invisible by default
+	# (Session.show_info_badges); PANEL_WIDTH already accounts for its
+	# footprint once shown, but disabling horizontal scroll is a cheap
+	# second guard so a slightly-too-long label clips rather than
+	# stranding a row's toggle off to the right behind a scrollbar
+	# (Dave's 29 Aug report on "Show info icons").
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
 
 	var column := VBoxContainer.new()
@@ -1183,6 +1200,7 @@ func _set_open(header: Button, body: Control, label: String, open: bool) -> void
 ## panel. Lets main_menu.gd's Settings button (UI-M) reuse this panel's
 ## existing Accessibility/Appearance rows instead of duplicating them.
 func open_to_categories(categories: Array) -> void:
+	_apply_layer_for_context()
 	panel.visible = true
 	for collection in COLLECTIONS:
 		var categories_here: Array = collection.categories
@@ -1394,10 +1412,23 @@ func _on_load_pressed() -> void:
 	get_tree().reload_current_scene()
 
 func _toggle_panel() -> void:
+	_apply_layer_for_context()
 	panel.visible = not panel.visible
 	# The cog itself doesn't change state -- the panel opening or closing
 	# is feedback enough, the way it wasn't when this button was just a
 	# label reading "Tuning".
+
+## Normally draws just above the HUD (layer 10, below gallerin/main_menu/
+## game_over) -- but main_menu.gd's own Settings button (UI-M) opens this
+## same panel while the menu itself is visible, and the menu's CanvasLayer
+## (20) sits above this one, so the panel used to open invisibly behind
+## the menu's own background (Dave's 29 Aug report). Raised above the menu
+## only while it is actually visible, so the normal in-run ordering is
+## unaffected.
+func _apply_layer_for_context() -> void:
+	var menus := get_tree().get_nodes_in_group("main_menu")
+	var menu_visible: bool = not menus.is_empty() and menus[0].visible
+	layer = 21 if menu_visible else 10
 
 func _make_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()

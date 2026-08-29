@@ -37,6 +37,12 @@ var _bubble_label: Label
 var _hovering_icon: bool = false
 var _hovering_bubble: bool = false
 var _last_message: String = ""
+## The bubble's font-size override (unlike most labels, which read a
+## theme_type_variation that UiTheme.refresh() updates for the whole game
+## at once) is only ever set explicitly, so it needs its own live check --
+## see _process(). Dave's 29 Aug report: the bubble's text stayed the old
+## size after changing the text-scale setting mid-session.
+var _last_text_scale: float = 1.0
 
 # --- prompt scheduling ----------------------------------------------
 ## Each queued entry: {"id": String, "text": String, "delay": float,
@@ -57,6 +63,7 @@ func _ready() -> void:
 
 	_build_icon()
 	_build_bubble()
+	_last_text_scale = Session.text_scale
 	visible = Session.gallerin_enabled
 	get_viewport().size_changed.connect(_apply_layout)
 	_apply_layout()
@@ -64,6 +71,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_stage_elapsed += delta
 	_fire_due_prompts()
+	if Session.text_scale != _last_text_scale:
+		_last_text_scale = Session.text_scale
+		_apply_bubble_font_size()
 
 # --- building the UI -------------------------------------------------
 
@@ -129,8 +139,8 @@ func _build_bubble() -> void:
 	_bubble_label = Label.new()
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 28.0, 0)
-	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
 	column.add_child(_bubble_label)
+	_apply_bubble_font_size()
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -161,6 +171,9 @@ func _apply_layout() -> void:
 	var width: float = _ui_layout().gallerin_bubble_width(viewport_width)
 	_bubble.custom_minimum_size.x = width
 	_bubble_label.custom_minimum_size.x = width - 28.0
+
+func _apply_bubble_font_size() -> void:
+	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
 
 func _on_icon_pressed() -> void:
 	if _last_message.is_empty():
