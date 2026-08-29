@@ -107,6 +107,33 @@ its check. Move a confirmed or superseded entry to
       rows with a visible gap at every window size and text scale, never
       overlapping a button (UI-F). See UI-D/E/F in `plans/now/ui.md`.
 
+### Challenge 1 Slice 8 -- acceptance-playthrough fixes (8a/8b/8d/8e)
+- [ ] **8a (full-storage bug, any forager):** fill every compatible cell in
+      the comb, then let a forager collect a load she has nowhere to put.
+      Confirm she keeps the load and waits (does not silently lose it and
+      loop back to the flower) until a cell frees up or a new one is built,
+      then deposits normally.
+- [ ] **8b (manual nectar collection):** during Challenge 1 stages 1.6-1.10,
+      let the queen fill up at a flower. Confirm she stays at the flower
+      instead of auto-flying home, and only travels home once you
+      right-click the hive marker.
+- [ ] **8c (re-verify, no code change):** with 8b fixed, replay the
+      Bundle D/E checks below and confirm `harvest_deposited` /
+      `second_cell_built` still only fire on a genuine deposit/build-finish,
+      not on arrival or full load. Flag if this still misbehaves -- it would
+      be new information, not the bug 8c originally suspected.
+- [ ] **8d (backup-role guard):** during Challenge 1, open the queen's "If
+      idle" backup-role menu and confirm Comb Worker is absent (only
+      Forager/Egg Layer/Nurse offered). If reachable at all, confirm picking
+      a backup role never starts the auto hex-spiral cell-building loop.
+- [ ] **8e (nectar-foraging presentation):** at stage 1.11, assign Forager/
+      Nectar and confirm the camera starts following the queen and the game
+      speed jumps to 4x, both exactly once; once the nectar cell reads full,
+      confirm foraging stops, camera-follow and speed both reset to normal
+      exactly once (not every frame), and the queen stands idle beside the
+      full cell awaiting the next command. See `plans/now/challenge-1.md`
+      Slice 8.
+
 ### Challenge 1 Slices 1-2 -- role-panel hit areas, Poppy removal, manual cell building
 - [ ] Play Challenge 1 from the start through building the first two cells
       (1.5 and 1.12). Confirm: the role-panel "Change to..." control responds

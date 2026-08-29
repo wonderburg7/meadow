@@ -8,18 +8,14 @@ on demand in `plans/archive/`.
 
 ## Next up
 
-1. **Current — Challenge 1 Slice 8: fix acceptance-playthrough findings.**
-   `plans/now/challenge-1.md`'s Slice 7 hands-on pass (29 Aug 2026) found
-   six bugs, now scoped as Slice 8: a shared full-storage bug that silently
-   discards a forager's carried resource (8a, affects ordinary play too,
-   not just Challenge 1), the queen auto-flying home during manual nectar
-   collection instead of waiting at the flower (8b), an unguarded "If idle"
-   backup-role menu letting the queen's secondary role become Comb Worker
-   and auto-build the whole hex spiral (8d), and the still-unbuilt
-   camera-follow/4x-speed presentation for automatic nectar foraging (8e).
-   Land 8a first (everything else depends on foraging not silently losing
-   resource), then 8b/8d (independent of each other), then 8e. Re-run
-   Slice 7's checklist only once Slice 8 is done.
+1. **Current — Challenge 1 Slice 7: resume the acceptance-playthrough
+   checklist.** Slice 8 (all four code changes: 8a's shared full-storage
+   fix, 8b's manual-collection wait-at-flower fix, 8d's backup-role guard,
+   8e's camera-follow/4x-speed presentation) is merged to master. 8c
+   proposed no code change and is re-verified live as part of this pass.
+   Re-run `plans/now/challenge-1.md`'s Slice 7 checklist (boot the project,
+   play Challenge 1 start to finish against the "Acceptance checks" list,
+   then the copy/doc pass) now that Slice 8's fixes are in.
 2. **Successor — UI-D through UI-N top-bar, tray-width, Gallerin-bubble,
    Challenge-1 button, pre-run-menu and top-bar-gap work, needs Dave's
    hands-on confirmation.** All eleven implemented in `plans/now/ui.md`:

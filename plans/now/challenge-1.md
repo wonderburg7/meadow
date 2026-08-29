@@ -1,10 +1,10 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: implement Slice 8
-(acceptance-playthrough findings below), then resume Slice 7's checklist —
-Slices 1-6's code is merged, Slice 7's playthrough surfaced six bugs now
-scoped as Slice 8 | Dependency: none | Verified: 2026-08-29
+Status: active | Owner: Dave / Claude Code | Next: resume Slice 7's
+acceptance-playthrough checklist — Slices 1-6 and Slice 8 (8a/8b/8d/8e) are
+merged to master; 8c proposed no code change and is re-verified live as part
+of Slice 7 | Dependency: none | Verified: 2026-08-29
 
 Supersedes the old Bundle H (copy/doc pass). That pass is folded into Slice 7
 below, run *after* the mechanics change, not before — updating docs to match

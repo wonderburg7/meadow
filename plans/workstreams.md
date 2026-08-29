@@ -19,7 +19,3 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
-| codex/challenge1-slice8a-full-storage (`.worktrees/challenge1-slice8a`) | full-storage bug that silently discards a forager's carried resource | Codex | in progress | — | `plans/now/challenge-1.md` Slice 8a |
-| codex/challenge1-slice8b-manual-collection (`.worktrees/challenge1-slice8b`) | queen waits at the flower during manual nectar collection instead of auto-flying home | Codex | in progress | 8a lands first | `plans/now/challenge-1.md` Slice 8b |
-| codex/challenge1-slice8d-role-guard (`.worktrees/challenge1-slice8d`) | guard the "If idle" backup-role menu so the queen's backup role can't become Comb Worker | Codex | in progress | 8a lands first | `plans/now/challenge-1.md` Slice 8d |
-| codex/challenge1-slice8e-forage-presentation (`.worktrees/challenge1-slice8e`) | camera-follow/4x-speed presentation for automatic nectar foraging | Codex | in progress | 8a, 8b, 8d land first | `plans/now/challenge-1.md` Slice 8e |
