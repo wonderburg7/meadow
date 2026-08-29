@@ -766,6 +766,11 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		return
 
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
+		# A full comb cannot receive this trip yet.  As with a miner that
+		# remembers no work, avoid repeating the same global search on every
+		# think tick until a cell mutation makes a new answer possible.
+		if bee._deposit_blocked_epoch == bee.hive.index_epoch:
+			return
 		bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
 		if bee.target_cell == null:
 			if bee.hive.cells.is_empty():
@@ -776,11 +781,9 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 				# here (still carrying it) and recheck next frame, so a
 				# cell finishing mid-wait picks her straight back up.
 				return
-			# comb is full -- the load is lost, which is the signal that
-			# the hive needs more cells built
-			bee.current_load = 0.0
-			bee.current_load_type = ""
-			bee.state = State.IN_HIVE_TO_EXIT
+			# Keep the load until a cell changes.  Discarding it here made a
+			# full comb silently erase every later foraging trip.
+			bee._deposit_blocked_epoch = bee.hive.index_epoch
 			return
 
 	var approach := approach_cell(bee, bee.target_cell, delta)
