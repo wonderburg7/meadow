@@ -1020,6 +1020,13 @@ var load_btn: Button
 ## category name -> the VBox holding its rows, so the header button can
 ## show and hide it
 var sections: Dictionary = {}
+## category/collection name -> its header Button, so open_to_categories()
+## (main_menu.gd's Settings button, UI-M) can expand a section the same
+## way a click would, arrow glyph included, without a second copy of the
+## open/close logic.
+var section_headers: Dictionary = {}
+var collection_bodies: Dictionary = {}
+var collection_headers: Dictionary = {}
 
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
@@ -1031,6 +1038,10 @@ func _style_button(button: BaseButton) -> BaseButton:
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 10   # draw on top of the world
+	# so main_menu.gd's Settings button (UI-M) can reach open_to_categories()
+	# without the two needing to know about each other directly -- same
+	# pattern as "main_menu" group used the other way by _on_main_menu_pressed().
+	add_to_group("debug_panel")
 
 	# Syncs Godot's own tooltip timer to whatever Session carried in from
 	# the last time it was changed -- harmless while Session always
@@ -1145,12 +1156,12 @@ func _make_collection(collection_name: String, categories: Array, start_open: bo
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 30)
 	header.theme_type_variation = "Body"
-	header.pressed.connect(func():
-		body.visible = not body.visible
-		header.text = "%s  %s" % ["▾" if body.visible else "▸", collection_name]
-	)
+	header.pressed.connect(func(): _set_open(header, body, collection_name, not body.visible))
 	wrapper.add_child(header)
 	wrapper.add_child(body)
+
+	collection_bodies[collection_name] = body
+	collection_headers[collection_name] = header
 
 	for category in categories:
 		var rows := _rows_in(category)
@@ -1159,6 +1170,32 @@ func _make_collection(collection_name: String, categories: Array, start_open: bo
 		body.add_child(_make_section(category, rows, false))
 
 	return wrapper
+
+## Shared by every collapsible header (collection or section) so a click
+## and a programmatic open (open_to_categories()) update the same two
+## things -- visibility and the header's arrow glyph -- the same way.
+func _set_open(header: Button, body: Control, label: String, open: bool) -> void:
+	body.visible = open
+	header.text = "%s  %s" % ["▾" if open else "▸", label]
+
+## Expands the named collection(s) and, within them, the named category
+## section(s) -- e.g. ["Accessibility", "Appearance"] -- and shows the
+## panel. Lets main_menu.gd's Settings button (UI-M) reuse this panel's
+## existing Accessibility/Appearance rows instead of duplicating them.
+func open_to_categories(categories: Array) -> void:
+	panel.visible = true
+	for collection in COLLECTIONS:
+		var categories_here: Array = collection.categories
+		var contains_target := false
+		for cat in categories:
+			if categories_here.has(cat):
+				contains_target = true
+				break
+		if contains_target and collection_headers.has(collection.name):
+			_set_open(collection_headers[collection.name], collection_bodies[collection.name], collection.name, true)
+	for cat in categories:
+		if section_headers.has(cat):
+			_set_open(section_headers[cat], sections[cat], cat, true)
 
 ## A clickable heading with its rows underneath, hidden until the heading
 ## is clicked.
@@ -1175,12 +1212,10 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 24)
 	header.theme_type_variation = "Small"
-	header.pressed.connect(func():
-		body.visible = not body.visible
-		header.text = "%s  %s" % ["▾" if body.visible else "▸", category]
-	)
+	header.pressed.connect(func(): _set_open(header, body, category, not body.visible))
 	wrapper.add_child(header)
 	wrapper.add_child(body)
+	section_headers[category] = header
 
 	var ordered_entries := []
 	# Preserve the authored order inside each group while putting the most

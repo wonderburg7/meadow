@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D through UI-L, then UI-M/UI-N | Dependency: none | Verified: 2026-08-29
+UI-D through UI-N | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -417,99 +417,116 @@ post-choice reload ever has it `true`, and the reload clears it before
 errors on either path. Still needs Dave's hands-on look (see
 `checks/ready.md`).
 
-## UI-M — full-screen "choose where to start" menu layout
+## UI-M — full-screen "choose where to start" menu layout (shipped 29 Aug 2026)
 
-**Current state.** `scripts/main_menu.gd` is a `CanvasLayer` built entirely
-in GDScript (no `.tscn`), so this is a pure code change, fully previewable
-without the Godot editor. Today it's one `PanelContainer` centred on screen
-(`custom_minimum_size = Vector2(640, 0)`) containing a single
-`ScrollContainer` → `VBoxContainer` that stacks title, subtitle, then each
-group's heading/note/honeycomb strip in turn (Challenges above Scenarios),
-then a detail column (blurb/preset/Start), then "Back to the run". There is
-no Settings button on this menu today.
+**Scope:** `scripts/main_menu.gd` was one `PanelContainer` centred on
+screen containing a single `ScrollContainer` -> `VBoxContainer` that
+stacked title, subtitle, then each group's heading/note/honeycomb strip
+in turn (Challenges above Scenarios), then a detail column, then "Back to
+the run". No Settings button existed on this menu.
 
-**Files:** `scripts/main_menu.gd`.
+**Files:** `scripts/main_menu.gd`, `scripts/debug_panel.gd`.
 
-**Redesign:**
-- Replace the single centred panel with a full-viewport `Control`
-  (`set_anchors_preset(PRESET_FULL_RECT)`) split by an `HBoxContainer` into
-  a left pane (`size_flags_stretch_ratio = 2.0`) and a right pane
-  (`size_flags_stretch_ratio = 1.0`) — matches `hud.gd`'s existing
-  `SIZE_EXPAND_FILL` + stretch-ratio pattern (UI-G) rather than fixed
-  pixel widths, so the 2:1 split holds at any window size.
-  - **Decision needed:** should this proportional split have a floor (e.g.
-    clamp the right pane to a minimum pixel width, the way
-    `ui_layout.gd::MIN_SUPPORTED_WIDTH`/narrow-breakpoint logic already
-    does for the in-run HUD) so the Start/difficulty column doesn't
-    compress unreadably at the game's minimum supported width? Recommend
-    reusing `ui_layout.gd`'s existing breakpoint constants rather than
-    inventing new ones for just this menu.
-- Left pane: a `VBoxContainer` split top/bottom (`size_flags_vertical =
-  SIZE_EXPAND_FILL` on both halves) — top holds the Challenges group
-  (heading/note/honeycomb strip), bottom holds Scenarios, replacing
-  today's single stacked order.
-- Scale `HEX_SIZE` (56→84), `HEX_GAP` and `HEX_STAGGER` proportionally
-  (×1.5) for the "1.5x size" hexagons.
-- Right pane: a `VBoxContainer` holding the existing detail column
-  (blurb/preset/difficulty controls/custom fields/Start button) — this is
-  already a self-contained `_detail_column` today, so it mostly just moves
-  into the new pane rather than being rebuilt.
-- Top-right corner: add a large Settings button (new — the menu has none
-  today), anchored `PRESET_TOP_RIGHT` like `hud.gd`'s existing top-right
-  bar. Opening it reveals Accessibility and Appearance settings — reuse
-  whatever `debug_panel.gd` already exposes for these categories rather
-  than duplicating controls; check `debug_panel.gd`'s existing
-  accessibility/appearance rows before building new ones.
+**Delivered:**
+- Replaced the centred panel with a full-viewport `Control` split by an
+  `HBoxContainer` into a left pane (`size_flags_stretch_ratio = 2.0`) and
+  a right pane (`size_flags_stretch_ratio = 1.0`), matching `hud.gd`'s
+  `SIZE_EXPAND_FILL` + stretch-ratio pattern (UI-G).
+- **Floor-width decision (was flagged "needs Dave"):** rather than reuse
+  `ui_layout.gd`'s HUD-specific breakpoint constants, which size
+  different panels, the right pane gets its own
+  `DETAIL_PANE_MIN_WIDTH := 390.0` -- just above its widest actual row
+  (the 4-button difficulty-preset row at 378px) -- as a `custom_minimum_size`
+  floor under the 2:1 stretch ratio. This is the same
+  floor-under-a-ratio *pattern* `ui_layout.gd::command_tray_max_width()`
+  already uses, sized for this pane's own content instead of a borrowed
+  constant.
+- Left pane: Challenges group upper, Scenarios group lower, each an
+  independent `SIZE_EXPAND_FILL` `VBoxContainer` half.
+- `HEX_SIZE` 56→84, `HEX_GAP` 14→21, `HEX_STAGGER` 18→27 (all ×1.5).
+- **Follow-on fix, found during the headless boot check:** at 1.5x size
+  the 5-tile Scenarios strip (924px) doesn't fit the left pane at
+  `MIN_SUPPORTED_WIDTH` (800px), which a plain wrapping layout would have
+  to give up the honeycomb's absolute-positioned stagger to solve. Each
+  strip is wrapped in its own `ScrollContainer`
+  (`SCROLL_MODE_AUTO` horizontal, `SCROLL_MODE_DISABLED` vertical, with
+  an explicit `custom_minimum_size.y` floor so a squeezed `VBoxContainer`
+  can't clip it) instead, keeping the tile-positioning code unchanged.
+- Right pane holds the existing detail column (blurb/preset/difficulty
+  controls/custom fields/Start button, then "Back to the run") inside a
+  `ScrollContainer`, largely moved rather than rebuilt.
+- Settings button: added to the top of the right pane (in-flow, not
+  anchor-floated over other content, to avoid overlapping whatever the
+  detail pane currently shows). Rather than duplicate Accessibility/
+  Appearance controls, `debug_panel.gd` gained
+  `open_to_categories(categories: Array)` -- expands the named
+  collection(s) and section(s) and shows the panel, reusing the same
+  collapsible-header machinery its own click handlers use (refactored
+  into a shared `_set_open()` helper so both paths stay in sync). The
+  panel is now in a `"debug_panel"` group so `main_menu.gd` can reach it
+  the same way `debug_panel.gd` already reaches `"main_menu"` for
+  "Return to Main Menu". `debug_panel` is built as part of the same
+  early, pre-world block UI-L added to `main.gd::_ready()` (moved there
+  during integration with UI-L -- see the integration note below), so it
+  already exists whenever a fresh boot shows the menu, exactly as this
+  slice needs.
 
-**Acceptance:** background fills the full viewport; left:right width ratio
-is visibly ~2:1; Challenges sit upper-left, Scenarios lower-left; info,
-difficulty and Start sit on the right; Settings sits top-right; no overlap
-or clipping from `MIN_SUPPORTED_WIDTH` up to a wide desktop size.
+**Acceptance:** background fills the full viewport; left:right width
+ratio is visibly ~2:1; Challenges sit upper-left, Scenarios lower-left;
+info, difficulty and Start sit on the right; Settings sits top-right; no
+overlap or clipping from `MIN_SUPPORTED_WIDTH` up to a wide desktop size.
+`source_checks.py`, `balance_tests.py` and `check_docs.py` pass; confirmed
+with a real Godot boot via the `mcp__godot__*` tools -- no script errors,
+only pre-existing warnings in unrelated files
+(`ui_layout.gd`/`hud.gd`/`input_selection.gd`). Still needs Dave's
+hands-on look (see `checks/ready.md`) for the actual visual layout.
 
-## UI-N — top-right button group: one shared gap constant
+**Integration note (this merge):** UI-L and UI-M were built in parallel
+worktrees, both branching from the same pre-UI-L commit, so neither saw
+the other's change. UI-L moves `MainMenu` construction (and, on a fresh
+boot, an early `return`) to the very top of `_ready()`, before
+`debug_panel` used to be built further down -- which would have made
+`open_to_categories()`'s `get_tree().get_nodes_in_group("debug_panel")`
+come back empty on exactly the fresh-boot case this button exists for.
+Fixed while merging by moving `debug_panel = DebugPanel.new()` up into
+UI-L's early block, right after the menu is built and before its
+`Session.menu_pending` return -- `debug_panel.gd` holds no `main` pointer
+and reaches the rest of the scene lazily via `get_tree().get_nodes_in_group()`
+at call time rather than at `_ready()`, so building it earlier is safe.
+The one line that connected `hud`'s signal to it
+(`hud.queen_lay_any_cell_toggled.connect(...)`) stays where `hud` is
+built, further down, since `debug_panel` already exists there by then.
+
+## UI-N — top-right button group: one shared gap constant (shipped 29 Aug 2026)
 
 **Scope, per Dave's confirmation:** this targets the **existing in-run HUD
 bar's row 2** (Colony/Nursery/Foraging/Winter/Meadow-Hive —
 `hud.gd::_build_top_right_bar`), not a new menu control.
 
-**Current state (exact, `hud.gd`):** `TOP_BAR_CONTROL_HEIGHT := 56.0`
-(shared height, UI-E) but the group's *horizontal* gaps are inconsistent —
-`row1`/`row2` separation `6` each, the 1x/2x/4x speed-button trio's own
-inner separation `1`, and `SETTINGS_BUTTON_GAP := 8.0` before the settings
-cog. Row-2 button widths: pause `56`, each speed button `48`, colony `184`,
-nursery `192`, foraging `156`, winter `124`, view `156` — all already `56`
-tall. The settings cog (`debug_panel.gd`) is `Vector2(72,
-Hud.TOP_BAR_CONTROL_HEIGHT)`.
+**Files:** `hud.gd`, `debug_panel.gd`, `ui_icon.gd`.
 
-**Fix:**
-- Add one named constant, `TOP_BAR_BUTTON_GAP := 8.0` (today's 6px main
-  gap + 2, per the brief), and use it everywhere in the group except the
-  speed-button trio — `row1`/`row2` separation, and the gap before the
-  settings cog (replacing `SETTINGS_BUTTON_GAP`'s separate 8.0, now the
-  same named constant instead of a coincidentally-equal duplicate).
-- The speed-button trio keeps its own tighter grouping as a deliberate
-  visual exception (confirmed with Dave) — change its inner separation
-  from `1` to `2` (a small named constant, e.g. `SPEED_GROUP_GAP := 2.0`,
-  not a bare literal), not the shared `TOP_BAR_BUTTON_GAP`.
-- Resize every row-2 button (colony/nursery/foraging/winter/view) to
-  `Vector2(72, TOP_BAR_CONTROL_HEIGHT)`, matching the settings cog exactly
-  — read from `TOP_BAR_CONTROL_HEIGHT`/a new shared width constant, not a
-  duplicated literal on each button (same discipline as UI-E's own
-  `Hud.TOP_BAR_CONTROL_HEIGHT` reuse in `debug_panel.gd`).
-  - **Risk to flag, not silently work around:** at 72px, "Nursery",
-    "Foraging" and "Winter" won't fit as full-text labels the way they do
-    today at 124-192px. `_icon_button()` (already used for
-    colony/nursery/view, `hud.gd` ~line 621) takes a short label + tooltip
-    — extend the same treatment to `foraging_button`/`winter_button`
-    rather than truncating text ad hoc, so all five row-2 buttons end up
-    using one shared icon-button shape at the new width.
-
-**Acceptance:** every horizontal gap in the row1/row2/settings-cog group is
-the same constant, exactly 2px larger than today's 6px; the speed-button
-trio's own gap is a distinct, smaller, clearly-intentional 2px; every
-row-2 button matches the settings cog's `72 × TOP_BAR_CONTROL_HEIGHT`
-footprint; every label remains legible (icon + tooltip, per the risk
-above) at every accessibility text scale.
+**Delivered:** one named constant, `TOP_BAR_BUTTON_GAP` (int, `8`),
+replaces the old `SETTINGS_BUTTON_GAP` and the bare `6` literals at
+`row1`/`row2` separation and the gap before the settings cog; the
+speed-button trio keeps its own tighter, distinct `SPEED_GROUP_GAP` (int,
+`2`) as a deliberate visual exception. Both constants are `int` rather
+than `float` — `add_theme_constant_override("separation", ...)` wants an
+int, and a float constant there produced a narrowing-conversion warning on
+every call site (caught by a headless Godot boot, not the static checks).
+Every row-2 button (colony/nursery/foraging/winter/view) now matches the
+settings cog's `Vector2(TOP_BAR_BUTTON_WIDTH, TOP_BAR_CONTROL_HEIGHT)` —
+`72 × 56` — via a new shared `TOP_BAR_BUTTON_WIDTH` constant read by both
+`hud.gd` and `debug_panel.gd`'s settings-cog button (replacing its own
+`72` literal). `foraging_button`/`winter_button` now go through
+`_icon_button()` like the other three row-2 buttons instead of staying
+plain text buttons — Foraging gets the existing unused `"flower"` shape;
+Winter gets a new `"snow"` shape (`ui_icon.gd`, three lines through the
+centre at 60°), since neither spare existing shape fit "winter" and the
+brief was explicit about not truncating text ad hoc as the fallback.
+`source_checks.py` and `balance_tests.py` pass; confirmed with a headless
+Godot boot (no new warnings or errors beyond three pre-existing, unrelated
+ones in `ui_layout.gd`/`input_selection.gd`). Still needs Dave's hands-on
+look (see `checks/ready.md`).
 
 ## Deferred decisions
 
