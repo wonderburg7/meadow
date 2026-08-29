@@ -16,6 +16,7 @@ const UiTheme = preload("res://scripts/ui_theme.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const ScenarioPresets = preload("res://scripts/scenario_presets.gd")
+const HexHitArea = preload("res://scripts/hex_hit_area.gd")
 
 ## Challenges carry no preset -- main.gd's existing wiring stays as it was.
 signal level_chosen(level: int)
@@ -95,15 +96,16 @@ const GROUPS := [
 ## now that each honeycomb strip has a whole half of the left pane to
 ## itself instead of sharing a single narrow scrolling column.
 const HEX_SIZE := 84.0
-## Horizontal air between two tiles' bounding boxes, so neighbouring
-## tiles' click areas never overlap -- see NEXTSTEPS.md for why this is a
-## row of separated hexes rather than true edge-to-edge tessellation.
-## Scaled with HEX_SIZE (UI-M) so the gap stays proportional.
-const HEX_GAP := 21.0
-## Purely cosmetic vertical zigzag between alternating tiles in a row, so
-## a row of two or three still reads as "honeycomb" rather than a plain
-## strip of rounded buttons. Scaled with HEX_SIZE (UI-M).
-const HEX_STAGGER := 27.0
+## Horizontal centre-to-centre spacing for a touching row of hexagons
+## (Dave's 29 Aug request: tiles' side edges meet exactly, no visible
+## gap) -- 1.5x HEX_SIZE is the standard hex-grid step for a hexagon with
+## vertices at its left/right extremes (shapes.gd::hexagon_points).
+## Neighbouring tiles' *bounding boxes* do overlap at this spacing even
+## though the hexagons themselves only touch -- HexHitArea (hex_hit_area.gd)
+## gives each tile a hex-accurate click region instead of a rectangular
+## one, so an overlapping corner never steals a click meant for the tile
+## next to it, which is what the old wider HEX_GAP spacing used to avoid.
+const HEX_STEP_X := HEX_SIZE * 1.5
 
 ## Floor width for the right-hand detail pane (blurb/preset/Start), so it
 ## can't compress unreadably at the game's minimum supported width the
@@ -230,6 +232,12 @@ func _ready() -> void:
 
 	var right_scroll := ScrollContainer.new()
 	right_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Without this, a ScrollContainer sizes its child to the child's own
+	# minimum width rather than stretching it to fit -- an autowrapping
+	# Label inside then computes its wrap width against nearly nothing,
+	# so it prints one letter per line instead of wrapping at the pane's
+	# actual width (Dave's 29 Aug report on the placeholder text).
+	right_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right_pane.add_child(right_scroll)
 
 	var detail_placeholder := Label.new()
@@ -239,6 +247,7 @@ func _ready() -> void:
 	detail_placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	_detail_column = VBoxContainer.new()
+	_detail_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_column.add_theme_constant_override("separation", 6)
 	_detail_column.add_child(detail_placeholder)
 	right_scroll.add_child(_detail_column)
@@ -281,8 +290,12 @@ func close() -> void:
 func _build_settings_button(right_pane: VBoxContainer) -> void:
 	settings_button = Button.new()
 	_style_button(settings_button)
-	settings_button.text = "Settings"
-	settings_button.custom_minimum_size = Vector2(120, 44)
+	# Same plain cog glyph the in-run settings button uses (debug_panel.gd),
+	# rather than a separate text button -- Dave's 29 Aug ask, so the two
+	# read as the same control rather than two different ones.
+	settings_button.text = "⚙"
+	settings_button.theme_type_variation = "Heading"
+	settings_button.custom_minimum_size = Vector2(56, 44)
 	settings_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	settings_button.pressed.connect(_on_settings_pressed)
 
@@ -304,12 +317,21 @@ func _on_settings_pressed() -> void:
 
 # --- the honeycomb ------------------------------------------------------
 
+## Vertical offset alternating tiles drop by so a touching row of
+## flat-vertex hexagons tessellates correctly: half the hex's own height,
+## the standard hex-grid offset between adjacent columns (paired with
+## HEX_STEP_X above). A function rather than a further const since
+## GDScript const expressions can't call sqrt() (see .claude/rules/
+## gdscript.md's ":=" landmine note on the same const-folding limits).
+func _hex_row_offset() -> float:
+	return HEX_SIZE * sqrt(3.0) / 2.0
+
 ## Full pixel height one honeycomb strip needs -- a plain tile row plus
-## the stagger offset the odd tiles drop by. Shared by the strip itself
-## and by the ScrollContainer wrapping it (_ready()), so the two can never
-## drift out of sync.
+## the offset the odd tiles drop by. Shared by the strip itself and by the
+## ScrollContainer wrapping it (_ready()), so the two can never drift out
+## of sync.
 func _hex_row_height() -> float:
-	return HEX_SIZE * sqrt(3.0) + HEX_STAGGER
+	return HEX_SIZE * sqrt(3.0) + _hex_row_offset()
 
 func _make_honeycomb_strip(group_key: String) -> Control:
 	var stages_in_group: Array = []
@@ -318,17 +340,17 @@ func _make_honeycomb_strip(group_key: String) -> Control:
 			stages_in_group.append(stage)
 
 	var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))
-	var step_x: float = HEX_SIZE * 2.0 + HEX_GAP
+	var row_offset: float = _hex_row_offset()
 	var strip := Control.new()
 	strip.custom_minimum_size = Vector2(
-		float(stages_in_group.size() - 1) * step_x + bbox.x,
-		bbox.y + HEX_STAGGER
+		float(stages_in_group.size() - 1) * HEX_STEP_X + bbox.x,
+		bbox.y + row_offset
 	)
 	strip.size = strip.custom_minimum_size
 
 	for i in range(stages_in_group.size()):
 		var tile := _make_hex_tile(stages_in_group[i])
-		tile.position = Vector2(float(i) * step_x, HEX_STAGGER if i % 2 == 1 else 0.0)
+		tile.position = Vector2(float(i) * HEX_STEP_X, row_offset if i % 2 == 1 else 0.0)
 		strip.add_child(tile)
 
 	return strip
@@ -377,7 +399,12 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 
 	# Added last so it draws (and receives clicks) on top of the shapes
 	# and labels beneath it -- flat, so nothing it draws itself is visible.
-	var button := Button.new()
+	# Hex-shaped hit test (HexHitArea), not the full bounding rectangle --
+	# see HEX_STEP_X's comment above for why that matters now the tiles
+	# tessellate with touching, overlapping-bbox neighbours.
+	var button := HexHitArea.new()
+	button.hex_size = HEX_SIZE
+	button.hex_center = bbox / 2.0
 	button.flat = true
 	button.text = ""
 	button.position = Vector2.ZERO

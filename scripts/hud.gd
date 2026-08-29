@@ -516,6 +516,13 @@ func _style_button(button: BaseButton) -> BaseButton:
 ## number, also means this keeps working if the cog's font size (and so
 ## its width) ever becomes a player setting.
 ##
+## TOP_BAR_BUTTON_GAP is added twice: the cog itself (debug_panel.gd)
+## already sits TOP_BAR_BUTTON_GAP in from the viewport's own right edge,
+## so reserving only `width + GAP` here lands this bar's edge exactly on
+## the cog's left edge -- zero visible gap between them (Dave's 29 Aug
+## report: the row of speed buttons touching the cog). The second GAP is
+## the actual visible air between the bar's content and the cog.
+##
 ## Two rows (UI_PLAN.md section 2): the transport row (pause, speed
 ## multipliers) first, then the window/view icon row (colony, nursery,
 ## winter, meadow/hive switch) underneath -- each row is its own tight
@@ -528,7 +535,7 @@ func _build_top_right_bar() -> void:
 	bar.add_theme_constant_override("separation", TOP_BAR_ROW_SEPARATION)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP)
+	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0)
 	bar.offset_top = 8
 	add_child(bar)
 
@@ -582,13 +589,16 @@ func _build_top_right_bar() -> void:
 	row2.add_theme_constant_override("separation", TOP_BAR_BUTTON_GAP)
 	bar.add_child(row2)
 
-	colony_button = _icon_button("bee", "Colony", TOP_BAR_BUTTON_WIDTH, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
+	# Row-2 buttons carry a short on-hover tooltip on the button itself now
+	# (Dave's 29 Aug ask -- "Opens Nursery Panel", not a paragraph); the
+	# full explanation stays on each button's own "i" info badge, unchanged.
+	colony_button = _icon_button("bee", "Colony", TOP_BAR_BUTTON_WIDTH, "Opens the Colony window.")
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
 
-	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
+	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Opens the Nursery window.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
@@ -597,7 +607,7 @@ func _build_top_right_bar() -> void:
 	# Icon-plus-label, same shape as colony/nursery/view now (UI-N) -- at
 	# TOP_BAR_BUTTON_WIDTH there isn't room for "Foraging" as full text, so
 	# it gets the icon+tooltip treatment instead of truncating ad hoc.
-	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Open the foraging window: trip timing, flowers visited per trip, empty-return rate, and recruitment/scouting counts.")
+	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Opens the Foraging window.")
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
 	row2.add_child(foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
@@ -605,14 +615,14 @@ func _build_top_right_bar() -> void:
 	# Only appears once a winter has been scheduled -- until then there is
 	# nothing for it to say, and a permanently dead button is worse than
 	# no button. Same icon+label treatment as the rest of the row (UI-N).
-	winter_button = _icon_button("snow", "Winter", TOP_BAR_BUTTON_WIDTH, "Open the winter forecast: what the colony will need, and how far short it is.")
+	winter_button = _icon_button("snow", "Winter", TOP_BAR_BUTTON_WIDTH, "Opens the Winter forecast.")
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
-	view_button = _icon_button("hive", "Hive", TOP_BAR_BUTTON_WIDTH, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
+	view_button = _icon_button("hive", "Hive", TOP_BAR_BUTTON_WIDTH, "Switch to the Hive view.")
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
@@ -683,7 +693,7 @@ func _build_goal_shelf() -> void:
 	goal_shelf.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP)
+	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0)
 	goal_shelf.offset_top = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
 	goal_shelf.custom_minimum_size = Vector2(320, 0)
 	goal_shelf.add_theme_constant_override("separation", 1)
@@ -743,8 +753,8 @@ func _build_goal_shelf() -> void:
 func set_settings_button_width(width: float) -> void:
 	if top_right_bar == null:
 		return
-	top_right_bar.offset_right = -(width + TOP_BAR_BUTTON_GAP)
-	goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP)
+	top_right_bar.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
+	goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
 
 ## Shown under the top-right button row for the length of a Challenge --
 ## see TUTORIAL_PLAN.md and UI_PLAN.md section 5. `text` is the current
@@ -785,7 +795,7 @@ func _build_selection_panel() -> void:
 	# anchored to the bottom-left so it stays put when the window resizes
 	selection_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	selection_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	selection_panel.offset_left = 16
+	selection_panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
 	selection_panel.offset_bottom = -16
 	selection_panel.visible = false
 	add_child(selection_panel)
@@ -795,10 +805,12 @@ func _build_selection_panel() -> void:
 	var column := selection_column
 	_apply_selection_tray_width()
 
+	# The cog sits on the same line as the identity label (Dave's 29 Aug
+	# ask) rather than a row of its own above it -- that row used to be
+	# empty air except for the cog, pushing every field down and making
+	# the panel taller than it needed to be for no reason.
 	var header := HBoxContainer.new()
-	header.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(header)
-	header.add_child(_build_selection_cog())
 
 	# Fixed, viewport-derived width (UiLayout.selection_tray_width) rather
 	# than sizing from label text -- see _apply_selection_tray_width. Every
@@ -807,7 +819,9 @@ func _build_selection_panel() -> void:
 	identity_label = Label.new()
 	identity_label.theme_type_variation = "Body"
 	identity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(identity_label)
+	identity_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(identity_label)
+	header.add_child(_build_selection_cog())
 
 	energy_label = Label.new()
 	energy_label.theme_type_variation = "Body"
@@ -2352,22 +2366,25 @@ func _refresh_selection_text() -> void:
 		trait_label.text = ""
 	_update_command_tray_width()
 
-## Sets the selection panel's fixed width for the current viewport
-## (UiLayout.selection_tray_width) -- called at build time and again from
-## _on_viewport_size_changed, never from content. See _build_selection_panel
-## and the durable rule in UI_PLAN.md UI-B.
+## Sets the selection panel's width for the current viewport
+## (UiLayout.selection_tray_width -- since UI-H, whatever room is left up
+## to the command tray's reserved zone, not a fixed per-breakpoint number)
+## -- called at build time and again from _on_viewport_size_changed, never
+## from content. See _build_selection_panel and the durable rule in
+## UI_PLAN.md UI-B.
 func _apply_selection_tray_width() -> void:
 	var width: float = UiLayout.selection_tray_width(get_viewport().get_visible_rect().size.x)
 	selection_panel.custom_minimum_size.x = width
 	if selection_column != null:
 		selection_column.custom_minimum_size.x = width
 
-## The command tray's max width is the viewport minus the selection
-## tray's fixed width (UiLayout.selection_tray_width, not the panel's
-## actual rendered size -- that still fluctuates a frame behind whatever
-## bee/cell text it last showed) and, above the responsive breakpoint, the
-## Gallerin reserve -- ui_layout.gd computes it so this tray respects the
-## reserve by construction rather than a magic-number width. Setting it
+## The command tray's max width is the viewport minus a nominal
+## reservation for the selection tray (not the panel's actual rendered
+## size -- that still fluctuates a frame behind whatever bee/cell text it
+## last showed, and since UI-H the panel's own width is derived from this
+## tray's cap, not the other way round) and the Gallerin reserve, at any
+## viewport width -- ui_layout.gd computes it so this tray respects both
+## reserves by construction rather than a magic-number width. Setting it
 ## on command_columns rather than command_tray itself is what makes the
 ## columns wrap their own content onto more rows instead of the whole
 ## tray growing wider than its cap.
@@ -2375,7 +2392,7 @@ func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var max_width: float = UiLayout.command_tray_max_width(viewport_width, UiLayout.selection_tray_width(viewport_width))
+	var max_width: float = UiLayout.command_tray_max_width(viewport_width)
 	command_columns.custom_minimum_size.x = max(200.0, max_width - 32.0)
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = max(520.0, max_width - 32.0)
@@ -2391,7 +2408,7 @@ func set_winter_button_visible(value: bool) -> void:
 func set_view_label(in_hive: bool) -> void:
 	view_button_label.text = "Meadow" if in_hive else "Hive"
 	view_icon.shape = "flower" if in_hive else "hive"
-	view_button.tooltip_text = "Switch to the meadow, or press Tab. Both views keep simulating while you look at the other one." if in_hive else "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one."
+	view_button.tooltip_text = "Switch to the Meadow view." if in_hive else "Switch to the Hive view."
 	view_icon.queue_redraw()
 
 func set_colony_button_visible(value: bool) -> void:

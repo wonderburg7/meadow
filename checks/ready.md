@@ -11,101 +11,70 @@ its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
-### UI-N -- top-right button group: one shared gap constant
-- [ ] Look at the in-run top-right bar's row 2 (Colony/Nursery/Foraging/
-      Winter/Meadow-Hive) alongside the settings cog: confirm every one of
-      them, plus row 1, sits at the same `72 x 56` footprint and the same
-      horizontal gap, with the 1x/2x/4x speed-button trio visibly a touch
-      tighter than the rest as a deliberate exception. Confirm Nursery,
-      Foraging and Winter still read clearly via icon + hover tooltip now
-      that they no longer show full text at the narrower width. See UI-N
-      in `plans/now/ui.md`.
-
-### UI-L -- pre-run menu no longer runs the simulation behind it
-- [ ] Launch the game fresh (or Restart Run from the OS, not "Return to
-      Main Menu" mid-session): confirm no bee, flower, day advance or
-      weather change happens before Start is pressed -- only the menu is
-      visible. Choose a Challenge and confirm it still loads only that
-      Challenge's configuration; choose a Scenario and confirm the same.
-      Confirm the existing in-run "Return to Main Menu" still just pauses
-      the live session (world stays alive underneath) rather than this
-      fresh-boot path. See UI-L in `plans/now/ui.md`.
-
-### UI-M -- full-screen "choose where to start" menu layout
-- [ ] Open the pre-run menu (fresh boot, or Settings -> Return to Main
-      Menu) and confirm: the backdrop fills the full viewport; the
-      Challenges honeycomb sits upper-left and Scenarios lower-left, each
-      roughly half the left pane's height; the left:right split is
-      visibly about 2:1; the hex tiles read as noticeably bigger than
-      before; picking a stage fills the right pane with its blurb,
-      preset/difficulty controls and Start button, not clipped or
-      overflowing at any window size down to `MIN_SUPPORTED_WIDTH`
-      (800px). At that floor width the Scenarios strip (5 tiles) should
-      scroll horizontally rather than clip or overlap the right pane.
-- [ ] Click the new top-right Settings button and confirm it opens the
-      same settings window the in-run cog opens, already expanded to the
-      Accessibility and Appearance sections; changing text scale or
-      contrast there should visibly apply immediately, before any run has
-      started. See UI-M in `plans/now/ui.md`.
-
-### UI-K -- Foraging button hidden for Challenge 1
-- [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
-      absent for every stage. Finish Challenge 1 ("Continue playing") and
-      confirm it reappears immediately, exactly like the colony/nursery/
-      view buttons. Separately confirm it stays visible throughout
-      Challenge 2 (present from stage 2.1 onward) and in ordinary
-      Scenarios. See UI-K in `plans/now/ui.md`.
-
-### UI-J -- Dr Gallerin bubble matches the summary panel's layout behaviour
-- [ ] Narrow the window below roughly 1000px width (`NARROW_BREAKPOINT`):
-      confirm Dr Gallerin's bubble visibly shrinks and the role/command
-      tray's reserved gap shrinks to match, exactly like the bottom-left
-      summary panel's own narrow-width step; the role/command tray never
-      renders underneath the bubble at any tested viewport width. See
-      UI-J in `plans/now/ui.md`.
-
-### UI-I -- Dr Gallerin bubble bigger, persistent, updates immediately
-- [ ] Trigger a Dr Gallerin prompt (any Challenge stage transition, or
-      click his icon after one has shown): confirm the bubble and its
-      text are visibly larger than before and scale with the text-size
-      accessibility setting; it stays on screen indefinitely until
-      "Dismiss" or "Turn off Dr Gallerin" is clicked (no auto-hide);
-      triggering a second prompt while the first is still showing (two
-      stage transitions in quick succession) swaps the visible text
-      immediately with no stale text lingering. See UI-I in
+### UI-N -- top-right button group gap and row-2 tooltips (re-check after fix)
+- [ ] Row 1 (pause/speed buttons): confirm a real, visible gap now exists
+      between the last speed button (1x/2x/4x, or 8x if enabled) and the
+      settings cog -- previously zero, a real formula bug (both rows'
+      content actually touched the cog; row 2's icon padding just masked
+      it). Row 2: confirm the same visible gap, and hover each of Colony/
+      Nursery/Foraging/Winter/Meadow-Hive -- the tooltip should now be one
+      short line ("Opens the Nursery window.", etc.), not the old
+      paragraph (that detail moved to each button's own "i" info badge,
+      which should still show the full text on hover). See UI-O in
       `plans/now/ui.md`.
 
-### UI-H -- role panel narrower, summary panel wider
-- [ ] Select a bee or cell (so the bottom-left summary panel shows
-      content) and select several bees at once (so the command tray
-      shows Job/Focus/Orders): confirm the summary panel is visibly
-      wider and the command tray's maximum width is visibly narrower by
-      roughly 30% than before, with no overlap between the two or the
-      Gallerin reserve at any viewport width down to
-      `MIN_SUPPORTED_WIDTH`. The two multipliers (`SELECTION_TRAY_WIDTH`
-      x1.3, `command_tray_max_width` x0.7) are a first-pass split, not an
-      exact pixel conservation -- flag if the balance looks wrong so they
-      can be retuned. See UI-H in `plans/now/ui.md`.
-
-### UI-G -- centre role panels use the full tray width
-- [ ] Select several bees at once (so Job/Focus/Orders all show content)
-      and confirm the three command-tray columns and their buttons
-      visibly spread across the tray's full width, headers centred, no
-      cluster on the left with empty space to the right. See UI-G in
+### UI-M -- settings-panel z-order and honeycomb tessellation (re-check after fix)
+- [ ] Open the pre-run menu and click its top-right Settings button:
+      confirm the settings window now appears *in front of* the menu's
+      own background (previously invisible, opening behind it) and text-
+      scale/contrast changes apply immediately as before.
+- [ ] Look at the Challenges/Scenarios honeycombs: confirm neighbouring
+      hex tiles now visibly touch edge-to-edge (no gap), alternating
+      top/bottom so the row stays roughly level across two bands, and
+      that clicking near a touching corner always selects the tile the
+      pointer is actually over, never its neighbour. See UI-O in
       `plans/now/ui.md`.
 
-### UI-D/E/F -- Challenge top-bar hit area, doubled buttons, goal shelf placement
-- [ ] Start a Challenge and try clicking the second-row top-bar buttons
-      (Colony, Nursery, Foraging, etc.) while the goal shelf is visible in
-      the top-right -- every part of each button should respond to a click,
-      not just its exposed top edge (UI-D). Compare against a Scenario,
-      where the goal shelf is hidden and this never showed up.
-- [ ] Confirm every top-right control (pause, each speed multiplier,
-      Colony, Nursery, Foraging, Winter, Meadow/Hive, settings cog) is
-      visibly twice its old size and all sit at one consistent height
-      (UI-E), and that the goal shelf starts clearly below both top-bar
-      rows with a visible gap at every window size and text scale, never
-      overlapping a button (UI-F). See UI-D/E/F in `plans/now/ui.md`.
+### UI-I -- Dr Gallerin bubble: narrow-width overlap and live text scale (re-check after fix)
+- [ ] Narrow the window below roughly 1000px width: confirm the role/
+      command tray no longer renders underneath the bubble at any tested
+      width (previously narrowing actually *removed* the tray's reserve
+      for the bubble instead of shrinking it, making the overlap worse,
+      not better).
+- [ ] With a bubble showing, open Settings and change the text-scale
+      slider: confirm the bubble's own text visibly resizes immediately,
+      without needing to dismiss/re-trigger it. See UI-O in
+      `plans/now/ui.md`.
+
+### UI-H -- summary-panel cog placement and command/summary width split (re-check after fix)
+- [ ] Select a bee or cell: confirm the panel's own configuration cog now
+      sits on the same line as the bee name/first line of text, with no
+      empty row above it, and the panel is correspondingly shorter.
+- [ ] Select several bees at once (Job/Focus/Orders showing) and compare
+      panel widths at a normal window size: the command tray should read
+      about 10% wider than before, and the summary panel should now fill
+      whatever room is actually left up to a 16px gap before the command
+      tray, rather than a fixed narrow width -- flag if either reads too
+      wide/narrow so the split can be retuned further.
+- [ ] Narrow the window right down towards `MIN_SUPPORTED_WIDTH` (800px):
+      confirm the summary panel and command tray never overlap each other
+      at any width tested. See UI-O in `plans/now/ui.md`.
+
+### Settings window -- position and "Show info icons" scroll (new, UI-O)
+- [ ] Open the in-run settings window (top-right cog): confirm it now
+      opens clearly below the full two-row HUD button bar, not
+      overlapping/underneath it.
+- [ ] Turn on "Show info icons" (Accessibility): confirm every row's
+      toggle/+/- controls stay fully visible and reachable without a
+      horizontal scrollbar appearing. See UI-O in `plans/now/ui.md`.
+
+### Main menu -- settings icon and placeholder text wrap (new, UI-O)
+- [ ] Open the pre-run menu: confirm the Settings button now shows the
+      same gear glyph the in-run cog uses, not a "Settings" text button.
+- [ ] Before selecting a Challenge or Scenario, confirm the right pane's
+      placeholder text ("Choose a Challenge or Scenario on the left.")
+      reads as normal wrapped sentences, not one letter per line. See
+      UI-O in `plans/now/ui.md`.
 
 ### Challenge 1 Slice 8 -- acceptance-playthrough fixes (8a/8b/8d/8e)
 - [ ] **8a (full-storage bug, any forager):** fill every compatible cell in
@@ -289,16 +258,6 @@ its check. Move a confirmed or superseded entry to
       ... flower" instead. See `plans/active/foraging-evidence.md`'s "Recent
       fixes".
 
-### HUD integrity batch (UI-A)
-- [ ] Hover/press every top-right button (pause, speed, Colony, Nursery,
-      Foraging, Winter, Meadow/Hive, settings cog) in Dark, Light and High
-      Contrast -- text should stay readable, not fall back to the engine
-      default. Confirm Colony/Nursery/Foraging/Winter/Meadow-Hive all show a
-      useful tooltip on hover and sit at one consistent height. Click a
-      flower with an old scent mark and confirm the "Scent mark: Xs old"
-      line disappears once the mark expires rather than staying forever.
-      See `git log` (merge commit for `codex/ui-a-hud-integrity`).
-
 ### Safe forager return reserve (recommendation Slice 4)
 - [ ] Foragers now turn for home based on a calculated return-energy
       estimate (distance x route factor x flight/upkeep rate, plus a
@@ -333,22 +292,3 @@ its check. Move a confirmed or superseded entry to
       whether it feels right, not just a confirmation of numbers already
       checked.
 
-### Panel sizing and overlap (UI-B)
-- [ ] Select a bee, then a cell, and watch the bottom-left summary panel
-      and the bottom-centre command tray while resizing the window and
-      raising the text scale: neither panel's width should change with
-      what the current bee/cell shows (long idle-reason lines, a bee fact
-      quote, a long obstacle description), only with the window size, and
-      the two should never overlap. See UI-B in `plans/now/ui.md`.
-
-### Nursery zone removal and cell action-tray redesign (UI-C)
-- [ ] Select a hive cell: the tray is now two primary columns, "Reserve
-      for" and "Nursery" (priority Low/Medium/High, "Open nursery window",
-      and the Raises controls -- hatch role, "Keep for every bee", "Raise a
-      gyne" -- all together), with More… revealing Emptying and Sealing.
-      There is no separate "Add"/"Remove" zone button anywhere -- reserving
-      a cell for eggs is done from Reserve for's Eggs/Unreserve buttons.
-      Confirm pressing a Priority button still reserves the cell for brood
-      if it wasn't already, and that the queen still lays eggs sensibly
-      (respects the priority-tier proportions, `queen_lays_in_any_cell`
-      still behaves as documented). See UI-C in `plans/now/ui.md`.
