@@ -503,6 +503,15 @@ built, further down, since `debug_panel` already exists there by then.
 bar's row 2** (Colony/Nursery/Foraging/Winter/Meadow-Hive —
 `hud.gd::_build_top_right_bar`), not a new menu control.
 
+**Current state (was, exact, `hud.gd`):** `TOP_BAR_CONTROL_HEIGHT := 56.0`
+(shared height, UI-E) but the group's *horizontal* gaps were inconsistent —
+`row1`/`row2` separation `6` each, the 1x/2x/4x speed-button trio's own
+inner separation `1`, and `SETTINGS_BUTTON_GAP := 8.0` before the settings
+cog. Row-2 button widths: pause `56`, each speed button `48`, colony `184`,
+nursery `192`, foraging `156`, winter `124`, view `156` — all already `56`
+tall. The settings cog (`debug_panel.gd`) was `Vector2(72,
+Hud.TOP_BAR_CONTROL_HEIGHT)`.
+
 **Files:** `hud.gd`, `debug_panel.gd`, `ui_icon.gd`.
 
 **Delivered:** one named constant, `TOP_BAR_BUTTON_GAP` (int, `8`),

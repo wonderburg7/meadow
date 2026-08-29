@@ -170,9 +170,21 @@ const PAUSE_TIP := "Pause. The whole colony freezes; you can still look around a
 static func mode_command(role_id: int, mode_key: String) -> String:
 	return "%s_%s" % [Roles.key_for(role_id), mode_key]
 
-## Gap left between this bar and the settings cog that debug_panel.gd
-## owns, on top of however wide the cog button actually is right now.
-const SETTINGS_BUTTON_GAP := 8.0
+## Shared horizontal gap for every join in the top-right bar's row1/row2/
+## settings-cog group: row separation, and the gap before the settings
+## cog. One constant so nothing in the group can drift out of sync --
+## also used as the gap left between the bar and the settings cog that
+## debug_panel.gd owns, on top of however wide the cog button actually is
+## right now.
+## Int-typed (not float, unlike most sizing constants here) because
+## add_theme_constant_override's "separation" wants an int -- a float
+## constant there produces a narrowing-conversion warning on every use.
+const TOP_BAR_BUTTON_GAP := 8
+## The 1x/2x/4x/(8x) speed-button trio's own tighter inner separation --
+## a deliberate visual exception to TOP_BAR_BUTTON_GAP (confirmed with
+## Dave): the trio reads as one control, not several. Int-typed for the
+## same reason as TOP_BAR_BUTTON_GAP above.
+const SPEED_GROUP_GAP := 2
 ## Used only until debug_panel.gd reports the cog's real width (see
 ## set_settings_button_width) -- close to the cog's own custom_minimum_size
 ## so there's no visible jump on the first frame.
@@ -181,8 +193,13 @@ const SETTINGS_BUTTON_DEFAULT_WIDTH := 72.0
 ## Keeping it in one place prevents a new text or icon button from making a
 ## row visibly uneven at a different UI scale.
 const TOP_BAR_CONTROL_HEIGHT := 56.0
-## Separation between the top-right bar's two rows -- shared with the goal
-## shelf's offset_top calculation so the two can never disagree.
+## Every row-2 window/view button (colony/nursery/foraging/winter/view)
+## and the settings cog share this width, matching TOP_BAR_CONTROL_HEIGHT
+## for height -- see _icon_button.
+const TOP_BAR_BUTTON_WIDTH := 72.0
+## Vertical separation between the top-right bar's two rows -- a distinct
+## constant from TOP_BAR_BUTTON_GAP (which is horizontal), shared with the
+## goal shelf's offset_top calculation so the two can never disagree.
 const TOP_BAR_ROW_SEPARATION := 4.0
 ## Fixed gap between the top-right bar's second row and the goal shelf
 ## below it, once the shelf's offset is derived rather than hardcoded.
@@ -511,13 +528,13 @@ func _build_top_right_bar() -> void:
 	bar.add_theme_constant_override("separation", TOP_BAR_ROW_SEPARATION)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
+	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP)
 	bar.offset_top = 8
 	add_child(bar)
 
 	var row1 := HBoxContainer.new()
 	row1.alignment = BoxContainer.ALIGNMENT_END
-	row1.add_theme_constant_override("separation", 6)
+	row1.add_theme_constant_override("separation", TOP_BAR_BUTTON_GAP)
 	bar.add_child(row1)
 
 	pause_button = Button.new()
@@ -535,7 +552,7 @@ func _build_top_right_bar() -> void:
 	# reads as one control rather than several and gives 8x somewhere to
 	# go without pushing everything else off the row when it's enabled.
 	var speed_group := HBoxContainer.new()
-	speed_group.add_theme_constant_override("separation", 1)
+	speed_group.add_theme_constant_override("separation", SPEED_GROUP_GAP)
 	row1.add_child(speed_group)
 
 	for entry in SPEEDS:
@@ -562,48 +579,40 @@ func _build_top_right_bar() -> void:
 
 	var row2 := HBoxContainer.new()
 	row2.alignment = BoxContainer.ALIGNMENT_END
-	row2.add_theme_constant_override("separation", 6)
+	row2.add_theme_constant_override("separation", TOP_BAR_BUTTON_GAP)
 	bar.add_child(row2)
 
-	colony_button = _icon_button("bee", "Colony", 184.0, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
+	colony_button = _icon_button("bee", "Colony", TOP_BAR_BUTTON_WIDTH, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
 
-	nursery_button = _icon_button("hex", "Nursery", 192.0, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
+	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	row2.add_child(nursery_info)
 
-	# Plain text button, no icon of its own yet -- same fallback as
-	# winter_button below, until UI_PLAN.md section 8's icon set grows one.
-	foraging_button = Button.new()
-	_style_button(foraging_button)
-	foraging_button.text = "Foraging"
-	foraging_button.custom_minimum_size = Vector2(156, TOP_BAR_CONTROL_HEIGHT)
-	foraging_button.tooltip_text = "Open the foraging window: trip timing, flowers visited per trip, empty-return rate, and recruitment/scouting counts."
+	# Icon-plus-label, same shape as colony/nursery/view now (UI-N) -- at
+	# TOP_BAR_BUTTON_WIDTH there isn't room for "Foraging" as full text, so
+	# it gets the icon+tooltip treatment instead of truncating ad hoc.
+	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Open the foraging window: trip timing, flowers visited per trip, empty-return rate, and recruitment/scouting counts.")
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
 	row2.add_child(foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
 
 	# Only appears once a winter has been scheduled -- until then there is
 	# nothing for it to say, and a permanently dead button is worse than
-	# no button. No icon of its own yet (section 8 names one for each of
-	# the other three, not this one), so it stays a plain text button.
-	winter_button = Button.new()
-	_style_button(winter_button)
-	winter_button.text = "Winter"
-	winter_button.custom_minimum_size = Vector2(124, TOP_BAR_CONTROL_HEIGHT)
-	winter_button.tooltip_text = "Open the winter forecast: what the colony will need, and how far short it is."
+	# no button. Same icon+label treatment as the rest of the row (UI-N).
+	winter_button = _icon_button("snow", "Winter", TOP_BAR_BUTTON_WIDTH, "Open the winter forecast: what the colony will need, and how far short it is.")
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
-	view_button = _icon_button("hive", "Hive", 156.0, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
+	view_button = _icon_button("hive", "Hive", TOP_BAR_BUTTON_WIDTH, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
@@ -674,7 +683,7 @@ func _build_goal_shelf() -> void:
 	goal_shelf.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
+	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP)
 	goal_shelf.offset_top = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
 	goal_shelf.custom_minimum_size = Vector2(320, 0)
 	goal_shelf.add_theme_constant_override("separation", 1)
@@ -734,8 +743,8 @@ func _build_goal_shelf() -> void:
 func set_settings_button_width(width: float) -> void:
 	if top_right_bar == null:
 		return
-	top_right_bar.offset_right = -(width + SETTINGS_BUTTON_GAP)
-	goal_shelf.offset_right = -(width + SETTINGS_BUTTON_GAP)
+	top_right_bar.offset_right = -(width + TOP_BAR_BUTTON_GAP)
+	goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP)
 
 ## Shown under the top-right button row for the length of a Challenge --
 ## see TUTORIAL_PLAN.md and UI_PLAN.md section 5. `text` is the current
