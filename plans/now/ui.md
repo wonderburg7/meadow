@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D/E/F/G/H | Dependency: none | Verified: 2026-08-29
+UI-D/E/F/G/H/I | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -231,7 +231,7 @@ any viewport width down to `MIN_SUPPORTED_WIDTH`.
 tuning pass on the two multipliers once he can compare on his own screen
 (see `checks/ready.md`).
 
-## UI-I — Dr Gallerin bubble: bigger, persistent, updates immediately
+## UI-I — Dr Gallerin bubble: bigger, persistent, updates immediately (shipped 29 Aug 2026)
 
 **Scope:** enlarge the bubble and its text, make it stay open until the
 player dismisses it instead of timing out, and make sure a new message
@@ -271,6 +271,15 @@ until "Dismiss" or "Turn off Dr Gallerin" is clicked; triggering a second
 prompt while the first is still showing (e.g. two stage transitions in
 quick succession) swaps the visible text immediately, with no stale text
 lingering even for one frame.
+
+**Delivered:** all five steps applied as written. `_hovering_icon` and
+`_hovering_bubble` are now unused for their original purpose (the timer
+they gated is gone) but were left in place -- step 4 scoped removal to
+what the timer needed, not every consumer of those flags. `_show_bubble`
+now takes only `text`; `show_now()`'s `trigger == "welcome"` branch is
+gone since there's no longer a welcome-specific duration to pick.
+`source_checks.py` and `balance_tests.py` pass; still needs Dave's
+hands-on look (see `checks/ready.md`).
 
 ## UI-J — Dr Gallerin bubble: same layout behaviour as the summary panel
 

@@ -7,6 +7,17 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-I -- Dr Gallerin bubble bigger, persistent, updates immediately
+- [ ] Trigger a Dr Gallerin prompt (any Challenge stage transition, or
+      click his icon after one has shown): confirm the bubble and its
+      text are visibly larger than before and scale with the text-size
+      accessibility setting; it stays on screen indefinitely until
+      "Dismiss" or "Turn off Dr Gallerin" is clicked (no auto-hide);
+      triggering a second prompt while the first is still showing (two
+      stage transitions in quick succession) swaps the visible text
+      immediately with no stale text lingering. See UI-I in
+      `plans/now/ui.md`.
+
 ### UI-H -- role panel narrower, summary panel wider
 - [ ] Select a bee or cell (so the bottom-left summary panel shows
       content) and select several bees at once (so the command tray
