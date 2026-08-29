@@ -7,6 +7,23 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-M -- full-screen "choose where to start" menu layout
+- [ ] Open the pre-run menu (fresh boot, or Settings -> Return to Main
+      Menu) and confirm: the backdrop fills the full viewport; the
+      Challenges honeycomb sits upper-left and Scenarios lower-left, each
+      roughly half the left pane's height; the left:right split is
+      visibly about 2:1; the hex tiles read as noticeably bigger than
+      before; picking a stage fills the right pane with its blurb,
+      preset/difficulty controls and Start button, not clipped or
+      overflowing at any window size down to `MIN_SUPPORTED_WIDTH`
+      (800px). At that floor width the Scenarios strip (5 tiles) should
+      scroll horizontally rather than clip or overlap the right pane.
+- [ ] Click the new top-right Settings button and confirm it opens the
+      same settings window the in-run cog opens, already expanded to the
+      Accessibility and Appearance sections; changing text scale or
+      contrast there should visibly apply immediately, before any run has
+      started. See UI-M in `plans/now/ui.md`.
+
 ### UI-K -- Foraging button hidden for Challenge 1
 - [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
       absent for every stage. Finish Challenge 1 ("Continue playing") and

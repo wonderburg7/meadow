@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D through UI-K | Dependency: none | Verified: 2026-08-29
+UI-D through UI-M | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -368,6 +368,68 @@ from today.
 **Delivered:** all three steps applied as written. `source_checks.py` and
 `balance_tests.py` pass; still needs Dave's hands-on look (see
 `checks/ready.md`).
+
+## UI-M — full-screen "choose where to start" menu layout (shipped 29 Aug 2026)
+
+**Scope:** `scripts/main_menu.gd` was one `PanelContainer` centred on
+screen containing a single `ScrollContainer` -> `VBoxContainer` that
+stacked title, subtitle, then each group's heading/note/honeycomb strip
+in turn (Challenges above Scenarios), then a detail column, then "Back to
+the run". No Settings button existed on this menu.
+
+**Files:** `scripts/main_menu.gd`, `scripts/debug_panel.gd`.
+
+**Delivered:**
+- Replaced the centred panel with a full-viewport `Control` split by an
+  `HBoxContainer` into a left pane (`size_flags_stretch_ratio = 2.0`) and
+  a right pane (`size_flags_stretch_ratio = 1.0`), matching `hud.gd`'s
+  `SIZE_EXPAND_FILL` + stretch-ratio pattern (UI-G).
+- **Floor-width decision (was flagged "needs Dave"):** rather than reuse
+  `ui_layout.gd`'s HUD-specific breakpoint constants, which size
+  different panels, the right pane gets its own
+  `DETAIL_PANE_MIN_WIDTH := 390.0` -- just above its widest actual row
+  (the 4-button difficulty-preset row at 378px) -- as a `custom_minimum_size`
+  floor under the 2:1 stretch ratio. This is the same
+  floor-under-a-ratio *pattern* `ui_layout.gd::command_tray_max_width()`
+  already uses, sized for this pane's own content instead of a borrowed
+  constant.
+- Left pane: Challenges group upper, Scenarios group lower, each an
+  independent `SIZE_EXPAND_FILL` `VBoxContainer` half.
+- `HEX_SIZE` 56→84, `HEX_GAP` 14→21, `HEX_STAGGER` 18→27 (all ×1.5).
+- **Follow-on fix, found during the headless boot check:** at 1.5x size
+  the 5-tile Scenarios strip (924px) doesn't fit the left pane at
+  `MIN_SUPPORTED_WIDTH` (800px), which a plain wrapping layout would have
+  to give up the honeycomb's absolute-positioned stagger to solve. Each
+  strip is wrapped in its own `ScrollContainer`
+  (`SCROLL_MODE_AUTO` horizontal, `SCROLL_MODE_DISABLED` vertical, with
+  an explicit `custom_minimum_size.y` floor so a squeezed `VBoxContainer`
+  can't clip it) instead, keeping the tile-positioning code unchanged.
+- Right pane holds the existing detail column (blurb/preset/difficulty
+  controls/custom fields/Start button, then "Back to the run") inside a
+  `ScrollContainer`, largely moved rather than rebuilt.
+- Settings button: added to the top of the right pane (in-flow, not
+  anchor-floated over other content, to avoid overlapping whatever the
+  detail pane currently shows). Rather than duplicate Accessibility/
+  Appearance controls, `debug_panel.gd` gained
+  `open_to_categories(categories: Array)` -- expands the named
+  collection(s) and section(s) and shows the panel, reusing the same
+  collapsible-header machinery its own click handlers use (refactored
+  into a shared `_set_open()` helper so both paths stay in sync). The
+  panel is now in a `"debug_panel"` group so `main_menu.gd` can reach it
+  the same way `debug_panel.gd` already reaches `"main_menu"` for
+  "Return to Main Menu". `debug_panel` is built before the menu in
+  `main.gd::_ready()`, so it already exists when a fresh boot shows the
+  menu.
+
+**Acceptance:** background fills the full viewport; left:right width
+ratio is visibly ~2:1; Challenges sit upper-left, Scenarios lower-left;
+info, difficulty and Start sit on the right; Settings sits top-right; no
+overlap or clipping from `MIN_SUPPORTED_WIDTH` up to a wide desktop size.
+`source_checks.py`, `balance_tests.py` and `check_docs.py` pass; confirmed
+with a real Godot boot via the `mcp__godot__*` tools -- no script errors,
+only pre-existing warnings in unrelated files
+(`ui_layout.gd`/`hud.gd`/`input_selection.gd`). Still needs Dave's
+hands-on look (see `checks/ready.md`) for the actual visual layout.
 
 ## Deferred decisions
 
