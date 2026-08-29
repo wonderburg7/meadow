@@ -2,7 +2,7 @@
 class_name HeadlessDiagnosticProfile
 extends RefCounted
 
-const HeadlessDiagnosticProbes = preload("res://scripts/headless/diagnostic_probes.gd")
+const DiagnosticProbesScript = preload("res://scripts/headless/diagnostic_probes.gd")
 const VERSION := 1
 const EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled", "build_target", "forager_return", "flight_start_resolved"]
 const DEFAULT_EVENT_TYPES := ["action", "death", "crab_spider_event", "recruitment_match", "recruitment_followup", "forager_settled", "orientation_flight", "stall_recovery", "scouting_settled"]
@@ -48,7 +48,7 @@ static func _default_snapshots(profile: String) -> Dictionary:
 
 static func _parse_snapshots(raw: Variant, profile: String) -> Dictionary:
 	if not (raw is Dictionary): return _error("diagnostics.snapshots must be an object")
-	var fields = _valid_strings(raw.get("fields", []), HeadlessDiagnosticProbes.SNAPSHOT_FIELDS, "diagnostics.snapshots.fields")
+	var fields = _valid_strings(raw.get("fields", []), DiagnosticProbesScript.SNAPSHOT_FIELDS, "diagnostics.snapshots.fields")
 	if not fields.ok: return fields
 	var interval = raw.get("every_sim_seconds", null)
 	if interval is String:

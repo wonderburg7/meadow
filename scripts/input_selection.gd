@@ -473,7 +473,10 @@ func _issue_command(world_point: Vector2) -> void:
 	# case above (Bee.command_return_and_deposit).
 	if not main.in_hive_view and world_point.distance_to(main.hive.global_position) <= HIVE_CLICK_RADIUS:
 		for b in commandable:
-			b.command_return_only() if b.manual_deposit_pending else b.command_return_and_deposit()
+			if b.manual_deposit_pending:
+				b.command_return_only()
+			else:
+				b.command_return_and_deposit()
 		return
 	if main.in_hive_view:
 		var cell := _cell_at(world_point)

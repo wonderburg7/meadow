@@ -868,11 +868,6 @@ var _mining_no_work_automine: bool = false
 var _miner_dispatch_timer: float = 0.0
 var _miner_dispatch_due: bool = false
 
-## A full comb makes a failed deposit search valid until a cell-content
-## mutation changes Hive.index_epoch.  Keeping the carried load is essential:
-## it must never turn a full store into an invisible discarded foraging trip.
-var _deposit_blocked_epoch: int = -1
-
 func _process(delta: float) -> void:
 	Perf.begin("bees")
 	if hive == null or is_dying:

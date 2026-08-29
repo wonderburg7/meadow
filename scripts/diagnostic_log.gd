@@ -17,8 +17,8 @@ extends Node
 
 const BeeEnums = preload("res://scripts/bee_enums.gd")
 const Flower = preload("res://scripts/flower.gd")
-const HeadlessDiagnosticProfile = preload("res://scripts/headless/diagnostic_profile.gd")
-const HeadlessDiagnosticProbes = preload("res://scripts/headless/diagnostic_probes.gd")
+const DiagnosticProfileScript = preload("res://scripts/headless/diagnostic_profile.gd")
+const DiagnosticProbesScript = preload("res://scripts/headless/diagnostic_probes.gd")
 
 const LOG_DIR := "user://logs"
 const MAX_SESSION_FILES := 5
@@ -60,7 +60,7 @@ var _session_path: String = ""
 ## with, not just which one it asked for.
 var scenario_random_seed: int = 12345
 var _queen_alive: bool = true
-var _diagnostics: Dictionary = HeadlessDiagnosticProfile.standard()
+var _diagnostics: Dictionary = DiagnosticProfileScript.standard()
 var _diagnostic_event_lines: Dictionary = {}
 var _diagnostic_snapshot_lines: int = 0
 var _diagnostic_last_snapshot: Dictionary = {}
@@ -773,7 +773,7 @@ func set_queen_alive(alive: bool) -> void:
 
 
 func configure_scenario_diagnostics(raw: Variant) -> bool:
-	var parsed := HeadlessDiagnosticProfile.parse(raw)
+	var parsed := DiagnosticProfileScript.parse(raw)
 	if not parsed.ok:
 		push_error("scenario diagnostics: %s" % parsed.error)
 		return false
@@ -805,7 +805,7 @@ func _snapshot_interval() -> float:
 
 
 func _selected_snapshot(world: Node2D) -> Dictionary:
-	return HeadlessDiagnosticProbes.selected_snapshot(world, _diagnostics.snapshots.get("fields", []), {
+	return DiagnosticProbesScript.selected_snapshot(world, _diagnostics.snapshots.get("fields", []), {
 		"cells_completed": _cells_completed,
 	})
 
