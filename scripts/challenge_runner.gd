@@ -133,6 +133,7 @@ func start() -> void:
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
 	main.queen.manual_deposit_pending = false
+	main.queen.role_restricted_to = []
 	_c1_base_nectar_rate = -1.0
 	_c1_base_pollen_rate = -1.0
 
@@ -269,6 +270,9 @@ func _enter_stage() -> void:
 	_run_stage_effects(stage.get("on_enter", []))
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
 	if Session.starting_level == 1:
+		# Challenge 1's manual building drives the queen's state directly;
+		# her backup role must never start the ordinary auto-builder loop.
+		main.queen.role_restricted_to = [Roles.QUEEN, Roles.FORAGER, Roles.NURSE]
 		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 		if stage.id == "1.11":
 			_c1_base_nectar_rate = main.queen.nectar_collection_rate
@@ -479,6 +483,7 @@ func _complete() -> void:
 		_marker.visible = false
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
+		main.queen.role_restricted_to = []
 		if _c1_base_nectar_rate >= 0.0:
 			main.queen.nectar_collection_rate = _c1_base_nectar_rate
 			main.queen.pollen_collection_rate = _c1_base_pollen_rate

@@ -2187,6 +2187,8 @@ func _secondary_items() -> Array:
 		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
 			continue   # neither is a sensible thing to fall back to
 		var key: String = role.key
+		if not allowed_role_keys.is_empty() and not allowed_role_keys.has(key):
+			continue   # a Challenge hasn't taught this role yet
 		items.append({"text": role.label, "action": func(): secondary_role_requested.emit(key)})
 	return items
 
