@@ -29,12 +29,6 @@ const ICON_MARGIN := 16.0
 const BUBBLE_WIDTH := 460.0
 const BUBBLE_TEXT_SIZE := 22
 
-## The reserved bottom-right footprint every other tray subtracts --
-## the bubble, not the icon, is the widest thing that can appear in this
-## corner, plus its own margin from the screen edge. ui_layout.gd reads
-## this rather than duplicating the number (UI_PLAN.md section 15,
-## slice 3).
-const RESERVE_WIDTH := BUBBLE_WIDTH + ICON_MARGIN
 const BUBBLE_GAP := 8.0
 
 var _icon_button: Button
@@ -64,6 +58,8 @@ func _ready() -> void:
 	_build_icon()
 	_build_bubble()
 	visible = Session.gallerin_enabled
+	get_viewport().size_changed.connect(_apply_layout)
+	_apply_layout()
 
 func _process(delta: float) -> void:
 	_stage_elapsed += delta
@@ -149,6 +145,22 @@ func _build_bubble() -> void:
 	disable_btn.text = "Turn off Dr Gallerin"
 	disable_btn.pressed.connect(_on_disable_pressed)
 	row.add_child(disable_btn)
+
+## ui_layout.gd already preloads this script (to read BUBBLE_WIDTH), so
+## this side uses a runtime load() rather than a top-level preload const
+## -- a two-way preload const would ask Godot's parser to resolve each
+## script's type before the other has finished compiling.
+func _ui_layout():
+	return load("res://scripts/ui_layout.gd")
+
+## Mirrors the summary panel's own viewport-driven width step
+## (hud.gd::_apply_selection_tray_width) so the bubble never grows into
+## the role/command tray's space at a narrow window size.
+func _apply_layout() -> void:
+	var viewport_width: float = get_viewport().get_visible_rect().size.x
+	var width: float = _ui_layout().gallerin_bubble_width(viewport_width)
+	_bubble.custom_minimum_size.x = width
+	_bubble_label.custom_minimum_size.x = width - 28.0
 
 func _on_icon_pressed() -> void:
 	if _last_message.is_empty():

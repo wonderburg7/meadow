@@ -7,6 +7,14 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-J -- Dr Gallerin bubble matches the summary panel's layout behaviour
+- [ ] Narrow the window below roughly 1000px width (`NARROW_BREAKPOINT`):
+      confirm Dr Gallerin's bubble visibly shrinks and the role/command
+      tray's reserved gap shrinks to match, exactly like the bottom-left
+      summary panel's own narrow-width step; the role/command tray never
+      renders underneath the bubble at any tested viewport width. See
+      UI-J in `plans/now/ui.md`.
+
 ### UI-I -- Dr Gallerin bubble bigger, persistent, updates immediately
 - [ ] Trigger a Dr Gallerin prompt (any Challenge stage transition, or
       click his icon after one has shown): confirm the bubble and its

@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D/E/F/G/H/I | Dependency: none | Verified: 2026-08-29
+UI-D through UI-J | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -281,7 +281,7 @@ gone since there's no longer a welcome-specific duration to pick.
 `source_checks.py` and `balance_tests.py` pass; still needs Dave's
 hands-on look (see `checks/ready.md`).
 
-## UI-J — Dr Gallerin bubble: same layout behaviour as the summary panel
+## UI-J — Dr Gallerin bubble: same layout behaviour as the summary panel (shipped 29 Aug 2026)
 
 **Dependency:** UI-I (uses its widened `BUBBLE_WIDTH`).
 
@@ -319,6 +319,22 @@ shrinks the bubble and the role/command tray's reserved gap shrinks to
 match, exactly like the summary panel's own narrow-width step; the
 role/command tray never renders underneath the bubble at any tested
 viewport width.
+
+**Delivered:** steps 1 and 3 applied as written (`GALLERIN_RESERVE_WIDTH`
+is now `ui_layout.gd::gallerin_reserve_width()`, and `command_tray_max_width()`
+passes its own `viewport_width` through). Step 2 uses a runtime `load()`
+instead of a top-level `preload()` const for `ui_layout.gd` inside
+`gallerin_panel.gd` -- `ui_layout.gd` already preloads `gallerin_panel.gd`
+at the top of its file (to read `BUBBLE_WIDTH`/`ICON_MARGIN`), so a
+`const` preload in the other direction would ask Godot's parser to
+resolve each script's type before the other has finished compiling; a
+runtime `load()` inside `_apply_layout()` sidesteps that since it only
+runs once the game is playing, not during script compilation. Also
+removed `RESERVE_WIDTH` from `gallerin_panel.gd` since `ui_layout.gd` no
+longer reads it (replaced by the new function). `source_checks.py` and `balance_tests.py` pass. Also confirmed with a
+real headless Godot boot (`Godot.exe --headless --path .`) -- no parse or
+script errors, so the preload-cycle risk this slice was written to avoid
+did not materialise.
 
 ## UI-K — remove the Foraging button from Challenge 1
 
