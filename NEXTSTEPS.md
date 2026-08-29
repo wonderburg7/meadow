@@ -12,12 +12,13 @@ on demand in `plans/archive/`.
    `plans/now/challenge-1.md` are code-complete and merged. What remains is
    Dave's hands-on acceptance playthrough against `checks/ready.md`'s
    Challenge 1 Bundles D–G, then the plan's own status/archive rewrite.
-2. **Successor — UI-D/E/F Challenge top-bar work, needs Dave's hands-on
-   confirmation.** All three implemented in `plans/now/ui.md`: the goal
-   shelf passes pointer input through to the top-bar buttons beneath it
-   (UI-D), every top-right control is doubled in size (UI-E), and the goal
-   shelf's vertical offset is now derived instead of hardcoded (UI-F).
-   Check against `checks/ready.md`.
+2. **Successor — UI-D/E/F/G top-bar and command-tray work, needs Dave's
+   hands-on confirmation.** All four implemented in `plans/now/ui.md`: the
+   goal shelf passes pointer input through to the top-bar buttons beneath
+   it (UI-D), every top-right control is doubled in size (UI-E), the goal
+   shelf's vertical offset is now derived instead of hardcoded (UI-F), and
+   the command tray's three columns now share its full width instead of
+   clustering left (UI-G). Check against `checks/ready.md`.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

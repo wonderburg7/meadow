@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on check of
-UI-D/E/F | Dependency: none | Verified: 2026-08-29
+UI-D/E/F/G | Dependency: none | Verified: 2026-08-29
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -171,7 +171,7 @@ and `top_right_bar` is already set by the time it runs — same formula,
 same result. `source_checks.py` and `balance_tests.py` pass; still needs
 Dave's hands-on look (see `checks/ready.md`).
 
-## UI-G — centre role panels use the full tray width
+## UI-G — centre role panels use the full tray width (shipped 29 Aug 2026)
 
 **Scope:** the command tray's three columns (Job/Focus/Orders) and their
 buttons currently pack to the left of a much wider tray, leaving dead
@@ -198,6 +198,10 @@ buttons fill each column instead of hugging its left edge.
 content), the three columns and their buttons visibly spread across the
 tray's full width instead of clustering on the left with empty space to
 the right.
+
+**Delivered:** both steps applied as written. `source_checks.py` and
+`balance_tests.py` pass; still needs Dave's hands-on look (see
+`checks/ready.md`).
 
 ## UI-H — role panel narrower, summary panel wider
 

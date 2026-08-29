@@ -7,6 +7,13 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-G -- centre role panels use the full tray width
+- [ ] Select several bees at once (so Job/Focus/Orders all show content)
+      and confirm the three command-tray columns and their buttons
+      visibly spread across the tray's full width, headers centred, no
+      cluster on the left with empty space to the right. See UI-G in
+      `plans/now/ui.md`.
+
 ### UI-D/E/F -- Challenge top-bar hit area, doubled buttons, goal shelf placement
 - [ ] Start a Challenge and try clicking the second-row top-bar buttons
       (Colony, Nursery, Foraging, etc.) while the goal shelf is visible in

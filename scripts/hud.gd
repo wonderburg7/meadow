@@ -954,11 +954,13 @@ func _build_tray_column(title: String) -> Array:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.custom_minimum_size = Vector2(100, 0)
+	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	command_columns.add_child(wrapper)
 
 	var header := Label.new()
 	header.text = title
 	header.theme_type_variation = "Small"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	wrapper.add_child(header)
 
@@ -2219,6 +2221,7 @@ func _labelled_row(title: String) -> HBoxContainer:
 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = label
 	button.theme_type_variation = "Small"
 	button.focus_mode = Control.FOCUS_NONE
@@ -2230,6 +2233,7 @@ func _toggle_button(label: String, is_current: bool, action: Callable, tip: Stri
 func _action_button(label: String, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = label
 	button.theme_type_variation = "Small"
 	button.pressed.connect(action)
@@ -2238,6 +2242,7 @@ func _action_button(label: String, action: Callable, tip: String) -> Control:
 func _current_role_marker(label: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = "● %s" % label
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = "This is what the selected bees are doing now."
