@@ -26,27 +26,14 @@ const Shapes = preload("res://scripts/shapes.gd")
 
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
-const BUBBLE_WIDTH := 360.0
-const BUBBLE_TEXT_SIZE := 17
+const BUBBLE_WIDTH := 460.0
+const BUBBLE_TEXT_SIZE := 22
 
-## The reserved bottom-right footprint every other tray subtracts --
-## the bubble, not the icon, is the widest thing that can appear in this
-## corner, plus its own margin from the screen edge. ui_layout.gd reads
-## this rather than duplicating the number (UI_PLAN.md section 15,
-## slice 3).
-const RESERVE_WIDTH := BUBBLE_WIDTH + ICON_MARGIN
 const BUBBLE_GAP := 8.0
-const BUBBLE_SECONDS := 6.0
-## The first line of a sub-stage (its "welcome" prompt) is meant to be
-## read without having to rush for it -- see TUTORIAL_PLAN.md's timing
-## pattern -- so it lingers a little longer than a hint or a completion
-## line does.
-const BUBBLE_SECONDS_WELCOME := 9.0
 
 var _icon_button: Button
 var _bubble: PanelContainer
 var _bubble_label: Label
-var _bubble_timer: float = 0.0
 var _hovering_icon: bool = false
 var _hovering_bubble: bool = false
 var _last_message: String = ""
@@ -71,15 +58,12 @@ func _ready() -> void:
 	_build_icon()
 	_build_bubble()
 	visible = Session.gallerin_enabled
+	get_viewport().size_changed.connect(_apply_layout)
+	_apply_layout()
 
 func _process(delta: float) -> void:
 	_stage_elapsed += delta
 	_fire_due_prompts()
-
-	if _bubble.visible and not _hovering_bubble and not _hovering_icon:
-		_bubble_timer -= delta
-		if _bubble_timer <= 0.0:
-			_bubble.visible = false
 
 # --- building the UI -------------------------------------------------
 
@@ -145,7 +129,7 @@ func _build_bubble() -> void:
 	_bubble_label = Label.new()
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 28.0, 0)
-	_bubble_label.add_theme_font_size_override("font_size", BUBBLE_TEXT_SIZE)
+	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
 	column.add_child(_bubble_label)
 
 	var row := HBoxContainer.new()
@@ -162,10 +146,26 @@ func _build_bubble() -> void:
 	disable_btn.pressed.connect(_on_disable_pressed)
 	row.add_child(disable_btn)
 
+## ui_layout.gd already preloads this script (to read BUBBLE_WIDTH), so
+## this side uses a runtime load() rather than a top-level preload const
+## -- a two-way preload const would ask Godot's parser to resolve each
+## script's type before the other has finished compiling.
+func _ui_layout():
+	return load("res://scripts/ui_layout.gd")
+
+## Mirrors the summary panel's own viewport-driven width step
+## (hud.gd::_apply_selection_tray_width) so the bubble never grows into
+## the role/command tray's space at a narrow window size.
+func _apply_layout() -> void:
+	var viewport_width: float = get_viewport().get_visible_rect().size.x
+	var width: float = _ui_layout().gallerin_bubble_width(viewport_width)
+	_bubble.custom_minimum_size.x = width
+	_bubble_label.custom_minimum_size.x = width - 28.0
+
 func _on_icon_pressed() -> void:
 	if _last_message.is_empty():
 		return
-	_show_bubble(_last_message, BUBBLE_SECONDS)
+	_show_bubble(_last_message)
 
 func _on_disable_pressed() -> void:
 	Session.gallerin_enabled = false
@@ -196,8 +196,7 @@ func show_now(prompt: Dictionary) -> void:
 		return
 	if id != "":
 		_shown_ids[id] = true
-	var seconds: float = BUBBLE_SECONDS_WELCOME if prompt.get("trigger", "") == "welcome" else BUBBLE_SECONDS
-	_show_bubble(str(prompt.get("text", "")), seconds)
+	_show_bubble(str(prompt.get("text", "")))
 
 func _fire_due_prompts() -> void:
 	if _queue.is_empty():
@@ -209,10 +208,9 @@ func _fire_due_prompts() -> void:
 	while not _queue.is_empty() and float(_queue[0].get("delay", 0.0)) <= _stage_elapsed:
 		show_now(_queue.pop_front())
 
-func _show_bubble(text: String, seconds: float) -> void:
+func _show_bubble(text: String) -> void:
 	if not Session.gallerin_enabled:
 		return
 	_last_message = text
 	_bubble_label.text = text
 	_bubble.visible = true
-	_bubble_timer = seconds

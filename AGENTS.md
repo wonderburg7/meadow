@@ -4,34 +4,33 @@ This file is the entry point for ChatGPT and Codex sessions in this
 repository.
 
 **Before reading or acting on any other project file, read `CHATGPT.md` and
-follow its worktree and file-editing boundaries.**
+follow its file-editing and hand-off conventions.**
 
-The primary Meadow worktree and `master` belong to Claude Project and Claude
-Code. ChatGPT/Codex must treat that worktree as advisory-only. Codex may
-implement an explicitly assigned task only from a separate worktree on a
-`codex/...` branch, after satisfying every isolation and overlap check in
-`CHATGPT.md`. It must commit there for Claude to integrate and must not merge
-into `master` itself.
+Codex has the same rights as Claude Code to read and edit Meadow's game and
+source files, including the primary worktree, for an assigned task. Like
+Claude, Codex commits on a work branch (a `codex/...` branch, or a dedicated
+worktree if one is already set up) rather than directly on `master`, then
+hands committed changes to Claude for risk-proportional integration per
+`CHATGPT.md`.
 
 `NEXTSTEPS.md` and `plans/` are the shared planning and implementation
-records for Claude and Codex. They establish integrated-project priority, but
-they do **not** authorise Codex to start a slice: Codex still needs Dave's
-explicit assignment and must follow `CHATGPT.md`'s isolation rules. Codex may
-propose an explicitly assigned queue update on a `codex/...` branch, but must
-not independently curate it or treat unmerged work as completed. In advisory
-mode, ChatGPT may write only to the Markdown files allowed by `CHATGPT.md`.
+records for Claude and Codex. They establish integrated-project priority.
+Codex may propose an assigned queue update on its work branch, but must not
+independently curate the queue or treat unmerged work as completed. In
+advisory mode, ChatGPT may write only to the Markdown files allowed by
+`CHATGPT.md`.
 
-In an isolated implementation task, relevant Markdown documentation is part of
-the change: Codex should update the README, design, architecture, testing or
+In an implementation task, relevant Markdown documentation is part of the
+change: Codex should update the README, design, architecture, testing or
 feature-plan documentation made inaccurate by its code. Those edits travel
 with the branch for review. Tool-policy files and canonical coordination files
 retain the stricter ownership rules in `CHATGPT.md`.
 
-When that boundary prevents implementation, follow `CHATGPT.md`'s durable
-recommendation routing automatically: preserve the current evidence,
-consequence and next action in `insights_from_ChatGPT.md`, with detailed
-execution steps kept in the relevant shared `plans/` file if Dave selects the
-work. Do not rely on the chat as the only record.
+When advisory mode or a missing task assignment prevents implementation,
+follow `CHATGPT.md`'s durable recommendation routing automatically: preserve
+the current evidence, consequence and next action in `insights_from_ChatGPT.md`,
+with detailed execution steps kept in the relevant shared `plans/` file if
+Dave selects the work. Do not rely on the chat as the only record.
 
 Claude Project and Claude Code should continue to use `CLAUDE.md` and
 `NEXTSTEPS.md` as their project instructions and canonical integrated work

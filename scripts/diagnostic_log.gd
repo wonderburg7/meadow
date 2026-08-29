@@ -94,6 +94,8 @@ var _stall_recoveries: int = 0
 var _forager_deliveries: int = 0
 var _forager_delivery_amount: float = 0.0
 var _flowers_senesced: int = 0
+var _senescence_nectar_lost: float = 0.0
+var _senescence_pollen_lost: float = 0.0
 var _handling_by_experience: Dictionary = {}
 
 ## Role outcome counters -- see CHATGPT_INSIGHTS_PLAN.md's C5. Cheap
@@ -161,6 +163,8 @@ func start_session() -> void:
 	_forager_deliveries = 0
 	_forager_delivery_amount = 0.0
 	_flowers_senesced = 0
+	_senescence_nectar_lost = 0.0
+	_senescence_pollen_lost = 0.0
 	_handling_by_experience.clear()
 	_brood_feeds = 0
 	_brood_hatches = 0
@@ -376,6 +380,14 @@ func count_forager_delivery(amount: float) -> void:
 
 func count_flower_senescence() -> void:
 	_flowers_senesced += 1
+
+
+## Resource that an ageing flower could have recharged but did not. Unlike
+## flowers_senesced, these are feature-effect counters and remain zero when
+## flower senescence is disabled.
+func count_flower_senescence_loss(nectar: float, pollen: float) -> void:
+	_senescence_nectar_lost += maxf(0.0, nectar)
+	_senescence_pollen_lost += maxf(0.0, pollen)
 
 
 func _experience_bucket(prior_experience: int) -> String:
@@ -728,6 +740,8 @@ func end_session(outcome: String) -> void:
 		"forager_deliveries": _forager_deliveries,
 		"forager_delivery_amount": _forager_delivery_amount,
 		"flowers_senesced": _flowers_senesced,
+		"senescence_nectar_lost": _senescence_nectar_lost,
+		"senescence_pollen_lost": _senescence_pollen_lost,
 		"handling_by_experience": _handling_by_experience,
 		"brood_feeds": _brood_feeds,
 		"brood_hatches": _brood_hatches,

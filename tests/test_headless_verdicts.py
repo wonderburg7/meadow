@@ -9,6 +9,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -16,7 +17,7 @@ TOOLS = Path(__file__).resolve().parent.parent / "tools"
 sys.path.insert(0, str(TOOLS))
 
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
-from run_scenario import run_verdict_scenario  # noqa: E402
+from run_scenario import _suppress_windows_crash_dialogs, run_once, run_verdict_scenario  # noqa: E402
 
 
 ANALYSIS = {
@@ -29,6 +30,31 @@ ANALYSIS = {
 
 
 class HeadlessVerdictTest(unittest.TestCase):
+    def test_legacy_runner_disables_godot_crash_handler(self):
+        scenario = Path("scenario.json")
+        session = Path("session.jsonl")
+
+        def fake_godot(command, **_kwargs):
+            self.assertIn("--disable-crash-handler", command)
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with mock.patch("run_scenario.subprocess.run", side_effect=fake_godot), \
+             mock.patch.dict(run_once.__globals__, {"session_file_for_run_id": lambda _run_id: session}), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(session, run_once(scenario, "unused", 1))
+
+    def test_windows_error_mode_is_applied_only_while_spawning(self):
+        kernel32 = mock.Mock()
+        kernel32.GetErrorMode.return_value = 0x10
+        fake_windll = SimpleNamespace(kernel32=kernel32)
+
+        with mock.patch("run_scenario.os.name", "nt"), \
+             mock.patch("run_scenario.ctypes.windll", fake_windll, create=True):
+            with _suppress_windows_crash_dialogs():
+                self.assertEqual([mock.call(0x13)], kernel32.SetErrorMode.call_args_list)
+
+        self.assertEqual([mock.call(0x13), mock.call(0x10)], kernel32.SetErrorMode.call_args_list)
+
     def test_typed_expectations_pass_and_name_their_results(self):
         expect = validate_expectations([
             {"id": "queen", "metric": "summary.queen_alive", "op": "eq", "value": True},

@@ -65,6 +65,12 @@ a machine-specific path in repository instructions:
 .\tools\run_headless.ps1 -PythonPath C:\path\to\python.exe test_scenarios/slice1_smoke_test.json
 ```
 
+On Windows, every Godot launch is unattended: the runner disables Godot's
+crash handler and temporarily applies the inherited no-dialog error mode while
+starting the child process. An engine crash therefore returns an exit status
+and is captured in the run artefacts; it must not leave an `Application Error`
+dialog waiting for input.
+
 ## Background jobs
 
 Add `--background` when the same foreground command will take long enough
@@ -183,7 +189,11 @@ python tools\foraging_evidence_report.py <experiment-result.json>
 ```
 
 The verdict reports outcome means/ranges, starvation deaths, handling-time
-averages by prior `species_experience` bucket, and flower senescence counts.
+averages by prior `species_experience` bucket, flower replacement counts, and
+the nectar/pollen recharge actually foregone due to senescence. Replacement is
+expected with the feature both off and on; the two foregone-recharge counters
+are the causal senescence-effect evidence and are zero by construction when it
+is off.
 A required zero-event channel is listed as `not_exercised`, not treated as
 evidence that the mechanic had no effect.
 

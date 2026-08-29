@@ -326,7 +326,11 @@ var scout_best_start_point: Vector2 = Vector2(INF, INF)
 ## whenever scouting or auto-recruitment is on, not just while scouting
 ## -- scouting just reads the same per-trip rate to score its bouts.
 ## Only becomes the EMA described above once past the grace window --
-## see grace_rate_sum immediately below.
+## see grace_rate_sum immediately below. Persisted (forager-history save
+## design, 28 Aug 2026): same additive .get()-default pattern as
+## known_patches/species_experience above, no FORMAT_VERSION bump. An
+## older save simply has no key, and 0.0 is exactly a fresh bee's
+## starting value, so old saves load unchanged.
 var avg_collection_rate: float = 0.0
 const RATE_EMA_WEIGHT := 0.3
 ## Running sum of trip rates while still inside the grace window (see
@@ -334,6 +338,7 @@ const RATE_EMA_WEIGHT := 0.3
 ## until she's settled, only switching to the EMA above once there are
 ## enough real trips behind it to smooth one lucky/unlucky trip out
 ## rather than being decided by it. See BeeForaging._score_trip.
+## Persisted, same pattern as avg_collection_rate above.
 var grace_rate_sum: float = 0.0
 ## How many trips this forager has actually been scored on since it last
 ## started being tracked (scouting or auto-recruitment turned on, or the
@@ -344,7 +349,9 @@ var grace_rate_sum: float = 0.0
 ## instant the toggle is switched on, since neither has a scored trip
 ## yet. Judging either against the thresholds immediately is what let
 ## a whole starting colony pile up at the entrance and starve -- see
-## BeeForaging.go_to_exit.
+## BeeForaging.go_to_exit. Persisted, same pattern as avg_collection_rate
+## above -- without this a reload silently reset every settled forager's
+## recruitment history back to "brand new colony" grace period.
 var trips_scored: int = 0
 ## Set while waiting at the entrance (see BeeForaging.wait_at_entrance) so
 ## the bee actually walks a couple of hex rows clear of the doorway

@@ -267,7 +267,7 @@ const C2_RESCUE_AMOUNT := 150.0
 ## than opening on a stage id that looks like two are missing.
 const STAGES_2 := [
 	{
-		"id": "2.1", "goal": "nectar_stabilized", "unlocked_keys": ["laying", "colony_window"],
+		"id": "2.1", "goal": "nectar_stabilized", "unlocked_keys": ["laying", "colony_window", "foraging_window"],
 		"goal_text": "Goal: watch the nectar stores fall, then recover them.",
 		"prompts": [
 			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},

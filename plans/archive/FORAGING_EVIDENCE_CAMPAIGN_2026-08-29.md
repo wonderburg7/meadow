@@ -1,9 +1,9 @@
 # Foraging ecology — operations and evidence plan
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: validation active | Owner: Dave / Claude Code | Next: run the matched
-foraging evidence campaign | Dependency: Godot/headless scenario access |
-Verified: 2026-08-26
+Status: evidence complete | Owner: Dave / Claude Code | Next: retain defaults;
+open a separate balance slice only if selected | Dependency: none |
+Verified: 2026-08-29
 
 Slices 0-9 are built. Their detailed specifications, results and implementation
 notes are retained in `plans/archive/FORAGING_ECOLOGY_PLAN_2026-08-26.md`.
@@ -32,6 +32,40 @@ seeds and a common 15-cell/11-forager, 60-day setup. Launch it with
 Report flower visits, orientation/scouting/recruitment events, deliveries,
 starvation, stalls and runtime together. A missing event means “not exercised”
 until the scenario proves otherwise.
+
+## Campaign result — 29 Aug 2026
+
+All 70 runs (14 cases × the five declared seeds) passed. The rerun adds only
+causal senescence telemetry; it keeps the same seeds, base scenario and
+configuration cases. Its manifest SHA-256 is
+`97030d4acd3ffff08cb89402073a4017f00fbd701199955e3f079a248b0816e0`; the
+result is under
+`C:\Users\dl13860\AppData\Local\Temp\meadow-headless-jobs\job-1787969794300-9ed1c6b9d838\runs\experiment-1787969794864-3228fff91eb5`
+(the verdict is `foraging-evidence-verdict.json`). Reproduce with the command
+in `docs/headless-run-contract.md`, then pass the emitted `result.json` to
+`tools/foraging_evidence_report.py`.
+
+- **Recruitment:** entrance recruitment exercised at 2.2 matches/run on
+  average (0–4); default proximity recruitment and every proximity sweep but
+  radius 125 had zero matches. Radius 125 produced one match across five runs
+  (0.2/run), with deliveries 41.0/run and 1228.5 delivered on average versus
+  entrance's 40.4 and 1271.5. This does not support replacing entrance
+  recruitment as the default; the proximity cases are `not_exercised` rather
+  than negative evidence.
+- **Handling experience:** the enabled case recorded 144 visits at experience
+  0 (7.0484 s average), 225 at 1–2 (6.0756 s), 168 at 3–5 (5.9405 s), 74 at
+  6–9 (4.2027 s), and 10 at 10+ (6.7 s). The effect is exercised and improves
+  through 6–9 visits; the final bucket is too small and non-monotonic to make
+  a stronger claim.
+- **Flower senescence:** flower replacement is deliberately independent of
+  the toggle (1685.6 `flowers_senesced` on versus 1690.4 off), so it is a
+  lifecycle observation rather than feature-effect evidence. The new causal
+  counters show 868.3412 nectar and 33.335 pollen units of effective recharge
+  foregone per enabled run (ranges 701.4816–1161.9236 and 17.8898–67.8365);
+  both are exactly zero off. Enabled runs delivered 2133.9 versus 2308.7
+  amount, with 65.6 versus 70.6 deliveries, 0.6 versus 0.6 starvation deaths
+  and 13.0 versus 9.2 stalls. This verifies the intended mechanism but is not
+  enough balance evidence to change the provisional off-by-default setting.
 
 ## Recent fixes
 
@@ -74,5 +108,6 @@ until the scenario proves otherwise.
 
 ## Future work
 
-Per-cell flower preference and forager-history save persistence remain separate
-future slices. They must not be folded into this validation campaign.
+Per-cell flower preference remains a separate future slice. It must not be
+folded into this validation campaign. (Forager-history save persistence is
+resolved -- see `plans/reference/technical-audit.md`.)

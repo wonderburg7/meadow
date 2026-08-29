@@ -176,11 +176,17 @@ const SETTINGS_BUTTON_GAP := 8.0
 ## Used only until debug_panel.gd reports the cog's real width (see
 ## set_settings_button_width) -- close to the cog's own custom_minimum_size
 ## so there's no visible jump on the first frame.
-const SETTINGS_BUTTON_DEFAULT_WIDTH := 36.0
+const SETTINGS_BUTTON_DEFAULT_WIDTH := 72.0
 ## All primary controls in the top-right bar use this measured height.
 ## Keeping it in one place prevents a new text or icon button from making a
 ## row visibly uneven at a different UI scale.
-const TOP_BAR_CONTROL_HEIGHT := 28.0
+const TOP_BAR_CONTROL_HEIGHT := 56.0
+## Separation between the top-right bar's two rows -- shared with the goal
+## shelf's offset_top calculation so the two can never disagree.
+const TOP_BAR_ROW_SEPARATION := 4.0
+## Fixed gap between the top-right bar's second row and the goal shelf
+## below it, once the shelf's offset is derived rather than hardcoded.
+const GOAL_SHELF_GAP := 12.0
 
 ## The top-left corner. Every readout lives in the colony window now;
 ## this shows only the ones the player has starred there, in a fixed
@@ -502,7 +508,7 @@ func _build_top_right_bar() -> void:
 	var bar := VBoxContainer.new()
 	top_right_bar = bar
 	bar.theme = UiTheme.build_theme()
-	bar.add_theme_constant_override("separation", 4)
+	bar.add_theme_constant_override("separation", TOP_BAR_ROW_SEPARATION)
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
@@ -518,7 +524,7 @@ func _build_top_right_bar() -> void:
 	_style_button(pause_button)
 	pause_button.text = "❚❚"
 	pause_button.tooltip_text = PAUSE_TIP
-	pause_button.custom_minimum_size = Vector2(28, TOP_BAR_CONTROL_HEIGHT)
+	pause_button.custom_minimum_size = Vector2(56, TOP_BAR_CONTROL_HEIGHT)
 	pause_button.theme_type_variation = "Small"
 	pause_button.focus_mode = Control.FOCUS_NONE
 	pause_button.toggle_mode = true
@@ -538,7 +544,7 @@ func _build_top_right_bar() -> void:
 		_style_button(btn)
 		btn.text = entry.label
 		btn.tooltip_text = entry.tip
-		btn.custom_minimum_size = Vector2(24, TOP_BAR_CONTROL_HEIGHT)
+		btn.custom_minimum_size = Vector2(48, TOP_BAR_CONTROL_HEIGHT)
 		btn.theme_type_variation = "Small"
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.toggle_mode = true
@@ -559,13 +565,13 @@ func _build_top_right_bar() -> void:
 	row2.add_theme_constant_override("separation", 6)
 	bar.add_child(row2)
 
-	colony_button = _icon_button("bee", "Colony", 92.0, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
+	colony_button = _icon_button("bee", "Colony", 184.0, "Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
 
-	nursery_button = _icon_button("hex", "Nursery", 96.0, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
+	nursery_button = _icon_button("hex", "Nursery", 192.0, "Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
@@ -576,7 +582,7 @@ func _build_top_right_bar() -> void:
 	foraging_button = Button.new()
 	_style_button(foraging_button)
 	foraging_button.text = "Foraging"
-	foraging_button.custom_minimum_size = Vector2(78, TOP_BAR_CONTROL_HEIGHT)
+	foraging_button.custom_minimum_size = Vector2(156, TOP_BAR_CONTROL_HEIGHT)
 	foraging_button.tooltip_text = "Open the foraging window: trip timing, flowers visited per trip, empty-return rate, and recruitment/scouting counts."
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
 	row2.add_child(foraging_button)
@@ -589,7 +595,7 @@ func _build_top_right_bar() -> void:
 	winter_button = Button.new()
 	_style_button(winter_button)
 	winter_button.text = "Winter"
-	winter_button.custom_minimum_size = Vector2(62, TOP_BAR_CONTROL_HEIGHT)
+	winter_button.custom_minimum_size = Vector2(124, TOP_BAR_CONTROL_HEIGHT)
 	winter_button.tooltip_text = "Open the winter forecast: what the colony will need, and how far short it is."
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
@@ -597,7 +603,7 @@ func _build_top_right_bar() -> void:
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
-	view_button = _icon_button("hive", "Hive", 78.0, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
+	view_button = _icon_button("hive", "Hive", 156.0, "Switch to the hive interior, or press Tab. Both views keep simulating while you look at the other one.")
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
@@ -662,10 +668,14 @@ func _build_goal_shelf() -> void:
 	goal_shelf = VBoxContainer.new()
 	goal_shelf.theme = UiTheme.build_theme()
 	goal_shelf.visible = false
+	# The shelf overlaps the second top-bar row while a Challenge is active.
+	# It is display-only, so every part must pass pointer input through to
+	# the controls underneath instead of leaving only their exposed edge live.
+	goal_shelf.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + SETTINGS_BUTTON_GAP)
-	goal_shelf.offset_top = 46
+	goal_shelf.offset_top = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
 	goal_shelf.custom_minimum_size = Vector2(320, 0)
 	goal_shelf.add_theme_constant_override("separation", 1)
 	add_child(goal_shelf)
@@ -692,6 +702,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	current_goal_label.custom_minimum_size = Vector2(320, 0)
+	current_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	current_goal_label.theme_type_variation = "Body"
 	current_goal_label.add_theme_color_override("font_color", UiTheme.color("warning"))
 	goal_shelf.add_child(current_goal_label)
@@ -701,16 +712,19 @@ func _build_goal_shelf() -> void:
 	goal_progress_row.visible = false
 	goal_progress_row.alignment = BoxContainer.ALIGNMENT_END
 	goal_progress_row.add_theme_constant_override("separation", 6)
+	goal_progress_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_shelf.add_child(goal_progress_row)
 
 	goal_progress_bar = ProgressBar.new()
 	goal_progress_bar.custom_minimum_size = Vector2(160, 8)
 	goal_progress_bar.show_percentage = false
+	goal_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_bar)
 
 	goal_progress_label = Label.new()
 	goal_progress_label.theme_type_variation = "Small"
 	goal_progress_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	goal_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_label)
 
 ## Called by debug_panel.gd whenever its settings cog's actual width
@@ -940,11 +954,13 @@ func _build_tray_column(title: String) -> Array:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.custom_minimum_size = Vector2(100, 0)
+	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	command_columns.add_child(wrapper)
 
 	var header := Label.new()
 	header.text = title
 	header.theme_type_variation = "Small"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	wrapper.add_child(header)
 
@@ -2205,6 +2221,7 @@ func _labelled_row(title: String) -> HBoxContainer:
 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = label
 	button.theme_type_variation = "Small"
 	button.focus_mode = Control.FOCUS_NONE
@@ -2216,6 +2233,7 @@ func _toggle_button(label: String, is_current: bool, action: Callable, tip: Stri
 func _action_button(label: String, action: Callable, tip: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = label
 	button.theme_type_variation = "Small"
 	button.pressed.connect(action)
@@ -2224,6 +2242,7 @@ func _action_button(label: String, action: Callable, tip: String) -> Control:
 func _current_role_marker(label: String) -> Control:
 	var button := Button.new()
 	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = "● %s" % label
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = "This is what the selected bees are doing now."
@@ -2381,6 +2400,10 @@ func set_view_button_visible(value: bool) -> void:
 		view_button.visible = value
 	if view_info != null:
 		view_info.visible = value
+
+func set_foraging_button_visible(value: bool) -> void:
+	if foraging_button != null:
+		foraging_button.visible = value
 
 ## See the `allowed_role_keys` field comment. Rebuilds the selection
 ## panel immediately so a stage unlocking a new role shows it without

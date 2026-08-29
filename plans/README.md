@@ -3,7 +3,7 @@
 <!-- CONTEXT: planning-routing | LOAD: on-demand | OWNER: Dave / implementer -->
 
 Use this directory for all future product planning and implementation work.
-Claude and Codex share these files; their different worktree and hand-off rules
+Claude and Codex share these files; their branch and hand-off conventions
 remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 ## Read order
@@ -61,7 +61,6 @@ alternatives out of live plans. Git and `plans/archive/` retain them.
 | --- | --- |
 | Challenge 1 Bundle H | `plans/now/challenge-1.md` |
 | UI-D diagnosis | `plans/now/ui.md` |
-| Foraging evidence | `plans/active/foraging-evidence.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Forager-history save persistence | `plans/design/forager-history.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
@@ -78,13 +77,10 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    documentation as a reliable dependency for later Challenge work.
 2. Diagnose UI-D from the observed Challenge reproduction before changing
    top-bar geometry; it is the next contained implementation investigation.
-3. Run the matched foraging evidence campaign before changing recruitment
-   defaults or using the existing foraging chain as the first progression
-   vertical slice.
-4. Forager-history persistence's save-format design is now explicit
-   (`plans/design/forager-history.md`); implement it as its own slice with
-   its own deterministic tests, not folded into unrelated UI or foraging
-   work.
-5. If progression is selected, follow `plans/design/progression.md`'s order:
+3. The foraging evidence campaign is complete and defaults are retained; see
+   `plans/archive/FORAGING_EVIDENCE_CAMPAIGN_2026-08-29.md` before changing
+   recruitment defaults or using the existing foraging chain as the first
+   progression vertical slice.
+4. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not
    begin adaptations, campaign meta, or legacy-path removal first.

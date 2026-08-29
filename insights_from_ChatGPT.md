@@ -4,10 +4,8 @@
 > explicitly points to it.**
 
 Purpose: a small, current-only queue of evidence-backed findings for Dave to
-hand to Claude when useful. Completed or rejected items are deleted, not kept
-as prose history; Git already preserves that history. Keep each entry to
-evidence, consequence and next action. Do not add implementation diaries or
-status tables.
+implement. Keep each entry to
+evidence, consequence and next action.
 
 Planning/context findings last refreshed: 26 Aug 2026. Completed simulation
 recommendations are recorded in Git history and their current checks/plans,
@@ -63,6 +61,24 @@ every top-right control in a Challenge and Scenario at normal and enlarged
 text scales. Do not fold this into cosmetic top-bar work.
 
 ## Workflow/tooling
+
+### P0. Foraging evidence campaign cannot complete a first case
+
+**Evidence:** On 29 Aug 2026, the pinned
+`test_scenarios/foraging_evidence_campaign.json` launched its first
+`no_automation` case at seed `12345`, then Godot exited with code
+`4294967295` after 48.578 seconds. The run wrote no session summary or
+diagnostic events (`status: crashed`); an independent 30-second foreground
+base-scenario probe timed out rather than reporting a game assertion.
+
+**Consequence:** no recruitment, handling-experience or flower-senescence
+comparison is available. A zero event count would be misleading because the
+simulation has not completed.
+
+**Recommendation:** reproduce one pinned base scenario interactively or with
+Godot crash logging enabled, identify the native/runtime failure before
+rerunning the matched campaign, then render the verdict only from a completed
+experiment `result.json`.
 
 ### P0. Planning state is split, stale and more expensive than the work
 

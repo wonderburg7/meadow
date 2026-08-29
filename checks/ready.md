@@ -7,6 +7,65 @@ feature and run only its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### UI-K -- Foraging button hidden for Challenge 1
+- [ ] Start Challenge 1 and confirm the top-right "Foraging" button is
+      absent for every stage. Finish Challenge 1 ("Continue playing") and
+      confirm it reappears immediately, exactly like the colony/nursery/
+      view buttons. Separately confirm it stays visible throughout
+      Challenge 2 (present from stage 2.1 onward) and in ordinary
+      Scenarios. See UI-K in `plans/now/ui.md`.
+
+### UI-J -- Dr Gallerin bubble matches the summary panel's layout behaviour
+- [ ] Narrow the window below roughly 1000px width (`NARROW_BREAKPOINT`):
+      confirm Dr Gallerin's bubble visibly shrinks and the role/command
+      tray's reserved gap shrinks to match, exactly like the bottom-left
+      summary panel's own narrow-width step; the role/command tray never
+      renders underneath the bubble at any tested viewport width. See
+      UI-J in `plans/now/ui.md`.
+
+### UI-I -- Dr Gallerin bubble bigger, persistent, updates immediately
+- [ ] Trigger a Dr Gallerin prompt (any Challenge stage transition, or
+      click his icon after one has shown): confirm the bubble and its
+      text are visibly larger than before and scale with the text-size
+      accessibility setting; it stays on screen indefinitely until
+      "Dismiss" or "Turn off Dr Gallerin" is clicked (no auto-hide);
+      triggering a second prompt while the first is still showing (two
+      stage transitions in quick succession) swaps the visible text
+      immediately with no stale text lingering. See UI-I in
+      `plans/now/ui.md`.
+
+### UI-H -- role panel narrower, summary panel wider
+- [ ] Select a bee or cell (so the bottom-left summary panel shows
+      content) and select several bees at once (so the command tray
+      shows Job/Focus/Orders): confirm the summary panel is visibly
+      wider and the command tray's maximum width is visibly narrower by
+      roughly 30% than before, with no overlap between the two or the
+      Gallerin reserve at any viewport width down to
+      `MIN_SUPPORTED_WIDTH`. The two multipliers (`SELECTION_TRAY_WIDTH`
+      x1.3, `command_tray_max_width` x0.7) are a first-pass split, not an
+      exact pixel conservation -- flag if the balance looks wrong so they
+      can be retuned. See UI-H in `plans/now/ui.md`.
+
+### UI-G -- centre role panels use the full tray width
+- [ ] Select several bees at once (so Job/Focus/Orders all show content)
+      and confirm the three command-tray columns and their buttons
+      visibly spread across the tray's full width, headers centred, no
+      cluster on the left with empty space to the right. See UI-G in
+      `plans/now/ui.md`.
+
+### UI-D/E/F -- Challenge top-bar hit area, doubled buttons, goal shelf placement
+- [ ] Start a Challenge and try clicking the second-row top-bar buttons
+      (Colony, Nursery, Foraging, etc.) while the goal shelf is visible in
+      the top-right -- every part of each button should respond to a click,
+      not just its exposed top edge (UI-D). Compare against a Scenario,
+      where the goal shelf is hidden and this never showed up.
+- [ ] Confirm every top-right control (pause, each speed multiplier,
+      Colony, Nursery, Foraging, Winter, Meadow/Hive, settings cog) is
+      visibly twice its old size and all sit at one consistent height
+      (UI-E), and that the goal shelf starts clearly below both top-bar
+      rows with a visible gap at every window size and text scale, never
+      overlapping a button (UI-F). See UI-D/E/F in `plans/now/ui.md`.
+
 ### Challenge 1 Slices 1-2 -- role-panel hit areas, Poppy removal, manual cell building
 - [ ] Play Challenge 1 from the start through building the first two cells
       (1.5 and 1.12). Confirm: the role-panel "Change to..." control responds
