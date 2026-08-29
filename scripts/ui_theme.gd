@@ -260,10 +260,6 @@ static func _refresh_theme_resource(theme: Theme) -> void:
 	theme.set_color("font_hover_pressed_color", "Button", color("text_primary"))
 	theme.set_color("font_disabled_color", "Button", color("disabled"))
 
-## The three non-default faces are placeholder options until their font
-## files are sourced under assets/fonts/ (UI_PLAN.md section 8) --
-## picking one before then falls back to the default font rather than
-## erroring, exactly like any other not-yet-built content per section 10.
 static func _typeface_font(typeface: String) -> Font:
 	var path := _typeface_path(typeface)
 	if path == "" or not ResourceLoader.exists(path):
@@ -273,10 +269,14 @@ static func _typeface_font(typeface: String) -> Font:
 static func _typeface_path(typeface: String) -> String:
 	match typeface:
 		"atkinson":
-			return "res://assets/fonts/AtkinsonHyperlegible-Regular.ttf"
-		"dyslexia":
+			return "res://assets/fonts/Atkinson-Hyperlegible-Regular-102.otf"
+		"opendyslexic":
 			return "res://assets/fonts/OpenDyslexic-Regular.otf"
-		"pixel":
-			return "res://assets/fonts/PixelOperator.ttf"
+		"opensans":
+			return "res://assets/fonts/OpenSans-Regular.ttf"
+		"munro":
+			return "res://assets/fonts/munro.ttf"
+		"silkscreen":
+			return "res://assets/fonts/slkscr.ttf"
 		_:
 			return ""  # "sans" -- Godot's built-in default, no asset needed
