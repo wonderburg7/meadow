@@ -846,7 +846,11 @@ func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2
 ## Walks the straight line in small steps and checks nothing solid sits
 ## on it. Step size is under one tile so a block can't be jumped over.
 func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool:
-	var span := from_point.distance_to(to_point)
+	# Sampled in true (unsquashed) hex space -- the squashed pixel span
+	# under-counts steps on a near-vertical line, which could skip a
+	# solid tile the straight-line walk actually crosses.
+	var squashed: bool = Session.use_sprite_hex_grid
+	var span := Shapes.unsquash_point(from_point, squashed).distance_to(Shapes.unsquash_point(to_point, squashed))
 	var steps := int(span / (GameConfig.hive_cell_size * 0.6)) + 1
 	for s in range(steps + 1):
 		var point: Vector2 = from_point.lerp(to_point, float(s) / float(steps))
@@ -887,6 +891,8 @@ func refresh_edge_flags() -> void:
 ## goes to the nearest job rather than whichever happened to be first in
 ## the dictionary.
 func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
+	var squashed: bool = Session.use_sprite_hex_grid
+	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best: Node2D = null
 	var best_distance := INF
 	for node in occupied_tiles.values():
@@ -896,7 +902,11 @@ func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 		# use as a job even though it's marked
 		if mine_stand_hex(node) == null:
 			continue
-		var d: float = 0.0 if from_point.x == INF else from_point.distance_to(node.position)
+		# Unsquashed so a miner's "nearest" pick is the same regardless of
+		# which of the six directions the block happens to sit in -- the
+		# squashed grid's compressed y axis would otherwise favour blocks
+		# above/below over ones the same hex-distance to the side.
+		var d: float = 0.0 if from_point.x == INF else true_from.distance_to(Shapes.unsquash_point(node.position, squashed))
 		if best == null or d < best_distance:
 			best_distance = d
 			best = node
@@ -909,6 +919,8 @@ func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 ## `from_point` overrides that with a miner's own home cell, in which
 ## case digging opens up around there instead.
 func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
+	var squashed: bool = Session.use_sprite_hex_grid
+	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best: Node2D = null
 	var best_distance := INF
 	for node in occupied_tiles.values():
@@ -916,10 +928,13 @@ func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 			continue
 		if mine_stand_hex(node) == null:
 			continue
+		# Both branches are hex-space distances now (see find_marked_block):
 		# hex ring index is the step distance from (0,0) -- the middle of
-		# the comb, where the first cell is drawn
+		# the comb, where the first cell is drawn -- and the unsquashed
+		# from_point case matches it so a miner's own home cell spirals
+		# outward the same way the from-centre fallback does.
 		var d: float = (
-			from_point.distance_to(node.position) if from_point.x != INF
+			true_from.distance_to(Shapes.unsquash_point(node.position, squashed)) if from_point.x != INF
 			else float(Shapes.hex_ring_index(node.axial))
 		)
 		if d < best_distance:
@@ -958,14 +973,18 @@ func mine_stand_hex(block: Node2D):
 const MINER_FACE_APPROACH := 0.35
 
 func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
+	var squashed: bool = Session.use_sprite_hex_grid
+	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best := Vector2(INF, INF)
 	var best_distance := INF
 	for step in NEIGHBOUR_STEPS:
 		var neighbour: Vector2i = block.axial + step
 		if not tile_is_walkable(neighbour):
 			continue
-		var point: Vector2 = comb_centre + Shapes.hex_to_pixel(neighbour.x, neighbour.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
-		var d: float = from_point.distance_to(point)
+		var point: Vector2 = comb_centre + Shapes.hex_to_pixel(neighbour.x, neighbour.y, GameConfig.hive_cell_spacing, squashed)
+		# Unsquashed distance -- see find_marked_block -- so the six faces
+		# of a block are judged by true hex-distance, not squashed pixels.
+		var d: float = true_from.distance_to(Shapes.unsquash_point(point, squashed))
 		if d < best_distance:
 			best_distance = d
 			best = point

@@ -150,6 +150,16 @@ var use_cell_sprites: bool = true
 ## `hive_cell_spacing` in GameConfig. See `Shapes.SQUASH`.
 var use_sprite_hex_grid: bool = true
 
+## Whether a bee walking inside the (squashed) hive covers one hex-edge's
+## worth of true distance in the same time regardless of which of the six
+## directions it's walking. Off reproduces the older behaviour: speed is
+## constant in squashed *screen* pixels, so a bee moving in the compressed
+## vertical direction crosses the same hex-distance faster than one moving
+## sideways. On by default so travel time is direction-independent; the
+## toggle exists to compare the two side by side. No effect when
+## `use_sprite_hex_grid` is off, since nothing is squashed to correct for.
+var use_radial_hex_speed: bool = true
+
 ## Whether the small ID-and-letter label above a forager is shown. Doesn't
 ## affect other roles' labels.
 var show_forager_labels: bool = true

@@ -53,6 +53,23 @@ static func hexagon_edge_midpoints(size: float, squashed: bool = false) -> Array
 		midpoints.append((corners[i] + corners[(i + 1) % 6]) * 0.5)
 	return midpoints
 
+## Undoes `hex_to_pixel`'s vertical squash, turning a squashed hive-grid
+## point back into the position it would sit at on a regular hexagon.
+## Safe to call on positions that already carry a shared offset (e.g.
+## `comb_centre + hex_to_pixel(...)`) as long as both sides of whatever
+## comparison you're about to make came from the same hive: the offset's
+## own y still divides by SQUASH, but it's identical on both sides, so it
+## cancels out of any `distance_to`/subtraction between them regardless.
+##
+## Anything that measures distance between two points on the squashed
+## grid -- to decide which is nearer, or how far there still is to walk
+## -- needs to unsquash first, or the compressed y axis makes vertical
+## neighbours read as closer than horizontal ones the same hex-distance
+## away. Placing a point (`hex_to_pixel`) or hit-testing a click
+## (`pixel_to_hex`) doesn't need this -- they're already squash-aware.
+static func unsquash_point(point: Vector2, squashed: bool = false) -> Vector2:
+	return Vector2(point.x, point.y / SQUASH) if squashed else point
+
 ## Converts a pixel position back to the nearest flat-top axial hex. Used
 ## to work out which tile a bee is standing on, so terrain can slow it
 ## down. `squashed` must match whatever `hex_to_pixel` placed the grid
@@ -60,7 +77,7 @@ static func hexagon_edge_midpoints(size: float, squashed: bool = false) -> Array
 static func pixel_to_hex(point: Vector2, size: float, squashed: bool = false) -> Vector2i:
 	# hex_to_pixel scales y by SQUASH going out, so un-scale it coming
 	# back in before the ordinary flat-top inversion below.
-	var y: float = point.y / SQUASH if squashed else point.y
+	var y: float = unsquash_point(point, squashed).y
 	var qf := (2.0 / 3.0 * point.x) / size
 	var rf := (-1.0 / 3.0 * point.x + sqrt(3.0) / 3.0 * y) / size
 	return _axial_round(qf, rf)

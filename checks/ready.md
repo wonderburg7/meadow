@@ -49,6 +49,30 @@ its check. Move a confirmed or superseded entry to
       menu's own honeycomb and icon backgrounds are deliberately
       unaffected by this setting -- they're decoration, not the hive grid.
 
+### Squashed hex grid -- decisions and movement now use true hex distance, not squashed pixels
+- [ ] With "Sprite-aligned hex grid" on (default) and automine enabled, dig
+      a small opening then let a miner with no marked blocks work
+      automine: confirm the dig front expands roughly evenly in all six
+      directions around the comb -- a ring at a time -- rather than
+      noticeably favouring the sideways (q) direction over up/down.
+      Previously `hive.gd`'s `find_nearest_edge_block`/`find_marked_block`/
+      `mine_stand_point` compared squashed on-screen pixel distance, which
+      under-weighted vertical neighbours relative to horizontal ones at
+      the same true hex-distance.
+- [ ] Settings > Hive & comb > "Direction-even hex speed" (new toggle, on
+      by default): with it on, time a bee's round trip between two comb
+      cells the same hex-distance apart, once mostly sideways and once
+      mostly up/down -- the times should be close. Turn it off and repeat:
+      the vertical trip should now be noticeably faster than the sideways
+      one (the old behaviour, kept only so the two can be compared). See
+      `Session.use_radial_hex_speed` and `BeeMovement._hive_pacing_corrected`
+      in `scripts/bee_movement.gd`. No effect when "Sprite-aligned hex
+      grid" is off.
+- [ ] General play with both toggles at their defaults: foragers depositing,
+      a miner digging, the queen laying -- confirm nothing paths oddly or
+      stalls; this only changed which candidate/how fast, not whether a
+      route exists.
+
 ### Accessibility fonts -- Typeface setting now has five real faces
 - [ ] Open Settings > Appearance > Typeface and step through each option
       (Standard, Atkinson Hyperlegible, Open Sans, OpenDyslexic, Munro,
