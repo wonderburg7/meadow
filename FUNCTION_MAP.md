@@ -231,53 +231,53 @@ A bee's dispatch loop, player commands, display text, vars.
 2270 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (1,751 lines)
+## debug_panel.gd (1,756 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-956  static func setting_get(key: String)
-959  static func setting_set(key: String, value) -> void
-974  static func apply_setting(key: String, value) -> void
-989  static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1003 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1017 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
-1050 func _style_button(button: BaseButton) -> BaseButton
-1055 func _ready() -> void
-1147 func _report_settings_button_width() -> void
-1152 func _rows_in(category: String) -> Array
-1174 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-1205 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-1213 func open_to_categories(categories: Array) -> void
-1231 func _make_section(category: String, entries: Array, start_open: bool) -> Control
-1285 func _make_controls_help() -> Control
-1318 func _build_actions(column: VBoxContainer) -> void
-1360 func _make_winter_action() -> Control
-1372 func _on_winter_pressed() -> void
-1378 func _on_challenge_advance_pressed() -> void
-1389 func set_save_load_enabled(enabled: bool) -> void
-1397 func set_toggle(key: String, value: bool) -> void
-1402 func _on_save_pressed() -> void
-1413 func _on_load_pressed() -> void
-1425 func _toggle_panel() -> void
-1439 func _apply_layer_for_context() -> void
-1444 func _make_row(entry: Dictionary) -> Control
-1487 func _make_control_slot() -> HBoxContainer
-1496 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-1526 func _make_toggle_row(entry: Dictionary) -> Control
-1597 func _make_options_row(entry: Dictionary) -> Control
-1630 func _option_display(entry: Dictionary, value) -> String
-1634 func _cycle_option(entry: Dictionary, direction: int) -> void
-1648 func _cascade_prerequisites_on(key: String) -> void
-1655 func _cascade_dependents_off(key: String) -> void
-1662 func _cascade_mutual_exclusion(key: String) -> void
-1671 func _make_star_row(entry: Dictionary) -> Control
-1712 func _adjust(entry: Dictionary, delta: float) -> void
-1727 func _format_value(v) -> String
-1734 func _on_restart_pressed() -> void
-1739 func _on_main_menu_pressed() -> void
-1747 func _restart() -> void
+961  static func setting_get(key: String)
+964  static func setting_set(key: String, value) -> void
+979  static func apply_setting(key: String, value) -> void
+994  static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1008 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1022 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1055 func _style_button(button: BaseButton) -> BaseButton
+1060 func _ready() -> void
+1152 func _report_settings_button_width() -> void
+1157 func _rows_in(category: String) -> Array
+1179 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+1210 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+1218 func open_to_categories(categories: Array) -> void
+1236 func _make_section(category: String, entries: Array, start_open: bool) -> Control
+1290 func _make_controls_help() -> Control
+1323 func _build_actions(column: VBoxContainer) -> void
+1365 func _make_winter_action() -> Control
+1377 func _on_winter_pressed() -> void
+1383 func _on_challenge_advance_pressed() -> void
+1394 func set_save_load_enabled(enabled: bool) -> void
+1402 func set_toggle(key: String, value: bool) -> void
+1407 func _on_save_pressed() -> void
+1418 func _on_load_pressed() -> void
+1430 func _toggle_panel() -> void
+1444 func _apply_layer_for_context() -> void
+1449 func _make_row(entry: Dictionary) -> Control
+1492 func _make_control_slot() -> HBoxContainer
+1501 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+1531 func _make_toggle_row(entry: Dictionary) -> Control
+1602 func _make_options_row(entry: Dictionary) -> Control
+1635 func _option_display(entry: Dictionary, value) -> String
+1639 func _cycle_option(entry: Dictionary, direction: int) -> void
+1653 func _cascade_prerequisites_on(key: String) -> void
+1660 func _cascade_dependents_off(key: String) -> void
+1667 func _cascade_mutual_exclusion(key: String) -> void
+1676 func _make_star_row(entry: Dictionary) -> Control
+1717 func _adjust(entry: Dictionary, delta: float) -> void
+1732 func _format_value(v) -> String
+1739 func _on_restart_pressed() -> void
+1744 func _on_main_menu_pressed() -> void
+1752 func _restart() -> void
 ```
 
 ## hive_cell.gd (987 lines)
@@ -347,7 +347,7 @@ One cell: contents, brood, honey ripening, how it draws.
 984  func development_percent() -> float
 ```
 
-## hive.gd (990 lines)
+## hive.gd (1,009 lines)
 
 The comb as a whole: cells, navigation, finding a cell.
 
@@ -414,15 +414,15 @@ The comb as a whole: cells, navigation, finding a cell.
 790  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
 824  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
 848  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
-858  # --- mining -------------------------------------------------------
-867  func refresh_edge_flags() -> void
-889  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-911  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-930  func _is_markable_block(node) -> bool
-937  func mine_stand_hex(block: Node2D)
-960  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
-978  func remove_block(block: Node2D, floor_maker: Callable) -> void
-989  func announce() -> void
+862  # --- mining -------------------------------------------------------
+871  func refresh_edge_flags() -> void
+893  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+921  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+945  func _is_markable_block(node) -> bool
+952  func mine_stand_hex(block: Node2D)
+975  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
+997  func remove_block(block: Node2D, floor_maker: Callable) -> void
+1008 func announce() -> void
 ```
 
 ## main.gd (1,201 lines)

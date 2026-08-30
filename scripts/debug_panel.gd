@@ -335,6 +335,11 @@ const TUNABLES := [
 		"category": "Hive & comb",
 		"tip": "Draw the whole hive -- comb, floor, soil, bedrock, the entrance tunnel -- squashed 2:1 to match the cell resprite's shape, instead of as a regular hexagon. Off restores the original hex grid. Takes effect on Restart Run.",
 	},
+	{
+		"key": "use_radial_hex_speed", "label": "Direction-even hex speed", "toggle": true,
+		"category": "Hive & comb",
+		"tip": "On the squashed hex grid, make a bee take the same time to cross one hex-edge in any of the six directions. Off reproduces the older behaviour, where speed is constant in squashed screen pixels and vertical travel is faster than sideways travel. Applies immediately; only matters while Sprite-aligned hex grid is on.",
+	},
 
 	# --- Brood & the queen ---
 	{
@@ -947,7 +952,7 @@ const TUNABLES := [
 const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
 	"show_flower_amounts", "show_cell_contents_text", "use_cell_sprites",
-	"use_sprite_hex_grid", "show_forager_labels",
+	"use_sprite_hex_grid", "use_radial_hex_speed", "show_forager_labels",
 	"gallerin_enabled", "show_crab_spiders",
 	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
 	"tooltip_delay", "show_speed_8x", "show_interface_labels",

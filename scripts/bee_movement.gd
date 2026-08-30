@@ -67,6 +67,8 @@ extends RefCounted
 const OBSTACLE_MARGIN := 18.0
 const BLOCK_MARGIN := 18.0
 
+const Shapes = preload("res://scripts/shapes.gd")
+
 ## How far round the rim to aim when the bee is already at the boundary.
 const SWEEP_STEP := 0.6
 
@@ -321,6 +323,36 @@ static func block_obstacles(bee: Node2D, wanted: Vector2) -> Vector2:
 			break
 	return result
 
+## Whether in-hive walking should pace itself by true (unsquashed) hex
+## distance rather than squashed screen pixels -- see
+## `Session.use_radial_hex_speed`. Off (or the grid not squashed at all)
+## reproduces the older pixel-space pacing, where a bee crosses the
+## compressed vertical axis faster than the same hex-distance sideways.
+static func _hive_pacing_corrected() -> bool:
+	return Session.use_sprite_hex_grid and Session.use_radial_hex_speed
+
+## Distance between two squashed hive-grid points, in whichever space
+## in-hive walking is pacing itself by right now.
+static func _hive_gap(a: Vector2, b: Vector2) -> float:
+	if _hive_pacing_corrected():
+		return Shapes.unsquash_point(a, Session.use_sprite_hex_grid).distance_to(Shapes.unsquash_point(b, Session.use_sprite_hex_grid))
+	return a.distance_to(b)
+
+## Moves `from_point` a `step`-worth of `_hive_gap` towards `to_point`,
+## without overshooting. Plain `move_toward` already does this when
+## pacing by squashed pixels; when pacing is corrected, `step` is a
+## true-space budget, so the fraction of the gap it covers has to come
+## from the true gap instead. The squash is a straight per-axis scale,
+## so that same fraction applied to the squashed points (`lerp`) lands
+## on the right squashed position.
+static func _hive_move_toward(from_point: Vector2, to_point: Vector2, step: float) -> Vector2:
+	if not _hive_pacing_corrected():
+		return from_point.move_toward(to_point, step)
+	var true_gap: float = _hive_gap(from_point, to_point)
+	if true_gap <= step:
+		return to_point
+	return from_point.lerp(to_point, step / true_gap)
+
 ## Outdoors a bee flies straight. Inside the hive it walks a route over
 ## open tiles, because soil is solid. The route is recalculated only
 ## when the destination changes, not every frame.
@@ -352,16 +384,16 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	# walk the waypoints, spending any leftover movement on the next one
 	while step > 0.0 and bee.path_index < bee.path_points.size():
 		var waypoint: Vector2 = bee.path_points[bee.path_index]
-		var gap: float = bee.position.distance_to(waypoint)
+		var gap: float = _hive_gap(bee.position, waypoint)
 		if gap <= step:
 			bee.position = waypoint
 			step -= gap
 			bee.path_index += 1
 		else:
-			bee.position = bee.position.move_toward(waypoint, step)
+			bee.position = _hive_move_toward(bee.position, waypoint, step)
 			step = 0.0
 	if bee.path_index >= bee.path_points.size():
-		bee.position = bee.position.move_toward(target, step)
+		bee.position = _hive_move_toward(bee.position, target, step)
 	_update_heading(bee, before)
 	Perf.end("bee_move")
 
