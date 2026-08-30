@@ -539,7 +539,7 @@ func _build_top_right_bar() -> void:
 	var bar := VBoxContainer.new()
 	top_right_bar = bar
 	bar.theme = UiTheme.build_theme()
-	bar.add_theme_constant_override("separation", TOP_BAR_ROW_SEPARATION)
+	bar.add_theme_constant_override("separation", int(TOP_BAR_ROW_SEPARATION))
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0)

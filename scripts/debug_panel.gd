@@ -325,6 +325,16 @@ const TUNABLES := [
 		"category": "Hive & comb",
 		"tip": "Show the small text on each comb cell -- N40, an egg's development percent, and so on. Off keeps the colour coding but drops the numbers, for a quieter comb at a glance. Applies within about a second, as cells redraw themselves.",
 	},
+	{
+		"key": "use_cell_sprites", "label": "Cell art", "toggle": true,
+		"category": "Hive & comb",
+		"tip": "Show the wax-cell resprite on empty comb cells instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
+	},
+	{
+		"key": "use_sprite_hex_grid", "label": "Sprite-aligned hex grid", "toggle": true,
+		"category": "Hive & comb",
+		"tip": "Draw the whole hive -- comb, floor, soil, bedrock, the entrance tunnel -- squashed 2:1 to match the cell resprite's shape, instead of as a regular hexagon. Off restores the original hex grid. Takes effect on Restart Run.",
+	},
 
 	# --- Brood & the queen ---
 	{
@@ -936,7 +946,8 @@ const TUNABLES := [
 ## The panel edits both, so it needs to know which object to ask.
 const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
-	"show_flower_amounts", "show_cell_contents_text", "show_forager_labels",
+	"show_flower_amounts", "show_cell_contents_text", "use_cell_sprites",
+	"use_sprite_hex_grid", "show_forager_labels",
 	"gallerin_enabled", "show_crab_spiders",
 	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
 	"tooltip_delay", "show_speed_8x", "show_interface_labels",
@@ -1543,6 +1554,13 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 			for listener in get_tree().get_nodes_in_group("colour_blind_listeners"):
 				if is_instance_valid(listener) and listener.has_method("colour_blind_changed"):
 					listener.colour_blind_changed()
+		elif key == "use_cell_sprites":
+			# cells otherwise only redraw themselves on their own staggered
+			# timer (see hive_cell.gd's display cadence note) -- force it so
+			# the swap is visible straight away rather than up to 1/6s late
+			for cell in get_tree().get_nodes_in_group("hive_cells"):
+				if is_instance_valid(cell):
+					cell._refresh()
 		elif key == "gallerin_enabled":
 			# gallerin_panel.gd only reads this once, in its own _ready() --
 			# toggling it here has to reach the live node directly, same

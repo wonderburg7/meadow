@@ -27,6 +27,24 @@ const Roles = preload("res://scripts/roles.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 
+## The empty-cell resprite: a 32x32 canvas holding a 32-wide, 16-tall
+## hex "cup" already alpha-masked to its own outline (exported from the
+## Resprite project alongside this file, `wax.cell.empty.resprite`), so a
+## plain Sprite2D shows it correctly with no risk of a square corner
+## spilling onto a neighbouring cell. Toggled by `Session.use_cell_sprites`
+## -- see `_refresh`.
+const EMPTY_TEXTURE := preload("res://assets/sprites/environment/wax.cell.empty.png")
+
+## Where the actual hex "floor" -- the silhouette that has to land on the
+## grid's own hex, three-sided front wall included -- sits within
+## EMPTY_TEXTURE's 32x32 canvas: a 32-wide, 16-tall slice starting 14px
+## down. Read straight off the Tileset-properties slice used to export
+## `wax.cell.empty.resprite` (Base W 32, Base H 16, Base Y 14). The 14px
+## left above the floor is the cup's back wall, drawn there so it
+## overlaps whichever cell is behind this one -- see `_ready`'s z_index.
+const EMPTY_TEXTURE_BASE_Y := 14.0
+const EMPTY_TEXTURE_BASE_H := 16.0
+
 ## Nectar is a clear liquid sitting in a yellow wax cell, so it's drawn as
 ## a pale blue warmed slightly by the wax showing through, rather than a
 ## flat pale blue on its own. Worked out as a pale-blue base lerped 15%
@@ -156,6 +174,10 @@ var hatch_role_locked: bool = false
 var axial: Vector2i = Vector2i.ZERO
 
 var cell_size: float = 17.0
+## Cached from `Session.use_sprite_hex_grid` in `_ready` -- read once, not
+## live, since the hive's whole grid is laid out on Restart Run (see the
+## note on that Session field).
+var squashed: bool = false
 var info_label: Label
 var outline: Line2D
 var designation_ring: Line2D
@@ -174,6 +196,9 @@ var zone_halo: Line2D
 var zone_glow_tag: String = ""
 ## A small seal drawn over a closed cell.
 var closed_mark: Line2D
+## The empty-cell resprite (see `EMPTY_TEXTURE`), shown only while the
+## cell holds nothing and `Session.use_cell_sprites` is on.
+var empty_sprite: Sprite2D
 
 ## One working position per wall. A bee claims a slot before it walks
 ## over, and gives it up when it leaves, so bees never stand on top of
@@ -184,15 +209,49 @@ func _ready() -> void:
 	add_to_group("hive_cells")
 	capacity = GameConfig.cell_capacity
 	cell_size = GameConfig.hive_cell_size
+	squashed = Session.use_sprite_hex_grid
 
-	polygon = Shapes.hexagon_points(cell_size)
+	# Cells are built one at a time as the comb grows, in whatever order
+	# the player or the queen happens to add them, but the resprite's cup
+	# wall (see EMPTY_TEXTURE_BASE_Y below) has to paint over the cell
+	# behind it -- so draw order needs to run screen-top to screen-bottom
+	# regardless of build order. `Shapes.hex_to_pixel`'s y is always a
+	# positive multiple of (2r + q), squashed or not, so that alone gives
+	# every cell's relative order without caring where comb_centre sits.
+	z_index = 2 * axial.y + axial.x
+
+	polygon = Shapes.hexagon_points(cell_size, squashed)
 	color = EMPTY_COLOR
+
+	# The empty-cell resprite, shown in place of the flat fill above when
+	# `Session.use_cell_sprites` is on -- see `_refresh`. Sized off
+	# `hive_cell_spacing` -- the distance the grid actually places cell
+	# centres apart -- rather than `hive_cell_size`, which draws the flat
+	# hex a touch smaller than that so the plain-colour look gets a
+	# grout-line gap. The resprite's whole point is to tessellate edge to
+	# edge like real comb, so it needs the full spacing, not the shrunk
+	# radius.
+	empty_sprite = Sprite2D.new()
+	empty_sprite.texture = EMPTY_TEXTURE
+	var sprite_size: float = GameConfig.hive_cell_spacing
+	var empty_scale: float = (sprite_size * 2.0) / EMPTY_TEXTURE.get_width()
+	empty_sprite.scale = Vector2(empty_scale, empty_scale)
+	# The floor slice sits low in its 32-tall canvas (see
+	# EMPTY_TEXTURE_BASE_Y), so shift up until the floor's own centre --
+	# not the canvas's -- lands on this cell's actual centre; otherwise
+	# the cup reads as floating above (or sunk below) where the hex grid,
+	# and every filled-cell fill, actually put this tile.
+	var canvas_mid: float = EMPTY_TEXTURE.get_height() * 0.5
+	var base_mid: float = EMPTY_TEXTURE_BASE_Y + EMPTY_TEXTURE_BASE_H * 0.5
+	empty_sprite.offset = Vector2(0.0, canvas_mid - base_mid)
+	empty_sprite.visible = false
+	add_child(empty_sprite)
 
 	# The body is drawn washed out and this sits on top at full strength,
 	# scaled to the contents -- so a cell with 20 nectar in it reads as
 	# obviously different from one with 200 without opening anything.
 	fill_shape = Polygon2D.new()
-	fill_shape.polygon = Shapes.hexagon_points(cell_size)
+	fill_shape.polygon = Shapes.hexagon_points(cell_size, squashed)
 	fill_shape.visible = false
 	add_child(fill_shape)
 
@@ -328,7 +387,7 @@ func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = 
 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()
-	var pts := Shapes.hexagon_points(size)
+	var pts := Shapes.hexagon_points(size, squashed)
 	for p in pts:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
@@ -462,7 +521,7 @@ func release_slot(bee: Node2D) -> void:
 func slot_position(index: int) -> Vector2:
 	if index < 0:
 		return position
-	var midpoints := Shapes.hexagon_edge_midpoints(cell_size)
+	var midpoints := Shapes.hexagon_edge_midpoints(cell_size, squashed)
 	var edge_offset: Vector2 = midpoints[index % 6]
 	return position + edge_offset * 1.35
 
@@ -763,18 +822,19 @@ func _refresh() -> void:
 		# you can see at a glance how far along it is
 		var f := build_fraction()
 		var drawn_size: float = lerp(cell_size * 0.35, cell_size, f)
-		polygon = Shapes.hexagon_points(drawn_size)
+		polygon = Shapes.hexagon_points(drawn_size, squashed)
 		_set_outline_points(outline, drawn_size)
 		outline.default_color = Color(0.6, 0.5, 0.25, 0.9)
 		outline.visible = true
 		color = Color(SITE_COLOR.r, SITE_COLOR.g, SITE_COLOR.b, lerp(0.25, 0.75, f))
+		empty_sprite.visible = false
 		designation_ring.visible = false
 		fill_shape.visible = false
 		closed_mark.visible = false
 		info_label.text = "%d%%" % int(f * 100.0)
 		return
 
-	polygon = Shapes.hexagon_points(cell_size)
+	polygon = Shapes.hexagon_points(cell_size, squashed)
 	_set_outline_points(outline, cell_size)
 	outline.default_color = Color(0.35, 0.28, 0.12)
 	# An empty cell is drawn as flat colour with no rim, so open comb and
@@ -793,6 +853,7 @@ func _refresh() -> void:
 	elif designated_type == "brood":
 		designation_ring.default_color = Color(0.6, 1.0, 0.7, 0.95)
 
+	empty_sprite.visible = false
 	match content_type:
 		"nectar":
 			color = NECTAR_COLOR
@@ -822,7 +883,11 @@ func _refresh() -> void:
 			color = CORPSE_COLOR
 			info_label.text = "dead %d%%" % int(clean_fraction() * 100.0)
 		_:
+			# The resprite stands in for the flat fill colour when the
+			# setting's on; either way EMPTY_COLOR stays set underneath so
+			# switching it off mid-run needs nothing else touched.
 			color = EMPTY_COLOR
+			empty_sprite.visible = Session.use_cell_sprites
 			# an empty cell reserved for something still says so, otherwise
 			# you can't tell a reserved cell from an unused one
 			if keep_empty:
@@ -912,7 +977,7 @@ func _apply_fill_shading() -> void:
 		return
 	fill_shape.visible = true
 	fill_shape.color = color
-	fill_shape.polygon = Shapes.hexagon_points(cell_size * sqrt(fraction))
+	fill_shape.polygon = Shapes.hexagon_points(cell_size * sqrt(fraction), squashed)
 	# the body behind it: same hue, drained towards bare wax
 	color = EMPTY_COLOR.lerp(color, 0.35)
 

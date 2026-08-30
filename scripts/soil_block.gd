@@ -42,22 +42,23 @@ var selected: bool = false
 func _ready() -> void:
 	add_to_group("soil_blocks")
 	block_size = GameConfig.hive_cell_size
+	var squashed: bool = Session.use_sprite_hex_grid
 	# oversized so adjacent blocks overlap generously and no seam or
 	# background colour shows between them at any zoom -- soil should read
 	# as one continuous mass of earth, not a tiled grid
-	polygon = Shapes.hexagon_points(block_size * 1.15)
+	polygon = Shapes.hexagon_points(block_size * 1.15, squashed)
 	color = SOIL_COLOR
 
 	# hatched marker shown once you've flagged this block for digging
 	marker = Polygon2D.new()
-	marker.polygon = Shapes.hexagon_points(block_size * 0.55)
+	marker.polygon = Shapes.hexagon_points(block_size * 0.55, squashed)
 	marker.color = Color(0.95, 0.75, 0.25, 0.9)
 	marker.visible = false
 	add_child(marker)
 
 	# ring shown while this block is part of a selection
 	selection_ring = Line2D.new()
-	var ring_points := Shapes.hexagon_points(block_size)
+	var ring_points := Shapes.hexagon_points(block_size, squashed)
 	for p in ring_points:
 		selection_ring.add_point(p)
 	selection_ring.add_point(ring_points[0])

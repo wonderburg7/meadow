@@ -128,6 +128,17 @@ var death_cause: String = ""
 
 var move_target: Vector2 = Vector2.ZERO   # for player-commanded movement
 var target_cell: Node2D = null
+## `hive.index_epoch` last seen when a full comb blocked this bee's deposit
+## -- -1 means "not blocked", since epoch 0 is a real value a fresh hive
+## starts at. No leading underscore, like `target_cell` above and every
+## other field `bee_foraging.gd` reaches through a bee reference: Godot's
+## "unused private variable" warning fires on an underscore-prefixed field
+## with no access from its own script, and doesn't count a companion
+## script's access as a use. A prior pass had this named `_deposit_blocked_
+## epoch` and deleted it outright to silence that false positive, which
+## produced a real crash (invalid property access) the moment a forager's
+## first deposit target went stale -- don't repeat either mistake.
+var deposit_blocked_epoch: int = -1
 ## Challenge 1's manual-forage arc stops the queen at the hive entrance so
 ## the player chooses the receiving cell. False everywhere else.
 var manual_deposit_pending: bool = false
@@ -867,11 +878,6 @@ var _mining_no_work_epoch: int = -1
 var _mining_no_work_automine: bool = false
 var _miner_dispatch_timer: float = 0.0
 var _miner_dispatch_due: bool = false
-
-## A full comb makes a failed deposit search valid until a cell-content
-## mutation changes Hive.index_epoch.  Keeping the carried load is essential:
-## it must never turn a full store into an invisible discarded foraging trip.
-var _deposit_blocked_epoch: int = -1
 
 func _process(delta: float) -> void:
 	Perf.begin("bees")
@@ -1628,7 +1634,7 @@ func set_mine_home_hex(hex: Vector2i) -> void:
 ## one, otherwise wherever it is standing.
 func _mine_reference_point() -> Vector2:
 	if has_mine_home and hive != null:
-		return hive.comb_centre + Shapes.hex_to_pixel(mine_home_hex.x, mine_home_hex.y, GameConfig.hive_cell_spacing)
+		return hive.comb_centre + Shapes.hex_to_pixel(mine_home_hex.x, mine_home_hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	return position
 
 ## Sent to a specific flower by right-click: ignore the cooldown list
@@ -2235,7 +2241,7 @@ func _terrain_speed_factor() -> float:
 	if hive == null or not hive.has_method("cell_at_tile"):
 		return 1.0
 	var local: Vector2 = position - hive.comb_centre
-	var hex: Vector2i = Shapes.pixel_to_hex(local, GameConfig.hive_cell_spacing)
+	var hex: Vector2i = Shapes.pixel_to_hex(local, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	return GameConfig.cell_slow_factor if hive.cell_at_tile(hex) != null else 1.0
 
 func _is_inside_hive() -> bool:

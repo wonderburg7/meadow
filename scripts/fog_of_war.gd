@@ -379,7 +379,7 @@ func _reveal_hive_entrance_to_queen() -> void:
 	var tunnel_depth: int = int(GameConfig.hive_soil_depth + GameConfig.hive_rock_rings)
 	var entrance_tiles: Dictionary = main.world_building._entrance_tiles(interior_rings, tunnel_depth)
 	var queen_hex: Vector2i = Shapes.pixel_to_hex(
-		main.queen.position - main.hive.comb_centre, GameConfig.hive_cell_spacing
+		main.queen.position - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid
 	)
 	var queen_ring: int = Shapes.hex_ring_index(queen_hex)
 	var reveal_radius: float = GameConfig.hive_cell_size * HIVE_QUEEN_REVEAL_RADIUS_MULTIPLIER
@@ -387,7 +387,7 @@ func _reveal_hive_entrance_to_queen() -> void:
 		if Shapes.hex_ring_index(hex) < queen_ring:
 			continue
 		var point: Vector2 = main.hive.comb_centre + Shapes.hex_to_pixel(
-			hex.x, hex.y, GameConfig.hive_cell_spacing
+			hex.x, hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid
 		)
 		_reveal_hive_around(point, reveal_radius)
 
@@ -413,7 +413,7 @@ func _rebuild_hive_open_space_mask() -> void:
 			if not main.hive.tile_is_walkable(hex):
 				continue
 			var point: Vector2 = main.hive.comb_centre + Shapes.hex_to_pixel(
-				hex.x, hex.y, GameConfig.hive_cell_spacing
+				hex.x, hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid
 			)
 			_reveal_hive_around(point, reveal_radius)
 

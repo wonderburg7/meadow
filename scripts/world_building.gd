@@ -352,7 +352,7 @@ func _build_starting_comb(centre_local: Vector2, spacing: float) -> void:
 		var cell = main.HiveCell.new()
 		cell.axial = cell_hex
 		cell.main = main
-		cell.position = centre_local + main.Shapes.hex_to_pixel(cell_hex.x, cell_hex.y, spacing)
+		cell.position = centre_local + main.Shapes.hex_to_pixel(cell_hex.x, cell_hex.y, spacing, Session.use_sprite_hex_grid)
 		main.hive_root.add_child(cell)
 		cells.append(cell)
 		main.hive.register_tile(cell_hex, cell)
@@ -412,8 +412,8 @@ func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool:
 
 func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
 	var tile = Polygon2D.new()
-	tile.polygon = main.Shapes.hexagon_points(GameConfig.hive_cell_size * 1.15)
-	tile.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	tile.polygon = main.Shapes.hexagon_points(GameConfig.hive_cell_size * 1.15, Session.use_sprite_hex_grid)
+	tile.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
 	tile.color = main.FLOOR_COLOR
 	main.hive_root.add_child(tile)
 
@@ -421,7 +421,7 @@ func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 	if not main.hive.tile_is_free(hex):
 		return
 	var block = main.SoilBlock.new()
-	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
 	main.hive_root.add_child(block)
 	block.setup(hex)
 	main.hive.register_tile(hex, block)
@@ -430,7 +430,7 @@ func _add_rock_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 	if not main.hive.tile_is_free(hex):
 		return
 	var block = main.RockBlock.new()
-	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+	block.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
 	main.hive_root.add_child(block)
 	block.setup(hex)
 	main.hive.register_tile(hex, block)
@@ -461,7 +461,7 @@ func hive_entrance_inside() -> Vector2:
 	# file trusts for turning an axial coordinate into a world position --
 	# not hand-derived, so a future geometry change doesn't have to find
 	# this a second time.
-	return _hive_centre_local() + main.Shapes.hex_to_pixel(0, -rings, GameConfig.hive_cell_spacing)
+	return _hive_centre_local() + main.Shapes.hex_to_pixel(0, -rings, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 
 ## Where a recruit (seeker, `side` -1) or recruiter (mentor, `side` 1)
 ## forager stands while waiting at the door for a match. Deliberately
@@ -476,7 +476,7 @@ func entrance_wait_point(side: int) -> Vector2:
 	var interior_rings: int = int(GameConfig.hive_interior_rings)
 	var spacing: float = GameConfig.hive_cell_spacing
 	var row: int = -(interior_rings - 1) + 2
-	var base: Vector2 = _hive_centre_local() + main.Shapes.hex_to_pixel(0, row, spacing)
+	var base: Vector2 = _hive_centre_local() + main.Shapes.hex_to_pixel(0, row, spacing, Session.use_sprite_hex_grid)
 	return base + Vector2(sign(side) * spacing * 1.4, 0.0)
 
 func _build_cameras() -> void:

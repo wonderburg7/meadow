@@ -11,6 +11,44 @@ its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### Empty-cell resprite + sprite-aligned hex grid -- new wax-cell art and grid shape (re-check after render-order/alignment fix)
+- [ ] Look at any empty comb cell in the hive: confirm the
+      `assets/sprites/environment/wax.cell.empty.png` cup art shows
+      (Settings > Hive & comb > "Cell art" on, the default), its hex floor
+      lands exactly on the grid's own hex (not floating above or sunk
+      below it -- compare against a neighbouring filled cell's fill shape),
+      and neighbouring cells tessellate edge to edge with no gap. Toggle
+      "Cell art" off: cells should revert instantly to the original
+      flat-colour fill, no lingering resprite.
+- [ ] Look at a run of cells going down a column: confirm each cell's cup
+      wall visibly overlaps -- stands in front of -- the top of the cell
+      below it on screen, and that this holds regardless of which cell was
+      built first (e.g. build a new cell above an older one and confirm
+      the older one, now lower on screen relative to it, still paints in
+      front). Previously cells painted in build order, so a cell built
+      later could wrongly paint over one above it that was built earlier.
+      See `scripts/hive_cell.gd`'s `z_index` line in `_ready`.
+- [ ] Confirm cells with something in them (nectar, pollen, honey, brood,
+      corpse) are unaffected by "Cell art" either way -- still flat
+      colour, sprite never shows over live contents.
+- [ ] Toggle Settings > Hive & comb > "Sprite-aligned hex grid" off, then
+      Restart Run (it only applies to a freshly built hive -- see
+      `Session.use_sprite_hex_grid`'s comment in `scripts/session.gd`):
+      confirm the whole hive -- comb, floor, soil, the entrance tunnel --
+      is visibly taller/more regular-hexagon-shaped than with the setting
+      on, bees still path and dig normally, and nothing looks
+      misaligned. Turn it back on and Restart Run again to confirm the
+      squashed 2:1 grid returns and still matches the resprite's own
+      32x16 footprint (`Shapes.SQUASH` in `scripts/shapes.gd`).
+- [ ] Play a few minutes with the sprite-aligned grid on: foragers
+      depositing into comb, a miner digging soil, the queen laying --
+      general confidence the grid-geometry change (touches
+      `hive.gd`/`world_building.gd`/`bee.gd`/`saving.gd`/`fog_of_war.gd`/
+      `input_selection.gd`, all reading `Session.use_sprite_hex_grid`)
+      hasn't broken navigation, digging or click targeting. The main
+      menu's own honeycomb and icon backgrounds are deliberately
+      unaffected by this setting -- they're decoration, not the hive grid.
+
 ### Accessibility fonts -- Typeface setting now has five real faces
 - [ ] Open Settings > Appearance > Typeface and step through each option
       (Standard, Atkinson Hyperlegible, Open Sans, OpenDyslexic, Munro,

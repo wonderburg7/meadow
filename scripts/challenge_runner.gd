@@ -328,10 +328,11 @@ func _brood_cell_count() -> int:
 func _hive_inspection_points() -> Array:
 	var centre: Vector2 = main.world_building._hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
+	var squashed: bool = Session.use_sprite_hex_grid
 	return [
-		{"position": centre + Shapes.hex_to_pixel(0, -3, spacing), "radius": Stages.VISIT_POINT_RADIUS},
-		{"position": centre + Shapes.hex_to_pixel(-3, 1, spacing), "radius": Stages.VISIT_POINT_RADIUS},
-		{"position": centre + Shapes.hex_to_pixel(3, 0, spacing), "radius": Stages.VISIT_POINT_RADIUS},
+		{"position": centre + Shapes.hex_to_pixel(0, -3, spacing, squashed), "radius": Stages.VISIT_POINT_RADIUS},
+		{"position": centre + Shapes.hex_to_pixel(-3, 1, spacing, squashed), "radius": Stages.VISIT_POINT_RADIUS},
+		{"position": centre + Shapes.hex_to_pixel(3, 0, spacing, squashed), "radius": Stages.VISIT_POINT_RADIUS},
 	]
 
 ## Three scenic waypoints out from the hive's meadow-side marker (where a
@@ -622,7 +623,7 @@ func _setup_opening_tunnel() -> void:
 	main.hive.refresh_edge_flags()
 	var queen_ring: int = first_block_ring + blocked_count
 	main.queen.position = main.world_building._hive_centre_local() + Shapes.hex_to_pixel(
-		0, -queen_ring, GameConfig.hive_cell_spacing
+		0, -queen_ring, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid
 	)
 	_drive_opening_mine()
 

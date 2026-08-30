@@ -19,7 +19,7 @@ func _ready() -> void:
 	block_size = GameConfig.hive_cell_size
 	# oversized like soil so neighbouring blocks fuse into one solid mass
 	# with no seams between them
-	polygon = Shapes.hexagon_points(block_size * 1.15)
+	polygon = Shapes.hexagon_points(block_size * 1.15, Session.use_sprite_hex_grid)
 	color = ROCK_COLOR
 
 func setup(hex: Vector2i) -> void:

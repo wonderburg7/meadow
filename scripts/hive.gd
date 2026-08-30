@@ -673,7 +673,7 @@ func _start_site_at(hex: Vector2i) -> Node2D:
 	var cell := HiveCell.new()
 	cell.axial = hex
 	cell.main = main
-	cell.position = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+	cell.position = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	comb_parent.add_child(cell)
 	cell.start_as_site()
 	cells.append(cell)
@@ -725,7 +725,7 @@ func build_navigation() -> void:
 			if _is_solid(hex):
 				continue
 			_tile_ids[hex] = next_id
-			var world_point: Vector2 = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+			var world_point: Vector2 = comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 			_astar.add_point(next_id, world_point, _tile_cost(hex))
 			next_id += 1
 
@@ -761,7 +761,7 @@ func tile_is_walkable(hex: Vector2i) -> bool:
 ## straight line -- straight through the wall. Snapping the target to
 ## whichever walkable tile is actually closest fixes both ends of that.
 func nearest_walkable_point(point: Vector2) -> Vector2:
-	var hex: Vector2i = Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing)
+	var hex: Vector2i = Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	if _tile_ids.has(hex):
 		return point
 	var best_hex: Vector2i = hex
@@ -771,7 +771,7 @@ func nearest_walkable_point(point: Vector2) -> Vector2:
 		if d < best_dist:
 			best_dist = d
 			best_hex = h
-	return comb_centre + Shapes.hex_to_pixel(best_hex.x, best_hex.y, GameConfig.hive_cell_spacing)
+	return comb_centre + Shapes.hex_to_pixel(best_hex.x, best_hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 
 ## A list of world points from `from_point` to `to_point` that stays out
 ## of the soil. Returns an empty array if either end is unreachable, in
@@ -789,8 +789,8 @@ const PATH_CACHE_LIMIT := 2000
 
 func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array:
 	Perf.begin("bee_path")
-	var from_hex := Shapes.pixel_to_hex(from_point - comb_centre, GameConfig.hive_cell_spacing)
-	var to_hex := Shapes.pixel_to_hex(to_point - comb_centre, GameConfig.hive_cell_spacing)
+	var from_hex := Shapes.pixel_to_hex(from_point - comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
+	var to_hex := Shapes.pixel_to_hex(to_point - comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	if not _tile_ids.has(from_hex) or not _tile_ids.has(to_hex):
 		Perf.end("bee_path")
 		return PackedVector2Array()
@@ -804,7 +804,7 @@ func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array:
 	# Smoothed from the tile centre rather than the bee's exact position,
 	# so the result is the same for everyone on that tile and can be
 	# shared. The bee walks to the first waypoint from wherever it is.
-	var from_centre: Vector2 = comb_centre + Shapes.hex_to_pixel(from_hex.x, from_hex.y, GameConfig.hive_cell_spacing)
+	var from_centre: Vector2 = comb_centre + Shapes.hex_to_pixel(from_hex.x, from_hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	var smoothed := _smooth_path(from_centre, raw)
 
 	if _path_cache.size() >= PATH_CACHE_LIMIT:
@@ -850,7 +850,7 @@ func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool:
 	var steps := int(span / (GameConfig.hive_cell_size * 0.6)) + 1
 	for s in range(steps + 1):
 		var point: Vector2 = from_point.lerp(to_point, float(s) / float(steps))
-		var hex := Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing)
+		var hex := Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 		if not tile_is_walkable(hex):
 			return false
 	return true
@@ -964,7 +964,7 @@ func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
 		var neighbour: Vector2i = block.axial + step
 		if not tile_is_walkable(neighbour):
 			continue
-		var point: Vector2 = comb_centre + Shapes.hex_to_pixel(neighbour.x, neighbour.y, GameConfig.hive_cell_spacing)
+		var point: Vector2 = comb_centre + Shapes.hex_to_pixel(neighbour.x, neighbour.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 		var d: float = from_point.distance_to(point)
 		if d < best_distance:
 			best_distance = d

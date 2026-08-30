@@ -300,7 +300,7 @@ func _death_marker_at(point: Vector2) -> Node2D:
 
 func _hex_at(global_point: Vector2) -> Vector2i:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
-	return main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing)
+	return main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 
 func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
 	var hex: Vector2i = _hex_at(global_point)
@@ -364,7 +364,7 @@ func _on_keep_clear_requested() -> void:
 func _place_home_cell(global_point: Vector2) -> void:
 	main.awaiting_home_cell = false
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
-	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing)
+	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in main.pending_home_bees:
 		if is_instance_valid(b):
 			b.set_home_hex(hex)
@@ -394,7 +394,7 @@ func _on_home_cell_requested() -> void:
 func _place_home_cell_all(global_point: Vector2) -> void:
 	main.awaiting_home_cell_all = false
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
-	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing)
+	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(b) and b.role == main.Bee.Role.BUILDER:
 			b.set_home_hex(hex)
@@ -409,7 +409,7 @@ func _on_home_cell_all_requested() -> void:
 func _place_mine_home(global_point: Vector2) -> void:
 	main.awaiting_mine_home = false
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
-	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing)
+	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in main.pending_mine_bees:
 		if is_instance_valid(b):
 			b.set_mine_home_hex(hex)
@@ -473,7 +473,10 @@ func _issue_command(world_point: Vector2) -> void:
 	# case above (Bee.command_return_and_deposit).
 	if not main.in_hive_view and world_point.distance_to(main.hive.global_position) <= HIVE_CLICK_RADIUS:
 		for b in commandable:
-			b.command_return_only() if b.manual_deposit_pending else b.command_return_and_deposit()
+			if b.manual_deposit_pending:
+				b.command_return_only()
+			else:
+				b.command_return_and_deposit()
 		return
 	if main.in_hive_view:
 		var cell := _cell_at(world_point)
@@ -627,7 +630,7 @@ func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void:
 		previous = point
 
 func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void:
-	var corners: PackedVector2Array = main.Shapes.hexagon_points(GameConfig.hive_cell_size + 1.0)
+	var corners: PackedVector2Array = main.Shapes.hexagon_points(GameConfig.hive_cell_size + 1.0, Session.use_sprite_hex_grid)
 	for i in range(6):
 		if dashed and i % 2 == 1:
 			continue
@@ -637,7 +640,7 @@ func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bo
 
 func _tile_centre(hex: Vector2i) -> Vector2:
 	return main.hive_root.to_global(
-		main.hive.comb_centre + main.Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing)
+		main.hive.comb_centre + main.Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	)
 
 func _draw_start_point_marker(point: Vector2) -> void:
