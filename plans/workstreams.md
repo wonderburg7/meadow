@@ -19,3 +19,4 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
+| fix/hex-grid-radial-symmetry | Squashed hex grid: make mining-job picks and in-hive walking speed use true hex distance instead of squashed pixels (`hive.gd`, `bee_movement.gd`) | Claude | in progress | none | none |
