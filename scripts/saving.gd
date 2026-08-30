@@ -114,7 +114,7 @@ func _restore_cells(cells: Array) -> void:
 		var cell = main.HiveCell.new()
 		cell.axial = hex
 		cell.main = main
-		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing)
+		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
 		main.hive_root.add_child(cell)
 
 		cell.content_type = str(entry.get("content", ""))

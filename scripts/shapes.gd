@@ -19,25 +19,35 @@ static func square_points(size: Vector2) -> PackedVector2Array:
 		Vector2(-half.x, half.y),
 	])
 
+## A regular flat-top hexagon's height (corner to corner) is
+## `size * sqrt(3)`. Multiplying that height by this factor instead gives
+## exactly `size` -- a flattened hex whose width:height ratio is 2:1,
+## matching the `wax.cell.empty.png` resprite's 32x16 footprint at any
+## `size`. See `Session.use_sprite_hex_grid`.
+const SQUASH := 1.0 / 1.7320508075688772
+
 ## Flat-top hexagon centred on origin. `size` is the distance from the
 ## centre to any corner. Every cell gets a flat edge on top and bottom
 ## this way, rather than a point -- corners start at 0 degrees instead
 ## of the old pointy-top's -30, and nothing else here needs to know
 ## which orientation this is: hex_to_pixel/pixel_to_hex below carry the
-## rest of it.
-static func hexagon_points(size: float) -> PackedVector2Array:
+## rest of it. `squashed` flattens the hex vertically to match the
+## sprite-aligned grid (see `SQUASH`); leave it false for anything not
+## sharing the hive's own grid (menu decoration, icon backgrounds).
+static func hexagon_points(size: float, squashed: bool = false) -> PackedVector2Array:
+	var y_scale := SQUASH if squashed else 1.0
 	var points := PackedVector2Array()
 	for i in range(6):
 		var angle := deg_to_rad(60.0 * i)
-		points.append(Vector2(cos(angle), sin(angle)) * size)
+		points.append(Vector2(cos(angle) * size, sin(angle) * size * y_scale))
 	return points
 
 ## The midpoint of each of a hexagon's six edges, in the same order as
 ## `hexagon_points`. Bees loading or unloading a comb cell stand on one
 ## of these rather than piling into the middle of it, which is what caps
 ## a cell at six workers at once -- one per wall.
-static func hexagon_edge_midpoints(size: float) -> Array:
-	var corners := hexagon_points(size)
+static func hexagon_edge_midpoints(size: float, squashed: bool = false) -> Array:
+	var corners := hexagon_points(size, squashed)
 	var midpoints: Array = []
 	for i in range(6):
 		midpoints.append((corners[i] + corners[(i + 1) % 6]) * 0.5)
@@ -45,10 +55,14 @@ static func hexagon_edge_midpoints(size: float) -> Array:
 
 ## Converts a pixel position back to the nearest flat-top axial hex. Used
 ## to work out which tile a bee is standing on, so terrain can slow it
-## down.
-static func pixel_to_hex(point: Vector2, size: float) -> Vector2i:
+## down. `squashed` must match whatever `hex_to_pixel` placed the grid
+## with, or a click/position will resolve to the wrong tile.
+static func pixel_to_hex(point: Vector2, size: float, squashed: bool = false) -> Vector2i:
+	# hex_to_pixel scales y by SQUASH going out, so un-scale it coming
+	# back in before the ordinary flat-top inversion below.
+	var y: float = point.y / SQUASH if squashed else point.y
 	var qf := (2.0 / 3.0 * point.x) / size
-	var rf := (-1.0 / 3.0 * point.x + sqrt(3.0) / 3.0 * point.y) / size
+	var rf := (-1.0 / 3.0 * point.x + sqrt(3.0) / 3.0 * y) / size
 	return _axial_round(qf, rf)
 
 ## Hex coordinates don't round like square ones -- you have to round in
@@ -101,9 +115,14 @@ static func hex_ring(radius: int) -> Array:
 ## `q = 0` is a perfectly straight vertical column (x stays 0 whatever r
 ## is) -- world_building.gd's entrance tunnel relies on that to carve a
 ## single-tile-wide shaft rather than the old alternating-width one.
-static func hex_to_pixel(q: int, r: int, size: float) -> Vector2:
+## `squashed` compresses only the y axis (see `SQUASH`), so that column
+## stays exactly vertical either way -- every caller placing something on
+## this grid needs to pass the same `squashed` value `pixel_to_hex` and
+## `hexagon_points` were given, or positions and hit-tests drift apart.
+static func hex_to_pixel(q: int, r: int, size: float, squashed: bool = false) -> Vector2:
+	var y_scale := SQUASH if squashed else 1.0
 	var x := size * 1.5 * q
-	var y := size * sqrt(3.0) * (r + q / 2.0)
+	var y := size * sqrt(3.0) * (r + q / 2.0) * y_scale
 	return Vector2(x, y)
 
 ## Points along a circular arc, centred on origin, from `from_degrees`

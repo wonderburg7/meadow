@@ -133,6 +133,23 @@ var show_flower_amounts: bool = false
 ## an egg's development percent, and so on) on top of its colour coding.
 var show_cell_contents_text: bool = true
 
+## Whether an empty comb cell shows the `wax.cell.empty.png` resprite
+## instead of the original flat colour fill. Off reverts to the flat
+## fill Meadow used before the resprite -- see `HiveCell._refresh`.
+## Purely cosmetic: doesn't touch the hive's grid geometry, unlike
+## `use_sprite_hex_grid` below.
+var use_cell_sprites: bool = true
+
+## Whether the hive's whole hex grid -- comb, floor, soil, bedrock, the
+## entrance tunnel, all of it -- is drawn squashed 2:1 to match the
+## resprite's 32x16 footprint, rather than as a regular hexagon. This is
+## grid geometry, not just a colour swap, so world_building.gd only reads
+## it while laying out a fresh hive: flipping it mid-run would leave
+## every already-placed cell and soil block sitting at the old grid's
+## positions. Takes effect on Restart Run, same as `hive_cell_size`/
+## `hive_cell_spacing` in GameConfig. See `Shapes.SQUASH`.
+var use_sprite_hex_grid: bool = true
+
 ## Whether the small ID-and-letter label above a forager is shown. Doesn't
 ## affect other roles' labels.
 var show_forager_labels: bool = true
