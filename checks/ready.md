@@ -171,3 +171,13 @@ its check. Move a confirmed or superseded entry to
       than a logic bug; needs one long run read against the diagnostic
       counters before any threshold changes. See
       `plans/active/foraging-evidence.md` Slice 2.
+
+### Hive comb visual alignment (Slices 1-3)
+- [ ] With Cell art on at the default comb spacing, inspect a column and
+      lower-side neighbours: empty cups should sit one pixel higher without a
+      visible seam. Multi-select an empty cell: its green ring should trace
+      the cup's raised back wall. Turn Cell art off mid-run: the same ring
+      should immediately return to the unchanged flat-hex outline. In
+      Settings, confirm Cell art, Show cell contents text, Sprite-aligned hex
+      grid and Direction-even hex speed are all under Appearance and absent
+      from Hive & comb; all other Hive & comb controls remain there.
