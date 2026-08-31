@@ -1,9 +1,10 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: implement Slice 9 (below),
-then resume Slice 7's acceptance-playthrough checklist again | Dependency:
-none | Verified: 2026-08-30
+Status: active | Owner: Dave / Claude Code | Next: implement Slice 10 (below,
+10a/10c first -- they break the Bundle D/E teaching sequence outright), then
+Slice 9, then resume Slice 7's acceptance-playthrough checklist again |
+Dependency: none | Verified: 2026-08-31
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
@@ -1073,6 +1074,203 @@ back into). 9g and 9i's camera/speed half, and 9j's "vanishing resource"
 claim, need a live repro pass before or alongside implementation, per their
 own sections above — don't skip that step because the rest of the slice is
 otherwise ready to build.
+
+## Slice 10 -- Bundle D/E: the queen's manual-to-automatic foraging arc is still broken (31 Aug 2026, second pass)
+
+Five findings from Dave replaying stages 1.6-1.14 today. Two are new, more
+direct causes for exactly the symptom Slice 9a already named; one is a
+genuine missing behaviour Slices 4b/5b's acceptance text assumed would just
+happen; one is unconfirmed and needs a live pick between two candidates.
+Traced against live source, not guessed, same discipline as Slice 9.
+
+<!-- LAYER: durable-rules -->
+
+- **9a's fix is necessary but not sufficient -- `role_restricted_to` is not
+  the only path to the queen's role.** 9a diagnosed the *secondary*-role
+  priority branch (`bee.gd::_idle_dispatch`) as the leak. It is one leak.
+  `Bee.command_collect_from()` -- the manual right-click-a-flower command
+  Bundle D's own stages 1.6-1.10 are built on -- changes the bee's *primary*
+  role outright (`set_role(Role.FORAGER)`), completely bypassing
+  `role_restricted_to`, which only ever gates secondary-role checks. Fixing
+  9a alone leaves 10a below completely unfixed. Any future "lock this bee's
+  role for the duration of a stage" mechanism has to gate every path that
+  can change `role`, not just the idle-dispatch backup-role branch --
+  `set_role`/`_apply_role` themselves, since that is the one place `role` is
+  actually written (per `_apply_role`'s own comment, "the one place `role`
+  actually changes").
+- **A Challenge stage's goal target and the bee's actual behaviour are two
+  different, disconnected mechanisms -- closing the goal never stops the
+  bee.** `_goal_check_nectar_target`/`_goal_check_pollen_target`
+  (`challenge_runner.gd:787,793`) exist purely to decide when to call
+  `_advance()`; nothing calls back into `bee.gd` to change what the queen is
+  doing. Slices 4b/5b's own acceptance text ("stops the moment the cell
+  reads full ... picks no further task on her own") was never actually
+  implemented as a behaviour -- it was assumed to fall out of the cell
+  filling up, which only works if the stage's target amount equals the
+  cell's real capacity. It doesn't (10c below). The reusable fix is the same
+  shape Slice 9i already proposed for `flower_switch_locked`: an explicit,
+  named per-stage `on_exit` effect through `_run_stage_effects`, not a side
+  effect of a goal check.
+
+### 10a -- Right-clicking a flower during 1.6-1.10 permanently promotes the queen to Forager
+
+**Confirmed.** `command_collect_from(flower)` (`bee.gd:1648-1659`):
+```gdscript
+func command_collect_from(flower: Node2D) -> void:
+	if role != Role.FORAGER:
+		set_role(Role.FORAGER)
+	...
+```
+This is a real, permanent primary-role change (`set_role` -> `_apply_role`,
+the only place `role` is written), not a one-off errand. It is exactly what
+Bundle D's manual-foraging stages use for "right-click a flower" -- and
+nothing about it is Challenge-aware: `queen_command_locked` is only ever set
+for stage `"1.1"` (`challenge_runner.gd::_enter_stage`), not 1.6-1.10.
+`resource_type` defaults to `"nectar"` (`bee.gd:81`) and is untouched by
+`_apply_role`, so the moment the player performs the one manual collection
+Dr Gallerin's own lesson asks for, the queen's Job column reads "Forager --
+nectar" from then on, with no role menu ever touched. This is Dave's first
+symptom exactly, and it fully explains the second one too: once `role` is
+genuinely `FORAGER`, `_idle_dispatch`'s ordinary `_try_role_work(role)`
+branch runs for her like any other forager, forever, including immediately
+after every future deposit -- `role_restricted_to` was never in this loop to
+begin with (it only guards the *secondary*-role branches at `bee.gd:1216`
+and `1223`).
+
+**Fix:** add a stage-scoped role lock that `set_role`/`_apply_role` (or
+`command_collect_from` specifically, if a fully general lock is judged too
+broad -- see risk note below) actually check, the same shape
+`manual_deposit_pending` already uses: e.g. `Bee.role_change_locked: bool =
+false`, set by `challenge_runner.gd::_enter_stage()` alongside the existing
+`main.queen.manual_deposit_pending = stage.id in [...]` line for the same
+`["1.6","1.7","1.8","1.9","1.10"]` set, cleared (`false`) everywhere
+`role_restricted_to` is already reset to `[]` (`_complete()`, Challenge
+start). Guard `command_collect_from`'s `set_role` call with `and not
+role_change_locked`, and still run the rest of the function unchanged
+(`flower.occupied_by`, `current_flower`, `state = State.TO_FLOWER`) so the
+manual trip itself still happens -- only the permanent role promotion is
+suppressed.
+
+**Live confirmation needed before shipping:** the collection state machine
+(`TO_FLOWER`/`INSPECTING`/`COLLECTING`/`DRINKING`) is driven by `state`, not
+`role`, everywhere read so far -- but confirm live that a bee whose `role`
+stays `EGG_LAYER` genuinely completes a full collect-and-return trip with
+`role_change_locked` set, since this exact combination (manual flight
+command, role deliberately left un-set) has never been exercised before this
+fix.
+
+### 10b -- Same root cause as 9a: apply 9a's fix too, but only once 10a's lock exists
+
+**Confirmed-plausible, not yet reproduced independently of 10a.** Even with
+10a fixed, 9a's original leak still stands: `role_restricted_to =
+[Roles.QUEEN, Roles.FORAGER, Roles.NURSE]` (`challenge_runner.gd:275`) is
+still one hand-written array for the whole Challenge, so a player using the
+"When idle: Forager" secondary-role menu (the one path that doesn't go
+through `command_collect_from`/`set_role` at all) can still make her
+auto-forage via the `_idle_dispatch` priority branch before 1.11 unlocks it.
+9a's proposed fix (derive `role_restricted_to` from
+`_stage_unlock_keys(stage.unlocked_keys)`, unioning in `[Roles.QUEEN,
+Roles.NURSERY]` for her own always-available fallback) is unchanged by this
+pass -- implement it alongside 10a, not instead of it. Cross-reference:
+`plans/now/challenge-1.md` Slice 9, section 9a.
+
+### 10c -- Nothing stops the queen once a stage's target amount is reached; she stops only at the cell's real capacity
+
+**Confirmed.** `cell_capacity = 200.0` (`game_config.gd:421`); the pollen
+goal target is `75.0` (`challenge_stages.gd:18`, checked by
+`_goal_check_pollen_target`, `challenge_runner.gd:793`); the nectar goal
+checks `fill_fraction() >= 1.0` against the cell's own
+`capacity_for("nectar")`, not a fixed number. Reaching either target only
+advances the *stage* (`_advance()`, `challenge_runner.gd:433`) -- it does
+not touch `main.queen.role`, `resource_type`, or issue any command. The only
+thing that can make a forager stop physically collecting is
+`go_to_deposit_cell`'s "cell has no space" wait state
+(`bee_foraging.gd:749-793`), which is governed by the cell's real
+capacity/`cell_full_threshold` (0.9 x 200 = 180), not the Challenge's
+75-unit target. So a pollen-foraging queen keeps going, trip after trip,
+well past 75, all the way toward 180-200 -- matching Dave's report exactly.
+
+**Fix (reusable, matching Slice 9i's own proposal for
+`flower_switch_locked` rather than inventing a second one-off mechanism):**
+add a named `on_exit` effect, e.g. `"queen_stop_foraging"`, run through the
+existing `_run_stage_effects()` (`challenge_runner.gd`). Add it to 1.11's
+`on_exit` list (stop the nectar leg the instant `nectar_target` is met) and
+1.13's `on_exit` list (stop the pollen leg at 75). The effect itself: clear
+whatever made her forage in the first place -- the `Roles.QUEEN`-equivalent
+of `set_role` (return her to Egg Layer) if 10a/10b's fix means she reached
+Forager via primary role, or clear `secondary_role`/`role_restricted_to`'s
+Forager entry if she reached it via the backup-role path -- the exact call
+depends on which of 10a/10b's mechanisms is live once this ships; pin down
+the call site once those land, don't guess it now.
+
+### 10d -- Pollen sub-mode may be unreachable while the queen forages via her secondary/backup role, not her primary one
+
+**Not confirmed -- two competing, evidenced hypotheses; needs one live
+playthrough to tell apart, not a blind fix.**
+
+1. **The "Doing" row (nectar/pollen toggle) is keyed to primary role only.**
+   `hud.gd::_build_doing_row(common_role, first)` calls
+   `Roles.modes_for(common_role)`, and `common_role` is the selection's
+   *primary* role. While the queen forages through the secondary/backup-role
+   mechanism 9a/10b describe (`role` stays `EGG_LAYER`, `secondary_role ==
+   FORAGER`), `modes_for(Role.EGG_LAYER)` has no nectar/pollen modes, so the
+   Doing row never renders for her at all -- there is no UI path to choose
+   pollen over nectar for a queen using her backup role, full stop. If
+   Dave's queen was still on the backup-role path when he tried to "assign
+   Forager -- pollen," this is why nothing happened.
+2. **A focus change mid-trip is deliberately made to finish the old resource
+   first.** `BeeForaging.collect()` (`bee_foraging.gd:625-631`): switching
+   `resource_type` away from a partial nectar load already in her stomach
+   doesn't discard it -- it calls `finish_collecting(bee)` and sets `state =
+   State.IDLING if bee.manual_deposit_pending else State.TO_HIVE`.
+   `manual_deposit_pending` is recomputed fresh on every `_enter_stage()`
+   call and should read `false` by 1.13, so the expected path is `TO_HIVE`
+   (fly home, deposit the leftover nectar, then `_default_state_for_role()`
+   picks up pollen once she's back out) -- a short pause that could easily
+   read as "doesn't autoforage" if watched only briefly, not a permanent
+   stall. Confirm live whether `manual_deposit_pending` is genuinely `false`
+   by 1.13 (a careless 10a/10b fix could leave it stuck) before assuming
+   this branch is clean.
+
+**Action:** reproduce live -- select the queen at the moment "Forager --
+pollen" is assigned and watch which of `_build_doing_row`'s absence
+(candidate 1) or a `TO_HIVE` detour (candidate 2, self-resolving) actually
+happens, before changing either function. If candidate 1 is confirmed, the
+fix is to key the Doing row off whichever role the bee is *actively
+working* (her primary role, or her secondary role while `working_secondary`
+is true -- see `bee.gd:210`'s own field), not just her primary role -- a
+small, reusable generalisation rather than a queen-only special case, since
+any future bee with an active secondary role would hit the identical gap.
+
+### 10e -- "Building third cell reveals Laying" is most likely the correct 1.14-to-1.15 transition, not a new bug -- but confirm which UI element Dave means
+
+**Not confirmed as a bug; likely a naming collision with the already-known,
+still-unfixed 9d.** Building the third cell satisfies 1.14's
+`third_cell_built` goal, which immediately calls `_advance()` into 1.15 --
+whose `unlocked_keys` includes `"laying"` for the first time
+(`challenge_stages.gd:199`), and 1.15's own goal is `first_egg_laid`.
+Revealing "Laying" as a *newly available option* at that exact moment is the
+intended pacing, not a leak. **However**, 9d (`plans/now/challenge-1.md`
+Slice 9, section 9d, confirmed 30 Aug, still unfixed -- verified this pass:
+`hud.gd::_build_job_row`, ~line 2047, still calls
+`_current_role_marker(...)` with no `allowed_role_keys` gate) means the Job
+column has shown "* Laying" as her *current, already-active* role from stage
+1.1 onward, regardless of any stage transition. **Ask Dave to confirm which
+one he saw:** "Laying" appearing as a *new choice* in the "Change to..."
+list right after the third cell (expected, no fix needed) versus "* Laying"
+as her *current-role marker* being visible at all before 1.15
+(already-diagnosed 9d, not new). Do not implement two fixes for what may be
+one already-tracked issue.
+
+**Acceptance (Slice 10):** 10a and 10c close independently and are the
+priority -- they are what breaks Bundle D/E's teaching sequence outright.
+10b ships together with 9a's own fix. 10d needs its one live-reproduction
+step before any code changes. 10e needs Dave's answer before it's scoped as
+work at all. Re-run `checks/ready.md`'s Bundle D and Bundle E entries in
+full once 10a/10b/10c land.
+
+---
+
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 

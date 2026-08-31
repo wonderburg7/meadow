@@ -2,7 +2,8 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: active | Owner: Dave / Claude Code | Next: Slice 1 (empty-cell sprite
-nudges) | Dependency: none | Verified: 2026-08-30
+nudges); Slice 6 (new, above-centre-row cell rendering) is the higher-priority
+find of the two | Dependency: none | Verified: 2026-08-31
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -190,3 +191,65 @@ delayed. If confirmed instant, this becomes a follow-on design question —
 whether a low-fill cell should keep a lighter version of the cup outline
 instead of jumping straight to the current flat wash — not a code fix in
 this slice.
+
+## Slice 6 -- Cells above the comb's centre row don't render (new, 31 Aug 2026 pass)
+
+**Symptom (Dave):** cells placed in rows above the central line of the comb
+are not rendering.
+
+**Confirmed-plausible, pending a live scene-inspector look -- same
+discipline as Slice 9g in `plans/now/challenge-1.md`, which flagged exactly
+this shape of bug as one of two candidates without yet pinning it down.**
+
+`hive_cell.gd::_ready()` sets `z_index = 2 * axial.y + axial.x` (~line 221),
+justified by a comment claiming "`Shapes.hex_to_pixel`'s y is always a
+positive multiple of (2r + q)... regardless of where comb_centre sits."
+That claim is false for any cell above the comb's origin: `hex_to_pixel(q,
+r, ...)`'s y is `size * sqrt(3.0) * (r + q / 2.0) * y_scale`
+(`shapes.gd:139-143`) -- proportional to `(2r + q)`, the exact same
+expression `z_index` uses, and it goes negative whenever `r` (the cell's
+`axial.y`) is negative and `q` isn't large enough positive to offset it,
+i.e. exactly the row(s) above the centre. A cell with a negative `z_index`
+still draws in Godot -- it doesn't vanish by itself -- but it now draws
+*behind* anything else in the same tree with `z_index >= 0`, which very
+plausibly includes the hive floor/background art painted at the default
+`z_index = 0`. That would read as "the cell doesn't render" even though the
+node exists, is built, and holds its content correctly (the same
+"functionally exists, never paints" signature Slice 9g already named for a
+different cell).
+
+**Likely why this is surfacing only now:** the recent hex-grid
+radial-symmetry fix (`1e0dc40`, `787495a`) specifically corrected
+automine/build-spiral placement so it no longer drifts sideways under the
+squashed-grid distance bug -- which means the comb can now grow evenly
+upward (negative `axial.y`) for the first time, rather than being biased
+away from that direction. This z_index formula's broken assumption may
+always have been latent; it simply had nothing to expose it before.
+
+**Fix:** the "always positive" property was never actually needed -- draw
+order only needs a *consistent* ordering, not a positive one, and Godot's
+own z_index range (-4096 to 4096) already supports negative values freely.
+Two options, either acceptable:
+1. Add a fixed offset comfortably clear of every other explicit z_index in
+   the codebase (`fog_of_war.gd`'s hive-fog layer at 90, `main.gd`'s
+   selection layer at 100) and any plausible real hive radius, e.g. `const
+   CELL_Z_INDEX_OFFSET := 512` and `z_index = 2 * axial.y + axial.x +
+   CELL_Z_INDEX_OFFSET` -- cheapest, one-line change, fixes both this and
+   9g's identical paint-order candidate at once if that turns out to be the
+   same mechanism.
+2. Replace the z_index scheme with actual scene-tree ordering (`move_child`
+   to keep cells sorted top-to-bottom as they're (re)built) -- more
+   invasive, not needed unless option 1 is confirmed insufficient.
+
+**Live confirmation needed before implementing:** inspect one
+non-rendering above-centre cell's actual `z_index`, `visible`, and paint
+order against the hive floor node in the remote scene inspector, confirming
+the sign is genuinely negative and genuinely losing to an opaque node
+above it, before picking option 1 over option 2 -- same discipline Slice
+9g's own writeup already asks for.
+
+**Cross-reference:** if this is confirmed, re-check Slice 9g
+(`plans/now/challenge-1.md`) -- its "second manually-built cell never
+renders" may be this same bug if that cell also happened to land above the
+centre row, in which case one fix closes both.
+
