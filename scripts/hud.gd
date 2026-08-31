@@ -1390,7 +1390,7 @@ func show_object_summary(kind: String, data) -> void:
 		"soil":
 			_show_soil_summary(data.count, data.reachable)
 		"death":
-			_show_death_summary(data)
+			_show_death_summary(data.death_info)
 	selection_panel.visible = true
 
 ## Kept live (unlike the other three kinds) because a flower's

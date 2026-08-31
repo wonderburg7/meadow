@@ -272,7 +272,7 @@ const C2_RESCUE_AMOUNT := 150.0
 ## than opening on a stage id that looks like two are missing.
 const STAGES_2 := [
 	{
-		"id": "2.1", "goal": "nectar_stabilized", "unlocked_keys": ["laying", "colony_window", "foraging_window"],
+		"id": "2.1", "goal": "nectar_stabilized", "unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window"],
 		"goal_text": "Goal: watch the nectar stores fall, then recover them.",
 		"prompts": [
 			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},
@@ -281,7 +281,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.2", "goal": "pollen_foragers_raised",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen"],
 		"goal_text": "Goal: raise a pollen Forager.",
 		"prompts": [
 			{"id": "2.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar keeps bees moving. Pollen helps make more bees. A colony that wants a future needs both."},
@@ -290,7 +290,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.3", "goal": "cell_designated",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: designate a cell.",
 		"prompts": [
 			{"id": "2.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be more than empty space. Give it a purpose, and the colony becomes easier to steer."},
@@ -299,7 +299,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.4", "goal": "interim_reserve",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: build a reserve of ~175 nectar and ~90 pollen.",
 		"prompts": [
 			{"id": "2.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "Before growing further, build a small reserve. Colonies with no buffer are simply dramatic accidents waiting to happen."},
@@ -308,7 +308,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.5", "goal": "nurse_raised",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both"],
 		"goal_text": "Goal: raise a nurse.",
 		"prompts": [
 			{"id": "2.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "The queen can begin a colony, but she should not have to do every nursery shift. Raise a nurse."},
@@ -317,7 +317,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.6", "goal": "persistent_designation_used",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock"],
 		"goal_text": "Goal: keep two cells raising foragers, and raise one more nurse as a one-off.",
 		"prompts": [
 			{"id": "2.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "Some cells can remember what they are for. Useful, if one prefers planning to mild panic."},
@@ -326,7 +326,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.7", "goal": "comb_worker_building",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain"],
 		"goal_text": "Goal: raise a Comb worker and build more comb.",
 		"prompts": [
 			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
@@ -335,7 +335,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.8", "goal": "miner_expansion",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
 		"goal_text": "Goal: raise a miner, dig new space, and build a cell in it.",
 		"prompts": [
 			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},
@@ -344,7 +344,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.9", "goal": "c2_complete",
-		"unlocked_keys": ["laying", "colony_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
 		"goal_text": "Goal: 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen Foragers, 2 nurses, 2 Comb workers, 2 miners.",
 		"prompts": [],
 	},
