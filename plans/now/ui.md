@@ -1,9 +1,12 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Dave's hands-on re-check of
-UI-O (below) -- UI-A through UI-G, UI-D/E/F, UI-K and UI-L are confirmed and
-closed | Dependency: none | Verified: 2026-08-29
+Status: active | Owner: Dave / Claude Code | Next: implement UI-P (below) |
+Dependency: none | Verified: 2026-08-30
+
+Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
+several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
+UI-K and UI-L remain confirmed and closed from the 29 Aug pass.
 
 The delivered redesign and hands-on investigation records are archived at
 `plans/archive/UI_PLAN_2026-08-26.md`,
@@ -661,6 +664,296 @@ runtime errors on either path, exercising the fresh-boot main menu (hex
 tiles, settings button, text-wrap fix) and the in-run HUD/Gallerin/settings
 paths respectively. Still needs Dave's hands-on look at every item above
 -- see `checks/ready.md`.
+
+## UI-P — fixes from Dave's 30 Aug hands-on pass
+
+**Scope:** Dave's 30 Aug hands-on pass through `checks/ready.md`'s UI-N,
+UI-M, UI-I, UI-H and UI-O entries confirmed UI-N's gap/tooltip fix, UI-M's
+z-order/text-scale/alternating-row fix, UI-I's bubble scaling, UI-O's
+settings-window position, "Show info icons" visibility and the pre-run gear
+glyph outright (their check entries are removed -- `docs/archive/
+HANDS_ON_CHECKS_ARCHIVE.md` should get them too, but this session has no
+read access to that path per `.claude/settings.json`'s deny list, same as
+UI-O's own note). Everything below is what's still open. Also folds in one
+game-wide styling ask (not scoped to any one panel) that surfaced during the
+same pass.
+
+**Files:** `scripts/ui.gd`, `scripts/hud.gd`, `scripts/ui_theme.gd`,
+`scripts/gallerin_panel.gd`, `scripts/ui_layout.gd`, `scripts/main_menu.gd`,
+`scripts/debug_panel.gd`.
+
+### UI-P-1 — "i" info badge tooltip doesn't wrap
+
+**Symptom:** a long badge tooltip spills off the edge of the screen as one
+horizontal line instead of wrapping.
+
+**Diagnosed:** `ui.gd::info_badge()` (~line 18) sets
+`badge.tooltip_text = text` and returns a plain `Button` — Godot's default
+tooltip for a `Button` sizes itself to the text's natural single-line width
+rather than wrapping, which is exactly the spill-over Dave describes.
+
+**Fix:** give the info badge its own small `Button` subclass (e.g.
+`scripts/ui_info_badge.gd`) that overrides `_make_custom_tooltip(for_text)`
+to build and return a `PanelContainer` wrapping a `Label` with
+`autowrap_mode = TextServer.AUTOWRAP_WORD_SMART` and a fixed
+`custom_minimum_size.x` (roughly 260px, tune by eye) so long text wraps
+downward into a multi-line block ("a thick rectangle extending downwards")
+instead of one long line. Use the theme's existing panel/label styling
+(`UiTheme.panel_stylebox()`, "Body" or "Small" type variation) so it reads
+as part of the game rather than Godot's raw default tooltip look. Swap
+`info_badge()`'s `Button.new()` for `UiInfoBadge.new()` — every other line
+in the function (styleboxes, `tooltip_text`, group membership) stays
+unchanged, so this fixes every info badge in the game (colony panel,
+nursery panel, winter panel, settings window, HUD) in one place, not just
+the settings window ones this was first noticed in.
+
+**Acceptance:** hovering any info badge with a long tip shows it wrapped
+into several lines within a fixed-width box, never spilling past the
+viewport edge; a short tip still reads as before.
+
+### UI-P-2 — game-wide: "Change to…" and "When idle:" should read as buttons
+
+**Ask (Dave, 30 Aug, explicitly "in all instances, not just Challenge 1"):**
+both controls should present with a background colour like other command
+panel options, not as floating text.
+
+**Diagnosed:** both already go through `_make_role_menu()`
+(`hud.gd::_build_job_row` for "Change to…", `_build_fallback_row` for "When
+idle: …"), which does call `_style_button(menu)` — the same helper every
+other command-panel button uses (`_toggle_button`, `_action_button`). The
+gap isn't a missing style, it's contrast: `ui_theme.gd::_refresh_button_stylebox()`'s
+`"normal"` state is `base.lightened(0.10)` with a fully transparent,
+zero-width border (~line 165-188) — visible up close, but easy to read as
+plain text against a similarly dark panel background, especially next to
+`UI.mark_as_current()`'s much higher-contrast current-role buttons
+elsewhere in the same tray.
+
+**Fix:** raise the "normal" state's contrast in
+`ui_theme.gd::_refresh_button_stylebox()` — e.g. `base.lightened(0.10)` to
+somewhere around `0.16-0.18` (between today's normal and hover values), and/or
+give "normal" a low-alpha border the way "focus"/"selected" already have one,
+so an unpressed, unhovered button reads as a button at rest. This is a
+`UiTheme` change, not a `hud.gd` one, so it affects every button sharing the
+same stylebox — confirm live against the rest of the command panel (Job/
+Focus/Orders columns, "More…" panel) that raising contrast this broadly
+doesn't make an already-prominent button (like a `mark_as_current` one) look
+wrong; retune the delta if so, but keep it one shared value rather than a
+one-off override on just these two menus.
+
+**Acceptance:** "Change to…" and "When idle: …" (and every other ordinary
+command-panel button) show a visibly distinct background at rest, not just
+on hover; `mark_as_current`-highlighted buttons still read as clearly more
+prominent than an ordinary one.
+
+### UI-P-3 — pre-run menu: honeycomb tiles' borders don't overlap
+
+**Ask (Dave, 30 Aug):** move the Challenge/Scenario selection hexes closer
+together so their borders fully overlap — there's currently a slight gap.
+
+**Diagnosed:** each tile is two stacked `Polygon2D`s
+(`main_menu.gd::_build_hex_tile` or equivalent, ~line 359-374): a `border`
+hex at the full `HEX_SIZE` and a `fill` hex at `HEX_SIZE - 4.0` on top,
+which is how the visible border ring is drawn (exposed border colour
+showing 4px around the smaller fill). `HEX_STEP_X := HEX_SIZE * 1.5`
+(~line 108, UI-M's own fix) already places neighbouring tiles' *border*
+hexagons exactly edge-to-edge, zero gap — but two touching 4px borders read
+as a doubled-width seam rather than one shared line, which is the "slight
+gap" Dave sees.
+
+**Fix — do not change `HEX_STEP_X`, the fill size, or tile centres.**
+`scripts/hex_hit_area.gd`'s exact-hexagon hit test (added in UI-M
+specifically to stop touching tiles stealing each other's clicks) is built
+against the tile's real hexagon size at its real position; shrinking the
+step would reopen that overlap-ambiguity bug. Instead, make only the
+`border` polygon itself slightly larger than `HEX_SIZE` (e.g.
+`Shapes.hexagon_points(HEX_SIZE + 3.0)`, tune by eye) so neighbouring
+borders overlap and merge into one line, purely a paint-order change with
+no effect on tile position, spacing, or click hit-testing.
+
+**Acceptance:** neighbouring tiles' borders read as one shared line, not a
+doubled seam; clicking near a touching corner still always selects the tile
+the pointer is actually over (UI-M's own acceptance, must not regress).
+
+### UI-P-4 — pre-run menu: left pane starts flush against the screen edge
+
+**Ask (Dave, 30 Aug):** the pre-run menu's left-pane text and hexagons
+should have a small buffer instead of starting at pixel 0.
+
+**Diagnosed:** UI-M's delivered layout is a full-viewport `Control` split by
+an `HBoxContainer` with no left margin ever added — the left pane's content
+starts exactly at the viewport edge.
+
+**Fix:** wrap the left pane's content in a small fixed left inset — either
+a `MarginContainer` with `theme_constant_override("margin_left", N)` around
+the left pane, or an explicit `LEFT_PANE_MARGIN` constant (mirroring
+`ui_layout.gd::SELECTION_TRAY_LEFT_MARGIN`'s naming) added as the pane's own
+`offset_left`. A small value (12-16px, matching `SELECTION_TRAY_LEFT_MARGIN`
+elsewhere) rather than a new bespoke number.
+
+**Acceptance:** the leftmost hex tile and any left-aligned text sit a small,
+consistent distance from the screen edge, matching the visual margin already
+used elsewhere (HUD, selection panel); no other pane layout changes.
+
+### UI-P-5 — pre-run menu: "Choose a Challenge or Scenario on the left." isn't visible
+
+**Symptom (Dave, 30 Aug):** the placeholder text can't be found anywhere on
+screen before a Challenge/Scenario is picked.
+
+**Diagnosed, not yet confirmed live:** `main_menu.gd` builds
+`detail_placeholder` once (~line 243-252) and adds it as `_detail_column`'s
+only initial child. Whatever populates the right pane once something is
+selected (the loop at ~line 466 that clears `_detail_column.get_children()`
+before adding a stage's own title/blurb/controls) is the prime suspect if it
+ever runs before a real selection exists — that would destroy the
+placeholder with nothing put back in its place. Check first whether that
+populate function runs during `_ready()`/`open()` with no stage chosen yet;
+if so, either skip the clear-and-rebuild when nothing is selected (leaving
+the placeholder alone) or re-add an equivalent placeholder in that
+no-selection branch.
+
+**If that isn't it:** check `right_scroll`'s own rect at first paint — since
+UI-O's fix disabled its horizontal scroll (`SCROLL_MODE_DISABLED`) without
+giving it an explicit minimum height, it's possible the container computes
+a zero-height rect before any child forces it wider, though this is less
+likely than the clear-on-populate path above.
+
+**Action:** reproduce live (boot to the menu, don't touch anything, look
+for the placeholder) and check `_detail_column`'s children/visibility at
+that exact moment before changing code — two plausible causes named above,
+pick whichever the live state actually shows.
+
+### UI-P-6 — settings window: gap between controls and the panel edge
+
+**Ask (Dave, 30 Aug):** there's currently a gap between the settings
+window's title/dropdowns/options and the panel edge, with "Show info icons"
+on and off, rather than these sitting next to the scrollbar with a small
+(~6px) gap.
+
+**Diagnosed:** `debug_panel.gd::PANEL_WIDTH := 320.0` (UI-O's fix) was sized
+to comfortably fit a row with its info badge showing, which by construction
+leaves slack when badges are off and isn't tied to the scrollbar's own
+position either way.
+
+**Fix:** rather than widen/narrow `PANEL_WIDTH` again (the badge-visible
+case already needs the current width), add row-level padding so content
+sits a fixed ~6px from the scroll's own edge regardless of `PANEL_WIDTH`:
+give the settings column (or each row) a right-side
+`theme_constant_override("margin_right", 6)` (or equivalent
+`add_theme_constant_override` on the row `HBoxContainer`s) so the visible
+gap is deliberate and next to the scrollbar, not leftover width from
+`PANEL_WIDTH`'s own sizing headroom.
+
+**Acceptance:** with "Show info icons" on and off, every row's content sits
+a small, consistent (~6px) gap from the scrollbar, not a larger unexplained
+gap from the panel's outer edge.
+
+### UI-P-7 — Dr Gallerin bubble: text size, font, position and pointer
+
+**Asks (Dave, 30 Aug), all in `scripts/gallerin_panel.gd`:**
+
+1. **Text size:** make it smaller, matching the summary-panel/command-panel
+   text size, not `BUBBLE_TEXT_SIZE := 22` (~line 30) which was UI-I's
+   enlarge-it fix and is now reported too big relative to the rest of the
+   HUD. Read whatever size `identity_label`/command-tray buttons actually
+   render at (their `"Body"`/`"Small"` `theme_type_variation` sizes in
+   `ui_theme.gd`) and match `BUBBLE_TEXT_SIZE` to that rather than picking a
+   new number blind.
+2. **Font:** the bubble's text doesn't follow the player's chosen typeface
+   at all. Confirmed cause: `_bubble_label` (`_build_bubble()`, ~line
+   122-142) is a plain `Label` with only a font-*size* override
+   (`add_theme_font_size_override`, added for UI-I's text-scale fix) — it
+   never gets a `theme_type_variation`, unlike every other label in the
+   game, which is how `UiTheme.refresh()` swaps the font family globally
+   when `ui_typeface` changes. Fix: set
+   `_bubble_label.theme_type_variation = "Body"` (or whichever variation
+   matches the new smaller size from point 1) in `_build_bubble()`, the
+   same as `identity_label`/`energy_label`/etc. already do in `hud.gd`.
+3. **Position:** move the bubble to the left of Dr Gallerin's own
+   sprite/icon (between Gallerin and the command panel) instead of its
+   current placement, and add a visible pointer so it reads as a speech
+   bubble. `_icon_button` and `_bubble` both currently anchor
+   `PRESET_BOTTOM_RIGHT` (~line 84, 126). Re-anchor `_bubble` so its right
+   edge sits at the icon's *left* edge minus a small gap (rather than
+   stacking above/behind it), keeping vertical alignment with the icon.
+   Add a small triangular pointer — a `Polygon2D` child of `_bubble`,
+   positioned at the bubble's right edge pointing toward the icon,
+   coloured to match the bubble's own panel background — so the bubble
+   visually connects to Gallerin rather than floating independently.
+4. **Narrow-width overlap regression:** re-verify UI-O's `command_tray_max_width()`
+   fix (always subtracting `gallerin_reserve_width(viewport_width)`) still
+   holds once the bubble's position changes — the reserve calculation and
+   the bubble's actual on-screen position need to stay in agreement, or the
+   overlap Dave reported previously reappears in a new place.
+
+**Acceptance:** the bubble's text visibly matches the rest of the HUD's
+type size and follows the player's chosen typeface immediately on change;
+the bubble sits to the left of Gallerin's sprite with a pointer connecting
+the two; the command tray never renders underneath the bubble at any tested
+width, including after the reposition.
+
+### UI-P-8 — summary panel: cog alignment, tray width, and a real resize-overlap bug
+
+**Files:** `scripts/hud.gd`, `scripts/ui_layout.gd`.
+
+1. **Cog sits one line low.** `hud.gd`'s `header` `HBoxContainer`
+   (~line 818-831) holds `identity_label` (which can be 1-3 lines: name,
+   then "Queen — role", then age) and `_build_selection_cog()`'s
+   `MenuButton` side by side with neither given an explicit vertical
+   alignment, so the row defaults to vertically centring the cog against
+   whatever height the multi-line label ends up — which visually lines the
+   cog up with the *second* line (bee number/role), not the first (name),
+   whenever the label wraps to more than one line. Fix: set
+   `menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN` in
+   `_build_selection_cog()` so the cog top-aligns with the label's first
+   line regardless of how many lines follow.
+2. **"Make the command tray 20% wider, keep the summary panel filling the
+   rest."** `ui_layout.gd::command_tray_max_width()`'s multiplier is
+   `0.77` today (UI-H's last tuning pass). Widen it by 20%: `0.77 * 1.2 ≈
+   0.924`. `selection_tray_width()` already derives its own width from
+   whatever `command_tray_max_width()` returns, so no separate change is
+   needed there for it to keep "filling the rest" — confirm live that the
+   ~0.924 figure reads right at a normal window size and doesn't crowd the
+   Gallerin reserve; retune the exact multiplier by eye if not.
+3. **Command tray and summary panel still overlap on resize — a real
+   architecture gap, not a tuning issue.** `hud.gd::_update_command_tray_width()`
+   sets `command_columns.custom_minimum_size.x = max(200.0, max_width -
+   32.0)`. In Godot, `custom_minimum_size` is a *floor*, not a ceiling — it
+   guarantees the container is at least that wide, but does nothing to stop
+   it growing wider than `max_width` when its own children's natural
+   minimum widths (button text at the current font size, especially after
+   UI-P-2/UI-E's larger buttons) exceed that figure. There is no actual cap
+   being enforced; the comment describing it as the tray's "max width" is
+   the bug. This is why narrowing the window can still force the tray wider
+   than its intended share and into the summary panel's space, independent
+   of any of the tuning multipliers above.
+   **Fix:** give the tray's own row-level containers (each Job/Focus/Orders
+   column's individual button rows) the ability to actually shrink by
+   wrapping, the same way `hud.gd::_build_nursery_controls`'s "Raises:" row
+   already uses `HFlowContainer` instead of `HBoxContainer` so it can drop
+   onto a second line rather than force extra width. Audit
+   `_build_job_row`/`_build_doing_row`/`_build_orders_row` (and whatever
+   builds each column's row containers) for plain `HBoxContainer`s that
+   currently can't shrink below their children's summed minimum widths, and
+   switch them to `HFlowContainer` where they aren't already — this is the
+   same fix Challenge 1 Slice 1a used for the exact same class of "second
+   row" wrapping problem, so reuse the pattern rather than inventing a new
+   one.
+4. **Summary panel text should match the command panel's text size.**
+   `identity_label`/`energy_label`/etc. use `theme_type_variation = "Body"`;
+   confirm what variation the command-panel's buttons use (`_toggle_button`/
+   `_action_button` use `"Small"`) and either align the summary panel's
+   labels to the same variation or confirm `"Body"` and `"Small"` are
+   already the same size in `ui_theme.gd` — if they differ, this is a
+   one-line `theme_type_variation` change per label, not a new size
+   constant.
+
+**Acceptance:** the cog sits inline with the bee/cell name's first line at
+any selection with 1-3 lines of identity text; the command tray reads
+visibly ~20% wider than before at a normal window size with the summary
+panel still filling the remaining room; narrowing the window all the way to
+`MIN_SUPPORTED_WIDTH` never overlaps the two panels, because the tray's
+buttons can now wrap onto more rows instead of forcing extra width; summary
+panel and command panel text read as the same size.
 
 ## Deferred decisions
 

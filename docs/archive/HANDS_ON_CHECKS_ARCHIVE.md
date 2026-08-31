@@ -6,6 +6,29 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 31 Aug 2026 -- hands-on pass
+
+- **Cell/colony dirty-index refactor (efficiency Slice 1).** Confirmed
+  working -- `hive.gd`'s cell-content buckets and the comb/nursery panel's
+  free/brood/gyne/hungry counts update the moment they should.
+- **HUD popups bound to revisions, not frames (efficiency Slice 2).**
+  Confirmed working -- cell popup, flower summary and selection panel
+  refresh immediately on a real change, including the activity line
+  updating instantly on a tray order.
+- **Crab spiders, full re-check.** Confirmed working -- the tunable attack-
+  success setting, the escaped-bee flower cooldown, the attack-flash ring
+  and the magenta dev marker all behave as `plans/archive/CRAB_SPIDER_PLAN.md`
+  Bundle 5 intended.
+- **Challenge 1 Bundle F (laying, backup nursing, the first daughter).**
+  Confirmed working in full -- automatic nursing backup, the new worker's
+  hatch behaviour (circling the queen, no dart for the exit), the queen not
+  re-laying mid-beat, her role panel, the farewell speech bubble placement,
+  and all three completion-window options.
+- Two items from the same pass were found broken, not confirmed --
+  see `plans/now/hands-on-fixes-2026-08-31.md` (Slices A/B/C/D) and the
+  updated entries left open in `checks/ready.md` for efficiency Slices 4/5
+  and Challenge 1 Bundle G.
+
 ## 24 Aug 2026 -- second hands-on pass
 
 - **Text now scales.** Confirmed working (`UI_BUGFIX_PLAN.md` Slices 1-2,

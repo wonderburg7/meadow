@@ -1,10 +1,16 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: resume Slice 7's
-acceptance-playthrough checklist — Slices 1-6 and Slice 8 (8a/8b/8d/8e) are
-merged to master; 8c proposed no code change and is re-verified live as part
-of Slice 7 | Dependency: none | Verified: 2026-08-29
+Status: active | Owner: Dave / Claude Code | Next: implement Slice 9 (below),
+then resume Slice 7's acceptance-playthrough checklist again | Dependency:
+none | Verified: 2026-08-30
+
+Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
+"code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
+removal, hit areas, manual build, no auto-second-cell, no Comb Worker
+role/letter change) are now confirmed clean; the rest of Slice 7's checklist
+(full start-to-finish playthrough, copy pass, `checks/ready.md` entries) is
+still blocked on Slice 9 below the same way it was blocked on Slice 8 before.
 
 Supersedes the old Bundle H (copy/doc pass). That pass is folded into Slice 7
 below, run *after* the mechanics change, not before — updating docs to match
@@ -689,6 +695,384 @@ beside the full cell waiting for the next command.
   the reusable mechanism; don't reintroduce a primary-role-only check.
 
 ---
+
+## Slice 9 — findings from the resumed Slice 7 acceptance pass (30 Aug 2026)
+
+Nine items found while re-running Slice 7's playthrough now that Slice 8 has
+landed. Grouped by mechanism, not by the order Dave found them in, since
+several share one root cause.
+
+<!-- LAYER: durable-rules -->
+
+- **A per-stage restriction list must be derived from the same source as
+  the UI gate it's meant to back up, never hand-maintained twice.**
+  `allowed_role_keys` (what the Job column may show) is already correctly
+  derived stage by stage from `unlocked_keys`. 9a below is exactly what
+  happens when a second list doing the equivalent job for *behaviour*
+  (`role_restricted_to`) is instead one hand-written array covering the
+  whole Challenge — it silently drifts more permissive than the UI it's
+  supposed to match. Any future per-bee behavioural restriction should
+  read from `allowed_role_keys`/`unlocked_keys`, not maintain its own copy.
+- **Every place a role can appear in the UI must respect `allowed_role_keys`
+  — this is now the fourth instance of the same missed-filter bug,** not a
+  new class of mistake. `challenge-1.md`'s existing durable rule ("Any UI
+  menu that offers a role choice... must filter by `allowed_role_keys`")
+  already named the Job column, hatch options and the "If idle" backup menu
+  as the three places to keep in sync; 9d below adds a fourth,
+  `_current_role_marker`'s always-on display of the bee's *current* role.
+  Update that rule to say "four such places", not just three.
+
+### 9a — Queen auto-forages before the player has ever chosen Forager as her job
+
+**Confirmed.** `challenge_runner.gd::_enter_stage()` sets
+`main.queen.role_restricted_to = [Roles.QUEEN, Roles.FORAGER, Roles.NURSE]`
+unconditionally for **every** Challenge 1 stage, from 1.1 onward — not
+derived from the current stage's `unlocked_keys` the way `allowed_role_keys`
+is. `bee.gd::_idle_dispatch()`'s queen-priority branch
+(`if is_queen and role == Role.EGG_LAYER and secondary_role != -1 and
+(role_restricted_to.is_empty() or secondary_role in role_restricted_to):
+_try_role_work(secondary_role)`) therefore already permits `Role.FORAGER`
+as her secondary/backup role from the very start of the Challenge, well
+before "forager" is unlocked in `allowed_role_keys` (1.11). The player never
+has to touch "Change to: Forager" to trigger automatic foraging — picking
+Forager once from the "When idle" backup-role menu (which itself correctly
+only lists Forager once `allowed_role_keys` includes it, per Slice 8d-i) is
+enough, because a queen's *secondary* role takes priority over her primary
+Egg Layer job. This matches every symptom Dave reported: she forages
+without her primary Job ever reading "Forager", and she resumes foraging
+automatically the instant she's next idle (e.g. straight after a deposit),
+because that's exactly what the backup-role priority branch is for.
+
+**Fix — stop hand-maintaining `role_restricted_to` as one static array; derive
+it from the stage the same way `allowed_role_keys` already is.**
+`_stage_unlock_keys(stage.unlocked_keys)` already produces the list of
+allowed role *keys* for the current stage. Add a small conversion (e.g.
+`Roles.role_ids_for_keys(keys: Array) -> Array`, or inline a `for key in
+keys: result.append(Roles.role_for_key(key))` if no such helper exists yet)
+and set `main.queen.role_restricted_to = Roles.role_ids_for_keys(_stage_unlock_keys(stage.unlocked_keys))`
+in `_enter_stage()` instead of the current hardcoded array — same call site,
+same timing, but now it can never be more permissive than what the Job
+column itself shows. Confirm `Roles.NURSERY`/`Roles.QUEEN` (her own
+always-available fallback and primary role) are still included via
+whatever mechanism already makes "nursing herself" possible before "nurse"
+ever appears as a general `unlocked_keys` entry — if `unlocked_keys` doesn't
+carry an implicit "queen may always fall back to nursing" concept, keep that
+one exception explicit (e.g. always union in `[Roles.QUEEN, Roles.NURSERY]`
+before converting the stage's own keys) rather than losing her intended
+day-one nursing fallback.
+
+### 9b — Queen's "Build cell" button disappears after the third cell
+
+**Confirmed.** `challenge_runner.gd::_enter_stage()`:
+`main.hud.set_queen_build_button_visible(stage.id in ["1.5", "1.12",
+"1.14"])` — the button is visible only during those three exact stages,
+hidden everywhere else (and explicitly hidden on completion, line ~482).
+Once past 1.14 there is no stage that turns it back on, so if the third
+cell later fills (e.g. an auto-foraged resource lands in it before she's
+laid), she has no way to ask for a fourth — exactly Dave's reported
+scenario.
+
+**Fix:** Slice 2's manual-build flow is already safe when nothing is under
+construction and does nothing until the player clicks a valid tile, so
+there's no risk in leaving the button available for the whole Challenge
+rather than gating it to three specific stage ids. Change the call to
+`main.hud.set_queen_build_button_visible(true)` inside the existing
+`if Session.starting_level == 1:` block in `_enter_stage()`, and leave the
+explicit `set_queen_build_button_visible(false)` in `_complete()` as the
+only place it's ever turned off.
+
+### 9c — "Raises:" still offers Default
+
+**Confirmed, and traced to Slice 2f's own filter, not a missed case.**
+`hud.gd::hatch_options()`'s filter (`_apply_cell_popup_gating`, line ~1174 /
+Slice 2f) is `if entry.role != -1 and not allowed_role_keys.is_empty() and
+not allowed_role_keys.has(...)`: it explicitly *never* filters the
+`role == -1` "Default" entry, by design ("the Default entry, always
+shown" — correct for ordinary play, where "Default" is a meaningful
+fallback among several real hatch choices). In Challenge 1, `allowed_role_keys`
+only ever contains `forager`/`laying` (and "laying" isn't hatchable — a cell
+can't raise a queen or egg-layer), so "Forager" is the *only* real option —
+"Default" next to a single real choice reads as redundant rather than
+useful.
+
+**Fix:** extend the filter so `role == -1` is also skipped whenever
+`allowed_role_keys` is non-empty (i.e. a Challenge is actively restricting
+roles): `if not allowed_role_keys.is_empty() and (entry.role == -1 or not
+allowed_role_keys.has(Roles.key_for(entry.role))): continue`. This is a
+one-line change to an existing, already-reusable filter — it also correctly
+drops "Default" the same way for any future Challenge that restricts roles,
+not just this one.
+
+### 9d — "Laying" shows as the queen's current role before it's taught
+
+**Confirmed, and it's the fourth instance of the class of bug the existing
+durable rule already tracks (see above).** `hud.gd::_build_job_row()`
+(~line 2038-2047) always adds `_current_role_marker(Roles.label_for(common_role))`
+for a single selection, with no `allowed_role_keys` check — unlike the
+"Change to…" switch-target list right below it in the same function, which
+does filter. The queen's role is `EGG_LAYER` ("Laying") from the moment
+Challenge 1 starts, long before `"laying"` enters `unlocked_keys` (1.15), so
+her Job column shows a "● Laying" current-role button the whole game,
+undermining the stage's own pacing.
+
+**Fix:** gate the marker the same way the switch-target list already is:
+`if common_role != -1 and (allowed_role_keys.is_empty() or
+allowed_role_keys.has(Roles.key_for(common_role))): row.add_child(_current_role_marker(...))`.
+Outside a Challenge (`allowed_role_keys` empty) this is a no-op, identical
+to today. Update the existing "Any UI menu that offers a role choice...
+must filter by `allowed_role_keys`" durable rule to name this as the fourth
+place, alongside the Job column's switch list, `hatch_options()`, and the
+"If idle" menu.
+
+### 9e — "Raise a gyne" is reachable in Challenge 1
+
+**Confirmed.** `hud.gd`'s `gyne_box` checkbox row (~line 1207-1220) is
+added to the cell tray unconditionally, with no `allowed_role_keys`/
+`allowed_designation_keys` gate at all — unlike the "Jelly" designation
+button next to it, which is likewise ungated today (so this isn't a
+regression specific to gynes, it's a control nobody has gated yet).
+
+**Fix, minimum:** gate `gyne_row`'s visibility on `allowed_role_keys.is_empty()`
+in `_apply_cell_popup_gating()` (or wherever the row's `.visible` is set) —
+correct for Challenge 1 today, since gyne-raising is never meant to be
+reachable there. **Fix, reusable (recommended so this doesn't need
+revisiting once Challenge 2 or a Scenario wants gynes gated too):** add a
+proper unlock key (e.g. `"gyne"`) alongside `allowed_role_keys` the same
+`_stage_unlock_keys` mechanism already produces, and gate on
+`allowed_role_keys.is_empty() or allowed_role_keys.has("gyne")` instead of
+the blunter empty-check — this lets a future Challenge stage unlock gyne
+-raising explicitly (`unlocked_keys: [..., "gyne"]`) rather than only ever
+being all-or-nothing. Not yet needed by any stage today, so the minimum fix
+is enough to ship; note the reusable version as the natural next step if a
+Challenge 2 stage ever wants to teach it.
+
+### 9f — Dr Gallerin's "right-click the marked flower" hint doesn't match "any flower is fine"
+
+**Ask (Dave, 30 Aug):** the hint text presupposes a specific marked flower
+that isn't (or shouldn't need to be) there; the player should be able to
+select any available flower.
+
+`challenge_stages.gd`'s 1.8/1.9 hints ("right-click the marked flower" /
+"the next marked flower") already work against goal predicates
+(`first_flower_collected`/`second_flower_collected`) that are not tied to
+any specific flower instance — mechanically, any flower already satisfies
+them. This reads as a copy mismatch, not a logic bug: the hint text should
+say "right-click a flower" (1.8) and "right-click another flower" (1.9)
+rather than implying one specific marked flower. **Before making it a pure
+copy fix, confirm live** whether `_meadow_inspection_points()`/`_update_marker()`
+(the same ordered-visit/marker machinery 1.7's hive-points tour uses) is
+also trying to mark one specific flower object for 1.8/1.9 and simply
+failing to find/keep track of it — if a marker mechanism genuinely exists
+here and is broken, fix or remove it consistent with "any flower is fine"
+rather than leaving a dangling visual pointer at nothing; if no such marker
+exists for these two stages (most likely, since flower selection isn't in
+the ordered-visit list `_hive_inspection_points`/`_meadow_inspection_points`
+feed), it's a copy-only fix.
+
+### 9g — Second manually-built cell: no build animation, and the finished cell is invisible
+
+**Confirmed as a rendering problem, not a logic one — the cell functionally
+exists.** Selecting the tile opens a real cell popup and accepts a pollen
+deposit, so the `HiveCell` node exists, is tracked in `hive.cells`, and
+responds to input at the right position. But nothing about it ever paints:
+no growing "under construction" stub during the build (which
+`hive_cell.gd::_refresh()` already draws for every other cell via
+`build_fraction()`), and no flat/cup fill once complete, regardless of the
+Cell art setting. Since even the *unbuilt* stub never shows, this points at
+the node's own visibility/paint state rather than anything content- or
+Cell-art-specific.
+
+**Two named, unconfirmed candidates — reproduce live with the remote scene
+inspector before changing code, same discipline as Slice 8d's own
+"confirmed-plausible, pending live-boot confirmation" finding:**
+
+1. **Fog-of-war visibility.** `fog_of_war.gd` is already named in
+   `plans/now/ui.md`'s UI-D-adjacent file list as something that reads
+   `Session.use_sprite_hex_grid`/hive geometry and gates tile visibility.
+   Check whether it also gates a freshly-created `HiveCell` node's own
+   `visible` by whether its tile has been "revealed" yet, and whether a
+   cell placed via the *new* player-chosen-tile flow (`create_cell_site_at`
+   /`on_queen_build_site_chosen`, Slice 2b) reaches that reveal check the
+   same way an auto-placed one (`create_next_cell_site`) always has —
+   this is the one meaningfully new code path this cell went through that
+   an ordinary auto-built cell never does.
+2. **Paint-order collision.** Confirm the clicked hex's computed
+   `z_index` (`2 * axial.y + axial.x`) and pixel position
+   (`comb_centre + Shapes.hex_to_pixel(hex.x, hex.y, GameConfig.hive_cell_spacing,
+   Session.use_sprite_hex_grid)`) don't coincide with another node already
+   occupying that exact position/layer (soil, floor decoration, the first
+   cell) in a way that fully occludes it.
+
+**Action:** live-inspect the second cell's `HiveCell` node (`visible`,
+`modulate`, `z_index`, parent chain) at the moment it's created, before
+picking between the two candidates above.
+
+### 9h — Selecting a bee and right-clicking a location in the *other* zone sends her off-screen
+
+**Confirmed.** `input_selection.gd::_issue_command(world_point)` handles two
+specific cross-zone cases explicitly — clicking the hive entrance while in
+hive view (`command_exit_hive`) and clicking the meadow-side hive marker
+while in meadow view (`command_return_and_deposit`/`command_return_only`) —
+but its general fallback (`b.command_move_to(world_point)` /
+`b.command_collect_from(flower)`, ~line 490-495) never checks whether the
+*commanded bee* is even in the zone currently being viewed. `world_point` is
+computed in the currently-displayed zone's coordinate space
+(`hive_root`/`meadow_root`), so issuing it to a bee physically standing in
+the *other* zone hands her a position that means nothing in her own zone's
+coordinates — reproducing exactly "tries to move somewhere off screen"
+rather than routing her through the entrance/exit first.
+
+**Fix:** in `_issue_command`, before the generic `command_move_to`/
+`command_collect_from` fallback, check whether each commandable bee is
+actually in the zone matching `main.in_hive_view` (however that's tracked
+per-bee today — likely the same state `works_indoors`/`_is_inside_hive()`
+already reads). For a bee in the *other* zone, don't call `command_move_to`
+directly: route her through the transition first (`command_exit_hive()` if
+she's inside and the view is the meadow; the equivalent hive-ward entry
+command if she's outside and the view is the hive), then queue the
+originally-clicked point as a destination to continue toward once she
+arrives — a new `pending_move_target: Vector2` (or similar) field on `Bee`,
+consumed by whatever already runs once she completes the zone transition
+(the same place `enter_hive()`/its meadow-side equivalent hands off to a
+default state), continuing to `command_move_to(pending_move_target)` instead
+of falling through to her default idle/role behaviour when one is queued.
+This generalises the existing two hardcoded cross-zone cases into one
+mechanism reusable for any future click, rather than adding a third
+special case.
+
+### 9i — Automatic nectar foraging (1.11): queen keeps switching flowers on her own; camera-follow/speed don't fire
+
+**Two related but separate findings at the same stage.**
+
+**Flower-switching (new design ask, not a regression of Slice 4's spec):**
+Dave: "the queen still moves to a new flower after depleting one, which she
+should not do — manual reselection only." Slice 4 never asked for this
+restriction (its acceptance was only "stops when the nectar cell is full");
+automatically picking a new flower once the current one depletes is
+ordinary automatic-forager behaviour (the same `SEEK_FLOWER`-driven
+selection every other forager already uses in `bee_foraging.gd`), which the
+Challenge is now asking to suppress specifically for the queen during 1.11.
+**Implement via the same reusable mechanism Slice 8e just introduced** —
+`challenge_stages.gd`'s per-stage `on_enter`/`on_exit` action arrays and
+`challenge_runner.gd::_run_stage_effects()` — rather than a new Challenge-
+only branch in `bee_foraging.gd`: add a new named effect (e.g.
+`"lock_flower_target:queen"`/`"unlock_flower_target:queen"`) backed by a new
+`Bee.flower_switch_locked: bool` field (default `false`, exactly the same
+empty-means-unrestricted shape `role_restricted_to`/`manual_deposit_pending`
+already use). Add `"lock_flower_target:queen"` to 1.11's existing `on_enter`
+list (alongside `"camera_follow_queen"`/`"speed_multiplier:4.0"`) and
+`"unlock_flower_target:queen"` to its `on_exit` list (alongside the existing
+unwind actions). Wherever a forager currently picks a *new* flower once the
+current one depletes or a collection bout ends without being full (the
+automatic-selection point in `bee_foraging.gd`'s `SEEK_FLOWER`-adjacent
+code — confirm the exact call site live, it wasn't pinned down in this
+pass), add a guard: if `flower_switch_locked` is true and she already has a
+`current_flower`/just released one, drop to `State.IDLING` instead of
+auto-selecting a replacement, the same "wait for an explicit player command"
+shape 8b already established for manual deposit.
+
+**Camera-follow/speed not firing:** `_run_stage_effects()` and 1.11's
+`on_enter` list (`["camera_follow_queen", "speed_multiplier:4.0"]`) are both
+present and call real primitives (`camera_view._on_follow_bee_toggled`,
+`_on_speed_requested`) directly — nothing in the static trace explains why
+Dave saw no camera movement or speed change. **Needs live reproduction, not
+a blind fix:** confirm `_enter_stage()` actually runs `_run_stage_effects(stage.get("on_enter", []))`
+for stage id `"1.11"` specifically (a stage-id typo or an early-return
+somewhere before that line would silently skip it); if it does run, check
+whether calling `_on_follow_bee_toggled`/`_on_speed_requested` directly
+(bypassing whatever button-press signal normally drives them) leaves some
+other piece of state inconsistent — e.g. a speed-button's own pressed
+visual not reflecting the change even though `Engine.time_scale` genuinely
+did, which would look like nothing happened even though the effect fired.
+Add a debug log line inside `_run_stage_effects`'s match (or a breakpoint)
+for one live playthrough before changing either function's logic.
+
+### 9j — Compatible-cell availability: a designated cell never returns to neutral, and a "vanishing" deposit needs live confirmation
+
+**Two findings, one confirmed design behaviour and one not yet reproduced
+in static code.**
+
+**Confirmed: a cell's `designated_type` is permanent once first used, even
+after it empties completely — this is probably not what "drink some nectar,
+now there's space" expects.** `hive_cell.gd::add_resource()` sets
+`designated_type = resource_type` the *first* time a spare
+(`content_type == "" and designated_type == ""`) cell receives anything —
+correct, and how the comb is meant to "organise itself as it fills"
+(the function's own comment). But `take_resource()` (drinking/consuming from
+a cell) only ever resets `content_type` back to `""` once the cell empties
+completely — it never touches `designated_type`. So a nectar cell that gets
+fully drunk down stays permanently reserved for nectar; a pollen-carrying
+bee blocked on "nowhere to deposit" gets no new option from that cell
+emptying, because `accepts()`/`space_for()` still refuse it
+(`designated_type != "" and designated_type != resource_type`). This is
+consistent with Dave's report that the blocked "carrying pollen to a cell"
+status doesn't change after the bee drinks nectar — nothing about cell
+availability for pollen actually changed, because the emptied cell is still
+pinned to nectar.
+
+**This is a real design gap worth naming, distinct from a bug:** there is no
+way today to tell an *auto*-designated cell (first-use fallback, the cell in
+`add_resource`'s comment) apart from a *player*-designated one (an explicit
+"Reserve for" click) — both just set the same `designated_type` field. A
+player's own explicit designation should stay sticky forever, exactly as
+today; an auto-designation that's since gone fully empty arguably should
+release back to neutral so the next resource that needs room can use it,
+the same way the cell would have if nothing had ever been deposited there
+at all.
+
+**Proposed fix (reusable, not a Challenge-1-only branch):** add a
+`bool designation_is_explicit` field to `HiveCell`, `false` by default. Set
+it `true` only where the player actually requests a designation
+(`set_designation()`, the "Reserve for" buttons) — never in `add_resource()`'s
+auto-fallback branch. In `take_resource()`'s full-empty branch (where
+`content_type` already resets to `""`), also reset
+`designated_type = ""` when `not designation_is_explicit`. A player-pinned
+cell is completely unaffected (it never sets the flag, so it never
+auto-releases); an auto-designated cell that empties out now genuinely
+returns to the neutral pool, which is what would let the "drink nectar,
+free a cell" scenario actually work as Dave expects, and fixes the same
+underlying staleness for every resource type and every bee, not just the
+queen's pollen/nectar case.
+
+**Also confirmed, and worth pairing with the fix above:** the
+`deposit_blocked_epoch`/`hive.index_epoch` guard (Slice 8a) only bumps on a
+*full* empty-out or a content-type change (`_invalidate_hive_index()`,
+called from `add_resource` and `take_resource`'s `amount <= 0.001` branch) —
+never on a partial withdrawal. That's already consistent (a partial drink
+never changes what any cell accepts today), but once the fix above makes a
+full empty-out able to change eligibility for a *different* resource type,
+double check `_invalidate_hive_index()` still fires on that exact same
+`take_resource()` branch — it already does (same `if amount <= 0.001` block),
+so no separate epoch-guard change should be needed; confirm live rather
+than assuming once 9j's designation fix lands.
+
+**Not confirmed: "the resource vanishes/is lost" when only an
+incompatible-type cell is available.** Traced `go_to_deposit_cell`,
+`find_cell_for`, `space_for`/`accepts`, and `finish_depositing` end to end —
+every path that assigns `bee.target_cell` already goes through
+`find_cell_for(resource_type)`, which itself excludes any cell whose
+`designated_type` doesn't match, and `add_resource`/`space_for` re-check the
+same thing again before anything is written. No static path was found where
+a bee deposits into a genuinely incompatible cell. **Action, matching 8c's
+own precedent:** no code change proposed here yet — replay live once 9a-9j
+above are in (several of them change exactly the mechanics this scenario
+depends on) and note precisely which two cell states were in play at the
+moment it happened; if it still reproduces, that's new information needing
+its own investigation, not a guess now.
+
+**Also raised in the same pass, not Challenge-1-specific:** "Change to…"
+and "When idle:" should present as buttons (background colour) rather than
+floating text, in every instance, not just Challenge 1. Tracked as
+`plans/now/ui.md`'s UI-P-2 (a `UiTheme` change, not a Challenge file) — no
+duplicate entry needed here.
+
+**Acceptance (Slice 9):** each of 9a-9j above closes independently against
+its own description; re-run the specific `checks/ready.md` entries once
+implemented (see Slice 7 below for the full playthrough this all feeds
+back into). 9g and 9i's camera/speed half, and 9j's "vanishing resource"
+claim, need a live repro pass before or alongside implementation, per their
+own sections above — don't skip that step because the rest of the slice is
+otherwise ready to build.
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 

@@ -66,8 +66,9 @@ the archived plan is never reopened or extended.
 
 | If the queue names | Read |
 | --- | --- |
-| Challenge 1 Bundle H | `plans/now/challenge-1.md` |
-| UI-D diagnosis | `plans/now/ui.md` |
+| Challenge 1 Slice 9 | `plans/now/challenge-1.md` |
+| UI-P | `plans/now/ui.md` |
+| Empty-cell sprite / hex grid settings / comb autobuild | `plans/now/hive-comb.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 
