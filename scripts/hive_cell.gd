@@ -123,6 +123,10 @@ func effective_build_time() -> float:
 ## the named thing: "nectar", "pollen", "honey", or "brood" for a nursery
 ## cell that stores eggs rather than stores.
 var designated_type: String = ""
+## True only for a player-made reservation. The first automatic deposit also
+## assigns designated_type so stores stay tidy, but that temporary assignment
+## returns to neutral when the cell is fully emptied.
+var designation_is_explicit: bool = false
 
 ## Priority tier within the nursery zone: 0 low, 1 medium, 2 high. Only
 ## meaningful while this is a brood cell. The queen shares her eggs
@@ -672,6 +676,8 @@ func take_resource(resource_type: String, requested: float) -> float:
 		content_type = ""
 		amount = 0.0
 		ripen_progress = 0.0
+		if not designation_is_explicit:
+			designated_type = ""
 		if evict_requested:
 			DiagnosticLog.count_cell_evicted()
 		evict_requested = false
@@ -709,8 +715,9 @@ func fill_fraction() -> float:
 		return 0.0
 	return clamp(amount / max(0.001, capacity_for(content_type)), 0.0, 1.0)
 
-func set_designation(resource_type: String) -> void:
+func set_designation(resource_type: String, explicit: bool = true) -> void:
 	designated_type = resource_type
+	designation_is_explicit = explicit and resource_type != ""
 	if resource_type != "":
 		# choosing what a cell is for overrides "leave it empty"
 		keep_empty = false

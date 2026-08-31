@@ -2,9 +2,10 @@ extends RefCounted
 ## Ordered save-format migrations. Run once by SaveGame.read() before a
 ## parsed save is handed to saving.gd.
 ##
-## Two real FORMAT_VERSION bumps have happened so far (see save_game.gd's
+## Three real FORMAT_VERSION bumps have happened so far (see save_game.gd's
 ## own history comment above FORMAT_VERSION): 1->2 for the hex/entrance
-## geometry change, 2->3 for fog of war's explored-cells map. Both are
+## geometry change, 2->3 for fog of war's explored-cells map, and 3->4 for
+## explicit-versus-automatic cell designations. The first two are
 ## already handled defensively at restore time -- saving.gd::_restore_cells
 ## evicts whatever a fresh dig placed on a saved cell's tile (the 1->2
 ## case), and a missing "fog" key already means "nothing explored yet" via
@@ -36,6 +37,9 @@ static func upgrade(data: Dictionary, target_version: int) -> Dictionary:
 			2:
 				out = _migrate_2_to_3(out)
 				version = 3
+			3:
+				out = _migrate_3_to_4(out)
+				version = 4
 			_:
 				return out
 		out["version"] = version
@@ -55,4 +59,12 @@ static func _migrate_1_to_2(data: Dictionary) -> Dictionary:
 ## key as "nothing explored yet".
 static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
 	data["fog"] = data.get("fog", [])
+	return data
+
+## 3->4: distinguish player-made cell designations from automatic first-use
+## assignments. Older saves did not retain that distinction, so preserve every
+## existing reservation as explicit rather than unexpectedly releasing it.
+static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
+	for cell in data.get("cells", []):
+		cell["designation_explicit"] = str(cell.get("designated", "")) != ""
 	return data

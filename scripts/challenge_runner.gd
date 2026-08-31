@@ -133,6 +133,7 @@ func start() -> void:
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
 	main.queen.manual_deposit_pending = false
+	main.queen.flower_switch_locked = false
 	main.queen.role_restricted_to = []
 	_c1_base_nectar_rate = -1.0
 	_c1_base_pollen_rate = -1.0
@@ -270,14 +271,27 @@ func _stage_unlock_keys(entries: Array) -> Array:
 			push_error("challenge_runner: unlock entry must be a String or Dictionary: %s" % entry)
 	return keys
 
+## Challenge 1 lets the queen fall back to nursing from its opening, while
+## every other permitted backup role must exactly match the stage's Job gate.
+func _queen_allowed_role_ids(entries: Array) -> Array:
+	var role_ids: Array = [Roles.QUEEN, Roles.NURSE]
+	for key_value in _stage_unlock_keys(entries):
+		var role_id: int = Roles.id_for_key(str(key_value))
+		if role_id >= 0 and role_id not in role_ids:
+			role_ids.append(role_id)
+	return role_ids
+
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	_run_stage_effects(stage.get("on_enter", []))
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
 	if Session.starting_level == 1:
 		# Challenge 1's manual building drives the queen's state directly;
-		# her backup role must never start the ordinary auto-builder loop.
-		main.queen.role_restricted_to = [Roles.QUEEN, Roles.FORAGER, Roles.NURSE]
+		# derive her permitted backup work from the same stage keys as the
+		# role controls, rather than maintaining a more-permissive copy here.
+		# Her own laying role and day-one nursing fallback remain intentional
+		# exceptions: neither is taught as a general role at the opening.
+		main.queen.role_restricted_to = _queen_allowed_role_ids(stage.unlocked_keys)
 		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 		if stage.id == "1.11":
 			_c1_base_nectar_rate = main.queen.nectar_collection_rate
@@ -289,7 +303,7 @@ func _enter_stage() -> void:
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
-	main.hud.set_queen_build_button_visible(stage.id in ["1.5", "1.12", "1.14"])
+	main.hud.set_queen_build_button_visible(Session.starting_level == 1)
 	if stage.id == "1.4":
 		_begin_ordered_visit(_hive_inspection_points(), main.hive_root)
 	elif stage.id == "1.7":
@@ -461,6 +475,10 @@ func _run_stage_effects(effects: Array) -> void:
 				main.following_bee = null
 			"speed_multiplier:1.0", "speed_multiplier:4.0":
 				main.camera_view._on_speed_requested(effect.trim_prefix("speed_multiplier:").to_float())
+			"lock_flower_target:queen":
+				main.queen.flower_switch_locked = true
+			"unlock_flower_target:queen":
+				main.queen.flower_switch_locked = false
 			"freeze_bee:queen":
 				main.queen._release_everything()
 				main.queen.clear_navigation_state()
@@ -490,6 +508,7 @@ func _complete() -> void:
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
 		main.queen.role_restricted_to = []
+		main.queen.flower_switch_locked = false
 		if _c1_base_nectar_rate >= 0.0:
 			main.queen.nectar_collection_rate = _c1_base_nectar_rate
 			main.queen.pollen_collection_rate = _c1_base_pollen_rate

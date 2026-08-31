@@ -480,17 +480,26 @@ func _issue_command(world_point: Vector2) -> void:
 		return
 	if main.in_hive_view:
 		var cell := _cell_at(world_point)
-		if cell != null:
-			for b in commandable:
-				if b.manual_deposit_pending and b.current_load > 0.0:
+		for b in commandable:
+			if cell != null and b.manual_deposit_pending and b.current_load > 0.0:
+				if b._is_inside_hive():
 					b.command_deposit_at(cell)
 				else:
-					b.command_move_to(world_point)
-			return
-	var flower = main.world_building._flower_at(world_point) if not main.in_hive_view else null
+					b.command_deposit_at_after_enter(cell)
+			elif b._is_inside_hive():
+				b.command_move_to(world_point)
+			else:
+				b.command_move_through_entrance(world_point, true)
+		return
+	var flower = main.world_building._flower_at(world_point)
 	for b in commandable:
 		if flower:
-			b.command_collect_from(flower)
+			if b._is_inside_hive():
+				b.command_collect_from_after_exit(flower)
+			else:
+				b.command_collect_from(flower)
+		elif b._is_inside_hive():
+			b.command_move_through_entrance(world_point, false)
 		else:
 			b.command_move_to(world_point)
 

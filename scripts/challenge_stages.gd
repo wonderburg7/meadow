@@ -138,18 +138,18 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
-		"goal_text": "Goal: gather from the first marked flower.",
+		"goal_text": "Goal: gather from a flower.",
 		"prompts": [
 			{"id": "1.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "There: a flower with nectar to spare. Right-click it and the queen will gather what she can carry."},
-			{"id": "1.8_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the queen selected, right-click the marked flower."},
+			{"id": "1.8_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the queen selected, right-click a flower."},
 		],
 	},
 	{
 		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
-		"goal_text": "Goal: gather from a second marked flower.",
+		"goal_text": "Goal: gather from another flower.",
 		"prompts": [
 			{"id": "1.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "One flower is a meal; a landscape of them is a supply network. Try another."},
-			{"id": "1.9_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Send the queen to the next marked flower before returning home."},
+			{"id": "1.9_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Send the queen to another flower before returning home."},
 		],
 	},
 	{
@@ -163,8 +163,8 @@ const STAGES_1 := [
 	{
 		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"goal_text": "Goal: automate nectar gathering.",
-		"on_enter": ["camera_follow_queen", "speed_multiplier:4.0"],
-		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
+		"on_enter": ["camera_follow_queen", "speed_multiplier:4.0", "lock_flower_target:queen"],
+		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "unlock_flower_target:queen", "freeze_bee:queen"],
 		"prompts": [
 			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
 			{"id": "1.11_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Assign the Forager role with nectar selected and let her build a small store."},
