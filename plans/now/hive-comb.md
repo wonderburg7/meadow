@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 shipped (merged from `codex/hive-comb` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 shipped (merged from `codex/hive-comb` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next, then Slice 7 (comb tiles never update hive A* costs) | Dependency: none | Verified: 2026-09-01
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -251,3 +251,95 @@ above it, before picking option 1 over option 2 -- same discipline Slice
 renders" may be this same bug if that cell also happened to land above the
 centre row, in which case one fix closes both.
 
+## Slice 7 -- Comb built during play never updates hive A* costs or clears the path cache (new, 1 Sep 2026 architecture review)
+
+**Confirmed against live source.** `hive.gd`'s navigation section states the
+intent plainly (~line 694):
+
+> Bees can't walk through soil, so movement inside the hive follows a route
+> over open tiles. Comb tiles are passable but cost more, which reproduces
+> the "slower over cells" rule as a routing preference too: a bee will go
+> round the comb if that's genuinely quicker.
+
+That preference is implemented by `_tile_cost(hex)`, which returns
+`COMB_TRAVEL_COST` (2.0) when `cell_at_tile(hex) != null` and 1.0 otherwise.
+But `_tile_cost` is only ever consulted from `build_navigation()`, and
+`build_navigation()` runs in exactly four places: boot
+(`world_building.gd::_build_hive_interior`), load
+(`saving.gd`), `hive.gd::remove_block()` (a mined-out block), and
+`challenge_runner.gd`'s opening-tunnel setup.
+
+Creating a cell does none of that. `hive.gd::_start_site_at()` calls
+`register_tile(hex, cell)` and `invalidate_index()` -- the content-bucket
+epoch -- and nothing else. The A* point's weight stays at whatever it was
+when the graph was last built, and `_path_cache` (2000 entries, keyed by
+hex pair) keeps serving routes computed before the comb existed.
+
+**Consequence.** The routing preference applies only to the starting comb --
+which is genuinely correct, because `_build_starting_comb()` runs *before*
+`build_navigation()` in `_build_hive_interior()` -- plus whatever comb
+existed at the last mined block. In a mid-game colony that builds
+continuously and mines rarely, most of the comb routes as open floor and the
+designed behaviour is silently absent. Worse for reasoning about the game: a
+save-and-reload rebuilds navigation, so the same colony routes differently
+before and after a reload, with no player-visible cause.
+
+**Fix (Dave's call, 1 Sep -- fix it rather than delete the intent).** Update
+the one point's weight in place; do not rebuild the graph per cell.
+
+In `hive.gd::_start_site_at()`, after `register_tile(hex, cell)`:
+
+```gdscript
+	# A new cell changes this tile's travel cost (see _tile_cost). Update
+	# the one A* point rather than rebuilding the whole graph, and drop the
+	# cached routes, which were smoothed against the old costs.
+	if _tile_ids.has(hex):
+		_astar.set_point_weight_scale(_tile_ids[hex], _tile_cost(hex))
+		_path_cache.clear()
+```
+
+`_tile_cost` is reused verbatim, so the resulting weight is by construction
+identical to what the next `build_navigation()` would compute -- this closes
+the drift rather than introducing a second definition of the cost.
+
+**Non-goals.**
+- Do **not** call `build_navigation()` per cell; it clears and rebuilds the
+  whole AStar2D graph and every connection.
+- Do **not** change `_tile_cost`'s definition. It currently charges the comb
+  cost for an unbuilt *site* as well as a built cell; that is pre-existing
+  behaviour and matching it exactly is the point of this slice.
+- Do **not** add per-key path-cache invalidation. A whole-cache clear on cell
+  creation is the same eviction strategy `path_between` already uses when the
+  cache fills, and cell creation is a rare, player-paced event.
+- Do **not** touch `remove_block()`'s existing full rebuild.
+
+**This is a behaviour change, not only a repair.** Bee routes inside the hive
+will change for any comb built after boot. Re-run the balance suite
+(`tools/verify.ps1`) and note that route-sensitive fixtures may legitimately
+shift; a changed number there is expected, not automatically a regression.
+
+**Measurement.** `path_between` is already wrapped in the `bee_path` Perf
+section and `build_navigation` in `nav_rebuild`, so no new instrumentation is
+needed. Run the pinned baseline before and after --
+`python tools/run_scenario.py test_scenarios/recommendation_slice0_baseline.json --fixed-fps 60 --report brief`
+-- and compare the `bee_path` section specifically: clearing the cache on
+every new cell forces re-pathing, and the slice is only worth shipping if
+that cost stays small. Compare each section with itself, per
+`docs/PERFORMANCE_BASELINE.md`.
+
+**Manual acceptance (for `checks/ready.md` on landing).** Build a wide comb
+across the hive with an open-floor detour available, send a bee from one side
+to the other, and confirm she now prefers the open floor over cutting
+straight across the comb. Then save, reload, and confirm the route is the
+same -- that identical-before-and-after-reload result is the actual fix.
+
+**Save / migration.** None: navigation is rebuilt from scratch on load and is
+not serialised. **Determinism.** Routes change (that is the fix); the change
+is deterministic and seed-independent. **Rollback.** Revert the three lines.
+
+**Alternatives considered.** (a) Clear only cache entries whose route crosses
+`hex` -- needs a reverse index from tile to cached key, more state than the
+problem justifies. (b) Leave the code alone and delete the header comment's
+claim -- honest, and cheaper, but abandons a designed behaviour Dave has
+asked to keep. (a) and (b) both rejected in favour of the in-place weight
+update above.

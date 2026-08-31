@@ -1,8 +1,7 @@
 # Technical audit — current contracts
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
-Status: reference | Owner: Dave / Claude Code | Next: measure before any new
-hot-path work | Dependency: a named measured bottleneck | Verified: 2026-08-28
+Status: reference | Owner: Dave / Claude Code | Next: measure before any new hot-path work | Dependency: a named measured bottleneck | Verified: 2026-09-01
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at
@@ -57,3 +56,78 @@ grace window re-logs it once more, which is a harmless duplicate, not a
 gameplay effect.
 
 No further forager-history work is planned; this closes the backlog item.
+
+## Measurement-gated hot-path candidates (1 Sep 2026 architecture review)
+
+Recorded here, not scheduled, and deliberately subject to the "profile before
+changing a hot path" contract above. Each names the instrumentation step that
+would turn it from a plausible improvement into a measured one. Neither is a
+reason to open a slice on its own.
+
+### A. `hive.gd`'s `find_*` functions bypass the content index that already exists
+
+`_content_index()` maintains epoch-invalidated buckets keyed
+`"" / nectar / pollen / honey / jelly / brood / corpse / unbuilt / ripe_honey`,
+and `find_cell_with`, `find_brood_cell`, `find_cell_needing_cleaning` and
+`has_gyne_brood` read them. These do not:
+
+| Function | Current | Bucket that already exists |
+| --- | --- | --- |
+| `find_food_cell` | **two** full passes over `cells` | `ripe_honey`, then `nectar` |
+| `find_unfinished_cell` | full pass | `unbuilt` |
+| `find_cell_needing_fanning` | full pass, no `is_instance_valid` guard | `honey` + `needs_fanning()` |
+| `find_cell_for` | full pass | `""` + `resource_type` |
+| `find_cell_needing_eviction` | full pass | the four stored-resource buckets |
+| `find_empty_cell` | full pass filtered to nursery cells | none — would need a new bucket |
+
+`find_food_cell` is the one worth checking first: `BeeSurvival.should_go_and_eat`
+calls it on every think tick (8 Hz) for every hungry bee inside the hive, so
+its cost scales as *hungry bees x 2 x cells* — exactly the situation the game
+is about.
+
+Equivalence was checked for the top three: `space_for()` returns 0 for an
+unbuilt cell, so no unbuilt cell can hold nectar or honey, and buckets are
+built in `cells` order, so iteration order and therefore the chosen cell are
+unchanged. `find_cell_for` and `find_empty_cell` are **not** in that set — the
+`best_empty`/`almost_full`/designation preference is a single-pass ordering
+that a two-bucket walk would subtly change; leave them alone.
+
+**Instrumentation needed first.** The hive's index *rebuild* is instrumented
+(`hive_index_rebuild`); its *queries* are not, so today their cost is only
+visible folded into `bee_state_nurse`/`bee_state_forager`. Add a
+`Perf.begin("hive_find_food")` pair, run
+`test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60`, and
+only act if the section is non-trivial. Determinism and save format are
+unaffected either way.
+
+### B. The 1 Hz colony refresh walks the same sets three to five times
+
+In one tick of `year_winter.gd::_refresh_signals`,
+`get_nodes_in_group("bees")` is called there, then again in `_winter_forecast`
+(reached via `_refresh_panels` -> `_refresh_winter`); `season.gd`'s own 1 Hz
+tick queries it once or twice more. `cells_holding("")` is walked in
+`_refresh_signals` (`free_cells`) and again in `_refresh_panels`
+(`free_cells`), and `cells_holding("brood")` likewise, recomputing
+`hungry_brood` both times.
+
+The smallest version is not a new structure: pass the already-fetched `bees`
+array (or just its size) into `_winter_forecast`, and compute
+`free_cells`/`hungry_brood` once in `_refresh_signals` and hand them to
+`_refresh_panels`. Roughly a dozen lines. The `signals` Perf section already
+covers all of it, so the before/after comparison needs no new instrumentation.
+
+Explicitly **not** proposed: a colony-snapshot object, a push-based signal, or
+an epoch cache over the bee group. `main._role_counts()` already demonstrates
+the epoch-cache pattern if a larger version is ever wanted, and `hive.gd`'s
+`invalidate_index()` comment records why polling an epoch was chosen over a
+Godot signal in the first place.
+
+### Not a case for ECS
+
+Checked deliberately, since 153 fields on `bee.gd` look component-shaped.
+There are 26 `get_nodes_in_group("bees")` sites, but almost all are 1 Hz or
+event-driven; the only per-frame one is `fog_of_war._update`, which is already
+this document's instrumented baseline target. There is no repeated
+filtered-query bottleneck to justify a migration, and the `bee_*.gd`
+static-function modules operating on a bee Node are already systems over a
+component bag. A and B above capture the same value incrementally.

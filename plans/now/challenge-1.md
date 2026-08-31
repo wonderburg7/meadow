@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 9 is now code-fixed (merged from `codex/challenge-1-slice-9` 1 Sep 2026, `tools/verify.ps1` green) -- re-run Slice 7's acceptance-playthrough checklist to confirm it (`checks/ready.md`), then implement Slice 10 (below, 10a/10c first -- they break the Bundle D/E teaching sequence outright) | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 9 is now code-fixed (merged from `codex/challenge-1-slice-9` 1 Sep 2026, `tools/verify.ps1` green) -- re-run Slice 7's acceptance-playthrough checklist to confirm it (`checks/ready.md`), then implement Slice 10 (below, 10a/10c/10f first -- all three break the Bundle D/E teaching sequence outright) | Dependency: none | Verified: 2026-09-01
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
@@ -42,7 +42,7 @@ prompts already do most of the right thing:
 
 | Brief's stage | Existing sub-stage id(s) | What changes |
 | --- | --- | --- |
-| 1. Manual nectar collection | 1.8, 1.9, 1.10 | 1.8/1.9 (drink from flower 1/2) are already correct and need no code change. 1.10 (return + deposit) must split into two manual commands — see Slice 3. |
+| 1. Manual nectar collection | 1.8, 1.9, 1.10 | 1.8/1.9 (drink from flower 1/2) need their **goal predicates** replaced — see Slice 10f; this row previously said they were correct and needed no code change, which the 1 Sep review disproved. Their prompts, unlock keys and ordering are unchanged. 1.10 (return + deposit) must split into two manual commands — see Slice 3. |
 | 2. Unlock automatic nectar foraging | 1.11 | Goal changes from "30 nectar in the hive" to "the nectar cell is full"; add the 2x forage-speed override — see Slice 4. |
 | 3. Introduce pollen | 1.12, 1.13 | 1.12 (`second_cell_built`) is the manual second cell — reuses Slice 2's build flow unchanged. 1.13 goal changes from "10 pollen in the hive" to "a pollen cell holds ≥75" — see Slice 5. |
 
@@ -265,6 +265,11 @@ Challenge.
 
 1.8/1.9 (drink from flower 1, then 2) already work as specified — do not
 touch `command_collect_from` or the goal checks for those two ids.
+
+> **Superseded by Slice 10f (1 Sep 2026).** The two goal *predicates* are
+> wrong and do need changing; the paragraph above stands only for the
+> flight/collection flow itself, which is unchanged. `command_collect_from`
+> is separately in scope for 10a and 10g.
 
 1.10 currently reaches its goal (`harvest_deposited`: "is inside the hive and
 current_load is 0") via one command, `command_return_and_deposit()`, called
@@ -1259,12 +1264,114 @@ as her *current-role marker* being visible at all before 1.15
 (already-diagnosed 9d, not new). Do not implement two fixes for what may be
 one already-tracked issue.
 
-**Acceptance (Slice 10):** 10a and 10c close independently and are the
+### 10f -- 1.8 and 1.9 clear on a *rejected* flower, not a collected one
+
+**Confirmed (1 Sep 2026 architecture review).** Both goals are implemented as
+a count of the queen's private flower-cooldown memory:
+
+```gdscript
+func _goal_check_first_flower_collected() -> bool:
+	return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 1
+
+func _goal_check_second_flower_collected() -> bool:
+	return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 2
+```
+(`challenge_runner.gd::_goal_check_first_flower_collected` /
+`_goal_check_second_flower_collected`, ~lines 832-838.)
+
+`bee.flower_cooldowns` gains an entry on a successful collection
+(`bee_foraging.gd::finish_collecting`, ~line 685) **and** on a rejection
+(`bee_foraging.gd::reject_flower`, ~line 519). `inspect()` rejects whenever
+`worth_feeding()` fails -- flower below `GameConfig.min_worthwhile_amount`,
+tarsal-marked, or alarm-marked. So a queen who flies to two flowers and turns
+both down clears both "collect from a flower" stages having collected
+nothing, and Dr Gallerin moves on to the deposit lesson with an empty queen.
+
+Three further ways the proxy misreads, all confirmed against live source:
+
+- It counts flowers she merely *touched* during the 1.7 meadow tour, before
+  1.8 has begun -- there is no per-stage baseline.
+- `set_focus()` and `set_preferred_species()` both call
+  `flower_cooldowns.clear()` (`bee.gd`, ~lines 1562 and 1754), so a focus
+  change between 1.8 and 1.9 resets the count to zero.
+- `command_collect_from()` explicitly calls `flower_cooldowns.erase(flower)`
+  on the very flower being targeted (`bee.gd`, ~line 1673), so the manual
+  path Bundle D teaches decrements the counter immediately before the trip
+  it is supposed to be counting.
+
+**Root cause worth naming, because it will recur:** `flower_cooldowns` is a
+private per-bee memory with no expiry -- entries are only removed by
+`release_flower_reference` (which `flower.gd` calls for `occupied_by` alone,
+so every *other* bee keeps a key pointing at a senesced, freed flower) and by
+the two `clear()` calls above. Its `.size()` was never a count of anything a
+stage should read. Any future goal predicate must be driven by an event the
+Challenge itself observes, not by the size of a simulation-internal cache.
+
+**Fix (Dave's call, 1 Sep):** give the runner its own counter rather than
+redefining what 1.8/1.9 mean.
+
+- `challenge_runner.gd`: add `var _c1_queen_collections: int = 0`, reset in
+  `start()` alongside `_c2_rescue_used`/`_last_completed_goal_text`, and reset
+  again in `_enter_stage()` when entering `"1.8"` so the meadow tour cannot
+  pre-satisfy it.
+- Increment it from the one place a collection actually completes --
+  `BeeForaging.finish_collecting()` -- for `main.queen` only, via the same
+  `main.challenge_runner` reach `on_worker_hatched()` already uses. Do not
+  add a signal; the runner is already polled every frame.
+- The two predicates become `_c1_queen_collections >= 1` and `>= 2`.
+
+**Non-goals:** do not change `reject_flower`, `finish_collecting` or
+`flower_cooldowns`' own semantics; do not add expiry to the cooldown
+dictionary in this slice (it is a bounded memory cost, not a correctness
+problem, once nothing reads its size); do not touch 1.8/1.9's prompts,
+`unlocked_keys` or ordering.
+
+**Acceptance:** at 1.8, right-click a visibly near-empty flower twice and
+confirm the stage does **not** clear; then collect from one real flower and
+confirm it does. Deterministic alternative if a fixture is cheaper than a
+hands-on pass: a `test_scenarios` run that drives the queen onto two depleted
+flowers and asserts the stage index has not advanced.
+
+**Save/determinism:** none -- runner state is not persisted (ordinary
+save/load stays disabled for the whole Challenge). **Rollback:** revert the
+two predicates.
+
+### 10g -- `command_collect_from` changes the queen's role before validating the command
+
+**Confirmed (1 Sep 2026 architecture review).** The guard runs *after* the
+mutation it should gate (`bee.gd::command_collect_from`, ~line 1665):
+
+```gdscript
+func command_collect_from(flower: Node2D) -> void:
+	_clear_pending_zone_command()
+	if role != Role.FORAGER:
+		set_role(Role.FORAGER)          # permanent, per 10a
+	if flower.occupied_by != null and flower.occupied_by != self:
+		return                          # ...only now is the command rejected
+```
+
+So right-clicking a flower another bee already holds promotes the queen to a
+real Forager and then does nothing else -- no flight, no collection, no
+feedback. This is a distinct defect from 10a: 10a is that the promotion is
+permanent at all, 10g is that it happens even when the command is refused.
+Whichever way 10a's role lock lands, this ordering is still wrong.
+
+**Fix:** move the `flower.occupied_by` test above the role change, so the
+function either does all of its work or none of it. One line moved.
+
+**Non-goals:** do not change the guard's condition, and do not add player
+feedback for the refused case in this slice (that is a separate UI question).
+
+**Sequencing:** land with 10a, since both edit the same six lines. **Save /
+determinism:** none. **Rollback:** trivial.
+
+**Acceptance (Slice 10):** 10a, 10c and 10f close independently and are the
 priority -- they are what breaks Bundle D/E's teaching sequence outright.
-10b ships together with 9a's own fix. 10d needs its one live-reproduction
-step before any code changes. 10e needs Dave's answer before it's scoped as
-work at all. Re-run `checks/ready.md`'s Bundle D and Bundle E entries in
-full once 10a/10b/10c land.
+10g is one moved line and ships with 10a (same function). 10b ships together
+with 9a's own fix. 10d needs its one live-reproduction step before any code
+changes. 10e needs Dave's answer before it's scoped as work at all. Re-run
+`checks/ready.md`'s Bundle D and Bundle E entries in full once
+10a/10b/10c/10f/10g land.
 
 ---
 
