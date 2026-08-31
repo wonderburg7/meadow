@@ -6,6 +6,24 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 31 Aug 2026 -- second hands-on pass
+
+- **Same-flower ping-pong / thin-patch escape (foraging).** Confirmed
+  working -- a forager worked into an isolated flower correctly switches to
+  "flying a search loop" once nothing worthwhile is left to try, rather than
+  sitting on the same flower indefinitely. See
+  `plans/active/foraging-evidence.md`.
+- The Foraging window's own numbers were reconfirmed the same pass (its
+  Orientation flight sub-finding was not, and stays open in
+  `checks/ready.md` alongside the confirmed line, not archived here, since
+  the heading as a whole isn't done).
+- Five further items from the same pass were found broken, not confirmed --
+  see `plans/now/challenge-1.md` Slice 10 (Challenge 1 Bundle D/E),
+  `plans/now/hive-comb.md` Slice 6 (cell rendering), and
+  `plans/active/foraging-evidence.md` Slices 1-3 (orientation flight,
+  proximity recruitment, safe forager return reserve), and the updated
+  entries left open in `checks/ready.md`.
+
 ## 31 Aug 2026 -- hands-on pass
 
 - **Cell/colony dirty-index refactor (efficiency Slice 1).** Confirmed
