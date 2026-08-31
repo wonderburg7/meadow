@@ -164,9 +164,11 @@ static func button_stylebox(state: String) -> StyleBoxFlat:
 
 static func _refresh_button_stylebox(box: StyleBoxFlat, state: String) -> void:
 	var base: Color = color("panel_bg")
-	var bg: Color = base.lightened(0.10)
-	var border: Color = Color(0, 0, 0, 0)
-	var border_width := 0
+	# Ordinary buttons need a visible resting surface: this deliberately sits
+	# below hover and selected, but no longer reads as floating text on a panel.
+	var bg: Color = base.lightened(0.16)
+	var border: Color = base.lightened(0.24)
+	var border_width := 1
 	match state:
 		"hover":
 			bg = base.lightened(0.18)

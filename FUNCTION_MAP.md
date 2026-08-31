@@ -231,7 +231,7 @@ A bee's dispatch loop, player commands, display text, vars.
 2270 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (1,756 lines)
+## debug_panel.gd (1,765 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -245,39 +245,39 @@ restart.
 1022 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 1055 func _style_button(button: BaseButton) -> BaseButton
 1060 func _ready() -> void
-1152 func _report_settings_button_width() -> void
-1157 func _rows_in(category: String) -> Array
-1179 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-1210 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-1218 func open_to_categories(categories: Array) -> void
-1236 func _make_section(category: String, entries: Array, start_open: bool) -> Control
-1290 func _make_controls_help() -> Control
-1323 func _build_actions(column: VBoxContainer) -> void
-1365 func _make_winter_action() -> Control
-1377 func _on_winter_pressed() -> void
-1383 func _on_challenge_advance_pressed() -> void
-1394 func set_save_load_enabled(enabled: bool) -> void
-1402 func set_toggle(key: String, value: bool) -> void
-1407 func _on_save_pressed() -> void
-1418 func _on_load_pressed() -> void
-1430 func _toggle_panel() -> void
-1444 func _apply_layer_for_context() -> void
-1449 func _make_row(entry: Dictionary) -> Control
-1492 func _make_control_slot() -> HBoxContainer
-1501 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-1531 func _make_toggle_row(entry: Dictionary) -> Control
-1602 func _make_options_row(entry: Dictionary) -> Control
-1635 func _option_display(entry: Dictionary, value) -> String
-1639 func _cycle_option(entry: Dictionary, direction: int) -> void
-1653 func _cascade_prerequisites_on(key: String) -> void
-1660 func _cascade_dependents_off(key: String) -> void
-1667 func _cascade_mutual_exclusion(key: String) -> void
-1676 func _make_star_row(entry: Dictionary) -> Control
-1717 func _adjust(entry: Dictionary, delta: float) -> void
-1732 func _format_value(v) -> String
-1739 func _on_restart_pressed() -> void
-1744 func _on_main_menu_pressed() -> void
-1752 func _restart() -> void
+1161 func _report_settings_button_width() -> void
+1166 func _rows_in(category: String) -> Array
+1188 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+1219 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+1227 func open_to_categories(categories: Array) -> void
+1245 func _make_section(category: String, entries: Array, start_open: bool) -> Control
+1299 func _make_controls_help() -> Control
+1332 func _build_actions(column: VBoxContainer) -> void
+1374 func _make_winter_action() -> Control
+1386 func _on_winter_pressed() -> void
+1392 func _on_challenge_advance_pressed() -> void
+1403 func set_save_load_enabled(enabled: bool) -> void
+1411 func set_toggle(key: String, value: bool) -> void
+1416 func _on_save_pressed() -> void
+1427 func _on_load_pressed() -> void
+1439 func _toggle_panel() -> void
+1453 func _apply_layer_for_context() -> void
+1458 func _make_row(entry: Dictionary) -> Control
+1501 func _make_control_slot() -> HBoxContainer
+1510 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+1540 func _make_toggle_row(entry: Dictionary) -> Control
+1611 func _make_options_row(entry: Dictionary) -> Control
+1644 func _option_display(entry: Dictionary, value) -> String
+1648 func _cycle_option(entry: Dictionary, direction: int) -> void
+1662 func _cascade_prerequisites_on(key: String) -> void
+1669 func _cascade_dependents_off(key: String) -> void
+1676 func _cascade_mutual_exclusion(key: String) -> void
+1685 func _make_star_row(entry: Dictionary) -> Control
+1726 func _adjust(entry: Dictionary, delta: float) -> void
+1741 func _format_value(v) -> String
+1748 func _on_restart_pressed() -> void
+1753 func _on_main_menu_pressed() -> void
+1761 func _restart() -> void
 ```
 
 ## hive_cell.gd (987 lines)

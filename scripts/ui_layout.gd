@@ -15,10 +15,12 @@ static func gallerin_bubble_width(viewport_width: float) -> float:
 
 ## Width of Dr Gallerin's bottom-right reserve for this viewport -- every
 ## other bottom-row tray subtracts this rather than guessing at his
-## footprint. Built from his own bubble width plus his icon margin,
-## rather than duplicating either number.
+## footprint. Built from the bubble, icon and shared gap constants rather
+## than a duplicate magic number.
 static func gallerin_reserve_width(viewport_width: float) -> float:
-	return gallerin_bubble_width(viewport_width) + GallerinPanel.ICON_MARGIN
+	# The bubble now sits left of Gallerin's icon, so the protected bottom-right
+	# footprint includes both controls and the gap between them.
+	return gallerin_bubble_width(viewport_width) + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP + GallerinPanel.ICON_MARGIN
 
 ## Below this viewport width, the Gallerin reserve shrinks (see
 ## gallerin_bubble_width) rather than disappearing -- command_tray_max_width
