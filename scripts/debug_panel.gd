@@ -1153,8 +1153,17 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
 
+	# PANEL_WIDTH includes room for optional info badges; keep the rows a
+	# deliberate small distance from the scrollbar instead of letting that
+	# spare width read as accidental slack when badges are hidden.
+	var content_margin := MarginContainer.new()
+	content_margin.add_theme_constant_override("margin_right", 6)
+	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content_margin)
+
 	var column := VBoxContainer.new()
-	scroll.add_child(column)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_margin.add_child(column)
 
 	_build_actions(column)
 

@@ -96,6 +96,8 @@ const GROUPS := [
 ## now that each honeycomb strip has a whole half of the left pane to
 ## itself instead of sharing a single narrow scrolling column.
 const HEX_SIZE := 84.0
+const HEX_BORDER_OVERLAP := 3.0
+const LEFT_PANE_MARGIN := 16
 ## Horizontal centre-to-centre spacing for a touching row of hexagons
 ## (Dave's 29 Aug request: tiles' side edges meet exactly, no visible
 ## gap) -- 1.5x HEX_SIZE is the standard hex-grid step for a hexagon with
@@ -162,12 +164,20 @@ func _ready() -> void:
 	split.add_theme_constant_override("separation", 24)
 	root.add_child(split)
 
+	# The full-viewport menu still uses the split's responsive 2:1 geometry,
+	# while its left content now begins on the same quiet 16px inset as the HUD.
+	var left_margin := MarginContainer.new()
+	left_margin.add_theme_constant_override("margin_left", LEFT_PANE_MARGIN)
+	left_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_margin.size_flags_stretch_ratio = 2.0
+	left_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split.add_child(left_margin)
+
 	var left_pane := VBoxContainer.new()
 	left_pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left_pane.size_flags_stretch_ratio = 2.0
 	left_pane.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left_pane.add_theme_constant_override("separation", 10)
-	split.add_child(left_pane)
+	left_margin.add_child(left_pane)
 
 	var right_pane := VBoxContainer.new()
 	right_pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -366,7 +376,9 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 	# a StyleBox, matching the rest of the game's "flat Polygon2D shapes,
 	# no imported art" placeholder approach (see gallerin_panel.gd).
 	var border := Polygon2D.new()
-	border.polygon = Shapes.hexagon_points(HEX_SIZE)
+	# Paint only: real tile centres and HexHitArea retain HEX_SIZE, so making
+	# this outer polygon overlap cannot reintroduce ambiguous edge clicks.
+	border.polygon = Shapes.hexagon_points(HEX_SIZE + HEX_BORDER_OVERLAP)
 	border.position = bbox / 2.0
 	tile.add_child(border)
 

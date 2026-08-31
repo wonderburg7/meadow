@@ -4,6 +4,7 @@ extends RefCounted
 ##        row.add_child(UI.info_badge("what this control does"))
 
 const UiTheme = preload("res://scripts/ui_theme.gd")
+const UiInfoBadge = preload("res://scripts/ui_info_badge.gd")
 
 const BADGE_SIZE := 16.0
 
@@ -16,7 +17,7 @@ const BADGE_SIZE := 16.0
 ## Fixed size + zero horizontal content margin + a corner radius of
 ## exactly half the size gives a true circle at any font setting.
 static func info_badge(text: String) -> Button:
-	var badge := Button.new()
+	var badge := UiInfoBadge.new()
 	badge.text = "i"
 	badge.tooltip_text = text
 	badge.custom_minimum_size = Vector2(BADGE_SIZE, BADGE_SIZE)

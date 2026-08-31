@@ -23,17 +23,20 @@ extends CanvasLayer
 ## shapes.gd's circle_points, not a sprite.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
 const BUBBLE_WIDTH := 460.0
-const BUBBLE_TEXT_SIZE := 22
+## Matches UiTheme's Body text, which is what the summary panel uses.
+const BUBBLE_TEXT_SIZE := 13
 
 const BUBBLE_GAP := 8.0
 
 var _icon_button: Button
 var _bubble: PanelContainer
 var _bubble_label: Label
+var _bubble_pointer: Polygon2D
 var _hovering_icon: bool = false
 var _hovering_bubble: bool = false
 var _last_message: String = ""
@@ -126,10 +129,15 @@ func _build_bubble() -> void:
 	_bubble.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	_bubble.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_bubble.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_bubble.offset_right = -ICON_MARGIN
-	_bubble.offset_bottom = -(ICON_MARGIN + ICON_SIZE.y + BUBBLE_GAP)
+	# The message belongs beside Gallerin, not above him: leave a small gap
+	# between its pointer and the icon at the bottom-right corner.
+	_bubble.offset_right = -(ICON_MARGIN + ICON_SIZE.x + BUBBLE_GAP)
+	_bubble.offset_bottom = -ICON_MARGIN
+	_bubble.theme = UiTheme.build_theme()
+	_bubble.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	_bubble.mouse_entered.connect(func(): _hovering_bubble = true)
 	_bubble.mouse_exited.connect(func(): _hovering_bubble = false)
+	_bubble.resized.connect(_position_bubble_pointer)
 	add_child(_bubble)
 
 	var column := VBoxContainer.new()
@@ -137,10 +145,18 @@ func _build_bubble() -> void:
 	_bubble.add_child(column)
 
 	_bubble_label = Label.new()
+	_bubble_label.theme_type_variation = "Body"
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 28.0, 0)
 	column.add_child(_bubble_label)
 	_apply_bubble_font_size()
+
+	_bubble_pointer = Polygon2D.new()
+	_bubble_pointer.polygon = PackedVector2Array([
+		Vector2(0, -8), Vector2(12, 0), Vector2(0, 8),
+	])
+	_bubble_pointer.color = UiTheme.color("panel_bg")
+	_bubble.add_child(_bubble_pointer)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -171,6 +187,14 @@ func _apply_layout() -> void:
 	var width: float = _ui_layout().gallerin_bubble_width(viewport_width)
 	_bubble.custom_minimum_size.x = width
 	_bubble_label.custom_minimum_size.x = width - 28.0
+	_position_bubble_pointer()
+
+func _position_bubble_pointer() -> void:
+	if _bubble_pointer == null:
+		return
+	# Both controls share a bottom edge, so this is Gallerin's actual vertical
+	# centre even when a longer message makes the bubble grow upward.
+	_bubble_pointer.position = Vector2(_bubble.size.x, _bubble.size.y - ICON_SIZE.y / 2.0)
 
 func _apply_bubble_font_size() -> void:
 	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
