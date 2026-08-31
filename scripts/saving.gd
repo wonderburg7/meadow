@@ -272,9 +272,15 @@ func _restore_bees(bees: Array) -> Array:
 		# Older saves (pre-Slice-6) have no known_patches at all -- an
 		# empty array is the correct fallback, not an error, same as a
 		# freshly spawned bee who hasn't fed anywhere yet.
-		bee.known_patches = []
+		# known_patches is bee.gd's only Array[Vector2]-typed save field; a
+		# bare `[]` literal assigned through this dynamically-typed `bee`
+		# reference doesn't coerce to that type at runtime and throws, so
+		# build the typed array locally and assign it once instead.
+		var patches: Array[Vector2] = []
 		for pair in entry.get("known_patches", []):
-			bee.known_patches.append(Vector2(float(pair[0]), float(pair[1])))
+			if pair.size() == 2:
+				patches.append(Vector2(float(pair[0]), float(pair[1])))
+		bee.known_patches = patches
 		# Older saves (pre-Slice-7) have neither key at all -- an empty
 		# dictionary is correct, same as a bee who hasn't earned any
 		# experience/confidence yet.

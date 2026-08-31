@@ -221,13 +221,18 @@ func _check_c2_failure() -> void:
 		return
 
 	if nectar < Stages.C2_FAILURE_FLOOR:
-		main.TutorialCheckpoint.restore(main)
+		if not main.TutorialCheckpoint.restore(main):
+			push_error("Challenge 2 checkpoint restore failed")
+			return
 		# A restore replaces main.queen with a new Bee node and rebuilds
 		# main.hive.cells from scratch (see saving.gd::_restore) -- nothing
 		# here may go on using the pre-restore queen/cell references.
 		# _stage_index itself doesn't move: the checkpoint is "the start of
 		# this sub-stage", so this re-enters the same stage rather than
 		# advancing or regressing it.
+		if not is_instance_valid(main.queen):
+			push_error("Challenge 2 checkpoint restore left no queen")
+			return
 		main.queen.energy_immune = true
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
