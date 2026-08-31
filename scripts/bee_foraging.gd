@@ -278,7 +278,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 	var accept := func(f) -> bool:
 		if f.occupied_by != null:
 			return false
-		if f.get_available(bee.resource_type) <= 0.0:
+		if f.get_available(bee.resource_type) < GameConfig.min_worthwhile_amount:
 			return false
 		# Gated on floral_constancy_on too, not just is_scouting -- a pure
 		# scout (constancy off) never commits scout_species (see

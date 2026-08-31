@@ -122,6 +122,21 @@ its check. Move a confirmed or superseded entry to
       long run. See `plans/active/foraging-evidence.md` Slice 3 for the
       proposed counter and a scenario likely to actually trigger it.
 
+### Nectar/pollen recharge reads as stuck (hands-on-fixes Slice C)
+- [ ] **Fix applied 31 Aug, not yet confirmed live:** three fixes, none
+      confirmed as Dave's specific cause but each closing a real gap. Click
+      a flower's detail panel and confirm the shown "+_/s" rate now reflects
+      season/senescence (reads ~0.00/s when out of season or senescent,
+      instead of the old nominal rate that never matched what was actually
+      happening). Watch a flower under forager pressure near the "1" floor
+      and confirm it no longer looks pinned -- `nearest_flower()` now skips
+      anything below `GameConfig.min_worthwhile_amount`, not just `<= 0.0`.
+      Pick a Scenario preset after tweaking a debug-panel flower/season
+      toggle and confirm the toggle is back to its default rather than
+      leaking into the new run (`DebugPanel.reset_config_to_defaults()`,
+      called from `main.gd::_on_scenario_chosen`). See
+      `plans/now/hands-on-fixes-2026-08-31.md` Slice C1-C3.
+
 ### AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.

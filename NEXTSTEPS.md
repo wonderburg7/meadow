@@ -74,11 +74,16 @@ on demand in `plans/archive/`.
    2.1, not 2.2-2.9 -- both buttons vanish the moment their stage is
    entered. Plain data fix in `challenge_stages.gd`. Slice A (bees/queen
    vanishing on load, Challenge 2 checkpoint-restore's missing queen guard)
-   shipped on `claude/save-restore-slice-a` 31 Aug -- code fixed and
+   shipped on `claude/save-restore-slice-a` 31 Aug and Slice C
+   (nectar/pollen recharge reads as stuck: HUD's shown rate now reflects
+   season/senescence, `nearest_flower()` no longer treats a
+   below-`min_worthwhile_amount` flower as available, and a debug-panel
+   flower/season tweak no longer leaks into the next scenario pick) shipped
+   on `claude/hands-on-fixes-slice-c` 1 Sep -- both code-fixed and
    `tools/verify.ps1` green, hands-on confirmation still pending in
-   `checks/ready.md`. Slices C (nectar/pollen recharge reads as stuck) and
-   D (death marker has no selection glow) remain queued in the same plan,
-   not yet sequenced against this slice or `plans/now/ui.md` UI-P.
+   `checks/ready.md`. Slice D (death marker has no selection glow) remains
+   queued in the same plan, not yet sequenced against this slice or
+   `plans/now/ui.md` UI-P.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

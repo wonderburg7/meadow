@@ -1403,10 +1403,10 @@ func _refresh_flower_summary() -> void:
 	energy_label.text = "Nectar: %d / %d   (+%.2f/s)\nPollen: %d / %d   (+%.2f/s)" % [
 		int(round(active_flower.nectar_amount)),
 		int(active_flower.nectar_capacity),
-		active_flower.nectar_recharge_rate,
+		active_flower.effective_nectar_rate(),
 		int(round(active_flower.pollen_amount)),
 		int(active_flower.pollen_capacity),
-		active_flower.pollen_recharge_rate,
+		active_flower.effective_pollen_rate(),
 	]
 	if active_flower.occupied_by != null and is_instance_valid(active_flower.occupied_by):
 		activity_label.text = "Being worked by bee %d" % active_flower.occupied_by.bee_id
