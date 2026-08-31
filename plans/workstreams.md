@@ -19,3 +19,4 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
+| `.worktrees/architecture-review` (`docs/architecture-review-2026-09-01`) | Documentation only. Files the 1 Sep architecture/performance review's confirmed findings into their owning plans: Challenge 1 Slice 10f/10g (`plans/now/challenge-1.md`), hive-navigation comb costs (`plans/now/hive-comb.md` Slice 7), settings-catalogue ownership (`plans/design/settings-catalogue.md`), measurement-gated hot-path candidates (`plans/reference/technical-audit.md`). No source changes. | Dave / Claude Code | active | none | Review write-up; no implementation slice assigned |
