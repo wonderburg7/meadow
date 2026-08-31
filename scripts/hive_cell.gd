@@ -45,6 +45,14 @@ const EMPTY_TEXTURE := preload("res://assets/sprites/environment/wax.cell.empty.
 const EMPTY_TEXTURE_BASE_Y := 14.0
 const EMPTY_TEXTURE_BASE_H := 16.0
 
+## Fine visual nudge on top of the derived offset below, in screen pixels
+## (negative = up). This stays separate from the export measurements so a
+## future resprite export cannot silently undo an alignment tuned by eye.
+const EMPTY_SPRITE_Y_NUDGE := -1.0
+## Makes the cup fractionally larger than exact tessellation if a filtering
+## seam needs closing. 1.0 keeps the exported sprite at its exact size.
+const EMPTY_SPRITE_SCALE_NUDGE := 1.0
+
 ## Nectar is a clear liquid sitting in a yellow wax cell, so it's drawn as
 ## a pale blue warmed slightly by the wax showing through, rather than a
 ## flat pale blue on its own. Worked out as a pale-blue base lerped 15%
@@ -174,6 +182,9 @@ var hatch_role_locked: bool = false
 var axial: Vector2i = Vector2i.ZERO
 
 var cell_size: float = 17.0
+## Cached when the empty-cell sprite is built so its raised cup outline uses
+## the same screen-space scale as the sprite itself.
+var empty_scale: float = 1.0
 ## Cached from `Session.use_sprite_hex_grid` in `_ready` -- read once, not
 ## live, since the hive's whole grid is laid out on Restart Run (see the
 ## note on that Session field).
@@ -234,8 +245,8 @@ func _ready() -> void:
 	empty_sprite = Sprite2D.new()
 	empty_sprite.texture = EMPTY_TEXTURE
 	var sprite_size: float = GameConfig.hive_cell_spacing
-	var empty_scale: float = (sprite_size * 2.0) / EMPTY_TEXTURE.get_width()
-	empty_sprite.scale = Vector2(empty_scale, empty_scale)
+	empty_scale = (sprite_size * 2.0) / EMPTY_TEXTURE.get_width()
+	empty_sprite.scale = Vector2.ONE * empty_scale * EMPTY_SPRITE_SCALE_NUDGE
 	# The floor slice sits low in its 32-tall canvas (see
 	# EMPTY_TEXTURE_BASE_Y), so shift up until the floor's own centre --
 	# not the canvas's -- lands on this cell's actual centre; otherwise
@@ -243,7 +254,10 @@ func _ready() -> void:
 	# and every filled-cell fill, actually put this tile.
 	var canvas_mid: float = EMPTY_TEXTURE.get_height() * 0.5
 	var base_mid: float = EMPTY_TEXTURE_BASE_Y + EMPTY_TEXTURE_BASE_H * 0.5
-	empty_sprite.offset = Vector2(0.0, canvas_mid - base_mid)
+	empty_sprite.offset = Vector2(
+		0.0,
+		canvas_mid - base_mid + EMPTY_SPRITE_Y_NUDGE / empty_scale
+	)
 	empty_sprite.visible = false
 	add_child(empty_sprite)
 
@@ -273,7 +287,7 @@ func _ready() -> void:
 	# Shown while the cell is part of a multi-cell selection, so it's
 	# obvious what the popup's buttons are about to act on.
 	selection_ring = Line2D.new()
-	_set_outline_points(selection_ring, cell_size + 2.0)
+	_set_selection_ring_points()
 	selection_ring.width = 2.5
 	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
 	selection_ring.visible = false
@@ -391,6 +405,29 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 	for p in pts:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
+
+## Cell art adds a back wall above the flat hex floor. The raised upper
+## corners make the selection ring trace that cup silhouette instead of
+## visibly cutting through it.
+func _set_outline_points_cup(line: Line2D, size: float) -> void:
+	line.clear_points()
+	var pts := Shapes.hexagon_points(size, squashed)
+	var cup_height := EMPTY_TEXTURE_BASE_Y * empty_scale * EMPTY_SPRITE_SCALE_NUDGE
+	# Flat-top hex points run clockwise from the right; 4 and 5 are its two
+	# upper corners in Godot's downward-positive screen coordinates.
+	pts[4] += Vector2(0.0, -cup_height)
+	pts[5] += Vector2(0.0, -cup_height)
+	for p in pts:
+		line.add_point(p)
+	line.add_point(pts[0])   # close the loop
+
+func _set_selection_ring_points() -> void:
+	if selection_ring == null:
+		return
+	if Session.use_cell_sprites:
+		_set_outline_points_cup(selection_ring, cell_size + 2.0)
+	else:
+		_set_outline_points(selection_ring, cell_size + 2.0)
 
 ## How often a cell redraws itself. Six times a second, not sixty.
 ##
@@ -817,6 +854,9 @@ func _refresh() -> void:
 	# doesn't need to know or care whether it's actually shown), only its
 	# visibility is gated.
 	info_label.visible = Session.show_cell_contents_text
+	# `use_cell_sprites` can switch live, so keep the selection ring in the
+	# matching shape alongside the empty-sprite visibility below.
+	_set_selection_ring_points()
 	if not is_built:
 		# an unfinished cell grows outwards from a stub as it's drawn, so
 		# you can see at a glance how far along it is

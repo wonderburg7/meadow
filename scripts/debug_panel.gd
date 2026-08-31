@@ -322,22 +322,22 @@ const TUNABLES := [
 	},
 	{
 		"key": "show_cell_contents_text", "label": "Show cell contents text", "toggle": true,
-		"category": "Hive & comb",
+		"category": "Appearance",
 		"tip": "Show the small text on each comb cell -- N40, an egg's development percent, and so on. Off keeps the colour coding but drops the numbers, for a quieter comb at a glance. Applies within about a second, as cells redraw themselves.",
 	},
 	{
 		"key": "use_cell_sprites", "label": "Cell art", "toggle": true,
-		"category": "Hive & comb",
+		"category": "Appearance",
 		"tip": "Show the wax-cell resprite on empty comb cells instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
 	},
 	{
 		"key": "use_sprite_hex_grid", "label": "Sprite-aligned hex grid", "toggle": true,
-		"category": "Hive & comb",
+		"category": "Appearance",
 		"tip": "Draw the whole hive -- comb, floor, soil, bedrock, the entrance tunnel -- squashed 2:1 to match the cell resprite's shape, instead of as a regular hexagon. Off restores the original hex grid. Takes effect on Restart Run.",
 	},
 	{
 		"key": "use_radial_hex_speed", "label": "Direction-even hex speed", "toggle": true,
-		"category": "Hive & comb",
+		"category": "Appearance",
 		"tip": "On the squashed hex grid, make a bee take the same time to cross one hex-edge in any of the six directions. Off reproduces the older behaviour, where speed is constant in squashed screen pixels and vertical travel is faster than sideways travel. Applies immediately; only matters while Sprite-aligned hex grid is on.",
 	},
 
