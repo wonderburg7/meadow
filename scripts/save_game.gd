@@ -19,7 +19,11 @@ extends RefCounted
 const SaveMigrations = preload("res://scripts/save_migrations.gd")
 
 const SAVE_PATH := "user://meadow_save.json"
-## Bumped 16 Aug 2026: added fog of war's explored-cells map. A save from
+## Bumped 1 Sep 2026: distinguish explicit cell designations from automatic
+## first-use assignments, so an automatically assigned cell returns to the
+## neutral pool when fully emptied.
+##
+## Previously bumped 16 Aug 2026: added fog of war's explored-cells map. A save from
 ## before this version simply has no "fog" key, and read() below already
 ## warns rather than refusing outright -- _restore_fog treats a missing
 ## key as "nothing explored yet" rather than erroring, so an old save
@@ -29,7 +33,7 @@ const SAVE_PATH := "user://meadow_save.json"
 ## hexes, corner entrance) so a save from before that version was dug and
 ## tunnelled differently. _restore_cells defends against a save's cell
 ## landing on what the fresh dig now considers soil.
-const FORMAT_VERSION := 3
+const FORMAT_VERSION := 4
 
 ## Every GameConfig field worth carrying across.
 ##
@@ -192,6 +196,7 @@ static func _cells_data(world) -> Array:
 			"content": cell.content_type,
 			"amount": cell.amount,
 			"designated": cell.designated_type,
+			"designation_explicit": cell.designation_is_explicit,
 			"keep_empty": cell.keep_empty,
 			"evict": cell.evict_requested,
 			"evict_mode": cell.evict_mode,

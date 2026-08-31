@@ -142,6 +142,14 @@ var deposit_blocked_epoch: int = -1
 ## Challenge 1's manual-forage arc stops the queen at the hive entrance so
 ## the player chooses the receiving cell. False everywhere else.
 var manual_deposit_pending: bool = false
+## A stage can let a forager pick her first flower automatically but require
+## an explicit player command before she switches to another one.
+var flower_switch_locked: bool = false
+## A point, flower, or receiving cell clicked in the other zone. The command
+## resumes only after the bee has physically crossed the entrance.
+var pending_move_target := Vector2(INF, INF)
+var pending_collect_flower: Node2D = null
+var pending_deposit_cell: Node2D = null
 var haul_target: Node2D = null
 var target_block: Node2D = null
 var automine: bool = false
@@ -987,7 +995,7 @@ func _process(delta: float) -> void:
 			# the colony within the first week.
 			if current_flower == null or not is_instance_valid(current_flower):
 				current_flower = null
-				state = State.SEEK_FLOWER
+				state = State.IDLING if flower_switch_locked else State.SEEK_FLOWER
 			else:
 				BeeMovement.move_towards(self, current_flower.position, delta)
 				if position.distance_to(current_flower.position) < arrive_distance:
@@ -1497,6 +1505,7 @@ func has_restock_orders() -> bool:
 ## position, which only matches by coincidence in the meadow (where
 ## meadow_root sits at the origin).
 func command_move_to(world_point: Vector2) -> void:
+	_clear_pending_zone_command()
 	var parent := get_parent()
 	var target: Vector2 = parent.to_local(world_point) if parent else world_point
 	# Inside the hive, a click can land on solid soil -- snap it to the
@@ -1514,6 +1523,13 @@ func command_move_to(world_point: Vector2) -> void:
 	_release_everything()
 	state = State.MOVE_TO_POINT
 
+## Queue a move in the other zone, then take the ordinary entrance route.
+func command_move_through_entrance(world_point: Vector2, target_in_hive: bool) -> void:
+	_clear_pending_zone_command()
+	pending_move_target = world_point
+	_release_everything()
+	state = State.TO_HIVE if target_in_hive else State.IN_HIVE_TO_EXIT
+
 ## Right-clicking the entrance tile (see input_selection.gd's
 ## _issue_command) sends a selected, indoor bee out through the door
 ## rather than to a plain point -- the same route BeeForaging.go_to_exit
@@ -1523,6 +1539,7 @@ func command_move_to(world_point: Vector2) -> void:
 func command_exit_hive() -> void:
 	if not _is_inside_hive():
 		return
+	_clear_pending_zone_command()
 	_release_everything()
 	state = State.IN_HIVE_TO_EXIT
 
@@ -1646,6 +1663,7 @@ func _mine_reference_point() -> Vector2:
 ## already set to (nectar by default -- see Bee.setup), not whatever the
 ## flower happens to be offering.
 func command_collect_from(flower: Node2D) -> void:
+	_clear_pending_zone_command()
 	if role != Role.FORAGER:
 		set_role(Role.FORAGER)
 	if flower.occupied_by != null and flower.occupied_by != self:
@@ -1658,6 +1676,14 @@ func command_collect_from(flower: Node2D) -> void:
 	current_flower = flower
 	state = State.TO_FLOWER
 
+## A flower belongs to meadow coordinates, so do not call
+## command_collect_from until an indoor bee has left the hive.
+func command_collect_from_after_exit(flower: Node2D) -> void:
+	_clear_pending_zone_command()
+	pending_collect_flower = flower
+	_release_everything()
+	state = State.IN_HIVE_TO_EXIT
+
 ## Sends a bee straight home to deposit whatever she's carrying, without
 ## waiting for a role's own trip-end logic to notice. Outside, this is
 ## the same State.TO_HIVE a full stomach already triggers on its own in
@@ -1666,6 +1692,7 @@ func command_collect_from(flower: Node2D) -> void:
 ## time. General, not Challenge-1-only, the same direct-command spirit
 ## as command_exit_hive and command_collect_from above.
 func command_return_and_deposit() -> void:
+	_clear_pending_zone_command()
 	_release_everything()
 	if _is_inside_hive():
 		state = State.IN_HIVE_TO_CELL if current_load > 0.0 else State.IN_HIVE_TO_EXIT
@@ -1675,14 +1702,50 @@ func command_return_and_deposit() -> void:
 ## Returns an outdoor bee to the hive without selecting a receiving cell.
 ## Challenge 1 uses this during its manual deposit lesson only.
 func command_return_only() -> void:
+	_clear_pending_zone_command()
 	_release_everything()
 	state = State.TO_HIVE
 
 ## Deposits the carried load into the cell the player selected.
 func command_deposit_at(cell: Node2D) -> void:
+	_clear_pending_zone_command()
 	target_cell = cell
 	manual_deposit_pending = false
 	state = State.IN_HIVE_TO_CELL
+
+## A hive cell belongs to hive coordinates, so delay assigning it until an
+## outdoor bee has walked in through the entrance.
+func command_deposit_at_after_enter(cell: Node2D) -> void:
+	_clear_pending_zone_command()
+	pending_deposit_cell = cell
+	_release_everything()
+	state = State.TO_HIVE
+
+## Called immediately after the entrance reparenting at either side. Returns
+## true when there was a player command to resume instead of normal idle work.
+func resume_pending_zone_command() -> bool:
+	if pending_deposit_cell != null and is_instance_valid(pending_deposit_cell):
+		var cell := pending_deposit_cell
+		_clear_pending_zone_command()
+		command_deposit_at(cell)
+		return true
+	if pending_collect_flower != null and is_instance_valid(pending_collect_flower):
+		var flower := pending_collect_flower
+		_clear_pending_zone_command()
+		command_collect_from(flower)
+		return true
+	if pending_move_target.x != INF:
+		var target := pending_move_target
+		_clear_pending_zone_command()
+		command_move_to(target)
+		return true
+	_clear_pending_zone_command()
+	return false
+
+func _clear_pending_zone_command() -> void:
+	pending_move_target = Vector2(INF, INF)
+	pending_collect_flower = null
+	pending_deposit_cell = null
 
 func set_focus(type: String) -> void:
 	if type == resource_type or role != Role.FORAGER:
@@ -1795,7 +1858,7 @@ func release_flower_reference(flower: Node2D) -> void:
 	if current_flower == flower:
 		current_flower = null
 		if state == State.TO_FLOWER or state == State.INSPECTING or state == State.COLLECTING:
-			state = State.SEEK_FLOWER
+			state = State.IDLING if flower_switch_locked else State.SEEK_FLOWER
 
 func set_selected(value: bool) -> void:
 	selected = value

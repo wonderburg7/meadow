@@ -432,7 +432,7 @@ static func start_inspecting(bee: Node2D) -> void:
 static func inspect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.SEEK_FLOWER
+		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
 		return
 	bee.timer -= delta
 	if bee.timer > 0.0:
@@ -463,7 +463,7 @@ static func needs_a_drink(bee: Node2D) -> bool:
 static func drink_at_flower(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.SEEK_FLOWER
+		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
 		return
 
 	var room: float = GameConfig.energy_capacity - bee.energy
@@ -614,7 +614,7 @@ static func _handling_experience_scale(bee: Node2D, species: String) -> float:
 static func collect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.SEEK_FLOWER
+		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
 		return
 
 	if bee.timer > 0.0:
@@ -685,6 +685,9 @@ static func finish_collecting(bee: Node2D) -> void:
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
+	if bee.flower_switch_locked:
+		bee.state = State.IDLING
+		return
 	# Manual deposit stages require an explicit return command. Stop at the
 	# flower once the crop is full rather than automatically starting the trip
 	# home; command_return_only() resumes it when the player asks.
@@ -709,6 +712,8 @@ static func enter_hive(bee: Node2D) -> void:
 		DiagnosticLog.log_forager_return(bee, "arrived", 0.0)
 		bee.emergency_return_reason = ""
 	bee.target_cell = null
+	if bee.resume_pending_zone_command():
+		return
 	if bee.manual_deposit_pending:
 		bee.state = State.IDLING
 		return
@@ -981,6 +986,8 @@ static func _leave_hive_and_resume(bee: Node2D) -> void:
 	bee.entrance_wait_target = Vector2(INF, INF)
 	if bee.world:
 		bee.world.move_bee_out_of_hive(bee)
+	if bee.resume_pending_zone_command():
+		return
 	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.role == Role.FORAGER:
 		bee.trip_start_time = Session.sim_time
 		bee.trip_first_flower_time = -1.0

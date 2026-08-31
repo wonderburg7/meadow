@@ -49,6 +49,7 @@ func _remember_designations(cells: Array) -> void:
 			_designation_undo.append({
 				"cell": cell,
 				"designated": cell.designated_type,
+				"designation_explicit": cell.designation_is_explicit,
 				"keep_empty": cell.keep_empty,
 				"priority": cell.nursery_priority,
 			})
@@ -62,7 +63,7 @@ func _undo_last_designation() -> void:
 		var cell = entry.cell
 		if not is_instance_valid(cell):
 			continue
-		cell.set_designation(entry.designated)
+		cell.set_designation(entry.designated, bool(entry.designation_explicit))
 		cell.keep_empty = entry.keep_empty
 		cell.nursery_priority = entry.priority
 		cell.bump_display_epoch()

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 FIXTURES = ROOT / "tests" / "fixtures"
 
-FORMAT_VERSION = 3  # must match scripts/save_game.gd's FORMAT_VERSION
+FORMAT_VERSION = 4  # must match scripts/save_game.gd's FORMAT_VERSION
 
 
 def load_fixture(name):
@@ -33,6 +33,12 @@ def migrate_2_to_3(data):
     return data
 
 
+def migrate_3_to_4(data):
+    for cell in data.get("cells", []):
+        cell["designation_explicit"] = bool(cell.get("designated", ""))
+    return data
+
+
 def upgrade(data, target_version=FORMAT_VERSION):
     version = int(data.get("version", 0))
     out = data
@@ -43,6 +49,9 @@ def upgrade(data, target_version=FORMAT_VERSION):
         elif version == 2:
             out = migrate_2_to_3(out)
             version = 3
+        elif version == 3:
+            out = migrate_3_to_4(out)
+            version = 4
         else:
             return out
         out["version"] = version
@@ -68,7 +77,7 @@ class SaveMigrationsSourceTest(unittest.TestCase):
     def test_migration_ladder_is_contiguous_up_to_format_version(self):
         steps = re.findall(r"_migrate_(\d+)_to_(\d+)", self.source)
         pairs = sorted({(int(a), int(b)) for a, b in steps})
-        self.assertEqual([(1, 2), (2, 3)], pairs)
+        self.assertEqual([(1, 2), (2, 3), (3, 4)], pairs)
         self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
 
     def test_read_never_weakens_the_newer_than_current_rejection(self):
@@ -90,6 +99,14 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertIn("fog", data)
         self.assertEqual([], data["fog"])
+
+    def test_v3_designations_remain_explicit(self):
+        data = upgrade({"version": 3, "cells": [
+            {"designated": "nectar"}, {"designated": ""},
+        ]})
+        self.assertEqual([True, False], [
+            cell["designation_explicit"] for cell in data["cells"]
+        ])
 
     def test_upgrade_is_idempotent_on_a_current_fixture(self):
         once = upgrade(load_fixture("save_v1.json"))

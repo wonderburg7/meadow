@@ -380,6 +380,7 @@ var active_cell: Node2D = null
 var keep_empty_box: CheckBox
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
+var gyne_row: HBoxContainer
 ## The "Keep for every bee" row, so set_hatch_lock_visible can hide it as
 ## a whole rather than reaching into its children.
 var lock_row: HBoxContainer
@@ -1171,7 +1172,7 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 
 	hatch_option_controls.clear()
 	for entry in hatch_options():
-		if entry.role != -1 and not allowed_role_keys.is_empty() and not allowed_role_keys.has(Roles.key_for(entry.role)):
+		if not allowed_role_keys.is_empty() and (entry.role == -1 or not allowed_role_keys.has(Roles.key_for(entry.role))):
 			continue
 		var options: Array = entry.options
 		var control: Control
@@ -1205,7 +1206,7 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 	lock_row.add_child(hatch_lock_box)
 
 	# Whether the queen lays a gyne here rather than a worker.
-	var gyne_row := HBoxContainer.new()
+	gyne_row = HBoxContainer.new()
 	column.add_child(gyne_row)
 	gyne_box = CheckBox.new()
 	_style_button(gyne_box)
@@ -1595,7 +1596,9 @@ func _apply_cell_popup_gating() -> void:
 			btn.visible = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
 	for entry in hatch_option_controls:
 		var role: int = entry.role
-		entry.control.visible = role == -1 or allowed_role_keys.is_empty() or allowed_role_keys.has(Roles.key_for(role))
+		entry.control.visible = allowed_role_keys.is_empty() or (role != -1 and allowed_role_keys.has(Roles.key_for(role)))
+	if gyne_row != null:
+		gyne_row.visible = allowed_role_keys.is_empty()
 	if lock_row != null:
 		lock_row.visible = hatch_lock_visible
 
@@ -2043,7 +2046,7 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		mixed.theme_type_variation = "Small"
 		mixed.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 		row.add_child(mixed)
-	else:
+	elif allowed_role_keys.is_empty() or allowed_role_keys.has(Roles.key_for(common_role)):
 		row.add_child(_current_role_marker(Roles.label_for(common_role)))
 
 	var items: Array = []
@@ -2447,6 +2450,8 @@ func set_allowed_role_keys(keys: Array) -> void:
 	allowed_role_keys = keys
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
+		_apply_cell_popup_gating()
 
 ## The Challenge runner owns the lock decision; HUD only applies it to the
 ## two already-separate pieces of selection UI. Re-applying the current

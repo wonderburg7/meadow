@@ -120,6 +120,7 @@ func _restore_cells(cells: Array) -> void:
 		cell.content_type = str(entry.get("content", ""))
 		cell.amount = float(entry.get("amount", 0.0))
 		cell.designated_type = str(entry.get("designated", ""))
+		cell.designation_is_explicit = bool(entry.get("designation_explicit", false))
 		cell.keep_empty = bool(entry.get("keep_empty", false))
 		cell.evict_requested = bool(entry.get("evict", false))
 		cell.evict_mode = str(entry.get("evict_mode", "move"))
