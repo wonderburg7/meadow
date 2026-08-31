@@ -1,8 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: implement UI-P (below) |
-Dependency: none | Verified: 2026-08-30
+Status: active | Owner: Dave / Claude Code | Next: UI-P-1/3/4/7 shipped (merged from `codex/ui-p` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- UI-P-2/5/6/8 remain (below) | Dependency: none | Verified: 2026-09-01
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,

@@ -1,10 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: implement Slice 10 (below,
-10a/10c first -- they break the Bundle D/E teaching sequence outright), then
-Slice 9, then resume Slice 7's acceptance-playthrough checklist again |
-Dependency: none | Verified: 2026-08-31
+Status: active | Owner: Dave / Claude Code | Next: Slice 9 is now code-fixed (merged from `codex/challenge-1-slice-9` 1 Sep 2026, `tools/verify.ps1` green) -- re-run Slice 7's acceptance-playthrough checklist to confirm it (`checks/ready.md`), then implement Slice 10 (below, 10a/10c first -- they break the Bundle D/E teaching sequence outright) | Dependency: none | Verified: 2026-09-01
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy

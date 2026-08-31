@@ -1,9 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 (empty-cell sprite
-nudges); Slice 6 (new, above-centre-row cell rendering) is the higher-priority
-find of the two | Dependency: none | Verified: 2026-08-31
+Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 shipped (merged from `codex/hive-comb` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next | Dependency: none | Verified: 2026-09-01
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as

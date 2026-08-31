@@ -181,3 +181,40 @@ its check. Move a confirmed or superseded entry to
       Settings, confirm Cell art, Show cell contents text, Sprite-aligned hex
       grid and Direction-even hex speed are all under Appearance and absent
       from Hive & comb; all other Hive & comb controls remain there.
+
+### Challenge 1 Slice 9 fixes (9a-9j)
+- [ ] Re-run Slice 7's full acceptance playthrough (`plans/now/challenge-1.md`
+      Slice 7) end to end. In particular: the queen's backup role no longer
+      lets her auto-build/auto-forage before a stage unlocks it (9a); "Build
+      cell" stays visible whenever a fourth cell might be needed, not just at
+      three fixed stage ids (9b); hatch options never offer "Default" (9c);
+      the Job column's current-role marker respects `allowed_role_keys` (9d);
+      "Raise a gyne" is hidden until its stage gate (9e); Dr Gallerin's hint
+      text says "any flower" not "marked flower" (9f); a manually-placed
+      second cell renders (9g); commanding a bee to a point in the other zone
+      routes her through the entrance/exit instead of off-screen (9h);
+      automatic nectar foraging locks her to one flower with camera-follow/
+      4x speed visibly firing (9i); a designated cell returns to neutral once
+      fully emptied (9j). See `plans/now/challenge-1.md` Slice 9 for each
+      finding's detail.
+
+### Challenge 2 Slice B + Slice D fixes
+- [ ] Start Challenge 2 fresh: the Meadow button is visible from the opening
+      stage, and the Foraging window button stays visible across every stage
+      transition through 2.9 (Slice B). Select a death marker (drag-box and
+      single-click, both zones): a green selection ring surrounds it, same
+      as any other selectable object (Slice D). See
+      `plans/now/hands-on-fixes-2026-08-31.md` Slices B and D.
+
+### UI-P-1, UI-P-3, UI-P-4, UI-P-7 (Dr Gallerin bubble, pre-run menu, info badges)
+- [ ] Hover a long info-badge tooltip (settings window or elsewhere): it
+      wraps into a multi-line box instead of spilling off-screen as one line
+      (P-1). On the pre-run menu, neighbouring honeycomb tiles' borders read
+      as one shared line, not a doubled seam, and clicking near a touching
+      corner still selects the tile under the pointer (P-3); the left pane's
+      text/hexagons sit a small buffer from the screen edge instead of pixel
+      0 (P-4). Dr Gallerin's speech bubble text matches the rest of the
+      HUD's size and follows the chosen typeface, sits to the left of his
+      icon with a pointer connecting the two, and the command tray never
+      renders underneath it at any tested width (P-7). See
+      `plans/now/ui.md` UI-P-1/3/4/7.

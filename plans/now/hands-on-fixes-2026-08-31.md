@@ -1,7 +1,7 @@
 # Hands-on fixes — 31 Aug 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`; Slice C (C1/C2/C3) fixed on `claude/hands-on-fixes-slice-c`, `tools/verify.ps1` green, hands-on confirmation still needed for both (`checks/ready.md`); Slices B and D still proposed | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slices A and C, then sequence B and D against `plans/now/challenge-1.md` Slice 9 and `plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-09-01
+Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`; Slice C (C1/C2/C3) fixed on `claude/hands-on-fixes-slice-c`; Slices B and D fixed on `codex/hands-on-bd` (merged 1 Sep 2026) -- `tools/verify.ps1` green, hands-on confirmation still needed for all four (`checks/ready.md`) | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slices A, B, C and D | Dependency: none | Verified: 2026-09-01
 
 Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced
@@ -222,6 +222,10 @@ hand-maintained inconsistently" durable rule already stated in
 from the opening stage; the Foraging window button stays visible across
 every stage transition through 2.9.
 
+**Implemented 1 Sep on `codex/hands-on-bd`:** `"meadow_view"` added to all 9
+`STAGES_2` entries' `unlocked_keys`; `"foraging_window"` added to 2.2-2.9.
+Moved to `checks/ready.md` as a post-fix confirmation.
+
 ---
 
 ## Slice C — Nectar/pollen recharge reads as stuck
@@ -352,6 +356,13 @@ better than a refactor nobody asked for.
 (`death_marker.gd`'s own header already documents it as simulation-inert).
 Needs a hands-on visual check (ring reads right on screen), not an
 automated one.
+
+**Implemented 1 Sep on `codex/hands-on-bd`:** `death_marker.gd` gained a
+`selection_ring: Line2D` and `set_selected(value)`; `input_selection.gd`'s
+three death-marker click branches now call `_select_world_object("death",
+marker)` instead of `show_object_summary` directly; `hud.gd`'s `"death"`
+case reads `data.death_info` off the passed node. Moved to
+`checks/ready.md` as a post-fix confirmation.
 
 ---
 
