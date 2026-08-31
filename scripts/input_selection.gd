@@ -120,8 +120,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
-				_clear_world_object_selection()
-				main.hud.show_object_summary("death", marker.death_info)
+				_select_world_object("death", marker)
 				return
 			_clear_cell_selection()
 			_clear_block_selection()
@@ -136,8 +135,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				return
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
-				_clear_world_object_selection()
-				main.hud.show_object_summary("death", marker.death_info)
+				_select_world_object("death", marker)
 				return
 	else:
 		for b in _bees_in_current_view():
@@ -169,8 +167,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 				if box.has_point(m.global_position):
 					boxed_markers.append(m)
 			if not boxed_markers.is_empty():
-				_clear_world_object_selection()
-				main.hud.show_object_summary("death", boxed_markers[0].death_info)
+				_select_world_object("death", boxed_markers[0])
 				return
 
 	_clear_world_object_selection()

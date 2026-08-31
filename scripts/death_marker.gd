@@ -25,6 +25,9 @@ var death_info: Dictionary = {}
 var body: Polygon2D
 var cross_a: Line2D
 var cross_b: Line2D
+## Presentation-only outline. InputSelection owns which marker is selected;
+## death markers remain simulation-inert.
+var selection_ring: Line2D
 
 func _ready() -> void:
 	add_to_group("death_markers")
@@ -41,6 +44,15 @@ func _ready() -> void:
 	cross_a = _make_stroke(Vector2(-4, -4), Vector2(4, 4))
 	cross_b = _make_stroke(Vector2(4, -4), Vector2(-4, 4))
 
+	selection_ring = Line2D.new()
+	selection_ring.points = Shapes.circle_points(8.0, 16)
+	selection_ring.closed = true
+	selection_ring.width = 2.5
+	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.visible = false
+	selection_ring.z_index = 10
+	add_child(selection_ring)
+
 func _make_stroke(from_point: Vector2, to_point: Vector2) -> Line2D:
 	var line := Line2D.new()
 	line.add_point(from_point)
@@ -49,6 +61,10 @@ func _make_stroke(from_point: Vector2, to_point: Vector2) -> Line2D:
 	line.default_color = Color(0.85, 0.85, 0.85, 0.8)
 	add_child(line)
 	return line
+
+func set_selected(value: bool) -> void:
+	if selection_ring != null:
+		selection_ring.visible = value
 
 func _process(delta: float) -> void:
 	age_seconds += delta
