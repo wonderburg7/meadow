@@ -1,9 +1,10 @@
 # Hands-on fixes — 31 Aug 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: proposed, not yet implemented | Owner: Dave / Claude Code | Next: Dave
-to sequence against `plans/now/challenge-1.md` Slice 9 and `plans/now/ui.md`
-UI-P | Dependency: none | Verified: 2026-08-31
+Status: Slice A1/A0 confirmed via live boot 31 Aug, fixes not yet
+implemented; Slices A2-D still proposed | Owner: Dave / Claude Code | Next:
+Dave to sequence against `plans/now/challenge-1.md` Slice 9 and
+`plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-08-31
 
 Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced
@@ -19,7 +20,8 @@ this file is fixes only.
 
 ## Slice A — Critical: restore can silently drop bees, including the queen
 
-**Two symptoms, one shared root cause plus one local bug.**
+**Two symptoms, root-caused 31 Aug from a live boot with console capture**
+(`meadow_save.json`, 110 bees, format version 3 -- see A1's fixture note).
 
 1. Dave: "loading a game after saving... seems to have made many bees,
    including the queen, disappear" (ordinary save/load).
@@ -27,58 +29,124 @@ this file is fixes only.
    the restore," and neither the rescue ("Ahem. Field ecologists...") nor
    recovery ("A brief ecological wobble...") Gallerin lines ever appeared.
 
-### A1 — `saving.gd::_restore_bees()` has no per-entry error boundary
+### A1 — `saving.gd:275` assigns an untyped `[]` to a typed-array property, and throws every time
 
-**Confirmed-plausible, pending a live-boot confirmation with console
-output.** `_restore_bees()` (`scripts/saving.gd:219-316`) loops every saved
-bee entry with no guard around the loop body. GDScript aborts the whole
-function on an unhandled runtime error, so one malformed entry partway
-through silently truncates every entry after it — bees before the failure
-survive as real nodes, everything after (queen included, since the save-time
-array order comes from a live group scan, not a queen-first order) never
-gets created. This is the only mechanism found that fits "**many** bees,
-including the queen" rather than all-or-none.
+**Confirmed**, from an ordinary load (`Session.load_pending` path,
+`main.gd:581`):
 
-The one restore step with a confirmed missing guard, contrasted with its
-neighbours: `known_patches` (`scripts/saving.gd:276-277`) loops arbitrary-
-length pairs with **no `.size() == 2` check**, unlike `home_hex`/
-`mine_home_hex` a few lines above, which do check. Not proven as *the*
-throwing field yet, but the clearest concrete gap in an otherwise
-defensively-written loop.
+```
+W  save_game.gd:359 @ read(): Exponent too high        (x284, see A0)
+E  _restore_bees: Invalid assignment of property or key 'known_patches'
+   with value of type 'Array' on a base object of type 'Node2D (bee.gd)'.
+   saving.gd:275 @ _restore_bees()
+   saving.gd:55 @ _restore()
+   main.gd:581 @ _ready()
+```
 
-Also relevant: `checks/ready.md`'s own Slice 5 entry has this exact check
-still open (`- [ ]`, never confirmed), and Slice 5's own writeup says "No
-Godot boot was available this session to confirm parser-level correctness."
-This restore path has no test coverage — `tests/test_save_migrations.py`
-only checks version bookkeeping, never runs a real multi-bee restore.
+Exactly **one** instance of the `E` line, not one per bee — the throw
+unwinds the whole call chain (`_restore_bees` -> `_restore` -> `_ready`)
+rather than being logged and skipped per entry. `known_patches` is
+declared `Array[Vector2] = []` (`bee.gd:295`) — the only save-restored bee
+field with a typed-array declaration; every sibling field in the same loop
+(`build_queue`, `mine_queue`, `restock_targets/sources/blocked`) is a plain
+untyped `Array`. `bee` itself is declared `var bee = main.Bee.new()`
+(`saving.gd:222`), reached through the `main.Bee` property rather than a
+local `const`, so its static type doesn't carry through and `bee` is
+Variant at compile time. Assigning the bare literal `bee.known_patches = []`
+(`saving.gd:275`) through that dynamically-typed reference hits a genuine
+Godot runtime restriction: an untyped `[]` literal isn't auto-coerced into
+a typed `Array[Vector2]` property outside the declaring class's own static
+context, so the assignment is rejected at runtime — on every bee, starting
+with the first one `_restore_bees()` processes.
 
-**Fix:**
-- Add a `pair.size() == 2` guard around the `known_patches` loop
-  (`saving.gd:276-277`), matching the existing `home_hex`/`mine_home_hex`
-  pattern.
-- Once a live boot names the actual throwing field (see below), add the
-  same defensive `.get()`/type/size check there, following the pattern
-  already used throughout this function.
-- Consider wrapping each entry's construction so one bad entry logs and is
-  skipped rather than aborting the rest of the colony — decide the exact
-  shape once the real failure is known; don't guess a broad try/catch-style
-  fix before that.
+**This supersedes the previous theory in this section** (a missing
+`pair.size() == 2` guard on the loop at 276-277) — same field, wrong
+mechanism: the crash happens on the reset-to-empty line itself, before the
+per-pair loop ever runs, so it fires unconditionally regardless of whether
+an entry's `known_patches` data is well-formed. Checked directly against
+the repro save: the first bee `_restore_bees()` processes (not the queen)
+has four valid `[x, y]` pairs; the queen's own entry has an empty array —
+both would fail identically at line 275 before either's pairs are ever
+read.
 
-**Live confirmation needed:**
-1. Debug-panel Save then Load on a non-trivial colony; capture the Godot
-   console at the moment of load (a script error names the exact file:line
-   and field).
-2. Compare bee count before save vs after load — partial loss confirms this
-   hypothesis; total loss points earlier in `_restore()` (e.g.
-   `_restore_cells`/`_restore_soil` throwing before `_restore_bees()` is
-   even reached) and needs its own look.
-3. Capture the reproducing save JSON as a new `tests/fixtures/` file — there
-   is currently no bee/queen-bearing fixture, which is the coverage gap that
-   let this ship unnoticed.
+**Consequence, worse than first scoped:** since the failure is
+data-independent, every ordinary load with at least one saved bee restores
+**zero** bees, not "many, but some survive." `main.queen` was already
+nulled a few lines earlier (`saving.gd:213`) and never gets reassigned.
+The throw also unwinds out of `_restore()` entirely, so everything after
+the `_restore_bees()` call on that path never runs either:
+`main.fog_of_war.restore(...)`, `main.hive.build_navigation()`,
+`main.hive.refresh_edge_flags()`, `main.hive.invalidate_index()`
+(`saving.gd:56-59`). Not reported by Dave, but it follows from the same
+confirmed throw — worth a quick check once A1 is fixed, not assumed fine.
+
+**Fix:** give the assignment a value that already carries the
+`Array[Vector2]` runtime type, instead of relying on external coercion of
+a bare literal:
+
+```gdscript
+var patches: Array[Vector2] = []
+for pair in entry.get("known_patches", []):
+    patches.append(Vector2(float(pair[0]), float(pair[1])))
+bee.known_patches = patches
+```
+
+(or a small `_point_array(raw) -> Array[Vector2]` helper alongside this
+file's existing `_cell_refs`/`_blocks_at`, called the same way
+`restock_targets = _cells_at(...)` already is). Either way, the fix is
+building the typed array locally and assigning it once, not looping
+`.append()` calls onto a property that was itself unassignable.
+
+The `pair.size() == 2` gap for a malformed pair (`saving.gd:277`) is still
+real and still worth adding alongside this fix, matching `home_hex`/
+`mine_home_hex`'s existing guard — it just isn't what caused this crash.
+
+**Now confirmed, not just needed:** capture `meadow_save.json` (the repro
+file behind this pass — 110 bees, one with a populated `known_patches`,
+the queen with an empty one, format version 3) as the `tests/fixtures/`
+bee/queen-bearing fixture this section already flagged as missing.
+`tests/test_save_migrations.py` still only checks version bookkeeping,
+never a real multi-bee restore.
+
+### A0 — `save_game.gd::read()` logs 284 "Exponent too high" warnings on this same load (new finding, 31 Aug)
+
+**Confirmed**, from the same console capture and a direct read of the
+repro save file. `save_game.gd:266-269` writes `b.forage_start_point.x/y`
+and `b.local_search_anchor.x/y` straight into the save JSON with no
+"unset" check, unlike the read side (`saving.gd:266-268`), which already
+expects either field to be missing and falls back to `INF`
+(`entry.get("start_x", INF)`, `if restored_start.x != INF`). Both fields
+default to `Vector2(INF, INF)` (`bee.gd:228,242`) until a bee's first
+forage bout sets them. Godot's JSON writer encodes an unrepresentable
+double as the literal `1e99999`; its own reader (`built_in_strtod`,
+`core/string/ustring.cpp`) clamps the exponent to 511 and prints
+"Exponent too high" on every occurrence — the clamped value still
+overflows to `INF` in double arithmetic in practice, which is why the read
+side's `!= INF` check keeps working.
+
+Counted directly in the repro save: 110/110 bees have `start_x`/`start_y`
+as this sentinel, 32/110 also have it on `search_anchor_x`/`search_anchor_y`
+— 110 + 110 + 32 + 32 = 284, matching the console exactly. Not the cause
+of the A1 crash (a separate field, a `W`-level warning, and the value
+round-trips), but real noise on every single load — 569 console lines were
+copied for this one boot — that will bury a genuine error report next
+time one happens.
+
+**Fix:** omit `start_x`/`start_y`/`search_anchor_x`/`search_anchor_y` from
+the saved dictionary when the corresponding field is still the `INF`
+sentinel, instead of writing a value that only round-trips by relying on
+double-overflow arithmetic. The read side needs no change —
+`entry.get(key, INF)` already treats a missing key as unset.
 
 ### A2 — `challenge_runner.gd::_check_c2_failure()`'s restore branch has no queen guard
 
-**Confirmed.** Line 224 calls `main.TutorialCheckpoint.restore(main)` and
+**Confirmed.** [31 Aug update: A1 above is now confirmed, not hypothetical
+— since checkpoint-restore reuses the exact same `_restore()`/
+`_restore_bees()` path (`tutorial_checkpoint.gd:40-47`), A1's
+known_patches crash is the leading explanation for the missing queen here
+too. Fix and re-test A1 first; this guard is still correct to add
+regardless, per the reasoning below.] Line 224 calls
+`main.TutorialCheckpoint.restore(main)` and
 never checks its return value; line 230 (`main.queen.energy_immune = true`)
 dereferences `main.queen` unguarded immediately after — the one place in
 this file that skips the `is_instance_valid(main.queen)` check used at 14

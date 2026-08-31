@@ -68,6 +68,20 @@ of these has bitten more than once:
   without Godot" in `CLAUDE.md`). Passed both check suites; failed to
   load in Godot. Worth rereading the *whole* function after more than
   one edit touches it, not just the specific lines each edit changed.
+- **A typed `Array[T]` property can't take a bare `[]` from outside its
+  class.** `bee.known_patches` is declared `Array[Vector2]`; resetting it
+  from another script via `some_dynamically_typed_ref.known_patches = []`
+  throws "Invalid assignment of property or key" at runtime, because an
+  untyped literal isn't coerced into a typed array outside the declaring
+  class's own static context — and it's data-independent, so it throws
+  on the very first call, not just on bad input. Build the typed array in
+  a local var first (`var x: Array[T] = []`, populate, then assign) or
+  return one from a helper, rather than assigning a literal through a
+  reference whose static type doesn't carry the property's declared type.
+  Bit `saving.gd::_restore_bees()` 31 Aug (see
+  `plans/now/hands-on-fixes-2026-08-31.md` Slice A1) — worth a beat of
+  suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
+  restore/deserialize path resets wholesale from outside its class.
 
 ## Environment quirk: a stale git lock
 

@@ -12,30 +12,69 @@ on demand in `plans/archive/`.
    on load; Challenge 2 checkpoint-restore can crash silently.** Found in
    Dave's 31 Aug hands-on pass (`checks/ready.md`'s Slice 4/5 checks).
    Jumps ahead of Challenge 1 Slice 9 below because it's a correctness/
-   data-loss bug, not a polish item. Confirmed-plausible root cause:
-   `saving.gd::_restore_bees()` has no per-entry error boundary, so one
-   malformed saved field aborts the loop partway through with no error
-   handling -- bees before the failure survive, everything after (queen
-   included, since save order isn't queen-first) never returns; the
-   `known_patches` step is the one confirmed missing guard (no
-   `.size() == 2` check, unlike its neighbours) but the real trigger needs
-   a live boot with the console open to name it. Separately but relatedly,
-   `challenge_runner.gd::_check_c2_failure()`'s checkpoint-restore branch
-   dereferences `main.queen` with no `is_instance_valid()` check -- the one
-   place in that file skipping its own established convention -- so if a
-   checkpoint restore leaves the queen missing, this silently eats the
-   recovery Gallerin message too; the separately-missing rescue message is
-   most likely explained by the collapse happening on stage 2.1, where the
-   rescue net is deliberately off by design (a question for Dave, not a
-   bug). Full diagnosis, fixes and live-confirmation steps in
+   data-loss bug, not a polish item. **Confirmed** (31 Aug live boot with console capture): `saving.gd:275`
+   (`bee.known_patches = []`) throws "Invalid assignment of property or
+   key" on the very first bee of every ordinary load, because
+   `known_patches` is bee.gd's only save-restored field typed
+   `Array[Vector2]` and the reassignment runs through a dynamically-typed
+   `bee` reference, which Godot won't coerce a bare `[]` literal into.
+   The throw unwinds `_restore_bees()` -> `_restore()` -> `_ready()`
+   entirely, so an ordinary load currently restores **zero** bees, not
+   "many but not all" as first guessed, and also skips the fog-of-war
+   restore and hive-nav rebuild that run after bees in `_restore()`. The
+   earlier `.size() == 2`-guard theory for this same field is superseded
+   -- same field, wrong mechanism. Also confirmed this pass:
+   `save_game.gd` writes bees' unset `forage_start_point`/
+   `local_search_anchor` (an `INF` sentinel) straight into the save JSON,
+   which round-trips through 284 "Exponent too high" parser warnings on
+   this same 110-bee repro save -- functionally harmless so far but pure
+   log noise that will bury a real error next time. Since Challenge 2
+   checkpoint-restore reuses this exact `_restore()` path, the
+   known_patches crash is now the leading explanation for its queen loss
+   too; `challenge_runner.gd::_check_c2_failure()`'s missing
+   `is_instance_valid()` guard is still confirmed and still worth fixing,
+   but very likely secondary damage from the same throw rather than an
+   independent cause. Full diagnosis and exact fixes in
    `plans/now/hands-on-fixes-2026-08-31.md` Slice A. Also queued in that
    same plan, not yet prioritised: Slice B (Challenge 2's Meadow/Foraging
    buttons never unlock -- confirmed, data-only fix), Slice C (nectar/
    pollen recharge reads as stuck -- an HUD readout bug plus a forager-
    pressure artefact, scenario choice is a red herring) and Slice D (death
    marker has no selection glow at all).
-2. **Successor — Challenge 1 Slice 9: fixes from Dave's 30 Aug hands-on
-   pass.** Slice 8 (8a/8b/8d/8e) shipped and Slice 7's resumed
+2. **Successor — Challenge 1 Slices 9 and 10: fixes from Dave's 30-31 Aug
+   hands-on passes.** Slice 10 (`plans/now/challenge-1.md`), found in a
+   second 31 Aug pass specifically replaying Bundle D/E (stages 1.6-1.14),
+   corrects and extends Slice 9a: `command_collect_from()` (the manual
+   right-click-a-flower command Bundle D itself uses) permanently promotes
+   the queen to a real Forager via `set_role()`, a separate and more direct
+   leak than 9a's `role_restricted_to` finding and not fixed by 9a alone
+   (10a-10b); and no mechanism ever stops her automatic foraging once a
+   stage's target amount is reached, so she overshoots toward the cell's
+   real 200-unit capacity instead of stopping at the taught 75/full mark
+   (10c) -- both break the Bundle D/E teaching sequence outright and should
+   be implemented before or alongside 9a-9j, not after. 10d (pollen
+   sub-mode may be unreachable via the queen's backup-role path) and 10e
+   ("building the third cell reveals Laying" is most likely the correct
+   1.14->1.15 transition, not a new bug, but may instead be the
+   already-known 9d) both need one live-reproduction step or a word from
+   Dave before they're scoped as code changes.
+   Also new this pass: `plans/now/hive-comb.md` Slice 6 (cells above the
+   comb's centre row don't render -- traced to `hive_cell.gd`'s z_index
+   formula silently assuming a value that goes negative above the centre,
+   very likely surfaced by the recent hex-grid radial-symmetry fix letting
+   the comb grow upward for the first time) and
+   `plans/active/foraging-evidence.md` (new file; three findings --
+   orientation-flight's counter reading 0 whenever Auto scouting is on, by
+   a settings-prerequisite/runtime-alternative mismatch needing Dave's
+   steer on the fix; proximity recruitment's wiring confirmed clean in
+   static code with no dance yet observed, needing a validated long run
+   before touching thresholds; and the safe forager return reserve being
+   very likely rare-by-design rather than broken, needing its own counter
+   to be checkable at all). Neither is prioritised ahead of Slice 9/10
+   here; both are ready to pick up on their own schedule.
+   Original 30 Aug findings unchanged below.
+
+   Slice 8 (8a/8b/8d/8e) shipped and Slice 7's resumed
    acceptance-playthrough confirmed Slices 1-2's own checks (Poppy, hit
    areas, manual build, no auto role/letter change) outright, then found
    nine further items in `plans/now/challenge-1.md`'s Slice 9:

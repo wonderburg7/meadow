@@ -16,12 +16,13 @@ its check. Move a confirmed or superseded entry to
       day/season boundary update, and rain start/stop plus a Challenge
       stage clear/checkpoint all still fire correctly -- the signal
       refactor itself is clean.
-- [ ] **Not confirmed, found broken 31 Aug:** saving then loading a save
-      made many bees, including the queen, disappear. Diagnosed as a
-      likely missing per-entry error boundary in `saving.gd::_restore_bees()`,
-      not a regression of this signal work. See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slice A -- fix queued ahead
-      of Challenge 1 Slice 9.
+- [ ] **Root cause confirmed 31 Aug, fix not yet applied:** saving then
+      loading a save made many bees, including the queen, disappear --
+      confirmed via live boot to be a `saving.gd:275` typed-array
+      assignment throw that restores zero bees on every load, not a
+      regression of this signal work. See
+      `plans/now/hands-on-fixes-2026-08-31.md` Slice A1 -- fix queued
+      ahead of Challenge 1 Slice 9.
 
 ### Challenge data/goal-registry extraction (efficiency Slice 4)
 - [x] Confirmed 31 Aug: goal shelf text/progress still advances stage by
@@ -58,6 +59,17 @@ its check. Move a confirmed or superseded entry to
       than failing, and 1.13's Gallerin copy withholds "pollen makes new
       workers" while 1.14's reveals it. See `plans/now/challenge-1.md`
       Slices 4-5.
+- [ ] **Not confirmed, found broken 31 Aug (second pass):** nothing ever
+      stops the queen's automatic foraging once a stage's target amount is
+      reached -- she keeps going toward the cell's real 200-unit capacity,
+      well past the 75-unit pollen target. Assigning Forager/pollen also
+      did not visibly start automatic pollen foraging in this run; two
+      competing explanations traced in code, not yet told apart live.
+      "Building the third cell reveals Laying" is most likely the correct
+      1.14->1.15 transition, not a new bug -- but may be the already-known,
+      unfixed 9d (current-role marker) instead; needs Dave to confirm which
+      UI element he saw. See `plans/now/challenge-1.md` Slice 10, sections
+      10c-10e.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
@@ -70,19 +82,15 @@ its check. Move a confirmed or superseded entry to
       movement/collection/deposit never clears a manual stage, and the
       queen never gets auto-assigned a role she wasn't manually given. See
       `plans/now/challenge-1.md` Slice 3.
-
-### Same-flower ping-pong / thin-patch escape (foraging)
-- [ ] Watch a forager worked into an isolated flower (nothing else within
-      `forage_perception_radius`), and separately one in a busy patch
-      (e.g. `foraging_evidence_base.json`'s 3-pollen-forager setup).
-      Before: selection panel could sit alternating "inspecting a flower
-      before deciding whether to feed" / "landing on a flower" for a long
-      stretch with the carried amount barely moving -- worst case, forever,
-      on the exact same flower. After: once nothing worthwhile is left to
-      try (the same flower still on her own cooldown, or a run of thin
-      finds), she should switch to "flying a search loop, looking for a
-      ... flower" instead. See `plans/active/foraging-evidence.md`'s "Recent
-      fixes".
+- [ ] **Not confirmed, found broken 31 Aug (second pass):** right-clicking
+      a flower during these stages permanently makes the queen a real
+      Forager (she reads "Forager -- nectar" with no role ever manually
+      assigned) and she keeps auto-foraging after every deposit from then
+      on. Diagnosed as `Bee.command_collect_from()` calling
+      `set_role(Role.FORAGER)` unconditionally, with no Challenge-aware
+      lock -- a separate, more direct cause than Slice 9a's own
+      `role_restricted_to` finding, and not fixed by 9a alone. See
+      `plans/now/challenge-1.md` Slice 10, sections 10a-10b.
 
 ### Safe forager return reserve (recommendation Slice 4)
 - [ ] Foragers now turn for home based on a calculated return-energy
@@ -94,17 +102,30 @@ its check. Move a confirmed or superseded entry to
       `balance_tests.py` pass; no headless A/B against the old fixed
       threshold has run yet. See `git log` (merge commit for
       `codex/recommendation-slice-4`).
+- [ ] **Confirmed 31 Aug why this can't be watched directly:** foragers
+      self-refuel to full at any flower with nectar (`drink_at_flower`)
+      well before the calculated reserve is ever approached in an ordinary
+      meadow, and the check is skipped outright while she's carrying any
+      nectar. This is very likely working as designed (an emergency-only
+      path for sparse/long-range conditions), but there is currently no
+      counter for it either, so it cannot be confirmed by number over a
+      long run. See `plans/active/foraging-evidence.md` Slice 3 for the
+      proposed counter and a scenario likely to actually trigger it.
 
 ### AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.
 
 ### Foraging window
-- [ ] Foraging window (**G**) showed real numbers when Dave checked it 22
-      Aug (see archive) but on 24 Aug showed no data at all -- check
-      whether Auto scouting/Auto-recruitment were both off (the panel is
-      correctly all-zero then) before treating this as a regression. See the
-      current campaign in `plans/active/foraging-evidence.md`.
+- [x] Confirmed 31 Aug (second time): the panel shows real numbers again.
+- [ ] **Not confirmed, found broken 31 Aug:** Orientation flight reads 0
+      even with the toggle showing as triggered. Traced to a genuine
+      mismatch, not a display bug: `orientation_flight_on` is
+      `scouting_on`'s settings-prerequisite (so the cascade lights it up
+      too), but the two are runtime alternatives (`if scouting_on ... elif
+      orientation_flight_on`), so the orientation-flight counter can never
+      move while scouting is on. Needs Dave's steer on which of three
+      options to take -- see `plans/active/foraging-evidence.md` Slice 1.
 
 ### Proximity recruitment (Slice 9)
 - [ ] Turn on Proximity recruitment (settings cog, Foraging section) --
@@ -117,3 +138,11 @@ its check. Move a confirmed or superseded entry to
       through a real headless sweep yet, so it is also the first real look at
       whether it feels right, not just a confirmation of numbers already
       checked.
+- [ ] **Not confirmed, found broken 31 Aug:** no dance observed over
+      several in-game days. Traced end to end in static code with no
+      defect found -- eligibility scoring, the per-frame proximity check
+      and the shared `_recruitment_matches` counter are all wired
+      correctly. Most likely a threshold/timing tuning question rather
+      than a logic bug; needs one long run read against the diagnostic
+      counters before any threshold changes. See
+      `plans/active/foraging-evidence.md` Slice 2.
