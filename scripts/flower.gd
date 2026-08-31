@@ -307,6 +307,16 @@ func season_strength() -> float:
 func get_available(resource_type: String) -> float:
 	return nectar_amount if resource_type == "nectar" else pollen_amount
 
+## What's actually being added per second right now -- nominal rate scaled
+## by both season and senescence, matching _sync_recharge()'s own maths.
+## The HUD shows these, not the nominal fields, so a flower that's out of
+## season or senescent doesn't read as "should be recharging" when it isn't.
+func effective_nectar_rate() -> float:
+	return nectar_recharge_rate * season_strength() * _senescence_scale()
+
+func effective_pollen_rate() -> float:
+	return pollen_recharge_rate * season_strength() * _senescence_scale()
+
 func get_capacity(resource_type: String) -> float:
 	return nectar_capacity if resource_type == "nectar" else pollen_capacity
 

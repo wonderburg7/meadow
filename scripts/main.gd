@@ -1000,6 +1000,7 @@ func _on_level_chosen(level: int) -> void:
 ## slice 6). The preset write has to land before reload_current_scene()
 ## rebuilds the world, since world_building.gd reads GameConfig at boot.
 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void:
+	DebugPanel.reset_config_to_defaults()
 	ScenarioPresets.apply(preset_key, custom_overrides)
 	PlayerProfile.mark_scenario_played(level, preset_key)
 	Session.starting_level = level

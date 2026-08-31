@@ -968,6 +968,22 @@ static func setting_set(key: String, value) -> void:
 	else:
 		GameConfig.set(key, value)
 
+## C3 (hands-on-fixes-2026-08-31.md): GameConfig is an autoload, so a
+## debug-panel tweak from an earlier session survives reload_current_scene()
+## and would otherwise leak into whatever the player picks next from the
+## main menu. Reads each default from a fresh, unmodified GameConfig
+## instance rather than a hand-maintained list, so it can't drift from
+## TUNABLES/game_config.gd over time. Skips SESSION_KEYS -- those are the
+## player's own preferences, not run balance, and should survive a scenario
+## pick same as they survive everything else.
+static func reset_config_to_defaults() -> void:
+	var defaults = GameConfig.get_script().new()
+	for tunable in TUNABLES:
+		var key: String = tunable.key
+		if key not in SESSION_KEYS:
+			GameConfig.set(key, defaults.get(key))
+	defaults.free()
+
 ## Sets `key` to `value` and, if `key` takes part in the Prerequisites
 ## tree, cascades to keep dependencies consistent -- turning a toggle on
 ## also turns on everything it depends on; turning one off also turns

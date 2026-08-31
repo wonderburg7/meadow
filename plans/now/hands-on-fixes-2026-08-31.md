@@ -1,7 +1,7 @@
 # Hands-on fixes — 31 Aug 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`, `tools/verify.ps1` green, hands-on confirmation still needed (`checks/ready.md`); Slices B-D still proposed | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slice A, then sequence B-D against `plans/now/challenge-1.md` Slice 9 and `plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-08-31
+Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`; Slice C (C1/C2/C3) fixed on `claude/hands-on-fixes-slice-c`, `tools/verify.ps1` green, hands-on confirmation still needed for both (`checks/ready.md`); Slices B and D still proposed | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slices A and C, then sequence B and D against `plans/now/challenge-1.md` Slice 9 and `plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-09-01
 
 Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced
@@ -289,6 +289,32 @@ a genuine `_sync_recharge` defect distinct from all three explanations
 above and needs its own look; if it climbs cleanly with no bee present,
 C2 is confirmed and it was never actually stuck.
 
+**Implemented 31 Aug/1 Sep without waiting on the above:** C1 and C2 are
+each independently worth fixing regardless of which explains Dave's
+specific report (see their own sections), and C3 closes a real silent leak
+on its own — none of the three needed the live check to be justified, so
+all three landed on `claude/hands-on-fixes-slice-c` rather than blocking on
+it. The live check above still matters for confirming Dave's *original*
+report is actually resolved — moved to `checks/ready.md` as a post-fix
+confirmation rather than a pre-implementation gate:
+- C1: `flower.gd` gained `effective_nectar_rate()`/`effective_pollen_rate()`
+  (nominal rate x `season_strength()` x `_senescence_scale()`); `hud.gd`'s
+  flower detail panel now calls these instead of the raw
+  `nectar_recharge_rate`/`pollen_recharge_rate` fields.
+- C2: `bee_foraging.gd::nearest_flower()`'s accept filter now rejects
+  `f.get_available(bee.resource_type) < GameConfig.min_worthwhile_amount`
+  instead of `<= 0.0`, matching every other worthwhile-amount check in the
+  same file.
+- C3: `debug_panel.gd` gained `reset_config_to_defaults()` — reads each
+  TUNABLES key's declared default off a fresh, unmodified `GameConfig`
+  instance rather than a second hand-maintained list, and skips
+  `SESSION_KEYS` (player preferences, not run balance). Called from
+  `main.gd::_on_scenario_chosen()` before `ScenarioPresets.apply()`, so a
+  preset's own restated fields still win. Deliberately *not* folded into
+  `Session.reset_run_state()` itself — that function also runs from
+  `debug_panel.gd`'s own "Restart Run" button, whose entire point is to
+  keep a just-edited debug-panel value across the reload.
+
 ---
 
 ## Slice D — Death marker: no selection glow
@@ -338,11 +364,15 @@ automated one.
 - Slice B: `scripts/challenge_stages.gd` (`STAGES_2`, 275-347),
   `scripts/challenge_runner.gd` (`_apply_stage_gate_to_ui`, ~546-547),
   `scripts/stage_gate.gd` (`set_unlocked_keys`, 87-90).
-- Slice C: `scripts/flower.gd` (`_sync_recharge`, 207-228),
-  `scripts/hud.gd` (flower detail panel, 1399-1410),
+- Slice C: `scripts/flower.gd` (`_sync_recharge` 207-228,
+  `effective_nectar_rate`/`effective_pollen_rate` new, after `get_available`),
+  `scripts/hud.gd` (flower detail panel, `_refresh_flower_summary` ~1399-1410),
   `scripts/bee_foraging.gd` (`nearest_flower` accept filter, ~281),
+  `scripts/debug_panel.gd` (`TUNABLES`, `SESSION_KEYS`,
+  `reset_config_to_defaults` new, after `setting_set`),
+  `scripts/main.gd` (`_on_scenario_chosen`, ~1002-1010),
   `scripts/scenario_presets.gd`, `scripts/game_config.gd`,
-  `scripts/debug_panel.gd`, `scripts/session.gd`.
+  `scripts/session.gd`.
 - Slice D: `scripts/death_marker.gd` (full file, 60 lines),
   `scripts/input_selection.gd` (121-141, 168-174, 251-257, `_select_world_object`),
   `scripts/flower.gd` (line 119, selection ring precedent).
