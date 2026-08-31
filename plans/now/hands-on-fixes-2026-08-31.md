@@ -1,10 +1,7 @@
 # Hands-on fixes — 31 Aug 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: Slice A1/A0 confirmed via live boot 31 Aug, fixes not yet
-implemented; Slices A2-D still proposed | Owner: Dave / Claude Code | Next:
-Dave to sequence against `plans/now/challenge-1.md` Slice 9 and
-`plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-08-31
+Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`, `tools/verify.ps1` green, hands-on confirmation still needed (`checks/ready.md`); Slices B-D still proposed | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slice A, then sequence B-D against `plans/now/challenge-1.md` Slice 9 and `plans/now/ui.md` UI-P | Dependency: none | Verified: 2026-08-31
 
 Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced

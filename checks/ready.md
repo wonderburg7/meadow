@@ -16,23 +16,33 @@ its check. Move a confirmed or superseded entry to
       day/season boundary update, and rain start/stop plus a Challenge
       stage clear/checkpoint all still fire correctly -- the signal
       refactor itself is clean.
-- [ ] **Root cause confirmed 31 Aug, fix not yet applied:** saving then
-      loading a save made many bees, including the queen, disappear --
-      confirmed via live boot to be a `saving.gd:275` typed-array
-      assignment throw that restores zero bees on every load, not a
-      regression of this signal work. See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slice A1 -- fix queued
-      ahead of Challenge 1 Slice 9.
+- [ ] **Fix applied 31 Aug, not yet confirmed live:** saving then loading a
+      save made many bees, including the queen, disappear -- root-caused to
+      a `saving.gd:275` typed-array assignment throw that restored zero
+      bees on every load. Fixed on `claude/save-restore-slice-a` by
+      building `known_patches` as a locally-typed `Array[Vector2]` before
+      assignment. Boot the game, load a save with at least one bee (the
+      repro save had 110, queen included), and confirm every bee restores
+      with no `known_patches`/`Invalid assignment` error in the console.
+      Also confirm the console no longer shows repeated "Exponent too
+      high" warnings on that same load (the paired `save_game.gd` fix, was
+      284 lines on the repro save). See
+      `plans/now/hands-on-fixes-2026-08-31.md` Slice A1/A0.
 
 ### Challenge data/goal-registry extraction (efficiency Slice 4)
 - [x] Confirmed 31 Aug: goal shelf text/progress still advances stage by
       stage exactly as before.
-- [ ] **Not confirmed, found broken 31 Aug:** neither the rescue message
-      ("Ahem. Field ecologists...") nor the recovery/checkpoint-restore
-      message ("A brief ecological wobble...") appeared during a Challenge
-      2 nectar collapse. Traced to `challenge_runner.gd`'s checkpoint-
-      restore branch, not this extraction. See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slice A2.
+- [ ] **Fix applied 31 Aug, not yet confirmed live:** neither the rescue
+      message ("Ahem. Field ecologists...") nor the recovery/checkpoint-
+      restore message ("A brief ecological wobble...") appeared during a
+      Challenge 2 nectar collapse. Most likely explained entirely by the
+      known_patches restore crash above (checkpoint-restore reuses the
+      same `_restore()` path); `challenge_runner.gd::_check_c2_failure()`
+      also now guards `TutorialCheckpoint.restore()`'s return and
+      `main.queen` validity before use, matching its other 14 call sites.
+      Trigger a Challenge 2 nectar collapse past stage 2.1 and confirm the
+      recovery Gallerin line appears and the queen survives the restore.
+      See `plans/now/hands-on-fixes-2026-08-31.md` Slice A2.
 
 ### Challenge 1 Bundle G -- trim Challenge 2's opening (stages renumbered 2.1-2.9)
 - [x] Confirmed 31 Aug: Challenge 2 opens with the queen (role Laying)

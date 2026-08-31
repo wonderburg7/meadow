@@ -8,40 +8,7 @@ on demand in `plans/archive/`.
 
 ## Next up
 
-1. **Current — Save/restore Slice A: bees, including the queen, can vanish
-   on load; Challenge 2 checkpoint-restore can crash silently.** Found in
-   Dave's 31 Aug hands-on pass (`checks/ready.md`'s Slice 4/5 checks).
-   Jumps ahead of Challenge 1 Slice 9 below because it's a correctness/
-   data-loss bug, not a polish item. **Confirmed** (31 Aug live boot with console capture): `saving.gd:275`
-   (`bee.known_patches = []`) throws "Invalid assignment of property or
-   key" on the very first bee of every ordinary load, because
-   `known_patches` is bee.gd's only save-restored field typed
-   `Array[Vector2]` and the reassignment runs through a dynamically-typed
-   `bee` reference, which Godot won't coerce a bare `[]` literal into.
-   The throw unwinds `_restore_bees()` -> `_restore()` -> `_ready()`
-   entirely, so an ordinary load currently restores **zero** bees, not
-   "many but not all" as first guessed, and also skips the fog-of-war
-   restore and hive-nav rebuild that run after bees in `_restore()`. The
-   earlier `.size() == 2`-guard theory for this same field is superseded
-   -- same field, wrong mechanism. Also confirmed this pass:
-   `save_game.gd` writes bees' unset `forage_start_point`/
-   `local_search_anchor` (an `INF` sentinel) straight into the save JSON,
-   which round-trips through 284 "Exponent too high" parser warnings on
-   this same 110-bee repro save -- functionally harmless so far but pure
-   log noise that will bury a real error next time. Since Challenge 2
-   checkpoint-restore reuses this exact `_restore()` path, the
-   known_patches crash is now the leading explanation for its queen loss
-   too; `challenge_runner.gd::_check_c2_failure()`'s missing
-   `is_instance_valid()` guard is still confirmed and still worth fixing,
-   but very likely secondary damage from the same throw rather than an
-   independent cause. Full diagnosis and exact fixes in
-   `plans/now/hands-on-fixes-2026-08-31.md` Slice A. Also queued in that
-   same plan, not yet prioritised: Slice B (Challenge 2's Meadow/Foraging
-   buttons never unlock -- confirmed, data-only fix), Slice C (nectar/
-   pollen recharge reads as stuck -- an HUD readout bug plus a forager-
-   pressure artefact, scenario choice is a red herring) and Slice D (death
-   marker has no selection glow at all).
-2. **Successor — Challenge 1 Slices 9 and 10: fixes from Dave's 30-31 Aug
+1. **Current — Challenge 1 Slices 9 and 10: fixes from Dave's 30-31 Aug
    hands-on passes.** Slice 10 (`plans/now/challenge-1.md`), found in a
    second 31 Aug pass specifically replaying Bundle D/E (stages 1.6-1.14),
    corrects and extends Slice 9a: `command_collect_from()` (the manual
@@ -100,6 +67,18 @@ on demand in `plans/archive/`.
    vanishes" half is unconfirmed in static code -- replay live once the
    rest of 9j lands). Re-run Slice 7's full acceptance playthrough again
    once Slice 9 is in.
+2. **Successor — `plans/now/hands-on-fixes-2026-08-31.md` Slice B:
+   Challenge 2's Meadow/Foraging buttons never unlock.** Confirmed fully
+   static, no live repro needed: `STAGES_2` never lists `"meadow_view"` in
+   any stage's `unlocked_keys`, and `"foraging_window"` is only listed in
+   2.1, not 2.2-2.9 -- both buttons vanish the moment their stage is
+   entered. Plain data fix in `challenge_stages.gd`. Slice A (bees/queen
+   vanishing on load, Challenge 2 checkpoint-restore's missing queen guard)
+   shipped on `claude/save-restore-slice-a` 31 Aug -- code fixed and
+   `tools/verify.ps1` green, hands-on confirmation still pending in
+   `checks/ready.md`. Slices C (nectar/pollen recharge reads as stuck) and
+   D (death marker has no selection glow) remain queued in the same plan,
+   not yet sequenced against this slice or `plans/now/ui.md` UI-P.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

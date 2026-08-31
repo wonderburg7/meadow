@@ -236,7 +236,7 @@ static func _bees_data(world) -> Array:
 	for b in world.get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b):
 			continue
-		out.append({
+		var entry := {
 			"id": b.bee_id,
 			"queen": b.is_queen,
 			"gyne": b.is_gyne,
@@ -263,10 +263,6 @@ static func _bees_data(world) -> Array:
 			"finish_first": b.finish_task_first,
 			"pending_role": b.pending_role,
 			"preferred": b.preferred_species,
-			"start_x": b.forage_start_point.x,
-			"start_y": b.forage_start_point.y,
-			"search_anchor_x": b.local_search_anchor.x,
-			"search_anchor_y": b.local_search_anchor.y,
 			# Slice 6 patch memory: array of [x, y] pairs, most recent
 			# last, same order as bee.known_patches and the same [x, y]
 			# shape _hex_list already uses below.
@@ -302,7 +298,20 @@ static func _bees_data(world) -> Array:
 			"restock_targets": _cell_refs(b.restock_targets),
 			"restock_sources": _cell_refs(b.restock_sources),
 			"restock_blocked": _cell_refs(b.restock_blocked),
-		})
+		}
+		# Unset until a bee's first forage bout, both default to
+		# Vector2(INF, INF) (bee.gd) -- omit rather than write a value that
+		# only round-trips via JSON's exponent-clamped 1e99999 encoding of
+		# an unrepresentable double, which floods the console with
+		# "Exponent too high" on every load. Read side (saving.gd) already
+		# treats a missing key as unset via entry.get(key, INF).
+		if b.forage_start_point.x != INF:
+			entry["start_x"] = b.forage_start_point.x
+			entry["start_y"] = b.forage_start_point.y
+		if b.local_search_anchor.x != INF:
+			entry["search_anchor_x"] = b.local_search_anchor.x
+			entry["search_anchor_y"] = b.local_search_anchor.y
+		out.append(entry)
 	return out
 
 ## Hexes as flat pairs, which is all JSON can carry.
