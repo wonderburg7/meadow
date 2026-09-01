@@ -1088,6 +1088,12 @@ lives, not what it is set to.
 
 ## Deferred decisions
 
-The panel texture needs Dave’s visual direction. Pre-run menu restructuring,
-shared accessibility surface and later skill-tree UI need a separately chosen
-product slice; they are not implied by UI-A through UI-D.
+The panel texture needs Dave’s visual direction. Pre-run menu restructuring
+and the shared accessibility surface need a separately chosen product slice;
+they are not implied by UI-A through UI-D.
+
+The skill-tree UI is no longer an open UI question. Its honeycomb grid, node
+states, panel behaviour and the row-2 HUD Skills button are fully specified in
+`plans/design/progression.md` sections 8.1-8.5, and belong to the progression
+build rather than a UI slice. Read that file before touching
+`hud.gd::_build_top_right_bar` or `ui_icon.gd` for skill-tree work.

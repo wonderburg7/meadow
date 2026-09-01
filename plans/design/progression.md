@@ -1,29 +1,30 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: designed, not scheduled | Owner: Dave | Next: select Phase A only
-when progression becomes the active product direction | Dependency: no active
-implementation slice | Verified: 2026-08-26
+Status: designed, not scheduled | Owner: Dave | Next: Phase A step 1 (catalogue inventory) once progression becomes the active product direction | Dependency: no active implementation slice; four skill definitions still open (section 5.9) | Verified: 2026-09-01
 
-Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Reconciled against `DESIGN_BACKLOG.md`, `ROADMAP.md`, `plans/now/ui.md` and the codebase as it stood 22 Aug 2026, from Dave's original design brief. This file is now the source of truth for skill-tree/adaptation design — `plans/now/ui.md` §13, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
+Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
-Documentation only. No game code changes in this pass — see section 10 for the build sequence Claude Code will work through separately.
+This file is the source of truth for skill-tree/adaptation design — `plans/now/ui.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
-## 0. Terminology reconciled with existing docs
+Documentation only. No game code changes in this pass — see section 11 for the build sequence.
 
-- **Scenarios** (not "Starter Mode") stays the name for preset runs — already shipped in `plans/now/ui.md` (21 Aug), with Relaxed/Standard/Demanding/Custom presets.
-- **Sandbox** is a distinct, separate mode: post-campaign, no win conditions, toggle every mechanic unlocked across the campaign. This is `DESIGN_BACKLOG.md` §1's "open world mode," renamed and formalised here. It is a **different concept from Scenarios**, not a replacement for the name — Scenarios are curated presets with settings limits; Sandbox is unrestricted. Sandbox has no build plan yet (see section 11).
-- **Defense** spelling is already settled (`plans/now/ui.md`, 21 Aug, "the six areas... named 21 Aug") — used consistently below.
+## 0. Terminology
+
+- **Scenarios** (not "Starter Mode") stays the name for preset runs — already shipped, with Relaxed/Standard/Demanding/Custom presets.
+- **Sandbox** is a distinct, separate mode: post-campaign, no win conditions, toggle every mechanic unlocked across the campaign. This is `DESIGN_BACKLOG.md` §1's "open world mode," renamed and formalised here. It is a **different concept from Scenarios**, not a replacement for the name. Sandbox has no build plan yet (section 12).
 - Run kinds, for the rest of this document: **Challenge**, **Scenario**, **Sandbox**.
+- **Defence** is spelt the British way throughout, per `CLAUDE.md`'s British English rule. This changes the "Defense" spelling settled 21 Aug in `plans/now/ui.md`. Every ID below is `skill.defence.*`. Nothing in the game's own scripts spells it the American way today, so this costs no rename — only the earlier plan text used "Defense".
+- **Language setting.** Display text must stay separable from stable IDs so a future setting can switch between UK and US English, and later other languages. **Do not scope or build that setting now** — the only requirement on this plan is that no display string is ever a save key, a dependency, or a lookup key. Section 3's stable-ID convention already guarantees this; keep it.
 
 ## 1. Purpose
 
 Two complementary forms of progression:
 
-1. **Skills** determine what a colony can do (features, roles, role modes, controls, behaviours, actions).
-2. **Colony Adaptations** determine what this particular colony is unusually good at (run-only statistical bonuses).
+1. **Skills** determine what a colony can do (features, roles, role modes, controls, behaviours, actions). Buying a skill unlocks that feature for that game.
+2. **Colony Adaptations** determine what this particular colony is unusually good at (run-only statistical bonuses). Retained as designed, but **deferred behind the whole skill tree** in the build order (section 11) — no skill-tree slice depends on them.
 
-Soft specialisation throughout — no mutually exclusive branches, no permanently locked alternatives, no one-capstone-per-run restriction, no irreversible meta specialisation in the first implementation. Revisit only if playtesting shows ordinary costs and tier progression don't create enough variety on their own.
+Soft specialisation throughout — no mutually exclusive branches, no permanently locked alternatives, no irreversible meta specialisation in the first implementation.
 
 ## 2. What already exists — reuse map
 
@@ -31,134 +32,241 @@ The main lever on build risk and effort. Most of what a from-scratch architectur
 
 | Need | Existing precedent | Decision |
 |---|---|---|
-| Availability/visibility resolver | `stage_gate.gd` — per-string-key unlock/lock, already what every panel/button checks; `plans/now/ui.md` §13 already plans every skill node as a `stage_gate` key | Keep `stage_gate.gd` unchanged as the **visibility** layer. Layer a new, thin resolver on top for ownership/afford/feature-validity questions — see section 3. |
-| Run-definition catalogue (Challenge/Scenario/Sandbox) | `levels.gd`'s `LEVELS` dict already carries empty `unlocks`/`win_conditions` arrays per entry, built for exactly this (`DESIGN_BACKLOG.md` §1, "done 19 Aug"); `challenge_runner.gd`'s `STAGES` already applies deltas per sub-stage | Extend this existing shape with skill-related fields (grants/bans/delays) rather than inventing a parallel `run_definitions.gd`. |
+| Availability/visibility resolver | `stage_gate.gd` — per-string-key unlock/lock, already what every panel/button checks | Keep `stage_gate.gd` unchanged as the **visibility** layer. Layer a new, thin resolver on top for ownership/afford/feature-validity questions — see section 3. |
+| Run-definition catalogue (Challenge/Scenario/Sandbox) | `levels.gd`'s `LEVELS` dict already carries empty `unlocks`/`win_conditions` arrays per entry; `challenge_runner.gd`'s `STAGES` already applies deltas per sub-stage | Extend this existing shape with skill-related fields (grants/bans/delays) rather than inventing a parallel `run_definitions.gd`. |
 | Checkpoint-shaped save/restore | `tutorial_checkpoint.gd` reuses `save_game.gd`'s serialise/restore against a separate path | Same pattern for skill/adaptation state — extend `save_game.gd`'s save shape and its settings-allowlist discipline (`.claude/rules/saving.md`), not a second save path. |
-| "One table, everyone reads it" catalogue shape | `roles.gd` — static data + lookup functions, `RefCounted`, one file per concept, exactly the shape the brief describes for `skills.gd` etc. | Model every new catalogue directly on `roles.gd`. |
-| Appending a new role safely | `bee_enums.gd`'s `Role` enum already documents append-only discipline (`HONEY_MAKER` was added this way; a comment warns renumbering would corrupt saves) | Add `Role.GUARD` (section 5.5) the same documented way. |
-| Foraging skill chain | Orientation Flight, Auto Scouting, Floral Constancy and Auto-recruitment already exist as separate, working toggles (`orientation_flight_on`, `scouting_on`, `auto_recruitment_on`) after last week's split | First vertical slice (section 10, Phase B) rewires ownership of existing toggles rather than building new behaviour. |
-| Skill-tree visual spec | `plans/now/ui.md` §13 (honeycomb layout, six sectors, node states, `skill_tree_panel.gd`) is already fully specced and Dave-approved, 21 Aug | Keep the visual/interaction spec as-is. This plan supersedes only the **data shape** behind it (`skill_tree.gd`'s minimal node table → this plan's richer `skills.gd`, section 3). |
-| Alarm Pheromone | Already built as a global placeholder toggle, explicitly documented as "a placeholder for a future per-bee/per-colony unlock" (`DESIGN_BACKLOG.md` §7.3) | Section 5.5 / Phase C formalises the expected migration — not new scope. |
+| "One table, everyone reads it" catalogue shape | `roles.gd` — static data + lookup functions, `RefCounted`, one file per concept | Model every new catalogue directly on `roles.gd`. |
+| Appending a new role safely | `bee_enums.gd`'s `Role` enum already documents append-only discipline (`HONEY_MAKER` was added this way; a comment warns renumbering would corrupt saves) | Add `Role.GUARD` (section 5.4) the same documented way. |
+| Foraging skill chain | Orientation Flight, Auto Scouting, Floral Constancy and Auto-recruitment already exist as separate, working toggles (`orientation_flight_on`, `scouting_on`, `auto_recruitment_on`) | The first vertical slice (section 11, Phase B) rewires ownership of existing toggles rather than building new behaviour. |
+| **Hex grid maths for the tree** | `shapes.gd` already has `hex_to_pixel` (flat-top), `hex_distance`, `hex_ring_index`, `hex_ring`, `hex_spiral`, `hexagon_points`; `hex_hit_area.gd` already gives a Button clipped to its own hexagon (built for the pre-run menu's touching tiles) | **Reuse both directly.** The skill tree adds only `Shapes.hex_line(a, b)` (section 8.3). Do not write a second hex implementation. |
+| Alarm Pheromone | Already built as a global placeholder toggle, explicitly documented as "a placeholder for a future per-bee/per-colony unlock" (`DESIGN_BACKLOG.md` §7.3) | Section 5.4 formalises the expected migration — not new scope. |
 
-Net effect: Phase A of the build (section 10) is mostly *extension*, not new systems.
+Net effect: Phase A of the build is mostly *extension*, not new systems.
 
 ## 3. New catalogue files
 
 Only what has no existing home. Each modelled on `roles.gd`'s shape (static const data + lookup funcs).
 
-- **`skills.gd`** — skill nodes. Fields: stable ID, name, description, sector, tier, axial position, max rank, colony-resource cost per rank, meta-point cost per mastered rank, previous-tier rank requirement, `all_of`/`any_of` prerequisites, campaign-introduction metadata, feature dependency, typed effects per rank, control/icon metadata.
-- **`adaptations.gd`** — adaptation cards. Fields: stable ID, name, description, category, max rank, typed effects per rank, required skills/roles/features, excluded run kinds, offer weighting, eligibility conditions, icon metadata.
-- **`features.gd`** — feature IDs and their technical dependencies. Small: mostly a lookup for systems that already exist as `GameConfig` toggles (predators, weather, seasons, fog of war) plus the newer ones (foraging chain, nursing, etc.).
-- **A thin resolver** (name to be settled at implementation time — `progression.gd` is a reasonable default) — the only place that answers ownership/afford/feature-validity questions and resolves effective numeric values (base `GameConfig` + additive + multiplicative modifiers, with source tracking: skill rank / adaptation / Challenge rule / developer override). Reads `skills.gd`/`adaptations.gd`/`features.gd` and `stage_gate.gd`; nothing else computes these. **Nothing writes to `GameConfig` from a skill or adaptation effect** — this matches `source_checks.py`'s existing `check_gameconfig_writes` allowlist discipline, just extended.
+- **`skills.gd`** — skill nodes. Fields: stable ID, name, description, sector, tier, axial position, `max_rank`, cost recipe, previous-tier requirement, `all_of`/`any_of` prerequisites, campaign-introduction metadata, feature dependency, typed effects, icon metadata.
+- **`adaptations.gd`** — adaptation cards (deferred build, see section 7).
+- **`features.gd`** — feature IDs and their technical dependencies. Small: mostly a lookup for systems that already exist as `GameConfig` toggles (predators, weather, seasons, fog of war) plus the newer ones.
+- **A thin resolver** (`progression.gd` is a reasonable default name) — the only place that answers ownership/afford/feature-validity questions and resolves effective numeric values (base `GameConfig` + additive + multiplicative modifiers, with source tracking). Reads `skills.gd`/`adaptations.gd`/`features.gd` and `stage_gate.gd`; nothing else computes these. **Nothing writes to `GameConfig` from a skill or adaptation effect** — this matches `source_checks.py`'s existing `check_gameconfig_writes` allowlist discipline, just extended.
 
-`settings_catalog.gd` and `controls.gd` (full extraction out of `debug_panel.gd`) are lower priority — `plans/now/ui.md` Slice 5 already plans a lighter reorganisation of `debug_panel.gd`'s settings categories. Defer the full catalogue extraction until a setting actually needs skill-gating (Phase B), rather than doing it speculatively in Phase A.
+`settings_catalog.gd` and `controls.gd` (full extraction out of `debug_panel.gd`) stay lower priority. Defer the full catalogue extraction until a setting actually needs skill-gating, rather than doing it speculatively in Phase A.
 
-Stable-ID convention (unchanged from the brief): `feature.predators`, `skill.foraging.orientation_flight`, `role.nurse`, `adaptation.general.stronger_wings`, `run.challenge.02`, `stage.challenge.02.03`, `milestone.colony.established`. Display text is never a save key or dependency.
+Stable-ID convention: `feature.predators`, `skill.foraging.orientation_flight`, `role.nurse`, `adaptation.general.stronger_wings`, `run.challenge.02`, `stage.challenge.02.03`, `milestone.colony.established`. Display text is never a save key or dependency (see section 0's language note).
 
 ## 4. Progression model
 
-Three skill states:
+### 4.1 The three skill states
 
 - **Discovered** — revealed in the campaign meta tree by completing the Challenge that introduces it. Undiscovered skills stay hidden.
-- **Mastered** — bought between runs with refundable meta points; owned automatically at the start of a permitted run. Challenge policy (grant/delay/ban) always overrides mastered ownership.
+- **Mastered** — bought between runs with meta points. **A mastered skill is owned free at the start of every permitted run** — it is not re-bought with colony resources, and it counts towards branch-tier progress (section 4.3) as if bought. Challenge policy (grant/delay/ban) always overrides mastered ownership.
 - **Temporary** — bought during a run with colony resources; not refundable; saved with the run; lost when the run ends.
 
+Both trees use **the same catalogue, the same prerequisites, the same tiers and the same resolver**. Only the currency differs: the meta tree spends meta points, the in-run tree spends colony stores. **The meta tree affects the in-run tree; the in-run tree never affects the meta tree** — nothing bought during a run is carried out of it.
+
+### 4.2 Cost — the tier resource ladder
+
+A skill's tier decides which resources its cost recipe may name:
+
+| Tier | Cost may name |
+|---|---|
+| 1 | nectar and/or pollen |
+| 2 | honey, plus nectar and/or pollen |
+| 3 | bee bread, plus honey, nectar and/or pollen |
+| 4 | royal jelly, plus bee bread, honey, nectar and/or pollen |
+
 Rules:
+
+- **Each skill declares its own fixed recipe** — exact amounts per resource, authored in `skills.gd`. Not a flat per-tier price and not a player-chosen mix.
+- **The recipe is spent from the colony's stores on purchase.** Skills compete directly with brood feeding and winter reserves; there is no "required in stock but not deducted" tier.
+- A recipe must name at least one resource from its own tier's row (a tier-3 skill must cost some bee bread), so the ladder is never bypassed. Enforced by validation (section 9).
+- The meta tree's currency is meta points and is unaffected by this ladder. The ladder is an in-run economic gate only.
+
+**Consequence — the Brood spine.** Because honey, bee bread and royal jelly are each produced only by a Brood skill, the Brood branch gates every other branch's tiers:
+
+- Any tier-2 purchase anywhere needs honey → **Honey worker** (Brood T1).
+- Any tier-3 purchase anywhere needs bee bread → **Bee bread** (Brood T2).
+- Any tier-4 purchase anywhere needs royal jelly → **Royal Jelly** (Brood T3).
+
+This is deliberate and is the strongest structural claim in the design. Section 6 lists the reachability constraints it imposes.
+
+### 4.3 Branch-tier progress
+
+**A branch's tier N+1 opens only when every skill in that branch's tier N is owned.** Not "any one of them" and not a per-branch count. Mastered skills count as owned (section 4.1).
+
+- An empty tier is vacuously satisfied — but there is nothing to buy there, so an empty tier N with a populated tier N+1 must not exist. Enforced by validation (section 9).
+- Branch-tier progress is per branch. Owning all of Foraging T1 opens Foraging T2 only.
+- This is *in addition to* the cost ladder and to any named prerequisite. All three must pass.
+
+### 4.4 Ranks
+
+**Every skill is a single unlock in this pass — bought once, `max_rank: 1`.** The `max_rank` field and per-rank cost/effect arrays stay in the schema so ranked skills can be introduced later without a migration, but nothing authors a rank above 1 yet, and validation rejects `max_rank > 1` until that is deliberately lifted.
+
+### 4.5 Other rules
 
 - Meta points reassign freely between runs, never mid-run.
 - Challenges unlock in order; completing one discovers the skills it introduces.
 - First completion of a rewarded goal pays full reward; later completions pay a reduced reward (25% starting point, needs tuning); a previously-missed optional goal pays full reward the first time it's achieved.
 - Scenarios and Sandbox never award meta points or discover skills.
-- Every purchased rank (mastered or temporary) counts towards branch-tier advancement.
-- A skill is purchasable only when: known, permitted by the run/Challenge stage, its feature dependency is valid, every `all_of` prerequisite is owned, at least one member of each `any_of` group is owned, its branch-tier requirement is met, it's below max rank, and the colony can afford the next rank.
+- A skill is purchasable only when: known, permitted by the run/Challenge stage, its feature dependency is valid, every `all_of` prerequisite is owned, at least one member of each `any_of` group is owned, its branch's previous tier is complete, it is not already owned, and the colony can afford its full recipe.
 
-## 5. Skill catalogue (condensed)
+## 5. Skill catalogue
 
-Status key: **Existing** = mechanic already built, mainly needs availability wiring. **Existing foundation** = partly built, needs separation/expansion. **New** = new simulation behaviour. **Future** = direction only, not in first content pass, needs its own design.
+Six sectors: **Foraging, Brood, Colony, Defence, Ecology, Hive Mind.** This replaces the earlier Foraging/Brood/Hive/Colony/Defense/Ecology set — the old Hive and Colony sectors merge into Colony, and Hive Mind is new.
+
+Status key: **Existing** = mechanic already built, mainly needs availability wiring. **Existing foundation** = partly built, needs separation or expansion. **New** = new simulation behaviour. **Open** = named but not yet defined, see section 5.9.
+
+Where Dave's brief joined two names with `+` ("Auto-mining + Auto-building"), that is **one node**, not two; a comma separates nodes. This reading is applied throughout and is flagged for confirmation in section 5.10.
 
 ### 5.1 Foraging
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.foraging.orientation_flight` | 1 | 1 | Existing | — | New forager scouts a working area instead of nearest-flower. Foundation for Auto Scouting. |
-| `skill.foraging.tarsal_secretions` | 1 | 1 | Existing | — | Bees respond to recent scent marks, reducing crowding at recently-visited flowers. Cross-sector prereq for Alarm Pheromone. |
-| `skill.foraging.auto_scouting` | 2 | 1 | Existing | Orientation Flight | Samples several starting areas, keeps the best. |
-| `skill.foraging.associative_learning` | 2 | 2 | New | Orientation Flight | R1: handling time drops with repeated visits to one flower species (familiarity is per bee per **species**, not per flower — must be saved). R2: raises the familiarity cap and/or slows decay. Exact rates need simulation before build. |
-| `skill.foraging.floral_constancy` | 3 | 1 | Existing | Auto Scouting | Forager specialises in one species; scouting evaluates area and species together. |
-| `skill.foraging.auto_recruitment` | 3 | 1 | Existing | Auto Scouting | Successful foragers share productive areas at the entrance. Does **not** require Floral Constancy (when both owned, recruitment can also pass species). |
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.foraging.tarsal_secretions` | 1 | Existing | — | Bees respond to recent scent marks, reducing crowding at recently-visited flowers. Cross-sector prereq for Alarm pheromone. |
+| `skill.foraging.orientation_flight` | 1 | Existing | — | A new forager scouts a working area instead of heading for the nearest flower. |
+| `skill.foraging.associative_learning` | 2 | New | — | Handling time drops with repeated visits to one flower species. Familiarity is per bee **per species**, not per flower, and must be saved. Rates need simulation before build. |
+| `skill.foraging.adaptive_constancy` | 2 | Existing foundation | — | The old `floral_constancy`: a forager specialises in one species, but re-evaluates and switches when that species stops paying rather than locking to it permanently. |
+| `skill.foraging.weighted_flower_choice` | 3 | New | Associative learning | Foragers score candidate flowers on expected yield, handling time and distance instead of picking nearest-first. |
+| `skill.foraging.pollinator_points` | 3 | **Open** | — | See section 5.9. |
+| `skill.foraging.nectar_robbing` | 4 | New | Weighted flower choice | Piercing the flower base to skip handling time, at the cost of no pollination and faster patch depletion. Needs its own balance pass — a pure speed-up with no downside would dominate. |
+| `skill.foraging.auto_recruitment` | 4 | Existing | — | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment can pass species too. |
+
+**Auto scouting is no longer a node** — it is baseline (section 5.7).
 
 ### 5.2 Brood
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.brood.nursing` | 1 | 1 | Existing | — | One purchase unlocks Nurse role, feeding behaviour, Feeding mode and its controls together — not split into several skills. |
-| `skill.brood.royal_jelly` | 2 | 1 | Existing | Nursing + Honey Making | Unlocks Jelly mode, jelly production/storage. Cross-sector link because jelly-making consumes honey. |
-| `skill.brood.gyne_rearing` | 3 | 1 | Existing | Royal Jelly Production | Unlocks gyne brood designation, feeding requirements, development. |
-| `skill.brood.caste_guidance` | 3+ | TBD | **Future** | Royal Jelly Production | Nurse-mediated influence over developing roles rather than cell-designation-only. Needs its own mechanic design first. |
+The tier spine (section 4.2). Every other branch's tier progression depends on this one.
 
-### 5.3 Hive
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.brood.honey_worker` | 1 | Existing (was `skill.hive.honey_making`) | — | Unlocks the Honey role, honey production and honey storage. **Gates every tier-2 purchase in every branch.** |
+| `skill.brood.nurses` | 1 | Existing (was `skill.brood.nursing`) | — | One purchase unlocks the Nurse role, feeding behaviour, Feeding mode and its controls together — not split into several skills. |
+| `skill.brood.bee_bread` | 2 | New | — | Unlocks bee bread production and storage. **Gates every tier-3 purchase in every branch.** Production chain is open — see section 5.9. |
+| `skill.brood.royal_jelly` | 3 | Existing | Bee bread | Unlocks Jelly mode, jelly production and storage. **Gates every tier-4 purchase in every branch.** |
+| `skill.brood.priority_cells` | 3 | New | Nurses | Mark brood cells that nurses feed before others. |
+| `skill.brood.gyne_rearing` | 4 | Existing | Royal jelly | Unlocks gyne brood designation, feeding requirements and development. |
+| `skill.brood.drones` | 4 | New | Royal jelly | Unlocks drone designation and drone bees. **Nothing drone-related exists in the codebase** — this is a full feature slice, not a wiring job. |
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.hive.comb_working` | 1 | 1 | Existing | — | Unlocks Comb worker role, manual building, clearing, essential controls. |
-| `skill.hive.excavation` | 1 | 1 | Existing | — | Unlocks Miner role, manual dig orders. |
-| `skill.hive.automatic_building` | 2 | 1 | Existing | Comb Working | Autonomous outward comb construction. |
-| `skill.hive.automatic_mining` | 2 | 1 | Existing | Excavation | Autonomous mining beyond player-designated orders. |
-| `skill.hive.honey_making` | 2 | 1 | Existing | Comb Working | Unlocks Honey role, honey production/storage. Lives in Hive, not its own sector — it's about storage and comb use. |
-| `skill.hive.store_management` | 3 | 1 | Existing | Comb Working | Restocking behaviour, storage orders, keep-empty controls, the related Comb worker mode. |
-| `skill.hive.thermal_comb` | 3+ | TBD | **Future** | — | Comb temperature, clustering, brood warmth, possible winter insulation. Needs its own mechanic and balance plan. |
+### 5.3 Colony
 
-### 5.4 Colony
+Comb, cells and stores. Absorbs the old Hive sector minus honey (now Brood) and minus the automation skills (now Hive Mind).
 
-Workforce coordination, not a duplicate of role unlocks elsewhere.
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.colony.cell_capacity` | 1 | New | — | Raises how much a single comb cell holds. The one numeric node in the catalogue — see section 5.10. |
+| `skill.colony.comb_worker` | 2 | Existing (was `skill.hive.comb_working`) | — | Unlocks the Comb worker role, manual building, clearing and the essential controls. |
+| `skill.colony.miner` | 2 | Existing (was `skill.hive.excavation`) | — | Unlocks the Miner role and manual dig orders. |
+| `skill.colony.restocking` | 3 | Existing (was `skill.hive.store_management`) | Comb worker | Restocking behaviour, storage orders, keep-empty controls and the related Comb worker mode. |
+| — | 4 | — | — | **Empty.** Dave to fill; candidates in section 5.8. |
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.colony.work_priorities` | 1 | 1 | Existing | — | Priority tiers for cells/zones/orders. |
-| `skill.colony.backup_roles` | 1 | 1 | Existing | — | Secondary-role assignment. |
-| `skill.colony.standing_instructions` | 2 | 1 | Existing foundation | Backup Roles or Work Priorities (layout TBD) | Bundles persistent instructions (role retention, work-from-here). One meaningful capability, not a skill per button. |
-| `skill.colony.workforce_planning` | 3 | TBD | New | Backup Roles + Standing Instructions | Higher-level workforce targets or shortage response. Exact player interaction must be defined before build — must not simply auto-play the game. |
-| `skill.colony.lineage` | 3+ | TBD | **Future** | — | Gynes inherit limited traits/colony identity. Starting point: the existing bee-individuality plan (`plans/archive/BEE_INDIVIDUALITY_PLAN.md`). |
+### 5.4 Defence
 
-### 5.5 Defense
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.defence.threat_detection` | 1 | Existing foundation (was `danger_memory`) | — | Bees register a predator's presence and remember it. Feature dependency: predators. |
+| `skill.defence.alarm_pheromone` | 1 | Existing placeholder | Tarsal secretions (cross-sector) | Bees recognise alarm marks and avoid an attacked flower. **This replaces the current global placeholder toggle** (`DESIGN_BACKLOG.md` §7.3) as the normal delivery mechanism — expected migration, not new scope. Feature dependency: predators. |
+| `skill.defence.guard_bee` | 2 | New role | Threat detection | Unlocks the Guard role. **`Role.GUARD` must be appended to `bee_enums.gd`'s existing enum, never inserted or renumbered** — the same discipline `HONEY_MAKER` already follows. Idle and threat-selection behaviour need their own design pass. |
+| `skill.defence.combat` | 2 | New | Guard bee | Grants Guards an attack action. Combat resolution must be reusable for future robbers, wasps and colony conflict, not crab-spider-specific. No attack-strength tuning until the basic loop is playtested. |
+| `skill.defence.suppress_recruitment` | 2 | New (split out of the old `danger_memory`) | Threat detection | A bee that escaped a predator does not recruit others towards the danger until it genuinely moves on. |
+| `skill.defence.medicine` | 3 | **Open** | — | See section 5.9. |
+| `skill.defence.auto_defence` | 3 | New | Combat | One node covering **Auto-defence and Auto attack**: Guards respond to shared threat information and engage without individual commands. Must avoid a constant performance-heavy threat scan. |
+| — | 4 | — | — | **Empty.** Dave to fill; candidates in section 5.8. |
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.defense.danger_memory` | 1 | 1 | Existing foundation | — | Escaping predator memory suppresses recruitment towards the danger until the bee genuinely moves on. Feature dependency: predators. |
-| `skill.defense.guard_bees` | 1 | 1 | New role | — | Unlocks Guard role. **`Role.GUARD` must be appended to `bee_enums.gd`'s existing enum, never inserted/renumbered** — same discipline `HONEY_MAKER` already follows. Needs its own design pass for idle/threat-selection behaviour. |
-| `skill.defense.alarm_pheromone` | 2 | 1 | Existing placeholder | Danger Memory + Tarsal Secretions | Bees recognise alarm marks and avoid an attacked flower. **This replaces the current global placeholder toggle** (`DESIGN_BACKLOG.md` §7.3) as the normal delivery mechanism — expected migration, not new scope. Feature dependency: predators. |
-| `skill.defense.attacking` | 2 | 1 | New | Guard Bees | Grants Guards an attack action. Combat resolution should be reusable for future robbers/wasps/colony conflict, not crab-spider-specific. No ranked attack-strength improvements until the basic loop is playtested. |
-| `skill.defense.coordinated_defence` | 3 | 1 | New | Attacking and/or Alarm Pheromone (settle when designed) | Guards respond to shared threat info without individual commands. Must avoid a constant performance-heavy threat scan. |
-| `skill.defense.robber_defence` | 3+ | TBD | **Future** | Future robbing feature | — |
+### 5.5 Ecology
 
-### 5.6 Ecology
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.ecology.weather_sensing` | 1 | Existing foundation (rain) / **feature missing** (drought) | — | One node covering **sensing rain and sensing drought**: the colony reads incoming unsafe weather and avoids starting unsuitable trips. **Current code already has baseline rain safety** (prevents new trips, sends some bees home) — the skilled behaviour must layer on without removing that baseline. Feature dependency: weather. |
+| `skill.ecology.rain_recall` | 2 | New/expanded | Weather sensing | Exposed foragers abandon outbound, inspecting and collecting activity and return at a rain threshold — not just bees choosing their next flower. |
+| — | 3 | — | — | **Empty.** Dave to fill; candidates in section 5.8. |
+| — | 4 | — | — | **Empty.** |
 
-| Skill | Tier | Ranks | Status | Prereq | Effect |
-|---|---|---|---|---|---|
-| `skill.ecology.rain_detection` | 1 | 1 | Existing foundation, needs separation | — | Bees avoid starting unsuitable trips in unsafe rain. **Current code already has baseline rain safety** (prevents new trips, sends some bees home) — the skilled behaviour must be layered without accidentally removing that baseline. Feature dependency: weather. |
-| `skill.ecology.automatic_rain_recall` | 2 | 1 | New/expanded | Rain Detection | Exposed foragers abandon outbound/collecting activity and return at a rain threshold. Must cover travelling, inspecting and collecting bees, not just bees choosing their next flower. |
-| `skill.ecology.seasonal_awareness` | 1 | 1 | Existing presentation foundation | — | Reveals flowering-condition info. Does **not** enable/disable seasons themselves — only what the colony/player knows. Feature dependency: seasons. |
-| `skill.ecology.flowering_forecast` | 2 | 1 | New presentation | Seasonal Awareness | Reveals upcoming flowering windows/forage-value changes. |
-| `skill.ecology.landscape_memory` | 1 | 1 | Existing foundation | — | Explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war. Typed effect (`enable_behaviour` vs `unlock_option`) to be settled at implementation. |
-| `skill.ecology.patch_stewardship` | 3+ | TBD | **Future** | — | Helps avoid exhausting patches / encourages sustainable use. Must not become a disguised flat collection bonus. |
+**Drought does not exist in the codebase in any form** — there is no drought state, no drought effect on flowers and no drought UI. Weather sensing therefore cannot ship its drought half until a drought feature slice lands. Either split the node in two (rain now, drought later) or block the whole node on the drought feature — see section 5.10.
 
-Cross-sector prerequisites (Royal Jelly ↔ Honey Making, Alarm Pheromone ↔ Tarsal Secretions) are permitted but should stay rare and clearly drawn in the honeycomb layout.
+### 5.6 Hive Mind
 
-## 6. Colony Adaptations
+Colony-level automation and standing policy. New sector.
 
-### 6.1 Rules
+| Skill | Tier | Status | Prereq | Effect |
+|---|---|---|---|---|
+| `skill.hive_mind.backup_roles` | 1 | Existing (was `skill.colony.backup_roles`) | — | Secondary-role assignment. |
+| `skill.hive_mind.automation` | 2 | Existing (was `automatic_building` + `automatic_mining`) | Comb worker **and** Miner (cross-sector) | One node covering **Auto-mining and Auto-building**: autonomous outward comb construction and autonomous mining beyond player-designated orders. |
+| `skill.hive_mind.cleaning` | 2 | Existing foundation | — | Unlocks cleaning of debris and corpses as a directed colony activity. |
+| `skill.hive_mind.adjustment_panel` | 3 | New | Backup roles | A panel for setting the colony's standing responses — combat behaviour, rain actions, drought actions. Depends on the corresponding behaviours existing: combat (Defence T2), rain recall (Ecology T2), drought (not yet a feature). |
+| `skill.hive_mind.extended_backup_roles` | 3 | New | Backup roles | Order backup-role priorities rather than naming a single fallback. |
+| `skill.hive_mind.chemical_cascade` | 4 | **Open** | — | See section 5.9. |
 
-Three eligible, distinct cards per offer: one broadly useful, one tied to the colony's active roles/skills/features, one alternative pointing a different direction. Never offer an adaptation that can't function in the run, one already at max rank, or three cards for the same role/activity. Most adaptations are one rank; a small number may have two where the second stays meaningful. Player may defer and reopen later; simulation pauses while the panel is open; effect shown exactly before confirmation; chosen adaptations are never refunded. Use a controlled eligible pool, not a fully random draw.
+### 5.7 Baseline capabilities — available from the start, not nodes
 
-### 6.2 Milestones (defaults — exact thresholds need the scenario harness, not a guess)
+Per Dave, 1 Sep: these are on from the beginning of a game and are **not** purchasable nodes. That may change later, so **reserve their IDs and leave them in `skills.gd` marked `baseline: true`** rather than deleting them — that way promoting one to a node later is a data change, not a rewrite.
 
-1. **First Generation** — colony raises a meaningful number of new adult workers this run.
+- Auto scouting (`skill.foraging.auto_scouting`) — samples several starting areas, keeps the best.
+- Work priorities (`skill.colony.work_priorities`) — priority tiers for cells, zones and orders.
+- Standing instructions (`skill.hive_mind.standing_instructions`) — persistent instructions such as role retention and work-from-here.
+- Landscape memory (`skill.ecology.landscape_memory`) — explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war.
+
+### 5.8 Parked candidates — designed, not slotted
+
+Kept from the previous catalogue as the pool to draw on when filling Colony T4, Defence T4 and Ecology T3/T4. None of these is scheduled, and none should be built before Dave slots it into a tier.
+
+- Workforce planning — higher-level workforce targets or shortage response. Must not simply auto-play the game.
+- Seasonal awareness — reveals flowering-condition info. Does not enable or disable seasons themselves.
+- Flowering forecast — reveals upcoming flowering windows and forage-value changes.
+- Caste guidance — nurse-mediated influence over developing roles rather than cell-designation only.
+- Thermal comb — comb temperature, clustering, brood warmth, possible winter insulation.
+- Lineage — gynes inherit limited traits or colony identity. Starting point: `plans/archive/BEE_INDIVIDUALITY_PLAN.md`.
+- Robber defence — depends on a robbing feature. Note that `skill.foraging.nectar_robbing` now makes *the player* the robber; defending against robbers is still unbuilt.
+- Patch stewardship — helps avoid exhausting patches. Must not become a disguised flat collection bonus.
+
+### 5.9 Open definitions — blocking their own slices only
+
+Dave will supply these. Everything else in this plan is specified around them, so their absence blocks only the nodes themselves.
+
+1. **`skill.foraging.pollinator_points` (Foraging T3)** — what it is, and whether it is a currency, a score, or a behaviour effect. If it is a currency it also needs a store, a UI readout and a save field.
+2. **`skill.defence.medicine` (Defence T3)** — what it does. A disease system already exists in `bee_survival.gd`/`game_config.gd`, so a hygienic/propolis reading of it would have a foundation, but this is not confirmed.
+3. **`skill.hive_mind.chemical_cascade` (Hive Mind T4)** — what it does.
+4. **`skill.brood.bee_bread` production chain (Brood T2)** — who makes it, from what inputs, where it is stored, and what besides skill purchases consumes it (nurse feeding? brood development?). **This is the highest-priority gap**: bee bread is a new resource that gates every tier-3 purchase in the game, so no tier-3 content can be built or balanced until the chain is defined.
+
+### 5.10 Assumptions to confirm
+
+Each of these was read into Dave's brief rather than stated by it. Each is written above as if true.
+
+1. `+`-joined names are one node (Auto-mining + Auto-building; Sensing rain + sensing drought; Auto-defence + Auto attack); commas separate nodes.
+2. Adaptive constancy replaces Floral constancy rather than sitting alongside it.
+3. Restocking is the existing `store_management`, and Threat detection is the existing `danger_memory` with Suppress recruitment split out of it.
+4. Cell capacity is a numeric modifier node. This is the one place where the skill/adaptation boundary blurs — section 7 keeps numeric bonuses in adaptations, and this node crosses that line. Fine as a deliberate exception; flagged so it does not become the precedent for a tree full of percentage filler.
+5. Ecology's Weather sensing node ships in two halves or waits for a drought feature (section 5.5).
+
+## 6. Reachability constraints
+
+The tier ladder plus "own all of the tier below" produces a strict opening sequence. These must hold or a run becomes unwinnable, and each is a validation check (section 9) rather than a note.
+
+1. **Nurses and Honey worker are effectively the first two purchases of every run.** Brood T1 has both, and Brood T2 (Bee bread) needs both owned; Bee bread in turn gates all tier-3 content. Any Challenge that bans or delays either one freezes the whole tree at tier 1.
+2. **Comb worker is a tier-2 purchase, so it costs honey — but honey is made into comb cells.** Therefore: **every run must start with enough pre-built empty comb for the Honey worker to produce the honey that the first tier-2 purchase costs.** Otherwise Colony T2 is unreachable and the colony cannot build comb at all. This is a starting-state balance requirement on `levels.gd`, checked by a scenario run, not an assertion in code.
+3. **`skill.hive_mind.automation` needs Comb worker and Miner**, both Colony T2, while Automation is itself Hive Mind T2. Both are reachable at tier 2, so there is no cycle — but Hive Mind T2 cannot be completed (and so Hive Mind T3 cannot open) until Colony T2 is complete.
+4. **Nothing in tier 3 is buildable until bee bread exists**, and nothing in tier 4 until royal jelly production is wired to the ladder. This orders section 11's Phase C.
+5. **A branch must not have an empty tier below a populated one.** No branch currently does; validation keeps it that way.
+6. **Cross-sector prerequisites should stay rare and short on the grid.** Current set: Alarm pheromone ← Tarsal secretions; Automation ← Comb worker and Miner. Section 8.2's sector ordering keeps both between adjacent wedges.
+
+## 7. Colony Adaptations — retained, deferred
+
+Kept exactly as designed on 26 Aug and **moved behind the entire skill tree in the build order**. Numeric percentage bonuses live here; the skill tree unlocks capabilities. No skill-tree slice may depend on adaptations existing.
+
+### 7.1 Rules
+
+Three eligible, distinct cards per offer: one broadly useful, one tied to the colony's active roles/skills/features, one alternative pointing a different direction. Never offer an adaptation that cannot function in the run, one already at max rank, or three cards for the same role or activity. Most adaptations are one rank. The player may defer and reopen later; simulation pauses while the panel is open; the effect is shown exactly before confirmation; chosen adaptations are never refunded. Use a controlled eligible pool, not a fully random draw.
+
+### 7.2 Milestones (defaults — exact thresholds need the scenario harness, not a guess)
+
+1. **First Generation** — the colony raises a meaningful number of new adult workers this run.
 2. **Established Colony** — meaningful population growth plus a functioning amount of comb.
-3. **Thriving Colony** — larger workforce plus evidence of economic stability (healthy stores).
+3. **Thriving Colony** — a larger workforce plus evidence of economic stability.
 
-Milestones measure progress made *during the run* where possible, so an advanced Scenario starting above a raw population threshold doesn't fire every milestone immediately. A run definition may replace conditions, delay choices, grant a specific adaptation, disable adaptations, or change the count of choices/milestones. Challenges 1 and 2 should probably hide adaptations (avoids adding an unrelated system to the opening tutorials); a later Challenge introduces them deliberately.
+Milestones measure progress made *during the run* where possible, so an advanced Scenario starting above a raw population threshold does not fire every milestone immediately. A run definition may replace conditions, delay choices, grant a specific adaptation, disable adaptations, or change the count of choices and milestones. Challenges 1 and 2 should hide adaptations; a later Challenge introduces them deliberately.
 
-### 6.3 Initial pool (values are balance bands, need simulation)
+### 7.3 Initial pool (values are balance bands, need simulation)
 
 | Adaptation | Requirement | Effect | Band |
 |---|---|---|---|
@@ -170,32 +278,110 @@ Milestones measure progress made *during the run* where possible, so an advanced
 | `adaptation.foraging.nimble_handling` | — | −flower-handling time | 8–12% |
 | `adaptation.foraging.efficient_flight` | — | −flight-energy cost | 10–15% |
 | `adaptation.foraging.long_range` | — | +forage search range | 10–15% |
-| `adaptation.foraging.quick_learners` | Associative Learning owned | familiarity builds faster | — |
-| `adaptation.foraging.persistent_memory` | Associative Learning owned | familiarity fades slower | — |
-| `adaptation.brood.attentive_nurses` | Nursing owned | +1 brood feed carried | — |
-| `adaptation.brood.sustaining_meals` | Nursing owned | each feed lasts longer | 10–15% |
+| `adaptation.foraging.quick_learners` | Associative learning owned | familiarity builds faster | — |
+| `adaptation.foraging.persistent_memory` | Associative learning owned | familiarity fades slower | — |
+| `adaptation.brood.attentive_nurses` | Nurses owned | +1 brood feed carried | — |
+| `adaptation.brood.sustaining_meals` | Nurses owned | each feed lasts longer | 10–15% |
 | `adaptation.brood.healthy_brood` | disease feature permitted | −disease penalty to brood development | — |
-| `adaptation.brood.rich_jelly` | Royal Jelly Production owned | +jelly per batch | — |
-| `adaptation.hive.wax_efficiency` | Comb Working owned | −cell energy cost | 10–15% |
-| `adaptation.hive.tireless_builders` | Comb Working owned | −cell construction time | 10–15% |
-| `adaptation.hive.sure_footed_miners` | Excavation owned | +excavation rate | 10–15% |
-| `adaptation.hive.larger_spoil_loads` | Excavation owned | +soil carried before dumping | — |
-| `adaptation.hive.efficient_fanning` | Honey Making owned | −honey-ripening time | 10–15% |
+| `adaptation.brood.rich_jelly` | Royal jelly owned | +jelly per batch | — |
+| `adaptation.colony.wax_efficiency` | Comb worker owned | −cell energy cost | 10–15% |
+| `adaptation.colony.tireless_builders` | Comb worker owned | −cell construction time | 10–15% |
+| `adaptation.colony.sure_footed_miners` | Miner owned | +excavation rate | 10–15% |
+| `adaptation.colony.larger_spoil_loads` | Miner owned | +soil carried before dumping | — |
+| `adaptation.brood.efficient_fanning` | Honey worker owned | −honey-ripening time | 10–15% |
 | `adaptation.ecology.weathered_wings` | weather feature permitted | −rain flight-energy penalty | 10–20% of penalty |
-| `adaptation.ecology.early_warning` | Rain Detection owned | earlier unsafe-rain detection | — |
-| `adaptation.defense.alert_guards` | Guard Bees owned | −Guard response time | — |
-| `adaptation.defense.forceful_defence` | Attacking owned | +attack effectiveness — **do not add until attack balance is established** | — |
-| `adaptation.defense.hygienic_colony` | disease feature permitted | −corpse/crowding contribution to disease | — |
+| `adaptation.ecology.early_warning` | Weather sensing owned | earlier unsafe-weather detection | — |
+| `adaptation.defence.alert_guards` | Guard bee owned | −Guard response time | — |
+| `adaptation.defence.forceful_defence` | Combat owned | +attack effectiveness — **do not add until attack balance is established** | — |
+| `adaptation.defence.hygienic_colony` | disease feature permitted | −corpse/crowding contribution to disease | — |
 
-Good first three for the vertical slice (section 10, Phase B): Stronger Wings, Deeper Stores, Fuller Crops — all existing `GameConfig` values the resolver already knows how to modify.
+Good first three when adaptations are eventually built: Stronger Wings, Deeper Stores, Fuller Crops — all existing `GameConfig` values the resolver already knows how to modify.
 
-## 7. Typed effects and modifiers
+## 8. The skill tree grid
 
-Typed effects: `unlock_feature`, `unlock_role`, `unlock_role_mode`, `unlock_control`, `unlock_option`, `enable_behaviour`, `grant_action`, `add_value`, `multiply_value`, `set_run_flag`.
+A hexagonal grid. Every tile is either a **skill tile**, a **connect tile** (a line-carrier, never interactive, never purchasable), a **sector title tile**, or the **centre tile**.
 
-Effective value resolution order: base `GameConfig` value → run/Challenge override → additive modifiers → multiplicative modifiers → explicit min/max caps. Every modifier record keeps its source (skill rank / Colony Adaptation / Challenge rule / developer override). `Session` stays current-run/interface state — it must not become a second balance catalogue. Skills and adaptations never rewrite `GameConfig` defaults directly (enforced by the resolver being the only write path, and caught for free by `source_checks.py`'s existing allowlist check).
+### 8.1 Rings
 
-Precedence for the resolver's availability questions (known / permitted / delayed / owned / feature-valid / control-visible / control-editable / behaviour-enabled / effective-value):
+Reuse `shapes.gd`'s existing flat-top axial maths (`hex_to_pixel`, `hex_distance`, `hex_ring_index`, `hex_ring`, `hexagon_points`) and `hex_hit_area.gd`'s hexagon-clipped Button. Do not write a second hex implementation.
+
+| Ring | Contents |
+|---|---|
+| 0 | Centre tile |
+| 1 | The six sector title tiles — one per sector, one per axial direction |
+| 2 | Connect tiles (title → tier 1) |
+| 3 | **Tier 1 skill tiles** |
+| 4 | Connect tiles |
+| 5 | **Tier 2 skill tiles** |
+| 6 | Connect tiles |
+| 7 | **Tier 3 skill tiles** |
+| 8 | Connect tiles |
+| 9 | **Tier 4 skill tiles** |
+
+So `ring == 2 * tier + 1` for every skill tile. Skill rings are all odd, which matters for the wedge rule below. Nine rings is 271 tiles — comfortable for one panel.
+
+Each ring `r` holds `6r` tiles, so a sector's wedge holds `r` of them: 3 slots at tier 1, 5 at tier 2, 7 at tier 3, 9 at tier 4. The fullest tier in the catalogue is Defence T2 with 3 nodes, so there is ample room.
+
+### 8.2 Sectors and wedges
+
+The six sector title tiles sit on ring 1, one per axial direction, in `shapes.gd`'s existing direction order:
+
+| Index | Axial direction | Sector |
+|---|---|---|
+| 0 | `(1, 0)` | Foraging |
+| 1 | `(0, 1)` | Defence |
+| 2 | `(-1, 1)` | Ecology |
+| 3 | `(-1, 0)` | Hive Mind |
+| 4 | `(0, -1)` | Colony |
+| 5 | `(1, -1)` | Brood |
+
+**This ordering is chosen, not arbitrary.** It puts every cross-sector prerequisite between adjacent wedges so its connecting line stays short: Foraging sits next to Defence (Alarm pheromone ← Tarsal secretions) and next to Brood (nectar and pollen feed the Brood spine); Colony sits next to Hive Mind (Automation ← Comb worker and Miner); Ecology sits between Defence and Hive Mind (weather responses feed the Adjustment panel). Changing this order lengthens those lines and should not be done casually.
+
+**Wedge membership rule, for the validator:** a tile at ring `r` belongs to the sector whose spine tile `direction[i] * r` it is closest to by `Shapes.hex_distance`. Because every skill ring is odd, no tile is ever equidistant between two spines, so this is unambiguous. A node whose authored coordinate resolves to a different sector than its `sector` field is a validation failure.
+
+### 8.3 Node positions and connect tiles
+
+- **Skill node positions are hand-authored** in `skills.gd` as an explicit `axial: Vector2i`. The implementer does not need to derive a layout algorithm; they need to place nodes and let the checks catch mistakes.
+- **Connect tiles are generated, never authored.** For each prerequisite edge and each title→tier-1 link, take the hex line between the two coordinates; every tile on that line that is not itself a skill tile becomes a connect tile carrying the line.
+- This requires one new helper, **`Shapes.hex_line(a: Vector2i, b: Vector2i) -> Array`** — standard cube-coordinate lerp and round. Add it to `shapes.gd` beside the existing hex functions, with the same comment style.
+- A generated connect tile must never land on an occupied skill coordinate. If it does, the author nudges the node within its wedge; validation reports which node and which edge.
+
+### 8.4 Node states and the panel
+
+Five node states, drawn from `UiTheme` rather than hard-coded colours:
+
+| State | Meaning |
+|---|---|
+| Hidden | Not discovered in the meta tree. The tile is not drawn at all. |
+| Locked | Discovered, but a prerequisite, branch tier, feature dependency or Challenge policy blocks it. Shows why on hover. |
+| Unaffordable | Purchasable in principle; the colony cannot pay the recipe. Shows the recipe with the shortfall marked. |
+| Affordable | Ready to buy. |
+| Owned | Bought this run, or mastered and granted at run start — the tooltip says which. |
+
+Panel behaviour: opens as a full-screen overlay with the simulation paused, following `plans/now/ui.md`'s existing pre-run menu precedent for not running the sim behind a full-screen menu (UI-L). The centre tile shows the colony's current spendable stores — nectar, pollen, honey, bee bread, royal jelly — so the player never has to close the tree to check whether they can afford something. Purchases are not refundable and there is no in-run respec.
+
+### 8.5 The HUD Skills button
+
+Added to the **second row of the top-right HUD bar** (`hud.gd::_build_top_right_bar`), **immediately to the left of the View button** — after Winter, before View.
+
+- Built with the existing `_icon_button()` helper, exactly like Colony/Nursery/Foraging/Winter/View: a `TOP_BAR_BUTTON_WIDTH` × `TOP_BAR_CONTROL_HEIGHT` button (72 × 56) carrying an icon plus the label "Skills", separated by `TOP_BAR_BUTTON_GAP`. **Do not introduce a new size or gap.**
+- Icon: a new **up arrow** shape added to `ui_icon.gd`'s `match shape` block, alongside the existing `"bee"`, `"hex"`, `"flower"`, `"hive"` and `"snow"` — same procedural placeholder-art approach, no sprite.
+- Emits a new `skill_tree_requested` signal, matching the `colony_panel_requested` / `nursery_window_requested` / `foraging_panel_requested` pattern already in the file.
+- Gets its own `_info()` badge alongside it, like Colony, Nursery, Foraging and View.
+- Visibility is a `stage_gate.gd` key, so a Challenge can hide it — Challenges 1 and 2 should hide it, the same way the Foraging button is hidden there (UI-K).
+- Regenerate `FUNCTION_MAP.md` after touching `hud.gd`.
+
+Full detail lives here rather than in `plans/now/ui.md` because this button is part of the progression build and is not itself a scheduled UI slice; `plans/now/ui.md`'s Deferred decisions section points here.
+
+## 9. Typed effects, modifiers and validation
+
+### 9.1 Typed effects
+
+`unlock_feature`, `unlock_role`, `unlock_role_mode`, `unlock_control`, `unlock_option`, `enable_behaviour`, `grant_action`, `add_value`, `multiply_value`, `set_run_flag`.
+
+Effective value resolution order: base `GameConfig` value → run/Challenge override → additive modifiers → multiplicative modifiers → explicit min/max caps. Every modifier record keeps its source (skill / Colony Adaptation / Challenge rule / developer override). `Session` stays current-run and interface state — it must not become a second balance catalogue. Skills and adaptations never rewrite `GameConfig` defaults directly, which `source_checks.py`'s existing allowlist check catches for free.
+
+Precedence for the resolver's availability questions:
 
 1. Catalogue defaults
 2. Run-definition preset
@@ -208,51 +394,76 @@ Precedence for the resolver's availability questions (known / permitted / delaye
 
 Accessibility settings stay outside skill gating entirely, matching `stage_gate.gd`'s existing `ACCESSIBILITY_KEYS` exemption.
 
-## 8. Saving and validation
+### 9.2 Validation
 
-A run save adds: temporary skill ranks, mastered ranks captured at run start, branch-tier progress, skill-controlled options, chosen Colony Adaptations and ranks, pending unchosen adaptation offers, triggered milestone IDs, per-bee associative-learning familiarity, active resolved modifiers, relevant pending-restart settings — layered onto `save_game.gd`'s existing shape and allowlist, not a new save path. Loading must never repeat: skill discoveries, first-time meta rewards, Challenge completion rewards, adaptation milestone offers already resolved, one-time prompts/rescues. Run saves and player profiles need independent versions/migrations. Tutorial checkpoints reuse the same serialisation shape, separate destination/restore policy — as `tutorial_checkpoint.gd` already does.
+Extend `tests/source_checks.py` and `balance_tests.py` rather than adding a new suite. Checks, grouped:
 
-Automated validation (extend `tests/source_checks.py`/`balance_tests.py` rather than a new suite): duplicate/missing IDs, references to missing catalogue entries, prerequisite/dependency cycles, invalid `all_of`/`any_of` groups, impossible branch-tier thresholds, skills above three ranks without explicit exception, Challenges that make branch advancement impossible, permitted skills with unavailable feature dependencies, invalid stage deltas, adaptation offers with fewer than three valid choices where three are required, modifiers targeting unknown values, any attempt to mutate `GameConfig` defaults from an effect, save fields without migration handling, renumbering of existing saved role/state enums.
+**Catalogue integrity** — duplicate or missing IDs; references to missing catalogue entries; prerequisite cycles; invalid `all_of`/`any_of` groups; modifiers targeting unknown values; any attempt to mutate `GameConfig` defaults from an effect; `max_rank > 1` (section 4.4); a display string used as a key.
 
-## 9. Settings and controls
+**Tier and cost** — every skill's recipe names at least one resource from its own tier's row (section 4.2); no recipe names a resource above its tier; no branch has an empty tier below a populated one (section 4.3); a Challenge's grants/bans/delays cannot make branch advancement impossible.
 
-Settings normally govern player choice within an owned capability; skills govern the capability itself. E.g. owning Auto-recruitment enables the behaviour; a related setting may let Sandbox/developer mode tune its threshold — the threshold itself is not a skill. Individual buttons are consequences of capability ownership, not separate nodes. Full `settings_catalog.gd` extraction is deferred (section 3) until a setting genuinely needs skill-gating. The HUD gets an in-run Skill Tree button using the existing measured-width top-right layout (`plans/now/ui.md`'s pattern); the main menu holds the meta tree.
+**Grid** — every skill tile's ring equals `2 * tier + 1`; its authored coordinate resolves to its declared sector by the wedge rule (section 8.2); no two nodes share a coordinate; no generated connect tile lands on a skill coordinate.
 
-## 10. Implementation sequence
+**Reachability** — section 6's constraints, plus permitted skills whose feature dependency is unavailable, and adaptation offers with fewer than three valid choices where three are required.
 
-Same three-phase shape as the original brief, reordered so each slice is provably safe before the next depends on it. Every slice: run both check suites, regenerate `FUNCTION_MAP.md` if `hud.gd`/`debug_panel.gd` touched, Godot boot check where available, plain-language summary, separate commit, Dave's hands-on check for anything visual.
+**Saving** — save fields without migration handling; renumbering of existing saved role or state enums.
+
+### 9.3 Saving
+
+A run save adds: temporary skill ownership, mastered ownership captured at run start, branch-tier progress, skill-controlled options, chosen Colony Adaptations, pending unchosen adaptation offers, triggered milestone IDs, per-bee associative-learning familiarity, active resolved modifiers, and relevant pending-restart settings — layered onto `save_game.gd`'s existing shape and allowlist, not a new save path.
+
+Loading must never repeat: skill discoveries, first-time meta rewards, Challenge completion rewards, adaptation milestone offers already resolved, or one-time prompts and rescues. Run saves and player profiles need independent versions and migrations. Tutorial checkpoints reuse the same serialisation shape with a separate destination and restore policy, as `tutorial_checkpoint.gd` already does.
+
+## 10. Settings and controls
+
+Settings normally govern player choice within an owned capability; skills govern the capability itself. Owning Auto-recruitment enables the behaviour; a related setting may let Sandbox or developer mode tune its threshold — the threshold itself is not a skill. Individual buttons are consequences of capability ownership, not separate nodes. Full `settings_catalog.gd` extraction stays deferred (section 3) until a setting genuinely needs skill-gating. The main menu holds the meta tree; the HUD button in section 8.5 opens the in-run tree.
+
+## 11. Implementation sequence
+
+Three phases, ordered so each slice is provably safe before the next depends on it. Every slice: run `tools/verify.ps1`, regenerate `FUNCTION_MAP.md` if `hud.gd`/`debug_panel.gd` are touched, a Godot boot check where available, a plain-language summary, a separate commit, and Dave's hands-on check for anything visual.
 
 **Phase A — plumbing, no gameplay change**
 
-1. **Catalogue inventory.** Write `skills.gd`, `adaptations.gd`, `features.gd` with real IDs for what already exists (foraging chain, existing roles, existing features). Data only, nothing reads them yet — additive, near-zero regression risk.
-2. **Resolver.** Build the thin resolver (section 3). Wire to `stage_gate.gd` for visibility and the catalogues for ownership/afford. Prove it against the foraging chain's existing toggles via `tests/`, not in-game yet.
-3. **Run-definition extension.** Add `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd`/`challenge_runner.gd`'s existing shape. Challenge 1/2 keep working unchanged with these fields empty.
-4. **Modifier resolution.** Effective-value lookup lives in the resolver from step 2. Mostly tests: a modifier changes an effective value, `GameConfig` itself is never touched.
+1. **Catalogue inventory.** Write `skills.gd`, `adaptations.gd`, `features.gd` with real IDs for section 5, including the baseline entries (5.7) and open nodes (5.9) as data with empty effects. Data only, nothing reads them yet — additive, near-zero regression risk.
+2. **Resolver.** Build the thin resolver (section 3). Wire to `stage_gate.gd` for visibility and the catalogues for ownership, cost and branch tier. Prove it against the existing foraging toggles via `tests/`, not in-game yet.
+3. **Run-definition extension.** Add `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd`/`challenge_runner.gd`'s existing shape. Challenges 1 and 2 keep working unchanged with these fields empty.
+4. **Modifier resolution and validation.** Effective-value lookup in the resolver, plus section 9.2's checks. Mostly tests: a modifier changes an effective value and `GameConfig` itself is never touched.
 
-**Phase B — prove the progression systems, in this order**
+**Phase B — prove the systems, in this order**
 
-5. **Foraging skill-tree vertical slice.** Orientation Flight, Auto Scouting, Floral Constancy, Auto-recruitment, Tarsal Secretions move from always-on toggles to skill-gated. Reuses `plans/now/ui.md` §13's honeycomb spec and `skill_tree_panel.gd` shape, backed by `skills.gd`. This is the brief's stated first success criterion — prove prerequisites, cost, effects, controls, node states and saving before adding other branches.
-6. **Colony Adaptations vertical slice.** One milestone, one choice of three (Stronger Wings / Deeper Stores / Fuller Crops), deferred choice, save/restore, modifier display.
-7. **Campaign meta tree.** Discovery, meta rewards, mastered ranks, full between-run reallocation. Only after 5 and 6 are proven — this is where save-format risk concentrates.
-8. **Full save integration.** Extend `save_game.gd` per section 8 above, following its existing allowlist/migration pattern. Covers Challenges, ordinary saves, checkpoints, skill state, adaptations, idempotent rewards.
-9. **Remove legacy paths.** Delete the old always-on toggles (`orientation_flight_on` etc.) and any duplicated unlock arrays/prerequisite maps once the resolver fully owns them. Deliberately last, so a working fallback exists until the new path is proven end to end.
+5. **Grid geometry.** Add `Shapes.hex_line`, the ring/wedge rules and their validators (section 8.1–8.3). Pure maths and checks, no panel yet.
+6. **Foraging tier 1 vertical slice.** Tarsal secretions and Orientation flight move from always-on toggles to skill-gated purchases, with the tree panel (section 8.4), the HUD button (section 8.5) and run saving. Tier 1 only, so it needs no honey and does not touch the Brood spine. This is the first success criterion — prove prerequisites, cost, effects, controls, node states and saving on the smallest possible surface.
+7. **The Brood spine at tier 1 and the honey gate.** Honey worker and Nurses become nodes; a tier-2 purchase becomes possible. This is where section 6's constraint 2 (enough starting comb to make the first honey) is tested with a real scenario run.
+8. **Tier 2 content.** Comb worker, Miner, Automation, Cleaning, Adaptive constancy, Associative learning, Guard bee, Combat, Suppress recruitment, Rain recall — all existing or bounded-new behaviour.
+9. **Campaign meta tree.** Discovery, meta rewards, mastered ownership at run start, between-run reallocation. Only after 6–8 are proven; this is where save-format risk concentrates.
+10. **Full save integration.** Extend `save_game.gd` per section 9.3, following its existing allowlist and migration pattern.
+11. **Remove legacy paths.** Delete the old always-on toggles (`orientation_flight_on` and the rest) and any duplicated unlock arrays once the resolver fully owns them. Deliberately last, so a working fallback exists until the new path is proven end to end.
 
-**Phase C — content, one slice per feature**
+**Phase C — content requiring new features**
 
-In order: existing role unlocks (Nursing, Comb Working, Excavation, Honey Making) → existing role modes/management capabilities → Alarm Pheromone migration off its placeholder toggle (`DESIGN_BACKLOG.md` §7.3 — expected work, not new risk) → Associative Learning → Rain Detection/Automatic Rain Recall → Guard Bees → Attacking → Coordinated Defence → Future-status mechanics only after their own separate design pass. Guard Bees, Attacking and Associative Learning each get their own design/balance/playtest slice — none of them ride in on the architecture refactor.
+Blocked on new simulation work, in dependency order:
 
-## 11. Non-goals for this pass
+12. **Bee bread** (section 5.9 item 4). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
+13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Extended backup roles; plus Pollinator Points and Medicine once defined.
+14. **Drought** as a weather feature, then Weather sensing's drought half and the Adjustment panel's drought actions.
+15. **Tier 4 content** — Royal jelly wired to the ladder, then Gyne rearing, Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
+16. **Colony Adaptations** (section 7). Last, and dependent on nothing above.
 
-Design every future skill; implement every node in one pass; rebalance the whole game; add mutually exclusive branches or generic percentage filler; build multiple player profiles; build Sandbox merely because the definitions support it (Sandbox mode itself has no build plan yet — referenced only as a run-kind the resolver should accommodate); generate every bespoke interface from catalogue data; build localisation (catalogue fields should stay translation-ID-ready without restructuring, nothing more); combine Guard Bees/combat/other new mechanics with the architecture refactor; replace hands-on playtesting with automated checks.
+Guard bee, Combat, Associative learning, Nectar robbing, Drones and Drought each get their own design, balance and playtest slice — none of them rides in on the architecture refactor.
 
-First success criterion, unchanged from the brief: one existing skill definition controls its prerequisites, cost, effects, controls, Challenge availability, saving and meta progression without duplicated wiring, and one milestone offers and persists a choice of three valid Colony Adaptations. Expand one playable slice at a time after that.
+## 12. Non-goals for this pass
 
-## 12. Open design items (Future status, need their own pass before build)
+Design every future skill; implement every node in one pass; rebalance the whole game; add mutually exclusive branches or generic percentage filler; build multiple player profiles; build the language setting (section 0); build Sandbox merely because the definitions support it (Sandbox itself has no build plan yet — referenced only as a run kind the resolver should accommodate); generate every bespoke interface from catalogue data; build localisation beyond keeping catalogue fields translation-ID-ready; combine Guard bee, combat or other new mechanics with the architecture refactor; replace hands-on playtesting with automated checks.
 
-- `skill.brood.caste_guidance` — nurse-mediated caste influence.
-- `skill.hive.thermal_comb` — comb temperature/clustering/winter insulation.
-- `skill.colony.workforce_planning` — exact player interaction, must not auto-play the game.
-- `skill.colony.lineage` — gyne trait inheritance, starting point is the existing bee-individuality plan.
-- `skill.defense.robber_defence` — depends on a future robbing feature.
-- `skill.ecology.patch_stewardship` — must not become a disguised flat collection bonus.
-- Guard Bees' idle/threat-selection behaviour, and Coordinated Defence's prerequisite settling — both flagged above as needing design before their Phase C slice.
+First success criterion: one existing skill definition controls its prerequisites, cost, effects, controls, Challenge availability, saving and meta progression without duplicated wiring — proven on Foraging tier 1 (Phase B step 6).
+
+## 13. Read on demand
+
+<!-- LAYER: on-demand -->
+
+- `shapes.gd` hex helpers and `hex_hit_area.gd` — before writing any grid code (section 8.1).
+- `hud.gd::_build_top_right_bar` and `ui_icon.gd`'s `match shape` block — before adding the Skills button (section 8.5).
+- `.claude/rules/saving.md` — before touching `save_game.gd` (section 9.3).
+- `bee_enums.gd`'s `Role` enum comment — before adding `Role.GUARD` (section 5.4).
+- `plans/archive/FORAGING_EVIDENCE_CAMPAIGN_2026-08-29.md` — before changing recruitment or scouting defaults in the Foraging vertical slice.
+- `DESIGN_BACKLOG.md` §7.3 — before migrating Alarm pheromone off its placeholder toggle.
