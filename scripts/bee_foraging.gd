@@ -669,6 +669,11 @@ static func finish_collecting(bee: Node2D) -> void:
 	if handling_seconds >= 0.0:
 		bee.flower_visit_started_at = -1.0
 	if bee.current_flower and is_instance_valid(bee.current_flower):
+		# Slice 10f: Challenge 1's 1.8/1.9 goals need a real per-stage count of
+		# completed collections, not flower_cooldowns.size() (also grows on a
+		# rejection, on the 1.7 tour, and shrinks on a focus change).
+		if is_instance_valid(bee.world) and bee.world.challenge_runner != null and bee.world.challenge_runner.active and bee == bee.world.queen:
+			bee.world.challenge_runner._c1_queen_collections += 1
 		var species: String = bee.current_flower.species_name
 		var prior_experience := int(bee.species_experience.get(species, 0))
 		if handling_seconds >= 0.0:

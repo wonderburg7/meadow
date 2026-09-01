@@ -107,6 +107,10 @@ var _hearts_timer: float = 0.0
 ## traits and debug-tuned rates are restored exactly when the Challenge ends.
 var _c1_base_nectar_rate: float = -1.0
 var _c1_base_pollen_rate: float = -1.0
+## Real count of the queen's completed flower collections during Challenge 1
+## -- 1.8/1.9's own goal counter, since flower_cooldowns.size() (bee.gd) also
+## grows on a rejected flower and isn't a stage-scoped measurement (Slice 10f).
+var _c1_queen_collections: int = 0
 
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
@@ -134,9 +138,11 @@ func start() -> void:
 	main.awaiting_queen_build_cell = false
 	main.queen.manual_deposit_pending = false
 	main.queen.flower_switch_locked = false
+	main.queen.role_change_locked = false
 	main.queen.role_restricted_to = []
 	_c1_base_nectar_rate = -1.0
 	_c1_base_pollen_rate = -1.0
+	_c1_queen_collections = 0
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -293,6 +299,9 @@ func _enter_stage() -> void:
 		# exceptions: neither is taught as a general role at the opening.
 		main.queen.role_restricted_to = _queen_allowed_role_ids(stage.unlocked_keys)
 		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
+		main.queen.role_change_locked = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
+		if stage.id == "1.8":
+			_c1_queen_collections = 0
 		if stage.id == "1.11":
 			_c1_base_nectar_rate = main.queen.nectar_collection_rate
 			_c1_base_pollen_rate = main.queen.pollen_collection_rate
@@ -509,6 +518,7 @@ func _complete() -> void:
 		main.queen.energy_immune = false
 		main.queen.role_restricted_to = []
 		main.queen.flower_switch_locked = false
+		main.queen.role_change_locked = false
 		if _c1_base_nectar_rate >= 0.0:
 			main.queen.nectar_collection_rate = _c1_base_nectar_rate
 			main.queen.pollen_collection_rate = _c1_base_pollen_rate
@@ -830,10 +840,10 @@ func _goal_check_meadow_points_visited() -> bool:
 	return _ordered_visit_complete(main.queen)
 
 func _goal_check_first_flower_collected() -> bool:
-	return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 1
+	return _c1_queen_collections >= 1
 
 func _goal_check_second_flower_collected() -> bool:
-	return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 2
+	return _c1_queen_collections >= 2
 
 func _goal_check_harvest_deposited() -> bool:
 	return is_instance_valid(main.queen) and main.queen._is_inside_hive() and main.queen.current_load <= 0.0
