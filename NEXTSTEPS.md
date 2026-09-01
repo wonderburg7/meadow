@@ -10,25 +10,32 @@ on demand in `plans/archive/`.
 
 1. **Current — Challenge 1 Slice 10: Bundle D/E's manual-to-automatic
    foraging arc is still broken (`plans/now/challenge-1.md`).** Found in a
-   second 31 Aug pass replaying stages 1.6-1.14. 10a/10c are the priority --
-   both break the Bundle D/E teaching sequence outright: `command_collect_from()`
-   (the manual right-click-a-flower command Bundle D itself uses) permanently
+   second 31 Aug pass replaying stages 1.6-1.14, extended by the 1 Sep
+   architecture review. 10a/10c/10f are the priority -- all three break the
+   Bundle D/E teaching sequence outright. `command_collect_from()` (the
+   manual right-click-a-flower command Bundle D itself uses) permanently
    promotes the queen to a real Forager via `set_role()`, a separate and more
    direct leak than Slice 9a's `role_restricted_to` finding and not fixed by
    9a alone (10a, needs one live-confirmation step before shipping -- see its
-   own section); and no mechanism ever stops her automatic foraging once a
+   own section). No mechanism ever stops her automatic foraging once a
    stage's target amount is reached, so she overshoots toward the cell's real
    200-unit capacity instead of stopping at the taught 75/full mark (10c).
-   10b ships alongside 9a's own fix. 10d (pollen sub-mode may be unreachable
-   via the queen's backup-role path) and 10e ("building the third cell
-   reveals Laying" is most likely the correct transition, not a new bug, but
-   may instead be the already-known 9d) both need one live-reproduction step
-   or a word from Dave before they're scoped as code changes.
+   And stages 1.8/1.9 clear on a *rejected* flower as readily as a collected
+   one, because both goals count the size of the queen's private
+   `flower_cooldowns` memory, which `reject_flower()` writes to as well
+   (10f, confirmed 1 Sep). 10g -- `command_collect_from` changing her role
+   before its own validity guard -- is one moved line and ships with 10a in
+   the same function. 10b ships alongside 9a's own fix. 10d (pollen sub-mode
+   may be unreachable via the queen's backup-role path) and 10e ("building
+   the third cell reveals Laying" is most likely the correct transition, not
+   a new bug, but may instead be the already-known 9d) both need one
+   live-reproduction step or a word from Dave before they're scoped as code
+   changes.
    Slice 9 (9a-9j) is now code-complete, merged from `codex/challenge-1-slice-9`
    1 Sep -- `tools/verify.ps1` green; re-run Slice 7's full acceptance
-   playthrough to confirm it (`checks/ready.md`), ideally alongside 10a/10c
-   once those land, since 10a's fix changes the same `command_collect_from`
-   path 9's own checks exercise.
+   playthrough to confirm it (`checks/ready.md`), ideally alongside 10a/10c/10f
+   once those land, since 10a/10f/10g change the same `command_collect_from`
+   and 1.8/1.9 paths 9's own checks exercise.
 2. **Successor — `plans/now/hive-comb.md` Slice 6: cells above the comb's
    centre row don't render.** Traced to `hive_cell.gd`'s z_index formula
    silently assuming a value that goes negative above the centre, very
