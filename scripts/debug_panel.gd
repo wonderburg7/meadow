@@ -973,15 +973,22 @@ static func setting_set(key: String, value) -> void:
 ## and would otherwise leak into whatever the player picks next from the
 ## main menu. Reads each default from a fresh, unmodified GameConfig
 ## instance rather than a hand-maintained list, so it can't drift from
-## TUNABLES/game_config.gd over time. Skips SESSION_KEYS -- those are the
-## player's own preferences, not run balance, and should survive a scenario
-## pick same as they survive everything else.
+## game_config.gd over time.
+##
+## The key set comes from GameConfig's own property list, not from
+## TUNABLES: a settings-window row is a view of a field, not the
+## definition of one, and 44 GameConfig fields have no row -- the ones
+## headless and scenario work tunes most. Iterating TUNABLES left those
+## 44 able to leak from one run into the next. This is the same
+## PROPERTY_USAGE_SCRIPT_VARIABLE filter levels.gd::apply_config_overrides
+## uses to decide what a valid override key is, so the two agree by
+## construction. No SESSION_KEYS special case is needed either: a Session
+## preference is not a GameConfig property, so this loop cannot reach one.
 static func reset_config_to_defaults() -> void:
 	var defaults = GameConfig.get_script().new()
-	for tunable in TUNABLES:
-		var key: String = tunable.key
-		if key not in SESSION_KEYS:
-			GameConfig.set(key, defaults.get(key))
+	for prop in GameConfig.get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			GameConfig.set(prop.name, defaults.get(prop.name))
 	defaults.free()
 
 ## Sets `key` to `value` and, if `key` takes part in the Prerequisites

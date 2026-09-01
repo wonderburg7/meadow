@@ -312,6 +312,102 @@ def check_catalogue_alignment(problems):
             )
 
 
+# The file holding the settings catalogue (COLLECTIONS/TUNABLES/
+# SESSION_KEYS). Named here rather than inline so the check follows the
+# catalogue when it moves out of the settings window.
+CATALOGUE_FILE = "debug_panel.gd"
+
+
+def catalogue_block(source, const_name):
+    """The text inside `const <name> := [ ... ]`, or None if absent."""
+    start = source.find("const %s" % const_name)
+    if start == -1:
+        return None
+    open_bracket = source.find("[", start)
+    if open_bracket == -1:
+        return None
+    depth = 0
+    for i in range(open_bracket, len(source)):
+        if source[i] == "[":
+            depth += 1
+        elif source[i] == "]":
+            depth -= 1
+            if depth == 0:
+                return source[open_bracket + 1:i]
+    return None
+
+
+def check_settings_keys(problems):
+    """Every settings-window row must name a field that actually exists.
+
+    The catalogue is a view of game_config.gd plus the handful of Session
+    preferences in SESSION_KEYS; a row naming neither resolves to nothing.
+    Godot's Object.set() ignores an unknown property silently, so such a
+    row reads and writes into the void rather than failing -- which is how
+    the "fps" star row sat inside reset_config_to_defaults()'s loop doing
+    nothing at all. Star rows are exempt: they are Session.pinned_stats
+    entries the panel can pin to the corner of the screen, not settings.
+    """
+    catalogue_path = os.path.join(ROOT, CATALOGUE_FILE)
+    config_path = os.path.join(ROOT, "game_config.gd")
+    for path in (catalogue_path, config_path):
+        if not os.path.exists(path):
+            problems.append(
+                "%s not found for settings key check" % os.path.basename(path)
+            )
+            return
+    catalogue_src = open(catalogue_path, encoding="utf-8").read()
+    config_src = open(config_path, encoding="utf-8").read()
+
+    tunables = catalogue_block(catalogue_src, "TUNABLES")
+    session_block = catalogue_block(catalogue_src, "SESSION_KEYS")
+    if tunables is None or session_block is None:
+        problems.append(
+            "%s: could not find const TUNABLES/SESSION_KEYS -- has the "
+            "catalogue moved? update CATALOGUE_FILE" % CATALOGUE_FILE
+        )
+        return
+
+    session_keys = set(re.findall(r'"(\w+)"', session_block))
+    config_vars = set(
+        re.findall(r"^(?:@\w+(?:\([^)]*\))?\s+)?var\s+(\w+)", config_src, re.M)
+    )
+
+    seen = {}
+    for entry in re.finditer(r"\{(.*?)\}", tunables, re.S):
+        body = entry.group(1)
+        key_match = re.search(r'"key":\s*"(\w+)"', body)
+        if not key_match:
+            problems.append(
+                '%s: TUNABLES entry with no "key": %s'
+                % (CATALOGUE_FILE, " ".join(body.split())[:60])
+            )
+            continue
+        key = key_match.group(1)
+        if key in seen:
+            problems.append(
+                "%s: TUNABLES lists %r twice" % (CATALOGUE_FILE, key)
+            )
+        seen[key] = True
+        if re.search(r'"star":\s*true', body):
+            continue
+        if key in config_vars or key in session_keys:
+            continue
+        problems.append(
+            "%s: TUNABLES key %r is neither a game_config.gd var nor a "
+            'SESSION_KEYS entry -- the row edits nothing (mark it "star": '
+            "true if it is a pinned stat rather than a setting)"
+            % (CATALOGUE_FILE, key)
+        )
+
+    for key in sorted(session_keys):
+        if key not in seen:
+            problems.append(
+                "%s: SESSION_KEYS lists %r but no TUNABLES row uses it"
+                % (CATALOGUE_FILE, key)
+            )
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -335,6 +431,7 @@ def main():
 
     check_autoloads(problems)
     check_catalogue_alignment(problems)
+    check_settings_keys(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
