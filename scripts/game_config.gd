@@ -243,24 +243,16 @@ var adaptive_constancy_decay: float = 0.2
 var adaptive_constancy_weight: float = 0.5
 
 ## Foraging-automation dependency tree (see SCOUTING_TOGGLE_PLAN.md):
-## Orientation flight (tier 0, a new forager's one semi-random start-point
-## flight, kept from then on, no comparison) sits under Scouting (tries a
-## few of those points and keeps whichever scored best), which sits under
-## both Floral constancy (also folds a species sample into each scouting
-## bout, so a scouted forager settles on the best (start point, species)
-## pair) and Auto-recruitment (the entrance exchange -- foragers below a
-## resource-specific lower threshold wait hoping a better performer passes
-## on its start point; foragers above the upper threshold wait to offer).
-## Turning a toggle on turns its prerequisite on too, recursively; turning
-## one off turns everything that depends on it off too, recursively.
-## Floral constancy and Auto-recruitment sit side by side -- each depends
-## on Scouting, not on each other, so "recruit without constancy, start
-## point only" is a real working combination. Proximity recruitment (see
-## below) is a second, alternate child of Scouting alongside
-## Auto-recruitment -- the two are mutually exclusive rather than a
-## parent/child pair of each other, since both are competing mechanisms
-## for the same job. All off by default; off means foraging works
-## exactly as it does with none of this present.
+## Orientation flight (a new forager's one semi-random start-point flight,
+## kept from then on, no comparison) and Scouting (tries a few start points
+## and keeps whichever scored best) are alternatives, rather than layers.
+## Floral constancy (which also folds a species sample into each scouting
+## bout) and the two recruitment modes depend on Scouting. Turning a
+## dependent toggle on turns Scouting on too; turning Scouting off turns
+## those dependents off. Auto-recruitment and Proximity recruitment are
+## alternatives to each other, since both compete for the same eligible
+## bees. All off by default; off means foraging works exactly as it does
+## with none of this present.
 var orientation_flight_on: bool = false
 var scouting_on: bool = false
 var auto_recruitment_on: bool = false

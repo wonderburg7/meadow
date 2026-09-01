@@ -129,12 +129,12 @@ const TUNABLES := [
 	{
 		"key": "orientation_flight_on", "label": "Orientation flight", "toggle": true,
 		"category": "Foraging",
-		"tip": "A new forager makes a short flight to a random spot near the hive before her first trip, and keeps working that spot from then on, rather than beelining for whatever's nearest the door -- real bees do this too, learning the area before they start foraging properly. Off by default. Turning on Auto scouting turns this on too.",
+		"tip": "A new forager makes a short flight to a random spot near the hive before her first trip, and keeps working that spot from then on, rather than beelining for whatever's nearest the door -- real bees do this too, learning the area before they start foraging properly. Off by default. This and Auto scouting are alternatives: turning either on turns the other off.",
 	},
 	{
 		"key": "scouting_on", "label": "Auto scouting", "toggle": true,
 		"category": "Foraging",
-		"tip": "A new forager tries a few start points near the hive (see Orientation flight) and settles on whichever collected best, instead of just keeping the first one. Off by default. Turning on Floral constancy or Auto-recruitment turns this on too, since both rely on a forager having actually scouted. Turning this off also turns off Floral constancy and Auto-recruitment.",
+		"tip": "A new forager tries a few start points near the hive and settles on whichever collected best, instead of just keeping the first one. Off by default. This and Orientation flight are alternatives: turning either on turns the other off. Turning on Floral constancy or Auto-recruitment turns this on too, since both rely on a forager having actually scouted. Turning this off also turns off Floral constancy and Auto-recruitment.",
 	},
 	{
 		"key": "floral_constancy_on", "label": "Floral constancy", "toggle": true,
@@ -1005,8 +1005,8 @@ static func apply_setting(key: String, value) -> void:
 
 ## Walks up Prerequisites from `key`, turning on everything it depends
 ## on -- e.g. switching on Floral constancy also switches on Auto
-## scouting, which also switches on Orientation flight. Returns the keys
-## it actually changed, so a UI caller can sync their checkboxes.
+## scouting. Returns the keys it actually changed, so a UI caller can
+## sync their checkboxes.
 static func _cascade_prerequisites_on_static(key: String) -> Array[String]:
 	var changed: Array[String] = []
 	var parent: String = Prerequisites.direct_parent(key)
@@ -1014,6 +1014,10 @@ static func _cascade_prerequisites_on_static(key: String) -> Array[String]:
 		if not setting_get(parent):
 			setting_set(parent, true)
 			changed.append(parent)
+			# A prerequisite can itself be an alternate mechanism (Auto
+			# scouting versus Orientation flight), so activating it must
+			# keep that pair consistent too.
+			_cascade_mutual_exclusion_static(parent)
 		parent = Prerequisites.direct_parent(parent)
 	return changed
 
@@ -1679,6 +1683,12 @@ func _cascade_prerequisites_on(key: String) -> void:
 	for changed in _cascade_prerequisites_on_static(key):
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = true
+	# An ancestor switched on above may have turned off its mutually
+	# exclusive sibling. Refresh every such pair from the authoritative
+	# setting so their checkboxes do not retain the old pressed state.
+	for mutually_exclusive in Prerequisites.MUTUALLY_EXCLUSIVE:
+		if toggle_boxes.has(mutually_exclusive):
+			toggle_boxes[mutually_exclusive].button_pressed = setting_get(mutually_exclusive)
 
 ## UI-syncing wrapper over `_cascade_dependents_off_static` -- unticks the
 ## checkbox for every key the cascade actually changed.

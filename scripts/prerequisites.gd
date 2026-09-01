@@ -19,7 +19,6 @@ extends RefCounted
 ## prerequisite. Mirrors the intended research order for a future skills
 ## tree, not built yet (see docs/archive/SCOUTING_TOGGLE_PLAN.md).
 const TOGGLE_PREREQUISITE := {
-	"scouting_on": "orientation_flight_on",
 	"floral_constancy_on": "scouting_on",
 	"auto_recruitment_on": "scouting_on",
 	"proximity_recruitment_on": "scouting_on",
@@ -28,13 +27,16 @@ const TOGGLE_PREREQUISITE := {
 }
 
 ## Toggles that are alternate mechanisms for the same job and must never
-## both run at once -- see FORAGING_ECOLOGY_PLAN.md Slice 9 task 1.
-## auto_recruitment_on and proximity_recruitment_on are both children of
-## scouting_on above, not a parent/child pair of each other, so this
-## relationship doesn't fit TOGGLE_PREREQUISITE -- it's a separate, flat
-## map queried the same way. debug_panel.gd's apply_setting and its UI
-## toggle handler both turn off whichever side isn't being switched on.
+## both run at once. Orientation flight and Auto scouting are alternate
+## ways to choose a new forager's initial search area; Auto-recruitment
+## and Proximity recruitment are alternate ways for established foragers
+## to recruit. These relationships are not parent/child prerequisites, so
+## they live in this separate, flat map. debug_panel.gd's apply_setting
+## and UI toggle handler both turn off whichever side is not being switched
+## on.
 const MUTUALLY_EXCLUSIVE := {
+	"orientation_flight_on": "scouting_on",
+	"scouting_on": "orientation_flight_on",
 	"auto_recruitment_on": "proximity_recruitment_on",
 	"proximity_recruitment_on": "auto_recruitment_on",
 }
@@ -44,10 +46,9 @@ const MUTUALLY_EXCLUSIVE := {
 static func mutually_exclusive_with(key: String) -> String:
 	return MUTUALLY_EXCLUSIVE.get(key, "")
 
-## True if `key` takes part in the tree at all, either as something with
-## a prerequisite or as something else's prerequisite.
+## True if `key` needs prerequisite or mutual-exclusion cascade handling.
 static func is_gated(key: String) -> bool:
-	return TOGGLE_PREREQUISITE.has(key) or TOGGLE_PREREQUISITE.values().has(key)
+	return TOGGLE_PREREQUISITE.has(key) or TOGGLE_PREREQUISITE.values().has(key) or MUTUALLY_EXCLUSIVE.has(key)
 
 ## The one toggle `key` directly depends on, or "" if none.
 static func direct_parent(key: String) -> String:
