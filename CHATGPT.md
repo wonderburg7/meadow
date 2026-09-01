@@ -98,7 +98,24 @@ integrate it:
    it as a concrete, checkable action rather than a vague "needs
    testing"; and
 6. whether this hand-off completes the plan's final slice -- if so, name it
-   and list every follow-up; if not, name the next slice.
+   and list every follow-up; if not, name the next slice; and
+7. the next-slice block below, so Dave learns what happens next without
+   opening a file.
+
+Finish every implementation hand-off with this block, unprompted:
+
+```
+Slice done:   <id> -- <name>
+Branch:       codex/<slice-id>  |  verify.ps1: green
+Risk tier:    <low|medium|high> -- <one-line reason>
+Hands-on:     <concrete check for Claude to file in checks/ready.md>  (or: none)
+Next in my lane: <id> -- <one line on what it does>
+Ready to merge: yes -- Claude integrates and closes the branch out
+```
+
+Codex never merges, pushes or deletes the branch. "Ready to merge" is a
+statement that the three conditions in `plans/workstreams.md` ("When to
+merge") are met, not an action taken.
 
 Deterministic check output and the committed diff are the evidence; a second
 agent need not re-derive the implementation narrative. After integration,
@@ -133,10 +150,20 @@ commits distinct.
 
 ## Session routing
 
-- Treat `NEXTSTEPS.md` as the only canonical current queue: current slice,
-  one successor and one blocker. Update the owning shared plan, the queue and
-  any player check only at a real slice transition; archive terminal execution
-  records in `plans/archive/` rather than retaining them at the root.
+- Treat `NEXTSTEPS.md` as the only canonical current queue. It holds five
+  ready slices split into a **[Claude] lane** and a **[Codex] lane**. Take the
+  first unclaimed **[Codex]** item and nothing else -- "implement the next
+  slice" means exactly that. Read only the `Plan:` file and heading that item
+  names; do not read the Claude lane's plan, the archive or Git history to
+  work out what to do.
+- The lanes are guaranteed not to share a file (`tools/check_docs.py` proves
+  it), so a Codex branch and a Claude branch can run at the same time without
+  conflicting. If the slice you are on turns out to need a file the other
+  lane's leading item names, stop and say so rather than editing it -- that
+  means the queue is wrong.
+- Update the owning shared plan, the queue and any player check only at a real
+  slice transition; archive terminal execution records in `plans/archive/`
+  rather than retaining them at the root.
 - Read other Meadow files only as evidence needed for the requested analysis.
 - Keep recommendations clearly labelled as recommendations, not completed
   changes.

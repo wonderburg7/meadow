@@ -1,7 +1,7 @@
 # Meadow — orientation for a new session
 
 <!-- CONTEXT: session-orientation | LOAD: every session -->
-Status: current | Owner: Dave / Claude Code | Verified: 2026-08-28
+Status: current | Owner: Dave / Claude Code | Verified: 2026-09-01
 
 Meadow is a solo Godot 4 / GDScript bee-colony simulation. Read narrowly,
 keep one playable slice in focus, and use deterministic evidence instead of
@@ -11,14 +11,68 @@ reconstructing history.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md` (current slice, successor, blocker).
-2. Open only the named file and heading in `plans/`; `plans/README.md` defines
-   the layers and on-demand fetch rules.
+1. Read `NEXTSTEPS.md`. It holds five ready slices in two lanes; take the
+   first unclaimed **[Claude]** item. "Implement the next slice" means exactly
+   that and needs no other context.
+2. Open only the `Plan:` file and heading that item names; `plans/README.md`
+   defines the layers and on-demand fetch rules.
 3. For code work, load the relevant path-scoped `.claude/rules/` file and use
    `FUNCTION_MAP.md`/search to read only the affected source section.
 
-Do not choose work from `ROADMAP.md`, `DESIGN_BACKLOG.md`, `plans/archive/`,
-`checks/`, or Git history. They are on-demand references, not queues.
+Do not read the Codex lane's plan, `ROADMAP.md`, `DESIGN_BACKLOG.md`,
+`plans/archive/`, `checks/` or Git history to work out what to do. The queue
+already decided; re-deriving it is the expensive path.
+
+## Keeping the queue true
+
+<!-- LAYER: durable-rules -->
+
+`NEXTSTEPS.md` holds only work that can be started immediately. This is
+enforced, not aspirational -- `tools/check_docs.py` fails if the queue has
+other than five items, if an item lacks a lane tag or its `Plan:`/`Files:`/
+`Check:`/`Next after:` lines, if either lane is empty, if the two lanes'
+leading items name a file in common, or if blocked-work language appears in
+the queue at all.
+
+**Admission test, applied every time the queue is rewritten.** A slice belongs
+in `## Next up` only if a model could start writing code on it today. It does
+*not* belong if it needs a hands-on check, a live repro, a live boot, or a
+decision from Dave *before* code can be written. Needing a hands-on check
+*after* the code lands is normal and does not disqualify it -- that check goes
+to `checks/ready.md`.
+
+Work that fails the admission test goes under `## Not in the queue, and why`
+with one line saying what it is waiting for. Never leave it in the queue "to
+keep it visible": a queue Dave cannot act on is worse than a short one.
+
+Refill the queue as part of finishing a slice, not as a separate errand. When
+a slice lands, promote its `Next after:` item into the lane, and if that
+empties a lane, pull the next ready slice from an owning plan and add it. When
+Dave reports a hands-on pass, the same rule runs in reverse: anything his
+findings unblock moves out of "Not in the queue" and into a lane.
+
+## End-of-slice report
+
+<!-- LAYER: durable-rules -->
+
+Every session that implements or integrates a slice ends with this block, in
+the chat, without being asked. It is how Dave learns what happened, what was
+merged and what is next, without reading any file:
+
+```
+Slice landed: <id> -- <name>
+Branch:       <branch>  |  verify.ps1: green
+Merged:       yes, to master now  (or: no -- <the one specific reason>)
+Hands-on:     <check filed in checks/ready.md § heading>  (or: none needed)
+Queue:        <lane> lane now leads with <id> -- <name>
+Next slice:   <id> -- <one line on what it does>
+Other lane:   <id> -- <name>, untouched by this merge
+Start it with: <the copy-paste prompt line from NEXTSTEPS.md>
+```
+
+If the `Merged:` line is anything other than "yes", it must name the specific
+blocker. "Waiting for a hands-on check" is never a valid reason -- file the
+check and merge.
 
 ## Documentation lifecycle
 
@@ -44,15 +98,27 @@ Do not choose work from `ROADMAP.md`, `DESIGN_BACKLOG.md`, `plans/archive/`,
 
 ## Coordinating and closing out workstreams
 
-Before creating a new branch or worktree (Codex or Claude's own), check
-`plans/workstreams.md` for scope overlap with open rows. No overlap: add a
-row from the primary checkout and start. Deliberate overlap (comparing two
-approaches): mark both rows `competing` with the comparison criterion, and
-delete the loser's branch/worktree the moment the decision is made.
-Accidental overlap: don't start a second branch — extend the existing row's
-work instead. `plans/workstreams.md` is edited only from the primary
-checkout, never from inside a feature branch — parallel branches editing it
-would conflict with each other on merge.
+Branches follow the lanes. One `[Claude]`-lane branch and one `[Codex]`-lane
+branch may be open at once; the queue proves they share no file, so they
+cannot conflict. Two branches in the same lane means the lane is being worked
+out of order — finish or abandon the first. Add the row from the primary
+checkout before starting; `plans/workstreams.md` is edited only from the
+primary checkout, never from inside a feature branch, since parallel branches
+editing it would conflict with each other on merge. Deliberate overlap
+(comparing two approaches) is the one exception: mark both rows `competing`
+with the comparison criterion, and delete the loser's branch/worktree the
+moment the decision is made.
+
+**When to merge: one slice, one branch, one merge, as soon as it is green.**
+Never batch two slices into one merge, and never hold a finished branch open.
+A branch is ready the moment `tools/verify.ps1` passes and any hands-on check
+it produced is written into `checks/ready.md` — filing the check is what
+closes the branch, so *waiting for Dave to play-test is never a reason to
+delay a merge*. Merge order between lanes does not matter; whoever finishes
+first merges first and the other merges on top with no rebase. A merge
+conflict between lanes is evidence the queue's `Files:` lines were wrong —
+fix them in the same pass. Dave never has to decide merge timing: the
+end-of-slice report states what was merged and what comes next.
 
 Read the hand-off and `git show --stat` first. Use the lowest review tier
 supported by evidence:
@@ -103,6 +169,7 @@ itself.
 | --- | --- |
 | Current work selection | `NEXTSTEPS.md` |
 | Parallel branch/worktree coordination | `plans/workstreams.md` |
+| Settings, `GameConfig` ownership | `plans/design/settings-catalogue.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Foraging behaviour or evidence | `plans/active/foraging-evidence.md` |

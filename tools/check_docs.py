@@ -68,16 +68,93 @@ def check_context_layout(errors: list[str]) -> None:
         errors.append("CHATGPT_NEXTSTEPS.md is retired; use the shared NEXTSTEPS.md and plans/")
 
 
+QUEUE_SIZE = 5
+LANES = ("Claude", "Codex")
+REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Next after:")
+NOT_READY_PHRASES = (
+    "blocked on",
+    "needs dave",
+    "needs a live",
+    "needs its own live",
+    "awaiting dave",
+    "hands-on confirmation first",
+    "before any code is written",
+)
+PATH_TOKEN = re.compile(r"`([^`]+)`")
+
+
+def _item_files(body: str) -> set[str]:
+    """Paths named on an item's Files: line, so two lanes can be proved disjoint."""
+    match = re.search(r"^\s*-\s*Files:\s*([\s\S]*?)(?=^\s*-\s[A-Z]|\Z)", body, re.MULTILINE)
+    if not match:
+        return set()
+    return {
+        token.strip()
+        for token in PATH_TOKEN.findall(match.group(1))
+        if "/" in token
+    }
+
+
 def check_next_steps(errors: list[str]) -> None:
+    """The queue is exactly QUEUE_SIZE ready slices, in two lanes that cannot collide."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
     if not match:
         errors.append("NEXTSTEPS.md: missing a '## Next up' section")
         return
-    items = re.findall(r"^\d+\.\s+", match.group(1), re.MULTILINE)
-    if len(items) != 3:
-        errors.append(f"NEXTSTEPS.md: expected exactly 3 next-step items, found {len(items)}")
+    section = match.group(1)
+
+    chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
+    if len(chunks) != QUEUE_SIZE:
+        errors.append(
+            f"NEXTSTEPS.md: expected exactly {QUEUE_SIZE} next-step items, found {len(chunks)}"
+        )
+
+    lane_order: list[tuple[str, str]] = []
+    for index, chunk in enumerate(chunks, start=1):
+        lane_match = re.match(r"\*\*\[(\w+)\]", chunk)
+        if not lane_match or lane_match.group(1) not in LANES:
+            errors.append(
+                f"NEXTSTEPS.md item {index}: must open with a lane tag, one of "
+                + ", ".join(f"**[{lane}]" for lane in LANES)
+            )
+            continue
+        lane_order.append((lane_match.group(1), chunk))
+
+        missing = [field for field in REQUIRED_ITEM_FIELDS if f"- {field}" not in chunk]
+        if missing:
+            errors.append(
+                f"NEXTSTEPS.md item {index}: missing {', '.join(field.rstrip(':') for field in missing)}"
+            )
+
+    lanes_present = {lane for lane, _ in lane_order}
+    for lane in LANES:
+        if lane not in lanes_present:
+            errors.append(f"NEXTSTEPS.md: no [{lane}] item -- both lanes must have work to run in parallel")
+
+    # Only ready work belongs here; anything waiting on Dave lives under "Not in the queue".
+    lowered = section.lower()
+    for phrase in NOT_READY_PHRASES:
+        if phrase in lowered:
+            errors.append(
+                f"NEXTSTEPS.md: '{phrase}' appears in the queue -- work waiting on Dave "
+                "belongs under '## Not in the queue, and why', not '## Next up'"
+            )
+
+    # The two lanes run at the same time, so their leading items must not share a file.
+    heads = {}
+    for lane, chunk in lane_order:
+        heads.setdefault(lane, _item_files(chunk))
+    if len(heads) == len(LANES):
+        first, second = (heads[lane] for lane in LANES)
+        shared = first & second
+        if shared:
+            errors.append(
+                "NEXTSTEPS.md: the leading items in each lane share "
+                + ", ".join(sorted(shared))
+                + " -- reorder the lanes so simultaneous work cannot collide"
+            )
 
 
 def check_markdown_links(errors: list[str]) -> None:

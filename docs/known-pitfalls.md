@@ -79,7 +79,7 @@ of these has bitten more than once:
   return one from a helper, rather than assigning a literal through a
   reference whose static type doesn't carry the property's declared type.
   Bit `saving.gd::_restore_bees()` 31 Aug (see
-  `plans/now/hands-on-fixes-2026-08-31.md` Slice A1) — worth a beat of
+  `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1) — worth a beat of
   suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
   restore/deserialize path resets wholesale from outside its class.
 

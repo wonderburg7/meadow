@@ -1,7 +1,7 @@
 # Hands-on fixes — 31 Aug 2026 pass
 
-<!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: Slice A (A1/A0/A2) fixed on `claude/save-restore-slice-a`; Slice C (C1/C2/C3) fixed on `claude/hands-on-fixes-slice-c`; Slices B and D fixed on `codex/hands-on-bd` (merged 1 Sep 2026) -- `tools/verify.ps1` green, hands-on confirmation still needed for all four (`checks/ready.md`) | Owner: Dave / Claude Code | Next: Dave to hands-on confirm Slices A, B, C and D | Dependency: none | Verified: 2026-09-01
+<!-- CONTEXT: plan | LAYER: history -->
+Status: complete -- all four slices (A/B/C/D) shipped and merged to master 1 Sep 2026 | Owner: Dave / Claude Code | Next: None -- plan complete; the remaining hands-on confirmations live in `checks/ready.md` | Dependency: none | Verified: 2026-09-01
 
 Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced

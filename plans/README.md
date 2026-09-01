@@ -10,12 +10,16 @@ remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md` only. It names the one current slice, one successor,
-   and one blocker.
-2. Open the named file/heading under `plans/` with a targeted search. Read its
-   status line and only the section needed for the assigned task.
+1. Read `NEXTSTEPS.md` only. It holds five ready slices in a `[Claude]` lane
+   and a `[Codex]` lane; take the first unclaimed item in your own lane.
+2. Open the `Plan:` file/heading that item names with a targeted search. Read
+   its status line and only the section needed for the assigned task.
 3. Load code rules, a check list, design reference, or historical record only
    when the task or the plan's `Read on demand` section names it.
+
+Do not read the other lane's plan. The lanes are proved file-disjoint by
+`tools/check_docs.py` so both can run at once; reading across them is wasted
+context and invites an accidental edit to the other lane's files.
 
 Do not load this entire directory, `plans/archive/`, `ROADMAP.md`,
 `DESIGN_BACKLOG.md`, Git history, or `checks/` to decide what is next.
@@ -66,11 +70,14 @@ the archived plan is never reopened or extended.
 
 | If the queue names | Read |
 | --- | --- |
-| Challenge 1 Slice 9 | `plans/now/challenge-1.md` |
-| UI-P | `plans/now/ui.md` |
-| Empty-cell sprite / hex grid settings / comb autobuild | `plans/now/hive-comb.md` |
+| C1 (settings catalogue) | `plans/design/settings-catalogue.md` |
+| C2 (UI-Q), UI-P, UI-D | `plans/now/ui.md` |
+| X1, X2 (foraging evidence) | `plans/active/foraging-evidence.md` |
+| Challenge 1 acceptance (Slice 7) | `plans/now/challenge-1.md` |
+| Comb autobuild order / cell feedback | `plans/now/hive-comb.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
+| Provenance for a shipped slice | `plans/archive/` (search only) |
 
 Create a new file in `plans/now/` only when a selected slice cannot fit in the
 existing area's immediate-task section. On completion, distil durable rules,
@@ -80,14 +87,16 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 
 <!-- LAYER: dependency-order -->
 
-1. Complete Challenge 1 Bundle H before treating its teaching/UI-unlock
-   documentation as a reliable dependency for later Challenge work.
-2. Diagnose UI-D from the observed Challenge reproduction before changing
-   top-bar geometry; it is the next contained implementation investigation.
-3. The foraging evidence campaign is complete and defaults are retained; see
-   `plans/archive/FORAGING_EVIDENCE_CAMPAIGN_2026-08-29.md` before changing
-   recruitment defaults or using the existing foraging chain as the first
-   progression vertical slice.
-4. If progression is selected, follow `plans/design/progression.md`'s order:
+1. The settings-catalogue slice (C1) lands before any further
+   `debug_panel.gd` work, including UI-P-6. It deletes ~900 lines from that
+   file; work done first would simply be rewritten.
+2. Add no counter-free evidence slice. X1 exists because the forager-return
+   check could not be answered at all without a counter; X2 reads the same
+   diagnostic surface. Evidence before threshold changes, every time.
+3. Diagnose UI-D and UI-P-5 from an observed reproduction before changing
+   geometry or menu-population code; both name two plausible causes.
+4. Comb auto-build (hive-comb Slice 4) is a build-throughput change, not a
+   visual one. It needs Dave's call on intended behaviour before code.
+5. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not
    begin adaptations, campaign meta, or legacy-path removal first.

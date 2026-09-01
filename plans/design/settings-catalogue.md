@@ -1,7 +1,7 @@
 # Settings catalogue — GameConfig as the authority, the panel as a view
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when settings/config ownership is selected -->
-Status: selected, Slice 1 active | Owner: Dave / Claude Code | Next: implement Slice 1 (`reset_config_to_defaults()` coverage), then Slice 2 (catalogue extraction) | Dependency: none | Verified: 2026-09-01
+Status: selected, Slices 1+2 combined into one active slice | Owner: Dave / Claude Code | Next: implement Slice 1 and Slice 2 in one pass, two commits (Claude lane) -- they touch the same function and the same source check, so splitting them means doing that work twice | Dependency: none | Verified: 2026-09-01
 
 Parked here on Dave's call (1 Sep 2026) from the architecture/performance
 review, then selected the same day as active product direction — Slice 1
@@ -15,6 +15,14 @@ and anything absent from it is invisible to code that should know better.
 This is the same mistake, one level up, that `prerequisites.gd` was extracted
 to fix (`DESIGN_BACKLOG.md` section 13, slice 3): a rule that only existed
 inside a checkbox widget.
+
+**Combined 1 Sep 2026 into one queue slice (C1).** Slice 1 rewrites
+`reset_config_to_defaults()` and Slice 2 moves that same function, along with
+the table it used to read, into a new file. Run separately, the source check
+Slice 1 adds would be written against `debug_panel.gd` and then immediately
+moved — Slice 2's own step 4 says exactly that. One pass, two commits: the
+behaviour fix first, the mechanical move second, so the move stays reviewable
+as a pure relocation.
 
 <!-- LAYER: immediate-task -->
 

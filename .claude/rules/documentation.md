@@ -9,9 +9,13 @@ paths:
 # Planning-document lifecycle
 
 Use the smallest current document that answers the task. `NEXTSTEPS.md` is the
-only canonical current queue and has exactly three entries: current slice,
-successor and blocker. Do not append a session diary or duplicate plan detail
-there.
+only canonical current queue. It holds exactly five ready slices, tagged
+`[Claude]` or `[Codex]`, each with `Plan:`, `Files:`, `Check:` and
+`Next after:` lines. Only work that can be started immediately belongs there;
+anything waiting on a hands-on check, a live repro or a decision from Dave
+goes under `## Not in the queue, and why`. `tools/check_docs.py` enforces all
+of this, including that the two lanes' leading items share no file. Do not
+append a session diary or duplicate plan detail there.
 
 Every live file in `plans/now/`, `plans/active/`, `plans/design/` or
 `plans/reference/` has one compact Status line containing Owner, Next,

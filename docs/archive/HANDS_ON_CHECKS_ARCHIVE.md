@@ -43,7 +43,7 @@ each item if more detail is needed.
   re-laying mid-beat, her role panel, the farewell speech bubble placement,
   and all three completion-window options.
 - Two items from the same pass were found broken, not confirmed --
-  see `plans/now/hands-on-fixes-2026-08-31.md` (Slices A/B/C/D) and the
+  see `plans/archive/HANDS_ON_FIXES_2026-08-31.md` (Slices A/B/C/D) and the
   updated entries left open in `checks/ready.md` for efficiency Slices 4/5
   and Challenge 1 Bundle G.
 

@@ -27,7 +27,7 @@ its check. Move a confirmed or superseded entry to
       Also confirm the console no longer shows repeated "Exponent too
       high" warnings on that same load (the paired `save_game.gd` fix, was
       284 lines on the repro save). See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slice A1/A0.
+      `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1/A0.
 
 ### Challenge data/goal-registry extraction (efficiency Slice 4)
 - [x] Confirmed 31 Aug: goal shelf text/progress still advances stage by
@@ -42,7 +42,7 @@ its check. Move a confirmed or superseded entry to
       `main.queen` validity before use, matching its other 14 call sites.
       Trigger a Challenge 2 nectar collapse past stage 2.1 and confirm the
       recovery Gallerin line appears and the queen survives the restore.
-      See `plans/now/hands-on-fixes-2026-08-31.md` Slice A2.
+      See `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A2.
 
 ### Challenge 1 Bundle G -- trim Challenge 2's opening (stages renumbered 2.1-2.9)
 - [x] Confirmed 31 Aug: Challenge 2 opens with the queen (role Laying)
@@ -53,7 +53,7 @@ its check. Move a confirmed or superseded entry to
       preference, not a bug, not tracked as an issue here.
 - [ ] **Not confirmed, found broken 31 Aug:** the Meadow view button never
       appears in Challenge 2 (missing `"meadow_view"` unlock key in every
-      `STAGES_2` entry). See `plans/now/hands-on-fixes-2026-08-31.md`
+      `STAGES_2` entry). See `plans/archive/HANDS_ON_FIXES_2026-08-31.md`
       Slice B.
 
 ### Challenge 1 Bundle E -- automate nectar, then pollen (stages 1.11-1.14)
@@ -67,7 +67,7 @@ its check. Move a confirmed or superseded entry to
       rate), then build a third cell (1.14). Confirm each stage's goal
       advances, the second and third cells land beside the first rather
       than failing, and 1.13's Gallerin copy withholds "pollen makes new
-      workers" while 1.14's reveals it. See `plans/now/challenge-1.md`
+      workers" while 1.14's reveals it. See `plans/archive/CHALLENGE1_SLICES_1-10.md`
       Slices 4-5.
 - [ ] **Fix applied 1 Sep (10c), not yet confirmed live:** nothing ever
       stopped the queen's automatic pollen foraging once a stage's target
@@ -77,7 +77,7 @@ its check. Move a confirmed or superseded entry to
       Confirm at 1.13: let the queen auto-forage pollen, the stage should
       advance right at 75 (not before), and she should be idle immediately
       after -- not still flying to a flower or continuing to collect. See
-      `plans/now/challenge-1.md` Slice 10, section 10c.
+      `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, section 10c.
 - [ ] **Fix applied 1 Sep (10d), not yet confirmed live:** assigning
       Forager/pollen didn't visibly start automatic pollen foraging in one
       31 Aug run -- traced to the "Doing" (nectar/pollen) row reading only
@@ -91,14 +91,14 @@ its check. Move a confirmed or superseded entry to
       backup role. Confirm at 1.13: select the queen while she's
       auto-foraging nectar via her backup role, open the Doing row, and
       pick Pollen -- it should render, take, and she should switch to
-      pollen collection. See `plans/now/challenge-1.md` Slice 10,
+      pollen collection. See `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10,
       section 10d.
 - [x] **Confirmed 1 Sep (10e), no bug:** Dave confirms "Laying" appeared as a
       *new choice* in the "Change to..." list right after the third cell --
       the intended 1.14->1.15 pacing, not a leak. Closed with no code change.
       The separate, still-unfixed 9d (current-role marker showing "Laying"
       before 1.15) remains open and is tracked only under Slice 9's own
-      entry above. See `plans/now/challenge-1.md` Slice 10, section 10e.
+      entry above. See `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, section 10e.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
@@ -110,7 +110,7 @@ its check. Move a confirmed or superseded entry to
       meadow, the 3-point tour, each flower, the deposit), automatic
       movement/collection/deposit never clears a manual stage, and the
       queen never gets auto-assigned a role she wasn't manually given. See
-      `plans/now/challenge-1.md` Slice 3.
+      `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 3.
 - [ ] **Fix applied 1 Sep (10a/10g), not yet confirmed live:**
       right-clicking a flower during these stages used to permanently make
       the queen a real Forager (she read "Forager -- nectar" with no role
@@ -122,7 +122,7 @@ its check. Move a confirmed or superseded entry to
       Confirm: right-click two flowers in turn, collect from each, and the
       Job column should keep reading "Laying" throughout -- no "Forager"
       anywhere, and no automatic foraging resumes after the deposit at
-      1.10. See `plans/now/challenge-1.md` Slice 10, sections 10a/10g.
+      1.10. See `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, sections 10a/10g.
 - [ ] **Fix applied 1 Sep (10f), not yet confirmed live:** 1.8/1.9 used to
       clear on a *rejected* flower as readily as a collected one, since
       both goals counted `Bee.flower_cooldowns.size()`, which also grew on
@@ -131,12 +131,12 @@ its check. Move a confirmed or superseded entry to
       from a real completed collection. Confirm at 1.8: right-click a
       visibly near-empty/depleted flower twice and the stage should **not**
       clear; then collect from one real flower and it should. See
-      `plans/now/challenge-1.md` Slice 10, section 10f.
+      `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, section 10f.
 - [ ] **No code needed (10b):** once the above two fixes land, confirm
       live that the backup-role path Slice 9a fixed also stays closed --
       i.e. the queen never shows "Forager" anywhere during 1.6-1.10 by any
       route, not just via the manual flower-click path above. See
-      `plans/now/challenge-1.md` Slice 10, section 10b.
+      `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, section 10b.
 
 ### Safe forager return reserve (recommendation Slice 4)
 - [ ] Foragers now turn for home based on a calculated return-energy
@@ -171,7 +171,7 @@ its check. Move a confirmed or superseded entry to
       toggle and confirm the toggle is back to its default rather than
       leaking into the new run (`DebugPanel.reset_config_to_defaults()`,
       called from `main.gd::_on_scenario_chosen`). See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slice C1-C3.
+      `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice C1-C3.
 
 ### AI playtest harness (slices 1-7, the headless action driver)
 - [ ] Review all seven slices end to end -- see `git log` for the
@@ -191,7 +191,7 @@ its check. Move a confirmed or superseded entry to
       switch Auto scouting on, confirm Orientation flight's checkbox turns
       itself off (not just staying lit with a zero counter); switch
       Orientation flight on and confirm the same in reverse, and that its
-      counter now moves. See `plans/active/foraging-evidence.md` Slice 1.
+      counter now moves. See `plans/archive/FORAGING_EVIDENCE_SLICE_1.md`.
 
 ### Proximity recruitment (Slice 9)
 - [ ] Turn on Proximity recruitment (settings cog, Foraging section) --
@@ -254,7 +254,7 @@ its check. Move a confirmed or superseded entry to
       routes her through the entrance/exit instead of off-screen (9h);
       automatic nectar foraging locks her to one flower with camera-follow/
       4x speed visibly firing (9i); a designated cell returns to neutral once
-      fully emptied (9j). See `plans/now/challenge-1.md` Slice 9 for each
+      fully emptied (9j). See `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 9 for each
       finding's detail.
 
 ### Challenge 2 Slice B + Slice D fixes
@@ -263,7 +263,7 @@ its check. Move a confirmed or superseded entry to
       transition through 2.9 (Slice B). Select a death marker (drag-box and
       single-click, both zones): a green selection ring surrounds it, same
       as any other selectable object (Slice D). See
-      `plans/now/hands-on-fixes-2026-08-31.md` Slices B and D.
+      `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slices B and D.
 
 ### UI-P-1, UI-P-3, UI-P-4, UI-P-7 (Dr Gallerin bubble, pre-run menu, info badges)
 - [ ] Hover a long info-badge tooltip (settings window or elsewhere): it
@@ -276,7 +276,7 @@ its check. Move a confirmed or superseded entry to
       HUD's size and follows the chosen typeface, sits to the left of his
       icon with a pointer connecting the two, and the command tray never
       renders underneath it at any tested width (P-7). See
-      `plans/now/ui.md` UI-P-1/3/4/7.
+      `plans/archive/UI_SHIPPED_2026-09-01.md` UI-P-1/3/4/7.
 
 ### UI-P-8 (summary panel cog, command tray width, resize overlap)
 - [ ] With a bee selected whose identity label wraps to 2-3 lines, confirm
@@ -288,4 +288,4 @@ its check. Move a confirmed or superseded entry to
       onto further lines rather than the tray growing into the summary
       panel or Gallerin's space. Summary panel text (name/energy/activity/
       trait) reads the same size as command-panel button text. See
-      `plans/now/ui.md` UI-P-8.
+      `plans/archive/UI_SHIPPED_2026-09-01.md` UI-P-8.
