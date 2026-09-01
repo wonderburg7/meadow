@@ -29,6 +29,11 @@ var _view_frame: int = -1
 ## grey ground.
 const GRASS_MARGIN := 200.0
 
+## Keep hive-floor polygons behind every row-ordered comb cell. -4096 is
+## Godot's lowest supported z-index, so even cells above the comb centre
+## (whose row key is negative) cannot be hidden by the floor.
+const HIVE_FLOOR_Z_INDEX := -4096
+
 func _build_meadow() -> void:
 	var grass = Polygon2D.new()
 	grass.polygon = main.Shapes.square_points(
@@ -415,6 +420,10 @@ func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> vo
 	tile.polygon = main.Shapes.hexagon_points(GameConfig.hive_cell_size * 1.15, Session.use_sprite_hex_grid)
 	tile.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
 	tile.color = main.FLOOR_COLOR
+	# Cell z-index follows its screen row (2r + q), which is negative above
+	# the comb centre. Keep the opaque floor below that whole ordering rather
+	# than allowing those cells to be hidden behind this default-z polygon.
+	tile.z_index = HIVE_FLOOR_Z_INDEX
 	main.hive_root.add_child(tile)
 
 func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void:
