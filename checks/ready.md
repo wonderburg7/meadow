@@ -78,12 +78,21 @@ its check. Move a confirmed or superseded entry to
       advance right at 75 (not before), and she should be idle immediately
       after -- not still flying to a flower or continuing to collect. See
       `plans/now/challenge-1.md` Slice 10, section 10c.
-- [ ] **Not yet fixed, needs a live-reproduction step (10d):** assigning
-      Forager/pollen did not visibly start automatic pollen foraging in one
-      31 Aug run; two competing explanations traced in code, not yet told
-      apart live -- watch whether the "Doing" (nectar/pollen) row even
-      renders for the queen at that moment. See `plans/now/challenge-1.md`
-      Slice 10, section 10d.
+- [ ] **Fix applied 1 Sep (10d), not yet confirmed live:** assigning
+      Forager/pollen didn't visibly start automatic pollen foraging in one
+      31 Aug run -- traced to the "Doing" (nectar/pollen) row reading only
+      the queen's primary role (`EGG_LAYER`), which never renders a mode
+      row for her while she forages via her secondary/backup role; and even
+      once rendered, `Bee.set_focus()`'s own primary-role-only guard would
+      have silently no-opped the click. Both are fixed: `Bee.
+      current_working_role()` and `hud.gd`'s new `_common_working_role()`
+      key the Doing row off whichever role she's actively working, and
+      `set_focus()` now accepts the change while she's working Forager as a
+      backup role. Confirm at 1.13: select the queen while she's
+      auto-foraging nectar via her backup role, open the Doing row, and
+      pick Pollen -- it should render, take, and she should switch to
+      pollen collection. See `plans/now/challenge-1.md` Slice 10,
+      section 10d.
 - [x] **Confirmed 1 Sep (10e), no bug:** Dave confirms "Laying" appeared as a
       *new choice* in the "Change to..." list right after the third cell --
       the intended 1.14->1.15 pacing, not a leak. Closed with no code change.

@@ -1,0 +1,43 @@
+{
+  "cells": 0,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 4,
+  "miners": 0,
+  "random_seed": 4242,
+  "time_scale": 1,
+  "config_overrides": {
+    "cell_build_time": 6.0,
+    "hive_interior_rings": 8.0,
+    "seconds_per_day": 120.0
+  },
+  "diagnostics": {
+    "profile": "custom",
+    "events": ["build_target"],
+    "snapshots": {
+      "every_sim_seconds": 10.0,
+      "fields": ["role_outcomes.cells_completed_total"],
+      "only_when_changed": true
+    },
+    "limits": {
+      "event_lines_per_type": 512,
+      "snapshot_lines": 16
+    }
+  },
+  "actions": [
+    {
+      "when": {"cells_completed_at_least": 37},
+      "do": "assert",
+      "condition": {"queen_alive": true}
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 2
+  },
+  "expect": [
+    {"id": "actions_clean", "metric": "actions.problems", "op": "empty"},
+    {"id": "queen_alive", "metric": "summary.queen_alive", "op": "eq", "value": true}
+  ]
+}

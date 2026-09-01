@@ -11,6 +11,35 @@ Planning/context findings last refreshed: 26 Aug 2026. Completed simulation
 recommendations are recorded in Git history and their current checks/plans,
 not retained here as an advisory queue.
 
+## Parallel-work recommendation (1 Sep 2026)
+
+**Evidence:** `NEXTSTEPS.md` makes Challenge 1 Slice 10d the current item and
+hive-comb Slice 4 its successor, but each still needs a Godot live reproduction
+and, for Slice 4, Dave's balance decision before code can be scoped. The only
+unmerged Codex branch, `codex/hive-comb-slice-4-repro`, already contains the
+useful bounded scenario/trace commits (`81e3606`, `93ecacf`), but is divergent
+from `master` and also carries an unrelated progression-plan commit
+(`1e3d4f0`). `plans/active/foraging-evidence.md` Slice 1 has an explicit
+decision (Option B) and is a narrow prerequisite-map change with no overlap
+with either priority investigation.
+
+**Consequence:** assigning two agents to implementation of 10d/Slice 4 now
+would invite blind fixes and compete for the same unavailable live-boot
+evidence. Starting either agent from the existing Codex branch risks carrying
+stale canonical-document edits into unrelated work.
+
+**Recommendation:** Claude Code should own the current Challenge 1 10d
+live reproduction and only implement its confirmed cause; Codex should start
+a fresh `master`-based branch for foraging-evidence Slice 1 (Option B), with
+focused prerequisite regression coverage. Before either new worktree is
+created, Claude should selectively integrate or reapply the hive-comb repro
+scenario/trace from the existing branch, leave out its stale queue/workstream
+snapshot and unrelated progression commit, then close that branch. Once Dave
+has visually confirmed the hive result and chosen the intended per-site
+builder behaviour, assign the resulting hive-comb implementation to the next
+free agent; keep UI-Q as a single later owner because it edits `hud.gd` and
+seven producer files.
+
 ## Architecture/performance
 
 ### P0. Consolidate availability and move high-value derived state to invalidation

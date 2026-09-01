@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slices 1-3, 6 and 7 shipped (merged to master 1 Sep 2026: `codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's `dd1b7ab`) -- all await Dave's hands-on confirmation in `checks/ready.md`; Slices 4-5 remain unconfirmed-as-bugs, pending their own live repro | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slices 1-3, 6 and 7 shipped (merged to master 1 Sep 2026: `codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's `dd1b7ab`) -- all await Dave's hands-on confirmation in `checks/ready.md`; Slice 4's headless trace confirms candidate cause 1 (all idle Comb Workers pile onto one unfinished site instead of spreading), still needs Dave's live-boot look and a call on intended behaviour before any code change; Slice 5 remains unconfirmed-as-a-bug, pending its own live repro | Dependency: `godot` MCP connection for the live-boot step | Verified: 2026-09-01
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -168,6 +168,46 @@ open floor and several idle Comb Workers (removing the digging-asymmetry
 variable) before writing any fix to `create_next_cell_site()` — same
 discipline `challenge-1.md`'s Slice 8d used for its own "confirmed-plausible,
 pending live-boot confirmation" finding.
+
+`test_scenarios/hive_comb_spiral_repro.json` is that reproducible setup: it
+starts four automatic Comb Workers with no cells or miners, expands the fully
+open interior to seven rings, and stops after 37 completed cells (the centre
+plus the first three complete hex rings). Its bounded `build_target` trace
+records every automatic target while the live boot supplies the visual answer;
+it deliberately does not treat a target-order assertion as proof that the
+drawn comb looks right. Run it with
+`./tools/run_headless.ps1 test_scenarios/hive_comb_spiral_repro.json` for the
+deterministic trace, then inspect the same `--scenario` boot visually before
+scoping any change to `create_next_cell_site()`.
+
+**Headless trace run (1 Sep, `run_id=b8cf41b4dc6c`, all 37 cells completed,
+`queen_alive`/`actions_clean` both passed): candidate cause 1 confirmed by
+the trace itself, no visual boot needed to see it.** Of 148 `assigned`
+`build_target` events, 51 land on a `target_hex` that one or more other bees
+were assigned in the very same tick. Tracing the first one: all four workers
+get `target_hex=[0,0]` at `game_time=0.025`; all four `claimed` and
+`completed` it together at `game_time≈2.6`; then all four get
+`target_hex=[0,-1]` together next, and so on for the whole run. The comb
+never grows at more than one site at a time — the four Comb Workers act as
+a single herd walking the spiral tile-by-tile, rather than each opening its
+own site and the ring filling in from several points in parallel.
+
+Mechanism, read from `scripts/bee.gd:1359-1367` and
+`scripts/hive.gd:553-557`: before calling `create_next_cell_site()`, an idle
+Comb Worker first calls `hive.find_unfinished_cell()`, which returns the
+first cell in `cells` with `is_built == false` — uncapped, so every idle
+worker piles onto the single most recent unfinished site instead of a new
+one opening once that site already has a builder. `find_unfinished_cell()`
+is also what lets a worker resume a site abandoned mid-build (e.g. after a
+death), which is correct; the bug is that it has no limit on how many
+workers can queue onto the same site while other ring positions sit
+untouched. This is a mechanism finding, not yet a scoped fix — capping
+concurrent builders per site would speed up perceived spiral growth but
+also changes overall build throughput (a balance question, not just a
+visual one per `.claude/rules/simulation.md`), so it needs Dave's live-boot
+look and a call on the intended behaviour before code changes. The `godot`
+MCP server was unavailable both this session and the session that first
+wrote this slice, so that visual step is still outstanding.
 
 ## Slice 5 — Cell-content feedback lag reading as "nothing happened" (design question, not confirmed a bug)
 

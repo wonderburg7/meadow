@@ -226,6 +226,15 @@ var role_restricted_to: Array = []
 ## state -- see _maybe_break_off_secondary.
 var working_secondary: bool = false
 
+## The role this bee is actually doing right now -- its secondary role
+## while working_secondary is true (see above), otherwise its primary
+## role. UI that offers a sub-mode choice (hud.gd's Doing row) must key
+## off this, not `role` alone, or a bee working entirely through its
+## backup role -- e.g. Challenge 1's queen, who never becomes a primary
+## Forager -- has no way to reach a mode it hasn't got a live role for.
+func current_working_role() -> int:
+	return secondary_role if working_secondary else role
+
 ## Floral constancy (see GameConfig.floral_constancy_on): "" means no
 ## preference. Once set, this bee only ever selects flowers of this
 ## species, regardless of the toggle -- turning constancy off in tuning
@@ -1754,7 +1763,13 @@ func _clear_pending_zone_command() -> void:
 	pending_deposit_cell = null
 
 func set_focus(type: String) -> void:
-	if type == resource_type or role != Role.FORAGER:
+	if type == resource_type:
+		return
+	# A bee working Forager as its secondary/backup role (working_secondary,
+	# role itself unchanged -- see current_working_role) must still be able
+	# to switch nectar/pollen: it is genuinely doing Forager's job, just
+	# without a primary-role change to show for it.
+	if role != Role.FORAGER and not (working_secondary and secondary_role == Role.FORAGER):
 		return
 	resource_type = type
 	flower_cooldowns.clear()

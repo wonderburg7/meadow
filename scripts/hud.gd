@@ -1970,6 +1970,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 		child.queue_free()
 
 	var common_role: int = _common_role(bees)
+	var common_working_role: int = _common_working_role(bees)
 	var first = bees[0] if is_instance_valid(bees[0]) else null
 	var any_queen := false
 	for b in bees:
@@ -1980,7 +1981,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	var show_queen_build_row: bool = show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
 	if show_queen_build_row:
 		_build_queen_build_row(job_column)
-	_build_doing_row(common_role, first)
+	_build_doing_row(common_working_role, first)
 	# Skipped while the queen's own "Build cell" button is showing --
 	# that button is the one build control Challenge 1 wants here, not
 	# also the ordinary placement/home-cell controls this row offers.
@@ -2305,6 +2306,24 @@ func _common_role(bees: Array) -> int:
 			role_value = b.role
 			found = true
 		elif b.role != role_value:
+			return -1
+	return role_value if found else -1
+
+## Same as _common_role, but reads current_working_role() -- a bee's
+## secondary role while it's actively doing that job, not just its
+## primary role. See _build_doing_row's use of this: a bee foraging
+## entirely through a backup role still needs to be offered its sub-mode.
+func _common_working_role(bees: Array) -> int:
+	var found := false
+	var role_value := -1
+	for b in bees:
+		if not is_instance_valid(b):
+			continue
+		var working: int = b.current_working_role()
+		if not found:
+			role_value = working
+			found = true
+		elif working != role_value:
 			return -1
 	return role_value if found else -1
 

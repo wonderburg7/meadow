@@ -9,35 +9,44 @@ on demand in `plans/archive/`.
 ## Next up
 
 1. **Current — Challenge 1 Slice 10: Bundle D/E's manual-to-automatic
-   foraging arc (`plans/now/challenge-1.md`).** 10a, 10c, 10f and 10g are
-   now code-complete, merged from `codex/challenge-1-slice-10`
-   (`tools/verify.ps1` green): `command_collect_from()` no longer
-   permanently promotes the queen to Forager during 1.6-1.10
+   foraging arc (`plans/now/challenge-1.md`).** 10a, 10c, 10d, 10f and 10g
+   are now code-complete (`tools/verify.ps1` green): `command_collect_from()`
+   no longer permanently promotes the queen to Forager during 1.6-1.10
    (`Bee.role_change_locked`), and checks the flower-occupied guard before
    mutating anything, not after (10a/10g); stage 1.13 now runs the same
    `"freeze_bee:queen"` on_exit effect 1.11 already ships, so pollen
    foraging stops at the taught 75-unit mark instead of overshooting toward
    the cell's real 200-unit capacity (10c); 1.8/1.9's goals now read a real
    per-stage collection counter instead of the size of the queen's private
-   `flower_cooldowns` memory, which also grew on a rejected flower (10f).
-   10b needed no code -- Slice 9a's own fix already covers it. Re-run
-   Bundle D/E's live checks to confirm all of the above (`checks/ready.md`).
-   10e is resolved (1 Sep): Dave confirmed the "Laying" he saw was the
-   expected new "Change to..." choice after the third cell, not the already-
-   known 9d marker bug -- no code change, closed. 10d (pollen sub-mode may be
-   unreachable via the queen's backup-role path) still needs one live
-   Godot-boot reproduction step before it's scoped as code -- not yet
-   attempted, the `godot` MCP server failed to connect this session. Slice 9
-   (9a-9j) is code-complete, merged 1 Sep -- re-run Slice 7's full acceptance
-   playthrough only once 10d is resolved and Bundle D/E's checks above are
+   `flower_cooldowns` memory, which also grew on a rejected flower (10f);
+   the "Doing" (nectar/pollen) row and `Bee.set_focus()` now key off
+   whichever role the queen is actively working (primary or backup), not
+   just her primary role, so pollen was genuinely unreachable while she
+   foraged via her backup role — traced statically (no live Godot boot
+   available/needed) via `Bee.current_working_role()` and `hud.gd`'s new
+   `_common_working_role()` (10d). 10b needed no code -- Slice 9a's own fix
+   already covers it. Re-run Bundle D/E's live checks to confirm all of the
+   above (`checks/ready.md`). 10e is resolved (1 Sep): Dave confirmed the
+   "Laying" he saw was the expected new "Change to..." choice after the
+   third cell, not the already-known 9d marker bug -- no code change,
+   closed. Slice 9 (9a-9j) is code-complete, merged 1 Sep -- re-run Slice
+   7's full acceptance playthrough only once Bundle D/E's checks above are
    confirmed.
 2. **Successor — `plans/now/hive-comb.md` Slice 4: automatic comb-building
    spiral order looks wrong (general play, not the queen-specific bug
-   Challenge 1 Slice 8d already fixed).** Traced to two live-only candidate
-   causes (same-frame dispatch across idle Comb Workers, or a correct spiral
-   that just looks uneven against asymmetric digging) — needs an isolated
-   Scenario repro with generous pre-dug, symmetric floor before any fix is
-   written; see the plan's own section. Slices 1-3 (empty-cell sprite
+   Challenge 1 Slice 8d already fixed).** The isolated Scenario repro
+   (`test_scenarios/hive_comb_spiral_repro.json`) is written and its headless
+   trace now confirms candidate cause 1: every idle Comb Worker calls
+   `hive.find_unfinished_cell()` before `create_next_cell_site()`
+   (`scripts/bee.gd:1359-1367`, `scripts/hive.gd:553-557`) with no cap on how
+   many workers can queue onto the same uncompleted site, so all four
+   workers in the repro build one cell together, then move to the next one
+   together, rather than spreading across the ring in parallel — see the
+   plan's own section for the trace detail. Still needs Dave's live-boot
+   look (the `godot` MCP server hasn't connected this session or the one
+   before it) and a call on the intended behaviour, since capping builders
+   per site is a build-throughput/balance change, not only a visual one,
+   before any code is written. Slices 1-3 (empty-cell sprite
    alignment), 6 (above-centre-row cell rendering) and 7 (comb navigation A*
    cost invalidation) are all now code-complete, merged to master 1 Sep
    (`codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's local

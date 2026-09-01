@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 10a/10c/10f/10g are code-fixed (`codex/challenge-1-slice-10`, `tools/verify.ps1` green) -- re-run Bundle D/E's live checks to confirm (`checks/ready.md`); 10e resolved 1 Sep (no bug); 10d still needs one live Godot-boot reproduction step (not yet attempted -- `godot` MCP failed to connect 1 Sep) before it's scoped as code, then re-run Slice 7's full acceptance-playthrough checklist, blocked until then | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 10a/10c/10d/10f/10g are code-fixed (`tools/verify.ps1` green) -- re-run Bundle D/E's live checks to confirm (`checks/ready.md`), then re-run Slice 7's full acceptance-playthrough checklist, blocked until then | Dependency: none | Verified: 2026-09-01
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
@@ -1085,16 +1085,13 @@ genuine missing behaviour Slices 4b/5b's acceptance text assumed would just
 happen; one is unconfirmed and needs a live pick between two candidates.
 Traced against live source, not guessed, same discipline as Slice 9.
 
-**Code-complete, `tools/verify.ps1` green: 10a, 10c, 10f, 10g** (merged from
-`codex/challenge-1-slice-10` -- see each section for what changed; awaiting
-Dave's live confirmation via `checks/ready.md`'s Bundle D/E entries). **No
-code needed: 10b** -- Slice 9a's landed fix already satisfies it; close it
-with the same live re-check. **Resolved, no bug: 10e** -- Dave confirmed
-(1 Sep) the "Laying" he saw was the expected new "Change to..." choice, not
-9d's marker; closed with no code change. **Not ready to hand off: 10d** --
-still needs one live-reproduction step (a Godot boot -- the `godot` MCP
-server failed to connect this session, so it could not be attempted here);
-an implementer should not scope it from this file alone.
+**Code-complete, `tools/verify.ps1` green: 10a, 10c, 10d, 10f, 10g** -- see
+each section for what changed; awaiting Dave's live confirmation via
+`checks/ready.md`'s Bundle D/E entries. **No code needed: 10b** -- Slice
+9a's landed fix already satisfies it; close it with the same live re-check.
+**Resolved, no bug: 10e** -- Dave confirmed (1 Sep) the "Laying" he saw was
+the expected new "Change to..." choice, not 9d's marker; closed with no
+code change.
 
 <!-- LAYER: durable-rules -->
 
@@ -1240,44 +1237,64 @@ unchanged).
 
 **Save/determinism:** none. **Rollback:** delete the one `on_exit` line.
 
-### 10d -- Pollen sub-mode may be unreachable while the queen forages via her secondary/backup role, not her primary one
+### 10d -- Pollen sub-mode was unreachable while the queen forages via her secondary/backup role, not her primary one
 
-**Not confirmed -- two competing, evidenced hypotheses; needs one live
-playthrough to tell apart, not a blind fix.**
+**Confirmed via static trace, without a live boot -- candidate 1, and a
+second, deeper wrinkle the original two-candidate framing hadn't found.**
+The `godot` MCP server can run the project and capture stdout, but has no
+input/click automation, so it can't drive the actual "select the queen at
+the moment Forager -- pollen is assigned" repro described below; tracing
+every function on the path settled it instead, the same discipline 9a/9d
+used.
 
-1. **The "Doing" row (nectar/pollen toggle) is keyed to primary role only.**
-   `hud.gd::_build_doing_row(common_role, first)` calls
-   `Roles.modes_for(common_role)`, and `common_role` is the selection's
-   *primary* role. While the queen forages through the secondary/backup-role
-   mechanism 9a/10b describe (`role` stays `EGG_LAYER`, `secondary_role ==
-   FORAGER`), `modes_for(Role.EGG_LAYER)` has no nectar/pollen modes, so the
-   Doing row never renders for her at all -- there is no UI path to choose
-   pollen over nectar for a queen using her backup role, full stop. If
-   Dave's queen was still on the backup-role path when he tried to "assign
-   Forager -- pollen," this is why nothing happened.
-2. **A focus change mid-trip is deliberately made to finish the old resource
-   first.** `BeeForaging.collect()` (`bee_foraging.gd:625-631`): switching
-   `resource_type` away from a partial nectar load already in her stomach
-   doesn't discard it -- it calls `finish_collecting(bee)` and sets `state =
-   State.IDLING if bee.manual_deposit_pending else State.TO_HIVE`.
-   `manual_deposit_pending` is recomputed fresh on every `_enter_stage()`
-   call and should read `false` by 1.13, so the expected path is `TO_HIVE`
-   (fly home, deposit the leftover nectar, then `_default_state_for_role()`
-   picks up pollen once she's back out) -- a short pause that could easily
-   read as "doesn't autoforage" if watched only briefly, not a permanent
-   stall. Confirm live whether `manual_deposit_pending` is genuinely `false`
-   by 1.13 (a careless 10a/10b fix could leave it stuck) before assuming
-   this branch is clean.
+1. **Candidate 1, confirmed.** `hud.gd::_build_doing_row(common_role, first)`
+   calls `Roles.modes_for(common_role)`, and `common_role` came from
+   `_common_role(bees)`, which reads only `b.role` (`hud.gd:2298-2309`) --
+   never `secondary_role`/`working_secondary`. While the queen forages
+   through the secondary/backup-role mechanism 9a/10b describe (`role` stays
+   `EGG_LAYER`, `secondary_role == FORAGER`, `working_secondary == true`),
+   `modes_for(Role.EGG_LAYER)` has no nectar/pollen modes, so the Doing row
+   never rendered for her -- no UI path existed to choose pollen over
+   nectar for a queen using her backup role. Confirmed further that the
+   backup-role menu itself (`hud.gd::_secondary_items()`, feeding "If idle")
+   only ever offers a role name, never a sub-mode -- there was no other
+   control anywhere that could have set pollen for her either.
+2. **Candidate 2, ruled out as the active mechanism.** Automatic foraging in
+   Challenge 1 is the backup-role mechanism by design (9a's own finding:
+   "she forages without her primary Job ever reading 'Forager'"), so the
+   queen never takes the primary-role `TO_HIVE` detour candidate 2
+   describes -- candidate 1 is what actually happens.
+3. **The deeper wrinkle: fixing the Doing row's visibility alone was not
+   enough.** `bee.gd::set_focus()` -- what the Doing row's "Pollen" button
+   ultimately calls (`orders_zones.gd::_apply_mode` -> `b.set_focus(mode_key)`)
+   -- itself guarded `if type == resource_type or role != Role.FORAGER:
+   return`. Since the queen's *primary* `role` stays `EGG_LAYER` throughout
+   this arc, that guard alone would silently no-op the mode change even
+   once the button existed to click.
 
-**Action:** reproduce live -- select the queen at the moment "Forager --
-pollen" is assigned and watch which of `_build_doing_row`'s absence
-(candidate 1) or a `TO_HIVE` detour (candidate 2, self-resolving) actually
-happens, before changing either function. If candidate 1 is confirmed, the
-fix is to key the Doing row off whichever role the bee is *actively
-working* (her primary role, or her secondary role while `working_secondary`
-is true -- see `bee.gd:210`'s own field), not just her primary role -- a
-small, reusable generalisation rather than a queen-only special case, since
-any future bee with an active secondary role would hit the identical gap.
+**Fix, both parts, same "key off the role actually being worked" shape:**
+
+- `bee.gd`: added `current_working_role() -> int` (`secondary_role if
+  working_secondary else role`) next to the `working_secondary` field it
+  reads.
+- `hud.gd::_rebuild_role_controls`: added `_common_working_role(bees)`
+  (same shape as `_common_role`, reading `b.current_working_role()`) and
+  pass that to `_build_doing_row` instead of the primary-role
+  `common_role`. Every other row (Job, Orders, "If idle", Favourite) is
+  unchanged -- they correctly still report her real primary role.
+- `bee.gd::set_focus()`: relaxed the guard to
+  `role != Role.FORAGER and not (working_secondary and secondary_role ==
+  Role.FORAGER)`, so a mode change is accepted while she's genuinely doing
+  Forager's job via her backup role, not just when it's her primary one.
+
+This is a general fix, not a queen-only special case -- any future bee with
+an active secondary role hits the identical gap; `tools/verify.ps1` is green
+(source checks, balance suite, function map, docs).
+
+**Still needed:** one live Godot-boot playthrough to confirm the Doing row
+now renders and the "Pollen" toggle takes at 1.13 (`checks/ready.md`) --
+the static trace establishes *why* it was broken and that the fix addresses
+every mechanism found, but hasn't been watched running.
 
 ### 10e -- "Building third cell reveals Laying" is most likely the correct 1.14-to-1.15 transition, not a new bug -- but confirm which UI element Dave means
 
