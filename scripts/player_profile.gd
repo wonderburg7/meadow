@@ -10,7 +10,7 @@ extends RefCounted
 ## `ui.gd`, `debug_panel.gd` and everywhere else) -- this file is only
 ## ever touched at boot (`session.gd`'s `_ready` loads from it) and
 ## whenever a preference actually changes (`Session.save_preferences()`,
-## called from `debug_panel.gd::setting_set` -- the one choke point every
+## called from `settings_catalogue.gd::setting_set` -- the one choke point every
 ## settings-window change already passes through -- plus the handful of
 ## preferences a player can change from outside the settings window: the
 ## pinned-stat stars in `colony_panel.gd`/`nursery_panel.gd`/

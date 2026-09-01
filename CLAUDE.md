@@ -182,7 +182,7 @@ itself.
 | Recurrent bug classes | `docs/known-pitfalls.md` |
 | Performance method/contracts | `docs/performance.md`, `docs/PERFORMANCE_BASELINE.md` |
 
-The six largest scripts are indexed in `FUNCTION_MAP.md`. For any other
+The seven largest scripts are indexed in `FUNCTION_MAP.md`. For any other
 script, search its `# --- section ---` headers instead of reading top to
 bottom. Do not search `_backups/`.
 

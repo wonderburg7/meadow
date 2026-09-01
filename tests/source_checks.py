@@ -225,7 +225,7 @@ def check_autoloads(problems):
 # AUDIT_PLAN.md bundle B. Everything else may read GameConfig freely, but
 # an assignment anywhere else is exactly the class of bug bundle A fixed
 # (challenge_runner.gd leaving a global balance number changed).
-GAMECONFIG_WRITE_ALLOWLIST = {"game_config.gd", "debug_panel.gd", "save_game.gd", "levels.gd"}
+GAMECONFIG_WRITE_ALLOWLIST = {"game_config.gd", "settings_catalogue.gd", "save_game.gd", "levels.gd"}
 
 GAMECONFIG_ASSIGN_RE = re.compile(
     r"\bGameConfig\.\w+\s*(?:\+=|-=|\*=|/=|=(?!=))"
@@ -313,9 +313,9 @@ def check_catalogue_alignment(problems):
 
 
 # The file holding the settings catalogue (COLLECTIONS/TUNABLES/
-# SESSION_KEYS). Named here rather than inline so the check follows the
-# catalogue when it moves out of the settings window.
-CATALOGUE_FILE = "debug_panel.gd"
+# SESSION_KEYS) -- moved out of debug_panel.gd, which is now a view of
+# it. Named here rather than inline so the check follows the catalogue.
+CATALOGUE_FILE = "settings_catalogue.gd"
 
 
 def catalogue_block(source, const_name):
