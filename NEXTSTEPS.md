@@ -33,11 +33,19 @@ on demand in `plans/archive/`.
    confirmed.
 2. **Successor — `plans/now/hive-comb.md` Slice 4: automatic comb-building
    spiral order looks wrong (general play, not the queen-specific bug
-   Challenge 1 Slice 8d already fixed).** Traced to two live-only candidate
-   causes (same-frame dispatch across idle Comb Workers, or a correct spiral
-   that just looks uneven against asymmetric digging) — needs an isolated
-   Scenario repro with generous pre-dug, symmetric floor before any fix is
-   written; see the plan's own section. Slices 1-3 (empty-cell sprite
+   Challenge 1 Slice 8d already fixed).** The isolated Scenario repro
+   (`test_scenarios/hive_comb_spiral_repro.json`) is written and its headless
+   trace now confirms candidate cause 1: every idle Comb Worker calls
+   `hive.find_unfinished_cell()` before `create_next_cell_site()`
+   (`scripts/bee.gd:1359-1367`, `scripts/hive.gd:553-557`) with no cap on how
+   many workers can queue onto the same uncompleted site, so all four
+   workers in the repro build one cell together, then move to the next one
+   together, rather than spreading across the ring in parallel — see the
+   plan's own section for the trace detail. Still needs Dave's live-boot
+   look (the `godot` MCP server hasn't connected this session or the one
+   before it) and a call on the intended behaviour, since capping builders
+   per site is a build-throughput/balance change, not only a visual one,
+   before any code is written. Slices 1-3 (empty-cell sprite
    alignment), 6 (above-centre-row cell rendering) and 7 (comb navigation A*
    cost invalidation) are all now code-complete, merged to master 1 Sep
    (`codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's local
