@@ -26,7 +26,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (2,509 lines)
+## hud.gd (2,528 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -104,139 +104,141 @@ Challenge goal readout.
 1926 func update_selection(bees: Array) -> void
 1947 func _selection_has_command_lock(bees: Array) -> bool
 1962 func _rebuild_role_controls(bees: Array) -> void
-2006 func _build_queen_build_row(column: VBoxContainer) -> void
-2020 func _build_follow_control(bees: Array, first) -> void
-2036 func _build_favourite_row(bee) -> void
-2047 func _build_job_row(common_role: int, any_queen: bool) -> void
-2075 func _build_doing_row(common_role: int, first) -> void
-2101 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
-2116 func _build_orders_row(common_role: int, first) -> void
-2163 func _build_restock_row(first) -> void
-2191 func _build_fallback_row(common_role: int, first) -> void
-2223 func _secondary_items() -> Array
-2239 func _column_row(parent: Container) -> HFlowContainer
-2247 func _labelled_row(title: String) -> HFlowContainer
-2266 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
-2278 func _action_button(label: String, action: Callable, tip: String) -> Control
-2287 func _current_role_marker(label: String) -> Control
-2298 func _common_role(bees: Array) -> int
-2311 func _make_role_menu(label: String, tip: String, items: Array) -> Control
-2326 func _refresh_selection_text() -> void
-2395 func _apply_selection_tray_width() -> void
-2411 func _update_command_tray_width() -> void
-2426 func set_winter_button_visible(value: bool) -> void
-2432 func set_view_label(in_hive: bool) -> void
-2438 func set_colony_button_visible(value: bool) -> void
-2444 func set_nursery_button_visible(value: bool) -> void
-2450 func set_view_button_visible(value: bool) -> void
-2456 func set_foraging_button_visible(value: bool) -> void
-2463 func set_allowed_role_keys(keys: Array) -> void
-2473 func set_command_locked_bees(bees: Array) -> void
-2478 func set_allowed_mode_keys(keys: Array) -> void
-2486 func set_allowed_designation_keys(keys: Array) -> void
-2491 func set_hatch_lock_visible(value: bool) -> void
-2496 func set_soil_marking_visible(value: bool) -> void
-2506 func set_queen_build_button_visible(value: bool) -> void
+2007 func _build_queen_build_row(column: VBoxContainer) -> void
+2021 func _build_follow_control(bees: Array, first) -> void
+2037 func _build_favourite_row(bee) -> void
+2048 func _build_job_row(common_role: int, any_queen: bool) -> void
+2076 func _build_doing_row(common_role: int, first) -> void
+2102 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
+2117 func _build_orders_row(common_role: int, first) -> void
+2164 func _build_restock_row(first) -> void
+2192 func _build_fallback_row(common_role: int, first) -> void
+2224 func _secondary_items() -> Array
+2240 func _column_row(parent: Container) -> HFlowContainer
+2248 func _labelled_row(title: String) -> HFlowContainer
+2267 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
+2279 func _action_button(label: String, action: Callable, tip: String) -> Control
+2288 func _current_role_marker(label: String) -> Control
+2299 func _common_role(bees: Array) -> int
+2316 func _common_working_role(bees: Array) -> int
+2330 func _make_role_menu(label: String, tip: String, items: Array) -> Control
+2345 func _refresh_selection_text() -> void
+2414 func _apply_selection_tray_width() -> void
+2430 func _update_command_tray_width() -> void
+2445 func set_winter_button_visible(value: bool) -> void
+2451 func set_view_label(in_hive: bool) -> void
+2457 func set_colony_button_visible(value: bool) -> void
+2463 func set_nursery_button_visible(value: bool) -> void
+2469 func set_view_button_visible(value: bool) -> void
+2475 func set_foraging_button_visible(value: bool) -> void
+2482 func set_allowed_role_keys(keys: Array) -> void
+2492 func set_command_locked_bees(bees: Array) -> void
+2497 func set_allowed_mode_keys(keys: Array) -> void
+2505 func set_allowed_designation_keys(keys: Array) -> void
+2510 func set_hatch_lock_visible(value: bool) -> void
+2515 func set_soil_marking_visible(value: bool) -> void
+2525 func set_queen_build_button_visible(value: bool) -> void
 ```
 
-## bee.gd (2,340 lines)
+## bee.gd (2,355 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
 ```
-567  func _ready() -> void
-704  func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void
-746  func _roll_fact() -> void
-760  func _default_state_for_role() -> int
-782  func _base_colour() -> Color
-793  func _tinted(c: Color) -> Color
-808  func _apply_stats() -> void
-834  func trait_text() -> String
-843  func _update_role_marker() -> void
-862  # --- how often a bee thinks ---------------------------------------
-894  func _process(delta: float) -> void
-1166 # --- life support -------------------------------------------------
-1168 # --- eating -------------------------------------------------------
-1170 # --- stall watchdog -----------------------------------------------
-1176 func _reset_stall_watch() -> void
-1179 # --- foraging -----------------------------------------------------
-1181 # --- entering and leaving the hive --------------------------------
-1183 # --- nursery work -------------------------------------------------
-1185 # --- royal jelly ---------------------------------------------------
-1187 # --- idle work dispatch --------------------------------------------
-1201 func _apply_pending_role() -> bool
-1213 func _is_busy() -> bool
-1219 func _idle_dispatch() -> void
-1245 func _maybe_break_off_secondary() -> void
-1269 func _try_role_work(r: int) -> bool
-1453 # --- building -----------------------------------------------------
-1455 # --- keeping cells topped up ---------------------------------------
-1484 func set_restock_targets(cells: Array, resource: String) -> void
-1487 func set_restock_sources(cells: Array, allowed: bool) -> void
-1490 func clear_restock() -> void
-1493 func has_restock_orders() -> bool
-1495 # --- mining -------------------------------------------------------
-1497 # --- honey making -------------------------------------------------
-1499 # --- egg laying (queen only) --------------------------------------
-1501 # --- player commands ----------------------------------------------
-1511 func command_move_to(world_point: Vector2) -> void
-1531 func command_move_through_entrance(world_point: Vector2, target_in_hive: bool) -> void
-1543 func command_exit_hive() -> void
-1553 func set_forage_start_point(meadow_point: Vector2, source: String = "manual") -> Vector2
-1561 func has_forage_start_point() -> bool
-1564 func set_preferred_species(species: String) -> void
-1577 func set_manual_build_target(hex: Vector2i) -> void
-1585 func queue_build_target(hex: Vector2i) -> void
-1592 func clear_build_queue() -> void
-1598 func _take_next_build_target() -> bool
-1611 func set_mine_target(block: Node2D) -> void
-1618 func queue_mine_target(block: Node2D) -> void
-1626 func clear_mine_queue() -> void
-1633 func _next_queued_block() -> Node2D
-1641 func set_home_hex(hex: Vector2i) -> void
-1650 func set_mine_home_hex(hex: Vector2i) -> void
-1656 func _mine_reference_point() -> Vector2
-1671 func command_collect_from(flower: Node2D) -> void
-1687 func command_collect_from_after_exit(flower: Node2D) -> void
-1700 func command_return_and_deposit() -> void
-1710 func command_return_only() -> void
-1716 func command_deposit_at(cell: Node2D) -> void
-1724 func command_deposit_at_after_enter(cell: Node2D) -> void
-1732 func resume_pending_zone_command() -> bool
-1751 func _clear_pending_zone_command() -> void
-1756 func set_focus(type: String) -> void
-1783 func set_secondary_role(new_role: int) -> void
-1786 func can_take_role(new_role: int) -> bool
-1796 func set_role(new_role: int) -> void
-1813 func _apply_role(new_role: int) -> void
-1846 func _release_everything() -> void
-1863 func release_flower_reference(flower: Node2D) -> void
-1869 func set_selected(value: bool) -> void
-1873 # --- display ------------------------------------------------------
-1875 func role_letter() -> String
-1893 func idle_reason() -> String
-1944 func task_description() -> String
-2089 func _idle_backup_note() -> String
-2094 func role_name_text() -> String
-2120 func nurse_mode_name() -> String
-2129 func architect_mode_name() -> String
-2135 func carrying_text() -> String
-2156 func age_days() -> float
-2164 func leave_to_found_colony() -> void
-2177 func days_remaining() -> float
-2189 func _update_label() -> void
-2209 func _update_alarm_ring() -> void
-2220 func _update_heading_marker() -> void
-2234 func _update_search_ring() -> void
-2262 func _update_wander_flight(delta: float) -> void
-2293 func _update_dance_circle(delta: float) -> void
-2307 func _terrain_speed_factor() -> float
-2316 func _is_inside_hive() -> bool
-2319 # --- getting round things in the meadow ---------------------------
-2339 func clear_navigation_state() -> void
+235  func current_working_role() -> int
+576  func _ready() -> void
+713  func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void
+755  func _roll_fact() -> void
+769  func _default_state_for_role() -> int
+791  func _base_colour() -> Color
+802  func _tinted(c: Color) -> Color
+817  func _apply_stats() -> void
+843  func trait_text() -> String
+852  func _update_role_marker() -> void
+871  # --- how often a bee thinks ---------------------------------------
+903  func _process(delta: float) -> void
+1175 # --- life support -------------------------------------------------
+1177 # --- eating -------------------------------------------------------
+1179 # --- stall watchdog -----------------------------------------------
+1185 func _reset_stall_watch() -> void
+1188 # --- foraging -----------------------------------------------------
+1190 # --- entering and leaving the hive --------------------------------
+1192 # --- nursery work -------------------------------------------------
+1194 # --- royal jelly ---------------------------------------------------
+1196 # --- idle work dispatch --------------------------------------------
+1210 func _apply_pending_role() -> bool
+1222 func _is_busy() -> bool
+1228 func _idle_dispatch() -> void
+1254 func _maybe_break_off_secondary() -> void
+1278 func _try_role_work(r: int) -> bool
+1462 # --- building -----------------------------------------------------
+1464 # --- keeping cells topped up ---------------------------------------
+1493 func set_restock_targets(cells: Array, resource: String) -> void
+1496 func set_restock_sources(cells: Array, allowed: bool) -> void
+1499 func clear_restock() -> void
+1502 func has_restock_orders() -> bool
+1504 # --- mining -------------------------------------------------------
+1506 # --- honey making -------------------------------------------------
+1508 # --- egg laying (queen only) --------------------------------------
+1510 # --- player commands ----------------------------------------------
+1520 func command_move_to(world_point: Vector2) -> void
+1540 func command_move_through_entrance(world_point: Vector2, target_in_hive: bool) -> void
+1552 func command_exit_hive() -> void
+1562 func set_forage_start_point(meadow_point: Vector2, source: String = "manual") -> Vector2
+1570 func has_forage_start_point() -> bool
+1573 func set_preferred_species(species: String) -> void
+1586 func set_manual_build_target(hex: Vector2i) -> void
+1594 func queue_build_target(hex: Vector2i) -> void
+1601 func clear_build_queue() -> void
+1607 func _take_next_build_target() -> bool
+1620 func set_mine_target(block: Node2D) -> void
+1627 func queue_mine_target(block: Node2D) -> void
+1635 func clear_mine_queue() -> void
+1642 func _next_queued_block() -> Node2D
+1650 func set_home_hex(hex: Vector2i) -> void
+1659 func set_mine_home_hex(hex: Vector2i) -> void
+1665 func _mine_reference_point() -> Vector2
+1680 func command_collect_from(flower: Node2D) -> void
+1696 func command_collect_from_after_exit(flower: Node2D) -> void
+1709 func command_return_and_deposit() -> void
+1719 func command_return_only() -> void
+1725 func command_deposit_at(cell: Node2D) -> void
+1733 func command_deposit_at_after_enter(cell: Node2D) -> void
+1741 func resume_pending_zone_command() -> bool
+1760 func _clear_pending_zone_command() -> void
+1765 func set_focus(type: String) -> void
+1798 func set_secondary_role(new_role: int) -> void
+1801 func can_take_role(new_role: int) -> bool
+1811 func set_role(new_role: int) -> void
+1828 func _apply_role(new_role: int) -> void
+1861 func _release_everything() -> void
+1878 func release_flower_reference(flower: Node2D) -> void
+1884 func set_selected(value: bool) -> void
+1888 # --- display ------------------------------------------------------
+1890 func role_letter() -> String
+1908 func idle_reason() -> String
+1959 func task_description() -> String
+2104 func _idle_backup_note() -> String
+2109 func role_name_text() -> String
+2135 func nurse_mode_name() -> String
+2144 func architect_mode_name() -> String
+2150 func carrying_text() -> String
+2171 func age_days() -> float
+2179 func leave_to_found_colony() -> void
+2192 func days_remaining() -> float
+2204 func _update_label() -> void
+2224 func _update_alarm_ring() -> void
+2235 func _update_heading_marker() -> void
+2249 func _update_search_ring() -> void
+2277 func _update_wander_flight(delta: float) -> void
+2308 func _update_dance_circle(delta: float) -> void
+2322 func _terrain_speed_factor() -> float
+2331 func _is_inside_hive() -> bool
+2334 # --- getting round things in the meadow ---------------------------
+2354 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (1,781 lines)
+## debug_panel.gd (1,791 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -247,43 +249,43 @@ restart.
 979  static func reset_config_to_defaults() -> void
 995  static func apply_setting(key: String, value) -> void
 1010 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1024 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1038 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
-1071 func _style_button(button: BaseButton) -> BaseButton
-1076 func _ready() -> void
-1177 func _report_settings_button_width() -> void
-1182 func _rows_in(category: String) -> Array
-1204 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-1235 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-1243 func open_to_categories(categories: Array) -> void
-1261 func _make_section(category: String, entries: Array, start_open: bool) -> Control
-1315 func _make_controls_help() -> Control
-1348 func _build_actions(column: VBoxContainer) -> void
-1390 func _make_winter_action() -> Control
-1402 func _on_winter_pressed() -> void
-1408 func _on_challenge_advance_pressed() -> void
-1419 func set_save_load_enabled(enabled: bool) -> void
-1427 func set_toggle(key: String, value: bool) -> void
-1432 func _on_save_pressed() -> void
-1443 func _on_load_pressed() -> void
-1455 func _toggle_panel() -> void
-1469 func _apply_layer_for_context() -> void
-1474 func _make_row(entry: Dictionary) -> Control
-1517 func _make_control_slot() -> HBoxContainer
-1526 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-1556 func _make_toggle_row(entry: Dictionary) -> Control
-1627 func _make_options_row(entry: Dictionary) -> Control
-1660 func _option_display(entry: Dictionary, value) -> String
-1664 func _cycle_option(entry: Dictionary, direction: int) -> void
-1678 func _cascade_prerequisites_on(key: String) -> void
-1685 func _cascade_dependents_off(key: String) -> void
-1692 func _cascade_mutual_exclusion(key: String) -> void
-1701 func _make_star_row(entry: Dictionary) -> Control
-1742 func _adjust(entry: Dictionary, delta: float) -> void
-1757 func _format_value(v) -> String
-1764 func _on_restart_pressed() -> void
-1769 func _on_main_menu_pressed() -> void
-1777 func _restart() -> void
+1028 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1042 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1075 func _style_button(button: BaseButton) -> BaseButton
+1080 func _ready() -> void
+1181 func _report_settings_button_width() -> void
+1186 func _rows_in(category: String) -> Array
+1208 func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+1239 func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+1247 func open_to_categories(categories: Array) -> void
+1265 func _make_section(category: String, entries: Array, start_open: bool) -> Control
+1319 func _make_controls_help() -> Control
+1352 func _build_actions(column: VBoxContainer) -> void
+1394 func _make_winter_action() -> Control
+1406 func _on_winter_pressed() -> void
+1412 func _on_challenge_advance_pressed() -> void
+1423 func set_save_load_enabled(enabled: bool) -> void
+1431 func set_toggle(key: String, value: bool) -> void
+1436 func _on_save_pressed() -> void
+1447 func _on_load_pressed() -> void
+1459 func _toggle_panel() -> void
+1473 func _apply_layer_for_context() -> void
+1478 func _make_row(entry: Dictionary) -> Control
+1521 func _make_control_slot() -> HBoxContainer
+1530 func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+1560 func _make_toggle_row(entry: Dictionary) -> Control
+1631 func _make_options_row(entry: Dictionary) -> Control
+1664 func _option_display(entry: Dictionary, value) -> String
+1668 func _cycle_option(entry: Dictionary, direction: int) -> void
+1682 func _cascade_prerequisites_on(key: String) -> void
+1695 func _cascade_dependents_off(key: String) -> void
+1702 func _cascade_mutual_exclusion(key: String) -> void
+1711 func _make_star_row(entry: Dictionary) -> Control
+1752 func _adjust(entry: Dictionary, delta: float) -> void
+1767 func _format_value(v) -> String
+1774 func _on_restart_pressed() -> void
+1779 func _on_main_menu_pressed() -> void
+1787 func _restart() -> void
 ```
 
 ## hive_cell.gd (1,034 lines)
