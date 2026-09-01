@@ -59,9 +59,12 @@ on demand in `plans/archive/`.
    and UI-P-1/3/4/7/8 (info-badge tooltip wrap, pre-run menu hex borders and
    left margin, Dr Gallerin bubble, summary/command tray responsive fixes)
    from `codex/ui-p`/`codex/ui-p-2`/`plans/now/ui.md` (UI-P-2/5/6 remain
-   unimplemented). `plans/active/foraging-evidence.md` (orientation flight,
-   proximity recruitment, safe forager return reserve) is ready to pick up
-   on its own schedule, not prioritised ahead of the above.
+   unimplemented). `plans/active/foraging-evidence.md` Slice 1 (orientation
+   flight/scouting wired as mutually exclusive, not parent/child) is also
+   code-complete and merged 1 Sep, awaiting the same live confirm; Slice 2
+   (proximity recruitment) and Slice 3 (safe forager return reserve) are
+   ready to pick up on their own schedule, not prioritised ahead of the
+   above.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

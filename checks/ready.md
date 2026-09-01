@@ -179,14 +179,19 @@ its check. Move a confirmed or superseded entry to
 
 ### Foraging window
 - [x] Confirmed 31 Aug (second time): the panel shows real numbers again.
-- [ ] **Not confirmed, found broken 31 Aug:** Orientation flight reads 0
-      even with the toggle showing as triggered. Traced to a genuine
-      mismatch, not a display bug: `orientation_flight_on` is
-      `scouting_on`'s settings-prerequisite (so the cascade lights it up
-      too), but the two are runtime alternatives (`if scouting_on ... elif
-      orientation_flight_on`), so the orientation-flight counter can never
-      move while scouting is on. Needs Dave's steer on which of three
-      options to take -- see `plans/active/foraging-evidence.md` Slice 1.
+- [ ] **Fix applied 1 Sep (Slice 1, Option B), not yet confirmed live:**
+      Orientation flight used to read 0 even with the toggle showing as
+      triggered, because `orientation_flight_on`/`scouting_on` were wired as
+      settings-prerequisite parent/child (so switching Scouting on also lit
+      Orientation flight) while the runtime treats them as alternatives
+      (`if scouting_on ... elif orientation_flight_on`) -- the counter could
+      never move while scouting was on. The two toggles are now in
+      `prerequisites.gd::MUTUALLY_EXCLUSIVE` instead: turning either on
+      turns the other off, in both the setting and its checkbox. Confirm:
+      switch Auto scouting on, confirm Orientation flight's checkbox turns
+      itself off (not just staying lit with a zero counter); switch
+      Orientation flight on and confirm the same in reverse, and that its
+      counter now moves. See `plans/active/foraging-evidence.md` Slice 1.
 
 ### Proximity recruitment (Slice 9)
 - [ ] Turn on Proximity recruitment (settings cog, Foraging section) --

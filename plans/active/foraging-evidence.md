@@ -1,11 +1,10 @@
 # Foraging evidence and validation -- active campaign
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: implement Slice 1's decided
-Option B fix (move `scouting_on`/`orientation_flight_on` into
-`prerequisites.gd::MUTUALLY_EXCLUSIVE`), then Slice 2's validated
-live/headless proximity-recruitment run | Dependency: none | Verified:
-2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 1's decided Option B
+fix is code-complete (`tools/verify.ps1` green) -- confirm live
+(`checks/ready.md`), then Slice 2's validated live/headless
+proximity-recruitment run | Dependency: none | Verified: 2026-09-01
 
 Three findings from Dave's 31 Aug hands-on pass against `checks/ready.md`'s
 Foraging window, Proximity recruitment and Safe forager return reserve
@@ -69,8 +68,20 @@ its existing `MUTUALLY_EXCLUSIVE` map (the same map
 move between two existing maps, no runtime foraging code touched. The
 orientation-flight counter then honestly reads "how many foragers used the
 simple mechanism instead of scouting," and stays at zero exactly when
-scouting has taken over. Not yet implemented; this is the next actionable
-step in this plan.
+scouting has taken over.
+
+**Implemented 1 Sep (`codex/foraging-evidence-slice-1-option-b-worktree`,
+merged to master).** `prerequisites.gd::MUTUALLY_EXCLUSIVE` now carries both
+`orientation_flight_on -> scouting_on` and `scouting_on ->
+orientation_flight_on`; `TOGGLE_PREREQUISITE` no longer lists `scouting_on`'s
+old parent entry. `debug_panel.gd`'s prerequisite-on cascade now also runs
+the mutual-exclusion cascade on every ancestor it switches on, and its UI
+sync refreshes every mutually-exclusive pair's checkbox afterward, so
+turning on Auto scouting no longer leaves Orientation flight showing lit
+when the runtime has actually superseded it. `tools/verify.ps1` green,
+including a new regression test
+(`tests/test_source_checks.py::ForagingPrerequisiteContractTest`). Needs a
+live confirm -- see `checks/ready.md`.
 
 ## Slice 2 -- Proximity recruitment: wiring confirmed clean in static code; needs a validated live/headless run before touching thresholds
 
