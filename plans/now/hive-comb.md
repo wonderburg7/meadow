@@ -169,6 +169,17 @@ variable) before writing any fix to `create_next_cell_site()` — same
 discipline `challenge-1.md`'s Slice 8d used for its own "confirmed-plausible,
 pending live-boot confirmation" finding.
 
+`test_scenarios/hive_comb_spiral_repro.json` is that reproducible setup: it
+starts four automatic Comb Workers with no cells or miners, expands the fully
+open interior to seven rings, and stops after 37 completed cells (the centre
+plus the first three complete hex rings). Its bounded `build_target` trace
+records every automatic target while the live boot supplies the visual answer;
+it deliberately does not treat a target-order assertion as proof that the
+drawn comb looks right. Run it with
+`./tools/run_headless.ps1 test_scenarios/hive_comb_spiral_repro.json` for the
+deterministic trace, then inspect the same `--scenario` boot visually before
+scoping any change to `create_next_cell_site()`.
+
 ## Slice 5 — Cell-content feedback lag reading as "nothing happened" (design question, not confirmed a bug)
 
 **Symptom (Dave, 30 Aug):** with Cell art on, a forager appears to be
