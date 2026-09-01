@@ -3,7 +3,7 @@
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
 Status: designed, not scheduled | Owner: Dave | Next: select Phase A only
 when progression becomes the active product direction | Dependency: no active
-implementation slice | Verified: 2026-08-26
+implementation slice | Verified: 2026-09-01
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Reconciled against `DESIGN_BACKLOG.md`, `ROADMAP.md`, `plans/now/ui.md` and the codebase as it stood 22 Aug 2026, from Dave's original design brief. This file is now the source of truth for skill-tree/adaptation design — `plans/now/ui.md` §13, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
@@ -100,7 +100,6 @@ Status key: **Existing** = mechanic already built, mainly needs availability wir
 
 | Skill | Tier | Ranks | Status | Prereq | Effect |
 |---|---|---|---|---|---|
-| `skill.hive.comb_working` | 1 | 1 | Existing | — | Unlocks Comb worker role, manual building, clearing, essential controls. |
 | `skill.hive.excavation` | 1 | 1 | Existing | — | Unlocks Miner role, manual dig orders. |
 | `skill.hive.automatic_building` | 2 | 1 | Existing | Comb Working | Autonomous outward comb construction. |
 | `skill.hive.automatic_mining` | 2 | 1 | Existing | Excavation | Autonomous mining beyond player-designated orders. |
@@ -114,6 +113,7 @@ Workforce coordination, not a duplicate of role unlocks elsewhere.
 
 | Skill | Tier | Ranks | Status | Prereq | Effect |
 |---|---|---|---|---|---|
+| `skill.colony.comb_working` | 1 | 1 | Existing | — | Unlocks Comb worker role, manual building, clearing, essential controls. |
 | `skill.colony.work_priorities` | 1 | 1 | Existing | — | Priority tiers for cells/zones/orders. |
 | `skill.colony.backup_roles` | 1 | 1 | Existing | — | Secondary-role assignment. |
 | `skill.colony.standing_instructions` | 2 | 1 | Existing foundation | Backup Roles or Work Priorities (layout TBD) | Bundles persistent instructions (role retention, work-from-here). One meaningful capability, not a skill per button. |
@@ -142,7 +142,7 @@ Workforce coordination, not a duplicate of role unlocks elsewhere.
 | `skill.ecology.landscape_memory` | 1 | 1 | Existing foundation | — | Explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war. Typed effect (`enable_behaviour` vs `unlock_option`) to be settled at implementation. |
 | `skill.ecology.patch_stewardship` | 3+ | TBD | **Future** | — | Helps avoid exhausting patches / encourages sustainable use. Must not become a disguised flat collection bonus. |
 
-Cross-sector prerequisites (Royal Jelly ↔ Honey Making, Alarm Pheromone ↔ Tarsal Secretions) are permitted but should stay rare and clearly drawn in the honeycomb layout.
+Cross-sector prerequisites (Royal Jelly ↔ Honey Making, Alarm Pheromone ↔ Tarsal Secretions, Comb Working ↔ Automatic Building/Honey Making/Store Management) are permitted but should stay rare and clearly drawn in the honeycomb layout. Comb Working now sits in Colony (tier 1) while three Hive-tier skills and two Hive adaptations (Wax Efficiency, Tireless Builders) still key off it — more cross-sector links from one skill than any other in the catalogue; revisit if the honeycomb layout makes this read as clutter.
 
 ## 6. Colony Adaptations
 
