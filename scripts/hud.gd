@@ -351,7 +351,7 @@ var command_locked_bees: Array = []
 ## favourite) underneath. Each column hides itself when it has nothing
 ## to show for the current selection (see _rebuild_role_controls).
 var command_tray: PanelContainer
-var command_columns: HBoxContainer
+var command_columns: Container
 var job_column_wrapper: VBoxContainer
 var job_column: VBoxContainer
 var focus_column_wrapper: VBoxContainer
@@ -369,9 +369,9 @@ var more_panel_open: bool = false
 ## the state those actions apply to is summarised in the bottom-left panel.
 ## See show_cell_popup/update_selection and UI_BUGFIX_PLAN.md Slice 9.
 var cell_group: VBoxContainer
-var cell_primary_columns: HBoxContainer
+var cell_primary_columns: Container
 var cell_more_button: Button
-var cell_more_panel: HBoxContainer
+var cell_more_panel: Container
 var cell_more_open: bool = false
 ## The wrapped "Raises:" controls are built while their cell group is hidden.
 ## Keep this reference so showing the group can run its first visible layout.
@@ -825,27 +825,27 @@ func _build_selection_panel() -> void:
 	# label below autowraps within it so a long line never stretches the
 	# panel (UI_PLAN.md UI-B).
 	identity_label = Label.new()
-	identity_label.theme_type_variation = "Body"
+	identity_label.theme_type_variation = "Small"
 	identity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	identity_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(identity_label)
 	header.add_child(_build_selection_cog())
 
 	energy_label = Label.new()
-	energy_label.theme_type_variation = "Body"
+	energy_label.theme_type_variation = "Small"
 	energy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	energy_label.add_theme_color_override("font_color", UiTheme.color("success"))
 	column.add_child(energy_label)
 
 	# what the bee is doing right this second
 	activity_label = Label.new()
-	activity_label.theme_type_variation = "Body"
+	activity_label.theme_type_variation = "Small"
 	activity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 	column.add_child(activity_label)
 
 	trait_label = Label.new()
-	trait_label.theme_type_variation = "Body"
+	trait_label.theme_type_variation = "Small"
 	trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
@@ -881,6 +881,9 @@ func _build_selection_cog() -> Control:
 	_style_button(menu)
 	menu.text = "⚙"
 	menu.theme_type_variation = "Body"
+	# Keep the cog aligned with the first identity line when that label wraps
+	# to show role and age below it (UI-P-8).
+	menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	menu.tooltip_text = "Choose which fields this panel shows for the selected bee."
 	menu.focus_mode = Control.FOCUS_NONE
 	var popup := menu.get_popup()
@@ -939,7 +942,10 @@ func _build_command_tray() -> void:
 	# whole tray growing wider than its cap (see _update_command_tray_width),
 	# which is still what lets the bottom row grow taller, not wider, at
 	# high text scale (UI_PLAN.md section 2's bottom-row rule).
-	command_columns = HBoxContainer.new()
+	# Let whole Job/Focus/Orders groups move onto another row when a narrow
+	# viewport cannot accommodate all three.  A fixed HBox would preserve its
+	# children's combined minimum width and spill into the summary panel.
+	command_columns = HFlowContainer.new()
 	command_columns.add_theme_constant_override("separation", 16)
 	column.add_child(command_columns)
 
@@ -1027,7 +1033,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bee Job/Focus/Orders composition. The state they act on belongs in the
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
-	cell_primary_columns = HBoxContainer.new()
+	cell_primary_columns = HFlowContainer.new()
 	cell_primary_columns.add_theme_constant_override("separation", 16)
 	cell_group.add_child(cell_primary_columns)
 
@@ -1096,7 +1102,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	)
 	cell_group.add_child(cell_more_button)
 
-	cell_more_panel = HBoxContainer.new()
+	cell_more_panel = HFlowContainer.new()
 	cell_more_panel.add_theme_constant_override("separation", 16)
 	cell_more_panel.visible = false
 	cell_group.add_child(cell_more_panel)
@@ -1107,7 +1113,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 ## A stable logical column in the cell tray. These are headings rather than
 ## independent accordions: the whole row is meant to scan like the selected-
 ## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
-func _build_cell_action_column(parent: HBoxContainer, title: String) -> VBoxContainer:
+func _build_cell_action_column(parent: Container, title: String) -> VBoxContainer:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2230,14 +2236,18 @@ func _secondary_items() -> Array:
 ## A bare row appended to one of the tray's Job/Focus/Orders columns --
 ## no title label, since the column's own header already says what it
 ## is. Same shape as _labelled_row below, minus the label.
-func _column_row(parent: Container) -> HBoxContainer:
-	var row := HBoxContainer.new()
+func _column_row(parent: Container) -> HFlowContainer:
+	# Role marker/menu pairs must wrap rather than impose their summed minimum
+	# width on the entire command tray (UI-P-8).
+	var row := HFlowContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	parent.add_child(row)
 	return row
 
-func _labelled_row(title: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
+func _labelled_row(title: String) -> HFlowContainer:
+	# "When idle" and its companion controls live in More…; make the row
+	# flow for the same narrow-window guarantee as the primary rows.
+	var row := HFlowContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	more_panel.add_child(row)
 
@@ -2403,11 +2413,15 @@ func _update_command_tray_width() -> void:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
 	var max_width: float = UiLayout.command_tray_max_width(viewport_width)
-	command_columns.custom_minimum_size.x = max(200.0, max_width - 32.0)
+	# custom_minimum_size is only a floor.  Set this anchored control's actual
+	# width as well, then let its HFlow rows grow taller rather than wider.
+	command_tray.custom_minimum_size.x = max_width
+	command_tray.size.x = max_width
+	command_columns.custom_minimum_size.x = 0.0
 	if cell_primary_columns != null:
-		cell_primary_columns.custom_minimum_size.x = max(520.0, max_width - 32.0)
+		cell_primary_columns.custom_minimum_size.x = 0.0
 	if cell_more_panel != null:
-		cell_more_panel.custom_minimum_size.x = max(520.0, max_width - 32.0)
+		cell_more_panel.custom_minimum_size.x = 0.0
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

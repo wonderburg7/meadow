@@ -1,9 +1,11 @@
 # Foraging evidence and validation -- active campaign
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 (orientation-flight
-/ scouting toggle mismatch -- needs Dave's steer on which of three options)
-| Dependency: none | Verified: 2026-08-31
+Status: active | Owner: Dave / Claude Code | Next: implement Slice 1's decided
+Option B fix (move `scouting_on`/`orientation_flight_on` into
+`prerequisites.gd::MUTUALLY_EXCLUSIVE`), then Slice 2's validated
+live/headless proximity-recruitment run | Dependency: none | Verified:
+2026-09-01
 
 Three findings from Dave's 31 Aug hands-on pass against `checks/ready.md`'s
 Foraging window, Proximity recruitment and Safe forager return reserve
@@ -60,14 +62,15 @@ before implementing:**
   window's orientation-flight stat so a reader doesn't mistake "0" for
   "broken" whenever scouting is active.
 
-No option is picked here -- this is a genuine fork in what the two toggles
-are supposed to mean to each other, the same class of decision
-`plans/now/challenge-1.md`'s 9e flagged for gyne-raising rather than
-guessed. **Recommended default if Dave has no strong preference: Option
-B** -- it's the smallest change (one line, moving two keys between two
-existing maps already built for exactly this), asks nothing of the runtime
-foraging code, and makes the settings UI stop implying a relationship that
-was never actually true.
+**Decided (Dave, 1 Sep 2026): Option B.** Move `scouting_on` and
+`orientation_flight_on` from `prerequisites.gd::TOGGLE_PREREQUISITE` into
+its existing `MUTUALLY_EXCLUSIVE` map (the same map
+`auto_recruitment_on`/`proximity_recruitment_on` already use) -- a one-line
+move between two existing maps, no runtime foraging code touched. The
+orientation-flight counter then honestly reads "how many foragers used the
+simple mechanism instead of scouting," and stays at zero exactly when
+scouting has taken over. Not yet implemented; this is the next actionable
+step in this plan.
 
 ## Slice 2 -- Proximity recruitment: wiring confirmed clean in static code; needs a validated live/headless run before touching thresholds
 

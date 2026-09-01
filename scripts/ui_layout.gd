@@ -47,18 +47,23 @@ const SELECTION_TRAY_RESERVE_NARROW := 312.0
 ## selection_tray_width and hud.gd's own anchor offset can't drift apart.
 const SELECTION_TRAY_LEFT_MARGIN := 16.0
 const SELECTION_TRAY_GAP := 16.0
+## A real floor for the command tray.  At the narrowest supported width the
+## nominal reservations can leave less than a usable control width; both the
+## tray and the summary-panel calculation must use this same floor so their
+## rectangles still remain disjoint.
+const COMMAND_TRAY_MIN_WIDTH := 200.0
 
 static func is_narrow(viewport_width: float) -> bool:
 	return viewport_width < NARROW_BREAKPOINT
 
 ## Max width the bottom-centre command tray may use: total width minus a
 ## nominal reservation for the summary panel and the Gallerin reserve, so
-## the tray respects both by construction rather than a magic-number
-## width. 10% more than before (Dave's 29 Aug tuning pass on UI-H's
-## first-pass split) -- 0.7 -> 0.77.
+## the tray respects both by construction rather than a magic-number width.
+## UI-P widens UI-H's 0.77 split by 20% (0.924); the shared floor keeps the
+## selection panel from reserving a narrower rectangle than the tray can use.
 static func command_tray_max_width(viewport_width: float) -> float:
 	var reserve: float = SELECTION_TRAY_RESERVE_NARROW if is_narrow(viewport_width) else SELECTION_TRAY_RESERVE
-	return (viewport_width - reserve - gallerin_reserve_width(viewport_width)) * 0.77
+	return maxf(COMMAND_TRAY_MIN_WIDTH, (viewport_width - reserve - gallerin_reserve_width(viewport_width)) * 0.924)
 
 ## The selection/summary panel's width for this viewport -- a function of
 ## viewport size alone, never of what the panel currently shows (UI-B).
