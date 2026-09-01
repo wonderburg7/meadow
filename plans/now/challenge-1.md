@@ -1077,13 +1077,22 @@ claim, need a live repro pass before or alongside implementation, per their
 own sections above — don't skip that step because the rest of the slice is
 otherwise ready to build.
 
-## Slice 10 -- Bundle D/E: the queen's manual-to-automatic foraging arc is still broken (31 Aug 2026, second pass)
+## Slice 10 -- Bundle D/E: the queen's manual-to-automatic foraging arc is still broken (31 Aug 2026, second pass; re-verified against live source 1 Sep 2026 for handoff)
 
-Five findings from Dave replaying stages 1.6-1.14 today. Two are new, more
+Five findings from Dave replaying stages 1.6-1.14 (31 Aug). Two are new, more
 direct causes for exactly the symptom Slice 9a already named; one is a
 genuine missing behaviour Slices 4b/5b's acceptance text assumed would just
 happen; one is unconfirmed and needs a live pick between two candidates.
 Traced against live source, not guessed, same discipline as Slice 9.
+
+**Ready to hand off as code changes: 10a, 10c, 10f, 10g.** All four
+re-confirmed against current source after Slice 9's 1 Sep merge (line
+numbers below are current, not the 31 Aug ones); 10c turned out simpler
+than first scoped -- see its section. **No code needed: 10b** -- Slice 9a's
+landed fix already satisfies it; close it with one live re-check once
+10a/10g ship, not a new patch. **Not ready to hand off: 10d, 10e** -- both
+still need a live-reproduction step or a word from Dave before they are
+code changes; an implementer should not scope either from this file alone.
 
 <!-- LAYER: durable-rules -->
 
@@ -1101,22 +1110,24 @@ Traced against live source, not guessed, same discipline as Slice 9.
   actually written (per `_apply_role`'s own comment, "the one place `role`
   actually changes").
 - **A Challenge stage's goal target and the bee's actual behaviour are two
-  different, disconnected mechanisms -- closing the goal never stops the
-  bee.** `_goal_check_nectar_target`/`_goal_check_pollen_target`
-  (`challenge_runner.gd:787,793`) exist purely to decide when to call
-  `_advance()`; nothing calls back into `bee.gd` to change what the queen is
-  doing. Slices 4b/5b's own acceptance text ("stops the moment the cell
-  reads full ... picks no further task on her own") was never actually
-  implemented as a behaviour -- it was assumed to fall out of the cell
-  filling up, which only works if the stage's target amount equals the
-  cell's real capacity. It doesn't (10c below). The reusable fix is the same
-  shape Slice 9i already proposed for `flower_switch_locked`: an explicit,
-  named per-stage `on_exit` effect through `_run_stage_effects`, not a side
-  effect of a goal check.
+  different mechanisms by default -- but a way to bridge them already
+  exists and ships for 1.11, it just isn't wired up everywhere it needs to
+  be.** `_run_stage_effects()`'s `"freeze_bee:queen"` case
+  (`challenge_runner.gd`) parks a bee in `State.IDLING`, which is
+  (confirmed live-traced) the one state `_idle_dispatch()` never re-enters
+  on its own -- see `bee.gd:1053`, `State.IDLING: pass # waits for orders
+  and nothing else`, versus every other idle-flavoured state (`SEEK_FLOWER`,
+  `NURSE_IDLE`, `BUILD_IDLE`, `MINE_IDLE`, `HONEY_IDLE`) which all call
+  `_idle_dispatch()` themselves. So parking a bee in `State.IDLING` at a
+  stage's `on_exit` durably stops her until the player's next command or a
+  role change -- exactly what Slices 4b/5b's acceptance text assumed would
+  happen. 10c below is a one-line data fix for this reason: wire the
+  existing effect into the one stage missing it, don't invent a second
+  mechanism.
 
 ### 10a -- Right-clicking a flower during 1.6-1.10 permanently promotes the queen to Forager
 
-**Confirmed.** `command_collect_from(flower)` (`bee.gd:1648-1659`):
+**Confirmed.** `command_collect_from(flower)` (`bee.gd:1665-1677`):
 ```gdscript
 func command_collect_from(flower: Node2D) -> void:
 	if role != Role.FORAGER:
@@ -1136,22 +1147,25 @@ symptom exactly, and it fully explains the second one too: once `role` is
 genuinely `FORAGER`, `_idle_dispatch`'s ordinary `_try_role_work(role)`
 branch runs for her like any other forager, forever, including immediately
 after every future deposit -- `role_restricted_to` was never in this loop to
-begin with (it only guards the *secondary*-role branches at `bee.gd:1216`
-and `1223`).
+begin with (it only guards the *secondary*-role branches, `bee.gd:1224` and
+`1231`).
 
-**Fix:** add a stage-scoped role lock that `set_role`/`_apply_role` (or
-`command_collect_from` specifically, if a fully general lock is judged too
-broad -- see risk note below) actually check, the same shape
-`manual_deposit_pending` already uses: e.g. `Bee.role_change_locked: bool =
-false`, set by `challenge_runner.gd::_enter_stage()` alongside the existing
-`main.queen.manual_deposit_pending = stage.id in [...]` line for the same
-`["1.6","1.7","1.8","1.9","1.10"]` set, cleared (`false`) everywhere
-`role_restricted_to` is already reset to `[]` (`_complete()`, Challenge
-start). Guard `command_collect_from`'s `set_role` call with `and not
-role_change_locked`, and still run the rest of the function unchanged
-(`flower.occupied_by`, `current_flower`, `state = State.TO_FLOWER`) so the
-manual trip itself still happens -- only the permanent role promotion is
-suppressed.
+**Fix:** add a stage-scoped role lock that `command_collect_from` actually
+checks, the same shape `manual_deposit_pending` already uses: e.g.
+`Bee.role_change_locked: bool = false`, set by
+`challenge_runner.gd::_enter_stage()` alongside the existing
+`main.queen.manual_deposit_pending = stage.id in [...]` line
+(`challenge_runner.gd:295`) for the same `["1.6","1.7","1.8","1.9","1.10"]`
+set, cleared (`false`) everywhere `role_restricted_to` is already reset to
+`[]` (`_complete()`, `start()`). Guard `command_collect_from`'s `set_role`
+call with `and not role_change_locked`, and still run the rest of the
+function unchanged (`flower.occupied_by`, `current_flower`,
+`state = State.TO_FLOWER`) so the manual trip itself still happens -- only
+the permanent role promotion is suppressed. `command_collect_from` is the
+only call site that needs the guard: `command_collect_from_after_exit`
+queues the flower and re-enters through `resume_pending_zone_command()`,
+which calls `command_collect_from()` directly (`bee.gd:1733`), so one guard
+point covers both the immediate and the walk-out-first paths.
 
 **Live confirmation needed before shipping:** the collection state machine
 (`TO_FLOWER`/`INSPECTING`/`COLLECTING`/`DRINKING`) is driven by `state`, not
@@ -1163,47 +1177,66 @@ fix.
 
 ### 10b -- Same root cause as 9a: apply 9a's fix too, but only once 10a's lock exists
 
-**Confirmed-plausible, not yet reproduced independently of 10a.** Even with
-10a fixed, 9a's original leak still stands: `role_restricted_to =
-[Roles.QUEEN, Roles.FORAGER, Roles.NURSE]` (`challenge_runner.gd:275`) is
-still one hand-written array for the whole Challenge, so a player using the
-"When idle: Forager" secondary-role menu (the one path that doesn't go
-through `command_collect_from`/`set_role` at all) can still make her
-auto-forage via the `_idle_dispatch` priority branch before 1.11 unlocks it.
-9a's proposed fix (derive `role_restricted_to` from
-`_stage_unlock_keys(stage.unlocked_keys)`, unioning in `[Roles.QUEEN,
-Roles.NURSERY]` for her own always-available fallback) is unchanged by this
-pass -- implement it alongside 10a, not instead of it. Cross-reference:
-`plans/now/challenge-1.md` Slice 9, section 9a.
+**Update, 1 Sep re-verification: already fixed, no further code needed.**
+`_queen_allowed_role_ids(entries)` (`challenge_runner.gd:276-282`) now does
+exactly what 9a proposed: `[Roles.QUEEN, Roles.NURSE]` unioned with
+`Roles.id_for_key(key)` for every key in `_stage_unlock_keys(stage.unlocked_keys)`.
+`_enter_stage()` sets `main.queen.role_restricted_to =
+_queen_allowed_role_ids(stage.unlocked_keys)` (`challenge_runner.gd:294`)
+for every Challenge 1 stage, not a hand-written array. This closes the
+*secondary/backup-role* leak 9a originally found. What is still open is
+10a -- the *primary*-role leak `role_restricted_to` was never meant to
+cover, since it only ever gates the two secondary-role branches in
+`_idle_dispatch` (`bee.gd:1224`, `1231`). **Action:** once 10a lands, re-run
+the Bundle D/E live pass and confirm the backup-role path stays closed too
+(this paragraph is a static-source check, not a live one) -- no separate
+patch is expected.
 
 ### 10c -- Nothing stops the queen once a stage's target amount is reached; she stops only at the cell's real capacity
 
-**Confirmed.** `cell_capacity = 200.0` (`game_config.gd:421`); the pollen
-goal target is `75.0` (`challenge_stages.gd:18`, checked by
-`_goal_check_pollen_target`, `challenge_runner.gd:793`); the nectar goal
-checks `fill_fraction() >= 1.0` against the cell's own
-`capacity_for("nectar")`, not a fixed number. Reaching either target only
-advances the *stage* (`_advance()`, `challenge_runner.gd:433`) -- it does
-not touch `main.queen.role`, `resource_type`, or issue any command. The only
-thing that can make a forager stop physically collecting is
-`go_to_deposit_cell`'s "cell has no space" wait state
-(`bee_foraging.gd:749-793`), which is governed by the cell's real
-capacity/`cell_full_threshold` (0.9 x 200 = 180), not the Challenge's
-75-unit target. So a pollen-foraging queen keeps going, trip after trip,
-well past 75, all the way toward 180-200 -- matching Dave's report exactly.
+**Confirmed, and simpler to fix than first scoped.** `cell_capacity = 200.0`
+(`game_config.gd:421`); the pollen goal target is `75.0`
+(`challenge_stages.gd:18`, checked by `_goal_check_pollen_target`,
+`challenge_runner.gd:817`, against `cell.amount`); the nectar goal checks
+`fill_fraction() >= 1.0` against the cell's own real capacity
+(`_goal_check_nectar_target`, `challenge_runner.gd:811`), not a fixed
+number. Reaching either target only advances the *stage* (`_advance()`) --
+it never touches `main.queen.role`, `resource_type`, or issues a command by
+itself. The only thing that ordinarily stops a forager mid-trip is
+`go_to_deposit_cell`'s "cell has no space" wait state, governed by the
+cell's real capacity, not the Challenge's target. So a pollen-foraging queen
+keeps going, trip after trip, past 75, toward 180-200 -- matching Dave's
+report exactly.
 
-**Fix (reusable, matching Slice 9i's own proposal for
-`flower_switch_locked` rather than inventing a second one-off mechanism):**
-add a named `on_exit` effect, e.g. `"queen_stop_foraging"`, run through the
-existing `_run_stage_effects()` (`challenge_runner.gd`). Add it to 1.11's
-`on_exit` list (stop the nectar leg the instant `nectar_target` is met) and
-1.13's `on_exit` list (stop the pollen leg at 75). The effect itself: clear
-whatever made her forage in the first place -- the `Roles.QUEEN`-equivalent
-of `set_role` (return her to Egg Layer) if 10a/10b's fix means she reached
-Forager via primary role, or clear `secondary_role`/`role_restricted_to`'s
-Forager entry if she reached it via the backup-role path -- the exact call
-depends on which of 10a/10b's mechanisms is live once this ships; pin down
-the call site once those land, don't guess it now.
+**The stop mechanism already exists and already ships for nectar -- 1.13
+just never calls it.** 1.11's own `on_exit` list already includes
+`"freeze_bee:queen"` (`challenge_stages.gd:167`), whose handler
+(`challenge_runner.gd::_run_stage_effects`) does `main.queen._release_everything();
+main.queen.clear_navigation_state(); main.queen.state = main.Bee.State.IDLING`.
+As the durable-rules note above confirms, `State.IDLING` never re-triggers
+`_idle_dispatch()` on its own, so a bee parked there sits until the player's
+next command or a role change. That is exactly why nectar (1.11) already
+looks correctly stopped once the cell is full. Stage 1.13 (`pollen_target`,
+`challenge_stages.gd:182-189`) has no `on_enter`/`on_exit` list at all today
+-- that omission is the entire bug, not a missing mechanism.
+
+**Fix:** add `"on_exit": ["freeze_bee:queen"]` to 1.13's stage dict in
+`challenge_stages.gd`, mirroring 1.11. No new `Bee` field, no new
+`_run_stage_effects` case, and no role-restoration logic -- this reuses the
+exact, already-shipped machinery 1.11 proves works.
+
+**Non-goals:** do not add `lock_flower_target:queen`/camera/speed to 1.13 in
+this fix -- 1.11 has them because 1.11 is the automatic-foraging teaching
+moment; whether 1.13 deserves the same presentation treatment is a UI-feel
+call for Dave, separate from the overshoot bug.
+
+**Acceptance:** at 1.13, let the queen auto-forage pollen; confirm the stage
+advances at 75 (not before) and that she is idle immediately after, not
+still flying to a flower or continuing to collect. Re-check 1.11 is
+unaffected (it already passes this same test today, since its `on_exit` is
+unchanged).
+
+**Save/determinism:** none. **Rollback:** delete the one `on_exit` line.
 
 ### 10d -- Pollen sub-mode may be unreachable while the queen forages via her secondary/backup role, not her primary one
 
@@ -1253,21 +1286,19 @@ whose `unlocked_keys` includes `"laying"` for the first time
 (`challenge_stages.gd:199`), and 1.15's own goal is `first_egg_laid`.
 Revealing "Laying" as a *newly available option* at that exact moment is the
 intended pacing, not a leak. **However**, 9d (`plans/now/challenge-1.md`
-Slice 9, section 9d, confirmed 30 Aug, still unfixed -- verified this pass:
-`hud.gd::_build_job_row`, ~line 2047, still calls
-`_current_role_marker(...)` with no `allowed_role_keys` gate) means the Job
-column has shown "* Laying" as her *current, already-active* role from stage
-1.1 onward, regardless of any stage transition. **Ask Dave to confirm which
-one he saw:** "Laying" appearing as a *new choice* in the "Change to..."
-list right after the third cell (expected, no fix needed) versus "* Laying"
-as her *current-role marker* being visible at all before 1.15
-(already-diagnosed 9d, not new). Do not implement two fixes for what may be
-one already-tracked issue.
+Slice 9, section 9d, confirmed 30 Aug, still unfixed) means the Job column
+has shown "* Laying" as her *current, already-active* role from stage 1.1
+onward, regardless of any stage transition. **Ask Dave to confirm which one
+he saw:** "Laying" appearing as a *new choice* in the "Change to..." list
+right after the third cell (expected, no fix needed) versus "* Laying" as
+her *current-role marker* being visible at all before 1.15 (already-
+diagnosed 9d, not new). Do not implement two fixes for what may be one
+already-tracked issue.
 
 ### 10f -- 1.8 and 1.9 clear on a *rejected* flower, not a collected one
 
-**Confirmed (1 Sep 2026 architecture review).** Both goals are implemented as
-a count of the queen's private flower-cooldown memory:
+**Confirmed.** Both goals are implemented as a count of the queen's private
+flower-cooldown memory:
 
 ```gdscript
 func _goal_check_first_flower_collected() -> bool:
@@ -1277,11 +1308,11 @@ func _goal_check_second_flower_collected() -> bool:
 	return is_instance_valid(main.queen) and main.queen.flower_cooldowns.size() >= 2
 ```
 (`challenge_runner.gd::_goal_check_first_flower_collected` /
-`_goal_check_second_flower_collected`, ~lines 832-838.)
+`_goal_check_second_flower_collected`, lines 832-834.)
 
 `bee.flower_cooldowns` gains an entry on a successful collection
-(`bee_foraging.gd::finish_collecting`, ~line 685) **and** on a rejection
-(`bee_foraging.gd::reject_flower`, ~line 519). `inspect()` rejects whenever
+(`bee_foraging.gd::finish_collecting`, line 663) **and** on a rejection
+(`bee_foraging.gd::reject_flower`, line 514). `inspect()` rejects whenever
 `worth_feeding()` fails -- flower below `GameConfig.min_worthwhile_amount`,
 tarsal-marked, or alarm-marked. So a queen who flies to two flowers and turns
 both down clears both "collect from a flower" stages having collected
@@ -1292,12 +1323,12 @@ Three further ways the proxy misreads, all confirmed against live source:
 - It counts flowers she merely *touched* during the 1.7 meadow tour, before
   1.8 has begun -- there is no per-stage baseline.
 - `set_focus()` and `set_preferred_species()` both call
-  `flower_cooldowns.clear()` (`bee.gd`, ~lines 1562 and 1754), so a focus
-  change between 1.8 and 1.9 resets the count to zero.
+  `flower_cooldowns.clear()` (`bee.gd:1754` and `1562`), so a focus change
+  between 1.8 and 1.9 resets the count to zero.
 - `command_collect_from()` explicitly calls `flower_cooldowns.erase(flower)`
-  on the very flower being targeted (`bee.gd`, ~line 1673), so the manual
-  path Bundle D teaches decrements the counter immediately before the trip
-  it is supposed to be counting.
+  on the very flower being targeted (`bee.gd:1672`), so the manual path
+  Bundle D teaches decrements the counter immediately before the trip it is
+  supposed to be counting.
 
 **Root cause worth naming, because it will recur:** `flower_cooldowns` is a
 private per-bee memory with no expiry -- entries are only removed by
@@ -1311,13 +1342,21 @@ Challenge itself observes, not by the size of a simulation-internal cache.
 redefining what 1.8/1.9 mean.
 
 - `challenge_runner.gd`: add `var _c1_queen_collections: int = 0`, reset in
-  `start()` alongside `_c2_rescue_used`/`_last_completed_goal_text`, and reset
-  again in `_enter_stage()` when entering `"1.8"` so the meadow tour cannot
-  pre-satisfy it.
+  `start()` alongside `_c1_base_nectar_rate`/`_c1_base_pollen_rate`, and
+  reset again in `_enter_stage()` when entering `"1.8"` so the meadow tour
+  cannot pre-satisfy it.
 - Increment it from the one place a collection actually completes --
-  `BeeForaging.finish_collecting()` -- for `main.queen` only, via the same
-  `main.challenge_runner` reach `on_worker_hatched()` already uses. Do not
-  add a signal; the runner is already polled every frame.
+  `BeeForaging.finish_collecting()` -- for `main.queen` only. `finish_collecting`
+  is a `static func(bee: Node2D)` with no existing reach to `main`, but
+  `bee.world` *is* `main.gd` (`bee.gd:80`, set in `setup()`) -- `_apply_role()`
+  already reaches `challenge_runner`'s owner this same way
+  (`world.invalidate_population()`), and `main.gd:115` declares `var
+  challenge_runner: Node`, so `bee.world.challenge_runner` is directly
+  reachable from `finish_collecting()`. Guard with `is_instance_valid(bee.world)
+  and bee.world.challenge_runner != null and bee.world.challenge_runner.active
+  and bee == bee.world.queen` (or an equivalent runner-side check) before
+  incrementing, since `finish_collecting` runs for every bee, not just the
+  queen. Do not add a signal; the runner is already polled every frame.
 - The two predicates become `_c1_queen_collections >= 1` and `>= 2`.
 
 **Non-goals:** do not change `reject_flower`, `finish_collecting` or
@@ -1338,8 +1377,8 @@ two predicates.
 
 ### 10g -- `command_collect_from` changes the queen's role before validating the command
 
-**Confirmed (1 Sep 2026 architecture review).** The guard runs *after* the
-mutation it should gate (`bee.gd::command_collect_from`, ~line 1665):
+**Confirmed.** The guard runs *after* the mutation it should gate
+(`bee.gd::command_collect_from`, line 1665):
 
 ```gdscript
 func command_collect_from(flower: Node2D) -> void:
@@ -1362,16 +1401,19 @@ function either does all of its work or none of it. One line moved.
 **Non-goals:** do not change the guard's condition, and do not add player
 feedback for the refused case in this slice (that is a separate UI question).
 
-**Sequencing:** land with 10a, since both edit the same six lines. **Save /
-determinism:** none. **Rollback:** trivial.
+**Sequencing:** land with 10a, since both edit the same function.
+**Save/determinism:** none. **Rollback:** trivial.
 
-**Acceptance (Slice 10):** 10a, 10c and 10f close independently and are the
-priority -- they are what breaks Bundle D/E's teaching sequence outright.
-10g is one moved line and ships with 10a (same function). 10b ships together
-with 9a's own fix. 10d needs its one live-reproduction step before any code
-changes. 10e needs Dave's answer before it's scoped as work at all. Re-run
-`checks/ready.md`'s Bundle D and Bundle E entries in full once
-10a/10b/10c/10f/10g land.
+**Acceptance (Slice 10):** ready for implementation now, and the batch to
+hand off together: 10a and 10g (same function, same edit -- `bee.gd`'s
+`command_collect_from`), 10c (one line in `challenge_stages.gd`), and 10f
+(a new counter plus one call site in `bee_foraging.gd`/`challenge_runner.gd`).
+These are what breaks Bundle D/E's teaching sequence outright. 10b needs no
+new code -- confirm live once 10a/10g land that the backup-role path stays
+closed. 10d needs its one live-reproduction step, and 10e needs Dave's
+answer, before either is scoped as code -- neither should be picked up from
+this file alone. Re-run `checks/ready.md`'s Bundle D and Bundle E entries in
+full once 10a/10b/10c/10f/10g have all been checked.
 
 ---
 
