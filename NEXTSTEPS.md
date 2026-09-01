@@ -20,26 +20,7 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C1 -- Settings catalogue: make `GameConfig` the authority, the
-   settings window a view.**
-   - Plan: `plans/design/settings-catalogue.md` -- Slice 1 and Slice 2, one
-     pass, two commits.
-   - Does: `reset_config_to_defaults()` derives its key set from
-     `GameConfig`'s own property list instead of the settings-window table
-     (closing the 44-field leak), then the 900-line catalogue moves to a
-     dependency-free `settings_catalogue.gd` so headless and scenario code
-     stop reaching through a `CanvasLayer`.
-   - Files: `scripts/debug_panel.gd`, `scripts/settings_catalogue.gd` (new),
-     `scripts/scenario_actions.gd`, `scripts/main.gd`,
-     `tests/source_checks.py`.
-   - Check: `tools/verify.ps1` plus one scenario run exercising `set_config`.
-     Nothing player-visible changes, so no hands-on check.
-   - Why now: it is the only queued item that deletes ~900 lines from a file
-     three other slices want to touch. Landing it first means UI-P-6 and any
-     later settings work edit the small file, not the large one.
-   - Next after: C2.
-
-2. **[Claude] C2 -- Warning banner: one throttle at the channel, one owner for
+1. **[Claude] C2 -- Warning banner: one throttle at the channel, one owner for
    the copy.**
    - Plan: `plans/now/ui.md` -- UI-Q-1 and UI-Q-2, landed together as the plan
      itself specifies.
@@ -52,10 +33,29 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: two throttled
      events eight seconds apart no longer wipe each other, and a "Run saved."
      confirmation survives an unrelated ambient event.
-   - Why after C1: C1 repoints `main.gd`'s scenario hook; C2 then edits
-     `main.gd`'s three `last_*` warning fields against a settled file.
-   - Next after: UI-P-6 (`plans/now/ui.md`), which C1 unblocks -- promote it
-     into this lane when C2 lands.
+   - Why now: C1 landed, so `main.gd`'s scenario hook has settled -- this
+     slice edits `main.gd`'s three `last_*` warning fields against a file
+     nothing else is about to move.
+   - Next after: UI-P-6.
+
+2. **[Claude] UI-P-6 -- Settings window: put the gap next to the scrollbar,
+   not left over from the panel width.**
+   - Plan: `plans/now/ui.md` -- UI-P-6.
+   - Does: adds a row-level right margin (~6px) so every settings row's
+     content sits a deliberate, consistent distance from the scroll's own
+     edge with "Show info icons" both on and off, instead of inheriting
+     whatever slack `PANEL_WIDTH := 320.0` leaves when badges are hidden.
+     Does not re-tune `PANEL_WIDTH` -- the badge-visible case needs it.
+   - Files: `scripts/debug_panel.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: with info icons
+     on and off, every row's content sits a small consistent gap from the
+     scrollbar rather than a larger unexplained gap from the panel edge.
+   - Why now: C1 unblocked it. `debug_panel.gd` is 777 lines of widget code
+     rather than 1781 lines of widget code wrapped around a data table, so
+     this slice edits the rows and nothing else.
+   - Next after: nothing in `plans/now/ui.md` is ready -- UI-P-5 and UI-D both
+     need Dave's live look first (see "Not in the queue"). Pull from another
+     owning plan, or ask Dave which of those his next hands-on pass unblocked.
 
 3. **[Codex] X1 -- Forager return reserve: give it a counter so it can be
    checked at all.**

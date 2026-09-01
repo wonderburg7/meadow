@@ -59,6 +59,7 @@ const Obstacle = preload("res://scripts/obstacle.gd")
 const RockBlock = preload("res://scripts/rock_block.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
+const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
 const ChallengeComplete = preload("res://scripts/challenge_complete.gd")
@@ -1000,7 +1001,7 @@ func _on_level_chosen(level: int) -> void:
 ## slice 6). The preset write has to land before reload_current_scene()
 ## rebuilds the world, since world_building.gd reads GameConfig at boot.
 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void:
-	DebugPanel.reset_config_to_defaults()
+	SettingsCatalogue.reset_config_to_defaults()
 	ScenarioPresets.apply(preset_key, custom_overrides)
 	PlayerProfile.mark_scenario_played(level, preset_key)
 	Session.starting_level = level

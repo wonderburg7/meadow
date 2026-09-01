@@ -169,7 +169,7 @@ itself.
 | --- | --- |
 | Current work selection | `NEXTSTEPS.md` |
 | Parallel branch/worktree coordination | `plans/workstreams.md` |
-| Settings, `GameConfig` ownership | `plans/design/settings-catalogue.md` |
+| Settings, `GameConfig` ownership | `scripts/settings_catalogue.gd`, then `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` for why |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Foraging behaviour or evidence | `plans/active/foraging-evidence.md` |
@@ -182,7 +182,7 @@ itself.
 | Recurrent bug classes | `docs/known-pitfalls.md` |
 | Performance method/contracts | `docs/performance.md`, `docs/PERFORMANCE_BASELINE.md` |
 
-The six largest scripts are indexed in `FUNCTION_MAP.md`. For any other
+The seven largest scripts are indexed in `FUNCTION_MAP.md`. For any other
 script, search its `# --- section ---` headers instead of reading top to
 bottom. Do not search `_backups/`.
 

@@ -169,7 +169,7 @@ its check. Move a confirmed or superseded entry to
       anything below `GameConfig.min_worthwhile_amount`, not just `<= 0.0`.
       Pick a Scenario preset after tweaking a debug-panel flower/season
       toggle and confirm the toggle is back to its default rather than
-      leaking into the new run (`DebugPanel.reset_config_to_defaults()`,
+      leaking into the new run (`SettingsCatalogue.reset_config_to_defaults()`,
       called from `main.gd::_on_scenario_chosen`). See
       `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice C1-C3.
 

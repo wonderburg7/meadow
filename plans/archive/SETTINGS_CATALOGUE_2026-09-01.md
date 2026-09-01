@@ -1,7 +1,7 @@
 # Settings catalogue — GameConfig as the authority, the panel as a view
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when settings/config ownership is selected -->
-Status: selected, Slices 1+2 combined into one active slice | Owner: Dave / Claude Code | Next: implement Slice 1 and Slice 2 in one pass, two commits (Claude lane) -- they touch the same function and the same source check, so splitting them means doing that work twice | Dependency: none | Verified: 2026-09-01
+Status: complete, both slices shipped 1 Sep 2026 | Owner: Dave / Claude Code | Next: None -- plan complete | Dependency: none | Verified: 2026-09-01
 
 Parked here on Dave's call (1 Sep 2026) from the architecture/performance
 review, then selected the same day as active product direction — Slice 1
@@ -23,6 +23,49 @@ Slice 1 adds would be written against `debug_panel.gd` and then immediately
 moved — Slice 2's own step 4 says exactly that. One pass, two commits: the
 behaviour fix first, the mechanical move second, so the move stays reviewable
 as a pure relocation.
+
+## Outcome -- both slices shipped, 1 Sep 2026
+
+Landed on `claude/c1-settings-catalogue` as two commits, as planned: the
+behaviour fix, then the relocation as a pure move.
+
+**Slice 1.** `reset_config_to_defaults()` now derives its key set from
+`GameConfig.get_property_list()` under the same
+`PROPERTY_USAGE_SCRIPT_VARIABLE` filter `levels.gd::apply_config_overrides`
+uses, so all 196 fields reset rather than the 171 that happened to have a
+settings row. The `SESSION_KEYS` special case and the silent
+`GameConfig.set("fps", null)` both went with it. `tests/source_checks.py`
+gained `check_settings_keys`: every `TUNABLES` row must name a
+`game_config.gd` var or a `SESSION_KEYS` entry (star rows exempt), and
+every `SESSION_KEYS` entry must have a row. It fires on an unresolvable
+key; it would have caught `"fps"`.
+
+**Slice 2.** `scripts/settings_catalogue.gd` (1,049 lines) is a
+`RefCounted` leaf preloading only `prerequisites.gd`.  `debug_panel.gd`
+drops from 1,781 to 777 lines and reads the catalogue through
+`const Settings`. `scenario_actions.gd` and `main.gd` reach it directly
+rather than through `DebugPanel`. No key, label, tip, step, default,
+category or ordering changed, and nothing was renamed. The source check
+and GameConfig-write allowlist membership moved with the file, and
+`settings_catalogue.gd` joins the seven scripts indexed in
+`FUNCTION_MAP.md`.
+
+**Verification.** `tools/verify.ps1` green, plus a headless run of
+`test_scenarios/a5_actions_resolved_test.json` -- whose `set_config`
+action toggles a gated setting -- returning `actions_resolved` with 0
+rejected, 0 failed, 0 unresolved. No hands-on check: nothing
+player-visible changed.
+
+**Follow-up not taken here.** Slice 1's suggested behavioural check
+(override one of the 44, call `reset_config_to_defaults()`, assert the
+field is back at its default) cannot be expressed in the scenario harness
+today: `reset_config_to_defaults()` is only reached from the menu's
+scenario-pick path, which a `--scenario=` boot never takes, and the
+harness has no condition that reads a `GameConfig` field. Adding a verb
+and a `config_equals` condition is its own harness slice, not a footnote
+to this one, so it is recorded here rather than half-built. The property
+list derivation plus `check_settings_keys` are the durable guards in the
+meantime.
 
 <!-- LAYER: immediate-task -->
 

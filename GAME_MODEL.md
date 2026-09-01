@@ -205,7 +205,7 @@ over it (see Foraging's Persistence entry below).
    can't be left in a state a player action never actually reaches.
 2. **Input** — the player clicking a toggle checkbox in
    `debug_panel.gd`'s settings window; the toggle's current state via
-   `setting_get`/`setting_set`.
+   `settings_catalogue.gd`'s `setting_get`/`setting_set`.
 3. **Evaluation** — `debug_panel.gd`'s `TOGGLE_PREREQUISITE` dictionary
    (key → the one toggle it depends on; not present = no prerequisite).
    Turning a toggle **on** walks up via `_cascade_prerequisites_on`,
@@ -234,11 +234,13 @@ over it (see Foraging's Persistence entry below).
    (`direct_parent`, `direct_dependents`) now live in
    `scripts/prerequisites.gd`, a non-visual `RefCounted` catalogue in
    the `roles.gd` style, so any future caller can ask "what does X
-   depend on" without going through a checkbox. The actual toggling and
-   checkbox sync (`_cascade_prerequisites_on`, `_cascade_dependents_off`)
-   stay in `debug_panel.gd`, since that part genuinely is presentation
-   — it needs `setting_get`/`setting_set` and the live `toggle_boxes`
-   widgets, which only the settings window has.
+   depend on" without going through a checkbox. The toggling itself
+   (`_cascade_prerequisites_on_static`, `_cascade_dependents_off_static`)
+   moved again with the settings catalogue, and now sits beside
+   `setting_get`/`setting_set` in `settings_catalogue.gd`; what stays in
+   `debug_panel.gd` is the checkbox sync (`_cascade_prerequisites_on`,
+   `_cascade_dependents_off`), which genuinely is presentation — it needs
+   the live `toggle_boxes` widgets only the settings window has.
 7. **Availability** — every toggle in the tree is either **Available**
    (no prerequisite, or its prerequisite is already on) or **Locked**
    (its prerequisite is currently off). "Locked" describes the

@@ -31,7 +31,7 @@ const TOGGLE_PREREQUISITE := {
 ## ways to choose a new forager's initial search area; Auto-recruitment
 ## and Proximity recruitment are alternate ways for established foragers
 ## to recruit. These relationships are not parent/child prerequisites, so
-## they live in this separate, flat map. debug_panel.gd's apply_setting
+## they live in this separate, flat map. settings_catalogue.gd's apply_setting
 ## and UI toggle handler both turn off whichever side is not being switched
 ## on.
 const MUTUALLY_EXCLUSIVE := {

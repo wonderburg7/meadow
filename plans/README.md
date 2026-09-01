@@ -70,7 +70,6 @@ the archived plan is never reopened or extended.
 
 | If the queue names | Read |
 | --- | --- |
-| C1 (settings catalogue) | `plans/design/settings-catalogue.md` |
 | C2 (UI-Q), UI-P, UI-D | `plans/now/ui.md` |
 | X1, X2 (foraging evidence) | `plans/active/foraging-evidence.md` |
 | Challenge 1 acceptance (Slice 7) | `plans/now/challenge-1.md` |
@@ -87,9 +86,9 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 
 <!-- LAYER: dependency-order -->
 
-1. The settings-catalogue slice (C1) lands before any further
-   `debug_panel.gd` work, including UI-P-6. It deletes ~900 lines from that
-   file; work done first would simply be rewritten.
+1. Settings live in `scripts/settings_catalogue.gd`, not in the settings
+   window. C1 moved them there on 1 Sep 2026; `debug_panel.gd` is now a view
+   of that catalogue, and a new setting is added to the catalogue file.
 2. Add no counter-free evidence slice. X1 exists because the forager-return
    check could not be answered at all without a counter; X2 reads the same
    diagnostic surface. Evidence before threshold changes, every time.
