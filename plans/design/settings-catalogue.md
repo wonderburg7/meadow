@@ -1,10 +1,12 @@
 # Settings catalogue — GameConfig as the authority, the panel as a view
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when settings/config ownership is selected -->
-Status: designed, not scheduled | Owner: Dave / Claude Code | Next: select Slice 1 (reset coverage) only when settings ownership becomes active work; Slice 2 (extraction) depends on it | Dependency: no active implementation slice | Verified: 2026-09-01
+Status: selected, Slice 1 active | Owner: Dave / Claude Code | Next: implement Slice 1 (`reset_config_to_defaults()` coverage), then Slice 2 (catalogue extraction) | Dependency: none | Verified: 2026-09-01
 
 Parked here on Dave's call (1 Sep 2026) from the architecture/performance
-review. Documentation only; no code has changed.
+review, then selected the same day as active product direction — Slice 1
+and Slice 2 only, not `plans/design/progression.md`'s wider Phase A, which
+stays parked. Documentation only so far; no code has changed yet.
 
 One idea underlies both slices below: **`game_config.gd` is the authority for
 what a setting is, and `debug_panel.gd`'s table is a view of it.** Today that

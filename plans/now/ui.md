@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-1/3/4/7 shipped (merged from `codex/ui-p` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- UI-P-2/5/6/8 remain (below), plus UI-Q (warning-banner throttling and copy ownership, recorded 1 Sep, not yet agreed work) | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: UI-P-1/3/4/7 shipped (merged from `codex/ui-p` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- UI-P-2/5/6/8 remain (below), plus UI-Q (warning-banner throttling and copy ownership) -- agreed 1 Sep 2026 as an active slice, both UI-Q-1 and UI-Q-2, not yet implemented | Dependency: none | Verified: 2026-09-01
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -957,9 +957,8 @@ panel and command panel text read as the same size.
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 
 **Scope:** the game has two player-attention channels that were built
-separately and have drifted apart. Documentation of a confirmed gap, not
-scheduled work — neither item below is agreed yet, and neither blocks
-anything.
+separately and have drifted apart. **Agreed as an active slice (Dave, 1 Sep
+2026): both UI-Q-1 and UI-Q-2 below.** Not yet implemented.
 
 **Files:** `scripts/hud.gd` (`show_warning`, `set_warnings_muted`,
 `_build_warning_banner`, `update_signals`, `_signal_color`),
@@ -1028,7 +1027,7 @@ deliberately throttled and deliberately dropped rather than queued
 completeness"). That decision is sound; the gap is that it had to be made
 three times, in three files, and still cannot arbitrate between producers.
 
-**Not yet designed.** The smallest shape that fixes both consequences is to
+**Design accepted, ready to implement.** The smallest shape that fixes both consequences is to
 move the rule to the channel: `show_warning(text, key := "", min_gap := 0.0)`
 holding one `key -> last shown` dictionary in `hud.gd`, with the three
 producers passing their existing `GameConfig` gap. Producer code loses its
@@ -1055,11 +1054,11 @@ deliberately ("a bee-domain concern... rather than a cross-system
 reach-through"), which is a defensible reading of *the throttle* but does not
 explain why the two files also own the wording.
 
-**Smallest change, if UI-Q-1 is taken up:** give the two a named entry in a
-small definitions file — the shape `challenge_feedback.gd::DEFS` already uses
-for Dr Gallerin prompts — so the simulation states the fact and the view
-chooses the words. Not worth doing on its own; fold it into whatever UI-Q-1
-settles on, so the banner gets its arbitration and its copy owner in one pass.
+**Smallest change:** give the two a named entry in a small definitions file —
+the shape `challenge_feedback.gd::DEFS` already uses for Dr Gallerin prompts —
+so the simulation states the fact and the view chooses the words. Land this
+in the same pass as UI-Q-1, so the banner gets its arbitration and its copy
+owner together.
 
 **Non-goals for both:** do not touch `set_warnings_muted` or its
 Challenge-wide use — `challenge_runner.gd` mutes the whole channel for the
