@@ -182,6 +182,12 @@ its check. Move a confirmed or superseded entry to
       grid and Direction-even hex speed are all under Appearance and absent
       from Hive & comb; all other Hive & comb controls remain there.
 
+### Hive comb navigation cost (Slice 7)
+- [ ] Build a wide comb across the hive while an open-floor detour remains,
+      then send a bee from one side to the other: she should prefer the open
+      floor over travelling straight across comb. Save and reload; the route
+      should remain the same before and after reload.
+
 ### Challenge 1 Slice 9 fixes (9a-9j)
 - [ ] Re-run Slice 7's full acceptance playthrough (`plans/now/challenge-1.md`
       Slice 7) end to end. In particular: the queen's backup role no longer

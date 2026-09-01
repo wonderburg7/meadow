@@ -678,6 +678,12 @@ func _start_site_at(hex: Vector2i) -> Node2D:
 	cell.start_as_site()
 	cells.append(cell)
 	register_tile(hex, cell)
+	# A new cell changes this tile's travel cost (see _tile_cost). Update
+	# the one A* point rather than rebuilding the whole graph, and drop the
+	# cached routes, which were smoothed against the old costs.
+	if _tile_ids.has(hex):
+		_astar.set_point_weight_scale(_tile_ids[hex], _tile_cost(hex))
+		_path_cache.clear()
 	invalidate_index()
 	return cell
 
@@ -778,9 +784,9 @@ func nearest_walkable_point(point: Vector2) -> Vector2:
 ## which case the caller should just move straight and hope.
 ## Routes are cached by the pair of tiles they run between, because bees
 ## ask for the same handful of journeys over and over -- entrance to
-## comb, comb to stores, stores to brood. The hive layout only changes
-## when a block is mined out, and build_navigation clears the cache when
-## that happens, so a cached route can never be stale.
+## comb, comb to stores, stores to brood. Mining and comb construction both
+## clear the cache when they change the route costs, so a cached route can
+## never be stale.
 ##
 ## Keyed on tiles rather than exact positions: two bees standing anywhere
 ## on the same tile want the same route.

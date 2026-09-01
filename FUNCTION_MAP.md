@@ -355,7 +355,7 @@ One cell: contents, brood, honey ripening, how it draws.
 1031 func development_percent() -> float
 ```
 
-## hive.gd (1,009 lines)
+## hive.gd (1,015 lines)
 
 The comb as a whole: cells, navigation, finding a cell.
 
@@ -412,25 +412,25 @@ The comb as a whole: cells, navigation, finding a cell.
 666  func can_build_on(hex: Vector2i) -> bool
 669  func _can_build_on(hex: Vector2i) -> bool
 672  func _start_site_at(hex: Vector2i) -> Node2D
-688  func create_cell_site_at(hex: Vector2i) -> Node2D
-693  # --- navigation ---------------------------------------------------
-704  func build_navigation() -> void
-745  func _is_solid(hex: Vector2i) -> bool
-751  func _tile_cost(hex: Vector2i) -> float
-754  func tile_is_walkable(hex: Vector2i) -> bool
-763  func nearest_walkable_point(point: Vector2) -> Vector2
-790  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
-824  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
-848  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
-862  # --- mining -------------------------------------------------------
-871  func refresh_edge_flags() -> void
-893  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-921  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-945  func _is_markable_block(node) -> bool
-952  func mine_stand_hex(block: Node2D)
-975  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
-997  func remove_block(block: Node2D, floor_maker: Callable) -> void
-1008 func announce() -> void
+694  func create_cell_site_at(hex: Vector2i) -> Node2D
+699  # --- navigation ---------------------------------------------------
+710  func build_navigation() -> void
+751  func _is_solid(hex: Vector2i) -> bool
+757  func _tile_cost(hex: Vector2i) -> float
+760  func tile_is_walkable(hex: Vector2i) -> bool
+769  func nearest_walkable_point(point: Vector2) -> Vector2
+796  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
+830  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
+854  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
+868  # --- mining -------------------------------------------------------
+877  func refresh_edge_flags() -> void
+899  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+927  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+951  func _is_markable_block(node) -> bool
+958  func mine_stand_hex(block: Node2D)
+981  func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
+1003 func remove_block(block: Node2D, floor_maker: Callable) -> void
+1014 func announce() -> void
 ```
 
 ## main.gd (1,202 lines)
