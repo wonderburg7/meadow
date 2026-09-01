@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-1/3/4/7 shipped (merged from `codex/ui-p` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- UI-P-2/5/6/8 remain (below), plus UI-Q (warning-banner throttling and copy ownership) -- agreed 1 Sep 2026 as an active slice, both UI-Q-1 and UI-Q-2, not yet implemented | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: UI-P-1/3/4/7/8 shipped (merged from `codex/ui-p` and `codex/ui-p-2` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- UI-P-2/5/6 remain (below), plus UI-Q (warning-banner throttling and copy ownership) -- agreed 1 Sep 2026 as an active slice, both UI-Q-1 and UI-Q-2, not yet implemented | Dependency: none | Verified: 2026-09-01
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -890,7 +890,7 @@ the bubble sits to the left of Gallerin's sprite with a pointer connecting
 the two; the command tray never renders underneath the bubble at any tested
 width, including after the reposition.
 
-### UI-P-8 — summary panel: cog alignment, tray width, and a real resize-overlap bug
+### UI-P-8 — summary panel: cog alignment, tray width, and a real resize-overlap bug (shipped 1 Sep 2026)
 
 **Files:** `scripts/hud.gd`, `scripts/ui_layout.gd`.
 
@@ -953,6 +953,26 @@ panel still filling the remaining room; narrowing the window all the way to
 `MIN_SUPPORTED_WIDTH` never overlaps the two panels, because the tray's
 buttons can now wrap onto more rows instead of forcing extra width; summary
 panel and command panel text read as the same size.
+
+**Delivered:** all four items applied. 1: `_build_selection_cog()`'s
+`MenuButton` now sets `size_flags_vertical = Control.SIZE_SHRINK_BEGIN`. 2:
+`command_tray_max_width()`'s multiplier is `0.924` (`0.77 * 1.2`), gated by
+a new `COMMAND_TRAY_MIN_WIDTH := 200.0` floor so a very narrow viewport
+can't collapse it below a usable width -- `selection_tray_width()` derives
+from the same function, so it stays in agreement automatically. 3: every
+row-level container that used to be a plain `HBoxContainer`
+(`command_columns`, `cell_primary_columns`, `cell_more_panel`, and the
+shared `_column_row()`/`_labelled_row()` builders) is now an
+`HFlowContainer`, so Job/Focus/Orders rows wrap onto further rows instead of
+forcing extra width; `_update_command_tray_width()` now sets
+`command_tray`'s own `custom_minimum_size.x`/`size.x` to the real cap
+(previously only a child's floor was set, which cannot act as a ceiling) and
+zeroes the flow containers' own minimum widths so they rely on wrapping
+rather than growing. 4: `identity_label`/`energy_label`/`activity_label`/
+`trait_label` changed from `"Body"` to `"Small"`, matching the command
+panel's own buttons. `source_checks.py` and `balance_tests.py` pass. Merged
+to master via `codex/ui-p-2` 1 Sep 2026. Still needs Dave's hands-on look
+(see `checks/ready.md`).
 
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 

@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 shipped (merged from `codex/hive-comb` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next, then Slice 7 (comb tiles never update hive A* costs) | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 and Slice 7 shipped (merged from `codex/hive-comb` and `codex/hive-comb-slice-7` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next | Dependency: none | Verified: 2026-09-01
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -251,7 +251,7 @@ above it, before picking option 1 over option 2 -- same discipline Slice
 renders" may be this same bug if that cell also happened to land above the
 centre row, in which case one fix closes both.
 
-## Slice 7 -- Comb built during play never updates hive A* costs or clears the path cache (new, 1 Sep 2026 architecture review)
+## Slice 7 -- Comb built during play never updates hive A* costs or clears the path cache (shipped 1 Sep 2026)
 
 **Confirmed against live source.** `hive.gd`'s navigation section states the
 intent plainly (~line 694):
@@ -343,3 +343,11 @@ problem justifies. (b) Leave the code alone and delete the header comment's
 claim -- honest, and cheaper, but abandons a designed behaviour Dave has
 asked to keep. (a) and (b) both rejected in favour of the in-place weight
 update above.
+
+**Delivered:** the three-line fix applied exactly as scoped in
+`hive.gd::_start_site_at()` -- `_astar.set_point_weight_scale()` on the new
+tile plus a full `_path_cache.clear()`, guarded by `_tile_ids.has(hex)`. No
+change to `_tile_cost`, `build_navigation()` or `remove_block()`.
+`source_checks.py` and `balance_tests.py` pass. Merged to master via
+`codex/hive-comb-slice-7` 1 Sep 2026. Still needs Dave's hands-on look and
+the before/after-reload route comparison (see `checks/ready.md`).

@@ -36,18 +36,19 @@ on demand in `plans/archive/`.
    comb grow upward for the first time. Confirmed-plausible, pending one
    live scene-inspector look (see the plan's own section) before picking
    between its two fix options. Slices 1-3 (empty-cell sprite alignment)
-   shipped from `codex/hive-comb` 1 Sep, hands-on confirmation pending in
-   `checks/ready.md`.
+   and Slice 7 (comb navigation A* cost invalidation) shipped from
+   `codex/hive-comb`/`codex/hive-comb-slice-7`, merged to master 1 Sep,
+   hands-on confirmation pending in `checks/ready.md`.
    Also code-complete and awaiting Dave's hands-on confirmation
    (`checks/ready.md`), not blocking either slice above: Challenge 2 Slices
    B (Meadow/Foraging button unlocks) and D (death marker selection glow),
    both from `codex/hands-on-bd`/`plans/now/hands-on-fixes-2026-08-31.md`;
-   and UI-P-1/3/4/7 (info-badge tooltip wrap, pre-run menu hex borders and
-   left margin, Dr Gallerin bubble) from `codex/ui-p`/`plans/now/ui.md`
-   (UI-P-2/5/6/8 remain unimplemented). `plans/active/foraging-evidence.md`
-   (orientation flight, proximity recruitment, safe forager return reserve)
-   is ready to pick up on its own schedule, not prioritised ahead of the
-   above.
+   and UI-P-1/3/4/7/8 (info-badge tooltip wrap, pre-run menu hex borders and
+   left margin, Dr Gallerin bubble, summary/command tray responsive fixes)
+   from `codex/ui-p`/`codex/ui-p-2`/`plans/now/ui.md` (UI-P-2/5/6 remain
+   unimplemented). `plans/active/foraging-evidence.md` (orientation flight,
+   proximity recruitment, safe forager return reserve) is ready to pick up
+   on its own schedule, not prioritised ahead of the above.
 3. **Blocked — save/load during an active Challenge.** Deferred in
    `DESIGN_BACKLOG.md`: `SaveGame` has no Challenge stage/gate/prompt
    schema, so `debug_panel.gd::set_save_load_enabled(false)` keeps

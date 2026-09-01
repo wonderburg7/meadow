@@ -253,3 +253,15 @@ its check. Move a confirmed or superseded entry to
       icon with a pointer connecting the two, and the command tray never
       renders underneath it at any tested width (P-7). See
       `plans/now/ui.md` UI-P-1/3/4/7.
+
+### UI-P-8 (summary panel cog, command tray width, resize overlap)
+- [ ] With a bee selected whose identity label wraps to 2-3 lines, confirm
+      the summary panel's cog stays aligned with the first line, not a lower
+      one. At a normal window size, the command tray reads visibly wider
+      (~20%) than before with the summary panel still filling the rest.
+      Narrow the window toward `MIN_SUPPORTED_WIDTH` with several bees
+      selected (so Job/Focus/Orders all show content): the tray's rows wrap
+      onto further lines rather than the tray growing into the summary
+      panel or Gallerin's space. Summary panel text (name/energy/activity/
+      trait) reads the same size as command-panel button text. See
+      `plans/now/ui.md` UI-P-8.
