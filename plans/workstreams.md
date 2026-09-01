@@ -19,3 +19,4 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
+| `codex/challenge-1-slice-10` (`.worktrees/challenge-1-slice-10`) | Implement Slice 10a/10c/10f/10g (queen role-lock, pollen freeze, real collection counter, guard-order fix) | Claude Code | active | none | `plans/now/challenge-1.md` Slice 10 |
