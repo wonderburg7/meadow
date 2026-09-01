@@ -22,23 +22,27 @@ on demand in `plans/archive/`.
    `flower_cooldowns` memory, which also grew on a rejected flower (10f).
    10b needed no code -- Slice 9a's own fix already covers it. Re-run
    Bundle D/E's live checks to confirm all of the above (`checks/ready.md`).
-   10d (pollen sub-mode may be unreachable via the queen's backup-role path)
-   and 10e ("building the third cell reveals Laying" is most likely the
-   correct transition, not a new bug, but may instead be the already-known
-   9d) both still need one live-reproduction step or a word from Dave before
-   they're scoped as code changes. Slice 9 (9a-9j) is code-complete, merged
-   1 Sep -- re-run Slice 7's full acceptance playthrough only once 10d/10e
-   are resolved and Bundle D/E's checks above are confirmed.
-2. **Successor — `plans/now/hive-comb.md` Slice 6: cells above the comb's
-   centre row don't render.** Traced to `hive_cell.gd`'s z_index formula
-   silently assuming a value that goes negative above the centre, very
-   likely surfaced by the recent hex-grid radial-symmetry fix letting the
-   comb grow upward for the first time. Confirmed-plausible, pending one
-   live scene-inspector look (see the plan's own section) before picking
-   between its two fix options. Slices 1-3 (empty-cell sprite alignment)
-   and Slice 7 (comb navigation A* cost invalidation) shipped from
-   `codex/hive-comb`/`codex/hive-comb-slice-7`, merged to master 1 Sep,
-   hands-on confirmation pending in `checks/ready.md`.
+   10e is resolved (1 Sep): Dave confirmed the "Laying" he saw was the
+   expected new "Change to..." choice after the third cell, not the already-
+   known 9d marker bug -- no code change, closed. 10d (pollen sub-mode may be
+   unreachable via the queen's backup-role path) still needs one live
+   Godot-boot reproduction step before it's scoped as code -- not yet
+   attempted, the `godot` MCP server failed to connect this session. Slice 9
+   (9a-9j) is code-complete, merged 1 Sep -- re-run Slice 7's full acceptance
+   playthrough only once 10d is resolved and Bundle D/E's checks above are
+   confirmed.
+2. **Successor — `plans/now/hive-comb.md` Slice 4: automatic comb-building
+   spiral order looks wrong (general play, not the queen-specific bug
+   Challenge 1 Slice 8d already fixed).** Traced to two live-only candidate
+   causes (same-frame dispatch across idle Comb Workers, or a correct spiral
+   that just looks uneven against asymmetric digging) — needs an isolated
+   Scenario repro with generous pre-dug, symmetric floor before any fix is
+   written; see the plan's own section. Slices 1-3 (empty-cell sprite
+   alignment), 6 (above-centre-row cell rendering) and 7 (comb navigation A*
+   cost invalidation) are all now code-complete, merged to master 1 Sep
+   (`codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's local
+   `dd1b7ab`), hands-on confirmation pending in `checks/ready.md`. Slice 5
+   (cell-content feedback lag) also still needs its own live repro.
    Also code-complete and awaiting Dave's hands-on confirmation
    (`checks/ready.md`), not blocking either slice above: Challenge 2 Slices
    B (Meadow/Foraging button unlocks) and D (death marker selection glow),

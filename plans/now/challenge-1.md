@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 10a/10c/10f/10g are code-fixed (`codex/challenge-1-slice-10`, `tools/verify.ps1` green) -- re-run Bundle D/E's live checks to confirm (`checks/ready.md`), then resolve 10d/10e (each needs one live-reproduction step or Dave's word before it's scoped as code) and re-run Slice 7's full acceptance-playthrough checklist, blocked until then | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 10a/10c/10f/10g are code-fixed (`codex/challenge-1-slice-10`, `tools/verify.ps1` green) -- re-run Bundle D/E's live checks to confirm (`checks/ready.md`); 10e resolved 1 Sep (no bug); 10d still needs one live Godot-boot reproduction step (not yet attempted -- `godot` MCP failed to connect 1 Sep) before it's scoped as code, then re-run Slice 7's full acceptance-playthrough checklist, blocked until then | Dependency: none | Verified: 2026-09-01
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
@@ -1089,9 +1089,12 @@ Traced against live source, not guessed, same discipline as Slice 9.
 `codex/challenge-1-slice-10` -- see each section for what changed; awaiting
 Dave's live confirmation via `checks/ready.md`'s Bundle D/E entries). **No
 code needed: 10b** -- Slice 9a's landed fix already satisfies it; close it
-with the same live re-check. **Not ready to hand off: 10d, 10e** -- both
-still need a live-reproduction step or a word from Dave before they are
-code changes; an implementer should not scope either from this file alone.
+with the same live re-check. **Resolved, no bug: 10e** -- Dave confirmed
+(1 Sep) the "Laying" he saw was the expected new "Change to..." choice, not
+9d's marker; closed with no code change. **Not ready to hand off: 10d** --
+still needs one live-reproduction step (a Godot boot -- the `godot` MCP
+server failed to connect this session, so it could not be attempted here);
+an implementer should not scope it from this file alone.
 
 <!-- LAYER: durable-rules -->
 
@@ -1278,21 +1281,17 @@ any future bee with an active secondary role would hit the identical gap.
 
 ### 10e -- "Building third cell reveals Laying" is most likely the correct 1.14-to-1.15 transition, not a new bug -- but confirm which UI element Dave means
 
-**Not confirmed as a bug; likely a naming collision with the already-known,
-still-unfixed 9d.** Building the third cell satisfies 1.14's
-`third_cell_built` goal, which immediately calls `_advance()` into 1.15 --
-whose `unlocked_keys` includes `"laying"` for the first time
+**Resolved 1 Sep -- no bug, closed.** Building the third cell satisfies
+1.14's `third_cell_built` goal, which immediately calls `_advance()` into
+1.15 -- whose `unlocked_keys` includes `"laying"` for the first time
 (`challenge_stages.gd:199`), and 1.15's own goal is `first_egg_laid`.
 Revealing "Laying" as a *newly available option* at that exact moment is the
-intended pacing, not a leak. **However**, 9d (`plans/now/challenge-1.md`
-Slice 9, section 9d, confirmed 30 Aug, still unfixed) means the Job column
-has shown "* Laying" as her *current, already-active* role from stage 1.1
-onward, regardless of any stage transition. **Ask Dave to confirm which one
-he saw:** "Laying" appearing as a *new choice* in the "Change to..." list
-right after the third cell (expected, no fix needed) versus "* Laying" as
-her *current-role marker* being visible at all before 1.15 (already-
-diagnosed 9d, not new). Do not implement two fixes for what may be one
-already-tracked issue.
+intended pacing, not a leak. Dave confirmed (1 Sep) this is what he saw:
+"Laying" appearing as a *new choice* in the "Change to..." list right after
+the third cell -- exactly the expected 1.14->1.15 pacing. No code change.
+The separate, still-open 9d (the Job column's current-role marker showing
+"* Laying" from stage 1.1 onward, unfiltered by `allowed_role_keys`) is a
+different, already-tracked bug and stays open under Slice 9's own section.
 
 ### 10f -- 1.8 and 1.9 clear on a *rejected* flower, not a collected one
 
@@ -1409,10 +1408,10 @@ hand off together: 10a and 10g (same function, same edit -- `bee.gd`'s
 (a new counter plus one call site in `bee_foraging.gd`/`challenge_runner.gd`).
 These are what breaks Bundle D/E's teaching sequence outright. 10b needs no
 new code -- confirm live once 10a/10g land that the backup-role path stays
-closed. 10d needs its one live-reproduction step, and 10e needs Dave's
-answer, before either is scoped as code -- neither should be picked up from
-this file alone. Re-run `checks/ready.md`'s Bundle D and Bundle E entries in
-full once 10a/10b/10c/10f/10g have all been checked.
+closed. 10e is resolved (1 Sep, no bug, see above). 10d still needs its one
+live-reproduction step before it is scoped as code -- it should not be
+picked up from this file alone. Re-run `checks/ready.md`'s Bundle D and
+Bundle E entries in full once 10a/10b/10c/10f/10g have all been checked.
 
 ---
 

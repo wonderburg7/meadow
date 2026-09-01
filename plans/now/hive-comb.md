@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slices 1-3 and Slice 7 shipped (merged from `codex/hive-comb` and `codex/hive-comb-slice-7` 1 Sep 2026, hands-on confirmation in `checks/ready.md`) -- Slice 6 (above-centre-row cell rendering) is next | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slices 1-3, 6 and 7 shipped (merged to master 1 Sep 2026: `codex/hive-comb`, `codex/hive-comb-slice-7`, and Slice 6's `dd1b7ab`) -- all await Dave's hands-on confirmation in `checks/ready.md`; Slices 4-5 remain unconfirmed-as-bugs, pending their own live repro | Dependency: none | Verified: 2026-09-01
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -250,6 +250,16 @@ above it, before picking option 1 over option 2 -- same discipline Slice
 (`plans/now/challenge-1.md`) -- its "second manually-built cell never
 renders" may be this same bug if that cell also happened to land above the
 centre row, in which case one fix closes both.
+
+**Delivered 1 Sep 2026 (`dd1b7ab`, merged to master from a local
+`codex/hive-comb-slice-6` branch).** Shipped as a third option, cheaper than
+either of the two above: rather than shifting every cell's `z_index`
+positive, pin the opaque hive-floor tile's `z_index` to Godot's lowest
+supported value (`HIVE_FLOOR_Z_INDEX := -4096`,
+`world_building.gd::_add_floor_tile`) so it can never occlude a cell
+regardless of the cell's own (possibly negative) `z_index`. `hive_cell.gd`'s
+formula is untouched. Still needs Dave's hands-on confirmation that
+above-centre cells now render -- see `checks/ready.md`.
 
 ## Slice 7 -- Comb built during play never updates hive A* costs or clears the path cache (shipped 1 Sep 2026)
 

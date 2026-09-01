@@ -84,14 +84,12 @@ its check. Move a confirmed or superseded entry to
       apart live -- watch whether the "Doing" (nectar/pollen) row even
       renders for the queen at that moment. See `plans/now/challenge-1.md`
       Slice 10, section 10d.
-- [ ] **Needs Dave's word, not a bug fix (10e):** "building the third cell
-      reveals Laying" is most likely the correct 1.14->1.15 transition, not
-      a new bug -- but may be the already-known, unfixed 9d (current-role
-      marker) instead. Confirm which UI element was seen: "Laying" as a
-      *new choice* in "Change to..." right after the third cell (expected)
-      versus "* Laying" as the *current-role marker* visible before 1.15
-      (9d, already tracked separately). See `plans/now/challenge-1.md`
-      Slice 10, section 10e.
+- [x] **Confirmed 1 Sep (10e), no bug:** Dave confirms "Laying" appeared as a
+      *new choice* in the "Change to..." list right after the third cell --
+      the intended 1.14->1.15 pacing, not a leak. Closed with no code change.
+      The separate, still-unfixed 9d (current-role marker showing "Laying"
+      before 1.15) remains open and is tracked only under Slice 9's own
+      entry above. See `plans/now/challenge-1.md` Slice 10, section 10e.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
@@ -210,6 +208,18 @@ its check. Move a confirmed or superseded entry to
       Settings, confirm Cell art, Show cell contents text, Sprite-aligned hex
       grid and Direction-even hex speed are all under Appearance and absent
       from Hive & comb; all other Hive & comb controls remain there.
+
+### Hive comb above-centre-row rendering (Slice 6)
+- [ ] **Fix applied 1 Sep, not yet confirmed live:** cells placed in rows
+      above the comb's centre line never painted, even though they existed,
+      were built and held content correctly -- traced to the hive-floor
+      polygon's default `z_index = 0` occluding any cell whose own
+      row-ordered `z_index` (`2 * axial.y + axial.x`) goes negative above
+      the centre. Fixed by pinning the floor tile's `z_index` to -4096
+      (`world_building.gd::_add_floor_tile`, `HIVE_FLOOR_Z_INDEX`) so it can
+      never sit above a cell regardless of sign. Build comb rows both above
+      and below the hive's centre line and confirm every cell renders
+      (empty cup or filled) with no gap, in both Cell-art-on and -off modes.
 
 ### Hive comb navigation cost (Slice 7)
 - [ ] Build a wide comb across the hive while an open-floor detour remains,
