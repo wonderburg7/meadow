@@ -145,6 +145,10 @@ var manual_deposit_pending: bool = false
 ## A stage can let a forager pick her first flower automatically but require
 ## an explicit player command before she switches to another one.
 var flower_switch_locked: bool = false
+## Challenge 1's manual-forage arc lets the queen fly a collection trip
+## without command_collect_from's usual set_role(Role.FORAGER) becoming
+## permanent. False everywhere else.
+var role_change_locked: bool = false
 ## A point, flower, or receiving cell clicked in the other zone. The command
 ## resumes only after the bee has physically crossed the entrance.
 var pending_move_target := Vector2(INF, INF)
@@ -1658,16 +1662,18 @@ func _mine_reference_point() -> Vector2:
 ## for this one trip and go straight there.
 ## Right-clicking a flower with a bee selected always sends it to collect
 ## from that flower -- switching it to Forager first if it wasn't
-## already one, the same direct-command spirit as command_exit_hive.
+## already one (unless role_change_locked -- Challenge 1's manual-forage
+## arc, where the trip must not permanently promote the queen), the same
+## direct-command spirit as command_exit_hive.
 ## Doesn't change resource_type: she gathers whichever resource she's
 ## already set to (nectar by default -- see Bee.setup), not whatever the
 ## flower happens to be offering.
 func command_collect_from(flower: Node2D) -> void:
 	_clear_pending_zone_command()
-	if role != Role.FORAGER:
-		set_role(Role.FORAGER)
 	if flower.occupied_by != null and flower.occupied_by != self:
 		return
+	if role != Role.FORAGER and not role_change_locked:
+		set_role(Role.FORAGER)
 	if current_flower and current_flower != flower:
 		current_flower.release(self)
 	flower_cooldowns.erase(flower)
