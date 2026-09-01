@@ -17,7 +17,7 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | Predators | `plans/archive/CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
 | UI and accessibility | `plans/now/ui.md` | active, narrow slices only |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/now/hive-comb.md` | active, narrow slices only |
-| Settings/config ownership (GameConfig vs the settings window) | `plans/design/settings-catalogue.md` | selected 1 Sep 2026, Slice 1 active |
+| Settings/config ownership (GameConfig vs the settings window) | `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` | shipped 1 Sep 2026; the catalogue is `scripts/settings_catalogue.gd` |
 
 ## Deferred product decisions
 

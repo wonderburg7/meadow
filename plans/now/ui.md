@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-Q-1+UI-Q-2 together (Claude lane) and UI-P-2 (Codex lane); UI-P-6 follows the settings-catalogue move; UI-P-5 and UI-D both need a live look first | Dependency: none for UI-Q or UI-P-2 | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: UI-Q-1+UI-Q-2 together then UI-P-6 (Claude lane) and UI-P-2 (Codex lane); UI-P-6 unblocked 1 Sep 2026 by the settings-catalogue move; UI-P-5 and UI-D both need a live look first | Dependency: none for UI-Q, UI-P-2 or UI-P-6 | Verified: 2026-09-01
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
