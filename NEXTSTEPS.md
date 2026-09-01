@@ -9,27 +9,28 @@ on demand in `plans/archive/`.
 ## Next up
 
 1. **Current — Challenge 1 Slice 10: Bundle D/E's manual-to-automatic
-   foraging arc (`plans/now/challenge-1.md`).** 10a, 10c, 10f and 10g are
-   now code-complete, merged from `codex/challenge-1-slice-10`
-   (`tools/verify.ps1` green): `command_collect_from()` no longer
-   permanently promotes the queen to Forager during 1.6-1.10
+   foraging arc (`plans/now/challenge-1.md`).** 10a, 10c, 10d, 10f and 10g
+   are now code-complete (`tools/verify.ps1` green): `command_collect_from()`
+   no longer permanently promotes the queen to Forager during 1.6-1.10
    (`Bee.role_change_locked`), and checks the flower-occupied guard before
    mutating anything, not after (10a/10g); stage 1.13 now runs the same
    `"freeze_bee:queen"` on_exit effect 1.11 already ships, so pollen
    foraging stops at the taught 75-unit mark instead of overshooting toward
    the cell's real 200-unit capacity (10c); 1.8/1.9's goals now read a real
    per-stage collection counter instead of the size of the queen's private
-   `flower_cooldowns` memory, which also grew on a rejected flower (10f).
-   10b needed no code -- Slice 9a's own fix already covers it. Re-run
-   Bundle D/E's live checks to confirm all of the above (`checks/ready.md`).
-   10e is resolved (1 Sep): Dave confirmed the "Laying" he saw was the
-   expected new "Change to..." choice after the third cell, not the already-
-   known 9d marker bug -- no code change, closed. 10d (pollen sub-mode may be
-   unreachable via the queen's backup-role path) still needs one live
-   Godot-boot reproduction step before it's scoped as code -- not yet
-   attempted, the `godot` MCP server failed to connect this session. Slice 9
-   (9a-9j) is code-complete, merged 1 Sep -- re-run Slice 7's full acceptance
-   playthrough only once 10d is resolved and Bundle D/E's checks above are
+   `flower_cooldowns` memory, which also grew on a rejected flower (10f);
+   the "Doing" (nectar/pollen) row and `Bee.set_focus()` now key off
+   whichever role the queen is actively working (primary or backup), not
+   just her primary role, so pollen was genuinely unreachable while she
+   foraged via her backup role — traced statically (no live Godot boot
+   available/needed) via `Bee.current_working_role()` and `hud.gd`'s new
+   `_common_working_role()` (10d). 10b needed no code -- Slice 9a's own fix
+   already covers it. Re-run Bundle D/E's live checks to confirm all of the
+   above (`checks/ready.md`). 10e is resolved (1 Sep): Dave confirmed the
+   "Laying" he saw was the expected new "Change to..." choice after the
+   third cell, not the already-known 9d marker bug -- no code change,
+   closed. Slice 9 (9a-9j) is code-complete, merged 1 Sep -- re-run Slice
+   7's full acceptance playthrough only once Bundle D/E's checks above are
    confirmed.
 2. **Successor — `plans/now/hive-comb.md` Slice 4: automatic comb-building
    spiral order looks wrong (general play, not the queen-specific bug
