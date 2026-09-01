@@ -19,4 +19,3 @@ branch — extend the existing row's work instead.
 
 | Branch (worktree path) | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- |
-| `docs/progression-plan` (`.worktrees/progression-plan`) | Rewrite `plans/design/progression.md` to Dave's 1 Sep skill catalogue: six sectors, four resource-gated tiers, hex-wedge grid, HUD Skills button. Documentation only. | Claude | active | none | `plans/design/progression.md` |
