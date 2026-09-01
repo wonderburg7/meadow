@@ -75,6 +75,7 @@ var _crab_spider_events: Dictionary = {}   # "kill"/"escape"/"alarm_flee" -> cou
 var _recruitment_matches: int = 0
 var _scouting_settled: int = 0
 var _orientation_flights: int = 0
+var _forager_returns_triggered: int = 0
 var _recruitment_followups: int = 0
 var _recruit_partner_overlaps: int = 0
 var _foragers_settled: int = 0
@@ -152,6 +153,7 @@ func start_session() -> void:
 	_recruitment_matches = 0
 	_scouting_settled = 0
 	_orientation_flights = 0
+	_forager_returns_triggered = 0
 	_recruitment_followups = 0
 	_recruit_partner_overlaps = 0
 	_foragers_settled = 0
@@ -483,6 +485,7 @@ func log_forager_return(bee: Node2D, phase: String, required_energy: float) -> v
 		"bee_id": bee.bee_id, "phase": phase, "reason": bee.emergency_return_reason,
 		"energy": bee.energy, "required_energy": required_energy,
 		"load": bee.current_load, "distance_home": bee.position.distance_to(bee.hive.position)})
+	_forager_returns_triggered += 1
 
 
 func log_flight_start_resolved(bee: Node2D, source: String, requested: Vector2, resolved: Dictionary) -> void:
@@ -667,6 +670,8 @@ func event_count(type: String, subtype: String = "") -> int:
 			return int(_crab_spider_events.get(subtype, 0))
 		"orientation_flight":
 			return _orientation_flights
+		"forager_return":
+			return _forager_returns_triggered
 		"forager_settled":
 			return _foragers_settled
 		_:
