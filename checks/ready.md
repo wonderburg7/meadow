@@ -69,17 +69,29 @@ its check. Move a confirmed or superseded entry to
       than failing, and 1.13's Gallerin copy withholds "pollen makes new
       workers" while 1.14's reveals it. See `plans/now/challenge-1.md`
       Slices 4-5.
-- [ ] **Not confirmed, found broken 31 Aug (second pass):** nothing ever
-      stops the queen's automatic foraging once a stage's target amount is
-      reached -- she keeps going toward the cell's real 200-unit capacity,
-      well past the 75-unit pollen target. Assigning Forager/pollen also
-      did not visibly start automatic pollen foraging in this run; two
-      competing explanations traced in code, not yet told apart live.
-      "Building the third cell reveals Laying" is most likely the correct
-      1.14->1.15 transition, not a new bug -- but may be the already-known,
-      unfixed 9d (current-role marker) instead; needs Dave to confirm which
-      UI element he saw. See `plans/now/challenge-1.md` Slice 10, sections
-      10c-10e.
+- [ ] **Fix applied 1 Sep (10c), not yet confirmed live:** nothing ever
+      stopped the queen's automatic pollen foraging once a stage's target
+      amount was reached -- she kept going toward the cell's real 200-unit
+      capacity, well past the 75-unit pollen target. Stage 1.13 now runs
+      the same `"freeze_bee:queen"` on_exit effect 1.11 already ships.
+      Confirm at 1.13: let the queen auto-forage pollen, the stage should
+      advance right at 75 (not before), and she should be idle immediately
+      after -- not still flying to a flower or continuing to collect. See
+      `plans/now/challenge-1.md` Slice 10, section 10c.
+- [ ] **Not yet fixed, needs a live-reproduction step (10d):** assigning
+      Forager/pollen did not visibly start automatic pollen foraging in one
+      31 Aug run; two competing explanations traced in code, not yet told
+      apart live -- watch whether the "Doing" (nectar/pollen) row even
+      renders for the queen at that moment. See `plans/now/challenge-1.md`
+      Slice 10, section 10d.
+- [ ] **Needs Dave's word, not a bug fix (10e):** "building the third cell
+      reveals Laying" is most likely the correct 1.14->1.15 transition, not
+      a new bug -- but may be the already-known, unfixed 9d (current-role
+      marker) instead. Confirm which UI element was seen: "Laying" as a
+      *new choice* in "Change to..." right after the third cell (expected)
+      versus "* Laying" as the *current-role marker* visible before 1.15
+      (9d, already tracked separately). See `plans/now/challenge-1.md`
+      Slice 10, section 10e.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
@@ -92,15 +104,32 @@ its check. Move a confirmed or superseded entry to
       movement/collection/deposit never clears a manual stage, and the
       queen never gets auto-assigned a role she wasn't manually given. See
       `plans/now/challenge-1.md` Slice 3.
-- [ ] **Not confirmed, found broken 31 Aug (second pass):** right-clicking
-      a flower during these stages permanently makes the queen a real
-      Forager (she reads "Forager -- nectar" with no role ever manually
-      assigned) and she keeps auto-foraging after every deposit from then
-      on. Diagnosed as `Bee.command_collect_from()` calling
+- [ ] **Fix applied 1 Sep (10a/10g), not yet confirmed live:**
+      right-clicking a flower during these stages used to permanently make
+      the queen a real Forager (she read "Forager -- nectar" with no role
+      ever manually assigned) and kept auto-foraging after every deposit
+      from then on -- `Bee.command_collect_from()` calling
       `set_role(Role.FORAGER)` unconditionally, with no Challenge-aware
-      lock -- a separate, more direct cause than Slice 9a's own
-      `role_restricted_to` finding, and not fixed by 9a alone. See
-      `plans/now/challenge-1.md` Slice 10, sections 10a-10b.
+      lock. `Bee.role_change_locked` now suppresses the promotion during
+      1.6-1.10 and the flower-occupied guard runs before any mutation.
+      Confirm: right-click two flowers in turn, collect from each, and the
+      Job column should keep reading "Laying" throughout -- no "Forager"
+      anywhere, and no automatic foraging resumes after the deposit at
+      1.10. See `plans/now/challenge-1.md` Slice 10, sections 10a/10g.
+- [ ] **Fix applied 1 Sep (10f), not yet confirmed live:** 1.8/1.9 used to
+      clear on a *rejected* flower as readily as a collected one, since
+      both goals counted `Bee.flower_cooldowns.size()`, which also grew on
+      a rejection. They now read a dedicated
+      `ChallengeRunner._c1_queen_collections` counter, incremented only
+      from a real completed collection. Confirm at 1.8: right-click a
+      visibly near-empty/depleted flower twice and the stage should **not**
+      clear; then collect from one real flower and it should. See
+      `plans/now/challenge-1.md` Slice 10, section 10f.
+- [ ] **No code needed (10b):** once the above two fixes land, confirm
+      live that the backup-role path Slice 9a fixed also stays closed --
+      i.e. the queen never shows "Forager" anywhere during 1.6-1.10 by any
+      route, not just via the manual flower-click path above. See
+      `plans/now/challenge-1.md` Slice 10, section 10b.
 
 ### Safe forager return reserve (recommendation Slice 4)
 - [ ] Foragers now turn for home based on a calculated return-energy

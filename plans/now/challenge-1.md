@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 9 is now code-fixed (merged from `codex/challenge-1-slice-9` 1 Sep 2026, `tools/verify.ps1` green) -- re-run Slice 7's acceptance-playthrough checklist to confirm it (`checks/ready.md`), then implement Slice 10 (below, 10a/10c/10f first -- all three break the Bundle D/E teaching sequence outright) | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 10a/10c/10f/10g are code-fixed (`codex/challenge-1-slice-10`, `tools/verify.ps1` green) -- re-run Bundle D/E's live checks to confirm (`checks/ready.md`), then resolve 10d/10e (each needs one live-reproduction step or Dave's word before it's scoped as code) and re-run Slice 7's full acceptance-playthrough checklist, blocked until then | Dependency: none | Verified: 2026-09-01
 
 Slice 7's resumed acceptance pass (30 Aug 2026) found nine further items in
 "code-complete" Slices 1-6/8. Slices 1-2's own acceptance checks (Poppy
@@ -1085,12 +1085,11 @@ genuine missing behaviour Slices 4b/5b's acceptance text assumed would just
 happen; one is unconfirmed and needs a live pick between two candidates.
 Traced against live source, not guessed, same discipline as Slice 9.
 
-**Ready to hand off as code changes: 10a, 10c, 10f, 10g.** All four
-re-confirmed against current source after Slice 9's 1 Sep merge (line
-numbers below are current, not the 31 Aug ones); 10c turned out simpler
-than first scoped -- see its section. **No code needed: 10b** -- Slice 9a's
-landed fix already satisfies it; close it with one live re-check once
-10a/10g ship, not a new patch. **Not ready to hand off: 10d, 10e** -- both
+**Code-complete, `tools/verify.ps1` green: 10a, 10c, 10f, 10g** (merged from
+`codex/challenge-1-slice-10` -- see each section for what changed; awaiting
+Dave's live confirmation via `checks/ready.md`'s Bundle D/E entries). **No
+code needed: 10b** -- Slice 9a's landed fix already satisfies it; close it
+with the same live re-check. **Not ready to hand off: 10d, 10e** -- both
 still need a live-reproduction step or a word from Dave before they are
 code changes; an implementer should not scope either from this file alone.
 
