@@ -52,4 +52,3 @@ the end-of-slice report states what was merged and what is next.
 | Branch (worktree path) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/x1` (`codex/x1`) | Codex | X1: forager-return diagnostic counter in diagnostic_log.gd, surfaced in foraging_panel.gd. | Codex | in progress | none | `plans/active/foraging-evidence.md` / Slice 3 |
-| `.worktrees/c2` (`claude/c2`) | Claude | C2: one throttle at the warning-banner channel (hud.gd), copy ownership for the two simulation-side warnings moves to problem_messages.gd. | Claude | in progress | none | `plans/now/ui.md` / UI-Q-1 + UI-Q-2 |
