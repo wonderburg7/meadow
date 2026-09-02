@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Branch (worktree path) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `claude/c1-11` (`.worktrees/c1-11`) | Claude | C1-11: three unguarded autonomous transitions in Challenge 1's manual-forage stages | Claude | in progress | — | `plans/now/challenge-1.md` Slice 11 |
