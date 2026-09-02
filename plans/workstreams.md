@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Branch (worktree path) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `claude/c1-12` (`.worktrees/c1-12`) | Claude | C1-12: one authoritative `player_driven` flag, one autonomous-transition choke point, and a source check that keeps it true | Claude | in progress | — | `plans/now/challenge-1.md` Slice 12 |
