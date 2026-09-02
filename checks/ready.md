@@ -49,12 +49,24 @@ checks here.
       See `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A2.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
-**Slice 11 landed 2 Sep 2026; this entry is now ready to re-run.** Dave's
-2 Sep run found the queen still foraging on her own through these stages --
-she flew to the next flower by herself after working one dry, and walked
-back out to forage after the 1.10 deposit. All three unguarded transitions
-are now guarded on `manual_deposit_pending` (`plans/now/challenge-1.md`
-Slice 11).
+**Slices 11 and 12 landed 2-3 Sep 2026; this entry is ready to re-run.**
+Dave's 2 Sep run found the queen still foraging on her own through these
+stages -- she flew to the next flower by herself after working one dry, and
+walked back out to forage after the 1.10 deposit. Slice 11 guarded those
+three transitions; Slice 12 then replaced `manual_deposit_pending` with one
+`player_driven` flag and routed all thirteen of the file's autonomous
+transitions through `bee_foraging.gd::autonomous_state()`
+(`plans/now/challenge-1.md` Slices 11 and 12).
+
+- [ ] **Slice 12 acceptance (a refactor, so this is the regression check):**
+      re-run the Slice 11 acceptance box below and confirm 1.6-1.10 behave
+      exactly as Slice 11 left them -- no change is the passing result. Two
+      places Slice 12 newly guards, worth a look while you are there: if it
+      rains during 1.6-1.10 the queen must stay put rather than flying home
+      or sheltering, and if a flower she is working disappears she must stay
+      where she is rather than seeking another. Outside a Challenge nothing
+      should differ at all: check a Scenario forager still forages, returns,
+      deposits and leaves the hive on her own.
 
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
       the marked doorway), tour the three marked meadow points, gather

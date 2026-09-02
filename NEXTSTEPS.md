@@ -2,10 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 2 Sep 2026 after C1-11 landed.
-Dave's 2 Sep hands-on batch confirmed fifteen checks and produced eight
-implementable findings; C1-11 is merged, C1-12 has taken its place at the
-head of the Claude lane, and four more ready slices are waiting below.
+Five ready slices in two lanes, rewritten 3 Sep 2026 after C1-12 landed.
+C1-12 named Challenge 1's "the player drives this bee" rule once and made it
+enforceable, so the Claude lane now leads with UI-R-1 and C1-13 has been
+promoted from the ready list to fill the gap.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,26 +21,21 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C1-12 -- One authoritative "player drives this bee" flag, and
-   a check that keeps it true.**
-   - Plan: `plans/now/challenge-1.md` -- Slice 12.
-   - Does: C1-11 was the sixth round of the same bug -- an autonomous state
-     transition nobody remembered to guard. Names the rule once as
-     `player_driven` on `bee.gd`, set only by `challenge_runner._enter_stage`
-     from a new stage key, routes every autonomous transition in
-     `bee_foraging.gd` through one `autonomous_state()` helper, and adds a
-     `source_checks.py` rule so the seventh round fails the build instead of
-     being found by playing. Replaces `manual_deposit_pending`; deliberately
-     leaves the four other lock fields alone.
-   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`,
-     `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
-     `scripts/input_selection.gd`, `tools/source_checks.py`.
-   - Check: `tools/verify.ps1`, including the new source check with a
-     deliberate break and repair. One hands-on check to file: re-run Bundle
-     D's Slice 11 acceptance and confirm the refactor kept it.
-   - Why first: it is the only item that stops a whole class of bug
-     recurring, and C1-11 just paid for the sixth instance of it.
-   - Next after: C1-13.
+1. **[Claude] UI-R-1 -- The command tray sits off-centre, overhangs the
+   screen and covers Dr Gallerin's bubble.**
+   - Plan: `plans/now/ui.md` -- UI-R-1.
+   - Does: the tray is anchored `PRESET_CENTER_BOTTOM`, i.e. centred on the
+     viewport, while its two reserves are unequal (390 left, 544 right). The
+     plan works the arithmetic: it lands 77px right of the band's true
+     centre, and the `0.924` fudge factor only claws back half of that.
+     Replaces the factor with an explicit left edge and a named side gap in
+     `ui_layout.gd`, and anchors the tray to it.
+   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: fully on screen
+     at 1920/1280/800, one gap from the summary panel, never inside
+     Gallerin's reserve, and UI-P-8's wrap behaviour intact.
+   - Why first: it was next in this lane, and it shares no file with X3.
+   - Next after: HC-8.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -57,20 +52,18 @@ what to do -- this file already decided.
      shares no file with anything in the Claude lane.
    - Next after: UI-R-2.
 
-3. **[Claude] UI-R-1 -- The command tray sits off-centre, overhangs the
-   screen and covers Dr Gallerin's bubble.**
-   - Plan: `plans/now/ui.md` -- UI-R-1.
-   - Does: the tray is anchored `PRESET_CENTER_BOTTOM`, i.e. centred on the
-     viewport, while its two reserves are unequal (390 left, 544 right). The
-     plan works the arithmetic: it lands 77px right of the band's true
-     centre, and the `0.924` fudge factor only claws back half of that.
-     Replaces the factor with an explicit left edge and a named side gap in
-     `ui_layout.gd`, and anchors the tray to it.
-   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: fully on screen
-     at 1920/1280/800, one gap from the summary panel, never inside
-     Gallerin's reserve, and UI-P-8's wrap behaviour intact.
-   - Next after: HC-8.
+3. **[Claude] HC-8 -- Cell highlight borders do not follow the cell
+   sprite's silhouette.**
+   - Plan: `plans/now/hive-comb.md` -- Slice 8.
+   - Does: `hive_cell.gd` builds five outlines and only `selection_ring`
+     knows about the cup sprite's raised back wall; the base outline, the
+     designation ring and the nursery zone glow/halo still trace the flat
+     hex and cut through it. Routes all five through one helper that makes
+     the silhouette decision once.
+   - Files: `scripts/hive_cell.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
+     follow the cup with Cell art on, and revert instantly when it is off.
+   - Next after: C1-13.
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -83,28 +76,32 @@ what to do -- this file already decided.
      unchanged.
    - Next after: UI-R-3.
 
-5. **[Claude] HC-8 -- Cell highlight borders do not follow the cell
-   sprite's silhouette.**
-   - Plan: `plans/now/hive-comb.md` -- Slice 8.
-   - Does: `hive_cell.gd` builds five outlines and only `selection_ring`
-     knows about the cup sprite's raised back wall; the base outline, the
-     designation ring and the nursery zone glow/halo still trace the flat
-     hex and cut through it. Routes all five through one helper that makes
-     the silhouette decision once.
-   - Files: `scripts/hive_cell.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
-     follow the cup with Cell art on, and revert instantly when it is off.
-   - Next after: this lane then pulls from `plans/now/challenge-1.md`
-     (C1-13), `plans/active/foraging-evidence.md` (Slice 4) or
-     `plans/now/settings-persistence.md` (Slice 1) -- all three are ready.
+5. **[Claude] C1-13 -- The queen's "Now:" line says things Challenge 1 has
+   not taught.**
+   - Plan: `plans/now/challenge-1.md` -- Slice 13.
+   - Does: `bee.gd::task_description()` and `idle_reason()` are one large
+     `match state:` covering every state in the game -- scouting bouts,
+     entrance mentoring, royal jelly, honey fanning -- so a Challenge-1
+     player is shown vocabulary for mechanics the Challenge has deliberately
+     not reached. Adds `challenge_vocabulary_limited()` and falls back to one
+     neutral line outside the permitted set; also suppresses
+     `_idle_backup_note()` while `role_restricted_to` is non-empty.
+   - Files: `scripts/bee.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: read the "Now:"
+     line at every stage to 1.14 with the queen selected, and confirm a
+     Scenario scout still reads "scouting: bout 1 of 3...".
+   - Why here: promoted from the ready list when C1-12 landed; it is the
+     last Challenge 1 code slice before Slice 7's acceptance pass, which is
+     Dave's to run.
+   - Next after: this lane then pulls from
+     `plans/active/foraging-evidence.md` (Slice 4) or
+     `plans/now/settings-persistence.md` (Slice 1) -- both are ready.
 
 ## Ready, not yet in the queue
 
 These pass the admission test and are only out because the queue holds five.
 Promote from here when a lane empties; no extra decision is needed.
 
-- **C1-13** (`plans/now/challenge-1.md` Slice 13) -- the queen's "Now:" line
-  names mechanics Challenge 1 has not taught yet.
 - **FE-4** (`plans/active/foraging-evidence.md` Slice 4) -- a settings
   toggle that rings the two bees in a recruitment dance, so a match can
   actually be seen happening. Follows `search_ring`'s existing pattern.
@@ -121,9 +118,10 @@ Each of these needs something from Dave before code can be written. They are
 listed so they are not lost, not so they are picked up.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- an acceptance
-  playthrough. C1-11 removed what stopped the 2 Sep attempt at stage 1.10,
-  so this now needs only Dave's run: `checks/ready.md` Bundles D and E are
-  the two entries to work through.
+  playthrough. C1-11 removed what stopped the 2 Sep attempt at stage 1.10
+  and C1-12 made that class of bug fail the build instead, so this now needs
+  only Dave's run: `checks/ready.md` Bundles D and E are the two entries to
+  work through. C1-13 is the one code slice still ahead of it.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace has found the mechanism (every idle Comb Worker piles onto
   one unfinished site), but capping builders per site changes build

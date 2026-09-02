@@ -242,6 +242,51 @@ def check_gameconfig_writes(name, code, problems):
                 % (name, i, line.strip()[:80])
             )
 
+# Challenge 1's manual-forage stages hand the player every move, collection
+# and deposit the queen makes. Six separate slices (9a, 10a, 10b, 10f, 10g
+# and 11) were each the same bug: one more autonomous transition in
+# bee_foraging.gd that nobody remembered to guard, found by playing the
+# Challenge until it went wrong rather than by any check. Slice 12 named the
+# rule once as bee.gd::player_driven and routed every transition through
+# bee_foraging.gd::autonomous_state(); this is what stops a seventh round.
+#
+# A new transition into one of these three states has to say which kind it
+# is: wrap it in autonomous_state() if the bee decided, or mark the line
+# `# player-command` if a command_* call asked for it. Silently defaulting
+# to autonomous is the mistake, so it is the thing that fails the build.
+AUTONOMOUS_TRANSITION_FILE = "bee_foraging.gd"
+AUTONOMOUS_GUARDED_STATES = ("SEEK_FLOWER", "TO_HIVE", "IN_HIVE_TO_EXIT")
+AUTONOMOUS_CHOKE_POINT = "autonomous_state"
+BARE_STATE_ASSIGN_RE = re.compile(
+    r"\bbee\.state\s*=\s*(?!.*\b%s\b).*?\bState\.(%s)\b"
+    % (AUTONOMOUS_CHOKE_POINT, "|".join(AUTONOMOUS_GUARDED_STATES))
+)
+
+
+def check_autonomous_transitions(name, lines, problems):
+    """Every transition to a foraging state in bee_foraging.gd must go
+    through autonomous_state(), or be marked as a player command.
+
+    Takes the raw lines rather than the comment-stripped code, because the
+    `# player-command` marker lives in the trailing comment."""
+    if name != AUTONOMOUS_TRANSITION_FILE:
+        return
+    inside_choke_point = False
+    for i, line in enumerate(lines, 1):
+        if line.startswith(("func ", "static func ")):
+            inside_choke_point = "func %s(" % AUTONOMOUS_CHOKE_POINT in line
+        if inside_choke_point:
+            continue
+        if line.rstrip().endswith("# player-command"):
+            continue
+        if BARE_STATE_ASSIGN_RE.search(strip_code(line)):
+            problems.append(
+                "%s:%d  unguarded autonomous transition -- wrap it in "
+                "%s(bee, ...) so a player-driven bee stays put, or mark the "
+                "line `# player-command`: %s"
+                % (name, i, AUTONOMOUS_CHOKE_POINT, line.strip()[:80])
+            )
+
 
 def check_catalogue_alignment(problems):
     """roles.gd's role ids must match bee_enums.gd's Role enum order
@@ -426,6 +471,7 @@ def main():
         check_declarations(name, code, problems)
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
+        check_autonomous_transitions(name, lines, problems)
         funcs, _members = collect_names(code, source)
         check_calls(name, code, funcs, problems)
 

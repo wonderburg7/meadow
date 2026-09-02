@@ -20,6 +20,25 @@ const SCOUT_BOUTS := 3
 ## that out enough to tell a real effect from trip-to-trip variance.
 const RECRUIT_FOLLOWUP_TRIPS := 5
 
+## The single choke point for every autonomous state change in this file.
+##
+## A bee whose `player_driven` flag is set makes no state transition of her
+## own: through Challenge 1's manual-forage stages the player issues every
+## move, collection and deposit, and a routine that quietly sent her on to
+## the next flower or home to the hive would teach the opposite of the
+## lesson. Six rounds of that bug (Slices 9a, 10a, 10b, 10f, 10g and 11)
+## were each one more unguarded transition, found by playing rather than by
+## testing -- so the rule is named once, here, instead of being remembered
+## at each site.
+##
+## Wrap every transition this file makes on the bee's own initiative. A
+## transition a `command_*` call asked for is not one of those: it assigns
+## `bee.state` directly and marks the line `# player-command`. That
+## distinction is the whole point, and tests/source_checks.py enforces it.
+static func autonomous_state(bee: Node2D, next: int) -> int:
+	return State.IDLING if bee.player_driven else next
+
+
 static func max_capacity(bee: Node2D) -> float:
 	return bee.nectar_stomach_capacity if bee.resource_type == "nectar" else bee.pollen_stomach_capacity
 
@@ -77,7 +96,7 @@ static func seek_flower(bee: Node2D) -> void:
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
 	if BeeStatus.grounded(bee):
-		bee.state = State.TO_HIVE
+		bee.state = autonomous_state(bee, State.TO_HIVE)
 		return
 
 	# A run of thin or rejected flowers means whatever's merely nearby has
@@ -129,7 +148,7 @@ static func _start_searching(bee: Node2D) -> void:
 ## matching seek_flower's pre-Slice-5 genuinely-empty behaviour exactly.
 static func search_for_flower(bee: Node2D, delta: float) -> void:
 	if BeeStatus.grounded(bee):
-		bee.state = State.TO_HIVE
+		bee.state = autonomous_state(bee, State.TO_HIVE)
 		return
 
 	var best := _perceive_flower(bee)
@@ -155,7 +174,7 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 		if best != null:
 			_commit_to_flower(bee, best)
 		else:
-			bee.state = State.TO_HIVE
+			bee.state = autonomous_state(bee, State.TO_HIVE)
 		return
 
 	BeeMovement.move_towards(bee, bee.search_waypoint, delta)
@@ -432,7 +451,7 @@ static func start_inspecting(bee: Node2D) -> void:
 static func inspect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
+		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 	bee.timer -= delta
 	if bee.timer > 0.0:
@@ -463,7 +482,7 @@ static func needs_a_drink(bee: Node2D) -> bool:
 static func drink_at_flower(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
+		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 
 	var room: float = GameConfig.energy_capacity - bee.energy
@@ -495,7 +514,7 @@ static func nectar_strength(_bee: Node2D) -> float:
 ## seconds as the exit and the rain check argued with each other.
 static func shelter(bee: Node2D, _delta: float) -> void:
 	if not BeeStatus.grounded(bee):
-		bee.state = State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER
+		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER)
 
 
 static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
@@ -526,7 +545,7 @@ static func reject_flower(bee: Node2D) -> void:
 			bee.species_confidence[species] = max(0.0, float(bee.species_confidence.get(species, 0.0)) - GameConfig.adaptive_constancy_decay)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
-	bee.state = State.SEEK_FLOWER
+	bee.state = autonomous_state(bee, State.SEEK_FLOWER)
 
 
 static func start_collecting(bee: Node2D) -> void:
@@ -614,7 +633,7 @@ static func _handling_experience_scale(bee: Node2D, species: String) -> float:
 static func collect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER
+		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 
 	if bee.timer > 0.0:
@@ -626,10 +645,10 @@ static func collect(bee: Node2D, delta: float) -> void:
 	# than mixing the two in its stomach.
 	if bee.current_load > 0.0 and bee.current_load_type != "" and bee.current_load_type != bee.resource_type:
 		finish_collecting(bee)
-		# Challenge 1's manual deposit lesson owns the journey home too.
-		# A focus change must not bypass that rule and fly a loaded queen
-		# home before the player has issued the return command.
-		bee.state = State.IDLING if bee.manual_deposit_pending else State.TO_HIVE
+		# The journey home is a transition of the bee's own, so a focus
+		# change cannot fly a player-driven queen home before the player has
+		# issued the return command.
+		bee.state = autonomous_state(bee, State.TO_HIVE)
 		return
 
 	var space_left: float = max_capacity(bee) - bee.current_load
@@ -693,16 +712,12 @@ static func finish_collecting(bee: Node2D) -> void:
 	if bee.flower_switch_locked:
 		bee.state = State.IDLING
 		return
-	# Manual deposit stages require an explicit return command. Stop at the
-	# flower whatever the crop holds, rather than automatically starting the
-	# trip home or setting off for the next flower; command_return_only()
-	# resumes it when the player asks. The load does not matter: a flower run
-	# dry before the crop filled used to fall through to SEEK_FLOWER, which is
-	# the queen foraging on her own through stages 1.6-1.10.
-	if bee.manual_deposit_pending:
-		bee.state = State.IDLING
-	else:
-		bee.state = State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER
+	# Both arms are the bee's own decision, so a player-driven queen stops at
+	# the flower whatever the crop holds and waits for command_return_only().
+	# The load does not matter: a flower run dry before the crop filled used
+	# to fall through to SEEK_FLOWER, which is the queen foraging on her own
+	# through stages 1.6-1.10.
+	bee.state = autonomous_state(bee, State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER)
 
 
 
@@ -722,13 +737,12 @@ static func enter_hive(bee: Node2D) -> void:
 	bee.target_cell = null
 	if bee.resume_pending_zone_command():
 		return
-	if bee.manual_deposit_pending:
-		bee.state = State.IDLING
-		return
 	# A bee that came home because its job is now indoors (see set_role)
 	# starts that job at the door rather than running the forager's
-	# deposit-and-leave sequence.
-	bee.state = bee._default_state_for_role() if BeeStatus.works_indoors(bee) else State.IN_HIVE_TO_CELL
+	# deposit-and-leave sequence. Either branch is the bee choosing for
+	# herself, so a player-driven queen waits at the door instead, and the
+	# player picks the receiving cell.
+	bee.state = autonomous_state(bee, bee._default_state_for_role() if BeeStatus.works_indoors(bee) else State.IN_HIVE_TO_CELL)
 
 
 ## Walks to one of the six wall positions on `cell`, claiming it first,
@@ -784,7 +798,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 			_score_trip(bee)
 			if bee._apply_pending_role():
 				return
-		bee.state = State.IN_HIVE_TO_EXIT
+		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
 		return
 
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
@@ -850,10 +864,9 @@ static func finish_depositing(bee: Node2D) -> void:
 	# this is the "finish depositing first" case.
 	if bee._apply_pending_role():
 		return
-	# The manual deposit lesson owns what happens after the delivery too:
-	# leaving the hive and resuming foraging is the player's next command to
-	# give, not something the forager routine does for her.
-	bee.state = State.IDLING if bee.manual_deposit_pending else State.IN_HIVE_TO_EXIT
+	# Leaving the hive after a delivery is the forager routine's own move, so
+	# for a player-driven queen it is the player's next command to give.
+	bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
 
 
 ## The trip just finished (whether or not this bee is scouting): work
@@ -1305,4 +1318,4 @@ static func deposit_everything_remotely(bee: Node2D) -> void:
 	bee.current_load = 0.0
 	bee.current_load_type = ""
 	bee.energy += bee.hive.take_energy(GameConfig.energy_capacity - bee.energy)
-	bee.state = State.SEEK_FLOWER
+	bee.state = autonomous_state(bee, State.SEEK_FLOWER)
