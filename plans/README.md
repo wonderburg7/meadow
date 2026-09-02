@@ -70,10 +70,11 @@ the archived plan is never reopened or extended.
 
 | If the queue names | Read |
 | --- | --- |
-| C2 (UI-Q), UI-P, UI-D | `plans/now/ui.md` |
-| X1, X2 (foraging evidence) | `plans/active/foraging-evidence.md` |
-| Challenge 1 acceptance (Slice 7) | `plans/now/challenge-1.md` |
-| Comb autobuild order / cell feedback | `plans/now/hive-comb.md` |
+| UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
+| Foraging evidence, recruitment visibility | `plans/active/foraging-evidence.md` |
+| Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
+| Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
+| Settings surviving a run change | `plans/now/settings-persistence.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 | Provenance for a shipped slice | `plans/archive/` (search only) |
@@ -93,9 +94,18 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    check could not be answered at all without a counter; X2 reads the same
    diagnostic surface. Evidence before threshold changes, every time.
 3. Diagnose UI-D and UI-P-5 from an observed reproduction before changing
-   geometry or menu-population code; both name two plausible causes.
+   geometry or menu-population code; both name two plausible causes. UI-R-1
+   is not in that category -- its cause is arithmetic and is worked in the
+   plan.
 4. Comb auto-build (hive-comb Slice 4) is a build-throughput change, not a
    visual one. It needs Dave's call on intended behaviour before code.
 5. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not
    begin adaptations, campaign meta, or legacy-path removal first.
+6. A Challenge stage that means "the player drives this bee" says so once,
+   in the stage data, and one choke point enforces it. Do not add a sixth
+   per-symptom boolean to `bee.gd`; see `plans/now/challenge-1.md` Slice 12
+   for why that pattern kept failing.
+7. A run change resets only the `GameConfig` keys a preset or Challenge
+   actually writes, never the whole object -- see
+   `plans/now/settings-persistence.md`.

@@ -6,6 +6,61 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 2 Sep 2026 -- hands-on pass over the 31 Aug/1 Sep fixes
+
+Fifteen entries confirmed. The findings that came out of the same pass are
+slices in their owning plans, not entries here.
+
+- **Foraging window, Slice 1 (Option B) -- orientation flight vs auto
+  scouting.** Switching either of Auto scouting / Orientation flight on
+  turns the other off, both directions, and the orientation-flight counter
+  now moves while Orientation flight is the live option. Provenance:
+  `plans/archive/FORAGING_EVIDENCE_SLICE_1.md`.
+- **Hive comb Slice 6 -- above-centre-row rendering.** Cells built above
+  the comb's centre line paint correctly, cell art on and off. The
+  `HIVE_FLOOR_Z_INDEX` pin holds.
+- **Hive comb Slice 7 -- navigation cost.** A bee crossing a wide comb
+  prefers the open-floor detour, and the route is identical before and
+  after a save/reload.
+- **Hive comb Slices 1-3 -- cell art after save/load,** and the settings
+  placement (Cell art, Show cell contents text, Sprite-aligned hex grid,
+  Direction-even hex speed under Appearance). *Partial:* the ring-shape
+  clause failed -- see `plans/now/hive-comb.md` Slice 8.
+- **UI-P-6 -- settings window row/scrollbar gap.** Rows sit a small,
+  consistent gap from the scrollbar with info icons on and off.
+- **UI-P-1 -- long info-badge tooltip.** Wraps into a multi-line box
+  instead of spilling off-screen.
+- **UI-P-3 -- pre-run menu tile borders and hit testing.** Neighbouring
+  tiles read as one shared line, and a click near a touching corner still
+  selects the tile under the pointer.
+- **UI-P-7 -- Dr Gallerin's bubble.** Typeface, size, width, placement
+  left of his icon and the pointer between the two are all as intended.
+  *Partial:* the "command tray never renders underneath it" clause failed
+  -- see `plans/now/ui.md` UI-R-1.
+- **UI-P-8 -- summary panel cog.** With an identity label wrapping to two
+  or three lines the cog stays aligned with the first line. *Partial:* the
+  command-tray width/wrap clauses failed -- same UI-R-1.
+- **UI-P-4 -- pre-run left margin.** Shipped and working, but too small;
+  raising it is `plans/now/ui.md` UI-R-2, not a re-check.
+- **Challenge 2 Slice B -- opening unlocks.** The Meadow button is visible
+  from Challenge 2's opening stage and the Foraging window button stays
+  visible across every stage transition through 2.9.
+- **Challenge 2 Slice D -- death markers.** A death marker shows the same
+  green selection ring as any other selectable object, in both zones, by
+  single click and by drag-box.
+- **Save/load unavailable during Challenge 2.** Working as built, not a
+  bug: `challenge_runner.gd::start()` calls
+  `main.debug_panel.set_save_load_enabled(false)` for the length of a
+  Challenge because `SaveGame` has no Challenge stage/gate/prompt schema.
+  Recorded as a confirmed decision in `DESIGN_BACKLOG.md`.
+- **Proximity recruitment fires.** Superseded by X2's headless run (25
+  dance matches over 40 days) plus Dave's live confirmation. The remaining
+  question -- that a match cannot be *seen* -- is
+  `plans/active/foraging-evidence.md` Slice 4.
+- **Scenario pick resets debug-panel toggles (C3).** Confirmed doing
+  exactly what it was built to do. Dave has since reversed the intended
+  behaviour -- see `plans/now/settings-persistence.md`.
+
 ## 31 Aug 2026 -- second hands-on pass
 
 - **Same-flower ping-pong / thin-patch escape (foraging).** Confirmed

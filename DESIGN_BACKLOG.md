@@ -25,7 +25,9 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
   until the core summer loop has evidence enough to model either option.
 - **Save/load during an active Challenge:** keep ordinary save/load disabled.
   A Challenge-aware save schema is a separate high-risk design and migration
-  task, not an incidental UI change.
+  task, not an incidental UI change. Confirmed live on 2 Sep 2026 that both
+  controls are unavailable for the length of Challenge 2 -- that is the
+  decision working, not a bug to file.
 - **Sprites:** procedural shapes remain the rendering baseline. A sprite pass
   must preserve a simple-graphics fallback and measure performance rather than
   assuming sprites are cheaper.

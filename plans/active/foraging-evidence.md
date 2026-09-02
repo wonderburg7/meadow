@@ -1,7 +1,7 @@
 # Foraging evidence and validation -- active campaign
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 2 (proximity-recruitment evidence run), Codex lane | Dependency: none | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: Slice 4 (make a recruitment dance findable on screen), Claude lane | Dependency: none | Verified: 2026-09-02
 
 Three findings from Dave's 31 Aug hands-on pass against `checks/ready.md`'s
 Foraging window, Proximity recruitment and Safe forager return reserve
@@ -12,11 +12,16 @@ previous campaign's record is archived at
 reopened per `plans/README.md`'s own rule (this is new work, not a
 continuation of that one).
 
-Slice 1 is shipped and archived at
-`plans/archive/FORAGING_EVIDENCE_SLICE_1.md`; its hands-on confirmation is in
-`checks/ready.md`. Slice 3 is shipped (`codex/x1`, merged 2 Sep 2026); its
-hands-on confirmation is in `checks/ready.md`'s "Safe forager return reserve"
-entry. Slice 2 below is implementable now.
+Slices 1, 2 and 3 are all shipped. Slice 1 is archived at
+`plans/archive/FORAGING_EVIDENCE_SLICE_1.md` and its hands-on check was
+confirmed on 2 Sep 2026. Slice 3 shipped as `codex/x1` (merged 2 Sep 2026);
+its hands-on check is still open in `checks/ready.md`'s "Safe forager return
+reserve" entry. Slice 2 shipped as `codex/x2` (merged 2 Sep 2026) and its
+result is recorded in place below -- it needed no hands-on check.
+
+Slice 4 below came out of Dave's 2 Sep hands-on pass and is implementable
+now. Slices 2 and 3 are kept here rather than archived because Slice 4's
+acceptance reads against Slice 2's finding.
 
 ## Slice 2 -- Proximity recruitment: wiring confirmed clean in static code; needs a validated live/headless run before touching thresholds
 
@@ -129,3 +134,64 @@ rain active (`rain_flight_burn_factor` raises the burn rate the estimate
 itself already accounts for) -- conditions likely to actually separate her
 energy from the drink-at-flower safety net long enough for the reserve
 estimate to matter.
+
+## Slice 4 -- A recruitment dance is happening and cannot be found on screen
+
+**Confirmed, both ways (2 Sep 2026).** Slice 2's headless run recorded 25
+dance matches over 40 days, and Dave's live pass confirms matches are
+happening. His remaining report is the whole of this slice: *"recruitment
+matches are happening but I can't see them happening -- make a toggle
+setting so these bees are visually highlighted to make them easier to
+find."* Nothing about the mechanism needs changing.
+
+**Why it is hard to catch.** A dance is two bees, indoors, among however
+many others are milling about the comb, for the length of one timer, with
+no visual difference from any other pair standing near each other. The only
+outward sign today is the selection panel's `task_description()` text, which
+requires having already picked the right bee.
+
+**Fix -- follow `search_ring` exactly; it is the same problem solved once
+already.** `bee.gd` already carries four rings (`selection_ring`,
+`alarm_ring`, `attack_ring`, `search_ring`) at increasing radii, and
+`_update_search_ring()` shows a pulsing ring for the whole time a bee is in
+`State.SEARCHING`, skipped when off screen, driven from the per-frame
+presentation block.
+
+- a) Add a `Session` preference `show_recruitment_highlight` (default
+  `false`) -- a `Session` key, not a `GameConfig` one, because it is
+  presentation and must not change simulation. Add it to
+  `settings_catalogue.gd`'s `SESSION_KEYS` list and give it a row in the
+  **Appearance** category next to `show_forager_labels`, with a tip saying
+  it rings the two bees in a recruitment dance so they can be found in a
+  crowd, and that it costs nothing when off.
+- b) Add `dance_ring: Polygon2D` to `bee.gd`, built in the same block as the
+  other four at `Shapes.circle_points(outline_radius + 17.0)` -- outside
+  `search_ring`'s `+14.0` so the two never sit on top of each other. Give
+  the mentor and the seeker different colours so the pair reads as a pair
+  with a direction: mentor a warm yellow, seeker a cool blue, both at the
+  same 0.85 alpha the others use. `Bee.dance_role` already holds
+  `"mentor"`/`"seeker"`.
+- c) Add `_update_dance_ring()` modelled line for line on
+  `_update_search_ring()`: same off-screen early return, visible only while
+  `state == State.DANCING` **and** `Session.show_recruitment_highlight`,
+  same `SEARCH_RING_PULSE_HZ`-style pulse with its own named constant. Call
+  it from the same `Perf.begin("bee_label")` block as
+  `_update_search_ring()`.
+
+**Acceptance.** With Proximity recruitment on and the new toggle on, a
+dancing pair is findable on screen without hunting; the two bees are
+distinguishable from each other; the ring disappears the moment the dance
+ends. With the toggle off, nothing renders and no per-bee work is done
+beyond the one boolean read. Auto-recruitment's own entrance exchange
+(`AT_ENTRANCE_SEEKING`/`AT_ENTRANCE_MENTORING`) is deliberately **not**
+covered by this slice -- those bees wait at a fixed, already-obvious place.
+
+**Check:** `tools/verify.ps1`. One hands-on check to file: the acceptance
+above, replacing the archived Proximity recruitment entry's "watch for a
+forager briefly circling another one indoors" clause.
+
+**Files:** `scripts/bee.gd`, `scripts/settings_catalogue.gd`,
+`scripts/session.gd`.
+
+**Next after:** Slice 3's live confirmation of the forager-return counter,
+which is Dave's, not a queue slice.
