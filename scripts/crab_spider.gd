@@ -15,6 +15,7 @@ extends RefCounted
 
 const BeeEnums = preload("res://scripts/bee_enums.gd")
 const FlowerSpecies = preload("res://scripts/flower_species.gd")
+const ProblemMessages = preload("res://scripts/problem_messages.gd")
 ## flower.gd preloads this file, so this file must not preload flower.gd
 ## back (that would close a compile-time cycle) -- but flower_species.gd
 ## is a plain data file with no dependency on flower.gd, so preloading
@@ -119,15 +120,16 @@ static func resolve_attack(bee: Node2D) -> bool:
 	return false
 
 
-## Throttled the same way BeeSurvival._announce_death throttles epitaphs
-## -- a bad patch of near-misses shouldn't spam the corner.
+## Throttled the same way BeeSurvival._announce_death throttles epitaphs,
+## arbitrated at the channel (see UI-Q-1 in plans/now/ui.md) -- a bad patch
+## of near-misses shouldn't spam the corner.
 static func _announce_escape(bee: Node2D) -> void:
 	if bee.world == null or not is_instance_valid(bee.world):
 		return
-	if Session.sim_time - bee.world.last_crab_spider_escape_time < GameConfig.crab_spider_escape_min_gap:
-		return
-	bee.world.last_crab_spider_escape_time = Session.sim_time
-	bee.world.hud.show_warning("%s narrowly escaped a crab spider." % bee.bee_name)
+	bee.world.hud.show_warning(
+		ProblemMessages.crab_spider_escape(bee.bee_name),
+		"crab_spider_escape", GameConfig.crab_spider_escape_min_gap
+	)
 
 
 ## Whether `bee` should be held back from becoming an entrance mentor

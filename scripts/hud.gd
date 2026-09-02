@@ -415,6 +415,12 @@ var warning_timer: float = 0.0
 ## TUTORIAL_PLAN.md's "Don't include the warning messages" note. Every
 ## other caller of show_warning is unaffected outside a Challenge.
 var warnings_muted: bool = false
+## One throttle for every show_warning() producer, keyed by their `key`
+## argument, so a correctly-throttled event can't wipe another one still
+## on screen -- see UI-Q-1 in plans/now/ui.md. Empty/default key means no
+## throttling, matching the untouched call sites (transactional copy the
+## player asked for, not an ambient warning).
+var _warning_last_shown: Dictionary = {}
 
 ## The at-a-glance problem strip, as [text, severity] pairs, kept so the
 ## corner can be rebuilt without main.gd having to resend it.
@@ -1365,9 +1371,18 @@ func _build_warning_banner() -> void:
 	close_btn.pressed.connect(func(): warning_panel.visible = false)
 	row.add_child(close_btn)
 
-func show_warning(text: String) -> void:
+## `key`/`min_gap` let a producer ask the channel to drop its own repeats
+## without needing to remember a timestamp itself -- pass both, or neither
+## for copy that should never be throttled (transactional confirmations,
+## one-off notices).
+func show_warning(text: String, key: String = "", min_gap: float = 0.0) -> void:
 	if warnings_muted:
 		return
+	if key != "":
+		var last_shown: float = _warning_last_shown.get(key, -INF)
+		if Session.sim_time - last_shown < min_gap:
+			return
+		_warning_last_shown[key] = Session.sim_time
 	warning_label.text = text
 	warning_panel.visible = true
 	warning_timer = WARNING_SECONDS

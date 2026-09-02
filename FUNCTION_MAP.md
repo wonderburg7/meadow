@@ -26,7 +26,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (2,528 lines)
+## hud.gd (2,543 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -34,110 +34,110 @@ Challenge goal readout.
 ```
 125  static func hatch_options() -> Array
 170  static func mode_command(role_id: int, mode_key: String) -> String
-427  func _signal_color(severity: int) -> Color
-438  func _ready() -> void
-491  func _on_viewport_size_changed() -> void
-495  func _make_label(pos: Vector2, variation: String = "Body") -> Label
-503  func _info(text: String) -> Button
-506  func _with_info(control: Control, tip: String) -> HBoxContainer
-511  func _style_button(button: BaseButton) -> BaseButton
-539  func _build_top_right_bar() -> void
-648  func _icon_button(shape: String, label: String, min_width: float, tip: String) -> Button
-684  func _apply_interface_label_visibility() -> void
-694  func _build_goal_shelf() -> void
-761  func set_settings_button_width(width: float) -> void
-775  func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void
-790  func set_speed_display(speed_scale: float) -> void
-799  func _build_selection_panel() -> void
-879  func _build_selection_cog() -> Control
-902  func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void
-913  func _apply_selection_field_visibility() -> void
-925  func _build_command_tray() -> void
-990  func _build_tray_column(title: String) -> Array
-1010 # --- cell popup ---------------------------------------------------
-1026 func _build_cell_group(parent: VBoxContainer) -> void
-1116 func _build_cell_action_column(parent: Container, title: String) -> VBoxContainer
-1137 func _build_nursery_controls(column: VBoxContainer) -> void
-1232 func _build_closing_controls(column: VBoxContainer) -> void
-1272 func _build_empty_controls(column: VBoxContainer) -> void
-1315 func _make_hatch_menu(entry: Dictionary) -> Control
-1339 func _build_warning_banner() -> void
-1368 func show_warning(text: String) -> void
-1375 func set_warnings_muted(value: bool) -> void
-1388 func show_object_summary(kind: String, data) -> void
-1406 func _refresh_flower_summary() -> void
-1433 func _show_obstacle_summary(obstacle: Node2D) -> void
-1439 func _show_soil_summary(count: int, reachable: int) -> void
-1455 func _show_death_summary(info: Dictionary) -> void
-1477 func show_cell_popup(cell: Node2D, count: int = 1) -> void
-1496 func _refresh_cell_popup() -> void
-1598 func _apply_cell_popup_gating() -> void
-1614 func _light_current_options() -> void
-1632 func _set_lit(key: String, lit: bool) -> void
-1643 func _process(_delta: float) -> void
-1668 func _request_designation(type: String) -> void
-1673 func _request_hatch_role(role: int, focus: String, use_automine: bool) -> void
-1678 func _request_empty(method: String) -> void
-1683 func _request_priority(tier: int) -> void
-1688 func _request_close(closed: bool) -> void
-1693 func _request_fill_close() -> void
-1698 # --- discard warning ----------------------------------------------
-1704 func _build_discard_dialog() -> void
-1719 func show_discard_warning(cell: Node2D, new_type: String, existing_type: String, existing_amount: float) -> void
-1728 func _on_discard_confirmed() -> void
-1731 func _on_discard_custom_action(action: StringName) -> void
-1738 func _apply_discard() -> void
-1746 # --- readouts -----------------------------------------------------
-1751 func update_day(day: int, note: String = "") -> void
-1761 func update_storage(nectar: float, pollen: float, honey: float, jelly: float, sealed: float = 0.0) -> void
-1770 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void
-1776 func update_comb(text: String) -> void
-1780 func update_energy(mean_fraction: float) -> void
-1787 func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: float) -> void
-1798 func update_recruit_gap(text: String) -> void
-1811 func update_fps(average: int, frame_ms: float, worst_ms: float, game_speed: float) -> void
-1817 func update_signals(lines: Array) -> void
-1825 func _refresh_corner() -> void
-1907 func pinned_stats_changed() -> void
-1916 func refresh_speed_visibility() -> void
-1923 func refresh_corner() -> void
-1926 func update_selection(bees: Array) -> void
-1947 func _selection_has_command_lock(bees: Array) -> bool
-1962 func _rebuild_role_controls(bees: Array) -> void
-2007 func _build_queen_build_row(column: VBoxContainer) -> void
-2021 func _build_follow_control(bees: Array, first) -> void
-2037 func _build_favourite_row(bee) -> void
-2048 func _build_job_row(common_role: int, any_queen: bool) -> void
-2076 func _build_doing_row(common_role: int, first) -> void
-2102 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
-2117 func _build_orders_row(common_role: int, first) -> void
-2164 func _build_restock_row(first) -> void
-2192 func _build_fallback_row(common_role: int, first) -> void
-2224 func _secondary_items() -> Array
-2240 func _column_row(parent: Container) -> HFlowContainer
-2248 func _labelled_row(title: String) -> HFlowContainer
-2267 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
-2279 func _action_button(label: String, action: Callable, tip: String) -> Control
-2288 func _current_role_marker(label: String) -> Control
-2299 func _common_role(bees: Array) -> int
-2316 func _common_working_role(bees: Array) -> int
-2330 func _make_role_menu(label: String, tip: String, items: Array) -> Control
-2345 func _refresh_selection_text() -> void
-2414 func _apply_selection_tray_width() -> void
-2430 func _update_command_tray_width() -> void
-2445 func set_winter_button_visible(value: bool) -> void
-2451 func set_view_label(in_hive: bool) -> void
-2457 func set_colony_button_visible(value: bool) -> void
-2463 func set_nursery_button_visible(value: bool) -> void
-2469 func set_view_button_visible(value: bool) -> void
-2475 func set_foraging_button_visible(value: bool) -> void
-2482 func set_allowed_role_keys(keys: Array) -> void
-2492 func set_command_locked_bees(bees: Array) -> void
-2497 func set_allowed_mode_keys(keys: Array) -> void
-2505 func set_allowed_designation_keys(keys: Array) -> void
-2510 func set_hatch_lock_visible(value: bool) -> void
-2515 func set_soil_marking_visible(value: bool) -> void
-2525 func set_queen_build_button_visible(value: bool) -> void
+433  func _signal_color(severity: int) -> Color
+444  func _ready() -> void
+497  func _on_viewport_size_changed() -> void
+501  func _make_label(pos: Vector2, variation: String = "Body") -> Label
+509  func _info(text: String) -> Button
+512  func _with_info(control: Control, tip: String) -> HBoxContainer
+517  func _style_button(button: BaseButton) -> BaseButton
+545  func _build_top_right_bar() -> void
+654  func _icon_button(shape: String, label: String, min_width: float, tip: String) -> Button
+690  func _apply_interface_label_visibility() -> void
+700  func _build_goal_shelf() -> void
+767  func set_settings_button_width(width: float) -> void
+781  func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void
+796  func set_speed_display(speed_scale: float) -> void
+805  func _build_selection_panel() -> void
+885  func _build_selection_cog() -> Control
+908  func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void
+919  func _apply_selection_field_visibility() -> void
+931  func _build_command_tray() -> void
+996  func _build_tray_column(title: String) -> Array
+1016 # --- cell popup ---------------------------------------------------
+1032 func _build_cell_group(parent: VBoxContainer) -> void
+1122 func _build_cell_action_column(parent: Container, title: String) -> VBoxContainer
+1143 func _build_nursery_controls(column: VBoxContainer) -> void
+1238 func _build_closing_controls(column: VBoxContainer) -> void
+1278 func _build_empty_controls(column: VBoxContainer) -> void
+1321 func _make_hatch_menu(entry: Dictionary) -> Control
+1345 func _build_warning_banner() -> void
+1378 func show_warning(text: String, key: String = "", min_gap: float = 0.0) -> void
+1390 func set_warnings_muted(value: bool) -> void
+1403 func show_object_summary(kind: String, data) -> void
+1421 func _refresh_flower_summary() -> void
+1448 func _show_obstacle_summary(obstacle: Node2D) -> void
+1454 func _show_soil_summary(count: int, reachable: int) -> void
+1470 func _show_death_summary(info: Dictionary) -> void
+1492 func show_cell_popup(cell: Node2D, count: int = 1) -> void
+1511 func _refresh_cell_popup() -> void
+1613 func _apply_cell_popup_gating() -> void
+1629 func _light_current_options() -> void
+1647 func _set_lit(key: String, lit: bool) -> void
+1658 func _process(_delta: float) -> void
+1683 func _request_designation(type: String) -> void
+1688 func _request_hatch_role(role: int, focus: String, use_automine: bool) -> void
+1693 func _request_empty(method: String) -> void
+1698 func _request_priority(tier: int) -> void
+1703 func _request_close(closed: bool) -> void
+1708 func _request_fill_close() -> void
+1713 # --- discard warning ----------------------------------------------
+1719 func _build_discard_dialog() -> void
+1734 func show_discard_warning(cell: Node2D, new_type: String, existing_type: String, existing_amount: float) -> void
+1743 func _on_discard_confirmed() -> void
+1746 func _on_discard_custom_action(action: StringName) -> void
+1753 func _apply_discard() -> void
+1761 # --- readouts -----------------------------------------------------
+1766 func update_day(day: int, note: String = "") -> void
+1776 func update_storage(nectar: float, pollen: float, honey: float, jelly: float, sealed: float = 0.0) -> void
+1785 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void
+1791 func update_comb(text: String) -> void
+1795 func update_energy(mean_fraction: float) -> void
+1802 func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: float) -> void
+1813 func update_recruit_gap(text: String) -> void
+1826 func update_fps(average: int, frame_ms: float, worst_ms: float, game_speed: float) -> void
+1832 func update_signals(lines: Array) -> void
+1840 func _refresh_corner() -> void
+1922 func pinned_stats_changed() -> void
+1931 func refresh_speed_visibility() -> void
+1938 func refresh_corner() -> void
+1941 func update_selection(bees: Array) -> void
+1962 func _selection_has_command_lock(bees: Array) -> bool
+1977 func _rebuild_role_controls(bees: Array) -> void
+2022 func _build_queen_build_row(column: VBoxContainer) -> void
+2036 func _build_follow_control(bees: Array, first) -> void
+2052 func _build_favourite_row(bee) -> void
+2063 func _build_job_row(common_role: int, any_queen: bool) -> void
+2091 func _build_doing_row(common_role: int, first) -> void
+2117 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
+2132 func _build_orders_row(common_role: int, first) -> void
+2179 func _build_restock_row(first) -> void
+2207 func _build_fallback_row(common_role: int, first) -> void
+2239 func _secondary_items() -> Array
+2255 func _column_row(parent: Container) -> HFlowContainer
+2263 func _labelled_row(title: String) -> HFlowContainer
+2282 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
+2294 func _action_button(label: String, action: Callable, tip: String) -> Control
+2303 func _current_role_marker(label: String) -> Control
+2314 func _common_role(bees: Array) -> int
+2331 func _common_working_role(bees: Array) -> int
+2345 func _make_role_menu(label: String, tip: String, items: Array) -> Control
+2360 func _refresh_selection_text() -> void
+2429 func _apply_selection_tray_width() -> void
+2445 func _update_command_tray_width() -> void
+2460 func set_winter_button_visible(value: bool) -> void
+2466 func set_view_label(in_hive: bool) -> void
+2472 func set_colony_button_visible(value: bool) -> void
+2478 func set_nursery_button_visible(value: bool) -> void
+2484 func set_view_button_visible(value: bool) -> void
+2490 func set_foraging_button_visible(value: bool) -> void
+2497 func set_allowed_role_keys(keys: Array) -> void
+2507 func set_command_locked_bees(bees: Array) -> void
+2512 func set_allowed_mode_keys(keys: Array) -> void
+2520 func set_allowed_designation_keys(keys: Array) -> void
+2525 func set_hatch_lock_visible(value: bool) -> void
+2530 func set_soil_marking_visible(value: bool) -> void
+2540 func set_queen_build_button_visible(value: bool) -> void
 ```
 
 ## bee.gd (2,355 lines)
@@ -442,43 +442,43 @@ The comb as a whole: cells, navigation, finding a cell.
 1014 func announce() -> void
 ```
 
-## main.gd (1,203 lines)
+## main.gd (1,192 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
 ```
-335  func _ready() -> void
-589  # --- public surface other scripts call directly -------------------
-596  func is_on_screen(node: Node2D) -> bool
-599  func hive_entrance_inside() -> Vector2
-602  func entrance_wait_point(side: int) -> Vector2
-605  func move_bee_into_hive(bee: Node2D) -> void
-608  func move_bee_out_of_hive(bee: Node2D) -> void
-611  func mark_death(bee: Node2D) -> void
-619  func _on_bee_died(bee: Node2D) -> void
-623  func finish_mining(block: Node2D) -> void
-626  func save_run() -> void
-629  func begin_winter_countdown() -> void
-632  # --- per-frame ----------------------------------------------------
-642  func _process(delta: float) -> void
-724  # --- the frame rate readout ----------------------------------------
-743  func _sample_fps() -> void
-766  func _reseed_meadow(delta: float) -> void
-781  func _hatch_ready_brood() -> void
-813  func _advance_weather(delta: float) -> void
-843  func _apply_rain_overlay() -> void
-858  func _check_for_loss() -> void
-880  func _check_colony_energy(delta: float) -> void
-914  func invalidate_population() -> void
-925  func _role_counts() -> Dictionary
-943  func _update_population_readout(bees = null) -> void
-965  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-971  func _prune_selection() -> void
-984  func _on_restart_after_loss() -> void
-990  func _on_level_chosen(level: int) -> void
-1003 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1021 func _apply_scenario_boot_arg() -> void
-1136 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1176 func _is_whole_number(value: Variant) -> bool
-1190 func _end_scenario_run(outcome: String) -> void
+327  func _ready() -> void
+581  # --- public surface other scripts call directly -------------------
+588  func is_on_screen(node: Node2D) -> bool
+591  func hive_entrance_inside() -> Vector2
+594  func entrance_wait_point(side: int) -> Vector2
+597  func move_bee_into_hive(bee: Node2D) -> void
+600  func move_bee_out_of_hive(bee: Node2D) -> void
+603  func mark_death(bee: Node2D) -> void
+611  func _on_bee_died(bee: Node2D) -> void
+615  func finish_mining(block: Node2D) -> void
+618  func save_run() -> void
+621  func begin_winter_countdown() -> void
+624  # --- per-frame ----------------------------------------------------
+634  func _process(delta: float) -> void
+716  # --- the frame rate readout ----------------------------------------
+735  func _sample_fps() -> void
+758  func _reseed_meadow(delta: float) -> void
+773  func _hatch_ready_brood() -> void
+805  func _advance_weather(delta: float) -> void
+835  func _apply_rain_overlay() -> void
+850  func _check_for_loss() -> void
+872  func _check_colony_energy(delta: float) -> void
+903  func invalidate_population() -> void
+914  func _role_counts() -> Dictionary
+932  func _update_population_readout(bees = null) -> void
+954  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+960  func _prune_selection() -> void
+973  func _on_restart_after_loss() -> void
+979  func _on_level_chosen(level: int) -> void
+992  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1010 func _apply_scenario_boot_arg() -> void
+1125 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1165 func _is_whole_number(value: Variant) -> bool
+1179 func _end_scenario_run(outcome: String) -> void
 ```

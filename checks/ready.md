@@ -11,6 +11,14 @@ its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### Warning banner: one throttle at the channel (C2, UI-Q-1/UI-Q-2)
+- [ ] Two throttled events eight seconds apart (e.g. a bee death epitaph,
+      then a crab spider escape) no longer wipe each other -- both throttles
+      now live in `hud.gd::show_warning`'s one `key -> last shown` dictionary
+      instead of each producer's own `last_*` timestamp on `main.gd`.
+- [ ] A "Run saved." confirmation survives an unrelated ambient event (rain
+      starting, a low-energy warning) firing shortly after it.
+
 ### Save migrations and domain-event boundaries (efficiency Slice 5)
 - [x] Confirmed 31 Aug: the epitaph toast and death marker on death, the
       day/season boundary update, and rain start/stop plus a Challenge

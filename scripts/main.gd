@@ -235,14 +235,6 @@ var rain_seconds_left: float = 0.0
 var rain_overlay: ColorRect
 var rain_effect: Node2D
 
-## Sim time the low-energy warning was last shown, so it can't nag. -INF
-## means it hasn't been shown at all yet this run.
-var last_energy_warning: float = -INF
-## Same idea for death epitaphs (see BeeSurvival.die) -- a bad night
-## shouldn't fire a dozen toasts back to back.
-var last_epitaph_time: float = -INF
-## Same idea for crab spider escape warnings (see CrabSpider.resolve_attack).
-var last_crab_spider_escape_time: float = -INF
 var warning_check_timer: float = 5.0 + randf()
 ## The periodic sweeps below are each given a random starting phase.
 ## Every one of them walks the whole colony or the whole comb, and when
@@ -883,9 +875,6 @@ func _check_colony_energy(delta: float) -> void:
 		return
 	warning_check_timer = 5.0
 
-	if Session.sim_time - last_energy_warning < GameConfig.low_energy_gap:
-		return
-
 	var bees: Array = get_tree().get_nodes_in_group("bees")
 	if bees.size() < 3:
 		return   # too small a colony for a proportion to mean anything
@@ -898,10 +887,10 @@ func _check_colony_energy(delta: float) -> void:
 	if share < GameConfig.low_energy_warning_fraction:
 		return
 
-	last_energy_warning = Session.sim_time
 	hud.show_warning(
 		"%d of your %d bees (%d%%) are below %d%% energy. The colony is burning nectar faster than it is bringing it in — put more bees on nectar foraging, or they will start to starve."
-		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)]
+		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)],
+		"low_energy", GameConfig.low_energy_gap
 	)
 
 ## Bumped whenever the live population's role assignment changes -- birth
