@@ -49,11 +49,12 @@ checks here.
       See `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A2.
 
 ### Challenge 1 Bundle D -- meadow arrival, manual foraging (stages 1.6-1.10)
-**Superseded in part by Slice 11.** Dave's 2 Sep run found the queen still
-foraging on her own through these stages -- she flies to the next flower by
-herself after working one dry, and walks back out to forage after the 1.10
-deposit. The cause is traced (`plans/now/challenge-1.md` Slice 11, three
-unguarded transitions); re-run this entry only after Slice 11 lands.
+**Slice 11 landed 2 Sep 2026; this entry is now ready to re-run.** Dave's
+2 Sep run found the queen still foraging on her own through these stages --
+she flew to the next flower by herself after working one dry, and walked
+back out to forage after the 1.10 deposit. All three unguarded transitions
+are now guarded on `manual_deposit_pending` (`plans/now/challenge-1.md`
+Slice 11).
 
 - [ ] Play Challenge 1 through to the meadow: exit the hive (right-click
       the marked doorway), tour the three marked meadow points, gather
@@ -69,6 +70,10 @@ unguarded transitions); re-run this entry only after Slice 11 lands.
       one. At 1.10, after the manual deposit she must stay inside the hive
       doing nothing, not walk back out. Throughout 1.6-1.10 the Job column
       must keep reading "Laying" -- no "Forager" anywhere.
+- [ ] **Slice 11 hand-over, the blocker itself:** on reaching 1.11 the Job
+      column must offer "Change to..." with Forager in it. If it is empty,
+      the queen is still working as a Forager and one of the three guards
+      did not hold -- report which stage she started foraging at.
 - [ ] **Fix applied 1 Sep (10f), not yet confirmed live:** 1.8/1.9 now
       read a dedicated `ChallengeRunner._c1_queen_collections` counter
       rather than `Bee.flower_cooldowns.size()`, which also grew on a
@@ -78,10 +83,11 @@ unguarded transitions); re-run this entry only after Slice 11 lands.
       Slice 10, section 10f.
 
 ### Challenge 1 Bundle E -- automate nectar, then pollen (stages 1.11-1.14)
-**Not reachable until Challenge 1 Slice 11 lands.** Dave's 2 Sep run stopped
+**Reachable again as of Slice 11 (2 Sep 2026).** Dave's 2 Sep run stopped
 at the 1.10 -> 1.11 hand-over: the queen was already auto-foraging, so the
 Job column offered no Forager to switch her to and the run could not
-continue. Re-run this whole entry after Slice 11.
+continue. Slice 11 removed that cause, so run this whole entry after the
+Bundle D hand-over check above passes.
 
 - [ ] Play Challenge 1 from the meadow-harvest deposit onward: assign the
       queen Forager/nectar and let her fill the nectar cell (1.11 -- runs

@@ -140,7 +140,7 @@ Challenge goal readout.
 2540 func set_queen_build_button_visible(value: bool) -> void
 ```
 
-## bee.gd (2,355 lines)
+## bee.gd (2,354 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -203,39 +203,39 @@ A bee's dispatch loop, player commands, display text, vars.
 1709 func command_return_and_deposit() -> void
 1719 func command_return_only() -> void
 1725 func command_deposit_at(cell: Node2D) -> void
-1733 func command_deposit_at_after_enter(cell: Node2D) -> void
-1741 func resume_pending_zone_command() -> bool
-1760 func _clear_pending_zone_command() -> void
-1765 func set_focus(type: String) -> void
-1798 func set_secondary_role(new_role: int) -> void
-1801 func can_take_role(new_role: int) -> bool
-1811 func set_role(new_role: int) -> void
-1828 func _apply_role(new_role: int) -> void
-1861 func _release_everything() -> void
-1878 func release_flower_reference(flower: Node2D) -> void
-1884 func set_selected(value: bool) -> void
-1888 # --- display ------------------------------------------------------
-1890 func role_letter() -> String
-1908 func idle_reason() -> String
-1959 func task_description() -> String
-2104 func _idle_backup_note() -> String
-2109 func role_name_text() -> String
-2135 func nurse_mode_name() -> String
-2144 func architect_mode_name() -> String
-2150 func carrying_text() -> String
-2171 func age_days() -> float
-2179 func leave_to_found_colony() -> void
-2192 func days_remaining() -> float
-2204 func _update_label() -> void
-2224 func _update_alarm_ring() -> void
-2235 func _update_heading_marker() -> void
-2249 func _update_search_ring() -> void
-2277 func _update_wander_flight(delta: float) -> void
-2308 func _update_dance_circle(delta: float) -> void
-2322 func _terrain_speed_factor() -> float
-2331 func _is_inside_hive() -> bool
-2334 # --- getting round things in the meadow ---------------------------
-2354 func clear_navigation_state() -> void
+1732 func command_deposit_at_after_enter(cell: Node2D) -> void
+1740 func resume_pending_zone_command() -> bool
+1759 func _clear_pending_zone_command() -> void
+1764 func set_focus(type: String) -> void
+1797 func set_secondary_role(new_role: int) -> void
+1800 func can_take_role(new_role: int) -> bool
+1810 func set_role(new_role: int) -> void
+1827 func _apply_role(new_role: int) -> void
+1860 func _release_everything() -> void
+1877 func release_flower_reference(flower: Node2D) -> void
+1883 func set_selected(value: bool) -> void
+1887 # --- display ------------------------------------------------------
+1889 func role_letter() -> String
+1907 func idle_reason() -> String
+1958 func task_description() -> String
+2103 func _idle_backup_note() -> String
+2108 func role_name_text() -> String
+2134 func nurse_mode_name() -> String
+2143 func architect_mode_name() -> String
+2149 func carrying_text() -> String
+2170 func age_days() -> float
+2178 func leave_to_found_colony() -> void
+2191 func days_remaining() -> float
+2203 func _update_label() -> void
+2223 func _update_alarm_ring() -> void
+2234 func _update_heading_marker() -> void
+2248 func _update_search_ring() -> void
+2276 func _update_wander_flight(delta: float) -> void
+2307 func _update_dance_circle(delta: float) -> void
+2321 func _terrain_speed_factor() -> float
+2330 func _is_inside_hive() -> bool
+2333 # --- getting round things in the meadow ---------------------------
+2353 func clear_navigation_state() -> void
 ```
 
 ## debug_panel.gd (777 lines)

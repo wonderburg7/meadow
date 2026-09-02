@@ -694,9 +694,12 @@ static func finish_collecting(bee: Node2D) -> void:
 		bee.state = State.IDLING
 		return
 	# Manual deposit stages require an explicit return command. Stop at the
-	# flower once the crop is full rather than automatically starting the trip
-	# home; command_return_only() resumes it when the player asks.
-	if bee.manual_deposit_pending and bee.current_load >= max_capacity(bee):
+	# flower whatever the crop holds, rather than automatically starting the
+	# trip home or setting off for the next flower; command_return_only()
+	# resumes it when the player asks. The load does not matter: a flower run
+	# dry before the crop filled used to fall through to SEEK_FLOWER, which is
+	# the queen foraging on her own through stages 1.6-1.10.
+	if bee.manual_deposit_pending:
 		bee.state = State.IDLING
 	else:
 		bee.state = State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER
@@ -847,7 +850,10 @@ static func finish_depositing(bee: Node2D) -> void:
 	# this is the "finish depositing first" case.
 	if bee._apply_pending_role():
 		return
-	bee.state = State.IN_HIVE_TO_EXIT
+	# The manual deposit lesson owns what happens after the delivery too:
+	# leaving the hive and resuming foraging is the player's next command to
+	# give, not something the forager routine does for her.
+	bee.state = State.IDLING if bee.manual_deposit_pending else State.IN_HIVE_TO_EXIT
 
 
 ## The trip just finished (whether or not this bee is scouting): work
