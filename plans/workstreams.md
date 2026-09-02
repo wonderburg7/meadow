@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Branch (worktree path) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/claude-hands-on-2026-09-02` (`claude/hands-on-2026-09-02`) | Claude | Triage Dave's 2 Sep hands-on batch: confirm/close checks, write the new slices into their owning plans, refill the queue | Claude | in progress | none | `checks/ready.md`, `plans/now/*`, `plans/active/foraging-evidence.md`, `NEXTSTEPS.md` |
