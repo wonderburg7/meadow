@@ -128,11 +128,12 @@ func refresh(stats: Node) -> void:
 
 	_rebuild_species(stats.species_breakdown())
 
-	recruitment_label.text = "Recruitment matches: %d\nForagers settled: %d\nScouting settled: %d\nOrientation flights: %d" % [
+	recruitment_label.text = "Recruitment matches: %d\nForagers settled: %d\nScouting settled: %d\nOrientation flights: %d\nForager returns triggered: %d" % [
 		DiagnosticLog.event_count("recruitment_match"),
 		DiagnosticLog.event_count("forager_settled"),
 		DiagnosticLog.event_count("scouting_settled"),
 		DiagnosticLog.event_count("orientation_flight"),
+		DiagnosticLog.event_count("forager_return"),
 	]
 
 ## Rebuilt from scratch each refresh, same reasoning as colony_panel's

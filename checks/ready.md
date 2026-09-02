@@ -165,15 +165,15 @@ its check. Move a confirmed or superseded entry to
       `balance_tests.py` pass; no headless A/B against the old fixed
       threshold has run yet. See `git log` (merge commit for
       `codex/recommendation-slice-4`).
-- [ ] **Confirmed 31 Aug why this can't be watched directly:** foragers
+- [ ] **Counter added 1 Sep (X1):** foragers
       self-refuel to full at any flower with nectar (`drink_at_flower`)
       well before the calculated reserve is ever approached in an ordinary
       meadow, and the check is skipped outright while she's carrying any
       nectar. This is very likely working as designed (an emergency-only
-      path for sparse/long-range conditions), but there is currently no
-      counter for it either, so it cannot be confirmed by number over a
-      long run. See `plans/active/foraging-evidence.md` Slice 3 for the
-      proposed counter and a scenario likely to actually trigger it.
+      path for sparse/long-range conditions). In the Foraging panel, confirm
+      **Forager returns triggered** reads zero in an ordinary meadow and rises
+      during a sparse/long-range or rainy run. See
+      `plans/active/foraging-evidence.md` Slice 3.
 
 ### Nectar/pollen recharge reads as stuck (hands-on-fixes Slice C)
 - [ ] **Fix applied 31 Aug, not yet confirmed live:** three fixes, none
