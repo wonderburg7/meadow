@@ -11,6 +11,15 @@ its check. Move a confirmed or superseded entry to
 `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; blocked items belong in
 `checks/blocked.md`.
 
+### Settings window: row gap next to the scrollbar (UI-P-6)
+- [ ] With "Show info icons" on and off, open the settings window and
+      confirm every row's content sits a small, consistent (~6px) gap from
+      the scrollbar, not a larger unexplained gap from the panel's outer
+      edge. The fix (`debug_panel.gd`'s `content_margin` MarginContainer,
+      `margin_right = 6`, wrapping the settings column) shipped 31 Aug 2026
+      in the same commit as UI-P-1/3/4/7/8 but was never confirmed live or
+      recorded as shipped -- this entry is that missing confirmation.
+
 ### Warning banner: one throttle at the channel (C2, UI-Q-1/UI-Q-2)
 - [ ] Two throttled events eight seconds apart (e.g. a bee death epitaph,
       then a crab spider escape) no longer wipe each other -- both throttles

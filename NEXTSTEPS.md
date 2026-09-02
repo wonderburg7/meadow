@@ -2,15 +2,17 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Normally five ready slices in two lanes; **four right now (1 Sep 2026)** --
-C2 landed and promoted UI-P-6 to the head of the Claude lane, but no plan has
-a second ready Claude or Codex slice behind it (checked `ui.md`,
+Normally five ready slices in two lanes; **three right now (2 Sep 2026)** --
+starting UI-P-6 found it already shipped 31 Aug 2026 (in the same batch
+commit as UI-P-1/3/4/7/8, just never recorded as such), so the Claude lane
+is now empty. No plan has a ready Claude slice to fill it (checked `ui.md`,
 `hive-comb.md`, `challenge-1.md`, `foraging-evidence.md`, `progression.md`;
-everything else needs Dave's hands-on pass first). `tools/check_docs.py`
-will report the item count as an error until Dave's next hands-on pass
-unblocks a fifth slice or hands one over directly -- known, not a bug to fix.
-The lanes never touch the same file, so Claude and Codex can each take the
-top of their own lane at the same time without disrupting each other.
+everything else needs Dave's hands-on pass first), and X2/X3 are the only
+remaining ready Codex slices. `tools/check_docs.py` will report the item
+count and empty-Claude-lane as errors until Dave's next hands-on pass
+unblocks a Claude slice or hands one over directly -- known, not a bug to
+fix. The lanes never touch the same file, so Claude and Codex can each take
+the top of their own lane at the same time without disrupting each other.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -26,27 +28,11 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] UI-P-6 -- Settings window: put the gap next to the scrollbar,
-   not left over from the panel width.**
-   - Plan: `plans/now/ui.md` -- UI-P-6.
-   - Does: adds a row-level right margin (~6px) so every settings row's
-     content sits a deliberate, consistent distance from the scroll's own
-     edge with "Show info icons" both on and off, instead of inheriting
-     whatever slack `PANEL_WIDTH := 320.0` leaves when badges are hidden.
-     Does not re-tune `PANEL_WIDTH` -- the badge-visible case needs it.
-   - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: with info icons
-     on and off, every row's content sits a small consistent gap from the
-     scrollbar rather than a larger unexplained gap from the panel edge.
-   - Why now: C1 unblocked it, then C2 landed 1 Sep 2026 clear of this file.
-     `debug_panel.gd` is 777 lines of widget code rather than 1781 lines of
-     widget code wrapped around a data table, so this slice edits the rows
-     and nothing else.
-   - Next after: nothing in `plans/now/ui.md` is ready -- UI-P-5 and UI-D both
-     need Dave's live look first (see "Not in the queue"). Pull from another
-     owning plan, or ask Dave which of those his next hands-on pass unblocked.
+The Claude lane is empty -- see the note above. There is nothing to pull in
+from an owning plan today; the next Claude slice depends on Dave's next
+hands-on pass or a direct hand-over.
 
-2. **[Codex] X1 -- Forager return reserve: give it a counter so it can be
+1. **[Codex] X1 -- Forager return reserve: give it a counter so it can be
    checked at all.**
    - Plan: `plans/active/foraging-evidence.md` -- Slice 3.
    - Does: add `_forager_returns_triggered` to `diagnostic_log.gd`,
@@ -63,7 +49,7 @@ what to do -- this file already decided.
      wants the same diagnostic surface.
    - Next after: X2.
 
-3. **[Codex] X2 -- Proximity recruitment: one long evidence run before any
+2. **[Codex] X2 -- Proximity recruitment: one long evidence run before any
    threshold is touched.**
    - Plan: `plans/active/foraging-evidence.md` -- Slice 2.
    - Does: a headless run with Proximity recruitment on, reading
@@ -80,7 +66,7 @@ what to do -- this file already decided.
      surface this run reads from.
    - Next after: X3.
 
-4. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
+3. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
    - Does: raise `ui_theme.gd::_refresh_button_stylebox()`'s `"normal"` state
      from `base.lightened(0.10)` toward 0.16-0.18 and/or give it a low-alpha

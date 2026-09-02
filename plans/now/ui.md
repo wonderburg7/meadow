@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-6 (Claude lane) and UI-P-2 (Codex lane); UI-Q-1+UI-Q-2 landed 1 Sep 2026; UI-P-5 and UI-D both need a live look first | Dependency: none for UI-P-2 or UI-P-6 | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: UI-P-2 (Codex lane); Claude lane has no ready slice here -- UI-P-6 turned out to already be shipped (see below), UI-P-5 and UI-D both need a live look first; UI-Q-1+UI-Q-2 landed 1 Sep 2026 | Dependency: none for UI-P-2 | Verified: 2026-09-02
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -26,7 +26,7 @@ execution plan.
 - A visual/UI slice requires a targeted hands-on check even when static checks
   and a Godot boot pass.
 
-UI-A through UI-O and UI-P-1/3/4/7/8 are shipped and archived at
+UI-A through UI-O and UI-P-1/3/4/6/7/8 are shipped and archived at
 `plans/archive/UI_SHIPPED_2026-09-01.md`; their hands-on confirmations are in
 `checks/ready.md`. What follows is everything still open.
 
@@ -166,30 +166,16 @@ for the placeholder) and check `_detail_column`'s children/visibility at
 that exact moment before changing code — two plausible causes named above,
 pick whichever the live state actually shows.
 
-### UI-P-6 — settings window: gap between controls and the panel edge
-
-**Ask (Dave, 30 Aug):** there's currently a gap between the settings
-window's title/dropdowns/options and the panel edge, with "Show info icons"
-on and off, rather than these sitting next to the scrollbar with a small
-(~6px) gap.
-
-**Diagnosed:** `debug_panel.gd::PANEL_WIDTH := 320.0` (UI-O's fix) was sized
-to comfortably fit a row with its info badge showing, which by construction
-leaves slack when badges are off and isn't tied to the scrollbar's own
-position either way.
-
-**Fix:** rather than widen/narrow `PANEL_WIDTH` again (the badge-visible
-case already needs the current width), add row-level padding so content
-sits a fixed ~6px from the scroll's own edge regardless of `PANEL_WIDTH`:
-give the settings column (or each row) a right-side
-`theme_constant_override("margin_right", 6)` (or equivalent
-`add_theme_constant_override` on the row `HBoxContainer`s) so the visible
-gap is deliberate and next to the scrollbar, not leftover width from
-`PANEL_WIDTH`'s own sizing headroom.
-
-**Acceptance:** with "Show info icons" on and off, every row's content sits
-a small, consistent (~6px) gap from the scrollbar, not a larger unexplained
-gap from the panel's outer edge.
+**UI-P-6 (settings window row/scrollbar gap) shipped 31 Aug 2026,** in the
+same "Implement first UI-P hands-on fixes" commit as UI-P-1/3/4/7/8: a
+`MarginContainer` (`content_margin`, `margin_right = 6`) now wraps
+`debug_panel.gd`'s settings column between the `ScrollContainer` and its
+rows, so every row sits a fixed ~6px from the scrollbar regardless of
+`PANEL_WIDTH`'s own badge-visible sizing. This session found the queue
+still listing it as open work and the code already matching the fix
+verbatim (same mechanism, same comment) -- a bookkeeping gap from that
+batch commit, not a missed slice. Hands-on confirmation filed in
+`checks/ready.md`.
 
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 
