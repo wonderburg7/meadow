@@ -82,6 +82,28 @@ of these has bitten more than once:
   `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1) — worth a beat of
   suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
   restore/deserialize path resets wholesale from outside its class.
+- **A rule enforced by remembering to check a flag gets forgotten, once
+  per call site.** "During Challenge 1's manual stages the player drives
+  the queen" has been broken and re-fixed six times (9a, 10a, 10b, 10f,
+  10g, and Slice 11), always the same way: a state transition somewhere in
+  `bee_foraging.gd` that nobody thought to guard. The rule was spread over
+  five booleans on `bee.gd`, each named after the symptom that prompted it
+  (`manual_deposit_pending`, `role_change_locked`, `flower_switch_locked`
+  …), written in three places and read in nine, with nothing anywhere
+  listing the transitions that needed guarding. If a rule has to hold at
+  every one of N call sites, give it one name, one choke point, and a
+  `source_checks.py` rule that fails the build when a new call site
+  bypasses it — otherwise the only test is playing the game until it goes
+  wrong. See `plans/now/challenge-1.md` Slices 11-12.
+- **Centring a control on the viewport when its two reserves differ.** The
+  command tray reserves 390px on the left and 544px on the right, then
+  anchors `PRESET_CENTER_BOTTOM` — so it renders 77px right of the band it
+  is meant to sit in, overhanging the screen and covering Dr Gallerin. A
+  magic `* 0.924` shrink had been added at some point, which hid half the
+  error and made the remainder look like a rounding problem. If a control
+  sits between two unequal reserves, compute its left edge from the
+  reserves; never centre it on the parent and never paper over the offset
+  with a scale factor. See `plans/now/ui.md` UI-R-1.
 
 ## Environment quirk: a stale git lock
 

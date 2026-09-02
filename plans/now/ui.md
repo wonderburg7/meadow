@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-2 (Codex lane); Claude lane has no ready slice here -- UI-P-6 turned out to already be shipped (see below), UI-P-5 and UI-D both need a live look first; UI-Q-1+UI-Q-2 landed 1 Sep 2026 | Dependency: none for UI-P-2 | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: UI-R-1 (command tray sits off-centre and overlaps Gallerin), Claude lane; UI-P-2 leads the Codex lane | Dependency: none for UI-R-1, UI-R-2, UI-R-3 or UI-P-2 | Verified: 2026-09-02
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -176,6 +176,115 @@ still listing it as open work and the code already matching the fix
 verbatim (same mechanism, same comment) -- a bookkeeping gap from that
 batch commit, not a missed slice. Hands-on confirmation filed in
 `checks/ready.md`.
+
+## UI-R — from Dave's 2 Sep 2026 hands-on pass
+
+UI-P-1, P-3, P-6, P-7's bubble and P-8's cog all confirmed clean in that
+pass and are archived in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`. Three
+items did not pass.
+
+### UI-R-1 — the command tray sits off-centre, overhangs the screen, and covers Dr Gallerin's bubble
+
+**Symptom (Dave, 2 Sep):** the command panel is only partly on screen,
+shifted right rather than sitting level with the summary panel, and it
+overlaps Dr Gallerin's speech bubble. (The bubble itself is the right width
+— that half of UI-P-7 is confirmed.)
+
+**Diagnosed, arithmetic not guesswork.** The bottom row has two reserves of
+different sizes: `SELECTION_TRAY_RESERVE = 390.0` on the left and
+`gallerin_reserve_width()` on the right, which is
+`BUBBLE_WIDTH 460 + ICON_SIZE.x 60 + BUBBLE_GAP 8 + ICON_MARGIN 16 = 544`.
+`command_tray_max_width()` correctly subtracts both, then multiplies by
+`0.924`. But `hud.gd::_build_command_tray` anchors the tray with
+`PRESET_CENTER_BOTTOM`, which centres it on the **viewport**, not on the
+band left between the two reserves. The band's own centre is
+`(390 + viewport_width - 544) / 2`, i.e. `(544 - 390) / 2 = 77px` left of
+the viewport centre — so the tray is drawn 77px too far right, and the
+`0.924` shrink only claws back half of that. Worked example at 1920 wide:
+band 986, cap 911, tray spans x=504.5..1415.5, Gallerin's reserve starts at
+1376 — a 39px overlap. At 1280 wide the same sum gives a 64px overlap. The
+`0.924` factor is doing the job of a centring correction and doing it
+badly; at some widths it under-corrects (the overlap above) and at all
+widths it wastes tray space.
+
+**Fix.**
+
+- a) In `ui_layout.gd`, replace the `* 0.924` in `command_tray_max_width()`
+  with the full band minus one named breathing constant:
+  add `const COMMAND_TRAY_SIDE_GAP := 16.0` and return
+  `maxf(COMMAND_TRAY_MIN_WIDTH, viewport_width - left_reserve - right_reserve - 2.0 * COMMAND_TRAY_SIDE_GAP)`
+  where `left_reserve` is `SELECTION_TRAY_LEFT_MARGIN + reserve +
+  SELECTION_TRAY_GAP` and `right_reserve` is
+  `gallerin_reserve_width(viewport_width)`.
+- b) Add `static func command_tray_left_edge(viewport_width: float) -> float`
+  returning `left_reserve + COMMAND_TRAY_SIDE_GAP`, clamped so the tray's
+  right edge never exceeds `viewport_width - right_reserve`. Rewrite
+  `selection_tray_width()` to read this helper rather than recomputing the
+  edge from the cap, so the two can no longer disagree.
+- c) In `hud.gd`, stop anchoring the tray to the viewport centre. Use
+  `PRESET_BOTTOM_LEFT` with `grow_horizontal = GROW_DIRECTION_END`, and set
+  `offset_left = UiLayout.command_tray_left_edge(viewport_width)` in
+  `_update_command_tray_width()` alongside the existing width assignment,
+  so a resize moves it. Keep `offset_bottom = -16` — that already matches
+  the summary panel and is why their bottoms are level.
+
+**Acceptance.** At 1920, 1280 and `MIN_SUPPORTED_WIDTH` (800): the tray is
+fully on screen; its left edge sits one `SELECTION_TRAY_GAP` right of the
+summary panel; its right edge never crosses into Gallerin's reserve, with a
+bubble showing and with none. UI-P-8's own acceptance must still hold —
+narrowing the window makes the tray's rows wrap onto further lines rather
+than the tray growing into either neighbour.
+
+**Files:** `scripts/ui_layout.gd`, `scripts/hud.gd`.
+
+### UI-R-2 — pre-run menu: the left edge still needs more room
+
+**Ask (Dave, 2 Sep):** UI-P-4 shipped and the left pane no longer starts at
+pixel 0, but the buffer is too small.
+
+**Fix.** `main_menu.gd`'s `const LEFT_PANE_MARGIN := 16` is the whole
+mechanism (a `MarginContainer` with `margin_left`). Raise it to `32`.
+Change nothing else — not `HEX_SIZE`, `HEX_STEP_X`, tile centres or the
+right pane — so UI-M's hit-testing and UI-P-3's border overlap are
+untouched.
+
+**Acceptance:** the leftmost hex tile and the left-aligned text sit a
+clearly comfortable distance from the screen edge; tile spacing, borders
+and click hit-testing are visibly unchanged.
+
+**Files:** `scripts/main_menu.gd`.
+
+### UI-R-3 — no way to trigger a warning-banner case on demand
+
+**Symptom (Dave, 2 Sep):** "I don't have a way to trigger two
+warning-banner cases and verify unrelated notifications do not overwrite
+each other." The UI-Q-1/UI-Q-2 check has therefore never been runnable and
+is now in `checks/blocked.md` with this slice named as its unblocker.
+
+**Why it is a real gap, not just this one check.** The banner's throttle
+lives in `hud.gd::show_warning`'s `key -> last shown` dictionary, and the
+whole point of slice C2 was arbitration *between* producers. Any future
+change to it has the same problem: the only way to see two events collide
+is to wait for the simulation to produce a death, a spider escape and a
+low-energy warning within eight seconds of each other.
+
+**Fix.** Add a second button to `debug_panel.gd`'s existing `challenge_row`
+(the row that already holds "Advance Challenge stage", built just below the
+save/load row), labelled "Fire test warnings" and styled with the same
+`_style_button` + `UI.with_info` pattern as its neighbour. It calls
+`hud.show_warning` three times
+through a short scripted sequence: an epitaph-keyed message at t=0, a
+crab-spider-escape-keyed message at t=+8s, and a "Run saved."-style
+unkeyed confirmation at t=+10s, using the real `problem_messages.gd`
+entries and the real `GameConfig` gaps rather than literals. Drive the
+delays with one `SceneTreeTimer` chain, not a per-frame state machine.
+Keep it in the developer section so it is not reachable in ordinary play.
+
+**Acceptance:** pressing the row once shows all three messages, the first
+two do not wipe each other, and the confirmation survives the ambient
+event that follows it. `tools/verify.ps1` passes.
+
+**Files:** `scripts/debug_panel.gd`.
 
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 

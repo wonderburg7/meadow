@@ -18,6 +18,18 @@ the concise check to `checks/ready.md`; move confirmed checks to
   in a Scenario. This is the UI-D diagnosis in `plans/now/ui.md`; do not
   treat the old `stage_gate.gd` theory as established cause.
 
+## Warning banner
+
+- [ ] Two throttled events eight seconds apart (e.g. a bee death epitaph,
+  then a crab spider escape) no longer wipe each other, and a "Run saved."
+  confirmation survives an unrelated ambient event firing shortly after it.
+  Blocked 2 Sep 2026: Dave has no way to make two banner cases happen on
+  demand -- a death, a spider escape and a low-energy warning all depend on
+  the simulation obliging, and waiting for two of them within eight seconds
+  is not a check anyone can run. Unblocked by `plans/now/ui.md` UI-R-3, a
+  debug-panel row that fires named warning-banner cases directly.
+  Provenance: `plans/now/ui.md` UI-Q-1/UI-Q-2, slice C2.
+
 ## Recruitment
 
 - [ ] The recruitment competition fix (`103d716`) is deferred until the
