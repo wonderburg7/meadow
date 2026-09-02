@@ -1,10 +1,7 @@
 # Foraging evidence and validation -- active campaign
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 3 (forager-return counter) then Slice 2 (proximity-recruitment evidence run), both Codex lane, in that order | Dependency: none | Verified: 2026-09-01
-fix is code-complete (`tools/verify.ps1` green) -- confirm live
-(`checks/ready.md`), then Slice 2's validated live/headless
-proximity-recruitment run | Dependency: none | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: Slice 2 (proximity-recruitment evidence run), Codex lane | Dependency: none | Verified: 2026-09-02
 
 Three findings from Dave's 31 Aug hands-on pass against `checks/ready.md`'s
 Foraging window, Proximity recruitment and Safe forager return reserve
@@ -17,7 +14,9 @@ continuation of that one).
 
 Slice 1 is shipped and archived at
 `plans/archive/FORAGING_EVIDENCE_SLICE_1.md`; its hands-on confirmation is in
-`checks/ready.md`. Slices 2 and 3 below are both implementable now.
+`checks/ready.md`. Slice 3 is shipped (`codex/x1`, merged 2 Sep 2026); its
+hands-on confirmation is in `checks/ready.md`'s "Safe forager return reserve"
+entry. Slice 2 below is implementable now.
 
 ## Slice 2 -- Proximity recruitment: wiring confirmed clean in static code; needs a validated live/headless run before touching thresholds
 
