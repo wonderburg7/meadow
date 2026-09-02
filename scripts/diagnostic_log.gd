@@ -949,6 +949,8 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
 			"avg_rate_without_preferred_species": rate_without_preference_sum / rate_without_preference_n if rate_without_preference_n > 0 else 0.0,
 			"entrance_mentors_waiting": hive.entrance_mentors.size(),
+			"dance_eligible_mentors": hive.dance_eligible_mentors.size(),
+			"dance_eligible_seekers": hive.dance_eligible_seekers.size(),
 			"orientation_flights_total": _orientation_flights,
 			"tarsal_marks_total": _tarsal_marks,
 			"tarsal_rejections_total": _tarsal_rejections,

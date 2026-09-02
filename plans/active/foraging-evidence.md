@@ -67,6 +67,18 @@ guessing a threshold change without this read first would match
 `plans/now/challenge-1.md`'s "not a blind fix" precedent for exactly this
 kind of unconfirmed finding.
 
+**Result (2 Sep 2026, X2): confirmed operational; no threshold change.**
+`test_scenarios/proximity_recruitment_evidence_x2.json` ran for 40 days
+with `proximity_recruitment_on: true` and `auto_recruitment_on: false`
+(seed 12345, 16x time scale). Its 30-sim-second snapshots reached four
+observations where both eligibility lists were non-empty (mentor maximum 4,
+seeker maximum 6), and the final diagnostic summary records 25
+`recruitment_matches` (all `via: "dance"`), 47 partner overlaps, and 82
+recruitment follow-ups. This rules out both an empty-threshold band and a
+complete spatial/timing failure in this representative long run. Keep the
+current thresholds and radius; a later tuning decision needs a player-facing
+reason, not a wiring fix.
+
 ## Slice 3 -- Safe forager return reserve: rare by design, needs its own counter to be checkable at all
 
 **Confirmed why this is hard to observe, not a defect in the estimate
