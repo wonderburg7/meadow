@@ -2,9 +2,15 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes. The lanes never touch the same file, so Claude
-and Codex can each take the top of their own lane at the same time without
-disrupting each other.
+Normally five ready slices in two lanes; **four right now (1 Sep 2026)** --
+C2 landed and promoted UI-P-6 to the head of the Claude lane, but no plan has
+a second ready Claude or Codex slice behind it (checked `ui.md`,
+`hive-comb.md`, `challenge-1.md`, `foraging-evidence.md`, `progression.md`;
+everything else needs Dave's hands-on pass first). `tools/check_docs.py`
+will report the item count as an error until Dave's next hands-on pass
+unblocks a fifth slice or hands one over directly -- known, not a bug to fix.
+The lanes never touch the same file, so Claude and Codex can each take the
+top of their own lane at the same time without disrupting each other.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -20,25 +26,7 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C2 -- Warning banner: one throttle at the channel, one owner for
-   the copy.**
-   - Plan: `plans/now/ui.md` -- UI-Q-1 and UI-Q-2, landed together as the plan
-     itself specifies.
-   - Does: `show_warning(text, key, min_gap)` holds one `key -> last shown`
-     dictionary in `hud.gd`, replacing three copies of the same throttle in
-     three producers; and the two simulation files that write player-facing
-     copy get a named entry in a definitions file instead.
-   - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/bee_survival.gd`,
-     `scripts/crab_spider.gd`, `scripts/problem_messages.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: two throttled
-     events eight seconds apart no longer wipe each other, and a "Run saved."
-     confirmation survives an unrelated ambient event.
-   - Why now: C1 landed, so `main.gd`'s scenario hook has settled -- this
-     slice edits `main.gd`'s three `last_*` warning fields against a file
-     nothing else is about to move.
-   - Next after: UI-P-6.
-
-2. **[Claude] UI-P-6 -- Settings window: put the gap next to the scrollbar,
+1. **[Claude] UI-P-6 -- Settings window: put the gap next to the scrollbar,
    not left over from the panel width.**
    - Plan: `plans/now/ui.md` -- UI-P-6.
    - Does: adds a row-level right margin (~6px) so every settings row's
@@ -50,14 +38,15 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: with info icons
      on and off, every row's content sits a small consistent gap from the
      scrollbar rather than a larger unexplained gap from the panel edge.
-   - Why now: C1 unblocked it. `debug_panel.gd` is 777 lines of widget code
-     rather than 1781 lines of widget code wrapped around a data table, so
-     this slice edits the rows and nothing else.
+   - Why now: C1 unblocked it, then C2 landed 1 Sep 2026 clear of this file.
+     `debug_panel.gd` is 777 lines of widget code rather than 1781 lines of
+     widget code wrapped around a data table, so this slice edits the rows
+     and nothing else.
    - Next after: nothing in `plans/now/ui.md` is ready -- UI-P-5 and UI-D both
      need Dave's live look first (see "Not in the queue"). Pull from another
      owning plan, or ask Dave which of those his next hands-on pass unblocked.
 
-3. **[Codex] X1 -- Forager return reserve: give it a counter so it can be
+2. **[Codex] X1 -- Forager return reserve: give it a counter so it can be
    checked at all.**
    - Plan: `plans/active/foraging-evidence.md` -- Slice 3.
    - Does: add `_forager_returns_triggered` to `diagnostic_log.gd`,
@@ -74,7 +63,7 @@ what to do -- this file already decided.
      wants the same diagnostic surface.
    - Next after: X2.
 
-4. **[Codex] X2 -- Proximity recruitment: one long evidence run before any
+3. **[Codex] X2 -- Proximity recruitment: one long evidence run before any
    threshold is touched.**
    - Plan: `plans/active/foraging-evidence.md` -- Slice 2.
    - Does: a headless run with Proximity recruitment on, reading
@@ -91,7 +80,7 @@ what to do -- this file already decided.
      surface this run reads from.
    - Next after: X3.
 
-5. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
+4. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
    - Does: raise `ui_theme.gd::_refresh_button_stylebox()`'s `"normal"` state
      from `base.lightened(0.10)` toward 0.16-0.18 and/or give it a low-alpha

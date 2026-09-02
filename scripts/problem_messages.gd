@@ -38,6 +38,16 @@ static func no_foragers(queen: Node2D) -> String:
 		return "%s has noticed that nobody is bringing food home. She is trying not to take it personally." % queen.bee_name
 	return "No foragers — nothing is coming in"
 
+## The two warning-banner copy owners that used to live on the simulation
+## side (BeeSurvival._announce_death, CrabSpider._announce_escape) -- see
+## UI-Q-2 in plans/now/ui.md. The simulation states the fact (a bee died,
+## a bee escaped) and calls these to choose the words.
+static func epitaph(bee_name: String, death_cause: String, bee_fact: String) -> String:
+	return "%s has died of %s. %s" % [bee_name, death_cause, bee_fact]
+
+static func crab_spider_escape(bee_name: String) -> String:
+	return "%s narrowly escaped a crab spider." % bee_name
+
 static func _first_bee(bees: Array, test: Callable) -> Node2D:
 	var found: Node2D = null
 	for bee in bees:

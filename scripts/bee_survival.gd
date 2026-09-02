@@ -11,6 +11,7 @@ const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 const BeeStatus = preload("res://scripts/bee_status.gd")
+const ProblemMessages = preload("res://scripts/problem_messages.gd")
 
 static func age_and_burn(bee: Node2D, delta: float) -> void:
 	bee.age_seconds += delta
@@ -406,13 +407,14 @@ static func die(bee: Node2D, cause: String) -> void:
 
 
 ## A one-line epitaph via the same toast channel as any other warning,
-## throttled by GameConfig.epitaph_min_gap so a bad night in winter, or a
-## mass starvation event, can't fire a dozen of these back to back --
-## see BEE_INDIVIDUALITY_PLAN.md section 6. If more bees die within the
-## gap, their epitaphs are skipped rather than queued: the moment
-## matters more than completeness.
+## throttled by GameConfig.epitaph_min_gap (arbitrated at the channel, see
+## UI-Q-1 in plans/now/ui.md) so a bad night in winter, or a mass
+## starvation event, can't fire a dozen of these back to back -- see
+## BEE_INDIVIDUALITY_PLAN.md section 6. If more bees die within the gap,
+## their epitaphs are skipped rather than queued: the moment matters more
+## than completeness.
 static func _announce_death(bee: Node2D) -> void:
-	if Session.sim_time - bee.world.last_epitaph_time < GameConfig.epitaph_min_gap:
-		return
-	bee.world.last_epitaph_time = Session.sim_time
-	bee.world.hud.show_warning("%s has died of %s. %s" % [bee.bee_name, bee.death_cause, bee.bee_fact])
+	bee.world.hud.show_warning(
+		ProblemMessages.epitaph(bee.bee_name, bee.death_cause, bee.bee_fact),
+		"epitaph", GameConfig.epitaph_min_gap
+	)

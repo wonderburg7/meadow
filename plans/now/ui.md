@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-Q-1+UI-Q-2 together then UI-P-6 (Claude lane) and UI-P-2 (Codex lane); UI-P-6 unblocked 1 Sep 2026 by the settings-catalogue move; UI-P-5 and UI-D both need a live look first | Dependency: none for UI-Q, UI-P-2 or UI-P-6 | Verified: 2026-09-01
+Status: active | Owner: Dave / Claude Code | Next: UI-P-6 (Claude lane) and UI-P-2 (Codex lane); UI-Q-1+UI-Q-2 landed 1 Sep 2026; UI-P-5 and UI-D both need a live look first | Dependency: none for UI-P-2 or UI-P-6 | Verified: 2026-09-01
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -193,115 +193,23 @@ gap from the panel's outer edge.
 
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 
-**Scope:** the game has two player-attention channels that were built
-separately and have drifted apart. **Agreed as an active slice (Dave, 1 Sep
-2026): both UI-Q-1 and UI-Q-2 below.** Not yet implemented.
+**Landed 1 Sep 2026 (slice C2).** `hud.gd::show_warning(text, key, min_gap)`
+now holds one `key -> last shown` dictionary (`_warning_last_shown`); the
+three throttled producers (`main.gd::_check_colony_energy`,
+`bee_survival.gd::_announce_death`, `crab_spider.gd::_announce_escape`) lost
+their own `last_*` timestamp fields/comparisons and pass their existing
+`GameConfig` gap (`low_energy_gap`, `epitaph_min_gap`,
+`crab_spider_escape_min_gap`, unchanged) through the call instead (UI-Q-1).
+The two simulation files' inline copy moved to named entries in
+`problem_messages.gd` (`epitaph`, `crab_spider_escape`), so the simulation
+states the fact and the view chooses the words (UI-Q-2). The other 18 call
+sites are untouched — they pass no key and are never throttled, matching
+before. Hands-on check filed in `checks/ready.md`.
 
-**Files:** `scripts/hud.gd` (`show_warning`, `set_warnings_muted`,
-`_build_warning_banner`, `update_signals`, `_signal_color`),
-`scripts/problem_messages.gd`, `scripts/main.gd` (the three `last_*` fields),
-and the seven calling files below.
-
-**The two channels today:**
-
-| | Problem strip (`update_signals`) | Warning banner (`show_warning`) |
-| --- | --- | --- |
-| Severity | 0/1/2, coloured via `UiTheme` (`_signal_color`) | none |
-| Click action | yes (`signal_clicked`, selects what it's about) | none |
-| Drawer category | yes (4th element, sorts into Colony/Nursery) | none |
-| Copy owner | `problem_messages.gd` | 21 raw literals across 7 files |
-| Rate limiting | recomputed wholesale once a second | none at the channel |
-
-Call sites, for scale: `orders_zones.gd` 5, `year_winter.gd` 5, `saving.gd`
-4, `camera_view.gd` 3, `main.gd` 2, `bee_survival.gd` 1, `crab_spider.gd` 1.
-
-### UI-Q-1 — three producers have each implemented the same throttle, and the channel still has none
-
-**Confirmed.** `hud.gd::show_warning` (~line 1362) writes into one label and
-restarts one timer; last writer wins, unconditionally:
-
-```gdscript
-func show_warning(text: String) -> void:
-	if warnings_muted:
-		return
-	warning_label.text = text
-	warning_panel.visible = true
-	warning_timer = WARNING_SECONDS
-```
-
-Because the channel does no rate limiting, three producers have each grown
-their own, in the same shape, with their own timestamp field on `main` and
-their own `GameConfig` gap:
-
-| Producer | Timestamp field | Gap constant | Default |
-| --- | --- | --- | --- |
-| `main.gd::_check_colony_energy` | `last_energy_warning` | `low_energy_gap` | 180.0 |
-| `bee_survival.gd::_announce_death` | `last_epitaph_time` | `epitaph_min_gap` | 8.0 |
-| `crab_spider.gd::_announce_escape` | `last_crab_spider_escape_time` | `crab_spider_escape_min_gap` | 8.0 |
-
-The source says so itself — `main.gd`'s field comments read "Same idea for
-death epitaphs", "Same idea for crab spider escape warnings";
-`crab_spider.gd`'s reads "Throttled the same way BeeSurvival._announce_death
-throttles epitaphs"; `game_config.gd`'s reads "same shape as
-`epitaph_min_gap`". Three copies of one rule, acknowledged as copies.
-
-Two consequences, both confirmed against live source:
-
-- **Correctly-throttled producers still overwrite each other.**
-  `WARNING_SECONDS` is 18.0 while both event gaps are 8.0, so an epitaph and
-  a spider escape eight seconds apart both fire legitimately and the second
-  wipes the first with ten seconds still to run. Neither producer can know
-  about the other; only the channel could.
-- **The other 18 call sites have no throttle at all**, and they include
-  transactional messages the player asked for — "Run saved.", "Undone — %d
-  cells put back.", the group-select confirmations, the winter forecast — any
-  of which can be wiped mid-display by an unrelated ambient event, or can
-  themselves wipe a warning the player was still reading.
-
-Note this is *not* a claim that death epitaphs spam the banner: they are
-deliberately throttled and deliberately dropped rather than queued
-(`bee_survival.gd`'s own comment — "the moment matters more than
-completeness"). That decision is sound; the gap is that it had to be made
-three times, in three files, and still cannot arbitrate between producers.
-
-**Design accepted, ready to implement.** The smallest shape that fixes both consequences is to
-move the rule to the channel: `show_warning(text, key := "", min_gap := 0.0)`
-holding one `key -> last shown` dictionary in `hud.gd`, with the three
-producers passing their existing `GameConfig` gap. Producer code loses its
-`last_*` field and its comparison; the three `GameConfig` values stay exactly
-where they are, so no balance or save change. A priority/dwell rule so a
-transactional confirmation isn't wiped by an ambient event is a second,
-separable question — decide UI-Q-1's shape before reaching for severity, or
-the banner gains a third overlapping concept rather than fewer.
-
-### UI-Q-2 — two simulation files write player-facing copy and reach into the HUD
-
-**Confirmed, and these are the only two in the codebase.**
-
-- `bee_survival.gd:418` — `bee.world.hud.show_warning("%s has died of %s. %s" % [...])`
-- `crab_spider.gd:130` — `bee.world.hud.show_warning("%s narrowly escaped a crab spider." % bee.bee_name)`
-
-Everywhere else the boundary holds: no other `scripts/bee*.gd`,
-`scripts/hive*.gd`, `flower.gd`, `season.gd`, `rival_hive.gd` or
-`soil_block.gd` references `hud` or `UiTheme` at all. `.claude/rules/
-simulation.md`'s "presentation may be skipped; simulation may not" rule
-governs the opposite direction, so nothing currently catches these two.
-`main.gd`'s `_on_bee_died` comment records the call being left in place
-deliberately ("a bee-domain concern... rather than a cross-system
-reach-through"), which is a defensible reading of *the throttle* but does not
-explain why the two files also own the wording.
-
-**Smallest change:** give the two a named entry in a small definitions file —
-the shape `challenge_feedback.gd::DEFS` already uses for Dr Gallerin prompts —
-so the simulation states the fact and the view chooses the words. Land this
-in the same pass as UI-Q-1, so the banner gets its arbitration and its copy
-owner together.
-
-**Non-goals for both:** do not touch `set_warnings_muted` or its
-Challenge-wide use — `challenge_runner.gd` mutes the whole channel for the
-duration of a Challenge deliberately (see `hud.gd`'s field comment). Do not
-change any of the three `GameConfig` gap values; this is about where the rule
-lives, not what it is set to.
+**Deliberately not done:** a priority/dwell rule so a transactional
+confirmation can't be wiped mid-display by an unrelated ambient event (or
+vice versa) — that needs its own severity/priority design, not a second
+overlapping concept bolted onto the key/gap shape above.
 
 ## Deferred decisions
 
