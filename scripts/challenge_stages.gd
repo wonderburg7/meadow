@@ -122,6 +122,11 @@ const STAGES_1 := [
 	{
 		"id": "1.6", "goal": "queen_reached_meadow",
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		# The manual-forage arc: the player issues every move, collection and
+		# deposit, so the queen makes no state transition of her own. Read by
+		# challenge_runner.gd::_enter_stage into bee.gd::player_driven, which
+		# bee_foraging.gd::autonomous_state() is the one place that acts on.
+		"player_driven": true,
 		"goal_text": "Goal: send the queen out to the meadow.",
 		"prompts": [
 			{"id": "1.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "A beautiful cell, and presently an empty one. The meadow can remedy that. Send the queen through the entrance."},
@@ -130,6 +135,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.7", "goal": "meadow_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
+		"player_driven": true,
 		"goal_text": "Goal: explore the three marked places in the meadow.",
 		"prompts": [
 			{"id": "1.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "Flowers, distance, weather, other wings -- the meadow is the colony's wider world. Let us take a short tour."},
@@ -138,6 +144,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
+		"player_driven": true,
 		"goal_text": "Goal: gather from a flower.",
 		"prompts": [
 			{"id": "1.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "There: a flower with nectar to spare. Right-click it and the queen will gather what she can carry."},
@@ -146,6 +153,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
+		"player_driven": true,
 		"goal_text": "Goal: gather from another flower.",
 		"prompts": [
 			{"id": "1.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "One flower is a meal; a landscape of them is a supply network. Try another."},
@@ -154,6 +162,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
+		"player_driven": true,
 		"goal_text": "Goal: return to the hive and deposit the harvest.",
 		"prompts": [
 			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home, then choose the wax cell that receives the harvest."},

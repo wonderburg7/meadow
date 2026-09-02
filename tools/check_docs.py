@@ -198,6 +198,24 @@ def git_worktree_paths() -> set[Path] | None:
     return paths
 
 
+def primary_checkout() -> Path:
+    """The main checkout's root, which is what a `.worktrees/x` path in the
+    ledger is relative to.
+
+    Not the same as ROOT when this runs inside a worktree: there, ROOT is the
+    worktree itself, and resolving `.worktrees/x` against it looks for a
+    nested copy that has never existed, so every ledger row read as stale and
+    verify.ps1 could not pass from the branch it was checking."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=ROOT, capture_output=True, text=True, check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return ROOT
+    return (ROOT / result.stdout.strip()).resolve().parent
+
+
 def ledger_worktree_rows() -> list[tuple[str, Path]]:
     """(raw path as written, resolved path) for each data row in plans/workstreams.md."""
     ledger = ROOT / "plans" / "workstreams.md"
@@ -214,7 +232,7 @@ def ledger_worktree_rows() -> list[tuple[str, Path]]:
         if not match:
             continue
         raw_path = match.group(1)
-        rows.append((raw_path, (ROOT / raw_path).resolve()))
+        rows.append((raw_path, (primary_checkout() / raw_path).resolve()))
     return rows
 
 
@@ -225,7 +243,7 @@ def check_workstreams(errors: list[str]) -> None:
         errors.append("could not run 'git worktree list' to validate plans/workstreams.md")
         return
 
-    worktree_dir = (ROOT / ".worktrees").resolve()
+    worktree_dir = (primary_checkout() / ".worktrees").resolve()
     if worktree_dir.is_dir():
         for entry in sorted(worktree_dir.iterdir()):
             if entry.is_dir() and entry.resolve() not in registered:

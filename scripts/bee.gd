@@ -139,9 +139,15 @@ var target_cell: Node2D = null
 ## produced a real crash (invalid property access) the moment a forager's
 ## first deposit target went stale -- don't repeat either mistake.
 var deposit_blocked_epoch: int = -1
-## Challenge 1's manual-forage arc stops the queen at the hive entrance so
-## the player chooses the receiving cell. False everywhere else.
-var manual_deposit_pending: bool = false
+## While true, this bee makes no autonomous state transition of its own --
+## every state change comes from a `command_*` call or a Challenge stage
+## effect. Written in exactly one place, challenge_runner.gd::_enter_stage,
+## from the stage's own `player_driven` key; no command ever writes it.
+## False everywhere else, so outside a Challenge nothing here applies.
+## bee_foraging.gd::autonomous_state() is the single choke point that reads
+## it, and tests/source_checks.py fails the build if an autonomous
+## transition is added that skips that choke point.
+var player_driven: bool = false
 ## A stage can let a forager pick her first flower automatically but require
 ## an explicit player command before she switches to another one.
 var flower_switch_locked: bool = false

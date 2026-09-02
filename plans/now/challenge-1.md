@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 12 (one authoritative player-driven flag, plus a source check that keeps it true), Claude lane | Dependency: none | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: Slice 13 (the queen's "Now:" line names mechanics Challenge 1 has not taught), Claude lane | Dependency: none | Verified: 2026-09-03
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -103,7 +103,7 @@ acceptance is filed in `checks/ready.md` § Challenge 1 Bundle D.
 
 **Next after:** Slice 12.
 
-## Slice 12 — One authoritative "player drives this bee" flag, and a check that keeps it true
+## Slice 12 — One authoritative "player drives this bee" flag, and a check that keeps it true — DONE 3 Sep 2026
 
 **Why this slice exists.** Slice 11 is the sixth round of the same bug.
 9a, 10a, 10b, 10f, 10g and now 11 were all "an autonomous state transition
@@ -168,7 +168,51 @@ D's Slice 11 acceptance and confirm it still passes after the refactor.
 `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
 `scripts/input_selection.gd`, `tools/source_checks.py`.
 
+### What landed, 3 Sep 2026
+
+All three parts, as planned. Four notes on where the shipped slice differs
+from the sketch above:
+
+- **The checker lives at `tests/source_checks.py`,** not
+  `tools/source_checks.py` as this plan and `NEXTSTEPS.md` both said. There
+  is no `tools/source_checks.py`; `tools/verify.ps1` has always run the
+  `tests/` one.
+- **Thirteen transitions went through `autonomous_state()`, not six.** The
+  plan named six; the source check in part 3 fails on *any* unwrapped
+  assignment to `SEEK_FLOWER`, `TO_HIVE` or `IN_HIVE_TO_EXIT`, which is what
+  makes it enforceable, so the rest of the file had to be honest too. The
+  seven the plan did not name are the rained-off returns in `seek_flower`
+  and `search_for_flower` (twice), the empty-meadow return, the
+  flower-vanished branches in `inspect`, `drink_at_flower` and `collect`,
+  `reject_flower`, the empty-handed arrival in `go_to_deposit_cell`, and the
+  `deposit_everything_remotely` fallback. Each is a decision the bee makes
+  for herself, so each is a route the seventh round of this bug could have
+  taken.
+- **`_enter_stage`'s write is guarded by `is_instance_valid(main.queen)`.**
+  The write sits outside the `Session.starting_level == 1` block, because
+  the stage dictionary now carries the rule and any Challenge can use it --
+  but `_enter_stage` runs for Challenge 2 as well, where the queen can be
+  dead, and the file guards `main.queen` everywhere else for that reason.
+- **`tools/check_docs.py` needed a fix to make `verify.ps1` runnable from a
+  worktree at all.** It resolved a ledger row's `.worktrees/x` path against
+  the *running* checkout, so inside a worktree it looked for a nested copy
+  that has never existed and reported every row stale. It now resolves
+  against the primary checkout (`git rev-parse --git-common-dir`). This is
+  pre-existing and unrelated to Challenge 1, but the slice could not be
+  verified on its own branch without it.
+
+**Acceptance evidence.** `tools/verify.ps1` green. The new check was broken
+deliberately (a bare `bee.state = State.SEEK_FLOWER` added to
+`bee_foraging.gd`) and reported
+`bee_foraging.gd:475  unguarded autonomous transition -- wrap it in
+autonomous_state(bee, ...) so a player-driven bee stays put, or mark the
+line \`# player-command\``, then passed again once repaired. Both escape
+hatches were tested too: the same line with a trailing `# player-command`
+passes, and a bare assignment inside `autonomous_state()` itself passes.
+
 **Next after:** Slice 13.
+
+**Still to confirm by playing:** `checks/ready.md` § Challenge 1 Bundle D.
 
 ## Slice 13 — The queen's "Now:" line says things Challenge 1 has not taught
 

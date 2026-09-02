@@ -136,7 +136,7 @@ func start() -> void:
 	_greeting_active = false
 	_hearts_timer = 0.0
 	main.awaiting_queen_build_cell = false
-	main.queen.manual_deposit_pending = false
+	main.queen.player_driven = false
 	main.queen.flower_switch_locked = false
 	main.queen.role_change_locked = false
 	main.queen.role_restricted_to = []
@@ -291,6 +291,11 @@ func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	_run_stage_effects(stage.get("on_enter", []))
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
+	# The one place player_driven is ever written. A stage that does not
+	# declare the key drives nothing, so the flag clears itself on the way
+	# out of the manual-forage arc without a matching list to maintain.
+	if is_instance_valid(main.queen):
+		main.queen.player_driven = stage.get("player_driven", false)
 	if Session.starting_level == 1:
 		# Challenge 1's manual building drives the queen's state directly;
 		# derive her permitted backup work from the same stage keys as the
@@ -298,7 +303,6 @@ func _enter_stage() -> void:
 		# Her own laying role and day-one nursing fallback remain intentional
 		# exceptions: neither is taught as a general role at the opening.
 		main.queen.role_restricted_to = _queen_allowed_role_ids(stage.unlocked_keys)
-		main.queen.manual_deposit_pending = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 		main.queen.role_change_locked = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
 		if stage.id == "1.8":
 			_c1_queen_collections = 0
@@ -517,6 +521,7 @@ func _complete() -> void:
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
 		main.queen.role_restricted_to = []
+		main.queen.player_driven = false
 		main.queen.flower_switch_locked = false
 		main.queen.role_change_locked = false
 		if _c1_base_nectar_rate >= 0.0:
