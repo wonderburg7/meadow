@@ -1725,7 +1725,6 @@ func command_return_only() -> void:
 func command_deposit_at(cell: Node2D) -> void:
 	_clear_pending_zone_command()
 	target_cell = cell
-	manual_deposit_pending = false
 	state = State.IN_HIVE_TO_CELL
 
 ## A hive cell belongs to hive coordinates, so delay assigning it until an

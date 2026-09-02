@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 11 (manual-forage stages: three unguarded autonomous transitions), Claude lane | Dependency: none | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: Slice 12 (one authoritative player-driven flag, plus a source check that keeps it true), Claude lane | Dependency: none | Verified: 2026-09-02
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -15,7 +15,7 @@ at the 1.10 -> 1.11 hand-over. Slices 11-13 below are what came out of it.
 Slice 11 is the fix, Slice 12 is the reason it kept happening, Slice 13 is
 a copy finding from the same run.
 
-## Slice 11 — Manual-forage stages: three unguarded autonomous transitions
+## Slice 11 — Manual-forage stages: three unguarded autonomous transitions — DONE 2 Sep 2026
 
 **Symptom (Dave, 2 Sep 2026).** Through 1.6-1.10 the queen still forages on
 her own. After the player right-clicks the first flower she flies on to
@@ -85,6 +85,21 @@ other bee in every other mode, so all three guards are inert there.
 (already rewritten to name this acceptance) plus the 1.10 -> 1.11 hand-over.
 
 **Files:** `scripts/bee_foraging.gd`, `scripts/bee.gd`.
+
+**Landed 2 Sep 2026** on `claude/c1-11`, all three fixes as written:
+(a) `finish_collecting` now ends `if bee.manual_deposit_pending: IDLING`
+with no load test, and the older full-crop-only guard is gone -- one guard,
+not two; (b) `finish_depositing`'s last statement is
+`IDLING if bee.manual_deposit_pending else IN_HIVE_TO_EXIT`; (c)
+`Bee.command_deposit_at()` no longer writes `manual_deposit_pending`, so
+`challenge_runner.gd::_enter_stage` is its only writer. `enter_hive` was
+read first as the plan asked: `resume_pending_zone_command()` still returns
+early on the `command_deposit_at_after_enter` path, so keeping the flag true
+there does not divert the in-flight manual deposit. `_build_job_row` was not
+touched. `input_selection.gd`'s cell branch is gated on
+`current_load > 0.0`, so a post-deposit right-click falls through to an
+ordinary move rather than re-entering the deposit command. Hands-on
+acceptance is filed in `checks/ready.md` § Challenge 1 Bundle D.
 
 **Next after:** Slice 12.
 

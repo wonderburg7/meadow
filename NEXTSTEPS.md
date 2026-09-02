@@ -2,10 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 2 Sep 2026 from Dave's hands-on
-batch. That pass confirmed fifteen checks and produced eight implementable
-findings, so both lanes are full again and three more ready slices are
-waiting in their owning plans (`Next after:` says which).
+Five ready slices in two lanes, rewritten 2 Sep 2026 after C1-11 landed.
+Dave's 2 Sep hands-on batch confirmed fifteen checks and produced eight
+implementable findings; C1-11 is merged, C1-12 has taken its place at the
+head of the Claude lane, and four more ready slices are waiting below.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,24 +21,26 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C1-11 -- Challenge 1's manual-forage stages: three unguarded
-   autonomous transitions.**
-   - Plan: `plans/now/challenge-1.md` -- Slice 11.
-   - Does: stops the queen foraging on her own through stages 1.6-1.10.
-     `finish_collecting`'s part-load branch sends her to the next flower,
-     the deposit-completion branch sends her back out of the hive, and
-     `command_deposit_at` clears the flag that should have stopped both.
-     One guard each, all three traced to a line in the plan. Also unblocks
-     the 1.10 -> 1.11 hand-over, which currently ends the Challenge: the
-     missing Forager option is a consequence of the queen already foraging,
-     not a separate bug.
-   - Files: `scripts/bee_foraging.gd`, `scripts/bee.gd`,
-     `plans/now/challenge-1.md`.
-   - Check: `tools/verify.ps1`, then the Slice 11 acceptance already written
-     into the Bundle D entry of the player-check list.
-   - Why first: it is the only item in the batch that blocks a whole
-     Challenge from being finished.
-   - Next after: C1-12.
+1. **[Claude] C1-12 -- One authoritative "player drives this bee" flag, and
+   a check that keeps it true.**
+   - Plan: `plans/now/challenge-1.md` -- Slice 12.
+   - Does: C1-11 was the sixth round of the same bug -- an autonomous state
+     transition nobody remembered to guard. Names the rule once as
+     `player_driven` on `bee.gd`, set only by `challenge_runner._enter_stage`
+     from a new stage key, routes every autonomous transition in
+     `bee_foraging.gd` through one `autonomous_state()` helper, and adds a
+     `source_checks.py` rule so the seventh round fails the build instead of
+     being found by playing. Replaces `manual_deposit_pending`; deliberately
+     leaves the four other lock fields alone.
+   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`,
+     `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
+     `scripts/input_selection.gd`, `tools/source_checks.py`.
+   - Check: `tools/verify.ps1`, including the new source check with a
+     deliberate break and repair. One hands-on check to file: re-run Bundle
+     D's Slice 11 acceptance and confirm the refactor kept it.
+   - Why first: it is the only item that stops a whole class of bug
+     recurring, and C1-11 just paid for the sixth instance of it.
+   - Next after: C1-13.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -93,7 +95,7 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
      follow the cup with Cell art on, and revert instantly when it is off.
    - Next after: this lane then pulls from `plans/now/challenge-1.md`
-     (C1-12/C1-13), `plans/active/foraging-evidence.md` (Slice 4) or
+     (C1-13), `plans/active/foraging-evidence.md` (Slice 4) or
      `plans/now/settings-persistence.md` (Slice 1) -- all three are ready.
 
 ## Ready, not yet in the queue
@@ -101,10 +103,6 @@ what to do -- this file already decided.
 These pass the admission test and are only out because the queue holds five.
 Promote from here when a lane empties; no extra decision is needed.
 
-- **C1-12** (`plans/now/challenge-1.md` Slice 12) -- one `player_driven`
-  flag owned by stage data, one choke point in `bee_foraging.gd`, and a
-  `source_checks.py` rule so the next unguarded transition fails the build
-  instead of being found by playing. Do it after C1-11.
 - **C1-13** (`plans/now/challenge-1.md` Slice 13) -- the queen's "Now:" line
   names mechanics Challenge 1 has not taught yet.
 - **FE-4** (`plans/active/foraging-evidence.md` Slice 4) -- a settings
@@ -123,8 +121,9 @@ Each of these needs something from Dave before code can be written. They are
 listed so they are not lost, not so they are picked up.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- an acceptance
-  playthrough, and it cannot start until C1-11 lands; the 2 Sep attempt
-  stopped at stage 1.10.
+  playthrough. C1-11 removed what stopped the 2 Sep attempt at stage 1.10,
+  so this now needs only Dave's run: `checks/ready.md` Bundles D and E are
+  the two entries to work through.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace has found the mechanism (every idle Comb Worker piles onto
   one unfinished site), but capping builders per site changes build
