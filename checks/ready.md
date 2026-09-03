@@ -29,6 +29,20 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-11 -- the centred command tray preserves both bottom-row gaps
+
+Shipped 3 Sep 2026. Select a bee so the command tray is visible, then check
+the row at 1920, 1280 and 800px viewport widths. Drag narrower between those
+sizes too: the tray should stay centred, shrink before it reaches either
+neighbour, and the summary panel and Dr Gallerin's bubble should refill the
+space left on their sides.
+
+PASS: at every width down to 800px, the command tray is fully on screen and
+there is an equal, visible 16px gap between it and both the summary panel and
+Dr Gallerin's bubble.
+
+Owner: `plans/now/ui.md` UI-S-1.
+
 ### C-10 -- a hand-set toggle survives picking a Scenario
 
 Shipped 3 Sep 2026. Change a flower or season debug toggle in the settings
