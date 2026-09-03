@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/W-5-fixup4` (`claude/W-5-fixup4`) | Claude | slice.ps1 finish: widen the directory-delete retry budget | Claude | in progress | none | `plans/now/agent-workflow.md` W-5 |
