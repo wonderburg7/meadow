@@ -122,9 +122,10 @@ holds five. Take one when a lane empties, in roughly this order.
 - **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
   format (id, one action, one PASS line, an owner) enforceable in
   `tools/check_docs.py`.
-- **W-1** (`plans/now/agent-workflow.md`) -- `tools/session_cost.py`, one
-  script that reports what a week of sessions cost, so the workflow changes
-  behind it can be measured rather than assumed.
+- **W-2** (`plans/now/agent-workflow.md`) -- cut the session-opening context
+  floor: disable the unused `gitkraken` MCP server for this project and deny
+  three orientation files agents keep reading by mistake. Needs W-1's
+  `tools/session_cost.py` "before" figure, which has now landed.
 - **W-3** (`plans/now/agent-workflow.md`) -- put a `Proof:` line on every
   queue item and make `tools/check_docs.py` evaluate it, so an item whose
   behaviour already exists fails verification instead of being started. This

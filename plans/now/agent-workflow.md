@@ -1,7 +1,7 @@
 # Agent workflow — make the process enforce itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Claude | Next: W-1 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Claude | Next: W-2 | Dependency: none | Verified: 2026-09-03
 
 ## Objective
 
@@ -22,62 +22,25 @@ worktrees and fix the ledger; median 23 tool calls before the first `.gd` edit.
 
 ## Open slices
 
+W-1 (a script that measures session cost) is delivered; see
+`plans/archive/AGENT_WORKFLOW_W1_2026-09-03.md`.
+
 | Slice | Outcome | Files owned | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| W-1 | A script that measures session cost | `tools/session_cost.py` | yes | low |
-| W-2 | The session-opening floor is cut | `.claude/settings.json`, `.mcp.json` | after W-1 | low |
+| W-2 | The session-opening floor is cut | `.claude/settings.json`, `.mcp.json` | yes | low |
 | W-3 | The admission test runs in `check_docs.py` | `tools/check_docs.py`, `NEXTSTEPS.md`, `plans/README.md` | yes | medium |
 | W-4 | `tools/slice.ps1 start` claims a slice atomically | `tools/slice.ps1`, `CHATGPT.md` | after W-3 | medium |
 | W-5 | `tools/slice.ps1 finish` closes it atomically | `tools/slice.ps1` | after W-4 | medium |
 | W-6 | Routing is addressable and bounded | `CLAUDE.md`, `tools/heading.py` | yes | low |
 | W-7 | `verify.ps1` is quiet on success | `tools/verify.ps1` | yes | low |
 
-Dependencies: W-1 → W-2 (you cannot show the floor fell without the
-measurement). W-3 → W-4 (`start` refuses a slice whose proof fails, so proofs
-must exist first). W-4 → W-5 (same file). W-3, W-6 and W-7 are independent of
-everything else and of each other. No two slices own a file in common except
-W-4 and W-5, which are sequential in one lane.
+Dependencies: W-3 → W-4 (`start` refuses a slice whose proof fails, so proofs
+must exist first). W-4 → W-5 (same file). W-2, W-3, W-6 and W-7 are
+independent of everything else and of each other. No two slices own a file in
+common except W-4 and W-5, which are sequential in one lane.
 
 Read for any slice: this file's section for it and nothing else. Every slice's
 check is `tools/verify.ps1`, and none of them files a hands-on check.
-
----
-
-## W-1 — A script that measures session cost
-
-Build `tools/session_cost.py`, so later slices can prove they helped.
-
-Input: the JSONL files in
-`~/.claude/projects/C--Users-dl13860-Documents-Meadow-meadow/`. Resolve that
-directory from `Path.home()`; if it does not exist, print one line saying so
-and exit 0. Argument: `--days N` (default 7) — include a file whose
-modification time is within N days.
-
-Each line is one JSON object; parse with `json.loads` inside a
-`try/except Exception: continue`. Skip files with fewer than four parsed rows.
-For a row where `type == "assistant"`, read `message.usage` and treat
-`input_tokens + cache_read_input_tokens + cache_creation_input_tokens` as that
-request's context size. Count each `tool_use` block by its `name`.
-
-Print exactly these lines and nothing else:
-
-```
-sessions                     <n>
-assistant requests           <n>
-context volume (tokens)      <sum of context sizes>
-output tokens                <sum of output_tokens>
-context/request median       <n>
-context/request p90          <n>
-session-opening context      <median of each session's first request>
-tool calls                   <n>
-top tools                    <name=count, six highest, comma separated>
-```
-
-Use `statistics.median`; for p90 use `sorted(x)[int(len(x)*0.9)]`. Exit 0
-always. No file output, no other arguments.
-
-**Acceptance:** `python tools/session_cost.py --days 7` prints those nine
-lines. It is not wired into `verify.ps1`.
 
 ---
 
