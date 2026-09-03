@@ -190,3 +190,17 @@ instruction" (with the action appended from 1.2 on), and every working
 stage still narrates the activity as before.
 
 Owner: `plans/now/challenge-1.md` Slice 15.
+
+### C-15 -- flower age and season read from the flower summary panel
+
+Shipped 3 Sep 2026. Click a flower: the panel shows its age in days
+against its lifespan, and whether it is in or out of season. Watching one
+across a season boundary with the panel open flips the line from in to
+out at the same moment the `+/s` figures fall away. A flower with a live
+scent mark still shows that line too.
+
+PASS: the age-vs-lifespan and in/out-of-season lines both show on click,
+and the season line flips exactly when the `+/s` figures fall away.
+
+Owner: `plans/now/flowers.md` Slice 1 (archived at
+`plans/archive/FLOWERS_SLICE_1_2026-09-03.md`).

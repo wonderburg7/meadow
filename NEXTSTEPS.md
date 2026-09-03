@@ -2,10 +2,15 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after UI-R-3 landed and
-`plans/now/check-loop.md` P-2 came unblocked (UI-S-1 and UI-S-2, the last
-things it needed, both shipped 3 Sep 2026). C2-1 is now the only queued
-`debug_panel.gd` slice.
+Four ready slices in two lanes. FL-1 shipped 3 Sep 2026 and its queue slot
+was not refilled: every other open plan (`ui.md`, `challenge-1.md`,
+`challenge-2.md`, `check-loop.md`, `hive-comb.md`, `progression.md`) was
+checked and none has a slice that is genuinely startable today beyond the
+four below -- everything else needs a hands-on check, a live repro or a
+product decision, which is exactly what does not belong in this list. Rather
+than pull one of those forward as a guess, `tools/check_docs.py`'s queue-size
+check now accepts four or five items (Dave, 3 Sep 2026); the fifth slot
+refills the moment a plan below has real ready work again.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -32,30 +37,9 @@ decided.
      sits comfortably clear of the screen edge and tile clicking is
      unchanged.
    - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
-   - Next after: FL-2, already fifth in this lane.
+   - Next after: FL-2, already fourth in this lane.
 
-2. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
-   - Plan: `plans/now/flowers.md` -- Slice 1.
-   - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
-     summary panel every frame it's open and already prints both effective
-     rates, but says nothing about age or season. Builds one extra line --
-     age in days against lifespan, and "in season (NN%)" / "out of season" /
-     "seasons off" -- and puts it in `trait_label` above the scent-mark text
-     (joined with a newline, not replacing it) using `age_seconds`,
-     `lifespan_seconds` and `season_strength()`, all already public on
-     `flower.gd`. Nothing new is computed in `flower.gd`.
-   - Files: `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: click a flower
-     and the panel shows its age against its lifespan and whether it's in
-     or out of season; watching one across a season boundary flips the line
-     at the same moment the `+/s` figures fall away.
-   - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why first in this lane: UI-R-3, which led before it, shipped 3 Sep
-     2026. Nothing else in the queue names `scripts/hud.gd`, and the Codex
-     lane leads with `main_menu.gd`, so the two heads cannot collide.
-   - Next after: C2-1, next in this lane.
-
-3. **[Claude] C2-1 -- A Challenge 2 nectar collapse cannot be made to happen.**
+2. **[Claude] C2-1 -- A Challenge 2 nectar collapse cannot be made to happen.**
    - Plan: `plans/now/challenge-2.md` -- Slice 1.
    - Does: adds a "Force Challenge 2 collapse" button to the Triggers group
      P-3 built, styled with the same `_style_button` + `UI.with_info` pattern
@@ -71,13 +55,14 @@ decided.
      acceptance, replacing `checks/ready.md`'s "Challenge data/goal-registry
      extraction" entry.
    - Proof: `absent: scripts/debug_panel.gd :: Force Challenge 2 collapse`
-   - Why here, not leading: FL-1 above it has no conflicting file, and this
-     queue position is unchanged from before UI-R-3 shipped.
+   - Why leading in this lane: FL-1, which led before it, shipped 3 Sep
+     2026; its queue slot was not refilled (see the note at the top of this
+     file).
    - Next after: `plans/now/challenge-2.md` Slice 2, once Dave has pressed
      the button and reported which line is missing (not yet ready --
-     check-loop P-2 fills this lane's third slot instead).
+     check-loop P-2 fills this lane's second slot instead).
 
-4. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
+3. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
    - Plan: `plans/now/check-loop.md` -- P-2.
    - Does: adds a check to `tests/source_checks.py`, in the style of the
      existing `GameConfig` write allowlist, that fails on any numeric
@@ -96,7 +81,7 @@ decided.
      `tests/source_checks.py` collides with no other queued file.
    - Next after: none -- this plan then has no open slice.
 
-5. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+4. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
    - Does: gives out-of-season flowers a small recharge floor, faster ageing
      and rarer seeding, using three explicit `GameConfig` balance values.
@@ -107,15 +92,17 @@ decided.
      in the plan. One hands-on check to file: the year-round species mix
      visibly follows the seasons without collapsing.
    - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
-   - Why here: it has no dependency on FL-1 and shares no file with the
-     current Claude work; the plan makes its required headless comparison
-     explicit before merge.
+   - Why here: it shares no file with the current Claude work; the plan
+     makes its required headless comparison explicit before merge.
    - Next after: none -- this plan then has no open slice.
 
 ## Ready, not yet in the queue
 
-Nothing. Every slice that could be started today is in the queue above; the
-next lane to empty pulls its refill from an owning plan's next open slice.
+Nothing. Every slice that could be started today is in the queue above,
+which is why the queue sits at four rather than five (see the note at the
+top of this file). The next lane to empty, or the fifth slot whenever a
+plan below gets real ready work, pulls from an owning plan's next open
+slice.
 
 ## Not in the queue, and why
 
@@ -126,8 +113,8 @@ They are listed so they are not lost, not so they are picked up.
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
   thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
-  of the rescue and recovery lines does not appear. Needs C2-1 (third in the
-  queue, second in the Claude lane) to ship and Dave to press the button;
+  of the rescue and recovery lines does not appear. Needs C2-1 (second in
+  the queue, leading the Claude lane) to ship and Dave to press the button;
   there is no static defect to fix blind, and guessing has already failed
   twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's

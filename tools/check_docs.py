@@ -103,7 +103,13 @@ def check_context_layout(errors: list[str]) -> None:
         errors.append("CHATGPT_NEXTSTEPS.md is retired; use the shared NEXTSTEPS.md and plans/")
 
 
-QUEUE_SIZE = 5
+# Normally exactly QUEUE_SIZE_MAX (five slices keep both lanes stocked), but
+# a slice can ship with no genuinely startable successor anywhere in the
+# plans -- refilling with a not-yet-ready item would violate the admission
+# test, so the queue is allowed to sit at QUEUE_SIZE_MIN until new work
+# becomes ready (Dave, 3 Sep 2026, after FL-1 shipped with none available).
+QUEUE_SIZE_MIN = 4
+QUEUE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")
 PROOF_LINE = re.compile(r"^\s*-\s*Proof:\s*`([^`]*)`", re.MULTILINE)
@@ -132,7 +138,7 @@ def _item_files(body: str) -> set[str]:
 
 
 def check_next_steps(errors: list[str], warnings: list[str]) -> None:
-    """The queue is exactly QUEUE_SIZE ready slices, in two lanes that cannot collide."""
+    """The queue holds QUEUE_SIZE_MIN-QUEUE_SIZE_MAX ready slices, in two lanes that cannot collide."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
@@ -142,9 +148,9 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
     section = match.group(1)
 
     chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
-    if len(chunks) != QUEUE_SIZE:
+    if not (QUEUE_SIZE_MIN <= len(chunks) <= QUEUE_SIZE_MAX):
         errors.append(
-            f"NEXTSTEPS.md: expected exactly {QUEUE_SIZE} next-step items, found {len(chunks)}"
+            f"NEXTSTEPS.md: expected {QUEUE_SIZE_MIN}-{QUEUE_SIZE_MAX} next-step items, found {len(chunks)}"
         )
 
     lane_order: list[tuple[str, str]] = []
