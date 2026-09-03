@@ -14,8 +14,10 @@ reconstructing history.
 1. Read `NEXTSTEPS.md`. It holds five ready slices in two lanes; take the
    first unclaimed **[Claude]** item. "Implement the next slice" means exactly
    that and needs no other context.
-2. Open only the `Plan:` file and heading that item names; `plans/README.md`
-   defines the layers and on-demand fetch rules.
+2. Open only the `Plan:` file and heading that item names --
+   `python tools/heading.py <file> "<heading>"` prints that one section and
+   stops at the next heading. `plans/README.md` defines the layers and
+   on-demand fetch rules.
 3. For code work, load the relevant path-scoped `.claude/rules/` file and use
    `FUNCTION_MAP.md`/search to read only the affected source section.
 
@@ -34,20 +36,13 @@ other than five items, if an item lacks a lane tag or its `Plan:`/`Files:`/
 leading items name a file in common, or if blocked-work language appears in
 the queue at all.
 
-**Admission test, applied every time the queue is rewritten.** A slice belongs
-in `## Next up` only if a model could start writing code on it today, *and the
-behaviour does not already exist*. Open the file the slice names and confirm
-the defect is still there before queuing it -- a plan records what was true
-when it was written, and a batch commit can ship several slices with only some
-booked out. X3 sat at the head of a lane, with a worktree open, for a fix that
-had shipped three days earlier. It does
-*not* belong if it needs a hands-on check, a live repro, a live boot, or a
-decision from Dave *before* code can be written. Needing a hands-on check
-*after* the code lands is normal and does not disqualify it -- that check goes
-to `checks/ready.md`.
+**Admission test:** a slice belongs in `## Next up` only if a model could
+start writing code on it today and the defect still exists, which its `Proof:`
+line asserts as `present:`/`absent: <path> :: <substring>` and
+`tools/check_docs.py` re-runs against the live file every verification.
 
-Work that fails the admission test goes under `## Not in the queue, and why`
-with one line saying what it is waiting for. Never leave it in the queue "to
+Work that fails that test goes under `## Not in the queue, and why` with one
+line saying what it is waiting for. Never leave it in the queue "to
 keep it visible": a queue Dave cannot act on is worse than a short one.
 
 Refill the queue as part of finishing a slice, not as a separate errand. When
@@ -142,9 +137,7 @@ necessary. The full Codex handoff policy is in `CHATGPT.md`.
 
 **Closeout:** run `tools/slice.ps1 finish` from inside the slice's worktree,
 immediately after integrating any branch (Codex hand-off or Claude's own
-worktree), never deferred — it verifies, gates on any hands-on check the
-`Check:` line named, commits, merges, pushes, removes the worktree and
-branch, and deletes the ledger row. Claude still moves the delivered slice's
+worktree), never deferred. Claude still moves the delivered slice's
 specification into `plans/archive/` and refills the queue by hand; `finish`
 does not touch either.
 
@@ -162,10 +155,14 @@ the authority on which tier a branch is in.
 ## Rules that apply without being requested
 
 1. **Context-efficient:** read one routed file/section, not a folder; use
-   `FUNCTION_MAP.md`, grep, Git and tests rather than broad rereads.
-2. **Architecturally right:** role data lives in `roles.gd`; `GameConfig`
-   owns balance values; `Session` owns run/UI state; presentation never gates
-   simulation; balance changes are simulated before shipping.
+   `FUNCTION_MAP.md`, grep, Git and tests rather than broad rereads. A file
+   read early is re-sent on every later request in the session; at ~90
+   requests a 6K-token file read at the start costs ~500K, not 6K. Read the
+   routed section, not the file.
+2. **Architecturally right:** role data lives in `scripts/roles.gd`;
+   `GameConfig` owns balance values; `Session` owns run/UI state;
+   presentation never gates simulation; balance changes are simulated before
+   shipping.
 3. **Processing-efficient:** profile a per-frame/per-bee path before changing
    it. Count both calls and population before adding an index/cache.
 4. **Cheap execution:** use the routine model/effort for bounded work and
@@ -202,6 +199,12 @@ the authority on which tier a branch is in.
 | Function or section location | `FUNCTION_MAP.md` |
 | Recurrent bug classes | `docs/known-pitfalls.md` |
 | Performance method/contracts | `docs/performance.md`, `docs/PERFORMANCE_BASELINE.md` |
+
+Every path above is repo-relative, so it can be opened without a search.
+For a Markdown target, read the one section you need with
+`python tools/heading.py <file> "<heading>"` rather than the whole file; it
+prints the first heading matching that text, case-insensitively, and exits 1
+listing the file's headings when nothing matches.
 
 The seven largest scripts are indexed in `FUNCTION_MAP.md`. For any other
 script, search its `# --- section ---` headers instead of reading top to
@@ -240,7 +243,7 @@ holds the evidence behind them):
 - **A rare condition ships with the way to trigger it.** If a behaviour
   only happens when the simulation obliges, the slice that builds it adds
   the developer trigger too. A check nobody can run on demand goes to
-  `checks/blocked.md` with its unblocker named, not to `ready.md`.
+  `checks/blocked.md` with its unblocker named, not to `checks/ready.md`.
 - **File a check only if failing it would change something.** Say in the
   entry what a failure would cause. "Nothing, we would assume it works"
   means do not file it.
