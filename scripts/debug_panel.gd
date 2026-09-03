@@ -94,7 +94,7 @@ func _ready() -> void:
 	toggle_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	toggle_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	toggle_button.offset_right = -Hud.TOP_BAR_BUTTON_GAP
-	toggle_button.offset_top = 8
+	toggle_button.offset_top = 8  # fixed-inset
 	toggle_button.tooltip_text = "Open the settings window. Changing a value here affects bees and flowers created from then on -- press Restart Run to rebuild the whole world with the new numbers."
 	toggle_button.pressed.connect(_toggle_panel)
 	add_child(toggle_button)

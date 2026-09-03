@@ -17,6 +17,10 @@ const SELECTION_TRAY_LEFT_MARGIN := 16.0
 const SELECTION_TRAY_GAP := 16.0
 const SELECTION_TRAY_MIN_WIDTH := 160.0
 
+## Shared bottom margin of the summary panel and the command tray, so the
+## two sit level with each other.
+const BOTTOM_ROW_MARGIN := 16.0
+
 ## The command tray takes half the viewport until either side needs its
 ## minimum band. It never becomes narrower than a usable control row.
 const COMMAND_TRAY_WIDTH_FRACTION := 0.5

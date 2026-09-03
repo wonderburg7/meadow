@@ -96,7 +96,7 @@ func _ready() -> void:
 	panel.theme = UiTheme.build_theme()
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	panel.offset_left = 16
+	panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
 	panel.custom_minimum_size = Vector2(330, 0)
 	panel.visible = false
 	add_child(panel)
