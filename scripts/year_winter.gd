@@ -11,21 +11,21 @@ extends Node
 ## one-line wrapper for it.
 
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
+const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
 
 var main: Node2D
 
-func _winter_forecast() -> Dictionary:
-	var bees: int = get_tree().get_nodes_in_group("bees").size()
+func _winter_forecast(bees_count: int) -> Dictionary:
 	var seconds_of_winter: float = GameConfig.winter_length_days * GameConfig.seconds_per_day
 	var required: float = (
-		bees * GameConfig.energy_burn_rate * GameConfig.winter_burn_factor * seconds_of_winter
+		bees_count * GameConfig.energy_burn_rate * GameConfig.winter_burn_factor * seconds_of_winter
 	)
 	var held: float = (
 		main.hive.total("nectar") + main.hive.total_honey() * GameConfig.honey_energy_factor
 	)
 	var days_left: float = max(0.0, Session.winter_starts_day - main.day)
 	return {
-		"bees": bees,
+		"bees": bees_count,
 		"required_energy": required,
 		"held_energy": held,
 		"days_left": days_left,
@@ -46,10 +46,10 @@ func begin_winter_countdown() -> void:
 		% int(Session.winter_starts_day)
 	)
 
-func _refresh_winter() -> void:
+func _refresh_winter(bees_count: int) -> void:
 	if not Session.winter_coming:
 		return
-	var forecast = _winter_forecast()
+	var forecast = _winter_forecast(bees_count)
 	main.winter_panel.refresh(forecast)
 	main.hud.corner_texts["winter"] = main.winter_panel.corner_text
 	main.hud.refresh_corner()
@@ -172,6 +172,7 @@ func _refresh_signals(delta: float) -> void:
 	main.signal_timer = 1.0
 
 	var bees: Array = get_tree().get_nodes_in_group("bees")
+	var facts: Dictionary = ColonyDiagnostics.compute(main, bees)
 
 	# A Challenge already tells the player what's wrong and what to do
 	# about it, one stage at a time, through Dr Gallerin -- this generic
@@ -183,43 +184,23 @@ func _refresh_signals(delta: float) -> void:
 	# just before start().
 	if main.challenge_runner.active:
 		main.hud.update_signals([])
-		_refresh_panels(bees)
+		_refresh_panels(bees, facts)
 		Perf.end("signals")
 		return
 
 	var lines: Array = []
 
-	var starving = 0
-	var hungry = 0
-	var foragers = 0
-	var nurses = 0
-	var comb_workers = 0
-	for b in bees:
-		if b.energy < GameConfig.energy_capacity * 0.15:
-			starving += 1
-		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
-			hungry += 1
-		match b.role:
-			main.Bee.Role.FORAGER:
-				foragers += 1
-			main.Bee.Role.NURSERY:
-				nurses += 1
-			main.Bee.Role.BUILDER:
-				comb_workers += 1
+	var starving: int = facts.starving
+	var hungry: int = facts.hungry
+	var foragers: int = facts.foragers
+	var nurses: int = facts.nurses
+	var comb_workers: int = facts.comb_workers
+	var hungry_brood: int = facts.hungry_brood
+	var free_cells: int = facts.free_cells
 
-	# Reads hive.gd's mutation-owned content buckets rather than walking
-	# every cell fresh -- same buckets _refresh_panels below reads, so the
-	# hive only re-scans its cells when a build/hatch/designation/load
-	# actually changed one, not once a second regardless.
+	# Not part of ColonyDiagnostics.compute -- used only here, so left as a
+	# single direct read rather than moved.
 	var dead_cells: int = main.hive.cells_holding("corpse").size()
-	var hungry_brood = 0
-	for cell in main.hive.cells_holding("brood"):
-		if cell.brood_fed_seconds <= 0.0:
-			hungry_brood += 1
-	var free_cells = 0
-	for cell in main.hive.cells_holding(""):
-		if not cell.keep_empty:
-			free_cells += 1
 
 	# A 4th element, where present, is a "category" used to sort a signal
 	# into the Colony/Nursery drawers' "needing attention" blocks
@@ -253,29 +234,26 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["Raining — nectar is watered down and flying costs more", 0])
 
 	main.hud.update_signals(lines)
-	_refresh_panels(bees)
+	_refresh_panels(bees, facts)
 	Perf.end("signals")
 
-func _refresh_panels(bees: Array) -> void:
+func _refresh_panels(bees: Array, facts: Dictionary) -> void:
 	var counts = main._role_counts()
 	var energy_share = 0.0
 	for b in bees:
 		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
 
-	# Same bucketed reads as _refresh_signals above -- see its comment.
+	# brood_count and gyne_count need the brood cells themselves (for
+	# brood_is_gyne), which facts doesn't carry -- hungry_brood and
+	# free_cells come from facts instead of a second walk.
 	var brood_cells: Array = main.hive.cells_holding("brood")
 	var brood_count: int = brood_cells.size()
 	var gyne_count = 0
-	var hungry_brood = 0
 	for cell in brood_cells:
 		if cell.brood_is_gyne:
 			gyne_count += 1
-		if cell.brood_fed_seconds <= 0.0:
-			hungry_brood += 1
-	var free_cells = 0
-	for cell in main.hive.cells_holding(""):
-		if not cell.keep_empty:
-			free_cells += 1
+	var hungry_brood: int = facts.hungry_brood
+	var free_cells: int = facts.free_cells
 
 	var mean_energy: float = energy_share / max(1, bees.size())
 	var comb_text = "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
@@ -304,7 +282,7 @@ func _refresh_panels(bees: Array) -> void:
 			main.hud.corner_texts[key] = main.nursery_panel.corner_texts[key]
 		main.hud.refresh_corner()
 	main.orders_zones._apply_zone_glow()
-	_refresh_winter()
+	_refresh_winter(facts.bees_count)
 
 ## How many foragers currently sit above the "offer" threshold (mentor-
 ## eligible) or below the "seek" threshold (would wait at the door hoping
