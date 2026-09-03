@@ -51,4 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| .worktrees/c1-15 (claude/c1-15) | Claude | "Now:" line says waiting-for-instruction, not narration | Claude Code | in progress | none | challenge-1.md Slice 15 |
+| `.worktrees/c1-15` (`claude/c1-15`) | Claude | "Now:" line says waiting-for-instruction, not narration | Claude Code | in progress | none | `plans/now/challenge-1.md` Slice 15 |
