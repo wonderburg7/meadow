@@ -2,8 +2,8 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after W-6 and UI-S-3
-landed.
+Five ready slices in two lanes, refilled 3 Sep 2026 after W-7 landed and
+finished the agent-workflow plan.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -20,31 +20,29 @@ decided.
 
 ## Next up
 
-1. **[Claude] W-7 -- `verify.ps1` is quiet on success.**
-   - Plan: `plans/now/agent-workflow.md` -- W-7.
-   - Does: adds `-Quiet` and `-Docs` switches to `tools/verify.ps1`. `-Quiet`
-     captures each stage and prints one line per stage (`source checks: OK`,
-     `balance tests: OK`, `function map: OK`, `doc checks: OK`), printing a
-     stage's captured output in full only when it fails; `-Docs` runs
-     `tools/check_docs.py` alone and skips the source, balance and
-     function-map stages. The doc stage's failures print under a heading that
-     names them as documentation, not code, with the code suites' passes
-     still visible. No stage changes what it checks, and the no-switch output
-     is untouched.
-   - Files: `tools/verify.ps1`.
-   - Check: `tools/verify.ps1`. No hands-on check: `-Quiet` printing four
-     lines, `-Docs` skipping the code suites, and a deliberately broken
-     `plans/workstreams.md` row producing a doc-only failure are all
-     scriptable.
-   - Proof: `absent: tools/verify.ps1 :: $Quiet`
-   - Why first: W-6 landed and W-7 is its `Next after:` item and
-     `plans/now/agent-workflow.md`'s last open slice. It owns `tools/verify.ps1`
-      alone, so it collides with neither UI-S-2 (the leading Codex item) nor
-     anything else queued. `tools/slice.ps1 finish` already passes `-Quiet`
-     when it exists, so this switch is the last thing that closeout wants.
-   - Next after: FL-1 (`plans/now/flowers.md` Slice 1) -- by then UI-S-3 will
-     have landed or dropped, clearing the `scripts/hud.gd` overlap that keeps
-     FL-1 out of the lead today.
+1. **[Claude] P-1 -- the check format is a convention, not a check.**
+   - Plan: `plans/now/check-loop.md` -- P-1.
+   - Does: adds a `check_checks()` function to `tools/check_docs.py`, in the
+     style of `check_next_steps()`, that reads `checks/ready.md` and
+     `checks/blocked.md` and fails when an entry heading does not start with
+     an id matching `C-<n> -- `, when an entry has no line beginning `PASS:`,
+     when it has no `Owner:` line naming a plan file that exists, or when two
+     entries share an id. It skips each file's header block -- everything
+     before the first `### ` -- and reuses the existing Markdown-link/path
+     resolution. Nothing outside the checker changes.
+   - Files: `tools/check_docs.py`, `checks/ready.md`, `checks/blocked.md`.
+   - Check: `tools/verify.ps1`, including a deliberate break and repair -- an
+     entry added without an id, or without a `PASS:` line, must fail with a
+     readable message, and both files as they stand today must pass. No
+     hands-on check: the whole slice is a checker and its own fixtures.
+   - Proof: `absent: tools/check_docs.py :: check_checks`
+   - Why first: W-7 landed and completed `plans/now/agent-workflow.md`, so
+     this lane needed a new item. FL-1 was W-7's `Next after:` but still
+     shares `scripts/hud.gd` with UI-S-2, the leading Codex item, so it
+     cannot lead. P-1 was the first entry under "Ready, not yet in the queue"
+     and owns three files no other queued item names.
+   - Next after: FL-1, already second in this lane -- it can lead as soon as
+     either it or UI-S-2 lands and clears the `scripts/hud.gd` pairing.
 
 2. **[Codex] UI-S-2 -- Left-side windows clear the corner readout and scroll.**
    - Plan: `plans/now/ui.md` -- UI-S-2.
@@ -128,9 +126,6 @@ holds five. Take one when a lane empties, in roughly this order.
   its named headless run before it merges.
 - **C2-1** (`plans/now/challenge-2.md` Slice 1) -- a debug button that forces
   a Challenge 2 nectar collapse, so C-5 can be run at all.
-- **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
-  format (id, one action, one PASS line, an owner) enforceable in
-  `tools/check_docs.py`.
 
 ## Not in the queue, and why
 

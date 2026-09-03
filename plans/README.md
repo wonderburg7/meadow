@@ -102,7 +102,7 @@ the archived plan is never reopened or extended.
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/design/colony-diagnostics.md` |
-| W-1..W-7, agent workflow, token cost, queue enforcement | `plans/now/agent-workflow.md` |
+| W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 | Provenance for a shipped slice | `plans/archive/` (search only) |
 
