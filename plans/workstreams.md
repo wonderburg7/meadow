@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/W-7` (`claude/W-7`) | Claude | `verify.ps1` is quiet on success. | Claude | in progress | none | `plans/now/agent-workflow.md` W-7 |
