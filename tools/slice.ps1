@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("start")]
+    [ValidateSet("start", "finish")]
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
@@ -63,6 +63,11 @@ function Get-NextUpItems {
             [System.Text.RegularExpressions.RegexOptions]::Singleline
         )
         $proofMatch = [regex]::Match($chunk, '(?m)^\s*-\s*Proof:\s*`([^`]*)`')
+        $nextAfterMatch = [regex]::Match(
+            $chunk,
+            '(?m)^\s*-\s*Next after:\s*(.*?)(?=^\s*-\s[A-Z]|\z)',
+            [System.Text.RegularExpressions.RegexOptions]::Singleline
+        )
 
         $planLine = if ($planMatch.Success) { $planMatch.Groups[1].Value.Trim() } else { "" }
         $planFile = ""
@@ -89,6 +94,7 @@ function Get-NextUpItems {
             Files   = $files
             Check   = if ($checkMatch.Success) { ($checkMatch.Groups[1].Value -replace '\s+', ' ').Trim() } else { "" }
             Proof   = if ($proofMatch.Success) { $proofMatch.Groups[1].Value.Trim() } else { "" }
+            NextAfter = if ($nextAfterMatch.Success) { ($nextAfterMatch.Groups[1].Value -replace '\s+', ' ').Trim() } else { "" }
         }
     }
     return $items
@@ -224,6 +230,143 @@ function Invoke-SliceStart {
     $result | ConvertTo-Json -Compress
 }
 
+function Invoke-SliceFinish {
+    $worktreeRoot = (Get-Location).Path
+    $root = Get-PrimaryRoot
+
+    if ((Resolve-Path -LiteralPath $worktreeRoot).Path -eq (Resolve-Path -LiteralPath $root).Path) {
+        Write-Error "run 'slice.ps1 finish' from inside a slice worktree, not the primary checkout"
+        exit 1
+    }
+
+    $branch = (git rev-parse --abbrev-ref HEAD).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "not inside a git branch"
+        exit 1
+    }
+    $branchMatch = [regex]::Match($branch, '^(?<prefix>claude|codex)/(?<id>.+)$')
+    if (-not $branchMatch.Success) {
+        Write-Error "not on a slice branch (claude/<id> or codex/<id>): current branch is $branch"
+        exit 1
+    }
+    $id = $branchMatch.Groups["id"].Value
+    $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
+    $worktreeRelative = ".worktrees/$id"
+
+    $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
+    $verifyCmd = Get-Command $verifyScript
+    $verifyArgs = @()
+    if ($verifyCmd.Parameters.ContainsKey("Quiet")) {
+        $verifyArgs += "-Quiet"
+    }
+    try {
+        $verifyOutput = & $verifyScript @verifyArgs 2>&1
+        $verifyExit = $LASTEXITCODE
+    }
+    catch {
+        $verifyOutput = $_ | Out-String
+        $verifyExit = 1
+    }
+    $verifyOutput | ForEach-Object { Write-Output $_ }
+    if ($verifyExit -ne 0) {
+        Write-Error "$id -- tools/verify.ps1 failed; branch left untouched"
+        exit 1
+    }
+
+    $items = Get-NextUpItems -Root $worktreeRoot
+    $item = $items | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+    $handsOnNote = "none needed"
+    if ($item -and $item.Check -match '(?i)hands-on check') {
+        $readyPath = Join-Path $worktreeRoot "checks\ready.md"
+        $currentReady = if (Test-Path -LiteralPath $readyPath) { Get-Content -Raw -LiteralPath $readyPath } else { "" }
+        $masterReady = git -C $root show "master:checks/ready.md"
+        if ($LASTEXITCODE -ne 0) { throw "could not read checks/ready.md from master" }
+        $currentEntries = [regex]::Matches($currentReady, '(?m)^### (C-\d+)') | ForEach-Object { $_.Groups[1].Value }
+        $masterEntries = [regex]::Matches($masterReady, '(?m)^### (C-\d+)') | ForEach-Object { $_.Groups[1].Value }
+        $newEntries = $currentEntries | Where-Object { $masterEntries -notcontains $_ }
+        if (-not $newEntries) {
+            Write-Error "$id -- Check: names a hands-on check but checks/ready.md gained no entry -- file it before finishing"
+            exit 1
+        }
+        $handsOnNote = "checks/ready.md gained $($newEntries -join ', ')"
+    }
+    elseif (-not $item) {
+        Write-Output "$id -- no NEXTSTEPS.md entry found; skipping the hands-on-check gate"
+    }
+
+    git add -A
+    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    $staged = git diff --cached --name-only
+    if ($staged) {
+        $commitMessage = "$id -- finish outstanding work`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        git commit -m $commitMessage | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+    }
+
+    Get-Process -Name "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+    Push-Location $root
+    try {
+        $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
+        if ($primaryBranch -ne "master") {
+            throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
+        }
+
+        $title = if ($item) { $item.Title } else { $id }
+        $mergeMessage = "Merge ${branch}: $title`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        git merge --no-ff $branch -m $mergeMessage
+        if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+
+        git push
+        if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+
+        git worktree remove $worktreeRelative
+        if ($LASTEXITCODE -ne 0) { throw "git worktree remove failed" }
+
+        git branch -d $branch
+        if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+
+        git ls-remote --exit-code --heads origin $branch | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            git push origin --delete $branch
+            if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+        }
+
+        $ledgerPath = Join-Path $root "plans\workstreams.md"
+        $lines = Get-Content -LiteralPath $ledgerPath
+        $keep = $lines | Where-Object { $_ -notlike "*``$worktreeRelative``*" }
+        Set-Content -LiteralPath $ledgerPath -Value $keep
+
+        git add "plans/workstreams.md"
+        if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+        $deleteMessage = "Remove the $id worktree row from the ledger`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        git commit -m $deleteMessage | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+
+        git push
+        if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    }
+    finally {
+        Pop-Location
+    }
+
+    $queueLine = "queue not refilled by 'finish' -- check NEXTSTEPS.md by hand"
+    if ($item -and $item.NextAfter) {
+        $queueLine = "$lane lane now leads with $($item.NextAfter)"
+    }
+
+    Write-Output ""
+    Write-Output "Slice landed: $id -- $title"
+    Write-Output "Branch:       $branch  |  verify.ps1: green"
+    Write-Output "Merged:       yes, to master now"
+    Write-Output "Hands-on:     $handsOnNote"
+    Write-Output "Queue:        $queueLine"
+    Write-Output "Next slice:   see 'Next after:' on the item above, or the owning plan in plans/now/"
+    Write-Output "Other lane:   check NEXTSTEPS.md -- untouched by this merge"
+    Write-Output "Start it with: tools/slice.ps1 start -Lane <lane with a free head>"
+}
+
 switch ($Command) {
-    "start" { Invoke-SliceStart -Lane $Lane }
+    "start"  { Invoke-SliceStart -Lane $Lane }
+    "finish" { Invoke-SliceFinish }
 }

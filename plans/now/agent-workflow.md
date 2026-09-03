@@ -28,52 +28,19 @@ floor) is delivered; see `plans/archive/AGENT_WORKFLOW_W2_2026-09-03.md`.
 W-3 (the `Proof:` line and its `check_docs.py` enforcement) is delivered;
 see `plans/archive/AGENT_WORKFLOW_W3_2026-09-03.md`. W-4 (`tools/slice.ps1
 start`) is delivered; see `plans/archive/AGENT_WORKFLOW_W4_2026-09-03.md`.
+W-5 (`tools/slice.ps1 finish`) is delivered; see
+`plans/archive/AGENT_WORKFLOW_W5_2026-09-03.md`.
 
 | Slice | Outcome | Files owned | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| W-5 | `tools/slice.ps1 finish` closes it atomically | `tools/slice.ps1` | yes | medium |
 | W-6 | Routing is addressable and bounded | `CLAUDE.md`, `tools/heading.py` | yes | low |
 | W-7 | `verify.ps1` is quiet on success | `tools/verify.ps1` | yes | low |
 
-Dependencies: W-5, W-6 and W-7 are independent of everything else and of
-each other.
+Dependencies: W-6 and W-7 are independent of everything else and of each
+other.
 
 Read for any slice: this file's section for it and nothing else. Every slice's
 check is `tools/verify.ps1`, and none of them files a hands-on check.
-
----
-
-W-4 (`tools/slice.ps1 start`) is delivered; see
-`plans/archive/AGENT_WORKFLOW_W4_2026-09-03.md`.
-
-## W-5 — `tools/slice.ps1 finish` closes it atomically
-
-`tools/slice.ps1 finish`, run from inside a slice worktree, in this order,
-stopping at the first failure:
-
-1. `tools/verify.ps1 -Quiet` on the branch. Non-zero → print its output and
-   exit 1 without touching anything.
-2. Exit 1 if the queue item's `Check:` line named a hands-on check and
-   `checks/ready.md` gained no entry. Filing the check is what closes the
-   branch; a branch is never held open waiting for Dave to play-test it.
-3. Commit anything outstanding on the branch.
-4. Before removing the worktree, run `Get-Process Godot* | Stop-Process` — a
-   running Godot instance holding `.worktrees/<id>` blocked two sessions this
-   week.
-5. In the primary checkout: `git merge --no-ff` the branch, push, remove the
-   worktree, delete the branch locally and on the remote, delete the ledger
-   row, and commit that deletion.
-6. Print the end-of-slice report block from `CLAUDE.md` with `Slice landed`,
-   `Branch`, `Merged` and `Queue` already filled from what it just did.
-
-Then cut `CLAUDE.md`'s six-step closeout checklist to one line naming the
-command. W-6 owns `CLAUDE.md`, so either land W-6 first or make that single
-edit part of this slice's commit and say so in the hand-off.
-
-**Acceptance:** finishing a real slice leaves `git worktree list` showing only
-the primary checkout, `git branch -a` without the slice branch,
-`plans/workstreams.md` without its row, and `tools/verify.ps1` green on
-`master`.
 
 ---
 
