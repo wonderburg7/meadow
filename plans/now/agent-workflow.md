@@ -1,7 +1,7 @@
 # Agent workflow — make the process enforce itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Claude | Next: W-4 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Claude | Next: W-6 | Dependency: none | Verified: 2026-09-03
 
 ## Objective
 
@@ -26,60 +26,25 @@ W-1 (a script that measures session cost) is delivered; see
 `plans/archive/AGENT_WORKFLOW_W1_2026-09-03.md`. W-2 (the session-opening
 floor) is delivered; see `plans/archive/AGENT_WORKFLOW_W2_2026-09-03.md`.
 W-3 (the `Proof:` line and its `check_docs.py` enforcement) is delivered;
-see `plans/archive/AGENT_WORKFLOW_W3_2026-09-03.md`.
+see `plans/archive/AGENT_WORKFLOW_W3_2026-09-03.md`. W-4 (`tools/slice.ps1
+start`) is delivered; see `plans/archive/AGENT_WORKFLOW_W4_2026-09-03.md`.
 
 | Slice | Outcome | Files owned | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| W-4 | `tools/slice.ps1 start` claims a slice atomically | `tools/slice.ps1`, `CHATGPT.md` | yes | medium |
-| W-5 | `tools/slice.ps1 finish` closes it atomically | `tools/slice.ps1` | after W-4 | medium |
+| W-5 | `tools/slice.ps1 finish` closes it atomically | `tools/slice.ps1` | yes | medium |
 | W-6 | Routing is addressable and bounded | `CLAUDE.md`, `tools/heading.py` | yes | low |
 | W-7 | `verify.ps1` is quiet on success | `tools/verify.ps1` | yes | low |
 
-Dependencies: W-4 → W-5 (same file). W-4, W-6 and W-7 are independent of
-everything else and of each other.
+Dependencies: W-5, W-6 and W-7 are independent of everything else and of
+each other.
 
 Read for any slice: this file's section for it and nothing else. Every slice's
 check is `tools/verify.ps1`, and none of them files a hands-on check.
 
 ---
 
-## W-4 — `tools/slice.ps1 start` claims a slice atomically
-
-One command replaces "open `NEXTSTEPS.md`, add your row, branch, create a
-worktree". `CHATGPT.md` line 25 and `NEXTSTEPS.md` line 12 disagree about who
-writes the ledger row; giving it to a script both agents call settles that.
-
-`tools/slice.ps1 start -Lane Claude|Codex`:
-
-1. Resolve the primary checkout with `git rev-parse --git-common-dir` and take
-   its parent. Every path below is relative to that, never to `$PWD`.
-2. Parse `## Next up` in `NEXTSTEPS.md`. Take the first item tagged with the
-   requested lane that has no row in `plans/workstreams.md`.
-3. Evaluate that item's `Proof:` line using the two forms W-3 defines. If it
-   does not hold, print
-   `<id>: proof no longer holds -- open <path>; do not start this slice` and
-   exit 1.
-4. Append the ledger row to `plans/workstreams.md` **in the primary checkout**,
-   commit it there with the message `Register the <id> worktree in the ledger`,
-   then `git worktree add .worktrees/<id> -b <prefix>/<id>`, where the prefix
-   is `claude` or `codex`, lower-cased.
-5. Print compact JSON on stdout and nothing else:
-   `{"id","plan","heading","files":[],"check","proof","branch","worktree"}`.
-
-Exit 1 with one line of explanation if the lane has no unclaimed item, a branch
-or worktree of that name already exists, or the ledger already holds a row for
-that lane.
-
-Then replace the prose it supersedes with the command: `CHATGPT.md`'s
-workstream-registration paragraph, and `NEXTSTEPS.md`'s "Implement the next
-slice means" paragraph, each become one line naming `tools/slice.ps1 start`.
-
-**Acceptance:** `tools/slice.ps1 start -Lane Claude` prints the JSON, the
-worktree exists, the ledger row is committed on `master`, and
-`tools/verify.ps1` passes from inside the new worktree. A second run for the
-same lane exits 1.
-
----
+W-4 (`tools/slice.ps1 start`) is delivered; see
+`plans/archive/AGENT_WORKFLOW_W4_2026-09-03.md`.
 
 ## W-5 — `tools/slice.ps1 finish` closes it atomically
 
