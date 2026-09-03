@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-R-2` (`codex/UI-R-2`) | Codex | Pre-run menu: the left edge still needs more room. | Codex | in progress | none | `plans/now/ui.md` UI-R-2 |
+| `.worktrees/C2-1` (`claude/C2-1`) | Claude | A Challenge 2 nectar collapse cannot be made to happen. | Claude | in progress | none | `plans/now/challenge-2.md` Slice 1 |
