@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/fe-4` (`claude/fe-4`) | Claude | Recruitment-dance highlight ring + `show_recruitment_highlight` Session preference | Claude Code | in progress | none | `plans/active/foraging-evidence.md` -- Slice 4 |
