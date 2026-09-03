@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 13 (the queen's "Now:" line names mechanics Challenge 1 has not taught), Claude lane | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 7's acceptance playthrough -- Dave's run, not a queue slice; every code slice in this plan is done | Dependency: none | Verified: 2026-09-03
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -214,7 +214,7 @@ passes, and a bare assignment inside `autonomous_state()` itself passes.
 
 **Still to confirm by playing:** `checks/ready.md` § Challenge 1 Bundle D.
 
-## Slice 13 — The queen's "Now:" line says things Challenge 1 has not taught
+## Slice 13 — The queen's "Now:" line says things Challenge 1 has not taught — DONE 3 Sep 2026
 
 **Ask (Dave, 2 Sep 2026):** the summary panel's "Now:" text options for the
 queen should be reviewed so nothing appears that is not relevant to the
@@ -252,18 +252,38 @@ the Challenge deliberately has not reached yet.
   `role_restricted_to` is non-empty -- that is already the exact signal
   that a Challenge is limiting which roles exist for this bee.
 
-**Acceptance.** Play Challenge 1 to 1.14 with the queen selected the whole
-way and read the "Now:" line at every stage: every line names something the
-player has already been shown. Outside a Challenge the line is unchanged --
-check a scouting forager still reads "scouting: bout 1 of 3…" in a Scenario.
+**Built (3 Sep 2026, `claude/c1-13`).** All three parts as specified, in
+`scripts/bee.gd` only:
 
-**Check:** `tools/verify.ps1`. One hands-on check to file: the read-through
-above.
+- `challenge_vocabulary_limited()` sits beside the two description
+  functions and uses the same `is_instance_valid(world)` guard as
+  `bee_foraging.gd`'s `_c1_queen_collections` line.
+- `CHALLENGE_TAUGHT_STATES` is one const list of the permitted states, read
+  by both `task_description()` and `idle_reason()` -- one decision, two
+  call sites, and no second copy of the vocabulary. Outside the set,
+  `task_description()` returns `"busy in the hive"` and `idle_reason()`
+  returns `""`.
+- `_idle_backup_note()` returns `""` whenever `role_restricted_to` is
+  non-empty, so the backup-role note cannot appear before backup roles
+  exist for that bee.
 
-**Files:** `scripts/bee.gd`.
+Nothing outside a Challenge changes: both gates are inert while
+`challenge_runner` is null or inactive. `tools/verify.ps1` green,
+`FUNCTION_MAP.md` regenerated for the new function, and a headless Godot
+4.7.1 boot ran clean -- which is what proves the const list folds at parse
+time.
+
+**Acceptance (Dave's, now filed as a check).** Play Challenge 1 to 1.14
+with the queen selected the whole way and read the "Now:" line at every
+stage: every line names something the player has already been shown.
+Outside a Challenge the line is unchanged -- check a scouting forager
+still reads "scouting: bout 1 of 3…" in a Scenario.
 
 **Next after:** Slice 7's acceptance pass, which is Dave's, not a queue
-slice.
+slice. With this landed, every code slice in this plan is done.
+
+**Still to confirm by playing:** `checks/ready.md` § Challenge 1
+selection-panel vocabulary (Slice 13).
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 
