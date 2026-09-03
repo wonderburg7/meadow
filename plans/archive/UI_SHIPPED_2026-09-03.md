@@ -321,3 +321,29 @@ internal scrolling when necessary, and opening one closes the other two.
 **Evidence.** `tools/verify.ps1` passed; hands-on check C-13 is filed in
 `checks/ready.md`.
 
+### UI-S-4 — a second right-click sometimes does nothing and drops the selection — shipped 3 Sep 2026
+
+**Symptom (Dave, 3 Sep).** A second right-click command could appear to do
+nothing and leave the queen unselected.
+
+**Diagnosed.** The command choke point was reached for every right-click and
+did not itself clear selection. The observable ambiguity was that a
+command-locked selection was silently filtered out while its command tray
+was hidden; an invalid node could also remain in `selected_bees` until a
+later command.
+
+**Landed.** `input_selection.gd::_issue_command()` now prunes invalid
+selections at its boundary, snapshots every selected bee, and writes one
+`DiagnosticLog.command_issue` event for every right-click. The event records
+selected and commandable counts, the exit/return/cell/flower/move or refusal
+branch, and each selected bee's id and state before and after the command.
+When no selected bee can take orders, it does not draw the click marker and
+uses the keyed warning channel to say "She cannot take orders right now."
+
+**Acceptance.** A refused command is visible rather than reading as a lost
+selection, and the diagnostic log provides the evidence to distinguish a
+command lock from a same-frame UI refresh on the next reproduction.
+
+**Evidence.** `tools/verify.ps1` passed; hands-on check C-14 is filed in
+`checks/ready.md`.
+

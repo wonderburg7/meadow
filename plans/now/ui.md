@@ -200,65 +200,12 @@ Archived: UI-S-3's command-tray reflow and viewport cap shipped 3 Sep 2026;
 its specification is at `plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on
 check C-12 is filed in `checks/ready.md`.
 
-### UI-S-4 — a second right-click sometimes does nothing and drops the selection
-
-**Symptom (Dave, 3 Sep).** "Sometimes when I try to move the queen twice
-(i.e. a right-click followed by a second right-click) -- and this may count
-for other bees -- she doesn't move and becomes unselected."
-
-**What has been ruled out by reading the code, so the next session does not
-repeat it.** `input_selection.gd::_issue_command` is reached on every
-right-click press (`_unhandled_input`, `MOUSE_BUTTON_RIGHT`, `event.pressed`),
-does not clear the selection on any branch, and `Bee.command_move_to` is
-re-entrant (it re-derives the target and re-assigns the state; the
-`_release_everything()` after it does not touch `move_target`). No
-right-click path calls `set_selected(false)` or `selected_bees.clear()`.
-`ClickMarker` is a plain `Node2D` and cannot swallow input.
-
-**Two candidate causes, both reachable from a second right-click.**
-
-1. **The command was rejected, and the rejection reads as a deselection.**
-   `_issue_command` returns early when every selected bee is filtered out
-   by `challenge_runner.is_bee_command_locked(b)`, and
-   `hud.update_selection` hides the whole command tray for a locked
-   selection (`command_tray.visible = ... and not
-   _selection_has_command_lock(bees)`). A bee that stays selected but loses
-   her tray looks unselected.
-2. **A stage or panel refresh rebuilt the selection under the click.**
-   `challenge_runner._apply_stage_gate_to_ui()` ends with
-   `main.hud.update_selection(main.selected_bees)`, which is also what
-   clears camera-follow (see `plans/now/challenge-1.md` Slice 14). If a
-   command completes a stage, the refresh lands in the same frame as the
-   second click.
-
-**Fix — make the answer visible first, then act on it. Both parts ship
-together.**
-
-- a) Instrument the choke point: in `_issue_command`, log one
-  `DiagnosticLog` event per right-click with the selected count, the
-  commandable count, the branch taken (exit / return / cell / flower /
-  move), and each target bee's id and state before and after. Follow the
-  shape of an existing `DiagnosticLog.log_*` helper; this is a diagnostic
-  event, not a `print`.
-- b) Fix what is already provably wrong regardless of which cause it is: a
-  right-click that commands nothing must not silently do nothing. When
-  `commandable` is empty, do not draw the click marker, and show the
-  existing warning-banner channel's "she cannot take orders right now"
-  message (`hud.show_warning`, keyed so it throttles). When a selected bee
-  has become invalid, prune it from `main.selected_bees` and refresh the
-  selection rather than filtering it out silently on every click.
-
-**Acceptance.** `tools/verify.ps1` passes. A right-click that cannot be
-obeyed says so instead of appearing to do nothing. The diagnostic log
-records every command issue, so Dave's next reproduction pins the cause to
-one branch.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file: reproduce the
-double right-click, then send the run's diagnostic log; the follow-up fix
-is scoped from that, not guessed.
-
-**Files:** `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
-`scripts/hud.gd`.
+**UI-S-4:** shipped 3 Sep 2026. Every right-click now records its selected
+and commandable counts, command branch, and target state transition; a
+refused command shows a throttled warning instead of silently doing nothing.
+Invalid selections are pruned at the command boundary. Its specification is
+archived in `plans/archive/UI_SHIPPED_2026-09-03.md`; hands-on check C-14 is
+filed in `checks/ready.md`.
 
 ## UI-Q — the warning banner: one open decision
 

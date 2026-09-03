@@ -21,20 +21,17 @@ decided.
 
 ## Next up
 
-1. **[Codex] UI-S-4 -- A refused command says so, at one instrumented choke point.**
-   - Plan: `plans/now/ui.md` -- UI-S-4.
-   - Does: instruments every right-click command issue, shows a throttled
-     warning instead of silently refusing a command, and removes invalid
-     selections rather than making them appear to vanish.
-   - Files: `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
-     `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: reproduce the
-     double right-click, then send the run's diagnostic log so its cause is
-     pinned to one branch rather than guessed.
-   - Proof: `absent: scripts/input_selection.gd :: DiagnosticLog`
-   - Why first in this lane: UI-S-2 landed and explicitly promotes it. It does
-     not overlap P-3, the leading Claude item.
-   - Next after: UI-R-2, already fifth in this file.
+1. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
+   - Plan: `plans/now/ui.md` -- UI-R-2.
+   - Does: raises `main_menu.gd`'s `LEFT_PANE_MARGIN` from 16 to 32. One
+     constant; nothing about tile size, spacing, centres or hit-testing
+     changes, so UI-M and UI-P-3 cannot regress.
+   - Files: `scripts/main_menu.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
+     sits comfortably clear of the screen edge and tile clicking is
+     unchanged.
+   - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
+   - Next after: FL-2, already fifth in this lane.
 
 2. **[Claude] P-3 -- Developer triggers have no home, and two slices are about to build one each.**
    - Plan: `plans/now/check-loop.md` -- P-3.
@@ -100,18 +97,21 @@ decided.
    - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
      with its named headless run to quote before it merges.
 
-5. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
-   - Plan: `plans/now/ui.md` -- UI-R-2.
-   - Does: raises `main_menu.gd`'s `LEFT_PANE_MARGIN` from 16 to 32. One
-     constant; nothing about tile size, spacing, centres or hit-testing
-     changes, so UI-M and UI-P-3 cannot regress.
-   - Files: `scripts/main_menu.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
-     sits comfortably clear of the screen edge and tile clicking is
-     unchanged.
-   - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
-   - Next after: nothing queued in this lane yet -- pull the next ready
-     `plans/now/ui.md` slice when it lands.
+5. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+   - Plan: `plans/now/flowers.md` -- Slice 2.
+   - Does: gives out-of-season flowers a small recharge floor, faster ageing
+     and rarer seeding, using three explicit `GameConfig` balance values.
+   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
+     `scripts/flower_species.gd`.
+   - Check: `tools/verify.ps1`, plus baseline and branch runs of
+     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
+     in the plan. One hands-on check to file: the year-round species mix
+     visibly follows the seasons without collapsing.
+   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
+   - Why here: it has no dependency on FL-1 and shares no file with the
+     current Claude work; the plan makes its required headless comparison
+     explicit before merge.
+   - Next after: none -- this plan then has no open slice.
 
 ## Ready, not yet in the queue
 
