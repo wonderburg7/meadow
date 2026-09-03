@@ -2,10 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 3 Sep 2026 after C1-12 landed.
-C1-12 named Challenge 1's "the player drives this bee" rule once and made it
-enforceable, so the Claude lane now leads with UI-R-1 and C1-13 has been
-promoted from the ready list to fill the gap.
+Five ready slices in two lanes, rewritten 3 Sep 2026 after UI-R-1 landed.
+UI-R-1 replaced the command tray's centred anchor and `0.924` fudge factor
+with an explicit left edge, so the Claude lane now leads with HC-8 and FE-4
+has been promoted from the ready list to fill the gap.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,21 +21,20 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] UI-R-1 -- The command tray sits off-centre, overhangs the
-   screen and covers Dr Gallerin's bubble.**
-   - Plan: `plans/now/ui.md` -- UI-R-1.
-   - Does: the tray is anchored `PRESET_CENTER_BOTTOM`, i.e. centred on the
-     viewport, while its two reserves are unequal (390 left, 544 right). The
-     plan works the arithmetic: it lands 77px right of the band's true
-     centre, and the `0.924` fudge factor only claws back half of that.
-     Replaces the factor with an explicit left edge and a named side gap in
-     `ui_layout.gd`, and anchors the tray to it.
-   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: fully on screen
-     at 1920/1280/800, one gap from the summary panel, never inside
-     Gallerin's reserve, and UI-P-8's wrap behaviour intact.
-   - Why first: it was next in this lane, and it shares no file with X3.
-   - Next after: HC-8.
+1. **[Claude] HC-8 -- Cell highlight borders do not follow the cell
+   sprite's silhouette.**
+   - Plan: `plans/now/hive-comb.md` -- Slice 8.
+   - Does: `hive_cell.gd` builds five outlines and only `selection_ring`
+     knows about the cup sprite's raised back wall; the base outline, the
+     designation ring and the nursery zone glow/halo still trace the flat
+     hex and cut through it. Routes all five through one helper that makes
+     the silhouette decision once.
+   - Files: `scripts/hive_cell.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
+     follow the cup with Cell art on, and revert instantly when it is off.
+   - Why first: UI-R-1 landed ahead of it in this lane, and it shares no
+     file with X3.
+   - Next after: C1-13.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -52,31 +51,7 @@ what to do -- this file already decided.
      shares no file with anything in the Claude lane.
    - Next after: UI-R-2.
 
-3. **[Claude] HC-8 -- Cell highlight borders do not follow the cell
-   sprite's silhouette.**
-   - Plan: `plans/now/hive-comb.md` -- Slice 8.
-   - Does: `hive_cell.gd` builds five outlines and only `selection_ring`
-     knows about the cup sprite's raised back wall; the base outline, the
-     designation ring and the nursery zone glow/halo still trace the flat
-     hex and cut through it. Routes all five through one helper that makes
-     the silhouette decision once.
-   - Files: `scripts/hive_cell.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
-     follow the cup with Cell art on, and revert instantly when it is off.
-   - Next after: C1-13.
-
-4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
-   - Plan: `plans/now/ui.md` -- UI-R-2.
-   - Does: raises `main_menu.gd`'s `LEFT_PANE_MARGIN` from 16 to 32. One
-     constant; nothing about tile size, spacing, centres or hit-testing
-     changes, so UI-M and UI-P-3 cannot regress.
-   - Files: `scripts/main_menu.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
-     sits comfortably clear of the screen edge and tile clicking is
-     unchanged.
-   - Next after: UI-R-3.
-
-5. **[Claude] C1-13 -- The queen's "Now:" line says things Challenge 1 has
+3. **[Claude] C1-13 -- The queen's "Now:" line says things Challenge 1 has
    not taught.**
    - Plan: `plans/now/challenge-1.md` -- Slice 13.
    - Does: `bee.gd::task_description()` and `idle_reason()` are one large
@@ -90,21 +65,44 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: read the "Now:"
      line at every stage to 1.14 with the queen selected, and confirm a
      Scenario scout still reads "scouting: bout 1 of 3...".
-   - Why here: promoted from the ready list when C1-12 landed; it is the
-     last Challenge 1 code slice before Slice 7's acceptance pass, which is
-     Dave's to run.
-   - Next after: this lane then pulls from
-     `plans/active/foraging-evidence.md` (Slice 4) or
-     `plans/now/settings-persistence.md` (Slice 1) -- both are ready.
+   - Why here: it is the last Challenge 1 code slice before Slice 7's
+     acceptance pass, which is Dave's to run.
+   - Next after: FE-4.
+
+4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
+   - Plan: `plans/now/ui.md` -- UI-R-2.
+   - Does: raises `main_menu.gd`'s `LEFT_PANE_MARGIN` from 16 to 32. One
+     constant; nothing about tile size, spacing, centres or hit-testing
+     changes, so UI-M and UI-P-3 cannot regress.
+   - Files: `scripts/main_menu.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
+     sits comfortably clear of the screen edge and tile clicking is
+     unchanged.
+   - Next after: UI-R-3.
+
+5. **[Claude] FE-4 -- A recruitment dance is happening and cannot be found
+   on screen.**
+   - Plan: `plans/active/foraging-evidence.md` -- Slice 4.
+   - Does: adds a `Session` preference `show_recruitment_highlight` (a
+     presentation key, not a `GameConfig` one) with an Appearance row in
+     `settings_catalogue.gd`, plus a fifth `dance_ring` on `bee.gd` at
+     `outline_radius + 17.0` and an `_update_dance_ring()` modelled line for
+     line on the existing `_update_search_ring()`. Mentor and seeker get
+     different colours so the pair reads as a pair.
+   - Files: `scripts/bee.gd`, `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. The hands-on check is already filed and
+     waiting under `checks/ready.md` § Proximity recruitment (Slice 9).
+   - Why here: promoted from the ready list when UI-R-1 landed. It shares
+     `bee.gd` with C1-13, which is fine -- both are in this lane, so they
+     are worked one after the other, never at once.
+   - Next after: this lane then pulls SP-1
+     (`plans/now/settings-persistence.md` Slice 1), which is ready.
 
 ## Ready, not yet in the queue
 
 These pass the admission test and are only out because the queue holds five.
 Promote from here when a lane empties; no extra decision is needed.
 
-- **FE-4** (`plans/active/foraging-evidence.md` Slice 4) -- a settings
-  toggle that rings the two bees in a recruitment dance, so a match can
-  actually be seen happening. Follows `search_ring`'s existing pattern.
 - **SP-1** (`plans/now/settings-persistence.md` Slice 1) -- picking a
   Scenario resets only the keys a preset owns, instead of wiping every
   `GameConfig` field including the ones the player set by hand.

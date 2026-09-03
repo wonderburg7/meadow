@@ -203,6 +203,22 @@ Bundle D hand-over check above passes.
 - [ ] Review all seven slices end to end -- see `git log` for the
       slice-by-slice detail.
 
+### Command tray placement (UI-R-1)
+- [ ] Select a bee so the command tray shows, then look at the bottom row at
+      1920, 1280 and 800 wide. The whole tray should be on screen, its left
+      edge one 16px gap right of the summary panel, its bottom level with the
+      panel's, and its right edge clear of Dr Gallerin -- check with a speech
+      bubble showing and with none. Resize the window while the tray is
+      visible: it should move and re-cap, not just re-cap. Narrowing should
+      still wrap the Job/Focus/Orders groups onto further rows rather than
+      growing the tray into either neighbour (UI-P-8's own acceptance).
+- [ ] At 800 wide specifically, the summary panel is now noticeably narrower
+      than before (139px against 268px). That is the deliberate trade: below
+      about 1150px the tray hits its 200px floor, and the slice chose "never
+      cross into Gallerin's reserve" over "keep the panel wide". Say if the
+      panel is too cramped to read there -- the alternative is letting the
+      tray overlap Gallerin at the very narrow end instead.
+
 ### Warning banner: one throttle at the channel (C2, UI-Q-1/UI-Q-2)
 Moved to `checks/blocked.md` on 2 Sep -- there is no way to trigger two
 throttled events on demand, so this check cannot currently produce
