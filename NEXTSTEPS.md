@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after C1-15 landed.
+Five ready slices in two lanes, refilled 3 Sep 2026 after HC-9 landed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -18,29 +18,25 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] HC-9 -- Cut the cell rings from the sprite's measured
-   silhouette, not from a hexagon with a nudge.**
-   - Plan: `plans/now/hive-comb.md` -- Slice 9.
-   - Does: `hive_cell.gd::_set_outline_points_cup()` builds every ring
-     (base, designation, selection, nursery glow/halo) from a regular
-     hexagon with two corners nudged up, but the cup sprite is an
-     eight-cornered shape with a flat top, flat bottom and vertical sides
-     -- so the rings never sit on the art. Adds a const holding the
-     silhouette measured off the sprite's own alpha, a helper that maps a
-     silhouette point into the cell's local space with the exact arithmetic
-     `_ready()` already uses to place `empty_sprite`, and rewrites
-     `_set_outline_points_cup` to walk that silhouette and scale it per
-     ring instead of nudging hexagon corners.
-   - Files: `scripts/hive_cell.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: with Cell art
-     on, at both Sprite-aligned hex grid settings, all five rings trace the
-     cup's own silhouette and stay visibly separated; with Cell art off,
-     every ring still returns to the flat hex.
-   - Why first: it shares no file with X3, and it is the only other
-     "either lane" slice with no outstanding dependency.
-   - Next after: refill from `## Ready, not yet in the queue` when this
-     lands; `plans/now/hive-comb.md` has nothing else ready (Slices 4 and 5
-     still need Dave's live look).
+1. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
+   - Plan: `plans/now/flowers.md` -- Slice 1.
+   - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
+     summary panel every frame it's open and already prints both effective
+     rates, but says nothing about age or season. Builds one extra line --
+     age in days against lifespan, and "in season (NN%)" / "out of season" /
+     "seasons off" -- and puts it in `trait_label` above the scent-mark text
+     (joined with a newline, not replacing it) using `age_seconds`,
+     `lifespan_seconds` and `season_strength()`, all already public on
+     `flower.gd`. Nothing new is computed in `flower.gd`.
+   - Files: `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: click a flower
+     and the panel shows its age against its lifespan and whether it's in
+     or out of season; watching one across a season boundary flips the line
+     at the same moment the `+/s` figures fall away.
+   - Why first: it shares no file with X3, HC-9 landed and
+     `plans/now/hive-comb.md` has nothing else ready.
+   - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
+     needs its named headless run before it merges.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -118,8 +114,6 @@ holds five. Take one when a lane empties, in roughly this order.
 - **UI-S-4** (`plans/now/ui.md`) -- a second right-click sometimes does
   nothing and appears to deselect the bee: instrument the command choke
   point and make a refused command say so.
-- **FL-1** (`plans/now/flowers.md` Slice 1) -- age and in/out-of-season on
-  the flower summary panel.
 - **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
   non-zero rate, faster ageing and rarer seeding. A balance change: it needs
   its named headless run before it merges.

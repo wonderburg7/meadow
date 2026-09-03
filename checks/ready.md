@@ -29,6 +29,25 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-9 -- cell highlight rings follow the cup sprite's own silhouette
+
+Shipped 3 Sep 2026, replacing the failed Slice 8 entry. With Cell art on, at
+both settings of Sprite-aligned hex grid, check every ring on a cell: the base
+outline, the designation ring (right-click a cell and pin it to a resource),
+the selection ring (multi-select), and the nursery glow/halo (open the
+nursery window). Each should trace the cup sprite's own flat-topped,
+vertical-sided shape, not a hexagon, and none should cut across the sprite's
+edge. Turn Cell art off and confirm every ring reverts to the flat hex within
+a fraction of a second. Check a part-built cell too -- its stub outline
+should stay flat at both settings.
+
+PASS: at both hex-grid settings, all five rings trace the cup's own
+silhouette with no ring cutting through the sprite, the five stay visibly
+separated from each other, Cell art off returns every ring to the flat hex,
+and a part-built cell's stub outline stays flat throughout.
+
+Owner: `plans/now/hive-comb.md` Slice 9.
+
 ### C-1 -- a flower under forager pressure no longer reads as pinned
 
 Shipped 31 Aug 2026, still unconfirmed. `nearest_flower()` now skips any

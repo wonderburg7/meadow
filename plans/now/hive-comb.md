@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 9 (rings cut from the sprite's measured silhouette), either lane -- queued as HC-9 in NEXTSTEPS.md | Dependency: none for Slice 9; Slices 4 and 5 still need Dave's live look | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: none startable -- Slices 4 and 5 still need Dave's live look, see checks/ready.md C-9 for Slice 9's hands-on check | Dependency: Slices 4 and 5 need Dave's live look | Verified: 2026-09-03
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -51,7 +51,7 @@ over a 35%-size stub. No ring's size argument, `EMPTY_TEXTURE_BASE_Y`,
 do not follow the art. Routing them all through one helper was right and
 is kept; the silhouette that helper draws is wrong. See Slice 9.
 
-## Slice 9 -- Rings must be cut from the sprite's measured silhouette, not from a hexagon with a guess added to it
+## Slice 9 -- Rings must be cut from the sprite's measured silhouette, not from a hexagon with a guess added to it (shipped 3 Sep 2026)
 
 **Symptom (Dave, 3 Sep 2026, re-running Slice 8's check).** "Cell highlight
 borders: still not in alignment." The flat-hex half of that check passed --
