@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: P-3 (one home for developer triggers), either lane | Dependency: P-3 before ui.md UI-R-3 and challenge-2 Slice 1; P-2 after UI-S-1 and UI-S-2 | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: P-2 (one owner for panel rectangles), after UI-S-1 and UI-S-2 | Dependency: P-2 after UI-S-1 and UI-S-2 | Verified: 2026-09-03
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -15,17 +15,14 @@ change so the same failures stop recurring.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| P-3 | One "Triggers" section in the developer area, before anything needs it | `scripts/debug_panel.gd` | yes | low |
 | P-2 | No HUD panel carries its own literal `offset_*` | `tests/source_checks.py` | after UI-S-1 and UI-S-2 | medium |
 
-**Dependency order, and why it changed on 3 Sep 2026.** P-3 was originally
-scheduled *after* `plans/now/ui.md` UI-R-3 and `plans/now/challenge-2.md`
-Slice 1, to gather up the buttons they each added. That is rework by
-construction: both would write a row into `challenge_row` that P-3 then
-rewrites, and all three own `scripts/debug_panel.gd`, so they cannot run in
-parallel lanes either. **P-3 now goes first and builds the empty section;
-UI-R-3 and C2-1 each add one button into it.** P-2 still runs last -- it
-enforces numbers that UI-S-1 and UI-S-2 have not moved yet.
+**Dependency order.** P-3 landed on 3 Sep 2026 and built the empty
+"Triggers" group, so `plans/now/ui.md` UI-R-3 and
+`plans/now/challenge-2.md` Slice 1 each now drop a single button into it --
+in that order, in one lane, because all three own `scripts/debug_panel.gd`.
+Its specification is in `plans/archive/CHECK_LOOP_P3_2026-09-03.md`. P-2 still
+runs last: it enforces numbers that UI-S-1 and UI-S-2 have not moved yet.
 
 **Required reading.** This file's own P-section, plus `tests/source_checks.py`
 for the style P-2 follows. Nothing else.
@@ -120,44 +117,6 @@ inset from a number that belongs in `ui_layout.gd`.
 
 **Next after:** none — this plan is then complete.
 
-## P-3 — one home for developer triggers, built before anything needs it
-
-**Why this comes first, not last.** Two slices already exist solely to make a
-rare state reachable -- `plans/now/ui.md` UI-R-3 (fire three warning-banner
-cases) and `plans/now/challenge-2.md` Slice 1 (force a nectar collapse) --
-and durable rule 3 above guarantees more. If each adds its button to
-`challenge_row` and this slice then moves them, both do their layout work
-twice. Building the empty section first also un-collides the queue: all three
-slices own `scripts/debug_panel.gd`, so they can never run in parallel lanes.
-
-**Fix.** In `debug_panel.gd`, promote the existing `challenge_row` into a
-labelled "Triggers" group in the developer area: a small header, one
-`UI.with_info` badge on the header saying that everything in the group forces
-a simulation state that is otherwise rare, and the existing "Advance
-Challenge stage" button moved into it unchanged. Follow the `_style_button` +
-`UI.with_info` pattern the row already uses.
-
-**In scope:** the group, its header, its badge, and moving the one existing
-button into it. **Out of scope:** any new trigger (UI-R-3 and C2-1 add their
-own), and any change to what "Advance Challenge stage" does. **Must not
-change:** the developer-area visibility gate -- nothing in the group is
-reachable in ordinary play.
-
-**Acceptance.** The developer area shows a "Triggers" group whose badge
-explains what it is for; "Advance Challenge stage" sits inside it and behaves
-exactly as before; nothing in the group appears outside the developer area.
-
-**Check:** `tools/verify.ps1`. No hands-on check -- nothing observable to a
-player changes, and by durable rule 4 a check whose failure would change
-nothing is not filed.
-
-**Files:** `scripts/debug_panel.gd`.
-
-**Reasoning level:** low. One file, one existing pattern, no simulation or
-save surface.
-
-**Next after:** P-2, once UI-S-1 and UI-S-2 have landed.
-
 <!-- LAYER: on-demand -->
 
 - The queue's own rules and the enforcement that keeps them true:
@@ -165,5 +124,5 @@ save surface.
   queue true").
 - The source-check style both P-1 and P-2 follow:
   `tests/source_checks.py`.
-- The two triggers that land in P-3's section afterwards:
+- The two triggers that land in P-3's delivered Triggers group:
   `plans/now/ui.md` UI-R-3, `plans/now/challenge-2.md` Slice 1.

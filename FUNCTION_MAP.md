@@ -242,7 +242,7 @@ A bee's dispatch loop, player commands, display text, vars.
 2440 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (777 lines)
+## debug_panel.gd (791 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -257,32 +257,32 @@ restart.
 230  func open_to_categories(categories: Array) -> void
 248  func _make_section(category: String, entries: Array, start_open: bool) -> Control
 302  func _make_controls_help() -> Control
-335  func _build_actions(column: VBoxContainer) -> void
-377  func _make_winter_action() -> Control
-389  func _on_winter_pressed() -> void
-395  func _on_challenge_advance_pressed() -> void
-406  func set_save_load_enabled(enabled: bool) -> void
-414  func set_toggle(key: String, value: bool) -> void
-419  func _on_save_pressed() -> void
-430  func _on_load_pressed() -> void
-442  func _toggle_panel() -> void
-456  func _apply_layer_for_context() -> void
-461  func _make_row(entry: Dictionary) -> Control
-504  func _make_control_slot() -> HBoxContainer
-513  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-543  func _make_toggle_row(entry: Dictionary) -> Control
-614  func _make_options_row(entry: Dictionary) -> Control
-647  func _option_display(entry: Dictionary, value) -> String
-651  func _cycle_option(entry: Dictionary, direction: int) -> void
-666  func _cascade_prerequisites_on(key: String) -> void
-680  func _cascade_dependents_off(key: String) -> void
-688  func _cascade_mutual_exclusion(key: String) -> void
-697  func _make_star_row(entry: Dictionary) -> Control
-738  func _adjust(entry: Dictionary, delta: float) -> void
-753  func _format_value(v) -> String
-760  func _on_restart_pressed() -> void
-765  func _on_main_menu_pressed() -> void
-773  func _restart() -> void
+336  func _build_actions(column: VBoxContainer) -> void
+391  func _make_winter_action() -> Control
+403  func _on_winter_pressed() -> void
+409  func _on_challenge_advance_pressed() -> void
+420  func set_save_load_enabled(enabled: bool) -> void
+428  func set_toggle(key: String, value: bool) -> void
+433  func _on_save_pressed() -> void
+444  func _on_load_pressed() -> void
+456  func _toggle_panel() -> void
+470  func _apply_layer_for_context() -> void
+475  func _make_row(entry: Dictionary) -> Control
+518  func _make_control_slot() -> HBoxContainer
+527  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+557  func _make_toggle_row(entry: Dictionary) -> Control
+628  func _make_options_row(entry: Dictionary) -> Control
+661  func _option_display(entry: Dictionary, value) -> String
+665  func _cycle_option(entry: Dictionary, direction: int) -> void
+680  func _cascade_prerequisites_on(key: String) -> void
+694  func _cascade_dependents_off(key: String) -> void
+702  func _cascade_mutual_exclusion(key: String) -> void
+711  func _make_star_row(entry: Dictionary) -> Control
+752  func _adjust(entry: Dictionary, delta: float) -> void
+767  func _format_value(v) -> String
+774  func _on_restart_pressed() -> void
+779  func _on_main_menu_pressed() -> void
+787  func _restart() -> void
 ```
 
 ## settings_catalogue.gd (1,066 lines)
