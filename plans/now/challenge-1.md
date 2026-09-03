@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 14 (the 1.11 hand-over -- the queen parks at the flower and the stage's camera/speed effects cancel themselves), Claude lane, then Slice 15 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 15 (the queen's "Now:" line should tell the player what to do, not narrate what she cannot do), Claude lane | Dependency: none | Verified: 2026-09-03
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -285,7 +285,7 @@ slice. With this landed, every code slice in this plan is done.
 **Still to confirm by playing:** `checks/ready.md` § Challenge 1
 selection-panel vocabulary (Slice 13).
 
-## Slice 14 -- 1.11 hand-over: the queen parks at the flower, and the stage's own camera/speed effects are cancelled as they are set
+## Slice 14 -- 1.11 hand-over: the queen parks at the flower, and the stage's own camera/speed effects are cancelled as they are set -- DONE 3 Sep 2026
 
 **Symptom (Dave, 3 Sep 2026, running Bundle D and the 9i check).** Two
 reports, one stage. (1) Once the player finally gives the queen the Forager
@@ -408,6 +408,35 @@ file: the acceptance above, replacing the 9i clause in `checks/ready.md`.
 **Files:** `scripts/bee_foraging.gd`, `scripts/bee.gd`,
 `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`,
 `tests/source_checks.py`.
+
+**Landed 3 Sep 2026** on `claude/c1-14`, all five parts as written. (a)
+`finish_collecting`'s trailing block is now one `autonomous_state` call:
+`TO_HIVE` when the crop is full **or** the flower is locked, `SEEK_FLOWER`
+otherwise -- the old `if bee.flower_switch_locked: IDLING; return` early
+exit is gone. (b) All five "the flower has gone" sites now read `TO_HIVE if
+...flower_switch_locked else SEEK_FLOWER`: the three in `bee_foraging.gd`
+(`inspect`, `drink_at_flower`, `collect`) plus `bee.gd`'s `_process()`
+`TO_FLOWER` branch and `release_flower_reference`. (c) `_enter_stage()` now
+calls `_run_stage_effects(stage.get("on_enter", []))` as its last statement,
+after `main.gallerin_panel.queue_prompts(...)` and immediately before
+`main.TutorialCheckpoint.save(main)` -- `_apply_stage_gate_to_ui()` now runs
+well before it. (d) 1.11's `on_enter` is just
+`["lock_flower_target:queen"]`; `camera_follow_queen` and
+`speed_multiplier:4.0` fire from a new `_drive_c1_forage_effects()`, called
+from `_process()` every frame Challenge 1 is active, guarded by a new
+`_c1_forage_effects_done` flag (cleared in `start()`, `_enter_stage()` and
+`_complete()`) and firing once the queen is seen in `SEEK_FLOWER`,
+`TO_FLOWER`, `INSPECTING` or `COLLECTING` while the stage id is `"1.11"` or
+`"1.13"`. 1.11's `on_exit` is untouched; 1.13's now also carries
+`camera_follow_off` and `speed_multiplier:1.0`. (e) `tests/source_checks.py`
+gained `check_stage_effects_order`, scanning `challenge_runner.gd`'s
+`_enter_stage()` body for a `_run_stage_effects(` call before
+`_apply_stage_gate_to_ui(`; verified to fire (and to clear once reverted) by
+temporarily reinserting the old top-of-function call during this slice.
+
+`tools/verify.ps1` green, including the new check both broken and repaired.
+Hands-on acceptance is filed in `checks/ready.md` as C-7, replacing the 9i
+clause.
 
 **Next after:** Slice 15.
 

@@ -1033,7 +1033,7 @@ func _process(delta: float) -> void:
 			# the colony within the first week.
 			if current_flower == null or not is_instance_valid(current_flower):
 				current_flower = null
-				state = State.IDLING if flower_switch_locked else State.SEEK_FLOWER
+				state = State.TO_HIVE if flower_switch_locked else State.SEEK_FLOWER
 			else:
 				BeeMovement.move_towards(self, current_flower.position, delta)
 				if position.distance_to(current_flower.position) < arrive_distance:
@@ -1904,7 +1904,7 @@ func release_flower_reference(flower: Node2D) -> void:
 	if current_flower == flower:
 		current_flower = null
 		if state == State.TO_FLOWER or state == State.INSPECTING or state == State.COLLECTING:
-			state = State.IDLING if flower_switch_locked else State.SEEK_FLOWER
+			state = State.TO_HIVE if flower_switch_locked else State.SEEK_FLOWER
 
 func set_selected(value: bool) -> void:
 	selected = value

@@ -451,7 +451,7 @@ static func start_inspecting(bee: Node2D) -> void:
 static func inspect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
+		bee.state = autonomous_state(bee, State.TO_HIVE if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 	bee.timer -= delta
 	if bee.timer > 0.0:
@@ -482,7 +482,7 @@ static func needs_a_drink(bee: Node2D) -> bool:
 static func drink_at_flower(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
+		bee.state = autonomous_state(bee, State.TO_HIVE if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 
 	var room: float = GameConfig.energy_capacity - bee.energy
@@ -633,7 +633,7 @@ static func _handling_experience_scale(bee: Node2D, species: String) -> float:
 static func collect(bee: Node2D, delta: float) -> void:
 	if bee.current_flower == null or not is_instance_valid(bee.current_flower):
 		bee.current_flower = null
-		bee.state = autonomous_state(bee, State.IDLING if bee.flower_switch_locked else State.SEEK_FLOWER)
+		bee.state = autonomous_state(bee, State.TO_HIVE if bee.flower_switch_locked else State.SEEK_FLOWER)
 		return
 
 	if bee.timer > 0.0:
@@ -709,15 +709,12 @@ static func finish_collecting(bee: Node2D) -> void:
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
-	if bee.flower_switch_locked:
-		bee.state = State.IDLING
-		return
 	# Both arms are the bee's own decision, so a player-driven queen stops at
 	# the flower whatever the crop holds and waits for command_return_only().
-	# The load does not matter: a flower run dry before the crop filled used
-	# to fall through to SEEK_FLOWER, which is the queen foraging on her own
-	# through stages 1.6-1.10.
-	bee.state = autonomous_state(bee, State.TO_HIVE if bee.current_load >= max_capacity(bee) else State.SEEK_FLOWER)
+	# A locked forager may still take her load home, full or not -- what the
+	# lock forbids is going to find a *different* flower, so a full crop or
+	# a locked flower both send her to the hive.
+	bee.state = autonomous_state(bee, State.TO_HIVE if (bee.current_load >= max_capacity(bee) or bee.flower_switch_locked) else State.SEEK_FLOWER)
 
 
 

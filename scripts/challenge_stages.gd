@@ -172,7 +172,7 @@ const STAGES_1 := [
 	{
 		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"goal_text": "Goal: automate nectar gathering.",
-		"on_enter": ["camera_follow_queen", "speed_multiplier:4.0", "lock_flower_target:queen"],
+		"on_enter": ["lock_flower_target:queen"],
 		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "unlock_flower_target:queen", "freeze_bee:queen"],
 		"prompts": [
 			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
@@ -191,7 +191,7 @@ const STAGES_1 := [
 	{
 		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"goal_text": "Goal: automate pollen gathering.",
-		"on_exit": ["freeze_bee:queen"],
+		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
 		"prompts": [
 			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar is fuel. Pollen is protein: less immediately glamorous, biologically indispensable."},
 			{"id": "1.13_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Keep the Forager role, switch the focus to pollen, and gather a small store."},

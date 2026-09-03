@@ -288,6 +288,46 @@ def check_autonomous_transitions(name, lines, problems):
             )
 
 
+STAGE_EFFECTS_FILE = "challenge_runner.gd"
+STAGE_EFFECTS_FUNC = "_enter_stage"
+STAGE_EFFECTS_RUN_CALL = "_run_stage_effects("
+STAGE_EFFECTS_GATE_CALL = "_apply_stage_gate_to_ui("
+
+
+def check_stage_effects_order(name, lines, problems):
+    """challenge_runner.gd::_enter_stage() must run a stage's on_enter
+    effects *after* _apply_stage_gate_to_ui(), not before (Slice 14).
+    _apply_stage_gate_to_ui() ends in update_selection(), whose first line
+    emits follow_bee_toggled(null, false) -- so an effect set earlier in
+    the same function (e.g. camera_follow_queen) is cancelled by the same
+    call that entered the stage, before the stage has finished entering."""
+    if name != STAGE_EFFECTS_FILE:
+        return
+    inside = False
+    run_effects_line = None
+    apply_gate_line = None
+    for i, line in enumerate(lines, 1):
+        if line.startswith(("func ", "static func ")):
+            if inside:
+                break
+            inside = "func %s(" % STAGE_EFFECTS_FUNC in line
+            continue
+        if not inside:
+            continue
+        if STAGE_EFFECTS_RUN_CALL in line and run_effects_line is None:
+            run_effects_line = i
+        if STAGE_EFFECTS_GATE_CALL in line and apply_gate_line is None:
+            apply_gate_line = i
+    if run_effects_line is not None and apply_gate_line is not None and run_effects_line < apply_gate_line:
+        problems.append(
+            "%s:%d  challenge_runner.gd: _enter_stage runs on_enter effects "
+            "before _apply_stage_gate_to_ui -- update_selection() clears "
+            "camera-follow, so the effect is cancelled as it is set. Run the "
+            "effects last."
+            % (name, run_effects_line)
+        )
+
+
 def check_catalogue_alignment(problems):
     """roles.gd's role ids must match bee_enums.gd's Role enum order
     exactly (see roles.gd's own comment on FORAGER..HONEY) -- a role
@@ -472,6 +512,7 @@ def main():
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
         check_autonomous_transitions(name, lines, problems)
+        check_stage_effects_order(name, lines, problems)
         funcs, _members = collect_names(code, source)
         check_calls(name, code, funcs, problems)
 
