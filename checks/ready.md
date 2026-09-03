@@ -34,6 +34,17 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-15 -- pre-run menu left inset
+
+Open the pre-run menu at the usual viewport, then choose several left-pane
+tiles. Confirm the leftmost tile and its text clear the screen edge
+comfortably, and that selecting tiles still works normally.
+
+PASS: the left pane has a clearly comfortable edge buffer, while tile spacing,
+borders and clicking are unchanged.
+
+Owner: `plans/now/ui.md` UI-R-2.
+
 ### C-14 -- double right-click command diagnosis
 
 Reproduce the queen's double-right-click symptom and send the run's diagnostic

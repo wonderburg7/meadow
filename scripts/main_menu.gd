@@ -97,7 +97,7 @@ const GROUPS := [
 ## itself instead of sharing a single narrow scrolling column.
 const HEX_SIZE := 84.0
 const HEX_BORDER_OVERLAP := 3.0
-const LEFT_PANE_MARGIN := 16
+const LEFT_PANE_MARGIN := 32
 ## Horizontal centre-to-centre spacing for a touching row of hexagons
 ## (Dave's 29 Aug request: tiles' side edges meet exactly, no visible
 ## gap) -- 1.5x HEX_SIZE is the standard hex-grid step for a hexagon with
@@ -165,7 +165,7 @@ func _ready() -> void:
 	root.add_child(split)
 
 	# The full-viewport menu still uses the split's responsive 2:1 geometry,
-	# while its left content now begins on the same quiet 16px inset as the HUD.
+	# while its left content now begins on a comfortable 32px inset.
 	var left_margin := MarginContainer.new()
 	left_margin.add_theme_constant_override("margin_left", LEFT_PANE_MARGIN)
 	left_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
