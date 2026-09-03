@@ -7,3 +7,6 @@ _backups/
 # Per-user Claude permissions and temporary task state
 .claude/settings.local.json
 .claude/scheduled-task*.lock
+# Python bytecode caches from tools/
+__pycache__/
+*.pyc
