@@ -13,7 +13,7 @@ completion state, detailed slice specifications or the canonical queue. The
 | --- | --- |
 | UI integrity and accessibility | `plans/now/ui.md` |
 | Challenge 1 revamp, then Challenge 2 | `plans/now/challenge-1.md` |
-| Foraging evidence and default decision | `plans/active/foraging-evidence.md` |
+| Foraging evidence and default decision | `plans/archive/FORAGING_EVIDENCE_2026-09-03.md` (closed) |
 | Skills and colony adaptations | `plans/design/progression.md` |
 
 ## Later, requiring a new design or evidence pass

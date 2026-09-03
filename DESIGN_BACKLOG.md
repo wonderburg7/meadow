@@ -13,7 +13,7 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | --- | --- | --- |
 | Progression, colony adaptations and skills | `plans/design/progression.md` | designed, not scheduled |
 | Challenge 1 revamp / Challenge 2 boundary | `plans/now/challenge-1.md` | Bundle H current |
-| Foraging ecology | `plans/active/foraging-evidence.md` | mechanics built; evidence campaign remains |
+| Foraging ecology | `plans/archive/FORAGING_EVIDENCE_2026-09-03.md` | mechanics built; evidence campaign remains |
 | Predators | `plans/archive/CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
 | UI and accessibility | `plans/now/ui.md` | active, narrow slices only |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/now/hive-comb.md` | active, narrow slices only |

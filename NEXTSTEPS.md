@@ -2,10 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 3 Sep 2026 after FE-4 landed.
-FE-4 was the last of `plans/active/foraging-evidence.md`'s planned slices,
-but filing its check turned up one more that is startable today (FE-5), so
-the Claude lane now leads with SP-1 and follows with that.
+Five ready slices in two lanes, rewritten 3 Sep 2026 after Dave's hands-on
+pass. Eleven of the sixteen checks he ran came back confirmed; the five
+failures are now slices in their owning plans, and the head of the Claude
+lane is the one that blocks his next Challenge 1 run.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,23 +21,31 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
-   hand.**
-   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
-   - Does: `main.gd::_on_scenario_chosen` calls
-     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
-     back over every `GameConfig` field -- including toggles the player set
-     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
-     adds `reset_config_keys()` beside the full reset, and resets only the
-     union of the outgoing preset's keys and the incoming one's.
-   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
-     `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
-     flower/season toggle survives picking a Scenario, and preset A's values
-     do not leak into preset B's run.
-   - Why first: FE-4 landed ahead of it in this lane and this was its
-     `Next after:`. It shares no file with X3.
-   - Next after: FE-5.
+1. **[Claude] C1-14 -- at 1.11 the queen is given the Forager role and then
+   stands still, and the stage's camera-follow never fires.**
+   - Plan: `plans/now/challenge-1.md` -- Slice 14.
+   - Does: two root causes, one stage. `flower_switch_locked` is read as
+     "stop" in six places -- `bee_foraging.gd::finish_collecting()` returns
+     `State.IDLING` before its crop-full test even runs -- so 1.11's
+     `lock_flower_target:queen` parks her at the first flower she finishes.
+     Separately, `challenge_runner.gd::_enter_stage()` runs a stage's
+     `on_enter` effects as its *first* statement and then calls
+     `_apply_stage_gate_to_ui()`, whose `update_selection` emits
+     `follow_bee_toggled(null, false)` -- so `camera_follow_queen` is
+     cancelled by the same function that set it. Fixes the lock's meaning,
+     moves the effects to the end of `_enter_stage`, fires 1.11/1.13's
+     camera and speed when she actually starts foraging, and adds a source
+     check so an effect can never again be undone at entry.
+   - Files: `scripts/bee_foraging.gd`, `scripts/bee.gd`,
+     `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`,
+     `tests/source_checks.py`.
+   - Check: `tools/verify.ps1`, including breaking and repairing the new
+     source check. One hands-on check to file: at 1.11 the camera follows
+     her and the speed goes to 4x as she sets off, and she runs the whole
+     flower/hive/cell loop until the cell is full.
+   - Why first: it is the only thing between Dave and the Challenge 1
+     acceptance playthrough, and it shares no file with X3.
+   - Next after: C1-15.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -54,23 +62,23 @@ what to do -- this file already decided.
      shares no file with anything in the Claude lane.
    - Next after: UI-R-2.
 
-3. **[Claude] FE-5 -- The forager-return counter cannot be read from a
-   headless run.**
-   - Plan: `plans/active/foraging-evidence.md` -- Slice 5.
-   - Does: `_forager_returns_triggered` is counted, reset and shown in the
-     Foraging window, but appears in neither read-out a scenario run
-     produces -- unlike `_orientation_flights`, which is in both. Adds
-     `"forager_returns_triggered"` to `end_session`'s totals dictionary and
-     `"forager_returns_total"` to `_snapshot`'s `foraging` block, so Slice
-     3's sparse/long-range rerun can be read the way Slice 2's was. Two
-     dictionary entries; the counter itself is already correct.
-   - Files: `scripts/diagnostic_log.gd`.
-   - Check: `tools/verify.ps1`. No hands-on check -- the acceptance is a
-     headless run's own output.
-   - Why here: found while filing FE-4's check, and it shares no file with
-     anything else in the queue.
-   - Next after: none -- that plan then has only Dave's two runs left. This
-     lane pulls its next slice from an owning plan.
+3. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
+   hand.**
+   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
+   - Does: `main.gd::_on_scenario_chosen` calls
+     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
+     back over every `GameConfig` field -- including toggles the player set
+     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
+     adds `reset_config_keys()` beside the full reset, and resets only the
+     union of the outgoing preset's keys and the incoming one's.
+   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
+     `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
+     flower/season toggle survives picking a Scenario, and preset A's values
+     do not leak into preset B's run.
+   - Why here: it was the Claude lane's head before C1-14 arrived, and it
+     shares no file with anything else in the queue.
+   - Next after: FL-1 (`plans/now/flowers.md` Slice 1).
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -94,42 +102,64 @@ what to do -- this file already decided.
      `problem_messages.gd` entries and `GameConfig` gaps, not literals.
      Developer section only, so ordinary play cannot reach it.
    - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s
-     banner-arbitration entry, which names this slice as its unblocker;
-     move that entry to `checks/ready.md` when this lands.
-   - Why here: it shares no file with anything else in the queue.
-   - Next after: none in this plan's UI-R group -- the lane then pulls from
-     `plans/now/ui.md`'s remaining items or another owning plan.
+   - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s C-4;
+     move that entry to `checks/ready.md`, keeping its id, when this lands.
+   - Next after: UI-S-1.
 
 ## Ready, not yet in the queue
 
-Empty as of 3 Sep 2026. FE-5 was written and queued in the same pass that
-landed FE-4, and every other item in the owning plans is listed below.
+All of these can be started today; they are out of the queue only because it
+holds five. Take one when a lane empties, in roughly this order.
+
+- **C1-15** (`plans/now/challenge-1.md` Slice 15) -- the queen's "Now:" line
+  should say "waiting for instruction" plus what to do at this stage, rather
+  than narrating what she cannot do. Claude lane, after C1-14.
+- **UI-S-1** (`plans/now/ui.md`) -- the bottom row re-specified: the command
+  tray takes half the viewport, centred, and the summary panel and Dr
+  Gallerin's bubble fill what is left with one 16px gap each. Supersedes
+  UI-R-1's own check.
+- **UI-S-2** (`plans/now/ui.md`) -- the colony, foraging and nursery windows
+  sit below the corner readout with a 16px buffer, scroll when they do not
+  fit, and close each other.
+- **UI-S-3** (`plans/now/ui.md`) -- the command tray shrinks again when
+  "More..." is closed, and never runs off the bottom of the screen.
+- **UI-S-4** (`plans/now/ui.md`) -- a second right-click sometimes does
+  nothing and appears to deselect the bee: instrument the command choke
+  point and make a refused command say so.
+- **HC-9** (`plans/now/hive-comb.md` Slice 9) -- cut the cell rings from the
+  sprite's measured silhouette (32x27, flat 16px top and bottom edges,
+  vertical sides) instead of from a hexagon with a nudge.
+- **FL-1** (`plans/now/flowers.md` Slice 1) -- age and in/out-of-season on
+  the flower summary panel.
+- **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
+  non-zero rate, faster ageing and rarer seeding. A balance change: it needs
+  its named headless run before it merges.
+- **C2-1** (`plans/now/challenge-2.md` Slice 1) -- a debug button that forces
+  a Challenge 2 nectar collapse, so C-5 can be run at all.
+- **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
+  format (id, one action, one PASS line, an owner) enforceable in
+  `tools/check_docs.py`.
 
 ## Not in the queue, and why
 
-Each of these needs something from Dave before code can be written. They are
-listed so they are not lost, not so they are picked up.
+Each of these needs something from Dave, or something else to ship first.
+They are listed so they are not lost, not so they are picked up.
 
-- **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- an acceptance
-  playthrough, and with C1-13 landed on 3 Sep it is all that plan has left.
-  C1-11 removed what stopped the 2 Sep attempt at stage 1.10, C1-12 made
-  that class of bug fail the build instead, and C1-13 stopped the queen's
-  "Now:" line naming mechanics the Challenge has not taught. It now needs
-  only Dave's run: `checks/ready.md` Bundles D and E, plus the new
-  selection-panel vocabulary entry, are the three to work through.
-- **Foraging evidence Slices 3 and 4** (`plans/active/foraging-evidence.md`)
-  -- both are hands-on runs rather than code. Slice 3 wants a sparse or
-  long-range meadow (or rain) to make the emergency recall fire at all;
-  FE-5 above is what makes that run readable. Slice 4 is the new
-  recruitment-dance highlight's acceptance, filed under `checks/ready.md`
-  section "Proximity recruitment".
-- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- with HC-8
-  landed these are all that plan has left, and neither is startable. Slice
-  4's headless trace has found the mechanism (every idle Comb Worker piles
-  onto one unfinished site), but capping builders per site changes build
-  throughput, so it needs Dave's live look and a call on intended behaviour.
-  Slice 5 needs its own live repro.
+- **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
+  playthrough. C1-14 and C1-15 are what it is waiting for; with those in, it
+  is Dave's run and the last thing that plan needs.
+- **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
+  of the rescue and recovery lines does not appear. Needs C2-1 to ship and
+  Dave to press the button; there is no static defect to fix blind, and
+  guessing has already failed twice.
+- **check-loop P-2 and P-3** (`plans/now/check-loop.md`) -- the panel-rect
+  source check runs after UI-S-1 and UI-S-2 move the numbers; the shared
+  developer-trigger section runs after UI-R-3 and C2-1 exist to collect.
+- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
+  headless trace found the mechanism (every idle Comb Worker piles onto one
+  unfinished site), but capping builders per site changes build throughput,
+  so it needs Dave's live look and a call on intended behaviour. Slice 5
+  needs its own live repro.
 - **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
   and say to reproduce live before changing code.
 - **Save/load during an active Challenge** (`DESIGN_BACKLOG.md`) -- `SaveGame`

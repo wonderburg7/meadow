@@ -173,7 +173,9 @@ itself.
 | Settings surviving a run change | `plans/now/settings-persistence.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
-| Foraging behaviour or evidence | `plans/active/foraging-evidence.md` |
+| Flowers, season, senescence | `plans/now/flowers.md` |
+| Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
+| How checks, slices and acceptance work | `plans/now/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |
 | Predators (built) | `checks/ready.md` or `plans/archive/CRAB_SPIDER_PLAN.md` |
 | Save/restore | `.claude/rules/saving.md` |
@@ -200,11 +202,30 @@ balance suites concurrently, checks the function map, then validates planning
 metadata. It does not replace a Godot boot when parser/type feedback matters,
 or Dave's hands-on check for click-driven, visual or feel-sensitive work.
 
-Every needed hands-on check belongs in `checks/ready.md`: short action,
-expected result and a pointer. A check landing there is what lets its
-branch/worktree close (see "Coordinating and closing out workstreams") —
-the check is never a reason to keep the branch open. Move blocked checks to
-`checks/blocked.md` and confirmed entries to the archive.
+Every needed hands-on check belongs in `checks/ready.md`, in that file's
+format: `### C-<n> -- <name>`, the action in a sentence or two, one `PASS:`
+line stating the single condition, one `Owner:` line naming the plan. Dave
+replies by id, so nothing has to be inferred from prose. A check landing
+there is what lets its branch/worktree close (see "Coordinating and closing
+out workstreams") -- the check is never a reason to keep the branch open.
+Move blocked checks to `checks/blocked.md` and confirmed entries to the
+archive.
+
+Three admission rules keep that list runnable (`plans/now/check-loop.md`
+holds the evidence behind them):
+
+- **Write the acceptance from the player's seat, once.** A slice's
+  `Acceptance` and the check it files are the same sentences. If the
+  acceptance cannot be written as something Dave does and sees, the slice
+  is not specified yet -- four of the five failures in the 3 Sep pass were
+  slices whose acceptance described the code instead.
+- **A rare condition ships with the way to trigger it.** If a behaviour
+  only happens when the simulation obliges, the slice that builds it adds
+  the developer trigger too. A check nobody can run on demand goes to
+  `checks/blocked.md` with its unblocker named, not to `ready.md`.
+- **File a check only if failing it would change something.** Say in the
+  entry what a failure would cause. "Nothing, we would assume it works"
+  means do not file it.
 
 ## Working style
 

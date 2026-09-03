@@ -71,7 +71,9 @@ the archived plan is never reopened or extended.
 | If the queue names | Read |
 | --- | --- |
 | UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
-| Foraging evidence, recruitment visibility | `plans/active/foraging-evidence.md` |
+| Flowers, season, senescence, the meadow's mix | `plans/now/flowers.md` |
+| Challenge 2 rescue and recovery messages | `plans/now/challenge-2.md` |
+| Check format, acceptance wording, developer triggers | `plans/now/check-loop.md` |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
 | Settings surviving a run change | `plans/now/settings-persistence.md` |
@@ -109,3 +111,20 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 7. A run change resets only the `GameConfig` keys a preset or Challenge
    actually writes, never the whole object -- see
    `plans/now/settings-persistence.md`.
+8. A stage's `on_enter` effects run *last* in `challenge_runner.gd::
+   _enter_stage`, after the gate and UI refresh. `_apply_stage_gate_to_ui`
+   ends in `update_selection`, which clears camera-follow -- so an effect
+   set at the top of that function is cancelled before the frame ends. An
+   effect that belongs to a player action (foraging starting, a role being
+   given) fires from `_process` when that happens, not at stage entry.
+9. A lock flag on a bee says what it forbids and returns the *other*
+   autonomous option. `State.IDLING` is correct only under `player_driven`,
+   where the player supplies the next state. See `plans/now/challenge-1.md`
+   Slices 12 and 14 for the two rounds this took.
+10. An outline that must sit on a sprite is measured off that sprite and
+    recorded as a named const, never re-derived from a shape that looks
+    similar -- `plans/now/hive-comb.md` Slice 9.
+11. Every persistent HUD panel takes its rectangle from `ui_layout.gd`. Two
+    panels that share an edge derive from one number; a literal `offset_top`
+    in a panel file is how the same overlap keeps coming back
+    (`plans/now/check-loop.md` P-2).

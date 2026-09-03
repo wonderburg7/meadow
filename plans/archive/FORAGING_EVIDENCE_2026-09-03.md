@@ -255,3 +255,25 @@ dictionary entries, and the acceptance is a headless run's own output.
 **Next after:** none. Both remaining items in this plan are then Dave's
 runs: Slice 3's sparse/long-range confirmation and Slice 4's acceptance.
 Archive this file once those two checks are confirmed.
+
+## Closed 3 Sep 2026
+
+Dave's 3 Sep hands-on pass confirmed Slice 4 outright: the recruitment-dance
+highlight makes a dancing pair findable, the mentor and the forager she is
+dancing at read as different bees, the toggle survives a restart, and with
+the toggle off the dance still happens (the recruitment-match count still
+moves). That was this campaign's last open question.
+
+Slice 3's own check went the other way, by decision rather than by evidence:
+"no increase [in] Forager returns triggered, as it's so unlikely to happen
+-- let's drop this and assume it works." The emergency recall stays as
+built, its counter and panel row stay, and the sparse/long-range rerun is
+not going to be run. **Slice 5 was dropped with it**: it existed only to
+make that rerun readable headlessly, and was removed from `NEXTSTEPS.md`
+unstarted on 3 Sep. Nothing else read the two dictionary entries it would
+have added.
+
+This file is closed. A later recruitment or foraging-evidence question
+starts a new plan under `plans/now/`; per `plans/README.md` this one is not
+reopened. The one loose thread is the deferred recruitment competition fix
+(`103d716`), parked in `checks/blocked.md` as C-6 with no owner.
