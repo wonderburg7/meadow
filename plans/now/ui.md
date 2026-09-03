@@ -189,94 +189,10 @@ answer to "is the summary panel too cramped at 800?" was to re-specify the
 whole bottom row, so the tray now leads and its neighbours follow, instead
 of the tray taking what two fixed reserves leave it.
 
-### UI-S-1 — the bottom row: the command tray leads, the summary panel and Dr Gallerin follow
+**UI-S-1:** archived in `plans/archive/UI_SHIPPED_2026-09-03.md`; the
+implementation centres the tray at half the viewport and derives both
+neighbouring widths from its edges, preserving the shared 16px gaps.
 
-**Ask (Dave, 3 Sep, two reports, one design).**
-
-1. "The buffer gap between summary window and command window is gone --
-   bring it back."
-2. "Command window should be positioned in the centre, taking up 50% of
-   screen width. The summary panel and Dr's speech bubble should react to
-   the command panel's size and fill up the available space if needed, but
-   with the 16px buffer. As the screen is resized, the command window
-   should resize to get smaller and the summary panel and Dr's speech
-   bubble react accordingly."
-
-That is the opposite dependency from what `ui_layout.gd` has today: the
-tray is currently sized from what two fixed reserves (`SELECTION_TRAY_RESERVE
-= 390`, Gallerin's 544) leave over, then its left edge is clamped, and at
-narrow widths the clamp eats the summary panel's own gap -- which is why
-the 16px buffer disappeared at the width Dave was testing.
-
-**Fix — rewrite `ui_layout.gd`'s bottom-row block around one rule: the tray
-is half the viewport, centred; the two neighbours fill what is left, each
-one `SELECTION_TRAY_GAP` clear of it.**
-
-- a) Constants. Add `const COMMAND_TRAY_WIDTH_FRACTION := 0.5`,
-  `const SELECTION_TRAY_MIN_WIDTH := 160.0` and
-  `const GALLERIN_BUBBLE_MIN_WIDTH := 200.0`. Keep
-  `SELECTION_TRAY_LEFT_MARGIN` (16), `SELECTION_TRAY_GAP` (16) and
-  `COMMAND_TRAY_MIN_WIDTH` (200). Delete `SELECTION_TRAY_RESERVE`,
-  `SELECTION_TRAY_RESERVE_NARROW`, `COMMAND_TRAY_SIDE_GAP` and
-  `command_tray_left_reserve()` -- nothing outside this file reads them
-  (`grep -rn` to confirm before deleting). `NARROW_BREAKPOINT`/`is_narrow`
-  survive only if something else still calls them; if not, delete those too.
-- b) `static func command_tray_width(viewport_width: float) -> float`:
-  the smaller of `viewport_width * COMMAND_TRAY_WIDTH_FRACTION` and the
-  widest tray that still leaves each side band its own minimum, floored at
-  `COMMAND_TRAY_MIN_WIDTH`. One side band's minimum is
-  `SELECTION_TRAY_GAP + GALLERIN_BUBBLE_MIN_WIDTH + GallerinPanel.BUBBLE_GAP
-  + GallerinPanel.ICON_SIZE.x + GallerinPanel.ICON_MARGIN` (= 300 with
-  today's constants) -- use the wider of the two sides' minimums for both,
-  since the tray is centred and the bands are equal by construction.
-- c) `static func command_tray_left_edge(viewport_width: float) -> float`:
-  `(viewport_width - command_tray_width(viewport_width)) * 0.5`. Centred on
-  the viewport, which is now correct precisely because the two neighbours
-  are derived from it rather than fixed.
-- d) `selection_tray_width()`: `maxf(0.0, command_tray_left_edge(vw) -
-  SELECTION_TRAY_GAP - SELECTION_TRAY_LEFT_MARGIN)`. Unchanged in shape;
-  it simply reads the new edge.
-- e) `gallerin_bubble_width()`: the right band less the icon and its gaps,
-  clamped between `GALLERIN_BUBBLE_MIN_WIDTH` and
-  `GallerinPanel.BUBBLE_WIDTH` -- i.e.
-  `viewport_width - (left_edge + tray_width) - SELECTION_TRAY_GAP -
-  GallerinPanel.ICON_SIZE.x - GallerinPanel.BUBBLE_GAP -
-  GallerinPanel.ICON_MARGIN`. `gallerin_reserve_width()` keeps its current
-  shape and picks the new bubble width up for free.
-- f) `hud.gd::_update_command_tray_width()`: replace
-  `UiLayout.command_tray_max_width(...)` with
-  `UiLayout.command_tray_width(...)` for both
-  `custom_minimum_size.x` and `size.x`; the `offset_left` line already
-  reads `command_tray_left_edge`. Delete `command_tray_max_width` once
-  nothing calls it. `_apply_selection_tray_width()` and
-  `gallerin_panel.gd`'s `gallerin_bubble_width()` call need no change --
-  they follow automatically. Make sure both are called on a viewport
-  resize, not only on selection change.
-
-**Worked numbers to check the implementation against** (viewport width →
-tray width, tray left edge, summary panel width, bubble width):
-
-- 1920 → 960, 480, 448, 380
-- 1600 → 800, 400, 368, 300
-- 1280 → 640, 320, 288, 220
-- 1000 → 500, 250, 218, 150 → bubble floors at 200, so the tray must shrink
-  to 400 at this width; recheck the (b) clamp gives that, and correct the
-  arithmetic here rather than the rule if it does not
-- 800 → 200 (the floor), 300, 268, 200
-
-**Acceptance.** At 1920, 1280 and 800: the command tray is horizontally
-centred, is about half the window wide above the floor, and is fully on
-screen. There is a visible, equal 16px gap between the summary panel and
-the tray, and between the tray and Dr Gallerin's bubble. Dragging the
-window narrower shrinks the tray continuously and the panel and bubble
-re-fill the space; nothing overlaps at any width down to 800. UI-P-8's rule
-still holds: a tray too narrow for its three groups wraps them onto more
-rows rather than growing wider.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file, replacing the
-"Command tray placement (UI-R-1)" entry in `checks/ready.md`.
-
-**Files:** `scripts/ui_layout.gd`, `scripts/hud.gd`.
 
 ### UI-S-2 — the colony, foraging and nursery windows sit on top of the corner readout
 
