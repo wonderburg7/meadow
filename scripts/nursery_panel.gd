@@ -16,6 +16,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal closed()
@@ -87,6 +88,8 @@ static func row_order() -> Array:
 const TIER_NAMES := ["Low", "Medium", "High"]
 
 var panel: PanelContainer
+var main: Node2D
+var scroll_container: ScrollContainer
 var zone_label: Label
 var brood_stages_label: Label
 var tier_label: Label
@@ -102,21 +105,25 @@ func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 11
 	add_to_group("nursery_panel")
+	main = get_parent() as Node2D
 
 	panel = PanelContainer.new()
 	panel.theme = UiTheme.build_theme()
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	# left-hand side, clear of the top-left readouts
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.offset_left = 16
-	panel.offset_top = 150
 	panel.custom_minimum_size = Vector2(330, 0)
 	panel.visible = false
 	add_child(panel)
 
+	scroll_container = ScrollContainer.new()
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	panel.add_child(scroll_container)
+
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
-	panel.add_child(column)
+	scroll_container.add_child(column)
 
 	var header := HBoxContainer.new()
 	column.add_child(header)
@@ -183,6 +190,7 @@ func _ready() -> void:
 	column.add_child(HSeparator.new())
 
 	intended_roles_label = _make_readout(_section_body(column, "Intended roles"), "Small")
+	get_viewport().size_changed.connect(_apply_left_window_rect)
 
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
@@ -268,7 +276,15 @@ func toggle() -> void:
 	else:
 		open()
 
+func _apply_left_window_rect() -> void:
+	var top := UiLayout.left_window_top(main.hud.corner_bottom())
+	panel.offset_top = top
+	scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
+		get_viewport().get_visible_rect().size.y, top
+	)
+
 func open() -> void:
+	_apply_left_window_rect()
 	panel.visible = true
 
 func close() -> void:

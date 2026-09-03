@@ -213,7 +213,9 @@ def check_queue_proofs(errors: list[str]) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
     X3 sat at the head of a lane, with a worktree open, for a fix that had
-    shipped three days earlier -- this is what would have caught it."""
+    shipped three days earlier -- this is what would have caught it. An
+    in-progress slice is the exception: its proof is expected to flip while
+    its registered worktree is being verified for merge."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
@@ -221,8 +223,15 @@ def check_queue_proofs(errors: list[str]) -> None:
         return
     section = match.group(1)
     chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
+    active_slice_ids = {
+        raw_path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+        for raw_path, _ in ledger_worktree_rows()
+    }
 
     for index, chunk in enumerate(chunks, start=1):
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if item_match and item_match.group(1) in active_slice_ids:
+            continue
         proof_match = PROOF_LINE.search(chunk)
         if not proof_match:
             continue  # already reported as a missing field by check_next_steps

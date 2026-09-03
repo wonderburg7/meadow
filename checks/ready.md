@@ -29,6 +29,20 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-13 -- left-side windows clear the corner and scroll
+
+With several readouts starred, then with none, open Colony, Foraging and
+Nursery at a short viewport height. Confirm each starts one visible 16px gap
+below the corner block and scrolls its own contents instead of leaving the
+screen. Open each window in turn and confirm the prior two close; opening
+Nursery must still enter the hive view and show its zone glow.
+
+PASS: all three windows clear both corner states, remain on screen with
+internal vertical scrolling when needed, and exactly one is open at a time
+without changing Nursery's hive-view behaviour.
+
+Owner: `plans/now/ui.md` UI-S-2.
+
 ### C-12 -- command tray reflows and stays on screen
 
 Select a bee with `More…`, note the tray height, then close it; repeat for a

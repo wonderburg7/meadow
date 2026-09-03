@@ -1924,6 +1924,11 @@ func _refresh_corner() -> void:
 	Perf.end("corner_rebuild_signals")
 	Perf.end("corner_refresh")
 
+## Bottom edge of the live top-left readout block. Left-side windows ask the
+## HUD for this instead of guessing a fixed height for a changing column.
+func corner_bottom() -> float:
+	return corner_column.position.y + corner_column.size.y
+
 ## Called when the player stars or unstars something in either window:
 ## the corner has to be redrawn even though no number changed. Also the
 ## one place that keeps Session.perf_enabled in step with the "fps"

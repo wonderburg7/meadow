@@ -23,6 +23,15 @@ const COMMAND_TRAY_WIDTH_FRACTION := 0.5
 const COMMAND_TRAY_MIN_WIDTH := 200.0
 const GALLERIN_BUBBLE_MIN_WIDTH := 200.0
 
+## Left-side windows start beneath the live corner column, then use the same
+## clearance as the bottom-row panels. Their content scrolls within the
+## remaining screen height rather than covering either edge.
+static func left_window_top(corner_bottom: float) -> float:
+	return corner_bottom + SELECTION_TRAY_GAP
+
+static func left_window_max_height(viewport_height: float, top: float) -> float:
+	return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)
+
 ## The minimum amount each half of the centred bottom row needs. The summary
 ## side includes its screen margin, while the Gallerin side includes the
 ## bubble, icon and their offsets. The latter is currently wider (300px), but
