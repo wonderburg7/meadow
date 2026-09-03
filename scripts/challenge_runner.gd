@@ -127,6 +127,13 @@ var _c1_forage_effects_done: bool = false
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
 
+## Read by hud.gd's "waiting for instruction" line -- what the player should
+## do at the current stage, or "" outside a Challenge or if unset.
+func current_stage_instruction() -> String:
+	if not active or _stage_index >= _stages().size():
+		return ""
+	return str(_stages()[_stage_index].get("instruction", ""))
+
 func start() -> void:
 	active = true
 	_stage_index = 0

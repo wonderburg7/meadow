@@ -80,6 +80,7 @@ const UNLOCK_TRIGGER_TYPES := ["design", "skill", "stage", "event", "interaction
 const STAGES_1 := [
 	{
 		"id": "1.1", "goal": "entrance_tunnel_cleared", "unlocked_keys": [],
+		"instruction": "",
 		"goal_text": "Goal: watch the queen open the way into the hive.",
 		"prompts": [
 			{"id": "1.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Dr Gallerin, at your service. And there she is: one queen, arriving with a whole colony still only a possibility."},
@@ -89,6 +90,7 @@ const STAGES_1 := [
 	{
 		"id": "1.2", "goal": "queen_reached_cavity",
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"instruction": "right-click the marked cavity to send her in",
 		"goal_text": "Goal: guide the queen into the newly opened cavity.",
 		"prompts": [
 			{"id": "1.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "The cavity is open. Pan with the arrow keys or by dragging with the middle mouse button, then guide her inside."},
@@ -97,6 +99,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.3", "goal": "queen_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"instruction": "left-click the queen to select her",
 		"goal_text": "Goal: select the queen.",
 		"prompts": [
 			{"id": "1.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "Select her for a closer look. Queens are not merely larger bees; this colony's entire future begins with this one."},
@@ -105,6 +108,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.4", "goal": "hive_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"instruction": "right-click each marked place in the cavity",
 		"goal_text": "Goal: inspect the three marked places in the cavity.",
 		"prompts": [
 			{"id": "1.4_welcome", "trigger": "welcome", "delay": 0.0, "text": "Before furnishing the place, let us inspect it. A hive is architecture, climate, nursery and pantry all at once."},
@@ -113,6 +117,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.5", "goal": "first_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
+		"instruction": "use Build cell, then click the marked centre",
 		"goal_text": "Goal: build the colony's first comb cell.",
 		"prompts": [
 			{"id": "1.5_welcome", "trigger": "welcome", "delay": 0.0, "text": "Now for architecture. One wax cell is enough to turn empty space into the beginning of a working hive."},
@@ -127,6 +132,7 @@ const STAGES_1 := [
 		# challenge_runner.gd::_enter_stage into bee.gd::player_driven, which
 		# bee_foraging.gd::autonomous_state() is the one place that acts on.
 		"player_driven": true,
+		"instruction": "right-click the marked doorway to send her outside",
 		"goal_text": "Goal: send the queen out to the meadow.",
 		"prompts": [
 			{"id": "1.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "A beautiful cell, and presently an empty one. The meadow can remedy that. Send the queen through the entrance."},
@@ -136,6 +142,7 @@ const STAGES_1 := [
 	{
 		"id": "1.7", "goal": "meadow_points_visited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
+		"instruction": "right-click each marked place in the meadow",
 		"goal_text": "Goal: explore the three marked places in the meadow.",
 		"prompts": [
 			{"id": "1.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "Flowers, distance, weather, other wings -- the meadow is the colony's wider world. Let us take a short tour."},
@@ -145,6 +152,7 @@ const STAGES_1 := [
 	{
 		"id": "1.8", "goal": "first_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
+		"instruction": "right-click a flower to gather from it",
 		"goal_text": "Goal: gather from a flower.",
 		"prompts": [
 			{"id": "1.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "There: a flower with nectar to spare. Right-click it and the queen will gather what she can carry."},
@@ -154,6 +162,7 @@ const STAGES_1 := [
 	{
 		"id": "1.9", "goal": "second_flower_collected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
+		"instruction": "right-click another flower to gather from it",
 		"goal_text": "Goal: gather from another flower.",
 		"prompts": [
 			{"id": "1.9_welcome", "trigger": "welcome", "delay": 0.0, "text": "One flower is a meal; a landscape of them is a supply network. Try another."},
@@ -163,6 +172,7 @@ const STAGES_1 := [
 	{
 		"id": "1.10", "goal": "harvest_deposited", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
+		"instruction": "right-click the hive, then right-click the wax cell",
 		"goal_text": "Goal: return to the hive and deposit the harvest.",
 		"prompts": [
 			{"id": "1.10_welcome", "trigger": "welcome", "delay": 0.0, "text": "A full stomach is useful; a filled store is a colony. Bring her home, then choose the wax cell that receives the harvest."},
@@ -171,6 +181,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"instruction": "give her the Forager role with nectar focus",
 		"goal_text": "Goal: automate nectar gathering.",
 		"on_enter": ["lock_flower_target:queen"],
 		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "unlock_flower_target:queen", "freeze_bee:queen"],
@@ -182,6 +193,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.12", "goal": "second_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
+		"instruction": "use Build cell to place a second cell",
 		"goal_text": "Goal: build a second comb cell.",
 		"prompts": [
 			{"id": "1.12_welcome", "trigger": "welcome", "delay": 0.0, "text": "Stores need space. Add another cell by hand; bees are tiny logistics departments with wings, but even they need shelving."},
@@ -190,6 +202,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"instruction": "switch her focus to pollen",
 		"goal_text": "Goal: automate pollen gathering.",
 		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
 		"prompts": [
@@ -199,6 +212,7 @@ const STAGES_1 := [
 	},
 	{
 		"id": "1.14", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"instruction": "use Build cell to place a third cell",
 		"goal_text": "Goal: build a third cell for the colony's next generation.",
 		"prompts": [
 			{"id": "1.14_welcome", "trigger": "welcome", "delay": 0.0, "text": "Here is pollen's deeper purpose: making more bees. Build a third cell, and we can turn provisions into a future."},

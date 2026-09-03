@@ -205,6 +205,11 @@ const TOP_BAR_ROW_SEPARATION := 4.0
 ## below it, once the shelf's offset is derived rather than hardcoded.
 const GOAL_SHELF_GAP := 12.0
 
+## Set by main.gd right after construction, matching the other systems'
+## back-reference -- only used to read main.challenge_runner's state for
+## the selected-bee activity line.
+var main: Node2D
+
 ## The top-left corner. Every readout lives in the colony window now;
 ## this shows only the ones the player has starred there, in a fixed
 ## order, so the corner is theirs to spend rather than a fixed block of
@@ -2393,16 +2398,31 @@ func _refresh_selection_text() -> void:
 			b.carrying_text(),
 		]
 
-		var activity := "Now: %s" % b.task_description()
-		# If it isn't doing anything, say why. A bee standing still looks
-		# identical whatever the reason, and "nothing is happening and I
-		# can't tell why" is the worst state to leave a player in.
-		var stuck: String = b.idle_reason()
-		if stuck != "":
-			activity += "\n%s" % stuck
-			activity_label.add_theme_color_override("font_color", UiTheme.color("warning"))
-		else:
+		var challenge_runner = main.challenge_runner if main != null else null
+		var waiting_for_instruction := (
+			challenge_runner != null and challenge_runner.active
+			and b.is_queen
+			and (b.state == Bee.State.IDLING or b.state == Bee.State.NURSE_IDLE or b.player_driven)
+		)
+		var activity: String
+		var stuck: String = ""
+		if waiting_for_instruction:
+			var instruction: String = challenge_runner.current_stage_instruction()
+			activity = "Now: waiting for instruction"
+			if instruction != "":
+				activity += " -- %s" % instruction
 			activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
+		else:
+			activity = "Now: %s" % b.task_description()
+			# If it isn't doing anything, say why. A bee standing still looks
+			# identical whatever the reason, and "nothing is happening and I
+			# can't tell why" is the worst state to leave a player in.
+			stuck = b.idle_reason()
+			if stuck != "":
+				activity += "\n%s" % stuck
+				activity_label.add_theme_color_override("font_color", UiTheme.color("warning"))
+			else:
+				activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
 			activity += "\nPreferred flower: %s" % b.preferred_species
 		# the queen's pollen store is the thing that gates egg-laying,
