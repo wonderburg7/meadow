@@ -2,8 +2,8 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after W-7 landed and
-finished the agent-workflow plan.
+Five ready slices in two lanes, refilled 3 Sep 2026 after UI-S-2 landed and
+W-7's closeout exposed two defects in `tools/slice.ps1 finish` (S-1).
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -20,29 +20,30 @@ decided.
 
 ## Next up
 
-1. **[Claude] P-1 -- the check format is a convention, not a check.**
-   - Plan: `plans/now/check-loop.md` -- P-1.
-   - Does: adds a `check_checks()` function to `tools/check_docs.py`, in the
-     style of `check_next_steps()`, that reads `checks/ready.md` and
-     `checks/blocked.md` and fails when an entry heading does not start with
-     an id matching `C-<n> -- `, when an entry has no line beginning `PASS:`,
-     when it has no `Owner:` line naming a plan file that exists, or when two
-     entries share an id. It skips each file's header block -- everything
-     before the first `### ` -- and reuses the existing Markdown-link/path
-     resolution. Nothing outside the checker changes.
-   - Files: `tools/check_docs.py`, `checks/ready.md`, `checks/blocked.md`.
-   - Check: `tools/verify.ps1`, including a deliberate break and repair -- an
-     entry added without an id, or without a `PASS:` line, must fail with a
-     readable message, and both files as they stand today must pass. No
-     hands-on check: the whole slice is a checker and its own fixtures.
-   - Proof: `absent: tools/check_docs.py :: check_checks`
-   - Why first: W-7 landed and completed `plans/now/agent-workflow.md`, so
-     this lane needed a new item. FL-1 was W-7's `Next after:` but still
-     shares `scripts/hud.gd` with UI-S-2, the leading Codex item, so it
-     cannot lead. P-1 was the first entry under "Ready, not yet in the queue"
-     and owns three files no other queued item names.
-   - Next after: FL-1, already second in this lane -- it can lead as soon as
-     either it or UI-S-2 lands and clears the `scripts/hud.gd` pairing.
+1. **[Claude] S-1 -- `slice.ps1 finish` dies on the worktree it deletes.**
+   - Plan: `plans/now/slice-tooling.md` -- S-1.
+   - Does: `Invoke-SliceFinish` runs its merge/cleanup block under
+     `Push-Location $root`, so the worktree it is about to delete is what sits
+     on the location stack, and the `finally`'s `Pop-Location` throws once
+     that directory is gone -- exiting 1 after a wholly successful merge, push
+     and branch delete. Replaces that pair with `Set-Location -LiteralPath
+     $root`. Instrumenting the block also showed the ledger row filter never
+     matches: a backtick is the escape character in a PowerShell wildcard, so
+     `"*``$worktreeRelative``*"` asks `-like` for a literal asterisk, nothing
+     is removed, and the ledger `git commit` then exits 1 on "nothing to
+     commit" -- the exception `Pop-Location` was masking. Swaps that filter
+     for an ordinal substring match and lets an already-clean ledger pass.
+   - Files: `tools/slice.ps1`.
+   - Check: `tools/verify.ps1`, plus an end-to-end rehearsal in a throwaway
+     repo (bare remote, primary checkout, one worktree) that must exit 0 with
+     the ledger row gone. No hands-on check: `finish` is agent-run closeout
+     tooling with no player-visible surface.
+   - Proof: `present: tools/slice.ps1 :: $_ -notlike`
+   - Why first: it breaks the tail of every closeout in both lanes and leaves
+     a stale `plans/workstreams.md` row that fails `check_docs.py` on master,
+     so every landing needs a hand repair until it is fixed. It owns
+     `tools/slice.ps1`, which no other queued item names.
+   - Next after: P-1, already second in this lane.
 
 2. **[Codex] UI-S-4 -- A refused command says so, at one instrumented choke point.**
    - Plan: `plans/now/ui.md` -- UI-S-4.
@@ -59,29 +60,27 @@ decided.
      not overlap P-1, the leading Claude item.
    - Next after: UI-R-2, already fourth in this lane.
 
-3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
-   - Plan: `plans/now/flowers.md` -- Slice 1.
-   - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
-     summary panel every frame it's open and already prints both effective
-     rates, but says nothing about age or season. Builds one extra line --
-     age in days against lifespan, and "in season (NN%)" / "out of season" /
-     "seasons off" -- and puts it in `trait_label` above the scent-mark text
-     (joined with a newline, not replacing it) using `age_seconds`,
-     `lifespan_seconds` and `season_strength()`, all already public on
-     `flower.gd`. Nothing new is computed in `flower.gd`.
-   - Files: `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: click a flower
-     and the panel shows its age against its lifespan and whether it's in
-     or out of season; watching one across a season boundary flips the line
-     at the same moment the `+/s` figures fall away.
-   - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-2, the
-     leading Codex item, so it stays second in the Claude lane rather than
-     promoting to lead -- promoting it now would make both lanes' leading
-      items collide. Re-check this pairing whichever of FL-1 or UI-S-2 lands
-     first: landing either one clears the conflict for the other to lead.
-   - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
-     needs its named headless run before it merges.
+3. **[Claude] P-1 -- the check format is a convention, not a check.**
+   - Plan: `plans/now/check-loop.md` -- P-1.
+   - Does: adds a `check_checks()` function to `tools/check_docs.py`, in the
+     style of `check_next_steps()`, that reads `checks/ready.md` and
+     `checks/blocked.md` and fails when an entry heading does not start with
+     an id matching `C-<n> -- `, when an entry has no line beginning `PASS:`,
+     when it has no `Owner:` line naming a plan file that exists, or when two
+     entries share an id. It skips each file's header block -- everything
+     before the first `### ` -- and reuses the existing Markdown-link/path
+     resolution. Nothing outside the checker changes.
+   - Files: `tools/check_docs.py`, `checks/ready.md`, `checks/blocked.md`.
+   - Check: `tools/verify.ps1`, including a deliberate break and repair -- an
+     entry added without an id, or without a `PASS:` line, must fail with a
+     readable message, and both files as they stand today must pass. No
+     hands-on check: the whole slice is a checker and its own fixtures.
+   - Proof: `absent: tools/check_docs.py :: check_checks`
+   - Why here, not leading: S-1 breaks the tail of every closeout in both
+     lanes, so it takes the head of this lane. P-1 owns three files no other
+     queued item names and leads this lane the moment S-1 lands.
+   - Next after: FL-1, first under "Ready, not yet in the queue" -- it
+     re-enters this lane as soon as S-1 or P-1 frees the slot.
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -119,6 +118,11 @@ holds five. Take one when a lane empties, in roughly this order.
 - **UI-S-4** (`plans/now/ui.md`) -- a second right-click sometimes does
   nothing and appears to deselect the bee: instrument the command choke
   point and make a refused command say so.
+- **FL-1** (`plans/now/flowers.md` Slice 1) -- the flower panel says nothing
+  about age or season: `hud.gd::_refresh_flower_summary()` gains one line
+  giving age against lifespan and in/out of season, built from `age_seconds`,
+  `lifespan_seconds` and `season_strength()`, all already public on
+  `flower.gd`. Out of the queue only because S-1 took the slot.
 - **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
   non-zero rate, faster ageing and rarer seeding. A balance change: it needs
   its named headless run before it merges.
