@@ -347,3 +347,27 @@ command lock from a same-frame UI refresh on the next reproduction.
 **Evidence.** `tools/verify.ps1` passed; hands-on check C-14 is filed in
 `checks/ready.md`.
 
+
+## UI-R-3 — no way to trigger a warning-banner case on demand
+
+Shipped 3 Sep 2026.
+
+**Symptom (Dave, 2 Sep):** "I don't have a way to trigger two
+warning-banner cases and verify unrelated notifications do not overwrite
+each other." The UI-Q-1/UI-Q-2 check had therefore never been runnable and
+sat in `checks/blocked.md` with this slice named as its unblocker.
+
+**Delivered:** `debug_panel.gd`'s Triggers group gained a second button,
+"Fire test warnings", beside "Advance Challenge stage", styled with the
+same `_style_button` + `UI.with_info` pattern. `_on_fire_test_warnings_pressed()`
+calls `hud.show_warning` three times through one `SceneTreeTimer` chain: an
+epitaph-keyed message (`ProblemMessages.epitaph`, `GameConfig.epitaph_min_gap`)
+at t=0, a crab-spider-escape-keyed message (`ProblemMessages.crab_spider_escape`,
+`GameConfig.crab_spider_escape_min_gap`) at t=+8s, and an unkeyed "Run saved."
+confirmation at t=+10s. Message copy is read from a live bee in the "bees"
+group rather than literals; the button does nothing if none exist. It stays
+in the developer section, so ordinary play cannot reach it.
+
+**Files:** `scripts/debug_panel.gd`.
+
+**Hands-on check:** `checks/ready.md` C-4, moved from `checks/blocked.md`.

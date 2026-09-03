@@ -34,6 +34,18 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-4 -- two throttled warnings eight seconds apart
+
+Press debug_panel.gd's "Fire test warnings" button, in the Triggers group
+beside "Advance Challenge stage". It fires a bee-death epitaph, then a
+crab-spider escape eight seconds later, then an unkeyed "Run saved."
+confirmation two seconds after that.
+
+PASS: the first two do not wipe each other, and the confirmation survives
+the ambient event that follows it.
+
+Owner: `plans/now/ui.md` UI-Q-1/UI-Q-2.
+
 ### C-14 -- double right-click command diagnosis
 
 Reproduce the queen's double-right-click symptom and send the run's diagnostic

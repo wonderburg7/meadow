@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-S-2 (left-side windows), Codex lane | Dependency: check-loop P-3 before UI-R-3; UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: UI-R-2, Codex lane | Dependency: UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -15,7 +15,6 @@ UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
 | UI-R-2 | Pre-run menu's left pane clears the screen edge | `main_menu.gd` | yes | low |
-| UI-R-3 | A developer button that fires three warning-banner cases | `debug_panel.gd` | after check-loop P-3 | low |
 | UI-S-1 | The bottom row re-specified: tray at 50%, neighbours fill the rest | `ui_layout.gd`, `hud.gd` | yes | medium |
 | UI-S-4 | A refused command says so, at one instrumented choke point | `input_selection.gd`, `diagnostic_log.gd` | yes | medium |
 | UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
@@ -23,10 +22,7 @@ UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
 
 **Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
 clamps; both are now shipped. UI-S-2 also shipped, so `plans/now/check-loop.md`
-P-2 can now enforce both left-panel rectangles. UI-R-3 adds a button to the
-developer Triggers section that `plans/now/check-loop.md` P-3 creates, so P-3
-goes first -- otherwise UI-R-3 writes a row that P-3 immediately rewrites.
-Nothing else here is ordered.
+P-2 can now enforce both left-panel rectangles. Nothing else here is ordered.
 
 **Required reading for any slice here.** This file's own section, and
 `scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are
@@ -119,7 +115,10 @@ pick whichever the live state actually shows.
 ## UI-R — from Dave's 2 Sep 2026 hands-on pass
 
 UI-R-1 shipped 3 Sep and was re-specified the same day by UI-S-1; see the
-archive. UI-R-2 and UI-R-3 remain.
+archive. UI-R-3 (the developer "Fire test warnings" button) shipped 3 Sep
+2026; its specification is archived in
+`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-4 is filed in
+`checks/ready.md`. UI-R-2 remains.
 
 ### UI-R-2 — pre-run menu: the left edge still needs more room
 
@@ -137,47 +136,6 @@ clearly comfortable distance from the screen edge; tile spacing, borders
 and click hit-testing are visibly unchanged.
 
 **Files:** `scripts/main_menu.gd`.
-
-### UI-R-3 — no way to trigger a warning-banner case on demand
-
-**Symptom (Dave, 2 Sep):** "I don't have a way to trigger two
-warning-banner cases and verify unrelated notifications do not overwrite
-each other." The UI-Q-1/UI-Q-2 check has therefore never been runnable and
-is now in `checks/blocked.md` with this slice named as its unblocker.
-
-**Why it is a real gap, not just this one check.** The banner's throttle
-lives in `hud.gd::show_warning`'s `key -> last shown` dictionary, and the
-whole point of slice C2 was arbitration *between* producers. Any future
-change to it has the same problem: the only way to see two events collide
-is to wait for the simulation to produce a death, a spider escape and a
-low-energy warning within eight seconds of each other.
-
-**Fix.** Add a second button to `debug_panel.gd`'s existing `challenge_row`
-(the row that already holds "Advance Challenge stage", built just below the
-save/load row), labelled "Fire test warnings" and styled with the same
-`_style_button` + `UI.with_info` pattern as its neighbour. It calls
-`hud.show_warning` three times
-through a short scripted sequence: an epitaph-keyed message at t=0, a
-crab-spider-escape-keyed message at t=+8s, and a "Run saved."-style
-unkeyed confirmation at t=+10s, using the real `problem_messages.gd`
-entries and the real `GameConfig` gaps rather than literals. Drive the
-delays with one `SceneTreeTimer` chain, not a per-frame state machine.
-Keep it in the developer section so it is not reachable in ordinary play.
-
-**Acceptance:** pressing the row once shows all three messages, the first
-two do not wipe each other, and the confirmation survives the ambient
-event that follows it. `tools/verify.ps1` passes.
-
-**Depends on:** `plans/now/check-loop.md` P-3, which builds the developer
-"Triggers" group this button goes into. Do not start UI-R-3 first and add
-the button to `challenge_row` -- P-3 would only move it again, and both
-slices own this file so they cannot run in parallel lanes.
-
-**Reasoning level:** low. One file, one existing pattern; the message
-contents come from `problem_messages.gd` and `GameConfig`, not from a
-judgement call.
-
-**Files:** `scripts/debug_panel.gd`.
 
 ## UI-S — from Dave's 3 Sep 2026 hands-on pass
 

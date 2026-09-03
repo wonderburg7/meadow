@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: P-2 (one owner for panel rectangles), after UI-S-1 and UI-S-2 | Dependency: P-2 after UI-S-1 and UI-S-2 | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: P-2 (one owner for panel rectangles), queued in the Claude lane | Dependency: none -- UI-S-1 and UI-S-2 both shipped 3 Sep 2026 | Verified: 2026-09-03
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -15,14 +15,16 @@ change so the same failures stop recurring.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| P-2 | No HUD panel carries its own literal `offset_*` | `tests/source_checks.py` | after UI-S-1 and UI-S-2 | medium |
+| P-2 | No HUD panel carries its own literal `offset_*` | `tests/source_checks.py` | yes | medium |
 
 **Dependency order.** P-3 landed on 3 Sep 2026 and built the empty
 "Triggers" group, so `plans/now/ui.md` UI-R-3 and
 `plans/now/challenge-2.md` Slice 1 each now drop a single button into it --
 in that order, in one lane, because all three own `scripts/debug_panel.gd`.
-Its specification is in `plans/archive/CHECK_LOOP_P3_2026-09-03.md`. P-2 still
-runs last: it enforces numbers that UI-S-1 and UI-S-2 have not moved yet.
+Its specification is in `plans/archive/CHECK_LOOP_P3_2026-09-03.md`.
+`plans/now/ui.md` UI-R-3 shipped 3 Sep 2026 too. P-2 was waiting on UI-S-1
+and UI-S-2 moving the numbers it enforces; both shipped 3 Sep 2026, so P-2
+is now queued in `NEXTSTEPS.md`'s Claude lane.
 
 **Required reading.** This file's own P-section, plus `tests/source_checks.py`
 for the style P-2 follows. Nothing else.
