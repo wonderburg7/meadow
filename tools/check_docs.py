@@ -291,6 +291,76 @@ def check_markdown_links(errors: list[str]) -> None:
                 errors.append(f"{path.relative_to(ROOT)}: broken Markdown link: {raw_target}")
 
 
+CHECK_FILES = ("checks/ready.md", "checks/blocked.md")
+CHECK_ID = re.compile(r"^C-(\d+) -- \S")
+OWNER_NONE = re.compile(r"^Owner:\s*none\b", re.IGNORECASE)
+
+
+def _owner_plan(line: str) -> str | None:
+    """The plan path an Owner: line names, written either as a Markdown link or in backticks."""
+    for raw in MD_LINK_PATTERN.findall(line) + PATH_TOKEN.findall(line):
+        target = raw.strip().split("#", 1)[0].strip()
+        if "/" in target:
+            return target
+    return None
+
+
+def check_checks(errors: list[str]) -> None:
+    """Every hands-on check is addressable by id, with one PASS line and one owning plan.
+
+    Dave replies "C-4 pass, C-7 fails: <what I saw>", so an entry with no id,
+    or two entries sharing one, makes a reply ambiguous -- the 3 Sep pass had
+    to read at least one item's meaning out of surrounding prose. The format
+    was a convention until this ran."""
+    seen: dict[str, str] = {}
+    for rel in CHECK_FILES:
+        path = ROOT / rel
+        if not path.is_file():
+            errors.append(f"{rel}: missing -- the hands-on checks live here")
+            continue
+        # Everything before the first entry is the file's contract, not an entry.
+        entries = re.split(r"^### ", path.read_text(encoding="utf-8"), flags=re.MULTILINE)[1:]
+        for entry in entries:
+            heading, _, body = entry.partition("\n")
+            heading = heading.strip()
+            id_match = CHECK_ID.match(heading)
+            if not id_match:
+                errors.append(
+                    f"{rel}: entry '{heading}' must open with an id, as '### C-<n> -- <short name>' "
+                    "-- Dave replies by id, so an unnamed entry cannot be answered"
+                )
+                continue
+            check_id = f"C-{id_match.group(1)}"
+            if check_id in seen:
+                errors.append(
+                    f"{rel}: {check_id} is already used by {seen[check_id]} -- an id follows its "
+                    "entry between the two files and is never reused"
+                )
+            else:
+                seen[check_id] = f"{rel} '{heading}'"
+
+            lines = [line.strip() for line in body.splitlines()]
+            if not any(line.startswith("PASS:") for line in lines):
+                errors.append(
+                    f"{rel}: {check_id} has no line beginning 'PASS:' -- an entry states its single "
+                    "pass condition on one line"
+                )
+
+            owners = [line for line in lines if line.startswith("Owner:")]
+            if not owners:
+                errors.append(f"{rel}: {check_id} has no 'Owner:' line naming the plan that owns it")
+                continue
+            owner = owners[0]
+            target = _owner_plan(owner)
+            if target is None:
+                # A blocked check can outlive its plan: C-6's evidence campaign closed with
+                # nothing to pick it up, and its Blocked by: line says what would.
+                if rel == "checks/blocked.md" and OWNER_NONE.match(owner):
+                    continue
+                errors.append(f"{rel}: {check_id}'s Owner: line names no plan file -- {owner}")
+            elif not (ROOT / target).is_file():
+                errors.append(f"{rel}: {check_id}'s Owner: names a plan that does not exist: {target}")
+
 def git_worktree_paths() -> set[Path] | None:
     """Resolved paths of every worktree Git currently knows about, or None if git is unavailable."""
     try:
@@ -393,6 +463,7 @@ def main() -> int:
     check_next_steps(errors, warnings)
     check_queue_proofs(errors)
     check_markdown_links(errors)
+    check_checks(errors)
     check_workstreams(errors)
 
     for warning in warnings:
