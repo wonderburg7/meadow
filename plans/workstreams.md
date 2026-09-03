@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/hc-8` (`claude/hc-8`) | Claude | Route all five `hive_cell.gd` outlines through one silhouette helper so highlight rings follow the cup sprite. | Claude | active | none | `plans/now/hive-comb.md` Slice 8 |
