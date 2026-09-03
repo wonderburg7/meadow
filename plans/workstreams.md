@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-S-2` (`codex/UI-S-2`) | Codex | Left-side windows clear the corner readout and scroll. | Codex | in progress | none | `plans/now/ui.md` UI-S-2 |

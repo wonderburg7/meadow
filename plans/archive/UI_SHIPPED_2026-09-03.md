@@ -285,3 +285,39 @@ states the fact and the view chooses the words (UI-Q-2). The other 18 call
 sites are untouched — they pass no key and are never throttled, matching
 before. Hands-on check filed in `checks/ready.md`.
 
+---
+
+### UI-S-2 — left-side windows clear the corner readout and scroll
+
+**Ask (Dave, 3 Sep).** "Left side panel windows are still overlapping with
+summary windows, rather than the panel windows fitting the space, with a
+buffer and scroll bar." And: "Colony/nursery windows overlap with summary.
+These should appear under the top-left text (under the nectar/pollen/summary
+line details) and have a slight buffer between the summary window and a
+scroll bar if this means that all the content can't be seen. The buffer
+space should be the same as the buffer space used between the summary
+window and the command panel." Plus: "Opening the colony/foraging/nursery
+panel should close any others of these panels."
+
+**Diagnosed.** Each of the three panels placed itself with a literal:
+`colony_panel.gd` and `foraging_panel.gd` set `offset_top = 60`,
+`nursery_panel.gd` set `offset_top = 150`, all three `offset_left = 16`,
+and none had a height cap or a `ScrollContainer`. The thing they had to
+clear was `hud.gd`'s changing `corner_column`.
+
+**Landed.** `UiLayout.left_window_top()` and
+`UiLayout.left_window_max_height()` use the shared 16px tray gap for the
+corner clearance and lower screen edge. `Hud.corner_bottom()` exposes the
+live corner block's bottom edge. Colony, Foraging and Nursery wrap their
+existing columns in vertically auto-scrolling `ScrollContainer`s and apply
+that shared rectangle on open and viewport resize. `year_winter.gd` now
+closes the other two left-side windows through one shared list before opening
+one, while Nursery retains its hive-view and zone-glow behaviour.
+
+**Acceptance.** With several readouts starred and with none, each window
+opens one 16px gap below the corner text, keeps its content on screen with
+internal scrolling when necessary, and opening one closes the other two.
+
+**Evidence.** `tools/verify.ps1` passed; hands-on check C-13 is filed in
+`checks/ready.md`.
+

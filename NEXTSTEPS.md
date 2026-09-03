@@ -44,22 +44,20 @@ decided.
    - Next after: FL-1, already second in this lane -- it can lead as soon as
      either it or UI-S-2 lands and clears the `scripts/hud.gd` pairing.
 
-2. **[Codex] UI-S-2 -- Left-side windows clear the corner readout and scroll.**
-   - Plan: `plans/now/ui.md` -- UI-S-2.
-   - Does: puts the colony, foraging and nursery windows one shared 16px gap
-     below the live corner readout, caps their remaining height with internal
-     scrolling, and makes opening one close the other two.
-   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`,
-     `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`,
-     `scripts/nursery_panel.gd`, `scripts/year_winter.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: each window clears
-     both a tall and an empty corner readout, scrolls when necessary, and
-     opening one closes the others without breaking the nursery hive view.
-   - Proof: `absent: scripts/ui_layout.gd :: left_window_top`
-   - Why first in this lane: UI-S-3 landed and explicitly promotes it. It does
+2. **[Codex] UI-S-4 -- A refused command says so, at one instrumented choke point.**
+   - Plan: `plans/now/ui.md` -- UI-S-4.
+   - Does: instruments every right-click command issue, shows a throttled
+     warning instead of silently refusing a command, and removes invalid
+     selections rather than making them appear to vanish.
+   - Files: `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
+     `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: reproduce the
+     double right-click, then send the run's diagnostic log so its cause is
+     pinned to one branch rather than guessed.
+   - Proof: `absent: scripts/input_selection.gd :: DiagnosticLog`
+   - Why first in this lane: UI-S-2 landed and explicitly promotes it. It does
      not overlap P-1, the leading Claude item.
-   - Next after: UI-S-4 (`plans/now/ui.md` -- refused commands are visible and
-     the right-click choke point records their cause).
+   - Next after: UI-R-2, already fourth in this lane.
 
 3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
    - Plan: `plans/now/flowers.md` -- Slice 1.

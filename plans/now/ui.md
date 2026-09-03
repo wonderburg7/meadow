@@ -17,17 +17,16 @@ UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
 | UI-R-2 | Pre-run menu's left pane clears the screen edge | `main_menu.gd` | yes | low |
 | UI-R-3 | A developer button that fires three warning-banner cases | `debug_panel.gd` | after check-loop P-3 | low |
 | UI-S-1 | The bottom row re-specified: tray at 50%, neighbours fill the rest | `ui_layout.gd`, `hud.gd` | yes | medium |
-| UI-S-2 | Colony/foraging/nursery windows clear the corner readout and scroll | `ui_layout.gd`, `hud.gd`, the three panel scripts | yes | medium |
 | UI-S-4 | A refused command says so, at one instrumented choke point | `input_selection.gd`, `diagnostic_log.gd` | yes | medium |
 | UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
 
 **Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
-clamps; both are now shipped. UI-R-3 adds a button to the developer Triggers
-section that `plans/now/check-loop.md` P-3 creates, so P-3 goes first --
-otherwise UI-R-3 writes a row that P-3 immediately rewrites. UI-S-2 and
-`plans/now/check-loop.md` P-2 both name the panel scripts: P-2 enforces what
-UI-S-1 and UI-S-2 land, so it runs after both. Nothing else here is ordered.
+clamps; both are now shipped. UI-S-2 also shipped, so `plans/now/check-loop.md`
+P-2 can now enforce both left-panel rectangles. UI-R-3 adds a button to the
+developer Triggers section that `plans/now/check-loop.md` P-3 creates, so P-3
+goes first -- otherwise UI-R-3 writes a row that P-3 immediately rewrites.
+Nothing else here is ordered.
 
 **Required reading for any slice here.** This file's own section, and
 `scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are
@@ -193,65 +192,9 @@ implementation centres the tray at half the viewport and derives both
 neighbouring widths from its edges, preserving the shared 16px gaps.
 
 
-### UI-S-2 — the colony, foraging and nursery windows sit on top of the corner readout
-
-**Ask (Dave, 3 Sep).** "Left side panel windows are still overlapping with
-summary windows, rather than the panel windows fitting the space, with a
-buffer and scroll bar." And: "Colony/nursery windows overlap with summary.
-These should appear under the top-left text (under the nectar/pollen/summary
-line details) and have a slight buffer between the summary window and a
-scroll bar if this means that all the content can't be seen. The buffer
-space should be the same as the buffer space used between the summary
-window and the command panel." Plus: "Opening the colony/foraging/nursery
-panel should close any others of these panels."
-
-**Diagnosed.** Each of the three panels places itself with a literal:
-`colony_panel.gd` and `foraging_panel.gd` set `offset_top = 60`,
-`nursery_panel.gd` sets `offset_top = 150`, all three `offset_left = 16`,
-all three `PRESET_TOP_LEFT`, none with a height cap or a `ScrollContainer`.
-The thing they must clear is `hud.gd`'s `corner_column` -- a `VBoxContainer`
-at `(16, 12)` whose height changes with how many readouts the player has
-starred, which is exactly why a fixed 60 or 150 cannot be right.
-
-**Fix.**
-
-- a) `ui_layout.gd`: add
-  `static func left_window_top(corner_bottom: float) -> float` returning
-  `corner_bottom + SELECTION_TRAY_GAP`, and
-  `static func left_window_max_height(viewport_height: float, top: float) -> float`
-  returning `maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)`. One
-  gap constant for all three edges, which is what "the same buffer as
-  between the summary window and the command panel" means.
-- b) `hud.gd`: add `func corner_bottom() -> float` returning
-  `corner_column.position.y + corner_column.size.y`, so the panels ask the
-  HUD rather than reaching into its nodes.
-- c) All three panels: wrap the existing content `VBoxContainer` in a
-  `ScrollContainer` (`horizontal_scroll_mode = SCROLL_MODE_DISABLED`,
-  vertical automatic) inside the `PanelContainer`, and give each a
-  `func _apply_left_window_rect() -> void` that sets `panel.offset_top`
-  from `left_window_top(main.hud.corner_bottom())` and the
-  ScrollContainer's `custom_minimum_size.y` from
-  `left_window_max_height(...)`. Call it when the panel is opened, and on
-  `get_viewport().size_changed`. Keep `offset_left = 16` and each panel's
-  existing `custom_minimum_size.x`.
-- d) `year_winter.gd::_toggle_panel()` and `_on_nursery_window_requested()`:
-  before opening any one of the three, close the other two. One list, walked
-  once -- do not add a third pairwise special case.
-- e) No literal `offset_top` may remain in the three panel files.
-
-**Acceptance.** With several readouts starred (a tall corner block) and
-with none, opening Colony, Foraging or Nursery puts the window's top edge
-one 16px gap below the last line of corner text, never over it. A window
-whose content is taller than the space left scrolls inside itself and stays
-on screen. Opening any one of the three closes whichever of the other two
-was open. The nursery window still opens the hive view and its zone glow
-as before.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file.
-
-**Files:** `scripts/ui_layout.gd`, `scripts/hud.gd`,
-`scripts/colony_panel.gd`, `scripts/foraging_panel.gd`,
-`scripts/nursery_panel.gd`, `scripts/year_winter.gd`.
+**UI-S-2:** shipped 3 Sep 2026; its specification is archived in
+`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-13 is filed in
+`checks/ready.md`.
 
 Archived: UI-S-3's command-tray reflow and viewport cap shipped 3 Sep 2026;
 its specification is at `plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on
