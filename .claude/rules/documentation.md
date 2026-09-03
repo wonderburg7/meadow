@@ -37,7 +37,6 @@ Do not turn `ROADMAP.md` or `DESIGN_BACKLOG.md` into second queues. They hold
 future product direction and decisions, respectively. Use
 `tools/check_docs.py` after editing Markdown; `tools/verify.ps1` includes it.
 
-Before specifying a slice, read the code it names, not only the plan that
-names it. A plan records what was true when written; a batch commit can ship
-several slices with only some booked out. If two slices need the same thing
-built, that thing is an earlier slice, never a later consolidation.
+Before specifying a slice, verify it against the code with a `Proof:` line
+(`plans/README.md` guardrail 12). If two slices need the same thing built,
+that thing is an earlier slice, never a later consolidation.

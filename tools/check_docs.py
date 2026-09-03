@@ -105,7 +105,8 @@ def check_context_layout(errors: list[str]) -> None:
 
 QUEUE_SIZE = 5
 LANES = ("Claude", "Codex")
-REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Next after:")
+REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")
+PROOF_LINE = re.compile(r"^\s*-\s*Proof:\s*`([^`]*)`", re.MULTILINE)
 NOT_READY_PHRASES = (
     "blocked on",
     "needs dave",
@@ -206,6 +207,57 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
                     + " -- they will collide once both lanes reach them; put them "
                     "in one lane, or make the shared file its own earlier slice"
                 )
+
+
+def check_queue_proofs(errors: list[str]) -> None:
+    """Each queue item's Proof: line must still hold against the code it names.
+
+    X3 sat at the head of a lane, with a worktree open, for a fix that had
+    shipped three days earlier -- this is what would have caught it."""
+    path = ROOT / "NEXTSTEPS.md"
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    if not match:
+        return
+    section = match.group(1)
+    chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
+
+    for index, chunk in enumerate(chunks, start=1):
+        proof_match = PROOF_LINE.search(chunk)
+        if not proof_match:
+            continue  # already reported as a missing field by check_next_steps
+
+        raw = proof_match.group(1).strip()
+        mode, sep, rest = raw.partition(":")
+        mode = mode.strip()
+        if not sep or mode not in ("present", "absent"):
+            errors.append(
+                f"NEXTSTEPS.md item {index}: Proof: must start with 'present:' or 'absent:', got `{raw}`"
+            )
+            continue
+
+        rel_path, sep, needle = rest.partition("::")
+        rel_path = rel_path.strip()
+        needle = needle.strip()
+        if not sep or not needle:
+            errors.append(
+                f"NEXTSTEPS.md item {index}: Proof: must be `{mode}: <path> :: <substring>`, got `{raw}`"
+            )
+            continue
+
+        target = ROOT / rel_path
+        if not target.is_file():
+            errors.append(f"NEXTSTEPS.md item {index}: Proof: names a file that does not exist: {rel_path}")
+            continue
+
+        content = target.read_text(encoding="utf-8")
+        found = needle in content
+        holds = found if mode == "present" else not found
+        if not holds:
+            errors.append(
+                f"NEXTSTEPS.md item {index}: proof no longer holds -- this may already be built. "
+                f"Open {rel_path} before requeuing it."
+            )
 
 
 def check_markdown_links(errors: list[str]) -> None:
@@ -330,6 +382,7 @@ def main() -> int:
     check_context_layout(errors)
     check_live_plans_hold_only_open_work(errors, warnings)
     check_next_steps(errors, warnings)
+    check_queue_proofs(errors)
     check_markdown_links(errors)
     check_workstreams(errors)
 

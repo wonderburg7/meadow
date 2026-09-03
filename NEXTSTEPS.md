@@ -18,7 +18,50 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
+1. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
+   hand.**
+   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
+   - Does: `main.gd::_on_scenario_chosen` calls
+     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
+     back over every `GameConfig` field -- including toggles the player set
+     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
+     adds `reset_config_keys()` beside the full reset, and resets only the
+     union of the outgoing preset's keys and the incoming one's.
+   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
+     `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
+     flower/season toggle survives picking a Scenario, and preset A's values
+     do not leak into preset B's run.
+   - Proof: `present: scripts/main.gd :: reset_config_to_defaults()`
+   - Why first: it was the Claude lane's head before C1-14 arrived, and it
+     shares no file with UI-S-1, this lane's leading Codex item.
+   - Next after: FL-1 (`plans/now/flowers.md` Slice 1).
+
+2. **[Codex] UI-S-1 -- The bottom row: the command tray leads, the summary
+   panel and Dr Gallerin follow.**
+   - Plan: `plans/now/ui.md` -- UI-S-1.
+   - Does: rewrites `ui_layout.gd`'s bottom-row block around one rule --
+     the command tray is 50% of the viewport, centred, and the summary panel
+     and Dr Gallerin's speech bubble fill what is left, each one
+     `SELECTION_TRAY_GAP` (16px) clear of it -- replacing today's fixed
+     `SELECTION_TRAY_RESERVE` reserves, which is why the 16px buffer
+     disappears at narrow widths. Supersedes UI-R-1's own check.
+   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: the 16px buffer
+     is visible between the command tray and each neighbour at every width,
+     and resizing narrower shrinks the tray before it eats either buffer.
+   - Proof: `absent: scripts/ui_layout.gd :: COMMAND_TRAY_WIDTH_FRACTION`
+   - Why first in this lane: X3 shipped (confirmed 3 Sep -- `ui_theme.gd`
+     already reads `base.lightened(0.16)`) and UI-S-1 is next in
+     `plans/now/ui.md`'s Codex lane, sharing no file with SP-1, this lane's
+     leading Claude item. It does touch `scripts/hud.gd`, the same file as
+     item 3 (FL-1) further down this lane's Claude side -- that is fine
+     while FL-1 is not the leading item, but FL-1 must land or drop before
+     UI-S-1 would collide with it.
+   - Next after: UI-S-3 (`plans/now/ui.md` -- UI-S-1 moves the numbers it
+     clamps).
+
+3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
    - Plan: `plans/now/flowers.md` -- Slice 1.
    - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
      summary panel every frame it's open and already prints both effective
@@ -33,43 +76,13 @@ what to do -- this file already decided.
      and the panel shows its age against its lifespan and whether it's in
      or out of season; watching one across a season boundary flips the line
      at the same moment the `+/s` figures fall away.
-   - Why first: it shares no file with X3, HC-9 landed and
-     `plans/now/hive-comb.md` has nothing else ready.
+   - Proof: `absent: scripts/hud.gd :: season_strength`
+   - Why here: it was queued before SP-1 arrived and shares no file with
+     anything else in the Claude lane; it does share `scripts/hud.gd` with
+     UI-S-1 (Codex), so whichever of FL-1 or UI-S-1 lands first, re-check
+     this pairing before promoting the other lane's next item into the lead.
    - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
      needs its named headless run before it merges.
-
-2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
-   - Plan: `plans/now/ui.md` -- UI-P-2.
-   - Does: raise `ui_theme.gd::_refresh_button_stylebox()`'s `"normal"` state
-     from `base.lightened(0.10)` toward 0.16-0.18 and/or give it a low-alpha
-     border, so "Change to..." and "When idle:" (and every other command-panel
-     button) show a background at rest. One shared value, not a per-menu
-     override.
-   - Files: `scripts/ui_theme.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: ordinary buttons
-     read as buttons at rest, and `mark_as_current` buttons still read as
-     clearly more prominent.
-   - Why first in this lane: it was already at the head of the queue and
-     shares no file with anything in the Claude lane.
-   - Next after: UI-R-2.
-
-3. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
-   hand.**
-   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
-   - Does: `main.gd::_on_scenario_chosen` calls
-     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
-     back over every `GameConfig` field -- including toggles the player set
-     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
-     adds `reset_config_keys()` beside the full reset, and resets only the
-     union of the outgoing preset's keys and the incoming one's.
-   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
-     `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
-     flower/season toggle survives picking a Scenario, and preset A's values
-     do not leak into preset B's run.
-   - Why here: it was the Claude lane's head before C1-14 arrived, and it
-     shares no file with anything else in the queue.
-   - Next after: FL-1 (`plans/now/flowers.md` Slice 1).
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -80,6 +93,7 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
      sits comfortably clear of the screen edge and tile clicking is
      unchanged.
+   - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
    - Next after: UI-R-3.
 
 5. **[Codex] UI-R-3 -- No way to fire a warning-banner case on demand.**
@@ -95,17 +109,14 @@ what to do -- this file already decided.
    - Files: `scripts/debug_panel.gd`.
    - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s C-4;
      move that entry to `checks/ready.md`, keeping its id, when this lands.
-   - Next after: UI-S-1.
+   - Proof: `absent: scripts/debug_panel.gd :: Fire test warnings`
+   - Next after: UI-S-2.
 
 ## Ready, not yet in the queue
 
 All of these can be started today; they are out of the queue only because it
 holds five. Take one when a lane empties, in roughly this order.
 
-- **UI-S-1** (`plans/now/ui.md`) -- the bottom row re-specified: the command
-  tray takes half the viewport, centred, and the summary panel and Dr
-  Gallerin's bubble fill what is left with one 16px gap each. Supersedes
-  UI-R-1's own check.
 - **UI-S-2** (`plans/now/ui.md`) -- the colony, foraging and nursery windows
   sit below the corner readout with a 16px buffer, scroll when they do not
   fit, and close each other.
@@ -122,14 +133,6 @@ holds five. Take one when a lane empties, in roughly this order.
 - **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
   format (id, one action, one PASS line, an owner) enforceable in
   `tools/check_docs.py`.
-- **W-2** (`plans/now/agent-workflow.md`) -- cut the session-opening context
-  floor: disable the unused `gitkraken` MCP server for this project and deny
-  three orientation files agents keep reading by mistake. Needs W-1's
-  `tools/session_cost.py` "before" figure, which has now landed.
-- **W-3** (`plans/now/agent-workflow.md`) -- put a `Proof:` line on every
-  queue item and make `tools/check_docs.py` evaluate it, so an item whose
-  behaviour already exists fails verification instead of being started. This
-  is the check X3 needed four times.
 - **W-6** (`plans/now/agent-workflow.md`) -- full paths in `CLAUDE.md`'s
   routing table, a `tools/heading.py` section reader, and one sentence on what
   an early read really costs.
