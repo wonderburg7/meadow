@@ -122,6 +122,19 @@ holds five. Take one when a lane empties, in roughly this order.
 - **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
   format (id, one action, one PASS line, an owner) enforceable in
   `tools/check_docs.py`.
+- **W-1** (`plans/now/agent-workflow.md`) -- `tools/session_cost.py`, one
+  script that reports what a week of sessions cost, so the workflow changes
+  behind it can be measured rather than assumed.
+- **W-3** (`plans/now/agent-workflow.md`) -- put a `Proof:` line on every
+  queue item and make `tools/check_docs.py` evaluate it, so an item whose
+  behaviour already exists fails verification instead of being started. This
+  is the check X3 needed four times.
+- **W-6** (`plans/now/agent-workflow.md`) -- full paths in `CLAUDE.md`'s
+  routing table, a `tools/heading.py` section reader, and one sentence on what
+  an early read really costs.
+- **W-7** (`plans/now/agent-workflow.md`) -- `tools/verify.ps1 -Quiet` and
+  `-Docs`, so a passing run prints four lines and a ledger failure does not
+  read as a code failure.
 
 ## Not in the queue, and why
 
