@@ -2,13 +2,13 @@
 
 <!-- CONTEXT: workflow-audit | LOAD: on-demand -->
 
-Status: current | Owner: Dave | Implementation plan: `plans/now/agent-workflow.md` | Verified: 2026-09-03
+Status: current | Owner: Dave | Implementation plan: `plans/archive/AGENT_WORKFLOW_2026-09-03.md` | Verified: 2026-09-03
 
 Two independent audits of the same week, one per agent. Part 1 is Codex's
 audit of its own rollouts, carried over unchanged. Part 2 is the Claude Code
 audit of the 95 Claude sessions over the same window. Part 3 combines them
-into one ranked set of changes, which `plans/now/agent-workflow.md` turns into
-implementable slices.
+into one ranked set of changes, which
+`plans/archive/AGENT_WORKFLOW_2026-09-03.md` turned into implementable slices.
 
 The two audits agree on cause more than they disagree. Both found that the
 expensive failures are **state that is asserted in prose and never verified by
@@ -268,7 +268,7 @@ removes them.**
 
 Ranked by impact divided by effort. Each is stated as a mechanism, not a rule,
 because every one of these areas already has a rule that was broken this week.
-`plans/now/agent-workflow.md` holds the implementable form.
+`plans/archive/AGENT_WORKFLOW_2026-09-03.md` holds the implementable form.
 
 ### R1. Cut the session-opening floor (addresses Claude F3, Codex "excessive context")
 
