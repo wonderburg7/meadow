@@ -53,7 +53,7 @@ decided.
      it as its `Next after:`; it shares no file with the Claude lane.
    - Next after: none -- this plan then has no open slice.
 
-2. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
+2. **[Claude] P-2 -- one owner for panel rectangles, enforced.**
    - Plan: `plans/now/check-loop.md` -- P-2.
    - Does: adds a check to `tests/source_checks.py`, in the style of the
      existing `GameConfig` write allowlist, that fails on any numeric
