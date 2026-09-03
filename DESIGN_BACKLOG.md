@@ -1,7 +1,7 @@
 # Meadow — design backlog
 
 Status: active design reference | Owner: Dave | Next: select one design area
-before creating an implementation slice | Verified: 2026-08-26
+before creating an implementation slice | Verified: 2026-09-03
 
 This is the parking place for agreed product direction, not an execution log.
 Built behaviour belongs in code, current plans and `docs/history.md`; the
@@ -12,12 +12,16 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | Area | Current source | State |
 | --- | --- | --- |
 | Progression, colony adaptations and skills | `plans/design/progression.md` | designed, not scheduled |
-| Challenge 1 revamp / Challenge 2 boundary | `plans/now/challenge-1.md` | Bundle H current |
+| Challenge 1 revamp | `plans/now/challenge-1.md` | code complete; Slice 7 is Dave's acceptance run |
+| Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` | active, one slice ready |
 | Foraging ecology | `plans/archive/FORAGING_EVIDENCE_2026-09-03.md` | mechanics built; evidence campaign remains |
 | Predators | `plans/archive/CRAB_SPIDER_PLAN.md` | built, off by default; hands-on re-check pending |
 | UI and accessibility | `plans/now/ui.md` | active, narrow slices only |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/now/hive-comb.md` | active, narrow slices only |
 | Settings/config ownership (GameConfig vs the settings window) | `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` | shipped 1 Sep 2026; the catalogue is `scripts/settings_catalogue.gd` |
+| Settings surviving a run change | `plans/now/settings-persistence.md` | active, one slice ready |
+| Flower season and senescence | `plans/now/flowers.md` | active, two slices ready |
+| The check/slice loop itself | `plans/now/check-loop.md` | active, three slices |
 
 ## Deferred product decisions
 
@@ -27,7 +31,9 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
   A Challenge-aware save schema is a separate high-risk design and migration
   task, not an incidental UI change. Confirmed live on 2 Sep 2026 that both
   controls are unavailable for the length of Challenge 2 -- that is the
-  decision working, not a bug to file.
+  decision working, not a bug to file. **This paragraph is the authoritative
+  statement of that decision**; `NEXTSTEPS.md` points here rather than
+  restating it.
 - **Sprites:** procedural shapes remain the rendering baseline. A sprite pass
   must preserve a simple-graphics fallback and measure performance rather than
   assuming sprites are cheaper.

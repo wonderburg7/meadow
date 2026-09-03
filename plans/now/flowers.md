@@ -11,6 +11,25 @@ No `plans/now/` file owned flower ecology before this one; the foraging
 side of it is closed and archived at
 `plans/archive/FORAGING_EVIDENCE_2026-09-03.md`.
 
+## Open slices at a glance
+
+| Slice | Outcome | Owns | Startable | Reasoning |
+| --- | --- | --- | --- | --- |
+| 1 | The flower panel shows age against lifespan, and season | `hud.gd` | yes | low |
+| 2 | Out of season means a small non-zero rate, faster ageing, rarer seeding | `game_config.gd`, `flower.gd`, `flower_species.gd` | yes | medium |
+
+Slice 1 is display only and Slice 2 is simulation; they share no file and
+have no dependency on each other, but Slice 1 first makes Slice 2 legible
+while it is being checked. Slice 2 is a balance change: it does not merge on
+`verify.ps1` alone (see the durable rule below).
+
+**Required reading.** This file's own slice section. Nothing else -- the
+foraging side of this area is closed and archived at
+`plans/archive/FORAGING_EVIDENCE_2026-09-03.md`, provenance only.
+
+**Do not change** `flower.gd::roll_preferred_species`: it weights by a
+different field for a different purpose than Slice 2's seeding change.
+
 <!-- LAYER: durable-rules -->
 
 - Season and senescence are simulation, and `GameConfig` owns their numbers.

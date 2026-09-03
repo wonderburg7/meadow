@@ -1,7 +1,7 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 (a developer trigger for a nectar collapse), either lane | Dependency: none for Slice 1; Slice 2 needs Slice 1's evidence | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 1 (a developer trigger for a nectar collapse), either lane | Dependency: Slice 1 needs check-loop P-3; Slice 2 needs Slice 1's evidence and Dave's run | Verified: 2026-09-03
 
 **Why this file exists.** The check "neither the rescue message nor the
 recovery/checkpoint-restore message appeared during a Challenge 2 nectar
@@ -31,10 +31,9 @@ condition happen on demand. This is the same gap `plans/now/ui.md` UI-R-3
 fixes for the warning banner, and the same lesson: a rare state that cannot
 be triggered cannot be checked.
 
-**Fix.** Add a button, "Force Challenge 2 collapse", to `debug_panel.gd`'s
-existing `challenge_row` -- the row that already holds "Advance Challenge
-stage" -- styled with the same `_style_button` + `UI.with_info` pattern as
-its neighbours, and visible only in the developer section.
+**Fix.** Add a button, "Force Challenge 2 collapse", to the developer
+"Triggers" group that `plans/now/check-loop.md` P-3 builds, styled with the
+same `_style_button` + `UI.with_info` pattern as its neighbours.
 
 - It removes nectar from the hive until `main.hive.total("nectar")` is just
   below `Stages.C2_RESCUE_THRESHOLD`, using the hive's existing withdrawal
@@ -56,6 +55,13 @@ that is Slice 2's evidence and the exact symptom to report.
 **Check:** `tools/verify.ps1`. One hands-on check to file: the acceptance
 above, replacing the "Challenge data/goal-registry extraction" entry in
 `checks/ready.md`.
+
+**Depends on:** `plans/now/check-loop.md` P-3 (the Triggers group). P-3,
+this slice and `plans/now/ui.md` UI-R-3 all own
+`scripts/debug_panel.gd`, so they run one at a time, P-3 first.
+
+**Reasoning level:** low. One file, one existing pattern, and every
+threshold read from `challenge_stages.gd` rather than chosen here.
 
 **Files:** `scripts/debug_panel.gd`.
 
