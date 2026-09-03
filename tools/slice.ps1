@@ -324,64 +324,83 @@ function Invoke-SliceFinish {
 
     Get-Process -Name "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
-    Push-Location $root
-    try {
-        $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
-        if ($primaryBranch -ne "master") {
-            throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
-        }
+    # `finish` deletes the worktree it is run from, so it must not depend
+    # on returning to it. Push-Location left that path on the location
+    # stack and the matching Pop-Location threw once the directory was
+    # gone -- and, sitting in a `finally`, replaced whatever real error was
+    # propagating, so a failed ledger commit surfaced as a path error.
+    Set-Location -LiteralPath $root
+    $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
+    if ($primaryBranch -ne "master") {
+        throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
+    }
 
-        $title = if ($item) { $item.Title } else { $branch }
-        $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
-        git merge --no-ff $branch -m $mergeMessage
-        if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+    $title = if ($item) { $item.Title } else { $branch }
+    $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
+    git merge --no-ff $branch -m $mergeMessage
+    if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
 
-        git push
-        if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    git push
+    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
-        $worktreePath = Join-Path $root $worktreeRelative
-        git worktree remove $worktreeRelative
-        if ($LASTEXITCODE -ne 0) {
-            # `git worktree remove` can deregister the worktree and still fail to
-            # delete the directory (an external process briefly holding it open --
-            # OneDrive and the Search Indexer both do this on a freshly emptied
-            # folder, same as a running Godot instance can). Once git has let go
-            # of it, re-running `git worktree remove` just fails with "is not a
-            # working tree" -- retry the plain delete instead.
-            $maxAttempts = 60
-            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-                if (-not (Test-Path -LiteralPath $worktreePath)) { break }
-                try {
-                    Remove-Item -LiteralPath $worktreePath -Recurse -Force -ErrorAction Stop
-                    break
-                }
-                catch {
-                    if ($attempt -eq $maxAttempts) { throw "could not remove $worktreeRelative -- $($_.Exception.Message)" }
-                    if ($attempt % 5 -eq 0) {
-                        Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
-                    }
-                    Start-Sleep -Seconds 3
-                }
+    $worktreePath = Join-Path $root $worktreeRelative
+    git worktree remove $worktreeRelative
+    if ($LASTEXITCODE -ne 0) {
+        # `git worktree remove` can deregister the worktree and still fail to
+        # delete the directory (an external process briefly holding it open --
+        # OneDrive and the Search Indexer both do this on a freshly emptied
+        # folder, same as a running Godot instance can). Once git has let go
+        # of it, re-running `git worktree remove` just fails with "is not a
+        # working tree" -- retry the plain delete instead.
+        $maxAttempts = 60
+        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            if (-not (Test-Path -LiteralPath $worktreePath)) { break }
+            try {
+                Remove-Item -LiteralPath $worktreePath -Recurse -Force -ErrorAction Stop
+                break
             }
-            git worktree prune
+            catch {
+                if ($attempt -eq $maxAttempts) { throw "could not remove $worktreeRelative -- $($_.Exception.Message)" }
+                if ($attempt % 5 -eq 0) {
+                    Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
+                }
+                Start-Sleep -Seconds 3
+            }
         }
+        git worktree prune
+    }
 
-        git branch -d $branch
-        if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+    git branch -d $branch
+    if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
 
-        git ls-remote --exit-code --heads origin $branch | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            git push origin --delete $branch
-            if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
-        }
+    git ls-remote --exit-code --heads origin $branch | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        git push origin --delete $branch
+        if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+    }
 
-        $ledgerPath = Join-Path $root "plans\workstreams.md"
-        $lines = Get-Content -LiteralPath $ledgerPath
-        $keep = $lines | Where-Object { $_ -notlike "*``$worktreeRelative``*" }
+    $ledgerPath = Join-Path $root "plans\workstreams.md"
+    # A ledger row wraps the worktree path in backticks, and a backtick is the
+    # escape character in a PowerShell wildcard: "*`<path>`*" asks -like for a
+    # *literal* asterisk, so no row ever matched, the file was rewritten
+    # unchanged, and the commit below then died on "nothing to commit". Match
+    # the row as an ordinal substring instead of a wildcard.
+    $rowMarker = '`' + $worktreeRelative + '`'
+    $lines = @(Get-Content -LiteralPath $ledgerPath)
+    $keep = @($lines | Where-Object { $_.IndexOf($rowMarker, [System.StringComparison]::Ordinal) -lt 0 })
+    if ($keep.Count -eq $lines.Count) {
+        Write-Output "$id -- no ledger row names $worktreeRelative; leaving plans/workstreams.md alone"
+    }
+    else {
         Set-Content -LiteralPath $ledgerPath -Value $keep
+    }
 
-        git add "plans/workstreams.md"
-        if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    git add "plans/workstreams.md"
+    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    # An empty commit exits 1, so a ledger that is already clean -- a re-run
+    # after a partial closeout -- must not fail the run. Ask what is staged.
+    git diff --cached --quiet
+    if ($LASTEXITCODE -ne 0) {
         $deleteMessage = "Remove the $id worktree row from the ledger`n`n$trailer"
         git commit -m $deleteMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
@@ -389,8 +408,8 @@ function Invoke-SliceFinish {
         git push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
     }
-    finally {
-        Pop-Location
+    else {
+        Write-Output "$id -- ledger already clean; nothing to commit"
     }
 
     $queueLine = "queue not refilled by 'finish' -- check NEXTSTEPS.md by hand"

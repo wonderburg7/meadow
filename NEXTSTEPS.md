@@ -2,8 +2,8 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after W-7 landed and
-finished the agent-workflow plan.
+Five ready slices in two lanes, refilled 3 Sep 2026 after S-1 fixed the two
+`tools/slice.ps1 finish` defects that W-7's closeout exposed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -20,7 +20,22 @@ decided.
 
 ## Next up
 
-1. **[Claude] P-1 -- the check format is a convention, not a check.**
+1. **[Codex] UI-S-4 -- A refused command says so, at one instrumented choke point.**
+   - Plan: `plans/now/ui.md` -- UI-S-4.
+   - Does: instruments every right-click command issue, shows a throttled
+     warning instead of silently refusing a command, and removes invalid
+     selections rather than making them appear to vanish.
+   - Files: `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
+     `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: reproduce the
+     double right-click, then send the run's diagnostic log so its cause is
+     pinned to one branch rather than guessed.
+   - Proof: `absent: scripts/input_selection.gd :: DiagnosticLog`
+   - Why first in this lane: UI-S-2 landed and explicitly promotes it. It does
+     not overlap P-1, the leading Claude item.
+   - Next after: UI-R-2, already fourth in this lane.
+
+2. **[Claude] P-1 -- the check format is a convention, not a check.**
    - Plan: `plans/now/check-loop.md` -- P-1.
    - Does: adds a `check_checks()` function to `tools/check_docs.py`, in the
      style of `check_next_steps()`, that reads `checks/ready.md` and
@@ -36,28 +51,11 @@ decided.
      readable message, and both files as they stand today must pass. No
      hands-on check: the whole slice is a checker and its own fixtures.
    - Proof: `absent: tools/check_docs.py :: check_checks`
-   - Why first: W-7 landed and completed `plans/now/agent-workflow.md`, so
-     this lane needed a new item. FL-1 was W-7's `Next after:` but still
-     shares `scripts/hud.gd` with UI-S-2, the leading Codex item, so it
-     cannot lead. P-1 was the first entry under "Ready, not yet in the queue"
-     and owns three files no other queued item names.
+   - Why first: S-1 landed and finished the slice-tooling plan, so this lane
+     promoted P-1 as that item's `Next after:`. P-1 owns three files no other
+     queued item names.
    - Next after: FL-1, already second in this lane -- it can lead as soon as
-     either it or UI-S-2 lands and clears the `scripts/hud.gd` pairing.
-
-2. **[Codex] UI-S-4 -- A refused command says so, at one instrumented choke point.**
-   - Plan: `plans/now/ui.md` -- UI-S-4.
-   - Does: instruments every right-click command issue, shows a throttled
-     warning instead of silently refusing a command, and removes invalid
-     selections rather than making them appear to vanish.
-   - Files: `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
-     `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: reproduce the
-     double right-click, then send the run's diagnostic log so its cause is
-     pinned to one branch rather than guessed.
-   - Proof: `absent: scripts/input_selection.gd :: DiagnosticLog`
-   - Why first in this lane: UI-S-2 landed and explicitly promotes it. It does
-     not overlap P-1, the leading Claude item.
-   - Next after: UI-R-2, already fourth in this lane.
+     either it or UI-S-4 lands and clears the `scripts/hud.gd` pairing.
 
 3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
    - Plan: `plans/now/flowers.md` -- Slice 1.
@@ -75,11 +73,10 @@ decided.
      or out of season; watching one across a season boundary flips the line
      at the same moment the `+/s` figures fall away.
    - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-2, the
-     leading Codex item, so it stays second in the Claude lane rather than
-     promoting to lead -- promoting it now would make both lanes' leading
-      items collide. Re-check this pairing whichever of FL-1 or UI-S-2 lands
-     first: landing either one clears the conflict for the other to lead.
+   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-4, the
+     leading Codex item, so it sits second in the Claude lane rather than
+     leading -- promoting it now would make both lanes' leading items
+     collide. Landing either it or UI-S-4 clears the pairing.
    - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
      needs its named headless run before it merges.
 

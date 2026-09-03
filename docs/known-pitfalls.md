@@ -105,6 +105,35 @@ of these has bitten more than once:
   reserves; never centre it on the parent and never paper over the offset
   with a scale factor. See `plans/now/ui.md` UI-R-1.
 
+## PowerShell tooling: three ways `slice.ps1 finish` broke at once
+
+All three bit in one closeout (W-7, 3 Sep 2026) and are general PowerShell
+traps, not Meadow ones. Full diagnosis in the S-1 commit on
+`claude/youthful-panini-727953`.
+
+- **A command that deletes a directory must not depend on returning to it.**
+  `finish` wrapped its merge/cleanup in `Push-Location $root`, so the worktree
+  it was about to delete sat on the location stack; the matching
+  `Pop-Location` then threw "Cannot find path". Use `Set-Location` when the
+  starting directory may not survive the command.
+- **Never put a throwing statement in a `finally` that wraps destructive
+  work.** An exception raised inside `finally` *replaces* the one propagating.
+  That `Pop-Location` masked the real failure for a whole closeout cycle: the
+  visible error named the cleanup, and the actual cause was invisible until
+  the block was instrumented statement by statement. If a `finally` can throw,
+  it hides every bug behind it.
+- **A backtick is the escape character in a PowerShell wildcard.** Markdown
+  wraps paths in backticks, so the ledger filter `-notlike "*``$path``*"`
+  built a pattern whose trailing `` `* `` meant a *literal asterisk*. It
+  matched nothing, silently: `'a*b' -like 'a`*b'` is True, but
+  `'axxb' -like 'a`*b'` is False. Match text containing backticks with an
+  ordinal `String.IndexOf`, never with `-like`/`-notlike`.
+- **`git commit` exits 1 on "nothing to commit".** Because the filter above
+  removed nothing, the file was rewritten byte-identical, `git add` staged
+  nothing, and the commit failed the whole run. A step that commits a computed
+  edit should ask `git diff --cached --quiet` first and treat "nothing
+  staged" as benign, not fatal.
+
 ## Environment quirk: a stale git lock
 
 A stale `.git/index.lock` or `HEAD.lock` costs a retry, not a rebuild.
