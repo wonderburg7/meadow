@@ -989,6 +989,17 @@ static func reset_config_to_defaults() -> void:
 			GameConfig.set(prop.name, defaults.get(prop.name))
 	defaults.free()
 
+## SP-1 (settings-persistence.md): resets only the named GameConfig keys to
+## their fresh-instance defaults, leaving every other field as the player
+## left it. Same default source as reset_config_to_defaults(), so the two
+## can't drift apart -- used where a run change owns a known subset of
+## GameConfig rather than the whole thing.
+static func reset_config_keys(keys: Array) -> void:
+	var defaults = GameConfig.get_script().new()
+	for key in keys:
+		GameConfig.set(key, defaults.get(key))
+	defaults.free()
+
 ## Sets `key` to `value` and, if `key` takes part in the Prerequisites
 ## tree, cascades to keep dependencies consistent -- turning a toggle on
 ## also turns on everything it depends on; turning one off also turns
