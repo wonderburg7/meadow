@@ -34,6 +34,16 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-16 -- pre-run menu left inset
+
+Open the pre-run menu at the usual viewport, then choose several left-pane
+tiles. Confirm the leftmost tile and its text clear the screen edge
+comfortably, and that selecting tiles still works normally.
+
+PASS: the left pane has a clearly comfortable edge buffer, while tile spacing,
+borders and clicking are unchanged.
+
+Owner: `plans/now/ui.md` UI-R-2.
 ### C-5 -- Challenge 2's rescue and recovery lines
 
 In a Challenge 2 run past stage 2.1, open the settings window and press
