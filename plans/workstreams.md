@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SP-1` (`claude/SP-1`) | Claude | Picking a Scenario wipes settings the player set by hand. | Claude | in progress | none | `plans/now/settings-persistence.md` Slice 1 |
