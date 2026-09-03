@@ -126,6 +126,25 @@ Bundle D hand-over check above passes.
       take, and she should switch to pollen collection. See
       `plans/archive/CHALLENGE1_SLICES_1-10.md` Slice 10, section 10d.
 
+### Challenge 1 selection-panel vocabulary (Slice 13)
+**Fix applied 3 Sep, not yet confirmed live.** `bee.gd::task_description()`
+and `idle_reason()` now fall back to a neutral line for any state outside
+the set Challenge 1 actually reaches, and the "(backup role ... also has
+nothing right now)" note is suppressed while a Challenge restricts the
+bee's roles.
+
+- [ ] Play Challenge 1 to 1.14 with the queen selected the whole way and
+      read the "Now:" line at every stage. Every line should name
+      something the player has already been shown -- nothing about
+      scouting bouts, waiting at the entrance, dancing, royal jelly,
+      mining spoil or honey fanning, and no backup-role note. The neutral
+      "busy in the hive" is the intended fallback; if it appears often
+      enough to feel uninformative, say at which stage.
+- [ ] Outside a Challenge nothing changes: start a Scenario, select a
+      forager that is scouting, and confirm the line still reads
+      "scouting: bout 1 of 3, waiting at the entrance for a tip (Ns)" in
+      full.
+
 ### Challenge 1 Slice 9 fixes (9a-9j)
 - [ ] Re-run Slice 7's full acceptance playthrough (`plans/now/challenge-1.md`
       Slice 7) end to end, **after Slice 11 lands** -- the 2 Sep attempt
