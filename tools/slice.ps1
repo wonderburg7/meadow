@@ -200,6 +200,10 @@ function Invoke-SliceStart {
 
     $ledgerPath = Join-Path $root "plans\workstreams.md"
     $row = "| ``$worktreeRelative`` (``$branch``) | $Lane | $($candidate.Title) | $Lane | in progress | none | ``$($candidate.Plan)`` $($candidate.Heading) |"
+    $ledgerContent = [System.IO.File]::ReadAllText($ledgerPath)
+    if ($ledgerContent.Length -gt 0 -and -not ($ledgerContent.EndsWith("`n"))) {
+        [System.IO.File]::AppendAllText($ledgerPath, "`r`n")
+    }
     Add-Content -LiteralPath $ledgerPath -Value $row
 
     Push-Location $root
