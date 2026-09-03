@@ -925,16 +925,23 @@ func _apply_selection_field_visibility() -> void:
 ## The command tray (UI_PLAN.md section 5): a wrapping row of role-action
 ## buttons, ranked by how often they're used for the current selection
 ## rather than alphabetically or by internal role-mode order, with
-## "More…" revealing the rest underneath. Anchored bottom-centre and
-## capped to ui_layout.gd's shared max width so it never grows into the
-## Gallerin reserve -- see _update_command_tray_width.
+## "More…" revealing the rest underneath. Anchored to ui_layout.gd's
+## explicit bottom-row left edge -- not the viewport's centre, which sat
+## 77px right of the band's own centre because the row's two reserves are
+## unequal (UI-R-1) -- and capped to the shared max width so it never grows
+## into the Gallerin reserve. See _update_command_tray_width.
 func _build_command_tray() -> void:
 	command_tray = PanelContainer.new()
 	command_tray.theme = UiTheme.build_theme()
 	command_tray.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	command_tray.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	command_tray.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	command_tray.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	# Grow rightwards from the left edge _update_command_tray_width sets, so
+	# the tray's own minimum size can never drag it back over the summary
+	# panel (UI-R-1).
+	command_tray.grow_horizontal = Control.GROW_DIRECTION_END
 	command_tray.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	# Matches the summary panel's own bottom offset, which is why the two
+	# sit level.
 	command_tray.offset_bottom = -16
 	command_tray.visible = false
 	add_child(command_tray)
@@ -2436,7 +2443,7 @@ func _apply_selection_tray_width() -> void:
 ## reservation for the selection tray (not the panel's actual rendered
 ## size -- that still fluctuates a frame behind whatever bee/cell text it
 ## last showed, and since UI-H the panel's own width is derived from this
-## tray's cap, not the other way round) and the Gallerin reserve, at any
+## tray's own edge, not the other way round) and the Gallerin reserve, at any
 ## viewport width -- ui_layout.gd computes it so this tray respects both
 ## reserves by construction rather than a magic-number width. Setting it
 ## on command_columns rather than command_tray itself is what makes the
@@ -2447,6 +2454,11 @@ func _update_command_tray_width() -> void:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
 	var max_width: float = UiLayout.command_tray_max_width(viewport_width)
+	# Position first, then width: the tray is anchored bottom-left, so its
+	# left edge is set outright rather than inferred from a centred anchor
+	# (UI-R-1). Doing it here rather than at build time is what makes a
+	# resize move the tray as well as re-cap it.
+	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
 	# custom_minimum_size is only a floor.  Set this anchored control's actual
 	# width as well, then let its HFlow rows grow taller rather than wider.
 	command_tray.custom_minimum_size.x = max_width

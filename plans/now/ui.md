@@ -1,7 +1,7 @@
 # Meadow UI — active slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-R-1 (command tray sits off-centre and overlaps Gallerin), Claude lane; UI-P-2 leads the Codex lane | Dependency: none for UI-R-1, UI-R-2, UI-R-3 or UI-P-2 | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: UI-P-2 (buttons that read as buttons at rest), Codex lane, then UI-R-2; UI-R-3 is ready but not yet queued, and the Claude lane has moved to HC-8 | Dependency: none for UI-R-2, UI-R-3 or UI-P-2 | Verified: 2026-09-03
 
 Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
 several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
@@ -183,7 +183,7 @@ UI-P-1, P-3, P-6, P-7's bubble and P-8's cog all confirmed clean in that
 pass and are archived in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`. Three
 items did not pass.
 
-### UI-R-1 — the command tray sits off-centre, overhangs the screen, and covers Dr Gallerin's bubble
+### UI-R-1 — the command tray sits off-centre, overhangs the screen, and covers Dr Gallerin's bubble — DONE 3 Sep 2026
 
 **Symptom (Dave, 2 Sep):** the command panel is only partly on screen,
 shifted right rather than sitting level with the summary panel, and it
@@ -236,6 +236,43 @@ narrowing the window makes the tray's rows wrap onto further lines rather
 than the tray growing into either neighbour.
 
 **Files:** `scripts/ui_layout.gd`, `scripts/hud.gd`.
+
+#### What landed, 3 Sep 2026
+
+All three parts (a), (b) and (c), as written. Two notes on where the shipped
+slice goes further than the sketch:
+
+- **The left reserve got its own helper,** `command_tray_left_reserve()`,
+  rather than being inlined into both `command_tray_max_width()` and
+  `command_tray_left_edge()`. The narrow-breakpoint choice between
+  `SELECTION_TRAY_RESERVE` and `SELECTION_TRAY_RESERVE_NARROW` now happens
+  in exactly one place, which is the same reason (b) asked for the edge
+  helper.
+- **The clamp needed a second bound.** The plan asked for the left edge to
+  be clamped so the tray's right edge never crosses into Gallerin's reserve.
+  Below about 1150px wide `COMMAND_TRAY_MIN_WIDTH` takes over, the band is
+  narrower than the tray, and that clamp alone would eventually push the
+  left edge off the left of the screen. It is now also floored at
+  `SELECTION_TRAY_LEFT_MARGIN`, and `selection_tray_width()` is floored at
+  zero for the same reason.
+
+**Acceptance evidence.** `tools/verify.ps1` green. The arithmetic was
+evaluated at 1920, 1600, 1280, 1100, 1000, 999, 900 and 800: at every width
+the tray is fully on screen, its left edge is exactly one
+`SELECTION_TRAY_GAP` right of the summary panel, and its right edge is at or
+left of where Gallerin's reserve starts. At 1920 the old code put the tray's
+right edge at 1415.5 against a reserve starting at 1376 — the 39px overlap
+this slice diagnosed; it is now 1360, 16px clear, and the tray is 11px wider
+into the bargain (922 against 911).
+
+**One consequence worth Dave's eye.** Because the tray now slides left
+rather than overlap Gallerin once it hits its floor, the summary panel is
+narrower at very small widths than it was: 139px at 800, against 268px
+before. Above ~1150px nothing changes for the panel (406px, as against 407px
+before). The check below asks specifically whether 800 is too cramped.
+
+**Still to confirm by playing:** `checks/ready.md` § Command tray placement
+(UI-R-1).
 
 ### UI-R-2 — pre-run menu: the left edge still needs more room
 
