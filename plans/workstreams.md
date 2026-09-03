@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-S-4` (`codex/UI-S-4`) | Codex | A refused command says so, at one instrumented choke point. | Codex | in progress | none | `plans/now/ui.md` UI-S-4 |
+| `.worktrees/P-1` (`claude/P-1`) | Claude | the check format is a convention, not a check. | Claude | in progress | none | `plans/now/check-loop.md` P-1 |
