@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 8 (cell highlight borders do not follow the sprite silhouette), Claude lane; Slices 4 and 5 still need Dave's live look | Dependency: none for Slice 8 | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: Slice 4 or 5, whichever Dave's next live look unblocks -- no hive-comb slice is startable today | Dependency: Dave's live look, for both remaining slices | Verified: 2026-09-03
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as
@@ -20,61 +20,35 @@ shipped. This is the first plan file for this area.
 - Automine block selection.
 - Typeface switching (all five faces, both text-scale extremes).
 
-Slices 1-3, 6 and 7 are shipped and archived at
+Slices 1-3, 6, 7 and 8 are shipped; 1-3, 6 and 7 are archived at
 `plans/archive/HIVE_COMB_SLICES_1-3_6-7.md`. Dave's 2 Sep 2026 pass
 confirmed their hands-on checks -- cell art, above-centre rows and wide-comb
 routing all survive a save and load -- with one exception, which is Slice 8
 below. Slices 4 and 5 still need Dave's live look before any code is
 written, so neither appears in `NEXTSTEPS.md`.
 
-## Slice 8 — Cell highlight borders do not follow the cell sprite's silhouette
+## Slice 8 — Cell highlight borders do not follow the cell sprite's silhouette (shipped 3 Sep 2026)
 
-**Symptom (Dave, 2 Sep 2026):** cell highlight borders do not match the
-shape of the cell sprites.
+**Was:** `hive_cell.gd` built five outlines and only `selection_ring` knew
+about the cup sprite's raised back wall. The base `outline`, the
+`designation_ring` and the nursery `zone_glow`/`zone_halo` all went through
+the flat `_set_outline_points()`, so with Cell art on they cut straight
+through the wall the sprite draws. Slices 1-3 fixed the one ring their check
+happened to name and left the other four.
 
-**Diagnosed.** `hive_cell.gd` builds five outlines and only one of them
-knows about the sprite. `_set_outline_points_cup()` raises hexagon points 4
-and 5 by `EMPTY_TEXTURE_BASE_Y * empty_scale * EMPTY_SPRITE_SCALE_NUDGE` so
-the ring traces the cup's raised back wall, and `_set_selection_ring_points()`
-is the only caller — and only when `Session.use_cell_sprites` is on. The
-base `outline` (`cell_size`), `designation_ring` (`cell_size - 3.0`),
-`zone_halo` (`cell_size + 6.0`) and `zone_glow` (`cell_size + 4.0`) all still
-go through the flat `_set_outline_points()`, so with cell art on they cut
-straight through the back wall the sprite draws. Slice 1-3 fixed the ring
-the check happened to name and left the other four.
+**Now:** every ring goes through one `_apply_outline_points(line, size)`,
+which makes the `Session.use_cell_sprites` decision once for the whole file;
+`_set_selection_ring_points()` is a single call to it. `_refresh()` re-points
+the four constant-size rings when, and only when, the setting flips under
+them, so a live toggle reverts all of them without four Line2D rebuilds per
+cell six times a second. The one deliberate exception is an unfinished
+cell's stub outline, which stays flat at both settings: a site draws no cup
+sprite, and the cup's raised wall is an absolute offset that would tower
+over a 35%-size stub. No ring's size argument, `EMPTY_TEXTURE_BASE_Y`,
+`EMPTY_SPRITE_SCALE_NUDGE` or `cell_size` changed.
 
-**Fix.**
-
-- a) Add `func _apply_outline_points(line: Line2D, size: float) -> void`
-  next to the two existing helpers: it calls `_set_outline_points_cup` when
-  `Session.use_cell_sprites` is true and `_set_outline_points` otherwise.
-  Rewrite `_set_selection_ring_points()` to be one call to it, so there is
-  one silhouette decision in the file rather than five.
-- b) Route `outline`, `designation_ring`, `zone_halo` and `zone_glow`
-  through `_apply_outline_points` at their build sites, keeping each one's
-  existing size argument unchanged.
-- c) The Cell art toggle must revert all five immediately, exactly as the
-  selection ring already does. Find where `_set_selection_ring_points()` is
-  re-called on a toggle/refresh and re-point the other four in the same
-  place; if that is `_refresh()`, do it there.
-
-**Do not** change `EMPTY_TEXTURE_BASE_Y`, `EMPTY_SPRITE_SCALE_NUDGE`,
-`cell_size`, the fill polygon, or any ring's size argument — this slice
-changes which silhouette a ring traces, nothing about where it sits.
-
-**Acceptance:** with Cell art on, multi-select a cup, pin a cell to a
-resource, and open the nursery window over the comb: all four rings follow
-the cup's raised back wall rather than cutting through it, and none of them
-overlap each other (their `+6.0`/`+4.0`/`+2.0`/`-3.0` spacing is preserved).
-Turn Cell art off mid-run: all four immediately return to the flat hex
-outline.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file: the acceptance
-above, replacing the ring half of the archived Slices 1-3 entry.
-
-**Files:** `scripts/hive_cell.gd`.
-
-**Next after:** Slice 4 or 5, whichever Dave's next live look unblocks.
+**Hands-on check:** filed at `checks/ready.md` § Hive comb visual alignment
+(Slices 1-3), replacing the ring half of that entry.
 
 ## Slice 4 — Cell auto-building: spiral order looks wrong (live repro needed first)
 
