@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/W-3` (`claude/W-3`) | Claude | Proof: line + check_docs.py enforcement | Claude | in progress | none | `plans/now/agent-workflow.md` W-3 |
