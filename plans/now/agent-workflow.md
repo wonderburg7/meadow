@@ -1,7 +1,7 @@
 # Agent workflow — make the process enforce itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Claude | Next: W-2 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Claude | Next: W-3 | Dependency: none | Verified: 2026-09-03
 
 ## Objective
 
@@ -46,8 +46,8 @@ check is `tools/verify.ps1`, and none of them files a hands-on check.
 
 ## W-2 — The session-opening floor is cut
 
-Run `python tools/session_cost.py --days 7` first and write the
-`session-opening context` figure into this section as the "before" number.
+Before: `session-opening context` was 61558 (measured 2026-09-03,
+`python tools/session_cost.py --days 7`).
 
 Then make three changes. **Load the `update-config` skill before editing
 `.claude/settings.json`** — it is authoritative for that file's schema. If it
@@ -72,6 +72,11 @@ here, and continue with the others.
 `python tools/session_cost.py --days 1` reports a `session-opening context`
 below the "before" figure. Record both numbers here. Target ≤45K; report the
 actual figure either way and do not chase it with further changes.
+
+After: pending — the three changes above landed in this session, which
+already had its context loaded before they took effect, so it cannot measure
+itself. Run `python tools/session_cost.py --days 1` after the *next* fresh
+session on this project and record the figure here.
 
 ---
 
