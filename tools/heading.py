@@ -18,23 +18,33 @@ from pathlib import Path
 
 
 HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
+FENCE_PATTERN = re.compile(r"^\s*(?:```|~~~)")
 
 
 def headings(lines: list[str]) -> list[tuple[int, int, str]]:
-    """Return (line index, level, text) for every ATX heading in the file."""
+    """Return (line index, level, text) for every ATX heading in the file.
+
+    Fenced blocks are skipped: several plans quote GDScript whose `##` doc
+    comments would otherwise read as headings and cut a section short.
+    """
     found = []
+    fenced = False
     for index, line in enumerate(lines):
+        if FENCE_PATTERN.match(line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
         match = HEADING_PATTERN.match(line)
         if match:
             found.append((index, len(match.group(1)), match.group(2)))
     return found
 
 
-def section(lines: list[str], start: int, level: int) -> list[str]:
+def section(lines: list[str], start: int, level: int, found: list[tuple[int, int, str]]) -> list[str]:
     """Return the heading line and everything up to the next same-or-shallower heading."""
-    for index in range(start + 1, len(lines)):
-        match = HEADING_PATTERN.match(lines[index])
-        if match and len(match.group(1)) <= level:
+    for index, other_level, _ in found:
+        if index > start and other_level <= level:
             return lines[start:index]
     return lines[start:]
 
@@ -68,7 +78,7 @@ def main() -> int:
         return 1
 
     start, level, text = matches[0]
-    for line in section(lines, start, level):
+    for line in section(lines, start, level, found):
         print(line)
 
     if len(matches) > 1:
