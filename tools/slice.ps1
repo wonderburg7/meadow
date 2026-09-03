@@ -329,7 +329,7 @@ function Invoke-SliceFinish {
             # folder, same as a running Godot instance can). Once git has let go
             # of it, re-running `git worktree remove` just fails with "is not a
             # working tree" -- retry the plain delete instead.
-            $maxAttempts = 30
+            $maxAttempts = 60
             for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
                 if (-not (Test-Path -LiteralPath $worktreePath)) { break }
                 try {
