@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/W-5-fixup2` (`claude/W-5-fixup2`) | Claude | slice.ps1 finish: stop treating a native stderr line as terminating | Claude | in progress | none | `plans/now/agent-workflow.md` W-5 |
