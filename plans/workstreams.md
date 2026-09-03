@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/W-6` (`claude/W-6`) | Claude | Routing is addressable and bounded. | Claude | in progress | none | `plans/now/agent-workflow.md` W-6 |
+| `.worktrees/UI-S-3` (`codex/UI-S-3`) | Codex | The command tray shrinks again and stays on screen. | Codex | in progress | none | `plans/now/ui.md` UI-S-3 |
