@@ -320,11 +320,15 @@ function Invoke-SliceFinish {
         git push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
-        for ($attempt = 1; $attempt -le 5; $attempt++) {
-            git worktree remove $worktreeRelative 2>&1 | ForEach-Object { Write-Output $_ }
+        $maxAttempts = 30
+        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            git worktree remove $worktreeRelative
             if ($LASTEXITCODE -eq 0) { break }
-            if ($attempt -eq 5) { throw "git worktree remove failed" }
-            Start-Sleep -Seconds 1
+            if ($attempt -eq $maxAttempts) { throw "git worktree remove failed" }
+            if ($attempt % 5 -eq 0) {
+                Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
+            }
+            Start-Sleep -Seconds 3
         }
 
         git branch -d $branch
