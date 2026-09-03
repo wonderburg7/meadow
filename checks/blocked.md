@@ -30,21 +30,6 @@ wasted visible work.
 
 Owner: `plans/archive/UI_SETTINGS_PLAN_2026-08-24.md`.
 
-### C-4 -- two throttled warnings eight seconds apart
-
-Fire a bee-death epitaph, then a crab-spider escape eight seconds later,
-then an unkeyed "Run saved." confirmation.
-
-PASS: the first two do not wipe each other, and the confirmation survives
-the ambient event that follows it.
-
-Blocked by: `plans/now/ui.md` UI-R-3 -- a debug-panel row that fires named
-warning-banner cases directly. Waiting for a death, a spider escape and a
-low-energy warning to land within eight seconds of each other is not a check
-anyone can run.
-
-Owner: `plans/now/ui.md` UI-Q-1/UI-Q-2.
-
 ### C-5 -- Challenge 2's rescue and recovery lines
 
 Trigger a Challenge 2 nectar collapse past stage 2.1, twice: once below the

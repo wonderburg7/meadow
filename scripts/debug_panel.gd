@@ -386,6 +386,12 @@ func _build_actions(column: VBoxContainer) -> void:
 	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
 	challenge_row.add_child(UI.with_info(challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder."))
 
+	var fire_warnings_btn := Button.new()
+	_style_button(fire_warnings_btn)
+	fire_warnings_btn.text = "Fire test warnings"
+	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
+	challenge_row.add_child(UI.with_info(fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own."))
+
 	column.add_child(HSeparator.new())
 
 func _make_winter_action() -> Control:
@@ -411,6 +417,40 @@ func _on_challenge_advance_pressed() -> void:
 	if worlds.is_empty():
 		return
 	worlds[0].challenge_runner.debug_advance_stage()
+
+## Fires the same three warning-banner shapes the simulation only produces
+## by chance, so the throttle in hud.gd::show_warning can be watched
+## arbitrating between two keyed producers and letting an unkeyed
+## confirmation through unaffected. One SceneTreeTimer chain, not a
+## per-frame state machine: the epitaph fires immediately, the escape
+## chains eight seconds later, and the confirmation chains a further two
+## seconds after that (t=0, t=+8s, t=+10s).
+func _on_fire_test_warnings_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	var hud := worlds[0].hud
+	var bees := get_tree().get_nodes_in_group("bees")
+	if bees.is_empty():
+		return
+	var bee: Node2D = bees[0]
+
+	hud.show_warning(
+		ProblemMessages.epitaph(bee.bee_name, "starvation", bee.bee_fact),
+		"epitaph", GameConfig.epitaph_min_gap
+	)
+	get_tree().create_timer(8.0).timeout.connect(func() -> void:
+		if not is_instance_valid(hud):
+			return
+		hud.show_warning(
+			ProblemMessages.crab_spider_escape(bee.bee_name),
+			"crab_spider_escape", GameConfig.crab_spider_escape_min_gap
+		)
+		get_tree().create_timer(2.0).timeout.connect(func() -> void:
+			if is_instance_valid(hud):
+				hud.show_warning("Run saved.")
+		)
+	)
 
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an
