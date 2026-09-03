@@ -216,11 +216,20 @@ bee's roles.
       Archived. The open question is that a player cannot see one happen --
       that is `plans/active/foraging-evidence.md` Slice 4, a feature slice,
       not a check.
-- [ ] Once Slice 4's highlight toggle ships: turn on Proximity recruitment
-      and the new highlight, and confirm you can find a dancing pair on
-      screen inside one in-game day, that the mentor and the seeker are
-      distinguishable from each other, and that the selection panel reads
-      "dancing to..."/"being shown a better patch" for them.
+- [ ] FE-4 shipped the highlight (3 Sep). Turn on Proximity recruitment,
+      then Settings -> Appearance -> "Highlight recruitment dances", and
+      watch the comb: a dancing pair should be findable without hunting,
+      the mentor ringed warm yellow and the forager she is dancing at cool
+      blue, so the two are distinguishable from each other. Both rings
+      should vanish the moment the dance ends, and the selection panel
+      should read "dancing to recruit a struggling forager" / "being danced
+      at" for the two of them while it runs.
+- [ ] Same run with the toggle off: no rings appear at all, and the dance
+      still happens (the recruitment-match count in the Foraging window
+      still moves). The highlight is presentation only and must not gate
+      the mechanism.
+- [ ] The toggle survives a restart -- set it, quit, reopen, and it is
+      still on (it is a saved player preference, not a per-run one).
 
 ### Foraging window
 - [x] Confirmed 31 Aug (second time): the panel shows real numbers again.

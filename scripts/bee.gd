@@ -579,6 +579,14 @@ var heading_marker: Polygon2D
 ## clicking her. See _update_search_ring.
 var search_ring: Polygon2D
 
+## A pulsing ring on each half of an in-progress recruitment dance,
+## shown only while Session.show_recruitment_highlight is on. A dance is
+## two bees standing together indoors among however many others are
+## milling about the comb, for the length of one timer, and the only
+## outward sign was the selection panel text -- which needs the right bee
+## picked first. See _update_dance_ring.
+var dance_ring: Polygon2D
+
 func _ready() -> void:
 	add_to_group("bees")
 	# Newly built cells and freshly-mined floor tiles get added to
@@ -665,6 +673,17 @@ func _ready() -> void:
 	search_ring.color = Color(0.65, 0.25, 0.95, 0.85)
 	search_ring.visible = false
 	visual_root.add_child(search_ring)
+
+	# Outside search_ring so the two never sit on top of each other -- a
+	# bee can be SEARCHING one moment and DANCING the next, and the pair
+	# needs to read as a pair. No colour here, unlike the four above:
+	# which of the two this bee wears depends on which side of the dance
+	# she is on, which is not known until she dances, so _update_dance_ring
+	# sets it in the same frame it makes the ring visible.
+	dance_ring = Polygon2D.new()
+	dance_ring.polygon = Shapes.circle_points(outline_radius + 17.0)
+	dance_ring.visible = false
+	visual_root.add_child(dance_ring)
 
 	var outline := Polygon2D.new()
 	outline.polygon = Shapes.circle_points(outline_radius)
@@ -1170,6 +1189,7 @@ func _process(delta: float) -> void:
 	_update_alarm_ring()
 	_update_heading_marker()
 	_update_search_ring()
+	_update_dance_ring()
 	Perf.end("bee_label")
 
 	Perf.begin("bee_wander")
@@ -2294,6 +2314,34 @@ func _update_search_ring() -> void:
 	if searching:
 		var pulse: float = 0.5 + 0.5 * sin(Session.sim_time * TAU * SEARCH_RING_PULSE_HZ)
 		search_ring.scale = Vector2.ONE * (1.0 + 0.2 * pulse)
+
+## The mentor/seeker pair in a recruitment dance, ringed so they can be
+## found in a crowd (foraging-evidence.md Slice 4). Opt-in, because it is
+## a hunting aid rather than something every run wants on screen: off, the
+## whole function is one boolean read and, at most, one hide. Two colours
+## so the pair reads as a pair with a direction -- warm yellow for the
+## mentor doing the recruiting, cool blue for the struggling forager she
+## is dancing at. Same pulse idea and off-screen skip as
+## _update_search_ring; presentation only (rule 3), so it never gates the
+## dance itself.
+const DANCE_RING_PULSE_HZ := 2.4
+const DANCE_RING_MENTOR_COLOUR := Color(1.0, 0.85, 0.15, 0.85)
+const DANCE_RING_SEEKER_COLOUR := Color(0.2, 0.7, 1.0, 0.85)
+func _update_dance_ring() -> void:
+	if dance_ring == null:
+		return
+	if not Session.show_recruitment_highlight:
+		if dance_ring.visible:
+			dance_ring.visible = false
+		return
+	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
+		return
+	var dancing: bool = state == State.DANCING
+	dance_ring.visible = dancing
+	if dancing:
+		dance_ring.color = DANCE_RING_MENTOR_COLOUR if dance_role == "mentor" else DANCE_RING_SEEKER_COLOUR
+		var pulse: float = 0.5 + 0.5 * sin(Session.sim_time * TAU * DANCE_RING_PULSE_HZ)
+		dance_ring.scale = Vector2.ONE * (1.0 + 0.2 * pulse)
 
 ## Bumble flight (see ROADMAP.md): a small Lissajous drift on visual_root
 ## while the bee is actually flying outdoors, so movement reads as
