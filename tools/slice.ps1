@@ -312,7 +312,7 @@ function Invoke-SliceFinish {
             throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
         }
 
-        $title = if ($item) { $item.Title } else { $id }
+        $title = if ($item) { $item.Title } else { $branch }
         $mergeMessage = "Merge ${branch}: $title`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
         git merge --no-ff $branch -m $mergeMessage
         if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
@@ -320,8 +320,12 @@ function Invoke-SliceFinish {
         git push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
-        git worktree remove $worktreeRelative
-        if ($LASTEXITCODE -ne 0) { throw "git worktree remove failed" }
+        for ($attempt = 1; $attempt -le 5; $attempt++) {
+            git worktree remove $worktreeRelative 2>&1 | ForEach-Object { Write-Output $_ }
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($attempt -eq 5) { throw "git worktree remove failed" }
+            Start-Sleep -Seconds 1
+        }
 
         git branch -d $branch
         if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
