@@ -24,21 +24,6 @@ wasted visible work.
 
 Owner: `plans/archive/UI_SETTINGS_PLAN_2026-08-24.md`.
 
-### C-3 -- Challenge-only top-bar hit areas
-
-In a Challenge, only a thin strip along the top of the second-row top-bar
-buttons responds to a click; the same controls are fully clickable in a
-Scenario. The goal shelf's `mouse_filter` fix is in.
-
-PASS: every second-row top-bar button responds across its full height in a
-Challenge, exactly as in a Scenario.
-
-Blocked by: nothing shipped -- it is grouped into UI-F's combined check and
-should be run with it. Do not treat the old `stage_gate.gd` theory as the
-established cause.
-
-Owner: `plans/now/ui.md` UI-D.
-
 ### C-4 -- two throttled warnings eight seconds apart
 
 Fire a bee-death epitaph, then a crab-spider escape eight seconds later,

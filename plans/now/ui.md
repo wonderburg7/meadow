@@ -1,17 +1,43 @@
-# Meadow UI — active slices and durable rules
+# Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-2 (buttons that read as buttons at rest), Codex lane, then UI-R-2 and UI-R-3; UI-S-1 to UI-S-4 came out of Dave's 3 Sep pass and are ready but not yet queued | Dependency: none for UI-P-2, UI-R-2, UI-R-3 or any UI-S item | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: UI-R-2 (pre-run menu left margin), Codex lane | Dependency: UI-S-1 before UI-S-3; check-loop P-3 before UI-R-3; UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
 
-Dave's 30 Aug hands-on pass through UI-N, UI-M, UI-I, UI-H and UI-O confirmed
-several items outright and found the rest below. UI-A through UI-G, UI-D/E/F,
-UI-K and UI-L remain confirmed and closed from the 29 Aug pass.
+**Objective.** The HUD and pre-run menu are legible, correctly placed and
+accessible, and every persistent panel takes its rectangle from one owner.
 
-The delivered redesign and hands-on investigation records are archived at
-`plans/archive/UI_PLAN_2026-08-26.md`,
-`plans/archive/UI_BUGFIX_PLAN_2026-08-24.md` and
-`plans/archive/UI_SETTINGS_PLAN_2026-08-24.md`. This is the only current UI
-execution plan.
+**State.** UI-A through UI-O, UI-P-1 to UI-P-4, UI-P-6 to UI-P-8, UI-Q and
+UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
+`plans/archive/UI_SHIPPED_2026-09-03.md`). Everything still open is below.
+
+## Open slices at a glance
+
+| Slice | Outcome | Owns | Startable | Reasoning |
+| --- | --- | --- | --- | --- |
+| UI-R-2 | Pre-run menu's left pane clears the screen edge | `main_menu.gd` | yes | low |
+| UI-R-3 | A developer button that fires three warning-banner cases | `debug_panel.gd` | after check-loop P-3 | low |
+| UI-S-1 | The bottom row re-specified: tray at 50%, neighbours fill the rest | `ui_layout.gd`, `hud.gd` | yes | medium |
+| UI-S-2 | Colony/foraging/nursery windows clear the corner readout and scroll | `ui_layout.gd`, `hud.gd`, the three panel scripts | yes | medium |
+| UI-S-3 | The command tray shrinks again and never runs off the bottom | `hud.gd` | after UI-S-1 | medium |
+| UI-S-4 | A refused command says so, at one instrumented choke point | `input_selection.gd`, `diagnostic_log.gd` | yes | medium |
+| UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
+| UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
+
+**Dependencies, stated rather than implied.** UI-S-1 moves the numbers UI-S-3
+clamps, so it goes first. UI-R-3 adds a button to the developer Triggers
+section that `plans/now/check-loop.md` P-3 creates, so P-3 goes first --
+otherwise UI-R-3 writes a row that P-3 immediately rewrites. UI-S-2 and
+`plans/now/check-loop.md` P-2 both name the panel scripts: P-2 enforces what
+UI-S-1 and UI-S-2 land, so it runs after both. Nothing else here is ordered.
+
+**Required reading for any slice here.** This file's own section, and
+`scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are
+provenance only, and no UI slice needs the whole of this file.
+
+**Do not change** `scripts/hex_hit_area.gd`, `HEX_SIZE`, `HEX_STEP_X` or tile
+centres in any pre-run-menu slice: UI-M's exact-hexagon hit test is built
+against the tile's real hexagon at its real position, and every reported
+"tiles look wrong" symptom so far has had a cause elsewhere.
 
 ## Durable rules
 
@@ -25,10 +51,6 @@ execution plan.
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks
   and a Godot boot pass.
-
-UI-A through UI-O and UI-P-1/3/4/6/7/8 are shipped and archived at
-`plans/archive/UI_SHIPPED_2026-09-01.md`; their hands-on confirmations are in
-`checks/ready.md`. What follows is everything still open.
 
 ## UI-D — Challenge top-bar hit-area diagnosis
 
@@ -46,97 +68,18 @@ is not the cause of the hit-area loss.
 
 **Delivered:** the goal shelf's `mouse_filter` was set to
 `Control.MOUSE_FILTER_IGNORE`, restoring full-button clickability under the
-overlap. UI-E and UI-F (below) are also now implemented, so the pending
-hands-on check is the combined one described in UI-F's acceptance, not a
-UI-D-only re-check. See `checks/ready.md`.
+overlap. UI-E and UI-F shipped alongside it and are archived at
+`plans/archive/UI_SHIPPED_2026-09-01.md`.
+
+**What is actually outstanding is the check, not the code.** C-3 in
+`checks/ready.md` is the one thing that will say whether this is fixed. Write
+no code here until it comes back failing -- and if it does, the old
+`stage_gate.gd` theory is not the established cause.
 
 ## UI-P — remaining fixes from Dave's 30 Aug hands-on pass
 
-**Files:** `scripts/ui_theme.gd` (P-2), `scripts/main_menu.gd` (P-5),
-`scripts/debug_panel.gd` (P-6). UI-P-1/3/4/7/8 shipped -- see the archive.
-
-### UI-P-2 — game-wide: "Change to…" and "When idle:" should read as buttons
-
-**Ask (Dave, 30 Aug, explicitly "in all instances, not just Challenge 1"):**
-both controls should present with a background colour like other command
-panel options, not as floating text.
-
-**Diagnosed:** both already go through `_make_role_menu()`
-(`hud.gd::_build_job_row` for "Change to…", `_build_fallback_row` for "When
-idle: …"), which does call `_style_button(menu)` — the same helper every
-other command-panel button uses (`_toggle_button`, `_action_button`). The
-gap isn't a missing style, it's contrast: `ui_theme.gd::_refresh_button_stylebox()`'s
-`"normal"` state is `base.lightened(0.10)` with a fully transparent,
-zero-width border (~line 165-188) — visible up close, but easy to read as
-plain text against a similarly dark panel background, especially next to
-`UI.mark_as_current()`'s much higher-contrast current-role buttons
-elsewhere in the same tray.
-
-**Fix:** raise the "normal" state's contrast in
-`ui_theme.gd::_refresh_button_stylebox()` — e.g. `base.lightened(0.10)` to
-somewhere around `0.16-0.18` (between today's normal and hover values), and/or
-give "normal" a low-alpha border the way "focus"/"selected" already have one,
-so an unpressed, unhovered button reads as a button at rest. This is a
-`UiTheme` change, not a `hud.gd` one, so it affects every button sharing the
-same stylebox — confirm live against the rest of the command panel (Job/
-Focus/Orders columns, "More…" panel) that raising contrast this broadly
-doesn't make an already-prominent button (like a `mark_as_current` one) look
-wrong; retune the delta if so, but keep it one shared value rather than a
-one-off override on just these two menus.
-
-**Acceptance:** "Change to…" and "When idle: …" (and every other ordinary
-command-panel button) show a visibly distinct background at rest, not just
-on hover; `mark_as_current`-highlighted buttons still read as clearly more
-prominent than an ordinary one.
-
-### UI-P-3 — pre-run menu: honeycomb tiles' borders don't overlap
-
-**Ask (Dave, 30 Aug):** move the Challenge/Scenario selection hexes closer
-together so their borders fully overlap — there's currently a slight gap.
-
-**Diagnosed:** each tile is two stacked `Polygon2D`s
-(`main_menu.gd::_build_hex_tile` or equivalent, ~line 359-374): a `border`
-hex at the full `HEX_SIZE` and a `fill` hex at `HEX_SIZE - 4.0` on top,
-which is how the visible border ring is drawn (exposed border colour
-showing 4px around the smaller fill). `HEX_STEP_X := HEX_SIZE * 1.5`
-(~line 108, UI-M's own fix) already places neighbouring tiles' *border*
-hexagons exactly edge-to-edge, zero gap — but two touching 4px borders read
-as a doubled-width seam rather than one shared line, which is the "slight
-gap" Dave sees.
-
-**Fix — do not change `HEX_STEP_X`, the fill size, or tile centres.**
-`scripts/hex_hit_area.gd`'s exact-hexagon hit test (added in UI-M
-specifically to stop touching tiles stealing each other's clicks) is built
-against the tile's real hexagon size at its real position; shrinking the
-step would reopen that overlap-ambiguity bug. Instead, make only the
-`border` polygon itself slightly larger than `HEX_SIZE` (e.g.
-`Shapes.hexagon_points(HEX_SIZE + 3.0)`, tune by eye) so neighbouring
-borders overlap and merge into one line, purely a paint-order change with
-no effect on tile position, spacing, or click hit-testing.
-
-**Acceptance:** neighbouring tiles' borders read as one shared line, not a
-doubled seam; clicking near a touching corner still always selects the tile
-the pointer is actually over (UI-M's own acceptance, must not regress).
-
-### UI-P-4 — pre-run menu: left pane starts flush against the screen edge
-
-**Ask (Dave, 30 Aug):** the pre-run menu's left-pane text and hexagons
-should have a small buffer instead of starting at pixel 0.
-
-**Diagnosed:** UI-M's delivered layout is a full-viewport `Control` split by
-an `HBoxContainer` with no left margin ever added — the left pane's content
-starts exactly at the viewport edge.
-
-**Fix:** wrap the left pane's content in a small fixed left inset — either
-a `MarginContainer` with `theme_constant_override("margin_left", N)` around
-the left pane, or an explicit `LEFT_PANE_MARGIN` constant (mirroring
-`ui_layout.gd::SELECTION_TRAY_LEFT_MARGIN`'s naming) added as the pane's own
-`offset_left`. A small value (12-16px, matching `SELECTION_TRAY_LEFT_MARGIN`
-elsewhere) rather than a new bespoke number.
-
-**Acceptance:** the leftmost hex tile and any left-aligned text sit a small,
-consistent distance from the screen edge, matching the visual margin already
-used elsewhere (HUD, selection panel); no other pane layout changes.
+UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. P-5 is all that
+is left, and it needs a live reproduction before any code.
 
 ### UI-P-5 — pre-run menu: "Choose a Challenge or Scenario on the left." isn't visible
 
@@ -166,115 +109,10 @@ for the placeholder) and check `_detail_column`'s children/visibility at
 that exact moment before changing code — two plausible causes named above,
 pick whichever the live state actually shows.
 
-**UI-P-6 (settings window row/scrollbar gap) shipped 31 Aug 2026,** in the
-same "Implement first UI-P hands-on fixes" commit as UI-P-1/3/4/7/8: a
-`MarginContainer` (`content_margin`, `margin_right = 6`) now wraps
-`debug_panel.gd`'s settings column between the `ScrollContainer` and its
-rows, so every row sits a fixed ~6px from the scrollbar regardless of
-`PANEL_WIDTH`'s own badge-visible sizing. This session found the queue
-still listing it as open work and the code already matching the fix
-verbatim (same mechanism, same comment) -- a bookkeeping gap from that
-batch commit, not a missed slice. Hands-on confirmation filed in
-`checks/ready.md`.
-
 ## UI-R — from Dave's 2 Sep 2026 hands-on pass
 
-UI-P-1, P-3, P-6, P-7's bubble and P-8's cog all confirmed clean in that
-pass and are archived in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`. Three
-items did not pass.
-
-### UI-R-1 — the command tray sits off-centre, overhangs the screen, and covers Dr Gallerin's bubble — DONE 3 Sep 2026
-
-**Symptom (Dave, 2 Sep):** the command panel is only partly on screen,
-shifted right rather than sitting level with the summary panel, and it
-overlaps Dr Gallerin's speech bubble. (The bubble itself is the right width
-— that half of UI-P-7 is confirmed.)
-
-**Diagnosed, arithmetic not guesswork.** The bottom row has two reserves of
-different sizes: `SELECTION_TRAY_RESERVE = 390.0` on the left and
-`gallerin_reserve_width()` on the right, which is
-`BUBBLE_WIDTH 460 + ICON_SIZE.x 60 + BUBBLE_GAP 8 + ICON_MARGIN 16 = 544`.
-`command_tray_max_width()` correctly subtracts both, then multiplies by
-`0.924`. But `hud.gd::_build_command_tray` anchors the tray with
-`PRESET_CENTER_BOTTOM`, which centres it on the **viewport**, not on the
-band left between the two reserves. The band's own centre is
-`(390 + viewport_width - 544) / 2`, i.e. `(544 - 390) / 2 = 77px` left of
-the viewport centre — so the tray is drawn 77px too far right, and the
-`0.924` shrink only claws back half of that. Worked example at 1920 wide:
-band 986, cap 911, tray spans x=504.5..1415.5, Gallerin's reserve starts at
-1376 — a 39px overlap. At 1280 wide the same sum gives a 64px overlap. The
-`0.924` factor is doing the job of a centring correction and doing it
-badly; at some widths it under-corrects (the overlap above) and at all
-widths it wastes tray space.
-
-**Fix.**
-
-- a) In `ui_layout.gd`, replace the `* 0.924` in `command_tray_max_width()`
-  with the full band minus one named breathing constant:
-  add `const COMMAND_TRAY_SIDE_GAP := 16.0` and return
-  `maxf(COMMAND_TRAY_MIN_WIDTH, viewport_width - left_reserve - right_reserve - 2.0 * COMMAND_TRAY_SIDE_GAP)`
-  where `left_reserve` is `SELECTION_TRAY_LEFT_MARGIN + reserve +
-  SELECTION_TRAY_GAP` and `right_reserve` is
-  `gallerin_reserve_width(viewport_width)`.
-- b) Add `static func command_tray_left_edge(viewport_width: float) -> float`
-  returning `left_reserve + COMMAND_TRAY_SIDE_GAP`, clamped so the tray's
-  right edge never exceeds `viewport_width - right_reserve`. Rewrite
-  `selection_tray_width()` to read this helper rather than recomputing the
-  edge from the cap, so the two can no longer disagree.
-- c) In `hud.gd`, stop anchoring the tray to the viewport centre. Use
-  `PRESET_BOTTOM_LEFT` with `grow_horizontal = GROW_DIRECTION_END`, and set
-  `offset_left = UiLayout.command_tray_left_edge(viewport_width)` in
-  `_update_command_tray_width()` alongside the existing width assignment,
-  so a resize moves it. Keep `offset_bottom = -16` — that already matches
-  the summary panel and is why their bottoms are level.
-
-**Acceptance.** At 1920, 1280 and `MIN_SUPPORTED_WIDTH` (800): the tray is
-fully on screen; its left edge sits one `SELECTION_TRAY_GAP` right of the
-summary panel; its right edge never crosses into Gallerin's reserve, with a
-bubble showing and with none. UI-P-8's own acceptance must still hold —
-narrowing the window makes the tray's rows wrap onto further lines rather
-than the tray growing into either neighbour.
-
-**Files:** `scripts/ui_layout.gd`, `scripts/hud.gd`.
-
-#### What landed, 3 Sep 2026
-
-All three parts (a), (b) and (c), as written. Two notes on where the shipped
-slice goes further than the sketch:
-
-- **The left reserve got its own helper,** `command_tray_left_reserve()`,
-  rather than being inlined into both `command_tray_max_width()` and
-  `command_tray_left_edge()`. The narrow-breakpoint choice between
-  `SELECTION_TRAY_RESERVE` and `SELECTION_TRAY_RESERVE_NARROW` now happens
-  in exactly one place, which is the same reason (b) asked for the edge
-  helper.
-- **The clamp needed a second bound.** The plan asked for the left edge to
-  be clamped so the tray's right edge never crosses into Gallerin's reserve.
-  Below about 1150px wide `COMMAND_TRAY_MIN_WIDTH` takes over, the band is
-  narrower than the tray, and that clamp alone would eventually push the
-  left edge off the left of the screen. It is now also floored at
-  `SELECTION_TRAY_LEFT_MARGIN`, and `selection_tray_width()` is floored at
-  zero for the same reason.
-
-**Acceptance evidence.** `tools/verify.ps1` green. The arithmetic was
-evaluated at 1920, 1600, 1280, 1100, 1000, 999, 900 and 800: at every width
-the tray is fully on screen, its left edge is exactly one
-`SELECTION_TRAY_GAP` right of the summary panel, and its right edge is at or
-left of where Gallerin's reserve starts. At 1920 the old code put the tray's
-right edge at 1415.5 against a reserve starting at 1376 — the 39px overlap
-this slice diagnosed; it is now 1360, 16px clear, and the tray is 11px wider
-into the bargain (922 against 911).
-
-**One consequence worth Dave's eye.** Because the tray now slides left
-rather than overlap Gallerin once it hits its floor, the summary panel is
-narrower at very small widths than it was: 139px at 800, against 268px
-before. Above ~1150px nothing changes for the panel (406px, as against 407px
-before). The check below asks specifically whether 800 is too cramped.
-
-**Superseded 3 Sep 2026.** Dave's answer to the "is 800 too cramped?"
-question below was to re-specify the whole bottom row: the tray leads at
-50% of the viewport and its two neighbours fill what is left. See UI-S-1.
-The UI-R-1 check in `checks/ready.md` is replaced by UI-S-1's.
+UI-R-1 shipped 3 Sep and was re-specified the same day by UI-S-1; see the
+archive. UI-R-2 and UI-R-3 remain.
 
 ### UI-R-2 — pre-run menu: the left edge still needs more room
 
@@ -322,6 +160,15 @@ Keep it in the developer section so it is not reachable in ordinary play.
 **Acceptance:** pressing the row once shows all three messages, the first
 two do not wipe each other, and the confirmation survives the ambient
 event that follows it. `tools/verify.ps1` passes.
+
+**Depends on:** `plans/now/check-loop.md` P-3, which builds the developer
+"Triggers" group this button goes into. Do not start UI-R-3 first and add
+the button to `challenge_row` -- P-3 would only move it again, and both
+slices own this file so they cannot run in parallel lanes.
+
+**Reasoning level:** low. One file, one existing pattern; the message
+contents come from `problem_messages.gd` and `GameConfig`, not from a
+judgement call.
 
 **Files:** `scripts/debug_panel.gd`.
 
@@ -586,20 +433,10 @@ is scoped from that, not guessed.
 **Files:** `scripts/input_selection.gd`, `scripts/diagnostic_log.gd`,
 `scripts/hud.gd`.
 
-## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
+## UI-Q — the warning banner: one open decision
 
-**Landed 1 Sep 2026 (slice C2).** `hud.gd::show_warning(text, key, min_gap)`
-now holds one `key -> last shown` dictionary (`_warning_last_shown`); the
-three throttled producers (`main.gd::_check_colony_energy`,
-`bee_survival.gd::_announce_death`, `crab_spider.gd::_announce_escape`) lost
-their own `last_*` timestamp fields/comparisons and pass their existing
-`GameConfig` gap (`low_energy_gap`, `epitaph_min_gap`,
-`crab_spider_escape_min_gap`, unchanged) through the call instead (UI-Q-1).
-The two simulation files' inline copy moved to named entries in
-`problem_messages.gd` (`epitaph`, `crab_spider_escape`), so the simulation
-states the fact and the view chooses the words (UI-Q-2). The other 18 call
-sites are untouched — they pass no key and are never throttled, matching
-before. Hands-on check filed in `checks/ready.md`.
+UI-Q-1 and UI-Q-2 landed 1 Sep 2026 (archive). What they deliberately
+left undone:
 
 **Deliberately not done:** a priority/dwell rule so a transactional
 confirmation can't be wiped mid-display by an unrelated ambient event (or

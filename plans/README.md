@@ -60,6 +60,28 @@ Then use these tagged sections only when needed:
 Keep execution diary, pasted command output, completed bundles and rejected
 alternatives out of live plans. Git and `plans/archive/` retain them.
 
+**A live plan holds open slices only.** The moment a slice ships, its
+specification moves to `plans/archive/` and the live file keeps a one-line
+pointer. `tools/check_docs.py` fails a `plans/now/` file whose heading is
+marked DONE, shipped, delivered, landed or superseded, and warns when one
+grows past 260 lines. This is not tidiness: X3 was queued on 3 Sep 2026, with
+a worktree opened for it, for a fix that had shipped on 31 Aug -- the plan
+still carried the pre-fix diagnosis, so the slice read as startable.
+
+**Every live plan opens with an index**, before any slice: its objective, its
+current state, a table of the open slices only (outcome, files owned, whether
+it is startable, minimum reasoning level), the dependencies between them
+stated explicitly rather than implied by order, and what a slice must read --
+which is normally that plan's own section and nothing else. Name anything
+that must *not* change where a past slice was derailed by touching it.
+
+**A shared prerequisite is an earlier slice, not a later tidy-up.** If two
+slices each need the same thing built, build it first and let them both use
+it. Scheduling the consolidation afterwards means both do the work twice and,
+because they then own the same file, they cannot run in parallel lanes
+either -- `plans/now/check-loop.md` P-3 was rescheduled for exactly this on
+3 Sep 2026.
+
 A hands-on-check finding against a plan that is still open (unshipped
 slices remain) becomes that plan's next slice. Once a plan's `Next:` says
 `None — plan complete` and it has moved to `plans/archive/`, a new finding
@@ -76,6 +98,7 @@ the archived plan is never reopened or extended.
 | Check format, acceptance wording, developer triggers | `plans/now/check-loop.md` |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
+| Developer triggers for rare states | `plans/now/check-loop.md` P-3 |
 | Settings surviving a run change | `plans/now/settings-persistence.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
@@ -128,3 +151,11 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     panels that share an edge derive from one number; a literal `offset_top`
     in a panel file is how the same overlap keeps coming back
     (`plans/now/check-loop.md` P-2).
+12. Before writing a slice, check the behaviour does not already exist. Read
+    the code the plan names, not just the plan: a plan is a record of what was
+    true when it was written, and a batch commit can ship several slices while
+    only some are booked out. X3/UI-P-2 cost a queue slot and a worktree
+    because nobody opened `ui_theme.gd` first.
+13. Developer triggers all live in `debug_panel.gd`'s "Triggers" group. A
+    slice that makes a rare state reachable adds a button there; it does not
+    invent a new home (`plans/now/check-loop.md` P-3).

@@ -145,10 +145,9 @@ They are listed so they are not lost, not so they are picked up.
   needs its own live repro.
 - **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
   and say to reproduce live before changing code.
-- **Save/load during an active Challenge** (`DESIGN_BACKLOG.md`) -- `SaveGame`
-  has no Challenge stage/gate/prompt schema, which is why save and load are
-  greyed out for the length of Challenge 2. Confirmed working as built on
-  2 Sep; changing it is a separate high-risk design task.
+- **Save/load during an active Challenge** -- a settled design decision, not
+  a defect. `DESIGN_BACKLOG.md` § "Deferred product decisions" holds it; it is
+  not restated here.
 - **Progression Phase A** (`plans/design/progression.md`) -- designed, not
   scheduled; parked behind the settings-catalogue work by Dave's 1 Sep call.
 

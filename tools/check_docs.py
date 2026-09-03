@@ -59,6 +59,41 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
             warnings.append(f"{plan.relative_to(ROOT)}: verification date is in the future")
 
 
+SHIPPED_HEADING = re.compile(
+    r"^#{2,4} .*\b(DONE|shipped|delivered|landed|superseded)\b",
+    re.MULTILINE | re.IGNORECASE,
+)
+LIVE_PLAN_SOFT_LIMIT = 260
+
+
+def check_live_plans_hold_only_open_work(errors: list[str], warnings: list[str]) -> None:
+    """A live plan holds open slices; a shipped one is history and belongs in plans/archive/.
+
+    X3 is the case this exists for. UI-P-2 shipped on 31 Aug 2026 inside a
+    batch commit, `plans/now/ui.md` kept its full pre-fix diagnosis, and three
+    days later it was queued as ready work with a worktree opened for it. A
+    shipped slice left in a live plan does not just cost context -- it reads
+    as startable. Size is the same failure earlier: a plan that has grown past
+    the soft limit is nearly always carrying delivered slices."""
+    for plan in current_plans():
+        if plan.parent.name != "now":
+            continue
+        text = plan.read_text(encoding="utf-8")
+        for match in SHIPPED_HEADING.finditer(text):
+            line_no = text[: match.start()].count(chr(10)) + 1
+            heading = match.group(0).strip()
+            errors.append(
+                f"{plan.relative_to(ROOT)}:{line_no}: heading marks delivered work "
+                f"-- move it to plans/archive/ and leave a one-line pointer: {heading}"
+            )
+        line_count = len(text.splitlines())
+        if line_count > LIVE_PLAN_SOFT_LIMIT:
+            warnings.append(
+                f"{plan.relative_to(ROOT)}: {line_count} lines (soft limit "
+                f"{LIVE_PLAN_SOFT_LIMIT}) -- check it is not holding delivered slices"
+            )
+
+
 def check_context_layout(errors: list[str]) -> None:
     legacy_root_plans = sorted(ROOT.glob("*_PLAN.md"))
     if legacy_root_plans:
@@ -95,7 +130,7 @@ def _item_files(body: str) -> set[str]:
     }
 
 
-def check_next_steps(errors: list[str]) -> None:
+def check_next_steps(errors: list[str], warnings: list[str]) -> None:
     """The queue is exactly QUEUE_SIZE ready slices, in two lanes that cannot collide."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
@@ -155,6 +190,22 @@ def check_next_steps(errors: list[str]) -> None:
                 + ", ".join(sorted(shared))
                 + " -- reorder the lanes so simultaneous work cannot collide"
             )
+
+    # A non-leading item becomes a leading one as soon as its lane empties, so
+    # cross-lane overlap further down the queue is a collision waiting for a
+    # merge. Same-lane overlap is fine: a lane is worked top to bottom.
+    for lane_a, chunk_a in lane_order:
+        for lane_b, chunk_b in lane_order:
+            if lane_a >= lane_b:
+                continue
+            overlap = _item_files(chunk_a) & _item_files(chunk_b)
+            if overlap:
+                warnings.append(
+                    f"NEXTSTEPS.md: a [{lane_a}] and a [{lane_b}] item both name "
+                    + ", ".join(sorted(overlap))
+                    + " -- they will collide once both lanes reach them; put them "
+                    "in one lane, or make the shared file its own earlier slice"
+                )
 
 
 def check_markdown_links(errors: list[str]) -> None:
@@ -217,8 +268,14 @@ def primary_checkout() -> Path:
 
 
 def ledger_worktree_rows() -> list[tuple[str, Path]]:
-    """(raw path as written, resolved path) for each data row in plans/workstreams.md."""
-    ledger = ROOT / "plans" / "workstreams.md"
+    """(raw path as written, resolved path) for each data row in plans/workstreams.md.
+
+    Read from the primary checkout, not from ROOT. The ledger is edited only
+    there (CLAUDE.md, "Coordinating and closing out workstreams"), so a branch
+    carries whatever copy it forked from -- reading the local one made every
+    row look stale from inside a worktree and pushed sessions into editing the
+    ledger on the branch, which is the conflict the rule exists to prevent."""
+    ledger = primary_checkout() / "plans" / "workstreams.md"
     if not ledger.exists():
         return []
     rows: list[tuple[str, Path]] = []
@@ -271,7 +328,8 @@ def main() -> int:
     warnings: list[str] = []
     check_plan_metadata(errors, warnings)
     check_context_layout(errors)
-    check_next_steps(errors)
+    check_live_plans_hold_only_open_work(errors, warnings)
+    check_next_steps(errors, warnings)
     check_markdown_links(errors)
     check_workstreams(errors)
 

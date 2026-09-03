@@ -8,6 +8,21 @@ finished and archived at `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md`;
 per `plans/README.md` an archived plan is never reopened, so this finding
 starts here.
 
+**Objective.** A run change resets only what a preset or Challenge owns;
+anything the player set by hand survives it.
+
+**State.** One open slice, below. If its acceptance run finds nothing more,
+this plan is complete and is archived.
+
+**Reasoning level: medium.** It moves an ownership boundary (what a run
+change may overwrite) and the plan resolves that decision already -- but if
+the code turns out not to have a single place presets are applied from, stop
+and escalate rather than adding a second one.
+
+**Required reading.** This file only. `plans/archive/` entries named below
+are provenance for *why* the full reset existed; do not open them to decide
+what to do.
+
 ## Slice 1 — Picking a Scenario wipes the player's settings, and should not
 
 **Ask (Dave, 2 Sep 2026):** "When choosing the Scenario, and changing a

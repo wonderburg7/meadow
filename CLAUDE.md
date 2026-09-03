@@ -35,7 +35,12 @@ leading items name a file in common, or if blocked-work language appears in
 the queue at all.
 
 **Admission test, applied every time the queue is rewritten.** A slice belongs
-in `## Next up` only if a model could start writing code on it today. It does
+in `## Next up` only if a model could start writing code on it today, *and the
+behaviour does not already exist*. Open the file the slice names and confirm
+the defect is still there before queuing it -- a plan records what was true
+when it was written, and a batch commit can ship several slices with only some
+booked out. X3 sat at the head of a lane, with a worktree open, for a fix that
+had shipped three days earlier. It does
 *not* belong if it needs a hands-on check, a live repro, a live boot, or a
 decision from Dave *before* code can be written. Needing a hands-on check
 *after* the code lands is normal and does not disqualify it -- that check goes
@@ -140,9 +145,14 @@ necessary. The full Codex handoff policy is in `CHATGPT.md`.
 
 1. Run `tools/verify.ps1`.
 2. Copy any stated manual check into `checks/ready.md`.
-3. Remove the worktree (`git worktree remove`) and delete the branch
+3. Move the delivered slice's specification out of its `plans/now/` file into
+   `plans/archive/`, leaving a one-line pointer. A shipped slice left in a
+   live plan reads as ready work; `tools/check_docs.py` fails on one.
+4. Refill the queue, and check the promoted item against the code it names
+   before trusting the plan's description of it.
+5. Remove the worktree (`git worktree remove`) and delete the branch
    (local, and remote if pushed).
-4. Delete its row from `plans/workstreams.md`.
+6. Delete its row from `plans/workstreams.md`, from the primary checkout.
 
 A worktree or branch is never kept open solely because a hands-on check is
 still outstanding — the check moves to `checks/ready.md`; the worktree
@@ -160,8 +170,17 @@ itself.
 3. **Processing-efficient:** profile a per-frame/per-bee path before changing
    it. Count both calls and population before adding an index/cache.
 4. **Cheap execution:** use the routine model/effort for bounded work and
-   scripts for deterministic checks. Escalate reasoning only for real
-   ambiguity or architecture.
+   scripts for deterministic checks. Every slice states a minimum reasoning
+   level in its plan: low for one-file mechanical work behind a clear
+   interface, medium for bounded implementation with an acceptance check,
+   high only for ownership boundaries, save migrations, event ordering, hot
+   paths, ambiguous bugs, or planning that decides several later slices.
+   Take the level the slice states. Escalating past it is as much a mistake
+   as ignoring it.
+5. **Stop and escalate** rather than deciding, when an unresolved question
+   would change an architecture or ownership boundary, save compatibility, a
+   gameplay outcome, or more than one later slice. Say what the options are
+   and what each costs; do not pick one and build on it.
 
 ## Where to route a change
 

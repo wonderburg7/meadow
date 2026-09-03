@@ -48,6 +48,18 @@ and a part-built cell's stub outline stays flat throughout.
 
 Owner: `plans/now/hive-comb.md` Slice 9.
 
+### C-3 -- Challenge-only top-bar hit areas
+
+Shipped 28 Aug 2026, still unconfirmed. The goal shelf's `mouse_filter` fix
+is in. In a Challenge, click every second-row top-bar button along its full
+height, then do the same in a Scenario.
+
+PASS: every second-row top-bar button responds across its full height in a
+Challenge, exactly as in a Scenario.
+
+Owner: `plans/now/ui.md` UI-D. If it fails, do not treat the old
+`stage_gate.gd` theory as the established cause.
+
 ### C-1 -- a flower under forager pressure no longer reads as pinned
 
 Shipped 31 Aug 2026, still unconfirmed. `nearest_flower()` now skips any
