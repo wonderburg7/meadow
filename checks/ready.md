@@ -29,6 +29,17 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-12 -- command tray reflows and stays on screen
+
+Select a bee with `More…`, note the tray height, then close it; repeat for a
+cell's `More…` control. At 800x600, select a cell with every action row
+available and resize the open tray once.
+
+PASS: both panels return to their former height when closed, and the full cell
+tray remains wholly on screen before and after resizing.
+
+Owner: `plans/now/ui.md` UI-S-3.
+
 ### C-11 -- the centred command tray preserves both bottom-row gaps
 
 Shipped 3 Sep 2026. Select a bee so the command tray is visible, then check
