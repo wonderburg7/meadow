@@ -57,7 +57,7 @@ decided.
      opening one closes the others without breaking the nursery hive view.
    - Proof: `absent: scripts/ui_layout.gd :: left_window_top`
    - Why first in this lane: UI-S-3 landed and explicitly promotes it. It does
-     not overlap W-7, the leading Claude item.
+     not overlap P-1, the leading Claude item.
    - Next after: UI-S-4 (`plans/now/ui.md` -- refused commands are visible and
      the right-click choke point records their cause).
 
