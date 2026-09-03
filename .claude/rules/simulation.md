@@ -5,6 +5,7 @@ paths:
   - "scripts/flower.gd"
   - "scripts/season.gd"
   - "scripts/spatial_grid.gd"
+  - "scripts/roles.gd"
 ---
 
 # Simulation rules
@@ -52,3 +53,24 @@ if each computes its own bound instead of sharing a constant — see the
 hex-ring navigation bug in `docs/known-pitfalls.md`. Worth checking
 `hive.gd`'s navigation build against `world_building.gd`'s dig loops if
 either changes.
+
+## Settled behaviour, not open design
+
+Three rules were settled on 26 Aug 2026. Each looks like an inconsistency
+until you know why it is there, so each is easy to "tidy away" by mistake.
+
+**The queen is the default emergency/backup nurse.** A Challenge or scenario
+may explicitly replace that default; nothing else may remove it. Tooltips,
+teaching text and tests describe the fallback rather than deny it.
+
+**Stocking is an indoor resource-moving role for assigned cell workers.** A
+worker moves resources from its cell to one or more other cells. It is *not*
+clearing, *not* eviction, and *not* a generic indoor fallback. Player
+management of those routes and rules is a separate future feature -- design
+that before adding any allocation behaviour.
+
+**Nectar-to-honey work converts and stores nectar; it must not create
+energy.** Nectar spoilage is a separate future feature, not part of this
+conversion. Before changing the conversion values, model the whole
+colony/winter economy and validate it over several seasons -- a
+single-season figure is not evidence. See `docs/headless-run-contract.md`.

@@ -122,9 +122,8 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
 
 
 def _action_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
-    """scenario_actions.gd's headless action driver (see
-    insights_from_ChatGPT.md's 22 Aug 2026 entry and
-    AI_PLAYTEST_PLAN.md's extension) logs one "action" entry per action
+    """scenario_actions.gd's headless action driver (contract:
+    docs/headless-run-contract.md) logs one "action" entry per action
     attempted, whatever the result. `problems` surfaces anything that
     wasn't a clean "accepted" -- a rejected action, or one whose "when"
     never fired before the run ended -- so a scenario author doesn't have

@@ -25,6 +25,28 @@ Fog storage compression, BitMap experiments and new masking approaches are not
 planned work. Reopen one only after a fresh comparable profile identifies a
 specific bottleneck and the smallest path is written as a new, focused slice.
 
+## Feature availability is split across five owners (26 Aug 2026 review)
+
+Recorded here as a decision-gated consolidation, not scheduled work. Whether
+a feature is available today is decided in five places: `GameConfig`,
+`prerequisites.gd`, level flags, `stage_gate.gd`, and Challenge/UI filtering.
+Roles additionally mirror their persisted integer IDs across `roles.gd` and
+`bee_enums.gd` -- that one is deliberate and stays.
+
+**Consequence:** every new resource, order or gated mechanic has to restate
+the same rule in several of those places, and a rule added to only four of
+the five is invisible until a player finds it.
+
+**If it is ever taken on, it is two slices, in this order.** First a
+non-visual availability query that the five owners call, so gating never
+depends on a UI filter. Then a small resource catalogue. Both keep the
+existing stable string keys, and the catalogue slice lands save-migration
+coverage *before* any schema change (`.claude/rules/saving.md`).
+
+**Not startable as written.** It changes an ownership boundary, so it needs
+Dave's call first, and it is worth doing only alongside a feature that would
+otherwise add a sixth owner. Do not open it as a tidy-up.
+
 ## Forager-history save design (28 Aug 2026)
 
 `DESIGN_BACKLOG.md`'s deferred "forager-history persistence" item, resolved

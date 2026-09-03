@@ -120,6 +120,17 @@ function Get-LedgerLaneRows {
     return $rows
 }
 
+function Get-LaneTrailer {
+    # `slice.ps1` runs in both lanes, so the co-author trailer follows the
+    # lane rather than being hard-coded -- a Codex slice credited to Claude
+    # makes `git log` useless for telling the two apart.
+    param([string]$Lane)
+    if ($Lane -eq "Codex") {
+        return "Co-Authored-By: ChatGPT Codex <noreply@openai.com>"
+    }
+    return "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+}
+
 function Test-Proof {
     param([string]$Root, [string]$ProofLine)
 
@@ -210,7 +221,7 @@ function Invoke-SliceStart {
     try {
         git add "plans/workstreams.md"
         if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-        $commitMessage = "Register the $id worktree in the ledger`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        $commitMessage = "Register the $id worktree in the ledger`n`n$(Get-LaneTrailer -Lane $Lane)"
         git commit -m $commitMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
 
@@ -255,6 +266,7 @@ function Invoke-SliceFinish {
     }
     $id = $branchMatch.Groups["id"].Value
     $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
+    $trailer = Get-LaneTrailer -Lane $lane
     $worktreeRelative = ".worktrees/$id"
 
     $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
@@ -302,7 +314,7 @@ function Invoke-SliceFinish {
     if ($LASTEXITCODE -ne 0) { throw "git add failed" }
     $staged = git diff --cached --name-only
     if ($staged) {
-        $commitMessage = "$id -- finish outstanding work`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        $commitMessage = "$id -- finish outstanding work`n`n$trailer"
         git commit -m $commitMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
     }
@@ -317,7 +329,7 @@ function Invoke-SliceFinish {
         }
 
         $title = if ($item) { $item.Title } else { $branch }
-        $mergeMessage = "Merge ${branch}: $title`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
         git merge --no-ff $branch -m $mergeMessage
         if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
 
@@ -367,7 +379,7 @@ function Invoke-SliceFinish {
 
         git add "plans/workstreams.md"
         if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-        $deleteMessage = "Remove the $id worktree row from the ledger`n`nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        $deleteMessage = "Remove the $id worktree row from the ledger`n`n$trailer"
         git commit -m $deleteMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
 

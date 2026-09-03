@@ -12,8 +12,9 @@ ChatGPT/Codex may work with Meadow in either of two modes:
   files.
 - **Implementation mode:** implement an explicitly assigned task, with the
   same rights to read and edit Meadow's game/source files — including in the
-  primary worktree — as Claude Code, then hand committed changes to Claude for
-  risk-proportional integration.
+  primary worktree — as Claude Code, then close the slice out with
+  `tools/slice.ps1 finish` exactly as Claude does, or, for a high-risk slice,
+  push the branch and hand it to Claude for review-then-closeout.
 
 In implementation mode, Codex may edit the files reasonably needed for the
 assigned task, run relevant checks, remove disposable artifacts created by its
@@ -26,9 +27,27 @@ Run `tools/slice.ps1 start -Lane Codex` to claim the lane's leading item and
 register its worktree in `plans/workstreams.md` atomically -- it also checks
 the item's `Proof:` line still holds and refuses a lane that already has an
 open worktree, so the same fix or investigation cannot be duplicated across
-branches. Closing out a Codex branch or worktree once it is integrated —
-including deleting it — is Claude's responsibility, consistent with Codex not
-merging, pushing or deleting shared branches itself.
+branches. Close it out with `tools/slice.ps1 finish`, run from inside that
+worktree the moment the slice is green: the same command, and the same
+timing, as Claude. It verifies, gates on any hands-on check the `Check:` line
+named, commits, merges to `master`, pushes, removes the worktree and branch, and
+deletes the ledger row. **Codex has the same commit, merge and push rights as
+Claude for its own lane's branch** and does not wait for Dave or Claude to do
+any of it.
+
+The one exception is a **high-risk** slice (triggers listed under
+"Risk-proportional closeout" below). There, Codex commits and pushes the
+branch but does not merge it: it hands the branch to Claude with the hand-off
+block, and Claude reviews the full diff and then runs `finish`. A hands-on
+check outstanding is never a reason to hold a branch open -- file it in
+`checks/ready.md` and finish.
+
+`finish` does not refill the queue or archive the delivered slice's
+specification. Do both by hand after it succeeds, for your own lane only:
+promote the item's `Next after:` into the `[Codex]` lane, pull one ready slice
+from an owning plan if that empties the lane, and move the shipped slice's
+specification into `plans/archive/` leaving a one-line pointer. Never edit the
+`[Claude]` lane's entries.
 
 ### Documentation and project-state ownership
 
@@ -43,8 +62,9 @@ integration path.
 Canonical coordination files describe the state of the integrated `master`
 branch, so their ownership is stricter:
 
-- `NEXTSTEPS.md` is the canonical integrated-project queue. Update it on `master` after reviewing and
-  integrating a Codex branch.
+- `NEXTSTEPS.md` is the canonical integrated-project queue. Update it on
+  `master` after a merge lands, never on the branch: whoever integrated the
+  slice refills its lane.
 - `NEXTSTEPS.md` and `plans/` are shared with Claude. They state the
   integrated project priority.
 - `CLAUDE.md`, `CHATGPT.md` and `AGENTS.md` are tool-policy and orientation
@@ -54,38 +74,41 @@ branch, so their ownership is stricter:
 In short: an implementation branch documents what it changes; the integrator
 records what is true on `master`.
 
-### Risk-proportional hand-off and integration
+### Risk-proportional closeout
 
-Claude does not need to perform a full model review of every Codex diff. Codex
-must classify the completed branch at the lowest tier whose conditions it
-meets, explain the classification and provide reproducible evidence. Claude
-uses that tier to spend review effort where it can change the outcome:
+The risk tier decides **who closes the branch out**, and how much review
+effort a hand-off is worth. Codex classifies its own completed branch at the
+lowest tier whose conditions it meets, and says why in one line:
 
 - **Low risk:** documentation, tests, fixtures, tooling or a small mechanical
   change with no intended runtime-behaviour change; no save-format,
   cross-system, balance, hot-path, dependency, generated-file or player-facing
   impact; no ownership overlap or merge conflict; and every relevant
-  deterministic check passes. Claude may use the fast path: verify the commit
-  and clean integration state, read the hand-off and `git show --stat`, rerun a
-  cheap check if useful, then integrate without rereading the full diff.
+  deterministic check passes. **Codex runs `finish` itself.**
 - **Medium risk:** a bounded gameplay or UI change with clear ownership,
-  focused tests and no high-risk trigger. Claude reviews only changed
-  interfaces, surprising logic, reported weak spots and any manual acceptance
-  requirement before integrating.
+  focused tests and no high-risk trigger. **Codex runs `finish` itself.**
 - **High risk:** save/schema/migration work, simulation architecture,
   cross-system behaviour, balance-sensitive logic, performance hot paths,
   dependencies, broad refactors, large/generated diffs, unresolved failures,
-  ownership overlap or merge conflicts. Claude performs a full diff review and
-  the relevant validation before integration.
+  ownership overlap or merge conflicts. **Codex commits and pushes the branch
+  but does not merge it**, and hands it to Claude, who reviews the full diff
+  and the relevant validation before running `finish`.
 
 Uncertainty alone is not a reason to default everything to high risk: use the
 lowest tier supported by the concrete diff and evidence. Escalate when a named
-trigger is present, checks are missing or failing, the hand-off does not match
-the diff, or integration reveals a conflict. Claude may raise a tier, but should
-state the specific trigger rather than repeat Codex's work by default.
+trigger is present, checks are missing or failing, or `finish` reveals a merge
+conflict -- a conflict between lanes is evidence the queue's `Files:` lines
+were wrong, so fix them in the same pass. Claude may raise a tier when
+reviewing, but should state the specific trigger rather than repeat Codex's
+work by default.
 
-Every implementation hand-off must contain only the information needed to
-integrate it:
+**A slice Codex closed out itself ends with the end-of-slice report** in
+`CLAUDE.md`, "End-of-slice report" -- `finish` prints it. Dave should not be
+able to tell from the report which agent ran the slice. Post it in the chat
+unprompted; there is no hand-off block for a slice nobody has to integrate.
+
+**A high-risk hand-off** must contain only the information Claude needs to
+review and integrate it:
 
 1. task and exact scope;
 2. baseline and final commit hash, plus changed-file summary;
@@ -100,39 +123,40 @@ integrate it:
 7. the next-slice block below, so Dave learns what happens next without
    opening a file.
 
-Finish every implementation hand-off with this block, unprompted:
+Finish a high-risk hand-off with this block, unprompted:
 
 ```
 Slice done:   <id> -- <name>
-Branch:       codex/<slice-id>  |  verify.ps1: green
-Risk tier:    <low|medium|high> -- <one-line reason>
+Branch:       codex/<slice-id>  (pushed)  |  verify.ps1: green
+Risk tier:    high -- <the specific trigger>
 Hands-on:     <concrete check for Claude to file in checks/ready.md>  (or: none)
 Next in my lane: <id> -- <one line on what it does>
-Ready to merge: yes -- Claude integrates and closes the branch out
+Ready to merge: yes -- Claude reviews the full diff, then runs 'finish'
 ```
 
-Codex never merges, pushes or deletes the branch. "Ready to merge" is a
-statement that the three conditions in `plans/workstreams.md` ("When to
-merge") are met, not an action taken.
+"Ready to merge" is a statement that the three conditions in
+`plans/workstreams.md` ("When to merge") are met, not an action taken. Push
+the branch before handing it over, so the diff is reviewable without the
+worktree.
 
 Deterministic check output and the committed diff are the evidence; a second
-agent need not re-derive the implementation narrative. After integration,
-Claude updates canonical project-state files only when the merged state makes
-that necessary.
+agent need not re-derive the implementation narrative.
 
 Codex must not:
 
-- merge its branch into `master`, push changes or rewrite shared history unless
-  Dave explicitly requests that specific action;
+- rewrite shared history (no force-push, no rebase of a pushed branch, no
+  amending a merged commit) unless Dave explicitly requests that action;
+- merge, push or delete a branch belonging to the `[Claude]` lane, or edit
+  that lane's queue entries;
 - edit `CLAUDE.md`, unless Dave explicitly
   asks for that exact documentation change; ordinary task-relevant Markdown is
   governed by the documentation rule above;
 - run broad formatters, generators or cleanup commands that affect files
   outside the assigned task.
 
-Claude is usually responsible for merging or cherry-picking Codex commits into
-the integration branch, using the risk tier above rather than applying a
-blanket full-review requirement.
+Claude reviews and integrates only the high-risk tier, using the specific
+trigger rather than a blanket full-review requirement. Everything else,
+Codex lands itself.
 
 ## Headless-check work
 
@@ -166,8 +190,10 @@ commits distinct.
 - Keep recommendations clearly labelled as recommendations, not completed
   changes.
 - Before implementation, record the current branch, baseline commit, and the
-  task scope. Before finishing, run relevant checks, review the diff, commit
-  the result on the work branch and report the concise hand-off required by
-  the risk-proportional integration section.
+  task scope. Before finishing, run relevant checks, review the diff and
+  commit on the work branch. Then close out per "Risk-proportional closeout":
+  low or medium risk, run `tools/slice.ps1 finish`, refill the `[Codex]` lane
+  and archive the slice's specification, and post the end-of-slice report;
+  high risk, push the branch and post the hand-off block instead.
 - In advisory mode, before finishing, check the working tree and make sure the
   session changed only allowed ChatGPT-specific Markdown files.

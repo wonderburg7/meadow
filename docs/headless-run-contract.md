@@ -197,6 +197,17 @@ is off.
 A required zero-event channel is listed as `not_exercised`, not treated as
 evidence that the mechanic had no effect.
 
+**If the campaign dies mid-case, do not render a verdict from what it wrote.**
+On 29 Aug 2026 the first `no_automation` case at seed `12345` exited with
+`4294967295` after 48.6 seconds, writing no session summary and no diagnostic
+events (`status: crashed`); a separate 30-second foreground probe of the base
+scenario timed out rather than reporting a game assertion. A zero event count
+from a run like that reads as "the mechanic did nothing" when the truth is
+that the simulation never finished. Reproduce one pinned base scenario
+interactively, or with Godot crash logging on, and identify the
+native/runtime failure before rerunning the matched campaign. The verdict is
+rendered only from a completed experiment `result.json`.
+
 ## Scenario expectations
 
 `expect` is optional. It is evaluated by Python only after the final evidence

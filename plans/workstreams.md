@@ -24,6 +24,12 @@ per lane, cannot conflict by construction.
 - Deliberate overlap (comparing two approaches) is the one exception: mark
   both rows `competing`, note the comparison criterion in Scope, and delete
   the loser's branch/worktree the moment the decision is made.
+- **Never start new work from a branch that has diverged.** A stale branch
+  usually carries a queue/plan snapshot and unrelated commits alongside the
+  work worth keeping, and building on it drags both into the new slice. Take
+  the evidence commits you want onto a fresh `master`-based branch, leave the
+  canonical-document snapshot behind, and close the old branch in the same
+  pass (`codex/hive-comb-slice-4-repro`, 1 Sep 2026).
 
 ## When to merge
 
@@ -44,10 +50,12 @@ merges first, and the other merges on top with no rebase, because the lanes
 share no file. If `git merge` reports a conflict anyway, that is evidence the
 queue's `Files:` lines were wrong -- fix them in the same pass.
 
-Codex never merges, pushes or deletes shared branches. Claude integrates a
-Codex branch at the risk tier its hand-off claims (see `CHATGPT.md`), then
-runs the closeout in `CLAUDE.md`. Dave does not need to decide merge timing;
-the end-of-slice report states what was merged and what is next.
+Both agents merge, push and close out their own lane's branch with
+`tools/slice.ps1 finish`, and neither touches the other lane's. The one
+exception is a **high-risk** Codex branch: Codex pushes it and hands it over,
+and Claude reviews the full diff before running `finish` (`CHATGPT.md`,
+"Risk-proportional closeout"). Dave does not need to decide merge timing; the
+end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |

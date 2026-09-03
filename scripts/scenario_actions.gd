@@ -1,7 +1,7 @@
 extends RefCounted
-## Dev-only headless action driver for --scenario= runs. Extends
-## AI_PLAYTEST_PLAN.md's harness with the piece insights_from_ChatGPT.md's
-## 22 Aug 2026 "headless equivalent of clicking" entry recommended: a
+## Dev-only headless action driver for --scenario= runs. The headless
+## equivalent of clicking, and the contract is
+## docs/headless-run-contract.md: a
 ## scenario's "actions" array gives a run semantic player actions --
 ## assign a role, designate a cell, queue build/mine work, toggle a
 ## setting -- gated by day/resource/event triggers and checked with
@@ -42,9 +42,9 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 
 ## Called from main.gd::_end_scenario_run, before DiagnosticLog closes the
 ## session file. An action whose "when" never became true is exactly as
-## diagnostically interesting as one that fired and was rejected --
-## insights_from_ChatGPT.md's recommendation #4/#5 ("a run should fail
-## loudly if an action cannot be carried out").
+## diagnostically interesting as one that fired and was rejected: a run
+## must fail loudly if an action cannot be carried out
+## (docs/headless-run-contract.md).
 static func log_unresolved(actions: Array) -> void:
 	for action in actions:
 		if action.get("_resolved", false):

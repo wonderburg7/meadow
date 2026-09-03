@@ -187,11 +187,12 @@ Codex, implementing:
 
 ```
 Read CHATGPT.md, then NEXTSTEPS.md. Implement the first unclaimed [Codex] item
-in the Next up queue. Follow its Plan heading only. Branch as codex/<slice-id>,
-run tools/verify.ps1, commit, and finish with the hand-off block in CHATGPT.md.
+in the Next up queue. Follow its Plan heading only. Claim it with
+tools/slice.ps1 start -Lane Codex, implement, run tools/verify.ps1, then close
+out per CHATGPT.md's "Risk-proportional closeout".
 ```
 
-Claude, integrating a finished Codex branch:
+Claude, integrating a high-risk Codex branch (the only kind handed over):
 
 ```
 Integrate the finished Codex branch and close it out.

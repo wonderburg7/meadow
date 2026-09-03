@@ -547,9 +547,8 @@ def _warn_on_action_problems(analysis: dict) -> None:
     action whose "when" never fired, or a failed "assert" ending the run.
     Printed even when --full is off, and run_scenario returns a failing exit
     status when any are present, since a strategy script silently not doing
-    what it said is exactly the failure mode
-    insights_from_ChatGPT.md's 22 Aug 2026 entry asked assertions to catch
-    loudly.
+    what it said is exactly the failure mode the action assertions exist to
+    catch loudly (contract: docs/headless-run-contract.md).
     """
     problems = analysis.get("actions", {}).get("problems", [])
     if not problems:
