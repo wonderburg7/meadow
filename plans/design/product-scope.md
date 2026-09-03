@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: admit Colony Diagnostics' first slice (`plans/design/colony-diagnostics.md`) through `NEXTSTEPS.md`; the other four §6.2 foundations (goal model, event director, job catalogue/dispatcher, run policy) still need their own design pass | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-03
+Status: selected design, not scheduled | Owner: Dave | Next: Colony Diagnostics' first slice shipped 4 Sep 2026 (`plans/reference/colony-diagnostics.md`, now reference only); the other four §6.2 foundations (goal model, event director, job catalogue/dispatcher, run policy) still need their own design pass | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-04
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -170,8 +170,8 @@ These are part of alpha stabilisation. They should continue through
   readiness, recent events and difficulty. It schedules pressure; simulation
   rules determine the outcome.
 - **Colony diagnostics:** reusable derived facts for UI, Dr explanations,
-  automated checks and future balancing. Designed in
-  `plans/design/colony-diagnostics.md`.
+  automated checks and future balancing. First slice shipped 4 Sep 2026;
+  contract now lives in `plans/reference/colony-diagnostics.md`.
 - **Job catalogue and dispatcher:** jobs and sub-jobs are stable data used by
   roles, Work Priorities, individual overrides and later policies.
 - **Persistence:** separate player profile and named run saves, migration,

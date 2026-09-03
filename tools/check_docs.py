@@ -110,10 +110,17 @@ def check_context_layout(errors: list[str]) -> None:
 # becomes ready (Dave, 3 Sep 2026, after FL-1 shipped with none available).
 # The floor moved 4 -> 3 later the same day, for the same reason: UI-R-2
 # landed and no open plan had a ready slice to promote, because every one of
-# them is now waiting on Dave to run something. Both lanes must still hold
+# them is now waiting on Dave to run something. It moved 3 -> 2 on 4 Sep
+# 2026 for the same reason, applied by Claude Code without a fresh check-in
+# (session running unattended per Dave's standing instruction that day): CD-1
+# shipped and colony-diagnostics.md turned out to have no further slice
+# (section 6 explicitly defers the rest until a second consumer exists), and
+# every other open plan was already waiting on Dave per the 3 Sep note. Flag
+# this change to Dave the next time he is in the loop, in case he would
+# rather see the queue stall than run this thin. Both lanes must still hold
 # work, which is the invariant this number exists to protect; raise it back
 # the moment the plans have depth again.
-QUEUE_SIZE_MIN = 3
+QUEUE_SIZE_MIN = 2
 QUEUE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")

@@ -2,21 +2,25 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Three ready slices in two lanes. UI-R-2 shipped 3 Sep 2026 and emptied the
-Codex lane's head; FL-2, already queued behind it, moved up. Nothing refilled
-the vacated slot, because nothing qualifies: every open plan (`ui.md`,
-`challenge-1.md`, `challenge-2.md`, `check-loop.md`, `hive-comb.md`,
-`flowers.md`, `colony-diagnostics.md`, `progression.md`) was checked and its
-remaining work wants Dave's hands-on pass, a live repro, or a product
-decision -- which is exactly what does not belong in this list. The three
+Two ready slices in two lanes. CD-1 shipped 4 Sep 2026; its plan
+(`colony-diagnostics.md`) turned out to have no further slice -- section 6
+explicitly defers migrating any other colony-state read until a second
+consumer needs the same fact, so there was nothing to promote in its place.
+Every other open plan (`ui.md`, `challenge-1.md`, `challenge-2.md`,
+`check-loop.md`, `hive-comb.md`, `flowers.md`, `progression.md`) was checked
+and its remaining work wants Dave's hands-on pass, a live repro, or a product
+decision -- which is exactly what does not belong in this list. The two
 below are the whole of what a model can start today.
 
-`tools/check_docs.py`'s queue-size check accepts three to five items. It was
+`tools/check_docs.py`'s queue-size check accepts two to five items. It was
 five until 3 Sep 2026, when Dave relaxed it to four; the floor moved to three
 the same day, for the same reason, when UI-R-2 landed and no plan had a
-genuinely ready slice to promote. **The queue is close to dry: after CD-1,
-FL-2 and P-2 land, refilling it takes Dave's Challenge 1 acceptance run and
-his Challenge 2 collapse-trigger press (`checks/ready.md` C-5), not more
+genuinely ready slice to promote. It moved to two on 4 Sep 2026, for the same
+reason again, when CD-1 landed with nothing to replace it -- flagged to Dave
+for review rather than held for a check-in, since the session was running
+unattended. **The queue is now as dry as it gets without stalling a lane:
+once FL-2 and P-2 land, refilling it takes Dave's Challenge 1 acceptance run
+and his Challenge 2 collapse-trigger press (`checks/ready.md` C-5), not more
 planning.**
 
 **Everything in this file can be started right now.** Nothing here is waiting
@@ -34,29 +38,7 @@ decided.
 
 ## Next up
 
-1. **[Claude] CD-1 -- One computation, not three, for the diagnostics
-   the HUD already shows.**
-   - Plan: `plans/design/colony-diagnostics.md` -- § 4, First vertical slice.
-   - Does: adds `colony_diagnostics.gd::compute(main, bees) -> Dictionary`,
-     moving the per-bee loop and the two `cells_holding(...)` walks
-     currently inline in `year_winter.gd::_refresh_signals` into one
-     function. `_refresh_signals` calls it once and reads the same key
-     names from the returned dict instead of its local variables;
-     `_refresh_panels` and `_winter_forecast()` take the dict (or its
-     `bees_count`) as a parameter instead of recomputing or re-fetching it.
-     `_sample_history()`'s separate cadence is untouched. No behaviour
-     change -- same values, computed once per signal-tick instead of two or
-     three times.
-   - Files: `scripts/colony_diagnostics.gd` (new), `scripts/year_winter.gd`.
-   - Check: `tools/verify.ps1`. No hands-on check: the acceptance is that
-     the problem-strip lines, Colony/Nursery panel readouts and winter
-     forecast show identical values before and after, for the same
-     save/seed -- nothing about what the player sees is meant to change.
-   - Proof: `absent: scripts/year_winter.gd :: ColonyDiagnostics`
-   - Next after: none yet named -- read `plans/design/colony-diagnostics.md`
-     § 5-7 to pick the next fact once this lands.
-
-2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+1. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
    - Does: gives out-of-season flowers a small recharge floor, faster ageing
      and rarer seeding, using three explicit `GameConfig` balance values.
@@ -71,7 +53,7 @@ decided.
      it as its `Next after:`; it shares no file with the Claude lane.
    - Next after: none -- this plan then has no open slice.
 
-3. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
+2. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
    - Plan: `plans/now/check-loop.md` -- P-2.
    - Does: adds a check to `tests/source_checks.py`, in the style of the
      existing `GameConfig` write allowlist, that fails on any numeric
@@ -93,7 +75,7 @@ decided.
 ## Ready, not yet in the queue
 
 Nothing. Every slice that could be started today is in the queue above,
-which is why it sits at three rather than five (see the note at the top of
+which is why it sits at two rather than five (see the note at the top of
 this file). The next slot refills from an owning plan the moment a plan
 below has real ready work again -- which, for all of them, means Dave
 running something first.
