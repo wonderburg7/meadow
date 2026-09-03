@@ -4,7 +4,13 @@
       "Read(./.godot/**)",
       "Read(./_backups/**)",
       "Read(./docs/archive/**)",
-      "Read(./plans/archive/**)"
+      "Read(./plans/archive/**)",
+      "Read(./ROADMAP.md)",
+      "Read(./DESIGN_BACKLOG.md)",
+      "Read(./insights_from_ChatGPT.md)"
     ]
+  },
+  "enabledPlugins": {
+    "gitkraken-hooks@gitkraken": false
   }
 }
