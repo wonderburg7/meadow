@@ -1,7 +1,7 @@
 # Agent workflow — make the process enforce itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Claude | Next: W-6 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Claude | Next: W-7 | Dependency: none | Verified: 2026-09-03
 
 ## Objective
 
@@ -29,45 +29,18 @@ W-3 (the `Proof:` line and its `check_docs.py` enforcement) is delivered;
 see `plans/archive/AGENT_WORKFLOW_W3_2026-09-03.md`. W-4 (`tools/slice.ps1
 start`) is delivered; see `plans/archive/AGENT_WORKFLOW_W4_2026-09-03.md`.
 W-5 (`tools/slice.ps1 finish`) is delivered; see
-`plans/archive/AGENT_WORKFLOW_W5_2026-09-03.md`.
+`plans/archive/AGENT_WORKFLOW_W5_2026-09-03.md`. W-6 (repo-relative routing
+and `tools/heading.py`) is delivered; see
+`plans/archive/AGENT_WORKFLOW_W6_2026-09-03.md`.
 
 | Slice | Outcome | Files owned | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| W-6 | Routing is addressable and bounded | `CLAUDE.md`, `tools/heading.py` | yes | low |
 | W-7 | `verify.ps1` is quiet on success | `tools/verify.ps1` | yes | low |
 
-Dependencies: W-6 and W-7 are independent of everything else and of each
-other.
+Dependencies: W-7 is independent of everything else.
 
 Read for any slice: this file's section for it and nothing else. Every slice's
 check is `tools/verify.ps1`, and none of them files a hands-on check.
-
----
-
-## W-6 — Routing is addressable and bounded
-
-1. **Full paths in `CLAUDE.md`'s "Where to route a change" table.** Every bare
-   filename becomes repo-relative: `scripts/hud.gd`, `scripts/roles.gd`,
-   `scripts/saving.gd`, `tests/source_checks.py`. Bare names cost 59 not-found
-   probes across 33 sessions this week, in both agents.
-2. **`tools/heading.py <file> "<heading>"`** prints one Markdown section: the
-   matching `#`-prefixed line and everything up to the next heading at the same
-   or a shallower level. Case-insensitive substring match on the heading text;
-   if several match, print the first and a one-line note. Exit 1 listing the
-   file's headings when none match. This turns "open only the `Plan:` heading
-   it names" into one bounded call.
-3. **One new sentence in `CLAUDE.md`**, under "Rules that apply without being
-   requested" rule 1: *A file read early is re-sent on every later request in
-   the session; at ~90 requests, a 6K-token file read at the start costs ~500K,
-   not 6K. Read the routed section, not the file.*
-
-Then delete, in `CLAUDE.md`: the admission-test paragraph under "Keeping the
-queue true" (cut to one sentence naming the `Proof:` line and W-3's check), and
-the closeout checklist if W-5 has landed (cut to `tools/slice.ps1 finish`).
-
-**Acceptance:** `python tools/heading.py plans/now/flowers.md "Slice 1"` prints
-that section alone, and `python tools/check_docs.py` still passes — keep the
-new paths in backticks, not as Markdown links, or its link check will fail.
 
 ---
 

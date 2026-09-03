@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after SP-1 landed.
+Five ready slices in two lanes, refilled 3 Sep 2026 after W-6 landed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -19,29 +19,31 @@ decided.
 
 ## Next up
 
-1. **[Claude] W-6 -- Routing is addressable and bounded.**
-   - Plan: `plans/now/agent-workflow.md` -- W-6.
-   - Does: every bare filename in `CLAUDE.md`'s "Where to route a change"
-     table becomes repo-relative, adds `tools/heading.py <file> "<heading>"`
-     to print one bounded Markdown section instead of a whole file, and adds
-     one sentence to rule 1 on why a routed section beats a routed file.
-     Deletes the admission-test paragraph under "Keeping the queue true" (cut
-     to one sentence naming the `Proof:` line) and the closeout checklist
-     (cut to `tools/slice.ps1 finish`).
-   - Files: `CLAUDE.md`, `tools/heading.py`.
-   - Check: `tools/verify.ps1`. No hands-on check: `python tools/heading.py
-     plans/now/flowers.md "Slice 1"` and `python tools/check_docs.py` are
-     both scriptable.
-   - Proof: `absent: CLAUDE.md :: tools/heading.py`
-   - Why first: SP-1 landed and its `Next after:` item, FL-1, shares
-     `scripts/hud.gd` with UI-S-1, this lane's leading Codex item -- FL-1's
-     own entry said to re-check that pairing before promoting it to lead, and
-     promoting it now would make both lanes' leading items collide. W-6 is
-     `plans/now/agent-workflow.md`'s own stated next slice, is independent of
-     every other open file, and keeps FL-1 queued (below) for whichever lands
-     first between it and UI-S-1.
-   - Next after: W-7 (`plans/now/agent-workflow.md` -- `verify.ps1` is quiet
-     on success).
+1. **[Claude] W-7 -- `verify.ps1` is quiet on success.**
+   - Plan: `plans/now/agent-workflow.md` -- W-7.
+   - Does: adds `-Quiet` and `-Docs` switches to `tools/verify.ps1`. `-Quiet`
+     captures each stage and prints one line per stage (`source checks: OK`,
+     `balance tests: OK`, `function map: OK`, `doc checks: OK`), printing a
+     stage's captured output in full only when it fails; `-Docs` runs
+     `tools/check_docs.py` alone and skips the source, balance and
+     function-map stages. The doc stage's failures print under a heading that
+     names them as documentation, not code, with the code suites' passes
+     still visible. No stage changes what it checks, and the no-switch output
+     is untouched.
+   - Files: `tools/verify.ps1`.
+   - Check: `tools/verify.ps1`. No hands-on check: `-Quiet` printing four
+     lines, `-Docs` skipping the code suites, and a deliberately broken
+     `plans/workstreams.md` row producing a doc-only failure are all
+     scriptable.
+   - Proof: `absent: tools/verify.ps1 :: $Quiet`
+   - Why first: W-6 landed and W-7 is its `Next after:` item and
+     `plans/now/agent-workflow.md`'s last open slice. It owns `tools/verify.ps1`
+     alone, so it collides with neither UI-S-1 (this lane's leading Codex item)
+     nor anything else queued. `tools/slice.ps1 finish` already passes `-Quiet`
+     when it exists, so this switch is the last thing that closeout wants.
+   - Next after: FL-1 (`plans/now/flowers.md` Slice 1) -- by then UI-S-1 will
+     have landed or dropped, clearing the `scripts/hud.gd` overlap that keeps
+     FL-1 out of the lead today.
 
 2. **[Codex] UI-S-1 -- The bottom row: the command tray leads, the summary
    panel and Dr Gallerin follow.**
@@ -141,9 +143,6 @@ holds five. Take one when a lane empties, in roughly this order.
 - **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
   format (id, one action, one PASS line, an owner) enforceable in
   `tools/check_docs.py`.
-- **W-7** (`plans/now/agent-workflow.md`) -- `tools/verify.ps1 -Quiet` and
-  `-Docs`, so a passing run prints four lines and a ledger failure does not
-  read as a code failure.
 
 ## Not in the queue, and why
 
