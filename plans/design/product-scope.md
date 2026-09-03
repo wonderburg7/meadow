@@ -311,25 +311,245 @@ gynes; that state offers restore rather than silently ending the run.
 
 ## 12. Development and review sequence
 
+Solid arrows show required sequence or dependency. Dotted arrows show
+supporting, evidence, parallel or later-reopening relationships. Diamonds are
+review or rule decisions rather than implementation tasks.
+
 ```mermaid
 flowchart TD
-    A[Existing playable loop] --> B[Stabilise and review current systems]
-    B --> C[Alpha foundations: run policy, catalogues, saves, goals, diagnostics]
-    C --> D[0-10 min: queen, first worker, Backup Roles and early automation]
-    D --> E[10-20 min: decision information and readable weather crisis]
-    E --> F[20-60 min: Bee Bread, selected Tier 2-3 skills and winter preparation]
-    F --> G[About 60 min: winter and recovery checkpoint]
-    G --> H[60-90 min: emerge, buy Gyne Rearing, raise and release gynes]
-    H --> I[Closed alpha with friends and family]
-    I --> J{Does the core promise work?}
-    J -->|No: clarity, pacing or decisions fail| B
-    J -->|Yes| K[Select one expansion pillar]
+    START["Current prototype<br/>Playable queen-to-colony loop"]
 
-    L[First-time Dr explanations and Why? diagnostics] -. throughout .-> D
-    L -. throughout .-> H
-    M[Flower and environment sprite queue] -. parallel .-> D
-    M -. parallel .-> I
-    N[5, 10, 20, 60 and 90 minute reviews] -. evidence .-> J
+    subgraph STABILISE["0 · Stabilise and understand the existing core"]
+        direction TB
+        CURRENT["Finish or consciously supersede current narrow slices<br/>UI · Challenges · flowers · comb · settings"]
+        HANDS["Run named hands-on checks<br/>foraging · predators · restore · interaction"]
+        BASELINE["Record pacing, balance and performance baselines"]
+        CORE_READY{"Clear enough to judge<br/>the underlying game?"}
+
+        CURRENT --> HANDS --> BASELINE --> CORE_READY
+        CORE_READY -->|No| CURRENT
+    end
+
+    START --> CURRENT
+
+    subgraph FOUNDATIONS["1 · Shared alpha foundations — build before multiplying content"]
+        direction TB
+        RUN_POLICY["Run policy<br/>availability · discovery · difficulty · victory · continuation"]
+        CATALOGUES["Stable catalogues and resolver<br/>skills · features · roles · resources · goals · events"]
+        JOBS["Job and sub-job catalogue<br/>shared task dispatcher"]
+        DIAGNOSTICS["Colony diagnostics<br/>production/consumption · shortages · waiting/travel · blocked work"]
+        GOALS["Four-layer goal model<br/>long-term · milestones · short-term · urgent"]
+        GUIDANCE["Dr Gallerin guidance<br/>first-encounter explanation + persistent Why?"]
+        EVENTS["Hybrid event director<br/>time + progress + readiness + recent events + difficulty"]
+        SAVE_MODEL["Persistence model<br/>player profile · named run saves · migrations"]
+        CHECKPOINTS["Three rolling recovery checkpoints<br/>before crises/seasons + every five days"]
+        AUTHORING["Validated authoring data<br/>Challenges · Colony Runs · Scenarios · environments"]
+        OBSERVE["Observability<br/>scenario harness · bounded diagnostics · hot-path budgets"]
+        EASY_RULES["Visible difficulty policy<br/>Easy readiness gates · non-age survival · queen protection"]
+
+        RUN_POLICY --> CATALOGUES
+        CATALOGUES --> JOBS
+        CATALOGUES --> GOALS
+        DIAGNOSTICS --> GOALS --> GUIDANCE
+        DIAGNOSTICS --> EVENTS
+        GOALS --> EVENTS
+        RUN_POLICY --> EVENTS
+        RUN_POLICY --> EASY_RULES
+        RUN_POLICY --> SAVE_MODEL --> CHECKPOINTS
+        CATALOGUES --> AUTHORING
+        DIAGNOSTICS --> OBSERVE
+        EVENTS --> OBSERVE
+    end
+
+    CORE_READY -->|Yes| RUN_POLICY
+    CORE_READY -->|Yes| DIAGNOSTICS
+
+    subgraph MODES["2 · One foundation, different run policies"]
+        direction LR
+        CHALLENGES["Challenges<br/>authored lessons discover skills"]
+        MAIN_RUN["Main Colony Run<br/>only Challenge-discovered skills available"]
+        FEEDBACK_RUN["Early feedback run<br/>all alpha skills discover through play"]
+        SCENARIOS["Scenarios<br/>variant starts, environments and objectives"]
+        SANDBOX["Sandbox<br/>after first Challenge set; discovered features only"]
+
+        CHALLENGES -->|discover| MAIN_RUN
+        CHALLENGES -->|unlock mode and features| SANDBOX
+        MAIN_RUN --> SCENARIOS
+    end
+
+    RUN_POLICY --> CHALLENGES
+    RUN_POLICY --> FEEDBACK_RUN
+
+    subgraph PROGRESSION["3 · Alpha progression and economy critical path"]
+        direction TB
+        DISCOVERY["Progress-triggered discovery<br/>actions reveal skills; colony resources purchase them"]
+        TIER1["Tier 1 foundation<br/>one role → Backup Roles · core brood/economy · rain sensing"]
+        TIER2["Tier 2 capability<br/>automation · cleaning · Bee Bread · role expansion · rain recall"]
+        TIER3["Tier 3 management<br/>Work Priorities · Pollinator Points · Royal Jelly · Priority Cells"]
+        TIER4["Selected Tier 4 route<br/>Pollinator Points required · Royal Jelly also required for Gyne Rearing"]
+        CONTINUE_SKILLS["Post-victory continuation<br/>remaining retained alpha skills and branches"]
+
+        DISCOVERY --> TIER1 --> TIER2 --> TIER3 --> TIER4 --> CONTINUE_SKILLS
+    end
+
+    CATALOGUES --> DISCOVERY
+    JOBS --> TIER1
+    FEEDBACK_RUN --> DISCOVERY
+
+    subgraph BEE_BREAD["3A · Bee Bread dependency"]
+        direction LR
+        BB_CELL["Designate Bee Bread cell"]
+        BB_FILL["Fermenter sub-role<br/>adds pollen + honey"]
+        BB_SEAL["Seal and ferment<br/>seven game-days"]
+        BB_FEED["Nurses feed larvae automatically<br/>Priority Cells later allocates scarcity"]
+        BB_ADULT["Adult outcome saved at emergence<br/>15d + 95% without · 25d + 105% with"]
+
+        BB_CELL --> BB_FILL --> BB_SEAL --> BB_FEED --> BB_ADULT
+    end
+
+    TIER2 --> BB_CELL
+    BB_SEAL --> TIER3
+    JOBS --> BB_FILL
+    SAVE_MODEL --> BB_SEAL
+    SAVE_MODEL --> BB_ADULT
+
+    subgraph POLLINATION["3B · Pollination and ecology dependency"]
+        direction TB
+        TRANSFER["Bee moves between different plants<br/>of the same species"]
+        WINDOW{"Destination eligible<br/>in this pollination window?"}
+        TWO_LEDGERS["Award spendable Pollinator Point<br/>and permanent Pollination Contribution"]
+        COMPATIBLE["Compatible pollen<br/>raises seed set and offspring quality"]
+        INCOMPATIBLE["Direct visit from another species<br/>reduces seed set and offspring quality"]
+        SEED_SET{"Compatible pollination present?"}
+        NO_SEED["No seed set<br/>separate background seed-bank emergence remains"]
+        OFFSPRING["Offspring nectar/pollen quality<br/>bounded ±15% with regression to baseline"]
+
+        TRANSFER --> WINDOW
+        WINDOW -->|Yes| TWO_LEDGERS --> COMPATIBLE --> SEED_SET
+        WINDOW -->|No point; pollen still affects plant| COMPATIBLE
+        INCOMPATIBLE --> SEED_SET
+        SEED_SET -->|No| NO_SEED
+        SEED_SET -->|Yes| OFFSPRING
+    end
+
+    TIER3 --> TRANSFER
+    TWO_LEDGERS --> TIER4
+    OFFSPRING --> CONTINUE_SKILLS
+    SAVE_MODEL --> TWO_LEDGERS
+    SAVE_MODEL --> OFFSPRING
+
+    subgraph PLAY_ARC["4 · Closed-alpha playable arc — experience budgets"]
+        direction LR
+        PLAY_START["0 min<br/>Queen alone"]
+        PLAY_5["≈5 min<br/>First worker"]
+        PLAY_10["≈10 min<br/>First useful automation"]
+        PLAY_20["≈20 min<br/>Readable forage-and-weather crisis"]
+        PLAY_MID["20–60 min<br/>Expand · Bee Bread · selected Tier 2–3 skills · prepare"]
+        PLAY_60["≈60 min<br/>Enter and survive first winter"]
+        PLAY_POST["Post-winter<br/>Recover · unlock selected Tier 4 route"]
+        PLAY_90["≈90 min<br/>Raise and release gynes · victory · continue"]
+
+        PLAY_START --> PLAY_5 --> PLAY_10 --> PLAY_20 --> PLAY_MID --> PLAY_60 --> PLAY_POST --> PLAY_90
+    end
+
+    AUTHORING --> PLAY_START
+    TIER1 --> PLAY_5
+    TIER2 --> PLAY_10
+    EVENTS --> PLAY_20
+    BB_ADULT --> PLAY_MID
+    TIER3 --> PLAY_MID
+    CHECKPOINTS --> PLAY_20
+    CHECKPOINTS --> PLAY_60
+    TIER4 --> PLAY_POST
+    PLAY_POST -->|Gyne Rearing| PLAY_90
+    GOALS -. guide .-> PLAY_START
+    GUIDANCE -. explain .-> PLAY_20
+    GUIDANCE -. explain .-> PLAY_60
+    DIAGNOSTICS -. inform decisions .-> PLAY_MID
+    EASY_RULES -. modifies failure and timing .-> PLAY_20
+
+    subgraph REVIEWS["5 · Evidence gates — review the smallest responsible system"]
+        direction LR
+        GATE_5["5 min<br/>Can a mixed-experience player raise a worker?"]
+        GATE_10["10 min<br/>Did automation remove repetition, not decisions?"]
+        GATE_20["20 min<br/>Can the player diagnose and answer the crisis?"]
+        GATE_60["60 min<br/>Can they read the economy, save/resume and survive winter?"]
+        GATE_90["90 min<br/>Can they explain the result, and want to continue?"]
+        CLOSED_ALPHA["Friends/family closed alpha<br/>mixed game experience · no live instruction"]
+        CORE_PROMISE{"Different viable organisations?<br/>Clear decisions? Desire to replay?"}
+
+        GATE_5 --> GATE_10 --> GATE_20 --> GATE_60 --> GATE_90 --> CLOSED_ALPHA --> CORE_PROMISE
+    end
+
+    PLAY_5 -. evidence .-> GATE_5
+    PLAY_10 -. evidence .-> GATE_10
+    PLAY_20 -. evidence .-> GATE_20
+    PLAY_60 -. evidence .-> GATE_60
+    PLAY_90 -. evidence .-> GATE_90
+    CORE_PROMISE -->|No| FIX_SMALLEST["Return to the smallest responsible system<br/>clarity · pacing · balance · defect · decision quality"]
+    FIX_SMALLEST --> CURRENT
+
+    subgraph EXPANSION["6 · Expand only after the core is validated"]
+        direction TB
+        SELECT_ONE["Select one evidence-backed expansion pillar"]
+        POLICY_EXPAND["Deeper policy and workforce control"]
+        ADAPTATIONS["Colony Adaptations"]
+        ECOLOGY_EXPAND["Ecosystem stewardship and environments"]
+        THREATS_EXPAND["Weather, diseases, pests and predators"]
+        CONTENT_EXPAND["Challenge sets, Scenarios, Codex and Dr notes"]
+        PRESENTATION_EXPAND["Audio, sprites, accessibility and presentation"]
+        BETA_GATE{"Core systems feature-complete?<br/>No new foundation required?"}
+
+        SELECT_ONE --> POLICY_EXPAND --> BETA_GATE
+        SELECT_ONE --> ADAPTATIONS --> BETA_GATE
+        SELECT_ONE --> ECOLOGY_EXPAND --> BETA_GATE
+        SELECT_ONE --> THREATS_EXPAND --> BETA_GATE
+        SELECT_ONE --> CONTENT_EXPAND --> BETA_GATE
+        SELECT_ONE --> PRESENTATION_EXPAND --> BETA_GATE
+        BETA_GATE -->|No| SELECT_ONE
+    end
+
+    CORE_PROMISE -->|Yes| SELECT_ONE
+
+    subgraph CREATIVE["Parallel creative stream — motivating, useful, never blocks playability"]
+        direction LR
+        ART_QUEUE["Keep 3–6 television-friendly tasks ready"]
+        FLOWER_SPRITES["Dandelion · Poppy · Borage<br/>rewarding · depleted · out-of-season · ageing"]
+        ENV_ART["Common environmental components"]
+        BEE_HIVE_ART["Bee activities and hive components"]
+        WEATHER_ANIMALS["Weather, animals and threats"]
+
+        ART_QUEUE --> FLOWER_SPRITES --> ENV_ART --> BEE_HIVE_ART --> WEATHER_ANIMALS
+    end
+
+    FLOWER_SPRITES -. supports readability .-> PLAY_20
+    ENV_ART -. supports atmosphere .-> CLOSED_ALPHA
+
+    subgraph RELEASE["Parallel production and release stream"]
+        direction LR
+        INTERNAL_ALPHA["Internal alpha<br/>90-minute route works with placeholders"]
+        DISTRIBUTION["Installable build · crash/feedback route · accessibility/performance review"]
+        BETA["Beta<br/>content and core systems feature-complete"]
+        EARLY_ACCESS["Early Access<br/>durable saves · replayability · honest roadmap · community process"]
+        ONE_ZERO["1.0<br/>promised modes/content complete · polished · supported"]
+
+        INTERNAL_ALPHA --> DISTRIBUTION --> BETA --> EARLY_ACCESS --> ONE_ZERO
+    end
+
+    PLAY_90 --> INTERNAL_ALPHA
+    CLOSED_ALPHA --> DISTRIBUTION
+    BETA_GATE -->|Yes| BETA
+
+    subgraph PARKED["Protected ideas — retained, but cannot delay closed alpha"]
+        direction LR
+        COMBAT_LATER["Guards · combat · invading/robbing · auto-defence"]
+        BIOLOGY_LATER["Drones · medicine · temperature · waste · temporal polyethism"]
+        WORLD_LATER["Drought · multiple biomes · 3D terrain"]
+        CREATOR_LATER["Public Scenario/environment editor<br/>sharing · moderation · distribution"]
+        LAUNCH_LATER["Full localisation · launch-scale audio/art<br/>price · studio identity · charity model"]
+    end
+
+    CORE_PROMISE -. may reopen with evidence .-> COMBAT_LATER
 ```
 
 ### Sequence rules
