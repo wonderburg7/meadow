@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Branch (worktree path) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/ui-r-1` (`claude/ui-r-1`) | Claude | UI-R-1: an explicit command-tray left edge and named side gap in `ui_layout.gd`, with `hud.gd` anchoring the tray to it | Claude | in progress | — | `plans/now/ui.md` UI-R-1 |
