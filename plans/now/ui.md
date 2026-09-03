@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-R-2 (pre-run menu left margin), Codex lane | Dependency: UI-S-1 before UI-S-3; check-loop P-3 before UI-R-3; UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: UI-S-2 (left-side windows), Codex lane | Dependency: check-loop P-3 before UI-R-3; UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -18,13 +18,12 @@ UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
 | UI-R-3 | A developer button that fires three warning-banner cases | `debug_panel.gd` | after check-loop P-3 | low |
 | UI-S-1 | The bottom row re-specified: tray at 50%, neighbours fill the rest | `ui_layout.gd`, `hud.gd` | yes | medium |
 | UI-S-2 | Colony/foraging/nursery windows clear the corner readout and scroll | `ui_layout.gd`, `hud.gd`, the three panel scripts | yes | medium |
-| UI-S-3 | The command tray shrinks again and never runs off the bottom | `hud.gd` | after UI-S-1 | medium |
 | UI-S-4 | A refused command says so, at one instrumented choke point | `input_selection.gd`, `diagnostic_log.gd` | yes | medium |
 | UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
 
-**Dependencies, stated rather than implied.** UI-S-1 moves the numbers UI-S-3
-clamps, so it goes first. UI-R-3 adds a button to the developer Triggers
+**Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
+clamps; both are now shipped. UI-R-3 adds a button to the developer Triggers
 section that `plans/now/check-loop.md` P-3 creates, so P-3 goes first --
 otherwise UI-R-3 writes a row that P-3 immediately rewrites. UI-S-2 and
 `plans/now/check-loop.md` P-2 both name the panel scripts: P-2 enforces what
@@ -254,49 +253,9 @@ as before.
 `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`,
 `scripts/nursery_panel.gd`, `scripts/year_winter.gd`.
 
-### UI-S-3 — the command tray grows but never shrinks, and can run off the bottom of the screen
-
-**Ask (Dave, 3 Sep).** "When tapping the 'more…' option in the command
-panel, the panel resizes accordingly, but doesn't go back to its original
-height when 'more…' is selected again." And: "Sometimes the cell command
-panel extends past the bottom of the screen."
-
-**Diagnosed.** `command_tray` is a `PanelContainer` anchored
-`PRESET_BOTTOM_LEFT` with `grow_vertical = GROW_DIRECTION_BEGIN` and
-`offset_bottom = -16`, so its height comes from its content's combined
-minimum size. Both `More…` buttons (`more_button` for a bee,
-`cell_more_button` for a cell) only flip a child's `visible` flag; nothing
-asks the tray to recompute its own rect afterwards, so it keeps the larger
-size it grew to. The same missing recompute is the likely cause of the
-second report: `show_cell_popup` already works around a stale
-`HFlowContainer` sort with a `queue_sort()` and a deferred
-`_update_command_tray_width()`, which is the same class of bug seen from
-the other side -- rows drawn outside the rect the panel thinks it has.
-
-**Fix.**
-
-- a) `hud.gd`: add `func _resize_command_tray() -> void` that, on the next
-  frame (`await get_tree().process_frame`, or `call_deferred` on a plain
-  helper -- match whichever style the file already uses), calls
-  `command_tray.reset_size()` and then `_update_command_tray_width()`.
-- b) Call it from both `More…` handlers, from `show_cell_popup`, from
-  `update_selection` and from the viewport `size_changed` handler. Delete
-  `show_cell_popup`'s bespoke `call_deferred("_update_command_tray_width")`
-  in favour of the one helper.
-- c) Clamp the height as well as the width, in the same helper: if
-  `command_tray.size.y` exceeds
-  `viewport_height - SELECTION_TRAY_GAP * 2.0`, cap it there. A tray that
-  tall is already a design problem, but it must not leave the screen.
-
-**Acceptance.** Open `More…` on a bee's tray and close it again: the tray
-returns to exactly its previous height. The same for a selected cell's
-`More…`. Select a cell with every action row available at 800x600 and the
-whole tray stays on screen. Resizing the window while the tray is open
-re-lays it out rather than leaving a stale rect.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file.
-
-**Files:** `scripts/hud.gd`.
+Archived: UI-S-3's command-tray reflow and viewport cap shipped 3 Sep 2026;
+its specification is at `plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on
+check C-12 is filed in `checks/ready.md`.
 
 ### UI-S-4 — a second right-click sometimes does nothing and drops the selection
 

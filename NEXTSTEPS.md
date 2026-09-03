@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after UI-S-1 and W-6
+Five ready slices in two lanes, refilled 3 Sep 2026 after W-6 and UI-S-3
 landed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
@@ -39,28 +39,29 @@ decided.
    - Proof: `absent: tools/verify.ps1 :: $Quiet`
    - Why first: W-6 landed and W-7 is its `Next after:` item and
      `plans/now/agent-workflow.md`'s last open slice. It owns `tools/verify.ps1`
-     alone, so it collides with neither UI-S-3 (the leading Codex item) nor
+      alone, so it collides with neither UI-S-2 (the leading Codex item) nor
      anything else queued. `tools/slice.ps1 finish` already passes `-Quiet`
      when it exists, so this switch is the last thing that closeout wants.
    - Next after: FL-1 (`plans/now/flowers.md` Slice 1) -- by then UI-S-3 will
      have landed or dropped, clearing the `scripts/hud.gd` overlap that keeps
      FL-1 out of the lead today.
 
-2. **[Codex] UI-S-3 -- The command tray shrinks again and stays on screen.**
-   - Plan: `plans/now/ui.md` -- UI-S-3.
-   - Does: makes the bee and cell `More...` controls recompute the command
-     tray's rect after they collapse, and caps its height so its bottom-left
-     layout never extends past the viewport.
-   - Files: `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: opening and
-     closing both `More...` panels restores the old height, and a full cell
-     tray stays on screen at 800x600.
-   - Proof: `present: scripts/hud.gd :: _resize_command_tray`
-   - Why first in this lane: UI-S-1 landed, and UI-S-3 is its stated next
-     slice in `plans/now/ui.md`; it does not overlap W-7, the leading Claude
-     item.
-   - Next after: UI-S-2 (`plans/now/ui.md` -- left-side windows follow the
-     corner readout and scroll within the viewport).
+2. **[Codex] UI-S-2 -- Left-side windows clear the corner readout and scroll.**
+   - Plan: `plans/now/ui.md` -- UI-S-2.
+   - Does: puts the colony, foraging and nursery windows one shared 16px gap
+     below the live corner readout, caps their remaining height with internal
+     scrolling, and makes opening one close the other two.
+   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`,
+     `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`,
+     `scripts/nursery_panel.gd`, `scripts/year_winter.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: each window clears
+     both a tall and an empty corner readout, scrolls when necessary, and
+     opening one closes the others without breaking the nursery hive view.
+   - Proof: `absent: scripts/ui_layout.gd :: left_window_top`
+   - Why first in this lane: UI-S-3 landed and explicitly promotes it. It does
+     not overlap W-7, the leading Claude item.
+   - Next after: UI-S-4 (`plans/now/ui.md` -- refused commands are visible and
+     the right-click choke point records their cause).
 
 3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
    - Plan: `plans/now/flowers.md` -- Slice 1.
@@ -78,10 +79,10 @@ decided.
      or out of season; watching one across a season boundary flips the line
      at the same moment the `+/s` figures fall away.
    - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-3, the
+   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-2, the
      leading Codex item, so it stays second in the Claude lane rather than
      promoting to lead -- promoting it now would make both lanes' leading
-     items collide. Re-check this pairing whichever of FL-1 or UI-S-3 lands
+      items collide. Re-check this pairing whichever of FL-1 or UI-S-2 lands
      first: landing either one clears the conflict for the other to lead.
    - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
      needs its named headless run before it merges.
@@ -112,16 +113,13 @@ decided.
    - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s C-4;
      move that entry to `checks/ready.md`, keeping its id, when this lands.
    - Proof: `absent: scripts/debug_panel.gd :: Fire test warnings`
-   - Next after: UI-S-2.
+   - Next after: UI-S-4.
 
 ## Ready, not yet in the queue
 
 All of these can be started today; they are out of the queue only because it
 holds five. Take one when a lane empties, in roughly this order.
 
-- **UI-S-2** (`plans/now/ui.md`) -- the colony, foraging and nursery windows
-  sit below the corner readout with a 16px buffer, scroll when they do not
-  fit, and close each other.
 - **UI-S-4** (`plans/now/ui.md`) -- a second right-click sometimes does
   nothing and appears to deselect the bee: instrument the command choke
   point and make a refused command say so.

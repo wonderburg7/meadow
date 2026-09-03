@@ -15,6 +15,7 @@ Provenance only; the live plan is `plans/now/ui.md`. Earlier UI work is at
 | UI-P-4 | `LEFT_PANE_MARGIN` inset on the pre-run menu's left pane (later raised to 32 by UI-R-2) | 31 Aug 2026, in `a8c808c` |
 | UI-P-6 | `MarginContainer` between the settings `ScrollContainer` and its rows | 31 Aug 2026, in `a8c808c` |
 | UI-R-1 | Command tray centred on the band between its two reserves, clamped both ends | 3 Sep 2026; re-specified by UI-S-1 the same day |
+| UI-S-3 | Deferred command-tray reflow after content changes, capped to the viewport height | 3 Sep 2026, in `edb33cc` |
 | UI-Q-1/2 | One `key -> last shown` throttle on `hud.gd::show_warning`; the two simulation files' copy moved to `problem_messages.gd` | 1 Sep 2026 |
 
 **UI-P-2 was found already shipped on 3 Sep 2026**, three days after it
@@ -243,6 +244,30 @@ gap. Narrowing the window shrinks the tray before it consumes either gap, and
 the three command groups wrap into additional rows rather than growing wider.
 
 **Evidence.** `tools/verify.ps1` passed; hands-on check C-11 is filed in
+`checks/ready.md`.
+
+### UI-S-3 — the command tray grows but never shrinks, and can run off the bottom of the screen — shipped 3 Sep 2026
+
+**Ask (Dave, 3 Sep).** Toggling either command tray's `More…` section grows
+the tray but does not restore its old height when closed, and a full cell tray
+can extend below the viewport.
+
+**Diagnosed.** Both handlers only changed a child visibility flag. The
+bottom-left `command_tray` therefore retained its larger content-driven rect;
+the cell popup already had a one-off deferred width update for the related
+stale-flow layout problem.
+
+**Landed.** `hud.gd::_resize_command_tray()` resets the visible tray's size,
+reapplies its centred width, and caps its height at the viewport height less
+two shared selection-tray gaps. Both `More…` controls, cell-popup opening,
+selection updates and viewport resizing schedule that one deferred helper;
+the cell popup's bespoke deferred width call is gone.
+
+**Acceptance.** Both `More…` panels return to their previous tray height when
+closed. At 800x600, a cell tray with every action row stays wholly on screen,
+and resizing it reflows the rect.
+
+**Evidence.** `tools/verify.ps1` passed; hands-on check C-12 is filed in
 `checks/ready.md`.
 
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
