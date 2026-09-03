@@ -271,9 +271,12 @@ function Invoke-SliceFinish {
 
     $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
     $verifyCmd = Get-Command $verifyScript
-    $verifyArgs = @()
+    # A hashtable splat, not an array: array splatting passes its elements as
+    # positional arguments, so "-Quiet" bound to verify.ps1's $PythonPath and
+    # every closeout died on "the supplied Python interpreter does not exist".
+    $verifyArgs = @{}
     if ($verifyCmd.Parameters.ContainsKey("Quiet")) {
-        $verifyArgs += "-Quiet"
+        $verifyArgs["Quiet"] = $true
     }
     try {
         $verifyOutput = & $verifyScript @verifyArgs 2>&1
