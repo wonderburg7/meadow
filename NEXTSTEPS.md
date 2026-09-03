@@ -9,12 +9,13 @@ on a hands-on check, a live repro, or a decision from Dave. Work that *is*
 waiting is listed under "Not in the queue" at the bottom, with a pointer, and
 is deliberately not mixed in above.
 
-**"Implement the next slice" means:** take the first unclaimed item in your
-lane, open only the `Plan:` file and heading it names, add your row to
-`plans/workstreams.md`, branch, implement, run `tools/verify.ps1`, and close
-with the end-of-slice report (`CLAUDE.md`, "End-of-slice report"). Do not read
-the other lane's plan, the archive, `ROADMAP.md` or Git history to work out
-what to do -- this file already decided.
+**"Implement the next slice" means:** run `tools/slice.ps1 start -Lane
+Claude` (or `-Lane Codex`) to claim the lane's leading item and open its
+worktree, open only the `Plan:` file and heading it names, implement, run
+`tools/verify.ps1`, and close with the end-of-slice report (`CLAUDE.md`,
+"End-of-slice report"). Do not read the other lane's plan, the archive,
+`ROADMAP.md` or Git history to work out what to do -- the script already
+decided.
 
 ## Next up
 

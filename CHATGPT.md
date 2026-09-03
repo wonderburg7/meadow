@@ -22,15 +22,13 @@ or a dedicated worktree if one is already set up). It must keep changes
 focused, preserve all pre-existing work, and follow the same branch discipline
 as Claude: never leave or commit edits directly on `master`.
 
-Before starting, check `plans/workstreams.md` for a row whose scope overlaps
-the assigned task, so the same fix or investigation isn't duplicated across
-branches. That file is maintained only from the primary checkout — Codex
-reads it to check for overlap but does not edit it from inside a work
-branch; Claude adds the row when the worktree is created and removes it
-when the branch is closed out. Closing out a Codex branch or worktree once
-it is integrated — including deleting it — is Claude's responsibility,
-consistent with Codex not merging, pushing or deleting shared branches
-itself.
+Run `tools/slice.ps1 start -Lane Codex` to claim the lane's leading item and
+register its worktree in `plans/workstreams.md` atomically -- it also checks
+the item's `Proof:` line still holds and refuses a lane that already has an
+open worktree, so the same fix or investigation cannot be duplicated across
+branches. Closing out a Codex branch or worktree once it is integrated —
+including deleting it — is Claude's responsibility, consistent with Codex not
+merging, pushing or deleting shared branches itself.
 
 ### Documentation and project-state ownership
 
