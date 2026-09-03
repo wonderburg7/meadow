@@ -330,8 +330,9 @@ Right click the ground — move the selection there
 Click a warning in the corner to select what it is about."""
 	return help
 
-## Restart, stage select and the main menu, kept at the top of the panel
-## so they don't drift below a growing list of settings.
+## Restart, save/load and the main menu, kept at the top of the panel so
+## they don't drift below a growing list of settings, with the developer
+## Triggers group underneath them.
 func _build_actions(column: VBoxContainer) -> void:
 	var restart_row := HBoxContainer.new()
 	column.add_child(restart_row)
@@ -363,8 +364,21 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
 
+	# One labelled home for buttons that force a state the simulation
+	# reaches only rarely on its own, built before anything needs it so the
+	# triggers still to come (plans/now/ui.md UI-R-3, plans/now/challenge-2.md
+	# Slice 1) drop a button in rather than each re-laying out this block.
+	var triggers := VBoxContainer.new()
+	triggers.add_theme_constant_override("separation", 0)
+	column.add_child(triggers)
+
+	var triggers_header := Label.new()
+	triggers_header.text = "Triggers"
+	triggers_header.theme_type_variation = "Small"
+	triggers.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
+
 	var challenge_row := HBoxContainer.new()
-	column.add_child(challenge_row)
+	triggers.add_child(challenge_row)
 
 	var challenge_advance_btn := Button.new()
 	_style_button(challenge_advance_btn)

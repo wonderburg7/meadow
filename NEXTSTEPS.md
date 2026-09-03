@@ -2,9 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after P-1 made
-`checks/ready.md`'s entry format enforceable. The three `debug_panel.gd`
-slices now sit in one lane, in the order `plans/now/check-loop.md` P-3 sets.
+Five ready slices in two lanes, refilled 3 Sep 2026 after P-3 built the
+developer Triggers group. The two remaining `debug_panel.gd` slices sit in
+one lane, in the order `plans/now/check-loop.md` P-3 sets, each now dropping
+a single button into that group.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -33,28 +34,7 @@ decided.
    - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
    - Next after: FL-2, already fifth in this lane.
 
-2. **[Claude] P-3 -- Developer triggers have no home, and two slices are about to build one each.**
-   - Plan: `plans/now/check-loop.md` -- P-3.
-   - Does: promotes `debug_panel.gd`'s existing `challenge_row` into a
-     labelled "Triggers" group in the developer area -- a small header, one
-     `UI.with_info` badge saying everything in the group forces a state that
-     is otherwise rare, and the existing "Advance Challenge stage" button
-     moved in unchanged. No new trigger, no change to what that button does,
-     no change to the developer-area visibility gate.
-   - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. No hands-on check -- nothing a player can see
-     changes, and by the check-loop plan's rule 4 a check whose failure would
-     change nothing is not filed.
-   - Proof: `absent: scripts/debug_panel.gd :: Triggers`
-   - Why first in this lane: P-1 landed and its plan's `Next after:` is P-3.
-     The plan reversed P-3's order on 3 Sep for a stated reason -- UI-R-3 and
-     C2-1 would each write a row into `challenge_row` that P-3 then rewrites,
-     and all three own `scripts/debug_panel.gd`, so they cannot run in
-     parallel lanes. P-3 builds the empty section; the other two drop one
-     button into it.
-   - Next after: UI-R-3, third in this lane and now unblocked by this slice.
-
-3. **[Claude] UI-R-3 -- No way to fire a warning-banner case on demand.**
+2. **[Claude] UI-R-3 -- No way to fire a warning-banner case on demand.**
    - Plan: `plans/now/ui.md` -- UI-R-3.
    - Does: adds a second button, "Fire test warnings", to `debug_panel.gd`'s
      Triggers group beside "Advance Challenge stage", styled with the same
@@ -68,13 +48,13 @@ decided.
    - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s C-4;
      move that entry to `checks/ready.md`, keeping its id, when this lands.
    - Proof: `absent: scripts/debug_panel.gd :: Fire test warnings`
-   - Why in this lane, not Codex's: it owns the same file as P-3 and has to
-     follow it, and `plans/now/check-loop.md` P-3 says all three
-     `debug_panel.gd` slices belong in one lane. Moving it here is what keeps
-     the two lanes collision-free.
-   - Next after: FL-1, fourth in this lane.
+   - Why first in this lane: P-3 landed 3 Sep 2026 and built the Triggers
+     group this button drops into. `plans/now/check-loop.md` P-3 keeps all
+     three `debug_panel.gd` slices in one lane, so C2-1 waits below it; the
+     Codex lane leads with `main_menu.gd`, so the two heads cannot collide.
+   - Next after: FL-1, third in this lane.
 
-4. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
+3. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
    - Plan: `plans/now/flowers.md` -- Slice 1.
    - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
      summary panel every frame it's open and already prints both effective
@@ -94,8 +74,29 @@ decided.
      leading Codex item, so it sits below the lane's head rather than at it --
      promoting it would make both lanes' leading items collide. Landing
      either it or UI-S-4 clears the pairing.
-   - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
-     with its named headless run to quote before it merges.
+   - Next after: C2-1, fourth in this lane.
+
+4. **[Claude] C2-1 -- A Challenge 2 nectar collapse cannot be made to happen.**
+   - Plan: `plans/now/challenge-2.md` -- Slice 1.
+   - Does: adds a "Force Challenge 2 collapse" button to the Triggers group
+     P-3 built, styled with the same `_style_button` + `UI.with_info` pattern
+     as its neighbours. One press withdraws nectar until the hive sits just
+     below `Stages.C2_RESCUE_THRESHOLD`; a second press takes it below
+     `Stages.C2_FAILURE_FLOOR`, so both branches of
+     `challenge_runner.gd::_check_c2_failure()` can be reached in order from
+     one run. Thresholds are read from `challenge_stages.gd`, never repeated.
+     It does nothing unless `Session.starting_level == 2` and the runner is
+     active, which the info badge says.
+   - Files: `scripts/debug_panel.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: the plan's
+     acceptance, replacing `checks/ready.md`'s "Challenge data/goal-registry
+     extraction" entry.
+   - Proof: `absent: scripts/debug_panel.gd :: Force Challenge 2 collapse`
+   - Why here, not leading: it owns `scripts/debug_panel.gd`, the same file
+     as UI-R-3 above it, so it takes its turn in this lane rather than
+     leading a second branch on the same file.
+   - Next after: `plans/now/challenge-2.md` Slice 2, once Dave has pressed
+     the button and reported which line is missing.
 
 5. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
@@ -115,15 +116,8 @@ decided.
 
 ## Ready, not yet in the queue
 
-All of these can be started today; they are out of the queue only because it
-holds five. Take one when a lane empties, in roughly this order.
-
-- **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
-  non-zero rate, faster ageing and rarer seeding. A balance change: it needs
-  its named headless run before it merges.
-- **C2-1** (`plans/now/challenge-2.md` Slice 1) -- a debug button that forces
-  a Challenge 2 nectar collapse, so C-5 can be run at all. It drops into
-  P-3's Triggers group, so take it in the same lane, after P-3.
+Nothing. Every slice that could be started today is in the queue above; the
+next lane to empty pulls its refill from an owning plan's next open slice.
 
 ## Not in the queue, and why
 
@@ -134,13 +128,12 @@ They are listed so they are not lost, not so they are picked up.
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
   thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
-  of the rescue and recovery lines does not appear. Needs C2-1 to ship and
-  Dave to press the button; there is no static defect to fix blind, and
-  guessing has already failed twice.
+  of the rescue and recovery lines does not appear. Needs C2-1 (now fourth in
+  the Claude lane) to ship and Dave to press the button; there is no static
+  defect to fix blind, and guessing has already failed twice.
 - **check-loop P-2** (`plans/now/check-loop.md`) -- the panel-rect source
-  check runs after UI-S-1 and UI-S-2 move the numbers. P-3 is no longer here:
-  its plan reversed the order on 3 Sep, so it now runs *before* UI-R-3 and
-  C2-1 rather than collecting after them, and it leads the Claude lane.
+  check runs after UI-S-1 and UI-S-2 move the numbers. P-3 landed on 3 Sep
+  2026, so this is now that plan's only open slice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
