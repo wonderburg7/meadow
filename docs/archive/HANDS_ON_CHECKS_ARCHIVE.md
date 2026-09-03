@@ -6,6 +6,87 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 3 Sep 2026 -- hands-on pass over the 31 Aug / 1-3 Sep fixes
+
+Eleven entries confirmed, one dropped, one superseded. The five that failed
+are slices in their owning plans, not entries here: `plans/now/challenge-1.md`
+Slices 14-15, `plans/now/hive-comb.md` Slice 9, `plans/now/ui.md` UI-S-1 to
+UI-S-4, and `plans/now/challenge-2.md`. Two new asks became
+`plans/now/flowers.md`, and the process findings from the pass became
+`plans/now/check-loop.md`.
+
+- **Save migrations and domain-event boundaries (efficiency Slice 5).**
+  Confirmed: "save works as intended without loss of bees", and the repeated
+  "Exponent too high" warnings are gone from that load. The `saving.gd:275`
+  typed-array fix and the paired `save_game.gd` one both hold. The only
+  console warning left on that boot was an unused-parameter warning in
+  `scenario_actions.gd::_do_set_config`, fixed in the same 3 Sep pass.
+  Provenance: `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A0/A1.
+- **Challenge 1 Bundle D -- Slice 12's acceptance (the refactor regression
+  check).** Confirmed: through 1.6-1.10 the queen never gets auto-assigned a
+  role she was not manually given, across exiting the hive, touring the
+  meadow points, gathering from two flowers, being sent home and depositing
+  by hand. One issue came out of it -- once she *is* given the Forager role
+  at 1.11 she still pauses at flowers instead of foraging -- which is
+  `plans/now/challenge-1.md` Slice 14.
+- **Challenge 1 Bundle D -- Slice 11's acceptance.** Confirmed on all three
+  clauses: worked dry at 1.8 she stays at the flower; after the 1.10 manual
+  deposit she stays inside the hive; the Job column reads "Laying"
+  throughout 1.6-1.10. The two transitions Slice 12 newly guarded are
+  confirmed too -- rain during 1.6-1.10 does not send her home or to
+  shelter, and a flower vanishing under her does not send her looking for
+  another.
+- **Challenge 1 Bundle D -- the 1.10 to 1.11 hand-over.** Confirmed: on
+  reaching 1.11 the Job column offers "Change to..." with Forager in it.
+  This was the blocker that stopped the 2 Sep run.
+- **Challenge 1 Bundle D -- the 10f collection counter.** Confirmed at 1.8:
+  right-clicking a near-empty flower twice does not clear the stage, and one
+  real collection does.
+- **Challenge 1 Bundle E -- automate nectar, then pollen (1.11-1.14).**
+  Confirmed, including the 10c freeze at the 75-unit pollen target and 10d's
+  Doing row keying off the role she is actually working.
+- **Challenge 1 Slice 9 fixes (9a-9j).** Confirmed except 9i's camera-follow
+  and 4x speed, which never fire: the effects are set at stage entry and
+  cancelled inside the same `_enter_stage()` call. That half is
+  `plans/now/challenge-1.md` Slice 14; every other item in 9a-9j passed.
+- **Challenge 1 selection-panel vocabulary (Slice 13), outside a Challenge.**
+  Confirmed: nothing changes in a Scenario. The in-Challenge half did not
+  pass -- the line is taught vocabulary but still not useful -- which is
+  `plans/now/challenge-1.md` Slice 15.
+- **Nectar/pollen recharge reads as stuck -- the C1 half.** Confirmed: a
+  dandelion showed `+0.00/s` on day 23, so the panel's rate really does
+  reflect season and senescence rather than the nominal figure. The C2 half
+  (a flower near its floor no longer pinned) stays open as C-1 in
+  `checks/ready.md`. Provenance:
+  `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice C1.
+- **Hive comb visual alignment -- the live Cell art toggle.** Confirmed:
+  turning Cell art off returns every ring to the flat hex within a fraction
+  of a second, so Slice 8's single routing helper is called in the right
+  places. The silhouette it draws is wrong, which is
+  `plans/now/hive-comb.md` Slice 9.
+- **Proximity recruitment (Slice 9 / FE-4).** Confirmed on all three
+  clauses: the dance highlight makes a pair findable and distinguishable,
+  the toggle survives a restart, and recruitment still happens with the
+  toggle off. Provenance:
+  `plans/archive/FORAGING_EVIDENCE_2026-09-03.md` Slice 4.
+- **Safe forager return reserve -- dropped, not confirmed.** Dave's call:
+  "no increase [in] Forager returns triggered, as it's so unlikely to happen
+  -- let's drop this and assume it works." The emergency recall, its counter
+  and its panel row stay as built; the sparse/long-range rerun will not be
+  run, and the queued FE-5 slice that existed to make that rerun readable
+  headlessly was dropped with it.
+- **Command tray placement (UI-R-1) -- superseded.** The check asked whether
+  the summary panel is too cramped at 800 wide. Dave's answer re-specified
+  the whole bottom row instead: the tray takes half the viewport, centred,
+  and the summary panel and Dr Gallerin's bubble fill what is left with a
+  16px gap each. That is `plans/now/ui.md` UI-S-1, whose check replaces this
+  one.
+- **AI playtest harness (slices 1-7) -- withdrawn, not a player check.**
+  "Review all seven slices end to end -- see `git log`" is developer work,
+  not something Dave can do at the keyboard; his reply was that he did not
+  know what it referred to. Removed under the check-admission rule in
+  `plans/now/check-loop.md`.
+
 ## 2 Sep 2026 -- hands-on pass over the 31 Aug/1 Sep fixes
 
 Fifteen entries confirmed. The findings that came out of the same pass are

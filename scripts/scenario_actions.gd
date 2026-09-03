@@ -318,7 +318,7 @@ static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 ## exactly the same way, nothing wider. Reached directly rather than
 ## through main.DebugPanel: a headless run has no reason to load a
 ## CanvasLayer to set a number.
-static func _do_set_config(main: Node2D, action: Dictionary) -> void:
+static func _do_set_config(_main: Node2D, action: Dictionary) -> void:
 	var key: String = action.get("key", "")
 	if key == "" or not action.has("value"):
 		_log("set_config", str(action), "rejected", "missing key or value")

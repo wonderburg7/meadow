@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 7's acceptance playthrough -- Dave's run, not a queue slice; every code slice in this plan is done | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 14 (the 1.11 hand-over -- the queen parks at the flower and the stage's camera/speed effects cancel themselves), Claude lane, then Slice 15 | Dependency: none | Verified: 2026-09-03
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -284,6 +284,201 @@ slice. With this landed, every code slice in this plan is done.
 
 **Still to confirm by playing:** `checks/ready.md` § Challenge 1
 selection-panel vocabulary (Slice 13).
+
+## Slice 14 -- 1.11 hand-over: the queen parks at the flower, and the stage's own camera/speed effects are cancelled as they are set
+
+**Symptom (Dave, 3 Sep 2026, running Bundle D and the 9i check).** Two
+reports, one stage. (1) Once the player finally gives the queen the Forager
+role at 1.11 she does not start her automatic round -- "she pauses on
+flowers even when she has the forager role. She should only do this prior
+to getting the forager role." (2) The 9i acceptance clause "automatic
+nectar foraging locks her to one flower with camera-follow/4x speed
+visibly firing" fails on its camera/speed half; every other 9a-9j item
+passed.
+
+**Root cause A -- `flower_switch_locked` was implemented as "stop", not as
+"do not go to a different flower".** 1.11's `on_enter` runs
+`lock_flower_target:queen`, which sets `Bee.flower_switch_locked`
+(`challenge_runner.gd::_run_stage_effects`). `bee_foraging.gd::finish_collecting()`
+then early-returns `bee.state = State.IDLING` whenever that flag is set.
+That block sits *before* the crop-full test below it, so the first
+completed bout -- full crop or flower run dry -- parks her at that flower
+for the rest of the stage. Five sibling sites repeat the same substitution
+when the flower vanishes underneath her: `inspect`, `drink_at_flower` and
+`collect` in `bee_foraging.gd`, and two lines in `bee.gd` (one of them
+`release_flower_reference`), each reading
+`State.IDLING if flower_switch_locked else State.SEEK_FLOWER`.
+
+This is the `manual_deposit_pending` lesson again (Slice 12): a lock named
+for what it forbids, implemented as `IDLING` used as a catch-all. `IDLING`
+is the right answer for `player_driven`, where the player supplies the next
+state; it is the wrong answer for a lock that only rules out *one* of the
+two autonomous options.
+
+**Root cause B -- an `on_enter` effect is undone inside the same
+`_enter_stage()` call.** `_enter_stage()` runs
+`_run_stage_effects(stage.get("on_enter", []))` as its **first** statement.
+About twelve lines later it calls `_apply_stage_gate_to_ui()`, whose last
+line is `main.hud.update_selection(main.selected_bees)`, whose *first* line
+is `follow_bee_toggled.emit(null, false)` -- which
+`camera_view._on_follow_bee_toggled` turns into `main.following_bee = null`.
+So `camera_follow_queen` is cancelled by the same function that set it, for
+every stage, always. (`speed_multiplier:4.0` does survive, but it starts at
+stage entry -- while the player is still being asked to assign the role --
+rather than when the automatic round begins, so it does not read as part of
+the foraging either.)
+
+Stage entry is in any case the wrong moment for both: the player must
+*select* the queen to give her the Forager role, and that selection emits
+the same `follow_bee_toggled(null, false)`. The effects belong to the
+moment automatic foraging actually starts.
+
+**Fix, in five parts.**
+
+- a) `bee_foraging.gd::finish_collecting()` -- delete the
+  `if bee.flower_switch_locked:` early-return block entirely, and replace
+  the function's last statement with a single `autonomous_state` call whose
+  next state is `State.TO_HIVE` when either the crop is full **or**
+  `bee.flower_switch_locked` is true, and `State.SEEK_FLOWER` otherwise.
+  Comment it: a locked forager may still take her load home; what the lock
+  forbids is going to find a *different* flower.
+
+- b) The five "the flower has gone" sites -- `inspect`, `drink_at_flower`
+  and `collect` in `bee_foraging.gd`, and the two matching lines in
+  `bee.gd` -- change `State.IDLING if ...flower_switch_locked else
+  State.SEEK_FLOWER` to `State.TO_HIVE if ...flower_switch_locked else
+  State.SEEK_FLOWER`. A locked forager whose flower has vanished flies home
+  rather than freezing; `go_to_deposit_cell` already handles an
+  empty-handed arrival. Find them all with
+  `grep -n flower_switch_locked scripts/*.gd` and change every read site,
+  so none is left meaning "stop".
+
+- c) `challenge_runner.gd::_enter_stage()` -- move
+  `_run_stage_effects(stage.get("on_enter", []))` from the first line of
+  the function to its last statement before
+  `main.TutorialCheckpoint.save(main)`, with a comment saying why: an
+  effect must not be undone by the gate/selection refresh that follows it.
+
+- d) Fire 1.11's camera/speed effects when she actually starts foraging,
+  not at stage entry. In `challenge_stages.gd`, remove
+  `"camera_follow_queen"` and `"speed_multiplier:4.0"` from 1.11's
+  `on_enter`, leaving `["lock_flower_target:queen"]`; leave 1.11's
+  `on_exit` exactly as it is (it must still turn both off), and add
+  `"camera_follow_off"` and `"speed_multiplier:1.0"` to 1.13's `on_exit`
+  so the pollen stage cleans up the way the nectar one does. In
+  `challenge_runner.gd`, add `var _c1_forage_effects_done: bool = false`,
+  cleared in `_enter_stage()`, `start()` and `_complete()` beside the other
+  per-stage/per-run resets, and in `_process()` -- inside the existing
+  `Session.starting_level == 1` work, after the opening-mine branch -- run
+  the two effects once, via the existing `_run_stage_effects([...])`, when
+  all of these hold: the flag is still false, the current stage id is
+  `"1.11"` or `"1.13"`, `is_instance_valid(main.queen)`, and
+  `main.queen.state` is one of `SEEK_FLOWER`, `TO_FLOWER`, `INSPECTING`,
+  `COLLECTING` (declare that list as one `const` beside the file's other
+  constants; use whatever `Bee` reference the file already has in scope,
+  `main.Bee.State` if there is none). Set the flag in the same branch.
+  Comment it: the camera-follow and speed-up belong to the moment she sets
+  off, because the player has to select her to assign the role and any
+  selection change clears camera-follow.
+
+- e) Make B unrepeatable. Add a check to `tests/source_checks.py`, in the
+  style of the `autonomous_state` check Slice 12 added: read
+  `scripts/challenge_runner.gd`, take the body of `func _enter_stage()`,
+  and fail if the line calling `_run_stage_effects(` comes **before** the
+  line calling `_apply_stage_gate_to_ui(`. Message: `challenge_runner.gd:
+  _enter_stage runs on_enter effects before _apply_stage_gate_to_ui --
+  update_selection() clears camera-follow, so the effect is cancelled as it
+  is set. Run the effects last.`
+
+**Acceptance.** At 1.11, give the queen Forager with nectar focus: the
+camera starts following her and the speed goes to 4x as she sets off, not
+before; she works one flower, flies home, deposits, and goes back out,
+repeating until the nectar cell is full; at the stage end camera-follow
+stops, speed returns to 1x and she stands still. The same at 1.13 for
+pollen. Stages 1.6-1.10 are unchanged -- `player_driven`, not
+`flower_switch_locked`, is what holds her there, and Slice 12's source
+check still passes. Outside a Challenge nothing changes:
+`flower_switch_locked` is false for every bee in every other mode.
+
+**Check:** `tools/verify.ps1`, including the new source check (break it
+deliberately by moving the `_run_stage_effects` call back to the top of
+`_enter_stage`, confirm the message, put it back). One hands-on check to
+file: the acceptance above, replacing the 9i clause in `checks/ready.md`.
+
+**Files:** `scripts/bee_foraging.gd`, `scripts/bee.gd`,
+`scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`,
+`tests/source_checks.py`.
+
+**Next after:** Slice 15.
+
+## Slice 15 -- "Now:" should tell the player what to do, not narrate what she cannot do
+
+**Ask (Dave, 3 Sep 2026, against Slice 13's own check).** Slice 13 stopped
+the queen's "Now:" line naming untaught mechanics, but the line Dave still
+sees at the stages that are waiting for him reads: *"Now: looking for brood
+work. No pollen in the comb - she can't eat so she can't lay..."*. His
+instruction: *"Instead of this say 'Now: waiting for instruction' or 'Now:
+waiting for instruction [insert what the player should instruct her to do
+for that stage]'."*
+
+**Why Slice 13 did not catch it.** `NURSE_IDLE` is inside
+`CHALLENGE_TAUGHT_STATES` -- correctly, since the Challenge does reach it
+-- so the whole nursing-idle vocabulary is still permitted. The problem is
+not that the sentence is untaught; it is that a stage waiting for a player
+action should say what the action is. That is stage knowledge, and `bee.gd`
+must not acquire any: the line is assembled in `hud.gd`
+(`var activity := "Now: %s" % b.task_description()`, ~line 2396), which
+already knows the world.
+
+**Fix.**
+
+- a) `challenge_stages.gd`: add a short `"instruction"` string to each
+  `STAGES_1` entry -- imperative, no full stop, naming only what the player
+  should do next. Use exactly these:
+  - 1.1 `""` (nothing to do -- she is opening the tunnel)
+  - 1.2 `"right-click the marked cavity to send her in"`
+  - 1.3 `"left-click the queen to select her"`
+  - 1.4 `"right-click each marked place in the cavity"`
+  - 1.5 `"use Build cell, then click the marked centre"`
+  - 1.6 `"right-click the marked doorway to send her outside"`
+  - 1.7 `"right-click each marked place in the meadow"`
+  - 1.8 `"right-click a flower to gather from it"`
+  - 1.9 `"right-click another flower to gather from it"`
+  - 1.10 `"right-click the hive, then right-click the wax cell"`
+  - 1.11 `"give her the Forager role with nectar focus"`
+  - 1.12 `"use Build cell to place a second cell"`
+  - 1.13 `"switch her focus to pollen"`
+  - 1.14 `"use Build cell to place a third cell"`
+
+  Read it with `stage.get("instruction", "")` so no other Challenge needs
+  the key. Stages beyond 1.14 keep no key and fall back to the bare line.
+- b) `challenge_runner.gd`: add `func current_stage_instruction() -> String`
+  returning `str(_stages()[_stage_index].get("instruction", ""))` while
+  `active`, and `""` otherwise. Guard `_stage_index` against the stage
+  list's size the way the file's other readers do.
+- c) `hud.gd`, at the `"Now: %s"` line: when a Challenge is running
+  (`main.challenge_runner != null and main.challenge_runner.active`), the
+  bee is the queen, and she has no task of her own -- `b.state` is
+  `Bee.State.IDLING` or `Bee.State.NURSE_IDLE`, or `b.player_driven` is
+  true -- render `"Now: waiting for instruction"`, with `" -- %s"` and the
+  instruction appended when `current_stage_instruction()` is non-empty. Do
+  not call `task_description()` at all on that path, and leave the
+  idle-reason line it feeds blank for the same case. Every other bee, and
+  every other state, is untouched.
+
+**Acceptance.** Play Challenge 1 to 1.14 with the queen selected: at every
+stage that is waiting for the player the line reads "Now: waiting for
+instruction -- <the action for this stage>", and at every stage where she
+is genuinely working (walking, gathering, flying home, building, laying)
+it still describes what she is doing. Outside a Challenge nothing changes.
+
+**Check:** `tools/verify.ps1`. One hands-on check to file: the acceptance
+above, replacing the Slice 13 entry in `checks/ready.md`.
+
+**Files:** `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
+`scripts/hud.gd`.
+
+**Next after:** Slice 7's acceptance pass, which is Dave's run.
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 
