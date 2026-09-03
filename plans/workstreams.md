@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CD-1` (`claude/CD-1`) | Claude | One computation, not three, for the diagnostics the HUD already shows. | Claude | in progress | none | `plans/design/colony-diagnostics.md` § 4, First vertical slice |
