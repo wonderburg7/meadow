@@ -101,6 +101,7 @@ the archived plan is never reopened or extended.
 | Developer triggers for rare states | `plans/now/check-loop.md` P-3 |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
+| Colony diagnostics (derived colony-state facts) | `plans/design/colony-diagnostics.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/now/agent-workflow.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 | Provenance for a shipped slice | `plans/archive/` (search only) |

@@ -1,9 +1,11 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: designed, not scheduled | Owner: Dave | Next: Phase A step 1 (catalogue inventory) once progression becomes the active product direction | Dependency: no active implementation slice; four skill definitions still open (section 5.9) | Verified: 2026-09-01
+Status: designed, not scheduled | Owner: Dave | Next: Phase A step 1 (catalogue inventory) once progression becomes the active product direction | Dependency: no active implementation slice; two skill definitions still open (section 5.9) | Verified: 2026-09-03
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
+
+**Reconciled against `plans/design/product-scope.md` on 2026-09-03.** That plan settled two things this file previously left open or stated differently: Pollinator Points, not royal jelly, is the universal tier-4 gate (§4.2, §5.1, §5.2, §5.9, §6 below), and the closed alpha's build order skips the campaign meta tree (§11 below). Where the two plans differ on anything else, `product-scope.md` is the newer, higher-level authority.
 
 This file is the source of truth for skill-tree/adaptation design — `plans/now/ui.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
@@ -75,7 +77,7 @@ A skill's tier decides which resources its cost recipe may name:
 | 1 | nectar and/or pollen |
 | 2 | honey, plus nectar and/or pollen |
 | 3 | bee bread, plus honey, nectar and/or pollen |
-| 4 | royal jelly, plus bee bread, honey, nectar and/or pollen |
+| 4 | Pollinator Points, plus bee bread, honey, nectar and/or pollen — royal jelly may be named as an additional thematic cost on specific recipes (Gyne Rearing does) but is no longer what every tier-4 recipe must name (`product-scope.md` §10) |
 
 Rules:
 
@@ -84,11 +86,11 @@ Rules:
 - A recipe must name at least one resource from its own tier's row (a tier-3 skill must cost some bee bread), so the ladder is never bypassed. Enforced by validation (section 9).
 - The meta tree's currency is meta points and is unaffected by this ladder. The ladder is an in-run economic gate only.
 
-**Consequence — the Brood spine.** Because honey, bee bread and royal jelly are each produced only by a Brood skill, the Brood branch gates every other branch's tiers:
+**Consequence — the Brood spine.** Because honey and bee bread are each produced only by a Brood skill, the Brood branch gates every other branch's early tiers:
 
 - Any tier-2 purchase anywhere needs honey → **Honey worker** (Brood T1).
 - Any tier-3 purchase anywhere needs bee bread → **Bee bread** (Brood T2).
-- Any tier-4 purchase anywhere needs royal jelly → **Royal Jelly** (Brood T3).
+- Any tier-4 purchase anywhere needs Pollinator Points, which is a Foraging output, not a Brood one — see §10 of `product-scope.md` for how pollination earns them. Royal Jelly (Brood T3) still gates specific tier-4 recipes that name it (Gyne Rearing does), but no longer the tier as a whole.
 
 This is deliberate and is the strongest structural claim in the design. Section 6 lists the reachability constraints it imposes.
 
@@ -129,7 +131,7 @@ Where Dave's brief joined two names with `+` ("Auto-mining + Auto-building"), th
 | `skill.foraging.associative_learning` | 2 | New | — | Handling time drops with repeated visits to one flower species. Familiarity is per bee **per species**, not per flower, and must be saved. Rates need simulation before build. |
 | `skill.foraging.adaptive_constancy` | 2 | Existing foundation | — | The old `floral_constancy`: a forager specialises in one species, but re-evaluates and switches when that species stops paying rather than locking to it permanently. |
 | `skill.foraging.weighted_flower_choice` | 3 | New | Associative learning | Foragers score candidate flowers on expected yield, handling time and distance instead of picking nearest-first. |
-| `skill.foraging.pollinator_points` | 3 | **Open** | — | See section 5.9. |
+| `skill.foraging.pollinator_points` | 3 | New | — | Two ledgers: **Spendable Pollinator Points**, required by every tier-4 skill purchase in every branch (replacing royal jelly as the universal tier-4 gate), and **Pollination Contribution**, never spent, driving ecological goals and seed outcomes. Full mechanic — award rule, compatible/incompatible visits, offspring quality — in `product-scope.md` §10. Window duration and the seed/quality formula stay open (`product-scope.md` §16). |
 | `skill.foraging.nectar_robbing` | 4 | New | Weighted flower choice | Piercing the flower base to skip handling time, at the cost of no pollination and faster patch depletion. Needs its own balance pass — a pure speed-up with no downside would dominate. |
 | `skill.foraging.auto_recruitment` | 4 | Existing | — | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment can pass species too. |
 
@@ -144,7 +146,7 @@ The tier spine (section 4.2). Every other branch's tier progression depends on t
 | `skill.brood.honey_worker` | 1 | Existing (was `skill.hive.honey_making`) | — | Unlocks the Honey role, honey production and honey storage. **Gates every tier-2 purchase in every branch.** |
 | `skill.brood.nurses` | 1 | Existing (was `skill.brood.nursing`) | — | One purchase unlocks the Nurse role, feeding behaviour, Feeding mode and its controls together — not split into several skills. |
 | `skill.brood.bee_bread` | 2 | New | — | Unlocks bee bread production and storage. **Gates every tier-3 purchase in every branch.** Production chain is open — see section 5.9. |
-| `skill.brood.royal_jelly` | 3 | Existing | Bee bread | Unlocks Jelly mode, jelly production and storage. **Gates every tier-4 purchase in every branch.** |
+| `skill.brood.royal_jelly` | 3 | Existing | Bee bread | Unlocks Jelly mode, jelly production and storage. Costs Pollinator Points as every tier-4 skill does; specific tier-4 recipes (Gyne Rearing) additionally name royal jelly directly. **No longer the universal tier-4 gate** — Pollinator Points is (`product-scope.md` §10). |
 | `skill.brood.priority_cells` | 3 | New | Nurses | Mark brood cells that nurses feed before others. |
 | `skill.brood.gyne_rearing` | 4 | Existing | Royal jelly | Unlocks gyne brood designation, feeding requirements and development. |
 | `skill.brood.drones` | 4 | New | Royal jelly | Unlocks drone designation and drone bees. **Nothing drone-related exists in the codebase** — this is a full feature slice, not a wiring job. |
@@ -224,10 +226,11 @@ Kept from the previous catalogue as the pool to draw on when filling Colony T4, 
 
 Dave will supply these. Everything else in this plan is specified around them, so their absence blocks only the nodes themselves.
 
-1. **`skill.foraging.pollinator_points` (Foraging T3)** — what it is, and whether it is a currency, a score, or a behaviour effect. If it is a currency it also needs a store, a UI readout and a save field.
-2. **`skill.defence.medicine` (Defence T3)** — what it does. A disease system already exists in `bee_survival.gd`/`game_config.gd`, so a hygienic/propolis reading of it would have a foundation, but this is not confirmed.
-3. **`skill.hive_mind.chemical_cascade` (Hive Mind T4)** — what it does.
-4. **`skill.brood.bee_bread` production chain (Brood T2)** — who makes it, from what inputs, where it is stored, and what besides skill purchases consumes it (nurse feeding? brood development?). **This is the highest-priority gap**: bee bread is a new resource that gates every tier-3 purchase in the game, so no tier-3 content can be built or balanced until the chain is defined.
+1. **`skill.defence.medicine` (Defence T3)** — what it does. A disease system already exists in `bee_survival.gd`/`game_config.gd`, so a hygienic/propolis reading of it would have a foundation, but this is not confirmed.
+2. **`skill.hive_mind.chemical_cascade` (Hive Mind T4)** — what it does.
+3. **`skill.brood.bee_bread` exact recipe (Brood T2)** — who makes it, from what inputs and where it is stored are now answered: a Honey worker in the Fermenter sub-role seals pollen and honey into a designated cell for a seven-day ferment; nurses feed the result automatically, and the later Priority Cells skill allows deliberate allocation when supply is scarce (`product-scope.md` §9). **Still open:** the exact pollen/honey recipe, cell capacity and larval ration — these need the scenario harness, not a guess (`product-scope.md` §9, §16).
+
+`skill.foraging.pollinator_points` (Foraging T3) is no longer open — see §4.2, §5.1 and §5.2 above. `product-scope.md` §10 defines it as two ledgers and it replaces royal jelly as the universal tier-4 gate. Its window duration and seed/quality formula remain open (`product-scope.md` §16).
 
 ### 5.10 Assumptions to confirm
 
@@ -246,7 +249,7 @@ The tier ladder plus "own all of the tier below" produces a strict opening seque
 1. **Nurses and Honey worker are effectively the first two purchases of every run.** Brood T1 has both, and Brood T2 (Bee bread) needs both owned; Bee bread in turn gates all tier-3 content. Any Challenge that bans or delays either one freezes the whole tree at tier 1.
 2. **Comb worker is a tier-2 purchase, so it costs honey — but honey is made into comb cells.** Therefore: **every run must start with enough pre-built empty comb for the Honey worker to produce the honey that the first tier-2 purchase costs.** Otherwise Colony T2 is unreachable and the colony cannot build comb at all. This is a starting-state balance requirement on `levels.gd`, checked by a scenario run, not an assertion in code.
 3. **`skill.hive_mind.automation` needs Comb worker and Miner**, both Colony T2, while Automation is itself Hive Mind T2. Both are reachable at tier 2, so there is no cycle — but Hive Mind T2 cannot be completed (and so Hive Mind T3 cannot open) until Colony T2 is complete.
-4. **Nothing in tier 3 is buildable until bee bread exists**, and nothing in tier 4 until royal jelly production is wired to the ladder. This orders section 11's Phase C.
+4. **Nothing in tier 3 is buildable until bee bread exists**, and nothing in tier 4 until Pollinator Points production is wired to the ladder (`product-scope.md` §10). Royal jelly stays a named ingredient on specific tier-4 recipes (Gyne Rearing) but no longer gates the tier as a whole. This orders section 11's Phase C.
 5. **A branch must not have an empty tier below a populated one.** No branch currently does; validation keeps it that way.
 6. **Cross-sector prerequisites should stay rare and short on the grid.** Current set: Alarm pheromone ← Tarsal secretions; Automation ← Comb worker and Miner. Section 8.2's sector ordering keeps both between adjacent wedges.
 
@@ -435,18 +438,20 @@ Three phases, ordered so each slice is provably safe before the next depends on 
 6. **Foraging tier 1 vertical slice.** Tarsal secretions and Orientation flight move from always-on toggles to skill-gated purchases, with the tree panel (section 8.4), the HUD button (section 8.5) and run saving. Tier 1 only, so it needs no honey and does not touch the Brood spine. This is the first success criterion — prove prerequisites, cost, effects, controls, node states and saving on the smallest possible surface.
 7. **The Brood spine at tier 1 and the honey gate.** Honey worker and Nurses become nodes; a tier-2 purchase becomes possible. This is where section 6's constraint 2 (enough starting comb to make the first honey) is tested with a real scenario run.
 8. **Tier 2 content.** Comb worker, Miner, Automation, Cleaning, Adaptive constancy, Associative learning, Guard bee, Combat, Suppress recruitment, Rain recall — all existing or bounded-new behaviour.
-9. **Campaign meta tree.** Discovery, meta rewards, mastered ownership at run start, between-run reallocation. Only after 6–8 are proven; this is where save-format risk concentrates.
-10. **Full save integration.** Extend `save_game.gd` per section 9.3, following its existing allowlist and migration pattern.
-11. **Remove legacy paths.** Delete the old always-on toggles (`orientation_flight_on` and the rest) and any duplicated unlock arrays once the resolver fully owns them. Deliberately last, so a working fallback exists until the new path is proven end to end.
+9. **Campaign meta tree** *(post-alpha — see "Alpha build order" below)*. Discovery, meta rewards, mastered ownership at run start, between-run reallocation. Only after 6–8 are proven; this is where save-format risk concentrates.
+10. **Full save integration**, scoped to a single run for the alpha. Extend `save_game.gd` per section 9.3 for the fields a run needs regardless of the meta tree — temporary skill ownership, branch-tier progress, chosen adaptations, milestone IDs, per-bee familiarity. The meta-tree-dependent fields (mastered ownership captured at run start, between-run reallocation) wait for step 9.
+11. **Remove legacy paths** *(post-alpha — depends on step 9)*. Delete the old always-on toggles (`orientation_flight_on` and the rest) and any duplicated unlock arrays once the resolver fully owns them everywhere, campaign meta tree included. Deliberately last, so a working fallback exists until the new path is proven end to end.
+
+**Alpha build order (decided 2026-09-03, `product-scope.md` §2's early-feedback-run policy).** The closed alpha does not need steps 9 or 11. Its skill-discovery mechanism is progress within a single run, not between-run mastery, so once step 8 is proven the alpha route goes straight to Phase C below for the content the 20–90 minute gates need (Bee bread, tier-3 content, the selected tier-4 route to Gyne Rearing) rather than building the campaign meta tree first. Steps 9 and 11 move to `product-scope.md` §6.3's post-alpha core expansion and are picked up only once the alpha itself is validated.
 
 **Phase C — content requiring new features**
 
 Blocked on new simulation work, in dependency order:
 
-12. **Bee bread** (section 5.9 item 4). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
-13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Extended backup roles; plus Pollinator Points and Medicine once defined.
+12. **Bee bread** (section 5.9 item 3; recipe/capacity/ration still open, chain shape answered by `product-scope.md` §9). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
+13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Extended backup roles, Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
 14. **Drought** as a weather feature, then Weather sensing's drought half and the Adjustment panel's drought actions.
-15. **Tier 4 content** — Royal jelly wired to the ladder, then Gyne rearing, Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
+15. **Tier 4 content** — Pollinator Points wired to the ladder as the universal gate, then Gyne rearing (also naming royal jelly directly), Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
 16. **Colony Adaptations** (section 7). Last, and dependent on nothing above.
 
 Guard bee, Combat, Associative learning, Nectar robbing, Drones and Drought each get their own design, balance and playtest slice — none of them rides in on the architecture refactor.
@@ -461,6 +466,7 @@ First success criterion: one existing skill definition controls its prerequisite
 
 <!-- LAYER: on-demand -->
 
+- `plans/design/product-scope.md` §9 (Bee Bread), §10 (Pollination/Pollinator Points) and §12 rule 2 — before touching any tier-4 cost, the Brood spine, or Bee Bread's production chain. These sections supersede this file's original royal-jelly-as-tier-4-gate text (2026-09-03 reconciliation).
 - `shapes.gd` hex helpers and `hex_hit_area.gd` — before writing any grid code (section 8.1).
 - `hud.gd::_build_top_right_bar` and `ui_icon.gd`'s `match shape` block — before adding the Skills button (section 8.5).
 - `.claude/rules/saving.md` — before touching `save_game.gd` (section 9.3).

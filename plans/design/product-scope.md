@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: reconcile `plans/design/progression.md` with the decisions recorded here, then admit one alpha-foundation slice through `NEXTSTEPS.md` | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-03
+Status: selected design, not scheduled | Owner: Dave | Next: admit Colony Diagnostics' first slice (`plans/design/colony-diagnostics.md`) through `NEXTSTEPS.md`; the other four §6.2 foundations (goal model, event director, job catalogue/dispatcher, run policy) still need their own design pass | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-03
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -55,7 +55,15 @@ weak underlying decision.
 
 The first closed alpha is a saveable 90-minute arc that may be continued after
 victory. Target timings are experience budgets, not promises that override a
-player's pause or chosen speed:
+player's pause or chosen speed. They assume ordinary play using the existing
+time-scale/fast-forward control through low-attention stretches (waiting on
+the foraging economy, winter's quiet weeks) — `GameConfig`'s day-length and
+season defaults are not being retuned to hit these targets at 1x speed on
+their own (decided 2026-09-03: `winter_countdown_days` + `winter_length_days`
+alone is 35 in-game days, ≈117 real minutes at the default 200 seconds/day).
+§13's gate reviews are where this gets checked against a real playthrough,
+including whether the pacing controls are prominent enough that a tester
+reaches for them without being told to.
 
 | Time | Player outcome |
 | --- | --- |
@@ -162,7 +170,8 @@ These are part of alpha stabilisation. They should continue through
   readiness, recent events and difficulty. It schedules pressure; simulation
   rules determine the outcome.
 - **Colony diagnostics:** reusable derived facts for UI, Dr explanations,
-  automated checks and future balancing.
+  automated checks and future balancing. Designed in
+  `plans/design/colony-diagnostics.md`.
 - **Job catalogue and dispatcher:** jobs and sub-jobs are stable data used by
   roles, Work Priorities, individual overrides and later policies.
 - **Persistence:** separate player profile and named run saves, migration,
