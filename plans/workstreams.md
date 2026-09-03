@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/c1-13` (`claude/c1-13`) | Claude | `bee.gd` selection-panel copy: gate `task_description()`/`idle_reason()` vocabulary while a Challenge is active | Claude | in progress | none | `plans/now/challenge-1.md` Slice 13 |
