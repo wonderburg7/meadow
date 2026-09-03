@@ -38,6 +38,7 @@ before it looks slow, suspect per-frame allocation first.
 
 **Fog-of-war is a measured hot path, not a standing optimisation
 instruction.** Its profiler spans are `fog_of_war_update` and
-`fog_of_war_relight`; the 22 Aug baseline and current follow-up are
-recorded in `insights_from_ChatGPT.md`. Take a fresh comparable baseline
+`fog_of_war_relight`, and the pinned baseline fixture, comparison
+contract and relight contract are all in
+`docs/PERFORMANCE_BASELINE.md`. Take a fresh comparable baseline
 before changing it. "Measured, not a bottleneck" remains a valid outcome.

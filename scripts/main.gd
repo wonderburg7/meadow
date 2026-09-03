@@ -284,8 +284,8 @@ var scenario_stop_when_actions_resolved: bool = false
 ## Dev-only bounded wall-clock profiler window. It observes a pinned scenario
 ## without changing simulation timing or player settings.
 var scenario_performance_capture: Dictionary = {}
-## A scenario's "actions" array (insights_from_ChatGPT.md's 22 Aug 2026
-## headless-action-driver extension) -- see scenario_actions.gd for the
+## A scenario's "actions" array (the headless action driver;
+## docs/headless-run-contract.md) -- see scenario_actions.gd for the
 ## verbs/triggers and main.gd::_process for where it's ticked.
 var scenario_actions: Array = []
 
@@ -1058,8 +1058,8 @@ func _apply_scenario_boot_arg() -> void:
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
 	level.erase("config_overrides")
-	# Dev-only headless action driver (insights_from_ChatGPT.md, 22 Aug
-	# 2026) -- see scenario_actions.gd. Not a levels.gd field, same
+	# Dev-only headless action driver (docs/headless-run-contract.md)
+	# -- see scenario_actions.gd. Not a levels.gd field, same
 	# reasoning as stop/config_overrides just above.
 	var actions: Array = level.get("actions", [])
 	level.erase("actions")

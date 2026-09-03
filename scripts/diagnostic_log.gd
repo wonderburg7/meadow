@@ -612,8 +612,7 @@ func count_cell_ripened() -> void:
 
 
 ## Called from scenario_actions.gd for every headless scenario action
-## attempted -- see AI_PLAYTEST_PLAN.md's action-driver extension and
-## insights_from_ChatGPT.md's 22 Aug 2026 entry. One line per action,
+## attempted -- see docs/headless-run-contract.md. One line per action,
 ## whatever the result, so a run states plainly what it tried to do and
 ## whether it worked, not just what happened to the bees afterwards.
 func log_action(do: String, target_desc: String, result: String, reason: String) -> void:

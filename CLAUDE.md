@@ -125,8 +125,8 @@ conflict between lanes is evidence the queue's `Files:` lines were wrong —
 fix them in the same pass. Dave never has to decide merge timing: the
 end-of-slice report states what was merged and what comes next.
 
-Read the hand-off and `git show --stat` first. Use the lowest review tier
-supported by evidence:
+When a Codex branch *is* handed over, read the hand-off and
+`git show --stat` first. Use the lowest review tier supported by evidence:
 
 - **Low:** documentation, tests, fixtures or runtime-neutral tooling with
   passing checks and no overlap. Verify the commit/stat and hand-off; a full
@@ -150,9 +150,14 @@ does not touch either.
 
 A worktree or branch is never kept open solely because a hands-on check is
 still outstanding — the check moves to `checks/ready.md`; the worktree
-closes regardless. Claude is responsible for this closeout, including for
-Codex branches, since Codex does not merge, push or delete shared branches
-itself.
+closes regardless.
+
+**Each lane closes out its own branch.** Codex has the same commit, merge and
+push rights as Claude and runs `finish` on its own slices, so a finished Codex
+branch is not normally Claude's to integrate. The exception is a **high-risk**
+Codex slice: those are pushed and handed over, and Claude reviews the full
+diff before running `finish`. `CHATGPT.md`'s "Risk-proportional closeout" is
+the authority on which tier a branch is in.
 
 ## Rules that apply without being requested
 

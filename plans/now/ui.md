@@ -76,6 +76,15 @@ overlap. UI-E and UI-F shipped alongside it and are archived at
 no code here until it comes back failing -- and if it does, the old
 `stage_gate.gd` theory is not the established cause.
 
+**If C-3 fails, the fallback is geometry, not another mouse filter.** Place
+the shelf below the *full* two-row bar, deriving its top from
+`ui_layout.gd`'s shared top-bar geometry rather than the literal
+`offset_top = 46` (durable rule: `plans/README.md` guardrail 11), and keep it
+input-transparent unless it gains interactive children. Re-check every
+top-right control in a Challenge *and* a Scenario, at normal and enlarged
+text scales -- enlarged text is what makes the two rows grow into the shelf.
+Do not fold this into cosmetic top-bar work.
+
 ## UI-P — remaining fixes from Dave's 30 Aug hands-on pass
 
 UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. P-5 is all that
