@@ -51,4 +51,3 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/planhealth` (`claude/plan-health`) | Claude | `NEXTSTEPS.md`, `plans/`, `tools/check_docs.py` | Claude | in-progress | none | Planning-health pass (Dave's 3 Sep review brief) |
