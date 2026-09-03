@@ -15,6 +15,7 @@ Provenance only; the live plan is `plans/now/ui.md`. Earlier UI work is at
 | UI-P-4 | `LEFT_PANE_MARGIN` inset on the pre-run menu's left pane (later raised to 32 by UI-R-2) | 31 Aug 2026, in `a8c808c` |
 | UI-P-6 | `MarginContainer` between the settings `ScrollContainer` and its rows | 31 Aug 2026, in `a8c808c` |
 | UI-R-1 | Command tray centred on the band between its two reserves, clamped both ends | 3 Sep 2026; re-specified by UI-S-1 the same day |
+| UI-R-2 | Pre-run menu's `LEFT_PANE_MARGIN` raised from 16 to 32; nothing else touched | 3 Sep 2026, in `f5b2ee2` |
 | UI-S-3 | Deferred command-tray reflow after content changes, capped to the viewport height | 3 Sep 2026, in `edb33cc` |
 | UI-Q-1/2 | One `key -> last shown` throttle on `hud.gd::show_warning`; the two simulation files' copy moved to `problem_messages.gd` | 1 Sep 2026 |
 
@@ -371,3 +372,29 @@ in the developer section, so ordinary play cannot reach it.
 **Files:** `scripts/debug_panel.gd`.
 
 **Hands-on check:** `checks/ready.md` C-4, moved from `checks/blocked.md`.
+
+### UI-R-2 — pre-run menu: the left edge still needs more room — shipped 3 Sep 2026
+
+Shipped on `codex/UI-R-2`, merged to master as `f5b2ee2`. The implementation
+is exactly the specification below: `LEFT_PANE_MARGIN` raised from 16 to 32
+in `scripts/main_menu.gd`, with the comment above the `MarginContainer`
+updated to match. Tile size, spacing, centres and hit-testing are untouched,
+so UI-M and UI-P-3 cannot regress.
+
+**Hands-on check:** `checks/ready.md` C-16 (renumbered from C-15, which
+FL-1 had taken on master while this branch was open).
+
+**Ask (Dave, 2 Sep):** UI-P-4 shipped and the left pane no longer starts at
+pixel 0, but the buffer is too small.
+
+**Fix.** `main_menu.gd`'s `const LEFT_PANE_MARGIN := 16` is the whole
+mechanism (a `MarginContainer` with `margin_left`). Raise it to `32`.
+Change nothing else — not `HEX_SIZE`, `HEX_STEP_X`, tile centres or the
+right pane — so UI-M's hit-testing and UI-P-3's border overlap are
+untouched.
+
+**Acceptance:** the leftmost hex tile and the left-aligned text sit a
+clearly comfortable distance from the screen edge; tile spacing, borders
+and click hit-testing are visibly unchanged.
+
+**Files:** `scripts/main_menu.gd`.

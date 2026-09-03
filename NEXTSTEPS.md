@@ -2,18 +2,22 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Four ready slices in two lanes. C2-1 shipped 3 Sep 2026; its own successor
-(Challenge 2 Slice 2) needs Dave's hands-on pass first, so the fourth slot is
-now filled by Colony Diagnostics' first vertical slice
-(`plans/design/colony-diagnostics.md` § 4) instead, which that plan's own
-Status line names as ready the moment a Claude-lane slot is free. Every other
-open plan (`ui.md`, `challenge-1.md`, `check-loop.md`, `hive-comb.md`,
-`flowers.md`, `progression.md`) was checked and has nothing else genuinely
-startable today -- everything else needs a hands-on check, a live repro or a
-product decision, which is exactly what does not belong in this list.
-`tools/check_docs.py`'s queue-size check accepts four or five items (Dave, 3
-Sep 2026); the fifth slot refills the moment a plan below has real ready work
-again.
+Three ready slices in two lanes. UI-R-2 shipped 3 Sep 2026 and emptied the
+Codex lane's head; FL-2, already queued behind it, moved up. Nothing refilled
+the vacated slot, because nothing qualifies: every open plan (`ui.md`,
+`challenge-1.md`, `challenge-2.md`, `check-loop.md`, `hive-comb.md`,
+`flowers.md`, `colony-diagnostics.md`, `progression.md`) was checked and its
+remaining work wants Dave's hands-on pass, a live repro, or a product
+decision -- which is exactly what does not belong in this list. The three
+below are the whole of what a model can start today.
+
+`tools/check_docs.py`'s queue-size check accepts three to five items. It was
+five until 3 Sep 2026, when Dave relaxed it to four; the floor moved to three
+the same day, for the same reason, when UI-R-2 landed and no plan had a
+genuinely ready slice to promote. **The queue is close to dry: after CD-1,
+FL-2 and P-2 land, refilling it takes Dave's Challenge 1 acceptance run and
+his Challenge 2 collapse-trigger press (`checks/ready.md` C-5), not more
+planning.**
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -30,19 +34,7 @@ decided.
 
 ## Next up
 
-1. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
-   - Plan: `plans/now/ui.md` -- UI-R-2.
-   - Does: raises `main_menu.gd`'s `LEFT_PANE_MARGIN` from 16 to 32. One
-     constant; nothing about tile size, spacing, centres or hit-testing
-     changes, so UI-M and UI-P-3 cannot regress.
-   - Files: `scripts/main_menu.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: the left pane
-     sits comfortably clear of the screen edge and tile clicking is
-     unchanged.
-   - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
-   - Next after: FL-2, already fourth in this lane.
-
-2. **[Claude] CD-1 -- One computation, not three, for the diagnostics
+1. **[Claude] CD-1 -- One computation, not three, for the diagnostics
    the HUD already shows.**
    - Plan: `plans/design/colony-diagnostics.md` -- § 4, First vertical slice.
    - Does: adds `colony_diagnostics.gd::compute(main, bees) -> Dictionary`,
@@ -61,12 +53,23 @@ decided.
      forecast show identical values before and after, for the same
      save/seed -- nothing about what the player sees is meant to change.
    - Proof: `absent: scripts/year_winter.gd :: ColonyDiagnostics`
-   - Why here: C2-1, which led this lane, shipped 3 Sep 2026; its successor
-     is not yet startable (see "Not in the queue" below), so this plan's own
-     Status line (ready "once a Claude-lane slot is free") fills the gap
-     instead.
    - Next after: none yet named -- read `plans/design/colony-diagnostics.md`
      § 5-7 to pick the next fact once this lands.
+
+2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+   - Plan: `plans/now/flowers.md` -- Slice 2.
+   - Does: gives out-of-season flowers a small recharge floor, faster ageing
+     and rarer seeding, using three explicit `GameConfig` balance values.
+   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
+     `scripts/flower_species.gd`.
+   - Check: `tools/verify.ps1`, plus baseline and branch runs of
+     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
+     in the plan. One hands-on check to file: the year-round species mix
+     visibly follows the seasons without collapsing.
+   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
+   - Why here: UI-R-2 shipped 3 Sep 2026 and this was already queued behind
+     it as its `Next after:`; it shares no file with the Claude lane.
+   - Next after: none -- this plan then has no open slice.
 
 3. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
    - Plan: `plans/now/check-loop.md` -- P-2.
@@ -87,28 +90,13 @@ decided.
      `tests/source_checks.py` collides with no other queued file.
    - Next after: none -- this plan then has no open slice.
 
-4. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
-   - Plan: `plans/now/flowers.md` -- Slice 2.
-   - Does: gives out-of-season flowers a small recharge floor, faster ageing
-     and rarer seeding, using three explicit `GameConfig` balance values.
-   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
-     `scripts/flower_species.gd`.
-   - Check: `tools/verify.ps1`, plus baseline and branch runs of
-     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
-     in the plan. One hands-on check to file: the year-round species mix
-     visibly follows the seasons without collapsing.
-   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
-   - Why here: it shares no file with the current Claude work; the plan
-     makes its required headless comparison explicit before merge.
-   - Next after: none -- this plan then has no open slice.
-
 ## Ready, not yet in the queue
 
 Nothing. Every slice that could be started today is in the queue above,
-which is why the queue sits at four rather than five (see the note at the
-top of this file). The next lane to empty, or the fifth slot whenever a
-plan below gets real ready work, pulls from an owning plan's next open
-slice.
+which is why it sits at three rather than five (see the note at the top of
+this file). The next slot refills from an owning plan the moment a plan
+below has real ready work again -- which, for all of them, means Dave
+running something first.
 
 ## Not in the queue, and why
 
@@ -121,15 +109,16 @@ They are listed so they are not lost, not so they are picked up.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
   of the rescue and recovery lines does not appear. C2-1 shipped 3 Sep 2026
   (its "Force Challenge 2 collapse" trigger is `checks/ready.md` C-5); this
-  now needs Dave to press it and report which line is missing. There is no
-  static defect to fix blind, and guessing has already failed twice.
+  now waits on Dave to press it and report which line is missing. There is
+  no static defect to fix blind, and guessing has already failed twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
-  so it needs Dave's live look and a call on intended behaviour. Slice 5
-  needs its own live repro.
+  so it wants Dave's live look and a call on intended behaviour. Slice 5
+  wants its own live repro.
 - **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
-  and say to reproduce live before changing code.
+  and say to reproduce live before changing code. With UI-R-2 shipped, these
+  two are all that plan has left.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` § "Deferred product decisions" holds it; it is
   not restated here.

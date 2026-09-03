@@ -108,7 +108,12 @@ def check_context_layout(errors: list[str]) -> None:
 # plans -- refilling with a not-yet-ready item would violate the admission
 # test, so the queue is allowed to sit at QUEUE_SIZE_MIN until new work
 # becomes ready (Dave, 3 Sep 2026, after FL-1 shipped with none available).
-QUEUE_SIZE_MIN = 4
+# The floor moved 4 -> 3 later the same day, for the same reason: UI-R-2
+# landed and no open plan had a ready slice to promote, because every one of
+# them is now waiting on Dave to run something. Both lanes must still hold
+# work, which is the invariant this number exists to protect; raise it back
+# the moment the plans have depth again.
+QUEUE_SIZE_MIN = 3
 QUEUE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")

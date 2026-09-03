@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-R-2, Codex lane | Dependency: UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: None startable -- UI-D and UI-P-5 are all that remain and both need a live repro | Dependency: UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -14,15 +14,17 @@ UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-R-2 | Pre-run menu's left pane clears the screen edge | `main_menu.gd` | yes | low |
-| UI-S-1 | The bottom row re-specified: tray at 50%, neighbours fill the rest | `ui_layout.gd`, `hud.gd` | yes | medium |
-| UI-S-4 | A refused command says so, at one instrumented choke point | `input_selection.gd`, `diagnostic_log.gd` | yes | medium |
 | UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
 
+Nothing in this plan is startable today. UI-R-2, UI-S-1 and UI-S-4 all
+shipped 3 Sep 2026; the two rows above are the whole of what is left, and
+both wait on Dave reproducing the symptom live.
+
 **Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
-clamps; both are now shipped. UI-S-2 also shipped, so `plans/now/check-loop.md`
-P-2 can now enforce both left-panel rectangles. Nothing else here is ordered.
+clamps; both are now shipped, as are UI-S-2 and UI-S-4, so
+`plans/now/check-loop.md` P-2 can now enforce both left-panel rectangles.
+Nothing else here is ordered.
 
 **Required reading for any slice here.** This file's own section, and
 `scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are
@@ -114,28 +116,13 @@ pick whichever the live state actually shows.
 
 ## UI-R — from Dave's 2 Sep 2026 hands-on pass
 
-UI-R-1 shipped 3 Sep and was re-specified the same day by UI-S-1; see the
-archive. UI-R-3 (the developer "Fire test warnings" button) shipped 3 Sep
-2026; its specification is archived in
-`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-4 is filed in
-`checks/ready.md`. UI-R-2 remains.
-
-### UI-R-2 — pre-run menu: the left edge still needs more room
-
-**Ask (Dave, 2 Sep):** UI-P-4 shipped and the left pane no longer starts at
-pixel 0, but the buffer is too small.
-
-**Fix.** `main_menu.gd`'s `const LEFT_PANE_MARGIN := 16` is the whole
-mechanism (a `MarginContainer` with `margin_left`). Raise it to `32`.
-Change nothing else — not `HEX_SIZE`, `HEX_STEP_X`, tile centres or the
-right pane — so UI-M's hit-testing and UI-P-3's border overlap are
-untouched.
-
-**Acceptance:** the leftmost hex tile and the left-aligned text sit a
-clearly comfortable distance from the screen edge; tile spacing, borders
-and click hit-testing are visibly unchanged.
-
-**Files:** `scripts/main_menu.gd`.
+Every slice in this group has shipped. UI-R-1 shipped 3 Sep and was
+re-specified the same day by UI-S-1; see the archive. UI-R-3 (the developer
+"Fire test warnings" button) shipped 3 Sep 2026, with hands-on check C-4 in
+`checks/ready.md`. UI-R-2 (the pre-run menu's left inset) shipped 3 Sep 2026
+on `codex/UI-R-2`; its specification is archived in
+`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-16 is filed in
+`checks/ready.md`.
 
 ## UI-S — from Dave's 3 Sep 2026 hands-on pass
 
