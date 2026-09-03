@@ -1,12 +1,17 @@
-# Settings persistence across a run change
+# Settings persistence across a run change (archived)
 
-<!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 (reset only what a preset owns, keep what the player set) | Dependency: none | Verified: 2026-09-02
+<!-- CONTEXT: historical-record | LAYER: history | LOAD: provenance-only -->
+Archived: 2026-09-03. Slice 1, the plan's only slice, is delivered -- see
+`scripts/main.gd::_on_scenario_chosen`, `scripts/scenario_presets.gd`'s
+`keys_to_reset()`/`_last_applied_keys`, and
+`scripts/settings_catalogue.gd::reset_config_keys()`. The remaining player
+check is `checks/ready.md` C-10. Per `plans/README.md` an archived plan is
+never reopened; a new finding in this area starts a fresh plan file.
 
 New file, 2 Sep 2026. The settings-catalogue work that owned this area is
 finished and archived at `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md`;
 per `plans/README.md` an archived plan is never reopened, so this finding
-starts here.
+started here.
 
 **Objective.** A run change resets only what a preset or Challenge owns;
 anything the player set by hand survives it.

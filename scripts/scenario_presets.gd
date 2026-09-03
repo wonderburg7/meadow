@@ -87,6 +87,11 @@ static func get_preset(key: String) -> Dictionary:
 			return preset
 	return PRESETS[1]  # "standard"
 
+## The keys the last apply() call wrote to GameConfig. Presets are applied
+## from exactly this one place, so one static is enough to remember what
+## the previous run's preset touched (SP-1, settings-persistence.md).
+static var _last_applied_keys: Array[String] = []
+
 ## Applies a preset's overrides to GameConfig. `custom_values`, only
 ## meaningful for "custom", replaces the baseline value for whichever of
 ## its customizable_keys the player actually changed -- any key not
@@ -97,4 +102,20 @@ static func apply(key: String, custom_values: Dictionary = {}) -> void:
 	if key == "custom":
 		for k in custom_values:
 			overrides[k] = custom_values[k]
+	_last_applied_keys.assign(overrides.keys())
 	Levels.apply_config_overrides(overrides)
+
+## The GameConfig keys a Scenario pick must reset before applying `key` --
+## the previous preset's fingerprints plus everything `key` (and, for
+## "custom", `custom_overrides`) is about to set. Leaves every other
+## GameConfig field exactly as the player left it (SP-1).
+static func keys_to_reset(key: String, custom_overrides: Dictionary = {}) -> Array:
+	var keys := {}
+	for k in _last_applied_keys:
+		keys[k] = true
+	for k in get_preset(key).overrides:
+		keys[k] = true
+	if key == "custom":
+		for k in custom_overrides:
+			keys[k] = true
+	return keys.keys()

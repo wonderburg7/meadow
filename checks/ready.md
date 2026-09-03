@@ -29,6 +29,20 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-10 -- a hand-set toggle survives picking a Scenario
+
+Shipped 3 Sep 2026. Change a flower or season debug toggle in the settings
+window, then pick a Scenario: the toggle should still be where you left it
+once the run boots. Then pick a Scenario with preset A, restart and pick
+preset B: none of A's values should carry into B's run. Then pick a Scenario
+with a custom override, then one without: the override should not leak.
+
+PASS: the hand-set toggle survives picking a Scenario, preset A's values do
+not leak into preset B's run, and a custom override does not leak into the
+next Scenario.
+
+Owner: `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` Slice 1.
+
 ### C-9 -- cell highlight rings follow the cup sprite's own silhouette
 
 Shipped 3 Sep 2026, replacing the failed Slice 8 entry. With Cell art on, at

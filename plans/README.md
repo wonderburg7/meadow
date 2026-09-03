@@ -99,7 +99,6 @@ the archived plan is never reopened or extended.
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
 | Developer triggers for rare states | `plans/now/check-loop.md` P-3 |
-| Settings surviving a run change | `plans/now/settings-persistence.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/now/agent-workflow.md` |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
@@ -134,7 +133,8 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    for why that pattern kept failing.
 7. A run change resets only the `GameConfig` keys a preset or Challenge
    actually writes, never the whole object -- see
-   `plans/now/settings-persistence.md`.
+   `scripts/scenario_presets.gd::keys_to_reset()` and
+   `scripts/settings_catalogue.gd::reset_config_keys()`.
 8. A stage's `on_enter` effects run *last* in `challenge_runner.gd::
    _enter_stage`, after the gate and UI refresh. `_apply_stage_gate_to_ui`
    ends in `update_selection`, which clears camera-follow -- so an effect

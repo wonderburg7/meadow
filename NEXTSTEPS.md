@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after HC-9 landed.
+Five ready slices in two lanes, refilled 3 Sep 2026 after SP-1 landed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -19,24 +19,29 @@ decided.
 
 ## Next up
 
-1. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
-   hand.**
-   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
-   - Does: `main.gd::_on_scenario_chosen` calls
-     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
-     back over every `GameConfig` field -- including toggles the player set
-     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
-     adds `reset_config_keys()` beside the full reset, and resets only the
-     union of the outgoing preset's keys and the incoming one's.
-   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
-     `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
-     flower/season toggle survives picking a Scenario, and preset A's values
-     do not leak into preset B's run.
-   - Proof: `present: scripts/main.gd :: reset_config_to_defaults()`
-   - Why first: it was the Claude lane's head before C1-14 arrived, and it
-     shares no file with UI-S-1, this lane's leading Codex item.
-   - Next after: FL-1 (`plans/now/flowers.md` Slice 1).
+1. **[Claude] W-6 -- Routing is addressable and bounded.**
+   - Plan: `plans/now/agent-workflow.md` -- W-6.
+   - Does: every bare filename in `CLAUDE.md`'s "Where to route a change"
+     table becomes repo-relative, adds `tools/heading.py <file> "<heading>"`
+     to print one bounded Markdown section instead of a whole file, and adds
+     one sentence to rule 1 on why a routed section beats a routed file.
+     Deletes the admission-test paragraph under "Keeping the queue true" (cut
+     to one sentence naming the `Proof:` line) and the closeout checklist
+     (cut to `tools/slice.ps1 finish`).
+   - Files: `CLAUDE.md`, `tools/heading.py`.
+   - Check: `tools/verify.ps1`. No hands-on check: `python tools/heading.py
+     plans/now/flowers.md "Slice 1"` and `python tools/check_docs.py` are
+     both scriptable.
+   - Proof: `absent: CLAUDE.md :: tools/heading.py`
+   - Why first: SP-1 landed and its `Next after:` item, FL-1, shares
+     `scripts/hud.gd` with UI-S-1, this lane's leading Codex item -- FL-1's
+     own entry said to re-check that pairing before promoting it to lead, and
+     promoting it now would make both lanes' leading items collide. W-6 is
+     `plans/now/agent-workflow.md`'s own stated next slice, is independent of
+     every other open file, and keeps FL-1 queued (below) for whichever lands
+     first between it and UI-S-1.
+   - Next after: W-7 (`plans/now/agent-workflow.md` -- `verify.ps1` is quiet
+     on success).
 
 2. **[Codex] UI-S-1 -- The bottom row: the command tray leads, the summary
    panel and Dr Gallerin follow.**
@@ -78,10 +83,12 @@ decided.
      or out of season; watching one across a season boundary flips the line
      at the same moment the `+/s` figures fall away.
    - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here: it was queued before SP-1 arrived and shares no file with
-     anything else in the Claude lane; it does share `scripts/hud.gd` with
-     UI-S-1 (Codex), so whichever of FL-1 or UI-S-1 lands first, re-check
-     this pairing before promoting the other lane's next item into the lead.
+   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-1 (Codex),
+     this lane's leading item, so it stays second in the Claude lane rather
+     than promoting to lead -- promoting it now would make both lanes'
+     leading items collide. Re-check this pairing whichever of FL-1 or
+     UI-S-1 lands first: landing either one clears the conflict for the
+     other to lead.
    - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
      needs its named headless run before it merges.
 
@@ -134,9 +141,6 @@ holds five. Take one when a lane empties, in roughly this order.
 - **P-1** (`plans/now/check-loop.md`) -- make `checks/ready.md`'s new entry
   format (id, one action, one PASS line, an owner) enforceable in
   `tools/check_docs.py`.
-- **W-6** (`plans/now/agent-workflow.md`) -- full paths in `CLAUDE.md`'s
-  routing table, a `tools/heading.py` section reader, and one sentence on what
-  an early read really costs.
 - **W-7** (`plans/now/agent-workflow.md`) -- `tools/verify.ps1 -Quiet` and
   `-Docs`, so a passing run prints four lines and a ledger failure does not
   read as a code failure.

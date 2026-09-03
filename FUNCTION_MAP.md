@@ -283,7 +283,7 @@ restart.
 773  func _restart() -> void
 ```
 
-## settings_catalogue.gd (1,055 lines)
+## settings_catalogue.gd (1,066 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
@@ -291,10 +291,11 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 959  static func setting_get(key: String)
 962  static func setting_set(key: String, value) -> void
 985  static func reset_config_to_defaults() -> void
-1000 static func apply_setting(key: String, value) -> void
-1015 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1033 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1047 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+997  static func reset_config_keys(keys: Array) -> void
+1011 static func apply_setting(key: String, value) -> void
+1026 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1044 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1058 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## hive_cell.gd (1,086 lines)
