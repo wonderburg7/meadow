@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/c1-14` (`claude/c1-14`) | Claude | 1.11 hand-over: unlock flower_switch_locked's meaning, fire on_enter effects last, move camera/speed to forage start | Claude Code | in progress | none | `plans/now/challenge-1.md` Slice 14 |
