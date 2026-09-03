@@ -25,6 +25,7 @@ const Prerequisites = preload("res://scripts/prerequisites.gd")
 ## range and tip, plus the read/write and cascade functions.
 const Settings = preload("res://scripts/settings_catalogue.gd")
 const Hud = preload("res://scripts/hud.gd")
+const Stages = preload("res://scripts/challenge_stages.gd")
 
 ## Fixed panel/scroll width -- widened from 300 (Dave's 29 Aug report:
 ## turning on "Show info icons" pushed some rows' toggle controls past
@@ -392,6 +393,12 @@ func _build_actions(column: VBoxContainer) -> void:
 	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
 	challenge_row.add_child(UI.with_info(fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own."))
 
+	var c2_collapse_btn := Button.new()
+	_style_button(c2_collapse_btn)
+	c2_collapse_btn.text = "Force Challenge 2 collapse"
+	c2_collapse_btn.pressed.connect(_on_force_c2_collapse_pressed)
+	challenge_row.add_child(UI.with_info(c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run."))
+
 	column.add_child(HSeparator.new())
 
 func _make_winter_action() -> Control:
@@ -451,6 +458,29 @@ func _on_fire_test_warnings_pressed() -> void:
 				hud.show_warning("Run saved.")
 		)
 	)
+
+## Withdraws nectar via the hive's own take() API (never writes cell
+## amounts directly) so challenge_runner.gd::_check_c2_failure(), which
+## polls main.hive.total("nectar") every frame, sees the drop and fires
+## on its own. Aims for the rescue threshold first; if the stores are
+## already below it (the rescue already fired and topped them back up
+## partway, or a second press), aims for the failure floor instead, so
+## one press each reaches the two branches of _check_c2_failure() in
+## order.
+func _on_force_c2_collapse_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	var world = worlds[0]
+	if Session.starting_level != 2 or not world.challenge_runner.active:
+		return
+	var hive = world.hive
+	var nectar: float = hive.total("nectar")
+	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0
+	if nectar < Stages.C2_RESCUE_THRESHOLD:
+		target = Stages.C2_FAILURE_FLOOR - 1.0
+	if nectar > target:
+		hive.take("nectar", nectar - target)
 
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an
