@@ -61,3 +61,19 @@ camera-follow and 4x speed visibly firing as she sets off, not before;
 the same at 1.13 for pollen; both stop at stage end.
 
 Owner: `plans/now/challenge-1.md` Slice 14.
+
+### C-8 -- the queen's "Now:" line says what to do, not what she cannot do
+
+Shipped 3 Sep 2026. Play Challenge 1 to 1.14 with the queen selected. At
+every stage that is waiting for the player -- 1.1 through 1.14 -- the line
+reads "Now: waiting for instruction", with " -- <the action for this stage>"
+appended for every stage but 1.1 (nothing to do there but watch the tunnel
+open). At every stage where she is genuinely working (walking, gathering,
+flying home, building, laying) the line still describes what she is doing.
+Outside a Challenge nothing changes.
+
+PASS: every waiting stage from 1.1 to 1.14 reads "Now: waiting for
+instruction" (with the action appended from 1.2 on), and every working
+stage still narrates the activity as before.
+
+Owner: `plans/now/challenge-1.md` Slice 15.

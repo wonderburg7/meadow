@@ -1,7 +1,7 @@
 # Meadow hive comb — active slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 9 (rings cut from the sprite's measured silhouette), either lane | Dependency: none for Slice 9; Slices 4 and 5 still need Dave's live look | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 9 (rings cut from the sprite's measured silhouette), either lane -- queued as HC-9 in NEXTSTEPS.md | Dependency: none for Slice 9; Slices 4 and 5 still need Dave's live look | Verified: 2026-09-03
 
 No `plans/now/` file previously owned the empty-cell resprite / sprite-aligned
 hex grid / cell-art settings cluster — it shipped and was tracked only as

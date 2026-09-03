@@ -2,10 +2,7 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 3 Sep 2026 after Dave's hands-on
-pass. Eleven of the sixteen checks he ran came back confirmed; the five
-failures are now slices in their owning plans, and the head of the Claude
-lane is the one that blocks his next Challenge 1 run.
+Five ready slices in two lanes, refilled 3 Sep 2026 after C1-15 landed.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,33 +18,29 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C1-15 -- the queen's "Now:" line should say "waiting for
-   instruction" plus what to do at this stage, rather than narrating what
-   she cannot do.**
-   - Plan: `plans/now/challenge-1.md` -- Slice 15.
-   - Does: a stage waiting for the player currently shows lines like "Now:
-     looking for brood work. No pollen in the comb - she can't eat so she
-     can't lay..." -- untaught-mechanics filtering (Slice 13) doesn't catch
-     this because the vocabulary itself is taught, it's just the wrong thing
-     to say while she's idle waiting for an instruction. Adds a short
-     `"instruction"` string to each `STAGES_1` entry naming what the player
-     should do next, a `challenge_runner.gd::current_stage_instruction()`
-     reader, and a `hud.gd` branch that renders "Now: waiting for
-     instruction -- <instruction>" whenever a Challenge is running, the bee
-     is the queen, and she has no task of her own (`IDLING`/`NURSE_IDLE`/
-     `player_driven`) -- `task_description()` itself is untouched.
-   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
-     `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: play Challenge 1
-     to 1.14 with the queen selected -- every waiting stage reads "Now:
-     waiting for instruction -- <the action>", every working stage still
-     describes what she's doing -- replacing the Slice 13 entry in
-     `checks/ready.md`.
-   - Why first: it is the last thing between Dave and the Challenge 1
-     acceptance playthrough (Slice 7), and it shares no file with X3.
-   - Next after: Slice 7's acceptance pass -- Dave's run, so nothing is
-     promoted into this lane from `challenge-1.md` itself; refill from
-     `## Ready, not yet in the queue` when this lands.
+1. **[Claude] HC-9 -- Cut the cell rings from the sprite's measured
+   silhouette, not from a hexagon with a nudge.**
+   - Plan: `plans/now/hive-comb.md` -- Slice 9.
+   - Does: `hive_cell.gd::_set_outline_points_cup()` builds every ring
+     (base, designation, selection, nursery glow/halo) from a regular
+     hexagon with two corners nudged up, but the cup sprite is an
+     eight-cornered shape with a flat top, flat bottom and vertical sides
+     -- so the rings never sit on the art. Adds a const holding the
+     silhouette measured off the sprite's own alpha, a helper that maps a
+     silhouette point into the cell's local space with the exact arithmetic
+     `_ready()` already uses to place `empty_sprite`, and rewrites
+     `_set_outline_points_cup` to walk that silhouette and scale it per
+     ring instead of nudging hexagon corners.
+   - Files: `scripts/hive_cell.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: with Cell art
+     on, at both Sprite-aligned hex grid settings, all five rings trace the
+     cup's own silhouette and stay visibly separated; with Cell art off,
+     every ring still returns to the flat hex.
+   - Why first: it shares no file with X3, and it is the only other
+     "either lane" slice with no outstanding dependency.
+   - Next after: refill from `## Ready, not yet in the queue` when this
+     lands; `plans/now/hive-comb.md` has nothing else ready (Slices 4 and 5
+     still need Dave's live look).
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -125,9 +118,6 @@ holds five. Take one when a lane empties, in roughly this order.
 - **UI-S-4** (`plans/now/ui.md`) -- a second right-click sometimes does
   nothing and appears to deselect the bee: instrument the command choke
   point and make a refused command say so.
-- **HC-9** (`plans/now/hive-comb.md` Slice 9) -- cut the cell rings from the
-  sprite's measured silhouette (32x27, flat 16px top and bottom edges,
-  vertical sides) instead of from a hexagon with a nudge.
 - **FL-1** (`plans/now/flowers.md` Slice 1) -- age and in/out-of-season on
   the flower summary panel.
 - **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
@@ -145,8 +135,8 @@ Each of these needs something from Dave, or something else to ship first.
 They are listed so they are not lost, not so they are picked up.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough. C1-15 is what it is waiting for; with that in, it is Dave's
-  run and the last thing that plan needs.
+  playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
+  thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
   of the rescue and recovery lines does not appear. Needs C2-1 to ship and
   Dave to press the button; there is no static defect to fix blind, and

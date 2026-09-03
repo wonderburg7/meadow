@@ -1,7 +1,7 @@
 # Challenge 1 — current slice
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 15 (the queen's "Now:" line should tell the player what to do, not narrate what she cannot do), Claude lane | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 7's acceptance pass -- Dave's run, the last thing this plan needs | Dependency: none | Verified: 2026-09-03
 
 Slices 1-6, 8, 9 and 10 are code-complete and merged to master (last: 1 Sep
 2026). Their findings and traces are archived at
@@ -440,7 +440,7 @@ clause.
 
 **Next after:** Slice 15.
 
-## Slice 15 -- "Now:" should tell the player what to do, not narrate what she cannot do
+## Slice 15 -- "Now:" should tell the player what to do, not narrate what she cannot do -- DONE 3 Sep 2026
 
 **Ask (Dave, 3 Sep 2026, against Slice 13's own check).** Slice 13 stopped
 the queen's "Now:" line naming untaught mechanics, but the line Dave still
