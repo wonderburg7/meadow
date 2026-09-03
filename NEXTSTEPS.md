@@ -2,26 +2,33 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Two ready slices in two lanes. CD-1 shipped 4 Sep 2026; its plan
-(`colony-diagnostics.md`) turned out to have no further slice -- section 6
-explicitly defers migrating any other colony-state read until a second
-consumer needs the same fact, so there was nothing to promote in its place.
-Every other open plan (`ui.md`, `challenge-1.md`, `challenge-2.md`,
-`check-loop.md`, `hive-comb.md`, `flowers.md`, `progression.md`) was checked
-and its remaining work wants Dave's hands-on pass, a live repro, or a product
-decision -- which is exactly what does not belong in this list. The two
-below are the whole of what a model can start today.
+**The Claude lane is empty.** CD-1 shipped 4 Sep 2026 with no further slice
+in its plan; P-2 shipped the same day and closed out `check-loop.md`'s last
+open slice too (now `plans/reference/check-loop.md`, reference only). Every
+other open plan (`ui.md`, `challenge-1.md`, `challenge-2.md`, `hive-comb.md`,
+`flowers.md`, `progression.md`) was checked and its remaining work wants
+Dave's hands-on pass, a live repro, or a product decision -- which is
+exactly what does not belong in this list, and exactly why nothing was
+promoted into the empty slot instead of inventing one. This is a genuine
+stop, surfaced rather than papered over: `tools/check_docs.py` will report
+"no [Claude] item" until Dave either does one of the things below, or
+decides the Claude lane sits idle until Codex's FL-2 lands and opens
+something new. This was not resolved by relaxing the check further --
+unlike the queue-size floor (below), "both lanes must have work" is what
+lets two sessions run in parallel without collision, and loosening it is
+Dave's call, not something to decide unattended.
 
-`tools/check_docs.py`'s queue-size check accepts two to five items. It was
-five until 3 Sep 2026, when Dave relaxed it to four; the floor moved to three
-the same day, for the same reason, when UI-R-2 landed and no plan had a
-genuinely ready slice to promote. It moved to two on 4 Sep 2026, for the same
-reason again, when CD-1 landed with nothing to replace it -- flagged to Dave
-for review rather than held for a check-in, since the session was running
-unattended. **The queue is now as dry as it gets without stalling a lane:
-once FL-2 and P-2 land, refilling it takes Dave's Challenge 1 acceptance run
-and his Challenge 2 collapse-trigger press (`checks/ready.md` C-5), not more
-planning.**
+The fastest unblocks, in order of effort: (1) reply to one of the four
+items under "Not in the queue" below with the evidence it is waiting on --
+a live repro, a hands-on-check result, or a press of a developer trigger;
+(2) greenlight Progression Phase A (`plans/design/progression.md`), parked
+by product-scope choice rather than a technical gate; (3) accept the idle
+lane and let Codex's FL-2 run alone for now.
+
+`tools/check_docs.py`'s queue-size check accepts two to five items -- moot
+while a lane is empty, but left at two rather than reverted to three, since
+that relaxation (3 Sep 2026, then again 4 Sep 2026) is independent of this
+one and still correctly describes the queue once a Claude item exists again.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -53,32 +60,12 @@ decided.
      it as its `Next after:`; it shares no file with the Claude lane.
    - Next after: none -- this plan then has no open slice.
 
-2. **[Claude] P-2 -- one owner for panel rectangles, enforced.**
-   - Plan: `plans/now/check-loop.md` -- P-2.
-   - Does: adds a check to `tests/source_checks.py`, in the style of the
-     existing `GameConfig` write allowlist, that fails on any numeric
-     literal assigned to `offset_top`/`offset_left`/`offset_right`/
-     `offset_bottom` in `hud.gd`, `colony_panel.gd`, `foraging_panel.gd`,
-     `nursery_panel.gd`, `gallerin_panel.gd` or `debug_panel.gd`. A trailing
-     `# fixed-inset` comment or a value read from `UiLayout` is allowed; the
-     message names the file, line and `ui_layout.gd` as where the number
-     belongs.
-   - Files: `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`, including a deliberate break (a literal
-     `offset_top = 60` in `colony_panel.gd`) and repair.
-   - Proof: `absent: tests/source_checks.py :: fixed-inset`
-   - Why here: UI-S-1 and UI-S-2, the panel-rect moves this check locks in,
-     both shipped 3 Sep 2026, so the plan's last open slice is now startable.
-     `tests/source_checks.py` collides with no other queued file.
-   - Next after: none -- this plan then has no open slice.
-
 ## Ready, not yet in the queue
 
-Nothing. Every slice that could be started today is in the queue above,
-which is why it sits at two rather than five (see the note at the top of
-this file). The next slot refills from an owning plan the moment a plan
-below has real ready work again -- which, for all of them, means Dave
-running something first.
+Nothing. The Claude lane is empty (see the note at the top of this file);
+the Codex lane's only item is already in the queue above. The next slot
+refills from an owning plan the moment a plan below has real ready work
+again -- which, for all of them, means Dave running something first.
 
 ## Not in the queue, and why
 
@@ -104,8 +91,12 @@ They are listed so they are not lost, not so they are picked up.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` § "Deferred product decisions" holds it; it is
   not restated here.
-- **Progression Phase A** (`plans/design/progression.md`) -- designed, not
-  scheduled; parked behind the settings-catalogue work by Dave's 1 Sep call.
+- **Progression Phase A** (`plans/design/progression.md`) -- `product-scope.md`
+  §5.3 categorises the whole skill tree as "designed, not scheduled": product
+  direction exists but has not entered `NEXTSTEPS.md`. The settings-catalogue
+  work this was originally parked behind (Dave's 1 Sep call) has since
+  shipped, but that does not by itself promote it -- entering the queue is a
+  scheduling decision, not a dependency that just cleared.
 
 ## Copy-paste prompts
 

@@ -22,9 +22,9 @@ shipped 3 Sep 2026; the two rows above are the whole of what is left, and
 both wait on Dave reproducing the symptom live.
 
 **Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
-clamps; both are now shipped, as are UI-S-2 and UI-S-4, so
-`plans/now/check-loop.md` P-2 can now enforce both left-panel rectangles.
-Nothing else here is ordered.
+clamps; both are now shipped, as are UI-S-2 and UI-S-4, and P-2 (which
+enforced both left-panel rectangles) shipped 4 Sep 2026 --
+`plans/reference/check-loop.md`. Nothing else here is ordered.
 
 **Required reading for any slice here.** This file's own section, and
 `scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are

@@ -17,7 +17,7 @@ demand belongs in `checks/blocked.md`, with its unblocker named.
 plan that owns it. Reply by id -- "C-1 pass", or "C-1 fails: <what I saw>"
 -- so nothing has to be inferred from prose. An entry only belongs here if
 failing it would change what gets built; if the answer is "nothing, we would
-assume it works", do not file it (`plans/now/check-loop.md`).
+assume it works", do not file it (`plans/reference/check-loop.md`).
 
 `tools/check_docs.py` enforces that format from 3 Sep 2026: it fails on an
 entry whose heading does not start `C-<n> -- `, on one with no `PASS:` line,
@@ -31,8 +31,8 @@ Slice 9, `plans/now/ui.md` UI-S-1 to UI-S-4). One moved to
 `checks/blocked.md` because it cannot be triggered on demand. One --
 the forager-return counter -- was dropped at Dave's call: "it's so unlikely
 to happen, let's drop this and assume it works." Two new asks became
-`plans/now/flowers.md`; the process findings became
-`plans/now/check-loop.md`.
+`plans/now/flowers.md`; the process findings became `check-loop.md`, now
+`plans/reference/check-loop.md` since its one slice shipped 4 Sep 2026.
 
 ### C-16 -- pre-run menu left inset
 

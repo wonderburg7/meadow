@@ -190,7 +190,7 @@ the authority on which tier a branch is in.
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Flowers, season, senescence | `plans/now/flowers.md` |
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
-| How checks, slices and acceptance work | `plans/now/check-loop.md` |
+| How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |
 | Predators (built) | `checks/ready.md` or `plans/archive/CRAB_SPIDER_PLAN.md` |
 | Save/restore | `.claude/rules/saving.md` |
@@ -232,7 +232,7 @@ out workstreams") -- the check is never a reason to keep the branch open.
 Move blocked checks to `checks/blocked.md` and confirmed entries to the
 archive.
 
-Three admission rules keep that list runnable (`plans/now/check-loop.md`
+Three admission rules keep that list runnable (`plans/reference/check-loop.md`
 holds the evidence behind them):
 
 - **Write the acceptance from the player's seat, once.** A slice's

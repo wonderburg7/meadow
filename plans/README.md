@@ -79,7 +79,7 @@ that must *not* change where a past slice was derailed by touching it.
 slices each need the same thing built, build it first and let them both use
 it. Scheduling the consolidation afterwards means both do the work twice and,
 because they then own the same file, they cannot run in parallel lanes
-either -- `plans/now/check-loop.md` P-3 was rescheduled for exactly this on
+either -- `plans/reference/check-loop.md` P-3 was rescheduled for exactly this on
 3 Sep 2026.
 
 A hands-on-check finding against a plan that is still open (unshipped
@@ -95,10 +95,9 @@ the archived plan is never reopened or extended.
 | UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
 | Flowers, season, senescence, the meadow's mix | `plans/now/flowers.md` |
 | Challenge 2 rescue and recovery messages | `plans/now/challenge-2.md` |
-| Check format, acceptance wording, developer triggers | `plans/now/check-loop.md` |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
-| Developer triggers for rare states | `plans/now/check-loop.md` P-3 |
+| Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
@@ -153,11 +152,11 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 11. Every persistent HUD panel takes its rectangle from `ui_layout.gd`. Two
     panels that share an edge derive from one number; a literal `offset_top`
     in a panel file is how the same overlap keeps coming back
-    (`plans/now/check-loop.md` P-2).
+    (`plans/reference/check-loop.md` P-2).
 12. A queue item's `Proof:` line is the check for "does the behaviour already
     exist" (`tools/check_docs.py`, `NEXTSTEPS.md` "Keeping the queue true").
     X3/UI-P-2 cost a queue slot and a worktree because nobody opened
     `ui_theme.gd` first.
 13. Developer triggers all live in `debug_panel.gd`'s "Triggers" group. A
     slice that makes a rare state reachable adds a button there; it does not
-    invent a new home (`plans/now/check-loop.md` P-3).
+    invent a new home (`plans/reference/check-loop.md` P-3).
