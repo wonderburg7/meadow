@@ -34,6 +34,18 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-14 -- double right-click command diagnosis
+
+Reproduce the queen's double-right-click symptom and send the run's diagnostic
+log. If the second command is refused, confirm the warning banner says "She
+cannot take orders right now." and no click marker is drawn.
+
+PASS: every right-click has one `command_issue` entry with its selected and
+commandable counts, branch, and each selected bee's state before and after;
+a refused command is visible instead of looking like a lost selection.
+
+Owner: `plans/now/ui.md` UI-S-4.
+
 ### C-13 -- left-side windows clear the corner and scroll
 
 With several readouts starred, then with none, open Colony, Foraging and
