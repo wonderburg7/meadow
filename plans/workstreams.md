@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/workflow-review` (`claude/workflow-review`) | Claude | Combined Codex+Claude agent-workflow audit: the report in `docs/`, the implementation plan in `plans/now/agent-workflow.md`, and its queue pointers | Claude | in progress | none | `plans/now/agent-workflow.md` |
