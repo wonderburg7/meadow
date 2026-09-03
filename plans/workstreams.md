@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-R-2` (`codex/UI-R-2`) | Codex | Pre-run menu: the left edge still needs more room. | Codex | in progress | none | `plans/now/ui.md` UI-R-2 |
-| `.worktrees/FL-1` (`claude/FL-1`) | Claude | The flower panel says nothing about age or season. | Claude | in progress | none | `plans/now/flowers.md` Slice 1 |
