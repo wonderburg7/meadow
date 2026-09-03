@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/P-3` (`claude/P-3`) | Claude | Developer triggers have no home, and two slices are about to build one each. | Claude | in progress | none | `plans/now/check-loop.md` P-3 |
