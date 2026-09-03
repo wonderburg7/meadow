@@ -34,6 +34,19 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
+### C-5 -- Challenge 2's rescue and recovery lines
+
+In a Challenge 2 run past stage 2.1, open the settings window and press
+"Force Challenge 2 collapse" in the Triggers group once, then again.
+
+PASS: the first press drops the stores below the rescue threshold and Dr
+Gallerin's "Ahem. Field ecologists..." line appears with 150 nectar
+restored; the second press drops them below the failure floor and the
+checkpoint restore appears with "A brief ecological wobble..." and a live
+queen.
+
+Owner: `plans/now/challenge-2.md` Slice 1.
+
 ### C-4 -- two throttled warnings eight seconds apart
 
 Press debug_panel.gd's "Fire test warnings" button, in the Triggers group

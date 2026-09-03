@@ -30,23 +30,6 @@ wasted visible work.
 
 Owner: `plans/archive/UI_SETTINGS_PLAN_2026-08-24.md`.
 
-### C-5 -- Challenge 2's rescue and recovery lines
-
-Trigger a Challenge 2 nectar collapse past stage 2.1, twice: once below the
-rescue threshold, once below the failure floor.
-
-PASS: the rescue line ("Ahem. Field ecologists...") appears with 150 nectar
-restored, and the checkpoint restore appears with "A brief ecological
-wobble..." and a live queen.
-
-Blocked by: `plans/now/challenge-2.md` Slice 1 -- a debug-panel button that
-forces the collapse. This check has now failed twice (31 Aug, 3 Sep) with
-each attempt separated by days of waiting for the simulation to oblige; the
-31 Aug attribution to the `known_patches` restore crash was wrong, since
-that crash is confirmed fixed in the same 3 Sep pass.
-
-Owner: `plans/now/challenge-2.md`.
-
 ### C-6 -- the deferred recruitment competition fix
 
 The recruitment competition fix (`103d716`) has never been run.

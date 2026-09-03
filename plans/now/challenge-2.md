@@ -1,7 +1,7 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 1 (a developer trigger for a nectar collapse), either lane | Dependency: Slice 1 needs check-loop P-3; Slice 2 needs Slice 1's evidence and Dave's run | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 2 (fix whichever message is missing), not yet startable | Dependency: Slice 2 needs Dave to press the Slice 1 trigger and report which line is missing | Verified: 2026-09-03
 
 **Why this file exists.** The check "neither the rescue message nor the
 recovery/checkpoint-restore message appeared during a Challenge 2 nectar
@@ -20,52 +20,9 @@ attesting a pass, unlike every other confirmed item in the same list.
 
 ## Slice 1 — there is no way to make a nectar collapse happen
 
-**Why this comes first.** Both messages are emitted from
-`challenge_runner.gd::_check_c2_failure()`, and nothing static is wrong with
-either path: `Feedback.gallerin_prompt("challenge_2_rescue")` and
-`"challenge_2_recovery"` both exist in `challenge_feedback.gd`, both are
-passed to `main.gallerin_panel.show_now(...)`, and the thresholds
-(`C2_RESCUE_THRESHOLD = 40`, `C2_FAILURE_FLOOR = 15`) are ordered correctly.
-Reading further is guesswork; what is missing is the ability to make the
-condition happen on demand. This is the same gap `plans/now/ui.md` UI-R-3
-fixes for the warning banner, and the same lesson: a rare state that cannot
-be triggered cannot be checked.
-
-**Fix.** Add a button, "Force Challenge 2 collapse", to the developer
-"Triggers" group that `plans/now/check-loop.md` P-3 builds, styled with the
-same `_style_button` + `UI.with_info` pattern as its neighbours.
-
-- It removes nectar from the hive until `main.hive.total("nectar")` is just
-  below `Stages.C2_RESCUE_THRESHOLD`, using the hive's existing withdrawal
-  API rather than writing cell amounts directly. Read the real constants
-  from `challenge_stages.gd`; do not repeat the numbers.
-- A second press takes it below `Stages.C2_FAILURE_FLOOR`, so the two
-  branches of `_check_c2_failure()` can be reached in order from one run:
-  first the one-time rescue, then the checkpoint restore.
-- It does nothing at all unless `Session.starting_level == 2` and
-  `challenge_runner.active`; say so on the button's info badge.
-
-**Acceptance.** In a Challenge 2 run past stage 2.1, one press drops the
-stores below the rescue threshold and Dr Gallerin's "Ahem. Field
-ecologists..." line appears with 150 nectar restored; a second press drops
-them below the failure floor and the checkpoint restores with the "A brief
-ecological wobble..." line and a live queen. If either line does not appear,
-that is Slice 2's evidence and the exact symptom to report.
-
-**Check:** `tools/verify.ps1`. One hands-on check to file: the acceptance
-above, replacing the "Challenge data/goal-registry extraction" entry in
-`checks/ready.md`.
-
-**Depends on:** `plans/now/check-loop.md` P-3 (the Triggers group). P-3,
-this slice and `plans/now/ui.md` UI-R-3 all own
-`scripts/debug_panel.gd`, so they run one at a time, P-3 first.
-
-**Reasoning level:** low. One file, one existing pattern, and every
-threshold read from `challenge_stages.gd` rather than chosen here.
-
-**Files:** `scripts/debug_panel.gd`.
-
-**Next after:** Slice 2.
+Shipped 2026-09-03; spec archived at
+`plans/archive/CHALLENGE_2_SLICE_1_2026-09-03.md`. Hands-on acceptance is
+`checks/ready.md` C-5.
 
 ## Slice 2 — fix whichever of the two messages does not appear
 
