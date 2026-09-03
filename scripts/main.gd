@@ -459,6 +459,7 @@ func _ready() -> void:
 	add_child(selection_layer)
 
 	hud = Hud.new()
+	hud.main = self
 	hud.role_requested.connect(orders_zones._on_role_requested)
 	hud.view_toggle_requested.connect(camera_view._toggle_view)
 	hud.colony_panel_requested.connect(func(): year_winter._toggle_panel(colony_panel))
