@@ -9,7 +9,13 @@ move the entry to `checks/ready.md` keeping its id; move confirmed checks to
 
 Entries use `checks/ready.md`'s format -- one id, one action, one `PASS:`
 line, one `Owner:` line -- plus a `Blocked by:` line naming what has to ship
-first. The id follows the entry when it moves.
+first. The id follows the entry when it moves, and `tools/check_docs.py`
+fails if it is reused in either file.
+
+The one difference from `checks/ready.md`: a blocked check may write
+`Owner: none` when the plan that owned it has closed, since its `Blocked by:`
+line already says what would give it a new one. Every ready entry must name a
+plan file that exists.
 
 ### C-2 -- a missing font has no visible effect
 

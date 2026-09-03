@@ -19,6 +19,11 @@ plan that owns it. Reply by id -- "C-1 pass", or "C-1 fails: <what I saw>"
 failing it would change what gets built; if the answer is "nothing, we would
 assume it works", do not file it (`plans/now/check-loop.md`).
 
+`tools/check_docs.py` enforces that format from 3 Sep 2026: it fails on an
+entry whose heading does not start `C-<n> -- `, on one with no `PASS:` line,
+on one whose `Owner:` names no plan file or names one that does not exist,
+and on an id used twice across this file and `checks/blocked.md`.
+
 Last pass: **3 Sep 2026**. Sixteen entries went out, eleven came back
 confirmed and are archived. Four failures became slices in their owning
 plans (`plans/now/challenge-1.md` Slices 14-15, `plans/now/hive-comb.md`

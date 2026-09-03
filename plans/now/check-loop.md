@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: P-1 (make the check format enforceable), either lane | Dependency: P-3 before ui.md UI-R-3 and challenge-2 Slice 1; P-2 after UI-S-1 and UI-S-2 | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: P-3 (one home for developer triggers), either lane | Dependency: P-3 before ui.md UI-R-3 and challenge-2 Slice 1; P-2 after UI-S-1 and UI-S-2 | Verified: 2026-09-03
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -15,7 +15,6 @@ change so the same failures stop recurring.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| P-1 | `checks/ready.md`'s entry format enforced by the checker | `tools/check_docs.py`, `checks/*.md` | yes | low |
 | P-3 | One "Triggers" section in the developer area, before anything needs it | `scripts/debug_panel.gd` | yes | low |
 | P-2 | No HUD panel carries its own literal `offset_*` | `tests/source_checks.py` | after UI-S-1 and UI-S-2 | medium |
 
@@ -29,7 +28,7 @@ UI-R-3 and C2-1 each add one button into it.** P-2 still runs last -- it
 enforces numbers that UI-S-1 and UI-S-2 have not moved yet.
 
 **Required reading.** This file's own P-section, plus `tests/source_checks.py`
-for the style P-1 and P-2 both follow. Nothing else.
+for the style P-2 follows. Nothing else.
 
 ## What the 3 Sep pass actually showed
 
@@ -85,40 +84,6 @@ disagree.
    HUD panel file may carry a literal `offset_top`/`offset_left`. Panels
    that share an edge must be derived from one number, not from two
    constants that happen to agree today.
-
-## P-1 — make the check format enforceable
-
-**What changed already (3 Sep, this pass).** `checks/ready.md` was rewritten
-so every entry has a stable id (`C-1`, `C-2`, …), one action, one **PASS:**
-line and a pointer to the slice that owns it. That is what makes a reply
-like "C-4 pass, C-7 fails: <what I saw>" unambiguous; this pass had to
-interpret prose replies, and got at least one item's meaning only from
-context.
-
-**Fix.** Add a `check_checks()` function to `tools/check_docs.py`, in the
-style of `check_next_steps()`, that reads `checks/ready.md` and fails if:
-
-- a `### ` entry heading does not start with an id matching `^C-\d+ -- `;
-- an entry has no line beginning `PASS:`;
-- an entry has no line beginning `Owner:` naming a plan file that exists
-  (reuse the existing Markdown-link/path resolution);
-- two entries share an id.
-
-Then add the same three lines to `checks/blocked.md`'s contract, and make
-the checker skip the file's header block (everything before the first
-`### `).
-
-**Acceptance.** `tools/verify.ps1` fails with a readable message when an
-entry is added without an id or a PASS line, and passes on the file as this
-pass leaves it. No behaviour outside the checker changes.
-
-**Check:** `tools/verify.ps1`, including a deliberate break and repair.
-
-**Files:** `tools/check_docs.py`, `checks/ready.md`, `checks/blocked.md`.
-
-**Reasoning level:** low. A self-contained checker in an established style.
-
-**Next after:** P-3.
 
 ## P-2 — one owner for panel rectangles, enforced
 
