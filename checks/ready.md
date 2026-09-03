@@ -175,12 +175,22 @@ Bundle D hand-over check above passes.
       are all consistent after a save and load, and the settings placement
       (Cell art, Show cell contents text, Sprite-aligned hex grid and
       Direction-even hex speed under Appearance) is right. Archived.
-- [ ] **Found broken 2 Sep:** cell highlight borders do not follow the
-      shape of the cell sprites. Only `selection_ring` traces the cup
-      silhouette; the base outline, the designation ring and the nursery
-      zone glow/halo still use the flat hex and cut through the sprite's
-      raised back wall. Fix is `plans/now/hive-comb.md` Slice 8; re-check
-      after it lands, with cell art on and off, against all four rings.
+- [x] **Found broken 2 Sep, fixed by Slice 8 (HC-8):** cell highlight
+      borders did not follow the shape of the cell sprites -- only
+      `selection_ring` traced the cup silhouette. All five outlines now go
+      through one `_apply_outline_points()` helper, so they cannot disagree.
+      Superseded by the check below.
+- [ ] **Slice 8 (HC-8), all five outlines follow one silhouette.** With
+      Cell art **on**: multi-select a cup, pin a cell to a resource, and
+      open the nursery window over the comb. The selection ring, the
+      designation ring and the nursery glow and halo should all trace the
+      cup's raised back wall rather than cutting through it, and should
+      still be visibly separated from each other (their +6/+4/+2/-3 spacing
+      is unchanged). Check the base outline too, on a cell holding nectar
+      and on one under an overlay. Then turn Cell art **off** mid-run: all
+      of them should snap back to the flat hex within a fraction of a
+      second. A cell part-way through being built is the one deliberate
+      exception -- its stub outline stays flat at both settings.
 
 ### Proximity recruitment (Slice 9)
 - [x] Confirmed 2 Sep, plus X2's headless evidence run: matches do happen.

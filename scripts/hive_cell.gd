@@ -209,6 +209,10 @@ var zone_halo: Line2D
 ## The role tag that stands in for the zone glow's colour when
 ## Session.colour_blind_mode is on -- see set_zone_glow.
 var zone_glow_tag: String = ""
+## Which silhouette the constant-size rings were last built with. A live
+## `Session.use_cell_sprites` toggle re-points them once, in `_refresh`,
+## rather than four rings being rebuilt six times a second forever.
+var _rings_follow_cup: bool = false
 ## A small seal drawn over a closed cell.
 var closed_mark: Line2D
 ## The empty-cell resprite (see `EMPTY_TEXTURE`), shown only while the
@@ -274,7 +278,7 @@ func _ready() -> void:
 	add_child(fill_shape)
 
 	outline = Line2D.new()
-	_set_outline_points(outline, cell_size)
+	_apply_outline_points(outline, cell_size)
 	outline.width = 1.5
 	outline.default_color = Color(0.35, 0.28, 0.12)
 	add_child(outline)
@@ -282,7 +286,7 @@ func _ready() -> void:
 	# a second, brighter ring drawn only when the player has pinned this
 	# cell to one resource
 	designation_ring = Line2D.new()
-	_set_outline_points(designation_ring, cell_size - 3.0)
+	_apply_outline_points(designation_ring, cell_size - 3.0)
 	designation_ring.width = 2.0
 	designation_ring.default_color = Color(1.0, 1.0, 1.0, 0.9)
 	designation_ring.visible = false
@@ -303,18 +307,21 @@ func _ready() -> void:
 	# a drawn outline, and stays legible over any cell contents. Sits
 	# outside the selection ring so the two never overlap.
 	zone_halo = Line2D.new()
-	_set_outline_points(zone_halo, cell_size + 6.0)
+	_apply_outline_points(zone_halo, cell_size + 6.0)
 	zone_halo.width = 7.0
 	zone_halo.default_color = Color(1.0, 1.0, 1.0, 0.22)
 	zone_halo.visible = false
 	add_child(zone_halo)
 
 	zone_glow = Line2D.new()
-	_set_outline_points(zone_glow, cell_size + 4.0)
+	_apply_outline_points(zone_glow, cell_size + 4.0)
 	zone_glow.width = 2.5
 	zone_glow.default_color = Color(1.0, 1.0, 1.0, 0.95)
 	zone_glow.visible = false
 	add_child(zone_glow)
+	# The five rings above were all just pointed at the same silhouette;
+	# `_refresh` re-points them if the setting changes under them.
+	_rings_follow_cup = Session.use_cell_sprites
 
 	# A bar across a sealed cell, so "closed" is visible on the comb and
 	# not only in the popup.
@@ -411,8 +418,8 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 	line.add_point(pts[0])   # close the loop
 
 ## Cell art adds a back wall above the flat hex floor. The raised upper
-## corners make the selection ring trace that cup silhouette instead of
-## visibly cutting through it.
+## corners make a ring trace that cup silhouette instead of visibly
+## cutting through it. Reached only via `_apply_outline_points`.
 func _set_outline_points_cup(line: Line2D, size: float) -> void:
 	line.clear_points()
 	var pts := Shapes.hexagon_points(size, squashed)
@@ -425,13 +432,22 @@ func _set_outline_points_cup(line: Line2D, size: float) -> void:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
-func _set_selection_ring_points() -> void:
-	if selection_ring == null:
+## The single place any ring decides which silhouette it traces. Every
+## ring on the cell goes through here, so the four highlight rings and
+## the base outline can never disagree with each other about whether the
+## cup sprite is being drawn -- which is exactly how the base outline,
+## the designation ring and the two zone rings came to cut through the
+## back wall while the selection ring alone traced it.
+func _apply_outline_points(line: Line2D, size: float) -> void:
+	if line == null:
 		return
 	if Session.use_cell_sprites:
-		_set_outline_points_cup(selection_ring, cell_size + 2.0)
+		_set_outline_points_cup(line, size)
 	else:
-		_set_outline_points(selection_ring, cell_size + 2.0)
+		_set_outline_points(line, size)
+
+func _set_selection_ring_points() -> void:
+	_apply_outline_points(selection_ring, cell_size + 2.0)
 
 ## How often a cell redraws itself. Six times a second, not sixty.
 ##
@@ -861,15 +877,28 @@ func _refresh() -> void:
 	# doesn't need to know or care whether it's actually shown), only its
 	# visibility is gated.
 	info_label.visible = Session.show_cell_contents_text
-	# `use_cell_sprites` can switch live, so keep the selection ring in the
-	# matching shape alongside the empty-sprite visibility below.
-	_set_selection_ring_points()
+	# `use_cell_sprites` can switch live, so keep every ring in the matching
+	# shape alongside the empty-sprite visibility below. Only the toggle
+	# itself changes a constant-size ring's points, so they are rebuilt when
+	# it flips rather than on all six refreshes a second. The base outline
+	# is not in here: it is re-pointed unconditionally below anyway, because
+	# an unfinished cell resizes it as it builds.
+	if Session.use_cell_sprites != _rings_follow_cup:
+		_rings_follow_cup = Session.use_cell_sprites
+		_set_selection_ring_points()
+		_apply_outline_points(designation_ring, cell_size - 3.0)
+		_apply_outline_points(zone_halo, cell_size + 6.0)
+		_apply_outline_points(zone_glow, cell_size + 4.0)
 	if not is_built:
 		# an unfinished cell grows outwards from a stub as it's drawn, so
 		# you can see at a glance how far along it is
 		var f := build_fraction()
 		var drawn_size: float = lerp(cell_size * 0.35, cell_size, f)
 		polygon = Shapes.hexagon_points(drawn_size, squashed)
+		# The one ring that stays flat whatever the setting says: a site
+		# draws no cup sprite at any size (`empty_sprite.visible = false`
+		# below), and the cup's raised back wall is an absolute offset, so
+		# on a 35%-size stub it would tower over the shape it outlines.
 		_set_outline_points(outline, drawn_size)
 		outline.default_color = Color(0.6, 0.5, 0.25, 0.9)
 		outline.visible = true
@@ -882,7 +911,7 @@ func _refresh() -> void:
 		return
 
 	polygon = Shapes.hexagon_points(cell_size, squashed)
-	_set_outline_points(outline, cell_size)
+	_apply_outline_points(outline, cell_size)
 	outline.default_color = Color(0.35, 0.28, 0.12)
 	# An empty cell is drawn as flat colour with no rim, so open comb and
 	# open floor read as one continuous surface instead of a grid of

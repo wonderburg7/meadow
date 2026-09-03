@@ -2,10 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 3 Sep 2026 after UI-R-1 landed.
-UI-R-1 replaced the command tray's centred anchor and `0.924` fudge factor
-with an explicit left edge, so the Claude lane now leads with HC-8 and FE-4
-has been promoted from the ready list to fill the gap.
+Five ready slices in two lanes, rewritten 3 Sep 2026 after HC-8 landed.
+HC-8 routed all five of `hive_cell.gd`'s outlines through one silhouette
+helper, so the Claude lane now leads with C1-13 and SP-1 has been promoted
+from the ready list to fill the gap.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -21,20 +21,24 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] HC-8 -- Cell highlight borders do not follow the cell
-   sprite's silhouette.**
-   - Plan: `plans/now/hive-comb.md` -- Slice 8.
-   - Does: `hive_cell.gd` builds five outlines and only `selection_ring`
-     knows about the cup sprite's raised back wall; the base outline, the
-     designation ring and the nursery zone glow/halo still trace the flat
-     hex and cut through it. Routes all five through one helper that makes
-     the silhouette decision once.
-   - Files: `scripts/hive_cell.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: all four rings
-     follow the cup with Cell art on, and revert instantly when it is off.
-   - Why first: UI-R-1 landed ahead of it in this lane, and it shares no
-     file with X3.
-   - Next after: C1-13.
+1. **[Claude] C1-13 -- The queen's "Now:" line says things Challenge 1 has
+   not taught.**
+   - Plan: `plans/now/challenge-1.md` -- Slice 13.
+   - Does: `bee.gd::task_description()` and `idle_reason()` are one large
+     `match state:` covering every state in the game -- scouting bouts,
+     entrance mentoring, royal jelly, honey fanning -- so a Challenge-1
+     player is shown vocabulary for mechanics the Challenge has deliberately
+     not reached. Adds `challenge_vocabulary_limited()` and falls back to one
+     neutral line outside the permitted set; also suppresses
+     `_idle_backup_note()` while `role_restricted_to` is non-empty.
+   - Files: `scripts/bee.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: read the "Now:"
+     line at every stage to 1.14 with the queen selected, and confirm a
+     Scenario scout still reads "scouting: bout 1 of 3...".
+   - Why first: HC-8 landed ahead of it in this lane, and it is the last
+     Challenge 1 code slice before Slice 7's acceptance pass, which is
+     Dave's to run. It shares no file with X3.
+   - Next after: FE-4.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -51,23 +55,21 @@ what to do -- this file already decided.
      shares no file with anything in the Claude lane.
    - Next after: UI-R-2.
 
-3. **[Claude] C1-13 -- The queen's "Now:" line says things Challenge 1 has
-   not taught.**
-   - Plan: `plans/now/challenge-1.md` -- Slice 13.
-   - Does: `bee.gd::task_description()` and `idle_reason()` are one large
-     `match state:` covering every state in the game -- scouting bouts,
-     entrance mentoring, royal jelly, honey fanning -- so a Challenge-1
-     player is shown vocabulary for mechanics the Challenge has deliberately
-     not reached. Adds `challenge_vocabulary_limited()` and falls back to one
-     neutral line outside the permitted set; also suppresses
-     `_idle_backup_note()` while `role_restricted_to` is non-empty.
-   - Files: `scripts/bee.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: read the "Now:"
-     line at every stage to 1.14 with the queen selected, and confirm a
-     Scenario scout still reads "scouting: bout 1 of 3...".
-   - Why here: it is the last Challenge 1 code slice before Slice 7's
-     acceptance pass, which is Dave's to run.
-   - Next after: FE-4.
+3. **[Claude] FE-4 -- A recruitment dance is happening and cannot be found
+   on screen.**
+   - Plan: `plans/active/foraging-evidence.md` -- Slice 4.
+   - Does: adds a `Session` preference `show_recruitment_highlight` (a
+     presentation key, not a `GameConfig` one) with an Appearance row in
+     `settings_catalogue.gd`, plus a fifth `dance_ring` on `bee.gd` at
+     `outline_radius + 17.0` and an `_update_dance_ring()` modelled line for
+     line on the existing `_update_search_ring()`. Mentor and seeker get
+     different colours so the pair reads as a pair.
+   - Files: `scripts/bee.gd`, `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. The hands-on check is already filed and
+     waiting under `checks/ready.md` § Proximity recruitment (Slice 9).
+   - Why here: it shares `bee.gd` with C1-13, which is fine -- both are in
+     this lane, so they are worked one after the other, never at once.
+   - Next after: SP-1.
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -80,32 +82,32 @@ what to do -- this file already decided.
      unchanged.
    - Next after: UI-R-3.
 
-5. **[Claude] FE-4 -- A recruitment dance is happening and cannot be found
-   on screen.**
-   - Plan: `plans/active/foraging-evidence.md` -- Slice 4.
-   - Does: adds a `Session` preference `show_recruitment_highlight` (a
-     presentation key, not a `GameConfig` one) with an Appearance row in
-     `settings_catalogue.gd`, plus a fifth `dance_ring` on `bee.gd` at
-     `outline_radius + 17.0` and an `_update_dance_ring()` modelled line for
-     line on the existing `_update_search_ring()`. Mentor and seeker get
-     different colours so the pair reads as a pair.
-   - Files: `scripts/bee.gd`, `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. The hands-on check is already filed and
-     waiting under `checks/ready.md` § Proximity recruitment (Slice 9).
-   - Why here: promoted from the ready list when UI-R-1 landed. It shares
-     `bee.gd` with C1-13, which is fine -- both are in this lane, so they
-     are worked one after the other, never at once.
-   - Next after: this lane then pulls SP-1
-     (`plans/now/settings-persistence.md` Slice 1), which is ready.
+5. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
+   hand.**
+   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
+   - Does: `main.gd::_on_scenario_chosen` calls
+     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
+     back over every `GameConfig` field -- including toggles the player set
+     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
+     adds `reset_config_keys()` beside the full reset, and resets only the
+     union of the outgoing preset's keys and the incoming one's.
+   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
+     `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
+     flower/season toggle survives picking a Scenario, and preset A's values
+     do not leak into preset B's run.
+   - Why here: promoted from the ready list when HC-8 landed. It shares
+     `settings_catalogue.gd` with FE-4, which is fine -- both are in this
+     lane and are worked one after the other.
+   - Next after: none -- that plan is one slice unless its acceptance run
+     finds more. This lane then pulls the next ready slice from an owning
+     plan.
 
 ## Ready, not yet in the queue
 
 These pass the admission test and are only out because the queue holds five.
 Promote from here when a lane empties; no extra decision is needed.
 
-- **SP-1** (`plans/now/settings-persistence.md` Slice 1) -- picking a
-  Scenario resets only the keys a preset owns, instead of wiping every
-  `GameConfig` field including the ones the player set by hand.
 - **UI-R-3** (`plans/now/ui.md` UI-R-3) -- a debug-panel button that fires
   named warning-banner cases, so the banner arbitration check can be run at
   all.
@@ -119,10 +121,12 @@ listed so they are not lost, not so they are picked up.
   playthrough. C1-11 removed what stopped the 2 Sep attempt at stage 1.10
   and C1-12 made that class of bug fail the build instead, so this now needs
   only Dave's run: `checks/ready.md` Bundles D and E are the two entries to
-  work through. C1-13 is the one code slice still ahead of it.
-- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
-  headless trace has found the mechanism (every idle Comb Worker piles onto
-  one unfinished site), but capping builders per site changes build
+  work through. C1-13, now at the head of the Claude lane, is the one code
+  slice still ahead of it.
+- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- with HC-8
+  landed these are all that plan has left, and neither is startable. Slice
+  4's headless trace has found the mechanism (every idle Comb Worker piles
+  onto one unfinished site), but capping builders per site changes build
   throughput, so it needs Dave's live look and a call on intended behaviour.
   Slice 5 needs its own live repro.
 - **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
