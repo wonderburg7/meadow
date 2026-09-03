@@ -70,10 +70,10 @@ decided.
      or out of season; watching one across a season boundary flips the line
      at the same moment the `+/s` figures fall away.
    - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-4, the
-     leading Codex item, so it sits below the lane's head rather than at it --
-     promoting it would make both lanes' leading items collide. Landing
-     either it or UI-S-4 clears the pairing.
+   - Why here, not leading: UI-R-3 above it leads this lane, and nothing
+     else in the queue names `scripts/hud.gd`, so this sits below the head
+     purely by lane order. (UI-S-4, which used to pair with it on that file,
+     landed 3 Sep 2026.)
    - Next after: C2-1, fourth in this lane.
 
 4. **[Claude] C2-1 -- A Challenge 2 nectar collapse cannot be made to happen.**
