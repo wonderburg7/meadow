@@ -320,15 +320,31 @@ function Invoke-SliceFinish {
         git push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
-        $maxAttempts = 30
-        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            git worktree remove $worktreeRelative
-            if ($LASTEXITCODE -eq 0) { break }
-            if ($attempt -eq $maxAttempts) { throw "git worktree remove failed" }
-            if ($attempt % 5 -eq 0) {
-                Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
+        $worktreePath = Join-Path $root $worktreeRelative
+        git worktree remove $worktreeRelative
+        if ($LASTEXITCODE -ne 0) {
+            # `git worktree remove` can deregister the worktree and still fail to
+            # delete the directory (an external process briefly holding it open --
+            # OneDrive and the Search Indexer both do this on a freshly emptied
+            # folder, same as a running Godot instance can). Once git has let go
+            # of it, re-running `git worktree remove` just fails with "is not a
+            # working tree" -- retry the plain delete instead.
+            $maxAttempts = 30
+            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+                if (-not (Test-Path -LiteralPath $worktreePath)) { break }
+                try {
+                    Remove-Item -LiteralPath $worktreePath -Recurse -Force -ErrorAction Stop
+                    break
+                }
+                catch {
+                    if ($attempt -eq $maxAttempts) { throw "could not remove $worktreeRelative -- $($_.Exception.Message)" }
+                    if ($attempt % 5 -eq 0) {
+                        Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
+                    }
+                    Start-Sleep -Seconds 3
+                }
             }
-            Start-Sleep -Seconds 3
+            git worktree prune
         }
 
         git branch -d $branch
