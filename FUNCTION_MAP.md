@@ -140,7 +140,7 @@ Challenge goal readout.
 2552 func set_queen_build_button_visible(value: bool) -> void
 ```
 
-## bee.gd (2,360 lines)
+## bee.gd (2,393 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -216,26 +216,27 @@ A bee's dispatch loop, player commands, display text, vars.
 1889 func set_selected(value: bool) -> void
 1893 # --- display ------------------------------------------------------
 1895 func role_letter() -> String
-1913 func idle_reason() -> String
-1964 func task_description() -> String
-2109 func _idle_backup_note() -> String
-2114 func role_name_text() -> String
-2140 func nurse_mode_name() -> String
-2149 func architect_mode_name() -> String
-2155 func carrying_text() -> String
-2176 func age_days() -> float
-2184 func leave_to_found_colony() -> void
-2197 func days_remaining() -> float
-2209 func _update_label() -> void
-2229 func _update_alarm_ring() -> void
-2240 func _update_heading_marker() -> void
-2254 func _update_search_ring() -> void
-2282 func _update_wander_flight(delta: float) -> void
-2313 func _update_dance_circle(delta: float) -> void
-2327 func _terrain_speed_factor() -> float
-2336 func _is_inside_hive() -> bool
-2339 # --- getting round things in the meadow ---------------------------
-2359 func clear_navigation_state() -> void
+1924 func challenge_vocabulary_limited() -> bool
+1937 func idle_reason() -> String
+1990 func task_description() -> String
+2137 func _idle_backup_note() -> String
+2147 func role_name_text() -> String
+2173 func nurse_mode_name() -> String
+2182 func architect_mode_name() -> String
+2188 func carrying_text() -> String
+2209 func age_days() -> float
+2217 func leave_to_found_colony() -> void
+2230 func days_remaining() -> float
+2242 func _update_label() -> void
+2262 func _update_alarm_ring() -> void
+2273 func _update_heading_marker() -> void
+2287 func _update_search_ring() -> void
+2315 func _update_wander_flight(delta: float) -> void
+2346 func _update_dance_circle(delta: float) -> void
+2360 func _terrain_speed_factor() -> float
+2369 func _is_inside_hive() -> bool
+2372 # --- getting round things in the meadow ---------------------------
+2392 func clear_navigation_state() -> void
 ```
 
 ## debug_panel.gd (777 lines)

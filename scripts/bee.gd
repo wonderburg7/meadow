@@ -1900,6 +1900,30 @@ func role_letter() -> String:
 		return "N" if resource_type == "nectar" else "P"
 	return Roles.letter_for(role)
 
+## The states a Challenge has actually taught by the time a bee can be
+## standing in them. Challenge 1 covers foraging, the queen's own laying
+## chain, eating, tending brood and building a cell, and deliberately
+## never reaches scouting bouts, entrance mentoring, dancing, royal
+## jelly, mining spoil or honey fanning -- so the selection panel must
+## not name those while a Challenge is running (Slice 13).
+const CHALLENGE_TAUGHT_STATES := [
+	State.SEEK_FLOWER, State.TO_FLOWER, State.COLLECTING, State.TO_HIVE,
+	State.IN_HIVE_TO_CELL, State.DEPOSITING, State.IN_HIVE_TO_EXIT,
+	State.MOVE_TO_POINT, State.IDLING,
+	State.NURSE_IDLE, State.TO_BROOD, State.TENDING,
+	State.TO_FEED_CELL, State.FEEDING,
+	State.TO_BUILD_SITE, State.BUILDING,
+	State.SEEK_POLLEN, State.TO_POLLEN_CELL, State.EATING,
+	State.TO_CELL_TO_LAY, State.LAYING,
+]
+
+## True while a Challenge is running, which is when the selection panel's
+## vocabulary has to stay inside what the player has been shown. Same
+## is_instance_valid(world) guard bee_foraging.gd's _c1_queen_collections
+## line uses -- world is null on a bee built before main.gd hands it over.
+func challenge_vocabulary_limited() -> bool:
+	return is_instance_valid(world) and world.challenge_runner != null and world.challenge_runner.active
+
 ## Why isn't this bee doing anything?
 ##
 ## "Nothing is happening and I can't tell why" is the worst state to
@@ -1912,6 +1936,8 @@ func role_letter() -> String:
 ## didn't find. Returns "" when the bee is genuinely busy.
 func idle_reason() -> String:
 	if hive == null:
+		return ""
+	if challenge_vocabulary_limited() and not (state in CHALLENGE_TAUGHT_STATES):
 		return ""
 	match state:
 		State.NURSE_IDLE:
@@ -1962,6 +1988,8 @@ func idle_reason() -> String:
 ## shown in the selection panel. Deliberately concrete ("returning
 ## pollen to the hive") rather than naming internal states.
 func task_description() -> String:
+	if challenge_vocabulary_limited() and not (state in CHALLENGE_TAUGHT_STATES):
+		return "busy in the hive"
 	match state:
 		State.SEEK_FLOWER:
 			return "looking for a %s flower" % resource_type
@@ -2107,6 +2135,11 @@ func task_description() -> String:
 ## state, which means _idle_dispatch already tried the secondary role
 ## this frame too and it also came up empty.
 func _idle_backup_note() -> String:
+	# role_restricted_to is exactly the signal that a Challenge is limiting
+	# which roles this bee may hold, so a backup role has not been
+	# introduced yet and naming one would teach it out of order.
+	if not role_restricted_to.is_empty():
+		return ""
 	if secondary_role != -1 and secondary_role != role:
 		return " (backup role %s also has nothing right now)" % Roles.label_for(secondary_role)
 	return ""
