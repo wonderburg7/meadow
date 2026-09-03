@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/P-2` (`claude/P-2`) | Claude | one owner for panel rectangles, enforced. | Claude | in progress | none | `plans/now/check-loop.md` P-2 |
