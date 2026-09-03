@@ -214,6 +214,37 @@ question below was to re-specify the whole bottom row: the tray leads at
 50% of the viewport and its two neighbours fill what is left. See UI-S-1.
 The UI-R-1 check in `checks/ready.md` is replaced by UI-S-1's.
 
+---
+
+### UI-S-1 — the bottom row: the command tray leads, the summary panel and Dr Gallerin follow — shipped 3 Sep 2026
+
+**Ask (Dave, 3 Sep, two reports, one design).**
+
+1. "The buffer gap between summary window and command window is gone --
+   bring it back."
+2. "Command window should be positioned in the centre, taking up 50% of
+   screen width. The summary panel and Dr's speech bubble should react to
+   the command panel's size and fill up the available space if needed, but
+   with the 16px buffer. As the screen is resized, the command window
+   should resize to get smaller and the summary panel and Dr's speech
+   bubble react accordingly."
+
+**Fix.** `ui_layout.gd` now sets the tray to half the viewport until either
+centred side band reaches its minimum width. The summary panel fills the left
+band after its fixed margin and 16px gap; Gallerin's bubble fills the right
+band after the same gap, icon and icon spacing. At 1000px the tray shrinks to
+400px to retain both 300px side bands, and at the supported 800px floor it is
+200px wide with a 300px band each side. `hud.gd` reads the tray's derived
+width and left edge on every viewport resize.
+
+**Acceptance.** At 1920, 1280 and 800px, the command tray is horizontally
+centred, fully on screen, and separated from both neighbours by an equal 16px
+gap. Narrowing the window shrinks the tray before it consumes either gap, and
+the three command groups wrap into additional rows rather than growing wider.
+
+**Evidence.** `tools/verify.ps1` passed; hands-on check C-11 is filed in
+`checks/ready.md`.
+
 ## UI-Q — the warning banner: throttling reinvented per producer, no arbitration at the channel (1 Sep 2026 architecture review)
 
 **Landed 1 Sep 2026 (slice C2).** `hud.gd::show_warning(text, key, min_gap)`

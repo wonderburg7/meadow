@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-S-1` (`codex/UI-S-1`) | Codex | The bottom row: the command tray leads, the summary panel and Dr Gallerin follow. | Codex | in progress | none | `plans/now/ui.md` UI-S-1 |
 | `.worktrees/W-6` (`claude/W-6`) | Claude | Routing is addressable and bounded. | Claude | in progress | none | `plans/now/agent-workflow.md` W-6 |
