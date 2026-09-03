@@ -140,19 +140,13 @@ supported by evidence:
 After integration update canonical state only if the merge makes it
 necessary. The full Codex handoff policy is in `CHATGPT.md`.
 
-**Closeout checklist** — run immediately after integrating any branch
-(Codex hand-off or Claude's own worktree), never deferred:
-
-1. Run `tools/verify.ps1`.
-2. Copy any stated manual check into `checks/ready.md`.
-3. Move the delivered slice's specification out of its `plans/now/` file into
-   `plans/archive/`, leaving a one-line pointer. A shipped slice left in a
-   live plan reads as ready work; `tools/check_docs.py` fails on one.
-4. Refill the queue, and check the promoted item against the code it names
-   before trusting the plan's description of it.
-5. Remove the worktree (`git worktree remove`) and delete the branch
-   (local, and remote if pushed).
-6. Delete its row from `plans/workstreams.md`, from the primary checkout.
+**Closeout:** run `tools/slice.ps1 finish` from inside the slice's worktree,
+immediately after integrating any branch (Codex hand-off or Claude's own
+worktree), never deferred — it verifies, gates on any hands-on check the
+`Check:` line named, commits, merges, pushes, removes the worktree and
+branch, and deletes the ledger row. Claude still moves the delivered slice's
+specification into `plans/archive/` and refills the queue by hand; `finish`
+does not touch either.
 
 A worktree or branch is never kept open solely because a hands-on check is
 still outstanding — the check moves to `checks/ready.md`; the worktree
