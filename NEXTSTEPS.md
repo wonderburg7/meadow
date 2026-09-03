@@ -2,15 +2,18 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Four ready slices in two lanes. FL-1 shipped 3 Sep 2026 and its queue slot
-was not refilled: every other open plan (`ui.md`, `challenge-1.md`,
-`challenge-2.md`, `check-loop.md`, `hive-comb.md`, `progression.md`) was
-checked and none has a slice that is genuinely startable today beyond the
-four below -- everything else needs a hands-on check, a live repro or a
-product decision, which is exactly what does not belong in this list. Rather
-than pull one of those forward as a guess, `tools/check_docs.py`'s queue-size
-check now accepts four or five items (Dave, 3 Sep 2026); the fifth slot
-refills the moment a plan below has real ready work again.
+Four ready slices in two lanes. C2-1 shipped 3 Sep 2026; its own successor
+(Challenge 2 Slice 2) needs Dave's hands-on pass first, so the fourth slot is
+now filled by Colony Diagnostics' first vertical slice
+(`plans/design/colony-diagnostics.md` § 4) instead, which that plan's own
+Status line names as ready the moment a Claude-lane slot is free. Every other
+open plan (`ui.md`, `challenge-1.md`, `check-loop.md`, `hive-comb.md`,
+`flowers.md`, `progression.md`) was checked and has nothing else genuinely
+startable today -- everything else needs a hands-on check, a live repro or a
+product decision, which is exactly what does not belong in this list.
+`tools/check_docs.py`'s queue-size check accepts four or five items (Dave, 3
+Sep 2026); the fifth slot refills the moment a plan below has real ready work
+again.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -39,28 +42,31 @@ decided.
    - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
    - Next after: FL-2, already fourth in this lane.
 
-2. **[Claude] C2-1 -- A Challenge 2 nectar collapse cannot be made to happen.**
-   - Plan: `plans/now/challenge-2.md` -- Slice 1.
-   - Does: adds a "Force Challenge 2 collapse" button to the Triggers group
-     P-3 built, styled with the same `_style_button` + `UI.with_info` pattern
-     as its neighbours. One press withdraws nectar until the hive sits just
-     below `Stages.C2_RESCUE_THRESHOLD`; a second press takes it below
-     `Stages.C2_FAILURE_FLOOR`, so both branches of
-     `challenge_runner.gd::_check_c2_failure()` can be reached in order from
-     one run. Thresholds are read from `challenge_stages.gd`, never repeated.
-     It does nothing unless `Session.starting_level == 2` and the runner is
-     active, which the info badge says.
-   - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: the plan's
-     acceptance, replacing `checks/ready.md`'s "Challenge data/goal-registry
-     extraction" entry.
-   - Proof: `absent: scripts/debug_panel.gd :: Force Challenge 2 collapse`
-   - Why leading in this lane: FL-1, which led before it, shipped 3 Sep
-     2026; its queue slot was not refilled (see the note at the top of this
-     file).
-   - Next after: `plans/now/challenge-2.md` Slice 2, once Dave has pressed
-     the button and reported which line is missing (not yet ready --
-     check-loop P-2 fills this lane's second slot instead).
+2. **[Claude] CD-1 -- One computation, not three, for the diagnostics
+   the HUD already shows.**
+   - Plan: `plans/design/colony-diagnostics.md` -- § 4, First vertical slice.
+   - Does: adds `colony_diagnostics.gd::compute(main, bees) -> Dictionary`,
+     moving the per-bee loop and the two `cells_holding(...)` walks
+     currently inline in `year_winter.gd::_refresh_signals` into one
+     function. `_refresh_signals` calls it once and reads the same key
+     names from the returned dict instead of its local variables;
+     `_refresh_panels` and `_winter_forecast()` take the dict (or its
+     `bees_count`) as a parameter instead of recomputing or re-fetching it.
+     `_sample_history()`'s separate cadence is untouched. No behaviour
+     change -- same values, computed once per signal-tick instead of two or
+     three times.
+   - Files: `scripts/colony_diagnostics.gd` (new), `scripts/year_winter.gd`.
+   - Check: `tools/verify.ps1`. No hands-on check: the acceptance is that
+     the problem-strip lines, Colony/Nursery panel readouts and winter
+     forecast show identical values before and after, for the same
+     save/seed -- nothing about what the player sees is meant to change.
+   - Proof: `absent: scripts/year_winter.gd :: ColonyDiagnostics`
+   - Why here: C2-1, which led this lane, shipped 3 Sep 2026; its successor
+     is not yet startable (see "Not in the queue" below), so this plan's own
+     Status line (ready "once a Claude-lane slot is free") fills the gap
+     instead.
+   - Next after: none yet named -- read `plans/design/colony-diagnostics.md`
+     § 5-7 to pick the next fact once this lands.
 
 3. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
    - Plan: `plans/now/check-loop.md` -- P-2.
@@ -113,10 +119,10 @@ They are listed so they are not lost, not so they are picked up.
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
   thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
-  of the rescue and recovery lines does not appear. Needs C2-1 (second in
-  the queue, leading the Claude lane) to ship and Dave to press the button;
-  there is no static defect to fix blind, and guessing has already failed
-  twice.
+  of the rescue and recovery lines does not appear. C2-1 shipped 3 Sep 2026
+  (its "Force Challenge 2 collapse" trigger is `checks/ready.md` C-5); this
+  now needs Dave to press it and report which line is missing. There is no
+  static defect to fix blind, and guessing has already failed twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
