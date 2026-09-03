@@ -44,6 +44,14 @@ const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const QueenHeartsVfx = preload("res://scripts/queen_hearts_vfx.gd")
 const BeeSpeechBubble = preload("res://scripts/bee_speech_bubble.gd")
+const Bee = preload("res://scripts/bee.gd")
+## Slice 14: 1.11/1.13's camera-follow and 4x speed belong to the moment the
+## queen actually sets off foraging, not to stage entry -- she has to be
+## selected to be given the Forager role, and selection clears camera-follow
+## (see _apply_stage_gate_to_ui). These are the states that mean "she's on
+## her way", so _process() below fires the effects the first time she's seen
+## in one of them.
+const CHALLENGE1_FORAGE_TRIGGER_STATES = [Bee.State.SEEK_FLOWER, Bee.State.TO_FLOWER, Bee.State.INSPECTING, Bee.State.COLLECTING]
 ## Stage records, prompt records and static targets/timings for both
 ## Challenges -- pure data, see challenge_stages.gd's own header.
 const Stages = preload("res://scripts/challenge_stages.gd")
@@ -111,6 +119,10 @@ var _c1_base_pollen_rate: float = -1.0
 ## -- 1.8/1.9's own goal counter, since flower_cooldowns.size() (bee.gd) also
 ## grows on a rejected flower and isn't a stage-scoped measurement (Slice 10f).
 var _c1_queen_collections: int = 0
+## Slice 14: guards the once-per-stage firing of 1.11/1.13's camera-follow
+## and speed-up, so _process() doesn't re-trigger them every frame she's
+## seen foraging. Cleared on every stage entry, so 1.13 fires its own copy.
+var _c1_forage_effects_done: bool = false
 
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
@@ -143,6 +155,7 @@ func start() -> void:
 	_c1_base_nectar_rate = -1.0
 	_c1_base_pollen_rate = -1.0
 	_c1_queen_collections = 0
+	_c1_forage_effects_done = false
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -194,6 +207,8 @@ func _process(delta: float) -> void:
 		return
 	if Session.starting_level == 1 and _stage_index == 0:
 		_drive_opening_mine()
+	if Session.starting_level == 1:
+		_drive_c1_forage_effects()
 	if _greeting_active:
 		_drive_greeting(delta)
 	if _hearts_timer > 0.0:
@@ -289,8 +304,10 @@ func _queen_allowed_role_ids(entries: Array) -> Array:
 
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
-	_run_stage_effects(stage.get("on_enter", []))
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
+	# Slice 14: fresh per stage, so 1.13 fires its own camera/speed effects
+	# independently of 1.11's.
+	_c1_forage_effects_done = false
 	# The one place player_driven is ever written. A stage that does not
 	# declare the key drives nothing, so the flag clears itself on the way
 	# out of the manual-forage arc without a matching list to maintain.
@@ -329,6 +346,11 @@ func _enter_stage() -> void:
 		_new_worker.get_parent().add_child(bubble)
 		bubble.show_text(_new_worker, Stages.FAREWELL_LINE)
 	main.gallerin_panel.queue_prompts(stage.prompts)
+	# Run on_enter last, not first: _apply_stage_gate_to_ui() above ends in
+	# update_selection(), whose first line clears camera-follow, so an effect
+	# set any earlier in this function is undone before the stage is done
+	# entering. tests/source_checks.py enforces this ordering.
+	_run_stage_effects(stage.get("on_enter", []))
 	main.TutorialCheckpoint.save(main)
 
 	if Session.starting_level == 2:
@@ -509,6 +531,7 @@ func debug_advance_stage() -> void:
 func _complete() -> void:
 	active = false
 	queen_command_locked = false
+	_c1_forage_effects_done = false
 	main.fog_of_war.set_hive_reveal_mode("")
 	main.fog_of_war.permanent_reveal_override = false
 	PlayerProfile.mark_challenge_complete(Session.starting_level)
@@ -688,6 +711,26 @@ func _opening_tunnel_cleared() -> bool:
 		if is_instance_valid(block):
 			return false
 	return true
+
+## Slice 14: 1.11/1.13's camera-follow and 4x speed fire the moment the queen
+## is actually seen setting off to forage, not at stage entry -- stage entry
+## is while the player is still being asked to select her and assign the
+## Forager role, and selecting her clears camera-follow (see
+## _apply_stage_gate_to_ui). Runs every frame Challenge 1 is active; the
+## stage-id and _c1_forage_effects_done checks make it a no-op outside the
+## one moment it's for.
+func _drive_c1_forage_effects() -> void:
+	if _c1_forage_effects_done:
+		return
+	var stage_id: String = _stages()[_stage_index].id
+	if stage_id != "1.11" and stage_id != "1.13":
+		return
+	if not is_instance_valid(main.queen):
+		return
+	if main.queen.state not in CHALLENGE1_FORAGE_TRIGGER_STATES:
+		return
+	_c1_forage_effects_done = true
+	_run_stage_effects(["camera_follow_queen", "speed_multiplier:4.0"])
 
 ## Called by main.gd right after every brood hatch, for every hatch in the
 ## game -- a no-op unless Challenge 1 is actually waiting on this one

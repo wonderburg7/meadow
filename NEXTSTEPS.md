@@ -21,31 +21,33 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] C1-14 -- at 1.11 the queen is given the Forager role and then
-   stands still, and the stage's camera-follow never fires.**
-   - Plan: `plans/now/challenge-1.md` -- Slice 14.
-   - Does: two root causes, one stage. `flower_switch_locked` is read as
-     "stop" in six places -- `bee_foraging.gd::finish_collecting()` returns
-     `State.IDLING` before its crop-full test even runs -- so 1.11's
-     `lock_flower_target:queen` parks her at the first flower she finishes.
-     Separately, `challenge_runner.gd::_enter_stage()` runs a stage's
-     `on_enter` effects as its *first* statement and then calls
-     `_apply_stage_gate_to_ui()`, whose `update_selection` emits
-     `follow_bee_toggled(null, false)` -- so `camera_follow_queen` is
-     cancelled by the same function that set it. Fixes the lock's meaning,
-     moves the effects to the end of `_enter_stage`, fires 1.11/1.13's
-     camera and speed when she actually starts foraging, and adds a source
-     check so an effect can never again be undone at entry.
-   - Files: `scripts/bee_foraging.gd`, `scripts/bee.gd`,
-     `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`,
-     `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`, including breaking and repairing the new
-     source check. One hands-on check to file: at 1.11 the camera follows
-     her and the speed goes to 4x as she sets off, and she runs the whole
-     flower/hive/cell loop until the cell is full.
-   - Why first: it is the only thing between Dave and the Challenge 1
-     acceptance playthrough, and it shares no file with X3.
-   - Next after: C1-15.
+1. **[Claude] C1-15 -- the queen's "Now:" line should say "waiting for
+   instruction" plus what to do at this stage, rather than narrating what
+   she cannot do.**
+   - Plan: `plans/now/challenge-1.md` -- Slice 15.
+   - Does: a stage waiting for the player currently shows lines like "Now:
+     looking for brood work. No pollen in the comb - she can't eat so she
+     can't lay..." -- untaught-mechanics filtering (Slice 13) doesn't catch
+     this because the vocabulary itself is taught, it's just the wrong thing
+     to say while she's idle waiting for an instruction. Adds a short
+     `"instruction"` string to each `STAGES_1` entry naming what the player
+     should do next, a `challenge_runner.gd::current_stage_instruction()`
+     reader, and a `hud.gd` branch that renders "Now: waiting for
+     instruction -- <instruction>" whenever a Challenge is running, the bee
+     is the queen, and she has no task of her own (`IDLING`/`NURSE_IDLE`/
+     `player_driven`) -- `task_description()` itself is untouched.
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`,
+     `scripts/hud.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: play Challenge 1
+     to 1.14 with the queen selected -- every waiting stage reads "Now:
+     waiting for instruction -- <the action>", every working stage still
+     describes what she's doing -- replacing the Slice 13 entry in
+     `checks/ready.md`.
+   - Why first: it is the last thing between Dave and the Challenge 1
+     acceptance playthrough (Slice 7), and it shares no file with X3.
+   - Next after: Slice 7's acceptance pass -- Dave's run, so nothing is
+     promoted into this lane from `challenge-1.md` itself; refill from
+     `## Ready, not yet in the queue` when this lands.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -111,9 +113,6 @@ what to do -- this file already decided.
 All of these can be started today; they are out of the queue only because it
 holds five. Take one when a lane empties, in roughly this order.
 
-- **C1-15** (`plans/now/challenge-1.md` Slice 15) -- the queen's "Now:" line
-  should say "waiting for instruction" plus what to do at this stage, rather
-  than narrating what she cannot do. Claude lane, after C1-14.
 - **UI-S-1** (`plans/now/ui.md`) -- the bottom row re-specified: the command
   tray takes half the viewport, centred, and the summary panel and Dr
   Gallerin's bubble fill what is left with one 16px gap each. Supersedes
@@ -146,8 +145,8 @@ Each of these needs something from Dave, or something else to ship first.
 They are listed so they are not lost, not so they are picked up.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough. C1-14 and C1-15 are what it is waiting for; with those in, it
-  is Dave's run and the last thing that plan needs.
+  playthrough. C1-15 is what it is waiting for; with that in, it is Dave's
+  run and the last thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
   of the rescue and recovery lines does not appear. Needs C2-1 to ship and
   Dave to press the button; there is no static defect to fix blind, and

@@ -45,3 +45,19 @@ Owner: `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice C2. The paired C1
 half of that fix -- the panel's `+/s` reflecting season and senescence --
 was confirmed on 3 Sep (a dandelion reading `+0.00/s` on day 23) and is
 archived.
+
+### C-7 -- 1.11/1.13's automatic foraging: camera-follow and 4x speed fire as she sets off
+
+Shipped 3 Sep 2026. Replaces the 9i acceptance clause. At 1.11, give the
+queen the Forager role with nectar focus: she should not pause on the
+first flower she finishes -- she works one flower, flies home, deposits,
+and goes back out, repeating until the nectar cell is full. The camera
+starts following her and the game speed jumps to 4x the moment she sets
+off (not at the moment the role is assigned), and both switch off again
+when the stage ends. The same at 1.13 for pollen.
+
+PASS: at 1.11, giving her Forager/nectar starts an unattended loop with
+camera-follow and 4x speed visibly firing as she sets off, not before;
+the same at 1.13 for pollen; both stop at stage end.
+
+Owner: `plans/now/challenge-1.md` Slice 14.
