@@ -34,7 +34,7 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became
 `plans/now/check-loop.md`.
 
-### C-15 -- pre-run menu left inset
+### C-16 -- pre-run menu left inset
 
 Open the pre-run menu at the usual viewport, then choose several left-pane
 tiles. Confirm the leftmost tile and its text clear the screen edge
