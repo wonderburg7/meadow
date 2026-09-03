@@ -355,16 +355,22 @@ func _toggle_panel(panel: CanvasLayer) -> void:
 	if panel == main.nursery_panel:
 		_on_nursery_window_requested()
 		return
-	if main.nursery_panel.is_open():
-		main.nursery_panel.close()
-	panel.toggle()
+	if panel.is_open():
+		panel.close()
+		return
+	_close_other_left_windows(panel)
+	panel.open()
+
+func _close_other_left_windows(opening: CanvasLayer) -> void:
+	for window in [main.colony_panel, main.foraging_panel, main.nursery_panel]:
+		if window != opening and window.is_open():
+			window.close()
 
 func _on_nursery_window_requested() -> void:
 	if main.nursery_panel.is_open():
 		main.nursery_panel.close()
 		return
-	if main.colony_panel.is_open():
-		main.colony_panel.toggle()
+	_close_other_left_windows(main.nursery_panel)
 	main.nursery_panel.open()
 	if not main.in_hive_view:
 		main.in_hive_view = true

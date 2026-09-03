@@ -17,6 +17,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
 ## Emitted when a role tally is clicked. `focus` narrows foragers to one
@@ -59,6 +60,8 @@ const PLOT_SERIES := [
 ]
 
 var panel: PanelContainer
+var main: Node2D
+var scroll_container: ScrollContainer
 var count_labels: Dictionary = {}   # count key -> Button
 var stat_labels: Dictionary = {}    # stat key -> Label
 var star_buttons: Dictionary = {}   # stat key -> Button
@@ -87,20 +90,25 @@ func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 11
 	add_to_group("colony_panel")
+	main = get_parent() as Node2D
 
 	panel = PanelContainer.new()
 	panel.theme = UiTheme.build_theme()
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.offset_left = 16
-	panel.offset_top = 60
 	panel.custom_minimum_size = Vector2(330, 0)
 	panel.visible = false
 	add_child(panel)
 
+	scroll_container = ScrollContainer.new()
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	panel.add_child(scroll_container)
+
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
-	panel.add_child(column)
+	scroll_container.add_child(column)
 
 	var title := Label.new()
 	title.text = "Colony"
@@ -146,6 +154,7 @@ func _ready() -> void:
 	favourites_column.add_child(favourites_empty_label)
 
 	_build_plot(_section(column, "Over time", false))
+	get_viewport().size_changed.connect(_apply_left_window_rect)
 
 ## The five states a plain Godot Button actually looks up ("selected" and
 ## "locked" from UiTheme's seven apply to custom-drawn controls like the
@@ -358,8 +367,25 @@ func _draw_plot() -> void:
 		int(round((float(history[count - 1].t) - float(history[0].t)) / 60.0)),
 	]
 
+func _apply_left_window_rect() -> void:
+	var top := UiLayout.left_window_top(main.hud.corner_bottom())
+	panel.offset_top = top
+	scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
+		get_viewport().get_visible_rect().size.y, top
+	)
+
 func toggle() -> void:
-	panel.visible = not panel.visible
+	if panel.visible:
+		close()
+	else:
+		open()
+
+func open() -> void:
+	_apply_left_window_rect()
+	panel.visible = true
+
+func close() -> void:
+	panel.visible = false
 
 func is_open() -> bool:
 	return panel.visible
