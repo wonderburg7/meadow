@@ -1,7 +1,7 @@
 # Foraging evidence and validation -- active campaign
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 4 (make a recruitment dance findable on screen), Claude lane | Dependency: none | Verified: 2026-09-02
+Status: active | Owner: Dave / Claude Code | Next: Slice 5 (the forager-return counter is not in either headless read-out), Claude lane | Dependency: none | Verified: 2026-09-03
 
 Three findings from Dave's 31 Aug hands-on pass against `checks/ready.md`'s
 Foraging window, Proximity recruitment and Safe forager return reserve
@@ -19,9 +19,12 @@ its hands-on check is still open in `checks/ready.md`'s "Safe forager return
 reserve" entry. Slice 2 shipped as `codex/x2` (merged 2 Sep 2026) and its
 result is recorded in place below -- it needed no hands-on check.
 
-Slice 4 below came out of Dave's 2 Sep hands-on pass and is implementable
+Slice 4 came out of Dave's 2 Sep hands-on pass and shipped as `claude/fe-4`
+on 3 Sep 2026; its hands-on check is open in `checks/ready.md`'s "Proximity
+recruitment" entry. Slice 5 was found while filing it, and is implementable
 now. Slices 2 and 3 are kept here rather than archived because Slice 4's
-acceptance reads against Slice 2's finding.
+acceptance reads against Slice 2's finding, and because Slice 3's own check
+is still open.
 
 ## Slice 2 -- Proximity recruitment: wiring confirmed clean in static code; needs a validated live/headless run before touching thresholds
 
@@ -190,8 +193,65 @@ covered by this slice -- those bees wait at a fixed, already-obvious place.
 above, replacing the archived Proximity recruitment entry's "watch for a
 forager briefly circling another one indoors" clause.
 
+**Result (3 Sep 2026, `claude/fe-4`): shipped as planned, with two
+departures worth recording.** The row went into the **Appearance**
+category as specified rather than beside `show_forager_labels`, which
+turned out to live under **Foraging**, not Appearance -- the category was
+the load-bearing half of that instruction and the adjacency was not.
+`show_recruitment_highlight` was also added to `player_profile.gd`'s
+`PREFERENCE_KEYS`, which the plan did not list: without it the toggle
+would reset every launch, unlike every other Appearance toggle. The ring
+sits at `outline_radius + 17.0` outside `search_ring`'s `+14.0`, pulses at
+its own `DANCE_RING_PULSE_HZ` of 2.4 (faster than `search_ring`'s 1.6, so
+the two read as different events even at the same moment), and takes its
+colour per frame from `dance_role` since which of the two a bee wears is
+not known until she dances. With the toggle off `_update_dance_ring` is
+one boolean read and, at most, one hide -- the off-screen check and every
+trig call sit behind it.
+
 **Files:** `scripts/bee.gd`, `scripts/settings_catalogue.gd`,
 `scripts/session.gd`.
 
-**Next after:** Slice 3's live confirmation of the forager-return counter,
-which is Dave's, not a queue slice.
+**Next after:** Slice 5.
+
+## Slice 5 -- The forager-return counter cannot be read from a headless run
+
+**Found 3 Sep 2026, while filing Slice 4.** Slice 3's whole point was to
+make the emergency recall (`bee_survival.gd::check_critical_recall`)
+checkable *by number* over a long run instead of by a lucky visual catch.
+The counter itself shipped: `diagnostic_log.gd` declares
+`_forager_returns_triggered`, increments it in `log_forager_return`, resets
+it beside `_orientation_flights`/`_recruitment_matches`, answers
+`event_count("forager_return")`, and `foraging_panel.gd` prints it as
+"Forager returns triggered". So a player watching the panel can read it.
+
+**The gap is that a headless run cannot.** `_orientation_flights` and
+`_recruitment_matches` each appear in *both* of the two read-outs a
+scenario run produces -- `end_session`'s run-total dictionary
+(`"orientation_flights"`, `"recruitment_matches"`) and `_snapshot`'s
+periodic `foraging` block (`"orientation_flights_total"`).
+`_forager_returns_triggered` is in neither. That is exactly the read Slice
+3's own "Action, once the counter exists" asks for: rerun with foragers
+working the edge of the meadow, or with rain on, and see whether the count
+moves. Slice 2 answered its question that way and Slice 3 cannot, for want
+of two dictionary entries.
+
+**Fix.** Add `"forager_returns_triggered": _forager_returns_triggered` to
+`end_session`'s totals dictionary beside `"orientation_flights"`, and
+`"forager_returns_total": _forager_returns_triggered` to `_snapshot`'s
+`foraging` block beside `"orientation_flights_total"`. Nothing else: the
+counter, its reset and its panel row are all already correct, and no other
+file reads either dictionary by a fixed key set.
+
+**Acceptance.** A scenario run's snapshots and its end-of-run summary both
+carry a forager-return figure, so Slice 3's sparse/long-range rerun can be
+done headlessly and read like Slice 2's was, without a live watch.
+
+**Check:** `tools/verify.ps1`. No hands-on check -- it is two read-only
+dictionary entries, and the acceptance is a headless run's own output.
+
+**Files:** `scripts/diagnostic_log.gd`.
+
+**Next after:** none. Both remaining items in this plan are then Dave's
+runs: Slice 3's sparse/long-range confirmation and Slice 4's acceptance.
+Archive this file once those two checks are confirmed.

@@ -332,6 +332,11 @@ const TUNABLES := [
 		"category": "Appearance",
 		"tip": "On the squashed hex grid, make a bee take the same time to cross one hex-edge in any of the six directions. Off reproduces the older behaviour, where speed is constant in squashed screen pixels and vertical travel is faster than sideways travel. Applies immediately; only matters while Sprite-aligned hex grid is on.",
 	},
+	{
+		"key": "show_recruitment_highlight", "label": "Highlight recruitment dances", "toggle": true,
+		"category": "Appearance",
+		"tip": "Ring the two bees in a recruitment dance so the pair can be found in a crowd on the comb -- the mentor in warm yellow, the struggling forager she is dancing at in cool blue. The rings appear when the dance starts and vanish the moment it ends. Off costs nothing and is the default; it changes nothing about recruitment itself, only whether you can see it happen.",
+	},
 
 	# --- Brood & the queen ---
 	{
@@ -945,6 +950,7 @@ const SESSION_KEYS := [
 	"show_info_badges", "colour_blind_mode",
 	"show_flower_amounts", "show_cell_contents_text", "use_cell_sprites",
 	"use_sprite_hex_grid", "use_radial_hex_speed", "show_forager_labels",
+	"show_recruitment_highlight",
 	"gallerin_enabled", "show_crab_spiders",
 	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
 	"tooltip_delay", "show_speed_8x", "show_interface_labels",

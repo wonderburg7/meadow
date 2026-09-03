@@ -164,6 +164,14 @@ var use_radial_hex_speed: bool = true
 ## affect other roles' labels.
 var show_forager_labels: bool = true
 
+## Whether the two bees in an in-progress recruitment dance are ringed so
+## they can be picked out of a crowd on the comb (mentor warm yellow,
+## seeker cool blue). Presentation only -- it must never gate the
+## recruitment mechanism itself, which is why this lives here and not in
+## GameConfig. Off by default, and off costs one boolean read per forager
+## per frame. See bee.gd's _update_dance_ring.
+var show_recruitment_highlight: bool = false
+
 ## Dev-only: keeps a flower's crab spider marker visible all the time
 ## instead of only flashing on an attack/relocation. Off means the
 ## normal, mostly-invisible presentation; see CRAB_SPIDER_PLAN.md

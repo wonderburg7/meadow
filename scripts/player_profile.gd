@@ -34,6 +34,7 @@ const PREFERENCE_KEYS := [
 	"warn_on_discard", "gallerin_enabled", "show_flower_amounts",
 	"show_cell_contents_text", "use_cell_sprites", "use_sprite_hex_grid",
 	"use_radial_hex_speed", "show_forager_labels", "show_speed_8x",
+	"show_recruitment_highlight",
 	"show_selection_identity", "show_selection_energy",
 	"show_selection_activity", "show_selection_trait",
 	"ui_theme", "ui_typeface", "text_scale", "reduced_motion",

@@ -2,11 +2,10 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, rewritten 3 Sep 2026 after C1-13 landed.
-C1-13 was the last Challenge 1 code slice, so that plan now has only Slice
-7's acceptance playthrough left, which is Dave's run rather than a queue
-item. The Claude lane moves on to FE-4, and UI-R-3 has been promoted from
-the ready list to fill the gap.
+Five ready slices in two lanes, rewritten 3 Sep 2026 after FE-4 landed.
+FE-4 was the last of `plans/active/foraging-evidence.md`'s planned slices,
+but filing its check turned up one more that is startable today (FE-5), so
+the Claude lane now leads with SP-1 and follows with that.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -22,21 +21,23 @@ what to do -- this file already decided.
 
 ## Next up
 
-1. **[Claude] FE-4 -- A recruitment dance is happening and cannot be found
-   on screen.**
-   - Plan: `plans/active/foraging-evidence.md` -- Slice 4.
-   - Does: adds a `Session` preference `show_recruitment_highlight` (a
-     presentation key, not a `GameConfig` one) with an Appearance row in
-     `settings_catalogue.gd`, plus a fifth `dance_ring` on `bee.gd` at
-     `outline_radius + 17.0` and an `_update_dance_ring()` modelled line for
-     line on the existing `_update_search_ring()`. Mentor and seeker get
-     different colours so the pair reads as a pair.
-   - Files: `scripts/bee.gd`, `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. The hands-on check is already filed under
-     `checks/ready.md` § Proximity recruitment (Slice 9).
-   - Why first: C1-13 landed ahead of it in this lane and touched the same
-     file, so this is the next one to take. It shares no file with X3.
-   - Next after: SP-1.
+1. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
+   hand.**
+   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
+   - Does: `main.gd::_on_scenario_chosen` calls
+     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
+     back over every `GameConfig` field -- including toggles the player set
+     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
+     adds `reset_config_keys()` beside the full reset, and resets only the
+     union of the outgoing preset's keys and the incoming one's.
+   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
+     `scripts/settings_catalogue.gd`.
+   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
+     flower/season toggle survives picking a Scenario, and preset A's values
+     do not leak into preset B's run.
+   - Why first: FE-4 landed ahead of it in this lane and this was its
+     `Next after:`. It shares no file with X3.
+   - Next after: FE-5.
 
 2. **[Codex] X3 -- Buttons that read as buttons at rest, game-wide.**
    - Plan: `plans/now/ui.md` -- UI-P-2.
@@ -53,25 +54,23 @@ what to do -- this file already decided.
      shares no file with anything in the Claude lane.
    - Next after: UI-R-2.
 
-3. **[Claude] SP-1 -- Picking a Scenario wipes settings the player set by
-   hand.**
-   - Plan: `plans/now/settings-persistence.md` -- Slice 1.
-   - Does: `main.gd::_on_scenario_chosen` calls
-     `SettingsCatalogue.reset_config_to_defaults()`, which writes the default
-     back over every `GameConfig` field -- including toggles the player set
-     themselves. Records the key set each `ScenarioPresets.apply()` wrote,
-     adds `reset_config_keys()` beside the full reset, and resets only the
-     union of the outgoing preset's keys and the incoming one's.
-   - Files: `scripts/main.gd`, `scripts/scenario_presets.gd`,
-     `scripts/settings_catalogue.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: a hand-set
-     flower/season toggle survives picking a Scenario, and preset A's values
-     do not leak into preset B's run.
-   - Why here: it shares `settings_catalogue.gd` with FE-4, which is fine --
-     both are in this lane and are worked one after the other, never at once.
-   - Next after: none -- that plan is one slice unless its acceptance run
-     finds more. This lane then pulls the next ready slice from an owning
-     plan.
+3. **[Claude] FE-5 -- The forager-return counter cannot be read from a
+   headless run.**
+   - Plan: `plans/active/foraging-evidence.md` -- Slice 5.
+   - Does: `_forager_returns_triggered` is counted, reset and shown in the
+     Foraging window, but appears in neither read-out a scenario run
+     produces -- unlike `_orientation_flights`, which is in both. Adds
+     `"forager_returns_triggered"` to `end_session`'s totals dictionary and
+     `"forager_returns_total"` to `_snapshot`'s `foraging` block, so Slice
+     3's sparse/long-range rerun can be read the way Slice 2's was. Two
+     dictionary entries; the counter itself is already correct.
+   - Files: `scripts/diagnostic_log.gd`.
+   - Check: `tools/verify.ps1`. No hands-on check -- the acceptance is a
+     headless run's own output.
+   - Why here: found while filing FE-4's check, and it shares no file with
+     anything else in the queue.
+   - Next after: none -- that plan then has only Dave's two runs left. This
+     lane pulls its next slice from an owning plan.
 
 4. **[Codex] UI-R-2 -- Pre-run menu: the left edge still needs more room.**
    - Plan: `plans/now/ui.md` -- UI-R-2.
@@ -98,15 +97,14 @@ what to do -- this file already decided.
    - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s
      banner-arbitration entry, which names this slice as its unblocker;
      move that entry to `checks/ready.md` when this lands.
-   - Why here: promoted from the ready list when C1-13 landed. It shares no
-     file with anything else in the queue.
+   - Why here: it shares no file with anything else in the queue.
    - Next after: none in this plan's UI-R group -- the lane then pulls from
      `plans/now/ui.md`'s remaining items or another owning plan.
 
 ## Ready, not yet in the queue
 
-Empty as of 3 Sep 2026: UI-R-3 was the last item here and has been promoted
-into the queue. Everything else in the owning plans is listed below instead.
+Empty as of 3 Sep 2026. FE-5 was written and queued in the same pass that
+landed FE-4, and every other item in the owning plans is listed below.
 
 ## Not in the queue, and why
 
@@ -120,6 +118,12 @@ listed so they are not lost, not so they are picked up.
   "Now:" line naming mechanics the Challenge has not taught. It now needs
   only Dave's run: `checks/ready.md` Bundles D and E, plus the new
   selection-panel vocabulary entry, are the three to work through.
+- **Foraging evidence Slices 3 and 4** (`plans/active/foraging-evidence.md`)
+  -- both are hands-on runs rather than code. Slice 3 wants a sparse or
+  long-range meadow (or rain) to make the emergency recall fire at all;
+  FE-5 above is what makes that run readable. Slice 4 is the new
+  recruitment-dance highlight's acceptance, filed under `checks/ready.md`
+  section "Proximity recruitment".
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- with HC-8
   landed these are all that plan has left, and neither is startable. Slice
   4's headless trace has found the mechanism (every idle Comb Worker piles
