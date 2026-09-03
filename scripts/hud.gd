@@ -501,7 +501,7 @@ func _ready() -> void:
 ## either tray's width; bee/cell/flower content must not.
 func _on_viewport_size_changed() -> void:
 	_apply_selection_tray_width()
-	_update_command_tray_width()
+	call_deferred("_resize_command_tray")
 
 func _make_label(pos: Vector2, variation: String = "Body") -> Label:
 	var l := Label.new()
@@ -984,6 +984,7 @@ func _build_command_tray() -> void:
 	more_button.pressed.connect(func():
 		more_panel_open = more_button.button_pressed
 		more_panel.visible = more_panel_open
+		call_deferred("_resize_command_tray")
 	)
 	column.add_child(more_button)
 
@@ -1114,6 +1115,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_more_button.pressed.connect(func():
 		cell_more_open = cell_more_button.button_pressed
 		cell_more_panel.visible = cell_more_open
+		call_deferred("_resize_command_tray")
 	)
 	cell_group.add_child(cell_more_button)
 
@@ -1514,8 +1516,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	hatch_row.queue_sort()
 	command_tray.visible = true
 	_refresh_cell_popup()
-	_update_command_tray_width()
-	call_deferred("_update_command_tray_width")
+	call_deferred("_resize_command_tray")
 
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
@@ -1963,10 +1964,12 @@ func update_selection(bees: Array) -> void:
 	cell_group.visible = false
 	command_columns.visible = true
 	if bees.is_empty():
+		call_deferred("_resize_command_tray")
 		return
 
 	_rebuild_role_controls(bees)
 	_refresh_selection_text()
+	call_deferred("_resize_command_tray")
 
 func _selection_has_command_lock(bees: Array) -> bool:
 	command_locked_bees = command_locked_bees.filter(func(b): return is_instance_valid(b))
@@ -2478,6 +2481,18 @@ func _update_command_tray_width() -> void:
 		cell_primary_columns.custom_minimum_size.x = 0.0
 	if cell_more_panel != null:
 		cell_more_panel.custom_minimum_size.x = 0.0
+
+## Content changes can alter the wrapped rows after their visibility changes.
+## Recompute on the deferred layout pass, then cap the bottom-left tray so it
+## always leaves the same gap from the top and bottom viewport edges.
+func _resize_command_tray() -> void:
+	if command_tray == null or not command_tray.visible:
+		return
+	command_tray.reset_size()
+	_update_command_tray_width()
+	var viewport_height: float = get_viewport().get_visible_rect().size.y
+	var maximum_height: float = viewport_height - UiLayout.SELECTION_TRAY_GAP * 2.0
+	command_tray.size.y = minf(command_tray.size.y, maximum_height)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

@@ -55,7 +55,7 @@ decided.
    - Check: `tools/verify.ps1`. One hands-on check to file: opening and
      closing both `More...` panels restores the old height, and a full cell
      tray stays on screen at 800x600.
-   - Proof: `absent: scripts/hud.gd :: _resize_command_tray`
+   - Proof: `present: scripts/hud.gd :: _resize_command_tray`
    - Why first in this lane: UI-S-1 landed, and UI-S-3 is its stated next
      slice in `plans/now/ui.md`; it does not overlap W-7, the leading Claude
      item.
