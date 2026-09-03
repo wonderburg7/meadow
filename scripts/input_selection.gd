@@ -451,19 +451,35 @@ const EXIT_CLICK_RADIUS := 26.0
 ## The hive's meadow-side marker is a 60x60 square (hive.gd) -- comfortably
 ## covers its corners at distance-from-centre checks.
 const HIVE_CLICK_RADIUS := 40.0
+const COMMAND_REFUSED_WARNING_KEY := "command_refused"
+const COMMAND_REFUSED_WARNING_GAP := 4.0
 
 func _issue_command(world_point: Vector2) -> void:
+	_prune_invalid_selected_bees()
 	if main.selected_bees.is_empty():
+		DiagnosticLog.log_command_issue(0, 0, "none", [])
 		return
+	# Snapshot every remaining selected bee, not just the bees we can order.
+	# A locked bee is the important evidence when a refusal looks like a lost
+	# selection, so it must be present in this event too.
+	var targets_before: Array = []
+	for bee in main.selected_bees:
+		targets_before.append({"bee": bee, "bee_id": bee.bee_id, "state": bee.state})
 	var commandable: Array = main.selected_bees.filter(
 		func(b): return is_instance_valid(b) and not main.challenge_runner.is_bee_command_locked(b)
 	)
 	if commandable.is_empty():
+		DiagnosticLog.log_command_issue(main.selected_bees.size(), 0, "refused", targets_before)
+		main.hud.show_warning(
+			"She cannot take orders right now.",
+			COMMAND_REFUSED_WARNING_KEY, COMMAND_REFUSED_WARNING_GAP
+		)
 		return
 	_show_click_marker(world_point)
 	if main.in_hive_view and world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
 		for b in commandable:
 			b.command_exit_hive()
+		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "exit", targets_before)
 		return
 	# Right-clicking the meadow-side hive marker sends a loaded bee home to
 	# deposit directly, the same direct-command spirit as the entrance-click
@@ -474,6 +490,7 @@ func _issue_command(world_point: Vector2) -> void:
 				b.command_return_only()
 			else:
 				b.command_return_and_deposit()
+		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "return", targets_before)
 		return
 	if main.in_hive_view:
 		var cell := _cell_at(world_point)
@@ -487,6 +504,7 @@ func _issue_command(world_point: Vector2) -> void:
 				b.command_move_to(world_point)
 			else:
 				b.command_move_through_entrance(world_point, true)
+		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "cell" if cell != null else "move", targets_before)
 		return
 	var flower = main.world_building._flower_at(world_point)
 	for b in commandable:
@@ -499,6 +517,17 @@ func _issue_command(world_point: Vector2) -> void:
 			b.command_move_through_entrance(world_point, false)
 		else:
 			b.command_move_to(world_point)
+	DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "flower" if flower != null else "move", targets_before)
+
+
+## Do this once at the command boundary.  Keeping invalid nodes in the
+## selection made every later command look like it had silently been refused.
+func _prune_invalid_selected_bees() -> void:
+	var valid_bees: Array = main.selected_bees.filter(func(bee): return is_instance_valid(bee))
+	if valid_bees.size() == main.selected_bees.size():
+		return
+	main.selected_bees = valid_bees
+	main.hud.update_selection(main.selected_bees)
 
 ## A short ripple at the clicked spot, so a command actually landing
 ## somewhere reads as a response rather than nothing having happened.

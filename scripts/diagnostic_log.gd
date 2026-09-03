@@ -628,6 +628,35 @@ func log_action(do: String, target_desc: String, result: String, reason: String)
 	})
 
 
+## One entry per player right-click command attempt.  The caller snapshots
+## targets before issuing it because a command may change their states before
+## this autoload has a chance to record the result.
+func log_command_issue(selected_count: int, commandable_count: int, branch: String,
+		targets_before: Array) -> void:
+	if _file == null:
+		return
+	var targets: Array = []
+	for target in targets_before:
+		var bee: Node2D = target.bee
+		var state_before: int = int(target.state)
+		var state_after := "invalid"
+		if is_instance_valid(bee):
+			state_after = BeeEnums.State.keys()[bee.state]
+		targets.append({
+			"bee_id": target.bee_id,
+			"state_before": BeeEnums.State.keys()[state_before],
+			"state_after": state_after,
+		})
+	_write({
+		"type": "command_issue",
+		"game_time": Session.sim_time,
+		"selected_count": selected_count,
+		"commandable_count": commandable_count,
+		"branch": branch,
+		"targets": targets,
+	})
+
+
 ## Read-side counterpart to the counters this file already keeps for its
 ## own summary line -- lets a scenario's "when"/"assert" conditions ask
 ## "has this actually happened N times yet" without scenario_actions.gd
