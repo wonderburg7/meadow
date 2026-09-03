@@ -1,7 +1,7 @@
 # Agent workflow — make the process enforce itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Claude | Next: W-3 | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Claude | Next: W-4 | Dependency: none | Verified: 2026-09-03
 
 ## Objective
 
@@ -23,132 +23,23 @@ worktrees and fix the ledger; median 23 tool calls before the first `.gd` edit.
 ## Open slices
 
 W-1 (a script that measures session cost) is delivered; see
-`plans/archive/AGENT_WORKFLOW_W1_2026-09-03.md`.
+`plans/archive/AGENT_WORKFLOW_W1_2026-09-03.md`. W-2 (the session-opening
+floor) is delivered; see `plans/archive/AGENT_WORKFLOW_W2_2026-09-03.md`.
+W-3 (the `Proof:` line and its `check_docs.py` enforcement) is delivered;
+see `plans/archive/AGENT_WORKFLOW_W3_2026-09-03.md`.
 
 | Slice | Outcome | Files owned | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| W-2 | The session-opening floor is cut | `.claude/settings.json`, `.mcp.json` | yes | low |
-| W-3 | The admission test runs in `check_docs.py` | `tools/check_docs.py`, `NEXTSTEPS.md`, `plans/README.md` | yes | medium |
-| W-4 | `tools/slice.ps1 start` claims a slice atomically | `tools/slice.ps1`, `CHATGPT.md` | after W-3 | medium |
+| W-4 | `tools/slice.ps1 start` claims a slice atomically | `tools/slice.ps1`, `CHATGPT.md` | yes | medium |
 | W-5 | `tools/slice.ps1 finish` closes it atomically | `tools/slice.ps1` | after W-4 | medium |
 | W-6 | Routing is addressable and bounded | `CLAUDE.md`, `tools/heading.py` | yes | low |
 | W-7 | `verify.ps1` is quiet on success | `tools/verify.ps1` | yes | low |
 
-Dependencies: W-3 → W-4 (`start` refuses a slice whose proof fails, so proofs
-must exist first). W-4 → W-5 (same file). W-2, W-3, W-6 and W-7 are
-independent of everything else and of each other. No two slices own a file in
-common except W-4 and W-5, which are sequential in one lane.
+Dependencies: W-4 → W-5 (same file). W-4, W-6 and W-7 are independent of
+everything else and of each other.
 
 Read for any slice: this file's section for it and nothing else. Every slice's
 check is `tools/verify.ps1`, and none of them files a hands-on check.
-
----
-
-## W-2 — The session-opening floor is cut
-
-Before: `session-opening context` was 61558 (measured 2026-09-03,
-`python tools/session_cost.py --days 7`).
-
-Then make three changes. **Load the `update-config` skill before editing
-`.claude/settings.json`** — it is authoritative for that file's schema. If it
-cannot confirm a key name, do not guess: leave that change out, note which one
-here, and continue with the others.
-
-1. Disable the `gitkraken` plugin MCP server for this project. It was called
-   twice in the whole of 27 Aug – 3 Sep (one push, one PR create), both of
-   which `git` and `gh` already do, and it costs a 30-second connect timeout
-   in sessions that never touch it.
-2. Keep the `godot` server in `.mcp.json` unchanged. It is used ~58 times a
-   week for `run_project` / `stop_project` / `get_debug_output` and has no
-   replacement.
-3. Extend the existing `permissions.deny` list in `.claude/settings.json` with
-   `Read(./ROADMAP.md)`, `Read(./DESIGN_BACKLOG.md)` and
-   `Read(./insights_from_ChatGPT.md)`. All three are named in `CLAUDE.md` as
-   files not to read for orientation, and all three were read for orientation
-   this week. A denial costs one round trip; the file costs the rest of the
-   session. Do not remove any existing deny entry.
-
-**Acceptance:** after one fresh session on this project,
-`python tools/session_cost.py --days 1` reports a `session-opening context`
-below the "before" figure. Record both numbers here. Target ≤45K; report the
-actual figure either way and do not chase it with further changes.
-
-After: pending — the three changes above landed in this session, which
-already had its context loaded before they took effect, so it cannot measure
-itself. Run `python tools/session_cost.py --days 1` after the *next* fresh
-session on this project and record the figure here.
-
----
-
-## W-3 — The admission test runs in `check_docs.py`
-
-"Confirm the defect is still there before queuing it" is stated in `CLAUDE.md`,
-`plans/README.md` guardrail 12, `.claude/rules/documentation.md` and a
-`check_docs.py` docstring — and has been broken four times by the same item.
-Make it executable.
-
-### The `Proof:` line
-
-Every item under `## Next up` in `NEXTSTEPS.md` gains one line, in the same
-bullet list as `Plan:` / `Files:` / `Check:` / `Next after:`:
-
-```
-   - Proof: `absent: scripts/hud.gd :: season_strength`
-```
-
-Exactly two forms, and no others:
-
-- `absent: <repo-relative path> :: <literal substring>` — holds while the
-  substring does **not** appear in that file.
-- `present: <repo-relative path> :: <literal substring>` — holds while it
-  **does**.
-
-No shell, no regular expressions, no quoting rules: a literal substring test
-against one file, identical on every platform.
-
-A proof states the thing that is true only while the defect is live. Derive it
-from the item's own `Does:` text. Worked examples, all verified on 3 Sep 2026:
-
-| Item | Proof | Holds today? |
-| --- | --- | --- |
-| FL-1 (adds season text to the flower panel) | `absent: scripts/hud.gd :: season_strength` | yes — 0 matches |
-| UI-R-2 (raises the margin from 16) | `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16` | yes — 1 match |
-| X3 (raises `lightened(0.10)`) | `present: scripts/ui_theme.gd :: lightened(0.10)` | **no — 0 matches** |
-
-X3 is the point. It has been queued since 31 August for work that shipped on
-31 August. Its proof fails, so the check fails, so the queue gets fixed.
-
-### The code
-
-In `tools/check_docs.py`:
-
-1. Add `"Proof:"` to `REQUIRED_ITEM_FIELDS`.
-2. Add `check_queue_proofs(errors)` and call it from `main()` beside
-   `check_next_steps`.
-3. For each chunk under `## Next up`, find `^\s*-\s*Proof:\s*` followed by a
-   backticked string. Split that string on the first `:` for the mode and on
-   ` :: ` for path and substring; strip each part.
-4. Unknown mode, missing `::`, or a path that is not a file → an error naming
-   the item number.
-5. Read the file with `encoding="utf-8"`. `present` fails when the substring is
-   absent; `absent` fails when it is present. The failure message must read:
-   `NEXTSTEPS.md item <n>: proof no longer holds -- this may already be built.
-   Open <path> before requeuing it.`
-
-Then add a `Proof:` line to all five current queue items and **fix whatever the
-check catches** — an item whose proof fails is either already built (remove it
-and refill the lane from `## Ready, not yet in the queue`) or wrongly described
-(rewrite it against the code).
-
-### The prose to delete
-
-In `plans/README.md`: cut guardrail 12 to one sentence pointing at the `Proof:`
-line, keeping the X3 sentence as its reason; cut the paragraph beginning
-"Before specifying a slice" to one line. Leave `CLAUDE.md` alone — W-6 owns it.
-
-**Acceptance:** `python tools/check_docs.py` errors on an item whose proof does
-not hold and passes once the queue is correct. Verify by temporarily setting
-one item's proof to a substring you know is absent.
 
 ---
 
