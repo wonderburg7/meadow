@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/hc-9` (`claude/hc-9`) | Claude | `scripts/hive_cell.gd` | Claude Code | in-progress | none | `plans/now/hive-comb.md` Slice 9 |
