@@ -242,6 +242,42 @@ def check_gameconfig_writes(name, code, problems):
                 % (name, i, line.strip()[:80])
             )
 
+# HUD panels that have each carried their own copy of a shared-edge number
+# before: the command tray over Dr Gallerin (UI-R-1), the tray's buffer
+# vanishing and the tray off-centre (UI-S-1), and the colony/foraging/
+# nursery windows over the corner readout (UI-S-2). ui_layout.gd exists to
+# be the one owner of those numbers; a literal here is how the same overlap
+# keeps coming back.
+OFFSET_RECT_FILES = {
+    "hud.gd", "colony_panel.gd", "foraging_panel.gd",
+    "nursery_panel.gd", "gallerin_panel.gd", "debug_panel.gd",
+}
+
+# Matches only when the whole right-hand side is a bare number -- an
+# expression that merely starts or ends with one (`8 + Hud.GAP`) still
+# names a real quantity via its other terms, so it is left alone. Anything
+# read from UiLayout is never numeric here, so it never matches either;
+# that is what "allow anything read from UiLayout" means in practice.
+OFFSET_LITERAL_RE = re.compile(
+    r"\.(?:offset_top|offset_left|offset_right|offset_bottom)\s*=(?!=)\s*-?\d+(?:\.\d+)?\s*$"
+)
+FIXED_INSET_COMMENT_RE = re.compile(r"#\s*fixed-inset\s*$")
+
+
+def check_offset_rect_literals(name, lines, problems):
+    if name not in OFFSET_RECT_FILES:
+        return
+    for i, line in enumerate(lines, 1):
+        if FIXED_INSET_COMMENT_RE.search(line):
+            continue
+        code_line = strip_code(line).rstrip()
+        if OFFSET_LITERAL_RE.search(code_line):
+            problems.append(
+                "%s:%d  literal offset belongs in ui_layout.gd (or mark it "
+                "`# fixed-inset` if it truly isn't shared): %s"
+                % (name, i, code_line.strip()[:80])
+            )
+
 # Challenge 1's manual-forage stages hand the player every move, collection
 # and deposit the queen makes. Six separate slices (9a, 10a, 10b, 10f, 10g
 # and 11) were each the same bug: one more autonomous transition in
@@ -511,6 +547,7 @@ def main():
         check_declarations(name, code, problems)
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
+        check_offset_rect_literals(name, lines, problems)
         check_autonomous_transitions(name, lines, problems)
         check_stage_effects_order(name, lines, problems)
         funcs, _members = collect_names(code, source)

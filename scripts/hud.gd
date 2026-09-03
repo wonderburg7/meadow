@@ -555,7 +555,7 @@ func _build_top_right_bar() -> void:
 	bar.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	bar.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0)
-	bar.offset_top = 8
+	bar.offset_top = 8  # fixed-inset
 	add_child(bar)
 
 	var row1 := HBoxContainer.new()
@@ -815,7 +815,7 @@ func _build_selection_panel() -> void:
 	selection_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	selection_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	selection_panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
-	selection_panel.offset_bottom = -16
+	selection_panel.offset_bottom = -UiLayout.BOTTOM_ROW_MARGIN
 	selection_panel.visible = false
 	add_child(selection_panel)
 
@@ -944,7 +944,7 @@ func _build_command_tray() -> void:
 	command_tray.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	# Matches the summary panel's own bottom offset, which is why the two
 	# sit level.
-	command_tray.offset_bottom = -16
+	command_tray.offset_bottom = -UiLayout.BOTTOM_ROW_MARGIN
 	command_tray.visible = false
 	add_child(command_tray)
 
@@ -1359,7 +1359,7 @@ func _build_warning_banner() -> void:
 	warning_panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	warning_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	warning_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	warning_panel.offset_top = 48
+	warning_panel.offset_top = 48  # fixed-inset
 	warning_panel.custom_minimum_size = Vector2(520, 0)
 	warning_panel.visible = false
 	add_child(warning_panel)
