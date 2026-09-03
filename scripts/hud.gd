@@ -1445,14 +1445,23 @@ func _refresh_flower_summary() -> void:
 		activity_label.text = "Being worked by bee %d" % active_flower.occupied_by.bee_id
 	else:
 		activity_label.text = "No bee here"
+	var age_days: float = active_flower.age_seconds / GameConfig.seconds_per_day
+	var lifespan_days: float = active_flower.lifespan_seconds / GameConfig.seconds_per_day
+	var season_line: String
+	if not GameConfig.seasons_on:
+		season_line = "Season: seasons off"
+	else:
+		var strength: float = active_flower.season_strength()
+		season_line = "Season: in season (%d%%)" % int(round(strength * 100.0)) if strength > 0.0 else "Season: out of season"
+	var summary_lines: Array = ["Age: %.1f of %.1f days" % [age_days, lifespan_days], season_line]
+
 	var age: float = active_flower.marker_age()
 	if age >= 0.0 and age < GameConfig.tarsal_marker_seconds:
-		trait_label.text = "Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if GameConfig.tarsal_markers_on else ""]
-	else:
-		# The marker remains a timestamp on the flower for simulation
-		# bookkeeping, but it is no longer useful player-facing information
-		# once bees have stopped reacting to it.
-		trait_label.text = ""
+		summary_lines.append("Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if GameConfig.tarsal_markers_on else ""])
+	# else: the marker remains a timestamp on the flower for simulation
+	# bookkeeping, but it is no longer useful player-facing information
+	# once bees have stopped reacting to it.
+	trait_label.text = "\n".join(summary_lines)
 
 ## Clicking a tree or a bank of raised ground says what it is, so the
 ## things bees have to walk round aren't unexplained scenery.

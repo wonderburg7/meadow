@@ -44,6 +44,30 @@ PASS: the left pane has a clearly comfortable edge buffer, while tile spacing,
 borders and clicking are unchanged.
 
 Owner: `plans/now/ui.md` UI-R-2.
+### C-5 -- Challenge 2's rescue and recovery lines
+
+In a Challenge 2 run past stage 2.1, open the settings window and press
+"Force Challenge 2 collapse" in the Triggers group once, then again.
+
+PASS: the first press drops the stores below the rescue threshold and Dr
+Gallerin's "Ahem. Field ecologists..." line appears with 150 nectar
+restored; the second press drops them below the failure floor and the
+checkpoint restore appears with "A brief ecological wobble..." and a live
+queen.
+
+Owner: `plans/now/challenge-2.md` Slice 1.
+
+### C-4 -- two throttled warnings eight seconds apart
+
+Press debug_panel.gd's "Fire test warnings" button, in the Triggers group
+beside "Advance Challenge stage". It fires a bee-death epitaph, then a
+crab-spider escape eight seconds later, then an unkeyed "Run saved."
+confirmation two seconds after that.
+
+PASS: the first two do not wipe each other, and the confirmation survives
+the ambient event that follows it.
+
+Owner: `plans/now/ui.md` UI-Q-1/UI-Q-2.
 
 ### C-14 -- double right-click command diagnosis
 
@@ -189,3 +213,17 @@ instruction" (with the action appended from 1.2 on), and every working
 stage still narrates the activity as before.
 
 Owner: `plans/now/challenge-1.md` Slice 15.
+
+### C-15 -- flower age and season read from the flower summary panel
+
+Shipped 3 Sep 2026. Click a flower: the panel shows its age in days
+against its lifespan, and whether it is in or out of season. Watching one
+across a season boundary with the panel open flips the line from in to
+out at the same moment the `+/s` figures fall away. A flower with a live
+scent mark still shows that line too.
+
+PASS: the age-vs-lifespan and in/out-of-season lines both show on click,
+and the season line flips exactly when the `+/s` figures fall away.
+
+Owner: `plans/now/flowers.md` Slice 1 (archived at
+`plans/archive/FLOWERS_SLICE_1_2026-09-03.md`).

@@ -2,9 +2,18 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-Five ready slices in two lanes, refilled 3 Sep 2026 after P-1 made
-`checks/ready.md`'s entry format enforceable. The three `debug_panel.gd`
-slices now sit in one lane, in the order `plans/now/check-loop.md` P-3 sets.
+Four ready slices in two lanes. C2-1 shipped 3 Sep 2026; its own successor
+(Challenge 2 Slice 2) needs Dave's hands-on pass first, so the fourth slot is
+now filled by Colony Diagnostics' first vertical slice
+(`plans/design/colony-diagnostics.md` § 4) instead, which that plan's own
+Status line names as ready the moment a Claude-lane slot is free. Every other
+open plan (`ui.md`, `challenge-1.md`, `check-loop.md`, `hive-comb.md`,
+`flowers.md`, `progression.md`) was checked and has nothing else genuinely
+startable today -- everything else needs a hands-on check, a live repro or a
+product decision, which is exactly what does not belong in this list.
+`tools/check_docs.py`'s queue-size check accepts four or five items (Dave, 3
+Sep 2026); the fifth slot refills the moment a plan below has real ready work
+again.
 
 **Everything in this file can be started right now.** Nothing here is waiting
 on a hands-on check, a live repro, or a decision from Dave. Work that *is*
@@ -31,73 +40,54 @@ decided.
      sits comfortably clear of the screen edge and tile clicking is
      unchanged.
    - Proof: `present: scripts/main_menu.gd :: LEFT_PANE_MARGIN := 16`
-   - Next after: FL-2, already fifth in this lane.
+   - Next after: FL-2, already fourth in this lane.
 
-2. **[Claude] P-3 -- Developer triggers have no home, and two slices are about to build one each.**
-   - Plan: `plans/now/check-loop.md` -- P-3.
-   - Does: promotes `debug_panel.gd`'s existing `challenge_row` into a
-     labelled "Triggers" group in the developer area -- a small header, one
-     `UI.with_info` badge saying everything in the group forces a state that
-     is otherwise rare, and the existing "Advance Challenge stage" button
-     moved in unchanged. No new trigger, no change to what that button does,
-     no change to the developer-area visibility gate.
-   - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. No hands-on check -- nothing a player can see
-     changes, and by the check-loop plan's rule 4 a check whose failure would
-     change nothing is not filed.
-   - Proof: `absent: scripts/debug_panel.gd :: Triggers`
-   - Why first in this lane: P-1 landed and its plan's `Next after:` is P-3.
-     The plan reversed P-3's order on 3 Sep for a stated reason -- UI-R-3 and
-     C2-1 would each write a row into `challenge_row` that P-3 then rewrites,
-     and all three own `scripts/debug_panel.gd`, so they cannot run in
-     parallel lanes. P-3 builds the empty section; the other two drop one
-     button into it.
-   - Next after: UI-R-3, third in this lane and now unblocked by this slice.
+2. **[Claude] CD-1 -- One computation, not three, for the diagnostics
+   the HUD already shows.**
+   - Plan: `plans/design/colony-diagnostics.md` -- § 4, First vertical slice.
+   - Does: adds `colony_diagnostics.gd::compute(main, bees) -> Dictionary`,
+     moving the per-bee loop and the two `cells_holding(...)` walks
+     currently inline in `year_winter.gd::_refresh_signals` into one
+     function. `_refresh_signals` calls it once and reads the same key
+     names from the returned dict instead of its local variables;
+     `_refresh_panels` and `_winter_forecast()` take the dict (or its
+     `bees_count`) as a parameter instead of recomputing or re-fetching it.
+     `_sample_history()`'s separate cadence is untouched. No behaviour
+     change -- same values, computed once per signal-tick instead of two or
+     three times.
+   - Files: `scripts/colony_diagnostics.gd` (new), `scripts/year_winter.gd`.
+   - Check: `tools/verify.ps1`. No hands-on check: the acceptance is that
+     the problem-strip lines, Colony/Nursery panel readouts and winter
+     forecast show identical values before and after, for the same
+     save/seed -- nothing about what the player sees is meant to change.
+   - Proof: `absent: scripts/year_winter.gd :: ColonyDiagnostics`
+   - Why here: C2-1, which led this lane, shipped 3 Sep 2026; its successor
+     is not yet startable (see "Not in the queue" below), so this plan's own
+     Status line (ready "once a Claude-lane slot is free") fills the gap
+     instead.
+   - Next after: none yet named -- read `plans/design/colony-diagnostics.md`
+     § 5-7 to pick the next fact once this lands.
 
-3. **[Claude] UI-R-3 -- No way to fire a warning-banner case on demand.**
-   - Plan: `plans/now/ui.md` -- UI-R-3.
-   - Does: adds a second button, "Fire test warnings", to `debug_panel.gd`'s
-     Triggers group beside "Advance Challenge stage", styled with the same
-     `_style_button` + `UI.with_info` pattern. It calls `hud.show_warning`
-     three times off one `SceneTreeTimer` chain -- an epitaph-keyed message
-     at t=0, a crab-spider-escape-keyed one at t=+8s and an unkeyed
-     confirmation at t=+10s -- using the real `problem_messages.gd` entries
-     and `GameConfig` gaps, not literals. Developer section only, so ordinary
-     play cannot reach it.
-   - Files: `scripts/debug_panel.gd`.
-   - Check: `tools/verify.ps1`. It also unblocks `checks/blocked.md`'s C-4;
-     move that entry to `checks/ready.md`, keeping its id, when this lands.
-   - Proof: `absent: scripts/debug_panel.gd :: Fire test warnings`
-   - Why in this lane, not Codex's: it owns the same file as P-3 and has to
-     follow it, and `plans/now/check-loop.md` P-3 says all three
-     `debug_panel.gd` slices belong in one lane. Moving it here is what keeps
-     the two lanes collision-free.
-   - Next after: FL-1, fourth in this lane.
+3. **[Claude] check-loop P-2 -- one owner for panel rectangles, enforced.**
+   - Plan: `plans/now/check-loop.md` -- P-2.
+   - Does: adds a check to `tests/source_checks.py`, in the style of the
+     existing `GameConfig` write allowlist, that fails on any numeric
+     literal assigned to `offset_top`/`offset_left`/`offset_right`/
+     `offset_bottom` in `hud.gd`, `colony_panel.gd`, `foraging_panel.gd`,
+     `nursery_panel.gd`, `gallerin_panel.gd` or `debug_panel.gd`. A trailing
+     `# fixed-inset` comment or a value read from `UiLayout` is allowed; the
+     message names the file, line and `ui_layout.gd` as where the number
+     belongs.
+   - Files: `tests/source_checks.py`.
+   - Check: `tools/verify.ps1`, including a deliberate break (a literal
+     `offset_top = 60` in `colony_panel.gd`) and repair.
+   - Proof: `absent: tests/source_checks.py :: fixed-inset`
+   - Why here: UI-S-1 and UI-S-2, the panel-rect moves this check locks in,
+     both shipped 3 Sep 2026, so the plan's last open slice is now startable.
+     `tests/source_checks.py` collides with no other queued file.
+   - Next after: none -- this plan then has no open slice.
 
-4. **[Claude] FL-1 -- The flower panel says nothing about age or season.**
-   - Plan: `plans/now/flowers.md` -- Slice 1.
-   - Does: `hud.gd::_refresh_flower_summary()` already rebuilds the flower
-     summary panel every frame it's open and already prints both effective
-     rates, but says nothing about age or season. Builds one extra line --
-     age in days against lifespan, and "in season (NN%)" / "out of season" /
-     "seasons off" -- and puts it in `trait_label` above the scent-mark text
-     (joined with a newline, not replacing it) using `age_seconds`,
-     `lifespan_seconds` and `season_strength()`, all already public on
-     `flower.gd`. Nothing new is computed in `flower.gd`.
-   - Files: `scripts/hud.gd`.
-   - Check: `tools/verify.ps1`. One hands-on check to file: click a flower
-     and the panel shows its age against its lifespan and whether it's in
-     or out of season; watching one across a season boundary flips the line
-     at the same moment the `+/s` figures fall away.
-   - Proof: `absent: scripts/hud.gd :: season_strength`
-   - Why here, not leading: it shares `scripts/hud.gd` with UI-S-4, the
-     leading Codex item, so it sits below the lane's head rather than at it --
-     promoting it would make both lanes' leading items collide. Landing
-     either it or UI-S-4 clears the pairing.
-   - Next after: FL-2 (`plans/now/flowers.md` Slice 2) -- a balance change,
-     with its named headless run to quote before it merges.
-
-5. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+4. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
    - Does: gives out-of-season flowers a small recharge floor, faster ageing
      and rarer seeding, using three explicit `GameConfig` balance values.
@@ -108,22 +98,17 @@ decided.
      in the plan. One hands-on check to file: the year-round species mix
      visibly follows the seasons without collapsing.
    - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
-   - Why here: it has no dependency on FL-1 and shares no file with the
-     current Claude work; the plan makes its required headless comparison
-     explicit before merge.
+   - Why here: it shares no file with the current Claude work; the plan
+     makes its required headless comparison explicit before merge.
    - Next after: none -- this plan then has no open slice.
 
 ## Ready, not yet in the queue
 
-All of these can be started today; they are out of the queue only because it
-holds five. Take one when a lane empties, in roughly this order.
-
-- **FL-2** (`plans/now/flowers.md` Slice 2) -- out of season means a small
-  non-zero rate, faster ageing and rarer seeding. A balance change: it needs
-  its named headless run before it merges.
-- **C2-1** (`plans/now/challenge-2.md` Slice 1) -- a debug button that forces
-  a Challenge 2 nectar collapse, so C-5 can be run at all. It drops into
-  P-3's Triggers group, so take it in the same lane, after P-3.
+Nothing. Every slice that could be started today is in the queue above,
+which is why the queue sits at four rather than five (see the note at the
+top of this file). The next lane to empty, or the fifth slot whenever a
+plan below gets real ready work, pulls from an owning plan's next open
+slice.
 
 ## Not in the queue, and why
 
@@ -134,13 +119,10 @@ They are listed so they are not lost, not so they are picked up.
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
   thing that plan needs.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
-  of the rescue and recovery lines does not appear. Needs C2-1 to ship and
-  Dave to press the button; there is no static defect to fix blind, and
-  guessing has already failed twice.
-- **check-loop P-2** (`plans/now/check-loop.md`) -- the panel-rect source
-  check runs after UI-S-1 and UI-S-2 move the numbers. P-3 is no longer here:
-  its plan reversed the order on 3 Sep, so it now runs *before* UI-R-3 and
-  C2-1 rather than collecting after them, and it leads the Claude lane.
+  of the rescue and recovery lines does not appear. C2-1 shipped 3 Sep 2026
+  (its "Force Challenge 2 collapse" trigger is `checks/ready.md` C-5); this
+  now needs Dave to press it and report which line is missing. There is no
+  static defect to fix blind, and guessing has already failed twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,

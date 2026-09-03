@@ -1,7 +1,7 @@
 # Meadow — Colony Diagnostics
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: designed, not scheduled | Owner: Dave | Next: admit the first vertical slice (section 4) through `NEXTSTEPS.md` once a Claude-lane slot is free | Dependency: no active implementation slice | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: § 4's first vertical slice, queued as CD-1 in `NEXTSTEPS.md`'s Claude lane | Dependency: none | Verified: 2026-09-03
 
 Scoped 3 Sep 2026 as the first of `plans/design/product-scope.md` §6.2's five
 undesigned "shared foundations" to get its own design pass (Dave's pick —

@@ -25,6 +25,7 @@ const Prerequisites = preload("res://scripts/prerequisites.gd")
 ## range and tip, plus the read/write and cascade functions.
 const Settings = preload("res://scripts/settings_catalogue.gd")
 const Hud = preload("res://scripts/hud.gd")
+const Stages = preload("res://scripts/challenge_stages.gd")
 
 ## Fixed panel/scroll width -- widened from 300 (Dave's 29 Aug report:
 ## turning on "Show info icons" pushed some rows' toggle controls past
@@ -330,8 +331,9 @@ Right click the ground — move the selection there
 Click a warning in the corner to select what it is about."""
 	return help
 
-## Restart, stage select and the main menu, kept at the top of the panel
-## so they don't drift below a growing list of settings.
+## Restart, save/load and the main menu, kept at the top of the panel so
+## they don't drift below a growing list of settings, with the developer
+## Triggers group underneath them.
 func _build_actions(column: VBoxContainer) -> void:
 	var restart_row := HBoxContainer.new()
 	column.add_child(restart_row)
@@ -363,14 +365,39 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
 
+	# One labelled home for buttons that force a state the simulation
+	# reaches only rarely on its own, built before anything needs it so the
+	# triggers still to come (plans/now/ui.md UI-R-3, plans/now/challenge-2.md
+	# Slice 1) drop a button in rather than each re-laying out this block.
+	var triggers := VBoxContainer.new()
+	triggers.add_theme_constant_override("separation", 0)
+	column.add_child(triggers)
+
+	var triggers_header := Label.new()
+	triggers_header.text = "Triggers"
+	triggers_header.theme_type_variation = "Small"
+	triggers.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
+
 	var challenge_row := HBoxContainer.new()
-	column.add_child(challenge_row)
+	triggers.add_child(challenge_row)
 
 	var challenge_advance_btn := Button.new()
 	_style_button(challenge_advance_btn)
 	challenge_advance_btn.text = "Advance Challenge stage"
 	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
 	challenge_row.add_child(UI.with_info(challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder."))
+
+	var fire_warnings_btn := Button.new()
+	_style_button(fire_warnings_btn)
+	fire_warnings_btn.text = "Fire test warnings"
+	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
+	challenge_row.add_child(UI.with_info(fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own."))
+
+	var c2_collapse_btn := Button.new()
+	_style_button(c2_collapse_btn)
+	c2_collapse_btn.text = "Force Challenge 2 collapse"
+	c2_collapse_btn.pressed.connect(_on_force_c2_collapse_pressed)
+	challenge_row.add_child(UI.with_info(c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run."))
 
 	column.add_child(HSeparator.new())
 
@@ -397,6 +424,63 @@ func _on_challenge_advance_pressed() -> void:
 	if worlds.is_empty():
 		return
 	worlds[0].challenge_runner.debug_advance_stage()
+
+## Fires the same three warning-banner shapes the simulation only produces
+## by chance, so the throttle in hud.gd::show_warning can be watched
+## arbitrating between two keyed producers and letting an unkeyed
+## confirmation through unaffected. One SceneTreeTimer chain, not a
+## per-frame state machine: the epitaph fires immediately, the escape
+## chains eight seconds later, and the confirmation chains a further two
+## seconds after that (t=0, t=+8s, t=+10s).
+func _on_fire_test_warnings_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	var hud := worlds[0].hud
+	var bees := get_tree().get_nodes_in_group("bees")
+	if bees.is_empty():
+		return
+	var bee: Node2D = bees[0]
+
+	hud.show_warning(
+		ProblemMessages.epitaph(bee.bee_name, "starvation", bee.bee_fact),
+		"epitaph", GameConfig.epitaph_min_gap
+	)
+	get_tree().create_timer(8.0).timeout.connect(func() -> void:
+		if not is_instance_valid(hud):
+			return
+		hud.show_warning(
+			ProblemMessages.crab_spider_escape(bee.bee_name),
+			"crab_spider_escape", GameConfig.crab_spider_escape_min_gap
+		)
+		get_tree().create_timer(2.0).timeout.connect(func() -> void:
+			if is_instance_valid(hud):
+				hud.show_warning("Run saved.")
+		)
+	)
+
+## Withdraws nectar via the hive's own take() API (never writes cell
+## amounts directly) so challenge_runner.gd::_check_c2_failure(), which
+## polls main.hive.total("nectar") every frame, sees the drop and fires
+## on its own. Aims for the rescue threshold first; if the stores are
+## already below it (the rescue already fired and topped them back up
+## partway, or a second press), aims for the failure floor instead, so
+## one press each reaches the two branches of _check_c2_failure() in
+## order.
+func _on_force_c2_collapse_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	var world = worlds[0]
+	if Session.starting_level != 2 or not world.challenge_runner.active:
+		return
+	var hive = world.hive
+	var nectar: float = hive.total("nectar")
+	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0
+	if nectar < Stages.C2_RESCUE_THRESHOLD:
+		target = Stages.C2_FAILURE_FLOOR - 1.0
+	if nectar > target:
+		hive.take("nectar", nectar - target)
 
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an
