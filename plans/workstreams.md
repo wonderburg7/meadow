@@ -51,3 +51,4 @@ the end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/pycache` (`claude/gitignore-pycache`) | Claude | `.gitignore`, `tools/__pycache__/` | Claude | in-progress | none | Repo hygiene (Dave's 3 Sep brief) |
