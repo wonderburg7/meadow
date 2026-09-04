@@ -22,9 +22,9 @@ queue until the checks resume.
 (catalogue, resolver, run-definition fields, modifier resolution and
 validation) and Phase B step 5 (the `Shapes.hex_line` helper and the grid
 rules, pure maths) are five consecutive Claude slices that each finish on
-`tools/verify.ps1` alone. Each becomes startable as its predecessor lands, so
-the queue promotes them one at a time rather than listing four items nobody
-can begin today.
+`tools/verify.ps1` alone. Step 1 landed on 4 Sep 2026 as PR-A1; the remaining
+four each become startable as its predecessor lands, so the queue promotes
+them one at a time rather than listing three items nobody can begin today.
 
 **Everything in `## Next up` can be started right now.** Work that wants
 something from Dave is under "Not in the queue" at the bottom, with a
@@ -43,31 +43,30 @@ decided.
 
 ## Next up
 
-1. **[Claude] PR-A1 -- Progression catalogue inventory.**
-   - Plan: `plans/design/progression.md` -- section 11, Phase A step 1, with
-     section 3 for each file's shape and section 5 for the node list.
+1. **[Claude] PR-A2 -- The thin resolver.**
+   - Plan: `plans/design/progression.md` -- section 11, Phase A step 2, with
+     section 3 for what the resolver owns, section 4.1/4.3/4.5 for the
+     purchasability rules and section 4.2 for the cost ladder.
      Minimum reasoning: medium.
-   - Does: writes `skills.gd`, `adaptations.gd` and `features.gd` as static
-     catalogue data on `roles.gd`'s shape -- stable IDs per section 3's
-     convention, the baseline entries (5.7) and the open nodes (5.9) carried
-     as data with empty effects. Nothing reads them yet, so the change is
-     additive and cannot alter a running game.
-   - Files: `scripts/skills.gd`, `scripts/adaptations.gd`,
-     `scripts/features.gd`, `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`, extended with section 9.2's
-     catalogue-integrity checks in `tests/source_checks.py` -- duplicate or
-     missing IDs, references to absent entries, prerequisite cycles,
-     `max_rank > 1`, a display string used as a key. No player check: the
-     data draws nothing.
-   - Proof: `absent: tests/source_checks.py :: skills.gd`
-   - Why here: it is the one piece of ready work that finishes on
-     `verify.ps1` alone while the filed checks sit unrun, and it shares no
-     file with the Codex lane. `plans/README.md` guardrail 5 fixes it as
-     first in the progression order.
-   - Next after: PR-A2 -- the thin resolver (section 11, Phase A step 2),
-     which answers ownership, afford and feature-validity against these
-     catalogues and `stage_gate.gd`, proved in `tests/` against the existing
-     foraging toggles rather than in-game.
+   - Does: writes `progression.gd`, the one place that answers ownership,
+     afford, feature-validity and branch-tier questions, reading
+     `skills.gd`/`adaptations.gd`/`features.gd` and `stage_gate.gd` and
+     nothing else. Nothing writes `GameConfig` from an effect. It is not
+     wired into the game yet, so no run behaves differently.
+   - Files: `scripts/progression.gd`, `tests/source_checks.py`.
+   - Check: `tools/verify.ps1`, extended so `progression.gd` is held to
+     section 3's rule that it is the only file answering these questions,
+     and proved against the existing foraging toggles
+     (`orientation_flight_on`, `tarsal_markers_on`) in `tests/` rather than
+     in-game. No player check: nothing calls it.
+   - Proof: `absent: tests/source_checks.py :: progression.gd`
+   - Why here: PR-A1 landed 4 Sep 2026 and named this as its `Next after:`.
+     The catalogues exist and nothing reads them, which is exactly the gap
+     this closes; it shares no file with the Codex lane.
+   - Next after: PR-A3 -- run-definition fields (section 11, Phase A step 3),
+     which adds `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd` and
+     `challenge_runner.gd`'s existing shape, with Challenges 1 and 2 working
+     unchanged while those fields are empty.
 
 2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
@@ -87,11 +86,13 @@ decided.
 ## Ready, not yet in the queue
 
 Nothing that a session could open today. The Claude lane's successors --
-PR-A2 (resolver), PR-A3 (run-definition fields in `levels.gd` and
-`challenge_runner.gd`), PR-A4 (modifier resolution and section 9.2's
-remaining validation) and PR-B5 (`Shapes.hex_line` plus the ring and wedge
-rules) -- are each written against the thing before them, so each is promoted
-into the lane as its predecessor merges rather than listed here as startable.
+PR-A3 (run-definition fields in `levels.gd` and `challenge_runner.gd`),
+PR-A4 (modifier resolution and section 9.2's remaining validation) and PR-B5
+(`Shapes.hex_line` plus the ring and wedge rules) -- are each written against
+the thing before them, so each is promoted into the lane as its predecessor
+merges rather than listed here as startable. PR-B5 in particular has data
+waiting for it: PR-A1 authored every node's axial coordinate, so that slice
+validates coordinates rather than inventing them.
 
 ## Not in the queue, and why
 

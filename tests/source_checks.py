@@ -529,6 +529,425 @@ def check_settings_keys(problems):
             )
 
 
+# --- progression catalogues ---------------------------------------
+# skills.gd, adaptations.gd and features.gd are pure data that nothing
+# reads yet (progression.md Phase A step 1), which is exactly why they
+# need checking here: a duplicate ID, a prerequisite naming a skill that
+# was renamed, or a cycle would sit in the file silently until the
+# resolver tried to walk it, and then fail at runtime in a panel rather
+# than in a test. These are section 9.2's "catalogue integrity" group.
+
+PROGRESSION_FILES = {
+    "skills": "skills.gd",
+    "adaptations": "adaptations.gd",
+    "features": "features.gd",
+}
+
+# A key is lower-case, dot-separated and machine-shaped. A display string
+# is not. Section 0's language note: display text is never a save key and
+# never a dependency, so anything in a key position that looks like prose
+# is the mistake this catches.
+KEY_SHAPE_RE = re.compile(r"^[a-z0-9_.]+$")
+
+
+def _strip_gd_comments(source):
+    """Blank out `#` comments, leaving string literals alone."""
+    out = []
+    for line in source.split("\n"):
+        in_string = False
+        cut = len(line)
+        for i, ch in enumerate(line):
+            if ch == '"':
+                in_string = not in_string
+            elif ch == "#" and not in_string:
+                cut = i
+                break
+        out.append(line[:cut])
+    return "\n".join(out)
+
+
+def _string_consts(source):
+    """`const NAME := "value"` pairs, for resolving key references."""
+    return dict(re.findall(r'const\s+(\w+)\s*:=\s*"([^"]*)"', source))
+
+
+def _entry_blocks(block):
+    """The text inside each top-level `{ ... }` of a catalogue array."""
+    entries = []
+    depth = 0
+    start = None
+    in_string = False
+    for i, ch in enumerate(block):
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch in "{[(":
+            if ch == "{" and depth == 0:
+                start = i + 1
+            depth += 1
+        elif ch in "}])":
+            depth -= 1
+            if ch == "}" and depth == 0 and start is not None:
+                entries.append(block[start:i])
+                start = None
+    return entries
+
+
+def _field(entry, key):
+    """The raw text of `"key": <value>`, or None. Stops at the comma that
+    ends the value, not at a comma inside a nested dict or array."""
+    match = re.search(r'"%s"\s*:\s*' % key, entry)
+    if not match:
+        return None
+    depth = 0
+    in_string = False
+    start = match.end()
+    for i in range(start, len(entry)):
+        ch = entry[i]
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch in "{[(":
+            depth += 1
+        elif ch in "}])":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            return entry[start:i].strip()
+    return entry[start:].strip()
+
+
+def _resolve_key(raw, consts_by_prefix, local):
+    """A key-position value as its literal string, or None if the token
+    names no constant -- which is itself worth reporting."""
+    if raw is None:
+        return None
+    raw = raw.strip()
+    if raw.startswith('"') and raw.endswith('"'):
+        return raw[1:-1]
+    if "." in raw:
+        prefix, _, name = raw.partition(".")
+        return consts_by_prefix.get(prefix, {}).get(name)
+    return local.get(raw)
+
+
+def _resolve_list(raw, consts_by_prefix, local):
+    """A `[a, b]` array of key-position values, flattened one level so a
+    nested `any_of` group resolves to its members."""
+    if raw is None:
+        return []
+    inner = raw.strip()
+    if not inner.startswith("["):
+        return []
+    inner = inner[1:inner.rfind("]")] if "]" in inner else inner[1:]
+    items = []
+    depth = 0
+    in_string = False
+    token = ""
+    for ch in inner:
+        if ch == '"':
+            in_string = not in_string
+        if not in_string:
+            if ch in "[{(":
+                depth += 1
+            elif ch in "]})":
+                depth -= 1
+            elif ch == "," and depth == 0:
+                items.append(token)
+                token = ""
+                continue
+        token += ch
+    items.append(token)
+    resolved = []
+    for item in items:
+        item = item.strip()
+        if not item:
+            continue
+        if item.startswith("["):
+            resolved.extend(_resolve_list(item, consts_by_prefix, local))
+        else:
+            resolved.append(_resolve_key(item, consts_by_prefix, local))
+    return resolved
+
+
+def _prerequisite_cycle(prereqs):
+    """The first cycle found in the prerequisite graph, as a list of ids,
+    or None. Depth-first with a colour marking, so a diamond (two paths
+    to one prerequisite) is not mistaken for a cycle."""
+    WHITE, GREY, BLACK = 0, 1, 2
+    colour = {node: WHITE for node in prereqs}
+
+    def walk(node, path):
+        colour[node] = GREY
+        for parent in prereqs.get(node, []):
+            if parent not in colour:
+                continue
+            if colour[parent] == GREY:
+                return path + [node, parent]
+            if colour[parent] == WHITE:
+                found = walk(parent, path + [node])
+                if found:
+                    return found
+        colour[node] = BLACK
+        return None
+
+    for node in sorted(prereqs):
+        if colour[node] == WHITE:
+            found = walk(node, [])
+            if found:
+                return found
+    return None
+
+
+def check_progression_catalogues(problems):
+    """Section 9.2's catalogue-integrity group, over skills.gd,
+    adaptations.gd and features.gd: duplicate or missing IDs, references
+    to absent entries, prerequisite cycles, `max_rank > 1` (section 4.4
+    holds every skill at a single rank until ranks are deliberately
+    lifted), and a display string used anywhere a key belongs.
+    """
+    sources = {}
+    for label, filename in PROGRESSION_FILES.items():
+        path = os.path.join(ROOT, filename)
+        if not os.path.exists(path):
+            problems.append(
+                "%s not found for progression catalogue check" % filename
+            )
+            return
+        sources[label] = _strip_gd_comments(open(path, encoding="utf-8").read())
+
+    consts = {label: _string_consts(src) for label, src in sources.items()}
+    # How a catalogue file refers to another one's constants.
+    by_prefix = {"Skills": consts["skills"], "Features": consts["features"]}
+
+    catalogues = {
+        "skills": ("SKILLS", "skills.gd"),
+        "adaptations": ("ADAPTATIONS", "adaptations.gd"),
+        "features": ("FEATURES", "features.gd"),
+    }
+    entries = {}
+    for label, (const_name, filename) in catalogues.items():
+        block = catalogue_block(sources[label], const_name)
+        if block is None:
+            problems.append(
+                "%s: could not find const %s -- has the catalogue moved?"
+                % (filename, const_name)
+            )
+            return
+        entries[label] = _entry_blocks(block)
+
+    # Every display string in every catalogue, so a key can be checked
+    # against the set rather than only against a shape.
+    display_names = set()
+    for label in entries:
+        for entry in entries[label]:
+            raw = _field(entry, "name") or _field(entry, "label")
+            if raw and raw.startswith('"'):
+                display_names.add(raw[1:-1].strip().lower())
+
+    ids = {}
+    for label, (_const_name, filename) in catalogues.items():
+        seen = []
+        for entry in entries[label]:
+            raw = _field(entry, "id")
+            resolved = _resolve_key(raw, by_prefix, consts[label])
+            if resolved is None:
+                problems.append(
+                    '%s: entry "id": %s names no constant -- a renamed or '
+                    "missing ID" % (filename, (raw or "<missing>")[:40])
+                )
+                continue
+            if resolved in seen:
+                problems.append("%s: %r is listed twice" % (filename, resolved))
+            seen.append(resolved)
+        ids[label] = seen
+
+    def check_key(filename, owner, field, value):
+        """A key-position value must be machine-shaped and must not be
+        somebody's display text."""
+        if value is None:
+            problems.append(
+                "%s: %s's %s names no constant -- a renamed or missing entry"
+                % (filename, owner, field)
+            )
+            return False
+        if value == "":
+            return False
+        if not KEY_SHAPE_RE.match(value):
+            problems.append(
+                "%s: %s's %s is %r, which is not a key -- keys are lower-case "
+                "and dotted, display text never appears in a key position"
+                % (filename, owner, field, value)
+            )
+            return False
+        if value.lower() in display_names:
+            problems.append(
+                "%s: %s's %s is %r, which is a display string -- display text "
+                "is never a save key or a dependency"
+                % (filename, owner, field, value)
+            )
+            return False
+        return True
+
+    # --- features: requires must name a feature that exists -----
+    for entry in entries["features"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["features"])
+        for required in _resolve_list(
+            _field(entry, "requires"), by_prefix, consts["features"]
+        ):
+            if not check_key("features.gd", owner, "requires entry", required):
+                continue
+            if required not in ids["features"]:
+                problems.append(
+                    "features.gd: %s requires %r, which is not a feature"
+                    % (owner, required)
+                )
+
+    # --- skills -------------------------------------------------
+    sector_keys = set(re.findall(r'\{"key":\s*"(\w+)",', sources["skills"]))
+    prereqs = {}
+    for entry in entries["skills"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["skills"])
+        if owner is None:
+            continue
+
+        sector = _resolve_key(_field(entry, "sector"), by_prefix, consts["skills"])
+        if check_key("skills.gd", owner, "sector", sector):
+            if sector not in sector_keys:
+                problems.append(
+                    "skills.gd: %s names sector %r, which is not in SECTORS"
+                    % (owner, sector)
+                )
+            elif not owner.startswith("skill.%s." % sector):
+                problems.append(
+                    "skills.gd: %s is in sector %r but its ID does not read "
+                    "skill.%s.<name> -- the ID convention is what makes a "
+                    "stable key readable" % (owner, sector, sector)
+                )
+
+        max_rank = _field(entry, "max_rank")
+        if max_rank is None or not max_rank.strip().isdigit():
+            problems.append("skills.gd: %s has no numeric max_rank" % owner)
+        elif int(max_rank) != 1:
+            problems.append(
+                "skills.gd: %s has max_rank %s -- section 4.4 holds every "
+                "skill at a single rank; the field exists so ranks can be "
+                "introduced later without a migration, not so one can be "
+                "authored now" % (owner, max_rank.strip())
+            )
+
+        baseline = (_field(entry, "baseline") or "false").strip() == "true"
+        tier_raw = (_field(entry, "tier") or "").strip()
+        if not tier_raw.isdigit():
+            problems.append("skills.gd: %s has no numeric tier" % owner)
+        else:
+            tier = int(tier_raw)
+            if baseline and tier != 0:
+                problems.append(
+                    "skills.gd: %s is baseline but sits at tier %d -- a "
+                    "section 5.7 capability is not on the grid" % (owner, tier)
+                )
+            elif not baseline and not 1 <= tier <= 4:
+                problems.append(
+                    "skills.gd: %s is at tier %d; nodes run 1-4 and tier 0 "
+                    "means baseline" % (owner, tier)
+                )
+
+        feature = _resolve_key(_field(entry, "feature"), by_prefix, consts["skills"])
+        if check_key("skills.gd", owner, "feature", feature):
+            if feature not in ids["features"]:
+                problems.append(
+                    "skills.gd: %s depends on feature %r, which features.gd "
+                    "does not list" % (owner, feature)
+                )
+
+        parents = []
+        for field in ("all_of", "any_of"):
+            for parent in _resolve_list(
+                _field(entry, field), by_prefix, consts["skills"]
+            ):
+                if not check_key("skills.gd", owner, "%s entry" % field, parent):
+                    continue
+                if parent not in ids["skills"]:
+                    problems.append(
+                        "skills.gd: %s's %s names %r, which is not a skill"
+                        % (owner, field, parent)
+                    )
+                    continue
+                if parent == owner:
+                    problems.append(
+                        "skills.gd: %s lists itself as its own prerequisite"
+                        % owner
+                    )
+                    continue
+                parents.append(parent)
+        prereqs[owner] = parents
+
+    cycle = _prerequisite_cycle(prereqs)
+    if cycle:
+        problems.append(
+            "skills.gd: prerequisite cycle -- %s. Nothing in the cycle can "
+            "ever be bought, because each waits on the next"
+            % " -> ".join(cycle)
+        )
+
+    # --- adaptations --------------------------------------------
+    for entry in entries["adaptations"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["adaptations"])
+        if owner is None:
+            continue
+
+        max_rank = _field(entry, "max_rank")
+        if max_rank is None or not max_rank.strip().isdigit():
+            problems.append("adaptations.gd: %s has no numeric max_rank" % owner)
+        elif int(max_rank) != 1:
+            problems.append(
+                "adaptations.gd: %s has max_rank %s -- section 4.4 holds "
+                "every card at a single rank for this pass"
+                % (owner, max_rank.strip())
+            )
+
+        skill = _resolve_key(
+            _field(entry, "requires_skill"), by_prefix, consts["adaptations"]
+        )
+        if check_key("adaptations.gd", owner, "requires_skill", skill):
+            if skill not in ids["skills"]:
+                problems.append(
+                    "adaptations.gd: %s requires skill %r, which skills.gd "
+                    "does not list" % (owner, skill)
+                )
+
+        feature = _resolve_key(
+            _field(entry, "requires_feature"), by_prefix, consts["adaptations"]
+        )
+        if check_key("adaptations.gd", owner, "requires_feature", feature):
+            if feature not in ids["features"]:
+                problems.append(
+                    "adaptations.gd: %s requires feature %r, which "
+                    "features.gd does not list" % (owner, feature)
+                )
+
+    milestone_block = catalogue_block(sources["adaptations"], "MILESTONES")
+    if milestone_block is None:
+        problems.append("adaptations.gd: could not find const MILESTONES")
+    else:
+        seen = []
+        for entry in _entry_blocks(milestone_block):
+            owner = _resolve_key(
+                _field(entry, "id"), by_prefix, consts["adaptations"]
+            )
+            if not check_key("adaptations.gd", "a milestone", "id", owner):
+                continue
+            if owner in seen:
+                problems.append(
+                    "adaptations.gd: milestone %r is listed twice" % owner
+                )
+            seen.append(owner)
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -556,6 +975,7 @@ def main():
     check_autoloads(problems)
     check_catalogue_alignment(problems)
     check_settings_keys(problems)
+    check_progression_catalogues(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))

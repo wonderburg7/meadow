@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A scheduled 4 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A1, section 11 Phase A step 1 (catalogue inventory), Claude lane | Dependency: none for Phase A; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-04
+Status: active -- Phase A step 1 landed 4 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A2, section 11 Phase A step 2 (the thin resolver), Claude lane | Dependency: none for Phase A; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-04
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -428,6 +428,21 @@ Three phases, ordered so each slice is provably safe before the next depends on 
 **Phase A — plumbing, no gameplay change**
 
 1. **Catalogue inventory.** Write `skills.gd`, `adaptations.gd`, `features.gd` with real IDs for section 5, including the baseline entries (5.7) and open nodes (5.9) as data with empty effects. Data only, nothing reads them yet — additive, near-zero regression risk.
+
+   **Landed 4 Sep 2026 as PR-A1.** All 37 skill entries are authored, the four
+   baseline capabilities among them at `tier: 0` with `baseline: true`, plus
+   24 adaptation cards, the three milestones and six features. Two decisions
+   the step did not spell out, recorded so the next steps inherit them rather
+   than re-deciding: **grid coordinates are authored now**, so PR-B5 has data
+   to validate rather than data to write, and every one already satisfies
+   section 8.1's `ring == 2 * tier + 1` and section 8.2's wedge rule;
+   **cost recipes name the right resources but their amounts are guesses**,
+   marked as such in `skills.gd`'s header, because section 4.2 fixes which
+   resources a tier may name and nothing else about a recipe can be settled
+   without the scenario harness. Section 9.2's catalogue-integrity group is in
+   `tests/source_checks.py::check_progression_catalogues`; the tier/cost and
+   grid groups wait for steps 4 and 5 as planned, though the data is already
+   consistent with both.
 2. **Resolver.** Build the thin resolver (section 3). Wire to `stage_gate.gd` for visibility and the catalogues for ownership, cost and branch tier. Prove it against the existing foraging toggles via `tests/`, not in-game yet.
 3. **Run-definition extension.** Add `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd`/`challenge_runner.gd`'s existing shape. Challenges 1 and 2 keep working unchanged with these fields empty.
 4. **Modifier resolution and validation.** Effective-value lookup in the resolver, plus section 9.2's checks. Mostly tests: a modifier changes an effective value and `GameConfig` itself is never touched.
