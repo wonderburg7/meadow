@@ -199,11 +199,10 @@ const PRESENTATION_PER_SECOND := 6.0
 var presentation_timer: float = 0.0
 
 ## Catches nectar_amount/pollen_amount up to the current sim time,
-## before either is read or written. Out of season this adds nothing
-## (season_strength is 0), matching the old per-frame gate. The plant
-## stays where it is whether it's recharging or not -- flowers popping
-## in and out of existence would read as a glitch rather than as a
-## season.
+## before either is read or written. Out of season this adds only the
+## small season-strength floor. The plant stays where it is whether it's
+## recharging or not -- flowers popping in and out of existence would read
+## as a glitch rather than as a season.
 func _sync_recharge() -> void:
 	var elapsed: float = Session.sim_time - _last_recharge_update
 	if elapsed <= 0.0:
@@ -244,7 +243,9 @@ func _process(delta: float) -> void:
 
 	# Flowers don't last forever. main.gd seeds a replacement elsewhere,
 	# so the meadow drifts around while staying about as full.
-	age_seconds += delta
+	var seasonal_strength: float = season_strength()
+	var ageing_factor: float = 1.0 if seasonal_strength > GameConfig.out_of_season_strength else GameConfig.out_of_season_ageing_factor
+	age_seconds += delta * ageing_factor
 	if age_seconds >= lifespan_seconds:
 		DiagnosticLog.count_flower_senescence()
 		if occupied_by != null and is_instance_valid(occupied_by):
@@ -267,7 +268,7 @@ func _process(delta: float) -> void:
 		Perf.end("flowers")
 		return
 	presentation_timer = (1.0 / PRESENTATION_PER_SECOND) * randf_range(0.85, 1.15)
-	_update_fade(season_strength())
+	_update_fade(seasonal_strength)
 	_update_labels()
 	_update_crab_spider_marker()
 	Perf.end("flowers")
@@ -290,15 +291,15 @@ func in_season() -> bool:
 	var f: float = season_fraction()
 	return f >= season_start and f <= season_end
 
-## How strongly it is flowering: nothing at the edges of its window,
-## full in the middle. Eased rather than switched, so a species fading
-## out gives the colony warning rather than stopping dead.
+## How strongly it is flowering: a small floor outside its window, full in
+## the middle. Eased rather than switched, so a species fading out gives the
+## colony warning rather than stopping dead.
 func season_strength() -> float:
 	if not GameConfig.seasons_on:
 		return 1.0
 	var f: float = season_fraction()
 	if f < season_start or f > season_end:
-		return 0.0
+		return GameConfig.out_of_season_strength
 	var span: float = max(0.001, season_end - season_start)
 	var through: float = (f - season_start) / span
 	# a smooth arch: 0 at both ends, 1 in the middle
