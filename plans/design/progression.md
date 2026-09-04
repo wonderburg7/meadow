@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: designed, not scheduled | Owner: Dave | Next: Phase A step 1 (catalogue inventory) once progression becomes the active product direction | Dependency: no active implementation slice; two skill definitions still open (section 5.9) | Verified: 2026-09-03
+Status: active -- Phase A scheduled 4 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A1, section 11 Phase A step 1 (catalogue inventory), Claude lane | Dependency: none for Phase A; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-04
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -9,7 +9,7 @@ Canonical detailed plan for the in-run skill tree, campaign meta progression, an
 
 This file is the source of truth for skill-tree/adaptation design — `plans/now/ui.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
-Documentation only. No game code changes in this pass — see section 11 for the build sequence.
+Phase A of section 11 was scheduled on 4 Sep 2026 (`NEXTSTEPS.md`), when Dave paused the hands-on checks and asked for work that does not wait on him: Phase A steps 1-4 and Phase B step 5 change no gameplay and are proved by `tools/verify.ps1` alone. Everything from Phase B step 6 on puts something on screen and stays unscheduled until the checks resume. The design below is unchanged by that scheduling call.
 
 ## 0. Terminology
 
