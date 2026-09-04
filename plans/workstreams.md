@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FL-2` (`codex/FL-2`) | Codex | Out of season means "barely", not "not at all". | Codex | in progress | none | `plans/now/flowers.md` Slice 2 |
+| `.worktrees/queue-refill` (`claude/queue-refill`) | Claude | Refill the empty Claude lane with slices that need no hands-on check. | Claude | in progress | none | `plans/design/progression.md` Phase A |
