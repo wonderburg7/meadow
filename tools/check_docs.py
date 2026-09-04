@@ -309,6 +309,81 @@ def check_markdown_links(errors: list[str]) -> None:
                 errors.append(f"{path.relative_to(ROOT)}: broken Markdown link: {raw_target}")
 
 
+DOC_GLOBS = (
+    "*.md",
+    "docs/*.md",
+    "plans/*.md",
+    "plans/now/*.md",
+    "plans/active/*.md",
+    "plans/design/*.md",
+    "plans/reference/*.md",
+    "checks/*.md",
+    ".claude/rules/*.md",
+)
+BACKTICK_TOKEN = re.compile(r"`([^`\n]+)`")
+ROUTABLE_SUFFIX = re.compile(r"\.(md|gd|py|ps1|json|tscn|tres|cfg)$")
+
+
+def routable_docs() -> list[Path]:
+    seen: dict[Path, None] = {}
+    for pattern in DOC_GLOBS:
+        for path in sorted(ROOT.glob(pattern)):
+            seen[path] = None
+    return list(seen)
+
+
+def check_backticked_paths(errors: list[str]) -> None:
+    """A backticked repo path must name a file that exists.
+
+    Almost all of this project's routing is written as `plans/now/ui.md`, not
+    as a Markdown link -- CLAUDE.md's whole "Where to route a change" table is
+    backticks. check_markdown_links never saw any of it, so a pointer left
+    behind by a move stayed green: check-loop.md moved to plans/reference/ on
+    4 Sep 2026 and DESIGN_BACKLOG.md still sent readers to plans/now/. The
+    cost of a dead pointer is not tidiness -- it is a session opening a file
+    that is not there and then searching for it, which is exactly the
+    expensive path the routing tables exist to avoid."""
+    for path in routable_docs():
+        for raw in BACKTICK_TOKEN.findall(path.read_text(encoding="utf-8")):
+            token = raw.strip()
+            if "/" not in token or " " in token or "://" in token.replace("res://", ""):
+                continue
+            if "*" in token or "?" in token:
+                continue  # a glob, e.g. `scripts/**/*.gd`
+            target = token[len("res://"):] if token.startswith("res://") else token
+            target = target.split("::", 1)[0].split("#", 1)[0].rstrip(".,;:")
+            if not ROUTABLE_SUFFIX.search(target):
+                continue
+            if not (ROOT / target).is_file():
+                errors.append(
+                    f"{path.relative_to(ROOT)}: backticked path does not exist: {token}"
+                )
+
+
+LANDED_RECORD = re.compile(r"^\s*\*\*Landed\b[^*]*\*\*", re.MULTILINE)
+
+
+def check_no_landed_records_in_live_plans(errors: list[str]) -> None:
+    """A landed slice's record belongs in plans/archive/, in every live layer.
+
+    check_live_plans_hold_only_open_work catches a *heading* marked shipped,
+    and only under plans/now/. Neither half held for plans/design/: the two
+    slices Phase A shipped on 4 Sep 2026 were written up as bold paragraphs
+    inside progression.md's section 11 -- the scheduling section every
+    following slice is routed to read. Two landed slices had already added
+    ~60 lines to it, and the pattern grows with each one, so the next slice
+    pays for the history of the ones before it on every request of its
+    session. Keep the decisions later steps inherit; archive the record."""
+    for plan in current_plans():
+        text = plan.read_text(encoding="utf-8")
+        for match in LANDED_RECORD.finditer(text):
+            line_no = text[: match.start()].count(chr(10)) + 1
+            errors.append(
+                f"{plan.relative_to(ROOT)}:{line_no}: a landed slice's record belongs in "
+                f"plans/archive/ -- keep only what a later slice inherits: {match.group(0).strip()}"
+            )
+
+
 CHECK_FILES = ("checks/ready.md", "checks/blocked.md")
 CHECK_ID = re.compile(r"^C-(\d+) -- \S")
 OWNER_NONE = re.compile(r"^Owner:\s*none\b", re.IGNORECASE)
@@ -481,6 +556,8 @@ def main() -> int:
     check_next_steps(errors, warnings)
     check_queue_proofs(errors)
     check_markdown_links(errors)
+    check_backticked_paths(errors)
+    check_no_landed_records_in_live_plans(errors)
     check_checks(errors)
     check_workstreams(errors)
 

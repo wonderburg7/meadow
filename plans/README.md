@@ -10,8 +10,9 @@ remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md` only. It holds five ready slices in a `[Claude]` lane
-   and a `[Codex]` lane; take the first unclaimed item in your own lane.
+1. Read `NEXTSTEPS.md` only. It holds two to five ready slices in a
+   `[Claude]` lane and a `[Codex]` lane; take the first unclaimed item in
+   your own lane.
 2. Open the `Plan:` file/heading that item names with a targeted search. Read
    its status line and only the section needed for the assigned task.
 3. Load code rules, a check list, design reference, or historical record only
