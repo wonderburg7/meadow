@@ -55,10 +55,15 @@ def main() -> int:
     parser.add_argument("heading", help="heading text; case-insensitive substring match")
     args = parser.parse_args()
 
-    # Sections carry em dashes and the like; a narrow console should degrade,
-    # not raise part-way through a printed section.
+    # Plans are UTF-8 and carry em dashes, arrows and curly quotes. Windows
+    # consoles default to cp1252, which turned every one of them into a
+    # literal "?" in the section a session had just been routed to -- the
+    # tool CLAUDE.md tells every session to read plans with was making those
+    # plans harder to read, not easier. Ask for UTF-8 explicitly, and keep
+    # `errors="replace"` so a console that genuinely cannot encode a glyph
+    # degrades rather than raising part-way through a printed section.
     for stream in (sys.stdout, sys.stderr):
-        stream.reconfigure(errors="replace")
+        stream.reconfigure(encoding="utf-8", errors="replace")
 
     path = Path(args.file)
     try:

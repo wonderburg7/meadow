@@ -11,8 +11,8 @@ reconstructing history.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md`. It holds five ready slices in two lanes; take the
-   first unclaimed **[Claude]** item. "Implement the next slice" means exactly
+1. Read `NEXTSTEPS.md`. It holds two to five ready slices in two lanes;
+   take the first unclaimed **[Claude]** item. "Implement the next slice" means exactly
    that and needs no other context.
 2. Open only the `Plan:` file and heading that item names --
    `python tools/heading.py <file> "<heading>"` prints that one section and
@@ -30,9 +30,9 @@ already decided; re-deriving it is the expensive path.
 <!-- LAYER: durable-rules -->
 
 `NEXTSTEPS.md` holds only work that can be started immediately. This is
-enforced, not aspirational -- `tools/check_docs.py` fails if the queue has
-other than five items, if an item lacks a lane tag or its `Plan:`/`Files:`/
-`Check:`/`Next after:` lines, if either lane is empty, if the two lanes'
+enforced, not aspirational -- `tools/check_docs.py` fails if the queue holds
+fewer than two or more than five items, if an item lacks a lane tag or its
+`Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines, if either lane is empty, if the two lanes'
 leading items name a file in common, or if blocked-work language appears in
 the queue at all.
 
@@ -198,6 +198,7 @@ the authority on which tier a branch is in.
 | Hot-path performance | `.claude/rules/performance.md` |
 | Function or section location | `FUNCTION_MAP.md` |
 | Recurrent bug classes | `docs/known-pitfalls.md` |
+| Naming or describing a system consistently | `GAME_MODEL.md` |
 | Performance method/contracts | `docs/performance.md`, `docs/PERFORMANCE_BASELINE.md` |
 
 Every path above is repo-relative, so it can be opened without a search.

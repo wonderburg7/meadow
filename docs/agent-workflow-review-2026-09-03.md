@@ -34,7 +34,7 @@ audit.
 | Queue and branch state drift | X1 was handled in three sessions. X3 was inspected three times and found already complete; it is still queued in `NEXTSTEPS.md` line 41, despite the implementation existing in `scripts/ui_theme.gd` line 169. X1/X3 repetition alone consumed at least 2.4M input tokens and ~13 minutes. | Critical development, high time/token waste |
 | Excessive context and tool output | Median first-call input grew from ~23K to ~25.8K tokens. There were 332 `Get-Content -Raw` calls; 811 tool calls requested outputs of 20K+ tokens. Much of the initial floor is app/tool/plugin context, not Meadow Markdown. | Critical token, high efficiency impact |
 | Git sandbox and approval churn | Guardian reviews consumed 39.3M input tokens — 28% of all input — across 232 approval turns. Logs contain 48 sandboxed Git-write failures across 39 sessions, plus 20 `safe.directory` mismatches. | High token/time, medium-high workflow risk |
-| Guessed paths and runtime rediscovery | At least 17 sessions queried missing locations: root `hud.gd` instead of `scripts/hud.gd`, `tools/source_checks.py` instead of `tests/source_checks.py`, root `verify.ps1`, nonexistent `docs/TESTING.md`, `src`, `.github`, `test_tools`, and a nested `.worktrees/x1`. Python/runtime discovery was also repeated. | Medium development, medium time/token |
+| Guessed paths and runtime rediscovery | At least 17 sessions queried missing locations: root `hud.gd` instead of `scripts/hud.gd`, `tests/source_checks.py` instead of `tests/source_checks.py`, root `verify.ps1`, nonexistent `tests/`, `src`, `.github`, `test_tools`, and a nested `.worktrees/x1`. Python/runtime discovery was also repeated. | Medium development, medium time/token |
 | Conflicting process ownership | `CHATGPT.md` line 25 says Claude owns workstream registration, while `NEXTSTEPS.md` line 12 tells the implementing agent to add the row. This produced a stale-ledger verification failure during X2. | High reliability, medium efficiency |
 
 Codex's recommendations:
@@ -207,7 +207,7 @@ Specific leaks, all against explicit written rules:
 - **10 reads of `DESIGN_BACKLOG.md`** and 15 of the retired root
   `HANDS_ON_CHECKS.md` signpost during orientation.
 - **59 not-found path probes across 33 sessions** — the same class Codex
-  found (root `hud.gd`, `tools/source_checks.py` when it lives in `tests/`).
+  found (root `hud.gd`, `tests/source_checks.py` when it lives in `tests/`).
   `CLAUDE.md`'s routing table names bare filenames (`hud.gd`, `roles.gd`,
   `saving.gd`), not paths, so every route ends in a search.
 

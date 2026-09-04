@@ -361,6 +361,8 @@ Five node states, drawn from `UiTheme` rather than hard-coded colours:
 | Affordable | Ready to buy. |
 | Owned | Bought this run, or mastered and granted at run start — the tooltip says which. |
 
+**The panel asks the resolver once per open, not once per frame.** `Skills.entry()` is a linear scan of the catalogue and `purchase_blocker()` calls it seven or eight times, plus a `for_sector_tier()` filter that allocates an Array. That is nothing at all for one node on one click, and roughly 300 scans and 40 allocations per frame if a redraw recomputes every tile's state — on a full-screen overlay, which is exactly where a per-frame `_process` is easiest to add without noticing. Resolve every tile's state into a dictionary when the panel opens and after each purchase, draw from that, and leave `shapes.gd`'s geometry computed once per open too. If a later slice ever does need per-frame resolution, `.claude/rules/performance.md` applies: measure it first, and index `SKILLS` by id rather than making the panel poll faster.
+
 Panel behaviour: opens as a full-screen overlay with the simulation paused, following `plans/now/ui.md`'s existing pre-run menu precedent for not running the sim behind a full-screen menu (UI-L). The centre tile shows the colony's current spendable stores — nectar, pollen, honey, bee bread, royal jelly — so the player never has to close the tree to check whether they can afford something. Purchases are not refundable and there is no in-run respec.
 
 ### 8.5 The HUD Skills button
@@ -429,65 +431,31 @@ Three phases, ordered so each slice is provably safe before the next depends on 
 
 1. **Catalogue inventory.** Write `skills.gd`, `adaptations.gd`, `features.gd` with real IDs for section 5, including the baseline entries (5.7) and open nodes (5.9) as data with empty effects. Data only, nothing reads them yet — additive, near-zero regression risk.
 
-   **Landed 4 Sep 2026 as PR-A1.** All 37 skill entries are authored, the four
-   baseline capabilities among them at `tier: 0` with `baseline: true`, plus
-   24 adaptation cards, the three milestones and six features. Two decisions
-   the step did not spell out, recorded so the next steps inherit them rather
-   than re-deciding: **grid coordinates are authored now**, so PR-B5 has data
-   to validate rather than data to write, and every one already satisfies
-   section 8.1's `ring == 2 * tier + 1` and section 8.2's wedge rule;
-   **cost recipes name the right resources but their amounts are guesses**,
-   marked as such in `skills.gd`'s header, because section 4.2 fixes which
-   resources a tier may name and nothing else about a recipe can be settled
-   without the scenario harness. Section 9.2's catalogue-integrity group is in
-   `tests/source_checks.py::check_progression_catalogues`; the tier/cost and
-   grid groups wait for steps 4 and 5 as planned, though the data is already
-   consistent with both.
+   *Landed 4 Sep 2026 as PR-A1; record in `plans/archive/PROGRESSION_PHASE_A_2026-09-04.md`.*
 2. **Resolver.** Build the thin resolver (section 3). Wire to `stage_gate.gd` for visibility and the catalogues for ownership, cost and branch tier. Prove it against the existing foraging toggles via `tests/`, not in-game yet.
 
-   **Landed 4 Sep 2026 as PR-A2.** `scripts/progression.gd` holds section
-   4.5's conditions as one function each and combines them in exactly one
-   place, `purchase_blocker()`, which returns `""` or the first `BLOCK_*`
-   reason a purchase is refused; `can_purchase()` delegates to it, and
-   `purchase()` is the one place a recipe is spent. Three decisions the step
-   did not spell out, recorded so steps 3 and 4 inherit them rather than
-   re-deciding: **the resolver is handed its config and stage gate rather
-   than reaching for the singletons**, so the section 3 write ban is visible
-   at a glance and a test can pass a stand-in; **a null stage gate permits
-   everything**, matching `stage_gate.gd`'s own "outside a Challenge every
-   key reads unlocked" rule, which is where step 3's `skill_grants`/
-   `skill_bans`/`skill_delays` will land inside `is_permitted()`; and
-   **stores are a plain resource-key dictionary passed per call**, because
-   nothing in the game owns such a collection yet and inventing an owner
-   here would pre-empt Phase B step 6. Ownership is kept as two dictionaries,
-   mastered and temporary, so section 4.1's "lost when the run ends" is a
-   `clear()` of one of them. `open_tier()` was written and then removed: a
-   branch whose top tier is empty has no honest single answer, and the tree
-   panel is what will define the question.
+   *Landed 4 Sep 2026 as PR-A2; same record.*
 
-   Two checks in `tests/source_checks.py` hold the file to section 3.
-   `check_progression_resolver` is structural -- every gate exists, the
-   chain consults all seven, `can_purchase()` does not grow a second copy of
-   the chain, the file preloads nothing but the three catalogues, it never
-   names `GameConfig`, and no other script defines a resolver function or
-   preloads a catalogue. `check_progression_foraging_rules` re-runs the
-   chain in Python over the shipped catalogue against the two existing
-   foraging toggles: a fresh colony can buy `tarsal_secretions` and
-   `orientation_flight` and neither one unit of nectar short; foraging tier 2
-   stays shut with one of the pair owned and opens with both, where honey
-   becomes the binding constraint (section 4.2's ladder, so the Brood spine
-   is what actually gates it); a baseline capability is never for sale; and
-   a predator skill is refused in a run with predators off. Both were
-   mutation-tested. **Neither executes the shipped GDScript** -- verify.ps1
-   has no Godot -- so `progression.gd` was separately parse-checked with
-   `Godot --headless --check-only`, and the first real execution is Phase B
-   step 6.
-3. **Run-definition extension.** Add `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd`/`challenge_runner.gd`'s existing shape. Challenges 1 and 2 keep working unchanged with these fields empty.
-4. **Modifier resolution and validation.** Effective-value lookup in the resolver, plus section 9.2's checks. Mostly tests: a modifier changes an effective value and `GameConfig` itself is never touched.
+**What steps 3, 4 and 5 inherit from the two landed steps.** Everything else about them is history and is in the archive record above; these five are load-bearing, so they stay here.
+
+- **Grid coordinates are already authored** in `skills.gd`, every one already satisfying section 8.1's `ring == 2 * tier + 1` and section 8.2's wedge rule. Step 5 validates data; it does not invent it.
+- **Cost amounts are guesses**, marked as such in `skills.gd`'s header. Section 4.2 fixes which *resources* a tier may name and nothing more can be settled without the scenario harness, so no later step should treat a recipe amount as decided.
+- **The resolver is handed its config and stage gate** rather than reaching for the singletons, so section 3's `GameConfig` write ban is visible at a glance and a test can pass a stand-in.
+- **A null stage gate permits everything**, matching `stage_gate.gd`'s own rule. `is_permitted()` exists as its own function precisely so step 3's `skill_grants`/`skill_bans`/`skill_delays` land inside it.
+- **Stores are a plain resource-key dictionary passed per call.** Nothing in the game owns such a collection yet, and inventing an owner before step 6 would pre-empt it.
+
+Section 9.2's catalogue-integrity group shipped with step 1 (`tests/source_checks.py::check_progression_catalogues`); `check_progression_resolver` and `check_progression_foraging_rules` shipped with step 2. Neither executes the shipped GDScript — `verify.ps1` has no Godot — so a slice touching `progression.gd` still wants a `Godot --headless --check-only` parse check, and the first real execution is step 6.
+
+3. **Run-definition extension.** Add `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd`/`challenge_runner.gd`'s existing shape, read inside `is_permitted()`. Challenges 1 and 2 keep working unchanged with these fields empty. Carries section 9.2's **tier and cost** group: the recipe/tier half can be checked against PR-A1's data as it stands, and "a Challenge's grants/bans/delays cannot make branch advancement impossible" is checkable only once this step's fields exist, so it belongs here rather than waiting for step 4.
+4. **Modifier resolution.** Effective-value lookup in the resolver — base `GameConfig` plus additive and multiplicative modifiers with source tracking (section 3) — plus section 9.2's **reachability** group. Mostly tests: a modifier changes an effective value and `GameConfig` itself is never touched.
+
+   **Author `effects` only for the two foraging tier-1 nodes this step can actually justify.** Tarsal secretions and Orientation flight map onto `GameConfig` toggles whose behaviour already ships, so their effects are transcription rather than invention. Every other `effects` array stays empty until the node's own content step reaches it. This is the same rule step 1 applied to cost amounts, for the same reason: a magnitude nothing can balance is a guess that step 6 would rewrite, and writing 35 of them here would mean authoring the tree's balance before a single node has ever been bought in a running game.
+
+**Scheduled order is 3, then 5, then 4** — not the numbering above, which is identity rather than schedule. Step 5 is pure maths over data step 1 already authored, so it is the least likely of the three to be rewritten; step 4 authors effect magnitudes and is the most likely, so it runs last and closest to step 6, which is what will prove them. Steps 3 and 4 both own `progression.gd` and so cannot run in parallel with each other in any case; step 5 owns `shapes.gd` and overlaps neither.
 
 **Phase B — prove the systems, in this order**
 
-5. **Grid geometry.** Add `Shapes.hex_line`, the ring/wedge rules and their validators (section 8.1–8.3). Pure maths and checks, no panel yet.
+5. **Grid geometry.** Add `Shapes.hex_line`, the ring/wedge rules and their validators (section 8.1–8.3), carrying section 9.2's **grid** group. Pure maths and checks against coordinates step 1 already authored, no panel yet. It depends on nothing in steps 3 or 4 and shares no file with them.
 6. **Foraging tier 1 vertical slice.** Tarsal secretions and Orientation flight move from always-on toggles to skill-gated purchases, with the tree panel (section 8.4), the HUD button (section 8.5) and run saving. Tier 1 only, so it needs no honey and does not touch the Brood spine. This is the first success criterion — prove prerequisites, cost, effects, controls, node states and saving on the smallest possible surface.
 7. **The Brood spine at tier 1 and the honey gate.** Honey worker and Nurses become nodes; a tier-2 purchase becomes possible. This is where section 6's constraint 2 (enough starting comb to make the first honey) is tested with a real scenario run.
 8. **Tier 2 content.** Comb worker, Miner, Automation, Cleaning, Adaptive constancy, Associative learning, Guard bee, Combat, Suppress recruitment, Rain recall — all existing or bounded-new behaviour.

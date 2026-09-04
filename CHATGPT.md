@@ -172,8 +172,8 @@ commits distinct.
 
 ## Session routing
 
-- Treat `NEXTSTEPS.md` as the only canonical current queue. It holds five
-  ready slices split into a **[Claude] lane** and a **[Codex] lane**. Take the
+- Treat `NEXTSTEPS.md` as the only canonical current queue. It holds two to
+  five ready slices split into a **[Claude] lane** and a **[Codex] lane**. Take the
   first unclaimed **[Codex]** item and nothing else -- "implement the next
   slice" means exactly that. Read only the `Plan:` file and heading that item
   names; do not read the Claude lane's plan, the archive or Git history to

@@ -34,6 +34,59 @@ to happen, let's drop this and assume it works." Two new asks became
 `plans/now/flowers.md`; the process findings became `check-loop.md`, now
 `plans/reference/check-loop.md` since its one slice shipped 4 Sep 2026.
 
+## Decisions waiting on Dave
+
+Not checks -- these need a call rather than a playthrough, and they are here
+because this is the file Dave answers by id. Reply "D-1: <choice>". They use
+`#### D-<n>` headings deliberately, so `tools/check_docs.py`'s C-id format
+rules do not apply to them. Raised by the 4 Sep 2026 alignment audit.
+
+#### D-1 -- the paused checks are now the binding constraint
+
+Fourteen checks sit unrun in this file, and four plans (`ui.md`,
+`challenge-1.md`, `challenge-2.md`, `hive-comb.md`) have no startable slice
+because of it. Progression Phase A is the only work that needs nothing from
+you, and it runs out after PR-A3, PR-B5 and PR-A4 -- three slices. After
+that the queue has nowhere to go without either a hands-on pass or a new
+plan.
+
+Options: run a pass (C-16, C-5 and C-13 unblock the most between them);
+or nominate a fifth area to design so the hands-off runway extends.
+
+#### D-2 -- whether the queue floor stays at 2
+
+`tools/check_docs.py`'s comment asks for this to be flagged to you: the
+minimum queue size was lowered 5 -> 4 -> 3 -> 2 over 3-4 Sep 2026, each time
+because a slice shipped with no ready successor. Promoting PR-B5 in this
+audit puts the queue back to 3. The floor exists to stop a lane emptying,
+which it still does at 2.
+
+Options: leave it at 2; or raise it back to 3 now that D-1's answer would
+determine whether the plans have depth again.
+
+#### D-3 -- git attribution names Sonnet, whichever model ran
+
+`tools/slice.ps1`'s `Get-LaneTrailer` hard-codes
+`Co-Authored-By: Claude Sonnet 5` for every Claude-lane slice. Its stated
+purpose is telling the Claude and Codex lanes apart in `git log`, which it
+does; but sessions run on different models (this audit ran on Opus 5), so
+the trailer is not accurate as attribution. Left unchanged, because
+attribution is yours to decide.
+
+Options: leave it as a lane marker; or have it name the model the session
+actually ran on.
+
+#### D-4 -- `ROADMAP.md` and `DESIGN_BACKLOG.md` are unreadable to a session
+
+`.claude/settings.json` denies reads of both, which correctly keeps them out
+of the routing path -- but it also meant this audit could not check their
+contents against the plans. Two dead pointers in `DESIGN_BACKLOG.md` were
+repaired blind, by known-target substitution, and `tools/check_docs.py` now
+catches that whole class automatically, so the gap is smaller than it was.
+
+Options: leave both denied and rely on the new backticked-path check; or
+lift the deny for an explicit audit session only.
+
 ### C-16 -- pre-run menu left inset
 
 Open the pre-run menu at the usual viewport, then choose several left-pane
