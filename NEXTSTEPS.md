@@ -2,38 +2,36 @@
 
 <!-- CONTEXT: current-queue | LOAD: every session -->
 
-**The Claude lane is empty.** CD-1 shipped 4 Sep 2026 with no further slice
-in its plan; P-2 shipped the same day and closed out `check-loop.md`'s last
-open slice too (now `plans/reference/check-loop.md`, reference only). Every
-other open plan (`ui.md`, `challenge-1.md`, `challenge-2.md`, `hive-comb.md`,
-`flowers.md`, `progression.md`) was checked and its remaining work wants
-Dave's hands-on pass, a live repro, or a product decision -- which is
-exactly what does not belong in this list, and exactly why nothing was
-promoted into the empty slot instead of inventing one. This is a genuine
-stop, surfaced rather than papered over: `tools/check_docs.py` will report
-"no [Claude] item" until Dave either does one of the things below, or
-decides the Claude lane sits idle until Codex's FL-2 lands and opens
-something new. This was not resolved by relaxing the check further --
-unlike the queue-size floor (below), "both lanes must have work" is what
-lets two sessions run in parallel without collision, and loosening it is
-Dave's call, not something to decide unattended.
+**Hands-on checks are paused (Dave, 4 Sep 2026).** Everything in
+`checks/ready.md` stays filed and unrun, so no slice that depends on one may
+enter the queue. That ruled out every remaining item in `ui.md`,
+`challenge-1.md`, `challenge-2.md` and `hive-comb.md` -- all four want Dave
+to run something first -- and left exactly one body of ready work that needs
+nothing from him: **Progression Phase A** (`plans/design/progression.md`
+section 11), whose four steps are explicitly "plumbing, no gameplay change"
+and are proved by `tests/`, not by playing.
 
-The fastest unblocks, in order of effort: (1) reply to one of the four
-items under "Not in the queue" below with the evidence it is waiting on --
-a live repro, a hands-on-check result, or a press of a developer trigger;
-(2) greenlight Progression Phase A (`plans/design/progression.md`), parked
-by product-scope choice rather than a technical gate; (3) accept the idle
-lane and let Codex's FL-2 run alone for now.
+Dave's instruction to fill the queue with work that does not wait on him is
+read here as scheduling Phase A, and nothing beyond it: the parked item under
+"Not in the queue" that said Phase A was a scheduling decision rather than a
+technical gate is now taken as made. Phase B's vertical slice (step 6) is the
+first progression work that puts anything on screen, so it stays out of the
+queue until the checks resume.
 
-`tools/check_docs.py`'s queue-size check accepts two to five items -- moot
-while a lane is empty, but left at two rather than reverted to three, since
-that relaxation (3 Sep 2026, then again 4 Sep 2026) is independent of this
-one and still correctly describes the queue once a Claude item exists again.
+**The runway, so it is clear how far this goes.** Phase A steps 1-4
+(catalogue, resolver, run-definition fields, modifier resolution and
+validation) and Phase B step 5 (the `Shapes.hex_line` helper and the grid
+rules, pure maths) are five consecutive Claude slices that each finish on
+`tools/verify.ps1` alone. Step 1 landed on 4 Sep 2026 as PR-A1; the remaining
+four each become startable as its predecessor lands, so the queue promotes
+them one at a time rather than listing three items nobody can begin today.
 
-**Everything in this file can be started right now.** Nothing here is waiting
-on a hands-on check, a live repro, or a decision from Dave. Work that *is*
-waiting is listed under "Not in the queue" at the bottom, with a pointer, and
-is deliberately not mixed in above.
+**Everything in `## Next up` can be started right now.** Work that wants
+something from Dave is under "Not in the queue" at the bottom, with a
+pointer, and is deliberately not mixed in above.
+
+`tools/check_docs.py`'s queue-size check accepts two to five items. Two is
+correct here: each lane holds the one item it can actually begin.
 
 **"Implement the next slice" means:** run `tools/slice.ps1 start -Lane
 Claude` (or `-Lane Codex`) to claim the lane's leading item and open its
@@ -45,7 +43,32 @@ decided.
 
 ## Next up
 
-1. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+1. **[Claude] PR-A2 -- The thin resolver.**
+   - Plan: `plans/design/progression.md` -- section 11, Phase A step 2, with
+     section 3 for what the resolver owns, section 4.1/4.3/4.5 for the
+     purchasability rules and section 4.2 for the cost ladder.
+     Minimum reasoning: medium.
+   - Does: writes `progression.gd`, the one place that answers ownership,
+     afford, feature-validity and branch-tier questions, reading
+     `skills.gd`/`adaptations.gd`/`features.gd` and `stage_gate.gd` and
+     nothing else. Nothing writes `GameConfig` from an effect. It is not
+     wired into the game yet, so no run behaves differently.
+   - Files: `scripts/progression.gd`, `tests/source_checks.py`.
+   - Check: `tools/verify.ps1`, extended so `progression.gd` is held to
+     section 3's rule that it is the only file answering these questions,
+     and proved against the existing foraging toggles
+     (`orientation_flight_on`, `tarsal_markers_on`) in `tests/` rather than
+     in-game. No player check: nothing calls it.
+   - Proof: `absent: tests/source_checks.py :: progression.gd`
+   - Why here: PR-A1 landed 4 Sep 2026 and named this as its `Next after:`.
+     The catalogues exist and nothing reads them, which is exactly the gap
+     this closes; it shares no file with the Codex lane.
+   - Next after: PR-A3 -- run-definition fields (section 11, Phase A step 3),
+     which adds `skill_grants`/`skill_bans`/`skill_delays` to `levels.gd` and
+     `challenge_runner.gd`'s existing shape, with Challenges 1 and 2 working
+     unchanged while those fields are empty.
+
+2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
    - Plan: `plans/now/flowers.md` -- Slice 2.
    - Does: gives out-of-season flowers a small recharge floor, faster ageing
      and rarer seeding, using three explicit `GameConfig` balance values.
@@ -53,7 +76,7 @@ decided.
      `scripts/flower_species.gd`.
    - Check: `tools/verify.ps1`, plus baseline and branch runs of
      `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
-     in the plan. One hands-on check to file: the year-round species mix
+     in the plan. One player check to file: the year-round species mix
      visibly follows the seasons without collapsing.
    - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
    - Why here: UI-R-2 shipped 3 Sep 2026 and this was already queued behind
@@ -62,41 +85,44 @@ decided.
 
 ## Ready, not yet in the queue
 
-Nothing. The Claude lane is empty (see the note at the top of this file);
-the Codex lane's only item is already in the queue above. The next slot
-refills from an owning plan the moment a plan below has real ready work
-again -- which, for all of them, means Dave running something first.
+Nothing that a session could open today. The Claude lane's successors --
+PR-A3 (run-definition fields in `levels.gd` and `challenge_runner.gd`),
+PR-A4 (modifier resolution and section 9.2's remaining validation) and PR-B5
+(`Shapes.hex_line` plus the ring and wedge rules) -- are each written against
+the thing before them, so each is promoted into the lane as its predecessor
+merges rather than listed here as startable. PR-B5 in particular has data
+waiting for it: PR-A1 authored every node's axial coordinate, so that slice
+validates coordinates rather than inventing them.
 
 ## Not in the queue, and why
 
-Each of these needs something from Dave, or something else to ship first.
-They are listed so they are not lost, not so they are picked up.
+Each of these wants something from Dave, or something else to ship first.
+They are listed so they are not lost, not so they are picked up. The first
+four are paused as a group while the filed checks go unrun.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
-  thing that plan needs.
+  thing that plan wants.
 - **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
   of the rescue and recovery lines does not appear. C2-1 shipped 3 Sep 2026
   (its "Force Challenge 2 collapse" trigger is `checks/ready.md` C-5); this
-  now waits on Dave to press it and report which line is missing. There is
-  no static defect to fix blind, and guessing has already failed twice.
+  wants Dave to press it and report which line is missing. There is no
+  static defect to fix blind, and guessing has already failed twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
   so it wants Dave's live look and a call on intended behaviour. Slice 5
-  wants its own live repro.
+  wants its own reproduction.
 - **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
-  and say to reproduce live before changing code. With UI-R-2 shipped, these
-  two are all that plan has left.
+  and say to reproduce the symptom live before changing code. With UI-R-2
+  shipped, these two are all that plan has left.
+- **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
+  the foraging tier-1 vertical slice is where the tree panel, the HUD button
+  and run saving first appear, and its acceptance is something Dave sees.
+  Steps 1-5 above are queued precisely because they stop short of it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` § "Deferred product decisions" holds it; it is
   not restated here.
-- **Progression Phase A** (`plans/design/progression.md`) -- `product-scope.md`
-  §5.3 categorises the whole skill tree as "designed, not scheduled": product
-  direction exists but has not entered `NEXTSTEPS.md`. The settings-catalogue
-  work this was originally parked behind (Dave's 1 Sep call) has since
-  shipped, but that does not by itself promote it -- entering the queue is a
-  scheduling decision, not a dependency that just cleared.
 
 ## Copy-paste prompts
 
