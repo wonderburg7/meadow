@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FL-2` (`codex/FL-2`) | Codex | Out of season means "barely", not "not at all". | Codex | in progress | none | `plans/now/flowers.md` Slice 2 |
+| `.worktrees/AUDIT-1` (`claude/AUDIT-1`) | Claude | Full documentation/code alignment audit: plan order, token efficiency, process order, runtime cost. | Claude | in progress | none | `NEXTSTEPS.md` (audit, not a queue slice) |
