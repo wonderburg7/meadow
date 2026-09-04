@@ -543,6 +543,14 @@ PROGRESSION_FILES = {
     "features": "features.gd",
 }
 
+# Each catalogue file's one big const, so a moved or renamed catalogue is
+# reported rather than silently checking nothing.
+PROGRESSION_CATALOGUES = {
+    "skills": ("SKILLS", "skills.gd"),
+    "adaptations": ("ADAPTATIONS", "adaptations.gd"),
+    "features": ("FEATURES", "features.gd"),
+}
+
 # A key is lower-case, dot-separated and machine-shaped. A display string
 # is not. Section 0's language note: display text is never a save key and
 # never a dependency, so anything in a key position that looks like prose
@@ -702,13 +710,11 @@ def _prerequisite_cycle(prereqs):
     return None
 
 
-def check_progression_catalogues(problems):
-    """Section 9.2's catalogue-integrity group, over skills.gd,
-    adaptations.gd and features.gd: duplicate or missing IDs, references
-    to absent entries, prerequisite cycles, `max_rank > 1` (section 4.4
-    holds every skill at a single rank until ranks are deliberately
-    lifted), and a display string used anywhere a key belongs.
-    """
+def _progression_catalogue_data(problems):
+    """The three catalogue files parsed once: comment-stripped sources,
+    each file's string constants, the prefixes one file uses to name
+    another's constants, and every entry block. None when a file is
+    missing or a catalogue has moved -- both of which are reported."""
     sources = {}
     for label, filename in PROGRESSION_FILES.items():
         path = os.path.join(ROOT, filename)
@@ -716,28 +722,39 @@ def check_progression_catalogues(problems):
             problems.append(
                 "%s not found for progression catalogue check" % filename
             )
-            return
+            return None
         sources[label] = _strip_gd_comments(open(path, encoding="utf-8").read())
 
     consts = {label: _string_consts(src) for label, src in sources.items()}
     # How a catalogue file refers to another one's constants.
     by_prefix = {"Skills": consts["skills"], "Features": consts["features"]}
 
-    catalogues = {
-        "skills": ("SKILLS", "skills.gd"),
-        "adaptations": ("ADAPTATIONS", "adaptations.gd"),
-        "features": ("FEATURES", "features.gd"),
-    }
     entries = {}
-    for label, (const_name, filename) in catalogues.items():
+    for label, (const_name, filename) in PROGRESSION_CATALOGUES.items():
         block = catalogue_block(sources[label], const_name)
         if block is None:
             problems.append(
                 "%s: could not find const %s -- has the catalogue moved?"
                 % (filename, const_name)
             )
-            return
+            return None
         entries[label] = _entry_blocks(block)
+
+    return sources, consts, by_prefix, entries
+
+
+def check_progression_catalogues(problems):
+    """Section 9.2's catalogue-integrity group, over skills.gd,
+    adaptations.gd and features.gd: duplicate or missing IDs, references
+    to absent entries, prerequisite cycles, `max_rank > 1` (section 4.4
+    holds every skill at a single rank until ranks are deliberately
+    lifted), and a display string used anywhere a key belongs.
+    """
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    sources, consts, by_prefix, entries = data
+    catalogues = PROGRESSION_CATALOGUES
 
     # Every display string in every catalogue, so a key can be checked
     # against the set rather than only against a shape.
@@ -948,6 +965,387 @@ def check_progression_catalogues(problems):
             seen.append(owner)
 
 
+RESOLVER_FILE = "progression.gd"
+
+# Section 3 hands one file the ownership, afford, feature-validity and
+# branch-tier questions. A second file defining any of these names is
+# precisely the failure the rule exists to stop: two answers to "can this
+# be bought", differing by one gate somebody forgot to copy across.
+RESOLVER_FUNCS = (
+    "is_owned", "is_known", "is_permitted", "feature_valid",
+    "prerequisites_met", "branch_tier_open", "can_afford",
+    "can_purchase", "purchase_blocker",
+)
+
+# Section 4.5's conditions. All of them apply to every purchase, so the
+# chain has to consult all of them.
+RESOLVER_GATES = (
+    "is_known", "is_permitted", "feature_valid", "prerequisites_met",
+    "branch_tier_open", "is_owned", "can_afford",
+)
+
+# Who may preload a catalogue at all. Anything else reading one directly
+# is on its way to answering a resolver question of its own.
+CATALOGUE_READERS = {
+    "skills.gd": {"adaptations.gd", RESOLVER_FILE},
+    "adaptations.gd": {RESOLVER_FILE},
+    "features.gd": {"skills.gd", "adaptations.gd", RESOLVER_FILE},
+}
+
+PRELOAD_RE = re.compile(r'preload\("res://scripts/(\w+\.gd)"\)')
+
+
+def _func_body(source, name):
+    """One function's body out of comment-stripped GDScript, or None.
+    Ends at the next top-level declaration, which in this codebase is
+    always a line beginning in column 0."""
+    match = re.search(r"^func %s\(" % re.escape(name), source, re.M)
+    if match is None:
+        return None
+    rest = source[match.end():]
+    end = re.search(r"^(?:func |const |var |signal |class |static )", rest, re.M)
+    return rest[:end.start()] if end else rest
+
+
+def check_progression_resolver(problems):
+    """Section 3's ownership rule for progression.gd: it is the only
+    file answering ownership, afford, feature-validity and branch-tier
+    questions, it reads nothing but the three catalogues, and it never
+    touches the GameConfig singleton.
+
+    Static on purpose. Running the resolver needs Godot, which
+    verify.ps1 does not have; what a static check can still prove is
+    that the chain has not quietly lost a gate and that no second
+    answer has appeared elsewhere in the codebase -- the two ways this
+    rule actually gets broken. check_progression_foraging_rules() below
+    covers the other half, that the rules produce the right answers over
+    the real catalogue.
+    """
+    path = os.path.join(ROOT, RESOLVER_FILE)
+    if not os.path.exists(path):
+        problems.append(
+            "%s not found -- section 3's one owner of the ownership, "
+            "afford, feature-validity and branch-tier questions"
+            % RESOLVER_FILE
+        )
+        return
+    source = _strip_gd_comments(open(path, encoding="utf-8").read())
+
+    # --- the chain still consults every gate --------------------
+    for name in RESOLVER_FUNCS:
+        if not re.search(r"^func %s\(" % name, source, re.M):
+            problems.append(
+                "%s: no func %s() -- section 4.5 gives each condition a "
+                "function of its own so no call site can apply a subset"
+                % (RESOLVER_FILE, name)
+            )
+
+    chain = _func_body(source, "purchase_blocker")
+    if chain is not None:
+        for gate in RESOLVER_GATES:
+            if not re.search(r"\b%s\(" % gate, chain):
+                problems.append(
+                    "%s: purchase_blocker() never calls %s(). Every one of "
+                    "section 4.5's conditions applies to every purchase, so "
+                    "a gate dropped from the chain silently allows a "
+                    "purchase the design forbids" % (RESOLVER_FILE, gate)
+                )
+
+    delegate = _func_body(source, "can_purchase") or ""
+    if not re.search(r"\bpurchase_blocker\(", delegate):
+        problems.append(
+            "%s: can_purchase() does not delegate to purchase_blocker(). "
+            "Two copies of the chain is what the single chain exists to "
+            "prevent" % RESOLVER_FILE
+        )
+
+    # --- it reads the catalogues and nothing else ---------------
+    extras = set(PRELOAD_RE.findall(source)) - set(PROGRESSION_FILES.values())
+    for extra in sorted(extras):
+        problems.append(
+            "%s: preloads %s. The resolver reads skills.gd, adaptations.gd "
+            "and features.gd, and takes the config and the stage gate as "
+            "arguments; reaching for anything else is what stops it being "
+            "thin" % (RESOLVER_FILE, extra)
+        )
+
+    if RESOLVER_FILE in GAMECONFIG_WRITE_ALLOWLIST:
+        problems.append(
+            "%s is in GAMECONFIG_WRITE_ALLOWLIST. Section 3: nothing writes "
+            "GameConfig from a skill or adaptation effect, and the resolver "
+            "least of all" % RESOLVER_FILE
+        )
+    if re.search(r"\bGameConfig\b", source):
+        problems.append(
+            "%s: names GameConfig directly. The resolver is handed its "
+            "config, which is what keeps the write ban obvious and lets a "
+            "test pass a plain stand-in" % RESOLVER_FILE
+        )
+
+    # --- and nobody else answers these questions ----------------
+    for other_path in sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True)):
+        name = os.path.basename(other_path)
+        if name == RESOLVER_FILE:
+            continue
+        other = _strip_gd_comments(open(other_path, encoding="utf-8").read())
+        for func_name in RESOLVER_FUNCS:
+            if re.search(r"^func %s\(" % func_name, other, re.M):
+                problems.append(
+                    "%s: defines %s(). progression.gd is section 3's one "
+                    "place these questions are answered -- a second answer "
+                    "is how two purchase rules drift apart"
+                    % (name, func_name)
+                )
+        for catalogue in sorted(
+            set(PRELOAD_RE.findall(other)) & set(PROGRESSION_FILES.values())
+        ):
+            if name == catalogue or name in CATALOGUE_READERS[catalogue]:
+                continue
+            problems.append(
+                "%s: preloads %s. Only the resolver asks a catalogue these "
+                "questions; a second reader answers them itself sooner or "
+                "later" % (name, catalogue)
+            )
+
+
+# The two tier-1 foraging nodes, which are the existing always-on
+# GameConfig toggles `tarsal_markers_on` and `orientation_flight_on`.
+# They are what the rules are proved against, because they are the pair
+# Phase B step 6 converts first: if the chain cannot let a fresh colony
+# buy exactly these two, that slice has nothing to stand on.
+FORAGING_TIER_1 = (
+    "skill.foraging.tarsal_secretions",
+    "skill.foraging.orientation_flight",
+)
+FORAGING_TIER_2 = (
+    "skill.foraging.associative_learning",
+    "skill.foraging.adaptive_constancy",
+)
+BASELINE_SKILL = "skill.foraging.auto_scouting"
+PREDATOR_SKILL = "skill.defence.threat_detection"
+
+COST_RE = re.compile(r"(\w+)\s*:\s*(\d+(?:\.\d+)?)")
+
+
+def _skill_rule_model(entries, consts, by_prefix, problems):
+    """Every skill reduced to the fields the purchase rules read. Parsed
+    out of skills.gd rather than restated here, so what is exercised is
+    the catalogue that ships."""
+    skills = {}
+    for entry in entries["skills"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["skills"])
+        if owner is None:
+            continue
+        cost = {}
+        for token, amount in COST_RE.findall(_field(entry, "cost") or ""):
+            resource = consts["skills"].get(token)
+            if resource is None:
+                problems.append(
+                    "skills.gd: %s's cost names %r, which is not a resource "
+                    "constant" % (owner, token)
+                )
+                continue
+            cost[resource] = float(amount)
+        any_of = _field(entry, "any_of") or "[]"
+        if any_of.strip() not in ("[]", ""):
+            problems.append(
+                "skills.gd: %s declares an any_of group. The rule model in "
+                "tests/source_checks.py only covers all_of, so extend it "
+                "before authoring the first group -- otherwise the rules "
+                "are proved against a prerequisite nobody checks" % owner
+            )
+        tier_raw = (_field(entry, "tier") or "").strip()
+        skills[owner] = {
+            "sector": _resolve_key(
+                _field(entry, "sector"), by_prefix, consts["skills"]
+            ),
+            "tier": int(tier_raw) if tier_raw.isdigit() else -1,
+            "cost": cost,
+            "all_of": _resolve_list(
+                _field(entry, "all_of"), by_prefix, consts["skills"]
+            ),
+            "feature": _resolve_key(
+                _field(entry, "feature"), by_prefix, consts["skills"]
+            ) or "",
+            "baseline": (_field(entry, "baseline") or "false").strip() == "true",
+            "requires_previous_tier": (
+                _field(entry, "requires_previous_tier") or "true"
+            ).strip() == "true",
+        }
+    return skills
+
+
+def check_progression_foraging_rules(problems):
+    """The other half of the resolver's proof: section 4.5's chain, run
+    over the catalogue that ships, against the two tier-1 foraging nodes
+    that exist today as `tarsal_markers_on` and `orientation_flight_on`.
+
+    The rules are re-run in Python here for the same reason
+    balance_tests.py re-runs the balance arithmetic: there is no Godot,
+    so the shipped GDScript cannot be executed. What that does prove is
+    that the rules and the catalogue *together* produce the intended
+    answers -- that a fresh colony can buy exactly the two tier-1
+    foraging nodes and nothing above them, that owning one of the pair is
+    not enough to open tier 2, and that the honey rung of section 4.2's
+    ladder is what stops a tier-2 purchase after that. What it cannot
+    prove is that progression.gd says the same thing, which is what
+    check_progression_resolver() is for, and a Godot boot after that.
+    """
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    _sources, consts, by_prefix, entries = data
+
+    resolver_path = os.path.join(ROOT, RESOLVER_FILE)
+    if not os.path.exists(resolver_path):
+        return
+    blocks = _string_consts(
+        _strip_gd_comments(open(resolver_path, encoding="utf-8").read())
+    )
+    for name in (
+        "BLOCK_BASELINE", "BLOCK_FEATURE", "BLOCK_PREREQUISITES",
+        "BLOCK_PREVIOUS_TIER", "BLOCK_ALREADY_OWNED", "BLOCK_COST",
+    ):
+        if name not in blocks:
+            problems.append(
+                "%s: no const %s -- purchase_blocker()'s reasons are keys a "
+                "caller branches on, so they cannot be renamed silently"
+                % (RESOLVER_FILE, name)
+            )
+            return
+
+    skills = _skill_rule_model(entries, consts, by_prefix, problems)
+
+    def owned(state, skill_id):
+        return skills.get(skill_id, {}).get("baseline", False) or skill_id in state
+
+    def blocker(state, stores, skill_id, features_on):
+        """Section 4.5's chain in its order, minus the two conditions
+        that are unconditionally true here: everything is known while
+        there is no campaign meta tree, and everything is permitted
+        outside a Challenge stage."""
+        skill = skills.get(skill_id)
+        if skill is None:
+            return "block.no_such_skill"
+        if skill["baseline"]:
+            return blocks["BLOCK_BASELINE"]
+        if skill["feature"] and not features_on.get(skill["feature"], False):
+            return blocks["BLOCK_FEATURE"]
+        for required in skill["all_of"]:
+            if not owned(state, required):
+                return blocks["BLOCK_PREREQUISITES"]
+        if skill["requires_previous_tier"] and skill["tier"] > 1:
+            for other, data_ in skills.items():
+                if (
+                    data_["sector"] == skill["sector"]
+                    and data_["tier"] == skill["tier"] - 1
+                    and not owned(state, other)
+                ):
+                    return blocks["BLOCK_PREVIOUS_TIER"]
+        if owned(state, skill_id):
+            return blocks["BLOCK_ALREADY_OWNED"]
+        for resource, amount in skill["cost"].items():
+            if stores.get(resource, 0) < amount:
+                return blocks["BLOCK_COST"]
+        return ""
+
+    def expect(condition, message):
+        if not condition:
+            problems.append("progression rules: " + message)
+
+    # The pair really is the whole of foraging tier 1 -- otherwise this
+    # proves the chain against a subset and the vertical slice inherits a
+    # tier it cannot complete.
+    tier_1 = sorted(
+        skill_id for skill_id, skill in skills.items()
+        if skill["sector"] == "foraging" and skill["tier"] == 1
+    )
+    expect(
+        tier_1 == sorted(FORAGING_TIER_1),
+        "foraging tier 1 is %s, not the two existing toggles %s. Phase B "
+        "step 6 converts exactly that pair, and section 4.3 needs every "
+        "member of a tier owned before the next opens"
+        % (tier_1, sorted(FORAGING_TIER_1)),
+    )
+
+    rich = {"nectar": 1000.0, "pollen": 1000.0}
+    fresh = set()
+
+    for skill_id in FORAGING_TIER_1:
+        expect(
+            blocker(fresh, rich, skill_id, {}) == "",
+            "%s is not buyable by a fresh colony with nectar and pollen in "
+            "hand; it is tier 1 with no prerequisites, so nothing should "
+            "stand in the way" % skill_id,
+        )
+        cost = skills[skill_id]["cost"]
+        expect(
+            set(cost) <= {"nectar", "pollen"} and bool(cost),
+            "%s costs %s -- section 4.2 lets a tier-1 recipe name nectar "
+            "and pollen only" % (skill_id, sorted(cost)),
+        )
+        short = dict(rich)
+        resource = sorted(cost)[0]
+        short[resource] = cost[resource] - 1
+        expect(
+            blocker(fresh, short, skill_id, {}) == blocks["BLOCK_COST"],
+            "%s is still buyable one unit of %s short. Section 4.2 spends "
+            "the recipe in full" % (skill_id, resource),
+        )
+
+    for skill_id in FORAGING_TIER_2:
+        expect(
+            blocker(fresh, rich, skill_id, {}) == blocks["BLOCK_PREVIOUS_TIER"],
+            "%s is not held shut for a fresh colony. Section 4.3 opens "
+            "tier 2 only once every tier-1 node in the branch is owned"
+            % skill_id,
+        )
+
+    half = {FORAGING_TIER_1[0]}
+    for skill_id in FORAGING_TIER_2:
+        expect(
+            blocker(half, rich, skill_id, {}) == blocks["BLOCK_PREVIOUS_TIER"],
+            "owning %s alone opened %s. Section 4.3 is every skill in the "
+            "tier, not any one of them" % (FORAGING_TIER_1[0], skill_id),
+        )
+
+    both = set(FORAGING_TIER_1)
+    for skill_id in FORAGING_TIER_1:
+        expect(
+            blocker(both, rich, skill_id, {}) == blocks["BLOCK_ALREADY_OWNED"],
+            "%s can be bought twice once owned" % skill_id,
+        )
+    for skill_id in FORAGING_TIER_2:
+        expect(
+            blocker(both, rich, skill_id, {}) == blocks["BLOCK_COST"],
+            "%s is not gated on honey once foraging tier 1 is complete. "
+            "Section 4.2's ladder is what makes the Brood spine gate every "
+            "other branch's tier 2" % skill_id,
+        )
+        stocked = dict(rich)
+        stocked["honey"] = 1000.0
+        expect(
+            blocker(both, stocked, skill_id, {}) == "",
+            "%s stays shut with honey, nectar and pollen all in stock and "
+            "foraging tier 1 complete" % skill_id,
+        )
+
+    expect(
+        blocker(fresh, rich, BASELINE_SKILL, {}) == blocks["BLOCK_BASELINE"],
+        "%s is offered for sale. Section 5.7's capabilities are on from the "
+        "first frame and never bought" % BASELINE_SKILL,
+    )
+    expect(
+        blocker(fresh, rich, PREDATOR_SKILL, {}) == blocks["BLOCK_FEATURE"],
+        "%s is buyable in a run with predators off. A skill whose feature "
+        "the run does not have can never work" % PREDATOR_SKILL,
+    )
+    expect(
+        blocker(fresh, rich, PREDATOR_SKILL, {"feature.predators": True}) == "",
+        "%s stays shut in a run that does have predators" % PREDATOR_SKILL,
+    )
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -976,6 +1374,8 @@ def main():
     check_catalogue_alignment(problems)
     check_settings_keys(problems)
     check_progression_catalogues(problems)
+    check_progression_resolver(problems)
+    check_progression_foraging_rules(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
