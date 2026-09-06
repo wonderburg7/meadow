@@ -134,6 +134,21 @@ func current_stage_instruction() -> String:
 		return ""
 	return str(_stages()[_stage_index].get("instruction", ""))
 
+## Section 11 Phase A step 3: this Challenge's explicit skill-policy
+## overrides, straight out of levels.gd's run definition for
+## Session.starting_level. Nothing calls this yet -- Phase B step 6 is
+## what constructs a Progression resolver for a running game and hands
+## it these via set_skill_policy(); every level ships them empty until
+## then, so today's call sites (none) would see no override either way.
+func run_skill_grants() -> Array:
+	return main.Levels.get_level(Session.starting_level).get("skill_grants", [])
+
+func run_skill_bans() -> Array:
+	return main.Levels.get_level(Session.starting_level).get("skill_bans", [])
+
+func run_skill_delays() -> Dictionary:
+	return main.Levels.get_level(Session.starting_level).get("skill_delays", {})
+
 func start() -> void:
 	active = true
 	_stage_index = 0

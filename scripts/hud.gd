@@ -2413,7 +2413,7 @@ func _refresh_selection_text() -> void:
 		]
 
 		var challenge_runner = main.challenge_runner if main != null else null
-		var waiting_for_instruction := (
+		var waiting_for_instruction = (
 			challenge_runner != null and challenge_runner.active
 			and b.is_queen
 			and (b.state == Bee.State.IDLING or b.state == Bee.State.NURSE_IDLE or b.player_driven)

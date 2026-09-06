@@ -1,9 +1,10 @@
 # Getting started with Claude Code for Meadow
 
-For when you're ready to move build sessions off this Cowork project and
-onto Claude Code, running directly against the repo on your machine.
-Keep using this Project for planning and Notion work — this is about the
-build half only.
+**Historical.** This is the note written for moving build sessions onto
+Claude Code, kept for its install, permissions and model advice. That move
+has happened, and the session process it once described has been superseded:
+`CLAUDE.md` and `NEXTSTEPS.md` are the authority on how a session runs, and
+where this file disagrees with them, they win.
 
 ## 1. Install Claude Code
 
@@ -67,17 +68,19 @@ for building.
 
 This is the biggest lever, bigger than any settings file:
 
-1. Start a session. Tell Claude to read `NEXTSTEPS.md` and go.
-2. Work one small slice — a single bee behaviour, a single UI change —
-   the same "small playable slices" rule already in `CLAUDE.md`.
-3. When it's done: run the two test suites, confirm they pass, commit
-   with a plain-language message.
-4. Have Claude rewrite `NEXTSTEPS.md` (overwrite, not append) with exactly
-   the current slice, one successor and one blocker; update only the owning
-   plan and any real hands-on check alongside it.
-5. `/clear` the session, or just start a fresh one next time. A new
-   session reads `NEXTSTEPS.md` (a few hundred words) instead of
+1. Start a session with one line: "Implement the next slice."
+2. Work one small slice, claimed with `tools/slice.ps1 start`, in its own
+   worktree and branch.
+3. When it's done: `tools/verify.ps1`, then `tools/slice.ps1 finish`, which
+   merges, pushes and closes the worktree out.
+4. Rewrite `NEXTSTEPS.md` (overwrite, never append) and archive the
+   delivered slice's specification; update only the owning plan and any real
+   hands-on check alongside it.
+5. Start a fresh session next time. It reads `NEXTSTEPS.md` instead of
    re-deriving "what's next" from the whole project.
+
+The detail behind each step lives in `CLAUDE.md`; do not follow a copy of it
+from here, because a copy is what goes stale.
 
 Short sessions with a clean handoff file beat one long session that
 accumulates context it doesn't need any more. If a plan is bigger than

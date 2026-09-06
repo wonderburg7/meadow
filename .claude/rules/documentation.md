@@ -9,9 +9,9 @@ paths:
 # Planning-document lifecycle
 
 Use the smallest current document that answers the task. `NEXTSTEPS.md` is the
-only canonical current queue. It holds exactly five ready slices, tagged
-`[Claude]` or `[Codex]`, each with `Plan:`, `Files:`, `Check:` and
-`Next after:` lines. Only work that can be started immediately belongs there;
+only canonical current queue. It holds two to five ready slices, tagged
+`[Claude]` or `[Codex]`, each with `Plan:`, `Files:`, `Check:`, `Proof:`
+and `Next after:` lines. Only work that can be started immediately belongs there;
 anything waiting on a hands-on check, a live repro or a decision from Dave
 goes under `## Not in the queue, and why`. `tools/check_docs.py` enforces all
 of this, including that the two lanes' leading items share no file. Do not

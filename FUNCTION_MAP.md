@@ -242,49 +242,49 @@ A bee's dispatch loop, player commands, display text, vars.
 2440 func clear_navigation_state() -> void
 ```
 
-## debug_panel.gd (861 lines)
+## debug_panel.gd (862 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-59   func _style_button(button: BaseButton) -> BaseButton
-64   func _ready() -> void
-165  func _report_settings_button_width() -> void
-170  func _rows_in(category: String) -> Array
-192  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-223  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-231  func open_to_categories(categories: Array) -> void
-249  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-303  func _make_controls_help() -> Control
-337  func _build_actions(column: VBoxContainer) -> void
-404  func _make_winter_action() -> Control
-416  func _on_winter_pressed() -> void
-422  func _on_challenge_advance_pressed() -> void
-435  func _on_fire_test_warnings_pressed() -> void
-470  func _on_force_c2_collapse_pressed() -> void
-490  func set_save_load_enabled(enabled: bool) -> void
-498  func set_toggle(key: String, value: bool) -> void
-503  func _on_save_pressed() -> void
-514  func _on_load_pressed() -> void
-526  func _toggle_panel() -> void
-540  func _apply_layer_for_context() -> void
-545  func _make_row(entry: Dictionary) -> Control
-588  func _make_control_slot() -> HBoxContainer
-597  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-627  func _make_toggle_row(entry: Dictionary) -> Control
-698  func _make_options_row(entry: Dictionary) -> Control
-731  func _option_display(entry: Dictionary, value) -> String
-735  func _cycle_option(entry: Dictionary, direction: int) -> void
-750  func _cascade_prerequisites_on(key: String) -> void
-764  func _cascade_dependents_off(key: String) -> void
-772  func _cascade_mutual_exclusion(key: String) -> void
-781  func _make_star_row(entry: Dictionary) -> Control
-822  func _adjust(entry: Dictionary, delta: float) -> void
-837  func _format_value(v) -> String
-844  func _on_restart_pressed() -> void
-849  func _on_main_menu_pressed() -> void
-857  func _restart() -> void
+60   func _style_button(button: BaseButton) -> BaseButton
+65   func _ready() -> void
+166  func _report_settings_button_width() -> void
+171  func _rows_in(category: String) -> Array
+193  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+224  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+232  func open_to_categories(categories: Array) -> void
+250  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+304  func _make_controls_help() -> Control
+338  func _build_actions(column: VBoxContainer) -> void
+405  func _make_winter_action() -> Control
+417  func _on_winter_pressed() -> void
+423  func _on_challenge_advance_pressed() -> void
+436  func _on_fire_test_warnings_pressed() -> void
+471  func _on_force_c2_collapse_pressed() -> void
+491  func set_save_load_enabled(enabled: bool) -> void
+499  func set_toggle(key: String, value: bool) -> void
+504  func _on_save_pressed() -> void
+515  func _on_load_pressed() -> void
+527  func _toggle_panel() -> void
+541  func _apply_layer_for_context() -> void
+546  func _make_row(entry: Dictionary) -> Control
+589  func _make_control_slot() -> HBoxContainer
+598  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+628  func _make_toggle_row(entry: Dictionary) -> Control
+699  func _make_options_row(entry: Dictionary) -> Control
+732  func _option_display(entry: Dictionary, value) -> String
+736  func _cycle_option(entry: Dictionary, direction: int) -> void
+751  func _cascade_prerequisites_on(key: String) -> void
+765  func _cascade_dependents_off(key: String) -> void
+773  func _cascade_mutual_exclusion(key: String) -> void
+782  func _make_star_row(entry: Dictionary) -> Control
+823  func _adjust(entry: Dictionary, delta: float) -> void
+838  func _format_value(v) -> String
+845  func _on_restart_pressed() -> void
+850  func _on_main_menu_pressed() -> void
+858  func _restart() -> void
 ```
 
 ## settings_catalogue.gd (1,066 lines)

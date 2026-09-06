@@ -3,6 +3,7 @@ paths:
   - "scripts/bee*.gd"
   - "scripts/hive*.gd"
   - "scripts/flower.gd"
+  - "scripts/flower_species.gd"
   - "scripts/season.gd"
   - "scripts/spatial_grid.gd"
   - "scripts/roles.gd"
@@ -28,7 +29,7 @@ don't rename it without a good reason, the save format depends on it.
 **`GameConfig` is balance numbers, read-only from here.** `Session` is
 run/UI state. The test: would a designer tune it to change how the game
 plays? Then `GameConfig` (written only by `game_config.gd`,
-`debug_panel.gd`, `save_game.gd`, `levels.gd` — see
+`settings_catalogue.gd`, `save_game.gd`, `levels.gd` — see
 `.claude/rules/saving.md`). Does it describe *this* run or *this*
 player? Then `Session`.
 

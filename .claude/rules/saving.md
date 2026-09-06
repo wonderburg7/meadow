@@ -2,6 +2,7 @@
 paths:
   - "scripts/saving.gd"
   - "scripts/save_game.gd"
+  - "scripts/save_migrations.gd"
   - "scripts/tutorial_checkpoint.gd"
   - "scripts/challenge_runner.gd"
 ---

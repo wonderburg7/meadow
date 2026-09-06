@@ -51,7 +51,16 @@ function Get-NextUpItems {
             continue
         }
 
-        $planMatch = [regex]::Match($chunk, '(?m)^\s*-\s*Plan:\s*(.+)$')
+        # Same multi-line capture as Files/Check below. A `Plan:` line that
+        # wraps -- which it does whenever it names more than one section --
+        # used to capture only its first physical line, so the heading handed
+        # to the implementer read "section 11, Phase A step 3, with" and the
+        # sections after the break were silently dropped.
+        $planMatch = [regex]::Match(
+            $chunk,
+            '(?m)^\s*-\s*Plan:\s*(.*?)(?=^\s*-\s[A-Z]|\z)',
+            [System.Text.RegularExpressions.RegexOptions]::Singleline
+        )
         $filesMatch = [regex]::Match(
             $chunk,
             '(?m)^\s*-\s*Files:\s*(.*?)(?=^\s*-\s[A-Z]|\z)',
@@ -69,7 +78,7 @@ function Get-NextUpItems {
             [System.Text.RegularExpressions.RegexOptions]::Singleline
         )
 
-        $planLine = if ($planMatch.Success) { $planMatch.Groups[1].Value.Trim() } else { "" }
+        $planLine = if ($planMatch.Success) { ($planMatch.Groups[1].Value -replace '\s+', ' ').Trim() } else { "" }
         $planFile = ""
         $heading = ""
         $planSplit = [regex]::Match($planLine, '^`([^`]+)`\s*--\s*(.+?)\.?$')
