@@ -24,8 +24,8 @@ extends RefCounted
 ##
 ## Each species is in flower over a window of the year, given as a
 ## fraction of a season from 0 (first day) to 1 (the last before
-## winter). Outside its window a species produces nothing and new ones
-## don't seed.
+## winter). Outside its window a species produces only a small trickle
+## and is much rarer among new seeds.
 ##
 ## This is the cheapest way to make three systems that already exist
 ## matter more than they did. Floral constancy becomes a real commitment
@@ -180,19 +180,41 @@ const SPECIES := [
 	},
 ]
 
-## Picks a species by rarity weight. Clover is common, foxglove scarce.
+## Weighs a species by rarity and its current flowering season. The seasonal
+## arch matches Flower.season_strength(), but keeps a small floor so an
+## out-of-season species can still seed occasionally.
+static func season_weight(species: Dictionary) -> float:
+	var weight: float = species.get("weight", 1.0)
+	if not GameConfig.seasons_on:
+		return weight
+	var season_start: float = species.get("season_start", 0.0)
+	var season_end: float = species.get("season_end", 1.0)
+	# This duplicates Flower.season_fraction() rather than preloading
+	# flower.gd, which already preloads this registry.
+	var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
+	var length: float = max(1.0, GameConfig.season_length_days)
+	var fraction: float = clampf(fmod(day, length) / length, 0.0, 1.0)
+	var strength: float = GameConfig.out_of_season_seed_weight
+	if fraction >= season_start and fraction <= season_end:
+		var span: float = maxf(0.001, season_end - season_start)
+		var through: float = (fraction - season_start) / span
+		strength = maxf(GameConfig.out_of_season_seed_weight, sin(through * PI))
+	return weight * strength
+
+## Picks a species by rarity weight, scaled by its current flowering season.
+## Clover is common, foxglove scarce.
 ## `exclude` is used by Challenge 1, whose meadow deliberately has no Poppies.
 static func pick_species_index(exclude: Array = []) -> int:
 	var total := 0.0
 	for s in SPECIES:
 		if s.name in exclude:
 			continue
-		total += s.get("weight", 1.0)
+		total += season_weight(s)
 	var roll := randf() * total
 	for i in range(SPECIES.size()):
 		if SPECIES[i].name in exclude:
 			continue
-		roll -= SPECIES[i].get("weight", 1.0)
+		roll -= season_weight(SPECIES[i])
 		if roll <= 0.0:
 			return i
 	for i in range(SPECIES.size()):
