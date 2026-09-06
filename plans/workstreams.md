@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FL-2` (`codex/FL-2`) | Codex | Out of season means "barely", not "not at all". | Codex | in progress | none | `plans/now/flowers.md` Slice 2 |
-| `.worktrees/PR-A3` (`claude/PR-A3`) | Claude | Run-definition fields. | Claude | in progress | none | `plans/design/progression.md` section 11, Phase A step 3, with section 4.1 for Challenge policy overriding mastered ownership and section 4.5 for what "permitted by the run/Challenge stage" means. Minimum reasoning: medium |
