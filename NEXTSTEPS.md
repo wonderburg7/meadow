@@ -13,63 +13,19 @@ to work out what to do -- the script already decided.
 on one may enter the queue. That rules out every remaining item in `ui.md`,
 `challenge-1.md`, `challenge-2.md` and `hive-comb.md`; they are listed at the
 bottom, not mixed in above. What is left that needs nothing from Dave is
-**Progression Phase A steps 3-4 and Phase B step 5**
-(`plans/design/progression.md` section 11) -- plumbing, no gameplay change,
-proved by `tests/` rather than by playing. Steps 1 and 2 landed 4 Sep 2026 as
-PR-A1 and PR-A2. Phase B step 6 is the first progression work that puts
-anything on screen, so it stays out until the checks resume.
+**Progression Phase B step 5** (`plans/design/progression.md` section 11) --
+plumbing, no gameplay change, proved by `tests/` rather than by playing.
+Phase A steps 1, 2 and 3 landed 4 and 6 Sep 2026 as PR-A1, PR-A2 and PR-A3;
+step 4 is deferred deliberately (see "Ready, not yet in the queue" below).
+Phase B step 6 is the first progression work that puts anything on screen,
+so it stays out until the checks resume.
 
 Everything under `## Next up` can be started today. `tools/check_docs.py`
 accepts two to five items and requires both lanes to hold work.
 
 ## Next up
 
-1. **[Claude] PR-A3 -- Run-definition fields.**
-   - Plan: `plans/design/progression.md` -- section 11, Phase A step 3, with
-     section 4.1 for Challenge policy overriding mastered ownership and
-     section 4.5 for what "permitted by the run/Challenge stage" means.
-     Minimum reasoning: medium.
-   - Does: adds `skill_grants`/`skill_bans`/`skill_delays` to the existing
-     run-definition shape in `levels.gd` and `challenge_runner.gd`, and
-     reads them inside `progression.gd`'s `is_permitted()`, which PR-A2 left
-     as the single place run policy lands. Challenges 1 and 2 keep working
-     unchanged while the three fields are empty, so no run behaves
-     differently. Also carries section 9.2's tier-and-cost validation group:
-     the recipe/tier half checks PR-A1's data as it stands, and "a
-     Challenge's grants/bans/delays cannot make branch advancement
-     impossible" is only checkable once this step's fields exist.
-   - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`,
-     `scripts/progression.gd`, `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`, extended so a run definition naming a skill
-     that is not in `skills.gd` fails, so a granted skill and a banned one
-     are proved to override ownership and the stage gate in the right order,
-     and so section 9.2's tier-and-cost group runs. Plus a Godot boot, since
-     `challenge_runner.gd` is loaded at runtime. No player check: with the
-     fields empty nothing on screen changes, and a Challenge that does use
-     them is Phase B step 6's work.
-   - Proof: `absent: scripts/levels.gd :: skill_grants`
-   - Why here: PR-A2 landed 4 Sep 2026 and named this as its `Next after:`.
-     The resolver exists with a deliberate hole where run policy goes, which
-     is exactly the gap this closes; it shares no file with the Codex lane.
-   - Next after: PR-B5 -- grid geometry, below, which is already startable
-     and becomes the head of the lane when this merges.
-
-2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
-   - Plan: `plans/now/flowers.md` -- Slice 2.
-   - Does: gives out-of-season flowers a small recharge floor, faster ageing
-     and rarer seeding, using three explicit `GameConfig` balance values.
-   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
-     `scripts/flower_species.gd`.
-   - Check: `tools/verify.ps1`, plus baseline and branch runs of
-     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
-     in the plan. One player check to file: the year-round species mix
-     visibly follows the seasons without collapsing.
-   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
-   - Why here: UI-R-2 shipped 3 Sep 2026 and this was already queued behind
-     it as its `Next after:`; it shares no file with the Claude lane.
-   - Next after: none -- this plan then has no open slice.
-
-3. **[Claude] PR-B5 -- Grid geometry.**
+1. **[Claude] PR-B5 -- Grid geometry.**
    - Plan: `plans/design/progression.md` -- section 11, Phase B step 5, with
      sections 8.1 to 8.3 for the ring, wedge and connect-tile rules.
      Minimum reasoning: low.
@@ -87,12 +43,26 @@ accepts two to five items and requires both lanes to hold work.
    - Proof: `absent: scripts/shapes.gd :: hex_line`
    - Why here: it is startable today and always was. PR-A1 authored the
      coordinates, so this validates data rather than inventing it, and it
-     depends on nothing in PR-A3 or PR-A4. It sits below PR-A3 only because
-     one lane is worked top to bottom, and it shares no file with the Codex
-     lane.
+     depends on nothing in PR-A3 or PR-A4. PR-A3 landed 6 Sep 2026 and named
+     this as its `Next after:`; it shares no file with the Codex lane.
    - Next after: PR-A4 -- modifier resolution (section 11, Phase A step 4),
      which adds effective-value lookup to the resolver and section 9.2's
      reachability group, still without `GameConfig` ever being written.
+
+2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
+   - Plan: `plans/now/flowers.md` -- Slice 2.
+   - Does: gives out-of-season flowers a small recharge floor, faster ageing
+     and rarer seeding, using three explicit `GameConfig` balance values.
+   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
+     `scripts/flower_species.gd`.
+   - Check: `tools/verify.ps1`, plus baseline and branch runs of
+     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
+     in the plan. One player check to file: the year-round species mix
+     visibly follows the seasons without collapsing.
+   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
+   - Why here: UI-R-2 shipped 3 Sep 2026 and this was already queued behind
+     it as its `Next after:`; it shares no file with the Claude lane.
+   - Next after: none -- this plan then has no open slice.
 
 ## Ready, not yet in the queue
 
