@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PS-1` (`claude/PS-1`) | Claude | Hotfix: `slice.ps1 finish`'s merge fails whenever a queue item's `Title` has a double quote (FL-2's did). | Claude | in progress | none | out-of-queue hotfix, not a `NEXTSTEPS.md` item |
