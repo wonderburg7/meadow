@@ -26,6 +26,7 @@ const Prerequisites = preload("res://scripts/prerequisites.gd")
 const Settings = preload("res://scripts/settings_catalogue.gd")
 const Hud = preload("res://scripts/hud.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
+const ProblemMessages = preload("res://scripts/problem_messages.gd")
 
 ## Fixed panel/scroll width -- widened from 300 (Dave's 29 Aug report:
 ## turning on "Show info icons" pushed some rows' toggle controls past
@@ -436,7 +437,7 @@ func _on_fire_test_warnings_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():
 		return
-	var hud := worlds[0].hud
+	var hud = worlds[0].hud
 	var bees := get_tree().get_nodes_in_group("bees")
 	if bees.is_empty():
 		return
