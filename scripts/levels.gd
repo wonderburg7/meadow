@@ -26,6 +26,15 @@ extends RefCounted
 ## GameConfig.weather_on = false here would leak into every later run
 ## the same way an early attempt at cell_build_time did (see
 ## challenge_runner.gd's FAST_BUILD_TIME comment).
+##
+## `skill_grants`/`skill_bans`/`skill_delays` (progression.md section 11,
+## Phase A step 3) are this run's explicit skill-policy overrides:
+## `skill_grants` and `skill_bans` are arrays of skill IDs, `skill_delays`
+## maps a skill ID to the stage-gate key it waits on instead of its own
+## ID. Every level ships them empty for this step, so is_permitted()'s
+## existing stage_gate-only behaviour is unchanged everywhere; a
+## Challenge fills them in only once it has a real reason to grant, ban
+## or delay a specific skill.
 
 const LEVELS := {
 	1: {
@@ -33,6 +42,7 @@ const LEVELS := {
 		"nurses": 0, "builders": 0, "miners": 0,
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	# Challenge 2: Brood, Roles and Expansion (TUTORIAL_PLAN.md). 5 cells,
 	# stocked from the last-built backward (see world_building.gd::
@@ -52,16 +62,19 @@ const LEVELS := {
 		"stock": {"nectar": 2, "pollen": 1},
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	3: {
 		"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1,
 		"nurses": 0, "builders": 0, "miners": 0,
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	4: {
 		"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
 		"nurses": 2, "builders": 2, "miners": 2,
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	# An established colony: enough bees and stores that the interesting
 	# decisions are about where it goes next rather than whether it
@@ -73,6 +86,7 @@ const LEVELS := {
 		"nurses": 2, "builders": 3, "miners": 3, "automine": true,
 		"stock": {"nectar": 4, "pollen": 2},
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	# 30-bee colony, three ring-layers of comb (18 cells) with half of them
 	# stocked -- 6 nectar-full, 2 pollen-full, 1 honey-full, the closest
@@ -84,6 +98,7 @@ const LEVELS := {
 		"nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
 		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	# Free-form extreme start: deliberately distinct from Challenge 1 even
 	# though both begin with the queen and no comb. There is no staged guide or
@@ -93,6 +108,7 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 }
 
