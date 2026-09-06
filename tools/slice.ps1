@@ -346,8 +346,25 @@ function Invoke-SliceFinish {
 
     $title = if ($item) { $item.Title } else { $branch }
     $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
-    git merge --no-ff $branch -m $mergeMessage
-    if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+    # -F <file> rather than -m <string>: a Title containing a double quote
+    # (FL-2's own did -- 'means "barely", not "not at all"') survives
+    # PowerShell's native-argument re-quoting fine as string content, but
+    # broke when handed to git as a command-line argument, failing the
+    # merge with a mangled ref-like error ("not something we can merge").
+    # A file sidesteps command-line quoting entirely.
+    $mergeMessageFile = New-TemporaryFile
+    try {
+        # Set-Content's UTF8 always writes a BOM in Windows PowerShell 5.1
+        # (no utf8NoBOM encoding exists here), which git would fold into
+        # the commit message as a leading invisible character -- write
+        # the file directly instead.
+        [System.IO.File]::WriteAllText($mergeMessageFile, $mergeMessage, (New-Object System.Text.UTF8Encoding $false))
+        git merge --no-ff $branch -F $mergeMessageFile
+        if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+    }
+    finally {
+        Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
+    }
 
     git push
     if ($LASTEXITCODE -ne 0) { throw "git push failed" }
