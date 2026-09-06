@@ -796,7 +796,7 @@ var season_length_days: float = 60.0
 var out_of_season_strength: float = 0.05
 ## Out-of-season flowers wear out faster, making an old season's patch turn
 ## over into species suited to the current part of the year.
-var out_of_season_ageing_factor: float = 2.0
+var out_of_season_ageing_factor: float = 1.5
 ## An out-of-season species retains this fraction of its usual seed weight,
 ## so replacements follow the year without making any species disappear.
 var out_of_season_seed_weight: float = 0.15
