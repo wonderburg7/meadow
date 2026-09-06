@@ -1452,7 +1452,7 @@ func _refresh_flower_summary() -> void:
 		season_line = "Season: seasons off"
 	else:
 		var strength: float = active_flower.season_strength()
-		season_line = "Season: in season (%d%%)" % int(round(strength * 100.0)) if strength > 0.0 else "Season: out of season"
+		season_line = "Season: in season (%d%%)" % int(round(strength * 100.0)) if strength > GameConfig.out_of_season_strength else "Season: out of season"
 	var summary_lines: Array = ["Age: %.1f of %.1f days" % [age_days, lifespan_days], season_line]
 
 	var age: float = active_flower.marker_age()
