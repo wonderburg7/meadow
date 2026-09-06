@@ -188,7 +188,7 @@ the authority on which tier a branch is in.
 | Settings surviving a run change (built) | `checks/ready.md` or `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
-| Flowers, season, senescence | `plans/now/flowers.md` |
+| Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |

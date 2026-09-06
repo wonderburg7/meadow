@@ -11,17 +11,20 @@ to work out what to do -- the script already decided.
 
 **Hands-on checks are paused (Dave, 4 Sep 2026),** so no slice that depends
 on one may enter the queue. That rules out every remaining item in `ui.md`,
-`challenge-1.md`, `challenge-2.md` and `hive-comb.md`; they are listed at the
-bottom, not mixed in above. What is left that needs nothing from Dave is
-**Progression Phase B step 5** (`plans/design/progression.md` section 11) --
-plumbing, no gameplay change, proved by `tests/` rather than by playing.
-Phase A steps 1, 2 and 3 landed 4 and 6 Sep 2026 as PR-A1, PR-A2 and PR-A3;
-step 4 is deferred deliberately (see "Ready, not yet in the queue" below).
-Phase B step 6 is the first progression work that puts anything on screen,
-so it stays out until the checks resume.
-
-Everything under `## Next up` can be started today. `tools/check_docs.py`
-accepts two to five items and requires both lanes to hold work.
+`challenge-1.md`, `challenge-2.md` and `hive-comb.md`. FL-2 (the Codex
+lane's last item) shipped 6 Sep 2026 and named no successor, which leaves
+the Codex lane with nothing admissible -- see the note in its place below
+and `checks/ready.md`'s D-1. Dave is running C-16, C-5 and C-13 now
+(6 Sep 2026); the first of those to fail becomes the Codex lane's next
+slice. **`tools/check_docs.py` will not pass while that lane is empty --
+this is expected and pending that reply, not a code defect.** What is
+left that needs nothing from Dave is **Progression Phase B step 5**
+(`plans/design/progression.md` section 11) -- plumbing, no gameplay change,
+proved by `tests/` rather than by playing. Phase A steps 1, 2 and 3 landed
+4 and 6 Sep 2026 as PR-A1, PR-A2 and PR-A3; step 4 is deferred deliberately
+(see "Ready, not yet in the queue" below). Phase B step 6 is the first
+progression work that puts anything on screen, so it stays out until the
+checks resume.
 
 ## Next up
 
@@ -49,20 +52,15 @@ accepts two to five items and requires both lanes to hold work.
      which adds effective-value lookup to the resolver and section 9.2's
      reachability group, still without `GameConfig` ever being written.
 
-2. **[Codex] FL-2 -- Out of season means "barely", not "not at all".**
-   - Plan: `plans/now/flowers.md` -- Slice 2.
-   - Does: gives out-of-season flowers a small recharge floor, faster ageing
-     and rarer seeding, using three explicit `GameConfig` balance values.
-   - Files: `scripts/game_config.gd`, `scripts/flower.gd`,
-     `scripts/flower_species.gd`.
-   - Check: `tools/verify.ps1`, plus baseline and branch runs of
-     `test_scenarios/slice8_senescence_on_seed12345_test.json` as specified
-     in the plan. One player check to file: the year-round species mix
-     visibly follows the seasons without collapsing.
-   - Proof: `absent: scripts/game_config.gd :: out_of_season_strength`
-   - Why here: UI-R-2 shipped 3 Sep 2026 and this was already queued behind
-     it as its `Next after:`; it shares no file with the Claude lane.
-   - Next after: none -- this plan then has no open slice.
+2. **[Codex] -- no admissible item.** FL-2 shipped 6 Sep 2026 (archived at
+   `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`) and named no successor.
+   Every other Codex-lane plan (`ui.md`, `challenge-1.md`, `challenge-2.md`,
+   `hive-comb.md`) needs a hands-on check or a live repro from Dave first --
+   see "Not in the queue, and why" and `checks/ready.md`'s D-1. Dave is
+   running C-16, C-5 and C-13 now (6 Sep 2026); the first of those to fail
+   becomes this lane's next slice the moment he replies. `tools/check_docs.py`
+   fails while this lane holds no item -- expected, and resolved by that
+   reply rather than by a fabricated entry here.
 
 ## Ready, not yet in the queue
 

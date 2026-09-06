@@ -94,7 +94,7 @@ the archived plan is never reopened or extended.
 | If the queue names | Read |
 | --- | --- |
 | UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
-| Flowers, season, senescence, the meadow's mix | `plans/now/flowers.md` |
+| Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/now/challenge-2.md` |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |

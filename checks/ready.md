@@ -30,9 +30,12 @@ plans (`plans/now/challenge-1.md` Slices 14-15, `plans/now/hive-comb.md`
 Slice 9, `plans/now/ui.md` UI-S-1 to UI-S-4). One moved to
 `checks/blocked.md` because it cannot be triggered on demand. One --
 the forager-return counter -- was dropped at Dave's call: "it's so unlikely
-to happen, let's drop this and assume it works." Two new asks became
-`plans/now/flowers.md`; the process findings became `check-loop.md`, now
-`plans/reference/check-loop.md` since its one slice shipped 4 Sep 2026.
+to happen, let's drop this and assume it works." Two new asks became the
+flowers plan (both slices shipped; archived at
+`plans/archive/FLOWERS_SLICE_1_2026-09-03.md` and
+`plans/archive/FLOWERS_SLICE_2_2026-09-06.md`); the process findings became
+`check-loop.md`, now `plans/reference/check-loop.md` since its one slice
+shipped 4 Sep 2026.
 
 ## Decisions waiting on Dave
 
@@ -99,7 +102,7 @@ PASS: something is visibly in flower all year, out-of-season flowers are
 rare rather than absent, and the panel's rate and season lines agree at
 every point in the year.
 
-Owner: `plans/now/flowers.md` Slice 2.
+Owner: `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`.
 
 ### C-16 -- pre-run menu left inset
 
@@ -292,5 +295,4 @@ scent mark still shows that line too.
 PASS: the age-vs-lifespan and in/out-of-season lines both show on click,
 and the season line flips exactly when the `+/s` figures fall away.
 
-Owner: `plans/now/flowers.md` Slice 1 (archived at
-`plans/archive/FLOWERS_SLICE_1_2026-09-03.md`).
+Owner: `plans/archive/FLOWERS_SLICE_1_2026-09-03.md`.
