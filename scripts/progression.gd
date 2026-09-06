@@ -29,10 +29,14 @@ extends RefCounted
 ## Adding a lookup now would be a schema guessed against no data.
 ##
 ## **Run policy.** Section 4.5's "permitted by the run/Challenge stage"
-## is answered here only by stage_gate.gd. A Challenge's explicit
-## `skill_grants`/`skill_bans`/`skill_delays` are Phase A step 3; they
-## land inside is_permitted(), which is why the gate is a function of its
-## own rather than an inline stage_gate call.
+## is answered by stage_gate.gd plus this run's explicit
+## `skill_grants`/`skill_bans`/`skill_delays` (Phase A step 3, set via
+## set_skill_policy() from levels.gd's/challenge_runner.gd's run
+## definition), which is why the gate is a function of its own rather
+## than an inline stage_gate call. Nothing constructs a resolver in a
+## running game yet (Phase B step 6 does), and every level ships these
+## three empty today, so is_permitted() answers exactly as before until
+## then.
 ##
 ## **Ranks.** Section 4.4 holds every skill at `max_rank` 1 for this
 ## pass, so ownership is yes/no and there is no rank arithmetic. The
@@ -83,6 +87,15 @@ var _mastered: Dictionary = {}      # skill id -> true
 var _temporary: Dictionary = {}     # skill id -> true
 var _discovered: Dictionary = {}    # skill id -> true
 var _adaptations: Dictionary = {}   # adaptation id -> true
+
+## This run's explicit skill-policy overrides (section 4.5, set by
+## set_skill_policy() below). A ban is absolute; a grant overrides the
+## stage gate; a delay redirects is_permitted() to a different stage-gate
+## key instead of the skill's own id. All three are empty until a caller
+## sets them, matching "no run behaves differently" until Phase B step 6.
+var _skill_grants: Dictionary = {}  # skill id -> true
+var _skill_bans: Dictionary = {}    # skill id -> true
+var _skill_delays: Dictionary = {}  # skill id -> stage-gate key
 
 
 func _init(game_config: Object = null, gate: Node = null) -> void:
@@ -166,14 +179,39 @@ func discover(skill_id: String) -> void:
 		_discovered[skill_id] = true
 
 
+## Section 11 Phase A step 3: this run's explicit skill_grants/
+## skill_bans/skill_delays, from levels.gd's/challenge_runner.gd's run
+## definition. A ban always wins, even over a grant naming the same
+## skill by mistake -- refusing outright is the safe reading of
+## contradictory data. A grant then wins over the stage gate, so a
+## Challenge can hand a skill out early. Clears both dictionaries and
+## replaces the delay map wholesale, so a later run's policy never
+## inherits an earlier one's.
+func set_skill_policy(grants: Array, bans: Array, delays: Dictionary) -> void:
+	_skill_grants.clear()
+	for skill_id in grants:
+		_skill_grants[skill_id] = true
+	_skill_bans.clear()
+	for skill_id in bans:
+		_skill_bans[skill_id] = true
+	_skill_delays = delays.duplicate()
+
+
 ## Permitted by the run or Challenge stage. A skill's stage-gate key is
 ## its own stable ID, so a sub-stage reveals a node the way it reveals
-## any other piece of UI. Phase A step 3 adds a run definition's explicit
-## grants, bans and delays here.
+## any other piece of UI -- unless this run's skill_delays redirects it
+## to a different key. A ban refuses regardless of the stage gate; a
+## grant permits regardless of it. Both are empty until set_skill_policy()
+## is called, so this answers exactly as before until then.
 func is_permitted(skill_id: String) -> bool:
+	if _skill_bans.has(skill_id):
+		return false
+	if _skill_grants.has(skill_id):
+		return true
 	if stage_gate == null:
 		return true
-	return stage_gate.is_unlocked(skill_id)
+	var gate_key: String = _skill_delays.get(skill_id, skill_id)
+	return stage_gate.is_unlocked(gate_key)
 
 
 ## The skill's feature dependency holds in this run. An unbuilt feature

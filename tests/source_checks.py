@@ -439,6 +439,50 @@ def check_catalogue_alignment(problems):
 CATALOGUE_FILE = "settings_catalogue.gd"
 
 
+def _dict_block(source, const_name):
+    """The text inside `const <name> := { ... }`, or None if absent --
+    catalogue_block()'s counterpart for a `{`-delimited const rather than
+    a `[`-delimited one (LEVELS, TIER_REQUIRED, TIER_ALLOWED)."""
+    start = source.find("const %s" % const_name)
+    if start == -1:
+        return None
+    open_brace = source.find("{", start)
+    if open_brace == -1:
+        return None
+    depth = 0
+    for i in range(open_brace, len(source)):
+        if source[i] == "{":
+            depth += 1
+        elif source[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[open_brace + 1:i]
+    return None
+
+
+TIER_LADDER_ENTRY_RE = re.compile(r"(\d+)\s*:\s*\[([^\]]*)\]")
+
+
+def _tier_ladder(source, const_name, consts):
+    """skills.gd's TIER_REQUIRED/TIER_ALLOWED shape -- `{tier: [resource,
+    ...], ...}` -- as {int tier: [resource key, ...]}, or None if the
+    const is missing."""
+    block = _dict_block(source, const_name)
+    if block is None:
+        return None
+    ladder = {}
+    for match in TIER_LADDER_ENTRY_RE.finditer(block):
+        tier = int(match.group(1))
+        resources = []
+        for token in match.group(2).split(","):
+            token = token.strip()
+            if not token:
+                continue
+            resources.append(consts.get(token, token))
+        ladder[tier] = resources
+    return ladder
+
+
 def catalogue_block(source, const_name):
     """The text inside `const <name> := [ ... ]`, or None if absent."""
     start = source.find("const %s" % const_name)
@@ -550,6 +594,10 @@ PROGRESSION_CATALOGUES = {
     "adaptations": ("ADAPTATIONS", "adaptations.gd"),
     "features": ("FEATURES", "features.gd"),
 }
+
+# levels.gd's run definitions -- Phase A step 3's skill_grants/
+# skill_bans/skill_delays are authored here, one set per level.
+LEVELS_FILE = "levels.gd"
 
 # A key is lower-case, dot-separated and machine-shaped. A display string
 # is not. Section 0's language note: display text is never a save key and
@@ -679,6 +727,46 @@ def _resolve_list(raw, consts_by_prefix, local):
         else:
             resolved.append(_resolve_key(item, consts_by_prefix, local))
     return resolved
+
+
+def _resolve_dict(raw, consts_by_prefix, local):
+    """A `{a: b, c: d}` dict of key-position value -> raw value text.
+    Only the keys are resolved to real IDs (skill_delays' values are
+    opaque stage-gate key strings, not catalogue references)."""
+    if raw is None:
+        return {}
+    inner = raw.strip()
+    if not inner.startswith("{"):
+        return {}
+    inner = inner[1:inner.rfind("}")] if "}" in inner else inner[1:]
+    parts = []
+    depth = 0
+    in_string = False
+    token = ""
+    for ch in inner:
+        if ch == '"':
+            in_string = not in_string
+        if not in_string:
+            if ch in "[{(":
+                depth += 1
+            elif ch in "]})":
+                depth -= 1
+            elif ch == "," and depth == 0:
+                parts.append(token)
+                token = ""
+                continue
+        token += ch
+    if token.strip():
+        parts.append(token)
+    pairs = {}
+    for part in parts:
+        if ":" not in part:
+            continue
+        key_raw, _, value_raw = part.partition(":")
+        key = _resolve_key(key_raw, consts_by_prefix, local)
+        if key is not None:
+            pairs[key] = value_raw.strip()
+    return pairs
 
 
 def _prerequisite_cycle(prereqs):
@@ -1059,6 +1147,46 @@ def check_progression_resolver(problems):
             "prevent" % RESOLVER_FILE
         )
 
+    # --- section 11 Phase A step 3: the run's skill policy lands in
+    # is_permitted(), in the right order -- a ban must win over a
+    # contradictory grant (section 4.1: a Challenge's ban always
+    # overrides ownership, mastered or otherwise), and a grant must be
+    # checked before the stage gate so it can override a lock.
+    if not re.search(r"^func set_skill_policy\(", source, re.M):
+        problems.append(
+            "%s: no func set_skill_policy() -- section 11 Phase A step 3's "
+            "skill_grants/skill_bans/skill_delays need one place to be set "
+            "before is_permitted() can read them" % RESOLVER_FILE
+        )
+    permitted_body = _func_body(source, "is_permitted")
+    if permitted_body is None:
+        problems.append(
+            "%s: no func is_permitted() -- section 4.5's run/Challenge "
+            "stage condition" % RESOLVER_FILE
+        )
+    else:
+        ban_pos = permitted_body.find("_skill_bans")
+        grant_pos = permitted_body.find("_skill_grants")
+        gate_pos = permitted_body.find("stage_gate")
+        if ban_pos == -1 or grant_pos == -1:
+            problems.append(
+                "%s: is_permitted() does not consult both _skill_bans and "
+                "_skill_grants -- section 11 Phase A step 3's run policy "
+                "would have nowhere to land" % RESOLVER_FILE
+            )
+        elif ban_pos > grant_pos:
+            problems.append(
+                "%s: is_permitted() checks _skill_grants before "
+                "_skill_bans -- a ban must win over a contradictory grant"
+                % RESOLVER_FILE
+            )
+        elif gate_pos != -1 and grant_pos > gate_pos:
+            problems.append(
+                "%s: is_permitted() checks the stage gate before "
+                "_skill_grants -- a grant must override a locked gate, "
+                "not be checked after it" % RESOLVER_FILE
+            )
+
     # --- it reads the catalogues and nothing else ---------------
     extras = set(PRELOAD_RE.findall(source)) - set(PROGRESSION_FILES.values())
     for extra in sorted(extras):
@@ -1203,8 +1331,9 @@ def check_progression_foraging_rules(problems):
         _strip_gd_comments(open(resolver_path, encoding="utf-8").read())
     )
     for name in (
-        "BLOCK_BASELINE", "BLOCK_FEATURE", "BLOCK_PREREQUISITES",
-        "BLOCK_PREVIOUS_TIER", "BLOCK_ALREADY_OWNED", "BLOCK_COST",
+        "BLOCK_BASELINE", "BLOCK_NOT_PERMITTED", "BLOCK_FEATURE",
+        "BLOCK_PREREQUISITES", "BLOCK_PREVIOUS_TIER", "BLOCK_ALREADY_OWNED",
+        "BLOCK_COST",
     ):
         if name not in blocks:
             problems.append(
@@ -1219,16 +1348,26 @@ def check_progression_foraging_rules(problems):
     def owned(state, skill_id):
         return skills.get(skill_id, {}).get("baseline", False) or skill_id in state
 
-    def blocker(state, stores, skill_id, features_on):
-        """Section 4.5's chain in its order, minus the two conditions
-        that are unconditionally true here: everything is known while
-        there is no campaign meta tree, and everything is permitted
-        outside a Challenge stage."""
+    def blocker(
+        state, stores, skill_id, features_on,
+        bans=frozenset(), grants=frozenset(), locked=False,
+    ):
+        """Section 4.5's chain in its order, minus one condition that is
+        unconditionally true here: everything is known while there is no
+        campaign meta tree. `locked` stands in for a Challenge stage gate
+        that has not unlocked this skill's key; `bans`/`grants` are a
+        run's section 11 Phase A step 3 skill policy, checked in the same
+        order progression.gd's is_permitted() does -- a ban wins over a
+        contradictory grant, and a grant overrides a locked gate."""
         skill = skills.get(skill_id)
         if skill is None:
             return "block.no_such_skill"
         if skill["baseline"]:
             return blocks["BLOCK_BASELINE"]
+        if skill_id in bans:
+            return blocks["BLOCK_NOT_PERMITTED"]
+        if locked and skill_id not in grants:
+            return blocks["BLOCK_NOT_PERMITTED"]
         if skill["feature"] and not features_on.get(skill["feature"], False):
             return blocks["BLOCK_FEATURE"]
         for required in skill["all_of"]:
@@ -1345,6 +1484,189 @@ def check_progression_foraging_rules(problems):
         "%s stays shut in a run that does have predators" % PREDATOR_SKILL,
     )
 
+    # --- section 11 Phase A step 3: skill_grants/skill_bans, in order ---
+    tier_1_skill = FORAGING_TIER_1[0]
+    expect(
+        blocker(fresh, rich, tier_1_skill, {}, locked=True)
+        == blocks["BLOCK_NOT_PERMITTED"],
+        "%s is buyable with its stage-gate key locked and no run policy "
+        "granting it" % tier_1_skill,
+    )
+    expect(
+        blocker(fresh, rich, tier_1_skill, {}, grants={tier_1_skill}, locked=True)
+        == "",
+        "%s stays locked even once granted -- a run's skill_grants must "
+        "override a locked stage gate" % tier_1_skill,
+    )
+    expect(
+        blocker(both, rich, tier_1_skill, {}, bans={tier_1_skill})
+        == blocks["BLOCK_NOT_PERMITTED"],
+        "%s reads as already owned once banned, instead of not permitted "
+        "-- section 4.1 says a Challenge's ban always overrides "
+        "ownership, mastered or otherwise" % tier_1_skill,
+    )
+    expect(
+        blocker(
+            fresh, rich, tier_1_skill, {},
+            bans={tier_1_skill}, grants={tier_1_skill},
+        ) == blocks["BLOCK_NOT_PERMITTED"],
+        "%s is buyable when both banned and granted -- a ban must win "
+        "over a contradictory grant" % tier_1_skill,
+    )
+
+
+def check_run_skill_policy(problems):
+    """Section 11 Phase A step 3: every level's skill_grants, skill_bans
+    and skill_delays must name real skills. levels.gd is the one place
+    they are authored -- challenge_runner.gd only reads them at runtime
+    -- so a renamed or mistyped skill id here would otherwise sit silent
+    until a Challenge tried to apply it."""
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    _sources, consts, by_prefix, entries = data
+
+    skill_ids = set()
+    for entry in entries["skills"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["skills"])
+        if owner is not None:
+            skill_ids.add(owner)
+
+    path = os.path.join(ROOT, LEVELS_FILE)
+    if not os.path.exists(path):
+        problems.append(
+            "%s not found for the run-definition skill-policy check"
+            % LEVELS_FILE
+        )
+        return
+    source = _strip_gd_comments(open(path, encoding="utf-8").read())
+    block = _dict_block(source, "LEVELS")
+    if block is None:
+        problems.append(
+            "%s: could not find const LEVELS -- has it moved?" % LEVELS_FILE
+        )
+        return
+
+    for level_entry in _entry_blocks(block):
+        for field, label in (
+            ("skill_grants", "skill_grants"), ("skill_bans", "skill_bans"),
+        ):
+            for skill_id in _resolve_list(
+                _field(level_entry, field), by_prefix, consts["skills"]
+            ):
+                if skill_id is not None and skill_id not in skill_ids:
+                    problems.append(
+                        "%s: a level's %s names %r, which is not a skill "
+                        "in skills.gd" % (LEVELS_FILE, label, skill_id)
+                    )
+        for skill_id in _resolve_dict(
+            _field(level_entry, "skill_delays"), by_prefix, consts["skills"]
+        ):
+            if skill_id is not None and skill_id not in skill_ids:
+                problems.append(
+                    "%s: a level's skill_delays names %r, which is not a "
+                    "skill in skills.gd" % (LEVELS_FILE, skill_id)
+                )
+
+
+def check_progression_tier_and_cost(problems):
+    """Section 9.2's tier-and-cost group: every skill's recipe names at
+    least one resource from its own tier's TIER_REQUIRED row and nothing
+    outside its TIER_ALLOWED row (section 4.2); no branch has an empty
+    tier below a populated one (section 4.3); and no level's skill_bans
+    can ban a skill that sits below a populated tier in its own branch,
+    since section 4.3 needs every skill in a tier owned before the tier
+    above opens -- a ban there makes that branch's advancement
+    impossible for the run (this is the fields section 11 Phase A step 3
+    adds; every level ships them empty today, so this passes vacuously
+    until a Challenge actually bans something)."""
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    sources, consts, by_prefix, entries = data
+
+    tier_required = _tier_ladder(sources["skills"], "TIER_REQUIRED", consts["skills"])
+    tier_allowed = _tier_ladder(sources["skills"], "TIER_ALLOWED", consts["skills"])
+    if tier_required is None or tier_allowed is None:
+        problems.append(
+            "skills.gd: could not find TIER_REQUIRED/TIER_ALLOWED -- "
+            "section 4.2's cost ladder"
+        )
+        return
+
+    skills = _skill_rule_model(entries, consts, by_prefix, problems)
+
+    branch_tiers = {}  # (sector, tier) -> [skill_id, ...]
+    for skill_id, skill in skills.items():
+        if skill["baseline"]:
+            continue
+        tier = skill["tier"]
+        if tier not in tier_required:
+            continue
+        required = set(tier_required.get(tier, []))
+        allowed = set(tier_allowed.get(tier, []))
+        cost = set(skill["cost"])
+        if not (cost & required):
+            problems.append(
+                "skills.gd: %s's recipe %s names none of tier %d's "
+                "required resources %s -- section 4.2's ladder is "
+                "bypassed" % (skill_id, sorted(skill["cost"]), tier, sorted(required))
+            )
+        outside = cost - allowed
+        if outside:
+            problems.append(
+                "skills.gd: %s's recipe names %s, which tier %d may not "
+                "spend -- section 4.2 bounds a tier's recipe to its own "
+                "row" % (skill_id, sorted(outside), tier)
+            )
+        branch_tiers.setdefault((skill["sector"], tier), []).append(skill_id)
+
+    sectors = {sector for sector, _tier in branch_tiers}
+    for sector in sectors:
+        populated_tiers = sorted(
+            tier for (sec, tier) in branch_tiers if sec == sector
+        )
+        highest = populated_tiers[-1]
+        for tier in range(1, highest):
+            if (sector, tier) not in branch_tiers:
+                problems.append(
+                    "skills.gd: sector %r has an empty tier %d below a "
+                    "populated tier %d -- section 4.3 says an empty tier "
+                    "with a populated tier above it can never be opened"
+                    % (sector, tier, highest)
+                )
+
+    levels_path = os.path.join(ROOT, LEVELS_FILE)
+    if not os.path.exists(levels_path):
+        problems.append(
+            "%s not found for the run-definition skill-policy check"
+            % LEVELS_FILE
+        )
+        return
+    levels_source = _strip_gd_comments(open(levels_path, encoding="utf-8").read())
+    levels_block = _dict_block(levels_source, "LEVELS")
+    if levels_block is None:
+        problems.append(
+            "%s: could not find const LEVELS -- has it moved?" % LEVELS_FILE
+        )
+        return
+    for level_entry in _entry_blocks(levels_block):
+        for skill_id in _resolve_list(
+            _field(level_entry, "skill_bans"), by_prefix, consts["skills"]
+        ):
+            skill = skills.get(skill_id)
+            if skill is None:
+                continue
+            sector, tier = skill["sector"], skill["tier"]
+            if (sector, tier + 1) in branch_tiers:
+                problems.append(
+                    "%s: a level bans %s, a %s tier-%d skill with tier %d "
+                    "populated -- section 4.3 needs every tier-%d skill "
+                    "owned before tier %d opens, so this ban makes that "
+                    "branch's advancement impossible in this run"
+                    % (LEVELS_FILE, skill_id, sector, tier, tier + 1, tier, tier + 1)
+                )
+
 
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
@@ -1376,6 +1698,8 @@ def main():
     check_progression_catalogues(problems)
     check_progression_resolver(problems)
     check_progression_foraging_rules(problems)
+    check_run_skill_policy(problems)
+    check_progression_tier_and_cost(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
