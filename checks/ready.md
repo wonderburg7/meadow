@@ -87,6 +87,20 @@ catches that whole class automatically, so the gap is smaller than it was.
 Options: leave both denied and rely on the new backticked-path check; or
 lift the deny for an explicit audit session only.
 
+### C-17 -- the meadow's species mix follows the seasons without collapsing
+
+Play (or headless-watch) a full year with seasons on. Confirm out-of-season
+flowers show a small non-zero `+/s` rather than `+0.00/s` and read "out of
+season" on the flower summary panel at the same time, that species become
+rarer but never vanish out of season, and that the meadow never reads as
+empty or overrun by one species.
+
+PASS: something is visibly in flower all year, out-of-season flowers are
+rare rather than absent, and the panel's rate and season lines agree at
+every point in the year.
+
+Owner: `plans/now/flowers.md` Slice 2.
+
 ### C-16 -- pre-run menu left inset
 
 Open the pre-run menu at the usual viewport, then choose several left-pane
