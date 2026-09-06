@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FL-2` (`codex/FL-2`) | Codex | Out of season means "barely", not "not at all". | Codex | in progress | none | `plans/now/flowers.md` Slice 2 |
+| `.worktrees/BOOT-1` (`claude/BOOT-1`) | Claude | Hotfix: `hud.gd`'s `:=` type-inference failure breaks Godot's parse of `main.gd`, so the whole game (and every headless run) fails to boot. | Claude | in progress | none | out-of-queue hotfix, not a `NEXTSTEPS.md` item |
