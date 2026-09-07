@@ -1,7 +1,7 @@
 # Three one-file UI fixes — Dave's 8 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-T-4 -- stop clipping the first hexagon's left point | Dependency: none -- all three are startable now, in any order | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-T-3 -- cell highlight rings two pixels lower | Dependency: none -- remaining slices are startable now, in any order | Verified: 2026-09-08
 
 **Objective.** Clear the three small, self-contained defects from Dave's
 8 Sep 2026 hands-on pass: a 2px ring offset, a clipped hexagon point, and
@@ -17,7 +17,6 @@ independent of each other and may be taken in any order.
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
 | UI-T-3 | Cell highlight rings sit 2px lower | `hive_cell.gd` | yes | low |
-| UI-T-4 | The pre-run menu stops clipping the first hexagon's left point | `main_menu.gd` | yes | low |
 | UI-T-5 | The settings window opens with every section collapsed | `debug_panel.gd` | yes | low |
 
 **Dependencies, stated rather than implied.** None. Three separate files,
@@ -88,69 +87,7 @@ did and read as centred on the cup. Cell art off is unchanged.
 
 **Check to file:** C-20.
 
-### UI-T-4 — the pre-run menu clips the first hexagon's left point
-
-**Reasoning level: low.** One file, one constant, arithmetic only.
-
-**Symptom (Dave, 8 Sep 2026, alongside C-16).** C-16 passed — the left pane
-has a comfortable edge buffer and tiles still click normally. But: "the first
-hexagons have part of the far-left hexagon point removed, despite there being
-space to include the point."
-
-**Cause.** `scripts/main_menu.gd::_make_hex_tile` draws the border polygon
-one `HEX_BORDER_OVERLAP` (3.0px) *larger* than the tile's own bounding box:
-
-```gdscript
-border.polygon = Shapes.hexagon_points(HEX_SIZE + HEX_BORDER_OVERLAP)
-border.position = bbox / 2.0    # bbox.x is exactly HEX_SIZE * 2.0
-```
-
-The border's leftmost vertex therefore sits at x = -3.0 in tile space. The
-first tile in each strip is positioned at x = 0 (`_make_honeycomb_strip`), and
-the strip lives inside a `ScrollContainer` (`strip_scroll`, ~line 227), which
-clips. Three pixels of the first tile's point are cut off. Every later tile is
-fine because its neighbour's bbox covers the overlap. It is a paint-space
-issue only: `HexHitArea` uses `HEX_SIZE`, not the border polygon.
-
-**Deliver.** Inset the whole strip by the overlap, so tile 0's border has
-room. In `scripts/main_menu.gd::_make_honeycomb_strip`:
-
-```gdscript
-    var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))
-    var row_offset: float = _hex_row_offset()
-    # The border polygon each tile paints is HEX_BORDER_OVERLAP wider than
-    # the tile's own bbox, so tile 0's left point fell outside the strip and
-    # the wrapping ScrollContainer clipped it (Dave, 8 Sep 2026). Shifting
-    # every tile by the same constant keeps relative centres, and each
-    # tile's HexHitArea, exactly where they were.
-    var paint_inset: float = HEX_BORDER_OVERLAP
-    var strip := Control.new()
-    strip.custom_minimum_size = Vector2(
-        float(stages_in_group.size() - 1) * HEX_STEP_X + bbox.x + paint_inset * 2.0,
-        bbox.y + row_offset
-    )
-    strip.size = strip.custom_minimum_size
-
-    for i in range(stages_in_group.size()):
-        var tile := _make_hex_tile(stages_in_group[i])
-        tile.position = Vector2(
-            paint_inset + float(i) * HEX_STEP_X,
-            row_offset if i % 2 == 1 else 0.0
-        )
-        strip.add_child(tile)
-```
-
-Do not change `HEX_SIZE`, `HEX_STEP_X`, `HEX_BORDER_OVERLAP`, the tile bbox,
-`hex_hit_area.gd`, or `LEFT_PANE_MARGIN` — C-16 confirmed the left inset is
-already right, and this must not visibly move it (3px is well below the
-buffer Dave described as good-sized).
-
-**Acceptance.** In the pre-run menu, at the usual viewport, the leftmost
-hexagon of both the Challenges and the Scenarios strip shows its complete
-left point with its border unbroken. Clicking every tile still selects the
-right stage, and the left-pane text inset looks unchanged.
-
-**Check to file:** C-21.
+UI-T-4's completed specification: `plans/archive/UI_T_4_2026-09-08.md`.
 
 ### UI-T-5 — the settings window opens with every section collapsed
 
