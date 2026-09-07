@@ -66,13 +66,17 @@ section collapsed (UI-T-5).
 
 ## Ready to run
 
-**Nothing right now.** Every check filed before 8 Sep has come back, and the
-nine slices Dave's pass produced (`plans/now/ui-bottom-row.md` UI-T-1,
-UI-T-2, UI-S-4b and UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-3, UI-T-4 and
-UI-T-5; `plans/now/season-balance.md` SB-1 and SB-2) each file their own
-check when they ship -- C-18 to C-25, reserved in those plans so
-the ids cannot collide. This section is empty because the queue is full of
-work, not because there is nothing to verify.
+### C-21 -- pre-run menu's first hexagon is not clipped
+
+Open the pre-run menu at the usual viewport. In both Challenges and Scenarios,
+confirm the leftmost hexagon's full left point and border are visible, then
+click every tile and confirm it selects its corresponding stage; also confirm
+the left-pane text inset still looks unchanged.
+
+PASS: Both strips show unbroken leftmost hexagons, every tile selects the
+right stage, and the left-pane text inset is unchanged.
+
+Owner: `plans/now/ui-small-fixes.md`
 
 ## Decisions waiting on Dave
 
