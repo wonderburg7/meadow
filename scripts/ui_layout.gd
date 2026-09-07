@@ -36,6 +36,13 @@ static func left_window_top(corner_bottom: float) -> float:
 static func left_window_max_height(viewport_height: float, top: float) -> float:
 	return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)
 
+## The tallest the bottom-row command tray may be: everything between the
+## top of the screen and its own bottom margin, less the shared clearance.
+## Nothing in the bottom row may exceed this -- see plans/now/ui.md's
+## "No persistent panel may extend past a viewport edge" rule.
+static func command_tray_max_height(viewport_height: float) -> float:
+	return maxf(120.0, viewport_height - BOTTOM_ROW_MARGIN - SELECTION_TRAY_GAP)
+
 ## The minimum amount each half of the centred bottom row needs. The summary
 ## side includes its screen margin, while the Gallerin side includes the
 ## bubble, icon and their offsets. The latter is currently wider (300px), but
