@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/PR-A4` (`claude/PR-A4`) | Claude | Modifier resolution. | Claude | in progress | none | `plans/design/progression.md` section 11, Phase A step 4, with section 3's resolver design for source-tracked modifiers. Minimum reasoning: medium |
