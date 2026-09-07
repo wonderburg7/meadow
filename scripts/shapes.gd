@@ -104,6 +104,26 @@ static func hex_distance(a: Vector2i, b: Vector2i) -> int:
 	var dr := a.y - b.y
 	return int((abs(dq) + abs(dq + dr) + abs(dr)) / 2)
 
+## Every axial hex on the straight line from `a` to `b`, inclusive of both
+## endpoints. Standard cube-coordinate lerp and round: `hex_distance(a, b)`
+## steps are walked at even spacing and each one is rounded back onto the
+## hex grid with `_axial_round`, which is what keeps the line one tile wide
+## instead of drifting off-axis. Used to generate the skill tree's connect
+## tiles between a prerequisite and its dependent (progression.md 8.3)
+## rather than authoring them by hand.
+static func hex_line(a: Vector2i, b: Vector2i) -> Array:
+	var distance := hex_distance(a, b)
+	var results: Array = []
+	if distance == 0:
+		results.append(a)
+		return results
+	for i in range(distance + 1):
+		var t := float(i) / float(distance)
+		var q := lerp(float(a.x), float(b.x), t)
+		var r := lerp(float(a.y), float(b.y), t)
+		results.append(_axial_round(q, r))
+	return results
+
 ## How many steps a hex is from the centre.
 static func hex_ring_index(hex: Vector2i) -> int:
 	return hex_distance(hex, Vector2i(0, 0))

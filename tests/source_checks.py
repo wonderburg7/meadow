@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import glob
+import math
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts")
 
@@ -1668,6 +1669,174 @@ def check_progression_tier_and_cost(problems):
                 )
 
 
+# --- progression grid (section 9.2's grid group) -------------------
+# shapes.gd's hex maths mirrored in Python, because these checks run
+# without Godot (see the module docstring). Only enough of it to prove
+# skills.gd's authored axial coordinates against progression.md 8.1-8.3
+# -- shapes.gd itself is still the one hex implementation the game uses.
+
+AXIAL_RE = re.compile(r"Vector2i\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)")
+
+# shapes.gd's direction order, matching skills.gd's SECTORS const and
+# progression.md 8.2's table. A sector's wedge points along its own
+# index's direction.
+SECTOR_DIRECTIONS = {
+    "foraging": (1, 0),
+    "defence": (0, 1),
+    "ecology": (-1, 1),
+    "hive_mind": (-1, 0),
+    "colony": (0, -1),
+    "brood": (1, -1),
+}
+
+
+def _hex_distance(a, b):
+    dq = a[0] - b[0]
+    dr = a[1] - b[1]
+    return (abs(dq) + abs(dq + dr) + abs(dr)) // 2
+
+
+def _round_half_away_from_zero(value):
+    """Matches Godot's `roundi`, which ties away from zero rather than
+    Python's `round()`, which ties to even."""
+    return math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
+
+
+def _axial_round(qf, rf):
+    """Port of shapes.gd's `_axial_round`: round in cube space and repair
+    whichever axis drifted furthest."""
+    sf = -qf - rf
+    q = _round_half_away_from_zero(qf)
+    r = _round_half_away_from_zero(rf)
+    s = _round_half_away_from_zero(sf)
+    q_diff = abs(q - qf)
+    r_diff = abs(r - rf)
+    s_diff = abs(s - sf)
+    if q_diff > r_diff and q_diff > s_diff:
+        q = -r - s
+    elif r_diff > s_diff:
+        r = -q - s
+    return (int(q), int(r))
+
+
+def _hex_line(a, b):
+    """Port of shapes.gd's `Shapes.hex_line`: the axial hexes on the
+    straight line from `a` to `b`, inclusive of both endpoints."""
+    distance = _hex_distance(a, b)
+    if distance == 0:
+        return [a]
+    results = []
+    for i in range(distance + 1):
+        t = i / distance
+        q = a[0] + (b[0] - a[0]) * t
+        r = a[1] + (b[1] - a[1]) * t
+        results.append(_axial_round(q, r))
+    return results
+
+
+def check_progression_grid(problems):
+    """Section 9.2's grid group, over skills.gd's axial coordinates
+    (progression.md 8.1-8.3): every skill tile's ring is `2 * tier + 1`,
+    its coordinate resolves to its declared sector by the wedge rule, no
+    two nodes share a coordinate, and no connect tile generated between a
+    prerequisite and its dependent (or a sector's title tile and its own
+    tier-1 nodes) lands on a skill coordinate. Baseline entries (tier 0)
+    hold no real position and are skipped, per progression.md 11's note
+    that grid validation does not apply to them."""
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    _sources, consts, by_prefix, entries = data
+
+    nodes = {}
+    for entry in entries["skills"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["skills"])
+        if owner is None:
+            continue
+        baseline = (_field(entry, "baseline") or "false").strip() == "true"
+        if baseline:
+            continue
+        axial_raw = _field(entry, "axial") or ""
+        match = AXIAL_RE.search(axial_raw)
+        if match is None:
+            problems.append("skills.gd: %s has no numeric axial coordinate" % owner)
+            continue
+        tier_raw = (_field(entry, "tier") or "").strip()
+        nodes[owner] = {
+            "axial": (int(match.group(1)), int(match.group(2))),
+            "sector": _resolve_key(
+                _field(entry, "sector"), by_prefix, consts["skills"]
+            ),
+            "tier": int(tier_raw) if tier_raw.isdigit() else -1,
+            "all_of": _resolve_list(
+                _field(entry, "all_of"), by_prefix, consts["skills"]
+            ),
+        }
+
+    skill_coords = {info["axial"] for info in nodes.values()}
+
+    coord_owners = {}
+    for owner, info in nodes.items():
+        coord_owners.setdefault(info["axial"], []).append(owner)
+    for coord, owners in coord_owners.items():
+        if len(owners) > 1:
+            problems.append(
+                "skills.gd: %s share axial coordinate %s -- no two nodes "
+                "may occupy the same tile" % (" and ".join(sorted(owners)), coord)
+            )
+
+    for owner, info in nodes.items():
+        axial, sector, tier = info["axial"], info["sector"], info["tier"]
+        ring = _hex_distance(axial, (0, 0))
+        if tier >= 1:
+            expected_ring = 2 * tier + 1
+            if ring != expected_ring:
+                problems.append(
+                    "skills.gd: %s is tier %d at ring %d, but progression.md "
+                    "8.1 puts a tier-%d tile on ring %d (ring == 2 * tier + "
+                    "1)" % (owner, tier, ring, tier, expected_ring)
+                )
+        if sector not in SECTOR_DIRECTIONS:
+            continue
+        nearest_sector, nearest_distance = None, None
+        for candidate, direction in SECTOR_DIRECTIONS.items():
+            spine = (direction[0] * ring, direction[1] * ring)
+            distance = _hex_distance(axial, spine)
+            if nearest_distance is None or distance < nearest_distance:
+                nearest_sector, nearest_distance = candidate, distance
+        if nearest_sector != sector:
+            problems.append(
+                "skills.gd: %s is authored in sector %r but its coordinate "
+                "%s resolves to %r by the wedge rule -- progression.md 8.2 "
+                "says a mismatch here is a validation failure"
+                % (owner, sector, axial, nearest_sector)
+            )
+
+    def check_connect_line(a, b, label):
+        for point in _hex_line(a, b)[1:-1]:
+            if point in skill_coords:
+                problems.append(
+                    "skills.gd: the connect line for %s passes through %s, "
+                    "which is another skill's coordinate -- progression.md "
+                    "8.3 says to nudge the node within its wedge" % (label, point)
+                )
+
+    for owner, info in nodes.items():
+        for parent in info["all_of"]:
+            parent_info = nodes.get(parent)
+            if parent_info is None:
+                continue
+            check_connect_line(
+                parent_info["axial"], info["axial"], "%s <- %s" % (owner, parent)
+            )
+        if info["tier"] == 1 and info["sector"] in SECTOR_DIRECTIONS:
+            direction = SECTOR_DIRECTIONS[info["sector"]]
+            check_connect_line(
+                direction, info["axial"],
+                "%s <- %s title tile" % (owner, info["sector"]),
+            )
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -1700,6 +1869,7 @@ def main():
     check_progression_foraging_rules(problems)
     check_run_skill_policy(problems)
     check_progression_tier_and_cost(problems)
+    check_progression_grid(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
