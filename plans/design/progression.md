@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase B step 5 landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A4, section 11 Phase A step 4 (modifier resolution), Claude lane | Dependency: none for Phase A step 4; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-07
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: none admissible -- Phase B step 6 (foraging tier-1 vertical slice) needs the hands-on checks that are paused | Dependency: Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-07
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -452,6 +452,8 @@ Section 9.2's catalogue-integrity group shipped with step 1 (`tests/source_check
 4. **Modifier resolution.** Effective-value lookup in the resolver — base `GameConfig` plus additive and multiplicative modifiers with source tracking (section 3) — plus section 9.2's **reachability** group. Mostly tests: a modifier changes an effective value and `GameConfig` itself is never touched.
 
    **Author `effects` only for the two foraging tier-1 nodes this step can actually justify.** Tarsal secretions and Orientation flight map onto `GameConfig` toggles whose behaviour already ships, so their effects are transcription rather than invention. Every other `effects` array stays empty until the node's own content step reaches it. This is the same rule step 1 applied to cost amounts, for the same reason: a magnitude nothing can balance is a guess that step 6 would rewrite, and writing 35 of them here would mean authoring the tree's balance before a single node has ever been bought in a running game.
+
+   *Landed 7 Sep 2026 as PR-A4; record in `plans/archive/PROGRESSION_PHASE_A_STEP4_2026-09-07.md`. Phase A is now complete.*
 
 **Scheduled order is 3, then 5, then 4** — not the numbering above, which is identity rather than schedule. Step 5 is pure maths over data step 1 already authored, so it is the least likely of the three to be rewritten; step 4 authors effect magnitudes and is the most likely, so it runs last and closest to step 6, which is what will prove them. Steps 3 and 4 both own `progression.gd` and so cannot run in parallel with each other in any case; step 5 owns `shapes.gd` and overlaps neither.
 

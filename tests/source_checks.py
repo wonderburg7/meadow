@@ -600,6 +600,17 @@ PROGRESSION_CATALOGUES = {
 # skill_bans/skill_delays are authored here, one set per level.
 LEVELS_FILE = "levels.gd"
 
+# Section 9.1's fixed vocabulary for a typed effect's "type" field.
+EFFECT_TYPES = {
+    "unlock_feature", "unlock_role", "unlock_role_mode", "unlock_control",
+    "unlock_option", "enable_behaviour", "grant_action", "add_value",
+    "multiply_value", "set_run_flag",
+}
+# The two that resolve to a number rather than a plain switch (section 11
+# Phase A step 4) -- these are the only ones an "amount" is meaningful on.
+EFFECT_VALUE_TYPES = {"add_value", "multiply_value"}
+_NUMBER_RE = re.compile(r"^-?\d+(\.\d+)?$")
+
 # A key is lower-case, dot-separated and machine-shaped. A display string
 # is not. Section 0's language note: display text is never a save key and
 # never a dependency, so anything in a key position that looks like prose
@@ -650,6 +661,32 @@ def _entry_blocks(block):
                 entries.append(block[start:i])
                 start = None
     return entries
+
+
+def _quoted(raw):
+    """A raw field value as its literal string, or None if it is not a
+    quoted string at all -- distinct from _resolve_key(), which also
+    resolves a dotted constant reference; an effect's "type" is always a
+    literal (section 9.1's fixed vocabulary), never a constant."""
+    if raw is None:
+        return None
+    raw = raw.strip()
+    if raw.startswith('"') and raw.endswith('"'):
+        return raw[1:-1]
+    return None
+
+
+def _effect_blocks(entry):
+    """The `[{...}, {...}]` under an entry's "effects" field, as a list
+    of raw effect-block strings -- skills.gd/adaptations.gd's shared
+    shape, parsed the same way _entry_blocks() reads a whole catalogue
+    array."""
+    raw = _field(entry, "effects") or "[]"
+    inner = raw.strip()
+    if not inner.startswith("["):
+        return []
+    inner = inner[1:inner.rfind("]")] if "]" in inner else inner[1:]
+    return _entry_blocks(inner)
 
 
 def _field(entry, key):
@@ -970,6 +1007,37 @@ def check_progression_catalogues(problems):
                     "does not list" % (owner, feature)
                 )
 
+        # Section 9.1's typed effects (Phase A step 4): a type outside the
+        # fixed vocabulary or a key that is not key-shaped would sit
+        # silently unread by effective_value()/is_behaviour_enabled(),
+        # since both simply skip anything they don't recognise.
+        for effect in _effect_blocks(entry):
+            effect_type = _quoted(_field(effect, "type"))
+            if effect_type is None or effect_type not in EFFECT_TYPES:
+                problems.append(
+                    "skills.gd: %s has an effect with type %r, which is not "
+                    "one of section 9.1's typed effects" % (owner, effect_type)
+                )
+                continue
+            effect_key = _quoted(_field(effect, "key"))
+            if effect_key is None:
+                problems.append(
+                    "skills.gd: %s has a %s effect with no key -- "
+                    "effective_value()/is_behaviour_enabled() have nothing "
+                    "to match it against" % (owner, effect_type)
+                )
+                continue
+            if not check_key("skills.gd", owner, "effect key", effect_key):
+                continue
+            if effect_type in EFFECT_VALUE_TYPES:
+                amount = _field(effect, "amount")
+                if amount is None or not _NUMBER_RE.match(amount.strip()):
+                    problems.append(
+                        "skills.gd: %s's %s effect on %r has no numeric "
+                        "amount -- effective_value() would have nothing to "
+                        "add or multiply" % (owner, effect_type, effect_key)
+                    )
+
         parents = []
         for field in ("all_of", "any_of"):
             for parent in _resolve_list(
@@ -1064,6 +1132,7 @@ RESOLVER_FUNCS = (
     "is_owned", "is_known", "is_permitted", "feature_valid",
     "prerequisites_met", "branch_tier_open", "can_afford",
     "can_purchase", "purchase_blocker",
+    "effective_value", "is_behaviour_enabled",
 )
 
 # Section 4.5's conditions. All of them apply to every purchase, so the
@@ -1147,6 +1216,32 @@ def check_progression_resolver(problems):
             "Two copies of the chain is what the single chain exists to "
             "prevent" % RESOLVER_FILE
         )
+
+    # --- section 11 Phase A step 4: effective_value() applies every
+    # additive modifier before any multiplicative one (section 9.1's
+    # resolution order) -- reversed, a x2 skill would double the base
+    # before a +5 skill's flat bonus is even added.
+    value_body = _func_body(source, "effective_value")
+    if value_body is None:
+        problems.append(
+            "%s: no func effective_value() -- section 11 Phase A step 4's "
+            "effective-value lookup" % RESOLVER_FILE
+        )
+    else:
+        add_pos = value_body.find("EFFECT_ADD_VALUE")
+        mul_pos = value_body.find("EFFECT_MULTIPLY_VALUE")
+        if add_pos == -1 or mul_pos == -1:
+            problems.append(
+                "%s: effective_value() does not apply both EFFECT_ADD_VALUE "
+                "and EFFECT_MULTIPLY_VALUE -- section 9.1 needs both stages"
+                % RESOLVER_FILE
+            )
+        elif add_pos > mul_pos:
+            problems.append(
+                "%s: effective_value() applies EFFECT_MULTIPLY_VALUE before "
+                "EFFECT_ADD_VALUE -- section 9.1's order is additive then "
+                "multiplicative" % RESOLVER_FILE
+            )
 
     # --- section 11 Phase A step 3: the run's skill policy lands in
     # is_permitted(), in the right order -- a ban must win over a
@@ -1669,6 +1764,155 @@ def check_progression_tier_and_cost(problems):
                 )
 
 
+# --- progression transcribed effects (section 11 Phase A step 4) ---
+
+# The only two skills this step may give a non-empty effects list, and
+# exactly what each must contain -- the enable_behaviour transcription of
+# a GameConfig toggle that already ships, not a guessed magnitude.
+TRANSCRIBED_EFFECTS = {
+    "skill.foraging.tarsal_secretions": ("enable_behaviour", "tarsal_markers_on"),
+    "skill.foraging.orientation_flight": ("enable_behaviour", "orientation_flight_on"),
+}
+
+
+def check_progression_transcribed_effects(problems):
+    """Section 11 Phase A step 4: Tarsal secretions and Orientation
+    flight carry exactly the enable_behaviour transcription of the
+    GameConfig toggle already shipping as tarsal_markers_on/
+    orientation_flight_on, every other skill's effects stays [], and the
+    toggle each one names still exists in game_config.gd -- otherwise
+    is_behaviour_enabled() would resolve a key nothing sets any more."""
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    _sources, consts, by_prefix, entries = data
+
+    config_path = os.path.join(ROOT, "game_config.gd")
+    config_vars = set()
+    if os.path.exists(config_path):
+        config_source = _strip_gd_comments(open(config_path, encoding="utf-8").read())
+        config_vars = set(re.findall(r"^var\s+(\w+)\s*:", config_source, re.M))
+    else:
+        problems.append("game_config.gd not found for the transcribed-effects check")
+
+    for entry in entries["skills"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["skills"])
+        if owner is None:
+            continue
+        effects = _effect_blocks(entry)
+        expected = TRANSCRIBED_EFFECTS.get(owner)
+        if expected is None:
+            if effects:
+                problems.append(
+                    "skills.gd: %s has a non-empty effects list -- section 11 "
+                    "Phase A step 4 authors effects only for Tarsal secretions "
+                    "and Orientation flight, everything else stays [] until "
+                    "its own content step reaches it" % owner
+                )
+            continue
+        expected_type, expected_key = expected
+        if len(effects) != 1:
+            problems.append(
+                "skills.gd: %s should carry exactly one enable_behaviour "
+                "effect, transcribing its GameConfig toggle" % owner
+            )
+            continue
+        effect_type = _quoted(_field(effects[0], "type"))
+        effect_key = _quoted(_field(effects[0], "key"))
+        if effect_type != expected_type or effect_key != expected_key:
+            problems.append(
+                "skills.gd: %s's effect is %r/%r, not the %r/%r transcription "
+                "of its existing GameConfig toggle"
+                % (owner, effect_type, effect_key, expected_type, expected_key)
+            )
+        elif expected_key not in config_vars:
+            problems.append(
+                "game_config.gd: no var %s -- skills.gd's %s effect names a "
+                "toggle that no longer exists" % (expected_key, owner)
+            )
+
+
+# --- progression reachability (section 9.2's reachability group) ---
+# The empty-tier-below-a-populated-one half of section 6 already lives in
+# check_progression_tier_and_cost() above (it shares that function's
+# branch_tiers table); what is left here is section 6's named
+# cross-sector prerequisites, permitted skills whose feature can never be
+# available, and adaptation groups too thin to fill a three-card offer.
+
+# Section 6 constraint 6 / 8.2: the only two cross-sector prerequisites
+# the design allows, each named explicitly so a skill moved off one loses
+# the link silently rather than the check just going quiet.
+CROSS_SECTOR_PREREQUISITES = (
+    ("skill.defence.alarm_pheromone", "skill.foraging.tarsal_secretions"),
+    ("skill.hive_mind.automation", "skill.colony.comb_worker"),
+    ("skill.hive_mind.automation", "skill.colony.miner"),
+)
+
+
+def check_progression_reachability(problems):
+    """Section 9.2's reachability group: section 6's named cross-sector
+    prerequisites still hold, no permitted skill depends on a feature
+    that can never be built (drought today), and every adaptation
+    group's offerable pool -- general plus its own -- can still fill a
+    three-card offer (section 7.1)."""
+    data = _progression_catalogue_data(problems)
+    if data is None:
+        return
+    sources, consts, by_prefix, entries = data
+
+    skills = _skill_rule_model(entries, consts, by_prefix, problems)
+
+    for child, parent in CROSS_SECTOR_PREREQUISITES:
+        skill = skills.get(child)
+        if skill is None:
+            continue
+        if parent not in skill["all_of"]:
+            problems.append(
+                "skills.gd: %s no longer lists %s in all_of -- section 6's "
+                "cross-sector prerequisite is what keeps this pair reachable "
+                "in the intended order" % (child, parent)
+            )
+
+    built_features = set()
+    for entry in entries["features"]:
+        owner = _resolve_key(_field(entry, "id"), by_prefix, consts["features"])
+        if owner is None:
+            continue
+        if (_field(entry, "built") or "false").strip() == "true":
+            built_features.add(owner)
+
+    for skill_id, skill in skills.items():
+        feature = skill["feature"]
+        if feature == "":
+            continue
+        if feature not in built_features:
+            problems.append(
+                "skills.gd: %s depends on feature %r, which features.gd "
+                "marks unbuilt -- it can never be bought until that "
+                "feature slice lands, so authoring it as a plain node here "
+                "is section 9.2's reachability failure" % (skill_id, feature)
+            )
+
+    group_offerable = {}
+    for entry in entries["adaptations"]:
+        group = _quoted(_field(entry, "group")) or ""
+        offerable = (_field(entry, "offerable") or "false").strip() == "true"
+        if offerable:
+            group_offerable[group] = group_offerable.get(group, 0) + 1
+
+    general_pool = group_offerable.get("general", 0)
+    for group, count in group_offerable.items():
+        if group == "general":
+            continue
+        pool = general_pool + count
+        if pool < 3:
+            problems.append(
+                "adaptations.gd: group %r has only %d offerable card(s) "
+                "including general -- section 7.1 needs three distinct "
+                "choices for an offer" % (group, pool)
+            )
+
+
 # --- progression grid (section 9.2's grid group) -------------------
 # shapes.gd's hex maths mirrored in Python, because these checks run
 # without Godot (see the module docstring). Only enough of it to prove
@@ -1869,6 +2113,8 @@ def main():
     check_progression_foraging_rules(problems)
     check_run_skill_policy(problems)
     check_progression_tier_and_cost(problems)
+    check_progression_transcribed_effects(problems)
+    check_progression_reachability(problems)
     check_progression_grid(problems)
 
     if problems:

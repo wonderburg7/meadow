@@ -21,13 +21,21 @@ extends RefCounted
 ## `tarsal_markers_on` and `orientation_flight_on`, and this resolver is
 ## proved against those two entries in tests/ rather than in play.
 ##
+## Effective values (Phase A step 4). `effective_value()` resolves base
+## GameConfig plus every owned skill's `add_value`/`multiply_value`
+## effects, additive first then multiplicative, each modifier keeping its
+## source skill (section 3, section 9.1). `is_behaviour_enabled()`
+## answers the boolean question the same two effects can't: Tarsal
+## secretions and Orientation flight transcribe as `enable_behaviour`
+## rather than a numeric modifier, since they are a plain owned/not-owned
+## switch, not a magnitude. Nothing calls either yet -- see the note above
+## about Phase B step 6 -- and no effect in the shipped catalogue exercises
+## add_value/multiply_value today, so those two are proved in tests/
+## against constructed data, the same way section 3's other rules were
+## proved against skills.gd before anything called them.
+##
 ## What is deliberately not here
 ## -----------------------------
-## **Effective values.** Section 3's other half -- base GameConfig plus
-## additive and multiplicative modifiers with source tracking -- is Phase
-## A step 4, and arrives once `effects` in skills.gd stops being empty.
-## Adding a lookup now would be a schema guessed against no data.
-##
 ## **Run policy.** Section 4.5's "permitted by the run/Challenge stage"
 ## is answered by stage_gate.gd plus this run's explicit
 ## `skill_grants`/`skill_bans`/`skill_delays` (Phase A step 3, set via
@@ -61,6 +69,17 @@ const BLOCK_PREREQUISITES := "block.prerequisites"
 const BLOCK_PREVIOUS_TIER := "block.previous_tier"
 const BLOCK_ALREADY_OWNED := "block.already_owned"
 const BLOCK_COST := "block.cost"
+
+# --- typed effects --------------------------------------------------
+## Section 9.1's fixed vocabulary, the three types this step's lookup
+## reads. The other six (unlock_feature and the rest) gate presence
+## questions the tree panel already has its own way to ask and are not
+## numeric or boolean modifiers, so effective_value() and
+## is_behaviour_enabled() below have no reason to know their names.
+
+const EFFECT_ADD_VALUE := "add_value"
+const EFFECT_MULTIPLY_VALUE := "multiply_value"
+const EFFECT_ENABLE_BEHAVIOUR := "enable_behaviour"
 
 # --- state --------------------------------------------------------
 ## `config` is GameConfig, read only and never written. `stage_gate` is
@@ -278,6 +297,57 @@ func can_afford(skill_id: String, stores: Dictionary) -> bool:
 		if float(stores.get(resource, 0)) < float(cost[resource]):
 			return false
 	return true
+
+# --- effective values -----------------------------------------------
+## Section 9.1's resolution order, restricted to what this step can
+## prove: base GameConfig value, then every owned skill's additive
+## modifiers summed, then every owned skill's multiplicative modifiers
+## applied. The run/Challenge-override and explicit-cap stages are out of
+## scope until a run definition or a skill actually feeds one.
+
+## Every add_value/multiply_value effect naming `key`, across every
+## owned skill -- baseline capabilities included, since section 5.7's
+## capabilities are owned like anything else. Kept separate from
+## effective_value() so a caller (a future tree panel tooltip) can show
+## "which skills changed this" rather than only the resolved number.
+func modifiers_for(key: String) -> Array:
+	var modifiers: Array = []
+	for skill_id in owned_ids():
+		for effect in Skills.entry(skill_id).get("effects", []):
+			if effect.get("key", "") != key:
+				continue
+			var op: String = effect.get("type", "")
+			if op != EFFECT_ADD_VALUE and op != EFFECT_MULTIPLY_VALUE:
+				continue
+			modifiers.append({
+				"source": skill_id, "op": op,
+				"amount": float(effect.get("amount", 0.0)),
+			})
+	return modifiers
+
+
+func effective_value(key: String, base: float) -> float:
+	var value := base
+	for modifier in modifiers_for(key):
+		if modifier["op"] == EFFECT_ADD_VALUE:
+			value += modifier["amount"]
+	for modifier in modifiers_for(key):
+		if modifier["op"] == EFFECT_MULTIPLY_VALUE:
+			value *= modifier["amount"]
+	return value
+
+
+## The enable_behaviour question: owned by any skill that switches `key`
+## on, Tarsal secretions/Orientation flight's shape rather than
+## add_value/multiply_value's. There is no "base" side to combine with --
+## the behaviour is off until something turns it on, matching
+## tarsal_markers_on/orientation_flight_on's own default.
+func is_behaviour_enabled(key: String) -> bool:
+	for skill_id in owned_ids():
+		for effect in Skills.entry(skill_id).get("effects", []):
+			if effect.get("type", "") == EFFECT_ENABLE_BEHAVIOUR and effect.get("key", "") == key:
+				return true
+	return false
 
 # --- the chain ----------------------------------------------------
 

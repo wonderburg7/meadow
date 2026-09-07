@@ -13,9 +13,14 @@ extends RefCounted
 ##
 ## What is deliberately empty here
 ## -------------------------------
-## Every entry's `effects` is `[]`. Typed effects arrive with the
-## resolver and the first vertical slice (Phase A step 4, Phase B step
-## 6); authoring them now would be guessing at a schema nothing reads.
+## Every entry's `effects` is `[]`, except Tarsal secretions and
+## Orientation flight (Phase A step 4): they transcribe the always-on
+## GameConfig toggles they already are today
+## (`tarsal_markers_on`/`orientation_flight_on`) as `enable_behaviour`
+## effects, section 9.1's type for a plain owned/not-owned switch rather
+## than a magnitude. Every other node's `effects` stays `[]` until its
+## own content step reaches it -- a number nothing can balance is a
+## guess, matching the rule this file already applies to cost amounts.
 ## `introduced_by` is likewise "" until the campaign meta tree exists,
 ## and `icon` is "" until the tree panel does.
 ##
@@ -163,7 +168,12 @@ const SKILLS := [
 		"sector": "foraging", "tier": 1, "axial": Vector2i(3, 0),
 		"max_rank": 1, "cost": {NECTAR: 120, POLLEN: 40},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
+		"feature": "", "introduced_by": "",
+		# Transcribes GameConfig.tarsal_markers_on -- section 11 Phase A
+		# step 4. "enable_behaviour" and the key are section 9.1's fixed
+		# vocabulary; progression.gd is where they get resolved.
+		"effects": [{"type": "enable_behaviour", "key": "tarsal_markers_on"}],
+		"icon": "",
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{
@@ -175,7 +185,11 @@ const SKILLS := [
 		"sector": "foraging", "tier": 1, "axial": Vector2i(3, -1),
 		"max_rank": 1, "cost": {NECTAR: 140, POLLEN: 40},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
+		"feature": "", "introduced_by": "",
+		# Transcribes GameConfig.orientation_flight_on -- section 11 Phase A
+		# step 4. Same vocabulary as Tarsal secretions above.
+		"effects": [{"type": "enable_behaviour", "key": "orientation_flight_on"}],
+		"icon": "",
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{
