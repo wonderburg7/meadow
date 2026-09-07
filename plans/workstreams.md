@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-T-3` (`codex/UI-T-3`) | Codex | cell highlight rings two pixels lower. | Codex | in progress | none | `plans/now/ui-small-fixes.md` "UI-T-3 — cell highlight rings sit two pixels high" |
