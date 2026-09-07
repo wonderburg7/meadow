@@ -9,54 +9,33 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Hands-on checks are paused (Dave, 4 Sep 2026),** so no slice that depends
-on one may enter the queue. That rules out every remaining item in `ui.md`,
-`challenge-1.md`, `challenge-2.md` and `hive-comb.md`. FL-2 (the Codex
-lane's last item) shipped 6 Sep 2026 and named no successor, which leaves
-the Codex lane with nothing admissible -- see the note in its place below
-and `checks/ready.md`'s D-1. Dave is running C-16, C-5 and C-13 now
-(6 Sep 2026); the first of those to fail becomes the Codex lane's next
-slice. **`tools/check_docs.py` will not pass while that lane is empty --
-this is expected and pending that reply, not a code defect.** What is
-left that needs nothing from Dave is **Progression Phase A step 4**
-(`plans/design/progression.md` section 11) -- plumbing, no gameplay change,
-proved by `tests/` rather than by playing. Phase A steps 1-3 landed 4 and
-6 Sep 2026 as PR-A1, PR-A2 and PR-A3; Phase B step 5 landed 7 Sep 2026 as
-PR-B5, which is what makes step 4 the correctly scheduled next step (section
-11's "scheduled order is 3, then 5, then 4"), not merely next in the
-numbering. Phase B step 6 is the first progression work that puts anything
-on screen, so it stays out until the checks resume.
+**Hands-on checks are paused (Dave, 4 Sep 2026), and both lanes are now
+empty of admissible work because of it.** That rules out every remaining
+item in `ui.md`, `challenge-1.md`, `challenge-2.md` and `hive-comb.md`.
+FL-2 (the Codex lane's last item) shipped 6 Sep 2026 and named no
+successor. PR-A4 (the Claude lane's last item -- Progression Phase A step
+4, modifier resolution) shipped 7 Sep 2026 and completed Phase A; its
+successor, Phase B step 6, is the first progression work that puts
+anything on screen, so it needs the same paused hands-on checks everything
+else here is waiting on. Dave is running C-16, C-5 and C-13 now (6 Sep
+2026); the first of those to fail becomes the Codex lane's next slice, and
+his reply also unpauses Phase B step 6 and the four `ui.md`/`challenge-1.md`/
+`challenge-2.md`/`hive-comb.md` items below. **`tools/check_docs.py` will
+not pass while both lanes are empty -- this is expected and pending that
+reply, not a code defect.**
 
 ## Next up
 
-1. **[Claude] PR-A4 -- Modifier resolution.**
-   - Plan: `plans/design/progression.md` -- section 11, Phase A step 4, with
-     section 3's resolver design for source-tracked modifiers.
-     Minimum reasoning: medium.
-   - Does: adds effective-value lookup to `progression.gd` -- base
-     `GameConfig` plus additive and multiplicative modifiers with source
-     tracking -- and section 9.2's reachability validation group. Authors
-     `effects` only for Tarsal secretions and Orientation flight, the two
-     foraging tier-1 nodes whose behaviour already ships as `GameConfig`
-     toggles, so it is transcription rather than a guessed magnitude. Every
-     other node's `effects` stays `[]`. `GameConfig` itself is never
-     written, matching `progression.gd`'s existing write ban.
-   - Files: `scripts/progression.gd`, `scripts/skills.gd`,
-     `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`. No player check needed -- nothing calls the
-     new lookup at runtime yet; proven by `tests/` over the resolver and
-     catalogue. A Godot headless parse check is still worth running since
-     `progression.gd` changes (section 11's note on that file).
-   - Proof: `absent: scripts/progression.gd :: effective_value`
-   - Why here: it is startable today. PR-B5 (grid geometry) landed 7 Sep
-     2026 and named this as its `Next after:` -- section 11's scheduled
-     order puts step 4 immediately after step 5, and it shares no file
-     with PR-B5's `shapes.gd`/`source_checks.py` change or with the Codex
-     lane.
-   - Next after: Phase B step 6 (the foraging tier-1 vertical slice) is
-     the plan's next step, but it needs the tree panel and a player-visible
-     acceptance check, so it stays paused with the rest of "Not in the
-     queue, and why" below until Dave's hands-on checks resume.
+1. **[Claude] -- no admissible item.** PR-A4 (modifier resolution) shipped
+   7 Sep 2026, archived at
+   `plans/archive/PROGRESSION_PHASE_A_STEP4_2026-09-07.md`, and completed
+   Phase A. Its named successor, Phase B step 6 (the foraging tier-1
+   vertical slice), needs the tree panel, the HUD button and a
+   player-visible acceptance check -- see "Not in the queue, and why".
+   No other Claude-lane plan has a slice that does not also need Dave's
+   hands-on checks. `tools/check_docs.py` fails while this lane holds no
+   item -- expected, and resolved once the checks resume rather than by a
+   fabricated entry here.
 
 2. **[Codex] -- no admissible item.** FL-2 shipped 6 Sep 2026 (archived at
    `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`) and named no successor.
@@ -70,15 +49,14 @@ on screen, so it stays out until the checks resume.
 
 ## Ready, not yet in the queue
 
-Nothing. PR-A4 was the Claude lane's only remaining Phase A/B successor and
-is now the queue's head (above); Phase B step 6 is next after it but needs
-the hands-on checks that are paused (see "Not in the queue, and why").
+Nothing. Every remaining slice in every owning plan needs a hands-on check
+or a live repro from Dave first (see "Not in the queue, and why").
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
-They are listed so they are not lost, not so they are picked up. The first
-four are paused as a group while the filed checks go unrun.
+They are listed so they are not lost, not so they are picked up. All are
+paused as a group while the filed checks go unrun.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
@@ -99,7 +77,7 @@ four are paused as a group while the filed checks go unrun.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear, and its acceptance is something Dave sees.
-  Steps 3, 4 and 5 are queued precisely because they stop short of it.
+  Phase A (steps 1-4) is complete precisely because it stops short of it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
 
