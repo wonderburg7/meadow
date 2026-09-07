@@ -17,7 +17,7 @@ routing table. Neither is repeated here.
 | --- | --- |
 | UI integrity and accessibility | `plans/now/ui.md` |
 | Challenge 1 revamp, then Challenge 2 | `plans/now/challenge-1.md`, `plans/now/challenge-2.md` |
-| Flower season and senescence | `plans/now/flowers.md` |
+| Flower season and senescence | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Skills and colony adaptations | `plans/design/progression.md` |
 
 ## Later, requiring a new design or evidence pass

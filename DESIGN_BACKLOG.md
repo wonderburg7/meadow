@@ -20,7 +20,7 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/now/hive-comb.md` | active, narrow slices only |
 | Settings/config ownership (GameConfig vs the settings window) | `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` | shipped 1 Sep 2026; the catalogue is `scripts/settings_catalogue.gd` |
 | Settings surviving a run change | `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` | active, one slice ready |
-| Flower season and senescence | `plans/now/flowers.md` | active, two slices ready |
+| Flower season and senescence | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` | active, two slices ready |
 | The check/slice loop itself | `plans/reference/check-loop.md` | active, three slices |
 
 ## Deferred product decisions
