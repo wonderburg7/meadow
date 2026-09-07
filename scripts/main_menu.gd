@@ -351,16 +351,25 @@ func _make_honeycomb_strip(group_key: String) -> Control:
 
 	var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))
 	var row_offset: float = _hex_row_offset()
+	# The border polygon each tile paints is HEX_BORDER_OVERLAP wider than
+	# the tile's own bbox, so tile 0's left point fell outside the strip and
+	# the wrapping ScrollContainer clipped it (Dave, 8 Sep 2026). Shifting
+	# every tile by the same constant keeps relative centres, and each
+	# tile's HexHitArea, exactly where they were.
+	var paint_inset: float = HEX_BORDER_OVERLAP
 	var strip := Control.new()
 	strip.custom_minimum_size = Vector2(
-		float(stages_in_group.size() - 1) * HEX_STEP_X + bbox.x,
+		float(stages_in_group.size() - 1) * HEX_STEP_X + bbox.x + paint_inset * 2.0,
 		bbox.y + row_offset
 	)
 	strip.size = strip.custom_minimum_size
 
 	for i in range(stages_in_group.size()):
 		var tile := _make_hex_tile(stages_in_group[i])
-		tile.position = Vector2(float(i) * HEX_STEP_X, row_offset if i % 2 == 1 else 0.0)
+		tile.position = Vector2(
+			paint_inset + float(i) * HEX_STEP_X,
+			row_offset if i % 2 == 1 else 0.0
+		)
 		strip.add_child(tile)
 
 	return strip
