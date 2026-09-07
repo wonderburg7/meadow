@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/PR-B5` (`claude/PR-B5`) | Claude | Grid geometry. | Claude | in progress | none | `plans/design/progression.md` section 11, Phase B step 5, with sections 8.1 to 8.3 for the ring, wedge and connect-tile rules. Minimum reasoning: low |
