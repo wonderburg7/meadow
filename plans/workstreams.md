@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-T-1` (`claude/UI-T-1`) | Claude | keep the command tray wholly on screen. | Claude | in progress | none | `plans/now/ui-bottom-row.md` "UI-T-1 — the command tray must stay wholly on screen" |
+| `.worktrees/UI-T-4` (`codex/UI-T-4`) | Codex | stop clipping the first hexagon's left point. | Codex | in progress | none | `plans/now/ui-small-fixes.md` "UI-T-4 — the pre-run menu clips the first hexagon's left point" |
