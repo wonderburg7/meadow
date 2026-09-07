@@ -18,39 +18,45 @@ and `checks/ready.md`'s D-1. Dave is running C-16, C-5 and C-13 now
 (6 Sep 2026); the first of those to fail becomes the Codex lane's next
 slice. **`tools/check_docs.py` will not pass while that lane is empty --
 this is expected and pending that reply, not a code defect.** What is
-left that needs nothing from Dave is **Progression Phase B step 5**
+left that needs nothing from Dave is **Progression Phase A step 4**
 (`plans/design/progression.md` section 11) -- plumbing, no gameplay change,
-proved by `tests/` rather than by playing. Phase A steps 1, 2 and 3 landed
-4 and 6 Sep 2026 as PR-A1, PR-A2 and PR-A3; step 4 is deferred deliberately
-(see "Ready, not yet in the queue" below). Phase B step 6 is the first
-progression work that puts anything on screen, so it stays out until the
-checks resume.
+proved by `tests/` rather than by playing. Phase A steps 1-3 landed 4 and
+6 Sep 2026 as PR-A1, PR-A2 and PR-A3; Phase B step 5 landed 7 Sep 2026 as
+PR-B5, which is what makes step 4 the correctly scheduled next step (section
+11's "scheduled order is 3, then 5, then 4"), not merely next in the
+numbering. Phase B step 6 is the first progression work that puts anything
+on screen, so it stays out until the checks resume.
 
 ## Next up
 
-1. **[Claude] PR-B5 -- Grid geometry.**
-   - Plan: `plans/design/progression.md` -- section 11, Phase B step 5, with
-     sections 8.1 to 8.3 for the ring, wedge and connect-tile rules.
-     Minimum reasoning: low.
-   - Does: adds `Shapes.hex_line(a, b)` -- a standard cube-coordinate lerp
-     and round, beside the existing hex helpers -- and section 9.2's grid
-     validation group over the axial coordinates PR-A1 already authored:
-     every skill tile's ring equals `2 * tier + 1`, its coordinate resolves
-     to its declared sector by the wedge rule, no two nodes share a
-     coordinate, and no generated connect tile lands on a skill coordinate.
-     No panel, no gameplay change.
-   - Files: `scripts/shapes.gd`, `tests/source_checks.py`.
-   - Check: `tools/verify.ps1`. No player check and no Godot boot needed --
-     nothing loads the new function at runtime yet, and the validators run
-     in Python over the catalogue.
-   - Proof: `absent: scripts/shapes.gd :: hex_line`
-   - Why here: it is startable today and always was. PR-A1 authored the
-     coordinates, so this validates data rather than inventing it, and it
-     depends on nothing in PR-A3 or PR-A4. PR-A3 landed 6 Sep 2026 and named
-     this as its `Next after:`; it shares no file with the Codex lane.
-   - Next after: PR-A4 -- modifier resolution (section 11, Phase A step 4),
-     which adds effective-value lookup to the resolver and section 9.2's
-     reachability group, still without `GameConfig` ever being written.
+1. **[Claude] PR-A4 -- Modifier resolution.**
+   - Plan: `plans/design/progression.md` -- section 11, Phase A step 4, with
+     section 3's resolver design for source-tracked modifiers.
+     Minimum reasoning: medium.
+   - Does: adds effective-value lookup to `progression.gd` -- base
+     `GameConfig` plus additive and multiplicative modifiers with source
+     tracking -- and section 9.2's reachability validation group. Authors
+     `effects` only for Tarsal secretions and Orientation flight, the two
+     foraging tier-1 nodes whose behaviour already ships as `GameConfig`
+     toggles, so it is transcription rather than a guessed magnitude. Every
+     other node's `effects` stays `[]`. `GameConfig` itself is never
+     written, matching `progression.gd`'s existing write ban.
+   - Files: `scripts/progression.gd`, `scripts/skills.gd`,
+     `tests/source_checks.py`.
+   - Check: `tools/verify.ps1`. No player check needed -- nothing calls the
+     new lookup at runtime yet; proven by `tests/` over the resolver and
+     catalogue. A Godot headless parse check is still worth running since
+     `progression.gd` changes (section 11's note on that file).
+   - Proof: `absent: scripts/progression.gd :: effective_value`
+   - Why here: it is startable today. PR-B5 (grid geometry) landed 7 Sep
+     2026 and named this as its `Next after:` -- section 11's scheduled
+     order puts step 4 immediately after step 5, and it shares no file
+     with PR-B5's `shapes.gd`/`source_checks.py` change or with the Codex
+     lane.
+   - Next after: Phase B step 6 (the foraging tier-1 vertical slice) is
+     the plan's next step, but it needs the tree panel and a player-visible
+     acceptance check, so it stays paused with the rest of "Not in the
+     queue, and why" below until Dave's hands-on checks resume.
 
 2. **[Codex] -- no admissible item.** FL-2 shipped 6 Sep 2026 (archived at
    `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`) and named no successor.
@@ -64,12 +70,9 @@ checks resume.
 
 ## Ready, not yet in the queue
 
-Nothing. PR-A4 is the Claude lane's only remaining successor and is deferred
-deliberately rather than for lack of readiness: it authors effect magnitudes,
-and section 11 schedules it last of the three so it runs closest to step 6,
-which is what will prove them. Its `effects` scope is bounded there to the
-two foraging tier-1 nodes that map onto shipped `GameConfig` toggles, so it
-is transcription rather than a second set of guessed numbers.
+Nothing. PR-A4 was the Claude lane's only remaining Phase A/B successor and
+is now the queue's head (above); Phase B step 6 is next after it but needs
+the hands-on checks that are paused (see "Not in the queue, and why").
 
 ## Not in the queue, and why
 

@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A step 2 landed 4 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A3, section 11 Phase A step 3 (run-definition fields), Claude lane | Dependency: none for Phase A; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-04
+Status: active -- Phase B step 5 landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: PR-A4, section 11 Phase A step 4 (modifier resolution), Claude lane | Dependency: none for Phase A step 4; Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-07
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -458,6 +458,8 @@ Section 9.2's catalogue-integrity group shipped with step 1 (`tests/source_check
 **Phase B — prove the systems, in this order**
 
 5. **Grid geometry.** Add `Shapes.hex_line`, the ring/wedge rules and their validators (section 8.1–8.3), carrying section 9.2's **grid** group. Pure maths and checks against coordinates step 1 already authored, no panel yet. It depends on nothing in steps 3 or 4 and shares no file with them.
+
+   *Landed 7 Sep 2026 as PR-B5; record in `plans/archive/PROGRESSION_PHASE_B_STEP5_2026-09-07.md`. Running the new grid group against step 1's authored coordinates found four real connect-line collisions -- nothing had validated them before -- fixed by nudging the affected node within its own wedge.*
 6. **Foraging tier 1 vertical slice.** Tarsal secretions and Orientation flight move from always-on toggles to skill-gated purchases, with the tree panel (section 8.4), the HUD button (section 8.5) and run saving. Tier 1 only, so it needs no honey and does not touch the Brood spine. This is the first success criterion — prove prerequisites, cost, effects, controls, node states and saving on the smallest possible surface.
 7. **The Brood spine at tier 1 and the honey gate.** Honey worker and Nurses become nodes; a tier-2 purchase becomes possible. This is where section 6's constraint 2 (enough starting comb to make the first honey) is tested with a real scenario run.
 8. **Tier 2 content.** Comb worker, Miner, Automation, Cleaning, Adaptive constancy, Associative learning, Guard bee, Combat, Suppress recruitment, Rain recall — all existing or bounded-new behaviour.
