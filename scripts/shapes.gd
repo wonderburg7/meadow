@@ -119,8 +119,8 @@ static func hex_line(a: Vector2i, b: Vector2i) -> Array:
 		return results
 	for i in range(distance + 1):
 		var t := float(i) / float(distance)
-		var q := lerp(float(a.x), float(b.x), t)
-		var r := lerp(float(a.y), float(b.y), t)
+		var q := lerpf(float(a.x), float(b.x), t)
+		var r := lerpf(float(a.y), float(b.y), t)
 		results.append(_axial_round(q, r))
 	return results
 
