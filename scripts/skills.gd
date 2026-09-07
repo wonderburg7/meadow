@@ -169,7 +169,10 @@ const SKILLS := [
 	{
 		"id": ORIENTATION_FLIGHT, "name": "Orientation flight",
 		"description": "A new forager learns a working area of its own before it starts collecting, instead of heading straight for the nearest flower.",
-		"sector": "foraging", "tier": 1, "axial": Vector2i(2, 1),
+		# (2, 1) sat on the connect line from Tarsal secretions to Alarm
+		# pheromone (progression.md 8.3's grid check caught it); the other
+		# free tier-1 slot in this wedge is clear of every line.
+		"sector": "foraging", "tier": 1, "axial": Vector2i(3, -1),
 		"max_rank": 1, "cost": {NECTAR: 140, POLLEN: 40},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
@@ -335,11 +338,13 @@ const SKILLS := [
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{
-		# Sits on the Hive Mind edge of the wedge because Automation
-		# needs it and Comb worker together (section 8.2).
+		# Automation needs this and Comb worker together (section 8.2).
+		# The Hive Mind-facing slots (-1, -4) and (-2, -3) both sat
+		# exactly on Comb worker's connect line to Automation (the grid
+		# check caught it), so this uses the wedge's other free slot.
 		"id": MINER, "name": "Miner",
 		"description": "Unlocks the Miner role and dig orders, so the hive can open up room for more comb.",
-		"sector": "colony", "tier": 2, "axial": Vector2i(-1, -4),
+		"sector": "colony", "tier": 2, "axial": Vector2i(1, -5),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 180, POLLEN: 60},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
@@ -485,7 +490,11 @@ const SKILLS := [
 	{
 		"id": CLEANING, "name": "Cleaning",
 		"description": "Debris and corpses become work the colony takes on deliberately, rather than something that simply sits there.",
-		"sector": "hive_mind", "tier": 2, "axial": Vector2i(-5, 0),
+		# (-5, 0) sat on the sector's own r=0 spine, exactly on Backup
+		# roles' connect line to both Adjustment panel and Extended
+		# backup roles (the grid check caught it); this slot is off that
+		# axis entirely.
+		"sector": "hive_mind", "tier": 2, "axial": Vector2i(-4, -1),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 160, POLLEN: 60},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
