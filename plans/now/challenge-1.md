@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 7's acceptance pass -- Dave's run, the last thing this plan needs | Dependency: none | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 7's acceptance pass -- Dave's run, once UI-T-1 puts the command tray back on screen | Dependency: Slice 7 needs plans/now/ui-bottom-row.md UI-T-1; C-7 sits in checks/blocked.md until it ships | Verified: 2026-09-08
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command. Every code slice is
@@ -10,6 +10,16 @@ shipped; what remains is one acceptance playthrough and its copy pass.
 **State.** Slices 1-6, 8-15 are code-complete and merged (last: 3 Sep
 2026). Slice 7 is the only open item and it is **Dave's run, not a code
 slice** -- it is listed in `NEXTSTEPS.md` under "Not in the queue".
+
+**8 Sep 2026 hands-on pass.** C-8 came back confirmed -- every waiting
+stage from 1.1 to 1.14 reads "Now: waiting for instruction" with the stage's
+action appended, and every working stage still narrates the activity. Slice
+15 is therefore closed and its check is archived. C-7 (Slice 14's automatic
+foraging, camera-follow and 4x speed) could not be run at all: "can't test
+because necessary buttons in the command panel are off screen". That is
+`plans/now/ui-bottom-row.md` UI-T-1, not a Challenge 1 defect -- C-7 has moved to
+`checks/blocked.md` naming UI-T-1 as its unblocker, and Slice 7's acceptance
+playthrough is stalled behind the same fix for the same reason.
 
 **Open slices.** Slice 7 only. No dependencies; nothing else in this plan
 is startable, and nothing may be added to it -- a finding from Slice 7's

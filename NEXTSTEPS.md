@@ -9,75 +9,122 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Hands-on checks are paused (Dave, 4 Sep 2026), and both lanes are now
-empty of admissible work because of it.** That rules out every remaining
-item in `ui.md`, `challenge-1.md`, `challenge-2.md` and `hive-comb.md`.
-FL-2 (the Codex lane's last item) shipped 6 Sep 2026 and named no
-successor. PR-A4 (the Claude lane's last item -- Progression Phase A step
-4, modifier resolution) shipped 7 Sep 2026 and completed Phase A; its
-successor, Phase B step 6, is the first progression work that puts
-anything on screen, so it needs the same paused hands-on checks everything
-else here is waiting on. Dave is running C-16, C-5 and C-13 now (6 Sep
-2026); the first of those to fail becomes the Codex lane's next slice, and
-his reply also unpauses Phase B step 6 and the four `ui.md`/`challenge-1.md`/
-`challenge-2.md`/`hive-comb.md` items below. **`tools/check_docs.py` will
-not pass while both lanes are empty -- this is expected and pending that
-reply, not a code defect.**
+**Dave ran a full hands-on pass on 8 Sep 2026 and both lanes are stocked
+again.** Fourteen checks went out; eleven came back confirmed and are
+archived, three failed, and two could not be run because of the command tray
+running off the bottom of the screen. Every item below is specified down to
+the function and the line, because each one was diagnosed against the source
+during that pass -- the plan sections say what to change and what not to
+touch, so no slice below needs a fresh investigation.
 
 ## Next up
 
-1. **[Claude] -- no admissible item.** PR-A4 (modifier resolution) shipped
-   7 Sep 2026, archived at
-   `plans/archive/PROGRESSION_PHASE_A_STEP4_2026-09-07.md`, and completed
-   Phase A. Its named successor, Phase B step 6 (the foraging tier-1
-   vertical slice), needs the tree panel, the HUD button and a
-   player-visible acceptance check -- see "Not in the queue, and why".
-   No other Claude-lane plan has a slice that does not also need Dave's
-   hands-on checks. `tools/check_docs.py` fails while this lane holds no
-   item -- expected, and resolved once the checks resume rather than by a
-   fabricated entry here.
+1. **[Claude] UI-T-1 -- keep the command tray wholly on screen.** The tray's
+   height is measured at the old width and then narrowed, so its top edge
+   lands too low and its content spills past the bottom edge; the height cap
+   that was meant to stop this is a no-op, because `Control.set_size` clamps
+   *up* to the combined minimum. Fix the order, and express the cap as a
+   `ScrollContainer` instead of an assignment to `size`. This is the highest
+   item in the whole queue: two other checks cannot be run at all while it
+   stands.
+   - Plan: `plans/now/ui-bottom-row.md` -- "UI-T-1 — the command tray must stay wholly on screen"
+   - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`
+   - Check: file C-18, replacing C-11 and C-12; move C-5 and C-7 back from
+     `checks/blocked.md` to `checks/ready.md` unchanged in the same pass
+   - Proof: `present: scripts/hud.gd :: command_tray.size.y = minf(command_tray.size.y, maximum_height)`
+   - Next after: UI-T-2 (left-side windows shorten for the summary panel)
 
-2. **[Codex] -- no admissible item.** FL-2 shipped 6 Sep 2026 (archived at
-   `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`) and named no successor.
-   Every other Codex-lane plan (`ui.md`, `challenge-1.md`, `challenge-2.md`,
-   `hive-comb.md`) needs a hands-on check or a live repro from Dave first --
-   see "Not in the queue, and why" and `checks/ready.md`'s D-1. Dave is
-   running C-16, C-5 and C-13 now (6 Sep 2026); the first of those to fail
-   becomes this lane's next slice the moment he replies. `tools/check_docs.py`
-   fails while this lane holds no item -- expected, and resolved by that
-   reply rather than by a fabricated entry here.
+2. **[Codex] UI-T-4 -- stop clipping the first hexagon's left point.** Each
+   pre-run menu tile paints its border polygon `HEX_BORDER_OVERLAP` (3px)
+   wider than the tile's own bbox, so tile 0's leftmost vertex sits at x=-3
+   and the wrapping `ScrollContainer` cuts it off. Inset the whole strip by
+   that constant and widen the strip's minimum size to match.
+   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-4 — the pre-run menu clips the first hexagon's left point"
+   - Files: `scripts/main_menu.gd`
+   - Check: file C-21
+   - Proof: `present: scripts/main_menu.gd :: tile.position = Vector2(float(i) * HEX_STEP_X, row_offset if i % 2 == 1 else 0.0)`
+   - Next after: UI-T-3 (cell highlight rings two pixels lower)
+
+3. **[Claude] UI-T-2 -- left-side windows shorten for the summary panel.**
+   `left_window_max_height` reserves against the viewport's bottom edge and
+   knows nothing about the bottom row, so Colony, Foraging and Nursery draw
+   over the bee summary panel. Give it the summary panel's top as a third
+   argument, add the `hud.gd` accessor that supplies it, and reflow the three
+   windows when the selection changes.
+   - Plan: `plans/now/ui-bottom-row.md` -- "UI-T-2 — left-side windows shorten instead of covering the summary panel"
+   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`
+   - Check: file C-19
+   - Proof: `present: scripts/ui_layout.gd :: return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)`
+   - Next after: UI-S-4b (a double right-click stops closing the bee panels)
+
+4. **[Codex] UI-T-3 -- cell highlight rings two pixels lower.** Every ring
+   built from `EMPTY_SILHOUETTE` sits 2px high on the drawn cup. Add a
+   ring-only `RING_Y_NUDGE` inside `_silhouette_point_to_local` so the sprite
+   itself is untouched and the two still cannot drift apart.
+   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-3 — cell highlight rings sit two pixels high"
+   - Files: `scripts/hive_cell.gd`
+   - Check: file C-20
+   - Proof: `absent: scripts/hive_cell.gd :: RING_Y_NUDGE`
+   - Next after: UI-T-5 (settings sections collapsed on startup)
+
+5. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
+   built with everything closed, but `open_to_categories()` (the pre-run
+   menu's Settings button) expands Accessibility and Appearance and nothing
+   ever closes them again, so the expansion follows the player into every
+   later run. Add `collapse_all()` and drive it from `Session.run_reset`.
+   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-5 — the settings window opens with every section collapsed"
+   - Files: `scripts/debug_panel.gd`
+   - Check: file C-22
+   - Proof: `absent: scripts/debug_panel.gd :: func collapse_all()`
+   - Next after: SB-1 (peak-season production is a rise, not a spike)
 
 ## Ready, not yet in the queue
 
-Nothing. Every remaining slice in every owning plan needs a hands-on check
-or a live repro from Dave first (see "Not in the queue, and why").
+These are fully specified and could be started today; they are out of the
+queue only because it is capped at five. Promote them as the lanes drain, in
+this order.
+
+- **UI-S-4b** (`plans/now/ui-bottom-row.md`) -- a double right-click closes the bee
+  panels. C-14's log has been recovered and analysed: the selection is
+  provably intact on every right-click, which retires UI-S-4's theory and
+  makes this a presentation fix plus one input-boundary guard. Claude lane,
+  after UI-T-2 (same file).
+- **UI-Q-3** (`plans/now/ui-bottom-row.md`) -- the warning dwell rule. C-4 passed and
+  gave the timings that settle the priority design UI-Q-1 deferred: ~6s,
+  ~1-2s, ~12s. Claude lane, after UI-S-4b (same file).
+- **SB-1** (`plans/now/season-balance.md`) -- peak season production is a
+  spike, twenty times the out-of-season floor, and discontinuous at the
+  window edge. One curve and one new `GameConfig` value, with the headless
+  comparison stated in the slice. Codex lane.
+- **SB-2** (`plans/now/season-balance.md`) -- out-of-season species seed at
+  0.15 of their usual weight, which reads as a standing presence rather than
+  a rarity. One value. Codex lane, after SB-1 (same file).
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
-They are listed so they are not lost, not so they are picked up. All are
-paused as a group while the filed checks go unrun.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough. C1-15 landed 3 Sep 2026; this is now Dave's run and the last
-  thing that plan wants.
-- **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever
-  of the rescue and recovery lines does not appear. C2-1 shipped 3 Sep 2026
-  (its "Force Challenge 2 collapse" trigger is `checks/ready.md` C-5); this
-  wants Dave to press it and report which line is missing. There is no
-  static defect to fix blind, and guessing has already failed twice.
+  playthrough, and Dave's run rather than a code slice. It is stalled behind
+  UI-T-1 for exactly the reason C-7 is: the role controls it needs are below
+  the bottom edge of the screen.
+- **Challenge 2 Slice 2** (`plans/now/challenge-2.md`) -- fixing whichever of
+  the rescue and recovery lines does not appear. C-5 is in
+  `checks/blocked.md` behind UI-T-1; nothing can be written here until it is
+  run, and guessing has already failed twice.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
   so it wants Dave's live look and a call on intended behaviour. Slice 5
   wants its own reproduction.
-- **UI-P-5 and UI-D** (`plans/now/ui.md`) -- both name two plausible causes
-  and say to reproduce the symptom live before changing code. With UI-R-2
-  shipped, these two are all that plan has left.
+- **UI-P-5** (`plans/now/ui.md`) -- names two plausible causes and says to
+  reproduce the symptom live before choosing between them. Dave's 8 Sep pass
+  did not report on it. UI-D is now closed: C-3 passed on 8 Sep 2026.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
-  and run saving first appear, and its acceptance is something Dave sees.
-  Phase A (steps 1-4) is complete precisely because it stops short of it.
+  and run saving first appear. Phase A (steps 1-4) is complete precisely
+  because it stops short of it. Its acceptance is something Dave sees, so it
+  wants a clear run of the UI work above rather than to compete with it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
 

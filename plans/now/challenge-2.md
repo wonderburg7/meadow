@@ -1,7 +1,16 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 2 (fix whichever message is missing), not yet startable | Dependency: Slice 2 needs Dave to press the Slice 1 trigger and report which line is missing | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: Slice 2 (fix whichever message is missing), not yet startable | Dependency: Slice 2 needs C-5 run, which needs plans/now/ui-bottom-row.md UI-T-1 first -- C-5 is in checks/blocked.md | Verified: 2026-09-08
+
+**8 Sep 2026 hands-on pass: C-5 could not be run.** Dave: "can't progress
+far enough to test this because of the command panel placement." The command
+tray runs off the bottom of the screen, so the run cannot be driven far
+enough into Challenge 2 to reach the trigger. That is
+`plans/now/ui-bottom-row.md` UI-T-1, not a Challenge 2 defect. C-5 has moved to `checks/blocked.md` naming
+UI-T-1 as its unblocker and comes straight back to `checks/ready.md` when it
+ships. Nothing in this plan changed, and no code should be written here on a
+guess -- guessing has already failed twice.
 
 **Why this file exists.** The check "neither the rescue message nor the
 recovery/checkpoint-restore message appeared during a Challenge 2 nectar

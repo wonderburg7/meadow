@@ -1,34 +1,40 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None startable -- UI-D and UI-P-5 are all that remain and both need a live repro | Dependency: UI-D and UI-P-5 need a live repro | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the 8 Sep group lives in ui-bottom-row.md and ui-small-fixes.md | Verified: 2026-09-08
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
 
-**State.** UI-A through UI-O, UI-P-1 to UI-P-4, UI-P-6 to UI-P-8, UI-Q and
-UI-R-1 are shipped and archived (`plans/archive/UI_SHIPPED_2026-09-01.md`,
-`plans/archive/UI_SHIPPED_2026-09-03.md`). Everything still open is below.
+**State.** UI-A through UI-O, UI-P-1 to UI-P-4, UI-P-6 to UI-P-8, UI-Q,
+UI-R-1 to UI-R-3 and UI-S-1 to UI-S-4 are shipped and archived
+(`plans/archive/UI_SHIPPED_2026-09-01.md`,
+`plans/archive/UI_SHIPPED_2026-09-03.md`). Dave's 8 Sep 2026 hands-on pass
+confirmed C-3, C-16, C-4, C-8, and the greater part of C-9, C-11 and C-13,
+and produced the UI-T group below. Everything still open is on this page.
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-D | Challenge-only top-bar hit areas | unknown | no — code shipped, awaiting check C-3 | high |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
 
-Nothing in this plan is startable today. UI-R-2, UI-S-1 and UI-S-4 all
-shipped 3 Sep 2026; the two rows above are the whole of what is left, and
-both wait on Dave reproducing the symptom live.
+**Where the rest of the open UI work is.** Dave's 8 Sep 2026 hands-on pass
+produced seven slices, split by lane so the two can run in parallel without
+sharing a file:
 
-**Dependencies, stated rather than implied.** UI-S-1 moved the numbers UI-S-3
-clamps; both are now shipped, as are UI-S-2 and UI-S-4, and P-2 (which
-enforced both left-panel rectangles) shipped 4 Sep 2026 --
-`plans/reference/check-loop.md`. Nothing else here is ordered.
+- `plans/now/ui-bottom-row.md` — UI-T-1, UI-T-2, UI-S-4b, UI-Q-3. All edit
+  `scripts/hud.gd`, so they are one lane worked in that order. UI-T-1 is the
+  highest item in the whole queue: C-5 and C-7 cannot be run until it ships.
+- `plans/now/ui-small-fixes.md` — UI-T-3, UI-T-4, UI-T-5. One script each,
+  independent, taken in any order in the other lane.
+
+Each of those files is archived whole when its group is done; this file keeps
+the objective, the durable rules and whatever outlives a single pass.
 
 **Required reading for any slice here.** This file's own section, and
-`scripts/ui_layout.gd` for anything in UI-S. Nothing else -- the archives are
-provenance only, and no UI slice needs the whole of this file.
+`scripts/ui_layout.gd` for anything touching a persistent panel's rectangle.
+Nothing else -- the archives are provenance only.
 
 **Do not change** `scripts/hex_hit_area.gd`, `HEX_SIZE`, `HEX_STEP_X` or tile
 centres in any pre-run-menu slice: UI-M's exact-hexagon hit test is built
@@ -43,48 +49,24 @@ against the tile's real hexagon at its real position, and every reported
 - Use one responsive layout value from `ui_layout.gd` for repeated panel
   widths and top-bar geometry; do not size a persistent panel from transient
   label text.
+- **No persistent panel may extend past a viewport edge at any supported
+  size.** A panel whose content does not fit scrolls inside its own rectangle
+  (`ScrollContainer`), exactly as the three left-side windows already do.
+  Added 8 Sep 2026, after Dave's pass found the command tray running off the
+  bottom edge with its `More…` button unreachable. Setting `Control.size`
+  smaller than a control's combined minimum size does not shrink the control
+  -- Godot silently keeps the minimum -- so a "cap the height" assignment is
+  never on its own enough to satisfy this rule.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks
   and a Godot boot pass.
 
-## UI-D — Challenge top-bar hit-area diagnosis
-
-**Confirmed reproduction (hands-on, 28 Aug):** In a Challenge, only a thin
-strip along the top of the second-row top-bar buttons responds to a click; the
-same controls are fully clickable in a Scenario.
-
-**Cause:** Challenge stage entry calls `hud.gd::set_challenge_goal()`, making
-the goal shelf visible. Its `offset_top = 46` overlaps the second top-bar row
-(roughly y=40–68), and the shelf itself retains Godot's default input-blocking
-mouse filter. Because it is added after the top bar, it receives clicks over
-that overlap, leaving only the exposed button top clickable. Scenarios keep
-the goal shelf hidden. `stage_gate.gd` controls which buttons are visible, but
-is not the cause of the hit-area loss.
-
-**Delivered:** the goal shelf's `mouse_filter` was set to
-`Control.MOUSE_FILTER_IGNORE`, restoring full-button clickability under the
-overlap. UI-E and UI-F shipped alongside it and are archived at
-`plans/archive/UI_SHIPPED_2026-09-01.md`.
-
-**What is actually outstanding is the check, not the code.** C-3 in
-`checks/ready.md` is the one thing that will say whether this is fixed. Write
-no code here until it comes back failing -- and if it does, the old
-`stage_gate.gd` theory is not the established cause.
-
-**If C-3 fails, the fallback is geometry, not another mouse filter.** Place
-the shelf below the *full* two-row bar, deriving its top from
-`ui_layout.gd`'s shared top-bar geometry rather than the literal
-`offset_top = 46` (durable rule: `plans/README.md` guardrail 11), and keep it
-input-transparent unless it gains interactive children. Re-check every
-top-right control in a Challenge *and* a Scenario, at normal and enlarged
-text scales -- enlarged text is what makes the two rows grow into the shelf.
-Do not fold this into cosmetic top-bar work.
-
 ## UI-P — remaining fixes from Dave's 30 Aug hands-on pass
 
-UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. P-5 is all that
-is left, and it needs a live reproduction before any code.
+UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. P-5 is all that is
+left, and it needs a live reproduction before any code. Dave's 8 Sep pass did
+not report on it, so it stays where it is.
 
 ### UI-P-5 — pre-run menu: "Choose a Challenge or Scenario on the left." isn't visible
 
@@ -114,53 +96,20 @@ for the placeholder) and check `_detail_column`'s children/visibility at
 that exact moment before changing code — two plausible causes named above,
 pick whichever the live state actually shows.
 
-## UI-R — from Dave's 2 Sep 2026 hands-on pass
+## Closed groups — pointers only
 
-Every slice in this group has shipped. UI-R-1 shipped 3 Sep and was
-re-specified the same day by UI-S-1; see the archive. UI-R-3 (the developer
-"Fire test warnings" button) shipped 3 Sep 2026, with hands-on check C-4 in
-`checks/ready.md`. UI-R-2 (the pre-run menu's left inset) shipped 3 Sep 2026
-on `codex/UI-R-2`; its specification is archived in
-`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-16 is filed in
-`checks/ready.md`.
+**UI-D (Challenge top-bar hit areas)** closed 8 Sep 2026: C-3 passed, the
+1 Sep `mouse_filter` fix was the cause and the cure, and the `stage_gate.gd`
+theory is retired. Diagnosis and the unused geometry fallback are in
+`plans/archive/UI_D_CLOSED_2026-09-08.md`.
 
-## UI-S — from Dave's 3 Sep 2026 hands-on pass
-
-Five reports, all about panels sharing the screen with each other. UI-R-1
-shipped on 3 Sep and its own check is superseded by UI-S-1 below: Dave's
-answer to "is the summary panel too cramped at 800?" was to re-specify the
-whole bottom row, so the tray now leads and its neighbours follow, instead
-of the tray taking what two fixed reserves leave it.
-
-**UI-S-1:** archived in `plans/archive/UI_SHIPPED_2026-09-03.md`; the
-implementation centres the tray at half the viewport and derives both
-neighbouring widths from its edges, preserving the shared 16px gaps.
-
-
-**UI-S-2:** shipped 3 Sep 2026; its specification is archived in
-`plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on check C-13 is filed in
-`checks/ready.md`.
-
-Archived: UI-S-3's command-tray reflow and viewport cap shipped 3 Sep 2026;
-its specification is at `plans/archive/UI_SHIPPED_2026-09-03.md` and hands-on
-check C-12 is filed in `checks/ready.md`.
-
-**UI-S-4:** shipped 3 Sep 2026. Every right-click now records its selected
-and commandable counts, command branch, and target state transition; a
-refused command shows a throttled warning instead of silently doing nothing.
-Invalid selections are pruned at the command boundary. Its specification is
-archived in `plans/archive/UI_SHIPPED_2026-09-03.md`; hands-on check C-14 is
-filed in `checks/ready.md`.
-
-## UI-Q — the warning banner: one open decision
-
-UI-Q-1 and UI-Q-2 landed 1 Sep 2026 (archive). What they deliberately
-left undone:
-
-**Deliberately not done:** a priority/dwell rule so a transactional
-confirmation can't be wiped mid-display by an unrelated ambient event (or
-vice versa) — that needs its own severity/priority design, not a second
-overlapping concept bolted onto the key/gap shape above.
+**UI-R (Dave's 2 Sep 2026 pass)** is entirely shipped and every check has come
+back. UI-R-1 was re-specified the same day by UI-S-1. UI-R-3 (the "Fire test
+warnings" button) shipped 3 Sep; its check C-4 passed on 8 Sep and the dwell
+asymmetry it exposed is UI-Q-3 above. UI-R-2 (the pre-run menu's left inset)
+shipped 3 Sep on `codex/UI-R-2`; its check C-16 passed on 8 Sep. The hexagon
+clipping Dave reported on the same screen is UI-T-4, not a regression in
+UI-R-2. Specifications: `plans/archive/UI_SHIPPED_2026-09-03.md`.
 
 ## Deferred decisions
 
