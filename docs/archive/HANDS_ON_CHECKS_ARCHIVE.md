@@ -242,3 +242,134 @@ slices in their owning plans, not entries here.
   choice).** Confirmed on a live playthrough -- heading-weighted choice and
   the SEARCHING spiral both read as intended. `forage_perception_radius`
   taken down 400 -> 320 off a `perf.gd` steer.
+
+## Confirmed in Dave's pass of 8 Sep 2026
+
+Eleven entries came back confirmed. Where a pass carried a correction or a
+balance note alongside it, the slice that owns the follow-up is named -- the
+check itself still passed and is closed here.
+
+### C-1 -- a flower under forager pressure no longer reads as pinned
+
+PASS confirmed. Dave: "Depleted flower recharges when abandoned."
+`nearest_flower()`'s `GameConfig.min_worthwhile_amount` skip is the fix, and
+it works: a flower drawn down near its floor is left alone and visibly
+recharges instead of sitting pinned just above zero.
+Owner was `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice C2.
+
+### C-3 -- Challenge-only top-bar hit areas
+
+PASS confirmed. Dave: "second-row top-bar buttons work across its full
+height." The goal shelf's `Control.MOUSE_FILTER_IGNORE` fix (1 Sep 2026) was
+both the cause and the cure. The `stage_gate.gd` theory is retired, and the
+geometry fallback that was held in reserve is not needed (archived at `plans/archive/UI_D_CLOSED_2026-09-08.md`). UI-D is
+closed.
+
+### C-4 -- two throttled warnings eight seconds apart
+
+PASS confirmed. All three messages appeared -- a bee-death epitaph, a
+crab-spider escape, then "Run saved." -- and none wiped another out, which is
+the condition. Dave timed the dwells: ~6s, ~1-2s, ~12s. The second message
+being cut to a fraction of the others is the priority/dwell rule UI-Q-1
+deliberately deferred, and is now `plans/now/ui-bottom-row.md` UI-Q-3, which will file
+its own replacement check.
+Owner was `plans/now/ui.md` UI-Q-1/UI-Q-2.
+
+### C-8 -- the queen's "Now:" line says what to do, not what she cannot do
+
+PASS confirmed. Every waiting stage from 1.1 to 1.14 reads "Now: waiting for
+instruction", with the stage's action appended from 1.2 on, and every working
+stage still narrates the activity. `plans/now/challenge-1.md` Slice 15 is
+closed.
+
+### C-9 -- cell highlight rings follow the cup sprite's own silhouette
+
+PASS confirmed, with one correction. All five rings trace the cup's own
+silhouette, none cuts through the sprite, turning Cell art off returns every
+ring to the flat hex, and the sprite-aligned hex grid works on restarting the
+level. Dave's correction: "move the cell highlight rings 2 pixels lower.
+otherwise as intended." That is `plans/now/ui-small-fixes.md` UI-T-3, which files C-20.
+Owner was `plans/now/hive-comb.md` Slice 9.
+
+### C-10 -- a hand-set toggle survives picking a Scenario
+
+PASS confirmed on all three clauses. A weather toggle set by hand in the main
+menu carried over into a Scenario; restarting the game removed the override;
+preset A's values did not carry into preset B's run; and a custom override
+did not leak into the next Scenario.
+Owner was `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` Slice 1.
+
+### C-11 -- the centred command tray preserves both bottom-row gaps
+
+PARTIAL, closed as superseded. Shifting between sizes works as UI-S-1
+intended, and the gap between Dr Gallerin's text and the command bar is
+correct. But there is no gap on the summary-panel side and the two overlap,
+and the tray itself runs off the bottom edge with its top too low to see.
+Superseded by `plans/now/ui-bottom-row.md` UI-T-1 and its check C-18. Dave's durable ask
+from this entry -- "ensure that panels like the command panel can't go off
+screen" -- is now a durable rule in that plan.
+Owner was `plans/now/ui.md` UI-S-1.
+
+### C-12 -- command tray reflows and stays on screen
+
+FAIL, closed as superseded. Dave: "as much of the command panel is off screen
+(off the bottom edge), i can't select 'more…'." Same defect as C-11's second
+half; both are UI-T-1 in `plans/now/ui-bottom-row.md`, whose check C-18 replaces the pair.
+Owner was `plans/now/ui.md` UI-S-3.
+
+### C-13 -- left-side windows clear the corner and scroll
+
+PASS confirmed on everything the entry asked, with one addition. Mutual
+closing works, the Nursery still enters the hive view and shows its zone
+glow, scrolling works, and starring works. Dave added: "left-side windows
+still sit ontop and overlap with a summary window if that's open at the same
+time, but these should not overlap. left-side windows should shorten in
+response to the summary window size." That is `plans/now/ui-bottom-row.md` UI-T-2, which
+files C-19.
+Owner was `plans/now/ui.md` UI-S-2.
+
+### C-14 -- double right-click command diagnosis
+
+FAIL, closed as superseded -- but the diagnostic it existed to produce did
+its job, and the answer overturns the theory UI-S-4 was built on.
+
+Dave: still happening, for any bee rather than only the queen, and "it clocks
+off their summary window/command panel so it's as if you're selecting off the
+bee". The run's log was recovered from
+`%APPDATA%\Godot\app_userdata\Meadow - Claude\logs\session_1788822502.jsonl`
+(7 Sep 2026, ~23:35). Seventeen `command_issue` entries, and **every one
+records `selected_count: 1`, `commandable_count: 1` and a correct state
+transition**. Two pairs sit 0.62s and 0.72s apart in `game_time` -- the
+double-clicks -- and in both the second command was accepted
+(`MOVE_TO_POINT -> MOVE_TO_POINT`).
+
+So the selection is not lost, no command is refused and no bee is pruned:
+the panels are being hidden while the selection behind them is intact. That
+is a presentation fault, not a selection one. `plans/now/ui-bottom-row.md` UI-S-4b owns
+the fix and files C-23.
+Owner was `plans/now/ui.md` UI-S-4.
+
+### C-15 -- flower age and season read from the flower summary panel
+
+PASS confirmed. Dave: "Works as intended." One balance note alongside it:
+"Increases to flower resource production in peak season are a bit too high."
+That is the new `plans/now/season-balance.md` SB-1, which files C-24.
+Owner was `plans/archive/FLOWERS_SLICE_1_2026-09-03.md`.
+
+### C-16 -- pre-run menu left inset
+
+PASS confirmed. The left pane has a comfortable edge buffer and tile spacing,
+borders and clicking are unchanged. A separate defect on the same screen:
+"the first hexagons have part of the far-left hexagon point removed, despite
+there being space to include the point." That is the border polygon being
+drawn wider than the tile bbox and clipped by the wrapping ScrollContainer --
+`plans/now/ui-small-fixes.md` UI-T-4, which files C-21. It is not a regression in UI-R-2.
+Owner was `plans/now/ui.md` UI-R-2.
+
+### C-17 -- the meadow's species mix follows the seasons without collapsing
+
+PASS confirmed on every clause: "every season retains visible flowers,
+out-of-season flowers remain rare rather than absent, and panel text/rates
+agree." One balance note: "Out-of-season plants should be more rare." That is
+`plans/now/season-balance.md` SB-2, which files C-25.
+Owner was `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`.
