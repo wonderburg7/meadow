@@ -356,6 +356,10 @@ var command_locked_bees: Array = []
 ## favourite) underneath. Each column hides itself when it has nothing
 ## to show for the current selection (see _rebuild_role_controls).
 var command_tray: PanelContainer
+## Holds the tray's content column and caps it to command_tray_max_height
+## without shrinking the PanelContainer below its content (which
+## Control.set_size cannot do -- see _resize_command_tray).
+var command_scroll: ScrollContainer
 var command_columns: Container
 var job_column_wrapper: VBoxContainer
 var job_column: VBoxContainer
@@ -948,9 +952,16 @@ func _build_command_tray() -> void:
 	command_tray.visible = false
 	add_child(command_tray)
 
+	command_scroll = ScrollContainer.new()
+	# The tray's width is owned by _update_command_tray_width; this must
+	# never grow a horizontal bar of its own.
+	command_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	command_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	command_tray.add_child(command_scroll)
+
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
-	command_tray.add_child(column)
+	command_scroll.add_child(column)
 
 	# Three ranked columns rather than one flowing row, per Dave's 22 Aug
 	# call -- each one wraps onto more rows internally rather than the
@@ -2502,11 +2513,23 @@ func _update_command_tray_width() -> void:
 func _resize_command_tray() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
-	command_tray.reset_size()
+	# Width first: command_columns is an HFlowContainer, so its wrapped row
+	# count -- and therefore the tray's real minimum height -- depends on
+	# the width it is given. Measuring height at the old width was what put
+	# the tray's top edge too low and spilled `More…` off the bottom edge
+	# (Dave, 8 Sep 2026, C-11/C-12).
 	_update_command_tray_width()
-	var viewport_height: float = get_viewport().get_visible_rect().size.y
-	var maximum_height: float = viewport_height - UiLayout.SELECTION_TRAY_GAP * 2.0
-	command_tray.size.y = minf(command_tray.size.y, maximum_height)
+	command_scroll.custom_minimum_size.y = 0.0
+	command_tray.reset_size()
+	var ceiling: float = UiLayout.command_tray_max_height(
+		get_viewport().get_visible_rect().size.y
+	)
+	# A PanelContainer cannot be made shorter than its content (set_size
+	# clamps up to the combined minimum), so the cap goes on the scroll
+	# region: it is the one child allowed to be smaller than what it holds.
+	var content_height: float = command_scroll.get_combined_minimum_size().y
+	command_scroll.custom_minimum_size.y = minf(content_height, ceiling)
+	command_tray.reset_size()
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

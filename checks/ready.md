@@ -66,13 +66,52 @@ section collapsed (UI-T-5).
 
 ## Ready to run
 
-**Nothing right now.** Every check filed before 8 Sep has come back, and the
-nine slices Dave's pass produced (`plans/now/ui-bottom-row.md` UI-T-1,
-UI-T-2, UI-S-4b and UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-3, UI-T-4 and
-UI-T-5; `plans/now/season-balance.md` SB-1 and SB-2) each file their own
-check when they ship -- C-18 to C-25, reserved in those plans so
-the ids cannot collide. This section is empty because the queue is full of
-work, not because there is nothing to verify.
+### C-18 -- the command tray stays wholly on screen
+
+At 1920x1080, 1280x720 and 800x600, select a bee and then a comb cell.
+
+PASS: in every case the whole command tray is on screen -- its top edge is
+visible, `More…` is clickable, and opening `More…` either grows the tray
+upwards or gives it a scrollbar, never pushing anything below the bottom of
+the window. The 16px gap between the tray and the summary panel on its left,
+and between the tray and Dr Gallerin's bubble on its right, is visible at
+every one of those sizes and while dragging between them.
+
+Owner: `plans/archive/UI-T-1_2026-09-08.md`.
+
+### C-5 -- Challenge 2's rescue and recovery lines
+
+In a Challenge 2 run past stage 2.1, open the settings window and press
+"Force Challenge 2 collapse" in the Triggers group once, then again.
+
+PASS: the first press drops the stores below the rescue threshold and Dr
+Gallerin's "Ahem. Field ecologists..." line appears with 150 nectar
+restored; the second press drops them below the failure floor and the
+checkpoint restore appears with "A brief ecological wobble..." and a live
+queen.
+
+Owner: `plans/now/challenge-2.md` Slice 1.
+
+### C-7 -- 1.11/1.13's automatic foraging: camera-follow and 4x speed fire as she sets off
+
+At 1.11, give the queen the Forager role with nectar focus: she should not
+pause on the first flower she finishes -- she works one flower, flies home,
+deposits, and goes back out, repeating until the nectar cell is full. The
+camera starts following her and the game speed jumps to 4x the moment she
+sets off (not at the moment the role is assigned), and both switch off again
+when the stage ends. The same at 1.13 for pollen.
+
+PASS: at 1.11, giving her Forager/nectar starts an unattended loop with
+camera-follow and 4x speed visibly firing as she sets off, not before;
+the same at 1.13 for pollen; both stop at stage end.
+
+Owner: `plans/now/challenge-1.md` Slice 14.
+
+Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-T-2,
+UI-S-4b and UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-3, UI-T-4 and UI-T-5;
+`plans/now/season-balance.md` SB-1 and SB-2) each file their own check when
+they ship -- C-19 to C-25, reserved in those plans so the ids cannot
+collide.
 
 ## Decisions waiting on Dave
 

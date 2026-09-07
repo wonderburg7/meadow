@@ -1,33 +1,33 @@
 # The HUD bottom row — Dave's 8 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-T-1 -- keep the command tray wholly on screen | Dependency: none -- UI-T-1 is startable now; the rest follow it in this file's order | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-T-2 -- left-side windows shorten instead of covering the summary panel | Dependency: none -- UI-T-2 is startable now; the rest follow it in this file's order | Verified: 2026-09-08
 
 **Objective.** No persistent HUD panel leaves the screen or covers another,
 and a double right-click stops closing the panels behind a selection that is
 still there.
 
-**Why these four are one file.** Every one of them edits `scripts/hud.gd`, so
+**UI-T-1 shipped 2026-09-08** (`plans/archive/UI-T-1_2026-09-08.md`): the
+command tray now stays wholly on screen at every supported width, capped by
+a `ScrollContainer` rather than a no-op `size` assignment. C-5 and C-7 moved
+back from `checks/blocked.md` to `checks/ready.md`, unchanged, in the same
+pass.
+
+**Why the rest are one file.** Every one of them edits `scripts/hud.gd`, so
 they are a single lane worked top to bottom. The three one-file fixes from the
 same pass are in `plans/now/ui-small-fixes.md` and run in the other lane in
 parallel; they share no file with these.
-
-**What this unblocks.** C-5 and C-7 are in `checks/blocked.md` naming UI-T-1,
-because both need buttons that are currently below the bottom edge of the
-screen. Both move straight back to `checks/ready.md`, unchanged, the moment
-UI-T-1 ships.
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-T-1 | The command tray is always wholly on screen | `hud.gd`, `ui_layout.gd` | yes | medium |
-| UI-T-2 | Left-side windows shorten instead of covering the summary panel | `ui_layout.gd`, `hud.gd`, the three left panels | after UI-T-1 | medium |
+| UI-T-2 | Left-side windows shorten instead of covering the summary panel | `ui_layout.gd`, `hud.gd`, the three left panels | yes | medium |
 | UI-S-4b | A double right-click stops closing the bee panels | `input_selection.gd`, `hud.gd`, `diagnostic_log.gd` | after UI-T-2 | medium |
 | UI-Q-3 | Warning dwell: a short message is no longer cut to 1-2s | `hud.gd` | after UI-S-4b | medium |
 
 **Dependencies, stated rather than implied.** The order in the table is the
-order to work in, and the only reason for it is that all four edit
+order to work in, and the only reason for it is that all three edit
 `scripts/hud.gd`. No slice here depends on another's behaviour.
 
 **Required reading for any slice here.** This file's own section and nothing
@@ -39,126 +39,6 @@ of this file. `plans/now/ui.md`'s "Durable rules" apply to all of them.
 filing checks at once cannot collide: C-18 UI-T-1, C-19 UI-T-2, C-20 UI-T-3,
 C-21 UI-T-4, C-22 UI-T-5, C-23 UI-S-4b, C-24 SB-1, C-25 SB-2. UI-Q-3 re-files
 C-4 rather than taking a new id.
-
-### UI-T-1 — the command tray must stay wholly on screen
-
-**Reasoning level: medium.** One file's geometry behind a clear interface,
-with an acceptance a player can see.
-
-**Symptom (Dave, 8 Sep 2026, C-11 and C-12).** With a bee or a cell
-selected, the command tray runs off the bottom edge of the screen. Its top
-starts too low, so the upper rows are cut, and the `More…` button — which
-sits below the action columns in the tray's own `VBoxContainer` — is off
-screen and unclickable. At the same time the 16px gap between the tray and
-the summary panel disappears and the two overlap. Resizing between widths
-otherwise behaves as UI-S-1 intended.
-
-**Cause, read off the code (`scripts/hud.gd::_resize_command_tray`, ~line
-2502).** The function runs in this order:
-
-```gdscript
-command_tray.reset_size()          # size := combined minimum size at the CURRENT width
-_update_command_tray_width()       # ...then the width is changed underneath it
-var maximum_height := viewport_height - UiLayout.SELECTION_TRAY_GAP * 2.0
-command_tray.size.y = minf(command_tray.size.y, maximum_height)
-```
-
-Two separate faults, and both have to be fixed:
-
-1. **The order is wrong.** `reset_size()` computes the tray's minimum height
-   for whatever width it happens to have at that moment.
-   `_update_command_tray_width()` then narrows it. `command_columns` is an
-   `HFlowContainer`, so a narrower width means *more wrapped rows*, so the
-   real minimum height goes up after the height has already been fixed. The
-   `PanelContainer`'s rectangle is now shorter than its content. Because the
-   tray is anchored `PRESET_BOTTOM_LEFT` with
-   `grow_vertical = GROW_DIRECTION_BEGIN` and a fixed `offset_bottom = -16`,
-   a rectangle that is too short has its *top* edge too low, and the
-   `VBoxContainer` inside it lays its children out from that top downwards
-   and spills past the bottom of the screen. That is precisely Dave's "the
-   start/top of the command panel is too low, so some of it can't be seen"
-   plus "goes off screen off the bottom".
-2. **The height cap does nothing.** `Control.set_size()` clamps the value it
-   is given *up* to `get_combined_minimum_size()`. Assigning a smaller
-   `size.y` therefore cannot make the tray shorter than its content, so the
-   `maximum_height` line has never once limited anything. A cap has to be
-   expressed as a scroll region, not as an assignment to `size`.
-
-**Deliver.**
-
-1. In `scripts/ui_layout.gd`, add one function beside the existing
-   `left_window_*` helpers, so the tray and the left windows take their
-   ceiling from the same place:
-
-   ```gdscript
-   ## The tallest the bottom-row command tray may be: everything between the
-   ## top of the screen and its own bottom margin, less the shared clearance.
-   ## Nothing in the bottom row may exceed this -- see plans/now/ui.md's
-   ## "No persistent panel may extend past a viewport edge" rule.
-   static func command_tray_max_height(viewport_height: float) -> float:
-       return maxf(120.0, viewport_height - BOTTOM_ROW_MARGIN - SELECTION_TRAY_GAP)
-   ```
-
-2. In `scripts/hud.gd::_build_command_tray` (~line 936), put the tray's
-   existing content `VBoxContainer` (the local `column`) inside a
-   `ScrollContainer` instead of adding it to `command_tray` directly:
-
-   - create `command_scroll := ScrollContainer.new()`;
-   - `command_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED`
-     (the tray's width is owned by `_update_command_tray_width`; it must never
-     grow a horizontal bar);
-   - `command_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO`;
-   - `command_tray.add_child(command_scroll)`, then
-     `command_scroll.add_child(column)`;
-   - store it in a new `var command_scroll: ScrollContainer` field beside the
-     existing `var command_tray: PanelContainer` (~line 358).
-
-   Everything that currently adds to `column` keeps doing so unchanged.
-
-3. Rewrite `_resize_command_tray` so width is settled *before* height, and the
-   ceiling is applied to the scroll region rather than to the panel:
-
-   ```gdscript
-   func _resize_command_tray() -> void:
-       if command_tray == null or not command_tray.visible:
-           return
-       # Width first: command_columns is an HFlowContainer, so its wrapped row
-       # count -- and therefore the tray's real minimum height -- depends on
-       # the width it is given. Measuring height at the old width was what put
-       # the tray's top edge too low and spilled `More…` off the bottom edge
-       # (Dave, 8 Sep 2026, C-11/C-12).
-       _update_command_tray_width()
-       command_scroll.custom_minimum_size.y = 0.0
-       command_tray.reset_size()
-       var ceiling: float = UiLayout.command_tray_max_height(
-           get_viewport().get_visible_rect().size.y
-       )
-       # A PanelContainer cannot be made shorter than its content (set_size
-       # clamps up to the combined minimum), so the cap goes on the scroll
-       # region: it is the one child allowed to be smaller than what it holds.
-       var content_height: float = command_scroll.get_combined_minimum_size().y
-       command_scroll.custom_minimum_size.y = minf(content_height, ceiling)
-       command_tray.reset_size()
-   ```
-
-4. Leave `_update_command_tray_width` otherwise as it is. Do **not** remove
-   its `command_tray.offset_left` assignment: that is what centres the tray,
-   and UI-S-1's summary-panel and Gallerin widths are derived from it.
-
-**Acceptance (what Dave does and sees).** At 1920x1080, 1280x720 and
-800x600, select a bee and then a comb cell. In every case the whole command
-tray is on screen: its top edge is visible, `More…` is clickable, and opening
-`More…` either grows the tray upwards or gives it a scrollbar — never pushes
-anything below the bottom of the window. The 16px gap between the tray and
-the summary panel on its left, and between the tray and Dr Gallerin's bubble
-on its right, is visible at every one of those sizes and while dragging
-between them.
-
-**Check to file:** C-18, replacing C-11 and C-12, which this supersedes.
-
-**Unblocks:** C-5 and C-7 move from `checks/blocked.md` back to
-`checks/ready.md` the moment this ships — both were unrunnable only because
-the buttons they need were below the bottom of the screen.
 
 ### UI-T-2 — left-side windows shorten instead of covering the summary panel
 
