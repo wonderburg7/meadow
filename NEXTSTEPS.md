@@ -19,18 +19,7 @@ touch, so no slice below needs a fresh investigation.
 
 ## Next up
 
-1. **[Codex] UI-T-4 -- stop clipping the first hexagon's left point.** Each
-   pre-run menu tile paints its border polygon `HEX_BORDER_OVERLAP` (3px)
-   wider than the tile's own bbox, so tile 0's leftmost vertex sits at x=-3
-   and the wrapping `ScrollContainer` cuts it off. Inset the whole strip by
-   that constant and widen the strip's minimum size to match.
-   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-4 — the pre-run menu clips the first hexagon's left point"
-   - Files: `scripts/main_menu.gd`
-   - Check: file C-21
-   - Proof: `present: scripts/main_menu.gd :: tile.position = Vector2(float(i) * HEX_STEP_X, row_offset if i % 2 == 1 else 0.0)`
-   - Next after: UI-T-3 (cell highlight rings two pixels lower)
-
-2. **[Claude] UI-T-2 -- left-side windows shorten for the summary panel.**
+1. **[Claude] UI-T-2 -- left-side windows shorten for the summary panel.**
    `left_window_max_height` reserves against the viewport's bottom edge and
    knows nothing about the bottom row, so Colony, Foraging and Nursery draw
    over the bee summary panel. Give it the summary panel's top as a third
@@ -42,7 +31,7 @@ touch, so no slice below needs a fresh investigation.
    - Proof: `present: scripts/ui_layout.gd :: return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)`
    - Next after: UI-S-4b (a double right-click stops closing the bee panels)
 
-3. **[Codex] UI-T-3 -- cell highlight rings two pixels lower.** Every ring
+2. **[Codex] UI-T-3 -- cell highlight rings two pixels lower.** Every ring
    built from `EMPTY_SILHOUETTE` sits 2px high on the drawn cup. Add a
    ring-only `RING_Y_NUDGE` inside `_silhouette_point_to_local` so the sprite
    itself is untouched and the two still cannot drift apart.
@@ -52,7 +41,7 @@ touch, so no slice below needs a fresh investigation.
    - Proof: `absent: scripts/hive_cell.gd :: RING_Y_NUDGE`
    - Next after: UI-T-5 (settings sections collapsed on startup)
 
-4. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
+3. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
    built with everything closed, but `open_to_categories()` (the pre-run
    menu's Settings button) expands Accessibility and Appearance and nothing
    ever closes them again, so the expansion follows the player into every
