@@ -17,6 +17,7 @@ const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 
 signal role_requested(role_name: String)
 signal view_toggle_requested()
@@ -2558,19 +2559,14 @@ func _refresh_selection_text() -> void:
 ## from content. See _build_selection_panel and the durable rule in
 ## UI_PLAN.md UI-B.
 func _apply_selection_tray_width() -> void:
-	var width: float = UiLayout.selection_tray_width(get_viewport().get_visible_rect().size.x)
-	selection_panel.custom_minimum_size.x = width
-	# custom_minimum_size is only a floor -- set the anchored panel's actual
-	# width too, so a wider-than-floor child (a soil button, an unwrapped
-	# word) cannot push it past the command tray's 16px gap (Dave, 8 Sep
-	# 2026, C-18).
-	selection_panel.size.x = width
+	var rect := UiLayout.summary_panel_rect(get_viewport().get_visible_rect().size)
+	UiPanelLayout.apply(selection_panel, null, rect)
 	if selection_column != null:
 		# Cap the column to the space inside the panel's own border and
 		# content margins, not the panel's outer width, so its content
 		# cannot raise the column's minimum width above what the panel has
 		# to give it.
-		selection_column.custom_minimum_size.x = maxf(0.0, width - UiLayout.panel_chrome_width())
+		selection_column.custom_minimum_size.x = maxf(0.0, rect.size.x - UiLayout.panel_chrome().x)
 
 ## The command tray is centred at half the viewport until its two side bands
 ## reach their minimum widths. The summary panel and Gallerin bubble derive
@@ -2585,9 +2581,8 @@ func _update_command_tray_width() -> void:
 	# Position first, then width: the tray is anchored bottom-left, so setting
 	# its explicit centred edge here also updates it on every viewport resize.
 	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
-	# custom_minimum_size is only a floor.  Set this anchored control's actual
-	# width as well, then let its HFlow rows grow taller rather than wider.
-	command_tray.custom_minimum_size.x = tray_width
+	# Set this anchored control's actual width, then let its HFlow rows grow
+	# taller rather than wider.
 	command_tray.size.x = tray_width
 	command_columns.custom_minimum_size.x = 0.0
 	if cell_primary_columns != null:
@@ -2609,20 +2604,8 @@ func _resize_command_tray() -> void:
 	_update_command_tray_width()
 	command_scroll.custom_minimum_size.y = 0.0
 	command_tray.reset_size()
-	var ceiling: float = UiLayout.command_tray_max_height(
-		get_viewport().get_visible_rect().size.y
-	)
-	# A PanelContainer cannot be made shorter than its content (set_size
-	# clamps up to the combined minimum), so the cap goes on the scroll
-	# region: it is the one child allowed to be smaller than what it holds.
-	# Measure command_content, not command_scroll: a ScrollContainer omits a
-	# child's minimum on the axis it scrolls, so get_combined_minimum_size()
-	# on command_scroll itself is ~0 however much the tray holds (Dave, 8 Sep
-	# 2026, C-18). ceiling is a budget for the panel's outer rectangle, so
-	# the panel's own chrome comes off before it caps content inside it.
-	var chrome: float = UiLayout.panel_chrome_height()
-	var content_height: float = command_content.get_combined_minimum_size().y
-	command_scroll.custom_minimum_size.y = minf(content_height, maxf(0.0, ceiling - chrome))
+	var rect := UiLayout.command_tray_rect(get_viewport().get_visible_rect().size)
+	UiPanelLayout.apply(command_tray, command_scroll, rect)
 	command_tray.reset_size()
 
 func set_winter_button_visible(value: bool) -> void:

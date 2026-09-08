@@ -193,7 +193,7 @@ the authority on which tier a branch is in.
 | Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
 | What a Challenge stage id means | `docs/challenge-stages.md` |
-| HUD panel placement, sizing or overlap | `plans/now/ui-layout-ownership.md` |
+| HUD panel placement, sizing or overlap (built) | `checks/ready.md` or `plans/archive/LAY-1_2026-09-08.md` |
 | Left-side windows or the settings window (built) | `checks/ready.md` or `plans/archive/UI-WINDOWS_2026-09-08.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |

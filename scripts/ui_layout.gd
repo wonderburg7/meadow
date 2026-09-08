@@ -12,15 +12,19 @@ const UiTheme = preload("res://scripts/ui_theme.gd")
 ## UI_PLAN.md section 14's acceptance criteria.
 const MIN_SUPPORTED_WIDTH := 800.0
 
-## Fixed left margin of the summary panel, and the shared clearance either
-## side of the command tray.
-const SELECTION_TRAY_LEFT_MARGIN := 16.0
-const SELECTION_TRAY_GAP := 16.0
+## One clearance value separates any two of the hierarchy's persistent
+## panels -- command tray, bottom-row side bands, left-side windows -- and
+## any one of them from a screen edge (plans/archive/LAY-1_2026-09-08.md,
+## "The hierarchy, decided"). The three names below keep every existing
+## call site working while leaving one number to change.
+const PANEL_GAP := 16.0
+const SELECTION_TRAY_LEFT_MARGIN := PANEL_GAP
+const SELECTION_TRAY_GAP := PANEL_GAP
 const SELECTION_TRAY_MIN_WIDTH := 160.0
 
 ## Shared bottom margin of the summary panel and the command tray, so the
 ## two sit level with each other.
-const BOTTOM_ROW_MARGIN := 16.0
+const BOTTOM_ROW_MARGIN := PANEL_GAP
 
 ## The command tray takes half the viewport until either side needs its
 ## minimum band. It never becomes narrower than a usable control row.
@@ -43,7 +47,7 @@ static func left_window_max_height(
 	var floor_y: float = viewport_height
 	if bottom_row_top > 0.0:
 		floor_y = bottom_row_top
-	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP - panel_chrome_height())
+	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP - panel_chrome().y)
 
 ## The tallest the bottom-row command tray may be: everything between the
 ## top of the screen and its own bottom margin, less the shared clearance.
@@ -91,17 +95,53 @@ static func gallerin_bubble_width(viewport_width: float) -> float:
 static func gallerin_reserve_width(viewport_width: float) -> float:
 	return gallerin_bubble_width(viewport_width) + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP + GallerinPanel.ICON_MARGIN
 
-## Vertical chrome UiTheme.panel_stylebox() adds around a panel's content:
-## top and bottom content margins plus the top and bottom border widths.
-## A budget for a panel's outer rectangle must subtract this before it is
-## applied to a control living inside that panel. LAY-1 will generalise
-## this and panel_chrome_width() into a single Vector2.
-static func panel_chrome_height() -> float:
+## Chrome UiTheme.panel_stylebox() adds around a panel's content -- content
+## margin plus border width, per axis. A budget for a panel's outer
+## rectangle must subtract this before it is applied to a control living
+## inside that panel; every such conversion goes through this rather than
+## writing the sum out again. See ui_panel_layout.gd::apply().
+static func panel_chrome() -> Vector2:
 	var box := UiTheme.panel_stylebox()
-	return box.content_margin_top + box.content_margin_bottom + box.border_width_top + box.border_width_bottom
+	return Vector2(
+		box.content_margin_left + box.content_margin_right + box.border_width_left + box.border_width_right,
+		box.content_margin_top + box.content_margin_bottom + box.border_width_top + box.border_width_bottom
+	)
 
-## Horizontal counterpart of panel_chrome_height(): left and right content
-## margins plus the left and right border widths.
-static func panel_chrome_width() -> float:
-	var box := UiTheme.panel_stylebox()
-	return box.content_margin_left + box.content_margin_right + box.border_width_left + box.border_width_right
+## --- persistent-rectangle owners ---------------------------------------
+## One function per rectangle in the hierarchy, each returning the panel's
+## outer Rect2 for a given viewport. The width/edge/height helpers above
+## are these functions' internals now -- a panel script calls one of the
+## four below and ui_panel_layout.gd::apply(), never the helpers directly.
+
+## The bottom-centre command tray: centred, sized by its own content up to
+## command_tray_max_height(). Rect.size.y is that ceiling, not the tray's
+## actual height -- the tray shrinks below it to fit shorter content, which
+## only apply()'s caller can measure (see hud.gd::_resize_command_tray).
+static func command_tray_rect(viewport_size: Vector2) -> Rect2:
+	var width := command_tray_width(viewport_size.x)
+	var height := command_tray_max_height(viewport_size.y)
+	return Rect2(command_tray_left_edge(viewport_size.x), viewport_size.y - BOTTOM_ROW_MARGIN - height, width, height)
+
+## The bottom-left summary panel: takes the width the tray leaves. Its
+## height is uncapped -- position.y/size.y are unused (0) placeholders, since
+## the panel auto-grows to its content on every axis apply() does not set
+## explicitly (see ui_panel_layout.gd::apply()'s no-scroll branch).
+static func summary_panel_rect(viewport_size: Vector2) -> Rect2:
+	return Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x), 0.0)
+
+## Dr Gallerin's bubble: the bottom-right counterpart of summary_panel_rect,
+## anchored from the tray's right edge rather than the left margin. Not yet
+## wired to a caller -- gallerin_panel.gd manages its own bottom-right
+## anchoring and keeps calling gallerin_bubble_width() directly.
+static func gallerin_rect(viewport_size: Vector2) -> Rect2:
+	var width := gallerin_bubble_width(viewport_size.x)
+	var right := viewport_size.x - (GallerinPanel.ICON_MARGIN + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP)
+	return Rect2(right - width, 0.0, width, 0.0)
+
+## A left-side window (Colony/Foraging/Nursery): fixed width, x pinned at
+## the shared left margin, top and height following the corner readout and
+## the bottom row per left_window_top()/left_window_max_height().
+static func left_window_rect(viewport_size: Vector2, width: float, corner_bottom: float, bottom_row_top: float = 0.0) -> Rect2:
+	var top := left_window_top(corner_bottom)
+	var height := left_window_max_height(viewport_size.y, top, bottom_row_top)
+	return Rect2(SELECTION_TRAY_LEFT_MARGIN, top, width, height)
