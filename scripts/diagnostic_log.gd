@@ -656,6 +656,21 @@ func log_command_issue(selected_count: int, commandable_count: int, branch: Stri
 		"targets": targets,
 	})
 
+## Which code path hid the bee summary panel or the command tray, and how
+## many bees the HUD thought were selected at the time. C-14's symptom is
+## the panels closing while the selection behind them is provably intact,
+## so "who hid it" is the one fact the command_issue entries cannot give.
+func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void:
+	if _file == null:
+		return
+	_write({
+		"type": "selection_panels_hidden",
+		"game_time": Session.sim_time,
+		"source": source,
+		"shown_count": shown_count,
+		"selected_count": selected_count,
+	})
+
 
 ## Read-side counterpart to the counters this file already keeps for its
 ## own summary line -- lets a scenario's "when"/"assert" conditions ask

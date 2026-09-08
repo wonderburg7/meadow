@@ -19,17 +19,17 @@ touch, so no slice below needs a fresh investigation.
 
 ## Next up
 
-1. **[Claude] UI-S-4b -- a double right-click stops closing the bee panels.**
-   Godot delivers a fast second right-click as a further `pressed` event with
-   `double_click` set, so `_issue_command` runs twice and the second event's
-   side effects read as the panels being cleared. Ignore the duplicate event,
-   and log every place that hides the summary panel or command tray so a
-   repeat of C-14's symptom does not need re-diagnosing.
-   - Plan: `plans/now/ui-bottom-row.md` -- "UI-S-4b — a double right-click closes the bee panels; the command is not lost"
-   - Files: `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/diagnostic_log.gd`
-   - Check: file C-23, replacing C-14
-   - Proof: `absent: scripts/input_selection.gd :: not event.double_click`
-   - Next after: UI-Q-3 (a message may not be cut to a fraction of its dwell)
+1. **[Claude] UI-Q-3 -- a message may not be cut to a fraction of its dwell.**
+   Dave timed the three test warnings at ~6s, ~1-2s and ~12s; the second was
+   cut short because "Run saved." arrived two seconds later and took the
+   banner. Give each message a minimum dwell and a severity: a lower- or
+   equal-severity message arriving inside another's minimum dwell queues
+   behind it, a strictly higher-severity one still pre-empts immediately.
+   - Plan: `plans/now/ui-bottom-row.md` -- "UI-Q-3 — a message may not be cut to a fraction of its dwell"
+   - Files: `scripts/hud.gd`
+   - Check: re-file C-4 against the new dwell rule
+   - Proof: `absent: scripts/hud.gd :: min_dwell`
+   - Next after: none named -- pull the next ready Claude-lane slice from an owning plan when this lands
 
 2. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
    built with everything closed, but `open_to_categories()` (the pre-run
@@ -48,9 +48,6 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **UI-Q-3** (`plans/now/ui-bottom-row.md`) -- the warning dwell rule. C-4 passed and
-  gave the timings that settle the priority design UI-Q-1 deferred: ~6s,
-  ~1-2s, ~12s. Claude lane, after UI-S-4b (same file).
 - **SB-1** (`plans/now/season-balance.md`) -- peak season production is a
   spike, twenty times the out-of-season floor, and discontinuous at the
   window edge. One curve and one new `GameConfig` value, with the headless

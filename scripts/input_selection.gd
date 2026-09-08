@@ -58,7 +58,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				main.panning = event.pressed
 				main.pan_anchor = event.position
 			MOUSE_BUTTON_RIGHT:
-				if event.pressed:
+				# Godot delivers a fast second right-click as a further pressed
+				# event with double_click set, so the same order was issued twice.
+				# That duplicate is the only difference between a double right-click
+				# and two spaced ones, which is exactly what C-14's symptom tracks
+				# (Dave, 8 Sep 2026).
+				if event.pressed and not event.double_click:
 					_issue_command(main.get_global_mouse_position())
 
 	elif event is InputEventMouseMotion:
