@@ -9,16 +9,12 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**UI-T-6 shipped 2026-09-08** (`plans/archive/UI-T-6_2026-09-08.md`): it was
-the last open slice in its owning plan, now retired to
-`plans/archive/ui-bottom-row_2026-09-08.md`. C-18 and C-7 (blocked on the
-command tray) both move back to `checks/ready.md`. The pattern behind the
-five panel-placement failures that produced this batch is diagnosed in
-`plans/now/ui-layout-ownership.md`, together with the panel hierarchy Dave
-asked for.
+**UI-W-1 shipped 2026-09-08** (`plans/archive/UI-W-1_2026-09-08.md`): the
+16px gap between a left-side window and the summary panel is now real.
+UI-W-2 takes its place in the queue.
 
 Every item below is specified down to the function and the line, because each
-one was diagnosed against the source during that pass.
+one was diagnosed against the source during the 8 Sep pass.
 
 ## Next up
 
@@ -41,16 +37,17 @@ one was diagnosed against the source during that pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] UI-W-1 -- left-side windows leave a true 16px gap.**
-   `left_window_max_height` returns an outer-rectangle budget that each panel
-   applies to a control inside a PanelContainer carrying 20px of border and
-   content margin, so every window finishes 20px taller than its budget and
-   eats the gap. Subtract the chrome inside the function.
-   - Plan: `plans/now/ui-windows.md` -- "UI-W-1 — left-side windows leave a true 16px gap"
-   - Files: `scripts/ui_layout.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`
-   - Check: re-file C-19
-   - Proof: `present: scripts/ui_layout.gd :: floor_y - top - SELECTION_TRAY_GAP`
-   - Next after: UI-W-2 (the nursery donut's key follows the chosen typeface)
+3. **[Claude] UI-W-2 -- the nursery donut's key follows the chosen typeface.**
+   `nursery_panel.gd::_draw_ring` draws the donut's key and its colour-blind
+   tag with `ThemeDB.fallback_font` at literal sizes 11 and 10, and
+   `colony_panel.gd:321`'s over-time plot axis labels do the same, so all
+   three ignore `Session.ui_typeface` and `Session.text_scale`. Take font and
+   size from the panel's own theme instead.
+   - Plan: `plans/now/ui-windows.md` -- "UI-W-2 — the nursery donut's key follows the chosen typeface and text scale"
+   - Files: `scripts/nursery_panel.gd`, `scripts/colony_panel.gd`
+   - Check: file C-26
+   - Proof: `present: scripts/nursery_panel.gd :: ThemeDB.fallback_font`
+   - Next after: UI-W-3 (left-side windows open with every section collapsed)
 
 ## Ready, not yet in the queue
 
@@ -58,13 +55,9 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **UI-W-2** (`plans/now/ui-windows.md`) -- the nursery donut's key and the
-  colony plot's axis labels are drawn with `ThemeDB.fallback_font` at literal
-  sizes, so they ignore the chosen typeface and text scale. Claude lane,
-  after UI-W-1 (shares `nursery_panel.gd` and `colony_panel.gd`).
 - **UI-W-3** (`plans/now/ui-windows.md`) -- Colony's and Foraging's sections
   open expanded; they should start collapsed and reset on `Session.run_reset`.
-  Claude lane, after UI-W-2 (same files).
+  Claude lane, after UI-W-2 (shares `colony_panel.gd` and `foraging_panel.gd`).
 - **UI-W-4** (`plans/now/ui-windows.md`) -- the pre-run Settings button opens
   Accessibility and Appearance pre-expanded; one call site in
   `main_menu.gd`. Either lane; it shares no file with anything queued.
