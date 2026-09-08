@@ -19,12 +19,17 @@ one was diagnosed against the source during the 8 Sep pass.
 
 ## Next up
 
-1. **[Codex] SB-1 -- peak-season production is a rise, not a spike.**
-   - Plan: `plans/now/season-balance.md` -- "SB-1 — peak-season production is a rise, not a spike"
-   - Files: see the named plan heading
-   - Check: file C-24
-   - Proof: see the named plan heading
-   - Next after: SB-2 (out-of-season species have a standing presence)
+1. **[Codex] CR-1 -- make the queue reject unclaimable work.**
+   Close the queue-schema hole before the lane reaches another malformed item:
+   validate the exact proof and file-list shapes, cover them with regression
+   fixtures, and add a read-only `slice.ps1 doctor` preflight that uses the
+   same candidate validation as `start`.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-1 — make the queue reject unclaimable work"
+   - Files: `tools/check_docs.py`, `tools/slice.ps1`,
+     `tests/test_source_checks.py`, `plans/now/codex-reliability.md`
+   - Check: deterministic tooling tests and `tools/verify.ps1`
+   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceDoctor`
+   - Next after: CR-2 (make the standard runtime self-discovering)
 
 2. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
@@ -62,14 +67,13 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **SB-2** (`plans/now/season-balance.md`) -- out-of-season species seed at
-  0.15 of their usual weight, which reads as a standing presence rather than
-  a rarity. One value. Codex lane, after SB-1 (same file).
-
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
+- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 must first prove
+  the bounded baseline simulation succeeds. SB-1 then returns with exact
+  `Files:` and `Proof:` values that pass `slice.ps1 doctor`; SB-2 follows it.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough, and Dave's run rather than a code slice. It needs C-7, ready
   to run in `checks/ready.md` now that UI-T-6 shipped and unblocked it.
