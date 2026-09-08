@@ -1,7 +1,7 @@
 # Persistent panel rectangles — the anchor bug and its guard rail
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: LAY-3, the left-side windows' gap and growing sections | Dependency: none — LAY-3 is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: LAY-4, the nursery donut's key clears the scrollbar | Dependency: none — LAY-4 is startable today | Verified: 2026-09-09
 
 **Objective.** A persistent HUD panel stays inside the viewport with a 16px
 gap from its neighbours, on every pass, at every supported size — and a
@@ -16,7 +16,11 @@ has landed** (`plans/archive/LAY-2_2026-09-09.md`): `ui_panel_layout.gd::apply()
 now writes a persistent panel's rectangle through offsets only, C-18 is
 re-filed in `checks/ready.md` awaiting Dave's pass, and C-7/C-5 are unblocked
 back into `checks/ready.md` alongside it. LAY-1 had refactored the call sites
-around the root cause without removing it; LAY-2 removes it.
+around the root cause without removing it; LAY-2 removes it. **LAY-3 has
+landed** (`plans/archive/LAY-3_2026-09-09.md`): `left_window_max_height()` no
+longer subtracts the chrome twice, and Colony/Foraging re-apply their window
+rectangle when a section expands or collapses. C-19 is re-filed in
+`checks/ready.md`.
 
 ## Why this kept coming back
 
@@ -52,11 +56,9 @@ reason for the repeat, and LAY-2 removes it rather than re-tuning a number.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| LAY-3 | The left-side windows' gap is a true 16px, and they grow when a section is expanded | `ui_layout.gd`, `colony_panel.gd`, `foraging_panel.gd`, `nursery_panel.gd` | yes | low |
 | LAY-4 | The nursery donut's key clears the scrollbar at every text scale | `nursery_panel.gd`, `ui_layout.gd` | yes | low |
 
-Both build on the `apply()` signature LAY-2 landed, and are independent of
-each other.
+LAY-4 builds on the `apply()` signature LAY-2 landed.
 
 **The guard rail is LAY-5, in `plans/now/layout-regression.md`.** It asserts
 the rule LAY-2 establishes and owns tooling files rather than UI ones, so it
@@ -73,39 +75,7 @@ gap between the tray and the summary window is correct. Every slice here is
 about the vertical axis and the scrollbar gutter.
 
 LAY-2's specification archived to `plans/archive/LAY-2_2026-09-09.md`.
-
-## LAY-3 — the left-side windows' gap, and growing when a section opens
-
-**Minimum reasoning level: low.**
-
-**Change 1 — stop subtracting the chrome twice.** In
-`scripts/ui_layout.gd::left_window_max_height()`, delete `- panel_chrome().y`
-from the returned expression. It returns an *outer* rectangle height, and
-`ui_panel_layout.gd::apply()` already subtracts the chrome when it converts
-that rectangle into the scroll's budget. Subtracting it here as well is the
-extra 20px on top of the 16px gap that Dave measured on 8 and 9 Sep. Update
-the comment to say the return value is an outer height.
-
-**Change 2 — a window regrows when a section is expanded.** In
-`scripts/colony_panel.gd`, the section header's `pressed` handler (around line
-193) sets `section_open[title]` and `body.visible` and stops. Add
-`call_deferred("_apply_left_window_rect")` as its last statement, so the
-window's height follows its new content on the next layout pass. Make the same
-addition in `scripts/foraging_panel.gd`'s equivalent handler. `nursery_panel.gd`
-has no collapsible sections, so it needs no change here.
-
-Deferring matters: the body's minimum size is not final on the frame its
-visibility changes, and `apply()` reads `get_combined_minimum_size()`.
-
-**Acceptance.** With a bee selected, open Colony at 1280x720 and again at
-800x600. The gap between the bottom of the window and the top of the summary
-panel is the same as the gap between the summary panel and the left screen
-edge. Expanding a section makes the window grow taller, up to the point where
-its bottom would reach that gap, after which it scrolls instead. Collapsing
-the section makes it shrink again. The same in Foraging. Re-files C-19.
-
-**Proof the defect is present:** `present: scripts/ui_layout.gd ::
-SELECTION_TRAY_GAP - panel_chrome().y`.
+LAY-3's specification archived to `plans/archive/LAY-3_2026-09-09.md`.
 
 ## LAY-4 — the nursery donut's key clears the scrollbar
 
