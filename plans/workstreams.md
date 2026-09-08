@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-W-3` (`claude/UI-W-3`) | Claude | left-side windows open with every section collapsed. | Claude | in progress | none | `plans/now/ui-windows.md` "UI-W-3 — left-side windows open with every section collapsed" |
