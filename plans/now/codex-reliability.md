@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Codex | Next: CR-1 -- close the queue-schema hole and make the current queue honest | Dependency: none for CR-1; permission-profile changes may require the machine administrator | Verified: 2026-09-08
+Status: active | Owner: Dave / Codex | Next: CR-2 -- make the standard runtime self-discovering | Dependency: CR-1 implemented; permission-profile changes may require the machine administrator | Verified: 2026-09-08
 
 **Objective.** A fresh `Implement the next slice` task either completes the
 assigned slice, or stops once with a precise external blocker. It must not
@@ -114,7 +114,9 @@ Small, immediate tooling/documentation slice.
    when a textual `Proof:` label exists. Add regression fixtures for missing,
    unbackticked, malformed, false and valid proofs.
 2. Reject placeholder `Files:` values. Every queue item must enumerate the
-   exact repository-relative files used by the overlap checker.
+   exact repository-relative files used by the overlap checker. An item with
+   an already-registered worktree is grandfathered only until that worktree
+   closes, so adopting this rule cannot strand an in-progress lane.
 3. Add a read-only `slice.ps1 doctor -Lane Codex|Claude` mode that parses and
    validates the same candidate object as `start` without modifying Git.
 4. Remove SB-1 from the runnable queue until both its exact proof/files and

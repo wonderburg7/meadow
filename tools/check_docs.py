@@ -120,7 +120,11 @@ QUEUE_SIZE_MIN = 3
 QUEUE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")
-PROOF_LINE = re.compile(r"^\s*-\s*Proof:\s*`([^`]*)`", re.MULTILINE)
+PROOF_LABEL = re.compile(r"^\s*-\s*Proof:\s*(.*?)\s*$", re.MULTILINE)
+PROOF_LINE = re.compile(r"^\s*-\s*Proof:\s*`([^`]*)`\s*$", re.MULTILINE)
+FILES_BLOCK = re.compile(
+    r"^\s*-\s*Files:\s*([\s\S]*?)(?=^\s*-\s[A-Z]|\Z)", re.MULTILINE
+)
 NOT_READY_PHRASES = (
     "blocked on",
     "needs dave",
@@ -135,14 +139,116 @@ PATH_TOKEN = re.compile(r"`([^`]+)`")
 
 def _item_files(body: str) -> set[str]:
     """Paths named on an item's Files: line, so two lanes can be proved disjoint."""
-    match = re.search(r"^\s*-\s*Files:\s*([\s\S]*?)(?=^\s*-\s[A-Z]|\Z)", body, re.MULTILINE)
+    match = FILES_BLOCK.search(body)
     if not match:
         return set()
     return {
         token.strip()
         for token in PATH_TOKEN.findall(match.group(1))
-        if "/" in token
+        if token.strip()
     }
+
+
+def _active_slice_ids() -> set[str]:
+    return {
+        raw_path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+        for raw_path, _ in ledger_worktree_rows()
+    }
+
+
+def _is_repository_relative_file(raw: str) -> bool:
+    path = Path(raw)
+    return (
+        bool(raw)
+        and not path.is_absolute()
+        and not re.match(r"^[A-Za-z]:", raw)
+        and "://" not in raw
+        and ".." not in path.parts
+        and bool(path.suffix)
+    )
+
+
+def validate_queue_files(body: str, index: int, errors: list[str]) -> None:
+    """Reject prose placeholders while allowing exact paths for files created by a slice."""
+    match = FILES_BLOCK.search(body)
+    if not match:
+        return  # check_next_steps reports the missing field
+
+    raw = match.group(1).strip()
+    tokens = [token.strip() for token in PATH_TOKEN.findall(raw)]
+    residue = PATH_TOKEN.sub("", raw)
+    residue = re.sub(r"[\s,]", "", residue)
+    invalid = [
+        token
+        for token in tokens
+        if not _is_repository_relative_file(token)
+    ]
+    if not tokens or residue or invalid:
+        errors.append(
+            f"NEXTSTEPS.md item {index}: Files: must contain only backticked "
+            "repository-relative paths separated by commas; placeholder prose is not allowed"
+        )
+
+
+def validate_queue_proof(body: str, index: int, root: Path, errors: list[str]) -> None:
+    """Validate one queue proof's exact shape and truth against root."""
+    label_match = PROOF_LABEL.search(body)
+    proof_match = PROOF_LINE.search(body)
+    if not proof_match:
+        detail = "missing" if not label_match else "must be backticked"
+        errors.append(
+            f"NEXTSTEPS.md item {index}: Proof: {detail}; use "
+            "`present|absent: <path> :: <substring>`"
+        )
+        return
+
+    raw = proof_match.group(1).strip()
+    mode, sep, rest = raw.partition(":")
+    mode = mode.strip()
+    if not sep or mode not in ("present", "absent"):
+        errors.append(
+            f"NEXTSTEPS.md item {index}: Proof: must start with 'present:' or 'absent:', got `{raw}`"
+        )
+        return
+
+    rel_path, sep, needle = rest.partition("::")
+    rel_path = rel_path.strip()
+    needle = needle.strip()
+    if not sep or not needle or not _is_repository_relative_file(rel_path):
+        errors.append(
+            f"NEXTSTEPS.md item {index}: Proof: must be `{mode}: <path> :: <substring>`, got `{raw}`"
+        )
+        return
+
+    target = root / rel_path
+    if not target.is_file():
+        errors.append(f"NEXTSTEPS.md item {index}: Proof: names a file that does not exist: {rel_path}")
+        return
+
+    content = target.read_text(encoding="utf-8")
+    found = needle in content
+    holds = found if mode == "present" else not found
+    if not holds:
+        errors.append(
+            f"NEXTSTEPS.md item {index}: proof no longer holds -- this may already be built. "
+            f"Open {rel_path} before requeuing it."
+        )
+
+
+def check_queue_files(errors: list[str]) -> None:
+    """Every unclaimed item must expose the exact file set used by overlap checks."""
+    path = ROOT / "NEXTSTEPS.md"
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    if not match:
+        return
+    chunks = re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]
+    active_slice_ids = _active_slice_ids()
+    for index, chunk in enumerate(chunks, start=1):
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if item_match and item_match.group(1) in active_slice_ids:
+            continue
+        validate_queue_files(chunk, index, errors)
 
 
 def check_next_steps(errors: list[str], warnings: list[str]) -> None:
@@ -172,7 +278,13 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
             continue
         lane_order.append((lane_match.group(1), chunk))
 
-        missing = [field for field in REQUIRED_ITEM_FIELDS if f"- {field}" not in chunk]
+        # Proof has a stricter dedicated validator below, including the wholly
+        # missing case, so do not emit a second generic error for it here.
+        missing = [
+            field
+            for field in REQUIRED_ITEM_FIELDS
+            if field != "Proof:" and f"- {field}" not in chunk
+        ]
         if missing:
             errors.append(
                 f"NEXTSTEPS.md item {index}: missing {', '.join(field.rstrip(':') for field in missing)}"
@@ -272,50 +384,13 @@ def check_queue_proofs(errors: list[str]) -> None:
         return
     section = match.group(1)
     chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
-    active_slice_ids = {
-        raw_path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
-        for raw_path, _ in ledger_worktree_rows()
-    }
+    active_slice_ids = _active_slice_ids()
 
     for index, chunk in enumerate(chunks, start=1):
         item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
         if item_match and item_match.group(1) in active_slice_ids:
             continue
-        proof_match = PROOF_LINE.search(chunk)
-        if not proof_match:
-            continue  # already reported as a missing field by check_next_steps
-
-        raw = proof_match.group(1).strip()
-        mode, sep, rest = raw.partition(":")
-        mode = mode.strip()
-        if not sep or mode not in ("present", "absent"):
-            errors.append(
-                f"NEXTSTEPS.md item {index}: Proof: must start with 'present:' or 'absent:', got `{raw}`"
-            )
-            continue
-
-        rel_path, sep, needle = rest.partition("::")
-        rel_path = rel_path.strip()
-        needle = needle.strip()
-        if not sep or not needle:
-            errors.append(
-                f"NEXTSTEPS.md item {index}: Proof: must be `{mode}: <path> :: <substring>`, got `{raw}`"
-            )
-            continue
-
-        target = ROOT / rel_path
-        if not target.is_file():
-            errors.append(f"NEXTSTEPS.md item {index}: Proof: names a file that does not exist: {rel_path}")
-            continue
-
-        content = target.read_text(encoding="utf-8")
-        found = needle in content
-        holds = found if mode == "present" else not found
-        if not holds:
-            errors.append(
-                f"NEXTSTEPS.md item {index}: proof no longer holds -- this may already be built. "
-                f"Open {rel_path} before requeuing it."
-            )
+        validate_queue_proof(chunk, index, ROOT, errors)
 
 
 def check_markdown_links(errors: list[str]) -> None:
@@ -585,6 +660,7 @@ def main() -> int:
     check_context_layout(errors)
     check_live_plans_hold_only_open_work(errors, warnings)
     check_next_steps(errors, warnings)
+    check_queue_files(errors)
     check_queue_proofs(errors)
     check_queue_successors(errors)
     check_markdown_links(errors)
