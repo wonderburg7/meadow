@@ -323,7 +323,7 @@ func _on_settings_pressed() -> void:
 	if panels.is_empty():
 		push_warning("No settings window in the scene to open")
 		return
-	panels[0].open_to_categories(["Accessibility", "Appearance"])
+	panels[0].open_to_categories([])
 
 # --- the honeycomb ------------------------------------------------------
 
