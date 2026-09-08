@@ -9,10 +9,10 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**UI-W-2 shipped 2026-09-08** (`plans/archive/UI-W-2_2026-09-08.md`): the
-nursery donut's key and the colony over-time plot's axis labels now take
-font and size from their panel's own theme. UI-W-3 takes its place in the
-queue.
+**UI-W-3 shipped 2026-09-08** (`plans/archive/UI-W-3_2026-09-08.md`): Colony
+and Foraging's sections now start collapsed, and Colony's remembered
+`section_open` state resets on `Session.run_reset`. UI-W-4 takes its place
+in the queue.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during the 8 Sep pass.
@@ -38,16 +38,16 @@ one was diagnosed against the source during the 8 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] UI-W-3 -- left-side windows open with every section collapsed.**
-   `colony_panel.gd`'s five `_section(column, ..., true)` calls and
-   `foraging_panel.gd`'s three all start expanded; Dave asked for every
-   section to start collapsed, and for `colony_panel.gd`'s remembered
-   `section_open` state to reset on `Session.run_reset`.
-   - Plan: `plans/now/ui-windows.md` -- "UI-W-3 — left-side windows open with every section collapsed"
-   - Files: `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`
+3. **[Claude] UI-W-4 -- the pre-run Settings button opens nothing pre-expanded.**
+   `main_menu.gd::_on_settings_pressed` opens the settings window with
+   Accessibility and Appearance pre-expanded; Dave asked for the pre-run
+   Settings button to open with every collection and topic section
+   collapsed, matching the in-run window C-22 already confirmed.
+   - Plan: `plans/now/ui-windows.md` -- "UI-W-4 — the pre-run Settings button opens nothing pre-expanded"
+   - Files: `scripts/main_menu.gd`
    - Check: file C-27
-   - Proof: `present: scripts/colony_panel.gd :: _section(column, "Needing attention", true)`
-   - Next after: UI-W-4 (the pre-run Settings button opens nothing pre-expanded)
+   - Proof: `present: scripts/main_menu.gd :: panels[0].open_to_categories(["Accessibility", "Appearance"])`
+   - Next after: none -- `plans/now/ui-windows.md` is complete once this lands
 
 ## Ready, not yet in the queue
 
@@ -55,9 +55,6 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **UI-W-4** (`plans/now/ui-windows.md`) -- the pre-run Settings button opens
-  Accessibility and Appearance pre-expanded; one call site in
-  `main_menu.gd`. Either lane; it shares no file with anything queued.
 - **SB-2** (`plans/now/season-balance.md`) -- out-of-season species seed at
   0.15 of their usual weight, which reads as a standing presence rather than
   a rarity. One value. Codex lane, after SB-1 (same file).

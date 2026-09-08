@@ -1,7 +1,7 @@
 # The left-side windows and the settings window — Dave's 8 Sep 2026 second pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-W-3 -- left-side windows open with every section collapsed | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-W-4 -- the pre-run Settings button opens nothing pre-expanded | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
 
 **Objective.** Colony, Foraging and Nursery sit clear of the bottom row at
 every viewport height, draw all their text in the chosen typeface and scale,
@@ -19,16 +19,16 @@ bands, then these windows, each separated by 16px. UI-W-1 was this file's
 half of that repair, shipped 2026-09-08 (`plans/archive/UI-W-1_2026-09-08.md`);
 UI-T-6 was the bottom row's half (shipped 2026-09-08,
 `plans/archive/UI-T-6_2026-09-08.md`), and LAY-1 consolidates both. UI-W-2
-shipped 2026-09-08 (`plans/archive/UI-W-2_2026-09-08.md`).
+shipped 2026-09-08 (`plans/archive/UI-W-2_2026-09-08.md`). UI-W-3 shipped
+2026-09-08 (`plans/archive/UI-W-3_2026-09-08.md`).
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-W-3 | Left-side windows open with every section collapsed | `colony_panel.gd`, `foraging_panel.gd` | yes | low |
 | UI-W-4 | The pre-run Settings button opens nothing pre-expanded | `main_menu.gd` | yes | low |
 
-**Dependencies, stated rather than implied.** None between them.
+**Dependencies, stated rather than implied.** None.
 
 **Required reading for any slice here.** This file's own section.
 `plans/now/ui.md`'s "Durable rules" apply to both.
@@ -37,35 +37,6 @@ shipped 2026-09-08 (`plans/archive/UI-W-2_2026-09-08.md`).
 UI-W-3 and UI-W-4 together, since both are "sections start collapsed" and
 Dave would run them in one sitting. C-28 belongs to LAY-1 in
 `plans/now/ui-layout-ownership.md`.
-
-## UI-W-3 — left-side windows open with every section collapsed
-
-**Reasoning level: low.** Five boolean literals and one call.
-
-**Evidence (Dave, 8 Sep 2026, C-19).** "Ensure left-hand panel sections start
-with all sections collapsed at the start of the game."
-
-**Deliver.**
-
-- `colony_panel.gd`: the five `_section(column, ..., true)` calls at lines
-  ~130, ~139, ~143, ~147 become `false`. ("Over time" at ~156 is already
-  `false`.)
-- `foraging_panel.gd`: the three `_section(column, ..., true)` calls at lines
-  ~64, ~71, ~81 become `false`.
-- `colony_panel.gd` remembers expansion for the session in
-  `section_open`, which is the behaviour to keep *within* a run. Reset it at
-  the start of a run the same way `debug_panel.gd` does: connect
-  `Session.run_reset` to a small `func _collapse_all()` that clears
-  `section_open`, sets every body's `visible` to `false` and rewrites each
-  header's arrow glyph. `foraging_panel.gd` has no remembered state, so it
-  needs only the literal change.
-- `nursery_panel.gd` uses `_section_body`, which is not collapsible at all.
-  Leave it alone -- its own comment says everything there is short enough
-  that collapsing would save no space, and Dave did not ask for it.
-
-**Do not change** the section headings, their order or their contents.
-
-**Check to file:** C-27, shared with UI-W-4 -- see below.
 
 ## UI-W-4 — the pre-run Settings button opens nothing pre-expanded
 

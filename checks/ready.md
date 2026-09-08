@@ -157,7 +157,10 @@ PASS: every collection and topic section in the settings window, and every
 section in Colony and Foraging, is collapsed on both run starts and at the
 pre-run menu. Expanding one still works and still holds while that run lasts.
 
-Owner: `plans/now/ui-windows.md` UI-W-3.
+Owner: `plans/now/ui-windows.md` UI-W-3 and UI-W-4. UI-W-3 landed
+2026-09-08 (Colony and Foraging collapse on open and reset with
+`Session.run_reset`); the settings-window half of this PASS condition
+still needs UI-W-4.
 
 ### C-4 -- warning banner messages get a guaranteed minimum dwell
 
