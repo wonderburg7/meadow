@@ -23,26 +23,14 @@ one was diagnosed against the source during that pass.
 
 ## Next up
 
-1. **[Claude] UI-Q-3 -- a message may not be cut to a fraction of its dwell.**
-   Give each message a minimum dwell and a severity: a lower- or
-   equal-severity message arriving inside another's minimum dwell queues
-   behind it, a strictly higher-severity one still pre-empts immediately.
-   **Its branch `claude/UI-Q-3` is already written and clean; it needs
-   merging, not implementing** -- see `plans/workstreams.md`.
-   - Plan: `plans/now/ui-bottom-row.md` -- "UI-Q-3 — a message may not be cut to a fraction of its dwell"
-   - Files: `scripts/hud.gd`
-   - Check: re-file C-4 against the new dwell rule
-   - Proof: `absent: scripts/hud.gd :: min_dwell`
-   - Next after: UI-T-6 (the command tray fills its rectangle again)
-
-2. **[Codex] SB-1 -- peak-season production is a rise, not a spike.**
+1. **[Codex] SB-1 -- peak-season production is a rise, not a spike.**
    - Plan: `plans/now/season-balance.md` -- "SB-1 — peak-season production is a rise, not a spike"
    - Files: see the named plan heading
    - Check: file C-24
    - Proof: see the named plan heading
    - Next after: SB-2 (out-of-season species have a standing presence)
 
-3. **[Claude] UI-T-6 -- the command tray fills its rectangle again.**
+2. **[Claude] UI-T-6 -- the command tray fills its rectangle again.**
    `_resize_command_tray` measures `command_scroll.get_combined_minimum_size().y`,
    but a ScrollContainer reports ~0 on the axis it scrolls, so the cap is set
    to zero and the tray renders as a bar a few pixels high. Measure the
@@ -54,7 +42,7 @@ one was diagnosed against the source during that pass.
    - Proof: `absent: scripts/ui_layout.gd :: panel_chrome_height`
    - Next after: UI-W-1 (left-side windows leave a true 16px gap)
 
-4. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
+3. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Count presses instead.
@@ -66,7 +54,7 @@ one was diagnosed against the source during that pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-5. **[Claude] UI-W-1 -- left-side windows leave a true 16px gap.**
+4. **[Claude] UI-W-1 -- left-side windows leave a true 16px gap.**
    `left_window_max_height` returns an outer-rectangle budget that each panel
    applies to a control inside a PanelContainer carrying 20px of border and
    content margin, so every window finishes 20px taller than its budget and

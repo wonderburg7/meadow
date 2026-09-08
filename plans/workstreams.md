@@ -59,14 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-Q-3` (`claude/UI-Q-3`) | Claude | a message may not be cut to a fraction of its dwell. | Claude | **finished, awaiting merge** | none | `plans/now/ui-bottom-row.md` "UI-Q-3 — a message may not be cut to a fraction of its dwell" |
-
-**UI-Q-3 is written and its worktree is clean** (commit `111985a`, 8 Sep
-2026): the dwell/severity rule is in `hud.gd` and C-4 is filed on the branch.
-It needs `tools/slice.ps1 finish` run from inside the worktree, not
-implementing. Left open rather than merged by the 8 Sep documentation pass,
-because that pass could not tell whether the session that wrote it was still
-running, and `finish` deletes the worktree out from under it. It also rewrote
-`checks/ready.md` wholesale, so **expect a conflict in that file on merge:
-take master's version and re-add the branch's `### C-4` entry, which master
-does not have.**
