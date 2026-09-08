@@ -66,6 +66,18 @@ section collapsed (UI-T-5).
 
 ## Ready to run
 
+### C-20 -- cell-art highlight rings align with their cups
+
+With Cell art on, inspect a cell's base outline, designation ring, selection
+ring and nursery glow/halo. Then turn Cell art off and confirm the flat-hex
+outlines still read as before.
+
+PASS: Every cell-art ring is centred on its drawn cup, two pixels lower than
+the previous high position, and turning Cell art off leaves the flat-hex path
+unchanged.
+
+Owner: `plans/now/ui-small-fixes.md`
+
 ### C-21 -- pre-run menu's first hexagon is not clipped
 
 Open the pre-run menu at the usual viewport. In both Challenges and Scenarios,
