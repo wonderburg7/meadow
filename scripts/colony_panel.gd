@@ -155,6 +155,7 @@ func _ready() -> void:
 
 	_build_plot(_section(column, "Over time", false))
 	get_viewport().size_changed.connect(_apply_left_window_rect)
+	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
 
 ## The five states a plain Godot Button actually looks up ("selected" and
 ## "locked" from UiTheme's seven apply to custom-drawn controls like the
@@ -371,8 +372,14 @@ func _apply_left_window_rect() -> void:
 	var top := UiLayout.left_window_top(main.hud.corner_bottom())
 	panel.offset_top = top
 	scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
-		get_viewport().get_visible_rect().size.y, top
+		get_viewport().get_visible_rect().size.y, top, main.hud.selection_panel_top()
 	)
+
+## The bottom row (summary panel) changed height while this window may
+## already be open -- reflow it rather than waiting for the next open().
+func _on_bottom_row_changed() -> void:
+	if panel.visible:
+		_apply_left_window_rect()
 
 func toggle() -> void:
 	if panel.visible:

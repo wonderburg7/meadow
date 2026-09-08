@@ -33,8 +33,16 @@ const GALLERIN_BUBBLE_MIN_WIDTH := 200.0
 static func left_window_top(corner_bottom: float) -> float:
 	return corner_bottom + SELECTION_TRAY_GAP
 
-static func left_window_max_height(viewport_height: float, top: float) -> float:
-	return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)
+## `bottom_row_top` is hud.selection_panel_top(): 0 when nothing is
+## selected, otherwise the y the summary panel starts at. A left-side
+## window shortens to clear it rather than covering it (Dave, 8 Sep 2026).
+static func left_window_max_height(
+	viewport_height: float, top: float, bottom_row_top: float = 0.0
+) -> float:
+	var floor_y: float = viewport_height
+	if bottom_row_top > 0.0:
+		floor_y = bottom_row_top
+	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP)
 
 ## The tallest the bottom-row command tray may be: everything between the
 ## top of the screen and its own bottom margin, less the shared clearance.

@@ -111,6 +111,11 @@ signal follow_bee_toggled(bee: Node2D, following: bool)
 ## main.gd routes this to debug_panel.gd, which does.
 signal queen_lay_any_cell_toggled(value: bool)
 
+## The bottom row's occupied height changed (selection_panel_top()).
+## Colony, Foraging and Nursery listen so an already-open window reflows
+## instead of only sizing itself once in open() (UI-T-2, Dave 8 Sep 2026).
+signal bottom_row_changed()
+
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
 ##
@@ -1537,6 +1542,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	command_tray.visible = true
 	_refresh_cell_popup()
 	call_deferred("_resize_command_tray")
+	bottom_row_changed.emit()
 
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
@@ -1949,6 +1955,14 @@ func _refresh_corner() -> void:
 func corner_bottom() -> float:
 	return corner_column.position.y + corner_column.size.y
 
+## The y the bottom row starts at, for the left-side windows to stop
+## above. Zero when nothing is selected, so a window gets the full height
+## back the moment the summary panel closes. Mirrors corner_bottom().
+func selection_panel_top() -> float:
+	if selection_panel == null or not selection_panel.visible:
+		return 0.0
+	return selection_panel.position.y
+
 ## Called when the player stars or unstars something in either window:
 ## the corner has to be redrawn even though no number changed. Also the
 ## one place that keeps Session.perf_enabled in step with the "fps"
@@ -1983,6 +1997,7 @@ func update_selection(bees: Array) -> void:
 	active_summary_kind = ""
 	soil_summary_row.visible = false
 	selection_panel.visible = not bees.is_empty()
+	bottom_row_changed.emit()
 	command_tray.visible = not bees.is_empty() and not _selection_has_command_lock(bees)
 	# Same thing for the tray itself -- a bee selection always wins over
 	# a cell selection's content, see show_cell_popup.
@@ -2399,6 +2414,7 @@ func _refresh_selection_text() -> void:
 	if shown_bees.is_empty():
 		selection_panel.visible = false
 		command_tray.visible = false
+		bottom_row_changed.emit()
 		return
 	if shown_bees.size() == 1:
 		var b = shown_bees[0]

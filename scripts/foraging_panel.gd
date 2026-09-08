@@ -85,6 +85,7 @@ func _ready() -> void:
 	recruitment_label.custom_minimum_size = Vector2(310, 0)
 	recruitment.add_child(recruitment_label)
 	get_viewport().size_changed.connect(_apply_left_window_rect)
+	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
 
 ## Same collapsible-section pattern as colony_panel.gd -- open by default
 ## here since this panel is short enough not to need remembering state.
@@ -113,8 +114,14 @@ func _apply_left_window_rect() -> void:
 	var top := UiLayout.left_window_top(main.hud.corner_bottom())
 	panel.offset_top = top
 	scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
-		get_viewport().get_visible_rect().size.y, top
+		get_viewport().get_visible_rect().size.y, top, main.hud.selection_panel_top()
 	)
+
+## The bottom row (summary panel) changed height while this window may
+## already be open -- reflow it rather than waiting for the next open().
+func _on_bottom_row_changed() -> void:
+	if panel.visible:
+		_apply_left_window_rect()
 
 func toggle() -> void:
 	if panel.visible:
