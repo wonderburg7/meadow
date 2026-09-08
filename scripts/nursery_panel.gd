@@ -17,6 +17,7 @@ extends CanvasLayer
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal closed()
@@ -278,11 +279,12 @@ func toggle() -> void:
 		open()
 
 func _apply_left_window_rect() -> void:
-	var top := UiLayout.left_window_top(main.hud.corner_bottom())
-	panel.offset_top = top
-	scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
-		get_viewport().get_visible_rect().size.y, top, main.hud.selection_panel_top()
+	var rect := UiLayout.left_window_rect(
+		get_viewport().get_visible_rect().size, panel.custom_minimum_size.x,
+		main.hud.corner_bottom(), main.hud.selection_panel_top()
 	)
+	panel.offset_top = rect.position.y
+	UiPanelLayout.apply(panel, scroll_container, rect)
 
 ## The bottom row (summary panel) changed height while this window may
 ## already be open -- reflow it rather than waiting for the next open().

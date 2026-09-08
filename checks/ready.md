@@ -68,7 +68,7 @@ attempts for.
   back to `checks/blocked.md` naming UI-T-6.
 
 **The pattern behind C-11, C-12, C-13, C-18 and C-19** was diagnosed in the
-same pass and written up in `plans/now/ui-layout-ownership.md`: four Godot
+same pass and written up in `plans/archive/LAY-1_2026-09-08.md`: four Godot
 behaviours nothing in the code stated, and no single owner of a panel's
 rectangle. That file also holds the panel hierarchy Dave asked for -- command
 tray, then the bottom row's side bands, then the left-side windows, 16px
@@ -173,6 +173,24 @@ at least six seconds before "Run saved." takes the banner; none of the three
 is skipped.
 
 Owner: `plans/archive/UI-Q-3_2026-09-08.md`.
+
+### C-28 -- the panel refactor changed no panel's position or size
+
+At 1920x1080, 1280x720 and 800x600, with a bee selected and then a cell
+selected, and with each left-side window (Colony, Foraging, Nursery) open in
+turn: check the command tray, the summary panel, and whichever left-side
+window is open.
+
+PASS: every persistent panel is wholly on screen with a visible 16px gap
+from its neighbours and from the screen edge. The command tray still hugs
+its buttons rather than always filling its ceiling height. One known,
+deliberate change from before LAY-1: a left-side window now also hugs its
+content instead of always filling the space between the corner readout and
+the bottom row, so it may look shorter than it used to when a section is
+collapsed -- it must still scroll, not spill past either edge, once
+content exceeds the available band.
+
+Owner: `plans/archive/LAY-1_2026-09-08.md`.
 
 ## Decisions waiting on Dave
 

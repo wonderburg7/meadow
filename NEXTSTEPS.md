@@ -12,7 +12,12 @@ to work out what to do -- the script already decided.
 **UI-W-4 shipped 2026-09-08** (`plans/archive/UI-W-4_2026-09-08.md`): the
 pre-run Settings button opens with every section collapsed, completing
 `plans/archive/UI-WINDOWS_2026-09-08.md` -- all four UI-W slices have now
-landed. LAY-1 takes its place in the queue.
+landed. LAY-1 shipped 2026-09-08 (`plans/archive/LAY-1_2026-09-08.md`) and
+completes the plan it came from, now fully archived. No open
+plan has a Claude-lane slice startable today without Dave's input first (see
+"Not in the queue, and why"), so on Dave's call the Claude lane is left
+empty rather than filled with an invented item -- `tools/check_docs.py` will
+report the queue short and the Claude lane empty until one is ready.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during the 8 Sep pass.
@@ -43,23 +48,8 @@ one was diagnosed against the source during the 8 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] LAY-1 -- one owner for every persistent HUD rectangle.**
-   `ui_layout.gd` has separate `panel_chrome_height()` and
-   `panel_chrome_width()` helpers rather than one `panel_chrome()` a caller
-   reads once; five callers (`hud.gd` twice, and each of `colony_panel.gd`,
-   `foraging_panel.gd`, `nursery_panel.gd`) still compute their own outer
-   rectangle instead of going through one function per persistent panel.
-   This consolidates the arithmetic UI-T-6 and UI-W-1 already got right and
-   adds the source check that stops `custom_minimum_size` being used as a
-   ceiling again.
-   - Plan: `plans/now/ui-layout-ownership.md` -- "LAY-1 -- ui_layout.gd returns outer rectangles, and one helper applies them"
-   - Files: see the named plan heading (`scripts/ui_layout.gd`, a new
-     ui_panel_layout.gd, `scripts/hud.gd`, `scripts/colony_panel.gd`,
-     `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`,
-     `tests/source_checks.py`)
-   - Check: file C-28
-   - Proof: `absent: scripts/ui_layout.gd :: static func panel_chrome() -> Vector2`
-   - Next after: none -- `plans/now/ui-layout-ownership.md` is complete once this lands
+**The Claude lane is empty.** Every Claude-lane candidate below wants a
+decision or a live look from Dave first -- see "Not in the queue, and why".
 
 ## Ready, not yet in the queue
 

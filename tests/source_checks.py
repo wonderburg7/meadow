@@ -279,6 +279,58 @@ def check_offset_rect_literals(name, lines, problems):
                 % (name, i, code_line.strip()[:80])
             )
 
+# LAY-1: custom_minimum_size only ever raises a control's minimum -- it
+# cannot cap one (plans/archive/LAY-1_2026-09-08.md's Cause 1). A caller that
+# computes a budget and assigns it there anyway is how the summary panel
+# pushed through the command tray's 16px gap (C-18): the "cap" silently did
+# nothing, because the panel's own content demanded more. These are the
+# persistent panels and their scroll containers from the hierarchy plan --
+# ui_panel_layout.gd::apply() is the one place allowed to size them; it
+# puts a computed budget on the scroll container, the one control allowed
+# to be smaller than its contents.
+PERSISTENT_PANEL_VARS = {
+    "hud.gd": ("selection_panel", "command_tray", "command_scroll"),
+    "colony_panel.gd": ("panel", "scroll_container"),
+    "foraging_panel.gd": ("panel", "scroll_container"),
+    "nursery_panel.gd": ("panel", "scroll_container"),
+}
+
+# A hand-authored literal (a fixed design-time floor, like the donut's
+# `Vector2(300, 150)`) is not Cause 1's mistake and is left alone -- only a
+# computed value (a variable, a call, an expression) assigned onto one of
+# these controls is the pattern that silently fails to cap anything.
+CUSTOM_MIN_SIZE_ASSIGN_RE = re.compile(
+    r"^\s*(\w+)\.custom_minimum_size(?:\.(?:x|y))?\s*=(?!=)\s*(.+?)\s*$"
+)
+LITERAL_VECTOR2_RE = re.compile(r"^Vector2\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)$")
+LITERAL_NUMBER_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+
+def _is_literal_size_value(rhs):
+    rhs = rhs.strip()
+    return bool(LITERAL_VECTOR2_RE.match(rhs) or LITERAL_NUMBER_RE.match(rhs))
+
+
+def check_panel_custom_min_size(name, code, problems):
+    var_names = PERSISTENT_PANEL_VARS.get(name)
+    if not var_names:
+        return
+    for i, line in enumerate(code, 1):
+        m = CUSTOM_MIN_SIZE_ASSIGN_RE.match(line)
+        if not m or m.group(1) not in var_names:
+            continue
+        if _is_literal_size_value(m.group(2)):
+            continue
+        problems.append(
+            "%s:%d  custom_minimum_size assigned from a computed value on a "
+            "persistent panel/scroll (Cause 1: custom_minimum_size only "
+            "ever raises a minimum, so a computed budget assigned here "
+            "cannot cap anything) -- route it through "
+            "ui_panel_layout.gd::apply() instead: %s"
+            % (name, i, line.strip()[:80])
+        )
+
+
 # Challenge 1's manual-forage stages hand the player every move, collection
 # and deposit the queen makes. Six separate slices (9a, 10a, 10b, 10f, 10g
 # and 11) were each the same bug: one more autonomous transition in
@@ -2100,6 +2152,7 @@ def main():
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
         check_offset_rect_literals(name, lines, problems)
+        check_panel_custom_min_size(name, code, problems)
         check_autonomous_transitions(name, lines, problems)
         check_stage_effects_order(name, lines, problems)
         funcs, _members = collect_names(code, source)

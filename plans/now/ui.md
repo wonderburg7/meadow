@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the rest of the 8 Sep group lives in ui-windows.md, ui-layout-ownership.md and the archive | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the rest of the 8 Sep group has all shipped | Verified: 2026-09-08
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -28,9 +28,9 @@ sharing a file:
 - `plans/archive/UI-WINDOWS_2026-09-08.md` — UI-W-1 to UI-W-4, from Dave's
   second 8 Sep pass, all shipped 2026-09-08. The left-side windows and the
   settings window.
-- `plans/now/ui-layout-ownership.md` — why five separate panel-placement
-  checks have failed since 3 Sep, the panel hierarchy Dave asked for on
-  8 Sep, and LAY-1, which makes one owner of it.
+- `plans/archive/LAY-1_2026-09-08.md` — why five separate panel-placement
+  checks failed since 3 Sep, the panel hierarchy Dave asked for on 8 Sep,
+  and LAY-1, which shipped one owner of it, 2026-09-08.
 - `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4
   and UI-T-5. One script each, independent in the other lane.
 
@@ -78,8 +78,10 @@ against the tile's real hexagon at its real position, and every reported
   Added 8 Sep 2026: this is the missing 20px that ate C-19's 16px gap.
 - **Panels resolve in one order** -- command tray, then the bottom row's side
   bands, then the left-side windows, then transient popups -- separated by
-  16px and nothing else. `plans/now/ui-layout-ownership.md` holds the
-  hierarchy and the slice that enforces it.
+  16px and nothing else. `plans/archive/LAY-1_2026-09-08.md` holds the
+  hierarchy and the slice that enforced it, now shipped: `ui_layout.gd`
+  returns each rectangle and `ui_panel_layout.gd::apply()` is the one place
+  that sizes a persistent panel from it.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks
