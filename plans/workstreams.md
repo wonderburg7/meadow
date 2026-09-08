@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-W-4` (`claude/UI-W-4`) | Claude | the pre-run Settings button opens nothing pre-expanded. | Claude | in progress | none | `plans/now/ui-windows.md` "UI-W-4 — the pre-run Settings button opens nothing pre-expanded" |

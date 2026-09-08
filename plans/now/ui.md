@@ -25,8 +25,9 @@ sharing a file:
 
 - `plans/archive/ui-bottom-row_2026-09-08.md` — UI-Q-3 and UI-T-6, both
   shipped 2026-09-08; C-7 is unblocked and back in `checks/ready.md`.
-- `plans/now/ui-windows.md` — UI-W-1 to UI-W-4, from Dave's second 8 Sep
-  pass. The left-side windows and the settings window.
+- `plans/archive/UI-WINDOWS_2026-09-08.md` — UI-W-1 to UI-W-4, from Dave's
+  second 8 Sep pass, all shipped 2026-09-08. The left-side windows and the
+  settings window.
 - `plans/now/ui-layout-ownership.md` — why five separate panel-placement
   checks have failed since 3 Sep, the panel hierarchy Dave asked for on
   8 Sep, and LAY-1, which makes one owner of it.

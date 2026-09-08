@@ -108,11 +108,11 @@ are all already 16 and all become aliases of it.
 
 ## What to change so this cannot recur
 
-The two live bugs are fixed first, in the plans that own them: UI-T-6
-(shipped 2026-09-08, `plans/archive/UI-T-6_2026-09-08.md`) and
-`plans/now/ui-windows.md` UI-W-1; they are urgent and must not wait behind a
-refactor. LAY-1 then consolidates the arithmetic they will both have got
-right, and adds the guard.
+The two live bugs were fixed first, in the plans that owned them: UI-T-6
+(shipped 2026-09-08, `plans/archive/UI-T-6_2026-09-08.md`) and UI-W-1
+(shipped 2026-09-08, `plans/archive/UI-WINDOWS_2026-09-08.md`); they were
+urgent and could not wait behind a refactor. LAY-1 now consolidates the
+arithmetic both got right, and adds the guard.
 
 ### LAY-1 -- ui_layout.gd returns outer rectangles, and one helper applies them
 

@@ -9,10 +9,10 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**UI-W-3 shipped 2026-09-08** (`plans/archive/UI-W-3_2026-09-08.md`): Colony
-and Foraging's sections now start collapsed, and Colony's remembered
-`section_open` state resets on `Session.run_reset`. UI-W-4 takes its place
-in the queue.
+**UI-W-4 shipped 2026-09-08** (`plans/archive/UI-W-4_2026-09-08.md`): the
+pre-run Settings button opens with every section collapsed, completing
+`plans/archive/UI-WINDOWS_2026-09-08.md` -- all four UI-W slices have now
+landed. LAY-1 takes its place in the queue.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during the 8 Sep pass.
@@ -38,16 +38,23 @@ one was diagnosed against the source during the 8 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] UI-W-4 -- the pre-run Settings button opens nothing pre-expanded.**
-   `main_menu.gd::_on_settings_pressed` opens the settings window with
-   Accessibility and Appearance pre-expanded; Dave asked for the pre-run
-   Settings button to open with every collection and topic section
-   collapsed, matching the in-run window C-22 already confirmed.
-   - Plan: `plans/now/ui-windows.md` -- "UI-W-4 — the pre-run Settings button opens nothing pre-expanded"
-   - Files: `scripts/main_menu.gd`
-   - Check: file C-27
-   - Proof: `present: scripts/main_menu.gd :: panels[0].open_to_categories(["Accessibility", "Appearance"])`
-   - Next after: none -- `plans/now/ui-windows.md` is complete once this lands
+3. **[Claude] LAY-1 -- one owner for every persistent HUD rectangle.**
+   `ui_layout.gd` has separate `panel_chrome_height()` and
+   `panel_chrome_width()` helpers rather than one `panel_chrome()` a caller
+   reads once; five callers (`hud.gd` twice, and each of `colony_panel.gd`,
+   `foraging_panel.gd`, `nursery_panel.gd`) still compute their own outer
+   rectangle instead of going through one function per persistent panel.
+   This consolidates the arithmetic UI-T-6 and UI-W-1 already got right and
+   adds the source check that stops `custom_minimum_size` being used as a
+   ceiling again.
+   - Plan: `plans/now/ui-layout-ownership.md` -- "LAY-1 -- ui_layout.gd returns outer rectangles, and one helper applies them"
+   - Files: see the named plan heading (`scripts/ui_layout.gd`, a new
+     ui_panel_layout.gd, `scripts/hud.gd`, `scripts/colony_panel.gd`,
+     `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`,
+     `tests/source_checks.py`)
+   - Check: file C-28
+   - Proof: `absent: scripts/ui_layout.gd :: static func panel_chrome() -> Vector2`
+   - Next after: none -- `plans/now/ui-layout-ownership.md` is complete once this lands
 
 ## Ready, not yet in the queue
 
@@ -58,11 +65,6 @@ this order.
 - **SB-2** (`plans/now/season-balance.md`) -- out-of-season species seed at
   0.15 of their usual weight, which reads as a standing presence rather than
   a rarity. One value. Codex lane, after SB-1 (same file).
-- **LAY-1** (`plans/now/ui-layout-ownership.md`) -- one owner for every
-  persistent HUD rectangle, plus the source check that stops
-  `custom_minimum_size` being used as a ceiling again. Deliberately last: it
-  consolidates the arithmetic UI-T-6 got right and UI-W-1 will get right, and
-  running it first would consolidate two known-wrong sums.
 
 ## Not in the queue, and why
 

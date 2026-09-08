@@ -53,10 +53,10 @@ attempts for.
   `plans/archive/UI-T-6_2026-09-08.md`) owns both halves.
 - **C-19 passed its main clause and returned three defects** -- no real 16px
   gap, the nursery donut's key ignoring the chosen font, and the left-side
-  sections opening expanded. These are UI-W-1, UI-W-2 and UI-W-3 in the new
-  `plans/now/ui-windows.md`. The dynamic-resize clause Dave asked about is
-  already built and already passing: UI-T-2's `bottom_row_changed` signal is
-  what makes the windows reflow while open.
+  sections opening expanded. These are UI-W-1, UI-W-2 and UI-W-3, from the
+  now-complete `plans/archive/UI-WINDOWS_2026-09-08.md`. The dynamic-resize
+  clause Dave asked about is already built and already passing: UI-T-2's
+  `bottom_row_changed` signal is what makes the windows reflow while open.
 - **C-22 passed** and Dave asked for the same behaviour at the pre-run menu:
   UI-W-4.
 - **C-5 ran and failed usefully.** Four separate observations, all explained
@@ -116,7 +116,7 @@ PASS: the visible gap between the bottom of the open window and the top of
 the summary panel is the same as the gap between the summary panel and the
 left screen edge.
 
-Owner: `plans/now/ui-windows.md` UI-W-1.
+Owner: `plans/archive/UI-WINDOWS_2026-09-08.md` UI-W-1.
 
 ### C-5 -- Challenge 2's rescue and recovery lines
 
@@ -145,7 +145,7 @@ PASS: the key's text changes typeface and size with the settings, matching
 the headings around it, and stays inside the window without clipping or
 overlapping the ring at the largest scale.
 
-Owner: `plans/now/ui-windows.md` UI-W-2.
+Owner: `plans/archive/UI-WINDOWS_2026-09-08.md` UI-W-2.
 
 ### C-27 -- sections start collapsed everywhere
 
@@ -157,10 +157,10 @@ PASS: every collection and topic section in the settings window, and every
 section in Colony and Foraging, is collapsed on both run starts and at the
 pre-run menu. Expanding one still works and still holds while that run lasts.
 
-Owner: `plans/now/ui-windows.md` UI-W-3 and UI-W-4. UI-W-3 landed
-2026-09-08 (Colony and Foraging collapse on open and reset with
-`Session.run_reset`); the settings-window half of this PASS condition
-still needs UI-W-4.
+Owner: `plans/archive/UI-WINDOWS_2026-09-08.md` UI-W-3 and UI-W-4. UI-W-3
+landed 2026-09-08 (Colony and Foraging collapse on open and reset with
+`Session.run_reset`); UI-W-4 landed 2026-09-08 (the pre-run Settings
+button opens with every section collapsed). Ready for Dave's pass.
 
 ### C-4 -- warning banner messages get a guaranteed minimum dwell
 

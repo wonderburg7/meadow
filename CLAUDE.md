@@ -194,7 +194,7 @@ the authority on which tier a branch is in.
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
 | What a Challenge stage id means | `docs/challenge-stages.md` |
 | HUD panel placement, sizing or overlap | `plans/now/ui-layout-ownership.md` |
-| Left-side windows or the settings window | `plans/now/ui-windows.md` |
+| Left-side windows or the settings window (built) | `checks/ready.md` or `plans/archive/UI-WINDOWS_2026-09-08.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |
 | Predators (built) | `checks/ready.md` or `plans/archive/CRAB_SPIDER_PLAN.md` |
