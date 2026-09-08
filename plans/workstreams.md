@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/LAY-1` (`claude/LAY-1`) | Claude | one owner for every persistent HUD rectangle. | Claude | in progress | none | `plans/now/ui-layout-ownership.md` "LAY-1 -- ui_layout.gd returns outer rectangles, and one helper applies them" |
