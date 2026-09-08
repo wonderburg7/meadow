@@ -10,3 +10,7 @@ _backups/
 # Python bytecode caches from tools/
 __pycache__/
 *.pyc
+
+# Slice worktrees (tools/slice.ps1). They are git worktrees, not content:
+# `git add -A` from the primary checkout would otherwise embed one.
+.worktrees/

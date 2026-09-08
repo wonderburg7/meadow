@@ -31,8 +31,10 @@ already decided; re-deriving it is the expensive path.
 
 `NEXTSTEPS.md` holds only work that can be started immediately. This is
 enforced, not aspirational -- `tools/check_docs.py` fails if the queue holds
-fewer than two or more than five items, if an item lacks a lane tag or its
-`Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines, if either lane is empty, if the two lanes'
+fewer than three or more than five items, if an item lacks a lane tag or its
+`Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines, if an item's
+`Next after:` names no successor (`none -- <plan> is complete` is the one
+accepted alternative), if either lane is empty, if the two lanes'
 leading items name a file in common, or if blocked-work language appears in
 the queue at all.
 
@@ -190,6 +192,9 @@ the authority on which tier a branch is in.
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
+| What a Challenge stage id means | `docs/challenge-stages.md` |
+| HUD panel placement, sizing or overlap | `plans/now/ui-layout-ownership.md` |
+| Left-side windows or the settings window | `plans/now/ui-windows.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |
 | Predators (built) | `checks/ready.md` or `plans/archive/CRAB_SPIDER_PLAN.md` |
@@ -248,6 +253,20 @@ holds the evidence behind them):
 - **File a check only if failing it would change something.** Say in the
   entry what a failure would cause. "Nothing, we would assume it works"
   means do not file it.
+
+## Naming a Challenge stage
+
+Dave, 8 Sep 2026: "when talking about stages in particular challenges, say
+what the stage is, or point me to where the stage details are."
+
+A bare stage id is unreadable on its own. Whenever one appears in a check, a
+plan, a commit message or a session report, either say what the stage asks
+the player to do in the same sentence -- "past 2.1, where the nectar stores
+fall and you bring them back" -- or link `docs/challenge-stages.md`, which
+lists every id with its goal, its internal goal check and what the player
+does. That file is generated from `scripts/challenge_stages.gd` by
+`python tools/stage_reference.py`, and `tools/verify.ps1` re-runs it with
+`--check`, so a stage edit that does not regenerate it fails verification.
 
 ## Working style
 
