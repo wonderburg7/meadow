@@ -9,14 +9,13 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave ran the UI-T group's checks on 8 Sep 2026.** Four passed and are
-archived; two failed and are re-filed; C-5 finally ran and gave Challenge 2
-the evidence it had been waiting three attempts for. The command tray is the
-urgent one: UI-T-1 stopped it running off the bottom edge and collapsed it to
-a bar with no buttons in it, which blocks C-7 and the back half of every
-Challenge run. The pattern behind five separate panel-placement failures is
-diagnosed in `plans/now/ui-layout-ownership.md`, together with the panel
-hierarchy Dave asked for.
+**UI-T-6 shipped 2026-09-08** (`plans/archive/UI-T-6_2026-09-08.md`): it was
+`plans/now/ui-bottom-row.md`'s last open slice, so that plan retires to
+`plans/archive/` at this slice's closeout. C-18 and C-7 (blocked on the
+command tray) both move back to `checks/ready.md`. The pattern behind the
+five panel-placement failures that produced this batch is diagnosed in
+`plans/now/ui-layout-ownership.md`, together with the panel hierarchy Dave
+asked for.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during that pass.
@@ -30,19 +29,7 @@ one was diagnosed against the source during that pass.
    - Proof: see the named plan heading
    - Next after: SB-2 (out-of-season species have a standing presence)
 
-2. **[Claude] UI-T-6 -- the command tray fills its rectangle again.**
-   `_resize_command_tray` measures `command_scroll.get_combined_minimum_size().y`,
-   but a ScrollContainer reports ~0 on the axis it scrolls, so the cap is set
-   to zero and the tray renders as a bar a few pixels high. Measure the
-   scrolled content instead, subtract the panel's own chrome from the
-   ceiling, and stop the summary panel growing through its 16px gap.
-   - Plan: `plans/now/ui-bottom-row.md` -- "UI-T-6 — the command tray fills its rectangle again, and the bottom row keeps its gaps"
-   - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`
-   - Check: re-file C-18
-   - Proof: `absent: scripts/ui_layout.gd :: panel_chrome_height`
-   - Next after: UI-W-1 (left-side windows leave a true 16px gap)
-
-3. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
+2. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Count presses instead.
@@ -54,7 +41,7 @@ one was diagnosed against the source during that pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-4. **[Claude] UI-W-1 -- left-side windows leave a true 16px gap.**
+3. **[Claude] UI-W-1 -- left-side windows leave a true 16px gap.**
    `left_window_max_height` returns an outer-rectangle budget that each panel
    applies to a control inside a PanelContainer carrying 20px of border and
    content margin, so every window finishes 20px taller than its budget and
@@ -87,7 +74,7 @@ this order.
 - **LAY-1** (`plans/now/ui-layout-ownership.md`) -- one owner for every
   persistent HUD rectangle, plus the source check that stops
   `custom_minimum_size` being used as a ceiling again. Deliberately last: it
-  consolidates the arithmetic UI-T-6 and UI-W-1 will have got right, and
+  consolidates the arithmetic UI-T-6 got right and UI-W-1 will get right, and
   running it first would consolidate two known-wrong sums.
 
 ## Not in the queue, and why
@@ -95,8 +82,8 @@ this order.
 Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, and Dave's run rather than a code slice. It needs C-7, which
-  went back to `checks/blocked.md` on 8 Sep 2026 naming UI-T-6.
+  playthrough, and Dave's run rather than a code slice. It needs C-7, ready
+  to run in `checks/ready.md` now that UI-T-6 shipped and unblocked it.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
