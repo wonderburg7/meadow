@@ -49,8 +49,8 @@ attempts for.
 
 - **C-18 failed.** UI-T-1 stopped the command tray running off the bottom
   edge and then collapsed it to a bar a few pixels high with no buttons in
-  it, and the summary panel still overlaps it. `plans/now/ui-bottom-row.md`
-  UI-T-6 owns both halves.
+  it, and the summary panel still overlaps it. UI-T-6 (shipped 2026-09-08,
+  `plans/archive/UI-T-6_2026-09-08.md`) owns both halves.
 - **C-19 passed its main clause and returned three defects** -- no real 16px
   gap, the nursery donut's key ignoring the chosen font, and the left-side
   sections opening expanded. These are UI-W-1, UI-W-2 and UI-W-3 in the new
@@ -89,7 +89,23 @@ between the tray and the summary panel on its left and Dr Gallerin's bubble
 on its right, at every one of those sizes, while dragging between them, and
 with the longest bee name selected.
 
-Owner: `plans/now/ui-bottom-row.md` UI-T-6.
+Owner: `plans/archive/UI-T-6_2026-09-08.md`.
+
+### C-7 -- 1.11/1.13's automatic foraging: camera-follow and 4x speed fire as she sets off
+
+At stage 1.11 -- "automate nectar gathering", where the player gives the
+queen the Forager role with nectar focus (`docs/challenge-stages.md`) --
+do exactly that: she should not pause on the first flower she finishes. She works one
+flower, flies home, deposits, and goes back out, repeating until the nectar
+cell is full. The camera starts following her and the game speed jumps to 4x
+the moment she sets off (not when the role is assigned), and both switch off
+again when the stage ends. The same at 1.13, "automate pollen gathering", for pollen.
+
+PASS: at 1.11, giving her Forager/nectar starts an unattended loop with
+camera-follow and 4x speed visibly firing as she sets off, not before; the
+same at 1.13 for pollen; both stop at stage end.
+
+Owner: `plans/now/challenge-1.md` Slice 14.
 
 ### C-19 -- left-side windows leave a real gap above the summary panel
 
@@ -155,7 +171,7 @@ replaces it; the escape message is not cut to 1-2s -- it stays on screen for
 at least six seconds before "Run saved." takes the banner; none of the three
 is skipped.
 
-Owner: `plans/now/ui-bottom-row.md` UI-Q-3.
+Owner: `plans/archive/UI-Q-3_2026-09-08.md`.
 
 ## Decisions waiting on Dave
 

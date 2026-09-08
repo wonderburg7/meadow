@@ -6,6 +6,7 @@ extends RefCounted
 ## Usage: const UiLayout = preload("res://scripts/ui_layout.gd")
 
 const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 ## Floor width this project's UI is expected to still render at, per
 ## UI_PLAN.md section 14's acceptance criteria.
@@ -89,3 +90,18 @@ static func gallerin_bubble_width(viewport_width: float) -> float:
 ## Dr Gallerin's complete bottom-right footprint, for callers that need it.
 static func gallerin_reserve_width(viewport_width: float) -> float:
 	return gallerin_bubble_width(viewport_width) + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP + GallerinPanel.ICON_MARGIN
+
+## Vertical chrome UiTheme.panel_stylebox() adds around a panel's content:
+## top and bottom content margins plus the top and bottom border widths.
+## A budget for a panel's outer rectangle must subtract this before it is
+## applied to a control living inside that panel. LAY-1 will generalise
+## this and panel_chrome_width() into a single Vector2.
+static func panel_chrome_height() -> float:
+	var box := UiTheme.panel_stylebox()
+	return box.content_margin_top + box.content_margin_bottom + box.border_width_top + box.border_width_bottom
+
+## Horizontal counterpart of panel_chrome_height(): left and right content
+## margins plus the left and right border widths.
+static func panel_chrome_width() -> float:
+	var box := UiTheme.panel_stylebox()
+	return box.content_margin_left + box.content_margin_right + box.border_width_left + box.border_width_right

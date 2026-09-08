@@ -365,6 +365,10 @@ var command_tray: PanelContainer
 ## without shrinking the PanelContainer below its content (which
 ## Control.set_size cannot do -- see _resize_command_tray).
 var command_scroll: ScrollContainer
+## command_scroll's one child. A ScrollContainer reports ~0 for
+## get_combined_minimum_size() on the axis it scrolls, so
+## _resize_command_tray measures this instead -- see _build_command_tray.
+var command_content: VBoxContainer
 var command_columns: Container
 var job_column_wrapper: VBoxContainer
 var job_column: VBoxContainer
@@ -892,12 +896,18 @@ func _build_selection_panel() -> void:
 	soil_mark_btn = Button.new()
 	_style_button(soil_mark_btn)
 	soil_mark_btn.text = "Mark for digging"
+	# Wrap and clip rather than raise the column's minimum width past the
+	# space _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
+	soil_mark_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	soil_mark_btn.clip_text = true
 	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
 	soil_summary_row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
 
 	soil_clear_btn = Button.new()
 	_style_button(soil_clear_btn)
 	soil_clear_btn.text = "Clear marks"
+	soil_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	soil_clear_btn.clip_text = true
 	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
 	soil_summary_row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
 
@@ -916,6 +926,10 @@ func _build_selection_cog() -> Control:
 	# Keep the cog aligned with the first identity line when that label wraps
 	# to show role and age below it (UI-P-8).
 	menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	# A fixed width so this single glyph cannot raise the selection column's
+	# minimum width above the space _apply_selection_tray_width gives it at
+	# a large text scale (Dave, 8 Sep 2026, C-18).
+	menu.custom_minimum_size.x = 24.0
 	menu.tooltip_text = "Choose which fields this panel shows for the selected bee."
 	menu.focus_mode = Control.FOCUS_NONE
 	var popup := menu.get_popup()
@@ -979,6 +993,7 @@ func _build_command_tray() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
 	command_scroll.add_child(column)
+	command_content = column
 
 	# Three ranked columns rather than one flowing row, per Dave's 22 Aug
 	# call -- each one wraps onto more rows internally rather than the
@@ -2545,8 +2560,17 @@ func _refresh_selection_text() -> void:
 func _apply_selection_tray_width() -> void:
 	var width: float = UiLayout.selection_tray_width(get_viewport().get_visible_rect().size.x)
 	selection_panel.custom_minimum_size.x = width
+	# custom_minimum_size is only a floor -- set the anchored panel's actual
+	# width too, so a wider-than-floor child (a soil button, an unwrapped
+	# word) cannot push it past the command tray's 16px gap (Dave, 8 Sep
+	# 2026, C-18).
+	selection_panel.size.x = width
 	if selection_column != null:
-		selection_column.custom_minimum_size.x = width
+		# Cap the column to the space inside the panel's own border and
+		# content margins, not the panel's outer width, so its content
+		# cannot raise the column's minimum width above what the panel has
+		# to give it.
+		selection_column.custom_minimum_size.x = maxf(0.0, width - UiLayout.panel_chrome_width())
 
 ## The command tray is centred at half the viewport until its two side bands
 ## reach their minimum widths. The summary panel and Gallerin bubble derive
@@ -2591,8 +2615,14 @@ func _resize_command_tray() -> void:
 	# A PanelContainer cannot be made shorter than its content (set_size
 	# clamps up to the combined minimum), so the cap goes on the scroll
 	# region: it is the one child allowed to be smaller than what it holds.
-	var content_height: float = command_scroll.get_combined_minimum_size().y
-	command_scroll.custom_minimum_size.y = minf(content_height, ceiling)
+	# Measure command_content, not command_scroll: a ScrollContainer omits a
+	# child's minimum on the axis it scrolls, so get_combined_minimum_size()
+	# on command_scroll itself is ~0 however much the tray holds (Dave, 8 Sep
+	# 2026, C-18). ceiling is a budget for the panel's outer rectangle, so
+	# the panel's own chrome comes off before it caps content inside it.
+	var chrome: float = UiLayout.panel_chrome_height()
+	var content_height: float = command_content.get_combined_minimum_size().y
+	command_scroll.custom_minimum_size.y = minf(content_height, maxf(0.0, ceiling - chrome))
 	command_tray.reset_size()
 
 func set_winter_button_visible(value: bool) -> void:

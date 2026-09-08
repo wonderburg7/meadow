@@ -16,8 +16,8 @@ four are UI-W-1 to UI-W-4.
 **The panel hierarchy these obey** is in
 `plans/now/ui-layout-ownership.md`: command tray, then the bottom row's side
 bands, then these windows, each separated by 16px. UI-W-1 is this file's half
-of that repair; `plans/now/ui-bottom-row.md` UI-T-6 is the bottom row's half,
-and LAY-1 consolidates both afterwards.
+of that repair; UI-T-6 was the bottom row's half (shipped 2026-09-08,
+`plans/archive/UI-T-6_2026-09-08.md`), and LAY-1 consolidates both.
 
 ## Open slices at a glance
 
@@ -74,12 +74,11 @@ time and an overlap sometimes -- it depends on where the rounding falls.
 
 **Deliver.**
 
-1. In `scripts/ui_layout.gd`, add
-   `static func panel_chrome_height() -> float`, returning
+1. `UiLayout.panel_chrome_height() -> float` already exists, landed by UI-T-6
+   (shipped 2026-09-08, `plans/archive/UI-T-6_2026-09-08.md`): it returns
    `content_margin_top + content_margin_bottom` of `UiTheme.panel_stylebox()`
-   plus its top and bottom border widths. Read them off the stylebox; do not
-   write `20.0` as a literal. **If `plans/now/ui-bottom-row.md` UI-T-6 has
-   already landed this function, use it as it stands and add nothing.**
+   plus its top and bottom border widths. Use it as it stands and add
+   nothing.
 2. Subtract it inside `left_window_max_height`, so the function keeps
    returning an outer-rectangle budget and the panels keep applying it
    unchanged:

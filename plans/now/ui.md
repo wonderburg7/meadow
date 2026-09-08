@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the 8 Sep group lives in ui-bottom-row.md and ui-small-fixes.md | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the rest of the 8 Sep group lives in ui-windows.md, ui-layout-ownership.md and the archive | Verified: 2026-09-08
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -23,9 +23,9 @@ and produced the UI-T group below. Everything still open is on this page.
 produced seven slices, split by lane so the two can run in parallel without
 sharing a file:
 
-- `plans/now/ui-bottom-row.md` — UI-Q-3 and UI-T-6. Both edit
-  `scripts/hud.gd`, so they are one lane worked in that order. UI-T-6 is the
-  urgent one: C-7 cannot be run until it ships.
+- `plans/now/ui-bottom-row.md` — UI-Q-3 and UI-T-6, both shipped
+  2026-09-08; C-7 is unblocked and back in `checks/ready.md`. This plan is
+  done and retires to `plans/archive/` at UI-T-6's closeout.
 - `plans/now/ui-windows.md` — UI-W-1 to UI-W-4, from Dave's second 8 Sep
   pass. The left-side windows and the settings window.
 - `plans/now/ui-layout-ownership.md` — why five separate panel-placement

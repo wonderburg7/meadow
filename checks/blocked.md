@@ -43,25 +43,3 @@ have owned it closed on 3 Sep 2026 with no threshold change
 pick this up before it can be checked at all.
 
 Owner: none currently.
-
-### C-7 -- 1.11/1.13's automatic foraging: camera-follow and 4x speed fire as she sets off
-
-At stage 1.11 -- "automate nectar gathering", where the player gives the
-queen the Forager role with nectar focus (`docs/challenge-stages.md`) --
-do exactly that: she should not pause on the first flower she finishes. She works one
-flower, flies home, deposits, and goes back out, repeating until the nectar
-cell is full. The camera starts following her and the game speed jumps to 4x
-the moment she sets off (not when the role is assigned), and both switch off
-again when the stage ends. The same at 1.13, "automate pollen gathering", for pollen.
-
-PASS: at 1.11, giving her Forager/nectar starts an unattended loop with
-camera-follow and 4x speed visibly firing as she sets off, not before; the
-same at 1.13 for pollen; both stop at stage end.
-
-Blocked by: `plans/now/ui-bottom-row.md` UI-T-6. Dave, 8 Sep 2026: "I can't
-progress through this because of the command window issue." UI-T-1 was meant
-to be this check's unblocker and instead collapsed the tray to a bar with no
-buttons in it, so the role still cannot be assigned. Moves straight back to
-`checks/ready.md`, unchanged, when UI-T-6 lands.
-
-Owner: `plans/now/challenge-1.md` Slice 14.
