@@ -61,14 +61,14 @@ func _ready() -> void:
 	gate_hint_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	column.add_child(gate_hint_label)
 
-	var overview := _section(column, "Overview", true)
+	var overview := _section(column, "Overview", false)
 	overview_label = Label.new()
 	overview_label.theme_type_variation = "Small"
 	overview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	overview_label.custom_minimum_size = Vector2(310, 0)
 	overview.add_child(overview_label)
 
-	var species_section := _section(column, "Species", true)
+	var species_section := _section(column, "Species", false)
 	species_column = VBoxContainer.new()
 	species_column.add_theme_constant_override("separation", 2)
 	species_section.add_child(species_column)
@@ -78,7 +78,7 @@ func _ready() -> void:
 	species_empty_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
 	species_column.add_child(species_empty_label)
 
-	var recruitment := _section(column, "Recruitment", true)
+	var recruitment := _section(column, "Recruitment", false)
 	recruitment_label = Label.new()
 	recruitment_label.theme_type_variation = "Small"
 	recruitment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

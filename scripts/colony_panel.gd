@@ -73,6 +73,8 @@ var plot_label: Label
 var history: Array = []             # handed over by main.gd each refresh
 ## Which sections are expanded, remembered for the session.
 var section_open: Dictionary = {}
+var section_headers: Dictionary = {}   # title -> Button
+var section_bodies: Dictionary = {}    # title -> VBoxContainer
 
 ## Rebuilt every refresh() -- see _rebuild_favourites. A plain list
 ## rather than count_labels' fixed-key dictionary, since which bees are
@@ -127,7 +129,7 @@ func _ready() -> void:
 	# now, then who is doing what, then the readouts and favourites you
 	# open this for less often, then the plot last since its own history
 	# is only worth building on request.
-	needing_attention_column = _section(column, "Needing attention", true)
+	needing_attention_column = _section(column, "Needing attention", false)
 	needing_attention_ok_label = Label.new()
 	needing_attention_ok_label.text = "Nothing needs attention right now."
 	needing_attention_ok_label.theme_type_variation = "Small"
@@ -136,15 +138,15 @@ func _ready() -> void:
 	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
 	needing_attention_column.add_child(needing_attention_ok_label)
 
-	var jobs := _section(column, "Who is doing what", true)
+	var jobs := _section(column, "Who is doing what", false)
 	for key in Roles.count_keys():
 		jobs.add_child(_make_role_row(key))
 
-	var readouts := _section(column, "Readouts", true)
+	var readouts := _section(column, "Readouts", false)
 	for entry in STAT_ROWS:
 		readouts.add_child(_make_stat_row(entry))
 
-	favourites_column = _section(column, "Favourites", true)
+	favourites_column = _section(column, "Favourites", false)
 	favourites_empty_label = Label.new()
 	favourites_empty_label.text = "Star a bee from its selection panel to pin it here."
 	favourites_empty_label.theme_type_variation = "Small"
@@ -156,6 +158,7 @@ func _ready() -> void:
 	_build_plot(_section(column, "Over time", false))
 	get_viewport().size_changed.connect(_apply_left_window_rect)
 	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	Session.run_reset.connect(_collapse_all)
 
 ## The five states a plain Godot Button actually looks up ("selected" and
 ## "locked" from UiTheme's seven apply to custom-drawn controls like the
@@ -190,7 +193,18 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 		body.visible = section_open[title]
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
 	)
+	section_headers[title] = header
+	section_bodies[title] = body
 	return body
+
+## Resets every section to collapsed at the start of a run, the same way
+## debug_panel.gd's collapse_all() does -- otherwise a section left open
+## from a previous run stays open through the reset.
+func _collapse_all() -> void:
+	section_open.clear()
+	for title in section_bodies:
+		section_bodies[title].visible = false
+		section_headers[title].text = "▸  %s" % title
 
 ## Each row is a button so the whole strip is clickable, not just a
 ## small target -- selecting every forager should be one easy click.
