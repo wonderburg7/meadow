@@ -31,17 +31,7 @@ touch, so no slice below needs a fresh investigation.
    - Proof: `present: scripts/ui_layout.gd :: return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)`
    - Next after: UI-S-4b (a double right-click stops closing the bee panels)
 
-2. **[Codex] UI-T-3 -- cell highlight rings two pixels lower.** Every ring
-   built from `EMPTY_SILHOUETTE` sits 2px high on the drawn cup. Add a
-   ring-only `RING_Y_NUDGE` inside `_silhouette_point_to_local` so the sprite
-   itself is untouched and the two still cannot drift apart.
-   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-3 — cell highlight rings sit two pixels high"
-   - Files: `scripts/hive_cell.gd`
-   - Check: file C-20
-   - Proof: `absent: scripts/hive_cell.gd :: RING_Y_NUDGE`
-   - Next after: UI-T-5 (settings sections collapsed on startup)
-
-3. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
+2. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
    built with everything closed, but `open_to_categories()` (the pre-run
    menu's Settings button) expands Accessibility and Appearance and nothing
    ever closes them again, so the expansion follows the player into every
