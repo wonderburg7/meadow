@@ -103,6 +103,20 @@ every one of those sizes and while dragging between them.
 
 Owner: `plans/archive/UI-T-1_2026-09-08.md`.
 
+### C-19 -- left-side windows shorten instead of covering the summary panel
+
+Open Colony, then Foraging, then Nursery, at a short viewport height with
+nothing selected -- each should fill down close to the bottom edge, as
+before. With one still open, select a bee, then a comb cell: the open
+window should shorten so its bottom edge sits clear above the bee summary
+panel, and its contents scroll inside the smaller area. Deselect and
+confirm it grows back.
+
+PASS: at every point above, the open window's contents stay fully on
+screen and never draw over the summary panel or the command tray.
+
+Owner: `plans/now/ui-bottom-row.md` UI-T-2.
+
 ### C-5 -- Challenge 2's rescue and recovery lines
 
 In a Challenge 2 run past stage 2.1, open the settings window and press
@@ -131,10 +145,10 @@ the same at 1.13 for pollen; both stop at stage end.
 
 Owner: `plans/now/challenge-1.md` Slice 14.
 
-Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-T-2,
-UI-S-4b and UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-3 and UI-T-5;
+Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-S-4b and
+UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-5;
 `plans/now/season-balance.md` SB-1 and SB-2) each file their own check when
-they ship -- C-19, C-20 and C-22 to C-25, reserved in those plans so the ids
+they ship -- C-22 to C-25, reserved in those plans so the ids
 cannot collide.
 
 ## Decisions waiting on Dave

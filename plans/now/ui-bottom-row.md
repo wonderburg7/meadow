@@ -1,7 +1,7 @@
 # The HUD bottom row — Dave's 8 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-T-2 -- left-side windows shorten instead of covering the summary panel | Dependency: none -- UI-T-2 is startable now; the rest follow it in this file's order | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-S-4b -- a double right-click stops closing the bee panels | Dependency: none -- UI-S-4b is startable now; UI-Q-3 follows it in this file's order | Verified: 2026-09-08
 
 **Objective.** No persistent HUD panel leaves the screen or covers another,
 and a double right-click stops closing the panels behind a selection that is
@@ -22,12 +22,11 @@ parallel; they share no file with these.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-T-2 | Left-side windows shorten instead of covering the summary panel | `ui_layout.gd`, `hud.gd`, the three left panels | yes | medium |
-| UI-S-4b | A double right-click stops closing the bee panels | `input_selection.gd`, `hud.gd`, `diagnostic_log.gd` | after UI-T-2 | medium |
+| UI-S-4b | A double right-click stops closing the bee panels | `input_selection.gd`, `hud.gd`, `diagnostic_log.gd` | yes | medium |
 | UI-Q-3 | Warning dwell: a short message is no longer cut to 1-2s | `hud.gd` | after UI-S-4b | medium |
 
 **Dependencies, stated rather than implied.** The order in the table is the
-order to work in, and the only reason for it is that all three edit
+order to work in, and the only reason for it is that both edit
 `scripts/hud.gd`. No slice here depends on another's behaviour.
 
 **Required reading for any slice here.** This file's own section and nothing
@@ -40,90 +39,7 @@ filing checks at once cannot collide: C-18 UI-T-1, C-19 UI-T-2, C-20 UI-T-3,
 C-21 UI-T-4, C-22 UI-T-5, C-23 UI-S-4b, C-24 SB-1, C-25 SB-2. UI-Q-3 re-files
 C-4 rather than taking a new id.
 
-### UI-T-2 — left-side windows shorten instead of covering the summary panel
-
-**Reasoning level: medium.** Follows UI-T-1 (same file) and touches four
-files, but each edit is small.
-
-**Symptom (Dave, 8 Sep 2026, C-13).** Everything else in C-13 passed —
-mutual closing, the Nursery hive view and its zone glow, scrolling, and
-starring. The one failure: the Colony, Foraging and Nursery windows still sit
-on top of, and overlap with, the bee summary panel when one is open at the
-same time. Dave's call: "these should not overlap. left-side windows should
-shorten in response to the summary window size."
-
-**Cause.** `scripts/ui_layout.gd::left_window_max_height` reserves space
-against the top of the screen and the bottom edge, but knows nothing about
-the bottom row:
-
-```gdscript
-static func left_window_max_height(viewport_height: float, top: float) -> float:
-    return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)
-```
-
-The summary panel is anchored bottom-left, in the same column, so a tall left
-window and a visible summary panel claim the same pixels.
-
-**Deliver.**
-
-1. In `scripts/hud.gd`, add an accessor beside the existing `corner_bottom()`
-   (~line 1938):
-
-   ```gdscript
-   ## The y the bottom row starts at, for the left-side windows to stop
-   ## above. Zero when nothing is selected, so a window gets the full height
-   ## back the moment the summary panel closes. Mirrors corner_bottom().
-   func selection_panel_top() -> float:
-       if selection_panel == null or not selection_panel.visible:
-           return 0.0
-       return selection_panel.position.y
-   ```
-
-2. Give `left_window_max_height` a third parameter and subtract the occupied
-   bottom row from the space available:
-
-   ```gdscript
-   ## `bottom_row_top` is hud.selection_panel_top(): 0 when nothing is
-   ## selected, otherwise the y the summary panel starts at. A left-side
-   ## window shortens to clear it rather than covering it (Dave, 8 Sep 2026).
-   static func left_window_max_height(
-       viewport_height: float, top: float, bottom_row_top: float = 0.0
-   ) -> float:
-       var floor_y: float = viewport_height
-       if bottom_row_top > 0.0:
-           floor_y = bottom_row_top
-       return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP)
-   ```
-
-   The default keeps every existing call compiling; all three are updated
-   below regardless.
-
-3. Update the three identical `_apply_left_window_rect()` bodies —
-   `scripts/colony_panel.gd:371`, `scripts/foraging_panel.gd:113`,
-   `scripts/nursery_panel.gd:280` — to pass the new argument:
-
-   ```gdscript
-   scroll_container.custom_minimum_size.y = UiLayout.left_window_max_height(
-       get_viewport().get_visible_rect().size.y, top, main.hud.selection_panel_top()
-   )
-   ```
-
-4. The three windows currently only recompute their rectangle in `open()`.
-   Selecting a bee while one is already open must reflow it. Add one signal
-   `bottom_row_changed` on `hud.gd`, emitted at the end of
-   `update_selection()` and of `show_cell_popup()`, and connect each of the
-   three panels to it with a handler that calls `_apply_left_window_rect()`
-   only when `panel.visible`. Do not have `hud.gd` reach into the three
-   panels directly.
-
-**Acceptance.** Open Colony (then Foraging, then Nursery) at a short viewport
-height with nothing selected: each fills down to 16px above the bottom edge,
-as now. With one still open, select a bee: the window shortens so its bottom
-edge sits clear above the summary panel, and its contents scroll inside the
-smaller rectangle. Deselect: it grows back. No window ever draws over the
-summary panel or the command tray.
-
-**Check to file:** C-19.
+UI-T-2's completed specification: `plans/archive/UI-T-2_2026-09-08.md`.
 
 ## UI-S — from Dave's 3 Sep 2026 hands-on pass
 

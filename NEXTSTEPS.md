@@ -19,17 +19,17 @@ touch, so no slice below needs a fresh investigation.
 
 ## Next up
 
-1. **[Claude] UI-T-2 -- left-side windows shorten for the summary panel.**
-   `left_window_max_height` reserves against the viewport's bottom edge and
-   knows nothing about the bottom row, so Colony, Foraging and Nursery draw
-   over the bee summary panel. Give it the summary panel's top as a third
-   argument, add the `hud.gd` accessor that supplies it, and reflow the three
-   windows when the selection changes.
-   - Plan: `plans/now/ui-bottom-row.md` -- "UI-T-2 — left-side windows shorten instead of covering the summary panel"
-   - Files: `scripts/ui_layout.gd`, `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`
-   - Check: file C-19
-   - Proof: `present: scripts/ui_layout.gd :: return maxf(120.0, viewport_height - top - SELECTION_TRAY_GAP)`
-   - Next after: UI-S-4b (a double right-click stops closing the bee panels)
+1. **[Claude] UI-S-4b -- a double right-click stops closing the bee panels.**
+   Godot delivers a fast second right-click as a further `pressed` event with
+   `double_click` set, so `_issue_command` runs twice and the second event's
+   side effects read as the panels being cleared. Ignore the duplicate event,
+   and log every place that hides the summary panel or command tray so a
+   repeat of C-14's symptom does not need re-diagnosing.
+   - Plan: `plans/now/ui-bottom-row.md` -- "UI-S-4b — a double right-click closes the bee panels; the command is not lost"
+   - Files: `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/diagnostic_log.gd`
+   - Check: file C-23, replacing C-14
+   - Proof: `absent: scripts/input_selection.gd :: not event.double_click`
+   - Next after: UI-Q-3 (a message may not be cut to a fraction of its dwell)
 
 2. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
    built with everything closed, but `open_to_categories()` (the pre-run
@@ -48,11 +48,6 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **UI-S-4b** (`plans/now/ui-bottom-row.md`) -- a double right-click closes the bee
-  panels. C-14's log has been recovered and analysed: the selection is
-  provably intact on every right-click, which retires UI-S-4's theory and
-  makes this a presentation fix plus one input-boundary guard. Claude lane,
-  after UI-T-2 (same file).
 - **UI-Q-3** (`plans/now/ui-bottom-row.md`) -- the warning dwell rule. C-4 passed and
   gave the timings that settle the priority design UI-Q-1 deferred: ~6s,
   ~1-2s, ~12s. Claude lane, after UI-S-4b (same file).
