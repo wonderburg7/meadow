@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-T-3` (`codex/UI-T-3`) | Codex | cell highlight rings two pixels lower. | Codex | in progress | none | `plans/now/ui-small-fixes.md` "UI-T-3 — cell highlight rings sit two pixels high" |
+| `.worktrees/UI-T-2` (`claude/UI-T-2`) | Claude | left-side windows shorten for the summary panel. | Claude | in progress | none | `plans/now/ui-bottom-row.md` "UI-T-2 — left-side windows shorten instead of covering the summary panel" |
