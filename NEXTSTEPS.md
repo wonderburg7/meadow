@@ -9,41 +9,28 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane.** C-4, C-27 and
-C-28 passed and are archived. C-18, C-19 and C-26 failed and became LAY-2 to
-LAY-4 in `plans/now/panel-layout.md`; C-7 and C-5 could not be run at all,
-because both need the command tray's buttons, and moved to
-`checks/blocked.md`. LAY-2 is the one that releases them, so it leads.
+**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane, and LAY-2 has now
+landed.** C-4, C-27 and C-28 passed and are archived. C-18, C-19 and C-26
+failed and became LAY-2 to LAY-4 in `plans/now/panel-layout.md`; C-7 and C-5
+could not be run at all, because both need the command tray's buttons, and
+moved to `checks/blocked.md`. LAY-2 shipped 2026-09-09
+(`plans/archive/LAY-2_2026-09-09.md`), re-filing C-18 and unblocking C-7 and
+C-5 back into `checks/ready.md`. LAY-3 leads the Claude lane now.
 
-The command tray has now escaped the viewport on four separate passes. The
-cause was found on 9 Sep and is written up in `plans/now/panel-layout.md`,
-"Why this kept coming back": `Control.set_size()` rewrites all four anchor
-offsets from the cached position, so giving a bottom-anchored panel a height
-converts its bottom pin into a top pin and the panel regrows downwards off
-the screen. LAY-2 removes that; LAY-5 in `plans/now/layout-regression.md`
-adds the headless assertion that would have caught it the first time.
+The command tray had escaped the viewport on four separate passes. The cause
+was found on 9 Sep and is written up in `plans/now/panel-layout.md`, "Why
+this kept coming back": `Control.set_size()` rewrites all four anchor offsets
+from the cached position, so giving a bottom-anchored panel a height converts
+its bottom pin into a top pin and the panel regrows downwards off the screen.
+LAY-2 removed that; LAY-5 in `plans/now/layout-regression.md` adds the
+headless assertion that would have caught it the first time.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Claude] LAY-2 -- a persistent panel's rectangle is written through offsets only.**
-   `Control.set_size()` -- which `panel.size.x = w` and `reset_size()` both
-   call -- recomputes all four anchor offsets from the cached position, so it
-   converts the command tray's bottom pin into a top pin and the tray then
-   regrows downwards past the bottom of the window. Make
-   `ui_panel_layout.gd::apply()` set offsets and never `size`, give it a
-   `bottom_margin` parameter, and take both `reset_size()` calls out of
-   `hud.gd::_resize_command_tray()`.
-   - Plan: `plans/now/panel-layout.md` -- "LAY-2 — write a persistent panel's rectangle through offsets only"
-   - Files: `scripts/ui_panel_layout.gd`, `scripts/ui_layout.gd`,
-     `scripts/hud.gd`, `plans/now/panel-layout.md`
-   - Check: re-file C-18
-   - Proof: `absent: scripts/ui_panel_layout.gd :: bottom_margin`
-   - Next after: LAY-3 (the left-side windows' gap and dynamic growth)
-
-2. **[Codex] CR-2 -- make the standard runtime self-discovering.**
+1. **[Codex] CR-2 -- make the standard runtime self-discovering.**
    Verification should locate Codex's bundled Python without a PATH edit;
    closeout keeps an explicit override, and `doctor` reports every runtime,
    Git-identity, ownership, remote and metadata-write failure in one pass.
@@ -55,7 +42,7 @@ one was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/verify.ps1 :: codex-primary-runtime`
    - Next after: CR-3 (align permissions with the intended Git lifecycle)
 
-3. **[Claude] LAY-3 -- the left-side windows' gap is 16px, and they grow when a section opens.**
+2. **[Claude] LAY-3 -- the left-side windows' gap is 16px, and they grow when a section opens.**
    `left_window_max_height()` subtracts the panel chrome and
    `ui_panel_layout.gd::apply()` subtracts it again, which is the extra 20px
    Dave measured on top of the 16px gap. Separately, expanding a section
@@ -68,7 +55,7 @@ one was diagnosed against the source during the 9 Sep pass.
    - Proof: `present: scripts/ui_layout.gd :: SELECTION_TRAY_GAP - panel_chrome().y`
    - Next after: LAY-4 (the nursery donut's key clears the scrollbar)
 
-4. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
+3. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Count presses instead.
@@ -76,11 +63,11 @@ one was diagnosed against the source during the 9 Sep pass.
    stage's next hint overwrites it.
    - Plan: `plans/now/challenge-2.md` -- "Slice 2 — the collapse button does what its tooltip says, and the rescue line survives"
    - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/gallerin_panel.gd`
-   - Check: C-5, which sits in `checks/blocked.md` until LAY-2 restores the tray
+   - Check: C-5, now runnable in `checks/ready.md` since LAY-2 restored the tray
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-5. **[Claude] LAY-4 -- the nursery donut's key clears the scrollbar.**
+4. **[Claude] LAY-4 -- the nursery donut's key clears the scrollbar.**
    `_draw_ring()` draws the legend at literal x positions inside a literal
    300px box, so at a large text scale the Nursery window's scrollbar covers
    its right-hand end. Measure the legend with the current font and reserve a
@@ -115,8 +102,8 @@ Each of these wants something from Dave, or something else to ship first.
   `Files:` and `Proof:` values that pass `slice.ps1 doctor`; SB-2 follows it.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough, and Dave's run rather than a code slice. It needs C-7, which
-  went back to `checks/blocked.md` on 9 Sep because the command tray has no
-  reachable Job button. LAY-2 releases it.
+  is back in `checks/ready.md` now that LAY-2 has restored the command tray's
+  Job button.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,

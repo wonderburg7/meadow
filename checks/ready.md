@@ -88,8 +88,8 @@ all and moved to `checks/blocked.md`.
   pixel positions inside a fixed 300px box. LAY-4 gives it a measured width
   and a scrollbar gutter.
 - **C-7 and C-5 could not be run.** Both need the command tray's buttons.
-  They are in `checks/blocked.md`, unblocked by LAY-2, and come straight back
-  here when it lands.
+  LAY-2 has now shipped and restores the tray, so both are back below,
+  unblocked from `checks/blocked.md`.
 
 ## Ready to run
 
@@ -110,6 +110,40 @@ of those sizes, while dragging between them, and with the longest bee name
 selected.
 
 Owner: `plans/now/panel-layout.md` LAY-2.
+
+### C-7 -- 1.11/1.13's automatic foraging: camera-follow and 4x speed fire as she sets off
+
+At stage 1.11 -- "automate nectar gathering", where the player gives the
+queen the Forager role with nectar focus (`docs/challenge-stages.md`) -- do
+exactly that: she should not pause on the first flower she finishes. She works
+one flower, flies home, deposits, and goes back out, repeating until the
+nectar cell is full. The camera starts following her and the game speed jumps
+to 4x the moment she sets off (not when the role is assigned), and both switch
+off again when the stage ends. The same at 1.13, "automate pollen gathering",
+for pollen.
+
+PASS: at 1.11, giving her Forager/nectar starts an unattended loop with
+camera-follow and 4x speed visibly firing as she sets off, not before; the
+same at 1.13 for pollen; both stop at stage end.
+
+Owner: `plans/now/challenge-1.md` Slice 14.
+
+### C-5 -- Challenge 2's rescue and recovery lines
+
+In a Challenge 2 run, get past stage 2.1 -- the opening stage, where the
+nectar stores fall and you bring them back -- and into 2.2, where you raise a
+pollen Forager (`docs/challenge-stages.md` lists every stage). Open the
+settings window and press "Force Challenge 2 collapse" in the Triggers group
+once, then again.
+
+PASS: the first press drops the stores below the rescue threshold, and Dr
+Gallerin's "Ahem. Field ecologists..." line appears with 150 nectar restored
+and stays up rather than being replaced by a stage hint a few seconds later.
+The second press drops them below the failure floor and the checkpoint
+restore appears with "A brief ecological wobble..." and a live queen. Neither
+takes a third press.
+
+Owner: `plans/now/challenge-2.md` Slice 2.
 
 ### C-19 -- left-side windows leave a true 16px gap, and grow with their content
 

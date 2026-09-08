@@ -26,7 +26,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (2,694 lines)
+## hud.gd (2,688 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -129,20 +129,20 @@ Challenge goal readout.
 2471 func _refresh_selection_text() -> void
 2561 func _apply_selection_tray_width() -> void
 2576 func _update_command_tray_width() -> void
-2596 func _resize_command_tray() -> void
-2611 func set_winter_button_visible(value: bool) -> void
-2617 func set_view_label(in_hive: bool) -> void
-2623 func set_colony_button_visible(value: bool) -> void
-2629 func set_nursery_button_visible(value: bool) -> void
-2635 func set_view_button_visible(value: bool) -> void
-2641 func set_foraging_button_visible(value: bool) -> void
-2648 func set_allowed_role_keys(keys: Array) -> void
-2658 func set_command_locked_bees(bees: Array) -> void
-2663 func set_allowed_mode_keys(keys: Array) -> void
-2671 func set_allowed_designation_keys(keys: Array) -> void
-2676 func set_hatch_lock_visible(value: bool) -> void
-2681 func set_soil_marking_visible(value: bool) -> void
-2691 func set_queen_build_button_visible(value: bool) -> void
+2592 func _resize_command_tray() -> void
+2605 func set_winter_button_visible(value: bool) -> void
+2611 func set_view_label(in_hive: bool) -> void
+2617 func set_colony_button_visible(value: bool) -> void
+2623 func set_nursery_button_visible(value: bool) -> void
+2629 func set_view_button_visible(value: bool) -> void
+2635 func set_foraging_button_visible(value: bool) -> void
+2642 func set_allowed_role_keys(keys: Array) -> void
+2652 func set_command_locked_bees(bees: Array) -> void
+2657 func set_allowed_mode_keys(keys: Array) -> void
+2665 func set_allowed_designation_keys(keys: Array) -> void
+2670 func set_hatch_lock_visible(value: bool) -> void
+2675 func set_soil_marking_visible(value: bool) -> void
+2685 func set_queen_build_button_visible(value: bool) -> void
 ```
 
 ## bee.gd (2,441 lines)

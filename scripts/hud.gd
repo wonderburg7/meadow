@@ -2560,7 +2560,7 @@ func _refresh_selection_text() -> void:
 ## UI_PLAN.md UI-B.
 func _apply_selection_tray_width() -> void:
 	var rect := UiLayout.summary_panel_rect(get_viewport().get_visible_rect().size)
-	UiPanelLayout.apply(selection_panel, null, rect)
+	UiPanelLayout.apply(selection_panel, null, rect, UiLayout.BOTTOM_ROW_MARGIN)
 	if selection_column != null:
 		# Cap the column to the space inside the panel's own border and
 		# content margins, not the panel's outer width, so its content
@@ -2577,13 +2577,9 @@ func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var tray_width: float = UiLayout.command_tray_width(viewport_width)
-	# Position first, then width: the tray is anchored bottom-left, so setting
-	# its explicit centred edge here also updates it on every viewport resize.
+	# Position the tray's explicit centred edge here so it updates on every
+	# viewport resize; ui_panel_layout.gd::apply() owns the width itself.
 	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
-	# Set this anchored control's actual width, then let its HFlow rows grow
-	# taller rather than wider.
-	command_tray.size.x = tray_width
 	command_columns.custom_minimum_size.x = 0.0
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = 0.0
@@ -2603,10 +2599,8 @@ func _resize_command_tray() -> void:
 	# (Dave, 8 Sep 2026, C-11/C-12).
 	_update_command_tray_width()
 	command_scroll.custom_minimum_size.y = 0.0
-	command_tray.reset_size()
 	var rect := UiLayout.command_tray_rect(get_viewport().get_visible_rect().size)
-	UiPanelLayout.apply(command_tray, command_scroll, rect)
-	command_tray.reset_size()
+	UiPanelLayout.apply(command_tray, command_scroll, rect, UiLayout.BOTTOM_ROW_MARGIN)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

@@ -123,11 +123,11 @@ static func command_tray_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(command_tray_left_edge(viewport_size.x), viewport_size.y - BOTTOM_ROW_MARGIN - height, width, height)
 
 ## The bottom-left summary panel: takes the width the tray leaves. Its
-## height is uncapped -- position.y/size.y are unused (0) placeholders, since
-## the panel auto-grows to its content on every axis apply() does not set
-## explicitly (see ui_panel_layout.gd::apply()'s no-scroll branch).
+## height is capped at the same ceiling the tray gets -- the panel hugs
+## shorter content already (see ui_panel_layout.gd::apply()).
 static func summary_panel_rect(viewport_size: Vector2) -> Rect2:
-	return Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x), 0.0)
+	return Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x),
+			command_tray_max_height(viewport_size.y))
 
 ## Dr Gallerin's bubble: the bottom-right counterpart of summary_panel_rect,
 ## anchored from the tray's right edge rather than the left margin. Not yet
