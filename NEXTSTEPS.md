@@ -9,18 +9,26 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**UI-W-4 shipped 2026-09-08** (`plans/archive/UI-W-4_2026-09-08.md`): the
-pre-run Settings button opens with every section collapsed, completing
-`plans/archive/UI-WINDOWS_2026-09-08.md` -- all four UI-W slices have now
-landed. LAY-1 shipped 2026-09-08 (`plans/archive/LAY-1_2026-09-08.md`) and
-completes the plan it came from, now fully archived. No open
-plan has a Claude-lane slice startable today without Dave's input first (see
-"Not in the queue, and why"), so on Dave's call the Claude lane is left
-empty rather than filled with an invented item -- `tools/check_docs.py` will
-report the queue short and the Claude lane empty until one is ready.
+**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane, and LAY-2 and
+LAY-3 have now landed.** C-4, C-27 and C-28 passed and are archived. C-18,
+C-19 and C-26 failed and became LAY-2 to LAY-4 in `plans/now/panel-layout.md`;
+C-7 and C-5 could not be run at all, because both need the command tray's
+buttons, and moved to `checks/blocked.md`. LAY-2 shipped 2026-09-09
+(`plans/archive/LAY-2_2026-09-09.md`), re-filing C-18 and unblocking C-7 and
+C-5 back into `checks/ready.md`. LAY-3 shipped the same day
+(`plans/archive/LAY-3_2026-09-09.md`), re-filing C-19. LAY-4 leads the Claude
+lane now.
+
+The command tray had escaped the viewport on four separate passes. The cause
+was found on 9 Sep and is written up in `plans/now/panel-layout.md`, "Why
+this kept coming back": `Control.set_size()` rewrites all four anchor offsets
+from the cached position, so giving a bottom-anchored panel a height converts
+its bottom pin into a top pin and the panel regrows downwards off the screen.
+LAY-2 removed that; LAY-5 in `plans/now/layout-regression.md` adds the
+headless assertion that would have caught it the first time.
 
 Every item below is specified down to the function and the line, because each
-one was diagnosed against the source during the 8 Sep pass.
+one was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
@@ -44,18 +52,35 @@ one was diagnosed against the source during the 8 Sep pass.
    stage's next hint overwrites it.
    - Plan: `plans/now/challenge-2.md` -- "Slice 2 — the collapse button does what its tooltip says, and the rescue line survives"
    - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/gallerin_panel.gd`
-   - Check: re-file C-5
+   - Check: C-5, now runnable in `checks/ready.md` since LAY-2 restored the tray
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-**The Claude lane is empty.** Every Claude-lane candidate below wants a
-decision or a live look from Dave first -- see "Not in the queue, and why".
+3. **[Claude] LAY-4 -- the nursery donut's key clears the scrollbar.**
+   `_draw_ring()` draws the legend at literal x positions inside a literal
+   300px box, so at a large text scale the Nursery window's scrollbar covers
+   its right-hand end. Measure the legend with the current font and reserve a
+   shared scrollbar gutter.
+   - Plan: `plans/now/panel-layout.md` -- "LAY-4 — the nursery donut's key clears the scrollbar"
+   - Files: `scripts/nursery_panel.gd`, `scripts/ui_layout.gd`,
+     `plans/now/panel-layout.md`
+   - Check: re-file C-26
+   - Proof: `absent: scripts/ui_layout.gd :: SCROLLBAR_GUTTER`
+   - Next after: LAY-5 (the headless panel-rectangle assertion)
 
 ## Ready, not yet in the queue
 
 These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
+
+- **LAY-5 -- a headless check that fails when a persistent panel leaves the
+  viewport** (`plans/now/layout-regression.md`). The guard rail for the whole
+  LAY group: a `viewport_size` scenario verb, a `panel_rect` assertion, one
+  fixture covering 1920x1080, 1280x720 and 800x600, and a test in `tests/`
+  that skips cleanly where Godot is not installed. Its acceptance is to
+  reintroduce LAY-2's bug on purpose and watch the check fail. It follows
+  LAY-4 so it is written against shipped behaviour.
 
 ## Not in the queue, and why
 
@@ -65,16 +90,17 @@ Each of these wants something from Dave, or something else to ship first.
   the bounded baseline simulation succeeds. SB-1 then returns with exact
   `Files:` and `Proof:` values that pass `slice.ps1 doctor`; SB-2 follows it.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, and Dave's run rather than a code slice. It needs C-7, ready
-  to run in `checks/ready.md` now that UI-T-6 shipped and unblocked it.
+  playthrough, and Dave's run rather than a code slice. It needs C-7, which
+  is back in `checks/ready.md` now that LAY-2 has restored the command tray's
+  Job button.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
   so it wants Dave's live look and a call on intended behaviour. Slice 5
   wants its own reproduction.
 - **UI-P-5** (`plans/now/ui.md`) -- names two plausible causes and says to
-  reproduce the symptom live before choosing between them. Neither of Dave's
-  8 Sep passes reported on it.
+  reproduce the symptom live before choosing between them. None of Dave's
+  three passes since 8 Sep has reported on it.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

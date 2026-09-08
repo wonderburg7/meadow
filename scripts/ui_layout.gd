@@ -41,13 +41,15 @@ static func left_window_top(corner_bottom: float) -> float:
 ## `bottom_row_top` is hud.selection_panel_top(): 0 when nothing is
 ## selected, otherwise the y the summary panel starts at. A left-side
 ## window shortens to clear it rather than covering it (Dave, 8 Sep 2026).
+## Returns the window's outer height; ui_panel_layout.gd::apply() subtracts
+## the chrome itself when it turns this into the scroll's budget.
 static func left_window_max_height(
 	viewport_height: float, top: float, bottom_row_top: float = 0.0
 ) -> float:
 	var floor_y: float = viewport_height
 	if bottom_row_top > 0.0:
 		floor_y = bottom_row_top
-	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP - panel_chrome().y)
+	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP)
 
 ## The tallest the bottom-row command tray may be: everything between the
 ## top of the screen and its own bottom margin, less the shared clearance.
@@ -123,11 +125,11 @@ static func command_tray_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(command_tray_left_edge(viewport_size.x), viewport_size.y - BOTTOM_ROW_MARGIN - height, width, height)
 
 ## The bottom-left summary panel: takes the width the tray leaves. Its
-## height is uncapped -- position.y/size.y are unused (0) placeholders, since
-## the panel auto-grows to its content on every axis apply() does not set
-## explicitly (see ui_panel_layout.gd::apply()'s no-scroll branch).
+## height is capped at the same ceiling the tray gets -- the panel hugs
+## shorter content already (see ui_panel_layout.gd::apply()).
 static func summary_panel_rect(viewport_size: Vector2) -> Rect2:
-	return Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x), 0.0)
+	return Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x),
+			command_tray_max_height(viewport_size.y))
 
 ## Dr Gallerin's bubble: the bottom-right counterpart of summary_panel_rect,
 ## anchored from the tray's right edge rather than the left margin. Not yet

@@ -10,6 +10,19 @@ of these has bitten more than once:
   produced `var comb workers := 0`. Blank screen, because a parse error
   in `main.gd` means the only scene won't load. `source_checks.py` now
   catches it. Prefer word-boundary replacements and check the diff.
+- **`Control.set_size()` destroys the anchor you set.** It recomputes all
+  four offsets from the control's cached position, so `panel.size.x = w`,
+  `panel.size.y = h` and `panel.reset_size()` all silently turn a
+  bottom-anchored panel into a top-anchored one at whatever y it happened to
+  be. `grow_vertical = GROW_DIRECTION_BEGIN` does not save it: grow direction
+  only applies when the combined minimum exceeds the offset-derived height,
+  and it moves the cached position without writing the offsets back. The
+  command tray escaped the bottom of the screen four times between 3 and 9
+  Sep 2026 on this one behaviour, through three separate "fixes" that each
+  changed the height it was given. Write a persistent panel's rectangle
+  through `offset_left`/`offset_right`/`offset_top`/`offset_bottom` only, in
+  `scripts/ui_panel_layout.gd`, and never through `size`, `position` or
+  `reset_size()`.
 - **Variable shadowing built-in properties.** `offset` on Polygon2D,
   `scale` on Node2D. Four separate occurrences so far.
 - **Coordinate spaces.** `hive_root` and `meadow_root` sit at different

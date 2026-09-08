@@ -108,6 +108,7 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 	header.pressed.connect(func():
 		body.visible = not body.visible
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+		call_deferred("_apply_left_window_rect")
 	)
 	return body
 

@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the rest of the 8 Sep group has all shipped | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the panel-rectangle work moved to plans/now/panel-layout.md on 9 Sep 2026 | Verified: 2026-09-09
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -31,6 +31,12 @@ sharing a file:
 - `plans/archive/LAY-1_2026-09-08.md` — why five separate panel-placement
   checks failed since 3 Sep, the panel hierarchy Dave asked for on 8 Sep,
   and LAY-1, which shipped one owner of it, 2026-09-08.
+- `plans/now/panel-layout.md` — **open.** LAY-2 to LAY-4, from Dave's 9 Sep
+  pass, and the Godot behaviour that made the command tray fail four times
+  in a row. Everything about a persistent panel's rectangle now belongs
+  there rather than here.
+- `plans/now/layout-regression.md` — **open.** LAY-5, the headless check
+  that fails when a panel leaves the viewport.
 - `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4
   and UI-T-5. One script each, independent in the other lane.
 
@@ -82,6 +88,21 @@ against the tile's real hexagon at its real position, and every reported
   hierarchy and the slice that enforced it, now shipped: `ui_layout.gd`
   returns each rectangle and `ui_panel_layout.gd::apply()` is the one place
   that sizes a persistent panel from it.
+- **A persistent panel's rectangle is written through offsets, never through
+  `size`, `position` or `reset_size()`.** `Control.set_size()` recomputes all
+  four anchor offsets from the control's cached position, so any of those
+  three converts a bottom-anchored panel into a top-anchored one and it then
+  regrows downwards off the screen. Added 9 Sep 2026, after the command tray
+  left the viewport for the fourth time (C-18). Only
+  `ui_panel_layout.gd::apply()` may write those offsets; a panel script calls
+  it and does nothing else to its own geometry.
+- **A slice that changes a persistent panel's rectangle ships the
+  deterministic assertion with it.** A hands-on check is the wrong instrument
+  for runtime geometry: it costs a day per round trip and it caught the same
+  defect four times without ever stating the cause. Added 9 Sep 2026;
+  `plans/now/layout-regression.md` LAY-5 builds the harness that makes this
+  cheap, and after it lands a geometry slice extends the fixture rather than
+  filing a check.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks

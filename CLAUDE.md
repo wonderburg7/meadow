@@ -189,6 +189,7 @@ the authority on which tier a branch is in.
 | Settings, `GameConfig` ownership | `scripts/settings_catalogue.gd`, then `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` for why |
 | Settings surviving a run change (built) | `checks/ready.md` or `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
+| A persistent panel's position, size or gaps | `plans/now/panel-layout.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
@@ -275,6 +276,19 @@ does. That file is generated from `scripts/challenge_stages.gd` by
   language message and state the next safe action.
 - Show a plan before large or irreversible work; back up before substantial
   edits.
-- Offer concrete choices when Dave must decide.
+- Offer concrete choices when Dave must decide, **in the session that needs
+  the decision**, and act on the answer there. Decisions do not go in
+  `checks/ready.md`; that file holds checks only (Dave, 9 Sep 2026).
+- **Anything asked of Dave names the file, the place in it, and what to
+  type.** Give the repo-relative path, say which part of the file changes,
+  and paste the exact text. Dave, 9 Sep 2026: "you haven't told me where to
+  put the permission setting code. in future make sure if i'm being asked to
+  do something, the steps and locations are explicitly communicated."
+- **The second time a check fails for the same reason, build the
+  instrument.** Stop fixing the symptom, say what would catch it without a
+  human, and ship that alongside the fix. Runtime facts are reachable from
+  the headless scenario runner (`docs/headless-run-contract.md`); the command
+  tray left the viewport on four passes for one unstated Godot behaviour
+  (`docs/known-pitfalls.md`), which is about four days of round trip.
 - Push freely when it helps the work along; no GitKraken route or other
   confirmation is required beforehand.

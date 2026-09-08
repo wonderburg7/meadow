@@ -193,6 +193,7 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 		section_open[title] = not section_open[title]
 		body.visible = section_open[title]
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
+		call_deferred("_apply_left_window_rect")
 	)
 	section_headers[title] = header
 	section_bodies[title] = body
