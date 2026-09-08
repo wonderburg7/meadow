@@ -39,7 +39,7 @@ Fourteen checks went out. **Eleven came back confirmed** and are archived in
 C-13, C-15, C-16 and C-17, plus C-11 in part. Three of those carried a
 correction or a balance note alongside the pass, and each became a slice:
 
-- C-9 passed but the rings sit 2px high -> `plans/now/ui-small-fixes.md` UI-T-3.
+- C-9 passed but the rings sit 2px high -> `plans/archive/ui-small-fixes_2026-09-08.md` UI-T-3.
 - C-13 passed but left-side windows still overlap the summary panel ->
   UI-T-2.
 - C-16 passed, and a separate clipped hexagon point in the same screen ->
@@ -76,7 +76,7 @@ PASS: Every cell-art ring is centred on its drawn cup, two pixels lower than
 the previous high position, and turning Cell art off leaves the flat-hex path
 unchanged.
 
-Owner: `plans/now/ui-small-fixes.md`
+Owner: `plans/archive/ui-small-fixes_2026-09-08.md`
 
 ### C-21 -- pre-run menu's first hexagon is not clipped
 
@@ -88,7 +88,7 @@ the left-pane text inset still looks unchanged.
 PASS: Both strips show unbroken leftmost hexagons, every tile selects the
 right stage, and the left-pane text inset is unchanged.
 
-Owner: `plans/now/ui-small-fixes.md`
+Owner: `plans/archive/ui-small-fixes_2026-09-08.md`
 
 ### C-18 -- the command tray stays wholly on screen
 
@@ -158,10 +158,8 @@ slowly still works as it does today.
 Owner: `plans/now/ui-bottom-row.md` UI-S-4b.
 
 Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-Q-3;
-`plans/now/ui-small-fixes.md` UI-T-5;
 `plans/now/season-balance.md` SB-1 and SB-2) each file their own check when
-they ship -- C-22, C-24 and C-25, reserved in those plans so the ids
-cannot collide.
+they ship -- C-23 to C-25, reserved in those plans so the ids cannot collide.
 
 ### C-22 -- settings sections reset closed
 
@@ -173,7 +171,7 @@ PASS: The in-run settings window opens with every collection and topic section
 collapsed after both run starts; the pre-run Settings button still expands
 Accessibility and Appearance, and the window itself remains available.
 
-Owner: `plans/now/ui-small-fixes.md`
+Owner: `plans/archive/ui-small-fixes_2026-09-08.md`
 
 ## Decisions waiting on Dave
 

@@ -26,8 +26,8 @@ sharing a file:
 - `plans/now/ui-bottom-row.md` — UI-T-1, UI-T-2, UI-S-4b, UI-Q-3. All edit
   `scripts/hud.gd`, so they are one lane worked in that order. UI-T-1 is the
   highest item in the whole queue: C-5 and C-7 cannot be run until it ships.
-- `plans/now/ui-small-fixes.md` — UI-T-3, UI-T-4, UI-T-5. One script each,
-  independent, taken in any order in the other lane.
+- `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4
+  and UI-T-5. One script each, independent in the other lane.
 
 Each of those files is archived whole when its group is done; this file keeps
 the objective, the durable rules and whatever outlives a single pass.

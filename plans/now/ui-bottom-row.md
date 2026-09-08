@@ -15,8 +15,8 @@ pass.
 
 **Why the rest are one file.** Every one of them edits `scripts/hud.gd`, so
 they are a single lane worked top to bottom. The three one-file fixes from the
-same pass are in `plans/now/ui-small-fixes.md` and run in the other lane in
-parallel; they share no file with these.
+same pass are archived in `plans/archive/ui-small-fixes_2026-09-08.md`; they
+shared no file with these.
 
 **UI-S-4b shipped 2026-09-08** (`plans/archive/UI-S-4b_2026-09-08.md`): the
 duplicate `double_click` event is now ignored at the input boundary, and
@@ -38,7 +38,7 @@ else -- the archives are provenance only, and no slice here needs the whole
 of this file. `plans/now/ui.md`'s "Durable rules" apply to all of them.
 
 **Check ids C-18 to C-25 are reserved** across this file,
-`plans/now/ui-small-fixes.md` and `plans/now/season-balance.md`, so two lanes
+`plans/archive/ui-small-fixes_2026-09-08.md` and `plans/now/season-balance.md`, so two lanes
 filing checks at once cannot collide: C-18 UI-T-1, C-19 UI-T-2, C-20 UI-T-3,
 C-21 UI-T-4, C-22 UI-T-5, C-23 UI-S-4b, C-24 SB-1, C-25 SB-2. UI-Q-3 re-files
 C-4 rather than taking a new id.

@@ -31,16 +31,12 @@ touch, so no slice below needs a fresh investigation.
    - Proof: `absent: scripts/hud.gd :: min_dwell`
    - Next after: none named -- pull the next ready Claude-lane slice from an owning plan when this lands
 
-2. **[Codex] UI-T-5 -- settings sections collapsed on startup.** The panel is
-   built with everything closed, but `open_to_categories()` (the pre-run
-   menu's Settings button) expands Accessibility and Appearance and nothing
-   ever closes them again, so the expansion follows the player into every
-   later run. Add `collapse_all()` and drive it from `Session.run_reset`.
-   - Plan: `plans/now/ui-small-fixes.md` -- "UI-T-5 — the settings window opens with every section collapsed"
-   - Files: `scripts/debug_panel.gd`
-   - Check: file C-22
-   - Proof: `absent: scripts/debug_panel.gd :: func collapse_all()`
-   - Next after: SB-1 (peak-season production is a rise, not a spike)
+2. **[Codex] SB-1 -- peak-season production is a rise, not a spike.**
+   - Plan: `plans/now/season-balance.md` -- "SB-1 — peak-season production is a rise, not a spike"
+   - Files: see the named plan heading
+   - Check: file C-24
+   - Proof: see the named plan heading
+   - Next after: SB-2 (out-of-season species have a standing presence)
 
 ## Ready, not yet in the queue
 
@@ -48,10 +44,6 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **SB-1** (`plans/now/season-balance.md`) -- peak season production is a
-  spike, twenty times the out-of-season floor, and discontinuous at the
-  window edge. One curve and one new `GameConfig` value, with the headless
-  comparison stated in the slice. Codex lane.
 - **SB-2** (`plans/now/season-balance.md`) -- out-of-season species seed at
   0.15 of their usual weight, which reads as a standing presence rather than
   a rarity. One value. Codex lane, after SB-1 (same file).
