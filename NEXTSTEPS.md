@@ -24,17 +24,17 @@ one was diagnosed against the source during the 8 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-1 -- make the queue reject unclaimable work.**
-   Close the queue-schema hole before the lane reaches another malformed item:
-   validate the exact proof and file-list shapes, cover them with regression
-   fixtures, and add a read-only `slice.ps1 doctor` preflight that uses the
-   same candidate validation as `start`.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-1 — make the queue reject unclaimable work"
-   - Files: `tools/check_docs.py`, `tools/slice.ps1`,
-     `tests/test_source_checks.py`, `plans/now/codex-reliability.md`
-   - Check: deterministic tooling tests and `tools/verify.ps1`
-   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceDoctor`
-   - Next after: CR-2 (make the standard runtime self-discovering)
+1. **[Codex] CR-2 -- make the standard runtime self-discovering.**
+   Verification should locate Codex's bundled Python without a PATH edit;
+   closeout keeps an explicit override, and `doctor` reports every runtime,
+   Git-identity, ownership, remote and metadata-write failure in one pass.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-2 — make the standard runtime self-discovering"
+   - Files: `tools/verify.ps1`, `tools/slice.ps1`,
+     `tests/test_source_checks.py`, `.codex/config.toml`,
+     `plans/now/codex-reliability.md`
+   - Check: deterministic tooling tests and `tools/verify.ps1` with no PATH edit
+   - Proof: `absent: tools/verify.ps1 :: codex-primary-runtime`
+   - Next after: CR-3 (align permissions with the intended Git lifecycle)
 
 2. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which

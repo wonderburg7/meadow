@@ -108,23 +108,7 @@ are both expected to append to that file.
 
 ### CR-1 — make the queue reject unclaimable work
 
-Small, immediate tooling/documentation slice.
-
-1. Change `check_queue_proofs` so a missing backticked match is an error even
-   when a textual `Proof:` label exists. Add regression fixtures for missing,
-   unbackticked, malformed, false and valid proofs.
-2. Reject placeholder `Files:` values. Every queue item must enumerate the
-   exact repository-relative files used by the overlap checker. An item with
-   an already-registered worktree is grandfathered only until that worktree
-   closes, so adopting this rule cannot strand an in-progress lane.
-3. Add a read-only `slice.ps1 doctor -Lane Codex|Claude` mode that parses and
-   validates the same candidate object as `start` without modifying Git.
-4. Remove SB-1 from the runnable queue until both its exact proof/files and
-   its required baseline simulation pass `doctor`; then restore it with
-   `absent: scripts/game_config.gd :: peak_season_strength` as its proof.
-
-Acceptance: the current placeholder proof makes both documentation validation
-and `doctor` fail with the same actionable message before any Git mutation.
+Completed 2026-09-08; archived at `plans/archive/CR-1_2026-09-08.md`.
 
 ### CR-2 — make the standard runtime self-discovering
 
