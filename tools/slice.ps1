@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("start", "finish")]
+    [ValidateSet("start", "finish", "doctor")]
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
@@ -40,7 +40,9 @@ function Get-NextUpItems {
     $chunks = [regex]::Split($section, '(?m)^\d+\.\s+') | Where-Object { $_.Trim() -ne "" }
 
     $items = @()
+    $itemNumber = 0
     foreach ($chunk in $chunks) {
+        $itemNumber++
         $trimmed = $chunk.Trim()
         $headMatch = [regex]::Match(
             $trimmed,
@@ -71,7 +73,8 @@ function Get-NextUpItems {
             '(?m)^\s*-\s*Check:\s*(.*?)(?=^\s*-\s[A-Z]|\z)',
             [System.Text.RegularExpressions.RegexOptions]::Singleline
         )
-        $proofMatch = [regex]::Match($chunk, '(?m)^\s*-\s*Proof:\s*`([^`]*)`')
+        $proofLabelMatch = [regex]::Match($chunk, '(?m)^\s*-\s*Proof:\s*(.*?)\s*$')
+        $proofMatch = [regex]::Match($chunk, '(?m)^\s*-\s*Proof:\s*`([^`]*)`\s*$')
         $nextAfterMatch = [regex]::Match(
             $chunk,
             '(?m)^\s*-\s*Next after:\s*(.*?)(?=^\s*-\s[A-Z]|\z)',
@@ -91,18 +94,21 @@ function Get-NextUpItems {
         if ($filesMatch.Success) {
             $files = [regex]::Matches($filesMatch.Groups[1].Value, '`([^`]+)`') |
                 ForEach-Object { $_.Groups[1].Value } |
-                Where-Object { $_ -match "/" }
+                Where-Object { $_.Trim() -ne "" }
         }
 
         $items += [PSCustomObject]@{
+            ItemNumber = $itemNumber
             Lane    = $headMatch.Groups["lane"].Value
             Id      = $headMatch.Groups["id"].Value
             Title   = ($headMatch.Groups["title"].Value -replace '\s+', ' ').Trim()
             Plan    = $planFile
             Heading = $heading
             Files   = $files
+            FilesRaw = if ($filesMatch.Success) { $filesMatch.Groups[1].Value.Trim() } else { "" }
             Check   = if ($checkMatch.Success) { ($checkMatch.Groups[1].Value -replace '\s+', ' ').Trim() } else { "" }
             Proof   = if ($proofMatch.Success) { $proofMatch.Groups[1].Value.Trim() } else { "" }
+            HasProofLabel = $proofLabelMatch.Success
             NextAfter = if ($nextAfterMatch.Success) { ($nextAfterMatch.Groups[1].Value -replace '\s+', ' ').Trim() } else { "" }
         }
     }
@@ -140,6 +146,60 @@ function Get-LaneTrailer {
     return "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 }
 
+function Test-RepositoryRelativePath {
+    param([string]$Path)
+
+    if (-not $Path -or [System.IO.Path]::IsPathRooted($Path)) {
+        return $false
+    }
+    if ($Path.Contains('://') -or -not [System.IO.Path]::GetExtension($Path)) {
+        return $false
+    }
+    return -not (($Path -split '[\\/]') -contains '..')
+}
+
+function Assert-CandidateDefinition {
+    param(
+        [string]$Root,
+        [object]$Candidate
+    )
+
+    $itemNumber = $Candidate.ItemNumber
+    if (-not $Candidate.Plan -or -not $Candidate.Heading) {
+        throw "NEXTSTEPS.md item ${itemNumber}: Plan: must be ``<path>`` -- <heading>"
+    }
+
+    $filesResidue = [regex]::Replace($Candidate.FilesRaw, '`[^`]+`', '') -replace '[\s,]', ''
+    $invalidFiles = @($Candidate.Files | Where-Object { -not (Test-RepositoryRelativePath -Path $_) })
+    if (-not $Candidate.Files -or $filesResidue -or $invalidFiles) {
+        throw "NEXTSTEPS.md item ${itemNumber}: Files: must contain only backticked repository-relative paths separated by commas; placeholder prose is not allowed"
+    }
+
+    if (-not $Candidate.Proof) {
+        $detail = if ($Candidate.HasProofLabel) { "must be backticked" } else { "missing" }
+        throw "NEXTSTEPS.md item ${itemNumber}: Proof: $detail; use ``present|absent: <path> :: <substring>``"
+    }
+
+    $parts = $Candidate.Proof.Split(":", 2)
+    $mode = if ($parts.Count -gt 0) { $parts[0].Trim() } else { "" }
+    if ($parts.Count -ne 2 -or $mode -notin @("present", "absent")) {
+        throw "NEXTSTEPS.md item ${itemNumber}: Proof: must start with 'present:' or 'absent:', got ``$($Candidate.Proof)``"
+    }
+
+    $pathAndNeedle = $parts[1].Trim() -split '::', 2
+    $relPath = if ($pathAndNeedle.Count -gt 0) { $pathAndNeedle[0].Trim() } else { "" }
+    $needle = if ($pathAndNeedle.Count -gt 1) { $pathAndNeedle[1].Trim() } else { "" }
+    if ($pathAndNeedle.Count -ne 2 -or -not $relPath -or -not $needle -or
+        -not (Test-RepositoryRelativePath -Path $relPath)) {
+        throw "NEXTSTEPS.md item ${itemNumber}: Proof: must be ``${mode}: <path> :: <substring>``, got ``$($Candidate.Proof)``"
+    }
+
+    $target = Join-Path $Root $relPath
+    if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
+        throw "NEXTSTEPS.md item ${itemNumber}: Proof: names a file that does not exist: $relPath"
+    }
+}
+
 function Test-Proof {
     param([string]$Root, [string]$ProofLine)
 
@@ -173,28 +233,29 @@ function Test-Proof {
     }
 }
 
-function Invoke-SliceStart {
+function Get-SlicePreflight {
     param([string]$Lane)
 
     if (-not $Lane) {
-        Write-Error "start requires -Lane Claude|Codex"
-        exit 1
+        throw "the command requires -Lane Claude|Codex"
     }
 
     $root = Get-PrimaryRoot
+    $items = Get-NextUpItems -Root $root
+    $candidate = $items | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
+    if (-not $candidate) {
+        throw "no unclaimed [$Lane] item in NEXTSTEPS.md"
+    }
+
+    Assert-CandidateDefinition -Root $root -Candidate $candidate
+    if (-not (Test-Proof -Root $root -ProofLine $candidate.Proof)) {
+        throw "NEXTSTEPS.md item $($candidate.ItemNumber): proof no longer holds -- this may already be built. Open $($candidate.Proof.Split(':', 2)[1].Split('::', 2)[0].Trim()) before requeuing it."
+    }
 
     $ledgerRows = Get-LedgerLaneRows -Root $root
     $existingLaneRow = $ledgerRows | Where-Object { $_.Lane -eq $Lane }
     if ($existingLaneRow) {
-        Write-Error "$Lane lane already has an open worktree ($($existingLaneRow.Worktree)) -- finish or abandon it first"
-        exit 1
-    }
-
-    $items = Get-NextUpItems -Root $root
-    $candidate = $items | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
-    if (-not $candidate) {
-        Write-Error "no unclaimed [$Lane] item in NEXTSTEPS.md"
-        exit 1
+        throw "$Lane lane already has an open worktree ($($existingLaneRow.Worktree)) -- finish or abandon it first"
     }
 
     $id = $candidate.Id
@@ -205,18 +266,63 @@ function Invoke-SliceStart {
 
     $branchExists = (git -C $root branch --list $branch)
     if ($branchExists) {
-        Write-Error "$id -- branch $branch already exists"
-        exit 1
+        throw "$id -- branch $branch already exists"
     }
     if (Test-Path -LiteralPath $worktreePath) {
-        Write-Error "$id -- worktree $worktreeRelative already exists"
+        throw "$id -- worktree $worktreeRelative already exists"
+    }
+
+    return [PSCustomObject]@{
+        Root = $root
+        Candidate = $candidate
+        Id = $id
+        Branch = $branch
+        WorktreeRelative = $worktreeRelative
+        WorktreePath = $worktreePath
+    }
+}
+
+function Invoke-SliceDoctor {
+    param([string]$Lane)
+
+    try {
+        $preflight = Get-SlicePreflight -Lane $Lane
+    }
+    catch {
+        Write-Error $_.Exception.Message
         exit 1
     }
 
-    if (-not (Test-Proof -Root $root -ProofLine $candidate.Proof)) {
-        Write-Error "$id -- proof no longer holds -- open $($candidate.Plan); do not start this slice"
+    [ordered]@{
+        status   = "ready"
+        id       = $preflight.Id
+        lane     = $Lane
+        plan     = $preflight.Candidate.Plan
+        heading  = $preflight.Candidate.Heading
+        files    = $preflight.Candidate.Files
+        check    = $preflight.Candidate.Check
+        proof    = $preflight.Candidate.Proof
+        branch   = $preflight.Branch
+        worktree = $preflight.WorktreeRelative
+    } | ConvertTo-Json -Compress
+}
+
+function Invoke-SliceStart {
+    param([string]$Lane)
+
+    try {
+        $preflight = Get-SlicePreflight -Lane $Lane
+    }
+    catch {
+        Write-Error $_.Exception.Message
         exit 1
     }
+
+    $root = $preflight.Root
+    $candidate = $preflight.Candidate
+    $id = $preflight.Id
+    $branch = $preflight.Branch
+    $worktreeRelative = $preflight.WorktreeRelative
 
     $ledgerPath = Join-Path $root "plans\workstreams.md"
     $row = "| ``$worktreeRelative`` (``$branch``) | $Lane | $($candidate.Title) | $Lane | in progress | none | ``$($candidate.Plan)`` $($candidate.Heading) |"
@@ -457,4 +563,5 @@ function Invoke-SliceFinish {
 switch ($Command) {
     "start"  { Invoke-SliceStart -Lane $Lane }
     "finish" { Invoke-SliceFinish }
+    "doctor" { Invoke-SliceDoctor -Lane $Lane }
 }
