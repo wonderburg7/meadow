@@ -43,7 +43,7 @@ static func left_window_max_height(
 	var floor_y: float = viewport_height
 	if bottom_row_top > 0.0:
 		floor_y = bottom_row_top
-	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP)
+	return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP - panel_chrome_height())
 
 ## The tallest the bottom-row command tray may be: everything between the
 ## top of the screen and its own bottom margin, less the shared clearance.

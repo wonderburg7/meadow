@@ -107,16 +107,14 @@ same at 1.13 for pollen; both stop at stage end.
 
 Owner: `plans/now/challenge-1.md` Slice 14.
 
-### C-19 -- left-side windows leave a real gap above the summary panel
+### C-19 -- left-side windows leave a true 16px gap above the summary panel
 
-Open Colony, then Foraging, then Nursery at a short viewport height with
-nothing selected -- each should still fill down close to the bottom edge.
-With one open, select a bee and then a comb cell.
+With a bee selected, open Colony, then Foraging, then Nursery in turn at
+1280x720, then at 800x600.
 
-PASS: the open window shortens so a clear gap sits between its bottom edge
-and the top of the summary panel, and that gap looks the same size as the gap
-between the summary panel and the left edge of the screen. Contents scroll
-inside the smaller area, and the window grows back on deselecting.
+PASS: the visible gap between the bottom of the open window and the top of
+the summary panel is the same as the gap between the summary panel and the
+left screen edge.
 
 Owner: `plans/now/ui-windows.md` UI-W-1.
 

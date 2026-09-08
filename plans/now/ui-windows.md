@@ -1,7 +1,7 @@
 # The left-side windows and the settings window — Dave's 8 Sep 2026 second pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-W-1 -- left-side windows leave a true 16px gap | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-W-2 -- the nursery donut's key follows the chosen typeface | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
 
 **Objective.** Colony, Foraging and Nursery sit clear of the bottom row at
 every viewport height, draw all their text in the chosen typeface and scale,
@@ -11,100 +11,35 @@ and open the way the player left them rather than pre-expanded.
 its main clause -- the windows do shorten and scroll rather than covering the
 summary panel -- and returned three separate defects alongside it. C-22
 passed and returned one ask about the other end of the same behaviour. Those
-four are UI-W-1 to UI-W-4.
+four were UI-W-1 to UI-W-4.
 
 **The panel hierarchy these obey** is in
 `plans/now/ui-layout-ownership.md`: command tray, then the bottom row's side
-bands, then these windows, each separated by 16px. UI-W-1 is this file's half
-of that repair; UI-T-6 was the bottom row's half (shipped 2026-09-08,
+bands, then these windows, each separated by 16px. UI-W-1 was this file's
+half of that repair, shipped 2026-09-08 (`plans/archive/UI-W-1_2026-09-08.md`);
+UI-T-6 was the bottom row's half (shipped 2026-09-08,
 `plans/archive/UI-T-6_2026-09-08.md`), and LAY-1 consolidates both.
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-W-1 | A real 16px gap between a left window and the summary panel | `ui_layout.gd`, `colony_panel.gd`, `foraging_panel.gd`, `nursery_panel.gd` | yes | low |
 | UI-W-2 | The nursery donut's key follows the chosen typeface and text scale | `nursery_panel.gd`, `colony_panel.gd` | yes | low |
 | UI-W-3 | Left-side windows open with every section collapsed | `colony_panel.gd`, `foraging_panel.gd` | yes | low |
 | UI-W-4 | The pre-run Settings button opens nothing pre-expanded | `main_menu.gd` | yes | low |
 
-**Dependencies, stated rather than implied.** None between them. UI-W-1 and
-UI-W-3 both edit `colony_panel.gd` and `foraging_panel.gd`, and UI-W-1 and
-UI-W-2 both edit `nursery_panel.gd` and `colony_panel.gd`, so all four belong
-to **one lane** worked top to bottom -- they must not be split across the two
-lanes or they will collide on merge.
+**Dependencies, stated rather than implied.** None between them. UI-W-3 edits
+`colony_panel.gd` and `foraging_panel.gd`, which UI-W-2 also edits (only
+`colony_panel.gd`), so all three belong to **one lane** worked top to bottom
+-- they must not be split across the two lanes or they will collide on merge.
 
-**Required reading for any slice here.** This file's own section, plus
-`scripts/ui_layout.gd` for UI-W-1 only. `plans/now/ui.md`'s "Durable rules"
-apply to all four.
+**Required reading for any slice here.** This file's own section.
+`plans/now/ui.md`'s "Durable rules" apply to all three.
 
-**Check ids.** C-19 is re-filed by UI-W-1. C-26 is UI-W-2's. C-27 covers
+**Check ids.** C-19 was re-filed by UI-W-1. C-26 is UI-W-2's. C-27 covers
 UI-W-3 and UI-W-4 together, since both are "sections start collapsed" and
 Dave would run them in one sitting. C-28 belongs to LAY-1 in
 `plans/now/ui-layout-ownership.md`.
-
-## UI-W-1 — left-side windows leave a true 16px gap
-
-**Reasoning level: low.** One arithmetic correction in a pure function, plus
-the same one-line change in three panels. The cause is known and stated
-below; there is nothing to investigate and nothing to decide.
-
-**Evidence (Dave, 8 Sep 2026, C-19).** "While the left-side windows shorten
-and scroll appropriately, there should be a 16px gap between the left-side
-windows and the summary panel. Currently the menu does not react to the size
-of the summary panel to make the appropriate gap, and at times this
-overlaps." He also asked to "have these windows resize dynamically" -- they
-already do, via `hud.gd`'s `bottom_row_changed` signal, which UI-T-2 added
-and which C-19's main clause confirmed working. Nothing is needed for that
-clause; it is the gap that is wrong, not the reaction.
-
-**Cause.** `UiLayout.left_window_max_height` returns
-
-```gdscript
-return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP)
-```
-
-which is correct for the window's **outer** rectangle. Each panel then
-applies it to `scroll_container.custom_minimum_size.y`, which sits **inside**
-a `PanelContainer` carrying `UiTheme.panel_stylebox()`: 8px content margin
-top and bottom plus a 2px border each side, so 20px the sum never accounted
-for. The finished panel is 20px taller than its budget, which eats the whole
-16px gap and leaves 4px of overlap. That is why Dave sees a gap most of the
-time and an overlap sometimes -- it depends on where the rounding falls.
-
-**Deliver.**
-
-1. `UiLayout.panel_chrome_height() -> float` already exists, landed by UI-T-6
-   (shipped 2026-09-08, `plans/archive/UI-T-6_2026-09-08.md`): it returns
-   `content_margin_top + content_margin_bottom` of `UiTheme.panel_stylebox()`
-   plus its top and bottom border widths. Use it as it stands and add
-   nothing.
-2. Subtract it inside `left_window_max_height`, so the function keeps
-   returning an outer-rectangle budget and the panels keep applying it
-   unchanged:
-
-   ```gdscript
-   static func left_window_max_height(
-       viewport_height: float, top: float, bottom_row_top: float = 0.0
-   ) -> float:
-       var floor_y: float = viewport_height
-       if bottom_row_top > 0.0:
-           floor_y = bottom_row_top
-       return maxf(120.0, floor_y - top - SELECTION_TRAY_GAP - panel_chrome_height())
-   ```
-
-3. Nothing changes in `colony_panel.gd`, `foraging_panel.gd` or
-   `nursery_panel.gd`. They are listed on this slice's `Files:` line only so
-   the lane bookkeeping is honest about what the change is felt in.
-
-**Do not change** `left_window_top`, the `bottom_row_changed` signal or any
-panel's `_on_bottom_row_changed`. Dave confirmed all three working.
-
-**Check to file:** re-file C-19 with its passing clauses removed and one new
-clause: with a bee selected at 1280x720 and at 800x600, the visible gap
-between the bottom of an open left-side window and the top of the summary
-panel is the same as the gap between the summary panel and the left screen
-edge.
 
 ## UI-W-2 — the nursery donut's key follows the chosen typeface and text scale
 
