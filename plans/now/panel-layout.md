@@ -1,7 +1,7 @@
 # Persistent panel rectangles — the anchor bug and its guard rail
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: LAY-2, the command tray's bottom pin | Dependency: none — LAY-2 is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: LAY-3, the left-side windows' gap and growing sections | Dependency: none — LAY-3 is startable today | Verified: 2026-09-09
 
 **Objective.** A persistent HUD panel stays inside the viewport with a 16px
 gap from its neighbours, on every pass, at every supported size — and a
@@ -11,9 +11,12 @@ round trip.
 **State.** Dave's 9 Sep 2026 pass found the command tray off the bottom edge
 for the fourth time (C-18), the left-side windows' gap too big for the second
 time (C-19), and the nursery donut's key under the scrollbar (C-26). C-7 and
-C-5 could not be run at all, because both need the tray's buttons. The root
-cause of the tray failures is stated below and had never been written down;
-LAY-1 refactored the call sites around it without removing it.
+C-5 could not be run at all, because both need the tray's buttons. **LAY-2
+has landed** (`plans/archive/LAY-2_2026-09-09.md`): `ui_panel_layout.gd::apply()`
+now writes a persistent panel's rectangle through offsets only, C-18 is
+re-filed in `checks/ready.md` awaiting Dave's pass, and C-7/C-5 are unblocked
+back into `checks/ready.md` alongside it. LAY-1 had refactored the call sites
+around the root cause without removing it; LAY-2 removes it.
 
 ## Why this kept coming back
 
@@ -49,12 +52,11 @@ reason for the repeat, and LAY-2 removes it rather than re-tuning a number.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| LAY-2 | Panel rectangles are written through offsets only; the tray stays on screen | `ui_panel_layout.gd`, `ui_layout.gd`, `hud.gd` | yes | medium |
-| LAY-3 | The left-side windows' gap is a true 16px, and they grow when a section is expanded | `ui_layout.gd`, `colony_panel.gd`, `foraging_panel.gd`, `nursery_panel.gd` | after LAY-2 | low |
-| LAY-4 | The nursery donut's key clears the scrollbar at every text scale | `nursery_panel.gd`, `ui_layout.gd` | after LAY-2 | low |
+| LAY-3 | The left-side windows' gap is a true 16px, and they grow when a section is expanded | `ui_layout.gd`, `colony_panel.gd`, `foraging_panel.gd`, `nursery_panel.gd` | yes | low |
+| LAY-4 | The nursery donut's key clears the scrollbar at every text scale | `nursery_panel.gd`, `ui_layout.gd` | yes | low |
 
-LAY-3 and LAY-4 both build on the `apply()` signature LAY-2 lands, so both
-follow it, and they are independent of each other after that.
+Both build on the `apply()` signature LAY-2 landed, and are independent of
+each other.
 
 **The guard rail is LAY-5, in `plans/now/layout-regression.md`.** It asserts
 the rule LAY-2 establishes and owns tooling files rather than UI ones, so it
@@ -70,95 +72,7 @@ row's side bands, then the left-side windows, 16px apart) or the values in
 gap between the tray and the summary window is correct. Every slice here is
 about the vertical axis and the scrollbar gutter.
 
-## LAY-2 — write a persistent panel's rectangle through offsets only
-
-**Minimum reasoning level: medium.**
-
-**Change 1 — `scripts/ui_panel_layout.gd::apply()` never touches `size`.**
-Replace the body so every assignment is to an offset. Add a fourth parameter
-`bottom_margin: float = -1.0`; a value `>= 0.0` means the panel is pinned that
-many pixels above the viewport's bottom edge, and a negative value means it is
-pinned at `rect.position.y` from the top.
-
-```gdscript
-static func apply(panel: PanelContainer, scroll: ScrollContainer, rect: Rect2,
-		bottom_margin: float = -1.0) -> void:
-	# Horizontal. Every persistent panel here uses anchor_left =
-	# anchor_right = 0 (PRESET_TOP_LEFT and PRESET_BOTTOM_LEFT both do),
-	# so these two offsets are the rectangle's left and right edges outright.
-	panel.anchor_left = 0.0
-	panel.anchor_right = 0.0
-	panel.offset_left = rect.position.x
-	panel.offset_right = rect.position.x + rect.size.x
-
-	if scroll != null:
-		var budget: Vector2 = rect.size - UiLayout.panel_chrome()
-		budget.x = maxf(0.0, budget.x)
-		budget.y = maxf(0.0, budget.y)
-		var content := scroll.get_child(0) as Control
-		if content != null:
-			budget.y = minf(budget.y, content.get_combined_minimum_size().y)
-		scroll.custom_minimum_size = budget
-
-	# Vertical. rect.size.y is the ceiling; the panel hugs shorter content.
-	var height: float = minf(panel.get_combined_minimum_size().y, rect.size.y)
-	if bottom_margin >= 0.0:
-		panel.anchor_top = 1.0
-		panel.anchor_bottom = 1.0
-		panel.offset_bottom = -bottom_margin
-		panel.offset_top = panel.offset_bottom - height
-	else:
-		panel.anchor_top = 0.0
-		panel.anchor_bottom = 0.0
-		panel.offset_top = rect.position.y
-		panel.offset_bottom = rect.position.y + height
-```
-
-Rewrite the function's doc comment to say why: `set_size()` recomputes all
-four offsets from the cached position, so it converts a bottom pin into a top
-pin, and this file is the one place allowed to size a persistent panel.
-
-**Change 2 — `summary_panel_rect()` gains a real ceiling.** In
-`scripts/ui_layout.gd`, change it to
-`Rect2(SELECTION_TRAY_LEFT_MARGIN, 0.0, selection_tray_width(viewport_size.x),
-command_tray_max_height(viewport_size.y))` and update its comment: the height
-is now the same ceiling the tray gets, not an unused placeholder.
-
-**Change 3 — `hud.gd::_update_command_tray_width()` stops setting `size.x`.**
-Delete the `command_tray.size.x = tray_width` line and the comment above it.
-Nothing replaces it: LAY-2's `apply()` owns both horizontal offsets, and
-`_update_command_tray_width` is always followed by `_resize_command_tray`,
-which calls `apply()`. Keep the `offset_left` assignment and the three
-`custom_minimum_size.x = 0.0` resets; keep the early return.
-
-**Change 4 — `hud.gd::_resize_command_tray()` loses both `reset_size()`
-calls.** The function becomes: early return, `_update_command_tray_width()`,
-`command_scroll.custom_minimum_size.y = 0.0`, build the rect, then
-`UiPanelLayout.apply(command_tray, command_scroll, rect,
-UiLayout.BOTTOM_ROW_MARGIN)`. No `reset_size()` anywhere — `apply()` now sets
-the height explicitly, and `reset_size()` is exactly the call that destroyed
-the pin.
-
-**Change 5 — `hud.gd::_apply_selection_tray_width()` pins its bottom too.**
-Change its `UiPanelLayout.apply(selection_panel, null, rect)` call to
-`UiPanelLayout.apply(selection_panel, null, rect,
-UiLayout.BOTTOM_ROW_MARGIN)`. Leave the `selection_column.custom_minimum_size.x`
-line below it exactly as it is.
-
-**Out of scope, deliberately.** The summary panel has no `ScrollContainer`, so
-content taller than its new ceiling would clip rather than scroll. It has
-never been that tall and Dave confirmed it on screen on 9 Sep. Do not add a
-scroll to it in this slice.
-
-**Acceptance.** At 1920x1080, 1280x720 and 800x600, select a bee, then a comb
-cell, then open `More…`, then select a bee again. The whole command tray is on
-screen every time, its Job, Focus and Orders buttons are visible and
-clickable, and its bottom edge stays 16px above the window's bottom edge
-throughout. Opening `More…` grows the tray upwards or gives it a scrollbar; it
-never pushes anything below the window edge. Re-files C-18.
-
-**Proof the defect is present:** `absent: scripts/ui_panel_layout.gd ::
-bottom_margin`.
+LAY-2's specification archived to `plans/archive/LAY-2_2026-09-09.md`.
 
 ## LAY-3 — the left-side windows' gap, and growing when a section opens
 
