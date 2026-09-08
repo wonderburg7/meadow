@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-Q-3` (`claude/UI-Q-3`) | Claude | a message may not be cut to a fraction of its dwell. | Claude | in progress | none | `plans/now/ui-bottom-row.md` "UI-Q-3 — a message may not be cut to a fraction of its dwell" |
