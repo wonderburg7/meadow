@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-W-2` (`claude/UI-W-2`) | Claude | the nursery donut's key follows the chosen typeface. | Claude | in progress | none | `plans/now/ui-windows.md` "UI-W-2 — the nursery donut's key follows the chosen typeface and text scale" |
