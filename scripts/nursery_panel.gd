@@ -423,6 +423,7 @@ func _refresh_ring(live: Dictionary) -> void:
 		total += int(live[key])
 	ring_slices = []
 	if total <= 0:
+		_update_ring_min_height()
 		ring.queue_redraw()
 		return
 	for key in row_order():
@@ -436,6 +437,7 @@ func _refresh_ring(live: Dictionary) -> void:
 			"count": count,
 			"tag": _key_tag(key),
 		})
+	_update_ring_min_height()
 	ring.queue_redraw()
 	# The ring answers "what shape is the colony", which is a question
 	# about proportions -- so the key gives the share as well as the
@@ -467,6 +469,15 @@ func _refresh_emergence(emerged: Dictionary, window: float) -> void:
 	emergence_label.text = "\n".join(lines)
 	corner_texts["nursery_output"] = "Emerging — %s" % ", ".join(lines)
 
+## The legend grows one line per slice, at whatever line height the
+## current typeface/text scale produces -- so it follows the reader's
+## settings instead of clipping at a size tuned for the default font.
+func _update_ring_min_height() -> void:
+	var line_height := float(ring.get_theme_font_size("font_size", "Small"))
+	ring.custom_minimum_size.y = maxf(
+		150.0, ring_slices.size() * (line_height + 4.0) + 12.0
+	)
+
 ## A donut, drawn as a run of thick arcs. Slices under a couple of degrees
 ## are still drawn -- a role with one bee in a colony of eighty should
 ## show as a sliver rather than disappear.
@@ -474,6 +485,12 @@ func _draw_ring() -> void:
 	var centre := Vector2(75, 75)
 	var radius := 52.0
 	var thickness := 22.0
+	var font := ring.get_theme_font("font", "Small")
+	var font_size := ring.get_theme_font_size("font_size", "Small")
+	# The colour-blind tag on the ring itself sits inside the arc, so it
+	# stays a little smaller than the legend text -- scaled off the
+	# looked-up size rather than a literal, so it still tracks text scale.
+	var tag_font_size := int(round(font_size * 10.0 / 11.0))
 
 	if ring_slices.is_empty():
 		ring.draw_arc(centre, radius, 0.0, TAU, 48, Color(0.4, 0.4, 0.45, 0.6), thickness)
@@ -488,15 +505,15 @@ func _draw_ring() -> void:
 		if Session.colour_blind_mode and sweep > 0.35:
 			var mid: float = angle + sweep * 0.5
 			ring.draw_string(
-				ThemeDB.fallback_font,
+				font,
 				centre + Vector2(cos(mid), sin(mid)) * radius + Vector2(-7, 4),
-				slice.tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.08, 0.08, 0.1)
+				slice.tag, HORIZONTAL_ALIGNMENT_LEFT, -1, tag_font_size, Color(0.08, 0.08, 0.1)
 			)
 		angle += sweep
 
 	# legend down the right-hand side
 	var y := 6.0
-	var font := ThemeDB.fallback_font
+	var line_height := float(font_size) + 4.0
 	for slice in ring_slices:
 		ring.draw_rect(Rect2(Vector2(150, y), Vector2(10, 10)), slice.colour, true)
 		var text: String = "%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0]
@@ -507,6 +524,6 @@ func _draw_ring() -> void:
 			text = "[%s] %s" % [slice.tag, text]
 		ring.draw_string(
 			font, Vector2(166, y + 10), text,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UiTheme.color("text_primary")
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.color("text_primary")
 		)
-		y += 15.0
+		y += line_height

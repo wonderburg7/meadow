@@ -318,11 +318,12 @@ func _draw_plot() -> void:
 	var frame := Rect2(Vector2(34, 6), Vector2(max(40.0, size.x - 42.0), max(30.0, size.y - 30.0)))
 	plot.draw_rect(frame, Color(0.12, 0.13, 0.16, 0.7), true)
 
-	var font := ThemeDB.fallback_font
+	var font := plot.get_theme_font("font", "Small")
+	var font_size := plot.get_theme_font_size("font_size", "Small")
 	if history.size() < 2:
 		plot.draw_string(
 			font, frame.position + Vector2(8, 22), "Not enough history yet.",
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UiTheme.color("text_secondary")
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.color("text_secondary")
 		)
 		return
 
@@ -351,13 +352,17 @@ func _draw_plot() -> void:
 		frame.position + frame.size,
 		Color(0.5, 0.52, 0.58), 1.0
 	)
+	# The axis numbers sit inside a narrow left margin, so they stay a
+	# touch smaller than the legend text -- scaled off the looked-up size
+	# rather than a literal, so it still tracks text scale.
+	var axis_font_size := int(round(font_size * 10.0 / 11.0))
 	plot.draw_string(
 		font, Vector2(2, frame.position.y + 10), "%d" % int(highest),
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UiTheme.color("text_secondary")
+		HORIZONTAL_ALIGNMENT_LEFT, -1, axis_font_size, UiTheme.color("text_secondary")
 	)
 	plot.draw_string(
 		font, Vector2(2, frame.position.y + frame.size.y), "0",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UiTheme.color("text_secondary")
+		HORIZONTAL_ALIGNMENT_LEFT, -1, axis_font_size, UiTheme.color("text_secondary")
 	)
 
 	var latest: float = float(history[count - 1].get(plot_series, 0.0))

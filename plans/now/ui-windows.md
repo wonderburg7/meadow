@@ -1,7 +1,7 @@
 # The left-side windows and the settings window — Dave's 8 Sep 2026 second pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-W-2 -- the nursery donut's key follows the chosen typeface | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-W-3 -- left-side windows open with every section collapsed | Dependency: none -- every slice here is startable now | Verified: 2026-09-08
 
 **Objective.** Colony, Foraging and Nursery sit clear of the bottom row at
 every viewport height, draw all their text in the chosen typeface and scale,
@@ -18,73 +18,25 @@ four were UI-W-1 to UI-W-4.
 bands, then these windows, each separated by 16px. UI-W-1 was this file's
 half of that repair, shipped 2026-09-08 (`plans/archive/UI-W-1_2026-09-08.md`);
 UI-T-6 was the bottom row's half (shipped 2026-09-08,
-`plans/archive/UI-T-6_2026-09-08.md`), and LAY-1 consolidates both.
+`plans/archive/UI-T-6_2026-09-08.md`), and LAY-1 consolidates both. UI-W-2
+shipped 2026-09-08 (`plans/archive/UI-W-2_2026-09-08.md`).
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-W-2 | The nursery donut's key follows the chosen typeface and text scale | `nursery_panel.gd`, `colony_panel.gd` | yes | low |
 | UI-W-3 | Left-side windows open with every section collapsed | `colony_panel.gd`, `foraging_panel.gd` | yes | low |
 | UI-W-4 | The pre-run Settings button opens nothing pre-expanded | `main_menu.gd` | yes | low |
 
-**Dependencies, stated rather than implied.** None between them. UI-W-3 edits
-`colony_panel.gd` and `foraging_panel.gd`, which UI-W-2 also edits (only
-`colony_panel.gd`), so all three belong to **one lane** worked top to bottom
--- they must not be split across the two lanes or they will collide on merge.
+**Dependencies, stated rather than implied.** None between them.
 
 **Required reading for any slice here.** This file's own section.
-`plans/now/ui.md`'s "Durable rules" apply to all three.
+`plans/now/ui.md`'s "Durable rules" apply to both.
 
-**Check ids.** C-19 was re-filed by UI-W-1. C-26 is UI-W-2's. C-27 covers
+**Check ids.** C-19 was re-filed by UI-W-1. C-26 was UI-W-2's. C-27 covers
 UI-W-3 and UI-W-4 together, since both are "sections start collapsed" and
 Dave would run them in one sitting. C-28 belongs to LAY-1 in
 `plans/now/ui-layout-ownership.md`.
-
-## UI-W-2 — the nursery donut's key follows the chosen typeface and text scale
-
-**Reasoning level: low.** Two hard-coded font lookups become themed ones.
-
-**Evidence (Dave, 8 Sep 2026, C-19).** "Nursery zone's 'The colony now' key
-does not use the selected font." The heading itself is a themed `Label`; the
-**key** beside the donut is not a Label at all. `nursery_panel.gd::_draw_ring`
-draws it with
-
-```gdscript
-var font := ThemeDB.fallback_font
-ring.draw_string(font, Vector2(166, y + 10), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ...)
-```
-
-so it ignores both `Session.ui_typeface` and `Session.text_scale`. The
-colour-blind slice tag ten lines above it (`ThemeDB.fallback_font`, size 10)
-has the same fault, and `colony_panel.gd:321` has a third instance in the
-over-time plot's axis labels.
-
-**Deliver.** In all three places, take the font and size from the theme the
-panel is already using rather than from `ThemeDB`:
-
-- font: `ring.get_theme_font("font", "Small")` (and the equivalent on
-  `colony_panel.gd`'s plot control), which resolves through the panel's
-  `UiTheme.build_theme()` and therefore tracks `Session.ui_typeface`;
-- size: `ring.get_theme_font_size("font_size", "Small")`, which tracks
-  `Session.text_scale`, replacing the literal `11` and `10`.
-
-Where a smaller size than "Small" is genuinely wanted for the in-slice tag,
-scale the looked-up size rather than reintroducing a literal.
-
-**Watch the layout.** The key is drawn at fixed offsets into a
-`Control` whose `custom_minimum_size` is `Vector2(300, 150)`, so a larger
-text scale will overflow it. Make that minimum height follow the looked-up
-line height: `150` becomes
-`maxf(150.0, ring_slices.size() * (line_height + 4.0) + 12.0)`, recomputed
-whenever the slices are rebuilt. The width may stay at 300.
-
-**Do not change** the ring geometry, the slice colours, the colour-blind tag
-text or `UiTheme`.
-
-**Check to file:** C-26 -- open the Nursery window, set the text scale to its
-largest and the typeface to each option in turn, and confirm the donut's key
-changes with them and stays inside the window without clipping.
 
 ## UI-W-3 — left-side windows open with every section collapsed
 

@@ -9,9 +9,10 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**UI-W-1 shipped 2026-09-08** (`plans/archive/UI-W-1_2026-09-08.md`): the
-16px gap between a left-side window and the summary panel is now real.
-UI-W-2 takes its place in the queue.
+**UI-W-2 shipped 2026-09-08** (`plans/archive/UI-W-2_2026-09-08.md`): the
+nursery donut's key and the colony over-time plot's axis labels now take
+font and size from their panel's own theme. UI-W-3 takes its place in the
+queue.
 
 Every item below is specified down to the function and the line, because each
 one was diagnosed against the source during the 8 Sep pass.
@@ -37,17 +38,16 @@ one was diagnosed against the source during the 8 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] UI-W-2 -- the nursery donut's key follows the chosen typeface.**
-   `nursery_panel.gd::_draw_ring` draws the donut's key and its colour-blind
-   tag with `ThemeDB.fallback_font` at literal sizes 11 and 10, and
-   `colony_panel.gd:321`'s over-time plot axis labels do the same, so all
-   three ignore `Session.ui_typeface` and `Session.text_scale`. Take font and
-   size from the panel's own theme instead.
-   - Plan: `plans/now/ui-windows.md` -- "UI-W-2 — the nursery donut's key follows the chosen typeface and text scale"
-   - Files: `scripts/nursery_panel.gd`, `scripts/colony_panel.gd`
-   - Check: file C-26
-   - Proof: `present: scripts/nursery_panel.gd :: ThemeDB.fallback_font`
-   - Next after: UI-W-3 (left-side windows open with every section collapsed)
+3. **[Claude] UI-W-3 -- left-side windows open with every section collapsed.**
+   `colony_panel.gd`'s five `_section(column, ..., true)` calls and
+   `foraging_panel.gd`'s three all start expanded; Dave asked for every
+   section to start collapsed, and for `colony_panel.gd`'s remembered
+   `section_open` state to reset on `Session.run_reset`.
+   - Plan: `plans/now/ui-windows.md` -- "UI-W-3 — left-side windows open with every section collapsed"
+   - Files: `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`
+   - Check: file C-27
+   - Proof: `present: scripts/colony_panel.gd :: _section(column, "Needing attention", true)`
+   - Next after: UI-W-4 (the pre-run Settings button opens nothing pre-expanded)
 
 ## Ready, not yet in the queue
 
@@ -55,9 +55,6 @@ These are fully specified and could be started today; they are out of the
 queue only because it is capped at five. Promote them as the lanes drain, in
 this order.
 
-- **UI-W-3** (`plans/now/ui-windows.md`) -- Colony's and Foraging's sections
-  open expanded; they should start collapsed and reset on `Session.run_reset`.
-  Claude lane, after UI-W-2 (shares `colony_panel.gd` and `foraging_panel.gd`).
 - **UI-W-4** (`plans/now/ui-windows.md`) -- the pre-run Settings button opens
   Accessibility and Appearance pre-expanded; one call site in
   `main_menu.gd`. Either lane; it shares no file with anything queued.
