@@ -436,6 +436,18 @@ var warnings_muted: bool = false
 ## player asked for, not an ambient warning).
 var _warning_last_shown: Dictionary = {}
 
+## Guaranteed on-screen time for whichever message is showing, regardless
+## of what arrives next -- see UI-Q-3 in plans/now/ui-bottom-row.md. A
+## strictly higher-severity arrival still pre-empts immediately; anything
+## else waits in _pending_warning until this window closes.
+const MIN_DWELL_SECONDS := 6.0
+var _warning_shown_at: float = -INF
+var _warning_severity: int = -1
+## The one message waiting behind the current one, or empty. A later
+## arrival while something is already pending simply replaces it -- same
+## last-call-wins rule show_warning always had, just deferred.
+var _pending_warning: Dictionary = {}
+
 ## The at-a-glance problem strip, as [text, severity] pairs, kept so the
 ## corner can be rebuilt without main.gd having to resend it.
 var shown_signals: Array = []
@@ -1395,14 +1407,17 @@ func _build_warning_banner() -> void:
 	_style_button(close_btn)
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(28, 28)
-	close_btn.pressed.connect(func(): warning_panel.visible = false)
+	close_btn.pressed.connect(_dismiss_warning)
 	row.add_child(close_btn)
 
 ## `key`/`min_gap` let a producer ask the channel to drop its own repeats
 ## without needing to remember a timestamp itself -- pass both, or neither
 ## for copy that should never be throttled (transactional confirmations,
-## one-off notices).
-func show_warning(text: String, key: String = "", min_gap: float = 0.0) -> void:
+## one-off notices). `severity` defaults to 0 (background information); a
+## message arriving with severity no higher than what's already showing,
+## inside that message's MIN_DWELL_SECONDS, queues instead of replacing it
+## -- see UI-Q-3 in plans/now/ui-bottom-row.md.
+func show_warning(text: String, key: String = "", min_gap: float = 0.0, severity: int = 0) -> void:
 	if warnings_muted:
 		return
 	if key != "":
@@ -1410,14 +1425,32 @@ func show_warning(text: String, key: String = "", min_gap: float = 0.0) -> void:
 		if Session.sim_time - last_shown < min_gap:
 			return
 		_warning_last_shown[key] = Session.sim_time
+
+	if warning_panel.visible and severity <= _warning_severity \
+			and Session.sim_time - _warning_shown_at < MIN_DWELL_SECONDS:
+		_pending_warning = {"text": text, "severity": severity}
+		return
+
+	_show_warning_now(text, severity)
+
+func _show_warning_now(text: String, severity: int) -> void:
 	warning_label.text = text
 	warning_panel.visible = true
 	warning_timer = WARNING_SECONDS
+	_warning_shown_at = Session.sim_time
+	_warning_severity = severity
+	_pending_warning = {}
+
+func _dismiss_warning() -> void:
+	warning_panel.visible = false
+	if not _pending_warning.is_empty():
+		_show_warning_now(_pending_warning.get("text", ""), _pending_warning.get("severity", 0))
 
 func set_warnings_muted(value: bool) -> void:
 	warnings_muted = value
 	if value:
 		warning_panel.visible = false
+		_pending_warning = {}
 
 ## --- object summary (flower / obstacle / death / soil) -------------
 ## Folded into the bottom-left selection panel from four separate
@@ -1695,7 +1728,10 @@ func _process(_delta: float) -> void:
 	Perf.begin("hud")
 	if warning_panel.visible:
 		warning_timer -= _delta
-		if warning_timer <= 0.0:
+		var dwell_elapsed := Session.sim_time - _warning_shown_at >= MIN_DWELL_SECONDS
+		if not _pending_warning.is_empty() and dwell_elapsed:
+			_show_warning_now(_pending_warning.get("text", ""), _pending_warning.get("severity", 0))
+		elif warning_timer <= 0.0:
 			warning_panel.visible = false
 
 	_popup_cadence_elapsed -= _delta

@@ -145,6 +145,18 @@ pre-run menu. Expanding one still works and still holds while that run lasts.
 
 Owner: `plans/now/ui-windows.md` UI-W-3.
 
+### C-4 -- warning banner messages get a guaranteed minimum dwell
+
+Press "Fire test warnings" in the debug panel (epitaph at t=0, crab-spider
+escape at t=+8s, "Run saved." at t=+10s).
+
+PASS: the epitaph shows for several seconds before the escape message
+replaces it; the escape message is not cut to 1-2s -- it stays on screen for
+at least six seconds before "Run saved." takes the banner; none of the three
+is skipped.
+
+Owner: `plans/now/ui-bottom-row.md` UI-Q-3.
+
 ## Decisions waiting on Dave
 
 Not checks -- these need a call rather than a playthrough, and they are here
