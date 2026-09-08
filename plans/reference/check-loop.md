@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: reference -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-09-04
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-09-09
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -70,6 +70,33 @@ disagree.
    `tests/source_checks.py` since P-2 (2026-09-04); a bare numeric literal
    there now fails the build unless it reads `UiLayout` or carries a
    trailing `# fixed-inset` comment.
+
+7. **A repeated failure is a missing instrument, not a missing effort.**
+   The second time a check fails for the same reason, stop fixing the
+   symptom and ask what would have caught it without a human. Runtime facts
+   -- a rectangle's position, a message's dwell, an event's order -- are
+   reachable from the headless scenario runner
+   (`docs/headless-run-contract.md`), and a slice that changes one of them
+   ships the assertion alongside the change. The command tray left the
+   viewport on four passes between 3 and 9 Sep 2026, through three fixes
+   that each adjusted the height it was given and none of which stated the
+   Godot behaviour underneath (`docs/known-pitfalls.md`). That is roughly
+   four days of round trip for one anchor.
+8. **Decisions are raised in the session that needs them.** Dave, 9 Sep
+   2026: "you can ask me decisions in the LLM sessions now rather than write
+   them in the checks -- it was just a temporary request in one session, I
+   didn't intend decisions to go in the checks forever more." Ask, get the
+   answer, and write the answer into the file the rule lives in.
+   `checks/ready.md` holds checks and nothing else. A decision that genuinely
+   cannot be taken this session goes under `NEXTSTEPS.md`'s "Not in the
+   queue, and why", with the choice and its cost stated in one line.
+9. **An ask of Dave names the file, the place in it, and what to type.**
+   Dave, 9 Sep 2026: "you haven't told me where to put the permission
+   setting code. in future make sure if i'm being asked to do something, the
+   steps and locations are explicitly communicated." Describing a change
+   without its location is not an ask, it is a puzzle. Give the repo-relative
+   path, say which part of the file changes, and paste the exact text --
+   whether the ask is in a plan, a queue entry or a session report.
 
 ## Read on demand
 
