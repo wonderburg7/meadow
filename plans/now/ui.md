@@ -23,9 +23,14 @@ and produced the UI-T group below. Everything still open is on this page.
 produced seven slices, split by lane so the two can run in parallel without
 sharing a file:
 
-- `plans/now/ui-bottom-row.md` — UI-T-1, UI-T-2, UI-S-4b, UI-Q-3. All edit
-  `scripts/hud.gd`, so they are one lane worked in that order. UI-T-1 is the
-  highest item in the whole queue: C-5 and C-7 cannot be run until it ships.
+- `plans/now/ui-bottom-row.md` — UI-Q-3 and UI-T-6. Both edit
+  `scripts/hud.gd`, so they are one lane worked in that order. UI-T-6 is the
+  urgent one: C-7 cannot be run until it ships.
+- `plans/now/ui-windows.md` — UI-W-1 to UI-W-4, from Dave's second 8 Sep
+  pass. The left-side windows and the settings window.
+- `plans/now/ui-layout-ownership.md` — why five separate panel-placement
+  checks have failed since 3 Sep, the panel hierarchy Dave asked for on
+  8 Sep, and LAY-1, which makes one owner of it.
 - `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4
   and UI-T-5. One script each, independent in the other lane.
 
@@ -57,6 +62,24 @@ against the tile's real hexagon at its real position, and every reported
   smaller than a control's combined minimum size does not shrink the control
   -- Godot silently keeps the minimum -- so a "cap the height" assignment is
   never on its own enough to satisfy this rule.
+- **`custom_minimum_size` is a floor, never a ceiling.** It can only make a
+  control bigger. To cap a persistent panel, put the cap on a
+  `ScrollContainer` inside it -- the one control allowed to be smaller than
+  its contents -- and never on the panel itself. Added 8 Sep 2026: the
+  summary panel is capped this way and is pushed over the command tray by any
+  child with a wider minimum (C-18).
+- **A `ScrollContainer` reports no minimum on the axis it scrolls.** Measure
+  content through its child, never through the `ScrollContainer` itself.
+  Added 8 Sep 2026: `_resize_command_tray` measured the scroller, got ~0, and
+  capped the command tray to nothing (C-18).
+- **A layout budget is an outer rectangle.** `UiTheme.panel_stylebox()` adds
+  20px vertically and 24px horizontally outside whatever an inner control is
+  given, so subtract the panel's chrome before applying a budget inside it.
+  Added 8 Sep 2026: this is the missing 20px that ate C-19's 16px gap.
+- **Panels resolve in one order** -- command tray, then the bottom row's side
+  bands, then the left-side windows, then transient popups -- separated by
+  16px and nothing else. `plans/now/ui-layout-ownership.md` holds the
+  hierarchy and the slice that enforces it.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks

@@ -103,24 +103,20 @@ def check_context_layout(errors: list[str]) -> None:
         errors.append("CHATGPT_NEXTSTEPS.md is retired; use the shared NEXTSTEPS.md and plans/")
 
 
-# Normally exactly QUEUE_SIZE_MAX (five slices keep both lanes stocked), but
-# a slice can ship with no genuinely startable successor anywhere in the
-# plans -- refilling with a not-yet-ready item would violate the admission
-# test, so the queue is allowed to sit at QUEUE_SIZE_MIN until new work
-# becomes ready (Dave, 3 Sep 2026, after FL-1 shipped with none available).
-# The floor moved 4 -> 3 later the same day, for the same reason: UI-R-2
-# landed and no open plan had a ready slice to promote, because every one of
-# them is now waiting on Dave to run something. It moved 3 -> 2 on 4 Sep
-# 2026 for the same reason, applied by Claude Code without a fresh check-in
-# (session running unattended per Dave's standing instruction that day): CD-1
-# shipped and colony-diagnostics.md turned out to have no further slice
-# (section 6 explicitly defers the rest until a second consumer exists), and
-# every other open plan was already waiting on Dave per the 3 Sep note. Flag
-# this change to Dave the next time he is in the loop, in case he would
-# rather see the queue stall than run this thin. Both lanes must still hold
-# work, which is the invariant this number exists to protect; raise it back
-# the moment the plans have depth again.
-QUEUE_SIZE_MIN = 2
+# Normally exactly QUEUE_SIZE_MAX (five slices keep both lanes stocked). The
+# floor is what the queue is allowed to drop to when a slice ships with no
+# genuinely startable successor -- refilling with a not-yet-ready item would
+# violate the admission test.
+#
+# The floor drifted 5 -> 4 -> 3 -> 2 across 3-4 Sep 2026, once per slice that
+# landed with nothing ready behind it. Dave answered D-2 on 8 Sep 2026:
+# **the floor is 3, and it does not move again.** A slice shipping with no
+# successor is now treated as the defect it is, and caught at the other end
+# instead -- see check_queue_successors below, which requires every queue
+# item to name the slice that follows it or to state that its plan is
+# finished. Together those two rules are what makes the queue refill itself:
+# promoting an item's named successor is a lookup, not an investigation.
+QUEUE_SIZE_MIN = 3
 QUEUE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")
@@ -225,6 +221,41 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
                     + " -- they will collide once both lanes reach them; put them "
                     "in one lane, or make the shared file its own earlier slice"
                 )
+
+
+# A "Next after:" line only refills the queue automatically if it names
+# something. "none named -- pull the next ready slice from an owning plan"
+# is not a successor: it is an investigation deferred to whoever empties the
+# lane, and it is what let the floor drift 5 -> 2 over two days. Dave, D-2,
+# 8 Sep 2026: every slice names its successor, or states that its plan is
+# finished. Those are the only two endings.
+NO_SUCCESSOR = re.compile(r"^\s*-\s*Next after:\s*(.+?)\s*$", re.MULTILINE)
+PLAN_COMPLETE = re.compile("none.*(complete|finished|last slice)", re.IGNORECASE)
+
+
+def check_queue_successors(errors: list[str]) -> None:
+    """Every queue item names the slice that follows it, or says its plan is done."""
+    path = ROOT / "NEXTSTEPS.md"
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    if not match:
+        return
+    chunks = re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]
+    for index, chunk in enumerate(chunks, start=1):
+        line = NO_SUCCESSOR.search(chunk)
+        if not line:
+            continue   # check_next_steps already reports the missing field
+        value = line.group(1)
+        if not value.lower().startswith("none"):
+            continue
+        if PLAN_COMPLETE.search(value):
+            continue
+        errors.append(
+            f"NEXTSTEPS.md item {index}: 'Next after: {value}' names no successor. "
+            "Name the slice that follows it, or write "
+            "'none -- <plan> is complete' if its owning plan has no further work "
+            "(Dave, D-2, 8 Sep 2026)"
+        )
 
 
 def check_queue_proofs(errors: list[str]) -> None:
@@ -555,6 +586,7 @@ def main() -> int:
     check_live_plans_hold_only_open_work(errors, warnings)
     check_next_steps(errors, warnings)
     check_queue_proofs(errors)
+    check_queue_successors(errors)
     check_markdown_links(errors)
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)

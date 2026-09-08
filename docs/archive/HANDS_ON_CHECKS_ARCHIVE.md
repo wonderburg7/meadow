@@ -373,3 +373,45 @@ out-of-season flowers remain rare rather than absent, and panel text/rates
 agree." One balance note: "Out-of-season plants should be more rare." That is
 `plans/now/season-balance.md` SB-2, which files C-25.
 Owner was `plans/archive/FLOWERS_SLICE_2_2026-09-06.md`.
+
+## Second 8 Sep 2026 pass -- the UI-T group's own checks
+
+UI-T-1 to UI-T-5 and UI-S-4b shipped on 8 Sep 2026 and Dave ran their checks
+the same day. Four passed outright and are recorded here. C-18 and C-19 did
+not, and were re-filed against new slices rather than archived -- see
+`checks/ready.md`.
+
+### C-20 -- cell-art highlight rings align with their cups
+
+PASS confirmed, with one adjustment: "Move the cell-art highlight rings 1 px
+higher." UI-T-3 moved them 2px down from the previous high position; Dave's
+eye puts the true centre 1px above where that landed. The correction is a
+single constant and rides with the next slice that opens the cell-art
+drawing, rather than a slice of its own.
+Owner was `plans/archive/ui-small-fixes_2026-09-08.md` UI-T-3.
+
+### C-21 -- pre-run menu's first hexagon is not clipped
+
+PASS confirmed. Both the Challenges and Scenarios strips show unbroken
+leftmost hexagons, every tile selects its own stage, and the left-pane text
+inset is unchanged.
+Owner was `plans/archive/ui-small-fixes_2026-09-08.md` UI-T-4.
+
+### C-22 -- settings sections reset closed
+
+PASS confirmed for the in-run settings window. Dave added one ask covering
+the other end of the same behaviour: "make it so the pre-run settings opens
+with every collection and topic section collapsed" -- the pre-run Settings
+button still expands Accessibility and Appearance on purpose, and Dave would
+rather it did not. That is a one-line change in the same file UI-T-5 touched
+and is queued as UI-W-4 in `plans/now/ui-windows.md`.
+Owner was `plans/archive/ui-small-fixes_2026-09-08.md` UI-T-5.
+
+### C-23 -- a double right-click no longer closes the bee panels
+
+PASS confirmed, in the strongest form: "no bee panel closure after single or
+double right click." UI-S-4b's fix -- ignoring the duplicate `double_click`
+event at the input boundary -- was the right one, and UI-S-4's lost-selection
+theory stays retired. The diagnostic logging UI-S-4 added is what proved it
+and is kept.
+Owner was `plans/now/ui-bottom-row.md` UI-S-4b.
