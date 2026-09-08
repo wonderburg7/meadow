@@ -157,9 +157,21 @@ slowly still works as it does today.
 
 Owner: `plans/now/ui-bottom-row.md` UI-S-4b.
 
-Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-Q-3;
-`plans/now/season-balance.md` SB-1 and SB-2) each file their own check when
-they ship -- C-23 to C-25, reserved in those plans so the ids cannot collide.
+### C-4 -- warning banner messages get a guaranteed minimum dwell
+
+Press "Fire test warnings" in the debug panel (epitaph at t=0, crab-spider
+escape at t=+8s, "Run saved." at t=+10s).
+
+PASS: the epitaph shows for several seconds before the escape message
+replaces it; the escape message is not cut to 1-2s -- it stays on screen for
+at least six seconds before "Run saved." takes the banner; none of the three
+is skipped.
+
+Owner: `plans/now/ui-bottom-row.md` UI-Q-3.
+
+Remaining slice from Dave's pass (`plans/now/season-balance.md` SB-1 and
+SB-2) files its own check when it ships -- C-24 and C-25, reserved in that
+plan so the two lanes cannot collide.
 
 ### C-22 -- settings sections reset closed
 
