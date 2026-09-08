@@ -49,6 +49,12 @@ const EMPTY_TEXTURE_BASE_H := 16.0
 ## (negative = up). This stays separate from the export measurements so a
 ## future resprite export cannot silently undo an alignment tuned by eye.
 const EMPTY_SPRITE_Y_NUDGE := -1.0
+## Rings only, not the sprite: EMPTY_SILHOUETTE was measured two pixels
+## above where the drawn cup reads, so every ring built from it sat high
+## on the art (Dave, 8 Sep 2026, C-9). Applied in
+## _silhouette_point_to_local after the sprite's own arithmetic, so the
+## two still cannot drift apart.
+const RING_Y_NUDGE := 2.0
 ## Makes the cup fractionally larger than exact tessellation if a filtering
 ## seam needs closing. 1.0 keeps the exported sprite at its exact size.
 const EMPTY_SPRITE_SCALE_NUDGE := 1.0
@@ -438,7 +444,7 @@ func _silhouette_point_to_local(p: Vector2) -> Vector2:
 	var base_mid: float = EMPTY_TEXTURE_BASE_Y + EMPTY_TEXTURE_BASE_H * 0.5
 	return Vector2(
 		(p.x - EMPTY_TEXTURE.get_width() * 0.5) * s,
-		(p.y - base_mid) * s + EMPTY_SPRITE_Y_NUDGE
+		(p.y - base_mid) * s + EMPTY_SPRITE_Y_NUDGE + RING_Y_NUDGE
 	)
 
 ## Cell art's cup sprite has vertical sides and a flat top and bottom, not
