@@ -151,6 +151,18 @@ UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-5;
 they ship -- C-22 to C-25, reserved in those plans so the ids
 cannot collide.
 
+### C-22 -- settings sections reset closed
+
+Open Settings from the pre-run menu, then start a run and open the in-run
+settings window. Expand several collections and sections, return to the menu,
+start another run, and open Settings again.
+
+PASS: The in-run settings window opens with every collection and topic section
+collapsed after both run starts; the pre-run Settings button still expands
+Accessibility and Appearance, and the window itself remains available.
+
+Owner: `plans/now/ui-small-fixes.md`
+
 ## Decisions waiting on Dave
 
 Not checks -- these need a call rather than a playthrough, and they are here

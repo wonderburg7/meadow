@@ -69,6 +69,7 @@ func _ready() -> void:
 	# without the two needing to know about each other directly -- same
 	# pattern as "main_menu" group used the other way by _on_main_menu_pressed().
 	add_to_group("debug_panel")
+	Session.run_reset.connect(collapse_all)
 
 	# Syncs Godot's own tooltip timer to whatever Session carried in from
 	# the last time it was changed -- harmless while Session always
@@ -162,6 +163,7 @@ func _ready() -> void:
 		column.add_child(_make_collection(
 			collection.name, collection.categories, false
 		))
+	collapse_all()
 
 func _report_settings_button_width() -> void:
 	for hud in get_tree().get_nodes_in_group("huds"):
@@ -244,6 +246,16 @@ func open_to_categories(categories: Array) -> void:
 	for cat in categories:
 		if section_headers.has(cat):
 			_set_open(section_headers[cat], sections[cat], cat, true)
+
+## Closes every collection and every topic section, returning the window
+## to its built state. Called when a run starts, so an expansion left over
+## from the pre-run menu's Settings button (open_to_categories) does not
+## follow the player into the game (Dave, 8 Sep 2026).
+func collapse_all() -> void:
+	for name in collection_headers:
+		_set_open(collection_headers[name], collection_bodies[name], name, false)
+	for name in section_headers:
+		_set_open(section_headers[name], sections[name], name, false)
 
 ## A clickable heading with its rows underneath, hidden until the heading
 ## is clicked.
