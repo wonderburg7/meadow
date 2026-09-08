@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-W-1` (`claude/UI-W-1`) | Claude | left-side windows leave a true 16px gap. | Claude | in progress | none | `plans/now/ui-windows.md` "UI-W-1 — left-side windows leave a true 16px gap" |
