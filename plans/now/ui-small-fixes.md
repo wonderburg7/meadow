@@ -1,7 +1,7 @@
 # Three one-file UI fixes — Dave's 8 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-T-3 -- cell highlight rings two pixels lower | Dependency: none -- remaining slices are startable now, in any order | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-T-5 -- settings sections collapsed on startup | Dependency: none -- remaining slice is startable now | Verified: 2026-09-08
 
 **Objective.** Clear the three small, self-contained defects from Dave's
 8 Sep 2026 hands-on pass: a 2px ring offset, a clipped hexagon point, and
@@ -16,7 +16,6 @@ independent of each other and may be taken in any order.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-T-3 | Cell highlight rings sit 2px lower | `hive_cell.gd` | yes | low |
 | UI-T-5 | The settings window opens with every section collapsed | `debug_panel.gd` | yes | low |
 
 **Dependencies, stated rather than implied.** None. Three separate files,
@@ -38,54 +37,7 @@ filing checks at once cannot collide: C-18 UI-T-1, C-19 UI-T-2, C-20 UI-T-3,
 C-21 UI-T-4, C-22 UI-T-5, C-23 UI-S-4b, C-24 SB-1, C-25 SB-2. UI-Q-3 re-files
 C-4 rather than taking a new id.
 
-### UI-T-3 — cell highlight rings sit two pixels high
-
-**Reasoning level: low.** One constant and one line, behind a clear
-interface.
-
-**Symptom (Dave, 8 Sep 2026, C-9).** Everything else in C-9 passed: all five
-rings trace the cup sprite's silhouette, turning Cell art off reverts every
-ring to the flat hex within a fraction of a second, and the sprite-aligned
-hex grid works on restarting the level. The one correction: "move the cell
-highlight rings 2 pixels lower. otherwise as intended."
-
-**Cause.** `scripts/hive_cell.gd::_silhouette_point_to_local` (~line 435)
-deliberately reuses the sprite's own placement arithmetic so a ring can never
-drift from the sprite. That is still the right design — the rings are two
-pixels high because the *measured* `EMPTY_SILHOUETTE` sits two pixels above
-where the drawn cup reads, not because the arithmetic disagrees with the
-sprite.
-
-**Deliver.** A ring-only offset, so the sprite is untouched.
-
-1. Beside `EMPTY_SPRITE_Y_NUDGE` (~line 51) add:
-
-   ```gdscript
-   ## Rings only, not the sprite: EMPTY_SILHOUETTE was measured two pixels
-   ## above where the drawn cup reads, so every ring built from it sat high
-   ## on the art (Dave, 8 Sep 2026, C-9). Applied in
-   ## _silhouette_point_to_local after the sprite's own arithmetic, so the
-   ## two still cannot drift apart.
-   const RING_Y_NUDGE := 2.0
-   ```
-
-2. In `_silhouette_point_to_local`, add it to the y term only:
-
-   ```gdscript
-   return Vector2(
-       (p.x - EMPTY_TEXTURE.get_width() * 0.5) * s,
-       (p.y - base_mid) * s + EMPTY_SPRITE_Y_NUDGE + RING_Y_NUDGE
-   )
-   ```
-
-Do not touch `EMPTY_SPRITE_Y_NUDGE`, `_ready()`'s `empty_sprite.position`, or
-`_set_outline_points` (the flat-hex path Dave confirmed is already correct).
-
-**Acceptance.** With Cell art on, the base outline, designation ring,
-selection ring and the nursery glow/halo all sit two pixels lower than they
-did and read as centred on the cup. Cell art off is unchanged.
-
-**Check to file:** C-20.
+UI-T-3's completed specification: `plans/archive/UI_T_3_2026-09-08.md`.
 
 UI-T-4's completed specification: `plans/archive/UI_T_4_2026-09-08.md`.
 
