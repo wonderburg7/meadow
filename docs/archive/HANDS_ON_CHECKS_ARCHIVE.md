@@ -6,6 +6,41 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 9 Sep 2026 -- hands-on pass over the UI-W and LAY-1 group
+
+Three entries confirmed. Three failed and are re-filed against
+`plans/now/panel-layout.md` (C-18, C-19, C-26); two -- C-7 and C-5 -- could
+not be run at all, because both need the command tray's buttons, and moved to
+`checks/blocked.md` naming LAY-2.
+
+### C-4 -- warning banner messages get a guaranteed minimum dwell
+
+PASS confirmed. The epitaph holds for several seconds, the crab-spider escape
+message is not cut short, and "Run saved." waits its turn. UI-Q-3's guaranteed
+minimum dwell holds.
+Owner was `plans/archive/UI-Q-3_2026-09-08.md`.
+
+### C-27 -- sections start collapsed everywhere
+
+PASS confirmed, at both ends: the in-run Colony, Foraging and settings
+sections and the pre-run Settings button all open collapsed, on a first run
+and after a return to the menu. UI-W-3 and UI-W-4 together close
+`plans/archive/UI-WINDOWS_2026-09-08.md`.
+Owner was `plans/archive/UI-WINDOWS_2026-09-08.md` UI-W-3 and UI-W-4.
+
+### C-28 -- the panel refactor changed no panel's position or size
+
+PASS confirmed for what LAY-1 itself owned. Dave: "every persistent panel is
+wholly on screen except the command tray", and "the gaps look correct other
+than the left-side panel and summary window gap looks too big". Both
+exceptions were already open defects with their own entries -- the tray is
+C-18 and the left-side gap is C-19 -- and both are now specified in
+`plans/now/panel-layout.md` as LAY-2 and LAY-3. LAY-1's own claim, that one
+owner sizes every persistent rectangle and nothing else moved, holds. The
+deliberate change LAY-1 announced -- a left-side window hugging its content
+rather than filling the band -- was not reported as a problem.
+Owner was `plans/archive/LAY-1_2026-09-08.md`.
+
 ## 3 Sep 2026 -- hands-on pass over the 31 Aug / 1-3 Sep fixes
 
 Eleven entries confirmed, one dropped, one superseded. The five that failed
