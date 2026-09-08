@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-T-6` (`claude/UI-T-6`) | Claude | the command tray fills its rectangle again. | Claude | in progress | none | `plans/now/ui-bottom-row.md` "UI-T-6 — the command tray fills its rectangle again, and the bottom row keeps its gaps" |

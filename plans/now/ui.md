@@ -23,9 +23,8 @@ and produced the UI-T group below. Everything still open is on this page.
 produced seven slices, split by lane so the two can run in parallel without
 sharing a file:
 
-- `plans/now/ui-bottom-row.md` — UI-Q-3 and UI-T-6, both shipped
-  2026-09-08; C-7 is unblocked and back in `checks/ready.md`. This plan is
-  done and retires to `plans/archive/` at UI-T-6's closeout.
+- `plans/archive/ui-bottom-row_2026-09-08.md` — UI-Q-3 and UI-T-6, both
+  shipped 2026-09-08; C-7 is unblocked and back in `checks/ready.md`.
 - `plans/now/ui-windows.md` — UI-W-1 to UI-W-4, from Dave's second 8 Sep
   pass. The left-side windows and the settings window.
 - `plans/now/ui-layout-ownership.md` — why five separate panel-placement

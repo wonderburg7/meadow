@@ -10,8 +10,8 @@ Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
 **UI-T-6 shipped 2026-09-08** (`plans/archive/UI-T-6_2026-09-08.md`): it was
-`plans/now/ui-bottom-row.md`'s last open slice, so that plan retires to
-`plans/archive/` at this slice's closeout. C-18 and C-7 (blocked on the
+the last open slice in its owning plan, now retired to
+`plans/archive/ui-bottom-row_2026-09-08.md`. C-18 and C-7 (blocked on the
 command tray) both move back to `checks/ready.md`. The pattern behind the
 five panel-placement failures that produced this batch is diagnosed in
 `plans/now/ui-layout-ownership.md`, together with the panel hierarchy Dave
