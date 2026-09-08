@@ -1,0 +1,14 @@
+version = 1
+name = "Meadow"
+
+[setup]
+script = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
+
+[setup.win32]
+script = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
+
+[[actions]]
+name = "Verify"
+icon = "test"
+command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
+platform = "win32"

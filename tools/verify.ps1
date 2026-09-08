@@ -2,7 +2,8 @@
 param(
     [string]$PythonPath,
     [switch]$Quiet,
-    [switch]$Docs
+    [switch]$Docs,
+    [switch]$ResolvePythonOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,13 +23,59 @@ function Resolve-Python {
     }
 
     foreach ($candidate in @("python", "python3", "py")) {
-        $command = Get-Command $candidate -ErrorAction SilentlyContinue
+        $command = Get-Command $candidate -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($command) {
             return $command.Source
         }
     }
 
-    throw "Python was not found. Install Python, or rerun with -PythonPath <path-to-python.exe>."
+    # Codex's primary runtime keeps Python beside the native tools whose
+    # directories are injected into the task's PATH. Python itself is not on
+    # PATH, so use those running-shell dependency paths to find its sibling.
+    # Walk command sources too: a caller may have trimmed PATH after this
+    # PowerShell process resolved Git or Node from the bundle.
+    $seeds = @()
+    if ($env:PATH) {
+        $seeds += @($env:PATH -split [System.IO.Path]::PathSeparator)
+    }
+    $seeds += @($PSHOME)
+    foreach ($commandName in @("git", "node", "powershell", "pwsh")) {
+        $seeds += @(Get-Command $commandName -All -CommandType Application -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.Source })
+    }
+
+    $dependencyRoots = @()
+    foreach ($seed in $seeds | Where-Object { $_ } | Select-Object -Unique) {
+        try {
+            $current = [System.IO.Path]::GetFullPath($seed.Trim('"'))
+            if ([System.IO.Path]::HasExtension($current)) {
+                $current = Split-Path -Parent $current
+            }
+            while ($current) {
+                $leaf = Split-Path -Leaf $current
+                $parent = Split-Path -Parent $current
+                if ($leaf -eq "dependencies" -and
+                    (Split-Path -Leaf $parent) -eq "codex-primary-runtime") {
+                    $dependencyRoots += $current
+                    break
+                }
+                if (-not $parent -or $parent -eq $current) { break }
+                $current = $parent
+            }
+        }
+        catch {
+            # Ignore malformed or transient PATH entries and keep looking.
+        }
+    }
+
+    foreach ($dependencyRoot in $dependencyRoots | Select-Object -Unique) {
+        $candidate = Join-Path $dependencyRoot "python\python.exe"
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+
+    throw "Python was not found on PATH or in the codex-primary-runtime dependency tree. Install Python, or rerun with -PythonPath <path-to-python.exe>."
 }
 
 # One line per stage under -Quiet; a stage that fails replays everything it
@@ -89,6 +136,11 @@ function Invoke-PythonStage {
 }
 
 $python = Resolve-Python $PythonPath
+if ($ResolvePythonOnly) {
+    Write-Output $python
+    exit 0
+}
+$env:PYTHONDONTWRITEBYTECODE = "1"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 # -Docs skips the source, balance and function-map stages: a documentation-only
