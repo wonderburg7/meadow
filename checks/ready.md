@@ -145,10 +145,22 @@ the same at 1.13 for pollen; both stop at stage end.
 
 Owner: `plans/now/challenge-1.md` Slice 14.
 
-Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-S-4b and
-UI-Q-3; `plans/now/ui-small-fixes.md` UI-T-5;
+### C-23 -- a double right-click no longer closes the bee panels
+
+Select any bee. Right-click twice in quick succession on a point in the
+meadow, on a flower, on the hive marker, and (in the hive view) on a comb
+cell.
+
+PASS: in every case the bee stays selected, its summary panel and command
+tray stay open, and exactly one command is carried out. Right-clicking twice
+slowly still works as it does today.
+
+Owner: `plans/now/ui-bottom-row.md` UI-S-4b.
+
+Remaining slices from Dave's pass (`plans/now/ui-bottom-row.md` UI-Q-3;
+`plans/now/ui-small-fixes.md` UI-T-5;
 `plans/now/season-balance.md` SB-1 and SB-2) each file their own check when
-they ship -- C-22 to C-25, reserved in those plans so the ids
+they ship -- C-22, C-24 and C-25, reserved in those plans so the ids
 cannot collide.
 
 ### C-22 -- settings sections reset closed

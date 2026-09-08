@@ -1,7 +1,7 @@
 # The HUD bottom row — Dave's 8 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-S-4b -- a double right-click stops closing the bee panels | Dependency: none -- UI-S-4b is startable now; UI-Q-3 follows it in this file's order | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: UI-Q-3 -- a message may not be cut to a fraction of its dwell | Dependency: none -- UI-Q-3 is startable now | Verified: 2026-09-08
 
 **Objective.** No persistent HUD panel leaves the screen or covers another,
 and a double right-click stops closing the panels behind a selection that is
@@ -18,12 +18,16 @@ they are a single lane worked top to bottom. The three one-file fixes from the
 same pass are in `plans/now/ui-small-fixes.md` and run in the other lane in
 parallel; they share no file with these.
 
+**UI-S-4b shipped 2026-09-08** (`plans/archive/UI-S-4b_2026-09-08.md`): the
+duplicate `double_click` event is now ignored at the input boundary, and
+`hud.gd`'s panel-hide sites are logged. C-23 replaces C-14 in
+`checks/ready.md`.
+
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| UI-S-4b | A double right-click stops closing the bee panels | `input_selection.gd`, `hud.gd`, `diagnostic_log.gd` | yes | medium |
-| UI-Q-3 | Warning dwell: a short message is no longer cut to 1-2s | `hud.gd` | after UI-S-4b | medium |
+| UI-Q-3 | Warning dwell: a short message is no longer cut to 1-2s | `hud.gd` | yes | medium |
 
 **Dependencies, stated rather than implied.** The order in the table is the
 order to work in, and the only reason for it is that both edit
@@ -50,80 +54,8 @@ owned by UI-T-2, and C-11/C-12 failed on the vertical containment now owned
 by UI-T-1.
 
 UI-S-4 shipped 3 Sep 2026 and its check C-14 came back failing. The
-diagnostic it added did its job: see UI-S-4b.
-
-### UI-S-4b — a double right-click closes the bee panels; the command is not lost
-
-**Reasoning level: medium.** The remaining unknown is presentational, and
-the fix is at the input boundary.
-
-**Symptom (Dave, 8 Sep 2026, C-14).** Still happening after UI-S-4. It
-affects any bee, not only the queen. "it clocks off their summary
-window/command panel so it's as if you're selecting off the bee."
-
-**What the diagnostic log proves — read this before writing code.** UI-S-4's
-`command_issue` entries were recovered from
-`%APPDATA%\Godot\app_userdata\Meadow - Claude\logs\session_1788822502.jsonl`
-(the 7 Sep 2026, ~23:35 run). Seventeen right-clicks, and **every single one
-recorded `selected_count: 1`, `commandable_count: 1` and a correct state
-transition.** Two pairs are 0.62s and 0.72s apart in `game_time` — those are
-the double-clicks, and in both the second command was accepted
-(`MOVE_TO_POINT -> MOVE_TO_POINT`).
-
-That rules out the theory UI-S-4 was built on. The selection is **not** lost,
-the command is **not** refused, and no bee is pruned. What Dave sees is the
-two panels being hidden while the selection behind them is still intact.
-
-**Deliver, in this order.**
-
-1. **Stop processing the duplicate event.** In
-   `scripts/input_selection.gd::_unhandled_input` (~line 60), Godot delivers a
-   rapid second right-click as a further `InputEventMouseButton` with
-   `pressed == true` *and* `double_click == true`, so `_issue_command` runs
-   twice. Re-issuing the same order 0.6s later is never useful, and it is the
-   only thing that distinguishes a double right-click from two spaced ones:
-
-   ```gdscript
-   MOUSE_BUTTON_RIGHT:
-       # Godot delivers a fast second right-click as a further pressed
-       # event with double_click set, so the same order was issued twice.
-       # That duplicate is the only difference between a double right-click
-       # and two spaced ones, which is exactly what C-14's symptom tracks
-       # (Dave, 8 Sep 2026).
-       if event.pressed and not event.double_click:
-           _issue_command(main.get_global_mouse_position())
-   ```
-
-2. **Log the panel hide, so if the symptom survives step 1 the next session
-   does not have to guess again.** Every place that sets
-   `selection_panel.visible` or `command_tray.visible` to `false` must say so.
-   In `scripts/hud.gd` those are `update_selection` (~line 1974),
-   `_refresh_selection_text` (~line 2389) and `show_cell_popup` (~line 1526).
-   Add to `scripts/diagnostic_log.gd`, in the same shape as
-   `log_command_issue`:
-
-   ```gdscript
-   ## Which code path hid the bee summary panel or the command tray, and how
-   ## many bees the HUD thought were selected at the time. C-14's symptom is
-   ## the panels closing while the selection behind them is provably intact,
-   ## so "who hid it" is the one fact the command_issue entries cannot give.
-   func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void:
-   ```
-
-   Emit it only on a true -> false transition, so an idle frame does not fill
-   the log.
-
-3. Do **not** change `_prune_invalid_selected_bees`, `_finish_drag` or
-   `update_selection`'s clearing logic. The log shows none of them is
-   involved.
-
-**Acceptance.** Select any bee. Right-click twice in quick succession on a
-point in the meadow, on a flower, on the hive marker, and in the hive view on
-a comb cell. In every case the bee stays selected, its summary panel and
-command tray stay open, and one command is carried out. Right-clicking twice
-slowly still works as it does today.
-
-**Check to file:** C-23, replacing C-14.
+diagnostic it added did its job: UI-S-4b shipped 2026-09-08 off the back of
+it (`plans/archive/UI-S-4b_2026-09-08.md`).
 
 ## UI-Q — the warning banner: dwell and priority
 
@@ -153,8 +85,6 @@ because "Run saved." arrived two seconds later and took the banner.
   problem (the same message repeating), and C-4 confirmed it works.
 - The three test messages must end up with comparable dwell times when fired
   through `debug_panel.gd`'s "Fire test warnings" button.
-
-**Start this only after UI-S-4b**, which is also in `scripts/hud.gd`.
 
 **Check to file:** re-file C-4 against the new dwell rule.
 

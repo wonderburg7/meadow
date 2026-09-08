@@ -1991,14 +1991,21 @@ func update_selection(bees: Array) -> void:
 	# Any selection change stops camera-follow -- see the field comment
 	# on follow_bee_toggled.
 	follow_bee_toggled.emit(null, false)
+	var previously_shown_count: int = shown_bees.size()
 	shown_bees = bees
 	# A bee selection always wins over whatever object summary the panel
 	# might currently be showing -- see show_object_summary.
 	active_summary_kind = ""
 	soil_summary_row.visible = false
+	var panel_was_visible := selection_panel.visible
+	var tray_was_visible := command_tray.visible
 	selection_panel.visible = not bees.is_empty()
 	bottom_row_changed.emit()
 	command_tray.visible = not bees.is_empty() and not _selection_has_command_lock(bees)
+	if panel_was_visible and not selection_panel.visible:
+		DiagnosticLog.log_selection_panels_hidden("update_selection.selection_panel", previously_shown_count, bees.size())
+	if tray_was_visible and not command_tray.visible:
+		DiagnosticLog.log_selection_panels_hidden("update_selection.command_tray", previously_shown_count, bees.size())
 	# Same thing for the tray itself -- a bee selection always wins over
 	# a cell selection's content, see show_cell_popup.
 	cell_group.visible = false
@@ -2410,8 +2417,13 @@ func _make_role_menu(label: String, tip: String, items: Array) -> Control:
 ## identity/job, energy/load, activity, trait/quote -- each its own
 ## label so _apply_selection_field_visibility can hide any one of them.
 func _refresh_selection_text() -> void:
+	var previously_shown_count: int = shown_bees.size()
 	shown_bees = shown_bees.filter(func(b): return is_instance_valid(b))
 	if shown_bees.is_empty():
+		if selection_panel.visible:
+			DiagnosticLog.log_selection_panels_hidden("_refresh_selection_text.selection_panel", previously_shown_count, 0)
+		if command_tray.visible:
+			DiagnosticLog.log_selection_panels_hidden("_refresh_selection_text.command_tray", previously_shown_count, 0)
 		selection_panel.visible = false
 		command_tray.visible = false
 		bottom_row_changed.emit()
