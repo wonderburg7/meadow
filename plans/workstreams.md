@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-S-4b` (`claude/UI-S-4b`) | Claude | a double right-click stops closing the bee panels. | Claude | in progress | none | `plans/now/ui-bottom-row.md` "UI-S-4b — a double right-click closes the bee panels; the command is not lost" |
