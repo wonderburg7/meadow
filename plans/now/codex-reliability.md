@@ -116,7 +116,7 @@ Completed 2026-09-09; archived at `plans/archive/CR-2_2026-09-09.md`.
 
 ### CR-3 — align permissions with the intended Git lifecycle
 
-Machine configuration, kept least-privilege.
+**Implemented 9 Sep 2026.** Machine configuration, kept least-privilege.
 
 1. Keep the elevated Windows sandbox. Create a named Meadow permission profile
    extending the workspace profile, with write access only to this repository,
@@ -132,6 +132,17 @@ Machine configuration, kept least-privilege.
 
 Acceptance: `doctor` can create and remove a disposable lock/ref probe, and a
 mock slice can claim, commit and close without an approval turn after setup.
+
+The trusted project selects a `meadow` permission
+profile extending `:workspace`; it grants writes only to the primary checkout,
+the worktree root and the exact shared `.git` directory, and proxies command
+network traffic only to the configured `github.com` remote. Windows environment
+setup records the primary checkout and worktree parent as Git safe directories.
+Because managed Windows policy still owns the `.git` deny, the trusted project
+also loads one narrow exec-policy rule for the canonical `doctor`, `start` and
+`finish` entry points rather than discovering the denial halfway through a
+slice. `doctor` now proves the real Git lock/ref path with a disposable
+`update-ref`, and the regression suite exercises a complete mock lifecycle.
 
 ### CR-4 — make the lifecycle failure-atomic and idempotent
 

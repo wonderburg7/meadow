@@ -352,7 +352,10 @@ function Get-DoctorEnvironmentFailures {
         $failures += "Git identity: missing $($identityParts -join ' and ')"
     }
 
-    $ownershipOutput = @(& git -C $Root status --porcelain --untracked-files=no 2>&1 |
+    # This probe ignores untracked files, so a user-level excludes file cannot
+    # affect its answer. Override it with an empty value to avoid making doctor depend on
+    # read access to an otherwise unrelated home-directory file.
+    $ownershipOutput = @(& git -c core.excludesFile= -C $Root status --porcelain --untracked-files=no 2>&1 |
         ForEach-Object { $_.ToString() })
     $ownershipExit = $LASTEXITCODE
     if ($ownershipExit -ne 0) {
@@ -365,7 +368,7 @@ function Get-DoctorEnvironmentFailures {
         $failures += "Remote reachability: push remote 'origin' is not configured"
     }
     else {
-        $remoteOutput = @(& git -C $Root ls-remote --exit-code origin HEAD 2>&1 |
+        $remoteOutput = @(& git -c http.sslBackend=openssl -C $Root ls-remote --exit-code origin HEAD 2>&1 |
             ForEach-Object { $_.ToString() })
         $remoteExit = $LASTEXITCODE
         if ($remoteExit -ne 0) {
@@ -382,26 +385,33 @@ function Get-DoctorEnvironmentFailures {
         $failures += "Git metadata write: cannot locate the common Git directory: $detail"
     }
     else {
-        $commonDir = $commonDirOutput[-1].Trim()
-        if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
-            $commonDir = Join-Path $Root $commonDir
-        }
-        $probePath = Join-Path $commonDir ("codex-doctor-{0}.tmp" -f [guid]::NewGuid().ToString("N"))
-        $stream = $null
+        # update-ref exercises Git's real lock-and-rename path rather than a
+        # plain file write. The temporary ref is always removed, so doctor
+        # proves shared-metadata access without leaving repository state.
+        $probeRef = "refs/codex-doctor/$([guid]::NewGuid().ToString('N'))"
+        $probeCreated = $false
         try {
-            $stream = [System.IO.File]::Open(
-                $probePath,
-                [System.IO.FileMode]::CreateNew,
-                [System.IO.FileAccess]::Write,
-                [System.IO.FileShare]::None
-            )
-        }
-        catch {
-            $failures += "Git metadata write: $($_.Exception.Message)"
+            $probeOutput = @(& git -C $Root update-ref $probeRef HEAD 2>&1 |
+                ForEach-Object { $_.ToString() })
+            $probeExit = $LASTEXITCODE
+            if ($probeExit -ne 0) {
+                $detail = ($probeOutput | Where-Object { $_ } | Select-Object -Last 1)
+                $failures += "Git metadata write: cannot create disposable ref ${probeRef}: $detail"
+            }
+            else {
+                $probeCreated = $true
+            }
         }
         finally {
-            if ($stream) { $stream.Dispose() }
-            Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+            if ($probeCreated) {
+                $deleteOutput = @(& git -C $Root update-ref -d $probeRef 2>&1 |
+                    ForEach-Object { $_.ToString() })
+                $deleteExit = $LASTEXITCODE
+                if ($deleteExit -ne 0) {
+                    $detail = ($deleteOutput | Where-Object { $_ } | Select-Object -Last 1)
+                    $failures += "Git metadata write: cannot remove disposable ref ${probeRef}: $detail"
+                }
+            }
         }
     }
 
@@ -616,7 +626,7 @@ function Invoke-SliceFinish {
         Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
     }
 
-    git push
+    git -c http.sslBackend=openssl push
     if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
     $worktreePath = Join-Path $root $worktreeRelative
@@ -649,9 +659,9 @@ function Invoke-SliceFinish {
     git branch -d $branch
     if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
 
-    git ls-remote --exit-code --heads origin $branch | Out-Null
+    git -c http.sslBackend=openssl ls-remote --exit-code --heads origin $branch | Out-Null
     if ($LASTEXITCODE -eq 0) {
-        git push origin --delete $branch
+        git -c http.sslBackend=openssl push origin --delete $branch
         if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
     }
 
@@ -681,7 +691,7 @@ function Invoke-SliceFinish {
         git commit -m $deleteMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
 
-        git push
+        git -c http.sslBackend=openssl push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
     }
     else {

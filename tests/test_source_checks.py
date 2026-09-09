@@ -15,6 +15,10 @@ SOURCE_CHECKS_PATH = Path(__file__).with_name("source_checks.py")
 CHECK_DOCS_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "check_docs.py"
 SLICE_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "slice.ps1"
 VERIFY_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "verify.ps1"
+CODEX_CONFIG_PATH = SOURCE_CHECKS_PATH.parent.parent / ".codex" / "config.toml"
+CODEX_RULES_PATH = (
+    SOURCE_CHECKS_PATH.parent.parent / ".codex" / "rules" / "meadow.rules"
+)
 ENVIRONMENT_CONFIG_PATH = (
     SOURCE_CHECKS_PATH.parent.parent / ".codex" / "environment.toml"
 )
@@ -276,6 +280,14 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("ready", json.loads(result.stdout)["status"])
         self.assertEqual(before, after)
+        refs = subprocess.run(
+            ["git", "for-each-ref", "--format=%(refname)", "refs/codex-doctor"],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        self.assertEqual("", refs)
 
     def test_doctor_and_doc_check_share_unbackticked_proof_error(self):
         self.write_queue("absent: scripts/sample.gd :: new_function")
@@ -317,6 +329,147 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertIn("Godot:", result.stderr)
         self.assertIn("Git identity:", result.stderr)
         self.assertIn("Remote reachability:", result.stderr)
+
+    def test_mock_slice_can_claim_commit_and_close(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($PythonPath -and -not (Test-Path -LiteralPath $PythonPath)) { exit 1 }\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\n"
+            "exit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"],
+            cwd=self.root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "use mock verifier"],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        start = subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-File",
+                str(self.root / "tools" / "slice.ps1"),
+                "start",
+                "-Lane",
+                "Codex",
+            ],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        with (worktree / "scripts" / "sample.gd").open(
+            "a", encoding="utf-8"
+        ) as source:
+            source.write("\nfunc new_function():\n\tpass\n")
+
+        finish = subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-Command",
+                "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                    str(worktree).replace("'", "''"),
+                    str(worktree / "tools" / "slice.ps1").replace("'", "''"),
+                ),
+            ],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        self.assertEqual(0, finish.returncode, finish.stderr)
+        self.assertIn("Slice landed: T-1", finish.stdout)
+        self.assertFalse(worktree.exists())
+        self.assertEqual(
+            [],
+            subprocess.run(
+                ["git", "branch", "--list", "codex/T-1"],
+                cwd=self.root,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.splitlines(),
+        )
+        self.assertIn(
+            "func new_function():",
+            (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
+        )
+
+
+class CodexPermissionProfileTest(unittest.TestCase):
+    def test_meadow_profile_is_least_privilege_and_remote_scoped(self):
+        config = tomllib.loads(CODEX_CONFIG_PATH.read_text(encoding="utf-8"))
+        meadow = config["permissions"]["meadow"]
+
+        self.assertEqual("meadow", config["default_permissions"])
+        self.assertTrue(config["features"]["network_proxy"])
+        self.assertEqual(":workspace", meadow["extends"])
+        self.assertEqual(
+            {
+                "~/Documents/Meadow/meadow": True,
+                "~/Documents/Meadow/meadow/.worktrees": True,
+            },
+            meadow["workspace_roots"],
+        )
+        self.assertEqual(
+            {
+                "~/Documents/Meadow/meadow/.git": "write",
+                ":workspace_roots": {
+                    ".": "write",
+                    ".git": "write",
+                    ".worktrees": "write",
+                },
+            },
+            meadow["filesystem"],
+        )
+        self.assertEqual(
+            {"enabled": True, "domains": {"github.com": "allow"}},
+            meadow["network"],
+        )
+
+    def test_windows_environment_bootstraps_git_and_exposes_slice_actions(self):
+        environment = tomllib.loads(
+            ENVIRONMENT_CONFIG_PATH.read_text(encoding="utf-8")
+        )
+        setup = environment["setup"]["win32"]["script"]
+        commands = {
+            action["name"]: action["command"]
+            for action in environment["actions"]
+        }
+
+        self.assertIn("git config --global --add safe.directory", setup)
+        self.assertIn(".worktrees", setup)
+        self.assertEqual(
+            "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 doctor -Lane Codex",
+            commands["Check slice readiness"],
+        )
+        self.assertEqual(
+            "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 start -Lane Codex",
+            commands["Claim Codex slice"],
+        )
+        self.assertEqual(
+            "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish",
+            commands["Finish slice"],
+        )
+
+    def test_exec_policy_allows_only_canonical_slice_entry_points(self):
+        rules = CODEX_RULES_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('["doctor", "start", "finish"]', rules)
+        self.assertIn('decision = "allow"', rules)
+        self.assertIn("tools/slice.ps1 abandon", rules)
+        self.assertNotIn('pattern = ["git"', rules)
 
 
 class VerifyPythonResolutionTest(unittest.TestCase):
@@ -395,7 +548,7 @@ class CodexLocalEnvironmentTest(unittest.TestCase):
 
         self.assertEqual(1, config["version"])
         self.assertEqual(command, config["setup"]["script"])
-        self.assertEqual(command, config["setup"]["win32"]["script"])
+        self.assertIn(command, config["setup"]["win32"]["script"])
         self.assertEqual(
             {
                 "name": "Verify",

@@ -1,3 +1,30 @@
+default_permissions = "meadow"
+
+[features]
+network_proxy = true
+
+[permissions.meadow]
+description = "Meadow source, slice worktrees, shared Git metadata, and the configured Git remote."
+extends = ":workspace"
+
+[permissions.meadow.workspace_roots]
+'~/Documents/Meadow/meadow' = true
+'~/Documents/Meadow/meadow/.worktrees' = true
+
+[permissions.meadow.filesystem]
+'~/Documents/Meadow/meadow/.git' = "write"
+
+[permissions.meadow.filesystem.":workspace_roots"]
+"." = "write"
+".git" = "write"
+".worktrees" = "write"
+
+[permissions.meadow.network]
+enabled = true
+
+[permissions.meadow.network.domains]
+"github.com" = "allow"
+
 [mcp_servers.godot]
 command = "npx"
 args = ["@coding-solo/godot-mcp@0.1.1"]
