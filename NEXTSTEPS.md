@@ -56,7 +56,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/run_scenario.py :: HeadlessBaselineProbe`
    - Next after: SB-1 (return season balance with a successful bounded baseline)
 
-2. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
+2. **[Codex] C1-20 -- the designation stage asks for the designation it names.**
+   Keep Challenge 1 stage 1.13 open until the player explicitly reserves a
+   cell for pollen, without changing Challenge 2's existing general
+   designation goal. This repairs the shared root cause behind C-30 and C-31.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 20 — the designation stage asks for the designation it names"
+   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `docs/challenge-stages.md`
+   - Check: re-file C-30 and C-31 unchanged after the automated regression test passes
+   - Proof: `absent: scripts/challenge_runner.gd :: _goal_check_pollen_cell_designated`
+   - Next after: C1-21 (investigate the queen's pollen-foraging stall after C1-20 lands)
+
+3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
    Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
    bottom of the command tray, this should be a single star without words to
    the left of the settings cog in the bee summary window." Delete

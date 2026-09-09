@@ -1,7 +1,7 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Claude Code | Next: none -- all three slices shipped | Dependency: none | Verified: 2026-09-09
+Status: reference | Owner: Dave / Claude Code | Next: none -- all three slices shipped | Dependency: none | Verified: 2026-09-09
 
 **Which stages this is about.** Stage `2.1` is "watch the nectar stores fall,
 then recover them"; `2.2` is "raise a pollen Forager". The full table of
