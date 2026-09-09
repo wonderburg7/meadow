@@ -905,10 +905,10 @@ func _build_selection_panel() -> void:
 	soil_mark_btn = Button.new()
 	_style_button(soil_mark_btn)
 	soil_mark_btn.text = "Mark for digging"
-	# Wrap and clip rather than raise the column's minimum width past the
-	# space _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
+	# Wrap rather than raise the column's minimum width past the space
+	# _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
 	soil_mark_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	soil_mark_btn.clip_text = true
+	soil_mark_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
 	soil_summary_row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
 
@@ -916,7 +916,7 @@ func _build_selection_panel() -> void:
 	_style_button(soil_clear_btn)
 	soil_clear_btn.text = "Clear marks"
 	soil_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	soil_clear_btn.clip_text = true
+	soil_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
 	soil_summary_row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
 

@@ -110,3 +110,15 @@ drops them below the failure floor and the checkpoint restore appears with "A
 brief ecological wobble..." and a live queen. Neither takes a third press.
 
 Owner: `plans/now/challenge-2.md` Slice 2.
+
+### C-32 -- the soil panel's two buttons are full width and labelled
+
+Select a soil block at the default text scale, then at the largest text
+scale.
+
+PASS: at both scales, "Mark for digging" and "Clear marks" each span the
+panel's width, show their label, and pressing each does what it says; at the
+largest scale a label wraps onto a second line and the button grows taller
+rather than the panel growing wider.
+
+Owner: `plans/now/hud-controls.md` HC-2.

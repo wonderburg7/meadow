@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-2, the soil panel's two buttons | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-3, "Change to…" looks like the buttons beside it | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text, and reads as the same kind of thing as the
@@ -14,7 +14,9 @@ same day — and none needs a design decision. Each is one container property
 set wrongly, diagnosed against the source below. **HC-1 has landed**
 (`plans/archive/HC-1_2026-09-09.md`): the tray's Job/Focus/Orders columns,
 and the cell action columns, now split the tray's inner width evenly instead
-of bunching against its left edge.
+of bunching against its left edge. **HC-2 has landed**
+(`plans/archive/HC-2_2026-09-09.md`): the soil panel's `soil_mark_btn` and
+`soil_clear_btn` now expand to fill the info row and show their labels.
 
 **Why they are one plan.** They share a cause: a Godot container gives a
 child its *minimum* size unless the child asks to expand, and three of the
@@ -34,61 +36,15 @@ to the bubble.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-2 | The soil panel's two buttons collapse to slivers | `scripts/hud.gd` | low |
 | HC-3 | "Change to…" draws as floating text, not a button | `scripts/hud.gd` | low |
 | HC-4 | Default text is 2px smaller than Dave wants | `scripts/ui_theme.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `scripts/gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `scripts/gallerin_panel.gd` | medium |
 
 HC-1 (the command tray's three columns share its width evenly) has landed
-and moved to `plans/archive/HC-1_2026-09-09.md`.
-
-## HC-2 — the soil panel's two buttons take the panel's width and show their text
-
-**Reasoning level: low.** Two properties on two buttons.
-
-**What Dave reported (9 Sep 2026).** Selecting a soil block gives a summary
-panel with "a big empty space on it", holding "two, what appeared to be
-buttons that don't do anything but highlight when the mouse is over them,
-that stretch out filling up vertical space". His screenshot shows two tall,
-roughly 10px-wide rounded bars down the panel's left edge.
-
-**Cause.** They are `soil_mark_btn` ("Mark for digging") and `soil_clear_btn`
-("Clear marks"), built at `scripts/hud.gd:897` and `:907`. Each is given
-`autowrap_mode = AUTOWRAP_WORD_SMART` and `clip_text = true`, which together
-drop the button's horizontal minimum size to zero. Each is then wrapped in
-`UI.with_info()` (`scripts/ui.gd:55`), which puts it in an `HBoxContainer`
-alongside the info badge and gives neither child an expand flag. An HBox with
-no expanding child hands every child its minimum size, so the button gets
-zero width — and autowrap at zero width breaks the label one character per
-line, which is where the height comes from. `clip_text` then hides the text
-that height was reserved for. They do highlight on hover because they are
-real, working buttons; they are simply too narrow to hit anywhere but the
-edge.
-
-**Deliver, in `scripts/hud.gd`.**
-
-- Give both buttons `size_flags_horizontal = Control.SIZE_EXPAND_FILL` so the
-  info row hands them the leftover width.
-- Set `clip_text = false` on both. With a real width, autowrap alone gives
-  the wrap-rather-than-widen behaviour the comment at `:900` asks for, and
-  clipping can only hide text again.
-- Keep `autowrap_mode` as it is: it is what stops a long label widening the
-  fixed-width summary panel.
-
-**Do not change `UI.with_info()`.** Its other callers rely on the current
-"every child at minimum width" behaviour, and widening them is not this
-slice's job.
-
-**Acceptance.** Select one soil block. The panel is as tall as its text plus
-two buttons, with no empty space below them. Both buttons span the panel's
-width, read "Mark for digging" and "Clear marks", and pressing each does what
-it says. At the largest text scale a label wraps onto a second line and the
-button grows taller rather than the panel growing wider.
-
-**Check to file:** a new check — select a soil block, confirm both buttons
-are full width, labelled and pressable, at the default and the largest text
-scale.
+and moved to `plans/archive/HC-1_2026-09-09.md`. HC-2 (the soil panel's two
+buttons take the panel's width and show their text) has landed and moved to
+`plans/archive/HC-2_2026-09-09.md`.
 
 ## HC-3 — "Change to…" looks like the buttons beside it
 
