@@ -32,17 +32,18 @@ one was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-2 -- make the standard runtime self-discovering.**
-   Verification should locate Codex's bundled Python without a PATH edit;
-   closeout keeps an explicit override, and `doctor` reports every runtime,
-   Git-identity, ownership, remote and metadata-write failure in one pass.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-2 — make the standard runtime self-discovering"
-   - Files: `tools/verify.ps1`, `tools/slice.ps1`,
-     `tests/test_source_checks.py`, `.codex/config.toml`,
+1. **[Codex] CR-3 -- align permissions with the intended Git lifecycle.**
+   Define a least-privilege Meadow profile for repository content, shared Git
+   metadata, the worktree root and the configured Git remote; make the normal
+   slice commands and safe-directory setup work without mid-slice approval
+   discovery.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-3 — align permissions with the intended Git lifecycle"
+   - Files: `.codex/config.toml`, `.codex/environment.toml`,
+     `tools/slice.ps1`, `tests/test_source_checks.py`,
      `plans/now/codex-reliability.md`
-   - Check: deterministic tooling tests and `tools/verify.ps1` with no PATH edit
-   - Proof: `absent: tools/verify.ps1 :: codex-primary-runtime`
-   - Next after: CR-3 (align permissions with the intended Git lifecycle)
+   - Check: `doctor` metadata probe and a mock claim/commit/close lifecycle
+   - Proof: `absent: .codex/config.toml :: profiles.meadow`
+   - Next after: CR-4 (make the lifecycle failure-atomic and idempotent)
 
 2. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
