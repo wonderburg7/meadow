@@ -59,5 +59,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C1-16` (`claude/C1-16`) | Claude | the queen works more than one flower. | Claude | in progress | none | `plans/now/challenge-1.md` "Slice 16 — the queen works more than one flower at 1.11" |
 | `.worktrees/CR-4` (`codex/CR-4`) | Codex | make the lifecycle failure-atomic and idempotent. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-4 — make the lifecycle failure-atomic and idempotent" |
+| `.worktrees/HC-3` (`claude/HC-3`) | Claude | "Change to…" looks like the buttons beside it. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-3 — "Change to…" looks like the buttons beside it" |

@@ -38,6 +38,11 @@ signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
 ## Applied the moment the checkbox is ticked, independently of whether
 ## the cell is being emptied right now.
 signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
+## The colony's own selected bee carries the cell's contents out herself,
+## rather than waiting for a comb worker to notice -- Slice 18, for
+## Challenge 1's queen, who can never take Role.BUILDER. General-purpose:
+## works for any selected bee, not just Challenge 1's queen.
+signal cell_empty_by_bee_requested(cell: Node2D)
 ## Whether the queen lays a gyne into this cell rather than a worker.
 signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## "Click a spot" modes -- main.gd puts itself into a placement mode when
@@ -397,6 +402,9 @@ var cell_more_open: bool = false
 var hatch_row: HFlowContainer
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
+## Visible only while active_cell holds something to carry -- see
+## _refresh_cell_popup. Slice 18.
+var empty_by_bee_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
@@ -897,10 +905,10 @@ func _build_selection_panel() -> void:
 	soil_mark_btn = Button.new()
 	_style_button(soil_mark_btn)
 	soil_mark_btn.text = "Mark for digging"
-	# Wrap and clip rather than raise the column's minimum width past the
-	# space _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
+	# Wrap rather than raise the column's minimum width past the space
+	# _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
 	soil_mark_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	soil_mark_btn.clip_text = true
+	soil_mark_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
 	soil_summary_row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
 
@@ -908,7 +916,7 @@ func _build_selection_panel() -> void:
 	_style_button(soil_clear_btn)
 	soil_clear_btn.text = "Clear marks"
 	soil_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	soil_clear_btn.clip_text = true
+	soil_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
 	soil_summary_row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
 
@@ -963,6 +971,11 @@ func _apply_selection_field_visibility() -> void:
 	activity_label.visible = Session.show_selection_activity
 	trait_label.visible = Session.show_selection_trait
 
+## Gap between the tray's ranked columns, both the HFlowContainer's own
+## separation and the even-width split _update_command_tray_width computes
+## around it -- one constant so the two can never disagree.
+const TRAY_COLUMN_SEPARATION := 16.0
+
 ## The command tray (UI_PLAN.md section 5): a wrapping row of role-action
 ## buttons, ranked by how often they're used for the current selection
 ## rather than alphabetically or by internal role-mode order, with
@@ -1005,7 +1018,7 @@ func _build_command_tray() -> void:
 	# viewport cannot accommodate all three.  A fixed HBox would preserve its
 	# children's combined minimum width and spill into the summary panel.
 	command_columns = HFlowContainer.new()
-	command_columns.add_theme_constant_override("separation", 16)
+	command_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
 	column.add_child(command_columns)
 
 	var job_group := _build_tray_column("Job")
@@ -1094,7 +1107,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
-	cell_primary_columns.add_theme_constant_override("separation", 16)
+	cell_primary_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
 	cell_group.add_child(cell_primary_columns)
 
 	var row := HFlowContainer.new()
@@ -1352,6 +1365,21 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	discard_btn.theme_type_variation = "Small"
 	discard_btn.pressed.connect(func(): _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
+
+	# The two buttons above wait for a comb worker to pick the job up --
+	# no help to a colony that doesn't have one yet, the queen included,
+	# since Challenge 1 never lets her take Role.BUILDER. This one sends
+	# the selected bee to do it herself, right now, with no role change.
+	empty_by_bee_btn = Button.new()
+	_style_button(empty_by_bee_btn)
+	empty_by_bee_btn.text = "Empty this cell"
+	empty_by_bee_btn.theme_type_variation = "Small"
+	empty_by_bee_btn.pressed.connect(func():
+		if active_cell and is_instance_valid(active_cell):
+			cell_empty_by_bee_requested.emit(active_cell)
+			_refresh_cell_popup()
+	)
+	empty_row.add_child(_with_info(empty_by_bee_btn, "The selected bee carries the contents out herself, right now -- no comb worker needed and no change to her role."))
 
 	# This has to write straight through to the cell. It used to be read
 	# back from the cell every frame by _refresh_cell_popup while only
@@ -1678,6 +1706,11 @@ func _refresh_cell_popup() -> void:
 		hatch_name,
 		" — every bee" if active_cell.hatch_role_locked else "",
 	]
+
+	# Only worth offering while there is actually something to carry --
+	# matches command_empty_cell's own guard in bee.gd.
+	empty_by_bee_btn.visible = active_cell.content_type != "" \
+		and active_cell.content_type != "brood" and active_cell.content_type != "corpse"
 
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
@@ -2568,11 +2601,40 @@ func _apply_selection_tray_width() -> void:
 		# to give it.
 		selection_column.custom_minimum_size.x = maxf(0.0, rect.size.x - UiLayout.panel_chrome().x)
 
+## Space the tray panel's own stylebox takes on each side, so a column's
+## even width is measured against what is left inside the panel rather than
+## the panel's outer width.
+func _tray_chrome_width() -> float:
+	var box := UiTheme.panel_stylebox()
+	return box.content_margin_left + box.content_margin_right
+
+## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
+## between each, but only when that even width is wide enough for the
+## widest wrapper's own content -- otherwise every wrapper's minimum width
+## is cleared and the HFlowContainer wraps onto more rows as it does at a
+## narrow viewport, instead of clipping the widest column's content.
+func _apply_even_column_widths(wrappers: Array) -> void:
+	if wrappers.is_empty():
+		return
+	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - _tray_chrome_width()
+	var count := wrappers.size()
+	var even: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
+	var widest := 100.0
+	for wrapper in wrappers:
+		widest = maxf(widest, wrapper.get_combined_minimum_size().x)
+	var width: float = even if even >= widest else 0.0
+	for wrapper in wrappers:
+		wrapper.custom_minimum_size.x = width
+
 ## The command tray is centred at half the viewport until its two side bands
 ## reach their minimum widths. The summary panel and Gallerin bubble derive
 ## their widths from that same edge, preserving their shared 16px gaps.
-## Setting the width on command_columns rather than command_tray itself makes
-## columns wrap onto more rows instead of the whole tray growing wider.
+## Job/Focus/Orders (and, when a cell is selected, the cell action columns)
+## divide the tray's inner width evenly between themselves via
+## _apply_even_column_widths, rather than growing to fill it the way
+## SIZE_EXPAND_FILL implies -- HFlowContainer ignores expand flags and lays
+## children out at their minimum size, which is what left them bunched
+## against the tray's left edge (Dave, C-18, 9 Sep 2026).
 func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
@@ -2581,8 +2643,10 @@ func _update_command_tray_width() -> void:
 	# viewport resize; ui_panel_layout.gd::apply() owns the width itself.
 	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
 	command_columns.custom_minimum_size.x = 0.0
+	_apply_even_column_widths([job_column_wrapper, focus_column_wrapper, orders_column_wrapper])
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = 0.0
+		_apply_even_column_widths(cell_primary_columns.get_children())
 	if cell_more_panel != null:
 		cell_more_panel.custom_minimum_size.x = 0.0
 

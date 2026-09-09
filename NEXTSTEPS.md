@@ -44,29 +44,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] C1-16 -- the queen works more than one flower.**
-   Stage 1.11 pins her to a single flower through
-   `on_enter: ["lock_flower_target:queen"]`, so the stage that teaches
-   automatic foraging teaches her to commute to one flower forever. Delete
-   that effect and its `on_exit` counterpart.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 16 — the queen works more than one flower at 1.11"
-   - Files: `scripts/challenge_stages.gd`
-   - Check: C-7, in `checks/ready.md`
-   - Proof: `present: scripts/challenge_stages.gd :: ["lock_flower_target:queen"]`
-   - Next after: C1-17 (changing a bee's focus wakes her up)
-
-3. **[Claude] C1-17 -- changing a bee's focus wakes her up.**
-   Stage 1.11's exit parks the queen on `State.IDLING`, which dispatches
-   nothing. Two stages later the player switches her focus to pollen and
-   `set_focus()` deliberately leaves the state alone inside the hive, so she
-   never moves again. Send a parked bee to the hive exit instead.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 17 — changing a bee's focus wakes her up"
-   - Files: `scripts/bee.gd`
-   - Check: C-7, in `checks/ready.md`
-   - Proof: `absent: scripts/bee.gd :: a bee parked on IDLING`
-   - Next after: C1-18 (pollen has somewhere to go)
-
-4. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -79,36 +57,35 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-5. **[Claude] HC-1 -- the command tray's three columns share its width.**
-   The three column wrappers ask to expand, but their parent is an
-   `HFlowContainer`, which lays children out at their minimum size and
-   ignores expand flags. All three bunch against the tray's left edge.
-   Compute an even third of the tray's inner width and fall back to wrapping
-   when that is narrower than a column's own content.
-   - Plan: `plans/now/hud-controls.md` -- "HC-1 — the command tray's three columns share its width evenly"
+3. **[Claude] HC-3 -- "Change to…" looks like the buttons beside it.**
+   `hud.gd::_make_role_menu()` (`:2456`) builds a `MenuButton`, which sets
+   `flat = true` in its own constructor and so skips its `normal` stylebox --
+   `_style_button()` overrides all five styleboxes correctly, but the flat
+   one never draws, which is why the button lights up on hover and vanishes
+   at rest. Set `menu.flat = false` immediately after `_style_button(menu)`,
+   then grep for other `MenuButton.new()` instances and give each the same
+   line.
+   - Plan: `plans/now/hud-controls.md` -- "HC-3 — "Change to…" looks like the buttons beside it"
    - Files: `scripts/hud.gd`
-   - Check: C-18, in `checks/ready.md`
-   - Proof: `absent: scripts/hud.gd :: TRAY_COLUMN_SEPARATION`
-   - Next after: HC-2 (the soil panel's two buttons take the panel's width)
+   - Check: none -- the look is proved by a screenshot in the commit, and a
+     failure would change nothing about what gets built next
+   - Proof: `absent: scripts/hud.gd :: menu.flat = false`
+   - Next after: HC-4 (the default text size goes up by 2px)
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 18 and 19** (`plans/now/challenge-1.md`) -- Slice 18
-  renumbers every Challenge 1 stage from 1.13 up, so it must not run beside
-  Slices 16 and 17, which edit the same stage records. Slice 19 needs 18
-  merged before its first step, re-running the stage, means anything.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, and Dave's run rather than a code slice. Starting it before
-  Slices 16 to 19 land only rediscovers C-7.
-- **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
+  playthrough, mostly Dave's run rather than a code slice; its own
+  boot/checklist pass is startable now that Slice 19 has landed, but it is
+  a session for Dave's hands rather than a queued code slice.
+- **HC-4 to HC-6** (`plans/now/hud-controls.md`) -- all edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
-  one Claude branch runs at a time; they follow HC-1 in order.
+  one Claude branch runs at a time; they follow HC-3 in order.
 - **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- the guard rail for
-  both layout groups, and startable, but it asserts against the controls HC-1
-  and HC-2 fix. Running it first would file assertions that describe the bug.
-  LAY-5 leads the lane again once HC-2 lands.
+  both layout groups, and startable now that HC-1 and HC-2 have landed, but
+  one Claude branch runs at a time; it follows HC-3 in the lane.
 - **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows

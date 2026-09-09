@@ -373,6 +373,16 @@ func _place_home_cell(global_point: Vector2) -> void:
 	main.pending_home_bees = []
 	main.hud.update_selection(main.selected_bees)
 
+## The selected bee empties `cell` herself -- see Bee.command_empty_cell.
+## Only the first selected bee, same "one click, one bee" spirit as
+## _on_home_cell_requested below.
+func _on_cell_empty_by_bee_requested(cell: Node2D) -> void:
+	if main.selected_bees.is_empty():
+		return
+	var bee: Node2D = main.selected_bees[0]
+	if is_instance_valid(bee):
+		bee.command_empty_cell(cell)
+
 ## Only the single bee this panel is showing -- not the whole selection.
 ## A box-selected group of comb workers used to all get retargeted at
 ## once here, which is one click doing far more than the button next to

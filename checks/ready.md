@@ -69,6 +69,33 @@ role is assigned, and both return to normal when the stage ends.
 
 Owner: `plans/now/challenge-1.md` Slice 19.
 
+### C-30 -- the new stage makes you designate a cell for pollen before it starts
+
+Play Challenge 1 to stage 1.13, right after the second cell finishes building
+(`docs/challenge-stages.md` lists every stage id and what it asks). Try
+waiting, or right-clicking things unrelated to the cell.
+
+PASS: the stage will not clear until you select the second cell and choose
+Pollen; once you do, it clears immediately into the pollen-automation stage
+that follows.
+
+Owner: `plans/now/challenge-1.md` Slice 18.
+
+### C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself
+
+Play Challenge 1 slowly through stages 1.12-1.13: once the second cell
+finishes, let the queen deliver at least one more nectar trip into it before
+you designate it for pollen (`docs/challenge-stages.md` lists what each
+stage asks). Once the pollen-automation stage begins with nectar still
+sitting in that cell, watch for Dr Gallerin, then select the queen, select
+the cell, and press "Empty this cell".
+
+PASS: Dr Gallerin says the pollen cell has nectar in it and to empty it or
+build another cell; pressing "Empty this cell" sends the queen to carry the
+nectar out herself, with no role change and no second bee needed.
+
+Owner: `plans/now/challenge-1.md` Slice 18.
+
 ### C-5 -- Challenge 2's rescue and recovery lines
 
 In a Challenge 2 run, get past stage 2.1 -- the opening stage, where the
@@ -83,3 +110,15 @@ drops them below the failure floor and the checkpoint restore appears with "A
 brief ecological wobble..." and a live queen. Neither takes a third press.
 
 Owner: `plans/now/challenge-2.md` Slice 2.
+
+### C-32 -- the soil panel's two buttons are full width and labelled
+
+Select a soil block at the default text scale, then at the largest text
+scale.
+
+PASS: at both scales, "Mark for digging" and "Clear marks" each span the
+panel's width, show their label, and pressing each does what it says; at the
+largest scale a label wraps onto a second line and the button grows taller
+rather than the panel growing wider.
+
+Owner: `plans/now/hud-controls.md` HC-2.

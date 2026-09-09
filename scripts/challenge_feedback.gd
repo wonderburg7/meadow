@@ -30,6 +30,12 @@ const DEFS := {
 		"repeatable": false,
 		"text": "A brief ecological wobble. Let's return to the last stable moment.\n\nThe colony has run out of usable energy. Let's return to the last stable point and rebuild the foraging pipeline.",
 	},
+	"challenge_1_pollen_cell_nectar": {
+		"kind": "gallerin",
+		"trigger": "warning",
+		"repeatable": false,
+		"text": "That cell was reserved for pollen, and nectar has found its way in regardless. Empty it, or build another cell for the nectar to go in.",
+	},
 }
 
 ## Builds the Dictionary gallerin_panel.show_now() expects from a "gallerin"
