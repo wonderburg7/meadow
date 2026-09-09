@@ -5,7 +5,9 @@ param(
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
-    [string]$Lane
+    [string]$Lane,
+
+    [string]$PythonPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -282,14 +284,151 @@ function Get-SlicePreflight {
     }
 }
 
+function Get-ConfiguredGodotPath {
+    param([string]$Root)
+
+    if ($env:GODOT_PATH) {
+        return $env:GODOT_PATH
+    }
+
+    $command = Get-Command "godot", "godot4" -CommandType Application -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($command) {
+        return $command.Source
+    }
+
+    $configPath = Join-Path $Root ".codex\config.toml"
+    if (Test-Path -LiteralPath $configPath -PathType Leaf) {
+        $config = Get-Content -Raw -LiteralPath $configPath
+        $match = [regex]::Match($config, '(?m)^\s*GODOT_PATH\s*=\s*[''"](?<path>[^''"]+)[''"]\s*$')
+        if ($match.Success) {
+            return $match.Groups["path"].Value
+        }
+    }
+
+    return $null
+}
+
+function Get-DoctorEnvironmentFailures {
+    param(
+        [string]$Root,
+        [string]$RequestedPythonPath
+    )
+
+    $failures = @()
+
+    $verifyScript = Join-Path $Root "tools\verify.ps1"
+    $runtimeArgs = @{ ResolvePythonOnly = $true }
+    if ($RequestedPythonPath) {
+        $runtimeArgs["PythonPath"] = $RequestedPythonPath
+    }
+    try {
+        $runtimeOutput = @(& $verifyScript @runtimeArgs 2>&1 | ForEach-Object { $_.ToString() })
+        $runtimeExit = $LASTEXITCODE
+    }
+    catch {
+        $runtimeOutput = @($_.Exception.Message)
+        $runtimeExit = 1
+    }
+    if ($runtimeExit -ne 0) {
+        $detail = ($runtimeOutput | Where-Object { $_ } | Select-Object -Last 1)
+        $failures += "Python: $detail"
+    }
+
+    $godotPath = Get-ConfiguredGodotPath -Root $Root
+    if (-not $godotPath) {
+        $failures += "Godot: no executable was found on PATH, in GODOT_PATH, or in .codex/config.toml"
+    }
+    elseif (-not (Test-Path -LiteralPath $godotPath -PathType Leaf)) {
+        $failures += "Godot: configured executable does not exist: $godotPath"
+    }
+
+    $userName = (& git -C $Root config --get user.name 2>$null | Select-Object -First 1)
+    $userEmail = (& git -C $Root config --get user.email 2>$null | Select-Object -First 1)
+    $identityParts = @()
+    if ([string]::IsNullOrWhiteSpace($userName)) { $identityParts += "user.name" }
+    if ([string]::IsNullOrWhiteSpace($userEmail)) { $identityParts += "user.email" }
+    if ($identityParts) {
+        $failures += "Git identity: missing $($identityParts -join ' and ')"
+    }
+
+    $ownershipOutput = @(& git -C $Root status --porcelain --untracked-files=no 2>&1 |
+        ForEach-Object { $_.ToString() })
+    $ownershipExit = $LASTEXITCODE
+    if ($ownershipExit -ne 0) {
+        $detail = ($ownershipOutput | Where-Object { $_ } | Select-Object -Last 1)
+        $failures += "Repository ownership: Git cannot read the worktree: $detail"
+    }
+
+    $remoteUrl = (& git -C $Root remote get-url --push origin 2>$null | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($remoteUrl)) {
+        $failures += "Remote reachability: push remote 'origin' is not configured"
+    }
+    else {
+        $remoteOutput = @(& git -C $Root ls-remote --exit-code origin HEAD 2>&1 |
+            ForEach-Object { $_.ToString() })
+        $remoteExit = $LASTEXITCODE
+        if ($remoteExit -ne 0) {
+            $detail = ($remoteOutput | Where-Object { $_ } | Select-Object -Last 1)
+            $failures += "Remote reachability: cannot reach origin ($remoteUrl): $detail"
+        }
+    }
+
+    $commonDirOutput = @(& git -C $Root rev-parse --git-common-dir 2>&1 |
+        ForEach-Object { $_.ToString() })
+    $commonDirExit = $LASTEXITCODE
+    if ($commonDirExit -ne 0 -or -not $commonDirOutput) {
+        $detail = ($commonDirOutput | Where-Object { $_ } | Select-Object -Last 1)
+        $failures += "Git metadata write: cannot locate the common Git directory: $detail"
+    }
+    else {
+        $commonDir = $commonDirOutput[-1].Trim()
+        if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
+            $commonDir = Join-Path $Root $commonDir
+        }
+        $probePath = Join-Path $commonDir ("codex-doctor-{0}.tmp" -f [guid]::NewGuid().ToString("N"))
+        $stream = $null
+        try {
+            $stream = [System.IO.File]::Open(
+                $probePath,
+                [System.IO.FileMode]::CreateNew,
+                [System.IO.FileAccess]::Write,
+                [System.IO.FileShare]::None
+            )
+        }
+        catch {
+            $failures += "Git metadata write: $($_.Exception.Message)"
+        }
+        finally {
+            if ($stream) { $stream.Dispose() }
+            Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    return $failures
+}
+
 function Invoke-SliceDoctor {
-    param([string]$Lane)
+    param(
+        [string]$Lane,
+        [string]$PythonPath
+    )
+
+    $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    $failures = @(Get-DoctorEnvironmentFailures -Root $root -RequestedPythonPath $PythonPath)
 
     try {
         $preflight = Get-SlicePreflight -Lane $Lane
     }
     catch {
-        Write-Error $_.Exception.Message
+        $failures += "Slice preflight: $($_.Exception.Message)"
+    }
+
+    if ($failures) {
+        [Console]::Error.WriteLine("slice doctor found $($failures.Count) problem(s):")
+        foreach ($failure in $failures) {
+            [Console]::Error.WriteLine("- $failure")
+        }
         exit 1
     }
 
@@ -361,6 +500,8 @@ function Invoke-SliceStart {
 }
 
 function Invoke-SliceFinish {
+    param([string]$PythonPath)
+
     $worktreeRoot = (Get-Location).Path
     $root = Get-PrimaryRoot
 
@@ -392,6 +533,9 @@ function Invoke-SliceFinish {
     $verifyArgs = @{}
     if ($verifyCmd.Parameters.ContainsKey("Quiet")) {
         $verifyArgs["Quiet"] = $true
+    }
+    if ($PythonPath -and $verifyCmd.Parameters.ContainsKey("PythonPath")) {
+        $verifyArgs["PythonPath"] = $PythonPath
     }
     try {
         $verifyOutput = & $verifyScript @verifyArgs 2>&1
@@ -562,6 +706,6 @@ function Invoke-SliceFinish {
 
 switch ($Command) {
     "start"  { Invoke-SliceStart -Lane $Lane }
-    "finish" { Invoke-SliceFinish }
-    "doctor" { Invoke-SliceDoctor -Lane $Lane }
+    "finish" { Invoke-SliceFinish -PythonPath $PythonPath }
+    "doctor" { Invoke-SliceDoctor -Lane $Lane -PythonPath $PythonPath }
 }
