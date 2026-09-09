@@ -406,6 +406,58 @@ class SliceDoctorTest(unittest.TestCase):
             (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
         )
 
+    def test_resume_completes_a_failure_after_merge(self):
+        """A merge is durable even when the original finish process dies."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        failed = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True,
+            env={**os.environ, "MEADOW_SLICE_FAIL_AFTER": "merged"},
+        )
+        self.assertNotEqual(0, failed.returncode)
+        resumed = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "resume", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, resumed.returncode, resumed.stderr)
+        self.assertFalse(worktree.exists())
+        self.assertEqual("", subprocess.run(
+            ["git", "branch", "--list", "codex/T-1"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout)
+        self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+
+    def test_status_reports_a_claimed_slice(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        status = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "status", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, status.returncode, status.stderr)
+        self.assertEqual("working", json.loads(status.stdout)["state"])
+
 
 class CodexPermissionProfileTest(unittest.TestCase):
     def test_meadow_profile_is_least_privilege_and_remote_scoped(self):

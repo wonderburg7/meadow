@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("start", "finish", "doctor")]
+    [ValidateSet("start", "finish", "doctor", "status", "resume", "abort")]
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
@@ -11,6 +11,38 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Tests (and an operator diagnosing a real interruption) can stop immediately
+# after a durable lifecycle phase.  Nothing reads this value during normal
+# operation, and `resume` derives its work from Git and the ledger rather than
+# assuming that the preceding command reached its final line.
+function Invoke-InjectedLifecycleFailure {
+    param([string]$Phase)
+    if ($env:MEADOW_SLICE_FAIL_AFTER -eq $Phase) {
+        throw "injected lifecycle failure after $Phase"
+    }
+}
+
+function Invoke-WithLifecycleLock {
+    param([string]$Root, [scriptblock]$Action)
+
+    $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($commonDir)) { $commonDir = Join-Path $Root $commonDir }
+    $lockPath = Join-Path $commonDir "meadow-slice-lifecycle.lock"
+    $stream = $null
+    try {
+        try {
+            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+        }
+        catch [System.IO.IOException] {
+            throw "slice lifecycle is busy; retry this command after the other lifecycle command completes"
+        }
+        & $Action
+    }
+    finally {
+        if ($stream) { $stream.Dispose(); Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue }
+    }
+}
 
 function Get-PrimaryRoot {
     $commonDir = (git rev-parse --git-common-dir).Trim()
@@ -491,6 +523,7 @@ function Invoke-SliceStart {
 
         git worktree add $worktreeRelative -b $branch | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git worktree add failed" }
+        Invoke-InjectedLifecycleFailure -Phase "started"
     }
     finally {
         Pop-Location
@@ -507,6 +540,122 @@ function Invoke-SliceStart {
         worktree = $worktreeRelative
     }
     $result | ConvertTo-Json -Compress
+}
+
+function Get-SliceTarget {
+    param([string]$Root, [string]$Lane)
+    if (-not $Lane) { throw "resume and abort require -Lane Claude|Codex when run from the primary checkout" }
+    $row = Get-LedgerLaneRows -Root $Root | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
+    if (-not $row) { throw "no open $Lane lifecycle was found" }
+    $worktreeMatch = [regex]::Match($row.Worktree, '`(?<path>[^`]+)`')
+    $worktreeRelative = if ($worktreeMatch.Success) { $worktreeMatch.Groups['path'].Value } else { $row.Worktree }
+    $id = Split-Path -Leaf ($worktreeRelative -replace '/', '\\')
+    [PSCustomObject]@{
+        Id = $id; Lane = $Lane; Branch = "$($Lane.ToLower())/$id"
+        WorktreeRelative = $worktreeRelative; WorktreePath = Join-Path $Root $worktreeRelative
+    }
+}
+
+function Test-SliceBranchMerged {
+    param([string]$Root, [string]$Branch)
+    # A newly-created branch also starts as an ancestor of master, so ancestry
+    # alone cannot prove a merge.  The no-ff merge commit is the durable truth
+    # in every post-merge phase, including after the branch has been deleted.
+    $mergeMessage = @(git -C $Root log master --format=%B --fixed-strings --grep=$Branch -n 1 2>$null)
+    return $mergeMessage.Count -gt 0
+}
+
+function Remove-SliceLedgerRow {
+    param([string]$Root, [object]$Target)
+    $ledgerPath = Join-Path $Root "plans\workstreams.md"
+    $marker = '`' + $Target.WorktreeRelative + '`'
+    $lines = @(Get-Content -LiteralPath $ledgerPath)
+    $keep = @($lines | Where-Object { $_.IndexOf($marker, [System.StringComparison]::Ordinal) -lt 0 })
+    if ($keep.Count -eq $lines.Count) { return $false }
+    Set-Content -LiteralPath $ledgerPath -Value $keep
+    git -C $Root add "plans/workstreams.md"
+    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    git -C $Root commit -m "Remove the $($Target.Id) worktree row from the ledger`n`n$(Get-LaneTrailer -Lane $Target.Lane)" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+    git -c http.sslBackend=openssl -C $Root push
+    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    return $true
+}
+
+function Invoke-SlicePostMergeCleanup {
+    param([string]$Root, [object]$Target)
+    if (Test-Path -LiteralPath $Target.WorktreePath) {
+        git -C $Root worktree remove --force $Target.WorktreeRelative 2>$null
+        if ($LASTEXITCODE -ne 0 -and (Test-Path -LiteralPath $Target.WorktreePath)) {
+            Remove-Item -LiteralPath $Target.WorktreePath -Recurse -Force
+        }
+        git -C $Root worktree prune
+    }
+    Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
+    git -C $Root show-ref --verify --quiet "refs/heads/$($Target.Branch)"
+    if ($LASTEXITCODE -eq 0) {
+        git -C $Root branch -d $Target.Branch
+        if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+    }
+    Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
+    git -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        git -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch
+        if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+    }
+    $removed = Remove-SliceLedgerRow -Root $Root -Target $Target
+    if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-deleted" }
+}
+
+function Invoke-SliceStatus {
+    param([string]$Lane)
+    $root = Get-PrimaryRoot
+    $rows = Get-LedgerLaneRows -Root $root
+    $states = foreach ($row in $rows) {
+        if ($Lane -and $row.Lane -ne $Lane) { continue }
+        $worktreeMatch = [regex]::Match($row.Worktree, '`(?<path>[^`]+)`')
+        $worktreeRelative = if ($worktreeMatch.Success) { $worktreeMatch.Groups['path'].Value } else { $row.Worktree }
+        $id = Split-Path -Leaf ($worktreeRelative -replace '/', '\\')
+        $branch = "$($row.Lane.ToLower())/$id"
+        $worktreeExists = Test-Path -LiteralPath (Join-Path $root $worktreeRelative)
+        git -C $root show-ref --verify --quiet "refs/heads/$branch"
+        $branchExists = $LASTEXITCODE -eq 0
+        $phase = if ($branchExists -and (Test-SliceBranchMerged -Root $root -Branch $branch)) { "merged; cleanup pending" } elseif ($worktreeExists) { "working" } elseif ($branchExists) { "worktree missing; resumable" } else { "ledger-only; repair required" }
+        [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase }
+    }
+    if (-not $states) { $states = @([PSCustomObject]@{ state="idle" }) }
+    $states | ConvertTo-Json -Compress
+}
+
+function Invoke-SliceResume {
+    param([string]$Lane, [string]$PythonPath)
+    $root = Get-PrimaryRoot
+    $openRow = Get-LedgerLaneRows -Root $root | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
+    if (-not $openRow) {
+        Write-Output "Slice resume: no open $Lane lifecycle remains; cleanup is already complete"
+        return
+    }
+    $target = Get-SliceTarget -Root $root -Lane $Lane
+    if (Test-SliceBranchMerged -Root $root -Branch $target.Branch) {
+        Invoke-SlicePostMergeCleanup -Root $root -Target $target
+        Write-Output "Slice resumed: $($target.Id) -- post-merge cleanup complete"
+        return
+    }
+    if (-not (Test-Path -LiteralPath $target.WorktreePath)) { throw "$($target.Id) -- branch exists but its worktree is missing; abort is safe before merge" }
+    Set-Location -LiteralPath $target.WorktreePath
+    Invoke-SliceFinish -PythonPath $PythonPath
+}
+
+function Invoke-SliceAbort {
+    param([string]$Lane)
+    $root = Get-PrimaryRoot
+    $target = Get-SliceTarget -Root $root -Lane $Lane
+    if (Test-SliceBranchMerged -Root $root -Branch $target.Branch) { throw "$($target.Id) has already merged; use resume, not abort" }
+    if (Test-Path -LiteralPath $target.WorktreePath) { git -C $root worktree remove --force $target.WorktreeRelative; git -C $root worktree prune }
+    git -C $root show-ref --verify --quiet "refs/heads/$($target.Branch)"
+    if ($LASTEXITCODE -eq 0) { git -C $root branch -D $target.Branch }
+    [void](Remove-SliceLedgerRow -Root $root -Target $target)
+    Write-Output "Slice aborted: $($target.Id)"
 }
 
 function Invoke-SliceFinish {
@@ -560,6 +709,7 @@ function Invoke-SliceFinish {
         Write-Error "$id -- tools/verify.ps1 failed; branch left untouched"
         exit 1
     }
+    Invoke-InjectedLifecycleFailure -Phase "verified"
 
     $items = Get-NextUpItems -Root $worktreeRoot
     $item = $items | Where-Object { $_.Id -eq $id } | Select-Object -First 1
@@ -590,6 +740,7 @@ function Invoke-SliceFinish {
         git commit -m $commitMessage | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
     }
+    Invoke-InjectedLifecycleFailure -Phase "branch-committed"
 
     Get-Process -Name "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -625,9 +776,11 @@ function Invoke-SliceFinish {
     finally {
         Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
     }
+    Invoke-InjectedLifecycleFailure -Phase "merged"
 
     git -c http.sslBackend=openssl push
     if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    Invoke-InjectedLifecycleFailure -Phase "pushed"
 
     $worktreePath = Join-Path $root $worktreeRelative
     git worktree remove $worktreeRelative
@@ -655,9 +808,11 @@ function Invoke-SliceFinish {
         }
         git worktree prune
     }
+    Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
 
     git branch -d $branch
     if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+    Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
 
     git -c http.sslBackend=openssl ls-remote --exit-code --heads origin $branch | Out-Null
     if ($LASTEXITCODE -eq 0) {
@@ -693,6 +848,7 @@ function Invoke-SliceFinish {
 
         git -c http.sslBackend=openssl push
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+        Invoke-InjectedLifecycleFailure -Phase "ledger-deleted"
     }
     else {
         Write-Output "$id -- ledger already clean; nothing to commit"
@@ -715,7 +871,10 @@ function Invoke-SliceFinish {
 }
 
 switch ($Command) {
-    "start"  { Invoke-SliceStart -Lane $Lane }
-    "finish" { Invoke-SliceFinish -PythonPath $PythonPath }
+    "start"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
+    "finish" { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
     "doctor" { Invoke-SliceDoctor -Lane $Lane -PythonPath $PythonPath }
+    "status" { Invoke-SliceStatus -Lane $Lane }
+    "resume" { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
+    "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
 }
