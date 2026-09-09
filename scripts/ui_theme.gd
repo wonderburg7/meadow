@@ -205,10 +205,10 @@ static func _refresh_button_stylebox(box: StyleBoxFlat, state: String) -> void:
 ## variation = "Body") and automatically tracks whatever Session.text_
 ## scale/ui_typeface are currently set to.
 const TYPE_SIZES := {
-	"Heading": 16,
-	"Body": 13,
-	"Small": 11,
-	"Tiny": 9,
+	"Heading": 18,
+	"Body": 15,
+	"Small": 13,
+	"Tiny": 11,
 }
 
 ## Returns the shared mutable Theme used by every panel. Keeping one resource
