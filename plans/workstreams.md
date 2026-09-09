@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/CR-2` (`codex/CR-2`) | Codex | make the standard runtime self-discovering. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-2 — make the standard runtime self-discovering" |
