@@ -120,35 +120,7 @@ Completed 2026-09-09; archived at `plans/archive/CR-3_2026-09-09.md`.
 
 ### CR-4 — make the lifecycle failure-atomic and idempotent
 
-Medium tooling slice; complete before adding more lifecycle prose.
-
-Implementation records lifecycle truth in Git and the workstream ledger, with
-`status`, `resume`, and pre-merge `abort` entry points.  Fault injection at
-each durable closeout phase exercises recovery through `resume`; a repository
-lock prevents concurrent master-side lifecycle mutation.
-
-Observed at CR-3 closeout on 9 Sep: `git worktree remove` deregistered the
-worktree after the merge and push but an external Windows handle kept the
-now-empty `.worktrees/CR-3` directory present. The remaining branch and ledger
-cleanup required manual recovery; this is the concrete failure CR-4 must make
-resumable.
-
-1. Add explicit states and commands: `status`, `resume`, and `abort` (the last
-   only before merge). Derive state from branch, worktree, ledger, master and
-   remote truth rather than trusting one file.
-2. Run every preflight before changing the ledger. On a failed `start`, roll
-   back only artifacts created by that invocation.
-3. Make `finish` resume safely after verification, branch commit, merge, push,
-   worktree removal, branch deletion, ledger deletion, or queue closeout.
-4. Use a repository lifecycle lock so two agents cannot mutate master-side
-   coordination at the same time. A busy lock should produce one clear
-   retryable result rather than apparent corruption.
-5. Move worktrees to a non-synced, non-indexed project-specific directory, or
-   use Codex-managed worktrees, to reduce Windows file-handle races.
-
-Acceptance: inject a failure after every lifecycle phase, rerun `resume`, and
-finish with one merge, one clean ledger, no orphan worktree/branch and no
-manual Git repair.
+Completed 2026-09-09; archived at `plans/archive/CR-4_2026-09-09.md`.
 
 ### CR-5 — remove cross-lane shared-file conflicts
 

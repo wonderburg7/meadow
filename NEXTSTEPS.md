@@ -33,16 +33,16 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-4 -- make the lifecycle failure-atomic and idempotent.**
-   Add recoverable lifecycle states and commands, preflight rollback, and a
-   repository lock so an interrupted claim or close can resume without manual
-   Git repair.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-4 — make the lifecycle failure-atomic and idempotent"
-   - Files: `tools/slice.ps1`, `tests/test_source_checks.py`,
+1. **[Codex] CR-5 -- remove cross-lane shared-file conflicts.**
+   Give each hands-on check an independently owned record, treat generated
+   coordination documentation as an integration product, and make `doctor`
+   account for lifecycle-owned files when it checks lane overlap.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-5 — remove cross-lane shared-file conflicts"
+   - Files: `tools/slice.ps1`, `tools/check_docs.py`, `checks/ready.md`,
      `plans/now/codex-reliability.md`
-   - Check: injected lifecycle-phase failures recover through `resume`
-   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
-   - Next after: CR-5 (remove cross-lane shared-file conflicts)
+   - Check: two mock lane branches can file checks and close in either order
+   - Proof: `absent: tools/slice.ps1 :: Get-ImplicitLifecycleFiles`
+   - Next after: CR-6 (make headless evidence bounded and causal)
 
 2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
