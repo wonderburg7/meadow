@@ -31,10 +31,10 @@ sharing a file:
 - `plans/archive/LAY-1_2026-09-08.md` — why five separate panel-placement
   checks failed since 3 Sep, the panel hierarchy Dave asked for on 8 Sep,
   and LAY-1, which shipped one owner of it, 2026-09-08.
-- `plans/now/panel-layout.md` — **open.** LAY-2 to LAY-4, from Dave's 9 Sep
-  pass, and the Godot behaviour that made the command tray fail four times
-  in a row. Everything about a persistent panel's rectangle now belongs
-  there rather than here.
+- `plans/now/panel-layout.md` — **every slice landed.** LAY-2 to LAY-4, from
+  Dave's 9 Sep pass, and the Godot behaviour that made the command tray fail
+  four times in a row, all shipped 2026-09-09; the file moves to
+  `plans/archive/` once the ledger clears.
 - `plans/now/layout-regression.md` — **open.** LAY-5, the headless check
   that fails when a panel leaves the viewport.
 - `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4

@@ -1,7 +1,7 @@
 # A deterministic check for persistent panel geometry
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: LAY-5, the headless panel-rectangle assertion | Dependency: LAY-2 must ship first, so this is written against the fixed behaviour | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: LAY-5, the headless panel-rectangle assertion | Dependency: none — LAY-2 has shipped, so this is startable today | Verified: 2026-09-09
 
 **Objective.** A persistent HUD panel leaving the viewport, or losing its
 16px gap, fails `tools/verify.ps1` instead of costing a hands-on pass.
@@ -19,7 +19,7 @@ human being in front of the screen. Nothing else in this file is open.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| LAY-5 | A headless check fails when a persistent panel leaves the viewport | `scenario_actions.gd`, `tests/fixtures/`, `tests/` | after LAY-2 ships | medium |
+| LAY-5 | A headless check fails when a persistent panel leaves the viewport | `scenario_actions.gd`, `tests/fixtures/`, `tests/` | yes | medium |
 
 **Required reading for this slice.** This file's own section,
 `docs/headless-run-contract.md`, and `scripts/scenario_actions.gd`'s existing

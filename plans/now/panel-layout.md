@@ -1,7 +1,7 @@
 # Persistent panel rectangles — the anchor bug and its guard rail
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: LAY-4, the nursery donut's key clears the scrollbar | Dependency: none — LAY-4 is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: None — every slice here has landed | Dependency: none | Verified: 2026-09-09
 
 **Objective.** A persistent HUD panel stays inside the viewport with a 16px
 gap from its neighbours, on every pass, at every supported size — and a
@@ -20,7 +20,12 @@ around the root cause without removing it; LAY-2 removes it. **LAY-3 has
 landed** (`plans/archive/LAY-3_2026-09-09.md`): `left_window_max_height()` no
 longer subtracts the chrome twice, and Colony/Foraging re-apply their window
 rectangle when a section expands or collapses. C-19 is re-filed in
-`checks/ready.md`.
+`checks/ready.md`. **LAY-4 has landed** (`plans/archive/LAY-4_2026-09-09.md`):
+the nursery ring's legend measures its own width and reserves
+`UiLayout.SCROLLBAR_GUTTER`, so the key no longer runs under the Nursery
+window's scrollbar at any text scale. C-26 is re-filed in `checks/ready.md`.
+Every slice this plan owns has now landed; the guard rail it motivated,
+LAY-5, is tracked in `plans/now/layout-regression.md` and is startable today.
 
 ## Why this kept coming back
 
@@ -54,77 +59,13 @@ reason for the repeat, and LAY-2 removes it rather than re-tuning a number.
 
 ## Open slices at a glance
 
-| Slice | Outcome | Owns | Startable | Reasoning |
-| --- | --- | --- | --- | --- |
-| LAY-4 | The nursery donut's key clears the scrollbar at every text scale | `nursery_panel.gd`, `ui_layout.gd` | yes | low |
-
-LAY-4 builds on the `apply()` signature LAY-2 landed.
-
-**The guard rail is LAY-5, in `plans/now/layout-regression.md`.** It asserts
-the rule LAY-2 establishes and owns tooling files rather than UI ones, so it
-sits in its own plan and runs after LAY-2 has shipped. Without it this group
-fixes three symptoms and leaves the next one to another hands-on pass.
-
-**Required reading for any slice here.** This file's own section and
-`scripts/ui_layout.gd`. Nothing else — the archives are provenance only.
-
-**Do not change** the panel hierarchy itself (command tray, then the bottom
-row's side bands, then the left-side windows, 16px apart) or the values in
-`ui_layout.gd`'s width helpers. Dave confirmed on 9 Sep that the horizontal
-gap between the tray and the summary window is correct. Every slice here is
-about the vertical axis and the scrollbar gutter.
+None. This plan's three slices (LAY-2, LAY-3, LAY-4) have all landed. The
+guard rail they motivated, LAY-5, is tracked in its own plan,
+`plans/now/layout-regression.md`, because it owns tooling files rather than
+UI ones. This file will move to `plans/archive/` once the `.worktrees/LAY-4`
+ledger row has cleared, since `plans/workstreams.md` cannot be edited from
+inside that worktree.
 
 LAY-2's specification archived to `plans/archive/LAY-2_2026-09-09.md`.
 LAY-3's specification archived to `plans/archive/LAY-3_2026-09-09.md`.
-
-## LAY-4 — the nursery donut's key clears the scrollbar
-
-**Minimum reasoning level: low.**
-
-`nursery_panel.gd::_draw_ring()` draws the legend swatch at a literal x of
-150 and the legend text at a literal x of 166, with no wrap width, inside a
-`ring` control whose `custom_minimum_size.x` is a literal 300. At a large text
-scale the legend runs past 300px, and the Nursery window's vertical scrollbar
-covers it — Dave, 9 Sep 2026.
-
-**Change 1 — one shared gutter constant.** Add to `scripts/ui_layout.gd`,
-beside `PANEL_GAP`:
-
-```gdscript
-## Width reserved on the right of any left-side window's content so a
-## vertical ScrollContainer bar never covers it (Dave, 9 Sep 2026, C-26).
-const SCROLLBAR_GUTTER := 14.0
-```
-
-**Change 2 — the ring measures its own legend.** In `nursery_panel.gd`, add
-two `const`s next to the other ring geometry — `RING_LEGEND_SWATCH_X := 150.0`
-and `RING_LEGEND_TEXT_X := 166.0` — and use them in `_draw_ring()` in place of
-the literals. Then extend `_update_ring_min_height()` to set the width as
-well, renaming it `_update_ring_min_size()` and updating its two call sites:
-
-```gdscript
-var font := ring.get_theme_font("font", "Small")
-var font_size := ring.get_theme_font_size("font_size", "Small")
-var widest := 0.0
-for slice in ring_slices:
-	widest = maxf(widest, font.get_string_size(
-		_ring_legend_text(slice), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
-ring.custom_minimum_size.x = maxf(
-	300.0, RING_LEGEND_TEXT_X + widest + UiLayout.SCROLLBAR_GUTTER)
-```
-
-**Change 3 — one function builds the legend string.** `_draw_ring()` currently
-composes the legend line inline, including the colour-blind tag. Extract that
-into `_ring_legend_text(slice) -> String` so the measurement above and the
-drawing use the same string, and call it from both. Pass
-`ring.size.x - RING_LEGEND_TEXT_X - UiLayout.SCROLLBAR_GUTTER` as
-`draw_string`'s `width` argument in place of `-1`, so a legend line can never
-draw into the gutter even if the measurement is a pixel out.
-
-**Acceptance.** Open the Nursery window and look at the key beside the donut.
-Set the text scale to its largest and try each typeface in turn. The key's
-text follows the setting, and no line is covered by or runs under the window's
-scrollbar at any scale. Re-files C-26.
-
-**Proof the defect is present:** `absent: scripts/ui_layout.gd ::
-SCROLLBAR_GUTTER`.
+LAY-4's specification archived to `plans/archive/LAY-4_2026-09-09.md`.
