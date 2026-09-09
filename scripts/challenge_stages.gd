@@ -294,6 +294,15 @@ const C2_FAILURE_FLOOR := 15.0
 ## after 2.1 has completed. Doc range 25-50.
 const C2_RESCUE_THRESHOLD := 40.0
 const C2_RESCUE_AMOUNT := 150.0
+## One-time pollen rescue before 2.2 clears. Read the actual per-bee cost
+## from GameConfig so this safety net follows balance changes automatically.
+## These must be functions rather than GDScript constants because the cost is
+## an editable GameConfig instance property, not a compile-time value.
+static func c2_pollen_rescue_threshold() -> float:
+	return GameConfig.egg_pollen_cost
+
+static func c2_pollen_rescue_amount() -> float:
+	return c2_pollen_rescue_threshold() * 3.0
 
 ## Bundle G (CHALLENGE1_REVAMP_PLAN.md): the old 2.1 (eggs_laid) and 2.2
 ## (nectar_forager_hatched) are gone -- Challenge 1's own 1.15-1.16 now
@@ -309,6 +318,7 @@ const STAGES_2 := [
 		"prompts": [
 			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},
 			{"id": "2.1_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Your stores are falling. That is not automatically bad -- but it does mean the colony needs nectar coming in."},
+			{"id": "2.1_pollen_reserve", "trigger": "hint", "delay": STRONGER_HINT_DELAY, "text": "One caution before you raise too many nectar Foragers: every new bee is raised on pollen. Keep some back, or the colony may spend its way out of a future."},
 		],
 	},
 	{
@@ -316,7 +326,7 @@ const STAGES_2 := [
 		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen"],
 		"goal_text": "Goal: raise a pollen Forager.",
 		"prompts": [
-			{"id": "2.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar keeps bees moving. Pollen helps make more bees. A colony that wants a future needs both."},
+			{"id": "2.2_welcome", "trigger": "welcome", "delay": 0.0, "text": "Now put that pollen reserve to work: raise a pollen Forager. Nectar keeps bees moving, but pollen helps make more bees."},
 			{"id": "2.2_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try raising a pollen forager. The next generation will need protein, not just sweetness."},
 		],
 	},

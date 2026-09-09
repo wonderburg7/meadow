@@ -96,6 +96,9 @@ var _c2_nurses_at_stage_entry: int = 0
 ## _shown_ids dedup already stops the *message* repeating, but the
 ## nectar grant itself needs its own guard.
 var _c2_rescue_used: bool = false
+## Like the nectar rescue, but needed before 2.2 can be cleared: a colony
+## with no pollen cannot raise the pollen Forager that unlocks its recovery.
+var _c2_pollen_rescue_used: bool = false
 ## Stage 2.1 deliberately withholds the rescue. Record the first withheld
 ## rescue per run without writing the same diagnostic every frame.
 var _c2_rescue_suppressed_logged: bool = false
@@ -132,6 +135,12 @@ var _c1_forage_effects_done: bool = false
 ## and once a second is often enough for a prompt, not a state change.
 var _c1_pollen_cell_nectar_elapsed: float = 0.0
 
+func _ready() -> void:
+	Session.run_reset.connect(_reset_c2_pollen_rescue)
+
+func _reset_c2_pollen_rescue() -> void:
+	_c2_pollen_rescue_used = false
+
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
 
@@ -161,6 +170,7 @@ func start() -> void:
 	active = true
 	_stage_index = 0
 	_c2_rescue_used = false
+	_c2_pollen_rescue_used = false
 	_c2_rescue_suppressed_logged = false
 	_last_completed_goal_text = ""
 	_build_goal_registry()
@@ -264,6 +274,22 @@ func _check_c2_failure() -> void:
 	if _stage_index < _c2_index("2.1"):
 		return
 	var nectar: float = main.hive.total("nectar")
+	var pollen: float = main.hive.total("pollen")
+
+	# Pollen is the price of every new bee. Keep this rescue available through
+	# 2.2, but no later: once its pollen Forager exists the player has the
+	# recovery route this top-up is meant to preserve.
+	if not _c2_pollen_rescue_used and _stage_index <= _c2_index("2.2") and pollen < Stages.c2_pollen_rescue_threshold():
+		_c2_pollen_rescue_used = true
+		main.hive.deposit("pollen", Stages.c2_pollen_rescue_amount())
+		main.gallerin_panel.clear_queue()
+		main.gallerin_panel.show_now({
+			"id": "challenge_2_pollen_rescue",
+			"trigger": "recovery",
+			"repeatable": false,
+			"text": "A colony without pollen cannot raise any bee at all. I have set a little aside, so you can raise the pollen Forager and restore the supply.",
+		})
+		return
 
 	# The one-time rescue only ever applies once 2.1 itself is behind us
 	# (its own goal *is* "recover from a dip", so a rescue mid-2.1 would
