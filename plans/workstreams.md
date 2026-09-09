@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CR-4` (`codex/CR-4`) | Codex | make the lifecycle failure-atomic and idempotent. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-4 — make the lifecycle failure-atomic and idempotent" |
+| `.worktrees/HC-2` (`claude/HC-2`) | Claude | the soil panel's two buttons take the panel's width and show their text. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-2 — the soil panel's two buttons take the panel's width and show their text" |
