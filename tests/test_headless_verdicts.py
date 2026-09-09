@@ -17,6 +17,7 @@ TOOLS = Path(__file__).resolve().parent.parent / "tools"
 sys.path.insert(0, str(TOOLS))
 
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
+from headless.jobs import HeadlessRunOutcome  # noqa: E402
 from run_scenario import _suppress_windows_crash_dialogs, run_once, run_verdict_scenario  # noqa: E402
 
 
@@ -96,15 +97,16 @@ class HeadlessVerdictTest(unittest.TestCase):
                 encoding="utf-8"
             )
 
-            def fake_godot(command, **_kwargs):
+            def fake_godot(command, _timeout):
                 self.assertIn("--disable-crash-handler", command)
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(fixture, encoding="utf-8")
-                return mock.Mock(returncode=0, stdout="MEADOW_RESULT_PATH=%s\n" % session, stderr="")
+                return HeadlessRunOutcome("completed", 123, 0,
+                                          "MEADOW_RESULT_PATH=%s\n" % session, "", 0.1)
 
             stdout = io.StringIO()
-            with mock.patch("run_scenario.subprocess.run", side_effect=fake_godot), \
+            with mock.patch("run_scenario.run_headless_process", side_effect=fake_godot), \
                  contextlib.redirect_stdout(stdout):
                 self.assertEqual(1, run_verdict_scenario(scenario, "unused", 1, 30, root / "results"))
 
@@ -114,6 +116,7 @@ class HeadlessVerdictTest(unittest.TestCase):
             result = json.loads(result_path.read_text(encoding="utf-8"))
             failure = json.loads((result_path.parent / "failure.json").read_text(encoding="utf-8"))
             self.assertEqual("failed", result["status"])
+            self.assertEqual("product_failure", result["classification"])
             self.assertEqual(["wrong_deaths"], result["expectations"]["failed"])
             self.assertEqual({"kind": "expectation", "id": "wrong_deaths", "expected": 1, "actual": 0},
                              failure["reason"])

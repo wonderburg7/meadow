@@ -19,6 +19,7 @@ import sys
 import tempfile
 import time
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,93 @@ TERMINAL_STATUSES = frozenset({"passed", "failed", "contract_error", "timed_out"
 # terminal serialisation window even though the worker is finishing normally.
 # Fifteen seconds stays bounded while allowing several identity-query retries.
 TERMINAL_WRITE_GRACE_SECONDS = 15
+
+
+@dataclass(frozen=True)
+class HeadlessRunOutcome:
+    """The complete, bounded outcome of one foreground Godot invocation.
+
+    ``kind`` deliberately separates a product exit from an environment
+    failure: callers can trust that this wrapper either reaped the process
+    tree or reported why it could not start it.
+    """
+
+    kind: str  # completed | timed_out | environment_failure
+    pid: int | None
+    returncode: int | None
+    stdout: str
+    stderr: str
+    wall_seconds: float
+    message: str | None = None
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    """Synchronously stop the child and every process it launched."""
+    if os.name == "nt":
+        # /T includes child processes; /F makes a hung native Godot process
+        # bounded even when it ignores its console control group.
+        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, check=False, timeout=10)
+        return
+    try:
+        os.killpg(process.pid, 9)
+    except ProcessLookupError:
+        pass
+
+
+def run_headless_process(command: list[str], timeout: int) -> HeadlessRunOutcome:
+    """Run one Godot command, returning a typed result within ``timeout``.
+
+    A distinct process group/session lets timeout cleanup include helpers Godot
+    may have started.  ``communicate`` after cleanup reaps the direct child so
+    this function never reports while its Godot process remains behind.
+    """
+    started_at = time.monotonic()
+    kwargs: dict[str, Any] = {
+        "stdin": subprocess.DEVNULL, "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE, "text": True,
+    }
+    if os.name == "nt":
+        kwargs["creationflags"] = (getattr(subprocess, "CREATE_NO_WINDOW", 0) |
+                                    getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    else:
+        kwargs["start_new_session"] = True
+    try:
+        process = subprocess.Popen(command, **kwargs)
+    except OSError as error:
+        return HeadlessRunOutcome("environment_failure", None, None, "", "",
+                                  time.monotonic() - started_at, str(error))
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+        return HeadlessRunOutcome("completed", process.pid, process.returncode,
+                                  stdout, stderr, time.monotonic() - started_at)
+    except subprocess.TimeoutExpired as error:
+        try:
+            _terminate_process_tree(process)
+        except (OSError, subprocess.TimeoutExpired) as cleanup_error:
+            # The direct child is still reaped below; preserve cleanup trouble
+            # as environment evidence without extending the caller's timeout.
+            message = "timeout cleanup failed: %s" % cleanup_error
+        else:
+            message = None
+        # Do not turn a failed tree-cleanup command into an unbounded second
+        # wait.  Killing the direct child is the final fallback that lets us
+        # reap it and return a classified failure on every path.
+        if process.poll() is None:
+            process.kill()
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired as reap_error:
+            stdout = reap_error.stdout.decode() if isinstance(reap_error.stdout, bytes) else (reap_error.stdout or "")
+            stderr = reap_error.stderr.decode() if isinstance(reap_error.stderr, bytes) else (reap_error.stderr or "")
+            message = (message + "; " if message else "") + "child did not reap within 5 seconds"
+        if not stdout:
+            stdout = error.stdout.decode() if isinstance(error.stdout, bytes) else (error.stdout or "")
+        if not stderr:
+            stderr = error.stderr.decode() if isinstance(error.stderr, bytes) else (error.stderr or "")
+        return HeadlessRunOutcome("timed_out", process.pid, process.returncode,
+                                  stdout, stderr, time.monotonic() - started_at, message)
 
 
 class JobError(ValueError):

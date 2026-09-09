@@ -23,6 +23,7 @@ from headless.experiments import (  # noqa: E402
     validate_manifest,
 )
 from headless.verdicts import ContractError  # noqa: E402
+from headless.jobs import HeadlessRunOutcome  # noqa: E402
 from run_scenario import run_experiment_manifest  # noqa: E402
 
 
@@ -81,15 +82,16 @@ class HeadlessExperimentTest(unittest.TestCase):
             manifest_path.write_text(json.dumps(MANIFEST), encoding="utf-8")
             commands: list[list[str]] = []
 
-            def fake_godot(command, **_kwargs):
+            def fake_godot(command, _timeout):
                 commands.append(command)
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(fixture, encoding="utf-8")
-                return mock.Mock(returncode=0, stdout="MEADOW_RESULT_PATH=%s\n" % session, stderr="")
+                return HeadlessRunOutcome("completed", 123, 0,
+                                          "MEADOW_RESULT_PATH=%s\n" % session, "", 0.1)
 
             stdout = io.StringIO()
-            with mock.patch("run_scenario.subprocess.run", side_effect=fake_godot), \
+            with mock.patch("run_scenario.run_headless_process", side_effect=fake_godot), \
                  contextlib.redirect_stdout(stdout):
                 self.assertEqual(0, run_experiment_manifest(manifest_path, "unused", 1, 30, root / "results"))
 
@@ -131,14 +133,15 @@ class HeadlessExperimentTest(unittest.TestCase):
             manifest_path = root / "experiment.json"
             manifest_path.write_text(json.dumps(failing), encoding="utf-8")
 
-            def fake_godot(command, **_kwargs):
+            def fake_godot(command, _timeout):
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(fixture, encoding="utf-8")
-                return mock.Mock(returncode=0, stdout="MEADOW_RESULT_PATH=%s\n" % session, stderr="")
+                return HeadlessRunOutcome("completed", 123, 0,
+                                          "MEADOW_RESULT_PATH=%s\n" % session, "", 0.1)
 
             stdout = io.StringIO()
-            with mock.patch("run_scenario.subprocess.run", side_effect=fake_godot), \
+            with mock.patch("run_scenario.run_headless_process", side_effect=fake_godot), \
                  contextlib.redirect_stdout(stdout):
                 self.assertEqual(1, run_experiment_manifest(manifest_path, "unused", 1, 30, root / "results"))
             self.assertTrue(stdout.getvalue().splitlines()[0].startswith(

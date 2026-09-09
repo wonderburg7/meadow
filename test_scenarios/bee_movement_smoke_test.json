@@ -9,5 +9,10 @@
   "random_seed": 12345,
   "config_overrides": {"seconds_per_day": 15},
   "snapshot_seconds": 5,
-  "stop": {"max_days": 2}
+  "stop": {"max_days": 2},
+  "expect": [
+    {"id": "queen_alive", "metric": "summary.queen_alive", "op": "eq", "value": true},
+    {"id": "two_days", "metric": "summary.day", "op": "gte", "value": 2},
+    {"id": "no_action_problems", "metric": "actions.problems", "op": "empty"}
+  ]
 }

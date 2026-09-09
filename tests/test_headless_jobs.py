@@ -19,9 +19,11 @@ sys.path.insert(0, str(TOOLS))
 
 from headless.jobs import (  # noqa: E402
     JobError,
+    HeadlessRunOutcome,
     ensure_job_root,
     prune_terminal_jobs,
     refresh_status,
+    run_headless_process,
     submit_job,
     validate_job_root,
 )
@@ -29,6 +31,19 @@ from run_scenario import _background_command, main  # noqa: E402
 
 
 class HeadlessJobsTest(unittest.TestCase):
+    def test_foreground_wrapper_returns_typed_completion_and_timeout(self):
+        completed = run_headless_process([sys.executable, "-c", "print('ok')"], 2)
+        self.assertIsInstance(completed, HeadlessRunOutcome)
+        self.assertEqual("completed", completed.kind)
+        self.assertEqual(0, completed.returncode)
+        self.assertEqual("ok", completed.stdout.strip())
+
+        started = time.monotonic()
+        timed_out = run_headless_process([sys.executable, "-c", "import time; time.sleep(30)"], 1)
+        self.assertLess(time.monotonic() - started, 5)
+        self.assertEqual("timed_out", timed_out.kind)
+        self.assertIsNotNone(timed_out.pid)
+
     def write_runner(self, directory: Path, status: str, exit_code: int) -> Path:
         runner = directory / "fake_runner.py"
         runner.write_text(
