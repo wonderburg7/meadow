@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/HC-10` (`claude/HC-10`) | Claude | the Favourite star's move to the summary header. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-10 — the Favourite star sits in the summary panel's header" |
