@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/LAY-4` (`claude/LAY-4`) | Claude | the nursery donut's key clears the scrollbar. | Claude | in progress | none | `plans/now/panel-layout.md` "LAY-4 — the nursery donut's key clears the scrollbar" |
