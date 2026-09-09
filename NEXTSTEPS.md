@@ -44,18 +44,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] C1-16 -- the queen works more than one flower.**
-   Stage 1.11 pins her to a single flower through
-   `on_enter: ["lock_flower_target:queen"]`, so the stage that teaches
-   automatic foraging teaches her to commute to one flower forever. Delete
-   that effect and its `on_exit` counterpart.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 16 — the queen works more than one flower at 1.11"
-   - Files: `scripts/challenge_stages.gd`
-   - Check: C-7, in `checks/ready.md`
-   - Proof: `present: scripts/challenge_stages.gd :: ["lock_flower_target:queen"]`
-   - Next after: C1-17 (changing a bee's focus wakes her up)
-
-3. **[Claude] C1-17 -- changing a bee's focus wakes her up.**
+2. **[Claude] C1-17 -- changing a bee's focus wakes her up.**
    Stage 1.11's exit parks the queen on `State.IDLING`, which dispatches
    nothing. Two stages later the player switches her focus to pollen and
    `set_focus()` deliberately leaves the state alone inside the hive, so she
@@ -66,7 +55,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/bee.gd :: a bee parked on IDLING`
    - Next after: C1-18 (pollen has somewhere to go)
 
-4. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+3. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -79,7 +68,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-5. **[Claude] HC-1 -- the command tray's three columns share its width.**
+4. **[Claude] HC-1 -- the command tray's three columns share its width.**
    The three column wrappers ask to expand, but their parent is an
    `HFlowContainer`, which lays children out at their minimum size and
    ignores expand flags. All three bunch against the tray's left edge.
@@ -97,11 +86,11 @@ Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 18 and 19** (`plans/now/challenge-1.md`) -- Slice 18
   renumbers every Challenge 1 stage from 1.13 up, so it must not run beside
-  Slices 16 and 17, which edit the same stage records. Slice 19 needs 18
-  merged before its first step, re-running the stage, means anything.
+  Slice 17, which edits the same stage records (Slice 16 has landed). Slice 19
+  needs 18 merged before its first step, re-running the stage, means anything.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough, and Dave's run rather than a code slice. Starting it before
-  Slices 16 to 19 land only rediscovers C-7.
+  Slices 17 to 19 land only rediscovers C-7.
 - **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
   one Claude branch runs at a time; they follow HC-1 in order.

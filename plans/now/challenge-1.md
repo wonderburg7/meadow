@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 16 -- the queen works more than one flower at 1.11 | Dependency: none -- Slices 16 to 19 are startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: Slice 17 -- changing a bee's focus wakes her up | Dependency: none -- Slice 17 is startable now; Slices 18-19 wait on it | Verified: 2026-09-09
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command. Every code slice is
@@ -37,7 +37,7 @@ Reports 3, 4 and 5 are one defect seen from three angles: nothing in the hive
 will accept pollen, because both built cells hold nectar. Slice 18 is that
 one.
 
-**Open slices.** Slices 16 to 19, then Slice 7. Nothing else may be added --
+**Open slices.** Slices 17 to 19, then Slice 7. Nothing else may be added --
 a finding from Slice 7's own run becomes this plan's next slice while it is
 open, and a finding after it closes starts a new `plans/now/` file.
 
@@ -48,53 +48,21 @@ Foraging transitions: `scripts/bee_foraging.gd`. Cell storage rules:
 `scripts/hive_cell.gd`, `scripts/hive.gd`.
 
 **Required reading.** This file only. The delivered slices are archived at
+`plans/archive/CHALLENGE1_SLICE_16_2026-09-09.md`,
 `plans/archive/CHALLENGE1_SLICES_11-15_2026-09-03.md` and
 `plans/archive/CHALLENGE1_SLICES_1-10.md`; open them for provenance, never to
 work out what to do.
 
-**Reasoning level.** Low for Slice 16. Medium for Slices 17 and 19. High for
-Slice 18, which adds a stage, changes what a cell accepts and gives the queen
-a job she could not do before.
+**Reasoning level.** Medium for Slices 17 and 19. High for Slice 18, which
+adds a stage, changes what a cell accepts and gives the queen a job she could
+not do before.
 
 **Slice numbering starts at 16 on purpose.** C-7's `Owner:` line named "Slice
 14", a slice archived on 3 Sep, so the check pointed at a specification
 nobody could open. New slices never reuse a retired number.
 
-## Slice 16 — the queen works more than one flower at 1.11
-
-**Reasoning level: low.** Delete one stage effect and its counterpart.
-
-**What Dave reported.** At 1.11, "automate nectar gathering", the queen works
-one flower, flies home, deposits, and goes straight back to the *same*
-flower, for the whole stage.
-
-**Cause.** `scripts/challenge_stages.gd`, stage `1.11`, carries
-`"on_enter": ["lock_flower_target:queen"]`. That effect sets
-`Bee.flower_switch_locked`, and every autonomous transition in
-`scripts/bee_foraging.gd` that would otherwise pick a new flower reads it:
-lines 454, 485, 636 and 717 all send her to `State.TO_HIVE` instead of
-`State.SEEK_FLOWER` while it is set. The lock is right for the manual arc
-(1.8 to 1.10), where the player picks each flower; it is exactly wrong for
-the stage whose whole point is that she now chooses for herself.
-
-**Deliver, in `scripts/challenge_stages.gd`.**
-
-- Remove `"on_enter": ["lock_flower_target:queen"]` from stage `1.11`.
-- Remove `"unlock_flower_target:queen"` from stage `1.11`'s `on_exit`,
-  leaving the other three effects in place and in their current order.
-- Leave the `lock_flower_target:queen` and `unlock_flower_target:queen` cases
-  in `challenge_runner.gd::_run_stage_effects()`. They are still the
-  documented mechanism, and `_run_stage_effects` pushes an error for an
-  unknown effect, so a later stage can use them without re-adding code.
-
-**Do not touch `flower_switch_locked` itself.** No other stage sets it, and
-the field is what a future "work this one flower" order would use.
-
-**Acceptance.** At 1.11 the queen fills up at one flower, flies home,
-deposits, and then flies to a *different* flower, repeating until the nectar
-cell is full. The same for pollen once Slice 17 lands.
-
-**Check to file:** covered by C-7's rewritten first condition.
+**Slice 16 — the queen works more than one flower at 1.11 — shipped 9 Sep
+2026:** `plans/archive/CHALLENGE1_SLICE_16_2026-09-09.md`.
 
 ## Slice 17 — changing a bee's focus wakes her up
 
