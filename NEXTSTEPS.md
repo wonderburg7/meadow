@@ -45,16 +45,16 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-5 -- remove cross-lane shared-file conflicts.**
-   Give each hands-on check an independently owned record, treat generated
-   coordination documentation as an integration product, and make `doctor`
-   account for lifecycle-owned files when it checks lane overlap.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-5 — remove cross-lane shared-file conflicts"
-   - Files: `tools/slice.ps1`, `tools/check_docs.py`, `checks/ready.md`,
-     `plans/now/codex-reliability.md`
-   - Check: two mock lane branches can file checks and close in either order
-   - Proof: `absent: tools/slice.ps1 :: Get-ImplicitLifecycleFiles`
-   - Next after: CR-6 (make headless evidence bounded and causal)
+1. **[Codex] CR-6 -- make headless evidence bounded and causal.**
+   Give the headless runner one synchronous, bounded wrapper that records a
+   typed result and leaves no Godot process behind; qualify it first with a
+   small deterministic baseline smoke scenario.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-6 — make headless evidence bounded and causal"
+   - Files: `tools/run_scenario.py`, `tools/headless/jobs.py`,
+     `test_scenarios/bee_movement_smoke_test.json`
+   - Check: the slice's bounded baseline and branch-run evidence
+   - Proof: `absent: tools/run_scenario.py :: HeadlessRunOutcome`
+   - Next after: SB-1 (return season balance with its bounded baseline evidence)
 
 2. **[Claude] HC-7 -- the command tray's content fills the tray's width.**
    Set `SIZE_EXPAND_FILL` on the `VBoxContainer` inside `command_scroll`, so
