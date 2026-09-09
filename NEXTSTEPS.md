@@ -64,18 +64,16 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/bee_foraging.gd :: c1_pollen_focus_trace`
    - Next after: C1-22 (reach the pollen stage with the camera)
 
-3. **[Claude] HC-11 -- a summary panel's cog offers the fields that panel
-   shows.** Dave, 9 Sep 2026: "All non-bee summary windows have settings
-   cogs, but the options only relate to bee summary windows. These summary
-   window settings should fit the entity." Replace `_build_selection_cog`'s
-   one fixed four-item popup with a table keyed by selection kind (bee, cell,
-   soil, multiple), and hide the cog entirely for a kind with no toggleable
-   fields.
-   - Plan: `plans/now/hud-controls.md` -- "HC-11 — a summary panel's cog offers the fields that panel shows"
-   - Files: `scripts/hud.gd`
-   - Check: one hands-on check that the cog's menu differs between a bee, a cell and a soil block, and that each item hides the line it names
-   - Proof: `present: scripts/hud.gd :: popup.add_check_item("Identity & job", 0)`
-   - Next after: HC-12 (the project boots with no GDScript warnings)
+3. **[Claude] HC-12 -- the project boots with no GDScript warnings.** Four
+   warnings on load: `hud.gd:1160`/`hud.gd:1256` narrow a float to an int at
+   `TRAY_COLUMN_SEPARATION`'s two override call sites, and
+   `debug_panel.gd:259`/`debug_panel.gd:261` shadow `Node.name` in
+   `collapse_all()`'s two `for name in ...` loops. No behaviour change.
+   - Plan: `plans/now/hud-controls.md` -- "HC-12 — the project boots with no GDScript warnings"
+   - Files: `scripts/hud.gd`, `scripts/debug_panel.gd`
+   - Check: none -- the boot log is the proof, quoted in the commit message
+   - Proof: `present: scripts/hud.gd :: add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)`
+   - Next after: HC-8 (the tray's height matches its content after a reselect, once its live measurement confirms the fix)
 
 ## Not in the queue, and why
 
@@ -83,7 +81,7 @@ Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
   fully specified and startable on their merits, and no longer blocked by
-  C2-2, but the Claude lane's leading item is HC-11 instead. Slice 20 is the
+  C2-2, but the Claude lane's leading item is HC-12 instead. Slice 20 is the
   one that matters most -- it is the confirmed cause of C-30, C-31 and most
   of C-7. Slice 21 additionally waits on Slice 20 by design: until stage 1.13
   runs, no cell in the hive accepts pollen and every pollen symptom has that
@@ -96,9 +94,6 @@ Each of these wants something from Dave, or something else to ship first.
   or is not; the slice says to measure first. Its automated check can now use
   LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
   live measurement is still the blocker.
-- **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
-  `scripts/hud.gd` and `scripts/debug_panel.gd`; the Claude lane's leading
-  item (HC-11) already owns `hud.gd`, so it waits behind HC-11.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
   `scripts/gallerin_panel.gd`. Not currently owned by either lane's leading
   item; worth re-checking against the live queue before assuming they still

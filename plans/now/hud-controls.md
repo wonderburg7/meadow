@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-11, a summary panel's cog offers the fields that panel shows (HC-8 wants a live measurement first) | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-12, the project boots with no GDScript warnings (HC-8 wants a live measurement first) | Dependency: HC-5 and HC-6 wait for the Codex lane to vacate `scripts/gallerin_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -44,14 +44,13 @@ asked what was selected.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
-| HC-11 | Every summary panel's cog offers bee-only options | `hud.gd` | low |
 | HC-12 | Four GDScript warnings on boot | `hud.gd`, `debug_panel.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
 HC-8 is easier to judge now the tray is the right width, but still wants a
 live measurement before it can be specified (see its heading below), so
-HC-11 is the next slice a session can simply start.
+HC-12 is the next slice a session can simply start.
 
 Landed and archived: HC-1 (the tray's three columns get even widths),
 HC-2 (the soil panel's buttons take the panel's width and show their text),
@@ -59,16 +58,19 @@ HC-3 ("Change to…" looks like the buttons beside it) and HC-4 (the default
 text size goes up by 2px), each archived under `plans/archive/` on 9 Sep
 2026, HC-7 (the tray's content fills the tray's width), archived under
 `plans/archive/HC-7_2026-09-09.md`, HC-9 (every button follows the
-text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`, and
+text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`,
 HC-10 (the Favourite star's move to the summary header), archived under
-`plans/archive/HC-10_2026-09-09.md`. HC-1 and HC-2 did what they specified;
+`plans/archive/HC-10_2026-09-09.md`, and HC-11 (a summary panel's cog
+offers the fields that panel shows), archived under
+`plans/archive/HC-11_2026-09-10.md`. HC-1 and HC-2 did what they specified;
 C-18 was HC-7's cause and is ready to re-run; C-32 was HC-9's cause and is
 ready to re-run.
 
-HC-5, HC-6 and HC-12 each edit a file the Codex lane is working in --
-`scripts/gallerin_panel.gd` for the first two, `scripts/debug_panel.gd`
-for HC-12 -- so all three wait in `NEXTSTEPS.md`'s "Not in the queue, and
-why" until the Codex lane vacates those files.
+HC-5 and HC-6 each edit `scripts/gallerin_panel.gd`, a file the Codex lane
+is working in, so both wait in `NEXTSTEPS.md`'s "Not in the queue, and why"
+until the Codex lane vacates it. HC-12 edits `scripts/debug_panel.gd` too,
+but no open Codex branch currently touches it (see HC-12's own "Note on
+ownership" below), so it is free to queue.
 
 ## HC-8 — the tray's height matches its content after a reselect
 
@@ -120,68 +122,16 @@ change. Note the dependency rather than duplicating the helper.
 **Check to file:** one check covering the deselect-reselect case with `More…`
 open, at two text scales.
 
-## HC-11 — a summary panel's cog offers the fields that panel shows
-
-**Reasoning level: low.** Dave settled the one product question on 9 Sep
-2026 (see below), so this is a table and a visibility rule.
-
-**What Dave reported (9 Sep 2026).** "All non-bee summary windows have
-settings cogs, but the options only relate to bee summary windows. These
-summary window settings should fit the entity."
-
-**Established cause.** `_build_selection_cog()` (`:930`) builds one fixed
-popup with four items — identity, energy, activity, trait — wired straight to
-`Session.show_selection_*` and applied by
-`_apply_selection_field_visibility()` (`:968`), which touches four Bee-only
-labels. The same header, and so the same cog, is used for the cell, soil and
-multiple-selection summaries. Nothing filters it by what is selected.
-
-**Files likely to change.** `scripts/hud.gd`, `scripts/session.gd` if new
-preference keys are needed.
-
-**Files that must not be changed.** Any simulation script. This is
-presentation only.
-
-**Requirements.**
-
-1. Describe each summary kind's fields as data — a dictionary keyed by
-   selection kind (bee, cell, soil, multiple), each entry naming its
-   toggleable fields, their labels, their `Session` preference keys and the
-   `Control` each shows. One table, not four branches.
-2. `_build_selection_cog` builds its popup from that table for the current
-   selection kind, and `_apply_selection_field_visibility` reads the same
-   table rather than four hard-coded labels.
-3. A kind with no toggleable fields hides the cog entirely rather than
-   showing an empty menu.
-4. Existing bee preferences keep their current `Session` keys and their
-   current default values, so nobody's saved preferences change.
-
-**Constraints and invariants.** `Session` owns run and UI state; new keys go
-there and are saved by `Session.save_preferences()` like the four that exist.
-Do not add per-panel preference storage.
-
-**Dave's decision (9 Sep 2026): hide the cog for a cell and a soil block.**
-Neither has a line worth toggling, and a cog that opens an empty menu is
-worse than no cog. So requirement 3 above is the expected outcome for those
-two kinds, not a fallback. Keep the table anyway -- it is what makes adding a
-kind's toggles later a data change rather than a fourth branch. The bee panel
-keeps its four field toggles with their current keys and defaults.
-
-**Escalate rather than guess if:** hiding the cog leaves the summary header
-with nothing in it and the header itself has to go, which changes the panel's
-shape rather than its contents.
-
-**Check to file:** one check that the cog's menu differs between a bee, a
-cell and a soil block, and that each item hides the line it names.
-
 ## HC-12 — the project boots with no GDScript warnings
 
 **Reasoning level: low.** Four warnings, two causes, no behaviour change.
 
-**What Dave reported (9 Sep 2026).** Four warnings on load:
+**What Dave reported (9 Sep 2026).** Four warnings on load, at the lines
+current as of HC-11 landing (10 Sep 2026; HC-9/HC-10/HC-11 each shifted
+`hud.gd`'s line numbers, the cause itself is unchanged):
 
-- `hud.gd:1022` and `hud.gd:1111`, NARROWING_CONVERSION.
-- `debug_panel.gd:255` and `debug_panel.gd:257`, SHADOWED_VARIABLE_BASE_CLASS.
+- `hud.gd:1160` and `hud.gd:1256`, NARROWING_CONVERSION.
+- `debug_panel.gd:259` and `debug_panel.gd:261`, SHADOWED_VARIABLE_BASE_CLASS.
 
 **Confirmed causes.** `TRAY_COLUMN_SEPARATION` is declared `:= 16.0`, a
 float, because `_apply_even_column_widths` does float arithmetic with it;
