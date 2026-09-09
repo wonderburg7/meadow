@@ -6,6 +6,28 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 9 Sep 2026 (second pass) -- the LAY group's own checks
+
+Two confirmed. C-18 passed on everything the panel-layout plan owned and was
+narrowed to its remaining column-layout fault; C-7 failed in five ways and
+C-5 failed on its press count, all three staying in `checks/ready.md`.
+
+### C-19 -- left-side windows leave a true 16px gap, and grow with their content
+
+PASS confirmed. The gap below an open Colony, Foraging or Nursery window
+matches the gap between the summary panel and the left screen edge. Expanding
+a section grows the window until its bottom would reach that gap, after which
+it scrolls; collapsing it shrinks the window again. LAY-3 holds.
+Owner was `plans/archive/LAY-3_2026-09-09.md`.
+
+### C-26 -- the nursery donut's key follows the typeface and clears the scrollbar
+
+PASS confirmed. The key's text changes typeface and size with the appearance
+settings, matching the headings around it, and no line of it runs under the
+window's scrollbar at any scale. LAY-4 holds, and with it every slice in
+`plans/archive/PANEL_LAYOUT_2026-09-09.md`.
+Owner was `plans/archive/LAY-4_2026-09-09.md`.
+
 ## 9 Sep 2026 -- hands-on pass over the UI-W and LAY-1 group
 
 Three entries confirmed. Three failed and are re-filed against

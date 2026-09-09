@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the panel-rectangle work moved to plans/now/panel-layout.md on 9 Sep 2026 | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5, the only slice this file still owns | Dependency: UI-P-5 wants a live reproduction; the panel-rectangle work left this file on 9 Sep 2026 and its plan has since closed | Verified: 2026-09-09
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -31,7 +31,7 @@ sharing a file:
 - `plans/archive/LAY-1_2026-09-08.md` — why five separate panel-placement
   checks failed since 3 Sep, the panel hierarchy Dave asked for on 8 Sep,
   and LAY-1, which shipped one owner of it, 2026-09-08.
-- `plans/now/panel-layout.md` — **every slice landed.** LAY-2 to LAY-4, from
+- `plans/archive/PANEL_LAYOUT_2026-09-09.md` — **every slice landed and C-19 and C-26 passed.** LAY-2 to LAY-4, from
   Dave's 9 Sep pass, and the Godot behaviour that made the command tray fail
   four times in a row, all shipped 2026-09-09; the file moves to
   `plans/archive/` once the ledger clears.

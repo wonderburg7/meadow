@@ -1,7 +1,7 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 2 -- the collapse button does what its tooltip says, and the rescue line survives | Dependency: none -- Dave ran C-5 on 8 Sep 2026 and the evidence is below | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: Slice 2 -- the collapse button does what its tooltip says, and the rescue line survives | Dependency: none -- Slices 2 and 3 are both startable today | Verified: 2026-09-09
 
 **Which stages this is about.** Stage `2.1` is "watch the nectar stores fall,
 then recover them"; `2.2` is "raise a pollen Forager". The full table of
@@ -136,6 +136,15 @@ not asked for a rescue at 2.1), or `TutorialCheckpoint.restore`.
 `checks/ready.md` for the wording, which now names the stage the run must be
 past and says what each press is expected to do.
 
+**Confirmed again on 9 Sep 2026.** Dave re-ran C-5 and reported that the
+wobble line still takes a **third** press, so the press-counting diagnosis
+above stands unchanged and this slice is still needed as written. He also
+reported that the rescue line survived this time -- it appeared with 150
+nectar restored and was not overwritten by a stage hint. That is one run, not
+a fix: `_check_c2_failure` still calls `show_now()` without `clear_queue()`,
+so whether the line survives still depends on what the current stage happens
+to have queued. Deliver the `clear_queue()` change as specified.
+
 <!-- LAYER: on-demand -->
 
 - The two branches: `scripts/challenge_runner.gd` (`_check_c2_failure`,
@@ -147,3 +156,72 @@ past and says what each press is expected to do.
 - The developer row: `scripts/debug_panel.gd` (`challenge_row`,
   `_on_force_c2_collapse_pressed`).
 - What every stage id means: `docs/challenge-stages.md`.
+
+## Slice 3 — the colony still has the pollen to act on Dr Gallerin's advice
+
+**Reasoning level: medium.** Two prompt changes and one guard, mirroring a
+mechanism this file already documents.
+
+**Startable now.** It shares no file with Slice 2's `debug_panel.gd` change
+and both may be taken in either order, but if they are taken together, take
+Slice 2 first: its `clear_queue()` fix is the same ordering this slice's new
+message depends on.
+
+**What Dave reported (C-5, 9 Sep 2026).**
+
+> "Dr's suggestion to make a pollen forager comes after pollen stores have
+> been depleted to make nectar foragers."
+
+**Cause.** Stage `2.1` is "watch the nectar stores fall, then recover them".
+The only way a player recovers them is to raise nectar Foragers, and raising
+any bee costs pollen. Stage `2.2`, "raise a pollen Forager", is the first
+time Dr Gallerin mentions pollen at all — its `2.2_welcome` line is "Nectar
+keeps bees moving. Pollen helps make more bees." By then the player has spent
+the colony's pollen doing what stage `2.1` asked of them.
+
+This is worse than an awkward hint order. Raising a bee costs pollen, so a
+colony at zero pollen cannot raise the pollen Forager stage `2.2` asks for,
+and cannot raise anything that would fetch more. The run stalls with no
+message saying why.
+
+**Deliver, in `scripts/challenge_stages.gd`.** Move the advice to where the
+player can still act on it.
+
+- Add a third prompt to stage `2.1` at `STRONGER_HINT_DELAY`, in Dr
+  Gallerin's voice, saying that every new bee is raised on pollen, so some
+  should be kept back rather than spent entirely on nectar Foragers. Give it
+  the id `2.1_pollen_reserve`.
+- Reword `2.2_welcome` so it reads as the follow-through on that, not as the
+  first mention of pollen.
+
+**Deliver, in `scripts/challenge_runner.gd`.** Add a pollen floor with a
+one-time rescue, built exactly like the nectar rescue in
+`_check_c2_failure()` so there is one pattern in this file rather than two.
+
+- New constants beside the existing `C2_RESCUE_THRESHOLD`,
+  `C2_RESCUE_AMOUNT` and `C2_FAILURE_FLOOR`: `C2_POLLEN_RESCUE_THRESHOLD` set
+  to the pollen cost of raising one bee, and `C2_POLLEN_RESCUE_AMOUNT` set to
+  three times that. Read the per-bee cost from `GameConfig` rather than
+  retyping the number.
+- While Challenge 2 is active and stage `2.2` has not yet cleared, if hive
+  pollen falls below the threshold, deposit the rescue amount once, then call
+  `main.gallerin_panel.clear_queue()` followed by `show_now()` with a
+  non-repeatable line explaining that a colony without pollen cannot raise
+  any bee at all, so a little has been set aside.
+- Guard it with the same one-shot flag shape the nectar rescue uses, and
+  reset that flag on `Session.run_reset` so a second run gets its own rescue.
+
+**Do not reorder stages `2.1` and `2.2`.** Stage `2.1` is Challenge 2's
+opening and its goal id is referenced by `_check_c2_failure`'s
+`_c2_index("2.1")` guard, by the checkpoint restore, and by C-5. Moving it
+would change all three for a problem that a prompt and a floor solve.
+
+**Acceptance.** Play Challenge 2 from the start, spending pollen freely on
+nectar Foragers through stage `2.1`. Dr Gallerin warns about the pollen
+reserve while stage `2.1` is still running. If the stores do bottom out
+before the pollen Forager is raised, a one-time top-up arrives with a line
+saying why, and the run continues. It happens once per run, not repeatedly.
+
+**Check to file:** one check covering the warning during `2.1` and the
+one-time top-up.
+
