@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-3, "Change to…" looks like the buttons beside it | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-4, the default text size goes up by 2px | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text, and reads as the same kind of thing as the
@@ -17,6 +17,9 @@ and the cell action columns, now split the tray's inner width evenly instead
 of bunching against its left edge. **HC-2 has landed**
 (`plans/archive/HC-2_2026-09-09.md`): the soil panel's `soil_mark_btn` and
 `soil_clear_btn` now expand to fill the info row and show their labels.
+**HC-3 has landed** (`plans/archive/HC-3_2026-09-09.md`): all three
+`MenuButton`s in `hud.gd` now draw their normal stylebox at rest instead of
+only on hover.
 
 **Why they are one plan.** They share a cause: a Godot container gives a
 child its *minimum* size unless the child asks to expand, and three of the
@@ -36,7 +39,6 @@ to the bubble.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-3 | "Change to…" draws as floating text, not a button | `scripts/hud.gd` | low |
 | HC-4 | Default text is 2px smaller than Dave wants | `scripts/ui_theme.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `scripts/gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `scripts/gallerin_panel.gd` | medium |
@@ -44,38 +46,8 @@ to the bubble.
 HC-1 (the command tray's three columns share its width evenly) has landed
 and moved to `plans/archive/HC-1_2026-09-09.md`. HC-2 (the soil panel's two
 buttons take the panel's width and show their text) has landed and moved to
-`plans/archive/HC-2_2026-09-09.md`.
-
-## HC-3 — "Change to…" looks like the buttons beside it
-
-**Reasoning level: low.** One property.
-
-**What Dave reported (9 Sep 2026).** "Make the 'Change to…' button look like
-the other buttons, rather than floating text." His screenshot shows Forager,
-Nectar, Pollen, "Start here" and "More…" all drawn as filled buttons, with
-"Change to…" as bare text between them.
-
-**Cause.** `hud.gd::_make_role_menu()` (`:2456`) builds a `MenuButton`.
-Godot's `MenuButton` sets `flat = true` in its own constructor, and a flat
-button skips its `normal` stylebox. `_style_button()` overrides all five
-styleboxes on it correctly — the button simply never draws the normal one,
-which is why it lights up on hover and vanishes at rest.
-
-**Deliver, in `scripts/hud.gd`.** In `_make_role_menu()`, set
-`menu.flat = false` immediately after `_style_button(menu)`. Add a one-line
-comment saying MenuButton defaults to flat, so the line is not later deleted
-as redundant.
-
-**Then check for others.** `grep -n "MenuButton.new()" scripts/` and give any
-other instance the same line. The column headers ("Job", "Focus", "Orders")
-are `Label`s and are meant to be text — leave them.
-
-**Acceptance.** With a bee selected, "Change to…" is drawn as a filled button
-matching Forager and "More…" beside it, at rest as well as on hover, and its
-menu still opens on click.
-
-**Check to file:** none. The look is proved by a screenshot in this slice's
-commit, and a failure would change nothing about what gets built next.
+`plans/archive/HC-2_2026-09-09.md`. HC-3 ("Change to…" looks like the
+buttons beside it) has landed and moved to `plans/archive/HC-3_2026-09-09.md`.
 
 ## HC-4 — the default text size goes up by 2px
 

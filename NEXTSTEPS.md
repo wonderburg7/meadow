@@ -57,20 +57,18 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] HC-3 -- "Change to…" looks like the buttons beside it.**
-   `hud.gd::_make_role_menu()` (`:2456`) builds a `MenuButton`, which sets
-   `flat = true` in its own constructor and so skips its `normal` stylebox --
-   `_style_button()` overrides all five styleboxes correctly, but the flat
-   one never draws, which is why the button lights up on hover and vanishes
-   at rest. Set `menu.flat = false` immediately after `_style_button(menu)`,
-   then grep for other `MenuButton.new()` instances and give each the same
-   line.
-   - Plan: `plans/now/hud-controls.md` -- "HC-3 — "Change to…" looks like the buttons beside it"
-   - Files: `scripts/hud.gd`
-   - Check: none -- the look is proved by a screenshot in the commit, and a
-     failure would change nothing about what gets built next
-   - Proof: `absent: scripts/hud.gd :: menu.flat = false`
-   - Next after: HC-4 (the default text size goes up by 2px)
+3. **[Claude] HC-4 -- the default text size goes up by 2px.**
+   Dave asked to increase the default text pixel size by 2. In
+   `ui_theme.gd::TYPE_SIZES` (`:207`) add 2 to each value: Heading 16 → 18,
+   Body 13 → 15, Small 11 → 13, Tiny 9 → 11. Then re-measure
+   `UiLayout.SELECTION_TRAY_MIN_WIDTH`, `GallerinPanel.BUBBLE_WIDTH` and the
+   100px column minimum in `hud.gd::_build_tray_column()` at 800x600, raising
+   any that now clip text.
+   - Plan: `plans/now/hud-controls.md` -- "HC-4 — the default text size goes up by 2px"
+   - Files: `scripts/ui_theme.gd`
+   - Check: a new check at 800x600 and the largest text scale
+   - Proof: `present: scripts/ui_theme.gd :: "Heading": 16,`
+   - Next after: HC-5 (Dr Gallerin's bubble types its line out)
 
 ## Not in the queue, and why
 
@@ -80,12 +78,12 @@ Each of these wants something from Dave, or something else to ship first.
   playthrough, mostly Dave's run rather than a code slice; its own
   boot/checklist pass is startable now that Slice 19 has landed, but it is
   a session for Dave's hands rather than a queued code slice.
-- **HC-4 to HC-6** (`plans/now/hud-controls.md`) -- all edit
-  `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
-  one Claude branch runs at a time; they follow HC-3 in order.
+- **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
+  `scripts/gallerin_panel.gd`, and one Claude branch runs at a time; they
+  follow HC-4 in order.
 - **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- the guard rail for
   both layout groups, and startable now that HC-1 and HC-2 have landed, but
-  one Claude branch runs at a time; it follows HC-3 in the lane.
+  one Claude branch runs at a time; it follows HC-4 in the lane.
 - **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
