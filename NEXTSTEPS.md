@@ -33,18 +33,7 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-4 -- make the lifecycle failure-atomic and idempotent.**
-   Add recoverable lifecycle states and commands, preflight rollback, and a
-   repository lock so an interrupted claim or close can resume without manual
-   Git repair.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-4 — make the lifecycle failure-atomic and idempotent"
-   - Files: `tools/slice.ps1`, `tests/test_source_checks.py`,
-     `plans/now/codex-reliability.md`
-   - Check: injected lifecycle-phase failures recover through `resume`
-   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
-   - Next after: CR-5 (remove cross-lane shared-file conflicts)
-
-2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+1. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -56,6 +45,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Check: C-5, in `checks/ready.md`
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
+
+2. **[Codex] CR-5 -- remove cross-lane shared-file conflicts.**
+   Give each hands-on check an independently owned record, treat generated
+   coordination documentation as an integration product, and make `doctor`
+   account for lifecycle-owned files when it checks lane overlap.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-5 — remove cross-lane shared-file conflicts"
+   - Files: `tools/slice.ps1`, `tools/check_docs.py`, `checks/ready.md`,
+     `plans/now/codex-reliability.md`
+   - Check: two mock lane branches can file checks and close in either order
+   - Proof: `absent: tools/slice.ps1 :: Get-ImplicitLifecycleFiles`
+   - Next after: CR-6 (make headless evidence bounded and causal)
 
 3. **[Claude] HC-4 -- the default text size goes up by 2px.**
    Dave asked to increase the default text pixel size by 2. In
