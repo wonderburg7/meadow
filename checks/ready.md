@@ -20,5 +20,6 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-33 -- the default text size is 2px larger everywhere, and nothing clips](ready/C-33.md)
 - [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-35 -- the Favourite star sits beside the summary panel's cog](ready/C-35.md)
+- [C-36 -- a summary panel's cog fits the entity it names](ready/C-36.md)
 - [C-5 -- Challenge 2's rescue and recovery lines](ready/C-5.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
