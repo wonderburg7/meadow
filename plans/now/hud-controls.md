@@ -1,24 +1,25 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-7, the command tray's content fills the tray's width | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-9, every button follows the text-size setting | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
 the player expects it, and offers options that apply to what is selected.
 
-**State.** Dave's second 9 Sep 2026 pass re-ran C-18 and C-32 and failed
-both, and added three more reports. C-18 failed for a *different* reason than
-the first time: HC-1 computed the right column widths, and the container
-holding those columns never grew past its own minimum, so the fix could not
-show. HC-7 is that container. C-32's own conditions passed and a new one
-failed underneath them: no plain button in the game follows the text-size
-setting, because the shared theme sets a font size for its named type
-variations but not for the `Button` base type. HC-9 is that.
+**State.** HC-7 landed 9 Sep 2026: `column` inside `command_scroll` now sets
+`SIZE_EXPAND_FILL`, so the tray's `ScrollContainer` stretches it to the
+tray's width instead of the column's own minimum, and `_tray_chrome_width()`
+is gone in favour of the one `UiLayout.panel_chrome()` both the tray and
+`ui_panel_layout.gd::apply()` now share. C-18 is ready to re-run. C-32's own
+conditions passed on the second 9 Sep pass and a new one failed underneath
+them: no plain button in the game follows the text-size setting, because the
+shared theme sets a font size for its named type variations but not for the
+`Button` base type. HC-9 is that, and is next.
 
 **Why they are one plan.** Most share a cause: a Godot container gives a
 child its *minimum* size unless the child asks to expand, and the controls
-that failed never ask. HC-7 is that same rule one level up the tree — a
+that failed never ask. HC-7 was that same rule one level up the tree — a
 `ScrollContainer` stretches its child only when the child has `SIZE_EXPAND` —
 which is why fixing the columns did not fix the columns. It is the same shape
 of mistake as the anchor bug in `plans/archive/PANEL_LAYOUT_2026-09-09.md`,
@@ -38,7 +39,6 @@ asked what was selected.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-7 | The tray's columns stack one per row (C-18) | `hud.gd` | low |
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
 | HC-9 | No button follows the text-size setting (C-32) | `ui_theme.gd` | low |
 | HC-10 | The Favourite toggle is a worded row in `More…` | `hud.gd` | low |
@@ -47,97 +47,23 @@ asked what was selected.
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-7 comes first: it is one line, it closes a check that has now failed
-twice, and HC-8 is easier to judge once the tray is the right width. HC-9 is
-independent but changes the size of every button in the game, so it wants a
-clear run rather than to land beside another layout slice.
+HC-9 comes first: it is independent, but changes the size of every button in
+the game, so it wants a clear run rather than to land beside another layout
+slice. HC-8 is easier to judge now the tray is the right width.
 
 Landed and archived: HC-1 (the tray's three columns get even widths),
 HC-2 (the soil panel's buttons take the panel's width and show their text),
 HC-3 ("Change to…" looks like the buttons beside it) and HC-4 (the default
-text size goes up by 2px), each archived under `plans/archive/` on 9 Sep 2026.
-HC-1 and HC-2 did what they specified; C-18 and C-32 still fail for the
-separate causes HC-7 and HC-9 name.
+text size goes up by 2px), each archived under `plans/archive/` on 9 Sep
+2026, and HC-7 (the tray's content fills the tray's width), archived under
+`plans/archive/HC-7_2026-09-09.md`. HC-1 and HC-2 did what they specified;
+C-18 was HC-7's cause and is ready to re-run; C-32 still fails for the cause
+HC-9 names.
 
 HC-5, HC-6 and HC-12 each edit a file the Codex lane is working in --
 `scripts/gallerin_panel.gd` for the first two, `scripts/debug_panel.gd`
 for HC-12 -- so all three wait in `NEXTSTEPS.md`'s "Not in the queue, and
 why" until the Codex lane vacates those files.
-
-## HC-7 — the command tray's content fills the tray's width
-
-**Reasoning level: low.** One size flag, in one function, with a confirmed
-cause. Do not redesign the tray.
-
-**Confirmed root cause.** `hud.gd::_build_command_tray()` puts a
-`VBoxContainer` (`column`, `:1006`) inside `command_scroll`, a
-`ScrollContainer`. Godot 4's `ScrollContainer` stretches its child to the
-container's width **only if that child has `SIZE_EXPAND` set horizontally**;
-otherwise the child is laid out at its own combined minimum width. `column`
-never sets `size_flags_horizontal`, so it defaults to `SIZE_FILL` without
-`SIZE_EXPAND` and takes its minimum width — which, for an `HFlowContainer`
-that can wrap, is the width of its widest single child. HC-1 gave each of
-Job/Focus/Orders the right even width, and then handed them to a container
-only one column wide, so all three wrap onto separate rows against the tray's
-left edge with the rest of the tray blank. That is C-18, and it is also the
-blank right-hand side Dave photographed with `More…` open.
-
-A second, smaller arithmetic fault sits on top of it and must be fixed in the
-same pass or C-18 will fail a third time on a narrow viewport:
-`_tray_chrome_width()` (`:2610`) subtracts only the panel stylebox's
-`content_margin_left/right`, while `ui_panel_layout.gd::apply()` budgets the
-scroll using `UiLayout.panel_chrome()`, which also subtracts the two border
-widths. `_apply_even_column_widths` therefore divides up a few pixels more
-than the columns actually get, and the last column wraps.
-
-**Current authoritative owner.** `scripts/hud.gd` for the tray;
-`scripts/ui_layout.gd` for the widths it derives from.
-
-**Required reading.** This heading;
-`hud.gd::_build_command_tray`, `_apply_even_column_widths`,
-`_update_command_tray_width`, `_tray_chrome_width`; `docs/known-pitfalls.md`'s
-container-minimum-size entry.
-
-**Files likely to change.** `scripts/hud.gd`.
-
-**Files that must not be changed.** `scripts/ui_panel_layout.gd` — it owns
-the panel rectangle and got it right. `scripts/ui_layout.gd`'s width
-functions.
-
-**Requirements.**
-
-1. Set `column.size_flags_horizontal = Control.SIZE_EXPAND_FILL` where it is
-   built, with a comment naming the Godot rule so it is not "tidied" away.
-2. Replace `_tray_chrome_width()`'s body with `UiLayout.panel_chrome().x`, so
-   the even-width split and the scroll budget are derived from one function.
-   Delete `_tray_chrome_width` outright if that leaves it a one-line
-   forwarder.
-3. Do the same audit for the cell action columns: `cell_primary_columns` and
-   `cell_more_panel` sit in the same `column`, so they inherit the fix, but
-   confirm it rather than assuming.
-
-**Constraints and invariants.** The tray's outer rectangle stays owned by
-`UiLayout.command_tray_rect` and applied by `UiPanelLayout.apply`. Never call
-`reset_size()` or assign `panel.size` (LAY-2's regression). The tray must
-still wrap onto more rows at 800x600 rather than clipping.
-
-**Runtime policy.** Layout only, no per-frame cost.
-
-**Edge cases.** A selection whose Focus or Orders column is empty and hidden:
-`_apply_even_column_widths` is handed all three wrappers regardless, so an
-empty one must not claim a third of the width. Check what it does today and
-pass only the visible wrappers if it does.
-
-**Automated acceptance checks.** LAY-6 (`plans/now/layout-regression.md`) is
-the instrument for this class. If LAY-5 has landed, add the assertion here:
-at 1920x1080 the three column wrappers' rectangles have the same width and
-the same y. If LAY-5 has not landed, say so in the commit message and leave
-C-18 as the proof.
-
-**Regression checks.** Source suite; C-11, C-12 and C-19 in the archive cover
-the tray's height and position and must not change.
-
-**Check to file:** C-18, re-run unchanged.
 
 ## HC-8 — the tray's height matches its content after a reselect
 

@@ -56,19 +56,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Get-ImplicitLifecycleFiles`
    - Next after: CR-6 (make headless evidence bounded and causal)
 
-2. **[Claude] HC-7 -- the command tray's content fills the tray's width.**
-   Set `SIZE_EXPAND_FILL` on the `VBoxContainer` inside `command_scroll`, so
-   the Job/Focus/Orders columns HC-1 sized correctly are given a container
-   wide enough to hold them side by side, and derive `_tray_chrome_width`
-   from `UiLayout.panel_chrome()` so the even-width split and the scroll
-   budget cannot disagree by two border widths.
-   - Plan: `plans/now/hud-controls.md` -- "HC-7 — the command tray's content fills the tray's width"
-   - Files: `scripts/hud.gd`
-   - Check: C-18, in `checks/ready.md`
-   - Proof: `absent: scripts/hud.gd :: column.size_flags_horizontal`
-   - Next after: HC-9 (every button follows the text-size setting)
-
-3. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -81,7 +69,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-4. **[Claude] HC-9 -- every button follows the text-size setting.**
+3. **[Claude] HC-9 -- every button follows the text-size setting.**
    `ui_theme.gd` sets `font_size` for its four type variations and, for the
    `Label` and `Button` base types, only colour and font. Give the base types
    the scaled Body size in the same loop, so an unmarked button matches the
