@@ -45,18 +45,7 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] C2-3 -- the colony still has the pollen to act on Dr Gallerin's advice.**
-   Challenge 2 warns about pollen only after stage 2.1 has spent it on nectar
-   Foragers, leaving the player unable to raise the pollen Forager that stage
-   2.2 requests. Give the warning while it can still change the player's
-   decision and supply a one-time pollen rescue if the stores bottom out.
-   - Plan: `plans/now/challenge-2.md` -- "Slice 3 — the colony still has the pollen to act on Dr Gallerin's advice"
-   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
-   - Check: a hands-on check covering the stage-2.1 warning and one-time pollen top-up
-   - Proof: `absent: scripts/challenge_stages.gd :: 2.1_pollen_reserve`
-   - Next after: Challenge 2 Slice 4 (not yet specified -- name it in `plans/now/challenge-2.md` once C2-3's own shape is known)
-
-2. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
+1. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
    Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
    engine/version evidence and a deterministic remediation or an explicit
    external-environment diagnosis. SB-1 stays blocked until the probe writes a
@@ -67,7 +56,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/run_scenario.py :: HeadlessBaselineProbe`
    - Next after: SB-1 (return season balance with a successful bounded baseline)
 
-3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
+2. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
    Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
    bottom of the command tray, this should be a single star without words to
    the left of the settings cog in the bee summary window." Delete
