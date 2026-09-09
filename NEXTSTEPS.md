@@ -44,16 +44,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] C1-17 -- changing a bee's focus wakes her up.**
-   Stage 1.11's exit parks the queen on `State.IDLING`, which dispatches
-   nothing. Two stages later the player switches her focus to pollen and
-   `set_focus()` deliberately leaves the state alone inside the hive, so she
-   never moves again. Send a parked bee to the hive exit instead.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 17 — changing a bee's focus wakes her up"
-   - Files: `scripts/bee.gd`
-   - Check: C-7, in `checks/ready.md`
-   - Proof: `absent: scripts/bee.gd :: a bee parked on IDLING`
-   - Next after: C1-18 (pollen has somewhere to go)
+2. **[Claude] C1-18 -- pollen has somewhere to go, and the player learns why.**
+   Both built cells hold nectar by the pollen stage, so
+   `HiveCell.space_for()` returns 0 for pollen and the queen carries a load
+   that has nowhere to go. Add overflow-nectar disposal for the queen, a new
+   stage teaching cell designation, queen-run cell emptying, and a Gallerin
+   prompt when nectar sits in a designated pollen cell.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 18 — pollen has somewhere to go, and the player learns why"
+   - Files: `scripts/bee_foraging.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/hud.gd`
+   - Check: designating a cell for pollen unlocks automatic deposit; nectar left in that cell prompts Dr Gallerin; the queen can empty a cell with no role change
+   - Proof: `absent: scripts/challenge_stages.gd :: "id": "1.13", "goal": "cell_designated"`
+   - Next after: C1-19 (the stage's automation switches off when the stage ends)
 
 3. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
@@ -84,13 +85,12 @@ was diagnosed against the source during the 9 Sep pass.
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 18 and 19** (`plans/now/challenge-1.md`) -- Slice 18
-  renumbers every Challenge 1 stage from 1.13 up, so it must not run beside
-  Slice 17, which edits the same stage records (Slice 16 has landed). Slice 19
-  needs 18 merged before its first step, re-running the stage, means anything.
+- **Challenge 1 Slice 19** (`plans/now/challenge-1.md`) -- needs Slice 18
+  merged before its first step, re-running the pollen stage to completion,
+  means anything.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough, and Dave's run rather than a code slice. Starting it before
-  Slices 17 to 19 land only rediscovers C-7.
+  Slices 18 and 19 land only rediscovers C-7.
 - **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
   one Claude branch runs at a time; they follow HC-1 in order.

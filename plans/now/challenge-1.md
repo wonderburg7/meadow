@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 17 -- changing a bee's focus wakes her up | Dependency: none -- Slice 17 is startable now; Slices 18-19 wait on it | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: Slice 18 -- pollen has somewhere to go, and the player learns why | Dependency: none -- Slice 18 is startable now; Slice 19 waits on it | Verified: 2026-09-09
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command. Every code slice is
@@ -12,7 +12,9 @@ shipped; what remains is one acceptance playthrough and its copy pass.
 restored the command tray, and the automatic-foraging arc failed in five
 distinct ways. Those became **Slices 16 to 19** below, per this plan's own
 rule that a finding from its acceptance run becomes its next slice while it
-is open. Slice 7, the acceptance playthrough, now runs after them.
+is open. Slice 7, the acceptance playthrough, now runs after them. Slices 16
+and 17 are shipped; the queen now works more than one flower and wakes up
+from a focus change alone.
 
 **What C-7 found, 9 Sep 2026.** Dave's five reports, in the order the player
 meets them:
@@ -37,7 +39,7 @@ Reports 3, 4 and 5 are one defect seen from three angles: nothing in the hive
 will accept pollen, because both built cells hold nectar. Slice 18 is that
 one.
 
-**Open slices.** Slices 17 to 19, then Slice 7. Nothing else may be added --
+**Open slices.** Slices 18 and 19, then Slice 7. Nothing else may be added --
 a finding from Slice 7's own run becomes this plan's next slice while it is
 open, and a finding after it closes starts a new `plans/now/` file.
 
@@ -53,9 +55,9 @@ Foraging transitions: `scripts/bee_foraging.gd`. Cell storage rules:
 `plans/archive/CHALLENGE1_SLICES_1-10.md`; open them for provenance, never to
 work out what to do.
 
-**Reasoning level.** Medium for Slices 17 and 19. High for Slice 18, which
-adds a stage, changes what a cell accepts and gives the queen a job she could
-not do before.
+**Reasoning level.** Medium for Slice 19. High for Slice 18, which adds a
+stage, changes what a cell accepts and gives the queen a job she could not do
+before.
 
 **Slice numbering starts at 16 on purpose.** C-7's `Owner:` line named "Slice
 14", a slice archived on 3 Sep, so the check pointed at a specification
@@ -64,60 +66,8 @@ nobody could open. New slices never reuse a retired number.
 **Slice 16 — the queen works more than one flower at 1.11 — shipped 9 Sep
 2026:** `plans/archive/CHALLENGE1_SLICE_16_2026-09-09.md`.
 
-## Slice 17 — changing a bee's focus wakes her up
-
-**Reasoning level: medium.** One guarded branch in the shared bee state
-machine, so it must not disturb bees that are mid-errand.
-
-**What Dave reported.** At the pollen stage the queen does nothing at all.
-Only right-clicking the nest entrance, a player command, gets her moving.
-
-**Cause.** Stage `1.11`'s `on_exit` runs `freeze_bee:queen`, which parks her
-in `State.IDLING`. `scripts/bee.gd`'s state machine handles that state with
-`pass   # waits for orders and nothing else`, so nothing dispatches her
-again. Assigning a *role* would wake her, because `_apply_role()` ends by
-setting `state = _default_state_for_role()`. Changing her *focus* does not:
-`Bee.set_focus()` (`scripts/bee.gd:1790`) deliberately leaves the state alone
-when the bee is inside the hive, on the reasoning that `_go_to_exit()` will
-call `_default_state_for_role()` once she walks out. A bee parked on `IDLING`
-never walks out, so the focus change lands on a bee that will never act on
-it. The build-a-cell stage sits between the freeze and the focus change,
-which is why this only shows up at the pollen stage.
-
-**Deliver, in `scripts/bee.gd`, in `set_focus()`.** Replace the final
-
-```gdscript
-if not _is_inside_hive():
-    state = State.SEEK_FLOWER
-```
-
-with a three-way branch, keeping the existing comment about meadow
-coordinates and adding one for the new case:
-
-- Not inside the hive: `state = State.SEEK_FLOWER`, exactly as now.
-- Inside the hive and `state == State.IDLING`: `state = State.IN_HIVE_TO_EXIT`,
-  so she walks out through the entrance the ordinary way and `_go_to_exit()`
-  picks the new resource type up on arrival. Comment this branch with the
-  phrase **a bee parked on IDLING** -- `NEXTSTEPS.md`'s `Proof:` line for this
-  slice asserts that phrase is absent until the slice lands.
-- Inside the hive and any other state: leave the state alone, as now. A bee
-  carrying a load to a cell must finish that walk.
-
-**Why `IN_HIVE_TO_EXIT` and not `SEEK_FLOWER`.** The comment already in
-`set_focus()` says why: a bee parented under `hive_root` reads a meadow
-position as a hive-local offset and drifts to a meaningless spot. Sending her
-to the exit keeps her inside the existing entrance-crossing path.
-
-**This is safe for every caller.** `set_focus` already refuses any bee that
-is not a Forager, primary or secondary (`scripts/bee.gd:1797`), so the only
-bees this can wake are ones whose job is to be out foraging.
-
-**Acceptance.** At the pollen stage, selecting the queen and pressing Pollen
-sends her out of the hive and to a flower with no further input. At 1.11,
-giving her Forager with nectar focus does the same. A forager already walking
-a load to a cell when her focus is switched still delivers that load first.
-
-**Check to file:** covered by C-7's rewritten second condition.
+**Slice 17 — changing a bee's focus wakes her up — shipped 9 Sep 2026:**
+`plans/archive/CHALLENGE1_SLICE_17_2026-09-09.md`.
 
 ## Slice 18 — pollen has somewhere to go, and the player learns why
 
