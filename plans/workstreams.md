@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CR-3` (`codex/CR-3`) | Codex | align permissions with the intended Git lifecycle. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-3 — align permissions with the intended Git lifecycle" |
+| `.worktrees/HC-1` (`claude/HC-1`) | Claude | the command tray's three columns share its width. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-1 — the command tray's three columns share its width evenly" |
