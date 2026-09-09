@@ -248,6 +248,7 @@ static func _refresh_theme_resource(theme: Theme) -> void:
 		elif theme.has_font("font", variation):
 			theme.clear_font("font", variation)
 	for base_type in ["Label", "Button"]:
+		theme.set_font_size("font_size", base_type, int(round(TYPE_SIZES["Body"] * scale)))
 		theme.set_color("font_color", base_type, color("text_primary"))
 		if font != null:
 			theme.set_font("font", base_type, font)
