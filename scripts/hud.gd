@@ -971,6 +971,11 @@ func _apply_selection_field_visibility() -> void:
 	activity_label.visible = Session.show_selection_activity
 	trait_label.visible = Session.show_selection_trait
 
+## Gap between the tray's ranked columns, both the HFlowContainer's own
+## separation and the even-width split _update_command_tray_width computes
+## around it -- one constant so the two can never disagree.
+const TRAY_COLUMN_SEPARATION := 16.0
+
 ## The command tray (UI_PLAN.md section 5): a wrapping row of role-action
 ## buttons, ranked by how often they're used for the current selection
 ## rather than alphabetically or by internal role-mode order, with
@@ -1013,7 +1018,7 @@ func _build_command_tray() -> void:
 	# viewport cannot accommodate all three.  A fixed HBox would preserve its
 	# children's combined minimum width and spill into the summary panel.
 	command_columns = HFlowContainer.new()
-	command_columns.add_theme_constant_override("separation", 16)
+	command_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
 	column.add_child(command_columns)
 
 	var job_group := _build_tray_column("Job")
@@ -1102,7 +1107,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
-	cell_primary_columns.add_theme_constant_override("separation", 16)
+	cell_primary_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
 	cell_group.add_child(cell_primary_columns)
 
 	var row := HFlowContainer.new()
@@ -2596,11 +2601,40 @@ func _apply_selection_tray_width() -> void:
 		# to give it.
 		selection_column.custom_minimum_size.x = maxf(0.0, rect.size.x - UiLayout.panel_chrome().x)
 
+## Space the tray panel's own stylebox takes on each side, so a column's
+## even width is measured against what is left inside the panel rather than
+## the panel's outer width.
+func _tray_chrome_width() -> float:
+	var box := UiTheme.panel_stylebox()
+	return box.content_margin_left + box.content_margin_right
+
+## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
+## between each, but only when that even width is wide enough for the
+## widest wrapper's own content -- otherwise every wrapper's minimum width
+## is cleared and the HFlowContainer wraps onto more rows as it does at a
+## narrow viewport, instead of clipping the widest column's content.
+func _apply_even_column_widths(wrappers: Array) -> void:
+	if wrappers.is_empty():
+		return
+	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - _tray_chrome_width()
+	var count := wrappers.size()
+	var even: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
+	var widest := 100.0
+	for wrapper in wrappers:
+		widest = maxf(widest, wrapper.get_combined_minimum_size().x)
+	var width: float = even if even >= widest else 0.0
+	for wrapper in wrappers:
+		wrapper.custom_minimum_size.x = width
+
 ## The command tray is centred at half the viewport until its two side bands
 ## reach their minimum widths. The summary panel and Gallerin bubble derive
 ## their widths from that same edge, preserving their shared 16px gaps.
-## Setting the width on command_columns rather than command_tray itself makes
-## columns wrap onto more rows instead of the whole tray growing wider.
+## Job/Focus/Orders (and, when a cell is selected, the cell action columns)
+## divide the tray's inner width evenly between themselves via
+## _apply_even_column_widths, rather than growing to fill it the way
+## SIZE_EXPAND_FILL implies -- HFlowContainer ignores expand flags and lays
+## children out at their minimum size, which is what left them bunched
+## against the tray's left edge (Dave, C-18, 9 Sep 2026).
 func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
@@ -2609,8 +2643,10 @@ func _update_command_tray_width() -> void:
 	# viewport resize; ui_panel_layout.gd::apply() owns the width itself.
 	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
 	command_columns.custom_minimum_size.x = 0.0
+	_apply_even_column_widths([job_column_wrapper, focus_column_wrapper, orders_column_wrapper])
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = 0.0
+		_apply_even_column_widths(cell_primary_columns.get_children())
 	if cell_more_panel != null:
 		cell_more_panel.custom_minimum_size.x = 0.0
 
