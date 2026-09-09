@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/LAY-5` (`claude/LAY-5`) | Claude | a headless check fails when a panel leaves the viewport. | Claude | in progress | none | `plans/now/layout-regression.md` "LAY-5 — a headless check that fails when a panel leaves the viewport" |
+| `.worktrees/C2-3` (`codex/C2-3`) | Codex | the colony still has the pollen to act on Dr Gallerin's advice. | Codex | in progress | none | `plans/now/challenge-2.md` "Slice 3 — the colony still has the pollen to act on Dr Gallerin's advice" |
