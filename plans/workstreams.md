@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CR-6` (`codex/CR-6`) | Codex | make headless evidence bounded and causal. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-6 — make headless evidence bounded and causal" |
+| `.worktrees/HC-9` (`claude/HC-9`) | Claude | every button follows the text-size setting. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-9 — every button follows the text-size setting" |
