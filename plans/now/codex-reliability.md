@@ -116,37 +116,17 @@ Completed 2026-09-09; archived at `plans/archive/CR-2_2026-09-09.md`.
 
 ### CR-3 — align permissions with the intended Git lifecycle
 
-**Implemented 9 Sep 2026.** Machine configuration, kept least-privilege.
-
-1. Keep the elevated Windows sandbox. Create a named Meadow permission profile
-   extending the workspace profile, with write access only to this repository,
-   its exact shared Git metadata and the chosen worktree root.
-2. Permit network access only to the configured Git remote endpoints needed by
-   `git fetch/push`; do not use full-access mode.
-3. Add a narrow rule/approval for the canonical `tools/slice.ps1 start` and
-   `tools/slice.ps1 finish` invocations. If managed policy prevents `.git`
-   writes, make one upfront approval the documented prerequisite instead of
-   discovering the denial midway through every task.
-4. Configure Git safe-directory handling for the primary checkout and the
-   worktree parent once at environment setup, not ad hoc per command.
-
-Acceptance: `doctor` can create and remove a disposable lock/ref probe, and a
-mock slice can claim, commit and close without an approval turn after setup.
-
-The trusted project selects a `meadow` permission
-profile extending `:workspace`; it grants writes only to the primary checkout,
-the worktree root and the exact shared `.git` directory, and proxies command
-network traffic only to the configured `github.com` remote. Windows environment
-setup records the primary checkout and worktree parent as Git safe directories.
-Because managed Windows policy still owns the `.git` deny, the trusted project
-also loads one narrow exec-policy rule for the canonical `doctor`, `start` and
-`finish` entry points rather than discovering the denial halfway through a
-slice. `doctor` now proves the real Git lock/ref path with a disposable
-`update-ref`, and the regression suite exercises a complete mock lifecycle.
+Completed 2026-09-09; archived at `plans/archive/CR-3_2026-09-09.md`.
 
 ### CR-4 — make the lifecycle failure-atomic and idempotent
 
 Medium tooling slice; complete before adding more lifecycle prose.
+
+Observed at CR-3 closeout on 9 Sep: `git worktree remove` deregistered the
+worktree after the merge and push but an external Windows handle kept the
+now-empty `.worktrees/CR-3` directory present. The remaining branch and ledger
+cleanup required manual recovery; this is the concrete failure CR-4 must make
+resumable.
 
 1. Add explicit states and commands: `status`, `resume`, and `abort` (the last
    only before merge). Derive state from branch, worktree, ledger, master and

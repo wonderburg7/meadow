@@ -33,18 +33,16 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-3 -- align permissions with the intended Git lifecycle.**
-   Define a least-privilege Meadow profile for repository content, shared Git
-   metadata, the worktree root and the configured Git remote; make the normal
-   slice commands and safe-directory setup work without mid-slice approval
-   discovery.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-3 — align permissions with the intended Git lifecycle"
-   - Files: `.codex/config.toml`, `.codex/environment.toml`,
-     `tools/slice.ps1`, `tests/test_source_checks.py`,
+1. **[Codex] CR-4 -- make the lifecycle failure-atomic and idempotent.**
+   Add recoverable lifecycle states and commands, preflight rollback, and a
+   repository lock so an interrupted claim or close can resume without manual
+   Git repair.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-4 — make the lifecycle failure-atomic and idempotent"
+   - Files: `tools/slice.ps1`, `tests/test_source_checks.py`,
      `plans/now/codex-reliability.md`
-   - Check: `doctor` metadata probe and a mock claim/commit/close lifecycle
-   - Proof: `absent: .codex/config.toml :: profiles.meadow`
-   - Next after: CR-4 (make the lifecycle failure-atomic and idempotent)
+   - Check: injected lifecycle-phase failures recover through `resume`
+   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
+   - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
 2. **[Claude] Challenge 1 Slice 16 -- the queen works more than one flower.**
    Stage 1.11 pins her to a single flower through
