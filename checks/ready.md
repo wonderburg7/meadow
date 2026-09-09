@@ -18,5 +18,6 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
 - [C-32 -- the soil panel's two buttons are full width and labelled](ready/C-32.md)
 - [C-33 -- the default text size is 2px larger everywhere, and nothing clips](ready/C-33.md)
+- [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-5 -- Challenge 2's rescue and recovery lines](ready/C-5.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
