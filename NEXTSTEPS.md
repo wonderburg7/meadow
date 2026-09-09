@@ -69,17 +69,18 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] HC-9 -- every button follows the text-size setting.**
-   `ui_theme.gd` sets `font_size` for its four type variations and, for the
-   `Label` and `Button` base types, only colour and font. Give the base types
-   the scaled Body size in the same loop, so an unmarked button matches the
-   body text beside it. Changes the size of every button in the game, so boot
-   and look before merging.
-   - Plan: `plans/now/hud-controls.md` -- "HC-9 — every button follows the text-size setting"
-   - Files: `scripts/ui_theme.gd`
-   - Check: C-32, in `checks/ready.md`
-   - Proof: `absent: scripts/ui_theme.gd :: set_font_size("font_size", base_type`
-   - Next after: Challenge 1 Slice 20 (the designation stage asks for the designation it names)
+3. **[Claude] LAY-5 -- a headless check fails when a panel leaves the viewport.**
+   Four of Dave's hands-on passes have been spent re-finding the same class of
+   defect: a persistent HUD panel losing its 16px gap or leaving the
+   viewport, most recently HC-7's C-18. Add a `viewport_size` scenario verb
+   and a `panel_rect` assertion so `tools/verify.ps1` catches it without a
+   human, proven by reintroducing and then removing LAY-2's old bug in the
+   same commit.
+   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
+   - Files: `scripts/scenario_actions.gd`
+   - Check: none -- the slice's own before/after test run is the acceptance evidence
+   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
+   - Next after: LAY-6 (a headless check fails when a built control has no usable size)
 
 ## Not in the queue, and why
 
@@ -103,7 +104,10 @@ Each of these wants something from Dave, or something else to ship first.
   LAY-5's rectangle helper.
 - **HC-10 and HC-11** (`plans/now/hud-controls.md`) -- the Favourite star's
   move to the summary header, and per-entity cog options. Both edit
-  `scripts/hud.gd`, which HC-7 leads with; one Claude branch at a time.
+  `scripts/hud.gd`, free since HC-7 landed, and ready on their merits, but
+  the Claude lane's leading item is LAY-5 instead -- the instrument that
+  would have caught HC-7's and HC-9's classes of defect without a human. One
+  Claude branch at a time; HC-10 is next after LAY-5.
 - **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
   `scripts/debug_panel.gd`, the Codex lane's C2-2 file.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
@@ -114,11 +118,9 @@ Each of these wants something from Dave, or something else to ship first.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- LAY-5, the
-  headless panel-rectangle assertion, is startable and was the Claude lane's
-  leading item before this pass; HC-7 and HC-9 went ahead of it because each
-  closes a check that has now failed twice. LAY-6 depends on LAY-5's
-  `viewport_size` verb, and would have caught HC-7's defect without a human.
+- **LAY-6** (`plans/now/layout-regression.md`) -- depends on LAY-5's
+  `viewport_size` verb and rectangle-reading helper. Becomes the Claude
+  lane's leading item once LAY-5 merges.
 - **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
