@@ -1,0 +1,25 @@
+# Meadow's managed Windows policy keeps shared .git metadata outside the
+# writable sandbox. These exact lifecycle entry points are the reviewed
+# escape hatch; all other PowerShell commands keep their normal policy.
+prefix_rule(
+    pattern = [
+        ["powershell", "powershell.exe"],
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools/slice.ps1",
+        ["doctor", "start", "finish"],
+    ],
+    decision = "allow",
+    justification = "Meadow's reviewed slice lifecycle needs its shared Git metadata and configured origin.",
+    match = [
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 doctor -Lane Codex",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 start -Lane Codex",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish",
+    ],
+    not_match = [
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 abandon",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1",
+    ],
+)

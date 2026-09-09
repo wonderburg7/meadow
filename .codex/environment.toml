@@ -5,10 +5,39 @@ name = "Meadow"
 script = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
 
 [setup.win32]
-script = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
+script = """
+$primary = (Resolve-Path (Join-Path (git rev-parse --git-common-dir).Trim() '..')).Path
+$worktrees = Join-Path $primary '.worktrees'
+$safeDirectories = @($primary, ($worktrees + '/*')) | ForEach-Object { $_.Replace('\\', '/') }
+$configured = @(git config --global --get-all safe.directory)
+foreach ($directory in $safeDirectories) {
+    if ($configured -notcontains $directory) {
+        git config --global --add safe.directory $directory
+    }
+}
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1
+"""
 
 [[actions]]
 name = "Verify"
 icon = "test"
 command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1"
+platform = "win32"
+
+[[actions]]
+name = "Check slice readiness"
+icon = "test"
+command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 doctor -Lane Codex"
+platform = "win32"
+
+[[actions]]
+name = "Claim Codex slice"
+icon = "play"
+command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 start -Lane Codex"
+platform = "win32"
+
+[[actions]]
+name = "Finish slice"
+icon = "check"
+command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish"
 platform = "win32"
