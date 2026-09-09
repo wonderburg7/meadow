@@ -38,6 +38,11 @@ signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
 ## Applied the moment the checkbox is ticked, independently of whether
 ## the cell is being emptied right now.
 signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
+## The colony's own selected bee carries the cell's contents out herself,
+## rather than waiting for a comb worker to notice -- Slice 18, for
+## Challenge 1's queen, who can never take Role.BUILDER. General-purpose:
+## works for any selected bee, not just Challenge 1's queen.
+signal cell_empty_by_bee_requested(cell: Node2D)
 ## Whether the queen lays a gyne into this cell rather than a worker.
 signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
 ## "Click a spot" modes -- main.gd puts itself into a placement mode when
@@ -397,6 +402,9 @@ var cell_more_open: bool = false
 var hatch_row: HFlowContainer
 var active_cell: Node2D = null
 var keep_empty_box: CheckBox
+## Visible only while active_cell holds something to carry -- see
+## _refresh_cell_popup. Slice 18.
+var empty_by_bee_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
@@ -1353,6 +1361,21 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	discard_btn.pressed.connect(func(): _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
 
+	# The two buttons above wait for a comb worker to pick the job up --
+	# no help to a colony that doesn't have one yet, the queen included,
+	# since Challenge 1 never lets her take Role.BUILDER. This one sends
+	# the selected bee to do it herself, right now, with no role change.
+	empty_by_bee_btn = Button.new()
+	_style_button(empty_by_bee_btn)
+	empty_by_bee_btn.text = "Empty this cell"
+	empty_by_bee_btn.theme_type_variation = "Small"
+	empty_by_bee_btn.pressed.connect(func():
+		if active_cell and is_instance_valid(active_cell):
+			cell_empty_by_bee_requested.emit(active_cell)
+			_refresh_cell_popup()
+	)
+	empty_row.add_child(_with_info(empty_by_bee_btn, "The selected bee carries the contents out herself, right now -- no comb worker needed and no change to her role."))
+
 	# This has to write straight through to the cell. It used to be read
 	# back from the cell every frame by _refresh_cell_popup while only
 	# being applied when one of the buttons above was pressed -- so
@@ -1678,6 +1701,11 @@ func _refresh_cell_popup() -> void:
 		hatch_name,
 		" — every bee" if active_cell.hatch_role_locked else "",
 	]
+
+	# Only worth offering while there is actually something to carry --
+	# matches command_empty_cell's own guard in bee.gd.
+	empty_by_bee_btn.visible = active_cell.content_type != "" \
+		and active_cell.content_type != "brood" and active_cell.content_type != "corpse"
 
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)

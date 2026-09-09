@@ -1753,6 +1753,24 @@ func command_deposit_at(cell: Node2D) -> void:
 	target_cell = cell
 	state = State.IN_HIVE_TO_CELL
 
+## Sends this bee to carry `cell`'s contents out, using the same haul-out
+## machinery a comb worker's autonomous maintenance already runs
+## (BeeBuilding.builder_go_to_haul_source/_target, dispatched purely by
+## state -- neither checks role) -- but commanded directly, so it works for
+## any bee, including the queen, whom Challenge 1 forbids ever taking
+## Role.BUILDER (durable rule, plans/now/challenge-1.md). Her own role is
+## left untouched; she returns to her own role's idle dispatch the moment
+## the cell is empty. Slice 18.
+func command_empty_cell(cell: Node2D) -> void:
+	if not is_instance_valid(cell) or cell.content_type == "" or cell.content_type == "brood" or cell.content_type == "corpse":
+		return
+	_clear_pending_zone_command()
+	cell.evict_requested = true
+	cell.bump_display_epoch()
+	_release_everything()
+	target_cell = cell
+	state = State.TO_HAUL_SOURCE   # player-command
+
 ## A hive cell belongs to hive coordinates, so delay assigning it until an
 ## outdoor bee has walked in through the entrance.
 func command_deposit_at_after_enter(cell: Node2D) -> void:
