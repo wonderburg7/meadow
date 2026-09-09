@@ -54,7 +54,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
    - Check: a hands-on check covering the stage-2.1 warning and one-time pollen top-up
    - Proof: `absent: scripts/challenge_stages.gd :: 2.1_pollen_reserve`
-   - Next after: none -- admit the owning plan's next ready slice after C2-3 ships
+   - Next after: Challenge 2 Slice 4 (not yet specified -- name it in `plans/now/challenge-2.md` once C2-3's own shape is known)
 
 2. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
    Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
@@ -67,61 +67,65 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/run_scenario.py :: HeadlessBaselineProbe`
    - Next after: SB-1 (return season balance with a successful bounded baseline)
 
-3. **[Claude] LAY-5 -- a headless check fails when a panel leaves the viewport.**
-   Four of Dave's hands-on passes have been spent re-finding the same class of
-   defect: a persistent HUD panel losing its 16px gap or leaving the
-   viewport, most recently HC-7's C-18. Add a `viewport_size` scenario verb
-   and a `panel_rect` assertion so `tools/verify.ps1` catches it without a
-   human, proven by reintroducing and then removing LAY-2's old bug in the
-   same commit.
-   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
-   - Files: `scripts/scenario_actions.gd`
-   - Check: none -- the slice's own before/after test run is the acceptance evidence
-   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
-   - Next after: LAY-6 (a headless check fails when a built control has no usable size)
+3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
+   Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
+   bottom of the command tray, this should be a single star without words to
+   the left of the settings cog in the bee summary window." Delete
+   `_build_favourite_row` and its `more_panel` call, and add a `☆`/`★` toggle
+   to the summary header next to the cog instead.
+   - Plan: `plans/now/hud-controls.md` -- "HC-10 — the Favourite star sits in the summary panel's header"
+   - Files: `scripts/hud.gd`
+   - Check: one hands-on check that the star appears left of the cog for a single bee, toggles, survives a reselect, and is absent for a cell
+   - Proof: `present: scripts/hud.gd :: _build_favourite_row`
+   - Next after: HC-11 (every summary panel's cog offers bee-only options)
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
-  fully specified and startable on their merits. They are no longer blocked by
-  C2-2, but the Claude lane is already working LAY-5. Slice 20 is the one
-  that matters most -- it is the confirmed cause of C-30, C-31 and most of
-  C-7 -- and it becomes the Claude lane's leading item when LAY-5 merges.
-  Slice 21 additionally waits on Slice 20 by design: until stage 1.13 runs, no
-  cell in the hive accepts pollen and every pollen symptom has that as a
-  sufficient cause.
+  fully specified and startable on their merits, and no longer blocked by
+  C2-2, but the Claude lane's leading item is HC-10 instead. Slice 20 is the
+  one that matters most -- it is the confirmed cause of C-30, C-31 and most
+  of C-7. Slice 21 additionally waits on Slice 20 by design: until stage 1.13
+  runs, no cell in the hive accepts pollen and every pollen symptom has that
+  as a sufficient cause.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 24 have made the
   pollen arc work unattended.
 - **HC-8** (`plans/now/hud-controls.md`) -- the tray's height after a
   deselect-reselect with `More…` open. Its cause is a stale container minimum
-  or is not; the slice says to measure first, and its automated check wants
-  LAY-5's rectangle helper.
-- **HC-10 and HC-11** (`plans/now/hud-controls.md`) -- the Favourite star's
-  move to the summary header, and per-entity cog options. Both edit
-  `scripts/hud.gd`, free since HC-7 landed, and ready on their merits, but
-  the Claude lane's leading item is LAY-5 instead -- the instrument that
-  would have caught HC-7's and HC-9's classes of defect without a human. One
-  Claude branch at a time; HC-10 is next after LAY-5.
+  or is not; the slice says to measure first. Its automated check can now use
+  LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
+  live measurement is still the blocker.
+- **HC-11** (`plans/now/hud-controls.md`) -- every summary panel's cog offers
+  bee-only options. Edits `scripts/hud.gd`, free since HC-7 landed and ready
+  on its merits, but the Claude lane's leading item is HC-10 instead. One
+  Claude branch at a time; HC-11 is next after HC-10.
 - **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
-  `scripts/debug_panel.gd`, the Codex lane's C2-2 file.
+  `scripts/hud.gd` and `scripts/debug_panel.gd`; the Claude lane's leading
+  item (HC-10) already owns `hud.gd`, so it waits behind HC-10/HC-11.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
-  `scripts/gallerin_panel.gd`, also C2-2's. They wait for the Codex lane to
-  move past it (C2-2, then C2-3).
+  `scripts/gallerin_panel.gd`. Not currently owned by either lane's leading
+  item; worth re-checking against the live queue before assuming they still
+  wait on anything.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **LAY-6** (`plans/now/layout-regression.md`) -- depends on LAY-5's
-  `viewport_size` verb and rectangle-reading helper. Becomes the Claude
-  lane's leading item once LAY-5 merges.
-- **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
-  a pollen Forager only after stage 2.1 has spent the colony's pollen on
-  nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
-  it rather than competing with it.
+- **The command tray's three columns are not pixel-even** -- LAY-6's new
+  `even_columns` assertion (9 Sep 2026) measured the Job/Focus/Orders wrapper
+  widths for a single selected forager at 170/100/127px, not equal. HC-1 (the
+  same symptom) is archived as landed, and the catastrophic "bunched at the
+  left edge" case it actually fixed stays fixed -- this is each wrapper
+  sizing to its own content's natural width inside the `HFlowContainer`
+  rather than to an equal one-third share, which the container was never
+  changed to enforce. `tests/fixtures/layout_panels.json`'s own `even_columns`
+  check uses a wide (80px) tolerance to pass on this, so it stays live for a
+  worse regression. Wants Dave's call on whether true pixel-equal columns
+  matter enough to justify a `GridContainer`-style layout change to
+  `hud.gd::_build_command_tray`, before a slice is written.
 - **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 now produces a
   bounded, classified baseline result, but the 9 Sep smoke baseline still
   exits `0xC0000005` before writing a summary. Diagnose or repair that Godot

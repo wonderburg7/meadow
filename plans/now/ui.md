@@ -131,8 +131,9 @@ sharing a file:
   Dave's 9 Sep pass, and the Godot behaviour that made the command tray fail
   four times in a row, all shipped 2026-09-09; the file moves to
   `plans/archive/` once the ledger clears.
-- `plans/now/layout-regression.md` — **open.** LAY-5, the headless check
-  that fails when a panel leaves the viewport.
+- `plans/archive/LAYOUT_REGRESSION_2026-09-09.md` — **delivered.** LAY-5 and
+  LAY-6, the headless checks that fail when a panel leaves the viewport or a
+  control inside one has no usable size, both shipped 2026-09-09.
 - `plans/archive/ui-small-fixes_2026-09-08.md` — delivered UI-T-3, UI-T-4
   and UI-T-5. One script each, independent in the other lane.
 
@@ -195,10 +196,10 @@ against the tile's real hexagon at its real position, and every reported
 - **A slice that changes a persistent panel's rectangle ships the
   deterministic assertion with it.** A hands-on check is the wrong instrument
   for runtime geometry: it costs a day per round trip and it caught the same
-  defect four times without ever stating the cause. Added 9 Sep 2026;
-  `plans/now/layout-regression.md` LAY-5 builds the harness that makes this
-  cheap, and after it lands a geometry slice extends the fixture rather than
-  filing a check.
+  defect four times without ever stating the cause. Added 9 Sep 2026; LAY-5
+  and LAY-6 (`plans/archive/LAYOUT_REGRESSION_2026-09-09.md`) built the
+  harness that makes this cheap -- a geometry slice extends
+  `tests/fixtures/layout_panels.json` rather than filing a check.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks
