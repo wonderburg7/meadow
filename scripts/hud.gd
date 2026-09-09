@@ -1007,6 +1007,11 @@ func _build_command_tray() -> void:
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
+	# A ScrollContainer stretches a child to its own width only when the
+	# child sets SIZE_EXPAND horizontally; without it Godot 4 lays the
+	# child out at its own minimum width, which bunched Job/Focus/Orders
+	# onto separate rows against the tray's left edge (Dave, C-18, 9 Sep 2026).
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	command_scroll.add_child(column)
 	command_content = column
 
@@ -2604,29 +2609,29 @@ func _apply_selection_tray_width() -> void:
 		# to give it.
 		selection_column.custom_minimum_size.x = maxf(0.0, rect.size.x - UiLayout.panel_chrome().x)
 
-## Space the tray panel's own stylebox takes on each side, so a column's
-## even width is measured against what is left inside the panel rather than
-## the panel's outer width.
-func _tray_chrome_width() -> float:
-	var box := UiTheme.panel_stylebox()
-	return box.content_margin_left + box.content_margin_right
-
 ## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
 ## between each, but only when that even width is wide enough for the
 ## widest wrapper's own content -- otherwise every wrapper's minimum width
 ## is cleared and the HFlowContainer wraps onto more rows as it does at a
 ## narrow viewport, instead of clipping the widest column's content.
 func _apply_even_column_widths(wrappers: Array) -> void:
-	if wrappers.is_empty():
+	# A hidden wrapper (an empty Focus or Orders column) must not claim a
+	# share of the width it never draws into, or the visible columns are
+	# left narrower than the space they actually have.
+	var visible_wrappers := wrappers.filter(func(w): return w.visible)
+	if visible_wrappers.is_empty():
 		return
-	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - _tray_chrome_width()
-	var count := wrappers.size()
+	# Measured against UiLayout.panel_chrome(), the same function
+	# ui_panel_layout.gd::apply() budgets the scroll from, so the even-width
+	# split and the scroll budget cannot disagree by two border widths.
+	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - UiLayout.panel_chrome().x
+	var count := visible_wrappers.size()
 	var even: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
 	var widest := 100.0
-	for wrapper in wrappers:
+	for wrapper in visible_wrappers:
 		widest = maxf(widest, wrapper.get_combined_minimum_size().x)
 	var width: float = even if even >= widest else 0.0
-	for wrapper in wrappers:
+	for wrapper in visible_wrappers:
 		wrapper.custom_minimum_size.x = width
 
 ## The command tray is centred at half the viewport until its two side bands
