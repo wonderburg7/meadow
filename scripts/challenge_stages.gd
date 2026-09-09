@@ -183,8 +183,7 @@ const STAGES_1 := [
 		"id": "1.11", "goal": "nectar_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"instruction": "give her the Forager role with nectar focus",
 		"goal_text": "Goal: automate nectar gathering.",
-		"on_enter": ["lock_flower_target:queen"],
-		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "unlock_flower_target:queen", "freeze_bee:queen"],
+		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
 		"prompts": [
 			{"id": "1.11_welcome", "trigger": "welcome", "delay": 0.0, "text": "You have proved the route. Now give the queen the Forager role and let colony instinct repeat it."},
 			{"id": "1.11_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Assign the Forager role with nectar selected and let her build a small store."},
