@@ -606,8 +606,12 @@ function Invoke-SlicePostMergeCleanup {
     Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
     git -C $Root show-ref --verify --quiet "refs/heads/$($Target.Branch)"
     if ($LASTEXITCODE -eq 0) {
-        git -C $Root branch -d $Target.Branch
-        if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+        # The branch is already proven to be the second parent of its merge.
+        # `-d` additionally insists its configured remote-tracking ref exists;
+        # a normal slice never pushes its own branch, so that requirement turns
+        # a completed local merge into a false cleanup failure.
+        git -C $Root branch -D $Target.Branch
+        if ($LASTEXITCODE -ne 0) { throw "git branch cleanup failed" }
     }
     Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
     git -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch | Out-Null
@@ -822,8 +826,11 @@ function Invoke-SliceFinish {
     }
     Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
 
-    git branch -d $branch
-    if ($LASTEXITCODE -ne 0) { throw "git branch -d failed" }
+    # This branch was just merged with --no-ff above. Use the same local
+    # merge-based cleanup as resume, without requiring a remote branch that a
+    # slice intentionally never pushed.
+    git branch -D $branch
+    if ($LASTEXITCODE -ne 0) { throw "git branch cleanup failed" }
     Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
 
     git -c http.sslBackend=openssl ls-remote --exit-code --heads origin $branch | Out-Null
