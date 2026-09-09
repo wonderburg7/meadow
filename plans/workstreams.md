@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CR-5` (`codex/CR-5`) | Codex | remove cross-lane shared-file conflicts. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-5 — remove cross-lane shared-file conflicts" |
