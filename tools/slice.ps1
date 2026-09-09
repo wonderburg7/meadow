@@ -32,7 +32,12 @@ function Invoke-WithLifecycleLock {
     $stream = $null
     try {
         try {
-            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            # OpenOrCreate makes a lock left behind by a killed PowerShell
+            # process recoverable: the OS releases its exclusive handle, so a
+            # later lifecycle command can take that same file. CreateNew
+            # instead made the stale name itself a permanent manual-repair
+            # problem.
+            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
         }
         catch [System.IO.IOException] {
             throw "slice lifecycle is busy; retry this command after the other lifecycle command completes"
@@ -559,10 +564,17 @@ function Get-SliceTarget {
 function Test-SliceBranchMerged {
     param([string]$Root, [string]$Branch)
     # A newly-created branch also starts as an ancestor of master, so ancestry
-    # alone cannot prove a merge.  The no-ff merge commit is the durable truth
-    # in every post-merge phase, including after the branch has been deleted.
-    $mergeMessage = @(git -C $Root log master --format=%B --fixed-strings --grep=$Branch -n 1 2>$null)
-    return $mergeMessage.Count -gt 0
+    # alone cannot prove a merge. While the branch still exists, its exact
+    # head must be a parent of the named no-ff merge; once cleanup deleted the
+    # branch, that merge message is the durable truth. This also prevents an
+    # old completed fixture or reused id from being mistaken for the current
+    # unmerged branch.
+    $branchHead = @(git -C $Root rev-parse --verify --quiet "refs/heads/$Branch" 2>$null | Select-Object -First 1)
+    $mergeParents = @(git -C $Root log master --merges --format=%P --fixed-strings --grep=$Branch 2>$null)
+    if ($branchHead) {
+        return @($mergeParents | Where-Object { ($_ -split '\s+') -contains $branchHead[0].Trim() }).Count -gt 0
+    }
+    return $mergeParents.Count -gt 0
 }
 
 function Remove-SliceLedgerRow {

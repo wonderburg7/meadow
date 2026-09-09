@@ -444,6 +444,71 @@ class SliceDoctorTest(unittest.TestCase):
         ).stdout)
         self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
 
+    def test_resume_completes_every_durable_finish_phase(self):
+        """Each recorded closeout boundary can be retried without Git repair."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+
+        phases = (
+            "started", "verified", "branch-committed", "merged", "pushed",
+            "worktree-removed", "branch-deleted", "ledger-deleted",
+        )
+        for phase in phases:
+            with self.subTest(phase=phase):
+                start_env = {**os.environ}
+                if phase == "started":
+                    start_env["MEADOW_SLICE_FAIL_AFTER"] = phase
+                started = subprocess.run(
+                    [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+                    cwd=self.root, capture_output=True, text=True, env=start_env,
+                )
+                if phase == "started":
+                    self.assertNotEqual(0, started.returncode)
+                else:
+                    self.assertEqual(0, started.returncode, started.stderr)
+                    (self.root / ".worktrees" / "T-1" / "scripts" / "sample.gd").write_text(
+                        "func new_function():\n\tpass\n", encoding="utf-8"
+                    )
+                    failed = subprocess.run(
+                        [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                            str(self.root / ".worktrees" / "T-1").replace("'", "''"),
+                            str(self.root / ".worktrees" / "T-1" / "tools" / "slice.ps1").replace("'", "''"),
+                        )],
+                        cwd=self.root, capture_output=True, text=True,
+                        env={**os.environ, "MEADOW_SLICE_FAIL_AFTER": phase},
+                    )
+                    self.assertNotEqual(0, failed.returncode)
+
+                resumed = subprocess.run(
+                    [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "resume", "-Lane", "Codex"],
+                    cwd=self.root, capture_output=True, text=True,
+                )
+                self.assertEqual(0, resumed.returncode, resumed.stderr)
+                self.assertFalse((self.root / ".worktrees" / "T-1").exists())
+                self.assertEqual("", subprocess.run(
+                    ["git", "branch", "--list", "codex/T-1"], cwd=self.root,
+                    capture_output=True, text=True, check=True,
+                ).stdout)
+                self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+
+                if phase != "started":
+                    # Return the mock source to the queued proof before
+                    # claiming the next subcase. This commit is ordinary
+                    # fixture setup; the next finish pushes it with its merge.
+                    (self.root / "scripts" / "sample.gd").write_text(
+                        "func existing():\n\tpass\n", encoding="utf-8"
+                    )
+                    subprocess.run(["git", "add", "scripts/sample.gd"], cwd=self.root, check=True)
+                    subprocess.run(["git", "commit", "-m", "reset mock source"], cwd=self.root, check=True)
+
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         start = subprocess.run(
@@ -457,6 +522,26 @@ class SliceDoctorTest(unittest.TestCase):
         )
         self.assertEqual(0, status.returncode, status.stderr)
         self.assertEqual("working", json.loads(status.stdout)["state"])
+
+    def test_stale_lifecycle_lock_does_not_require_manual_removal(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        # A process killed while holding the old CreateNew lock left this file
+        # behind. A new command must reclaim it once its OS handle is gone.
+        (self.root / ".git" / "meadow-slice-lifecycle.lock").write_text(
+            "stale", encoding="utf-8"
+        )
+
+        started = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+
+        self.assertEqual(0, started.returncode, started.stderr)
+        aborted = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "abort", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, aborted.returncode, aborted.stderr)
 
 
 class CodexPermissionProfileTest(unittest.TestCase):
