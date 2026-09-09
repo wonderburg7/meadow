@@ -58,6 +58,11 @@ var star_buttons: Dictionary = {}
 const GYNE_COLOUR := Color(0.98, 0.80, 0.35)
 const UNSET_COLOUR := Color(0.75, 0.75, 0.78)
 
+## Ring legend geometry -- shared between the layout pass that measures the
+## legend and the draw pass that lays it out, so they can never disagree.
+const RING_LEGEND_SWATCH_X := 150.0
+const RING_LEGEND_TEXT_X := 166.0
+
 static func _key_label(key: String) -> String:
 	if key == "gyne":
 		return "Gynes"
@@ -425,7 +430,7 @@ func _refresh_ring(live: Dictionary) -> void:
 		total += int(live[key])
 	ring_slices = []
 	if total <= 0:
-		_update_ring_min_height()
+		_update_ring_min_size()
 		ring.queue_redraw()
 		return
 	for key in row_order():
@@ -439,7 +444,7 @@ func _refresh_ring(live: Dictionary) -> void:
 			"count": count,
 			"tag": _key_tag(key),
 		})
-	_update_ring_min_height()
+	_update_ring_min_size()
 	ring.queue_redraw()
 	# The ring answers "what shape is the colony", which is a question
 	# about proportions -- so the key gives the share as well as the
@@ -471,14 +476,34 @@ func _refresh_emergence(emerged: Dictionary, window: float) -> void:
 	emergence_label.text = "\n".join(lines)
 	corner_texts["nursery_output"] = "Emerging — %s" % ", ".join(lines)
 
-## The legend grows one line per slice, at whatever line height the
-## current typeface/text scale produces -- so it follows the reader's
-## settings instead of clipping at a size tuned for the default font.
-func _update_ring_min_height() -> void:
+## The legend grows one line per slice, at whatever line height and width
+## the current typeface/text scale produces -- so it follows the reader's
+## settings instead of clipping at a size tuned for the default font, and
+## reserves a gutter so the window's scrollbar never covers it.
+func _update_ring_min_size() -> void:
 	var line_height := float(ring.get_theme_font_size("font_size", "Small"))
 	ring.custom_minimum_size.y = maxf(
 		150.0, ring_slices.size() * (line_height + 4.0) + 12.0
 	)
+	var font := ring.get_theme_font("font", "Small")
+	var font_size := ring.get_theme_font_size("font_size", "Small")
+	var widest := 0.0
+	for slice in ring_slices:
+		widest = maxf(widest, font.get_string_size(
+			_ring_legend_text(slice), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+	ring.custom_minimum_size.x = maxf(
+		300.0, RING_LEGEND_TEXT_X + widest + UiLayout.SCROLLBAR_GUTTER)
+
+## The one string both the legend measurement and the legend draw use, so
+## they can never disagree about how wide a line is.
+func _ring_legend_text(slice: Dictionary) -> String:
+	var text: String = "%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0]
+	if Session.colour_blind_mode:
+		# The chip alone tells you nothing if you can't separate the
+		# colours, and the slices on the ring have no labels of their
+		# own. The tag appears on both, which is what links them.
+		text = "[%s] %s" % [slice.tag, text]
+	return text
 
 ## A donut, drawn as a run of thick arcs. Slices under a couple of degrees
 ## are still drawn -- a role with one bee in a colony of eighty should
@@ -516,16 +541,11 @@ func _draw_ring() -> void:
 	# legend down the right-hand side
 	var y := 6.0
 	var line_height := float(font_size) + 4.0
+	var legend_width := ring.size.x - RING_LEGEND_TEXT_X - UiLayout.SCROLLBAR_GUTTER
 	for slice in ring_slices:
-		ring.draw_rect(Rect2(Vector2(150, y), Vector2(10, 10)), slice.colour, true)
-		var text: String = "%s  %d  (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0]
-		if Session.colour_blind_mode:
-			# The chip alone tells you nothing if you can't separate the
-			# colours, and the slices on the ring have no labels of their
-			# own. The tag appears on both, which is what links them.
-			text = "[%s] %s" % [slice.tag, text]
+		ring.draw_rect(Rect2(Vector2(RING_LEGEND_SWATCH_X, y), Vector2(10, 10)), slice.colour, true)
 		ring.draw_string(
-			font, Vector2(166, y + 10), text,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.color("text_primary")
+			font, Vector2(RING_LEGEND_TEXT_X, y + 10), _ring_legend_text(slice),
+			HORIZONTAL_ALIGNMENT_LEFT, legend_width, font_size, UiTheme.color("text_primary")
 		)
 		y += line_height

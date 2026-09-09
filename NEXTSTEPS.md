@@ -9,15 +9,17 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane, and LAY-2 and
-LAY-3 have now landed.** C-4, C-27 and C-28 passed and are archived. C-18,
-C-19 and C-26 failed and became LAY-2 to LAY-4 in `plans/now/panel-layout.md`;
-C-7 and C-5 could not be run at all, because both need the command tray's
-buttons, and moved to `checks/blocked.md`. LAY-2 shipped 2026-09-09
-(`plans/archive/LAY-2_2026-09-09.md`), re-filing C-18 and unblocking C-7 and
-C-5 back into `checks/ready.md`. LAY-3 shipped the same day
-(`plans/archive/LAY-3_2026-09-09.md`), re-filing C-19. LAY-4 leads the Claude
-lane now.
+**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane, and LAY-2,
+LAY-3 and LAY-4 have now landed.** C-4, C-27 and C-28 passed and are archived.
+C-18, C-19 and C-26 failed and became LAY-2 to LAY-4 in
+`plans/now/panel-layout.md`; C-7 and C-5 could not be run at all, because both
+need the command tray's buttons, and moved to `checks/blocked.md`. LAY-2
+shipped 2026-09-09 (`plans/archive/LAY-2_2026-09-09.md`), re-filing C-18 and
+unblocking C-7 and C-5 back into `checks/ready.md`. LAY-3 shipped the same day
+(`plans/archive/LAY-3_2026-09-09.md`), re-filing C-19. LAY-4 shipped the same
+day too (`plans/archive/LAY-4_2026-09-09.md`), re-filing C-26 -- every slice
+`plans/now/panel-layout.md` owns has now landed. LAY-5, its guard rail, leads
+the Claude lane now.
 
 The command tray had escaped the viewport on four separate passes. The cause
 was found on 9 Sep and is written up in `plans/now/panel-layout.md`, "Why
@@ -57,31 +59,17 @@ one was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
 
-3. **[Claude] LAY-4 -- the nursery donut's key clears the scrollbar.**
-   `_draw_ring()` draws the legend at literal x positions inside a literal
-   300px box, so at a large text scale the Nursery window's scrollbar covers
-   its right-hand end. Measure the legend with the current font and reserve a
-   shared scrollbar gutter.
-   - Plan: `plans/now/panel-layout.md` -- "LAY-4 — the nursery donut's key clears the scrollbar"
-   - Files: `scripts/nursery_panel.gd`, `scripts/ui_layout.gd`,
-     `plans/now/panel-layout.md`
-   - Check: re-file C-26
-   - Proof: `absent: scripts/ui_layout.gd :: SCROLLBAR_GUTTER`
-   - Next after: LAY-5 (the headless panel-rectangle assertion)
-
-## Ready, not yet in the queue
-
-These are fully specified and could be started today; they are out of the
-queue only because it is capped at five. Promote them as the lanes drain, in
-this order.
-
-- **LAY-5 -- a headless check that fails when a persistent panel leaves the
-  viewport** (`plans/now/layout-regression.md`). The guard rail for the whole
-  LAY group: a `viewport_size` scenario verb, a `panel_rect` assertion, one
-  fixture covering 1920x1080, 1280x720 and 800x600, and a test in `tests/`
-  that skips cleanly where Godot is not installed. Its acceptance is to
-  reintroduce LAY-2's bug on purpose and watch the check fail. It follows
-  LAY-4 so it is written against shipped behaviour.
+3. **[Claude] LAY-5 -- a headless check that fails when a persistent panel
+   leaves the viewport.** The guard rail for the whole LAY group: a
+   `viewport_size` scenario verb, a `panel_rect` assertion, one fixture
+   covering 1920x1080, 1280x720 and 800x600, and a test in `tests/` that
+   skips cleanly where Godot is not installed. Its acceptance is to
+   reintroduce LAY-2's bug on purpose and watch the check fail.
+   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
+   - Files: `scripts/scenario_actions.gd`
+   - Check: none filed -- the point of this slice is that none is needed
+   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
+   - Next after: none -- `plans/now/layout-regression.md` is complete once this lands
 
 ## Not in the queue, and why
 

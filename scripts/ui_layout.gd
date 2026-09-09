@@ -22,6 +22,10 @@ const SELECTION_TRAY_LEFT_MARGIN := PANEL_GAP
 const SELECTION_TRAY_GAP := PANEL_GAP
 const SELECTION_TRAY_MIN_WIDTH := 160.0
 
+## Width reserved on the right of any left-side window's content so a
+## vertical ScrollContainer bar never covers it (Dave, 9 Sep 2026, C-26).
+const SCROLLBAR_GUTTER := 14.0
+
 ## Shared bottom margin of the summary panel and the command tray, so the
 ## two sit level with each other.
 const BOTTOM_ROW_MARGIN := PANEL_GAP
