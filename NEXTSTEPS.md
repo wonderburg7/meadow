@@ -64,17 +64,18 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/bee_foraging.gd :: c1_pollen_focus_trace`
    - Next after: C1-22 (reach the pollen stage with the camera)
 
-3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
-   Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
-   bottom of the command tray, this should be a single star without words to
-   the left of the settings cog in the bee summary window." Delete
-   `_build_favourite_row` and its `more_panel` call, and add a `☆`/`★` toggle
-   to the summary header next to the cog instead.
-   - Plan: `plans/now/hud-controls.md` -- "HC-10 — the Favourite star sits in the summary panel's header"
+3. **[Claude] HC-11 -- a summary panel's cog offers the fields that panel
+   shows.** Dave, 9 Sep 2026: "All non-bee summary windows have settings
+   cogs, but the options only relate to bee summary windows. These summary
+   window settings should fit the entity." Replace `_build_selection_cog`'s
+   one fixed four-item popup with a table keyed by selection kind (bee, cell,
+   soil, multiple), and hide the cog entirely for a kind with no toggleable
+   fields.
+   - Plan: `plans/now/hud-controls.md` -- "HC-11 — a summary panel's cog offers the fields that panel shows"
    - Files: `scripts/hud.gd`
-   - Check: one hands-on check that the star appears left of the cog for a single bee, toggles, survives a reselect, and is absent for a cell
-   - Proof: `present: scripts/hud.gd :: _build_favourite_row`
-   - Next after: HC-11 (every summary panel's cog offers bee-only options)
+   - Check: one hands-on check that the cog's menu differs between a bee, a cell and a soil block, and that each item hides the line it names
+   - Proof: `present: scripts/hud.gd :: popup.add_check_item("Identity & job", 0)`
+   - Next after: HC-12 (the project boots with no GDScript warnings)
 
 ## Not in the queue, and why
 
@@ -82,7 +83,7 @@ Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
   fully specified and startable on their merits, and no longer blocked by
-  C2-2, but the Claude lane's leading item is HC-10 instead. Slice 20 is the
+  C2-2, but the Claude lane's leading item is HC-11 instead. Slice 20 is the
   one that matters most -- it is the confirmed cause of C-30, C-31 and most
   of C-7. Slice 21 additionally waits on Slice 20 by design: until stage 1.13
   runs, no cell in the hive accepts pollen and every pollen symptom has that
@@ -95,13 +96,9 @@ Each of these wants something from Dave, or something else to ship first.
   or is not; the slice says to measure first. Its automated check can now use
   LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
   live measurement is still the blocker.
-- **HC-11** (`plans/now/hud-controls.md`) -- every summary panel's cog offers
-  bee-only options. Edits `scripts/hud.gd`, free since HC-7 landed and ready
-  on its merits, but the Claude lane's leading item is HC-10 instead. One
-  Claude branch at a time; HC-11 is next after HC-10.
 - **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
   `scripts/hud.gd` and `scripts/debug_panel.gd`; the Claude lane's leading
-  item (HC-10) already owns `hud.gd`, so it waits behind HC-10/HC-11.
+  item (HC-11) already owns `hud.gd`, so it waits behind HC-11.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
   `scripts/gallerin_panel.gd`. Not currently owned by either lane's leading
   item; worth re-checking against the live queue before assuming they still

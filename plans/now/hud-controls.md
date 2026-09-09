@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-10, the Favourite star's move to the summary header (HC-8 wants a live measurement first) | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-11, a summary panel's cog offers the fields that panel shows (HC-8 wants a live measurement first) | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -44,7 +44,6 @@ asked what was selected.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
-| HC-10 | The Favourite toggle is a worded row in `More…` | `hud.gd` | low |
 | HC-11 | Every summary panel's cog offers bee-only options | `hud.gd` | low |
 | HC-12 | Four GDScript warnings on boot | `hud.gd`, `debug_panel.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
@@ -52,17 +51,19 @@ asked what was selected.
 
 HC-8 is easier to judge now the tray is the right width, but still wants a
 live measurement before it can be specified (see its heading below), so
-HC-10 is the next slice a session can simply start.
+HC-11 is the next slice a session can simply start.
 
 Landed and archived: HC-1 (the tray's three columns get even widths),
 HC-2 (the soil panel's buttons take the panel's width and show their text),
 HC-3 ("Change to…" looks like the buttons beside it) and HC-4 (the default
 text size goes up by 2px), each archived under `plans/archive/` on 9 Sep
 2026, HC-7 (the tray's content fills the tray's width), archived under
-`plans/archive/HC-7_2026-09-09.md`, and HC-9 (every button follows the
-text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`. HC-1
-and HC-2 did what they specified; C-18 was HC-7's cause and is ready to
-re-run; C-32 was HC-9's cause and is ready to re-run.
+`plans/archive/HC-7_2026-09-09.md`, HC-9 (every button follows the
+text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`, and
+HC-10 (the Favourite star's move to the summary header), archived under
+`plans/archive/HC-10_2026-09-09.md`. HC-1 and HC-2 did what they specified;
+C-18 was HC-7's cause and is ready to re-run; C-32 was HC-9's cause and is
+ready to re-run.
 
 HC-5, HC-6 and HC-12 each edit a file the Codex lane is working in --
 `scripts/gallerin_panel.gd` for the first two, `scripts/debug_panel.gd`
@@ -118,51 +119,6 @@ change. Note the dependency rather than duplicating the helper.
 
 **Check to file:** one check covering the deselect-reselect case with `More…`
 open, at two text scales.
-
-## HC-10 — the Favourite star sits in the summary panel's header
-
-**Reasoning level: low.** Moving one control between two built rows.
-
-**What Dave asked (9 Sep 2026).** "There should not be a 'Mark: Favourite'
-button at the bottom of the command tray, this should be a single star
-without words to the left of the settings cog in the bee summary window."
-
-**Where it is now.** `hud.gd::_build_favourite_row()` (`:2198`) puts a
-labelled toggle into `more_panel`, built from `_labelled_row("Mark:")`. The
-summary panel's header already holds the cog (`:877`,
-`_build_selection_cog`), and the panel already prefixes a favourite bee's
-name with `★` (`:1588`, `:2530`).
-
-**Files likely to change.** `scripts/hud.gd`.
-
-**Files that must not be changed.** `scripts/bee.gd`'s `is_favourite`, the
-`favourite_requested` signal, and whatever listens to it. This slice moves a
-control; it does not change what the control does.
-
-**Requirements.**
-
-1. Delete `_build_favourite_row` and its call from `_build_more_panel`'s
-   sequence (`:2156`).
-2. Add a star toggle to the summary panel header, immediately left of the
-   cog, built and styled like the cog: `☆` when off, `★` when on, no words,
-   the same `UiTheme.button_stylebox()` overrides, `theme_type_variation`
-   set so HC-9's scaling reaches it.
-3. Keep the existing tooltip text verbatim — it explains the Favourites list
-   and is the only place that does.
-4. Visible only when exactly one bee is selected, the same condition
-   `_build_favourite_row` used. Hidden, not disabled, for a cell, a soil
-   block or a multiple selection.
-5. The star reflects the current bee's state on every selection change, and
-   emits `favourite_requested` with the inverted value on press.
-
-**Constraints and invariants.** The `★` name prefix stays as it is; the star
-button is a second, redundant affordance by design, not a replacement.
-
-**Edge cases.** The selected bee dies while selected. A multiple selection
-that narrows to one.
-
-**Check to file:** one check that the star appears left of the cog for a
-single bee, toggles, survives a reselect, and is absent for a cell.
 
 ## HC-11 — a summary panel's cog offers the fields that panel shows
 
