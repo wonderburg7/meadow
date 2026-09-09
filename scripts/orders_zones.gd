@@ -166,7 +166,7 @@ func _on_finish_first_requested(value: bool) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 ## Only ever offered for a single selected bee -- see hud.gd's
-## _build_favourite_row.
+## _build_favourite_star.
 func _on_favourite_requested(value: bool) -> void:
 	for b in main.selected_bees:
 		if is_instance_valid(b):

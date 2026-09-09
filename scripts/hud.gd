@@ -333,6 +333,10 @@ var identity_label: Label
 var energy_label: Label
 var activity_label: Label
 var trait_label: Label
+## The header's ☆/★ toggle (HC-10) and the single bee it currently names,
+## if any -- see _build_favourite_star and _set_favourite_star.
+var favourite_star_btn: Button
+var _favourite_star_bee = null
 ## Which kind of "not a bee" thing the panel is showing, if any --
 ## "flower"/"obstacle"/"death"/"soil", or "" for the ordinary bee/multi-
 ## bee fields. Folded in from four separate mouse-anchored popups
@@ -889,6 +893,7 @@ func _build_selection_panel() -> void:
 	identity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	identity_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(identity_label)
+	header.add_child(_build_favourite_star())
 	header.add_child(_build_selection_cog())
 
 	energy_label = Label.new()
@@ -943,6 +948,45 @@ func _build_selection_panel() -> void:
 	soil_summary_row.add_child(soil_clear_wrapper)
 
 	_apply_selection_field_visibility()
+
+## The star toggle beside the cog (HC-10, moved from the command tray's
+## More… panel -- see _set_favourite_star). Built once, like the cog, and
+## only offered for one bee at a time, so "favourite" always names one
+## individual rather than a whole selection. Lets the player find this bee
+## again later from the colony window's Favourites list. See
+## BEE_INDIVIDUALITY_PLAN.md section 7.
+func _build_favourite_star() -> Control:
+	favourite_star_btn = Button.new()
+	_style_button(favourite_star_btn)
+	favourite_star_btn.text = "☆"
+	favourite_star_btn.theme_type_variation = "Body"
+	# Keep the star aligned with the first identity line when that label
+	# wraps, same as the cog just to its right.
+	favourite_star_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	# A fixed width so this single glyph cannot raise the selection column's
+	# minimum width above the space _apply_selection_tray_width gives it at
+	# a large text scale (Dave, 8 Sep 2026, C-18).
+	favourite_star_btn.custom_minimum_size.x = 24.0
+	favourite_star_btn.tooltip_text = "Pin this bee by name so you can find it again in the colony window's Favourites list, in a colony of hundreds."
+	favourite_star_btn.focus_mode = Control.FOCUS_NONE
+	favourite_star_btn.visible = false
+	favourite_star_btn.pressed.connect(func():
+		if _favourite_star_bee != null and is_instance_valid(_favourite_star_bee):
+			favourite_requested.emit(not _favourite_star_bee.is_favourite)
+	)
+	return favourite_star_btn
+
+## Shows the star for exactly the one selected bee and hides it for
+## anything else -- a cell, a soil block, a flower, an obstacle, a death
+## mark, a multiple selection or nothing at all. Called on every selection
+## change and on the same periodic refresh that keeps the identity label
+## current, so a bee dying while selected clears the star the same way it
+## clears the name (see _refresh_selection_text).
+func _set_favourite_star(bee) -> void:
+	_favourite_star_bee = bee
+	favourite_star_btn.visible = bee != null
+	if bee != null:
+		favourite_star_btn.text = "★" if bee.is_favourite else "☆"
 
 ## The tray's own configuration cog (UI_PLAN.md section 5) -- a plain
 ## gear glyph, same placeholder-art approach as debug_panel.gd's
@@ -1551,6 +1595,7 @@ func show_object_summary(kind: String, data) -> void:
 	active_summary_kind = kind
 	active_flower = data if kind == "flower" else null
 	soil_summary_row.visible = kind == "soil"
+	_set_favourite_star(null)
 	match kind:
 		"flower":
 			_refresh_flower_summary()
@@ -1651,6 +1696,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_summary_kind = "cell"
 	active_flower = null
 	soil_summary_row.visible = false
+	_set_favourite_star(null)
 	selection_panel.visible = true
 	command_columns.visible = false
 	more_button.visible = false
@@ -2139,6 +2185,7 @@ func update_selection(bees: Array) -> void:
 	cell_group.visible = false
 	command_columns.visible = true
 	if bees.is_empty():
+		_set_favourite_star(null)
 		call_deferred("_resize_command_tray")
 		return
 
@@ -2193,8 +2240,6 @@ func _rebuild_role_controls(bees: Array) -> void:
 
 	_build_job_row(common_role, any_queen)
 	_build_fallback_row(common_role, first)
-	if bees.size() == 1 and first != null:
-		_build_favourite_row(first)
 
 	job_column_wrapper.visible = job_column.get_child_count() > 0
 	focus_column_wrapper.visible = focus_column.get_child_count() > 0
@@ -2231,18 +2276,6 @@ func _build_follow_control(bees: Array, first) -> void:
 	button.toggle_mode = true
 	button.toggled.connect(func(pressed: bool): follow_bee_toggled.emit(first, pressed))
 	more_panel.add_child(_with_info(button, "Keeps the camera centred on this bee as it moves. Switches off the moment you select something else."))
-
-## The star toggle -- only offered for one bee at a time, so "favourite"
-## always names one individual rather than a whole selection. Lets the
-## player find this bee again later from the colony window's
-## Favourites list. See BEE_INDIVIDUALITY_PLAN.md section 7.
-func _build_favourite_row(bee) -> void:
-	var row := _labelled_row("Mark")
-	row.add_child(_toggle_button(
-		"★ Favourite" if bee.is_favourite else "☆ Favourite", bee.is_favourite,
-		func(): favourite_requested.emit(not bee.is_favourite),
-		"Pin this bee by name so you can find it again in the colony window's Favourites list, in a colony of hundreds."
-	))
 
 ## Job: what the selection is, lit up, plus one dropdown holding every
 ## role it could be switched to. Builds into the Job column, not
@@ -2565,10 +2598,12 @@ func _refresh_selection_text() -> void:
 			DiagnosticLog.log_selection_panels_hidden("_refresh_selection_text.command_tray", previously_shown_count, 0)
 		selection_panel.visible = false
 		command_tray.visible = false
+		_set_favourite_star(null)
 		bottom_row_changed.emit()
 		return
 	if shown_bees.size() == 1:
 		var b = shown_bees[0]
+		_set_favourite_star(b)
 
 		var identity := "%s%s — %s" % [
 			"Queen " if b.is_queen else "Bee ",
@@ -2637,6 +2672,7 @@ func _refresh_selection_text() -> void:
 		energy_label.text = ""
 		activity_label.text = ""
 		trait_label.text = ""
+		_set_favourite_star(null)
 	_update_command_tray_width()
 
 ## Sets the selection panel's width for the current viewport
