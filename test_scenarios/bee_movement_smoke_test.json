@@ -7,6 +7,7 @@
   "miners": 0,
   "time_scale": 1,
   "random_seed": 12345,
+  "baseline_probe": true,
   "config_overrides": {"seconds_per_day": 15},
   "snapshot_seconds": 5,
   "stop": {"max_days": 2},

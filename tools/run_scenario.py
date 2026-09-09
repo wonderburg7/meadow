@@ -62,6 +62,7 @@ DEFAULT_TIMEOUT = 300
 # wall-clock timing.
 DEFAULT_FIXED_FPS = 30
 DEFAULT_RESULT_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-results"
+BASELINE_PROBE_TIMEOUT = 30
 _WINDOWS_HEADLESS_ERROR_MODE = 0x0001 | 0x0002  # SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX
 
 
@@ -222,6 +223,67 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _exit_code_detail(returncode: int | None) -> dict[str, Any]:
+    """Keep Windows' signed process status and its native exception code."""
+    detail: dict[str, Any] = {"exit_code": returncode}
+    if returncode is not None and returncode < 0:
+        detail["windows_exception"] = "0x%08X" % (returncode & 0xFFFFFFFF)
+    return detail
+
+
+def run_baseline_probe(godot_path: str, result_dir: Path, timeout: int) -> dict[str, Any]:
+    """Record a minimal executable/project boot before a smoke scenario.
+
+    This is deliberately not a scenario verdict.  It establishes whether the
+    installed engine can report its version and open this project far enough
+    to initialise the editor, keeping a native Godot exit distinct from a
+    gameplay expectation failure.
+    """
+    version_command = [godot_path, "--version"]
+    launch_command = [godot_path, "--headless", "--disable-crash-handler",
+                      "--path", str(ROOT), "--editor", "--quit"]
+    log_path = result_dir / "baseline_probe.log"
+    started_at = time.monotonic()
+    probe: dict[str, Any] = {
+        "kind": "baseline_probe", "timeout_seconds": timeout,
+        "godot_path": godot_path, "version_command": version_command,
+        "launch_command": launch_command, "artefacts": {"log": log_path.name},
+    }
+    try:
+        with _suppress_windows_crash_dialogs():
+            version = run_headless_process(version_command, timeout)
+            launch = run_headless_process(launch_command, timeout)
+    except OSError as error:
+        probe.update({"classification": "environment_failure", "status": "launch_error",
+                      "reason": {"kind": "launch", "message": str(error)}})
+        log_path.write_text(str(error) + "\n", encoding="utf-8")
+    else:
+        log_path.write_text(
+            "--- version stdout ---\n%s\n--- version stderr ---\n%s\n"
+            "--- launch stdout ---\n%s\n--- launch stderr ---\n%s\n" %
+            (version.stdout, version.stderr, launch.stdout, launch.stderr), encoding="utf-8"
+        )
+        version_info = {"execution": version.kind, "output": version.stdout.strip()}
+        version_info.update(_exit_code_detail(version.returncode))
+        launch_info = {"execution": launch.kind}
+        launch_info.update(_exit_code_detail(launch.returncode))
+        probe.update({"version": version_info, "launch": launch_info,
+                      "wall_seconds": round(time.monotonic() - started_at, 6)})
+        if version.kind != "completed" or version.returncode != 0:
+            probe.update({"classification": "environment_failure", "status": "version_failed",
+                          "reason": {"kind": "version", "message": version.message}})
+        elif launch.kind == "timed_out":
+            probe.update({"classification": "timeout", "status": "timed_out",
+                          "reason": {"kind": "timeout", "message": launch.message}})
+        elif launch.kind != "completed" or launch.returncode != 0:
+            probe.update({"classification": "environment_failure", "status": "native_exit",
+                          "reason": {"kind": "native_exit", "message": launch.message}})
+        else:
+            probe.update({"classification": "pass", "status": "passed"})
+    _write_json(result_dir / "baseline_probe.json", probe)
+    return probe
+
+
 def _failure_capsule(*, status: str, run_id: str, reason: dict[str, Any],
                      entries: list[dict[str, Any]], artefacts: dict[str, str]) -> dict[str, Any]:
     """Bounded evidence for an unsuccessful run; raw data stays on disk."""
@@ -313,6 +375,33 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         if emit:
             print(line)
         return 1
+
+    if data.get("baseline_probe") is True:
+        probe = run_baseline_probe(godot_path, run_dir, min(timeout, BASELINE_PROBE_TIMEOUT))
+        artefacts["baseline_probe"] = "baseline_probe.json"
+        if probe["classification"] != "pass":
+            reason = {"kind": "baseline_probe", "probe_status": probe["status"]}
+            result = {
+                "schema_version": SCHEMA_VERSION, "status": "crashed", "run_id": run_id,
+                "classification": probe["classification"],
+                "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
+                "seed": metadata["seed"], "diagnostics": {"profile": diagnostics["profile"], "version": diagnostics["version"]},
+                "outcome": None, "simulated": {"seconds": None, "day": None},
+                "actions": {"rejected": 0, "failed": 0, "unresolved": 0},
+                "expectations": {"passed": [], "failed": []},
+                "process": {"exit_code": None, "pid": None, "execution": "baseline_probe", "wall_seconds": 0},
+                "artefacts": artefacts,
+            }
+            failure_path = _write_failure(run_dir, status="crashed", run_id=run_id, reason=reason,
+                                          entries=entries, artefacts=artefacts)
+            result["artefacts"] = dict(artefacts, failure=failure_path.name)
+            _write_json(result_path, result)
+            line = _terminal_line(probe["classification"], run_id, result_path,
+                                  reason="baseline_probe")
+            assert fits_stdout_budget(line + "\n", failed=True)
+            if emit:
+                print(line)
+            return 1
 
     seed = seed_override if seed_override is not None else (
         requested_seed if requested_seed is not None else random.randint(0, 2**31 - 1)
