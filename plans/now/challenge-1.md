@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 19 -- the stage's automation switches off when the stage ends | Dependency: none -- Slice 19 is startable now | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: Slice 7 -- acceptance pass and documentation | Dependency: none -- Slice 7 is startable now | Verified: 2026-09-09
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command. Every code slice is
@@ -40,7 +40,7 @@ Reports 3, 4 and 5 are one defect seen from three angles: nothing in the hive
 will accept pollen, because both built cells hold nectar. Slice 18 is that
 one.
 
-**Open slices.** Slice 19, then Slice 7. Nothing else may be added -- a
+**Open slices.** Slice 7, the last one. Nothing else may be added -- a
 finding from Slice 7's own run becomes this plan's next slice while it is
 open, and a finding after it closes starts a new `plans/now/` file.
 
@@ -56,7 +56,8 @@ Foraging transitions: `scripts/bee_foraging.gd`. Cell storage rules:
 `plans/archive/CHALLENGE1_SLICES_1-10.md`; open them for provenance, never to
 work out what to do.
 
-**Reasoning level.** Medium for Slice 19.
+**Reasoning level.** Slice 7 is Dave's own playthrough plus a copy/doc pass,
+not a reasoning-bounded code slice.
 
 **Slice numbering starts at 16 on purpose.** C-7's `Owner:` line named "Slice
 14", a slice archived on 3 Sep, so the check pointed at a specification
@@ -74,50 +75,19 @@ every Challenge 1 stage from the former `1.13` onward by one (ending at
 `1.20`) to insert a new `1.13` designation stage -- `docs/challenge-stages.md`
 has the current sequence.
 
-## Slice 19 — the stage's automation switches off when the stage ends
-
-**Reasoning level: medium.** A small change, but it is about event ordering.
-
-**What Dave reported.** "4x speed doesn't reset at the stage ends."
-
-**The likely cause, to confirm first.** Both `1.11` and the pollen stage
-declare `"on_exit": ["camera_follow_off", "speed_multiplier:1.0", ...]`, and
-`challenge_runner.gd::_advance()` runs `on_exit` before `_enter_stage()`, so
-the reset does exist in the code. The pollen stage, however, could not
-complete at all in Dave's run — Slices 17 and 18 are why. A stage that never
-ends never runs its `on_exit`, which accounts for the speed staying at 4x.
-
-**So start by re-running it.** With Slices 16 to 18 merged, play 1.11 and the
-pollen stage to completion and watch the speed readout. If it returns to 1x
-both times, this slice delivers only its guard below, and says so in the
-commit message.
-
-**Deliver either way, in `scripts/challenge_runner.gd`.** Make the reset
-independent of a stage completing normally. `_complete()` already clears
-`_c1_forage_effects_done`; give it, and the checkpoint-restore path, an
-explicit `_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])`,
-so an abandoned, restored or completed Challenge never leaves the player at
-4x with the camera locked to a bee.
-
-**If the speed still persists after a normal stage end,** the second place to
-look is `scripts/debug_panel.gd:536` and `:872`, which set
-`Engine.time_scale = 1.0` without updating `main.current_speed`. The two can
-disagree, and `_refresh_speed_display()` reads `main.current_speed`. Fix by
-routing both through `camera_view._on_speed_requested()`.
-
-**Acceptance.** Finishing 1.11 returns the game to 1x speed and releases the
-camera. The same at the pollen stage. Abandoning Challenge 1 from the
-settings window does too.
-
-**Check to file:** covered by C-7's rewritten third condition.
+**Slice 19 — the stage's automation switches off when the stage ends —
+shipped 9 Sep 2026:** `plans/archive/CHALLENGE1_SLICE_19_2026-09-09.md`.
+`_complete()` and the checkpoint-restore path now run
+`_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])`
+explicitly, independent of a stage's own `on_exit`.
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 
-**Run after Slices 16-19 land.** The 29 Aug, 30 Aug, 2 Sep and 9 Sep attempts
-at this pass are what found Slices 8, 9/10, 11/13 and 16-19 respectively.
-Starting it before the automatic-foraging arc works only rediscovers C-7.
+**Run now.** The 29 Aug, 30 Aug, 2 Sep and 9 Sep attempts at this pass are
+what found Slices 8, 9/10, 11/13 and 16-19 respectively. This is the plan's
+last open slice.
 
-Once Slices 16-19 are in:
+Now that Slices 16-19 are in:
 
 - Run `.\tools\verify.ps1` (source + balance suites, function map,
   planning-metadata checks).
