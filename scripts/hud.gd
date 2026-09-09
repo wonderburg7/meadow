@@ -930,6 +930,7 @@ func _build_selection_panel() -> void:
 func _build_selection_cog() -> Control:
 	var menu := MenuButton.new()
 	_style_button(menu)
+	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	menu.text = "⚙"
 	menu.theme_type_variation = "Body"
 	# Keep the cog aligned with the first identity line when that label wraps
@@ -1404,6 +1405,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 func _make_hatch_menu(entry: Dictionary) -> Control:
 	var menu := MenuButton.new()
 	_style_button(menu)
+	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	menu.text = entry.label
 	menu.theme_type_variation = "Small"
 	var options: Array = entry.options
@@ -2489,6 +2491,7 @@ func _common_working_role(bees: Array) -> int:
 func _make_role_menu(label: String, tip: String, items: Array) -> Control:
 	var menu := MenuButton.new()
 	_style_button(menu)
+	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	menu.text = label
 	menu.tooltip_text = tip
 	var popup := menu.get_popup()
