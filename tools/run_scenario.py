@@ -45,7 +45,8 @@ from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
                                   compose_case_scenario, evaluate_aggregate_expectations,
                                   required_metrics, validate_manifest)  # noqa: E402
-from headless.jobs import DEFAULT_JOB_ROOT, JobError, submit_job  # noqa: E402
+from headless.jobs import (DEFAULT_JOB_ROOT, HeadlessRunOutcome, JobError,
+                           run_headless_process, submit_job)  # noqa: E402
 from headless.profiles import validate_diagnostics  # noqa: E402
 from headless.route import ROUTING_CARD  # noqa: E402
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
@@ -326,6 +327,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     cmd += ["--path", str(ROOT), "--", "--scenario=%s" % scenario_path,
             "--run-id=%s" % run_id, "--random-seed=%d" % seed,
             "--headless-session-path=%s" % session_path]
+    process_outcome: HeadlessRunOutcome | None = None
     returncode: int | None = None
     process_stdout = ""
     status = "passed"
@@ -333,17 +335,19 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     started_at = time.monotonic()
     try:
         with _suppress_windows_crash_dialogs():
-            completed = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
-        returncode = completed.returncode
-        process_stdout = completed.stdout
+            process_outcome = run_headless_process(cmd, timeout)
+        returncode = process_outcome.returncode
+        process_stdout = process_outcome.stdout
         process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" %
-                               (completed.stdout, completed.stderr), encoding="utf-8")
-    except subprocess.TimeoutExpired as error:
-        status = "timed_out"
-        reason = {"kind": "timeout", "timeout_seconds": timeout}
-        stdout = error.stdout.decode() if isinstance(error.stdout, bytes) else (error.stdout or "")
-        stderr = error.stderr.decode() if isinstance(error.stderr, bytes) else (error.stderr or "")
-        process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" % (stdout, stderr), encoding="utf-8")
+                               (process_outcome.stdout, process_outcome.stderr), encoding="utf-8")
+        if process_outcome.kind == "timed_out":
+            status = "timed_out"
+            reason = {"kind": "timeout", "timeout_seconds": timeout}
+            if process_outcome.message:
+                reason["cleanup"] = process_outcome.message
+        elif process_outcome.kind == "environment_failure":
+            status = "crashed"
+            reason = {"kind": "environment", "message": process_outcome.message}
     except OSError as error:
         status = "crashed"
         reason = {"kind": "crash", "message": str(error)}
@@ -395,8 +399,13 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
             problem["result"], problem["result"]
         )
         action_counts[problem_kind] = action_counts.get(problem_kind, 0) + 1
+    classification = ("pass" if status == "passed" else
+                      "timeout" if status == "timed_out" else
+                      "environment_failure" if status == "crashed" else
+                      "product_failure")
     result = {
         "schema_version": SCHEMA_VERSION, "status": status, "run_id": run_id,
+        "classification": classification,
         "scenario": {"path": metadata["path"], "sha256": metadata["sha256"]},
         "seed": metadata["seed"], "diagnostics": {"profile": diagnostics["profile"], "version": diagnostics["version"]},
         "outcome": summary.get("outcome") if summary else None,
@@ -406,6 +415,8 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         "expectations": {"passed": [item.identifier for item in expectation_results if item.passed],
                          "failed": [item.identifier for item in expectation_results if not item.passed]},
         "process": {"exit_code": returncode,
+                    "pid": process_outcome.pid if process_outcome else None,
+                    "execution": process_outcome.kind if process_outcome else "environment_failure",
                     "wall_seconds": round(time.monotonic() - started_at, 6)}, "artefacts": artefacts,
     }
     if status != "passed":
