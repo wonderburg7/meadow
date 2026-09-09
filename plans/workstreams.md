@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HC-4` (`claude/HC-4`) | Claude | the default text size goes up by 2px. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-4 — the default text size goes up by 2px" |
