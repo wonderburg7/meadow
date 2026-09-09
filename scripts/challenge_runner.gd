@@ -6,7 +6,7 @@ extends Node
 ## for the design this follows stage by stage.
 ##
 ## Both Challenges share this one file: challenge_stages.gd's Stages.STAGES_1
-## is Challenge 1's nineteen sub-stages (1.1-1.19), Stages.STAGES_2 is
+## is Challenge 1's twenty sub-stages (1.1-1.20), Stages.STAGES_2 is
 ## Challenge 2's nine (2.1-2.9, per Bundle G's trim -- see STAGES_2's own
 ## comment there) -- `_stages()` picks between them by `Session.starting_level`.
 ## Where the two Challenges' shapes actually differ (Challenge 1 walks the queen
@@ -123,6 +123,11 @@ var _c1_queen_collections: int = 0
 ## and speed-up, so _process() doesn't re-trigger them every frame she's
 ## seen foraging. Cleared on every stage entry, so 1.13 fires its own copy.
 var _c1_forage_effects_done: bool = false
+## Slice 18: seconds since the pollen-automation stage (1.14) last checked
+## its designated cell for stray nectar. Polled rather than event-driven --
+## nothing marks the moment a cell becomes wrong, only its steady state --
+## and once a second is often enough for a prompt, not a state change.
+var _c1_pollen_cell_nectar_elapsed: float = 0.0
 
 func _stages() -> Array:
 	return Stages.STAGES_2 if Session.starting_level == 2 else Stages.STAGES_1
@@ -231,6 +236,7 @@ func _process(delta: float) -> void:
 		_drive_opening_mine()
 	if Session.starting_level == 1:
 		_drive_c1_forage_effects()
+		_drive_c1_pollen_cell_nectar_prompt(delta)
 	if _greeting_active:
 		_drive_greeting(delta)
 	if _hearts_timer > 0.0:
@@ -327,7 +333,7 @@ func _queen_allowed_role_ids(entries: Array) -> Array:
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
-	# Slice 14: fresh per stage, so 1.13 fires its own camera/speed effects
+	# Slice 14: fresh per stage, so 1.14 fires its own camera/speed effects
 	# independently of 1.11's.
 	_c1_forage_effects_done = false
 	# The one place player_driven is ever written. A stage that does not
@@ -363,7 +369,7 @@ func _enter_stage() -> void:
 	else:
 		_clear_ordered_visit()
 	_update_marker(stage.id)
-	if stage.id == "1.18" and is_instance_valid(_new_worker):
+	if stage.id == "1.19" and is_instance_valid(_new_worker):
 		var bubble := BeeSpeechBubble.new()
 		_new_worker.get_parent().add_child(bubble)
 		bubble.show_text(_new_worker, Stages.FAREWELL_LINE)
@@ -469,14 +475,14 @@ func _show_current_visit_point() -> void:
 func _update_marker(stage_id: String) -> void:
 	if stage_id in ["1.4", "1.7"]:
 		_show_current_visit_point()
-	elif stage_id in ["1.2", "1.5", "1.12", "1.14"]:
-		# The actual site 1.12/1.14 land on spirals out from here rather
+	elif stage_id in ["1.2", "1.5", "1.12", "1.15"]:
+		# The actual site 1.12/1.15 land on spirals out from here rather
 		# than sitting exactly on it (see _on_queen_build_cell_requested),
 		# but the centre is still the honest "build near here" anchor --
 		# same marker 1.5 already uses for the first cell.
 		_marker.position = main.world_building._hive_centre_local()
 		_marker.visible = true
-	elif stage_id in ["1.6", "1.18"]:
+	elif stage_id in ["1.6", "1.19"]:
 		# Both beats are walked from inside the hive view -- the marker
 		# may still be parked in meadow_root from 1.7/1.10's tour, so pull
 		# it back before pointing at the interior doorway.
@@ -485,7 +491,7 @@ func _update_marker(stage_id: String) -> void:
 		_marker.position = main.hive_entrance_inside()
 		_marker.visible = true
 	elif stage_id == "1.10":
-		# Unlike 1.6/1.18, this beat is walked from the meadow: point at
+		# Unlike 1.6/1.19, this beat is walked from the meadow: point at
 		# the hive's meadow-side marker instead of the (meaningless out
 		# here) interior doorway coordinate.
 		if _marker.get_parent() != main.meadow_root:
@@ -734,7 +740,7 @@ func _opening_tunnel_cleared() -> bool:
 			return false
 	return true
 
-## Slice 14: 1.11/1.13's camera-follow and 4x speed fire the moment the queen
+## Slice 14: 1.11/1.14's camera-follow and 4x speed fire the moment the queen
 ## is actually seen setting off to forage, not at stage entry -- stage entry
 ## is while the player is still being asked to select her and assign the
 ## Forager role, and selecting her clears camera-follow (see
@@ -745,7 +751,7 @@ func _drive_c1_forage_effects() -> void:
 	if _c1_forage_effects_done:
 		return
 	var stage_id: String = _stages()[_stage_index].id
-	if stage_id != "1.11" and stage_id != "1.13":
+	if stage_id != "1.11" and stage_id != "1.14":
 		return
 	if not is_instance_valid(main.queen):
 		return
@@ -754,15 +760,48 @@ func _drive_c1_forage_effects() -> void:
 	_c1_forage_effects_done = true
 	_run_stage_effects(["camera_follow_queen", "speed_multiplier:4.0"])
 
+## Slice 18: whether `bee`'s overflow load should vanish instead of
+## stranding her at a full comb. Only ever true for the queen carrying
+## nectar while Challenge 1 is running -- bee_foraging.gd routes this
+## question here rather than reading Session itself, so the simulation
+## keeps exactly one opinion about which Challenge is active.
+func discards_overflow(bee: Node2D) -> bool:
+	return (
+		active and Session.starting_level == 1
+		and is_instance_valid(main.queen) and bee == main.queen
+		and bee.current_load_type == "nectar"
+	)
+
+## Slice 18: from the pollen-automation stage (1.14) onward, nectar left in
+## the cell the player designated for pollen has nowhere to be collected
+## from -- most often a forager trip that landed there just before the
+## designation was set. Told once per occurrence rather than every frame:
+## clear_queue() first, or the stage's own hint overwrites this within
+## seconds (same ordering plans/now/challenge-2.md Slice 2 fixes for the
+## rescue line).
+func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void:
+	if _stages()[_stage_index].id != "1.14":
+		_c1_pollen_cell_nectar_elapsed = 0.0
+		return
+	_c1_pollen_cell_nectar_elapsed += delta
+	if _c1_pollen_cell_nectar_elapsed < 1.0:
+		return
+	_c1_pollen_cell_nectar_elapsed = 0.0
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.designated_type == "pollen" and cell.content_type == "nectar":
+			main.gallerin_panel.clear_queue()
+			main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_1_pollen_cell_nectar"))
+			return
+
 ## Called by main.gd right after every brood hatch, for every hatch in the
 ## game -- a no-op unless Challenge 1 is actually waiting on this one
-## (stage 1.16, the colony's first daughter). Keeps her from immediately
+## (stage 1.17, the colony's first daughter). Keeps her from immediately
 ## walking to the exit the way an ordinary hatch does, and starts the
 ## greeting animation and the queen's hearts VFX.
 func on_worker_hatched(bee: Node2D) -> void:
 	if not active or Session.starting_level != 1 or not is_instance_valid(bee):
 		return
-	if _stages()[_stage_index].id != "1.16":
+	if _stages()[_stage_index].id != "1.17":
 		return
 	_new_worker = bee
 	bee.state = main.Bee.State.IDLING

@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 18 -- pollen has somewhere to go, and the player learns why | Dependency: none -- Slice 18 is startable now; Slice 19 waits on it | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: Slice 19 -- the stage's automation switches off when the stage ends | Dependency: none -- Slice 19 is startable now | Verified: 2026-09-09
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command. Every code slice is
@@ -12,9 +12,10 @@ shipped; what remains is one acceptance playthrough and its copy pass.
 restored the command tray, and the automatic-foraging arc failed in five
 distinct ways. Those became **Slices 16 to 19** below, per this plan's own
 rule that a finding from its acceptance run becomes its next slice while it
-is open. Slice 7, the acceptance playthrough, now runs after them. Slices 16
-and 17 are shipped; the queen now works more than one flower and wakes up
-from a focus change alone.
+is open. Slice 7, the acceptance playthrough, now runs after them. Slices 16,
+17 and 18 are shipped: the queen now works more than one flower, wakes up
+from a focus change alone, and pollen has somewhere to go once the player
+designates a cell for it.
 
 **What C-7 found, 9 Sep 2026.** Dave's five reports, in the order the player
 meets them:
@@ -39,8 +40,8 @@ Reports 3, 4 and 5 are one defect seen from three angles: nothing in the hive
 will accept pollen, because both built cells hold nectar. Slice 18 is that
 one.
 
-**Open slices.** Slices 18 and 19, then Slice 7. Nothing else may be added --
-a finding from Slice 7's own run becomes this plan's next slice while it is
+**Open slices.** Slice 19, then Slice 7. Nothing else may be added -- a
+finding from Slice 7's own run becomes this plan's next slice while it is
 open, and a finding after it closes starts a new `plans/now/` file.
 
 **Authoritative files.** Stage data: `scripts/challenge_stages.gd`.
@@ -55,9 +56,7 @@ Foraging transitions: `scripts/bee_foraging.gd`. Cell storage rules:
 `plans/archive/CHALLENGE1_SLICES_1-10.md`; open them for provenance, never to
 work out what to do.
 
-**Reasoning level.** Medium for Slice 19. High for Slice 18, which adds a
-stage, changes what a cell accepts and gives the queen a job she could not do
-before.
+**Reasoning level.** Medium for Slice 19.
 
 **Slice numbering starts at 16 on purpose.** C-7's `Owner:` line named "Slice
 14", a slice archived on 3 Sep, so the check pointed at a specification
@@ -69,134 +68,11 @@ nobody could open. New slices never reuse a retired number.
 **Slice 17 — changing a bee's focus wakes her up — shipped 9 Sep 2026:**
 `plans/archive/CHALLENGE1_SLICE_17_2026-09-09.md`.
 
-## Slice 18 — pollen has somewhere to go, and the player learns why
-
-**Reasoning level: high.** Adds a Challenge stage, changes what a cell
-accepts, and gives the queen a job she could not previously do. Read the
-whole slice before starting.
-
-**What Dave reported.** Three symptoms, one cause. She waits at the inner
-entrance holding pollen; a manual deposit walks her to the cell and then
-elsewhere without depositing; and leftover nectar can fill the second cell,
-after which "there's nowhere to deposit pollen unless the player realised
-they need to make a new cell".
-
-**Cause.** `HiveCell.space_for()` (`scripts/hive_cell.gd:682`) returns `0.0`
-for any resource that is not the cell's current `content_type`. By the pollen
-stage both built cells hold nectar, so `Hive.find_cell_for("pollen")` returns
-`null`. `BeeForaging.go_to_deposit_cell()` (`scripts/bee_foraging.gd:801`)
-then sets `deposit_blocked_epoch` and **returns holding the load**, by
-design — that guard is what stopped a full comb silently erasing foraging
-trips. The manual deposit fails at the same check for the same reason.
-Nothing is broken; the hive genuinely has nowhere to put pollen, and nothing
-tells the player so.
-
-**Dave's decision, 9 Sep 2026,** asked for four things together, and all four
-are this slice:
-
-> "when the first cell reaches max capacity, make any additional nectar the
-> queen is carrying disappear, teach designating a cell. make it so selecting
-> 'emptying the cell' can be carried out by the queen (without any additional
-> roles happening). if nectar is in the second cell, have the Dr tell the
-> player so they know to either empty the cell or make a new one."
-
-**Deliver in five parts, in this order.**
-
-**(a) Overflow nectar disappears, in `scripts/bee_foraging.gd`.** In
-`go_to_deposit_cell()`, in the branch that currently sets
-`bee.deposit_blocked_epoch` and returns, add a Challenge-1-only case *before*
-that line: if the bee is the queen, the load type is `"nectar"`, and
-Challenge 1 is active, discard the load (`bee.current_load = 0.0`,
-`bee.current_load_type = ""`) and fall through to `State.IN_HIVE_TO_EXIT`
-instead of holding it. Route the "is Challenge 1 active" question through one
-new method on `challenge_runner.gd`, for example
-`func discards_overflow(bee) -> bool`, rather than reading `Session` from
-inside the foraging file. The simulation must not grow a second opinion about
-which Challenge is running.
-
-Leave the general path exactly as it is. Outside Challenge 1 a full comb must
-still keep the load; that guard is load-bearing and its own comment says so.
-
-**(b) A new stage teaching cell designation, in `scripts/challenge_stages.gd`.**
-Insert a stage between the existing `1.12` (build a second cell) and `1.13`
-(automate pollen gathering). The stage ids are the player-visible sequence
-and `docs/challenge-stages.md` is generated from this file, so renumber
-rather than inventing a `1.12a`: the new stage becomes `1.13` and every later
-stage moves up one, ending at `1.20`.
-
-The new `1.13`:
-
-- `"goal": "cell_designated"` — that goal function already exists, used by
-  Challenge 2's stage `2.3`. Reuse it; do not write a second one.
-- `"unlocked_keys"`: stage `1.12`'s list plus `"cell_designation"`.
-- `"goal_text": "Goal: set the new cell aside for pollen."`
-- `"instruction": "designate the second cell for pollen"`.
-- Prompts in Dr Gallerin's voice: a `welcome` at delay 0.0 explaining that a
-  cell can be reserved for one thing, and a `hint` at `HINT_DELAY` saying to
-  select the empty cell and choose Pollen.
-
-Then find every place a Challenge 1 stage id appears as a literal and update
-it. `challenge_runner.gd` alone has `1.1`, `1.4`, `1.7`, `1.8`, `1.11`,
-`1.16` and `1.18` in `_enter_stage()`, plus the `1.11`/`1.13` pair in
-`_drive_c1_forage_effects()`. Work through `grep -rn "1\.1" scripts/` rather
-than from memory: getting one wrong moves a stage effect onto the wrong
-stage, and that failure is invisible until someone plays it.
-
-Finally run `python tools/stage_reference.py` to regenerate
-`docs/challenge-stages.md`. `tools/verify.ps1` re-runs it with `--check` and
-fails if it was not regenerated.
-
-**(c) Challenge 2's stage `2.3` now teaches this second.** Stage `2.3`'s goal
-is also `cell_designated`, and its prompts introduce designation as new.
-Reword `2.3_welcome` and `2.3_hint` as a reminder instead, and say in the
-commit message that this is why. Do not remove the stage: Challenge 2 can be
-started without Challenge 1.
-
-**(d) The queen can empty a cell, in `scripts/bee_building.gd`,
-`scripts/bee.gd` and `scripts/hud.gd`.** Emptying a cell today is Comb Worker
-work: `builder_evict()` and `builder_go_to_haul_target()` run only from the
-builder states, and Challenge 1 forbids the queen ever taking `Role.BUILDER`,
-as primary or as backup. That durable rule is at the foot of this file and
-must not be weakened.
-
-Add a **player-commanded** eviction instead, the same shape as the existing
-`command_*` calls:
-
-- `Bee.command_empty_cell(cell)` sets `target_cell` and assigns the eviction
-  states directly, each line marked `# player-command` so
-  `tests/source_checks.py`'s autonomous-transition rule passes. The bee's
-  `role` is never touched.
-- Reuse `bee_building.gd`'s existing eviction and haul steps. Where those
-  functions branch on the builder role, lift that into a parameter or a plain
-  check on the current state so one code path serves both callers. Do not
-  copy the functions.
-- Issue the command from the cell's own controls: add an "Empty this cell"
-  button to the comb-cell group in `hud.gd::_build_cell_group()`, shown when
-  the cell holds anything at all, and gated by `allowed_role_keys` the way
-  the other cell actions are.
-
-**(e) Dr Gallerin says when nectar is in the pollen cell.** In
-`challenge_runner.gd`, while the renumbered pollen stage is current, check
-once per second whether any cell whose `designated_type` is `"pollen"` has
-`content_type == "nectar"`. If one does, call
-`main.gallerin_panel.clear_queue()` and then `show_now()` with a
-non-repeatable prompt saying the pollen cell has nectar in it, and that the
-player can either empty it or build another cell. `clear_queue()` before
-`show_now()` is required, and is the same ordering `plans/now/challenge-2.md`
-Slice 2 fixes for the rescue line — without it the stage's own hint
-overwrites this within seconds.
-
-**Acceptance.** Play 1.11 through to the end of the pollen stage without
-touching the debug panel. The queen fills the first cell with nectar and any
-surplus she is carrying disappears rather than stranding her. The new
-designation stage asks the player to set the second cell aside for pollen and
-will not advance until they do. She then forages pollen and deposits it in
-that cell unaided. If nectar is somehow in the pollen cell, Dr Gallerin says
-so, and the "Empty this cell" button lets the queen clear it with no role
-change and no second bee.
-
-**Checks to file:** three, one condition each — the automatic pollen deposit,
-the designation stage, and the queen-run cell emptying.
+**Slice 18 — pollen has somewhere to go, and the player learns why — shipped
+9 Sep 2026:** `plans/archive/CHALLENGE1_SLICE_18_2026-09-09.md`. Renumbered
+every Challenge 1 stage from the former `1.13` onward by one (ending at
+`1.20`) to insert a new `1.13` designation stage -- `docs/challenge-stages.md`
+has the current sequence.
 
 ## Slice 19 — the stage's automation switches off when the stage ends
 
@@ -260,7 +136,7 @@ Once Slices 16-19 are in:
   - Cell building never changes the queen's role to Comb worker.
   - All visible buttons respond across their complete bounds.
 - Do the copy/current-doc pass that was Bundle H: consistent Gallerin voice
-  across the new/changed lines (1.10, 1.12, 1.13 especially), update any
+  across the new/changed lines (1.10, 1.12, 1.13, 1.14 especially), update any
   user-facing Challenge 1 / UI-unlock documentation to match, regenerate
   `FUNCTION_MAP.md` only if one of its six indexed scripts' functions moved.
 - Add exactly the hands-on checks that still need Dave's eyes to

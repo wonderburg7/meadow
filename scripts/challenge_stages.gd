@@ -200,58 +200,67 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.13", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"id": "1.13", "goal": "cell_designated", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "cell_designation"],
+		"instruction": "designate the second cell for pollen",
+		"goal_text": "Goal: set the new cell aside for pollen.",
+		"prompts": [
+			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be reserved for one thing. Set the new one aside for pollen before she brings any home."},
+			{"id": "1.13_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the empty cell and choose Pollen."},
+		],
+	},
+	{
+		"id": "1.14", "goal": "pollen_target", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"instruction": "switch her focus to pollen",
 		"goal_text": "Goal: automate pollen gathering.",
 		"on_exit": ["camera_follow_off", "speed_multiplier:1.0", "freeze_bee:queen"],
 		"prompts": [
-			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar is fuel. Pollen is protein: less immediately glamorous, biologically indispensable."},
-			{"id": "1.13_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Keep the Forager role, switch the focus to pollen, and gather a small store."},
+			{"id": "1.14_welcome", "trigger": "welcome", "delay": 0.0, "text": "Nectar is fuel. Pollen is protein: less immediately glamorous, biologically indispensable."},
+			{"id": "1.14_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Keep the Forager role, switch the focus to pollen, and gather a small store."},
 		],
 	},
 	{
-		"id": "1.14", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
+		"id": "1.15", "goal": "third_cell_built", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"instruction": "use Build cell to place a third cell",
 		"goal_text": "Goal: build a third cell for the colony's next generation.",
 		"prompts": [
-			{"id": "1.14_welcome", "trigger": "welcome", "delay": 0.0, "text": "Here is pollen's deeper purpose: making more bees. Build a third cell, and we can turn provisions into a future."},
-			{"id": "1.14_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Place one more comb cell with the queen's Build cell command."},
+			{"id": "1.15_welcome", "trigger": "welcome", "delay": 0.0, "text": "Here is pollen's deeper purpose: making more bees. Build a third cell, and we can turn provisions into a future."},
+			{"id": "1.15_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Place one more comb cell with the queen's Build cell command."},
 		],
 	},
 	{
-		"id": "1.15", "goal": "first_egg_laid", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.16", "goal": "first_egg_laid", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: let the queen lay the colony's first egg.",
 		"prompts": [
-			{"id": "1.15_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying, with Nursing as her backup. A queen who only seeks empty cells would overlook the hungry brood already depending on her."},
-			{"id": "1.15_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose Laying as the queen's role and Nursing as her backup, then keep one cell free."},
+			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying, with Nursing as her backup. A queen who only seeks empty cells would overlook the hungry brood already depending on her."},
+			{"id": "1.16_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose Laying as the queen's role and Nursing as her backup, then keep one cell free."},
 		],
 	},
 	{
-		"id": "1.16", "goal": "nectar_forager_hatched", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.17", "goal": "nectar_forager_hatched", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: care for the egg until the first worker hatches.",
 		"prompts": [
-			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "An egg is a promise with a feeding schedule. Keep the young bee supplied and watch what pollen becomes."},
-			{"id": "1.16_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen's Nursing backup lets her feed developing brood whenever laying is blocked."},
+			{"id": "1.17_welcome", "trigger": "welcome", "delay": 0.0, "text": "An egg is a promise with a feeding schedule. Keep the young bee supplied and watch what pollen becomes."},
+			{"id": "1.17_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen's Nursing backup lets her feed developing brood whenever laying is blocked."},
 		],
 	},
 	{
-		"id": "1.17", "goal": "new_bee_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.18", "goal": "new_bee_selected", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: select the new worker.",
 		"prompts": [
-			{"id": "1.17_welcome", "trigger": "welcome", "delay": 0.0, "text": "A daughter, and the colony's first worker. Select her and inspect the summary and role panels."},
-			{"id": "1.17_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the smaller new bee. She begins as a nectar Forager, ready to turn one route into a routine."},
+			{"id": "1.18_welcome", "trigger": "welcome", "delay": 0.0, "text": "A daughter, and the colony's first worker. Select her and inspect the summary and role panels."},
+			{"id": "1.18_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the smaller new bee. She begins as a nectar Forager, ready to turn one route into a routine."},
 		],
 	},
 	{
-		"id": "1.18", "goal": "new_bee_left_hive", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
+		"id": "1.19", "goal": "new_bee_left_hive", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: send the new worker out into the meadow.",
 		"prompts": [
-			{"id": "1.18_welcome", "trigger": "welcome", "delay": 0.0, "text": "Her first journey awaits. Send the new worker through the hive entrance."},
-			{"id": "1.18_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the new worker selected, command her to leave the hive."},
+			{"id": "1.19_welcome", "trigger": "welcome", "delay": 0.0, "text": "Her first journey awaits. Send the new worker through the hive entrance."},
+			{"id": "1.19_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "With the new worker selected, command her to leave the hive."},
 		],
 	},
 	{
-		"id": "1.19", "goal": "complete",
+		"id": "1.20", "goal": "complete",
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "",
 		"prompts": [],
@@ -315,9 +324,12 @@ const STAGES_2 := [
 		"id": "2.3", "goal": "cell_designated",
 		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: designate a cell.",
+		# Reworded from Slice 18's Challenge 1 1.13, which now teaches
+		# designation first -- Challenge 2 can still be started on its own,
+		# so this is a reminder rather than the first introduction.
 		"prompts": [
-			{"id": "2.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be more than empty space. Give it a purpose, and the colony becomes easier to steer."},
-			{"id": "2.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Try designating a cell. Bees are marvellous, but they do appreciate a labelled cupboard."},
+			{"id": "2.3_welcome", "trigger": "welcome", "delay": 0.0, "text": "Remember that a cell can be reserved for one thing. Time to put that to use here as well."},
+			{"id": "2.3_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Designate a cell for the resource this colony needs most. Bees do appreciate a labelled cupboard."},
 		],
 	},
 	{

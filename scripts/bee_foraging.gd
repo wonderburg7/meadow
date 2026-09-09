@@ -814,6 +814,16 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 				# here (still carrying it) and recheck next frame, so a
 				# cell finishing mid-wait picks her straight back up.
 				return
+			# Challenge 1 only: by the pollen stage both built cells hold
+			# nectar, so a nectar trip genuinely has nowhere to go until the
+			# player designates a cell for pollen. Outside Challenge 1 this
+			# guard does not fire -- a full comb must still keep the load,
+			# which is exactly what the general case below does.
+			if is_instance_valid(bee.world) and bee.world.challenge_runner != null and bee.world.challenge_runner.discards_overflow(bee):
+				bee.current_load = 0.0
+				bee.current_load_type = ""
+				bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+				return
 			# Keep the load until a cell changes.  Discarding it here made a
 			# full comb silently erase every later foraging trip.
 			bee.deposit_blocked_epoch = bee.hive.index_epoch

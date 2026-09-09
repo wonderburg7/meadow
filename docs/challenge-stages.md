@@ -28,13 +28,14 @@ nothing; "past 2.1, where the nectar stores fall and recover" does.
 | `1.10` | return to the hive and deposit the harvest. | `harvest_deposited` | right-click the hive, then right-click the wax cell |
 | `1.11` | automate nectar gathering. | `nectar_target` | give her the Forager role with nectar focus |
 | `1.12` | build a second comb cell. | `second_cell_built` | use Build cell to place a second cell |
-| `1.13` | automate pollen gathering. | `pollen_target` | switch her focus to pollen |
-| `1.14` | build a third cell for the colony's next generation. | `third_cell_built` | use Build cell to place a third cell |
-| `1.15` | let the queen lay the colony's first egg. | `first_egg_laid` | -- |
-| `1.16` | care for the egg until the first worker hatches. | `nectar_forager_hatched` | -- |
-| `1.17` | select the new worker. | `new_bee_selected` | -- |
-| `1.18` | send the new worker out into the meadow. | `new_bee_left_hive` | -- |
-| `1.19` | -- | `complete` | -- |
+| `1.13` | set the new cell aside for pollen. | `cell_designated` | designate the second cell for pollen |
+| `1.14` | automate pollen gathering. | `pollen_target` | switch her focus to pollen |
+| `1.15` | build a third cell for the colony's next generation. | `third_cell_built` | use Build cell to place a third cell |
+| `1.16` | let the queen lay the colony's first egg. | `first_egg_laid` | -- |
+| `1.17` | care for the egg until the first worker hatches. | `nectar_forager_hatched` | -- |
+| `1.18` | select the new worker. | `new_bee_selected` | -- |
+| `1.19` | send the new worker out into the meadow. | `new_bee_left_hive` | -- |
+| `1.20` | -- | `complete` | -- |
 
 ## Challenge 2 — the foraging pipeline
 

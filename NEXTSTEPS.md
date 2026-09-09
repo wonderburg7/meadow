@@ -44,17 +44,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] C1-18 -- pollen has somewhere to go, and the player learns why.**
-   Both built cells hold nectar by the pollen stage, so
-   `HiveCell.space_for()` returns 0 for pollen and the queen carries a load
-   that has nowhere to go. Add overflow-nectar disposal for the queen, a new
-   stage teaching cell designation, queen-run cell emptying, and a Gallerin
-   prompt when nectar sits in a designated pollen cell.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 18 — pollen has somewhere to go, and the player learns why"
-   - Files: `scripts/bee_foraging.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/hud.gd`
-   - Check: designating a cell for pollen unlocks automatic deposit; nectar left in that cell prompts Dr Gallerin; the queen can empty a cell with no role change
-   - Proof: `absent: scripts/challenge_stages.gd :: "id": "1.13", "goal": "cell_designated"`
-   - Next after: C1-19 (the stage's automation switches off when the stage ends)
+2. **[Claude] C1-19 -- the stage's automation switches off when the stage
+   ends.** Dave reported 4x speed doesn't reset at the stage ends. Both
+   `1.11` and the pollen stage declare an `on_exit` that resets it, but a
+   stage that never completes never runs its `on_exit` -- make the reset
+   independent of a stage completing normally by giving `_complete()` and
+   the checkpoint-restore path their own explicit call.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 19 — the stage's automation switches off when the stage ends"
+   - Files: `scripts/challenge_runner.gd`
+   - Check: finishing 1.11 or the pollen stage returns the game to 1x speed and releases the camera; abandoning Challenge 1 does too
+   - Proof: `absent: scripts/challenge_runner.gd :: _run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])`
+   - Next after: C1-7 (Slice 7 — acceptance pass and documentation, the plan's last open slice)
 
 3. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
@@ -85,12 +85,10 @@ was diagnosed against the source during the 9 Sep pass.
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slice 19** (`plans/now/challenge-1.md`) -- needs Slice 18
-  merged before its first step, re-running the pollen stage to completion,
-  means anything.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, and Dave's run rather than a code slice. Starting it before
-  Slices 18 and 19 land only rediscovers C-7.
+  playthrough, mostly Dave's run rather than a code slice, though its own
+  boot/checklist pass is startable once Slice 19 lands. Starting it before
+  Slice 19 lands only rediscovers C-7.
 - **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
   one Claude branch runs at a time; they follow HC-1 in order.
