@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-9, every button follows the text-size setting | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-10, the Favourite star's move to the summary header (HC-8 wants a live measurement first) | Dependency: HC-5, HC-6 and HC-12 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` and `scripts/debug_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -11,11 +11,13 @@ the player expects it, and offers options that apply to what is selected.
 `SIZE_EXPAND_FILL`, so the tray's `ScrollContainer` stretches it to the
 tray's width instead of the column's own minimum, and `_tray_chrome_width()`
 is gone in favour of the one `UiLayout.panel_chrome()` both the tray and
-`ui_panel_layout.gd::apply()` now share. C-18 is ready to re-run. C-32's own
-conditions passed on the second 9 Sep pass and a new one failed underneath
-them: no plain button in the game follows the text-size setting, because the
-shared theme sets a font size for its named type variations but not for the
-`Button` base type. HC-9 is that, and is next.
+`ui_panel_layout.gd::apply()` now share. C-18 is ready to re-run. HC-9 also
+landed 9 Sep 2026: `_refresh_theme_resource()`'s `Label`/`Button` base-type
+loop now sets the scaled Body `font_size` alongside colour and font, so a
+plain button (no `theme_type_variation`) follows `Session.text_scale` like
+every named variation already did. C-32 is ready to re-run, and C-33's button
+half is testable for the first time. Full spec in
+`plans/archive/HC-9_2026-09-09.md`.
 
 **Why they are one plan.** Most share a cause: a Godot container gives a
 child its *minimum* size unless the child asks to expand, and the controls
@@ -40,25 +42,25 @@ asked what was selected.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
-| HC-9 | No button follows the text-size setting (C-32) | `ui_theme.gd` | low |
 | HC-10 | The Favourite toggle is a worded row in `More…` | `hud.gd` | low |
 | HC-11 | Every summary panel's cog offers bee-only options | `hud.gd` | low |
 | HC-12 | Four GDScript warnings on boot | `hud.gd`, `debug_panel.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-9 comes first: it is independent, but changes the size of every button in
-the game, so it wants a clear run rather than to land beside another layout
-slice. HC-8 is easier to judge now the tray is the right width.
+HC-8 is easier to judge now the tray is the right width, but still wants a
+live measurement before it can be specified (see its heading below), so
+HC-10 is the next slice a session can simply start.
 
 Landed and archived: HC-1 (the tray's three columns get even widths),
 HC-2 (the soil panel's buttons take the panel's width and show their text),
 HC-3 ("Change to…" looks like the buttons beside it) and HC-4 (the default
 text size goes up by 2px), each archived under `plans/archive/` on 9 Sep
-2026, and HC-7 (the tray's content fills the tray's width), archived under
-`plans/archive/HC-7_2026-09-09.md`. HC-1 and HC-2 did what they specified;
-C-18 was HC-7's cause and is ready to re-run; C-32 still fails for the cause
-HC-9 names.
+2026, HC-7 (the tray's content fills the tray's width), archived under
+`plans/archive/HC-7_2026-09-09.md`, and HC-9 (every button follows the
+text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`. HC-1
+and HC-2 did what they specified; C-18 was HC-7's cause and is ready to
+re-run; C-32 was HC-9's cause and is ready to re-run.
 
 HC-5, HC-6 and HC-12 each edit a file the Codex lane is working in --
 `scripts/gallerin_panel.gd` for the first two, `scripts/debug_panel.gd`
@@ -114,64 +116,6 @@ change. Note the dependency rather than duplicating the helper.
 
 **Check to file:** one check covering the deselect-reselect case with `More…`
 open, at two text scales.
-
-## HC-9 — every button follows the text-size setting
-
-**Reasoning level: low.** One theme entry, with a confirmed cause and a wide
-blast radius, so look at the result before merging.
-
-**Confirmed root cause.** `ui_theme.gd::_refresh_theme_resource()` (`:239`)
-sets `font_size` for the four named type variations — Heading, Body, Small,
-Tiny — and, for the base types `Label` and `Button`, sets only `font_color`
-and `font`. A `Button` with no `theme_type_variation` therefore keeps Godot's
-default font size and never moves when `Session.text_scale` changes. That is
-C-32 exactly: "1 soil block selected" is a Label with a variation and scales,
-while "Mark for digging" and "Clear marks" are plain Buttons and do not. It
-is not specific to the soil panel — no plain button anywhere in the HUD
-scales today, which is also why C-33 could not be judged on the buttons.
-
-**Current authoritative owner.** `scripts/ui_theme.gd` for type sizes.
-
-**Required reading.** This heading; `ui_theme.gd`'s `TYPE_SIZES` and
-`_refresh_theme_resource`.
-
-**Files likely to change.** `scripts/ui_theme.gd`.
-
-**Files that must not be changed.** `scripts/hud.gd` — do not fix this by
-setting `theme_type_variation = "Body"` on individual buttons. That is the
-same mistake in a hundred places, and it is what the shared theme exists to
-avoid.
-
-**Requirements.**
-
-1. In the `for base_type in ["Label", "Button"]` loop, also set
-   `font_size` to the scaled `Body` size, so an unmarked control matches the
-   body text beside it.
-2. Confirm the four variations still win over the base type for controls that
-   name one, which is Godot's normal precedence but is worth an assertion.
-3. `refresh()` already reapplies to live controls; check a button's size
-   changes without a rebuild when the setting moves.
-
-**Constraints and invariants.** `TYPE_SIZES` stays the single home for type
-sizes. No per-control font-size override is added anywhere.
-
-**Runtime policy.** `refresh()` runs on a setting change, not per frame.
-
-**Edge cases.** Buttons that are also icons (`⚙`, `☆`) grow too; confirm they
-stay square and their panels still fit. The three `MenuButton`s HC-3 fixed.
-The speed buttons in the top bar, which sit in a fixed-width strip.
-
-**Automated acceptance checks.** A test asserting the theme reports a
-different `font_size` for `Button` at two `Session.text_scale` values, and
-that a `Button` with `theme_type_variation = "Small"` still reports the Small
-size.
-
-**Regression checks.** Source suite. Because every button in the game changes
-size, boot the project and look at the top bar, the tray, the summary panel,
-the settings window and the main menu before merging.
-
-**Check to file:** C-32, re-run; and note in the commit message that C-33's
-button half is now testable for the first time.
 
 ## HC-10 — the Favourite star sits in the summary panel's header
 
