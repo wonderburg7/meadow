@@ -228,6 +228,8 @@ func clear_queue() -> void:
 ## completion congratulations and soft-failure recovery lines, which
 ## fire the instant their triggering event happens rather than on a timer.
 func show_now(prompt: Dictionary) -> void:
+	if not Session.gallerin_enabled:
+		return
 	var id: String = prompt.get("id", "")
 	if id != "" and not bool(prompt.get("repeatable", false)) and _shown_ids.has(id):
 		return

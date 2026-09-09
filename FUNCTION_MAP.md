@@ -253,22 +253,22 @@ The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-60   func _style_button(button: BaseButton) -> BaseButton
-65   func _ready() -> void
-168  func _report_settings_button_width() -> void
-173  func _rows_in(category: String) -> Array
-195  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-226  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-234  func open_to_categories(categories: Array) -> void
-254  func collapse_all() -> void
-262  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-316  func _make_controls_help() -> Control
-350  func _build_actions(column: VBoxContainer) -> void
-417  func _make_winter_action() -> Control
-429  func _on_winter_pressed() -> void
-435  func _on_challenge_advance_pressed() -> void
-448  func _on_fire_test_warnings_pressed() -> void
-483  func _on_force_c2_collapse_pressed() -> void
+63   func _style_button(button: BaseButton) -> BaseButton
+68   func _ready() -> void
+172  func _report_settings_button_width() -> void
+177  func _rows_in(category: String) -> Array
+199  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+230  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+238  func open_to_categories(categories: Array) -> void
+258  func collapse_all() -> void
+266  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+320  func _make_controls_help() -> Control
+354  func _build_actions(column: VBoxContainer) -> void
+421  func _make_winter_action() -> Control
+433  func _on_winter_pressed() -> void
+439  func _on_challenge_advance_pressed() -> void
+452  func _on_fire_test_warnings_pressed() -> void
+485  func _on_force_c2_collapse_pressed() -> void
 503  func set_save_load_enabled(enabled: bool) -> void
 511  func set_toggle(key: String, value: bool) -> void
 516  func _on_save_pressed() -> void
