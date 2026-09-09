@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Codex | Next: CR-3 -- align permissions with the intended Git lifecycle | Dependency: CR-1 and CR-2 implemented; permission-profile changes may require the machine administrator | Verified: 2026-09-09
+Status: active | Owner: Dave / Codex | Next: CR-7 -- make the baseline's Godot environment failure reproducible | Dependency: CR-1 through CR-6 implemented; the smoke baseline must write a summary | Verified: 2026-09-09
 
 **Objective.** A fresh `Implement the next slice` task either completes the
 assigned slice, or stops once with a precise external blocker. It must not
@@ -143,6 +143,27 @@ Medium test-runner slice, required before SB-1 returns to the queue.
 Acceptance: the runner always returns a summary or one classified failure
 within its stated bound, leaves no Godot process behind, and the current
 master baseline completes before SB-1 is advertised as ready.
+
+Implementation completed 2026-09-09; execution record archived at
+`plans/archive/CR-6_2026-09-09.md`. The deterministic smoke run returned its
+durable classified environment failure in 14.156 seconds: Godot exited
+`0xC0000005` before producing a summary, and no child process remained. The
+runner acceptance holds; the baseline-success gate for SB-1 does not.
+
+### CR-7 — make the baseline's Godot environment failure reproducible
+
+1. Add a compact baseline probe which reports the Godot executable version,
+   launch arguments, exit code and artefact paths without conflating a native
+   engine exit with a scenario verdict.
+2. Run that probe before the two-day smoke scenario and retain its classified
+   result beside the smoke artefacts.
+3. If a project launch setting causes the crash, fix it and demonstrate a
+   successful session summary; otherwise record the minimal external engine
+   reproduction and leave SB-1 blocked.
+
+Acceptance: one bounded command distinguishes a runnable Godot environment
+from the present native crash and records enough evidence to either repair it
+or name the external prerequisite without guessing.
 
 ## Order and success measure
 

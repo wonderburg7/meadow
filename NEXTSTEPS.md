@@ -45,18 +45,7 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-6 -- make headless evidence bounded and causal.**
-   Give the headless runner one synchronous, bounded wrapper that records a
-   typed result and leaves no Godot process behind; qualify it first with a
-   small deterministic baseline smoke scenario.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-6 — make headless evidence bounded and causal"
-   - Files: `tools/run_scenario.py`, `tools/headless/jobs.py`,
-     `test_scenarios/bee_movement_smoke_test.json`
-   - Check: the slice's bounded baseline and branch-run evidence
-   - Proof: `absent: tools/run_scenario.py :: HeadlessRunOutcome`
-   - Next after: SB-1 (return season balance with its bounded baseline evidence)
-
-2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+1. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -68,6 +57,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Check: C-5, in `checks/ready.md`
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
+
+2. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
+   Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
+   engine/version evidence and a deterministic remediation or an explicit
+   external-environment diagnosis. SB-1 stays blocked until the probe writes a
+   summary.
+   - Plan: `plans/now/codex-reliability.md` -- "CR-7 — make the baseline's Godot environment failure reproducible"
+   - Files: `tools/run_scenario.py`, `test_scenarios/bee_movement_smoke_test.json`
+   - Check: the CR-7 bounded baseline probe
+   - Proof: `absent: tools/run_scenario.py :: HeadlessBaselineProbe`
+   - Next after: SB-1 (return season balance with a successful bounded baseline)
 
 3. **[Claude] LAY-5 -- a headless check fails when a panel leaves the viewport.**
    Four of Dave's hands-on passes have been spent re-finding the same class of
@@ -125,9 +125,11 @@ Each of these wants something from Dave, or something else to ship first.
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
   it rather than competing with it.
-- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 must first prove
-  the bounded baseline simulation succeeds. SB-1 then returns with exact
-  `Files:` and `Proof:` values that pass `slice.ps1 doctor`; SB-2 follows it.
+- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 now produces a
+  bounded, classified baseline result, but the 9 Sep smoke baseline still
+  exits `0xC0000005` before writing a summary. Diagnose or repair that Godot
+  environment failure before SB-1 returns with exact `Files:` and `Proof:`
+  values that pass `slice.ps1 doctor`; SB-2 follows it.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
