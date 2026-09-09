@@ -404,6 +404,7 @@ def check_markdown_links(errors: list[str]) -> None:
             for path in (ROOT / "plans" / layer).glob("*.md")
         ]
         + list((ROOT / "checks").glob("*.md"))
+        + list((ROOT / "checks" / "ready").glob("*.md"))
     )
     for path in files:
         text = path.read_text(encoding="utf-8")
@@ -424,6 +425,7 @@ DOC_GLOBS = (
     "plans/design/*.md",
     "plans/reference/*.md",
     "checks/*.md",
+    "checks/ready/*.md",
     ".claude/rules/*.md",
 )
 BACKTICK_TOKEN = re.compile(r"`([^`\n]+)`")
@@ -490,9 +492,53 @@ def check_no_landed_records_in_live_plans(errors: list[str]) -> None:
             )
 
 
-CHECK_FILES = ("checks/ready.md", "checks/blocked.md")
+READY_CHECKS_DIR = ROOT / "checks" / "ready"
+READY_INDEX = ROOT / "checks" / "ready.md"
+CHECK_FILES = ("checks/blocked.md",)
 CHECK_ID = re.compile(r"^C-(\d+) -- \S")
 OWNER_NONE = re.compile(r"^Owner:\s*none\b", re.IGNORECASE)
+
+
+def ready_check_files() -> list[tuple[str, Path]]:
+    """Ready checks are independently owned records; ready.md is only their index.
+
+    A feature branch that needs a player check creates one uniquely named file,
+    rather than appending to a page another lane is likely to edit.  The index
+    is rebuilt during integration, after the branch has merged.
+    """
+    if not READY_CHECKS_DIR.is_dir():
+        return []
+    return [
+        (f"checks/ready/{path.name}", path)
+        for path in sorted(READY_CHECKS_DIR.glob("C-*.md"))
+    ]
+
+
+def ready_index_text() -> str:
+    lines = [
+        "# Ready hands-on checks",
+        "",
+        "<!-- CONTEXT: player-checks | LAYER: on-demand -->",
+        "",
+        "Shipped behaviours that static checks cannot prove. Each ready check has its own",
+        "record, so parallel feature slices do not edit a shared page. Reply by id, for",
+        'example: "C-1 pass" or "C-1 fails: <what I saw>".',
+        "",
+        "This index is generated during slice closeout. Move a confirmed or superseded",
+        "entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; move an on-demand check",
+        "that cannot run to `checks/blocked.md`, naming its unblocker.",
+        "",
+        "## Ready to run",
+        "",
+    ]
+    for rel, path in ready_check_files():
+        heading = path.read_text(encoding="utf-8").splitlines()[0].removeprefix("# ").strip()
+        lines.append(f"- [{heading}](ready/{path.name})")
+    return "\n".join(lines) + "\n"
+
+
+def write_ready_index() -> None:
+    READY_INDEX.write_text(ready_index_text(), encoding="utf-8")
 
 
 def _owner_plan(line: str) -> str | None:
@@ -512,13 +558,21 @@ def check_checks(errors: list[str]) -> None:
     to read at least one item's meaning out of surrounding prose. The format
     was a convention until this ran."""
     seen: dict[str, str] = {}
-    for rel in CHECK_FILES:
-        path = ROOT / rel
+    check_files = ready_check_files() + [(rel, ROOT / rel) for rel in CHECK_FILES]
+    if not READY_CHECKS_DIR.is_dir():
+        errors.append("checks/ready/: missing -- each ready hands-on check needs its own file")
+    for rel, path in check_files:
         if not path.is_file():
             errors.append(f"{rel}: missing -- the hands-on checks live here")
             continue
-        # Everything before the first entry is the file's contract, not an entry.
-        entries = re.split(r"^### ", path.read_text(encoding="utf-8"), flags=re.MULTILINE)[1:]
+        # Ready records contain exactly one entry headed with '#'; blocked.md
+        # remains a collection headed with '###'.
+        source = path.read_text(encoding="utf-8")
+        entries = (
+            [source.removeprefix("# ")]
+            if rel.startswith("checks/ready/")
+            else re.split(r"^### ", source, flags=re.MULTILINE)[1:]
+        )
         for entry in entries:
             heading, _, body = entry.partition("\n")
             heading = heading.strip()
@@ -537,6 +591,11 @@ def check_checks(errors: list[str]) -> None:
                 )
             else:
                 seen[check_id] = f"{rel} '{heading}'"
+
+            if rel.startswith("checks/ready/") and path.name != f"{check_id}.md":
+                errors.append(
+                    f"{rel}: ready-check filename must be {check_id}.md -- one check has one independently owned record"
+                )
 
             lines = [line.strip() for line in body.splitlines()]
             if not any(line.startswith("PASS:") for line in lines):
@@ -654,6 +713,12 @@ def check_workstreams(errors: list[str]) -> None:
 
 
 def main() -> int:
+    if sys.argv[1:] == ["--write-ready-index"]:
+        write_ready_index()
+        return 0
+    if sys.argv[1:]:
+        print("usage: check_docs.py [--write-ready-index]", file=sys.stderr)
+        return 2
     errors: list[str] = []
     warnings: list[str] = []
     check_plan_metadata(errors, warnings)

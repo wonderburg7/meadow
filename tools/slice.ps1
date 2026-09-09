@@ -154,6 +154,29 @@ function Get-NextUpItems {
     return $items
 }
 
+function Get-LifecycleProducts {
+    # These files describe integration state, not either feature branch.  A
+    # slice may cause them to change, but only the lifecycle writes them after
+    # merge, so they must not turn two otherwise independent branches into a
+    # false ownership collision.
+    return @("plans/workstreams.md", "checks/ready.md")
+}
+
+function Assert-CrossLaneOwnership {
+    param([string]$Root, [object]$Candidate)
+
+    $lifecycle = @(Get-LifecycleProducts)
+    $candidateFiles = @($Candidate.Files | Where-Object { $_ -notin $lifecycle })
+    $otherItems = Get-NextUpItems -Root $Root | Where-Object { $_.Lane -ne $Candidate.Lane }
+    foreach ($other in $otherItems) {
+        $otherFiles = @($other.Files | Where-Object { $_ -notin $lifecycle })
+        $shared = @($candidateFiles | Where-Object { $_ -in $otherFiles } | Select-Object -Unique)
+        if ($shared) {
+            throw "$($Candidate.Id) and [$($other.Lane)] $($other.Id) both own $($shared -join ', ') -- reorder the queue before claiming either slice"
+        }
+    }
+}
+
 function Get-LedgerLaneRows {
     param([string]$Root)
 
@@ -287,6 +310,7 @@ function Get-SlicePreflight {
     }
 
     Assert-CandidateDefinition -Root $root -Candidate $candidate
+    Assert-CrossLaneOwnership -Root $root -Candidate $candidate
     if (-not (Test-Proof -Root $root -ProofLine $candidate.Proof)) {
         throw "NEXTSTEPS.md item $($candidate.ItemNumber): proof no longer holds -- this may already be built. Open $($candidate.Proof.Split(':', 2)[1].Split('::', 2)[0].Trim()) before requeuing it."
     }
@@ -731,18 +755,15 @@ function Invoke-SliceFinish {
     $item = $items | Where-Object { $_.Id -eq $id } | Select-Object -First 1
     $handsOnNote = "none needed"
     if ($item -and $item.Check -match '(?i)hands-on check') {
-        $readyPath = Join-Path $worktreeRoot "checks\ready.md"
-        $currentReady = if (Test-Path -LiteralPath $readyPath) { Get-Content -Raw -LiteralPath $readyPath } else { "" }
-        $masterReady = git -C $root show "master:checks/ready.md"
-        if ($LASTEXITCODE -ne 0) { throw "could not read checks/ready.md from master" }
-        $currentEntries = [regex]::Matches($currentReady, '(?m)^### (C-\d+)') | ForEach-Object { $_.Groups[1].Value }
-        $masterEntries = [regex]::Matches($masterReady, '(?m)^### (C-\d+)') | ForEach-Object { $_.Groups[1].Value }
-        $newEntries = $currentEntries | Where-Object { $masterEntries -notcontains $_ }
+        $readyDirectory = Join-Path $worktreeRoot "checks\ready"
+        $branchChecks = if (Test-Path -LiteralPath $readyDirectory) { Get-ChildItem -LiteralPath $readyDirectory -Filter "C-*.md" | ForEach-Object { $_.Name } } else { @() }
+        $masterChecks = @(git -C $root ls-tree -r --name-only master -- checks/ready | ForEach-Object { Split-Path -Leaf $_ })
+        $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
         if (-not $newEntries) {
-            Write-Error "$id -- Check: names a hands-on check but checks/ready.md gained no entry -- file it before finishing"
+            Write-Error "$id -- Check: names a hands-on check but checks/ready/ gained no independently owned C-<id>.md record -- file it before finishing"
             exit 1
         }
-        $handsOnNote = "checks/ready.md gained $($newEntries -join ', ')"
+        $handsOnNote = "checks/ready/ gained $($newEntries -join ', ')"
     }
     elseif (-not $item) {
         Write-Output "$id -- no NEXTSTEPS.md entry found; skipping the hands-on-check gate"
@@ -793,6 +814,24 @@ function Invoke-SliceFinish {
         Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
     }
     Invoke-InjectedLifecycleFailure -Phase "merged"
+
+    # The ready-check page is a shared index, deliberately generated only in
+    # the primary checkout once the feature branch has landed. This keeps
+    # parallel branches from appending to the same Markdown file.
+    $indexGenerator = Join-Path $root "tools\check_docs.py"
+    $python = if ($PythonPath) { $PythonPath } else { & $verifyScript -ResolvePythonOnly }
+    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
+        throw "could not resolve Python for the ready-check index"
+    }
+    & $python $indexGenerator --write-ready-index
+    if ($LASTEXITCODE -ne 0) { throw "could not regenerate checks/ready.md" }
+    git add -- checks/ready.md
+    $indexStaged = git diff --cached --name-only
+    if ($indexStaged) {
+        $indexMessage = "$id -- refresh ready-check index`n`n$trailer"
+        git commit -m $indexMessage | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed while refreshing ready-check index" }
+    }
 
     git -c http.sslBackend=openssl push
     if ($LASTEXITCODE -ne 0) { throw "git push failed" }
