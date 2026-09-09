@@ -138,6 +138,49 @@ of these has bitten more than once:
   sits between two unequal reserves, compute its left edge from the
   reserves; never centre it on the parent and never paper over the offset
   with a scale factor. See `plans/now/ui.md` UI-R-1.
+- **A `ScrollContainer` gives its child the child's minimum width, not its
+  own, unless the child asks to expand.** Godot 4 stretches a
+  `ScrollContainer`'s content to the container's size only when the content
+  has `SIZE_EXPAND` on that axis; `SIZE_FILL` alone is not enough, and
+  `SIZE_FILL` is the default. The command tray's content `VBoxContainer`
+  never set it, so it took the width of its widest single child — and the
+  three Job/Focus/Orders columns, freshly given correct even widths by HC-1,
+  were handed to a container one column wide and wrapped one per row against
+  the tray's left edge. C-18 failed twice for two different reasons, the
+  second one invisible because the first fix looked right in the code. See
+  `plans/now/hud-controls.md` HC-7. The general form: **when a layout fix
+  does not show, check the parent chain before rereading the fix.** A child
+  laid out at its minimum size inside a parent that is the right size is the
+  signature, and LAY-6 in `plans/now/layout-regression.md` is the assertion
+  that catches it without a human.
+- **The shared theme scales the type variations, not the base types.**
+  `ui_theme.gd` sets `font_size` for Heading/Body/Small/Tiny and, for the
+  `Label` and `Button` base types, only colour and font. A control that never
+  names a variation therefore keeps Godot's default size and ignores the
+  player's text-scale setting entirely — which is why the soil panel's label
+  grew and its two buttons did not (C-32). Anything the accessibility setting
+  is meant to reach must be reachable from the theme's base type, not only
+  from a variation someone remembered to name. See
+  `plans/now/hud-controls.md` HC-9.
+- **A goal that asks "is any of them X" passes on the one that was always
+  X.** Challenge 1's stage 1.13 asks the player to set the *second* cell
+  aside for pollen; its goal check returned true for any cell with any
+  designation, and `HiveCell.add_resource` auto-designates a cell on its
+  first deposit. The first cell had been nectar-designated since stage 1.10,
+  so the stage cleared in the frame it opened and was never seen — taking Dr
+  Gallerin's call-out and the whole pollen arc with it (C-30, C-31, C-7). A
+  goal that names a specific object must check that object, and a goal about
+  a player's choice must distinguish the choice from the automatic default;
+  `designation_is_explicit` was already there to do it. See
+  `plans/now/challenge-1.md` Slice 20.
+- **A marker reparented by some branches and not others ends up in the wrong
+  world.** `challenge_runner.gd::_update_marker` reparents the shared stage
+  marker in two of its four branches. The branch covering stages 1.2, 1.5,
+  1.12 and 1.15 sets a hive-local position and shows the marker without
+  reparenting, so after the meadow tour at 1.7/1.10 the marker stays in the
+  meadow and a yellow dot appears in open ground. If several branches share
+  one node, the parent belongs in one place that always runs, not in each
+  branch that remembers. See `plans/now/challenge-1.md` Slice 24.
 
 ## PowerShell tooling: three ways `slice.ps1 finish` broke at once
 
