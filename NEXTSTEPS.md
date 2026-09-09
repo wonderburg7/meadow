@@ -54,7 +54,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
    - Check: a hands-on check covering the stage-2.1 warning and one-time pollen top-up
    - Proof: `absent: scripts/challenge_stages.gd :: 2.1_pollen_reserve`
-   - Next after: none -- admit the owning plan's next ready slice after C2-3 ships
+   - Next after: Challenge 2 Slice 4 (not yet specified -- name it in `plans/now/challenge-2.md` once C2-3's own shape is known)
 
 2. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
    Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
