@@ -1813,6 +1813,13 @@ func set_focus(type: String) -> void:
 	if not _is_inside_hive():
 		# Already out foraging -- no need to fly home first.
 		state = State.SEEK_FLOWER
+	elif state == State.IDLING:
+		# A bee parked on IDLING (Stage 1.11's freeze_bee) never dispatches
+		# itself again on its own, so a focus change here would otherwise
+		# be silently ignored. Walk her out through the ordinary exit path;
+		# _go_to_exit() calls _default_state_for_role() on arrival, which
+		# picks up the new resource type.
+		state = State.IN_HIVE_TO_EXIT
 	_update_label()
 	_update_role_marker()
 
