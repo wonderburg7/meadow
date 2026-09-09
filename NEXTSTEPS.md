@@ -44,19 +44,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] C1-19 -- the stage's automation switches off when the stage
-   ends.** Dave reported 4x speed doesn't reset at the stage ends. Both
-   `1.11` and the pollen stage declare an `on_exit` that resets it, but a
-   stage that never completes never runs its `on_exit` -- make the reset
-   independent of a stage completing normally by giving `_complete()` and
-   the checkpoint-restore path their own explicit call.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 19 — the stage's automation switches off when the stage ends"
-   - Files: `scripts/challenge_runner.gd`
-   - Check: finishing 1.11 or the pollen stage returns the game to 1x speed and releases the camera; abandoning Challenge 1 does too
-   - Proof: `absent: scripts/challenge_runner.gd :: _run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])`
-   - Next after: C1-7 (Slice 7 — acceptance pass and documentation, the plan's last open slice)
-
-3. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
+2. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -69,7 +57,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-4. **[Claude] HC-1 -- the command tray's three columns share its width.**
+3. **[Claude] HC-1 -- the command tray's three columns share its width.**
    The three column wrappers ask to expand, but their parent is an
    `HFlowContainer`, which lays children out at their minimum size and
    ignores expand flags. All three bunch against the tray's left edge.
@@ -86,9 +74,9 @@ was diagnosed against the source during the 9 Sep pass.
 Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, mostly Dave's run rather than a code slice, though its own
-  boot/checklist pass is startable once Slice 19 lands. Starting it before
-  Slice 19 lands only rediscovers C-7.
+  playthrough, mostly Dave's run rather than a code slice; its own
+  boot/checklist pass is startable now that Slice 19 has landed, but it is
+  a session for Dave's hands rather than a queued code slice.
 - **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
   one Claude branch runs at a time; they follow HC-1 in order.

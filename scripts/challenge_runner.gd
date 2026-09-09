@@ -283,6 +283,10 @@ func _check_c2_failure() -> void:
 		if not is_instance_valid(main.queen):
 			push_error("Challenge 2 checkpoint restore left no queen")
 			return
+		# A restore re-enters the same stage without running its on_exit, so
+		# 4x speed or camera-follow active going into the dip would otherwise
+		# survive the rescue.
+		_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
 		main.queen.energy_immune = true
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
@@ -560,6 +564,10 @@ func _complete() -> void:
 	active = false
 	queen_command_locked = false
 	_c1_forage_effects_done = false
+	# A stage's own on_exit only runs on the way to the next stage, so a
+	# Challenge whose last stage completes never runs one -- release the
+	# camera and speed here explicitly rather than depending on that.
+	_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
 	main.fog_of_war.set_hive_reveal_mode("")
 	main.fog_of_war.permanent_reveal_override = false
 	PlayerProfile.mark_challenge_complete(Session.starting_level)
