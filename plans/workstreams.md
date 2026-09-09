@@ -60,4 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CR-6` (`codex/CR-6`) | Codex | make headless evidence bounded and causal. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-6 — make headless evidence bounded and causal" |
-| `.worktrees/LAY-5` (`claude/LAY-5`) | Claude | a headless check fails when a panel leaves the viewport. | Claude | in progress | none | `plans/now/layout-regression.md` "LAY-5 — a headless check that fails when a panel leaves the viewport" |
+| `.worktrees/LAY-5` (`claude/LAY-5`) | Claude | a headless check fails when a panel leaves the viewport, plus LAY-6's control-level assertions. | Claude | in progress | none | `plans/archive/LAYOUT_REGRESSION_2026-09-09.md` "LAY-5" and "LAY-6" |

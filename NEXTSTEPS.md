@@ -69,18 +69,17 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] LAY-5 -- a headless check fails when a panel leaves the viewport.**
-   Four of Dave's hands-on passes have been spent re-finding the same class of
-   defect: a persistent HUD panel losing its 16px gap or leaving the
-   viewport, most recently HC-7's C-18. Add a `viewport_size` scenario verb
-   and a `panel_rect` assertion so `tools/verify.ps1` catches it without a
-   human, proven by reintroducing and then removing LAY-2's old bug in the
-   same commit.
-   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
-   - Files: `scripts/scenario_actions.gd`
-   - Check: none -- the slice's own before/after test run is the acceptance evidence
-   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
-   - Next after: LAY-6 (a headless check fails when a built control has no usable size)
+3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
+   Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
+   bottom of the command tray, this should be a single star without words to
+   the left of the settings cog in the bee summary window." Delete
+   `_build_favourite_row` and its `more_panel` call, and add a `☆`/`★` toggle
+   to the summary header next to the cog instead.
+   - Plan: `plans/now/hud-controls.md` -- "HC-10 — the Favourite star sits in the summary panel's header"
+   - Files: `scripts/hud.gd`
+   - Check: one hands-on check that the star appears left of the cog for a single bee, toggles, survives a reselect, and is absent for a cell
+   - Proof: `present: scripts/hud.gd :: _build_favourite_row`
+   - Next after: HC-11 (every summary panel's cog offers bee-only options)
 
 ## Not in the queue, and why
 
@@ -100,14 +99,13 @@ Each of these wants something from Dave, or something else to ship first.
   pollen arc work unattended.
 - **HC-8** (`plans/now/hud-controls.md`) -- the tray's height after a
   deselect-reselect with `More…` open. Its cause is a stale container minimum
-  or is not; the slice says to measure first, and its automated check wants
-  LAY-5's rectangle helper.
-- **HC-10 and HC-11** (`plans/now/hud-controls.md`) -- the Favourite star's
-  move to the summary header, and per-entity cog options. Both edit
-  `scripts/hud.gd`, free since HC-7 landed, and ready on their merits, but
-  the Claude lane's leading item is LAY-5 instead -- the instrument that
-  would have caught HC-7's and HC-9's classes of defect without a human. One
-  Claude branch at a time; HC-10 is next after LAY-5.
+  or is not; the slice says to measure first. Its automated check can now use
+  LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
+  live measurement is still the blocker.
+- **HC-11** (`plans/now/hud-controls.md`) -- every summary panel's cog offers
+  bee-only options. Edits `scripts/hud.gd`, free since HC-7 landed and ready
+  on its merits, but the Claude lane's leading item is HC-10 instead. One
+  Claude branch at a time; HC-11 is next after HC-10.
 - **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
   `scripts/debug_panel.gd`, the Codex lane's C2-2 file.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
@@ -118,9 +116,18 @@ Each of these wants something from Dave, or something else to ship first.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **LAY-6** (`plans/now/layout-regression.md`) -- depends on LAY-5's
-  `viewport_size` verb and rectangle-reading helper. Becomes the Claude
-  lane's leading item once LAY-5 merges.
+- **The command tray's three columns are not pixel-even** -- LAY-6's new
+  `even_columns` assertion (9 Sep 2026) measured the Job/Focus/Orders wrapper
+  widths for a single selected forager at 170/100/127px, not equal. HC-1 (the
+  same symptom) is archived as landed, and the catastrophic "bunched at the
+  left edge" case it actually fixed stays fixed -- this is each wrapper
+  sizing to its own content's natural width inside the `HFlowContainer`
+  rather than to an equal one-third share, which the container was never
+  changed to enforce. `tests/fixtures/layout_panels.json`'s own `even_columns`
+  check uses a wide (80px) tolerance to pass on this, so it stays live for a
+  worse regression. Wants Dave's call on whether true pixel-equal columns
+  matter enough to justify a `GridContainer`-style layout change to
+  `hud.gd::_build_command_tray`, before a slice is written.
 - **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows

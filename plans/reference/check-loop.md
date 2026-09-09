@@ -135,6 +135,8 @@ disagree.
     tray columns bunched left, two buttons collapsed to 10px, a menu drawing
     with no button behind it (`plans/now/hud-controls.md`). A slice that
     places a control inside a container asserts the resulting rectangle
-    through `plans/now/layout-regression.md`'s LAY-6 assertions, because
-    "a container gives a child its minimum size" is a rule about every
-    container, not about the one that was noticed.
+    through LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
+    assertions (`scripts/scenario_actions.gd`,
+    `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`), because "a container
+    gives a child its minimum size" is a rule about every container, not
+    about the one that was noticed.

@@ -196,6 +196,7 @@ the authority on which tier a branch is in.
 | Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
 | What a Challenge stage id means | `docs/challenge-stages.md` |
 | HUD panel placement, sizing or overlap (built) | `checks/ready.md` or `plans/archive/LAY-1_2026-09-08.md` |
+| Headless layout/geometry assertions -- `panel_rect`/`control_rect`/`even_columns`/`no_collapsed_controls` (built) | `scripts/scenario_actions.gd` or `plans/archive/LAYOUT_REGRESSION_2026-09-09.md` |
 | Left-side windows or the settings window (built) | `checks/ready.md` or `plans/archive/UI-WINDOWS_2026-09-08.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |
 | Skills/progression | `plans/design/progression.md` |

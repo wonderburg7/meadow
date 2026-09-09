@@ -352,6 +352,16 @@ var selection_column: VBoxContainer
 var soil_summary_row: BoxContainer
 var soil_mark_btn: Button
 var soil_clear_btn: Button
+## The _with_info() rows soil_mark_btn/soil_clear_btn sit in. A
+## VBoxContainer/HBoxContainer's cross- and main-axis children don't take
+## SIZE_EXPAND_FILL as licence to claim their parent's width on their
+## own here -- _apply_selection_tray_width has to hand each one an
+## explicit custom_minimum_size.x floor, the same way it already does for
+## selection_column, or the buttons collapse to their own tiny autowrap
+## minimum (HC-2, "soil panel's two buttons collapsed to about 10px
+## wide", Dave, 9 Sep 2026).
+var soil_mark_wrapper: HBoxContainer
+var soil_clear_wrapper: HBoxContainer
 var speed_buttons: Array = []
 var shown_bees: Array = []
 ## Challenge-owned command restrictions are passed in as bee references.
@@ -854,6 +864,11 @@ func _build_selection_panel() -> void:
 	add_child(selection_panel)
 
 	selection_column = VBoxContainer.new()
+	# Named so LAY-6's control_rect/even_columns/no_collapsed_controls
+	# assertions can address it and its descendants by a stable
+	# get_node_or_null path from the "selection_panel" root
+	# (scripts/scenario_actions.gd::_resolve_scoped_path).
+	selection_column.name = "selection_column"
 	selection_panel.add_child(selection_column)
 	var column := selection_column
 	_apply_selection_tray_width()
@@ -899,10 +914,12 @@ func _build_selection_panel() -> void:
 	# vertically (rather than side by side) so the two buttons can never
 	# push the panel past its fixed width at a large text scale.
 	soil_summary_row = VBoxContainer.new()
+	soil_summary_row.name = "soil_summary_row"
 	soil_summary_row.visible = false
 	column.add_child(soil_summary_row)
 
 	soil_mark_btn = Button.new()
+	soil_mark_btn.name = "soil_mark_btn"
 	_style_button(soil_mark_btn)
 	soil_mark_btn.text = "Mark for digging"
 	# Wrap rather than raise the column's minimum width past the space
@@ -910,15 +927,20 @@ func _build_selection_panel() -> void:
 	soil_mark_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	soil_mark_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
-	soil_summary_row.add_child(_with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer."))
+	soil_mark_wrapper = _with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer.")
+	soil_mark_wrapper.name = "soil_mark_wrapper"
+	soil_summary_row.add_child(soil_mark_wrapper)
 
 	soil_clear_btn = Button.new()
+	soil_clear_btn.name = "soil_clear_btn"
 	_style_button(soil_clear_btn)
 	soil_clear_btn.text = "Clear marks"
 	soil_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	soil_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
-	soil_summary_row.add_child(_with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work."))
+	soil_clear_wrapper = _with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work.")
+	soil_clear_wrapper.name = "soil_clear_wrapper"
+	soil_summary_row.add_child(soil_clear_wrapper)
 
 	_apply_selection_field_visibility()
 
@@ -999,6 +1021,11 @@ func _build_command_tray() -> void:
 	add_child(command_tray)
 
 	command_scroll = ScrollContainer.new()
+	# Named (like command_content/command_columns below) so LAY-6's
+	# control_rect/even_columns/no_collapsed_controls assertions can address
+	# the tray's contents by a stable get_node_or_null path from the
+	# "command_tray" root (scripts/scenario_actions.gd::_resolve_scoped_path).
+	command_scroll.name = "command_scroll"
 	# The tray's width is owned by _update_command_tray_width; this must
 	# never grow a horizontal bar of its own.
 	command_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -1006,6 +1033,7 @@ func _build_command_tray() -> void:
 	command_tray.add_child(command_scroll)
 
 	var column := VBoxContainer.new()
+	column.name = "command_content"
 	column.add_theme_constant_override("separation", 4)
 	# A ScrollContainer stretches a child to its own width only when the
 	# child sets SIZE_EXPAND horizontally; without it Godot 4 lays the
@@ -1024,6 +1052,7 @@ func _build_command_tray() -> void:
 	# viewport cannot accommodate all three.  A fixed HBox would preserve its
 	# children's combined minimum width and spill into the summary panel.
 	command_columns = HFlowContainer.new()
+	command_columns.name = "command_columns"
 	command_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
 	column.add_child(command_columns)
 
@@ -1067,7 +1096,13 @@ func _build_command_tray() -> void:
 ## whether the column has anything to say for the current selection, so
 ## an empty column doesn't sit there as a blank gap.
 func _build_tray_column(title: String) -> Array:
+	# Named to match the job_column_wrapper/job_column field pair the
+	# caller assigns this pair's return into (same for focus/orders), so
+	# LAY-6's assertions can address either one by a stable path under the
+	# "command_tray" root -- see scenario_actions.gd::_resolve_scoped_path.
+	var slug: String = title.to_lower()
 	var wrapper := VBoxContainer.new()
+	wrapper.name = "%s_column_wrapper" % slug
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.custom_minimum_size = Vector2(100, 0)
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1081,6 +1116,7 @@ func _build_tray_column(title: String) -> Array:
 	wrapper.add_child(header)
 
 	var content := VBoxContainer.new()
+	content.name = "%s_column" % slug
 	content.add_theme_constant_override("separation", 3)
 	wrapper.add_child(content)
 
@@ -2213,6 +2249,10 @@ func _build_favourite_row(bee) -> void:
 ## more_panel, per Dave's 22 Aug three-column call.
 func _build_job_row(common_role: int, any_queen: bool) -> void:
 	var row := _column_row(job_column)
+	# Named so LAY-6's control_rect assertion on the "Change to…" menu has a
+	# stable path (see the row.add_child(_make_role_menu(..., "change_to_menu"))
+	# call below and scenario_actions.gd::_resolve_scoped_path).
+	row.name = "job_row"
 	if common_role == -1:
 		var mixed := Label.new()
 		mixed.text = "mixed selection"
@@ -2236,7 +2276,7 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 			"action": func(): role_requested.emit(key),
 		})
 	if not items.is_empty():
-		row.add_child(_make_role_menu("Change to…", "Switch the selected bees to another job. Sub-modes for that job appear on the Doing row once they are on it.", items))
+		row.add_child(_make_role_menu("Change to…", "Switch the selected bees to another job. Sub-modes for that job appear on the Doing row once they are on it.", items, "change_to_menu"))
 
 ## Doing: the sub-mode of the current job, where that job has one.
 func _build_doing_row(common_role: int, first) -> void:
@@ -2493,8 +2533,14 @@ func _common_working_role(bees: Array) -> int:
 			return -1
 	return role_value if found else -1
 
-func _make_role_menu(label: String, tip: String, items: Array) -> Control:
+## node_name is optional and only given where a fixture needs to address
+## this specific menu by a stable path (LAY-6's "change_to_menu") -- label
+## text isn't usable for that since _build_fallback_row's call rebuilds its
+## menu with a different label ("When idle: <role>") each time.
+func _make_role_menu(label: String, tip: String, items: Array, node_name: String = "") -> Control:
 	var menu := MenuButton.new()
+	if node_name != "":
+		menu.name = node_name
 	_style_button(menu)
 	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	menu.text = label
@@ -2608,6 +2654,31 @@ func _apply_selection_tray_width() -> void:
 		# cannot raise the column's minimum width above what the panel has
 		# to give it.
 		selection_column.custom_minimum_size.x = maxf(0.0, rect.size.x - UiLayout.panel_chrome().x)
+		# soil_summary_row (and, in turn, the mark/clear button rows inside
+		# it) sit two and three VBoxContainer/HBoxContainer levels below
+		# selection_column and don't inherit its width just from being
+		# nested inside it -- each level needs the same explicit floor, or
+		# the soil buttons collapse to their own tiny autowrap minimum
+		# (see the soil_mark_wrapper/soil_clear_wrapper field comment).
+		if soil_summary_row != null:
+			soil_summary_row.custom_minimum_size.x = selection_column.custom_minimum_size.x
+		if soil_mark_wrapper != null:
+			soil_mark_wrapper.custom_minimum_size.x = selection_column.custom_minimum_size.x
+		if soil_clear_wrapper != null:
+			soil_clear_wrapper.custom_minimum_size.x = selection_column.custom_minimum_size.x
+		# soil_mark_btn/soil_clear_btn's own SIZE_EXPAND_FILL (set where
+		# they're built) still doesn't claim the row's width on its own --
+		# an autowrap Button's minimum size doesn't tell HBoxContainer's
+		# stretch pass it wants more, so without this floor it renders at
+		# its own tiny autowrap minimum even once the row around it is the
+		# full 424px above. Floored to the row's width minus the info
+		# badge and its separation (UI.with_info), not a fixed number, so
+		# it still shrinks -- and still wraps -- at a narrow viewport.
+		var soil_button_floor: float = maxf(0.0, selection_column.custom_minimum_size.x - UI.BADGE_SIZE - 3.0)
+		if soil_mark_btn != null:
+			soil_mark_btn.custom_minimum_size.x = soil_button_floor
+		if soil_clear_btn != null:
+			soil_clear_btn.custom_minimum_size.x = soil_button_floor
 
 ## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
 ## between each, but only when that even width is wide enough for the

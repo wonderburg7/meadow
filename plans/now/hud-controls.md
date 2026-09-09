@@ -25,8 +25,10 @@ that failed never ask. HC-7 was that same rule one level up the tree — a
 `ScrollContainer` stretches its child only when the child has `SIZE_EXPAND` —
 which is why fixing the columns did not fix the columns. It is the same shape
 of mistake as the anchor bug in `plans/archive/PANEL_LAYOUT_2026-09-09.md`,
-and `plans/now/layout-regression.md`'s LAY-6 is the instrument that catches
-it without a human. HC-9, HC-10 and HC-11 are not that shape: they are a
+and LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls` assertions
+(`scripts/scenario_actions.gd`, `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`)
+are the instrument that catches it without a human. HC-9, HC-10 and HC-11
+are not that shape: they are a
 missing theme entry, a control in the wrong place, and a menu that never
 asked what was selected.
 

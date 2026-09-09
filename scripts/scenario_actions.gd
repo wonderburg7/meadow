@@ -68,6 +68,14 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_hatch_role(main, action)
 		"set_restock_order":
 			_do_set_restock_order(main, action)
+		"select_bees":
+			_do_select_bees(main, action)
+		"select_soil":
+			_do_select_soil(main, action)
+		"open_window":
+			_do_open_window(main, action)
+		"viewport_size":
+			_do_viewport_size(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -388,17 +396,310 @@ static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void:
 		return
 	_log("set_restock_order", "%d bees: %s -> %s (%s)" % [bees.size(), source_hex, target_hex, resource], "accepted", "")
 
+## Selects bees the same way a single non-additive click does --
+## input_selection.gd::_finish_drag's terminal branch: clear whatever else
+## was selected, mark the picked bees selected and call hud.update_selection,
+## the exact call a click's selection ends on. Left selected afterwards
+## (unlike _do_assign_role's temporary swap-and-restore), because LAY-5/LAY-6
+## fixtures need the selection panels it opens to stay up for later asserts.
+static func _do_select_bees(main: Node2D, action: Dictionary) -> void:
+	var bees: Array = _resolve_bees(main, action.get("target", {}))
+	if bees.is_empty():
+		_log("select_bees", str(action), "rejected", "no matching bees")
+		return
+	main.input_selection._clear_world_object_selection()
+	main.input_selection._clear_cell_selection()
+	main.input_selection._clear_block_selection()
+	for b in main.selected_bees:
+		if is_instance_valid(b):
+			b.set_selected(false)
+	main.selected_bees.clear()
+	for b in bees:
+		if not main.selected_bees.has(b):
+			b.set_selected(true)
+			main.selected_bees.append(b)
+	main.hud.update_selection(main.selected_bees)
+	var bad: Array = bees.filter(func(b): return not is_instance_valid(b) or not main.selected_bees.has(b))
+	if not bad.is_empty():
+		_log("select_bees", "%d bees" % bees.size(), "rejected",
+			"%d bee(s) did not end up selected" % bad.size())
+		return
+	_log("select_bees", "%d bees" % bees.size(), "accepted", "")
+
+## Selects soil blocks the same way a single non-additive click does --
+## input_selection.gd::_select_blocks, the function a click on a soil block
+## resolves to once _finish_drag has found it. "hexes" names blocks by axial
+## coordinate like queue_mine's target; omit it to pick whichever block the
+## "soil_blocks" group returns first, so a fixture doesn't need to know a
+## procedurally-generated map's exact layout just to reach the soil summary
+## LAY-6's control_rect checks (soil_mark_btn/soil_clear_btn) need visible.
+static func _do_select_soil(main: Node2D, action: Dictionary) -> void:
+	var hexes: Array = action.get("hexes", [])
+	var blocks: Array = []
+	if hexes.is_empty():
+		var all_blocks: Array = main.get_tree().get_nodes_in_group("soil_blocks").filter(
+			func(b): return is_instance_valid(b)
+		)
+		if not all_blocks.is_empty():
+			blocks.append(all_blocks[0])
+	else:
+		for hex in hexes:
+			var block: Node2D = _resolve_soil_block(main, hex)
+			if block != null:
+				blocks.append(block)
+	if blocks.is_empty():
+		_log("select_soil", str(action), "rejected", "no soil block found")
+		return
+	main.input_selection._select_blocks(blocks, false)
+	_log("select_soil", "%d blocks" % blocks.size(), "accepted", "")
+
+## Opens one of the left-side windows or the command tray's "More…" panel,
+## through the same functions their buttons call
+## (main.gd wires colony_button/foraging_button to year_winter._toggle_panel,
+## input_selection.gd's 'N' key does the same for nursery). "More…" has no
+## extracted function -- hud.gd's more_button.pressed lambda is inlined --
+## so this replicates that lambda's body against the same public fields.
+static func _do_open_window(main: Node2D, action: Dictionary) -> void:
+	var window_key: String = action.get("window", "")
+	if window_key == "command_tray_more":
+		main.hud.more_panel_open = true
+		if main.hud.more_button != null:
+			main.hud.more_button.set_pressed_no_signal(true)
+		if main.hud.more_panel != null:
+			main.hud.more_panel.visible = true
+		main.hud._resize_command_tray()
+		if main.hud.more_panel != null and main.hud.more_panel.visible:
+			_log("open_window", window_key, "accepted", "")
+		else:
+			_log("open_window", window_key, "rejected", "tray 'More…' panel did not open")
+		return
+
+	var panel: CanvasLayer = null
+	match window_key:
+		"colony":
+			panel = main.colony_panel
+		"foraging":
+			panel = main.foraging_panel
+		"nursery":
+			panel = main.nursery_panel
+		_:
+			pass
+	if panel == null:
+		_log("open_window", str(action), "rejected", "unknown window")
+		return
+	if not panel.is_open():
+		main.year_winter._toggle_panel(panel)
+	if not panel.is_open():
+		_log("open_window", window_key, "rejected", "panel did not open")
+		return
+	_log("open_window", window_key, "accepted", "")
+
+## Sets the root window's size directly rather than relying on Godot's
+## --resolution command-line flag, whose behaviour --headless doesn't
+## guarantee. LAY-5: lets a fixture cover the three supported sizes
+## (1920x1080, 1280x720, 800x600 -- UiLayout.MIN_SUPPORTED_WIDTH's floor)
+## without three separate Godot boots.
+static func _do_viewport_size(main: Node2D, action: Dictionary) -> void:
+	var w: int = int(action.get("w", 0))
+	var h: int = int(action.get("h", 0))
+	if w <= 0 or h <= 0:
+		_log("viewport_size", str(action), "rejected", "w and h must both be positive")
+		return
+	main.get_window().size = Vector2i(w, h)
+	_log("viewport_size", "%dx%d" % [w, h], "accepted", "")
+
+
+# --- assertion checks -------------------------------------------------
+
 ## Not gated -- checked once, the tick its own "when" (if any) is met.
 ## Returns whether the run should keep going, so run_pending can stop
-## evaluating the rest of this tick's actions on failure.
+## evaluating the rest of this tick's actions on failure. Dispatches on
+## which key the condition dict carries: "panel"/"control"/"container"/
+## "root" each name one of the LAY-5/LAY-6 rectangle assertions below;
+## anything else falls back to the plain trigger checks _when_met already
+## covers (day_at_least and friends), unchanged.
 static func _do_assert(main: Node2D, action: Dictionary) -> bool:
 	var condition: Dictionary = action.get("condition", {})
-	if _when_met(main, condition):
+	var result: Dictionary = _evaluate_assert_condition(main, condition)
+	if result.get("ok", false):
 		_log("assert", str(condition), "accepted", "")
 		return true
-	_log("assert", str(condition), "rejected", "condition not met")
+	_log("assert", str(condition), "rejected", String(result.get("reason", "condition not met")))
 	main._end_scenario_run("assert_failed")
 	return false
+
+static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary:
+	if condition.has("panel"):
+		return _check_panel_rect(main, condition)
+	if condition.has("control"):
+		return _check_control_rect(main, condition)
+	if condition.has("container"):
+		return _check_even_columns(main, condition)
+	if condition.has("root"):
+		return _check_no_collapsed_controls(main, condition)
+	if _when_met(main, condition):
+		return {"ok": true, "reason": ""}
+	return {"ok": false, "reason": "condition not met"}
+
+## LAY-5's panel-level check: {"panel": name, "inside_viewport": true,
+## "gap_below": px}. `name` is one of the five panels LAY-5 names, each
+## resolved to the Control whose get_global_rect() is the thing a player
+## actually sees -- command_tray/summary are hud.gd fields, the three
+## windows keep their PanelContainer behind a CanvasLayer (colony_panel.gd,
+## foraging_panel.gd, nursery_panel.gd all name it "panel"). An invisible
+## panel is never asserted on by a fixture -- LAY-5 only calls this once
+## the panel has just been opened -- so no invisible-pass rule is needed
+## here the way LAY-6's control_rect needs one.
+static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary:
+	var name: String = condition.get("panel", "")
+	var panel: Control = _resolve_named_panel(main, name)
+	if panel == null:
+		return {"ok": false, "reason": "unknown panel '%s'" % name}
+	if not panel.visible:
+		return {"ok": false, "reason": "panel '%s' is not visible" % name}
+	var rect: Rect2 = panel.get_global_rect()
+	var viewport_rect: Rect2 = main.get_viewport().get_visible_rect()
+	if not viewport_rect.encloses(rect):
+		return {"ok": false, "reason": "panel '%s' rect %s is not inside viewport %s" % [name, rect, viewport_rect]}
+	if condition.has("gap_below"):
+		var expected_gap: float = float(condition["gap_below"])
+		var actual_gap: float = (viewport_rect.position.y + viewport_rect.size.y) - (rect.position.y + rect.size.y)
+		if absf(actual_gap - expected_gap) > 1.0:
+			return {"ok": false, "reason": "panel '%s' gap_below is %.1fpx, expected %.1fpx (rect %s, viewport %s)" % [name, actual_gap, expected_gap, rect, viewport_rect]}
+	return {"ok": true, "reason": ""}
+
+static func _resolve_named_panel(main: Node2D, name: String) -> Control:
+	match name:
+		"command_tray":
+			return main.hud.command_tray
+		"summary":
+			return main.hud.selection_panel
+		"colony":
+			return main.colony_panel.panel
+		"foraging":
+			return main.foraging_panel.panel
+		"nursery":
+			return main.nursery_panel.panel
+		_:
+			return null
+
+## LAY-6 change 1: {"control": "<path>", "min_size": [w, h], "inside":
+## "<path>"}. An invisible control passes silently -- see the plan's own
+## reasoning: visibility is what _rebuild_role_controls legitimately
+## toggles, so asserting on a hidden control would make every fixture a
+## list of which columns happen to be shown this tick.
+static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary:
+	var path: String = condition.get("control", "")
+	var node: Node = _resolve_scoped_path(main, path)
+	if node == null or not (node is Control):
+		return {"ok": false, "reason": "control '%s' not found" % path}
+	var control: Control = node as Control
+	if not control.is_visible_in_tree():
+		return {"ok": true, "reason": ""}
+	var rect: Rect2 = control.get_global_rect()
+	var min_size_arr: Array = condition.get("min_size", [0, 0])
+	var expected := Vector2(float(min_size_arr[0]), float(min_size_arr[1]))
+	if rect.size.x < expected.x or rect.size.y < expected.y:
+		return {"ok": false, "reason": "control '%s' rect %s is smaller than minimum %s" % [path, rect, expected]}
+	if condition.has("inside"):
+		var inside_path: String = condition["inside"]
+		var inside_node: Node = _resolve_scoped_path(main, inside_path)
+		if inside_node == null or not (inside_node is Control):
+			return {"ok": false, "reason": "control '%s' inside-ancestor '%s' not found" % [path, inside_path]}
+		var ancestor_rect: Rect2 = (inside_node as Control).get_global_rect()
+		if not ancestor_rect.encloses(rect):
+			return {"ok": false, "reason": "control '%s' rect %s is not inside '%s' rect %s" % [path, rect, inside_path, ancestor_rect]}
+	return {"ok": true, "reason": ""}
+
+## LAY-6 change 2: {"container": "<path>", "children": n, "tolerance": px}.
+## Fails when the first n visible children's widths, or the gaps between
+## them, are not equal within tolerance -- the one assertion no per-control
+## minimum can express, and the one HC-1 (the tray's three columns bunched
+## against its left edge) needs.
+static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary:
+	var path: String = condition.get("container", "")
+	var node: Node = _resolve_scoped_path(main, path)
+	if node == null or not (node is Control):
+		return {"ok": false, "reason": "container '%s' not found" % path}
+	var container: Control = node as Control
+	var visible_children: Array = container.get_children().filter(
+		func(c): return c is Control and c.is_visible_in_tree()
+	)
+	var n: int = int(condition.get("children", 0))
+	if visible_children.size() < n:
+		return {"ok": false, "reason": "container '%s' has %d visible children, expected at least %d" % [path, visible_children.size(), n]}
+	var selected: Array = visible_children.slice(0, n)
+	var tolerance: float = float(condition.get("tolerance", 0))
+
+	var widths: Array = selected.map(func(c): return (c as Control).get_global_rect().size.x)
+	var reference_width: float = widths[0]
+	for w in widths:
+		if absf(w - reference_width) > tolerance:
+			return {"ok": false, "reason": "container '%s' columns have uneven widths %s (tolerance %.1fpx)" % [path, widths, tolerance]}
+
+	if n >= 2:
+		var gaps: Array = []
+		for i in range(n - 1):
+			var left_rect: Rect2 = (selected[i] as Control).get_global_rect()
+			var right_rect: Rect2 = (selected[i + 1] as Control).get_global_rect()
+			gaps.append(right_rect.position.x - (left_rect.position.x + left_rect.size.x))
+		var reference_gap: float = gaps[0]
+		for g in gaps:
+			if absf(g - reference_gap) > tolerance:
+				return {"ok": false, "reason": "container '%s' columns have uneven gaps %s (tolerance %.1fpx)" % [path, gaps, tolerance]}
+
+	return {"ok": true, "reason": ""}
+
+## LAY-6 change 4: {"root": "<path>"}. Walks every visible Button/MenuButton
+## under root and fails on any under 8x8px -- the sweep that catches the
+## next collapsed control nobody named an assertion for, on top of the
+## named control_rect checks above. Geometry only, never colour/font/
+## stylebox -- HC-3's flat "Change to…" button is a drawing defect this
+## sweep does not and cannot see; leave that one to a screenshot.
+static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary:
+	var path: String = condition.get("root", "")
+	var node: Node = _resolve_scoped_path(main, path)
+	if node == null:
+		return {"ok": false, "reason": "root '%s' not found" % path}
+	var collapsed: Array = []
+	_collect_collapsed_controls(node, collapsed)
+	if not collapsed.is_empty():
+		return {"ok": false, "reason": "collapsed controls under '%s': %s" % [path, collapsed]}
+	return {"ok": true, "reason": ""}
+
+static func _collect_collapsed_controls(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		if (child is Button or child is MenuButton) and (child as Control).is_visible_in_tree():
+			var rect: Rect2 = (child as Control).get_global_rect()
+			if rect.size.x < 8.0 or rect.size.y < 8.0:
+				out.append("%s (%s)" % [child.get_path(), rect])
+		_collect_collapsed_controls(child, out)
+
+## Resolves a control_rect/even_columns/no_collapsed_controls path against a
+## small allowlist of named roots, so a fixture can only reach the parts of
+## the scene tree LAY-6 was written to check, never an arbitrary node.
+## "<root>" alone returns the root; "<root>/<rest>" resolves <rest> under it
+## with the ordinary get_node_or_null.
+static func _resolve_scoped_path(main: Node2D, path: String) -> Node:
+	if path == "":
+		return null
+	var segments: Array = path.split("/")
+	var root_name: String = segments[0]
+	var root: Node = null
+	match root_name:
+		"hud":
+			root = main.hud
+		"selection_panel":
+			root = main.hud.selection_panel
+		"command_tray":
+			root = main.hud.command_tray
+		"gallerin_panel":
+			root = main.gallerin_panel
+		_:
+			return null
+	if root == null or segments.size() == 1:
+		return root
+	return root.get_node_or_null("/".join(segments.slice(1)))
 
 static func _log(do: String, target_desc: String, result: String, reason: String) -> void:
 	DiagnosticLog.log_action(do, target_desc, result, reason)

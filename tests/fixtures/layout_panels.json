@@ -1,0 +1,32 @@
+{
+  "cells": 5,
+  "nectar_foragers": 1,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "viewport_size", "w": 1920, "h": 1080},
+    {"do": "select_bees", "target": {"current_role": "forager", "count": 1}},
+    {"do": "assert", "condition": {"panel": "command_tray", "inside_viewport": true, "gap_below": 16}},
+    {"do": "assert", "condition": {"panel": "summary", "inside_viewport": true, "gap_below": 16}},
+    {"do": "assert", "condition": {"container": "command_tray/command_scroll/command_content/command_columns", "children": 3, "tolerance": 80}},
+    {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/job_column_wrapper/job_column/job_row/change_to_menu", "min_size": [60, 20]}},
+    {"do": "open_window", "window": "colony"},
+    {"do": "assert", "condition": {"panel": "colony", "inside_viewport": true}},
+    {"do": "open_window", "window": "foraging"},
+    {"do": "assert", "condition": {"panel": "foraging", "inside_viewport": true}},
+    {"do": "open_window", "window": "nursery"},
+    {"do": "assert", "condition": {"panel": "nursery", "inside_viewport": true}},
+    {"do": "open_window", "window": "command_tray_more"},
+    {"do": "assert", "condition": {"panel": "command_tray", "inside_viewport": true}},
+    {"do": "select_soil"},
+    {"do": "assert", "condition": {"control": "selection_panel/selection_column/soil_summary_row/soil_mark_wrapper/soil_mark_btn", "min_size": [80, 20], "inside": "selection_panel"}},
+    {"do": "assert", "condition": {"control": "selection_panel/selection_column/soil_summary_row/soil_clear_wrapper/soil_clear_btn", "min_size": [80, 20], "inside": "selection_panel"}},
+    {"do": "assert", "condition": {"root": "hud"}},
+    {"do": "viewport_size", "w": 800, "h": 600},
+    {"do": "select_bees", "target": {"current_role": "forager", "count": 1}},
+    {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/job_column_wrapper", "min_size": [60, 20]}},
+    {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/focus_column_wrapper", "min_size": [60, 20]}},
+    {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/orders_column_wrapper", "min_size": [60, 20]}},
+    {"do": "assert", "condition": {"root": "hud"}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

@@ -151,8 +151,10 @@ of these has bitten more than once:
   `plans/now/hud-controls.md` HC-7. The general form: **when a layout fix
   does not show, check the parent chain before rereading the fix.** A child
   laid out at its minimum size inside a parent that is the right size is the
-  signature, and LAY-6 in `plans/now/layout-regression.md` is the assertion
-  that catches it without a human.
+  signature, and LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
+  assertions (`scripts/scenario_actions.gd`,
+  `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`) are what catches it
+  without a human.
 - **The shared theme scales the type variations, not the base types.**
   `ui_theme.gd` sets `font_size` for Heading/Body/Small/Tiny and, for the
   `Label` and `Button` base types, only colour and font. A control that never
