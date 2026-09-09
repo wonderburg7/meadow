@@ -42,7 +42,7 @@ asked what was selected.
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
 | HC-9 | No button follows the text-size setting (C-32) | `ui_theme.gd` | low |
 | HC-10 | The Favourite toggle is a worded row in `More…` | `hud.gd` | low |
-| HC-11 | Every summary panel's cog offers bee-only options | `hud.gd`, `session.gd` | medium |
+| HC-11 | Every summary panel's cog offers bee-only options | `hud.gd` | low |
 | HC-12 | Four GDScript warnings on boot | `hud.gd`, `debug_panel.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
@@ -294,8 +294,8 @@ single bee, toggles, survives a reselect, and is absent for a cell.
 
 ## HC-11 — a summary panel's cog offers the fields that panel shows
 
-**Reasoning level: medium.** Needs a small decision about what each entity's
-fields are, so write the list down before coding.
+**Reasoning level: low.** Dave settled the one product question on 9 Sep
+2026 (see below), so this is a table and a visibility rule.
 
 **What Dave reported (9 Sep 2026).** "All non-bee summary windows have
 settings cogs, but the options only relate to bee summary windows. These
@@ -332,9 +332,16 @@ presentation only.
 there and are saved by `Session.save_preferences()` like the four that exist.
 Do not add per-panel preference storage.
 
-**Escalate rather than guess if:** the cell and soil summaries turn out to
-have no fields worth toggling. "Hide the cog for those two" is then the whole
-slice, and that is a product call for Dave, not a decision to make in code.
+**Dave's decision (9 Sep 2026): hide the cog for a cell and a soil block.**
+Neither has a line worth toggling, and a cog that opens an empty menu is
+worse than no cog. So requirement 3 above is the expected outcome for those
+two kinds, not a fallback. Keep the table anyway -- it is what makes adding a
+kind's toggles later a data change rather than a fourth branch. The bee panel
+keeps its four field toggles with their current keys and defaults.
+
+**Escalate rather than guess if:** hiding the cog leaves the summary header
+with nothing in it and the header itself has to go, which changes the panel's
+shape rather than its contents.
 
 **Check to file:** one check that the cog's menu differs between a bee, a
 cell and a soil block, and that each item hides the line it names.
