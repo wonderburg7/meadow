@@ -122,6 +122,11 @@ Completed 2026-09-09; archived at `plans/archive/CR-3_2026-09-09.md`.
 
 Medium tooling slice; complete before adding more lifecycle prose.
 
+Implementation records lifecycle truth in Git and the workstream ledger, with
+`status`, `resume`, and pre-merge `abort` entry points.  Fault injection at
+each durable closeout phase exercises recovery through `resume`; a repository
+lock prevents concurrent master-side lifecycle mutation.
+
 Observed at CR-3 closeout on 9 Sep: `git worktree remove` deregistered the
 worktree after the merge and push but an external Windows handle kept the
 now-empty `.worktrees/CR-3` directory present. The remaining branch and ledger
