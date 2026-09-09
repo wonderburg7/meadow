@@ -135,9 +135,9 @@ passes that override through closeout and its `doctor` reports Python, Godot,
 Git identity, repository ownership, remote reachability and Git-metadata
 write failures together. Meadow's project-local Codex environment runs the
 canonical verifier during Windows worktree setup and exposes the same command
-as a toolbar action. Focused runtime/doctor regressions pass, and the full
-verifier reaches only the pre-existing shared queue/ledger failures recorded
-outside this slice.
+as a toolbar action. Focused runtime/doctor regressions and the full verifier
+pass without an explicit Python path; verification also suppresses generated
+Python bytecode.
 
 ### CR-3 — align permissions with the intended Git lifecycle
 
