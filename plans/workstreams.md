@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/LAY-5` (`claude/LAY-5`) | Claude | a headless check fails when a panel leaves the viewport. | Claude | in progress | none | `plans/now/layout-regression.md` "LAY-5 — a headless check that fails when a panel leaves the viewport" |
-| `.worktrees/C2-2` (`codex/C2-2`) | Codex | the collapse button does what its tooltip says. | Codex | in progress | none | `plans/now/challenge-2.md` "Slice 2 — the collapse button does what its tooltip says, and the rescue line survives" |

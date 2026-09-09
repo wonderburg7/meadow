@@ -45,18 +45,16 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
-   The button picks its target from the nectar currently in the hive, which
-   the rescue has just topped up by 150, so the second press does nothing and
-   the third is the one that reaches the failure floor. Dave confirmed the
-   third-press behaviour again on 9 Sep. Count presses instead. The rescue
-   line also needs `clear_queue()` before `show_now()`, or the stage's next
-   hint overwrites it.
-   - Plan: `plans/now/challenge-2.md` -- "Slice 2 — the collapse button does what its tooltip says, and the rescue line survives"
-   - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/gallerin_panel.gd`
-   - Check: C-5, in `checks/ready.md`
-   - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
-   - Next after: C2-3 (the colony still has the pollen to act on the advice)
+1. **[Codex] C2-3 -- the colony still has the pollen to act on Dr Gallerin's advice.**
+   Challenge 2 warns about pollen only after stage 2.1 has spent it on nectar
+   Foragers, leaving the player unable to raise the pollen Forager that stage
+   2.2 requests. Give the warning while it can still change the player's
+   decision and supply a one-time pollen rescue if the stores bottom out.
+   - Plan: `plans/now/challenge-2.md` -- "Slice 3 — the colony still has the pollen to act on Dr Gallerin's advice"
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
+   - Check: a hands-on check covering the stage-2.1 warning and one-time pollen top-up
+   - Proof: `absent: scripts/challenge_stages.gd :: 2.1_pollen_reserve`
+   - Next after: none -- admit the owning plan's next ready slice after C2-3 ships
 
 2. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
    Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
@@ -87,11 +85,10 @@ was diagnosed against the source during the 9 Sep pass.
 Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
-  fully specified and startable on their merits. All five edit
-  `scripts/challenge_runner.gd`, which the Codex lane's C2-2 is currently in,
-  so they cannot lead the Claude lane while C2-2 is open. Slice 20 is the one
+  fully specified and startable on their merits. They are no longer blocked by
+  C2-2, but the Claude lane is already working LAY-5. Slice 20 is the one
   that matters most -- it is the confirmed cause of C-30, C-31 and most of
-  C-7 -- and it becomes the Claude lane's leading item the moment C2-2 merges.
+  C-7 -- and it becomes the Claude lane's leading item when LAY-5 merges.
   Slice 21 additionally waits on Slice 20 by design: until stage 1.13 runs, no
   cell in the hive accepts pollen and every pollen symptom has that as a
   sufficient cause.
