@@ -45,18 +45,7 @@ was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
-1. **[Codex] CR-7 -- make the baseline's Godot environment failure reproducible.**
-   Turn CR-6's `0xC0000005` outcome into a small, named baseline probe with
-   engine/version evidence and a deterministic remediation or an explicit
-   external-environment diagnosis. SB-1 stays blocked until the probe writes a
-   summary.
-   - Plan: `plans/now/codex-reliability.md` -- "CR-7 — make the baseline's Godot environment failure reproducible"
-   - Files: `tools/run_scenario.py`, `test_scenarios/bee_movement_smoke_test.json`
-   - Check: the CR-7 bounded baseline probe
-   - Proof: `absent: tools/run_scenario.py :: HeadlessBaselineProbe`
-   - Next after: SB-1 (return season balance with a successful bounded baseline)
-
-2. **[Codex] C1-20 -- the designation stage asks for the designation it names.**
+1. **[Codex] C1-20 -- the designation stage asks for the designation it names.**
    Keep Challenge 1 stage 1.13 open until the player explicitly reserves a
    cell for pollen, without changing Challenge 2's existing general
    designation goal. This repairs the shared root cause behind C-30 and C-31.
@@ -65,6 +54,15 @@ was diagnosed against the source during the 9 Sep pass.
    - Check: re-file C-30 and C-31 unchanged after the automated regression test passes
    - Proof: `absent: scripts/challenge_runner.gd :: _goal_check_pollen_cell_designated`
    - Next after: C1-21 (investigate the queen's pollen-foraging stall after C1-20 lands)
+
+2. **[Codex] C1-21 -- the queen forages pollen without being pushed.**
+   After C1-20 lands and C-30 is re-run, trace the queen at stage 1.14 and
+   repair only the confirmed reason a pollen focus change leaves her waiting.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 21 — the queen forages pollen without being pushed"
+   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/challenge_stages.gd`
+   - Check: headless stage-1.14 scenario proves a focus change starts pollen foraging and preserves the nectar arc
+   - Proof: `absent: scripts/bee_foraging.gd :: c1_pollen_focus_trace`
+   - Next after: C1-22 (reach the pollen stage with the camera)
 
 3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
    Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the

@@ -152,18 +152,11 @@ runner acceptance holds; the baseline-success gate for SB-1 does not.
 
 ### CR-7 — make the baseline's Godot environment failure reproducible
 
-1. Add a compact baseline probe which reports the Godot executable version,
-   launch arguments, exit code and artefact paths without conflating a native
-   engine exit with a scenario verdict.
-2. Run that probe before the two-day smoke scenario and retain its classified
-   result beside the smoke artefacts.
-3. If a project launch setting causes the crash, fix it and demonstrate a
-   successful session summary; otherwise record the minimal external engine
-   reproduction and leave SB-1 blocked.
-
-Acceptance: one bounded command distinguishes a runnable Godot environment
-from the present native crash and records enough evidence to either repair it
-or name the external prerequisite without guessing.
+Completed 2026-09-09; execution record archived at
+`plans/archive/CR-7_2026-09-09.md`. The probe established that Godot
+4.7.1.stable can report its version and open Meadow headlessly; the two-day
+scenario then exits `0xC0000005` before writing a session summary. SB-1 stays
+blocked on that scenario-specific native crash.
 
 ## Order and success measure
 
