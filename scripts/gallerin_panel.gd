@@ -29,7 +29,7 @@ const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
 const BUBBLE_WIDTH := 460.0
 ## Matches UiTheme's Body text, which is what the summary panel uses.
-const BUBBLE_TEXT_SIZE := 13
+const BUBBLE_TEXT_SIZE := 15
 
 const BUBBLE_GAP := 8.0
 

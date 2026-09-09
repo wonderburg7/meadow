@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-4, the default text size goes up by 2px | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-5, Dr Gallerin's bubble types its line out | Dependency: HC-5 and HC-6 wait for the Codex lane to vacate `scripts/gallerin_panel.gd` | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text, and reads as the same kind of thing as the
@@ -39,7 +39,6 @@ to the bubble.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-4 | Default text is 2px smaller than Dave wants | `scripts/ui_theme.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `scripts/gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `scripts/gallerin_panel.gd` | medium |
 
@@ -48,29 +47,13 @@ and moved to `plans/archive/HC-1_2026-09-09.md`. HC-2 (the soil panel's two
 buttons take the panel's width and show their text) has landed and moved to
 `plans/archive/HC-2_2026-09-09.md`. HC-3 ("Change to…" looks like the
 buttons beside it) has landed and moved to `plans/archive/HC-3_2026-09-09.md`.
+HC-4 (the default text size goes up by 2px) has landed and moved to
+`plans/archive/HC-4_2026-09-09.md`.
 
-## HC-4 — the default text size goes up by 2px
-
-**Reasoning level: low.** Four numbers in one dictionary.
-
-**What Dave asked (9 Sep 2026).** "Increase the default text pixel size by 2."
-
-**Deliver, in `scripts/ui_theme.gd`.** In `TYPE_SIZES` (`:207`) add 2 to each
-value: Heading 16 → 18, Body 13 → 15, Small 11 → 13, Tiny 9 → 11. Change
-nothing else — `Session.text_scale` multiplies these, so every scale setting
-moves with them, and `refresh()` already re-applies to open panels.
-
-**Then re-measure the three widths chosen against the old sizes.**
-`UiLayout.SELECTION_TRAY_MIN_WIDTH`, `GallerinPanel.BUBBLE_WIDTH` and the
-100px column minimum in `hud.gd::_build_tray_column()`. Boot the game at
-800x600 and confirm none of the three now clips its text; if one does, raise
-that constant in this same slice and say so in the commit message.
-
-**Acceptance.** At the default text-scale setting every label is visibly
-larger than before, and at 800x600 nothing in the summary panel, the command
-tray or Dr Gallerin's bubble is clipped or wrapped mid-word.
-
-**Check to file:** a new check at 800x600 and the largest text scale.
+HC-5 and HC-6 both edit `scripts/gallerin_panel.gd`, which the Codex lane's
+C2-2 (and then C2-3) is currently working in; they wait in
+`NEXTSTEPS.md`'s "Not in the queue, and why" until the Codex lane vacates
+that file, rather than being queued alongside a same-file Codex item.
 
 ## HC-5 — Dr Gallerin's bubble types its line out
 

@@ -57,18 +57,18 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] HC-4 -- the default text size goes up by 2px.**
-   Dave asked to increase the default text pixel size by 2. In
-   `ui_theme.gd::TYPE_SIZES` (`:207`) add 2 to each value: Heading 16 → 18,
-   Body 13 → 15, Small 11 → 13, Tiny 9 → 11. Then re-measure
-   `UiLayout.SELECTION_TRAY_MIN_WIDTH`, `GallerinPanel.BUBBLE_WIDTH` and the
-   100px column minimum in `hud.gd::_build_tray_column()` at 800x600, raising
-   any that now clip text.
-   - Plan: `plans/now/hud-controls.md` -- "HC-4 — the default text size goes up by 2px"
-   - Files: `scripts/ui_theme.gd`
-   - Check: a new check at 800x600 and the largest text scale
-   - Proof: `present: scripts/ui_theme.gd :: "Heading": 16,`
-   - Next after: HC-5 (Dr Gallerin's bubble types its line out)
+3. **[Claude] LAY-5 -- a headless check that fails when a panel leaves the
+   viewport.** Add a `viewport_size` scenario verb and a `panel_rect`
+   assertion to `scripts/scenario_actions.gd`, a `layout_panels.json`
+   fixture covering 1920x1080, 1280x720 and 800x600, and a test wiring it
+   into the suite. Prove it by reintroducing LAY-2's bug on purpose
+   (`command_tray.reset_size()` back in `hud.gd::_resize_command_tray()`)
+   and showing the new test catches it.
+   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
+   - Files: `scripts/scenario_actions.gd`
+   - Check: none -- the slice's own before-and-after in the commit message is the proof
+   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
+   - Next after: LAY-6 (a headless check that fails when a built control has no usable size)
 
 ## Not in the queue, and why
 
@@ -79,11 +79,14 @@ Each of these wants something from Dave, or something else to ship first.
   boot/checklist pass is startable now that Slice 19 has landed, but it is
   a session for Dave's hands rather than a queued code slice.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
-  `scripts/gallerin_panel.gd`, and one Claude branch runs at a time; they
-  follow HC-4 in order.
-- **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- the guard rail for
-  both layout groups, and startable now that HC-1 and HC-2 have landed, but
-  one Claude branch runs at a time; it follows HC-4 in the lane.
+  `scripts/gallerin_panel.gd`, the file the Codex lane's own leading item,
+  C2-2, is currently working in. The two lanes' leading items may not share
+  a file, so HC-5 waits for the Codex lane to move past `gallerin_panel.gd`
+  (C2-2, then C2-3) before it can be queued; LAY-5 was promoted in its place
+  as HC-4's successor.
+- **LAY-6** (`plans/now/layout-regression.md`) -- depends on LAY-5's
+  `viewport_size` verb and rectangle-reading helper; one Claude branch runs
+  at a time, so it follows LAY-5 in the lane.
 - **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
   a pollen Forager only after stage 2.1 has spent the colony's pollen on
   nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
