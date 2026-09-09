@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CR-4` (`codex/CR-4`) | Codex | make the lifecycle failure-atomic and idempotent. | Codex | in progress | none | `plans/now/codex-reliability.md` "CR-4 — make the lifecycle failure-atomic and idempotent" |
+| `.worktrees/C1-17` (`claude/C1-17`) | Claude | changing a bee's focus wakes her up. | Claude | in progress | none | `plans/now/challenge-1.md` "Slice 17 — changing a bee's focus wakes her up" |
