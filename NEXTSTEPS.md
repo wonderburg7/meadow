@@ -44,7 +44,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceResume`
    - Next after: CR-5 (remove cross-lane shared-file conflicts)
 
-2. **[Claude] Challenge 1 Slice 16 -- the queen works more than one flower.**
+2. **[Claude] C1-16 -- the queen works more than one flower.**
    Stage 1.11 pins her to a single flower through
    `on_enter: ["lock_flower_target:queen"]`, so the stage that teaches
    automatic foraging teaches her to commute to one flower forever. Delete
@@ -53,9 +53,9 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/challenge_stages.gd`
    - Check: C-7, in `checks/ready.md`
    - Proof: `present: scripts/challenge_stages.gd :: ["lock_flower_target:queen"]`
-   - Next after: Challenge 1 Slice 17 (changing a bee's focus wakes her up)
+   - Next after: C1-17 (changing a bee's focus wakes her up)
 
-3. **[Claude] Challenge 1 Slice 17 -- changing a bee's focus wakes her up.**
+3. **[Claude] C1-17 -- changing a bee's focus wakes her up.**
    Stage 1.11's exit parks the queen on `State.IDLING`, which dispatches
    nothing. Two stages later the player switches her focus to pollen and
    `set_focus()` deliberately leaves the state alone inside the hive, so she
@@ -64,9 +64,9 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/bee.gd`
    - Check: C-7, in `checks/ready.md`
    - Proof: `absent: scripts/bee.gd :: a bee parked on IDLING`
-   - Next after: Challenge 1 Slice 18 (pollen has somewhere to go)
+   - Next after: C1-18 (pollen has somewhere to go)
 
-4. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
+4. **[Codex] C2-2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
    the third is the one that reaches the failure floor. Dave confirmed the
@@ -77,7 +77,7 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/gallerin_panel.gd`
    - Check: C-5, in `checks/ready.md`
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
-   - Next after: Challenge 2 Slice 3 (the colony still has the pollen to act on the advice)
+   - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
 5. **[Claude] HC-1 -- the command tray's three columns share its width.**
    The three column wrappers ask to expand, but their parent is an
