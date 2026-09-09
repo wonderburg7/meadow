@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-1, the command tray's three columns | Dependency: none — every slice here is startable today | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: HC-2, the soil panel's two buttons | Dependency: none — every remaining slice here is startable today | Verified: 2026-09-09
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text, and reads as the same kind of thing as the
@@ -11,7 +11,10 @@ controls beside it.
 failing that, all in the bottom-left/bottom-centre pair of panels. None is a
 rectangle-on-screen bug — `plans/archive/PANEL_LAYOUT_2026-09-09.md` closed that class the
 same day — and none needs a design decision. Each is one container property
-set wrongly, diagnosed against the source below.
+set wrongly, diagnosed against the source below. **HC-1 has landed**
+(`plans/archive/HC-1_2026-09-09.md`): the tray's Job/Focus/Orders columns,
+and the cell action columns, now split the tray's inner width evenly instead
+of bunching against its left edge.
 
 **Why they are one plan.** They share a cause: a Godot container gives a
 child its *minimum* size unless the child asks to expand, and three of the
@@ -31,75 +34,14 @@ to the bubble.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-1 | The tray's three columns bunch up on the left | `scripts/hud.gd` | low |
 | HC-2 | The soil panel's two buttons collapse to slivers | `scripts/hud.gd` | low |
 | HC-3 | "Change to…" draws as floating text, not a button | `scripts/hud.gd` | low |
 | HC-4 | Default text is 2px smaller than Dave wants | `scripts/ui_theme.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `scripts/gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `scripts/gallerin_panel.gd` | medium |
 
-## HC-1 — the command tray's three columns share its width evenly
-
-**Reasoning level: low.** One function, one property, no interface change.
-
-**What Dave reported (C-18, 9 Sep 2026).** The tray is on screen, its gaps
-are right, and Job, Focus, Orders and `More…` are all visible and clickable —
-every other condition in C-18 passed. But "the tray buttons are all squashed
-on the left side of the tray", with the rest of the tray empty. Dave: "the
-tray should have three columns evenly spaced columns."
-
-**Cause.** `hud.gd::_build_tray_column()` sets each column wrapper's
-`size_flags_horizontal = Control.SIZE_EXPAND_FILL`, but the parent
-`command_columns` is an `HFlowContainer`. A flow container lays its children
-out at their minimum size and ignores expand flags entirely — that is what
-makes it wrap. So each wrapper gets its `custom_minimum_size.x` of 100px and
-they pack against the left edge, leaving the rest of the tray's centred width
-empty.
-
-**Deliver, in `scripts/hud.gd`.**
-
-- Add `const TRAY_COLUMN_SEPARATION := 16.0` and use it in place of the two
-  literal `16`s already passed to
-  `add_theme_constant_override("separation", 16)` for `command_columns` in
-  `_build_command_tray()` and for `cell_primary_columns` in
-  `_build_cell_group()`.
-
-- Add a helper `_tray_chrome_width() -> float` returning the tray panel
-  stylebox's left plus right content margins
-  (`UiTheme.panel_stylebox().content_margin_left + ...content_margin_right`),
-  so columns are measured against the space inside the panel, not its outer
-  width.
-
-- In `_update_command_tray_width()`, after `command_tray.offset_left` is set,
-  compute the even column width:
-
-  ```gdscript
-  var inner: float = UiLayout.command_tray_width(viewport_width) - _tray_chrome_width()
-  var even: float = floorf((inner - 2.0 * TRAY_COLUMN_SEPARATION) / 3.0)
-  ```
-
-- Apply `even` to `job_column_wrapper`, `focus_column_wrapper` and
-  `orders_column_wrapper` as `custom_minimum_size.x`, but **only when it is
-  wide enough for the widest column's own content**. Take
-  `maxf(wrapper.get_combined_minimum_size().x, 100.0)` across the three; if
-  `even` is smaller than that, set all three back to `0.0` and let the flow
-  container wrap as it does today. A narrow viewport keeps wrapping; a wide
-  one gets three even columns.
-
-- Do the same for `cell_primary_columns`' children, which have the same
-  wrapper shape and the same defect when a comb cell is selected.
-
-- Leave `size_flags_horizontal` alone. It is inert inside an `HFlowContainer`
-  and removing it would only invite someone to re-add it.
-
-**Acceptance.** At 1920x1080, select a bee. The Job, Focus and Orders columns
-divide the tray's width into three equal parts, with the same gap between
-each pair and the same distance from each end. Select a comb cell and the
-cell columns do the same. At 800x600, where a third of the tray is narrower
-than the widest button, the columns wrap onto more rows instead and nothing
-is clipped.
-
-**Check to file:** re-file C-18 narrowed to this one condition.
+HC-1 (the command tray's three columns share its width evenly) has landed
+and moved to `plans/archive/HC-1_2026-09-09.md`.
 
 ## HC-2 — the soil panel's two buttons take the panel's width and show their text
 

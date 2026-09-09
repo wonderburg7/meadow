@@ -57,17 +57,18 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
    - Next after: C2-3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] HC-1 -- the command tray's three columns share its width.**
-   The three column wrappers ask to expand, but their parent is an
-   `HFlowContainer`, which lays children out at their minimum size and
-   ignores expand flags. All three bunch against the tray's left edge.
-   Compute an even third of the tray's inner width and fall back to wrapping
-   when that is narrower than a column's own content.
-   - Plan: `plans/now/hud-controls.md` -- "HC-1 — the command tray's three columns share its width evenly"
+3. **[Claude] HC-2 -- the soil panel's two buttons take the panel's width and show their text.**
+   `soil_mark_btn` and `soil_clear_btn` get `autowrap_mode` and `clip_text =
+   true` but no expand flag inside `UI.with_info()`'s `HBoxContainer`, which
+   hands every child its minimum width -- zero, once autowrap has nothing to
+   wrap into. Give both buttons `size_flags_horizontal = EXPAND_FILL` and
+   drop `clip_text`.
+   - Plan: `plans/now/hud-controls.md` -- "HC-2 — the soil panel's two buttons take the panel's width and show their text"
    - Files: `scripts/hud.gd`
-   - Check: C-18, in `checks/ready.md`
-   - Proof: `absent: scripts/hud.gd :: TRAY_COLUMN_SEPARATION`
-   - Next after: HC-2 (the soil panel's two buttons take the panel's width)
+   - Check: a new check -- select a soil block, confirm both buttons are full
+     width, labelled and pressable, at the default and the largest text scale
+   - Proof: `present: scripts/hud.gd :: soil_mark_btn.clip_text = true`
+   - Next after: HC-3 ("Change to…" looks like the buttons beside it)
 
 ## Not in the queue, and why
 
@@ -77,9 +78,9 @@ Each of these wants something from Dave, or something else to ship first.
   playthrough, mostly Dave's run rather than a code slice; its own
   boot/checklist pass is startable now that Slice 19 has landed, but it is
   a session for Dave's hands rather than a queued code slice.
-- **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
+- **HC-3 to HC-6** (`plans/now/hud-controls.md`) -- all edit
   `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
-  one Claude branch runs at a time; they follow HC-1 in order.
+  one Claude branch runs at a time; they follow HC-2 in order.
 - **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- the guard rail for
   both layout groups, and startable, but it asserts against the controls HC-1
   and HC-2 fix. Running it first would file assertions that describe the bug.
