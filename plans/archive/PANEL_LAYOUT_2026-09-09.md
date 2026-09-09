@@ -1,7 +1,8 @@
 # Persistent panel rectangles — the anchor bug and its guard rail
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None — every slice here has landed | Dependency: none | Verified: 2026-09-09
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none | Verified: 2026-09-09
+Archived 2026-09-09, the day Dave's hands-on pass confirmed C-19 and C-26.
 
 **Objective.** A persistent HUD panel stays inside the viewport with a 16px
 gap from its neighbours, on every pass, at every supported size — and a
@@ -57,14 +58,27 @@ of them changed the fact that giving a bottom-anchored panel a height
 destroys the anchor that keeps its bottom edge on screen. That is the whole
 reason for the repeat, and LAY-2 removes it rather than re-tuning a number.
 
-## Open slices at a glance
+## Outcome, confirmed 9 September 2026
 
-None. This plan's three slices (LAY-2, LAY-3, LAY-4) have all landed. The
-guard rail they motivated, LAY-5, is tracked in its own plan,
-`plans/now/layout-regression.md`, because it owns tooling files rather than
-UI ones. This file will move to `plans/archive/` once the `.worktrees/LAY-4`
-ledger row has cleared, since `plans/workstreams.md` cannot be edited from
-inside that worktree.
+All three slices landed and Dave's hands-on pass the same day confirmed two of
+the three checks they filed:
+
+- **C-19 passed.** The gap below an open left-side window matches the gap
+  between the summary panel and the left screen edge, and expanding a section
+  grows the window until its bottom reaches that gap, after which it scrolls.
+- **C-26 passed.** The nursery donut's key follows the chosen typeface and
+  text scale, and no line of it runs under the window's scrollbar.
+- **C-18 passed on everything this plan owned** -- the tray is on screen at
+  every size, its Job, Focus and Orders buttons and `More…` are visible and
+  clickable, `More…` grows the tray upwards, and the 16px gaps to the summary
+  panel and to the window's bottom edge hold. The one remaining fault is that
+  the three columns bunch against the tray's left edge instead of sharing its
+  width. That is a container flag inside the tray, not a panel rectangle, and
+  it moved to `plans/now/hud-controls.md` HC-1.
+
+The guard rail this plan motivated is LAY-5, in
+`plans/now/layout-regression.md`, with LAY-6 added on 9 Sep to cover the
+controls *inside* a panel as well as the panel itself.
 
 LAY-2's specification archived to `plans/archive/LAY-2_2026-09-09.md`.
 LAY-3's specification archived to `plans/archive/LAY-3_2026-09-09.md`.

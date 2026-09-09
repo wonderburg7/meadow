@@ -9,28 +9,27 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave's 9 Sep 2026 hands-on pass refilled the Claude lane, and LAY-2,
-LAY-3 and LAY-4 have now landed.** C-4, C-27 and C-28 passed and are archived.
-C-18, C-19 and C-26 failed and became LAY-2 to LAY-4 in
-`plans/now/panel-layout.md`; C-7 and C-5 could not be run at all, because both
-need the command tray's buttons, and moved to `checks/blocked.md`. LAY-2
-shipped 2026-09-09 (`plans/archive/LAY-2_2026-09-09.md`), re-filing C-18 and
-unblocking C-7 and C-5 back into `checks/ready.md`. LAY-3 shipped the same day
-(`plans/archive/LAY-3_2026-09-09.md`), re-filing C-19. LAY-4 shipped the same
-day too (`plans/archive/LAY-4_2026-09-09.md`), re-filing C-26 -- every slice
-`plans/now/panel-layout.md` owns has now landed. LAY-5, its guard rail, leads
-the Claude lane now.
+**Dave's second 9 Sep 2026 hands-on pass reset both lanes.** C-19 and C-26
+passed, so every slice `plans/archive/PANEL_LAYOUT_2026-09-09.md` owned has
+landed and that plan is archived. C-18 passed on everything except its column
+layout. C-7 failed in five ways and C-5 failed on its press count.
 
-The command tray had escaped the viewport on four separate passes. The cause
-was found on 9 Sep and is written up in `plans/now/panel-layout.md`, "Why
-this kept coming back": `Control.set_size()` rewrites all four anchor offsets
-from the cached position, so giving a bottom-anchored panel a height converts
-its bottom pin into a top pin and the panel regrows downwards off the screen.
-LAY-2 removed that; LAY-5 in `plans/now/layout-regression.md` adds the
-headless assertion that would have caught it the first time.
+Two new plans came out of it. `plans/now/challenge-1.md` gained Slices 16 to
+19: Challenge 1's automatic-foraging arc does not work, and the tutorial
+stalls at the pollen stage with the queen holding a load nothing in the hive
+will accept. `plans/now/hud-controls.md` gained HC-1 to HC-6, four controls
+that do not occupy the space they were built for and two features Dave asked
+for on Dr Gallerin's bubble.
+
+The class of bug behind the second group is written up in
+`docs/known-pitfalls.md`: a Godot container gives a child its minimum size,
+and `HFlowContainer` ignores expand flags, `clip_text` plus autowrap makes the
+minimum zero, and `MenuButton` is flat by default. LAY-6 in
+`plans/now/layout-regression.md` is the assertion that would have caught all
+three without a human.
 
 Every item below is specified down to the function and the line, because each
-one was diagnosed against the source during the 9 Sep pass.
+was diagnosed against the source during the 9 Sep pass.
 
 ## Next up
 
@@ -47,41 +46,78 @@ one was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: .codex/config.toml :: profiles.meadow`
    - Next after: CR-4 (make the lifecycle failure-atomic and idempotent)
 
-2. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
+2. **[Claude] Challenge 1 Slice 16 -- the queen works more than one flower.**
+   Stage 1.11 pins her to a single flower through
+   `on_enter: ["lock_flower_target:queen"]`, so the stage that teaches
+   automatic foraging teaches her to commute to one flower forever. Delete
+   that effect and its `on_exit` counterpart.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 16 — the queen works more than one flower at 1.11"
+   - Files: `scripts/challenge_stages.gd`
+   - Check: C-7, in `checks/ready.md`
+   - Proof: `present: scripts/challenge_stages.gd :: ["lock_flower_target:queen"]`
+   - Next after: Challenge 1 Slice 17 (changing a bee's focus wakes her up)
+
+3. **[Claude] Challenge 1 Slice 17 -- changing a bee's focus wakes her up.**
+   Stage 1.11's exit parks the queen on `State.IDLING`, which dispatches
+   nothing. Two stages later the player switches her focus to pollen and
+   `set_focus()` deliberately leaves the state alone inside the hive, so she
+   never moves again. Send a parked bee to the hive exit instead.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 17 — changing a bee's focus wakes her up"
+   - Files: `scripts/bee.gd`
+   - Check: C-7, in `checks/ready.md`
+   - Proof: `absent: scripts/bee.gd :: a bee parked on IDLING`
+   - Next after: Challenge 1 Slice 18 (pollen has somewhere to go)
+
+4. **[Codex] Challenge 2 Slice 2 -- the collapse button does what its tooltip says.**
    The button picks its target from the nectar currently in the hive, which
    the rescue has just topped up by 150, so the second press does nothing and
-   the third is the one that reaches the failure floor. Count presses instead.
-   The rescue line also needs `clear_queue()` before `show_now()`, or the
-   stage's next hint overwrites it.
+   the third is the one that reaches the failure floor. Dave confirmed the
+   third-press behaviour again on 9 Sep. Count presses instead. The rescue
+   line also needs `clear_queue()` before `show_now()`, or the stage's next
+   hint overwrites it.
    - Plan: `plans/now/challenge-2.md` -- "Slice 2 — the collapse button does what its tooltip says, and the rescue line survives"
    - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/gallerin_panel.gd`
-   - Check: C-5, now runnable in `checks/ready.md` since LAY-2 restored the tray
+   - Check: C-5, in `checks/ready.md`
    - Proof: `absent: scripts/debug_panel.gd :: _c2_collapse_presses`
-   - Next after: none -- `plans/now/challenge-2.md` is complete once this lands
+   - Next after: Challenge 2 Slice 3 (the colony still has the pollen to act on the advice)
 
-3. **[Claude] LAY-5 -- a headless check that fails when a persistent panel
-   leaves the viewport.** The guard rail for the whole LAY group: a
-   `viewport_size` scenario verb, a `panel_rect` assertion, one fixture
-   covering 1920x1080, 1280x720 and 800x600, and a test in `tests/` that
-   skips cleanly where Godot is not installed. Its acceptance is to
-   reintroduce LAY-2's bug on purpose and watch the check fail.
-   - Plan: `plans/now/layout-regression.md` -- "LAY-5 — a headless check that fails when a panel leaves the viewport"
-   - Files: `scripts/scenario_actions.gd`
-   - Check: none filed -- the point of this slice is that none is needed
-   - Proof: `absent: scripts/scenario_actions.gd :: panel_rect`
-   - Next after: none -- `plans/now/layout-regression.md` is complete once this lands
+5. **[Claude] HC-1 -- the command tray's three columns share its width.**
+   The three column wrappers ask to expand, but their parent is an
+   `HFlowContainer`, which lays children out at their minimum size and
+   ignores expand flags. All three bunch against the tray's left edge.
+   Compute an even third of the tray's inner width and fall back to wrapping
+   when that is narrower than a column's own content.
+   - Plan: `plans/now/hud-controls.md` -- "HC-1 — the command tray's three columns share its width evenly"
+   - Files: `scripts/hud.gd`
+   - Check: C-18, in `checks/ready.md`
+   - Proof: `absent: scripts/hud.gd :: TRAY_COLUMN_SEPARATION`
+   - Next after: HC-2 (the soil panel's two buttons take the panel's width)
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
+- **Challenge 1 Slices 18 and 19** (`plans/now/challenge-1.md`) -- Slice 18
+  renumbers every Challenge 1 stage from 1.13 up, so it must not run beside
+  Slices 16 and 17, which edit the same stage records. Slice 19 needs 18
+  merged before its first step, re-running the stage, means anything.
+- **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
+  playthrough, and Dave's run rather than a code slice. Starting it before
+  Slices 16 to 19 land only rediscovers C-7.
+- **HC-2 to HC-6** (`plans/now/hud-controls.md`) -- all six edit
+  `scripts/hud.gd`, `scripts/ui_theme.gd` or `scripts/gallerin_panel.gd`, and
+  one Claude branch runs at a time; they follow HC-1 in order.
+- **LAY-5 and LAY-6** (`plans/now/layout-regression.md`) -- the guard rail for
+  both layout groups, and startable, but it asserts against the controls HC-1
+  and HC-2 fix. Running it first would file assertions that describe the bug.
+  LAY-5 leads the lane again once HC-2 lands.
+- **Challenge 2 Slice 3** (`plans/now/challenge-2.md`) -- Dr Gallerin suggests
+  a pollen Forager only after stage 2.1 has spent the colony's pollen on
+  nectar Foragers. It shares `challenge_runner.gd` with Slice 2, so it follows
+  it rather than competing with it.
 - **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 must first prove
   the bounded baseline simulation succeeds. SB-1 then returns with exact
   `Files:` and `Proof:` values that pass `slice.ps1 doctor`; SB-2 follows it.
-- **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough, and Dave's run rather than a code slice. It needs C-7, which
-  is back in `checks/ready.md` now that LAY-2 has restored the command tray's
-  Job button.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
@@ -89,7 +125,7 @@ Each of these wants something from Dave, or something else to ship first.
   wants its own reproduction.
 - **UI-P-5** (`plans/now/ui.md`) -- names two plausible causes and says to
   reproduce the symptom live before choosing between them. None of Dave's
-  three passes since 8 Sep has reported on it.
+  four passes since 8 Sep has reported on it.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

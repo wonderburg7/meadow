@@ -62,7 +62,11 @@ disagree.
 5. **A lock says what it forbids and returns a real alternative.**
    `IDLING` is the right answer only where a player supplies the next state
    (`player_driven`). A lock that rules out one of two autonomous options
-   must return the other one, not stop the bee.
+   must return the other one, not stop the bee. *Broken again on 9 Sep
+   2026:* `freeze_bee:queen` parks the queen on `IDLING` at the end of a
+   Challenge 1 stage, and two stages later a focus change lands on a bee who
+   will never act on it (`plans/now/challenge-1.md` Slice 17). The rule was
+   written and nothing enforced it, which is why rule 8 below exists.
 6. **Every persistent panel takes its rectangle from `ui_layout.gd`.** No
    HUD panel file may carry a literal `offset_top`/`offset_left`. Panels
    that share an edge must be derived from one number, not from two
@@ -108,3 +112,29 @@ disagree.
   group, `debug_panel.gd`'s "Triggers" section.
 - `plans/archive/CHECK_LOOP_P2_2026-09-04.md` -- P-2's full execution
   record.
+
+8. **A check states one condition.** C-7 bundled five behaviours behind one
+   `PASS:` line -- multi-flower foraging, pollen starting, pollen depositing,
+   the camera and the speed reset. When Dave ran it on 9 Sep 2026 it came
+   back as five findings against four different slices, and nothing in the
+   entry said which of them "C-7 fails" meant. Split a multi-condition check
+   before filing it, even when the conditions ship in one slice: a check is
+   how a failure gets attributed, and one that cannot be attributed has to be
+   re-diagnosed from prose.
+
+9. **An `Owner:` line names a section that still exists.** C-7's owner was
+   "`plans/now/challenge-1.md` Slice 14", a slice archived on 3 Sep 2026, so
+   the check pointed at a specification nobody could open. Two habits keep
+   this true: re-point every check an archived slice owned in the same pass
+   that archives it, and never reuse a retired slice number -- Challenge 1's
+   new slices start at 16 for exactly that reason.
+
+10. **A control's size is asserted, not eyeballed.** Rule 7's instrument
+    argument applies one level below the panel. Three separate controls
+    shipped in a state a screenshot showed instantly and no check could see:
+    tray columns bunched left, two buttons collapsed to 10px, a menu drawing
+    with no button behind it (`plans/now/hud-controls.md`). A slice that
+    places a control inside a container asserts the resulting rectangle
+    through `plans/now/layout-regression.md`'s LAY-6 assertions, because
+    "a container gives a child its minimum size" is a rule about every
+    container, not about the one that was noticed.

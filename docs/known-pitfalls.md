@@ -23,6 +23,27 @@ of these has bitten more than once:
   through `offset_left`/`offset_right`/`offset_top`/`offset_bottom` only, in
   `scripts/ui_panel_layout.gd`, and never through `size`, `position` or
   `reset_size()`.
+- **A container gives a child its minimum size, and three things quietly make
+  that zero.** All three shipped at once and were found by eye on 9 Sep 2026
+  (`plans/now/hud-controls.md`). `HFlowContainer` ignores
+  `size_flags_horizontal` entirely -- that is what lets it wrap -- so three
+  columns marked `SIZE_EXPAND_FILL` packed against the tray's left edge.
+  `clip_text = true` together with `autowrap_mode` drops a Button's horizontal
+  minimum to zero, and an `HBoxContainer` with no expanding child then hands
+  it that zero: two soil buttons came out 10px wide and a panel tall, with
+  their labels wrapped one character per line and clipped away. And Godot's
+  `MenuButton` sets `flat = true` in its own constructor, so it skips its
+  `normal` stylebox no matter how many overrides you add -- "Change to…" drew
+  as floating text. When you put a control in a container, assert the
+  rectangle it ends up with.
+- **A bee on `State.IDLING` never dispatches again.** `bee.gd` handles that
+  state with `pass   # waits for orders and nothing else`. Assigning a *role*
+  wakes her, because `_apply_role()` ends by setting
+  `_default_state_for_role()`; changing her *focus* does not, because
+  `set_focus()` deliberately leaves the state alone inside the hive and relies
+  on `_go_to_exit()` to pick the change up -- which a parked bee never
+  reaches. Challenge 1's `freeze_bee:queen` effect is what parks her, so a
+  stage that freezes a bee has to say how she starts again.
 - **Variable shadowing built-in properties.** `offset` on Polygon2D,
   `scale` on Node2D. Four separate occurrences so far.
 - **Coordinate spaces.** `hive_root` and `meadow_root` sit at different
