@@ -96,6 +96,9 @@ var _c2_nurses_at_stage_entry: int = 0
 ## _shown_ids dedup already stops the *message* repeating, but the
 ## nectar grant itself needs its own guard.
 var _c2_rescue_used: bool = false
+## Stage 2.1 deliberately withholds the rescue. Record the first withheld
+## rescue per run without writing the same diagnostic every frame.
+var _c2_rescue_suppressed_logged: bool = false
 
 ## Challenge 1's first daughter (1.16-1.18) -- the one bee on-screen every
 ## goal/animation/bubble from here on refers to. Set once, by
@@ -158,6 +161,7 @@ func start() -> void:
 	active = true
 	_stage_index = 0
 	_c2_rescue_used = false
+	_c2_rescue_suppressed_logged = false
 	_last_completed_goal_text = ""
 	_build_goal_registry()
 	main.stage_gate.start()
@@ -264,11 +268,16 @@ func _check_c2_failure() -> void:
 	# The one-time rescue only ever applies once 2.1 itself is behind us
 	# (its own goal *is* "recover from a dip", so a rescue mid-2.1 would
 	# short-circuit the very thing it's meant to teach).
-	if not _c2_rescue_used and _stage_index > _c2_index("2.1") and nectar < Stages.C2_RESCUE_THRESHOLD:
-		_c2_rescue_used = true
-		main.hive.deposit("nectar", Stages.C2_RESCUE_AMOUNT)
-		main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_rescue"))
-		return
+	if not _c2_rescue_used and nectar < Stages.C2_RESCUE_THRESHOLD:
+		if _stage_index > _c2_index("2.1"):
+			_c2_rescue_used = true
+			main.hive.deposit("nectar", Stages.C2_RESCUE_AMOUNT)
+			main.gallerin_panel.clear_queue()
+			main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_rescue"))
+			return
+		if _stage_index == _c2_index("2.1") and not _c2_rescue_suppressed_logged:
+			_c2_rescue_suppressed_logged = true
+			DiagnosticLog.log_action("c2_rescue", _stages()[_stage_index].id, "suppressed", "rescue is withheld during 2.1 by design; nectar %.0f" % nectar)
 
 	if nectar < Stages.C2_FAILURE_FLOOR:
 		if not main.TutorialCheckpoint.restore(main):

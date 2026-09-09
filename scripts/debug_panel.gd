@@ -54,6 +54,9 @@ var sections: Dictionary = {}
 var section_headers: Dictionary = {}
 var collection_bodies: Dictionary = {}
 var collection_headers: Dictionary = {}
+## The collapse button promises a two-press sequence; count its presses rather
+## than inferring which step it should take from stores the rescue may refill.
+var _c2_collapse_presses: int = 0
 
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
@@ -70,6 +73,7 @@ func _ready() -> void:
 	# pattern as "main_menu" group used the other way by _on_main_menu_pressed().
 	add_to_group("debug_panel")
 	Session.run_reset.connect(collapse_all)
+	Session.run_reset.connect(func() -> void: _c2_collapse_presses = 0)
 
 	# Syncs Godot's own tooltip timer to whatever Session carried in from
 	# the last time it was changed -- harmless while Session always
@@ -475,11 +479,9 @@ func _on_fire_test_warnings_pressed() -> void:
 ## Withdraws nectar via the hive's own take() API (never writes cell
 ## amounts directly) so challenge_runner.gd::_check_c2_failure(), which
 ## polls main.hive.total("nectar") every frame, sees the drop and fires
-## on its own. Aims for the rescue threshold first; if the stores are
-## already below it (the rescue already fired and topped them back up
-## partway, or a second press), aims for the failure floor instead, so
-## one press each reaches the two branches of _check_c2_failure() in
-## order.
+## on its own. The first press aims for the rescue threshold; every later
+## press aims for the failure floor, so the button's two-press tooltip remains
+## true even though the rescue refills the stores after the first press.
 func _on_force_c2_collapse_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():
@@ -489,12 +491,10 @@ func _on_force_c2_collapse_pressed() -> void:
 		return
 	var hive = world.hive
 	var nectar: float = hive.total("nectar")
-	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0
-	if nectar < Stages.C2_RESCUE_THRESHOLD:
-		target = Stages.C2_FAILURE_FLOOR - 1.0
+	_c2_collapse_presses += 1
+	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0 if _c2_collapse_presses == 1 else Stages.C2_FAILURE_FLOOR - 1.0
 	if nectar > target:
 		hive.take("nectar", nectar - target)
-
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an
 ## active Challenge -- tutorial_checkpoint.gd covers Challenge-internal
