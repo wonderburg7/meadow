@@ -52,16 +52,16 @@ stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
    - Next after: C1-21 (the queen forages pollen without being pushed)
 
-2. **[Claude] HC-5 -- Dr Gallerin's bubble types its line out.**
-   Reveal a new prompt one character at a time with
-   `Label.visible_characters`, sized at the line's final length from the
-   first frame, running on unscaled time so 4x game speed does not speed up
-   the typing, and finishing instantly on a click or a new prompt.
-   - Plan: `plans/now/hud-controls.md` -- "HC-5 — Dr Gallerin's bubble types its line out"
+2. **[Claude] HC-6 -- Dr Gallerin's bubble can be paged back through.**
+   Add `◀`/`▶` buttons to the bubble's button row so the player can step
+   back through up to 50 previous prompts; hold the live prompt queue while
+   an older entry is shown, and release it the moment the player returns to
+   the newest one.
+   - Plan: `plans/now/hud-controls.md` -- "HC-6 — Dr Gallerin's bubble can be paged back through"
    - Files: `scripts/gallerin_panel.gd`
-   - Check: one check covering the typing, the 4x-speed case and click-to-finish
-   - Proof: `absent: scripts/gallerin_panel.gd :: TYPE_CHARACTERS_PER_SECOND`
-   - Next after: HC-6 (Dr Gallerin's bubble can be paged back through)
+   - Check: one check covering the paging, the disabled ends and the held-prompt case
+   - Proof: `absent: scripts/gallerin_panel.gd :: _history_index`
+   - Next after: HC-8 (the tray's height matches its content, from the first frame)
 
 3. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
    The pre-run menu's tiles size their text from the theme and their label box
@@ -93,9 +93,6 @@ Each of these wants something from Dave, or something else to ship first.
   reproducible from the headless runner rather than by hand, but its own
   heading still calls for a measurement pass to confirm the cause before a
   fix is specified, which is why it is not a queue item yet.
-- **HC-6** (`plans/now/hud-controls.md`) -- pages back through Dr Gallerin's
-  history. Edits `scripts/gallerin_panel.gd`, which HC-5 holds until it
-  lands.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It

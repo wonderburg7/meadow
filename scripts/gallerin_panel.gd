@@ -33,6 +33,9 @@ const BUBBLE_TEXT_SIZE := 15
 
 const BUBBLE_GAP := 8.0
 
+## How fast the bubble's text types out. See _process()'s typing block.
+const TYPE_CHARACTERS_PER_SECOND := 45.0
+
 var _icon_button: Button
 var bubble: PanelContainer
 var _bubble_scroll: ScrollContainer
@@ -47,6 +50,10 @@ var _last_message: String = ""
 ## see _process(). Dave's 29 Aug report: the bubble's text stayed the old
 ## size after changing the text-scale setting mid-session.
 var _last_text_scale: float = 1.0
+## The line currently typing out and how many of its characters are
+## revealed so far -- see _show_bubble() and _process()'s typing block.
+var _typing_target: String = ""
+var _typed_characters: float = 0.0
 
 # --- prompt scheduling ----------------------------------------------
 ## Each queued entry: {"id": String, "text": String, "delay": float,
@@ -78,6 +85,19 @@ func _process(delta: float) -> void:
 	if Session.text_scale != _last_text_scale:
 		_last_text_scale = Session.text_scale
 		_apply_bubble_font_size()
+	if _typed_characters < _typing_target.length():
+		# Godot multiplies the delta reaching _process() by Engine.time_scale
+		# (camera_view.gd's 4x/etc game-speed control), so it has to be
+		# divided back out here -- otherwise 4x game speed would type the
+		# prompt 4x faster, which isn't what game speed means for dialogue.
+		var unscaled_delta := delta
+		if Engine.time_scale > 0.0:
+			unscaled_delta = delta / Engine.time_scale
+		_typed_characters += TYPE_CHARACTERS_PER_SECOND * unscaled_delta
+		if _typed_characters >= _typing_target.length():
+			_finish_typing()
+		else:
+			_bubble_label.visible_characters = int(_typed_characters)
 
 # --- building the UI -------------------------------------------------
 
@@ -136,6 +156,7 @@ func _build_bubble() -> void:
 	bubble.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	bubble.mouse_entered.connect(func(): _hovering_bubble = true)
 	bubble.mouse_exited.connect(func(): _hovering_bubble = false)
+	bubble.gui_input.connect(_on_bubble_gui_input)
 	bubble.resized.connect(_position_bubble_pointer)
 	add_child(bubble)
 
@@ -229,6 +250,17 @@ func _position_bubble_pointer() -> void:
 func _apply_bubble_font_size() -> void:
 	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
 
+## Reveals the rest of the current line at once -- shared by click-to-finish
+## and by _show_bubble() replacing a still-typing line with a new one.
+func _finish_typing() -> void:
+	_typed_characters = _typing_target.length()
+	_bubble_label.visible_characters = -1
+
+func _on_bubble_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		_finish_typing()
+
 func _on_icon_pressed() -> void:
 	if _last_message.is_empty():
 		return
@@ -280,8 +312,18 @@ func _fire_due_prompts() -> void:
 func _show_bubble(text: String) -> void:
 	if not Session.gallerin_enabled:
 		return
+	# A new prompt arriving finishes whatever was mid-type rather than
+	# leaving it half-revealed underneath the line that replaces it.
+	_finish_typing()
 	_last_message = text
+	# The label always holds the whole line so the bubble is laid out (and
+	# sized by _apply_layout() below) at its final size from the first
+	# frame -- visible_characters clips what's drawn without re-running
+	# layout, so the bubble never grows as it types.
 	_bubble_label.text = text
+	_typing_target = text
+	_typed_characters = 0.0
+	_bubble_label.visible_characters = 0
 	bubble.visible = true
 	# A resize while hidden updates nothing below (Godot does not re-layout
 	# an invisible control), so the rectangle could otherwise be stale from
