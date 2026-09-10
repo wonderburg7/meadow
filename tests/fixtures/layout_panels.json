@@ -8,7 +8,7 @@
     {"do": "settle", "ticks": 2},
     {"do": "assert", "condition": {"panel": "command_tray", "inside_viewport": true, "gap_below": 16}},
     {"do": "assert", "condition": {"panel": "summary", "inside_viewport": true, "gap_below": 16}},
-    {"do": "assert", "condition": {"container": "command_tray/command_scroll/command_content/command_columns", "children": 3, "tolerance": 80}},
+    {"do": "assert", "condition": {"container": "command_tray/command_scroll/command_content/command_columns", "children": 3, "tolerance": 2}},
     {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/job_column_wrapper/job_column/job_row/change_to_menu", "min_size": [60, 20]}},
     {"do": "assert", "condition": {"control": "selection_panel/selection_column/summary_header/favourite_star_btn", "min_size": [16, 16], "same_height_as": "selection_panel/selection_column/summary_header/selection_cog_btn"}},
     {"do": "assert", "condition": {"control": "selection_panel/selection_column/summary_header/selection_cog_btn", "min_size": [16, 16]}},
@@ -35,6 +35,7 @@
     {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/job_column_wrapper", "min_size": [60, 20]}},
     {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/focus_column_wrapper", "min_size": [60, 20]}},
     {"do": "assert", "condition": {"control": "command_tray/command_scroll/command_content/command_columns/orders_column_wrapper", "min_size": [60, 20]}},
+    {"do": "assert", "condition": {"panel": "command_tray", "inside_viewport": true, "gap_below": 16}},
     {"do": "assert", "condition": {"root": "hud"}}
   ],
   "stop": {"when_actions_resolved": true, "max_days": 1}

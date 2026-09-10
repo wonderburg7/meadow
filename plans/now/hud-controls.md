@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-15, the tray's three columns take an equal third each | Dependency: HC-5 and HC-6 follow HC-14 in `scripts/gallerin_panel.gd`; HC-8 follows HC-15 in `scripts/hud.gd` | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-14, Dr Gallerin's bubble is given its rectangle like every other panel | Dependency: HC-5 and HC-6 follow HC-14 in `scripts/gallerin_panel.gd`; HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -41,22 +41,23 @@ for saved UI preferences.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-15 | The tray's three columns are 170/100/127px, not equal thirds (C-18) | `hud.gd`, `layout_panels.json` | medium |
 | HC-14 | Dr Gallerin's bubble sets its own left edge, so its gap is not the shared one (C-18) | `gallerin_panel.gd`, `ui_layout.gd`, `ui_panel_layout.gd` | medium |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-15 and HC-8 both edit `scripts/hud.gd`, so HC-8 follows HC-15. HC-14
-edits `scripts/gallerin_panel.gd`, so HC-5 follows it and HC-6 follows HC-5.
-HC-8 still wants the measurement its own heading describes; it is the only
-slice here whose cause is not yet confirmed.
+HC-14 edits `scripts/gallerin_panel.gd`, so HC-5 follows it and HC-6 follows
+HC-5. HC-8 still wants the measurement its own heading describes; it is the
+only slice here whose cause is not yet confirmed.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
 them), HC-3, HC-4, HC-7, HC-9, HC-10, HC-11, HC-12 and HC-13 (10 Sep 2026,
-`plans/archive/HC-13_2026-09-10.md`). Open those for provenance, never to work
-out what to do.
+`plans/archive/HC-13_2026-09-10.md`), and HC-15 (10 Sep 2026,
+`plans/archive/HC-15_2026-09-10.md` -- the tray's columns take equal thirds
+whenever three genuinely fit on the row; the specified `GridContainer` swap
+did not survive contact with 800x600, see that file). Open those for
+provenance, never to work out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
@@ -168,112 +169,6 @@ re-file C-18 unchanged.
 **Escalate rather than guess if:** the measurement points at
 `ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
 That file sizes every persistent panel, so a change there is a high slice.
-
-## HC-15 — the tray's three columns take an equal third each
-
-**Reasoning level: medium.** A container swap in a panel whose width and
-height maths has failed four separate ways already, so the regression surface
-matters more than the change does.
-
-**Purpose and intended outcome.** The command tray's Job, Focus and Orders
-columns each occupy one third of the tray's inner width, with equal gaps
-between them and equal space at each end, so C-18 can pass on the condition
-it actually states.
-
-**Status and dependencies.** Ready once HC-13 lands — both edit
-`scripts/hud.gd`, and HC-13's requirement 1 changes two of the very controls
-whose natural widths this slice stops mattering.
-
-**Decision already taken.** Dave, 10 Sep 2026, asked directly: pixel-equal
-columns, unconditionally. Do not re-open that question or add a
-"only when they fit on one row" mode.
-
-**Confirmed root cause.** LAY-6's `even_columns` assertion measured the three
-wrappers at 170/100/127px for a single selected forager on 9 Sep 2026. HC-1
-gave each column the right *share* and HC-7 made the scroll container hand
-the content the tray's full width, but the wrappers live in an
-`HFlowContainer`, which sizes each child to that child's own minimum and
-places the next one after it. Nothing in the tree has ever been asked to
-divide the width into three. The catastrophic "bunched at the left edge" case
-HC-1 fixed stays fixed; this is the remainder.
-
-**Current authoritative owner.** `hud.gd::_build_command_tray` owns the
-container; `hud.gd::_update_command_tray_width` owns the arithmetic;
-`ui_layout.gd::command_tray_width` owns the tray's outer width and is read,
-not written.
-
-**Required reading.** This heading, `hud.gd::_build_command_tray`,
-`hud.gd::_update_command_tray_width`, and
-`plans/archive/LAYOUT_REGRESSION_2026-09-09.md` for what `even_columns`
-measures.
-
-**Files likely to change.** `scripts/hud.gd`,
-`tests/fixtures/layout_panels.json`.
-
-**Files that must not be changed.** `scripts/ui_layout.gd` and
-`scripts/ui_panel_layout.gd` — the tray's outer rectangle is correct and is
-not what this slice is about. `scripts/scenario_actions.gd` — `even_columns`
-already exists and only its fixture tolerance changes.
-
-**Requirements.**
-
-1. The three column wrappers divide the tray's inner width into three equal
-   parts. Prefer replacing the `HFlowContainer` with a three-column
-   `GridContainer` and giving every wrapper `SIZE_EXPAND_FILL`, which makes
-   the split the container's job rather than a width this file computes.
-2. Add `_tray_column_share(inner_width: float) -> float` as the one place
-   that expresses "one third, less the separation", and have both the layout
-   and any width assertion read it. If requirement 1's container does the
-   split by itself, this function is still the single statement of what the
-   share ought to be, and the automated check compares against it.
-3. `TRAY_COLUMN_SEPARATION` stays the only source of the gap, and the space
-   at each end equals it, so the tray reads as three equal columns rather
-   than three columns pushed to one side.
-4. A hidden column still takes its third. `_rebuild_role_controls` sets
-   `job_column_wrapper.visible` and its two siblings from their child counts;
-   an invisible wrapper must not hand its share to its neighbours, because
-   the player would then see the columns move as the selection changes.
-   State the chosen behaviour in a comment either way.
-
-**Constraints and invariants.** The tray must still wrap or scroll rather
-than clip at 800x600 — C-18's pass condition allows more rows there, never
-lost content. No fixed pixel column width. `_update_command_tray_width` must
-keep being called before the height is measured (see its C-11/C-12 comment):
-a `GridContainer`'s row count still depends on the width it is given.
-
-**Existing patterns to reuse.** `TRAY_COLUMN_SEPARATION`,
-`UiLayout.panel_chrome()`, LAY-6's `even_columns` assertion.
-
-**State-transition and cleanup behaviour.** The tray is rebuilt from scratch
-on each selection change. If requirement 1 swaps the container type, the
-three wrappers must be re-parented in `_build_command_tray` only, never
-re-created per selection.
-
-**Runtime policy.** Layout on selection change and viewport resize only.
-
-**Edge cases.** A selection where only one column has content (a soil block,
-where Orders alone is populated). A mixed selection. 800x600 at the largest
-text scale, where the columns must wrap. A queen in Challenge 1, whose Job
-column holds the extra "Build cell" row.
-
-**Automated acceptance checks.** Tighten `even_columns` in
-`tests/fixtures/layout_panels.json` from its current 80px tolerance to 2px
-for the single-forager case, and add a second entry at 800x600 asserting the
-same equality or a clean wrap. The wide tolerance exists only because this
-defect does; it must not survive the fix.
-
-**Regression checks.** `panel_rect`, `control_rect` and
-`no_collapsed_controls` for the tray at both viewport sizes, and HC-8's
-height assertion if HC-8 has landed by then.
-
-**Completion and documentation updates.** Update the glance table and Status
-line, archive this heading, and re-file C-18 unchanged — it is the check for
-this slice, and it is the last of C-18's conditions to be answered.
-
-**Escalate rather than guess if:** an equal-thirds split forces the tray
-wider than `UiLayout.command_tray_width()` at 800x600 at the largest text
-scale. That would put the tray in conflict with Dr Gallerin's minimum band,
-which is a bottom-row geometry decision, not a tray decision.
 
 ## HC-14 — Dr Gallerin's bubble is given its rectangle like every other panel
 
