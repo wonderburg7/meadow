@@ -20,4 +20,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-37 -- every control in the tray and the summary panel matches its neighbours](ready/C-37.md)
 - [C-38 -- Dr Gallerin's bubble types its line out](ready/C-38.md)
+- [C-39 -- Dr Gallerin's bubble can be paged back through](ready/C-39.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

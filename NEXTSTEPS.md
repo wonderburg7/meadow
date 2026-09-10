@@ -52,16 +52,16 @@ stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
    - Next after: C1-21 (the queen forages pollen without being pushed)
 
-2. **[Claude] HC-6 -- Dr Gallerin's bubble can be paged back through.**
-   Add `◀`/`▶` buttons to the bubble's button row so the player can step
-   back through up to 50 previous prompts; hold the live prompt queue while
-   an older entry is shown, and release it the moment the player returns to
-   the newest one.
-   - Plan: `plans/now/hud-controls.md` -- "HC-6 — Dr Gallerin's bubble can be paged back through"
-   - Files: `scripts/gallerin_panel.gd`
-   - Check: one check covering the paging, the disabled ends and the held-prompt case
-   - Proof: `absent: scripts/gallerin_panel.gd :: _history_index`
-   - Next after: HC-8 (the tray's height matches its content, from the first frame)
+2. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
+   Add a `NECTAR_TARGET` constant beside the existing `POLLEN_TARGET` and
+   have the nectar stage's goal check and progress bar use it instead of the
+   cell's full 200 capacity, so the queen stops filling it at 150 and the
+   nectar stage stays a demonstration rather than a chore.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 23 — a Challenge 1 wax cell is full at 150 nectar"
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
+   - Check: one check confirming the nectar stage's goal bar fills and the queen stops at 150, not 200
+   - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
+   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
 3. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
    The pre-run menu's tiles size their text from the theme and their label box
@@ -78,13 +78,14 @@ stated pass condition.
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 21 to 24 and 26** (`plans/now/challenge-1.md`) -- all
-  five are specified. Slice 21 waits on Slice 20 by design: until stage 1.13
-  runs, no cell in the hive accepts pollen and every pollen symptom has that
-  as a sufficient cause. Slice 26 (the marker pulses and shows an off-screen
-  arrow, both Dave's 10 Sep asks) waits on Slice 24, the other open change to
-  the same marker node. Slices 22 and 23 are startable on their merits but
-  sit behind C1-20 and C1-25 in the same lane.
+- **Challenge 1 Slices 21, 22, 24 and 26** (`plans/now/challenge-1.md`) --
+  all four are specified. Slice 21 waits on Slice 20 by design: until stage
+  1.13 runs, no cell in the hive accepts pollen and every pollen symptom has
+  that as a sufficient cause. Slice 26 (the marker pulses and shows an
+  off-screen arrow, both Dave's 10 Sep asks) waits on Slice 24, the other
+  open change to the same marker node. Slice 22 is startable on its merits
+  but sits behind C1-25 and C1-23 in the same lane. Slice 24 is next after
+  C1-23 and is queued as its `Next after:`.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.
