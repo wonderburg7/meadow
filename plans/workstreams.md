@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/HC-16` (`claude/HC-16`) | Claude | the command tray's height matches its content on a reselection. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-16 — the tray's height matches its content on a reselection" |
