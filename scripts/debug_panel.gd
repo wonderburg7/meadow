@@ -256,10 +256,10 @@ func open_to_categories(categories: Array) -> void:
 ## from the pre-run menu's Settings button (open_to_categories) does not
 ## follow the player into the game (Dave, 8 Sep 2026).
 func collapse_all() -> void:
-	for name in collection_headers:
-		_set_open(collection_headers[name], collection_bodies[name], name, false)
-	for name in section_headers:
-		_set_open(section_headers[name], sections[name], name, false)
+	for key in collection_headers:
+		_set_open(collection_headers[key], collection_bodies[key], key, false)
+	for key in section_headers:
+		_set_open(section_headers[key], sections[key], key, false)
 
 ## A clickable heading with its rows underneath, hidden until the heading
 ## is clicked.
