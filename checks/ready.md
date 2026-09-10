@@ -23,4 +23,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-39 -- Dr Gallerin's bubble can be paged back through](ready/C-39.md)
 - [C-40 -- a hexagon's title fits inside it, at every text size](ready/C-40.md)
 - [C-41 -- the command tray fits its content the first time you select a bee](ready/C-41.md)
+- [C-42 -- the queen keeps a full-comb nectar trip until the player makes room](ready/C-42.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

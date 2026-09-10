@@ -24,6 +24,9 @@ ENVIRONMENT_CONFIG_PATH = (
 )
 PREREQUISITES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "prerequisites.gd"
 DEBUG_PANEL_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "debug_panel.gd"
+CHALLENGE_RUNNER_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_runner.gd"
+CHALLENGE_STAGES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_stages.gd"
+BEE_FORAGING_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "bee_foraging.gd"
 SPEC = importlib.util.spec_from_file_location("source_checks", SOURCE_CHECKS_PATH)
 source_checks = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(source_checks)
@@ -78,6 +81,54 @@ class ForagingPrerequisiteContractTest(unittest.TestCase):
             "static func _cascade_dependents_off_static", 1
         )[0]
         self.assertIn("_cascade_mutual_exclusion_static(parent)", prerequisite_cascade)
+
+
+class ChallengeOneOverflowContractTest(unittest.TestCase):
+    def test_only_the_pollen_automation_stage_can_discard_queen_nectar(self):
+        stages = CHALLENGE_STAGES_PATH.read_text(encoding="utf-8")
+        runner = CHALLENGE_RUNNER_PATH.read_text(encoding="utf-8")
+        foraging = BEE_FORAGING_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('const C1_DISCARD_STAGES := ["1.14"]', stages)
+        self.assertNotIn('"1.12"', stages.split("const C1_DISCARD_STAGES", 1)[1].splitlines()[0])
+        predicate = runner.split("func discards_overflow", 1)[1].split(
+            "func announce_overflow_discard", 1
+        )[0]
+        self.assertIn(
+            "_stages()[_stage_index].id in Stages.C1_DISCARD_STAGES", predicate
+        )
+        self.assertIn("active and Session.starting_level == 1", predicate)
+        self.assertIn("bee == main.queen", predicate)
+        self.assertIn('bee.current_load_type == "nectar"', predicate)
+
+        discard_branch = foraging.split("discards_overflow(bee):", 1)[1].split(
+            "# Keep the load until a cell changes.", 1
+        )[0]
+        self.assertLess(
+            discard_branch.index("announce_overflow_discard()"),
+            discard_branch.index("bee.current_load = 0.0"),
+        )
+        retained_load = foraging.split("# Keep the load until a cell changes.", 1)[1].split(
+            "var approach", 1
+        )[0]
+        self.assertIn("bee.deposit_blocked_epoch = bee.hive.index_epoch", retained_load)
+        self.assertNotIn("bee.current_load = 0.0", retained_load)
+
+    def test_each_real_discard_replaces_the_hint_with_an_explanation(self):
+        runner = CHALLENGE_RUNNER_PATH.read_text(encoding="utf-8")
+        prompt = runner.split("func announce_overflow_discard", 1)[1].split(
+            "## Slice 18:", 1
+        )[0]
+
+        self.assertIn("_c1_overflow_discard_count += 1", prompt)
+        self.assertIn("main.gallerin_panel.clear_queue()", prompt)
+        self.assertIn("main.gallerin_panel.show_now({", prompt)
+        self.assertIn("comb has no room for nectar", prompt)
+
+        stage_entry = runner.split("func _enter_stage", 1)[1].split(
+            "func _built_cell_count", 1
+        )[0]
+        self.assertIn("_c1_overflow_discard_count = 0", stage_entry)
 
 
 class QueueSchemaChecksTest(unittest.TestCase):
