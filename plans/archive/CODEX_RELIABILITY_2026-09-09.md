@@ -1,8 +1,25 @@
 # Codex execution reliability — make slice runs startable and recoverable
 
-<!-- CONTEXT: plan | LAYER: immediate-task -->
+<!-- CONTEXT: archive | LAYER: history -->
+Status: complete 2026-09-09 | Owner: Dave / Codex | Archived: 2026-09-11
 
-Status: active | Owner: Dave / Codex | Next: CR-7 -- make the baseline's Godot environment failure reproducible | Dependency: CR-1 through CR-6 implemented; the smoke baseline must write a summary | Verified: 2026-09-09
+**Plan complete.** CR-1 to CR-7 all shipped between 8 and 9 September 2026,
+each with its own execution record: `plans/archive/CR-1_2026-09-08.md` and
+`CR-2` to `CR-7_2026-09-09.md`. The plan sat in `plans/now/` until 11 Sep
+2026 carrying `Status: active` and `Next: CR-7` after CR-7 had already
+shipped, which is the state `plans/README.md` forbids a live plan to be in.
+
+**Where its rules live now.** The lane lock, the one-slice-one-branch-one-merge
+rule, the shared-file list and the failure-atomic lifecycle are all encoded in
+`tools/slice.ps1` and stated in `CLAUDE.md` and `CHATGPT.md`. Nothing below is
+a rule a session needs; it is the diagnosis those rules came from.
+
+**Deferred, not delivered.** The ten throwaway lifecycle exercises in "Order
+and success measure" below were never run, so the 10/10 success measure is
+unproven. That is recorded in `NEXTSTEPS.md` under "Not in the queue, and
+why". CR-6 and CR-7 also left one live blocker: the two-day headless
+scenario exits `0xC0000005` before writing a summary, which is why SB-1 is
+still out of the queue (`plans/now/season-balance.md`).
 
 **Objective.** A fresh `Implement the next slice` task either completes the
 assigned slice, or stops once with a precise external blocker. It must not

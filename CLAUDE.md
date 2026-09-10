@@ -11,7 +11,7 @@ reconstructing history.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md`. It holds two to five ready slices in two lanes;
+1. Read `NEXTSTEPS.md`. It holds three to five ready slices in two lanes;
    take the first unclaimed **[Claude]** item. "Implement the next slice" means exactly
    that and needs no other context.
 2. Open only the `Plan:` file and heading that item names --
@@ -193,7 +193,7 @@ the authority on which tier a branch is in.
 | A control inside a panel: its size, width or look | `plans/now/hud-controls.md` |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
-| Challenge 2 rescue/recovery messages | `plans/now/challenge-2.md` |
+| Challenge 2 rescue/recovery messages (built) | `checks/ready.md` or `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` for why |
 | What a Challenge stage id means | `docs/challenge-stages.md` |
 | HUD panel placement, sizing or overlap (built) | `checks/ready.md` or `plans/archive/LAY-1_2026-09-08.md` |
 | Headless layout/geometry assertions -- `panel_rect`/`control_rect`/`even_columns`/`no_collapsed_controls` (built) | `scripts/scenario_actions.gd` or `plans/archive/LAYOUT_REGRESSION_2026-09-09.md` |

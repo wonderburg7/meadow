@@ -9,36 +9,17 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave's fourth 9-10 Sep 2026 hands-on pass ran eleven checks.** Four passed
-and are archived. Four passed the fault their own slice named and failed on a
-cause underneath it. Two failed outright on a cause already being worked. One
-could not be run at all.
+**Current state, after Dave's fourth hands-on pass (9-10 Sep 2026).** Eleven
+checks ran. Everything that pass unblocked has since shipped except one fault,
+and it leads the queue below: Challenge 1 destroys the queen's nectar whenever
+the comb is full, because `challenge_runner.gd::discards_overflow` carries its
+stage restriction in a comment and not in its code, so a rule meant for the
+pollen stage fires at every stage. That is C1-25, the most severe finding in the
+pass -- it loses resources the player gathered by hand and can dead-end the run.
 
-Every remaining fault in that pass has been traced to the line, so nothing
-below is a guess:
-
-1. Two tray controls, the summary panel's star, three empty summary labels
-   and two Challenge-1 checkboxes were each one small fault in
-   `scripts/hud.gd`. That was HC-13, which landed on 10 Sep 2026 as C-37 and
-   released C-34 back into `checks/ready.md`.
-2. The queen's nectar is destroyed whenever Challenge 1's comb is full.
-   `challenge_runner.gd::discards_overflow` carries the stage restriction in
-   its comment and not in its code, so a rule meant for the pollen stage
-   fires at every stage. That is Slice 25, and it is the most severe finding
-   in the pass: it loses resources the player gathered by hand and can
-   dead-end the run.
-3. Dr Gallerin's bubble was the one persistent panel that set its own left
-   edge instead of taking a rectangle from `ui_layout.gd`, which is why its
-   gap to the tray was not the shared one. That was HC-14, which landed on
-   10 Sep 2026 (`plans/archive/HC-14_2026-09-10.md`) and released HC-5 into
-   the queue.
-
-Dave answered two questions in the same session. Pixel-equal tray columns:
-yes, unconditionally, which landed on 10 Sep 2026 as HC-15 (whenever three
-columns genuinely fit on the row -- see `plans/archive/HC-15_2026-09-10.md`
-for why the specified `GridContainer` swap did not survive 800x600). Soil-
-button labels wrapping at a small viewport: not a fault, and C-32 keeps its
-stated pass condition.
+The pass's other three fixes (HC-13, HC-14 and HC-15) all landed on 10 Sep 2026
+and their records are in `plans/archive/`. Twelve hands-on checks are waiting in
+`checks/ready.md`; by rule no queue item is held open for one.
 
 ## Next up
 
@@ -124,6 +105,12 @@ Each of these wants something from Dave, or something else to ship first.
   not lost.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
+- **The Codex lifecycle's own success measure** -- CR-1 to CR-7 all shipped by
+  9 Sep 2026 and the plan is archived at
+  `plans/archive/CODEX_RELIABILITY_2026-09-09.md`, but its stated measure was
+  ten throwaway lifecycle exercises including parallel lanes and injected
+  failures, and those were never run. It is not a defect and nothing waits on
+  it, so it is not a slice; it becomes one only if a lifecycle failure recurs.
 
 ## Copy-paste prompts
 
