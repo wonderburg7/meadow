@@ -9,39 +9,31 @@ open only the `Plan:` file and heading that item names, implement, run
 Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
-**Dave's third 9 Sep 2026 hands-on pass reset the Claude lane.** Seven checks
-were run and none passed outright. C-18 and C-32 failed for causes *beneath*
-the ones HC-1 and HC-2 fixed, so both slices did what they specified and both
-checks still fail. C-30 failed outright and turned out to be the cause of
-C-31 and of most of C-7's pollen half as well. C-29's pollen half failed on
-the camera only. C-5 failed again on its press count and is still the Codex
-lane's C2-2, untouched by this pass.
+**Dave's fourth 9-10 Sep 2026 hands-on pass ran eleven checks.** Four passed
+and are archived. Four passed the fault their own slice named and failed on a
+cause underneath it. Two failed outright on a cause already being worked. One
+could not be run at all.
 
-Three confirmed root causes came out of it, each written up in
-`docs/known-pitfalls.md`:
+Every remaining fault in that pass has been traced to the line, so nothing
+below is a guess:
 
-1. A Godot `ScrollContainer` gives its child the child's minimum width unless
-   the child sets `SIZE_EXPAND`. The command tray's content never does, so
-   HC-1's correct column widths were handed to a container one column wide.
-   That is C-18, and the blank space Dave photographed with `More…` open.
-2. `ui_theme.gd` scales the four named type variations and not the `Label`
-   and `Button` base types, so no plain button in the game follows the
-   text-size setting. That is C-32.
-3. Challenge 1's stage 1.13 goal passes on *any* designated cell, and
-   `HiveCell.add_resource` auto-designates a cell on its first deposit, so
-   the first cell satisfied it at stage 1.10 and the stage cleared in the
-   frame it opened. That is C-30, and it takes C-31 and the pollen arc with
-   it.
+1. Two tray controls, the summary panel's star, three empty summary labels
+   and two Challenge-1 checkboxes are each one small, confirmed fault in
+   `scripts/hud.gd`. Together they are HC-13, and HC-13 is also what unblocks
+   C-34 -- the cell popup's "Raises:" menus never say they are menus.
+2. The queen's nectar is destroyed whenever Challenge 1's comb is full.
+   `challenge_runner.gd::discards_overflow` carries the stage restriction in
+   its comment and not in its code, so a rule meant for the pollen stage
+   fires at every stage. That is Slice 25, and it is the most severe finding
+   in the pass: it loses resources the player gathered by hand and can
+   dead-end the run.
+3. Dr Gallerin's bubble is the one persistent panel that sets its own left
+   edge instead of taking a rectangle from `ui_layout.gd`, which is why its
+   gap to the tray is not the shared one. That is HC-14.
 
-Two more reports have confirmed causes and small fixes: a stage marker that
-is shown without being reparented, which puts a yellow dot in the meadow
-(Challenge 1 Slice 24), and four GDScript warnings on boot (HC-12). Two need
-a measurement before a fix can be specified: the tray's height after a
-reselect (HC-8) and the pollen stage's missing camera-follow (Challenge 1
-Slice 22). Both say so in their own headings rather than guessing.
-
-Every item below is specified down to the function and the line, because each
-was diagnosed against the source during the 9 Sep pass.
+Dave answered two questions in the same session. Pixel-equal tray columns:
+yes, unconditionally, which is HC-15. Soil-button labels wrapping at a small
+viewport: not a fault, and C-32 keeps its stated pass condition.
 
 ## Next up
 
@@ -53,76 +45,83 @@ was diagnosed against the source during the 9 Sep pass.
    - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `docs/challenge-stages.md`
    - Check: re-file C-30 and C-31 unchanged after the automated regression test passes
    - Proof: `absent: scripts/challenge_runner.gd :: _goal_check_pollen_cell_designated`
-   - Next after: C1-21 (investigate the queen's pollen-foraging stall after C1-20 lands)
+   - Next after: C1-25 (the queen's harvest is never thrown away without her being told)
 
-2. **[Codex] C1-21 -- the queen forages pollen without being pushed.**
-   After C1-20 lands and C-30 is re-run, trace the queen at stage 1.14 and
-   repair only the confirmed reason a pollen focus change leaves her waiting.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 21 — the queen forages pollen without being pushed"
-   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/challenge_stages.gd`
-   - Check: headless stage-1.14 scenario proves a focus change starts pollen foraging and preserves the nectar arc
-   - Proof: `absent: scripts/bee_foraging.gd :: c1_pollen_focus_trace`
-   - Next after: C1-22 (reach the pollen stage with the camera)
+2. **[Claude] HC-13 -- the tray and summary panel's controls match their neighbours.**
+   Five confirmed faults in `scripts/hud.gd`: two tray controls that render
+   2px larger than the rest, a Favourite star shorter than the cog beside it,
+   three empty summary labels that keep their line height, two Challenge-1
+   checkboxes shown before they are taught, and a "Raises:" menu with nothing
+   saying a menu opens from it.
+   - Plan: `plans/now/hud-controls.md` -- "HC-13 — the tray and summary panel's controls match their neighbours"
+   - Files: `scripts/hud.gd`, `tests/fixtures/layout_panels.json`
+   - Check: one check covering all five requirements; move C-34 back to `checks/ready.md` with its id
+   - Proof: `absent: scripts/hud.gd :: SUMMARY_HEADER_BUTTON_SIZE`
+   - Next after: HC-15 (the tray's three columns take an equal third each)
 
-3. **[Claude] HC-10 -- the Favourite star's move to the summary header.**
-   Dave, 9 Sep 2026: "There should not be a 'Mark: Favourite' button at the
-   bottom of the command tray, this should be a single star without words to
-   the left of the settings cog in the bee summary window." Delete
-   `_build_favourite_row` and its `more_panel` call, and add a `☆`/`★` toggle
-   to the summary header next to the cog instead.
-   - Plan: `plans/now/hud-controls.md` -- "HC-10 — the Favourite star sits in the summary panel's header"
-   - Files: `scripts/hud.gd`
-   - Check: one hands-on check that the star appears left of the cog for a single bee, toggles, survives a reselect, and is absent for a cell
-   - Proof: `present: scripts/hud.gd :: _build_favourite_row`
-   - Next after: HC-11 (every summary panel's cog offers bee-only options)
+3. **[Codex] C1-25 -- the queen's harvest is never thrown away without her being told.**
+   Narrow Challenge 1's nectar-discard rule to the stage its own comment
+   names, tell the player when it fires, and let the queen keep a load the
+   comb cannot take at every other stage.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 25 — the queen's harvest is never thrown away without her being told"
+   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `scripts/bee_foraging.gd`
+   - Check: one check reproducing Dave's 10 Sep 2026 sequence at stage 1.12
+   - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
+   - Next after: C1-21 (the queen forages pollen without being pushed)
+
+4. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
+   LAY-6 measured the Job/Focus/Orders wrappers at 170/100/127px. Divide the
+   tray's inner width into three equal parts and tighten `even_columns` from
+   its 80px tolerance to 2px so it cannot drift back.
+   - Plan: `plans/now/hud-controls.md` -- "HC-15 — the tray's three columns take an equal third each"
+   - Files: `scripts/hud.gd`, `tests/fixtures/layout_panels.json`
+   - Check: re-file C-18 unchanged; this answers the last of its conditions
+   - Proof: `absent: scripts/hud.gd :: _tray_column_share`
+   - Next after: HC-14 (Dr Gallerin's bubble is given its rectangle like every other panel)
+
+5. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
+   Route the bubble through `ui_layout.gd::gallerin_rect()` and
+   `ui_panel_layout.gd::apply()`, so all three bottom-row panels get their
+   horizontal edges from one owner and an assertion can prove the two gaps
+   are equal.
+   - Plan: `plans/now/hud-controls.md` -- "HC-14 — Dr Gallerin's bubble is given its rectangle like every other panel"
+   - Files: `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd`, `scripts/ui_panel_layout.gd`
+   - Check: one check on the two bottom-row gaps at two viewport sizes
+   - Proof: `absent: scripts/gallerin_panel.gd :: UiPanelLayout`
+   - Next after: HC-5 (Dr Gallerin's bubble types its line out)
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
-  fully specified and startable on their merits, and no longer blocked by
-  C2-2, but the Claude lane's leading item is HC-10 instead. Slice 20 is the
-  one that matters most -- it is the confirmed cause of C-30, C-31 and most
-  of C-7. Slice 21 additionally waits on Slice 20 by design: until stage 1.13
+- **Challenge 1 Slices 21 to 24 and 26** (`plans/now/challenge-1.md`) -- all
+  five are specified. Slice 21 waits on Slice 20 by design: until stage 1.13
   runs, no cell in the hive accepts pollen and every pollen symptom has that
-  as a sufficient cause.
+  as a sufficient cause. Slice 26 (the marker pulses and shows an off-screen
+  arrow, both Dave's 10 Sep asks) waits on Slice 24, the other open change to
+  the same marker node. Slices 22 and 23 are startable on their merits but
+  sit behind C1-20 and C1-25 in the same lane.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough. Not worth a sixth attempt until Slices 20 to 24 have made the
+  playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.
-- **HC-8** (`plans/now/hud-controls.md`) -- the tray's height after a
-  deselect-reselect with `More…` open. Its cause is a stale container minimum
-  or is not; the slice says to measure first. Its automated check can now use
-  LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
-  live measurement is still the blocker.
-- **HC-11** (`plans/now/hud-controls.md`) -- every summary panel's cog offers
-  bee-only options. Edits `scripts/hud.gd`, free since HC-7 landed and ready
-  on its merits, but the Claude lane's leading item is HC-10 instead. One
-  Claude branch at a time; HC-11 is next after HC-10.
-- **HC-12** (`plans/now/hud-controls.md`) -- the four GDScript warnings. Edits
-  `scripts/hud.gd` and `scripts/debug_panel.gd`; the Claude lane's leading
-  item (HC-10) already owns `hud.gd`, so it waits behind HC-10/HC-11.
-- **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
-  `scripts/gallerin_panel.gd`. Not currently owned by either lane's leading
-  item; worth re-checking against the live queue before assuming they still
-  wait on anything.
+- **HC-8** (`plans/now/hud-controls.md`) -- the tray is taller than its
+  content until `More…` is toggled. Dave's 10 Sep report made this
+  reproducible from the headless runner rather than by hand, so its own
+  measurement step is now the implementer's to take. It is out of the queue
+  only because it shares `scripts/hud.gd` with HC-13 and HC-15, which are
+  ahead of it in the same lane.
+- **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- Dr Gallerin's bubble
+  types its line out, and pages back through her history. Both edit
+  `scripts/gallerin_panel.gd`, which HC-14 holds until it lands.
+- **UI-M-2** (`plans/now/ui.md`) -- the pre-run menu's hexagon titles spill
+  outside their tiles, plus Dave's request to drop the punctuation after the
+  Challenge and Scenario numbers. Fully specified and startable on its
+  merits; it is out only because the Claude lane already holds three items.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **The command tray's three columns are not pixel-even** -- LAY-6's new
-  `even_columns` assertion (9 Sep 2026) measured the Job/Focus/Orders wrapper
-  widths for a single selected forager at 170/100/127px, not equal. HC-1 (the
-  same symptom) is archived as landed, and the catastrophic "bunched at the
-  left edge" case it actually fixed stays fixed -- this is each wrapper
-  sizing to its own content's natural width inside the `HFlowContainer`
-  rather than to an equal one-third share, which the container was never
-  changed to enforce. `tests/fixtures/layout_panels.json`'s own `even_columns`
-  check uses a wide (80px) tolerance to pass on this, so it stays live for a
-  worse regression. Wants Dave's call on whether true pixel-equal columns
-  matter enough to justify a `GridContainer`-style layout change to
-  `hud.gd::_build_command_tray`, before a slice is written.
 - **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 now produces a
   bounded, classified baseline result, but the 9 Sep smoke baseline still
   exits `0xC0000005` before writing a summary. Diagnose or repair that Godot
@@ -135,7 +134,7 @@ Each of these wants something from Dave, or something else to ship first.
   wants its own reproduction.
 - **UI-P-5** (`plans/now/ui.md`) -- names two plausible causes and says to
   reproduce the symptom live before choosing between them. None of Dave's
-  five passes since 8 Sep has reported on it.
+  six passes since 8 Sep has reported on it.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

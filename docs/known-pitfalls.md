@@ -36,6 +36,47 @@ of these has bitten more than once:
   `normal` stylebox no matter how many overrides you add -- "Change to…" drew
   as floating text. When you put a control in a container, assert the
   rectangle it ends up with.
+- **A restriction that lives in the comment and not in the predicate.** Three
+  times now, on the same shape. `challenge_runner.gd::discards_overflow` is
+  the clearest: the comment above its one caller says "Challenge 1 only: by
+  the pollen stage both built cells hold nectar", and the function tests the
+  Challenge, the bee, the resource and nothing about the stage -- so a rule
+  meant for one stage destroyed the queen's nectar at every stage, and Dave
+  found it by watching a load vanish (10 Sep 2026,
+  `plans/now/challenge-1.md` Slice 25). Challenge 1's stage 1.13 goal was the
+  same mistake a month earlier: `cell_designated` was documented as "the
+  second cell is set aside for pollen" and implemented as "any cell is
+  designated at all" (Slice 20). When a comment names a narrower case than
+  the code tests, the comment is the specification and the code is the bug.
+  Put the narrowing in the predicate, from a named constant, so a reader
+  cannot find one without the other.
+- **A rectangle with two owners, one of which is dead code.**
+  `ui_layout.gd::gallerin_rect()` computes Dr Gallerin's bubble's outer
+  rectangle and carries the comment "Not yet wired to a caller --
+  gallerin_panel.gd manages its own bottom-right anchoring". So the bubble is
+  the only bottom-row panel whose left edge is not assigned by
+  `ui_panel_layout.gd::apply()`, and its gap to the command tray is whatever
+  is left over rather than `PANEL_GAP` by construction -- which is exactly
+  what Dave saw on 10 Sep 2026 (`plans/now/hud-controls.md` HC-14). A helper
+  written for a caller that never arrived is worse than no helper: it reads
+  as the owner while something else owns it. Wire it or delete it in the
+  same pass.
+- **An empty `Label` is a full line tall.** Godot sizes a Label from its font
+  metrics, not from its text, so setting `text = ""` and leaving it visible
+  costs a whole line of height. `hud.gd`'s summary panel blanks three of its
+  four labels for a soil, flower, obstacle or death selection and hides none
+  of them, which is the empty band Dave photographed under "1 soil block
+  selected" (10 Sep 2026, `plans/now/hud-controls.md` HC-13). It grew when
+  HC-4 raised the default text size, because the band is measured in lines.
+  Set visibility from whether there is text, in one place, not per call site.
+- **A `theme_type_variation` left unset is not neutral.** Since HC-9 taught
+  the base `Button` and `Label` types to follow `Session.text_scale` at Body
+  size, a control with no variation renders 2px larger than one marked
+  "Small" -- which is every other control in the command tray.
+  `_current_role_marker` and `_make_role_menu` were the two that never set
+  it, and the difference was visible to Dave immediately (10 Sep 2026).
+  Adding a control to an existing row means giving it that row's variation;
+  omitting it is a choice, not a default.
 - **A bee on `State.IDLING` never dispatches again.** `bee.gd` handles that
   state with `pass   # waits for orders and nothing else`. Assigning a *role*
   wakes her, because `_apply_role()` ends by setting

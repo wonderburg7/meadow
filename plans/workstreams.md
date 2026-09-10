@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C1-20` (`codex/C1-20`) | Codex | the designation stage asks for the designation it names. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 20 — the designation stage asks for the designation it names" |
+| `.worktrees/HC-13` (`claude/HC-13`) | Claude | the tray and summary panel's controls match their neighbours. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-13 — the tray and summary panel's controls match their neighbours" |

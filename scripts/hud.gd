@@ -337,6 +337,12 @@ var trait_label: Label
 ## if any -- see _build_favourite_star and _set_favourite_star.
 var favourite_star_btn: Button
 var _favourite_star_bee = null
+## The header's settings cog (HC-11) and the selection kind its popup is
+## currently built for -- "bee", "multiple", or any other string, which
+## SELECTION_FIELD_TABLE has no entry for and so hides the cog. See
+## _build_selection_cog and _set_summary_cog_kind.
+var selection_cog_btn: MenuButton
+var _summary_cog_kind: String = ""
 ## Which kind of "not a bee" thing the panel is showing, if any --
 ## "flower"/"obstacle"/"death"/"soil", or "" for the ordinary bee/multi-
 ## bee fields. Folded in from four separate mouse-anchored popups
@@ -947,7 +953,7 @@ func _build_selection_panel() -> void:
 	soil_clear_wrapper.name = "soil_clear_wrapper"
 	soil_summary_row.add_child(soil_clear_wrapper)
 
-	_apply_selection_field_visibility()
+	_set_summary_cog_kind("")
 
 ## The star toggle beside the cog (HC-10, moved from the command tray's
 ## More… panel -- see _set_favourite_star). Built once, like the cog, and
@@ -988,55 +994,109 @@ func _set_favourite_star(bee) -> void:
 	if bee != null:
 		favourite_star_btn.text = "★" if bee.is_favourite else "☆"
 
+## Each selection kind's toggleable fields (HC-11), keyed the same way
+## show_object_summary/show_cell_popup/_refresh_selection_text name a kind,
+## plus "multiple" for more than one bee. A kind absent here -- cell, soil,
+## flower, obstacle, death, or nothing selected -- has no line worth
+## toggling (Dave, 9 Sep 2026, about cell and soil; the other three never
+## respected these toggles either), so its cog is hidden entirely rather
+## than opening a menu that does nothing. "control" names a
+## _field_control() case; "key" is the exact existing Session property, so
+## the bee panel's four toggles keep their current keys and defaults
+## (requirement 4).
+const SELECTION_FIELD_TABLE := {
+	"bee": [
+		{"label": "Identity & job", "control": "identity", "key": "show_selection_identity"},
+		{"label": "Energy & load", "control": "energy", "key": "show_selection_energy"},
+		{"label": "Activity", "control": "activity", "key": "show_selection_activity"},
+		{"label": "Trait & quote", "control": "trait", "key": "show_selection_trait"},
+	],
+	"multiple": [
+		{"label": "Identity & job", "control": "identity", "key": "show_selection_identity"},
+	],
+}
+
+func _field_control(field_name: String) -> Control:
+	match field_name:
+		"identity": return identity_label
+		"energy": return energy_label
+		"activity": return activity_label
+		"trait": return trait_label
+	return null
+
 ## The tray's own configuration cog (UI_PLAN.md section 5) -- a plain
 ## gear glyph, same placeholder-art approach as debug_panel.gd's
 ## settings cog. Its popup stays open across clicks
 ## (hide_on_checkable_item_selection = false) so several fields can be
-## toggled in one go.
+## toggled in one go. Built once, like the star; see _set_summary_cog_kind
+## for the per-kind popup content and visibility.
 func _build_selection_cog() -> Control:
-	var menu := MenuButton.new()
-	_style_button(menu)
-	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
-	menu.text = "⚙"
-	menu.theme_type_variation = "Body"
+	selection_cog_btn = MenuButton.new()
+	_style_button(selection_cog_btn)
+	selection_cog_btn.flat = false # MenuButton defaults to flat, which skips its normal stylebox
+	selection_cog_btn.text = "⚙"
+	selection_cog_btn.theme_type_variation = "Body"
 	# Keep the cog aligned with the first identity line when that label wraps
 	# to show role and age below it (UI-P-8).
-	menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	selection_cog_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	# A fixed width so this single glyph cannot raise the selection column's
 	# minimum width above the space _apply_selection_tray_width gives it at
 	# a large text scale (Dave, 8 Sep 2026, C-18).
-	menu.custom_minimum_size.x = 24.0
-	menu.tooltip_text = "Choose which fields this panel shows for the selected bee."
-	menu.focus_mode = Control.FOCUS_NONE
-	var popup := menu.get_popup()
+	selection_cog_btn.custom_minimum_size.x = 24.0
+	selection_cog_btn.tooltip_text = "Choose which fields this panel shows for the selected bee."
+	selection_cog_btn.focus_mode = Control.FOCUS_NONE
+	var popup := selection_cog_btn.get_popup()
 	popup.hide_on_checkable_item_selection = false
-	popup.add_check_item("Identity & job", 0)
-	popup.add_check_item("Energy & load", 1)
-	popup.add_check_item("Activity", 2)
-	popup.add_check_item("Trait & quote", 3)
-	popup.set_item_checked(0, Session.show_selection_identity)
-	popup.set_item_checked(1, Session.show_selection_energy)
-	popup.set_item_checked(2, Session.show_selection_activity)
-	popup.set_item_checked(3, Session.show_selection_trait)
 	popup.id_pressed.connect(func(id: int): _on_selection_field_toggled(id, popup))
-	return menu
+	return selection_cog_btn
+
+## Rebuilds the cog's popup from SELECTION_FIELD_TABLE for the given
+## selection kind, and hides the cog entirely when that kind has no
+## toggleable fields. Called everywhere the panel's content kind changes --
+## show_object_summary, show_cell_popup, update_selection's empty-selection
+## branch, and both branches of _refresh_selection_text -- the same call
+## sites as _set_favourite_star.
+func _set_summary_cog_kind(kind: String) -> void:
+	_summary_cog_kind = kind
+	var fields: Array = SELECTION_FIELD_TABLE.get(kind, [])
+	selection_cog_btn.visible = not fields.is_empty()
+	var popup := selection_cog_btn.get_popup()
+	popup.clear()
+	for i in fields.size():
+		var field: Dictionary = fields[i]
+		popup.add_check_item(field["label"], i)
+		popup.set_item_checked(i, Session.get(field["key"]))
+	_apply_selection_field_visibility()
 
 func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void:
+	var fields: Array = SELECTION_FIELD_TABLE.get(_summary_cog_kind, [])
+	if id < 0 or id >= fields.size():
+		return
 	var checked: bool = not popup.is_item_checked(id)
 	popup.set_item_checked(id, checked)
-	match id:
-		0: Session.show_selection_identity = checked
-		1: Session.show_selection_energy = checked
-		2: Session.show_selection_activity = checked
-		3: Session.show_selection_trait = checked
+	Session.set(fields[id]["key"], checked)
 	Session.save_preferences()
 	_apply_selection_field_visibility()
 
+## Applies the current kind's toggle state to its listed fields. A kind
+## with no table entry (cell, soil, flower, obstacle, death) offers no
+## toggle, so its labels always show whatever text the _show_*_summary
+## functions set -- unlike bee/multiple, nothing here ever hides them.
 func _apply_selection_field_visibility() -> void:
-	identity_label.visible = Session.show_selection_identity
-	energy_label.visible = Session.show_selection_energy
-	activity_label.visible = Session.show_selection_activity
-	trait_label.visible = Session.show_selection_trait
+	var fields: Array = SELECTION_FIELD_TABLE.get(_summary_cog_kind, [])
+	if fields.is_empty():
+		identity_label.visible = true
+		energy_label.visible = true
+		activity_label.visible = true
+		trait_label.visible = true
+		return
+	var shown := {}
+	for field in fields:
+		_field_control(field["control"]).visible = Session.get(field["key"])
+		shown[field["control"]] = true
+	for field_name in ["identity", "energy", "activity", "trait"]:
+		if not shown.has(field_name):
+			_field_control(field_name).visible = false
 
 ## Gap between the tray's ranked columns, both the HFlowContainer's own
 ## separation and the even-width split _update_command_tray_width computes
@@ -1097,7 +1157,7 @@ func _build_command_tray() -> void:
 	# children's combined minimum width and spill into the summary panel.
 	command_columns = HFlowContainer.new()
 	command_columns.name = "command_columns"
-	command_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
+	command_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	column.add_child(command_columns)
 
 	var job_group := _build_tray_column("Job")
@@ -1193,7 +1253,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
-	cell_primary_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
+	cell_primary_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	cell_group.add_child(cell_primary_columns)
 
 	var row := HFlowContainer.new()
@@ -1596,6 +1656,7 @@ func show_object_summary(kind: String, data) -> void:
 	active_flower = data if kind == "flower" else null
 	soil_summary_row.visible = kind == "soil"
 	_set_favourite_star(null)
+	_set_summary_cog_kind(kind)
 	match kind:
 		"flower":
 			_refresh_flower_summary()
@@ -1697,6 +1758,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_flower = null
 	soil_summary_row.visible = false
 	_set_favourite_star(null)
+	_set_summary_cog_kind("cell")
 	selection_panel.visible = true
 	command_columns.visible = false
 	more_button.visible = false
@@ -2186,6 +2248,7 @@ func update_selection(bees: Array) -> void:
 	command_columns.visible = true
 	if bees.is_empty():
 		_set_favourite_star(null)
+		_set_summary_cog_kind("")
 		call_deferred("_resize_command_tray")
 		return
 
@@ -2599,11 +2662,13 @@ func _refresh_selection_text() -> void:
 		selection_panel.visible = false
 		command_tray.visible = false
 		_set_favourite_star(null)
+		_set_summary_cog_kind("")
 		bottom_row_changed.emit()
 		return
 	if shown_bees.size() == 1:
 		var b = shown_bees[0]
 		_set_favourite_star(b)
+		_set_summary_cog_kind("bee")
 
 		var identity := "%s%s — %s" % [
 			"Queen " if b.is_queen else "Bee ",
@@ -2673,6 +2738,7 @@ func _refresh_selection_text() -> void:
 		activity_label.text = ""
 		trait_label.text = ""
 		_set_favourite_star(null)
+		_set_summary_cog_kind("multiple")
 	_update_command_tray_width()
 
 ## Sets the selection panel's width for the current viewport

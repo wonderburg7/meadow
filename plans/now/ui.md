@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-U-1, stage arrows in the settings window | Dependency: UI-U-1 waits for both lanes to vacate `debug_panel.gd` and `challenge_runner.gd`; UI-P-5 wants a live reproduction | Verified: 2026-09-09
+Status: active | Owner: Dave / Claude Code | Next: UI-M-2, a hexagon's title fits inside it | Dependency: UI-U-1 waits for both lanes to vacate `debug_panel.gd` and `challenge_runner.gd`; UI-P-5 wants a live reproduction | Verified: 2026-09-10
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -13,14 +13,125 @@ UI-R-1 to UI-R-3 and UI-S-1 to UI-S-4 are shipped and archived
 confirmed C-3, C-16, C-4, C-8, and the greater part of C-9, C-11 and C-13,
 and produced the UI-T group below. Dave's second 9 Sep 2026 pass added
 UI-U-1, a developer control for reaching a late Challenge stage without
-replaying the whole Challenge. Everything still open is on this page.
+replaying the whole Challenge. Dave's 10 Sep 2026 pass added UI-M-2: the
+pre-run menu's hexagon titles now spill outside their tiles, because the tile
+sizes text from the theme and its label box from a fixed constant. Everything
+still open is on this page.
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
+| UI-M-2 | Hexagon titles spill outside their tiles (C-33) | `main_menu.gd` | yes | low |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
 | UI-U-1 | No way to reach a late Challenge stage without replaying it | `debug_panel.gd`, `challenge_runner.gd` | no — both files are in use | medium |
+
+UI-M-2 and UI-P-5 both own `scripts/main_menu.gd`, but UI-P-5 is not
+startable, so UI-M-2 has the file to itself.
+
+## UI-M-2 — a hexagon's title fits inside it, at every text size
+
+**Reasoning level: low.** One label box and two strings, in one file, behind
+a clear interface.
+
+**Purpose and intended outcome.** Every Challenge and Scenario tile on the
+pre-run menu shows its whole title inside its own hexagon, at every text-size
+setting, and the titles read the way Dave wants them to.
+
+**Status and dependencies.** Ready. No dependency. Nothing else open touches
+`scripts/main_menu.gd` except UI-P-5, which wants a live reproduction and is
+not startable, so there is no contention.
+
+**Observable problems (Dave, 10 Sep 2026).**
+
+- C-33, otherwise a pass: "there's some text spilling over in the main menu
+  hexagons."
+- A separate ask on the same screen: "In the main menu, in the scenario and
+  challenge titles, remove the dash after the scenario number, and remove the
+  colon after the challenge number."
+
+**Confirmed root cause.** `main_menu.gd::_make_hex_tile` gives the tile's
+label a fixed pixel rectangle: `label.position = Vector2(10.0, 8.0)` and
+`label.size = Vector2(bbox.x - 20.0, bbox.y - 16.0)`, where `bbox` comes from
+the constant `HEX_SIZE`. The hexagon does not scale with the text-size
+setting and neither does that box, but the label's text does — it is
+`theme_type_variation = "Small"`, which `ui_theme.gd` scales from
+`Session.text_scale`, and which HC-4 raised by 2px for everyone on 9 Sep
+2026. The label also has no clipping, so once the wrapped text is taller than
+the box it simply paints outside the hexagon. The longest title, "Challenge 2:
+Brood, Roles and Expansion", is the first to go.
+
+**Current authoritative owner.** `scripts/main_menu.gd`: the `STAGES` table
+owns the titles, `_make_hex_tile` owns the tile's geometry, and `HEX_SIZE`
+owns the hexagon's radius.
+
+**Required reading.** This heading and `main_menu.gd::_make_hex_tile`, plus
+the `STAGES` table's title entries near the top of the same file.
+
+**Files likely to change.** `scripts/main_menu.gd`.
+
+**Files that must not be changed.** `scripts/ui_theme.gd` — the text sizes
+are correct and it is the hexagon that has to accommodate them.
+`scripts/hex_hit_area.gd` and `HEX_SIZE` itself — the click regions and the
+tessellation both depend on that constant, and changing it moves every tile.
+
+**Requirements.**
+
+1. The tile's title never paints outside its hexagon. Set
+   `label.clip_text = true` — or `clip_contents` on the tile — so that
+   overflow is impossible by construction rather than by the strings
+   happening to be short enough.
+2. The title fits rather than being clipped, at the default and the largest
+   text scale. Give the label `autowrap` (it already has it) plus a smaller
+   type variation or a scaled-down font when the text does not fit, and pick
+   *one* mechanism. State in a comment which one and why. Requirement 1 is
+   the safety net; requirement 2 is the fix.
+3. Titles lose their punctuation after the number:
+   `"Challenge 1: First Stores"` becomes `"Challenge 1 First Stores"`, and
+   `"Scenario 1 — Queen alone"` becomes `"Scenario 1 Queen alone"`. Change
+   all seven entries in the `STAGES` table. The tooltip and the detail-pane
+   heading both read `stage.title`, so they follow with no further change.
+4. The `✓` completion tick keeps its corner and is not overlapped by a
+   wrapped title at the largest text scale.
+
+**Constraints and invariants.** `HEX_SIZE`, `HEX_STEP_X` and
+`HEX_BORDER_OVERLAP` do not change: the tiles' positions, the strip's scroll
+width and `HexHitArea`'s hit test all derive from them, and C-21 passed on
+the current tessellation. The left pane and the detail pane are not in scope.
+
+**Existing patterns to reuse.** `theme_type_variation` for sizing, as every
+other label in the file does. `Shapes.hexagon_points` is untouched.
+
+**State-transition and cleanup behaviour.** Tiles are built once per menu
+open. If requirement 2 chooses a font size from the current text scale, it
+must be recomputed when the appearance settings change while the menu is
+open, in whatever the file already does on that signal.
+
+**Runtime policy.** Menu construction only. Nothing per frame.
+
+**Edge cases.** The longest Challenge title and the longest Scenario title at
+the largest text scale at 800x600. A completed stage, where the tick is
+present. The narrow strip, where the Scenarios row scrolls horizontally.
+
+**Automated acceptance checks.** A LAY-6 `control_rect` fixture entry over
+the pre-run menu asserting each tile label's rectangle sits inside its tile's
+bounding box, at the default and largest text scales. This is the assertion
+that makes requirement 1 provable without Dave.
+
+**Regression checks.** C-21's condition — the leftmost hexagon of both strips
+is unclipped and every tile selects its own stage — and C-16's left-pane
+inset. Neither may change.
+
+**Save/load.** None.
+
+**Completion and documentation updates.** Update this plan's glance table and
+Status line, archive this heading, and file one check covering the longest
+title at the largest text scale plus the new title punctuation.
+
+**Escalate rather than guess if:** requirement 2 cannot fit the longest title
+without a font so small it is unreadable. That would mean the hexagons need
+to be bigger, which moves `HEX_SIZE` and therefore the whole menu layout —
+Dave's call, not the implementer's.
 
 ## UI-U-1 — step back and forth through a Challenge's stages
 
