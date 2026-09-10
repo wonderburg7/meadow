@@ -1157,7 +1157,7 @@ func _build_command_tray() -> void:
 	# children's combined minimum width and spill into the summary panel.
 	command_columns = HFlowContainer.new()
 	command_columns.name = "command_columns"
-	command_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
+	command_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	column.add_child(command_columns)
 
 	var job_group := _build_tray_column("Job")
@@ -1253,7 +1253,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
-	cell_primary_columns.add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)
+	cell_primary_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	cell_group.add_child(cell_primary_columns)
 
 	var row := HFlowContainer.new()
