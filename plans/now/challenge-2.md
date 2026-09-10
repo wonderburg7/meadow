@@ -1,7 +1,7 @@
 # Challenge 2 — rescue and recovery messages
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: reference | Owner: Dave / Claude Code | Next: none -- all three slices shipped | Dependency: none | Verified: 2026-09-09
+Status: reference | Owner: Dave / Claude Code | Next: none -- all three slices shipped | Dependency: C-34 cannot be run until HC-13 lands | Verified: 2026-09-10
 
 **Which stages this is about.** Stage `2.1` is "watch the nectar stores fall,
 then recover them"; `2.2` is "raise a pollen Forager". The full table of
@@ -36,4 +36,17 @@ overwritten by a queued stage hint.
 
 Shipped 2026-09-09; specification archived at
 `plans/archive/CHALLENGE_2_SLICE_3_2026-09-09.md`.
+
+**Its check has never been run.** Dave tried on 10 Sep 2026 and stopped at the
+first step: "there's no option to raise a pollen forager in the cell command
+window." The option exists -- the cell popup's "Raises:" row builds the
+Forager choice as a `MenuButton` holding Nectar and Pollen -- but its label is
+the bare word "Forager", with nothing saying a menu opens from it. C-34 has
+moved to `checks/blocked.md` naming HC-13 in `plans/now/hud-controls.md` as
+its unblocker, and comes back to `checks/ready.md` with its id intact once
+that lands. Nothing in this plan's own code is implicated, and no slice
+reopens here.
+
+**C-5 passed on 10 Sep 2026** at the third attempt, confirming Slice 2. Its
+write-up is in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`.
 
