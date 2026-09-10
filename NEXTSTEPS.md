@@ -64,16 +64,15 @@ was diagnosed against the source during the 9 Sep pass.
    - Proof: `absent: scripts/bee_foraging.gd :: c1_pollen_focus_trace`
    - Next after: C1-22 (reach the pollen stage with the camera)
 
-3. **[Claude] HC-12 -- the project boots with no GDScript warnings.** Four
-   warnings on load: `hud.gd:1160`/`hud.gd:1256` narrow a float to an int at
-   `TRAY_COLUMN_SEPARATION`'s two override call sites, and
-   `debug_panel.gd:259`/`debug_panel.gd:261` shadow `Node.name` in
-   `collapse_all()`'s two `for name in ...` loops. No behaviour change.
-   - Plan: `plans/now/hud-controls.md` -- "HC-12 — the project boots with no GDScript warnings"
-   - Files: `scripts/hud.gd`, `scripts/debug_panel.gd`
-   - Check: none -- the boot log is the proof, quoted in the commit message
-   - Proof: `present: scripts/hud.gd :: add_theme_constant_override("separation", TRAY_COLUMN_SEPARATION)`
-   - Next after: HC-8 (the tray's height matches its content after a reselect, once its live measurement confirms the fix)
+3. **[Claude] HC-5 -- Dr Gallerin's bubble types its line out.** A Challenge
+   prompt's text currently appears all at once; reveal it one character at a
+   time via `visible_characters`, unscaled so 4x game speed does not change
+   typing speed, with a click finishing the current line immediately.
+   - Plan: `plans/now/hud-controls.md` -- "HC-5 — Dr Gallerin's bubble types its line out"
+   - Files: `scripts/gallerin_panel.gd`
+   - Check: one check covering the typing, the 4x-speed case and click-to-finish
+   - Proof: `absent: scripts/gallerin_panel.gd :: TYPE_CHARACTERS_PER_SECOND`
+   - Next after: HC-6 (arrows in Dr Gallerin's bubble page back through what she has already said)
 
 ## Not in the queue, and why
 
@@ -81,7 +80,7 @@ Each of these wants something from Dave, or something else to ship first.
 
 - **Challenge 1 Slices 20 to 24** (`plans/now/challenge-1.md`) -- all five are
   fully specified and startable on their merits, and no longer blocked by
-  C2-2, but the Claude lane's leading item is HC-12 instead. Slice 20 is the
+  C2-2, but the Claude lane's leading item is HC-5 instead. Slice 20 is the
   one that matters most -- it is the confirmed cause of C-30, C-31 and most
   of C-7. Slice 21 additionally waits on Slice 20 by design: until stage 1.13
   runs, no cell in the hive accepts pollen and every pollen symptom has that
@@ -94,10 +93,9 @@ Each of these wants something from Dave, or something else to ship first.
   or is not; the slice says to measure first. Its automated check can now use
   LAY-5's `panel_rect`/`control_rect` assertions (shipped 9 Sep 2026), but the
   live measurement is still the blocker.
-- **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- both edit
-  `scripts/gallerin_panel.gd`. Not currently owned by either lane's leading
-  item; worth re-checking against the live queue before assuming they still
-  wait on anything.
+- **HC-6** (`plans/now/hud-controls.md`) -- pages back through Dr Gallerin's
+  bubble history. Edits `scripts/gallerin_panel.gd`, the same file as HC-5,
+  the Claude lane's leading item, so it queues once HC-5 lands.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It

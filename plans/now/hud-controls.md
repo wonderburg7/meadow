@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-12, the project boots with no GDScript warnings (HC-8 wants a live measurement first) | Dependency: HC-5 and HC-6 wait for the Codex lane to vacate `scripts/gallerin_panel.gd`; HC-8's automated check wants LAY-5 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-5, Dr Gallerin's bubble types its line out (HC-8 still wants a live measurement first) | Dependency: HC-6 follows HC-5 in the same file; HC-8's automated check wants LAY-5 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -44,13 +44,12 @@ asked what was selected.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray stays tall and blank after a reselect | `hud.gd` | medium |
-| HC-12 | Four GDScript warnings on boot | `hud.gd`, `debug_panel.gd` | low |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
 HC-8 is easier to judge now the tray is the right width, but still wants a
 live measurement before it can be specified (see its heading below), so
-HC-12 is the next slice a session can simply start.
+HC-5 is the next slice a session can simply start.
 
 Landed and archived: HC-1 (the tray's three columns get even widths),
 HC-2 (the soil panel's buttons take the panel's width and show their text),
@@ -60,17 +59,18 @@ text size goes up by 2px), each archived under `plans/archive/` on 9 Sep
 `plans/archive/HC-7_2026-09-09.md`, HC-9 (every button follows the
 text-size setting), archived under `plans/archive/HC-9_2026-09-09.md`,
 HC-10 (the Favourite star's move to the summary header), archived under
-`plans/archive/HC-10_2026-09-09.md`, and HC-11 (a summary panel's cog
-offers the fields that panel shows), archived under
-`plans/archive/HC-11_2026-09-10.md`. HC-1 and HC-2 did what they specified;
-C-18 was HC-7's cause and is ready to re-run; C-32 was HC-9's cause and is
-ready to re-run.
+`plans/archive/HC-10_2026-09-09.md`, HC-11 (a summary panel's cog offers
+the fields that panel shows), archived under
+`plans/archive/HC-11_2026-09-10.md`, and HC-12 (the project boots with no
+GDScript warnings), archived under `plans/archive/HC-12_2026-09-10.md`.
+HC-1 and HC-2 did what they specified; C-18 was HC-7's cause and is ready
+to re-run; C-32 was HC-9's cause and is ready to re-run.
 
-HC-5 and HC-6 each edit `scripts/gallerin_panel.gd`, a file the Codex lane
-is working in, so both wait in `NEXTSTEPS.md`'s "Not in the queue, and why"
-until the Codex lane vacates it. HC-12 edits `scripts/debug_panel.gd` too,
-but no open Codex branch currently touches it (see HC-12's own "Note on
-ownership" below), so it is free to queue.
+HC-5 and HC-6 each edit `scripts/gallerin_panel.gd`. No open branch in
+either lane currently touches that file (re-checked 10 Sep 2026, after
+HC-12 vacated `scripts/debug_panel.gd`), so HC-5 is free to queue; HC-6
+follows it in `NEXTSTEPS.md` once HC-5 lands, since both edit the same
+file.
 
 ## HC-8 — the tray's height matches its content after a reselect
 
@@ -122,42 +122,10 @@ change. Note the dependency rather than duplicating the helper.
 **Check to file:** one check covering the deselect-reselect case with `More…`
 open, at two text scales.
 
-## HC-12 — the project boots with no GDScript warnings
-
-**Reasoning level: low.** Four warnings, two causes, no behaviour change.
-
-**What Dave reported (9 Sep 2026).** Four warnings on load, at the lines
-current as of HC-11 landing (10 Sep 2026; HC-9/HC-10/HC-11 each shifted
-`hud.gd`'s line numbers, the cause itself is unchanged):
-
-- `hud.gd:1160` and `hud.gd:1256`, NARROWING_CONVERSION.
-- `debug_panel.gd:259` and `debug_panel.gd:261`, SHADOWED_VARIABLE_BASE_CLASS.
-
-**Confirmed causes.** `TRAY_COLUMN_SEPARATION` is declared `:= 16.0`, a
-float, because `_apply_even_column_widths` does float arithmetic with it;
-`add_theme_constant_override("separation", ...)` takes an int, so both call
-sites narrow. In `debug_panel.gd::collapse_all()` the two `for name in ...`
-loops shadow `Node.name`.
-
-**Files likely to change.** `scripts/hud.gd`, `scripts/debug_panel.gd`.
-
-**Requirements.**
-
-1. Pass `int(TRAY_COLUMN_SEPARATION)` at both override call sites. Keep the
-   constant a float — the width arithmetic is the reason it is one, and
-   changing it would push the rounding into `_apply_even_column_widths`.
-2. Rename both loop variables to `key`.
-3. Boot the project and confirm the warning list is empty, not just shorter.
-
-**Constraints and invariants.** No behaviour change. If fixing a warning
-would change behaviour, leave it and say which.
-
-**Note on ownership.** `scripts/debug_panel.gd` is the settings window, which
-the Codex lane's C2-2 also edits. This slice must not be queued while a Codex
-branch is open in that file.
-
-**Check to file:** none — the boot log is the proof, quoted in the commit
-message.
+HC-12 (the project boots with no GDScript warnings) landed 10 Sep 2026,
+archived under `plans/archive/HC-12_2026-09-10.md`. Both `hud.gd` narrowing
+sites now pass `int(TRAY_COLUMN_SEPARATION)`; `debug_panel.gd::collapse_all()`'s
+two loop variables are `key`. The boot log carries none of the four warnings.
 
 ## HC-5 — Dr Gallerin's bubble types its line out
 
