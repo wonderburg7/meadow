@@ -208,6 +208,24 @@ interactively, or with Godot crash logging on, and identify the
 native/runtime failure before rerunning the matched campaign. The verdict is
 rendered only from a completed experiment `result.json`.
 
+## Settling the layout before a geometry assertion
+
+Actions are not a sequence: every unresolved one is checked each tick, in
+file order, so a whole fixture normally fires on a single tick. Godot lays a
+container out on the frame *after* its content changes, so a `panel`,
+`control`, `container` or `root` assertion in the same tick as the selection
+that changed it measures the previous frame's rectangle.
+
+`settle` is the one action that is a barrier. Nothing after it in the file
+runs until it has counted out its ticks:
+
+```json
+{"do": "settle", "ticks": 2}
+```
+
+Put one between an action and the assertions that measure what it changed.
+`ticks` defaults to 1; 2 is what `tests/fixtures/layout_panels.json` uses.
+
 ## Scenario expectations
 
 `expect` is optional. It is evaluated by Python only after the final evidence

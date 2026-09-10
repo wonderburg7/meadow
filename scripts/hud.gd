@@ -888,6 +888,9 @@ func _build_selection_panel() -> void:
 	# empty air except for the cog, pushing every field down and making
 	# the panel taller than it needed to be for no reason.
 	var header := HBoxContainer.new()
+	# Named for the same reason selection_column is: the star and cog
+	# assertions below it need a stable path (HC-13).
+	header.name = "summary_header"
 	column.add_child(header)
 
 	# Fixed, viewport-derived width (UiLayout.selection_tray_width) rather
@@ -955,6 +958,13 @@ func _build_selection_panel() -> void:
 
 	_set_summary_cog_kind("")
 
+## The star and the cog sit side by side in the summary panel's header, so
+## they are one control pair and take one size (HC-13). Each used to set
+## only its own width, leaving each button as tall as its own glyph's font
+## metrics asked for -- and "☆" and "⚙" do not agree, so the star rendered
+## shorter than the cog beside it (Dave, 10 Sep 2026, C-35).
+const SUMMARY_HEADER_BUTTON_SIZE := Vector2(24.0, 24.0)
+
 ## The star toggle beside the cog (HC-10, moved from the command tray's
 ## More… panel -- see _set_favourite_star). Built once, like the cog, and
 ## only offered for one bee at a time, so "favourite" always names one
@@ -963,16 +973,20 @@ func _build_selection_panel() -> void:
 ## BEE_INDIVIDUALITY_PLAN.md section 7.
 func _build_favourite_star() -> Control:
 	favourite_star_btn = Button.new()
+	# Named so LAY-6's control_rect assertions can address the star and the
+	# cog by a stable path and compare their heights (HC-13).
+	favourite_star_btn.name = "favourite_star_btn"
 	_style_button(favourite_star_btn)
 	favourite_star_btn.text = "☆"
 	favourite_star_btn.theme_type_variation = "Body"
 	# Keep the star aligned with the first identity line when that label
 	# wraps, same as the cog just to its right.
 	favourite_star_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	# A fixed width so this single glyph cannot raise the selection column's
+	# A fixed size so this single glyph cannot raise the selection column's
 	# minimum width above the space _apply_selection_tray_width gives it at
-	# a large text scale (Dave, 8 Sep 2026, C-18).
-	favourite_star_btn.custom_minimum_size.x = 24.0
+	# a large text scale (Dave, 8 Sep 2026, C-18), and so the star matches
+	# the cog's height rather than its own glyph's (HC-13).
+	favourite_star_btn.custom_minimum_size = SUMMARY_HEADER_BUTTON_SIZE
 	favourite_star_btn.tooltip_text = "Pin this bee by name so you can find it again in the colony window's Favourites list, in a colony of hundreds."
 	favourite_star_btn.focus_mode = Control.FOCUS_NONE
 	favourite_star_btn.visible = false
@@ -1032,6 +1046,7 @@ func _field_control(field_name: String) -> Control:
 ## for the per-kind popup content and visibility.
 func _build_selection_cog() -> Control:
 	selection_cog_btn = MenuButton.new()
+	selection_cog_btn.name = "selection_cog_btn"
 	_style_button(selection_cog_btn)
 	selection_cog_btn.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	selection_cog_btn.text = "⚙"
@@ -1039,10 +1054,11 @@ func _build_selection_cog() -> Control:
 	# Keep the cog aligned with the first identity line when that label wraps
 	# to show role and age below it (UI-P-8).
 	selection_cog_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	# A fixed width so this single glyph cannot raise the selection column's
+	# A fixed size so this single glyph cannot raise the selection column's
 	# minimum width above the space _apply_selection_tray_width gives it at
-	# a large text scale (Dave, 8 Sep 2026, C-18).
-	selection_cog_btn.custom_minimum_size.x = 24.0
+	# a large text scale (Dave, 8 Sep 2026, C-18), and so the cog matches
+	# the star's height rather than its own glyph's (HC-13).
+	selection_cog_btn.custom_minimum_size = SUMMARY_HEADER_BUTTON_SIZE
 	selection_cog_btn.tooltip_text = "Choose which fields this panel shows for the selected bee."
 	selection_cog_btn.focus_mode = Control.FOCUS_NONE
 	var popup := selection_cog_btn.get_popup()
@@ -1078,25 +1094,52 @@ func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void:
 	Session.save_preferences()
 	_apply_selection_field_visibility()
 
-## Applies the current kind's toggle state to its listed fields. A kind
-## with no table entry (cell, soil, flower, obstacle, death) offers no
-## toggle, so its labels always show whatever text the _show_*_summary
-## functions set -- unlike bee/multiple, nothing here ever hides them.
+## The one place that decides whether each of the four ranked labels is
+## seen. A kind the table covers (bee, multiple) hides a field the player
+## switched off in the cog; a kind it does not cover (cell, soil, flower,
+## obstacle, death) offers no toggle and shows whatever the _show_*_summary
+## functions set. Either way an empty label is never visible: an empty Godot
+## Label still reports a full line of font height as its minimum, so the
+## three blank fields a soil, obstacle or death summary leaves behind were a
+## band of dead space that grew with the text-size setting (Dave, 10 Sep
+## 2026, HC-13). The test lives here rather than in the four _show_*_summary
+## functions so a summary kind added later cannot reintroduce the band.
 func _apply_selection_field_visibility() -> void:
 	var fields: Array = SELECTION_FIELD_TABLE.get(_summary_cog_kind, [])
-	if fields.is_empty():
-		identity_label.visible = true
-		energy_label.visible = true
-		activity_label.visible = true
-		trait_label.visible = true
-		return
-	var shown := {}
+	var toggled_on := {}
 	for field in fields:
-		_field_control(field["control"]).visible = Session.get(field["key"])
-		shown[field["control"]] = true
+		toggled_on[field["control"]] = bool(Session.get(field["key"]))
 	for field_name in ["identity", "energy", "activity", "trait"]:
-		if not shown.has(field_name):
-			_field_control(field_name).visible = false
+		var label := _field_control(field_name) as Label
+		if label == null:
+			continue
+		# A field the table lists takes its toggle; a field it omits is
+		# hidden for a kind that has a table entry (the "multiple" summary
+		# offers identity alone) and shown for a kind that has none.
+		var wanted: bool = toggled_on.get(field_name, fields.is_empty())
+		label.visible = wanted and label.text != ""
+	# The panel's height is a snapshot of its content's minimum, taken by
+	# UiPanelLayout.apply, so hiding a label only reclaims its band once
+	# that snapshot is retaken. Until HC-13 all four labels were visible
+	# whatever they held, the snapshot was permanently the four-line worst
+	# case, and that is the dead space itself.
+	# Deferred, not immediate: Godot lays a container out on the frame after
+	# its content changes, so measuring here would measure the labels as
+	# they were before this call. Same reason update_selection defers
+	# _resize_command_tray.
+	call_deferred("_resize_selection_panel_to_content")
+
+## Retakes the summary panel's height for the content now visible in it, and
+## tells the left-side windows only when the height actually moved -- this
+## runs on _refresh_selection_text's 0.1s cadence, and bottom_row_changed is
+## not worth emitting ten times a second for a panel that has not shifted.
+func _resize_selection_panel_to_content() -> void:
+	if selection_panel == null or selection_column == null:
+		return
+	var previous_top: float = selection_panel.offset_top
+	_apply_selection_tray_width()
+	if not is_equal_approx(selection_panel.offset_top, previous_top):
+		bottom_row_changed.emit()
 
 ## Gap between the tray's ranked columns, both the HFlowContainer's own
 ## separation and the even-width split _update_command_tray_width computes
@@ -1547,11 +1590,15 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	keep_row.add_child(_info("On: the cell refuses every deposit once it's been cleared, so it stays free. This is what stops a crowd of foragers cramming nectar into the last spare pot and leaving nowhere for pollen or eggs. Reserving the cell for a resource later clears this again. Off: the cell goes back to taking whatever arrives first."))
 
 ## A dropdown for a role that has more than one way to start.
+## The trailing ellipsis is the whole tell that this is a menu and not a
+## one-press button -- the same convention the tray's "Change to…" menu
+## already uses (HC-3, then HC-13 for C-34). The popup entries keep their
+## own full labels; only the closed control gains it.
 func _make_hatch_menu(entry: Dictionary) -> Control:
 	var menu := MenuButton.new()
 	_style_button(menu)
 	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
-	menu.text = entry.label
+	menu.text = "%s…" % entry.label
 	menu.theme_type_variation = "Small"
 	var options: Array = entry.options
 	var role_value: int = entry.role
@@ -1666,6 +1713,10 @@ func show_object_summary(kind: String, data) -> void:
 			_show_soil_summary(data.count, data.reachable)
 		"death":
 			_show_death_summary(data.death_info)
+	# _set_summary_cog_kind above ran before these four wrote their text, so
+	# the empty-label test has to be re-run now that there is text to test
+	# (HC-13). Selection-driven, not per-frame.
+	_apply_selection_field_visibility()
 	selection_panel.visible = true
 
 ## Kept live (unlike the other three kinds) because a flower's
@@ -1869,6 +1920,9 @@ func _refresh_cell_popup() -> void:
 	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
 	_light_current_options()
 	_apply_cell_popup_gating()
+	# Same ordering as show_object_summary: the cog kind was set before this
+	# function wrote the four labels (HC-13).
+	_apply_selection_field_visibility()
 
 	_cell_popup_last_cell = active_cell
 	_cell_popup_last_count = selected_cell_count
@@ -2491,28 +2545,53 @@ func _build_restock_row(first) -> void:
 		orders_column.add_child(summary)
 
 ## The backup role and whether a reassignment waits for the current job.
+##
+## Each of the three controls is offered only where the Challenge has taught
+## the thing it acts on (HC-13). Outside a Challenge allowed_role_keys is
+## empty, every test below is true and the row reads exactly as it always
+## did -- the same convention _apply_cell_popup_gating states. Challenge 1
+## used to show the queen both checkboxes from her first frame, before it
+## had taught her either idea (Dave, 10 Sep 2026).
 func _build_fallback_row(common_role: int, first) -> void:
+	# _secondary_items always leads with "Nothing", so a second entry is
+	# what says a real alternative role exists to be reassigned to. Where
+	# there is none, "Finish the job first" is a rule about an event that
+	# cannot happen yet.
+	var secondary_items: Array = _secondary_items()
+	var reassignment_offered: bool = secondary_items.size() > 1
+	var show_idle_menu: bool = common_role != -1
+	# "laying" is the queen role's key in roles.gd::ROLES -- Challenge 1
+	# unlocks it at stage 1.16 and Challenge 2 at 2.1, which is exactly
+	# where "Lay in plain comb too" starts to mean something.
+	var queen_selected: bool = first != null and first.is_queen and common_role == Bee.Role.EGG_LAYER
+	var laying_taught: bool = allowed_role_keys.is_empty() or allowed_role_keys.has("laying")
+	var show_plain_comb: bool = queen_selected and laying_taught
+	# Nothing to put in it, so no empty labelled row is left behind.
+	if not show_idle_menu and not reassignment_offered and not show_plain_comb:
+		return
+
 	var row := _labelled_row("If idle")
-	if common_role != -1:
+	if show_idle_menu:
 		var current: int = first.secondary_role if first != null else -1
 		row.add_child(_make_role_menu(
 			"When idle: %s" % (Roles.label_for(current) if current != -1 else "nothing"),
 			"What this bee does instead of standing around whenever it genuinely has no work of its own -- a non-automine miner with no block marked, say, or a nurse with no brood to tend. It drops the backup role and returns to its own the instant real work turns up.",
-			_secondary_items()
+			secondary_items
 		))
 
-	var finish_box := CheckBox.new()
-	_style_button(finish_box)
-	finish_box.text = "Finish the job first"
-	finish_box.theme_type_variation = "Small"
-	finish_box.button_pressed = first.finish_task_first if first != null else false
-	finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
-	row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying, a comb worker finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts immediately."))
+	if reassignment_offered:
+		var finish_box := CheckBox.new()
+		_style_button(finish_box)
+		finish_box.text = "Finish the job first"
+		finish_box.theme_type_variation = "Small"
+		finish_box.button_pressed = first.finish_task_first if first != null else false
+		finish_box.toggled.connect(func(pressed: bool): finish_first_requested.emit(pressed))
+		row.add_child(_with_info(finish_box, "On: reassigning this bee waits until it has finished what it is doing -- a forager delivers the load it is carrying, a comb worker finishes the cell it is on -- and the new role takes effect the moment it is free. Off: it drops everything and starts immediately."))
 
 	# The queen's own laying rule sits here rather than in its own row --
 	# it is a "what does she do when she can't lay" question, which is
 	# the same question this row is about.
-	if first != null and first.is_queen and common_role == Bee.Role.EGG_LAYER:
+	if show_plain_comb:
 		var any_cell_box := CheckBox.new()
 		_style_button(any_cell_box)
 		any_cell_box.text = "Lay in plain comb too"
@@ -2592,6 +2671,10 @@ func _current_role_marker(label: String) -> Control:
 	_style_button(button)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = "● %s" % label
+	# A bare Button in this file means Body-sized since HC-9 taught the base
+	# type to follow Session.text_scale, so every tray control has to say
+	# "Small" out loud or it renders 2px larger than its neighbours (HC-13).
+	button.theme_type_variation = "Small"
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = "This is what the selected bees are doing now."
 	return UI.mark_as_current(button)
@@ -2640,6 +2723,9 @@ func _make_role_menu(label: String, tip: String, items: Array, node_name: String
 	_style_button(menu)
 	menu.flat = false # MenuButton defaults to flat, which skips its normal stylebox
 	menu.text = label
+	# See _current_role_marker: a bare Button/MenuButton is Body-sized, and
+	# every other control in the tray is Small (HC-13).
+	menu.theme_type_variation = "Small"
 	menu.tooltip_text = tip
 	var popup := menu.get_popup()
 	for i in range(items.size()):
@@ -2739,6 +2825,9 @@ func _refresh_selection_text() -> void:
 		trait_label.text = ""
 		_set_favourite_star(null)
 		_set_summary_cog_kind("multiple")
+	# Both branches set their labels after _set_summary_cog_kind, so the
+	# empty-label test runs once here rather than twice above (HC-13).
+	_apply_selection_field_visibility()
 	_update_command_tray_width()
 
 ## Sets the selection panel's width for the current viewport
@@ -2749,7 +2838,11 @@ func _refresh_selection_text() -> void:
 ## UI_PLAN.md UI-B.
 func _apply_selection_tray_width() -> void:
 	var rect := UiLayout.summary_panel_rect(get_viewport().get_visible_rect().size)
-	UiPanelLayout.apply(selection_panel, null, rect, UiLayout.BOTTOM_ROW_MARGIN)
+	# Width first, then height. Every label in this column autowraps, so its
+	# minimum height is only meaningful once it knows how wide it is --
+	# measured at the old width, a one-line label reports the height of a
+	# column of single words. Same ordering, and the same reason, as
+	# _resize_command_tray (Dave, 8 Sep 2026, C-11/C-12).
 	if selection_column != null:
 		# Cap the column to the space inside the panel's own border and
 		# content margins, not the panel's outer width, so its content
@@ -2781,6 +2874,29 @@ func _apply_selection_tray_width() -> void:
 			soil_mark_btn.custom_minimum_size.x = soil_button_floor
 		if soil_clear_btn != null:
 			soil_clear_btn.custom_minimum_size.x = soil_button_floor
+	_match_summary_header_button_heights()
+	UiPanelLayout.apply(selection_panel, null, rect, UiLayout.BOTTOM_ROW_MARGIN)
+
+## The star and the cog are one control pair, so they take one height: the
+## taller of the two minimums, given to both. SUMMARY_HEADER_BUTTON_SIZE is
+## the floor and not the answer on its own -- "☆" and "⚙" resolve to
+## different fallback fonts on some systems, and a fallback's metrics can
+## ask for more height than the floor, which is how the star came out
+## shorter than the cog beside it (Dave, 10 Sep 2026, C-35). Both are reset
+## to the floor first so a smaller text scale can bring the pair back down
+## rather than ratcheting it up. Lives here because _apply_selection_tray_width
+## is already what runs at build time, on a viewport change and, since
+## HC-13, whenever the panel's visible content changes.
+func _match_summary_header_button_heights() -> void:
+	if favourite_star_btn == null or selection_cog_btn == null:
+		return
+	favourite_star_btn.custom_minimum_size.y = SUMMARY_HEADER_BUTTON_SIZE.y
+	selection_cog_btn.custom_minimum_size.y = SUMMARY_HEADER_BUTTON_SIZE.y
+	var tallest: float = maxf(
+		favourite_star_btn.get_combined_minimum_size().y,
+		selection_cog_btn.get_combined_minimum_size().y)
+	favourite_star_btn.custom_minimum_size.y = tallest
+	selection_cog_btn.custom_minimum_size.y = tallest
 
 ## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
 ## between each, but only when that even width is wide enough for the

@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-13, the tray and summary panel's controls match their neighbours | Dependency: HC-15 follows HC-13 in `scripts/hud.gd`; HC-5 and HC-6 follow HC-14 in `scripts/gallerin_panel.gd`; HC-8 wants a headless measurement first | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-15, the tray's three columns take an equal third each | Dependency: HC-5 and HC-6 follow HC-14 in `scripts/gallerin_panel.gd`; HC-8 follows HC-15 in `scripts/hud.gd` | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -41,22 +41,22 @@ for saved UI preferences.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-13 | Tray and summary controls that do not match their neighbours (C-18, C-32, C-34, C-35) | `hud.gd` | medium |
 | HC-15 | The tray's three columns are 170/100/127px, not equal thirds (C-18) | `hud.gd`, `layout_panels.json` | medium |
 | HC-14 | Dr Gallerin's bubble sets its own left edge, so its gap is not the shared one (C-18) | `gallerin_panel.gd`, `ui_layout.gd`, `ui_panel_layout.gd` | medium |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-13 and HC-15 both edit `scripts/hud.gd`, so HC-15 follows HC-13. HC-14
+HC-15 and HC-8 both edit `scripts/hud.gd`, so HC-8 follows HC-15. HC-14
 edits `scripts/gallerin_panel.gd`, so HC-5 follows it and HC-6 follows HC-5.
-HC-8 is independent of all of them but still wants the measurement its own
-heading describes; it is the only slice here whose cause is not yet confirmed.
+HC-8 still wants the measurement its own heading describes; it is the only
+slice here whose cause is not yet confirmed.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
-them), HC-3, HC-4, HC-7, HC-9, HC-10, HC-11 and HC-12. Open those for
-provenance, never to work out what to do.
+them), HC-3, HC-4, HC-7, HC-9, HC-10, HC-11, HC-12 and HC-13 (10 Sep 2026,
+`plans/archive/HC-13_2026-09-10.md`). Open those for provenance, never to work
+out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
@@ -168,172 +168,6 @@ re-file C-18 unchanged.
 **Escalate rather than guess if:** the measurement points at
 `ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
 That file sizes every persistent panel, so a change there is a high slice.
-
-## HC-13 — the tray and summary panel's controls match their neighbours
-
-**Reasoning level: medium.** Five confirmed, independent faults in one file.
-Each is small; none needs a design decision. Medium rather than low because
-the file is 2,933 lines and three of the five touch shared helpers.
-
-**Purpose and intended outcome.** Every control the player sees in the
-command tray and the summary panel is the size its neighbours are, is absent
-when the Challenge has not taught it, and says so when it opens a menu. Five
-of Dave's 10 Sep 2026 reports are answered, and C-34 becomes runnable.
-
-**Status and dependencies.** Ready. No dependency. HC-15 follows it because
-both edit `scripts/hud.gd`.
-
-**Confirmed root causes.** All five were traced to the line on 10 Sep 2026.
-
-1. **Two tray controls are 2px larger than the rest.** Dave: "there's an
-   inconsistency in the font size for the contents of the command tray, where
-   the forager and change to… buttons seemed to be a larger font than the
-   others." `_current_role_marker` (`:2590`) and `_make_role_menu` (`:2637`)
-   are the only two tray controls that never set
-   `theme_type_variation = "Small"`. Every other one does. They therefore fall
-   through to the base `Button` type, which HC-9 taught to follow
-   `Session.text_scale` at **Body** size. `ui_theme.gd::TYPE_SIZES` is
-   `{"Body": 15, "Small": 13}`, so those two render exactly 2px larger at
-   every scale. HC-9 is what made this visible; it is not an HC-9 defect.
-2. **The Favourite star is shorter than the cog beside it.** C-35's
-   adjustment. `_build_favourite_star` (`:965`) and `_build_selection_cog`
-   (`:1034`) each set `custom_minimum_size.x = 24.0` and neither sets `.y`, so
-   each button takes the height its own glyph's metrics ask for — the star and
-   the cog glyphs do not agree.
-3. **A soil, flower, obstacle or death summary keeps three empty labels.**
-   Dave: "there is still unnecessary empty space in the soil summary window."
-   `_show_soil_summary` (`:1716`) sets `energy_label.text`,
-   `activity_label.text` and `trait_label.text` to the empty string but leaves
-   all three visible, and `_apply_selection_field_visibility` (`:1085`) returns
-   early showing all four labels for any kind `SELECTION_FIELD_TABLE` has no
-   entry for — which is every kind but `bee` and `bees`. An empty Godot
-   `Label` still reports a full line of font height as its minimum, so three
-   of them plus the column separation are the blank band in Dave's screenshot,
-   and it grows with the text-size setting.
-4. **Challenge 1 shows the queen two controls it has not taught.** Dave:
-   "Hide the 'finish the job first' and 'Lay in plain comb too' buttons in
-   the Queen's command tray in challenge one." `_build_fallback_row`
-   (`:2494`) gates the "When idle" menu's *items* through `_secondary_items()`
-   but gates neither checkbox at all. The plain-comb checkbox shows whenever
-   the selection is a queen in `Role.EGG_LAYER`, which she is from the first
-   frame of Challenge 1, while the role key `laying` is not unlocked until
-   stage 1.16.
-5. **The cell popup's "Raises:" menus do not say they are menus.** The C-34
-   blocker. `_make_hatch_menu` (`:1550`) builds a `MenuButton` whose text is
-   the bare role label, so a player sees a button reading "Forager" with
-   "Forager — Nectar" and "Forager — Pollen" hidden inside it. The tray's own
-   `_make_role_menu` solved this in HC-3 by labelling itself "Change to…";
-   that convention was never carried across.
-
-**Current authoritative owner.** `scripts/hud.gd` for all five.
-`scripts/ui_theme.gd` owns the type sizes and is read, not written.
-
-**Required reading.** This heading. `scripts/hud.gd` sections
-`_build_favourite_star`, `_build_selection_cog`,
-`_apply_selection_field_visibility`, `_show_soil_summary`,
-`_make_hatch_menu`, `_build_fallback_row`, `_current_role_marker` and
-`_make_role_menu` — found via `FUNCTION_MAP.md`, not by reading the file.
-
-**Files likely to change.** `scripts/hud.gd` only.
-
-**Files that must not be changed.** `scripts/ui_theme.gd` — the `Small` type
-size is correct and this slice makes two controls use it, not the other way
-round. `scripts/roles.gd` — the role and mode labels are data and stay as they
-are. `scripts/challenge_stages.gd` — requirement 4 is deliberately specified
-so that no new stage key is needed.
-
-**Requirements.**
-
-1. `_current_role_marker` and `_make_role_menu` set
-   `theme_type_variation = "Small"` on the control they return, so every
-   control in the tray reads at the same size. Add a one-line comment on each
-   naming this slice, because a bare `Button` in this file now silently means
-   Body-sized.
-2. Add `const SUMMARY_HEADER_BUTTON_SIZE := Vector2(24.0, 24.0)` beside the
-   existing star and cog builders, and set `custom_minimum_size` from it in
-   both. Both existing `custom_minimum_size.x = 24.0` assignments are
-   replaced by it — the value must have one home, or the next change to one
-   button will part them again.
-3. In `_apply_selection_field_visibility`, a summary label whose text is
-   empty is never visible. Apply this in both branches, so it holds for the
-   kinds `SELECTION_FIELD_TABLE` covers and for the kinds it does not. Do not
-   fix this by editing `_show_soil_summary` and its three siblings
-   individually: one place decides, and a future summary kind then cannot
-   reintroduce the band.
-4. In `_build_fallback_row`:
-   - The "Lay in plain comb too" checkbox is added only when
-     `allowed_role_keys.is_empty() or allowed_role_keys.has("laying")`.
-     `laying` is the queen role's key in `roles.gd::ROLES`; Challenge 1
-     unlocks it at stage 1.16 and Challenge 2 at 2.1, so this hides the
-     checkbox for exactly the stages Dave named and nowhere else.
-   - The "Finish the job first" checkbox is added only when the row offers a
-     reassignment at all, which is `_secondary_items().size() > 1` — outside a
-     Challenge that is always true, and inside one it becomes true when the
-     first alternative role is taught.
-   - When neither control is added and the "When idle" menu was also skipped,
-     the whole "If idle" row is not added, so no empty labelled row is left
-     behind.
-5. `_make_hatch_menu`'s `MenuButton` text gains a trailing ellipsis, matching
-   the tray's "Change to…". The popup entries keep their existing full
-   labels. Do not add a chevron glyph; the ellipsis is the convention this
-   codebase already has, and having one convention is the point.
-
-**Constraints and invariants.** No control gains a hard-coded pixel font
-size — the theme owns sizes. No new gating key, setter or signal: requirement
-4 uses `allowed_role_keys`, which
-`challenge_runner.gd::_apply_stage_gate_to_ui` already pushes. Outside a
-Challenge, `allowed_role_keys` is empty and every control in this slice stays
-visible, which is the existing convention stated in
-`_apply_cell_popup_gating`'s comment.
-
-**Existing patterns to reuse.** `_style_button` for styling, `_with_info` for
-the info dot, `allowed_role_keys` for Challenge gating,
-`SELECTION_FIELD_TABLE` and `_field_control` for summary label identity.
-
-**State-transition and cleanup behaviour.** The tray is rebuilt on every
-selection change, so requirement 4 needs no teardown. Requirement 3 runs
-inside `_apply_selection_field_visibility`, which is already called on every
-summary kind change, so a label hidden for a soil block reappears for a bee
-that has text for it.
-
-**Runtime policy.** Nothing here runs per frame.
-`_apply_selection_field_visibility` is called on selection and kind changes
-only; requirement 3 must not move it into `_process`.
-
-**Edge cases.** A mixed selection, where `_common_role` is -1 and
-`_current_role_marker` is never built. A queen selected in Challenge 1 at
-stage 1.16, where the plain-comb checkbox must appear for the first time. A
-soil selection where fewer blocks are reachable than selected, so the
-activity label *does* have text and must stay visible. A flower summary,
-where all four labels have text. The "Default" hatch entry, whose role is -1
-and which requirement 5 must leave alone because it is a plain `Button`, not
-a menu.
-
-**Automated acceptance checks.** Extend `tests/fixtures/layout_panels.json`
-with LAY-6 `control_rect` entries asserting that the star and the cog have
-equal heights, and a `no_collapsed_controls` pass over the summary panel with
-a soil block selected. A `panel_rect` assertion on the summary panel with a
-soil block selected, comparing its height against the one visible label plus
-the two buttons plus chrome, is what proves requirement 3 without a human.
-
-**Regression checks.** The existing `even_columns` and
-`no_collapsed_controls` entries must still pass — requirement 1 changes two
-controls' widths, which moves the column measurements HC-15 then makes equal.
-Re-run the Challenge 2 stage 2.2 headless scenario to confirm requirement 5
-did not change which hatch options exist, only how the control is labelled.
-
-**Save/load.** None of these five is persisted. `Session`'s saved UI
-preferences are read by requirement 3 and not written by it.
-
-**Completion and documentation updates.** Update this plan's glance table and
-Status line, archive this heading to `plans/archive/`, move C-34 from
-`checks/blocked.md` back to `checks/ready.md` keeping its id, and re-file
-C-18, C-32 and C-35's adjustment as one check covering all five requirements.
-
-**Escalate rather than guess if:** requirement 4's
-`_secondary_items().size() > 1` test turns out to hide the row outside a
-Challenge in any case — that would mean the role table, not the gating, is
-wrong, and it changes behaviour for every bee in open play.
 
 ## HC-15 — the tray's three columns take an equal third each
 

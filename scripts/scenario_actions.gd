@@ -18,7 +18,9 @@ extends RefCounted
 ## fires, so a repeat call only evaluates what's still pending -- actions
 ## are independent of each other (every unresolved one is checked every
 ## tick, in file order), not a strict sequence, so several can fire on
-## the same tick.
+## the same tick. The one exception is "settle" (see _do_settle): it is a
+## barrier, and nothing after it in the file runs until it has counted out
+## its ticks.
 
 const Settings = preload("res://scripts/settings_catalogue.gd")
 
@@ -29,6 +31,10 @@ const Settings = preload("res://scripts/settings_catalogue.gd")
 static func run_pending(main: Node2D, actions: Array) -> void:
 	for action in actions:
 		if action.get("_resolved", false):
+			continue
+		if action.get("do", "") == "settle":
+			if not _do_settle(action):
+				return
 			continue
 		if not _when_met(main, action.get("when", {})):
 			continue
@@ -51,6 +57,25 @@ static func log_unresolved(actions: Array) -> void:
 			continue
 		_log(action.get("do", ""), str(action), "never_fired", "run ended before its 'when' was met")
 
+
+## {"do": "settle", "ticks": n} -- the one action that is a sequence point,
+## and the only one that holds up the actions after it. Godot lays a
+## container out on the frame *after* its content changes, so a geometry
+## assertion in the same tick as the selection that changed it measures the
+## previous frame's rectangle. Every LAY-5/LAY-6 assertion in
+## layout_panels.json used to do exactly that and passed on the stale
+## number; HC-13 shrank one panel and the stale number stopped agreeing.
+## Put a settle between the action and the assertions that measure it.
+##
+## Returns whether the rest of this tick's actions may run.
+static func _do_settle(action: Dictionary) -> bool:
+	var remaining: int = int(action.get("ticks", 1))
+	if remaining > 0:
+		action["ticks"] = remaining - 1
+		return false
+	action["_resolved"] = true
+	_log("settle", str(action), "accepted", "")
+	return true
 
 static func _execute(main: Node2D, action: Dictionary) -> void:
 	match action.get("do", ""):
@@ -515,7 +540,8 @@ static func _do_viewport_size(main: Node2D, action: Dictionary) -> void:
 ## Returns whether the run should keep going, so run_pending can stop
 ## evaluating the rest of this tick's actions on failure. Dispatches on
 ## which key the condition dict carries: "panel"/"control"/"container"/
-## "root" each name one of the LAY-5/LAY-6 rectangle assertions below;
+## "root"/"no_empty_labels" each name one of the LAY-5/LAY-6 rectangle
+## assertions below;
 ## anything else falls back to the plain trigger checks _when_met already
 ## covers (day_at_least and friends), unchanged.
 static func _do_assert(main: Node2D, action: Dictionary) -> bool:
@@ -537,6 +563,8 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_even_columns(main, condition)
 	if condition.has("root"):
 		return _check_no_collapsed_controls(main, condition)
+	if condition.has("no_empty_labels"):
+		return _check_no_empty_labels(main, condition)
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met"}
@@ -584,10 +612,17 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 			return null
 
 ## LAY-6 change 1: {"control": "<path>", "min_size": [w, h], "inside":
-## "<path>"}. An invisible control passes silently -- see the plan's own
-## reasoning: visibility is what _rebuild_role_controls legitimately
-## toggles, so asserting on a hidden control would make every fixture a
-## list of which columns happen to be shown this tick.
+## "<path>", "same_height_as": "<path>"}. An invisible control passes
+## silently -- see the plan's own reasoning: visibility is what
+## _rebuild_role_controls legitimately toggles, so asserting on a hidden
+## control would make every fixture a list of which columns happen to be
+## shown this tick.
+##
+## "same_height_as" (HC-13) is the one thing a per-control minimum cannot
+## say: that two neighbouring controls are the same height as each other.
+## The summary panel's star and cog each took the height its own glyph's
+## font metrics asked for, which no absolute pixel expectation would catch
+## without also breaking every time the theme's font changed.
 static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary:
 	var path: String = condition.get("control", "")
 	var node: Node = _resolve_scoped_path(main, path)
@@ -609,6 +644,17 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		var ancestor_rect: Rect2 = (inside_node as Control).get_global_rect()
 		if not ancestor_rect.encloses(rect):
 			return {"ok": false, "reason": "control '%s' rect %s is not inside '%s' rect %s" % [path, rect, inside_path, ancestor_rect]}
+	if condition.has("same_height_as"):
+		var peer_path: String = condition["same_height_as"]
+		var peer_node: Node = _resolve_scoped_path(main, peer_path)
+		if peer_node == null or not (peer_node is Control):
+			return {"ok": false, "reason": "control '%s' height-peer '%s' not found" % [path, peer_path]}
+		var peer: Control = peer_node as Control
+		if not peer.is_visible_in_tree():
+			return {"ok": false, "reason": "control '%s' height-peer '%s' is not visible" % [path, peer_path]}
+		var peer_height: float = peer.get_global_rect().size.y
+		if absf(rect.size.y - peer_height) > 1.0:
+			return {"ok": false, "reason": "control '%s' is %.1fpx tall but '%s' is %.1fpx" % [path, rect.size.y, peer_path, peer_height]}
 	return {"ok": true, "reason": ""}
 
 ## LAY-6 change 2: {"container": "<path>", "children": n, "tolerance": px}.
@@ -666,6 +712,29 @@ static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) ->
 	if not collapsed.is_empty():
 		return {"ok": false, "reason": "collapsed controls under '%s': %s" % [path, collapsed]}
 	return {"ok": true, "reason": ""}
+
+## HC-13: {"no_empty_labels": "<path>"}. Fails on any visible Label under
+## root whose text is empty. An empty Godot Label still reports a full line
+## of font height as its minimum, so three of them are a band of dead space
+## the player sees and no rectangle assertion names -- and stating the
+## defect directly beats an absolute panel height that would have to be
+## re-measured every time the theme's font changed.
+static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary:
+	var path: String = condition.get("no_empty_labels", "")
+	var node: Node = _resolve_scoped_path(main, path)
+	if node == null:
+		return {"ok": false, "reason": "no_empty_labels root '%s' not found" % path}
+	var empties: Array = []
+	_collect_empty_labels(node, empties)
+	if not empties.is_empty():
+		return {"ok": false, "reason": "visible labels with no text under '%s': %s" % [path, empties]}
+	return {"ok": true, "reason": ""}
+
+static func _collect_empty_labels(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		if child is Label and (child as Control).is_visible_in_tree() and (child as Label).text.strip_edges() == "":
+			out.append(String(child.get_path()))
+		_collect_empty_labels(child, out)
 
 static func _collect_collapsed_controls(node: Node, out: Array) -> void:
 	for child in node.get_children():

@@ -18,9 +18,9 @@ Every remaining fault in that pass has been traced to the line, so nothing
 below is a guess:
 
 1. Two tray controls, the summary panel's star, three empty summary labels
-   and two Challenge-1 checkboxes are each one small, confirmed fault in
-   `scripts/hud.gd`. Together they are HC-13, and HC-13 is also what unblocks
-   C-34 -- the cell popup's "Raises:" menus never say they are menus.
+   and two Challenge-1 checkboxes were each one small fault in
+   `scripts/hud.gd`. That was HC-13, which landed on 10 Sep 2026 as C-37 and
+   released C-34 back into `checks/ready.md`.
 2. The queen's nectar is destroyed whenever Challenge 1's comb is full.
    `challenge_runner.gd::discards_overflow` carries the stage restriction in
    its comment and not in its code, so a rule meant for the pollen stage
@@ -47,19 +47,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
    - Next after: C1-21 (the queen forages pollen without being pushed)
 
-2. **[Claude] HC-13 -- the tray and summary panel's controls match their neighbours.**
-   Five confirmed faults in `scripts/hud.gd`: two tray controls that render
-   2px larger than the rest, a Favourite star shorter than the cog beside it,
-   three empty summary labels that keep their line height, two Challenge-1
-   checkboxes shown before they are taught, and a "Raises:" menu with nothing
-   saying a menu opens from it.
-   - Plan: `plans/now/hud-controls.md` -- "HC-13 — the tray and summary panel's controls match their neighbours"
-   - Files: `scripts/hud.gd`, `tests/fixtures/layout_panels.json`
-   - Check: one check covering all five requirements; move C-34 back to `checks/ready.md` with its id
-   - Proof: `absent: scripts/hud.gd :: SUMMARY_HEADER_BUTTON_SIZE`
-   - Next after: HC-15 (the tray's three columns take an equal third each)
-
-3. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
+2. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
    LAY-6 measured the Job/Focus/Orders wrappers at 170/100/127px. Divide the
    tray's inner width into three equal parts and tighten `even_columns` from
    its 80px tolerance to 2px so it cannot drift back.
@@ -69,7 +57,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/hud.gd :: _tray_column_share`
    - Next after: HC-14 (Dr Gallerin's bubble is given its rectangle like every other panel)
 
-4. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
+3. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
    Route the bubble through `ui_layout.gd::gallerin_rect()` and
    `ui_panel_layout.gd::apply()`, so all three bottom-row panels get their
    horizontal edges from one owner and an assertion can prove the two gaps
@@ -79,6 +67,17 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Check: one check on the two bottom-row gaps at two viewport sizes
    - Proof: `absent: scripts/gallerin_panel.gd :: UiPanelLayout`
    - Next after: HC-5 (Dr Gallerin's bubble types its line out)
+
+4. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
+   The pre-run menu's tiles size their text from the theme and their label box
+   from a fixed constant, so the longest Challenge title paints outside its
+   hexagon. Clip the label, make the title fit at every text scale, and drop
+   the punctuation after the Challenge and Scenario numbers.
+   - Plan: `plans/now/ui.md` -- "UI-M-2 — a hexagon's title fits inside it, at every text size"
+   - Files: `scripts/main_menu.gd`, `tests/fixtures/layout_panels.json`
+   - Check: one check on the longest title at the largest text scale, plus the new title punctuation
+   - Proof: `absent: scripts/main_menu.gd :: clip_text`
+   - Next after: UI-P-5 (the pre-run menu's placeholder text is missing)
 
 ## Not in the queue, and why
 
@@ -98,15 +97,11 @@ Each of these wants something from Dave, or something else to ship first.
   content until `More…` is toggled. Dave's 10 Sep report made this
   reproducible from the headless runner rather than by hand, so its own
   measurement step is now the implementer's to take. It is out of the queue
-  only because it shares `scripts/hud.gd` with HC-13 and HC-15, which are
-  ahead of it in the same lane.
+  only because it shares `scripts/hud.gd` with HC-15, which is ahead of it in
+  the same lane.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- Dr Gallerin's bubble
   types its line out, and pages back through her history. Both edit
   `scripts/gallerin_panel.gd`, which HC-14 holds until it lands.
-- **UI-M-2** (`plans/now/ui.md`) -- the pre-run menu's hexagon titles spill
-  outside their tiles, plus Dave's request to drop the punctuation after the
-  Challenge and Scenario numbers. Fully specified and startable on its
-  merits; it is out only because the Claude lane already holds three items.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
