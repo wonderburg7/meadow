@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C1-25` (`codex/C1-25`) | Codex | the queen's harvest is never thrown away without her being told. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 25 — the queen's harvest is never thrown away without her being told" |
+| `.worktrees/HC-5` (`claude/HC-5`) | Claude | Dr Gallerin's bubble types its line out. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-5 — Dr Gallerin's bubble types its line out" |
