@@ -17,7 +17,7 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-30 -- the new stage makes you designate a cell for pollen before it starts](ready/C-30.md)
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
 - [C-32 -- the soil panel's two buttons are full width and labelled](ready/C-32.md)
-- [C-38 -- Dr Gallerin's bubble types its line out](ready/C-38.md)
 - [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-37 -- every control in the tray and the summary panel matches its neighbours](ready/C-37.md)
+- [C-38 -- Dr Gallerin's bubble types its line out](ready/C-38.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
