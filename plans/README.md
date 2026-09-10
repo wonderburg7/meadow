@@ -10,7 +10,7 @@ remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md` only. It holds two to five ready slices in a
+1. Read `NEXTSTEPS.md` only. It holds three to five ready slices in a
    `[Claude]` lane and a `[Codex]` lane; take the first unclaimed item in
    your own lane.
 2. Open the `Plan:` file/heading that item names with a targeted search. Read
@@ -30,7 +30,7 @@ Do not load this entire directory, `plans/archive/`, `ROADMAP.md`,
 | Location | Purpose | Routine loading |
 | --- | --- | --- |
 | `plans/now/` | An executable current/successor slice. One file per active area. | Only when `NEXTSTEPS.md` points here. |
-| `plans/active/` | A live validation or evidence campaign that is not necessarily next. | Only for that campaign. |
+| `plans/active/` | A live validation or evidence campaign that is not necessarily next. Empty today. | Only for that campaign. |
 | `plans/design/` | Agreed, unscheduled product design. | Only after that product direction is selected. |
 | `plans/reference/` | Durable technical contracts and reopening criteria. | Only for the matching kind of change. |
 | `plans/archive/` | Completed, superseded, and detailed execution records. | Never for orientation; search for provenance only. |
@@ -95,7 +95,7 @@ the archived plan is never reopened or extended.
 | --- | --- |
 | UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
-| Challenge 2 rescue and recovery messages | `plans/now/challenge-2.md` |
+| Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
@@ -116,7 +116,10 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 <!-- LAYER: dependency-order -->
 
 1. Settings live in `scripts/settings_catalogue.gd`, not in the settings
-   window. C1 moved them there on 1 Sep 2026; `debug_panel.gd` is now a view
+   window. The settings-catalogue slice moved them there on 1 Sep 2026
+   (`plans/archive/SETTINGS_CATALOGUE_2026-09-01.md`; that slice was also
+   called C1, and is not the architecture review's C1). `debug_panel.gd` is
+   now a view
    of that catalogue, and a new setting is added to the catalogue file.
 2. Add no counter-free evidence slice. X1 exists because the forager-return
    check could not be answered at all without a counter; X2 reads the same

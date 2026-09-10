@@ -1,26 +1,25 @@
 # Meadow roadmap
 
 Status: active product overview | Owner: Dave | Next: select from
-`NEXTSTEPS.md` or one linked plan | Verified: 2026-09-03
+`NEXTSTEPS.md` or one linked plan | Verified: 2026-09-11
 
-This is a concise map of unbuilt product directions. It does not duplicate
-completion state, detailed slice specifications or the canonical queue. The
-22 Aug snapshot is at `docs/archive/ROADMAP_2026-08-22.md`.
+This file owns one thing: the product directions that have **no plan yet**.
+The 22 Aug snapshot is at `docs/archive/ROADMAP_2026-08-22.md`.
 
-## Ready when selected
+## Directions that already have a plan
 
-This table is product direction only. For what is *startable*, read
-`NEXTSTEPS.md`; for which plan owns a given change, read `plans/README.md`'s
-routing table. Neither is repeated here.
+Not listed here. A third copy of that table lived here until 11 Sep 2026,
+still routing flower season to a plan that had been archived. These own it
+instead:
 
-| Direction | Source |
-| --- | --- |
-| UI integrity and accessibility | `plans/now/ui.md` |
-| Challenge 1 revamp, then Challenge 2 | `plans/now/challenge-1.md`, `plans/now/challenge-2.md` |
-| Flower season and senescence | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
-| Skills and colony adaptations | `plans/design/progression.md` |
+- `NEXTSTEPS.md` — what is startable right now, in two lanes.
+- `DESIGN_BACKLOG.md` — every design area and the plan that owns it.
+- `plans/README.md` — which plan a queue id belongs to.
 
 ## Later, requiring a new design or evidence pass
+
+Nothing below has an owning plan. Each needs a design or evidence pass before
+it can become one.
 
 - winter and wider seasonal pressure;
 - sprites with a measured procedural fallback;

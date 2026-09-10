@@ -1,7 +1,7 @@
 # Technical audit — current contracts
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
-Status: reference | Owner: Dave / Claude Code | Next: measure before any new hot-path work | Dependency: a named measured bottleneck | Verified: 2026-09-01
+Status: reference | Owner: Dave / Claude Code | Next: measure before any new hot-path work | Dependency: a named measured bottleneck | Verified: 2026-09-11
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at
@@ -27,8 +27,7 @@ specific bottleneck and the smallest path is written as a new, focused slice.
 
 ## Feature availability is split across five owners (26 Aug 2026 review)
 
-Recorded here as a decision-gated consolidation, not scheduled work. Whether
-a feature is available today is decided in five places: `GameConfig`,
+Whether a feature is available today is decided in five places: `GameConfig`,
 `prerequisites.gd`, level flags, `stage_gate.gd`, and Challenge/UI filtering.
 Roles additionally mirror their persisted integer IDs across `roles.gd` and
 `bee_enums.gd` -- that one is deliberate and stays.
@@ -37,15 +36,15 @@ Roles additionally mirror their persisted integer IDs across `roles.gd` and
 the same rule in several of those places, and a rule added to only four of
 the five is invisible until a player finds it.
 
-**If it is ever taken on, it is two slices, in this order.** First a
-non-visual availability query that the five owners call, so gating never
-depends on a UI filter. Then a small resource catalogue. Both keep the
-existing stable string keys, and the catalogue slice lands save-migration
-coverage *before* any schema change (`.claude/rules/saving.md`).
+**Consolidating it is no longer this file's work.** Until 11 Sep 2026 this
+section prescribed two slices of its own -- an availability query, then a
+resource catalogue -- and said neither was startable without Dave's call.
+`plans/design/architecture-review.md` has since specified exactly that work,
+with the ownership decisions taken: B1 is the cell-content catalogue, C1 the
+conditions evaluator that replaces the three condition vocabularies, and F2s
+the declarative gate table that replaces the bespoke stage-gated UI setters.
+Read those slices. Do not open a second version of them from here.
 
-**Not startable as written.** It changes an ownership boundary, so it needs
-Dave's call first, and it is worth doing only alongside a feature that would
-otherwise add a sixth owner. Do not open it as a tidy-up.
 
 ## Forager-history save design (28 Aug 2026)
 
@@ -79,14 +78,21 @@ gameplay effect.
 
 No further forager-history work is planned; this closes the backlog item.
 
-## Measurement-gated hot-path candidates (1 Sep 2026 architecture review)
+## Measurement-gated hot-path candidates (1 Sep 2026 review)
 
-Recorded here, not scheduled, and deliberately subject to the "profile before
+Not to be confused with `plans/design/architecture-review.md`, which is the
+10 Sep 2026 review and holds scheduled slices. These two are recorded here,
+not scheduled, and deliberately subject to the "profile before
 changing a hot path" contract above. Each names the instrumentation step that
 would turn it from a plausible improvement into a measured one. Neither is a
 reason to open a slice on its own.
 
 ### A. `hive.gd`'s `find_*` functions bypass the content index that already exists
+
+**Not covered by the architecture review, deliberately.** That review's A3
+caches the `total()` family and B2 builds the bucket dictionary from the
+catalogue; neither touches the `find_*` functions below. Do A3 and B2 first --
+they are specified and cheap -- and only then measure this.
 
 `_content_index()` maintains epoch-invalidated buckets keyed
 `"" / nectar / pollen / honey / jelly / brood / corpse / unbuilt / ripe_honey`,
@@ -122,10 +128,16 @@ visible folded into `bee_state_nurse`/`bee_state_forager`. Add a
 only act if the section is non-trivial. Determinism and save format are
 unaffected either way.
 
-### B. The 1 Hz colony refresh walks the same sets three to five times
+### B. The 1 Hz colony refresh walks the same sets more than once
+
+**Mostly owned elsewhere now.** `plans/design/architecture-review.md`'s A2
+makes `ColonyDiagnostics.compute` take role counts as a parameter instead of
+walking the bee group itself, which removes the largest duplicate in this call
+tree. Do A2 first; what follows is only the residue A2 leaves behind, and it is
+not worth a slice on its own.
 
 In one tick of `year_winter.gd::_refresh_signals`,
-`get_nodes_in_group("bees")` is called there, then again in `_winter_forecast`
+`get_nodes_in_group("bees")` is called there and again in `_winter_forecast`
 (reached via `_refresh_panels` -> `_refresh_winter`); `season.gd`'s own 1 Hz
 tick queries it once or twice more. `cells_holding("")` is walked in
 `_refresh_signals` (`free_cells`) and again in `_refresh_panels`
@@ -143,6 +155,7 @@ an epoch cache over the bee group. `main._role_counts()` already demonstrates
 the epoch-cache pattern if a larger version is ever wanted, and `hive.gd`'s
 `invalidate_index()` comment records why polling an epoch was chosen over a
 Godot signal in the first place.
+
 
 ### Not a case for ECS
 
