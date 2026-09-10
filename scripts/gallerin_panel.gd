@@ -55,6 +55,19 @@ var _last_text_scale: float = 1.0
 var _typing_target: String = ""
 var _typed_characters: float = 0.0
 
+# --- history paging (HC-6) --------------------------------------------
+## Every line shown so far, oldest first, capped at 50 entries so a long
+## run cannot grow it without bound -- see _push_history().
+var _history: Array[String] = []
+## Index into _history of the entry currently on screen. -1 means nothing
+## has been shown yet. Sits at _history.size() - 1 (the newest entry)
+## except while the player is paging back with ◀ -- see _process()'s
+## _fire_due_prompts() guard, which is what holds the queue while that's
+## true.
+var _history_index: int = -1
+var _history_back_btn: Button
+var _history_forward_btn: Button
+
 # --- prompt scheduling ----------------------------------------------
 ## Each queued entry: {"id": String, "text": String, "delay": float,
 ## "repeatable": bool}. `delay` is seconds since the current sub-stage's
@@ -81,7 +94,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_stage_elapsed += delta
-	_fire_due_prompts()
+	# The queue keeps accumulating while the player is paged back to an
+	# older entry (HC-6) -- a prompt that comes due is shown the moment
+	# they return to the newest one, rather than snatching the bubble away
+	# from what they're reading.
+	if _history_index == _history.size() - 1:
+		_fire_due_prompts()
 	if Session.text_scale != _last_text_scale:
 		_last_text_scale = Session.text_scale
 		_apply_bubble_font_size()
@@ -204,6 +222,22 @@ func _build_bubble() -> void:
 	row.add_theme_constant_override("separation", 8)
 	column.add_child(row)
 
+	_history_back_btn = Button.new()
+	_history_back_btn.text = "◀"
+	_history_back_btn.tooltip_text = "See what Dr Gallerin said before this."
+	_history_back_btn.disabled = true
+	_history_back_btn.pressed.connect(_on_history_back_pressed)
+	_style_button(_history_back_btn)
+	row.add_child(_history_back_btn)
+
+	_history_forward_btn = Button.new()
+	_history_forward_btn.text = "▶"
+	_history_forward_btn.tooltip_text = "Step forward toward the newest line."
+	_history_forward_btn.disabled = true
+	_history_forward_btn.pressed.connect(_on_history_forward_pressed)
+	_style_button(_history_forward_btn)
+	row.add_child(_history_forward_btn)
+
 	var dismiss_btn := Button.new()
 	dismiss_btn.text = "Dismiss"
 	dismiss_btn.pressed.connect(func(): bubble.visible = false)
@@ -213,6 +247,12 @@ func _build_bubble() -> void:
 	disable_btn.text = "Turn off Dr Gallerin"
 	disable_btn.pressed.connect(_on_disable_pressed)
 	row.add_child(disable_btn)
+
+## The five states a plain Godot Button actually looks up -- see
+## debug_panel.gd's identical helper.
+func _style_button(button: BaseButton) -> void:
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 
 ## ui_layout.gd already preloads this script (to read BUBBLE_WIDTH), so
 ## this side uses a runtime load() rather than a top-level preload const
@@ -270,6 +310,50 @@ func _on_disable_pressed() -> void:
 	Session.gallerin_enabled = false
 	visible = false
 
+func _on_history_back_pressed() -> void:
+	if _history_index <= 0:
+		return
+	_history_index -= 1
+	_show_history_entry(_history_index)
+
+func _on_history_forward_pressed() -> void:
+	if _history_index >= _history.size() - 1:
+		return
+	_history_index += 1
+	_show_history_entry(_history_index)
+
+## Shows one already-recorded line in full, never typed out (HC-6's
+## acceptance: "a history entry is shown in full, not typed out"), and
+## without touching _history itself.
+func _show_history_entry(index: int) -> void:
+	var text: String = _history[index]
+	_bubble_label.text = text
+	_typing_target = text
+	_typed_characters = text.length()
+	_bubble_label.visible_characters = -1
+	bubble.visible = true
+	_apply_layout()
+	_update_history_buttons()
+
+## Records a newly-shown line for ◀/▶ paging, skipping an exact repeat of
+## the last entry so redisplaying the same message (e.g. the icon click
+## re-showing _last_message) doesn't duplicate it. Caps at 50 entries,
+## dropping the oldest, so a long run cannot grow the array without bound.
+func _push_history(text: String) -> void:
+	if _history.is_empty() or _history[-1] != text:
+		_history.append(text)
+		if _history.size() > 50:
+			_history.pop_front()
+	_history_index = _history.size() - 1
+
+## Disables ◀ on the oldest entry and ▶ on the newest, so the ends are
+## visible rather than silent (HC-6's acceptance).
+func _update_history_buttons() -> void:
+	if _history_back_btn == null:
+		return
+	_history_back_btn.disabled = _history_index <= 0
+	_history_forward_btn.disabled = _history_index >= _history.size() - 1
+
 # --- prompt scheduling ------------------------------------------------
 
 ## Called at the start of a sub-stage with its prompt list -- typically a
@@ -316,6 +400,8 @@ func _show_bubble(text: String) -> void:
 	# leaving it half-revealed underneath the line that replaces it.
 	_finish_typing()
 	_last_message = text
+	_push_history(text)
+	_update_history_buttons()
 	# The label always holds the whole line so the bubble is laid out (and
 	# sized by _apply_layout() below) at its final size from the first
 	# frame -- visible_characters clips what's drawn without re-running

@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-6, Dr Gallerin's bubble can be paged back through | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: None startable -- HC-8 still wants its own measurement pass before a fix is specified | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -42,10 +42,9 @@ for saved UI preferences.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
-| HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
 HC-8 still wants the measurement its own heading describes; it is the only
-slice here whose cause is not yet confirmed.
+slice open here, and its cause is not yet confirmed.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
@@ -57,11 +56,14 @@ did not survive contact with 800x600, see that file), HC-14 (10 Sep 2026,
 `plans/archive/HC-14_2026-09-10.md` -- the bubble's rectangle now comes from
 `ui_layout.gd`/`ui_panel_layout.gd` like every other panel; wrapping the
 button row needed a `ScrollContainer`, not just an `HFlowContainer`, see that
-file), and HC-5 (10 Sep 2026, `plans/archive/HC-5_2026-09-10.md` -- the
+file), HC-5 (10 Sep 2026, `plans/archive/HC-5_2026-09-10.md` -- the
 bubble types its line via `visible_characters`, laid out at final size from
 the first frame, on unscaled time so 4x game speed does not speed up the
-typing, and finishing instantly on click or a new prompt). Open those for
-provenance, never to work out what to do.
+typing, and finishing instantly on click or a new prompt), and HC-6 (10 Sep
+2026, `plans/archive/HC-6_2026-09-10.md` -- `◀`/`▶` page back through up to
+50 previous lines, shown in full rather than typed, holding the scheduler's
+queue while an older line is on screen). Open those for provenance, never to
+work out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
@@ -174,39 +176,5 @@ re-file C-18 unchanged.
 `ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
 That file sizes every persistent panel, so a change there is a high slice.
 
-## HC-6 — Dr Gallerin's bubble can be paged back through
-
-**Reasoning level: medium.** New state, and it must not fight the scheduler.
-
-**What Dave asked (9 Sep 2026).** "Add a feature so there's arrows in Dr G's
-speech bubble you can cycle through what he's previously said."
-
-**Deliver, in `scripts/gallerin_panel.gd`.**
-
-- Add `var _history: Array[String] = []` and `var _history_index: int = -1`.
-  `_show_bubble()` appends its text to `_history` (skipping an exact repeat
-  of the last entry) and points `_history_index` at the newest entry. Cap the
-  array at 50 entries, dropping the oldest, so a long run cannot grow it
-  without bound.
-- Add a `◀` and a `▶` button to the button row built at the end of
-  `_build_bubble()` (`:160`), to the **left** of Dismiss so the two existing
-  buttons keep their places. Style both with the same
-  `UiTheme.button_stylebox()` overrides the panel's other buttons use.
-- `◀` steps `_history_index` back one and shows that entry; `▶` steps
-  forward. Disable `◀` on the oldest entry and `▶` on the newest, so the ends
-  are visible rather than silent.
-- While the player is looking at anything but the newest entry, the bubble is
-  **held**: guard the `_fire_due_prompts()` call in `_process` with
-  `_history_index == _history.size() - 1`. The queue keeps accumulating, so
-  nothing is lost — a prompt that came due is shown the moment the player
-  returns to the newest entry.
-- A history entry is shown in full, not typed out. Only a genuinely new line
-  types (HC-5).
-
-**Acceptance.** After several prompts, `◀` steps back through them one at a
-time and `▶` returns. The arrow at each end is disabled, not silent. A prompt
-falling due while the player is reading an older line does not snatch the
-bubble, and appears once they return to the newest line.
-
-**Check to file:** one check covering the paging, the disabled ends and the
-held-prompt case.
+HC-6 (paging back through Dr Gallerin's history) shipped 10 Sep 2026; spec
+archived at `plans/archive/HC-6_2026-09-10.md`.
