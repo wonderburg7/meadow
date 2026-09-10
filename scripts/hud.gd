@@ -396,11 +396,18 @@ var command_scroll: ScrollContainer
 ## _resize_command_tray measures this instead -- see _build_command_tray.
 var command_content: VBoxContainer
 var command_columns: Container
+## The wrapper itself stays visible always, so a hidden column still claims
+## its GridContainer slot -- see _tray_column_share and the header/content
+## pair below, which are what actually hide when a column has nothing to
+## show for the current selection.
 var job_column_wrapper: VBoxContainer
+var job_column_header: Label
 var job_column: VBoxContainer
 var focus_column_wrapper: VBoxContainer
+var focus_column_header: Label
 var focus_column: VBoxContainer
 var orders_column_wrapper: VBoxContainer
+var orders_column_header: Label
 var orders_column: VBoxContainer
 var more_button: Button
 var more_panel: VBoxContainer
@@ -1195,9 +1202,14 @@ func _build_command_tray() -> void:
 	# whole tray growing wider than its cap (see _update_command_tray_width),
 	# which is still what lets the bottom row grow taller, not wider, at
 	# high text scale (UI_PLAN.md section 2's bottom-row rule).
-	# Let whole Job/Focus/Orders groups move onto another row when a narrow
-	# viewport cannot accommodate all three.  A fixed HBox would preserve its
-	# children's combined minimum width and spill into the summary panel.
+	# Still an HFlowContainer, not a GridContainer: at 800x600 a single
+	# column's own content (the "Change to…" menu plus its role marker) is
+	# wider than a genuine third, and a GridContainer's fixed column count
+	# has no way to relieve that except by pushing the whole tray wider
+	# than its cap. HFlowContainer's wrap-to-a-new-row is still what keeps
+	# that case bounded; _tray_column_share below now applies unconditionally
+	# instead of only when it happens to be wide enough (Dave, 10 Sep 2026:
+	# pixel-equal columns whenever three actually fit on the row).
 	command_columns = HFlowContainer.new()
 	command_columns.name = "command_columns"
 	command_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
@@ -1205,12 +1217,15 @@ func _build_command_tray() -> void:
 
 	var job_group := _build_tray_column("Job")
 	job_column_wrapper = job_group[0]
+	job_column_header = job_group[2]
 	job_column = job_group[1]
 	var focus_group := _build_tray_column("Focus")
 	focus_column_wrapper = focus_group[0]
+	focus_column_header = focus_group[2]
 	focus_column = focus_group[1]
 	var orders_group := _build_tray_column("Orders")
 	orders_column_wrapper = orders_group[0]
+	orders_column_header = orders_group[2]
 	orders_column = orders_group[1]
 
 	more_button = Button.new()
@@ -1238,10 +1253,12 @@ func _build_command_tray() -> void:
 	_build_cell_group(column)
 
 ## One of the command tray's three ranked columns: a small header label
-## plus the content VBox rows get added to. Returns [wrapper, content] --
-## the wrapper is what _rebuild_role_controls shows/hides depending on
-## whether the column has anything to say for the current selection, so
-## an empty column doesn't sit there as a blank gap.
+## plus the content VBox rows get added to. Returns [wrapper, content,
+## header] -- _rebuild_role_controls shows/hides the header and content,
+## not the wrapper, depending on whether the column has anything to say for
+## the current selection, so a hidden column still holds its GridContainer
+## slot (Dave, 10 Sep 2026: pixel-equal columns, unconditionally) rather
+## than handing its third to its neighbours.
 func _build_tray_column(title: String) -> Array:
 	# Named to match the job_column_wrapper/job_column field pair the
 	# caller assigns this pair's return into (same for focus/orders), so
@@ -1267,7 +1284,7 @@ func _build_tray_column(title: String) -> Array:
 	content.add_theme_constant_override("separation", 3)
 	wrapper.add_child(content)
 
-	return [wrapper, content]
+	return [wrapper, content, header]
 
 # --- cell popup ---------------------------------------------------
 
@@ -2358,9 +2375,20 @@ func _rebuild_role_controls(bees: Array) -> void:
 	_build_job_row(common_role, any_queen)
 	_build_fallback_row(common_role, first)
 
-	job_column_wrapper.visible = job_column.get_child_count() > 0
-	focus_column_wrapper.visible = focus_column.get_child_count() > 0
-	orders_column_wrapper.visible = orders_column.get_child_count() > 0
+	# The wrapper itself stays visible (see job_column_wrapper's field
+	# comment) so it keeps its GridContainer slot; only the header and
+	# content are hidden when the column has nothing to show for the
+	# current selection, so a soil block (Orders only) doesn't make the
+	# columns hop sideways the moment a bee is picked instead.
+	var job_has_content: bool = job_column.get_child_count() > 0
+	job_column_header.visible = job_has_content
+	job_column.visible = job_has_content
+	var focus_has_content: bool = focus_column.get_child_count() > 0
+	focus_column_header.visible = focus_has_content
+	focus_column.visible = focus_has_content
+	var orders_has_content: bool = orders_column.get_child_count() > 0
+	orders_column_header.visible = orders_has_content
+	orders_column.visible = orders_has_content
 	more_button.visible = more_panel.get_child_count() > 0
 	more_button.button_pressed = more_button.visible and more_panel_open
 	more_panel.visible = more_button.button_pressed
@@ -2898,15 +2926,26 @@ func _match_summary_header_button_heights() -> void:
 	favourite_star_btn.custom_minimum_size.y = tallest
 	selection_cog_btn.custom_minimum_size.y = tallest
 
+## The one statement of what the command tray's Job/Focus/Orders columns
+## should each measure: a flat third of the inner width, less this column's
+## share of the two separations between them. Both _update_command_tray_width
+## and tests/fixtures/layout_panels.json's 2px even_columns tolerance are
+## checking this same number, so they cannot drift apart the way the old
+## 80px tolerance let them (Dave, 10 Sep 2026: pixel-equal columns,
+## unconditionally -- no "only when they fit" fallback).
+func _tray_column_share(inner_width: float) -> float:
+	return floor((inner_width - 2.0 * TRAY_COLUMN_SEPARATION) / 3.0)
+
 ## Splits `inner` evenly across `wrappers` with a TRAY_COLUMN_SEPARATION gap
-## between each, but only when that even width is wide enough for the
-## widest wrapper's own content -- otherwise every wrapper's minimum width
-## is cleared and the HFlowContainer wraps onto more rows as it does at a
-## narrow viewport, instead of clipping the widest column's content.
+## between each. Used for the cell popup's action columns, whose count
+## varies with what the selected cell shows; the command tray's own
+## fixed three-way split reads _tray_column_share directly instead (see
+## _update_command_tray_width) because it is never asked to divide by
+## anything but three.
 func _apply_even_column_widths(wrappers: Array) -> void:
-	# A hidden wrapper (an empty Focus or Orders column) must not claim a
-	# share of the width it never draws into, or the visible columns are
-	# left narrower than the space they actually have.
+	# A hidden wrapper (an empty cell-popup column) must not claim a share
+	# of the width it never draws into, or the visible columns are left
+	# narrower than the space they actually have.
 	var visible_wrappers := wrappers.filter(func(w): return w.visible)
 	if visible_wrappers.is_empty():
 		return
@@ -2915,23 +2954,22 @@ func _apply_even_column_widths(wrappers: Array) -> void:
 	# split and the scroll budget cannot disagree by two border widths.
 	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - UiLayout.panel_chrome().x
 	var count := visible_wrappers.size()
-	var even: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
-	var widest := 100.0
-	for wrapper in visible_wrappers:
-		widest = maxf(widest, wrapper.get_combined_minimum_size().x)
-	var width: float = even if even >= widest else 0.0
+	var width: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
 	for wrapper in visible_wrappers:
 		wrapper.custom_minimum_size.x = width
 
 ## The command tray is centred at half the viewport until its two side bands
 ## reach their minimum widths. The summary panel and Gallerin bubble derive
 ## their widths from that same edge, preserving their shared 16px gaps.
-## Job/Focus/Orders (and, when a cell is selected, the cell action columns)
-## divide the tray's inner width evenly between themselves via
-## _apply_even_column_widths, rather than growing to fill it the way
-## SIZE_EXPAND_FILL implies -- HFlowContainer ignores expand flags and lays
-## children out at their minimum size, which is what left them bunched
-## against the tray's left edge (Dave, C-18, 9 Sep 2026).
+## Job/Focus/Orders divide the tray's inner width into three equal thirds via
+## _tray_column_share, every wrapper's minimum set to the same number so the
+## GridContainer's SIZE_EXPAND_FILL wrappers render at that width rather than
+## each other's natural content size (which is what LAY-6 measured as
+## 170/100/127px, Dave, C-18, 9 Sep 2026). The wrapper's own visibility is
+## never toggled -- _rebuild_role_controls hides its header/content instead
+## -- so an empty column still holds its GridContainer slot and its third
+## of the width, rather than the remaining columns shifting sideways as the
+## selection changes.
 func _update_command_tray_width() -> void:
 	if command_tray == null or not command_tray.visible:
 		return
@@ -2940,7 +2978,10 @@ func _update_command_tray_width() -> void:
 	# viewport resize; ui_panel_layout.gd::apply() owns the width itself.
 	command_tray.offset_left = UiLayout.command_tray_left_edge(viewport_width)
 	command_columns.custom_minimum_size.x = 0.0
-	_apply_even_column_widths([job_column_wrapper, focus_column_wrapper, orders_column_wrapper])
+	var inner: float = UiLayout.command_tray_width(viewport_width) - UiLayout.panel_chrome().x
+	var column_width: float = _tray_column_share(inner)
+	for wrapper in [job_column_wrapper, focus_column_wrapper, orders_column_wrapper]:
+		wrapper.custom_minimum_size.x = column_width
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = 0.0
 		_apply_even_column_widths(cell_primary_columns.get_children())

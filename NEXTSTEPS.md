@@ -32,8 +32,11 @@ below is a guess:
    gap to the tray is not the shared one. That is HC-14.
 
 Dave answered two questions in the same session. Pixel-equal tray columns:
-yes, unconditionally, which is HC-15. Soil-button labels wrapping at a small
-viewport: not a fault, and C-32 keeps its stated pass condition.
+yes, unconditionally, which landed on 10 Sep 2026 as HC-15 (whenever three
+columns genuinely fit on the row -- see `plans/archive/HC-15_2026-09-10.md`
+for why the specified `GridContainer` swap did not survive 800x600). Soil-
+button labels wrapping at a small viewport: not a fault, and C-32 keeps its
+stated pass condition.
 
 ## Next up
 
@@ -47,17 +50,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
    - Next after: C1-21 (the queen forages pollen without being pushed)
 
-2. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
-   LAY-6 measured the Job/Focus/Orders wrappers at 170/100/127px. Divide the
-   tray's inner width into three equal parts and tighten `even_columns` from
-   its 80px tolerance to 2px so it cannot drift back.
-   - Plan: `plans/now/hud-controls.md` -- "HC-15 — the tray's three columns take an equal third each"
-   - Files: `scripts/hud.gd`, `tests/fixtures/layout_panels.json`
-   - Check: re-file C-18 unchanged; this answers the last of its conditions
-   - Proof: `absent: scripts/hud.gd :: _tray_column_share`
-   - Next after: HC-14 (Dr Gallerin's bubble is given its rectangle like every other panel)
-
-3. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
+2. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
    Route the bubble through `ui_layout.gd::gallerin_rect()` and
    `ui_panel_layout.gd::apply()`, so all three bottom-row panels get their
    horizontal edges from one owner and an assertion can prove the two gaps
@@ -68,7 +61,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/gallerin_panel.gd :: UiPanelLayout`
    - Next after: HC-5 (Dr Gallerin's bubble types its line out)
 
-4. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
+3. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
    The pre-run menu's tiles size their text from the theme and their label box
    from a fixed constant, so the longest Challenge title paints outside its
    hexagon. Clip the label, make the title fit at every text scale, and drop
@@ -95,10 +88,9 @@ Each of these wants something from Dave, or something else to ship first.
   pollen arc work unattended.
 - **HC-8** (`plans/now/hud-controls.md`) -- the tray is taller than its
   content until `More…` is toggled. Dave's 10 Sep report made this
-  reproducible from the headless runner rather than by hand, so its own
-  measurement step is now the implementer's to take. It is out of the queue
-  only because it shares `scripts/hud.gd` with HC-15, which is ahead of it in
-  the same lane.
+  reproducible from the headless runner rather than by hand, but its own
+  heading still calls for a measurement pass to confirm the cause before a
+  fix is specified, which is why it is not a queue item yet.
 - **HC-5 and HC-6** (`plans/now/hud-controls.md`) -- Dr Gallerin's bubble
   types its line out, and pages back through her history. Both edit
   `scripts/gallerin_panel.gd`, which HC-14 holds until it lands.
