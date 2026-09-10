@@ -895,6 +895,7 @@ const GOAL_CADENCE := {
 	"harvest_deposited": "frame", "new_bee_selected": "event", "new_bee_left_hive": "frame",
 	"complete": "event", "nectar_forager_hatched": "event",
 	"nectar_stabilized": "poll", "pollen_foragers_raised": "event", "cell_designated": "poll",
+	"pollen_cell_designated": "poll",
 	"interim_reserve": "poll", "nurse_raised": "event", "persistent_designation_used": "poll",
 	"comb_worker_building": "poll", "miner_expansion": "poll", "c2_complete": "poll",
 }
@@ -933,6 +934,7 @@ func _build_goal_registry() -> void:
 		"nectar_stabilized": Callable(self, "_goal_check_nectar_stabilized"),
 		"pollen_foragers_raised": Callable(self, "_goal_check_pollen_foragers_raised"),
 		"cell_designated": Callable(self, "_goal_check_cell_designated"),
+		"pollen_cell_designated": Callable(self, "_goal_check_pollen_cell_designated"),
 		"interim_reserve": Callable(self, "_goal_check_interim_reserve"),
 		"nurse_raised": Callable(self, "_goal_check_nurse_raised"),
 		"persistent_designation_used": Callable(self, "_goal_check_persistent_designation_used"),
@@ -1031,6 +1033,12 @@ func _goal_check_pollen_foragers_raised() -> bool:
 func _goal_check_cell_designated() -> bool:
 	for cell in main.hive.cells:
 		if is_instance_valid(cell) and cell.designated_type in ["nectar", "pollen", "brood"]:
+			return true
+	return false
+
+func _goal_check_pollen_cell_designated() -> bool:
+	for cell in main.hive.cells:
+		if is_instance_valid(cell) and cell.designated_type == "pollen" and cell.designation_is_explicit:
 			return true
 	return false
 
