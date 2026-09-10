@@ -6,6 +6,50 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 10 Sep 2026 -- Dave's fourth hands-on pass
+
+Eleven checks run. Four confirmed and recorded here; two of the four carried a
+follow-up ask that was filed as a slice rather than left in the check. C-18,
+C-29, C-32 and C-7 each passed the part their own slice had fixed and failed
+on a cause underneath it, so all four stay in `checks/ready.md`. C-30 and
+C-31 failed outright on the cause Challenge 1 Slice 20 is already open
+against. C-34 could not be run at all and moved to `checks/blocked.md`.
+
+### C-36 -- a summary panel's cog fits the entity it names
+
+PASS confirmed, with no qualification. The single bee's cog offers all four
+fields and each one hides and shows its line; the cell and the soil block
+show no cog; two or more bees show "Identity & job" alone.
+Owner was `plans/archive/HC-11_2026-09-10.md`.
+
+### C-35 -- the Favourite star sits beside the summary panel's cog
+
+PASS confirmed, with one adjustment: "make the star button the same height as
+its neighbouring settings button". Neither button sets a minimum height, so
+each takes the height its own glyph asks for and the star lands shorter than
+the cog. That is one shared constant and is queued as HC-13 in
+`plans/now/hud-controls.md`.
+Owner was `plans/archive/HC-10_2026-09-09.md`.
+
+### C-33 -- the default text size is 2px larger everywhere, and nothing clips
+
+PASS confirmed for every panel the check named. One place outside them spills:
+"there's some text spilling over in the main menu hexagons". A hex tile's
+label is given a fixed pixel box derived from `HEX_SIZE` while its text
+follows the text-size setting, so the longer titles now overrun the hexagon.
+Queued as UI-M-2 in `plans/now/ui.md`, together with Dave's request to drop
+the punctuation after the Challenge and Scenario numbers.
+Owner was `plans/archive/HC-4_2026-09-09.md`.
+
+### C-5 -- Challenge 2's rescue and recovery lines
+
+PASS confirmed at the third attempt. One press of "Force Challenge 2 collapse"
+drops the stores below the rescue threshold and Dr Gallerin's "Ahem. Field
+ecologists..." line appears with 150 nectar restored and stays up; the second
+press reaches the failure floor and restores the checkpoint with a live queen.
+Neither needs a third press. Challenge 2 Slice 2 holds.
+Owner was `plans/now/challenge-2.md` Slice 2.
+
 ## 9 Sep 2026 (second pass) -- the LAY group's own checks
 
 Two confirmed. C-18 passed on everything the panel-layout plan owned and was

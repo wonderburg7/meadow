@@ -43,3 +43,28 @@ have owned it closed on 3 Sep 2026 with no threshold change
 pick this up before it can be checked at all.
 
 Owner: none currently.
+
+### C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager
+
+Start Challenge 2 and leave it in stage 2.1 long enough for Dr Gallerin's
+stronger hint. Spend pollen freely on nectar Foragers until the pollen store
+falls below one bee's cost, then continue into 2.2 without raising its pollen
+Forager. Let the game run briefly, and then continue until stage 2.2 clears.
+
+PASS: during 2.1, Dr Gallerin warns that every new bee costs pollen and some
+should be kept back. At low pollen, exactly once per run, the colony receives
+three bee-costs of pollen and the line explains that no pollen means no new
+bees. The rescue line remains visible, and the same low-pollen state does not
+top the store up again. Once the pollen Forager is raised, no further pollen
+rescue occurs.
+
+Blocked by: HC-13 in `plans/now/hud-controls.md`. Dave, 10 Sep 2026: "there's
+no option to raise a pollen forager in the cell command window." The cell
+popup's "Raises:" row builds the Forager choice as a `MenuButton` labelled
+just "Forager", with Nectar and Pollen inside its popup and no ellipsis,
+chevron or any other mark saying a menu is there -- the same complaint HC-3
+fixed for the tray's "Change to…" and never applied here. Until the control
+says it opens a menu, the check's own second half cannot be reached, so a
+failure here would not be evidence about the pollen rescue.
+
+Owner: `plans/now/challenge-2.md` Slice 3.
