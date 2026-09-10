@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 20 -- the designation stage asks for the designation it names | Dependency: Slice 21 waits on Slice 20; Slice 26 waits on Slice 24; Slice 25 shares `challenge_runner.gd` with Slice 20; Slice 7 waits on all of 20-26 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: Slice 25 -- the queen's harvest is never thrown away without her being told | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 21-26 | Verified: 2026-09-10
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -10,7 +10,7 @@ half of that loop now works. The pollen half does not, and Slices 20 to 26
 are what make it work before the acceptance playthrough is worth running.
 
 **State.** Slices 1-6 and 8-15 are code-complete and merged (3 Sep 2026).
-Slices 16-19 shipped on 9 Sep 2026 in answer to Dave's first C-7 run --
+Slices 16-20 shipped by 10 Sep 2026 in answer to Dave's first C-7 run --
 the queen works more than one flower, a focus change wakes her, pollen has
 somewhere to go once a cell is designated for it, and a stage's camera and
 speed switch off when it ends. Their specifications and the five reports
@@ -48,7 +48,6 @@ same shape: a rule whose comment named a stage and whose code did not.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| 20 | Stage 1.13 clears before the player sees it (C-30, C-31) | `challenge_runner.gd`, `challenge_stages.gd` | medium |
 | 25 | The queen's harvest is discarded whenever the comb is full | `challenge_runner.gd`, `challenge_stages.gd`, `bee_foraging.gd` | high |
 | 21 | The queen will not start pollen foraging unaided (C-7) | `bee.gd`, `bee_foraging.gd` | high |
 | 22 | The pollen stage's camera never follows (C-29) | `challenge_runner.gd`, `camera_view.gd` | medium |
@@ -57,12 +56,9 @@ same shape: a rule whose comment named a stage and whose code did not.
 | 26 | The marker does not pulse, and vanishes when off screen | `challenge_runner.gd`, `hud.gd` | medium |
 | 7 | The acceptance playthrough and copy pass | docs | -- |
 
-Slice 21 depends on Slice 20: until 1.13 runs, no cell accepts pollen and
-every pollen symptom has that as a sufficient cause. Slice 26 depends on
-Slice 24, which is the other open change to the same marker node. Slice 25
-shares `challenge_runner.gd` with Slices 20 and 22, so no two of those three
-run at once. Slices 22, 23 and 24 are otherwise independent of each other and
-of 20. Slice 7 runs last.
+Slice 26 depends on Slice 24, which is the other open change to the same
+marker node. Slices 21, 22, 23 and 24 are otherwise independent of each
+other. Slice 7 runs last.
 
 Nothing else may be added -- a finding from Slice 7's own run becomes this
 plan's next slice while it is open, and a finding after it closes starts a
@@ -86,101 +82,8 @@ is never reused.
 
 ## Slice 20 — the designation stage asks for the designation it names
 
-**Reasoning level: medium.** One goal function, but it is shared with
-Challenge 2 and it gates three failed checks.
-
-**Confirmed root cause.** `challenge_runner.gd::_goal_check_cell_designated()`
-(`:996`) returns true for *any* cell whose `designated_type` is one of
-nectar/pollen/brood. `hive_cell.gd::add_resource()` (`:721`) auto-assigns
-`designated_type = resource_type` the first time anything is deposited into
-an empty, undesignated cell. So the queen's first nectar delivery at stage
-1.10 designates the first cell "nectar", and stage 1.13 — "set the new cell
-aside for pollen" — is already satisfied the instant it opens. It clears in
-the same frame and the player never sees it (C-30).
-
-Two further failures follow from that one cause, so all three are this
-slice's:
-
-- The second cell is never designated for pollen, so the queen's next nectar
-  trip auto-designates it "nectar" too. `_drive_c1_pollen_cell_nectar_prompt`
-  (`:790`) only fires on a cell with `designated_type == "pollen"`, so Dr
-  Gallerin's call-out never runs (C-31).
-- With no cell that will accept pollen, the pollen-automation stage begins
-  with nowhere to put a pollen load. Slice 21 covers what the queen then
-  does; this slice removes the reason.
-
-**Current authoritative owner.** `scripts/challenge_runner.gd` for goals and
-sequencing; `scripts/challenge_stages.gd` for stage data.
-
-**Required reading.** This heading, `docs/challenge-stages.md`, and
-`challenge_runner.gd`'s `_goal_registry` (`:884`) and `GOAL_KINDS` (`:856`).
-
-**Files likely to change.** `scripts/challenge_runner.gd`,
-`scripts/challenge_stages.gd`, `docs/challenge-stages.md` (regenerated).
-
-**Files that must not be changed.** `scripts/hive_cell.gd` — the auto-designate
-on first deposit is correct open-play behaviour and several other systems
-rely on it. `scripts/hive.gd`. Challenge 2's stage `2.3`, which keeps the
-existing `cell_designated` goal unchanged.
-
-**Requirements.**
-
-1. Add a new goal key `pollen_cell_designated`, registered in `GOAL_KINDS` as
-   `"poll"` and in `_goal_registry` as `_goal_check_pollen_cell_designated`.
-2. It returns true only when a cell has `designated_type == "pollen"` **and**
-   `designation_is_explicit == true`. That second field already exists on
-   `HiveCell` (`:762` reads it) and is what separates a player's choice from
-   the auto-assignment `add_resource` makes.
-3. Point stage `1.13` at the new goal. Leave stage `2.3` on
-   `cell_designated` and leave `_goal_check_cell_designated` itself alone.
-4. Confirm the cell-designation UI sets `designation_is_explicit`. If the
-   Pollen button in the cell popup does not set it, set it there — that is
-   the one place a designation is genuinely the player's choice. Do not set
-   it anywhere in `add_resource`'s path.
-
-**Constraints and invariants.**
-
-- Challenge 2's stage 2.3 must keep passing on the same behaviour it passes
-  on today. Do not repurpose the shared goal.
-- No `GameConfig` write (this plan's durable rules).
-- Save compatibility: `designation_is_explicit` is already saved or already
-  not saved; do not change which. If it is not persisted, do not start
-  persisting it in this slice — say so in the commit message and file it as
-  a follow-up instead.
-
-**State-transition and cleanup behaviour.** Stage 1.13's `on_exit` stays as
-it is. Nothing new is stored on the runner, so nothing new needs resetting in
-`_reset_c1_state` (`:183`).
-
-**Edge cases.**
-
-- The player designates the *first* cell for pollen instead of the second.
-  The goal passes — that is a legitimate, if odd, way to satisfy it, and the
-  stage text says "the new one" rather than enforcing which.
-- The player unreserves and re-reserves. The goal is a poll, so it simply
-  goes false and true again; the stage does not advance while it is false.
-- A checkpoint restore during 1.13 rebuilds `hive.cells`; the poll reads the
-  new list each frame, so nothing stale survives.
-
-**Automated acceptance checks.** Add a test that builds a hive with one cell
-auto-designated nectar by a deposit and asserts `pollen_cell_designated` is
-false; then explicitly designates a second cell pollen and asserts it is
-true. Add a regression assertion that `cell_designated` still returns true
-for the auto-designated cell, so Challenge 2 is proved untouched.
-
-**Regression checks.** Run the source and balance suites. Re-run any existing
-Challenge 2 stage-sequence test.
-
-**Completion and documentation.** Regenerate `docs/challenge-stages.md` with
-`python tools/stage_reference.py` (verification re-runs it with `--check`).
-Re-file C-30 and C-31 unchanged — they are already written for this
-behaviour.
-
-**Escalate rather than guess if:** `designation_is_explicit` turns out not to
-exist as a persisted, reliable flag, or the cell popup's Pollen button shares
-its code path with the automatic designation. Either would mean the
-player-choice signal has to be introduced rather than read, which is an
-ownership decision.
+Shipped 10 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-20_2026-09-10.md`](../archive/C1-20_2026-09-10.md).
 
 ## Slice 25 — the queen's harvest is never thrown away without her being told
 
