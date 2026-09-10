@@ -63,20 +63,18 @@ stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
-3. **[Claude] HC-8 -- the command tray's height matches its content, from the first frame.**
-   `ui_panel_layout.gd::apply()` caps the tray's scroll budget from
-   `content.get_combined_minimum_size().y` in the same frame `hud.gd`
-   zeroes and rebuilds it, and Godot invalidates a container's minimum size
-   on a deferred pass -- so that read can be the previous frame's value.
-   Measure first (the headless scenario runner reproduces it without Dave:
-   build the tray for a long `More…` selection, then a short one, then
-   toggle `More…` twice, recording `content.get_combined_minimum_size().y`,
-   the computed budget and the tray's final height per frame); only implement
-   the fix below if the frame-of-rebuild value is stale.
-   - Plan: `plans/now/hud-controls.md` -- "HC-8 — the tray's height matches its content, from the first frame"
+3. **[Claude] HC-16 -- the command tray's height matches its content on a reselection.**
+   HC-8 (10 Sep 2026) fixed the tray for the *first* build after a
+   selection; reselecting a different bee still leaves it wrong, with or
+   without `More…` open -- one traced case left the tray 260px+ taller than
+   its content even after 15 settle ticks. HC-8's own measurement found this
+   is not a single stale frame but an unpredictable multi-pass Godot timing
+   problem, so it needs a high slice, not a medium one -- see the heading's
+   diagnostic evidence.
+   - Plan: `plans/now/hud-controls.md` -- "HC-16 — the tray's height matches its content on a reselection"
    - Files: `scripts/hud.gd`
-   - Check: one check covering the first-open case and the deselect-reselect case with More… open, at two text scales
-   - Proof: `absent: scripts/hud.gd :: HC-8`
+   - Check: one check covering a reselection (forager -> queen and the reverse) with More… open and without it, at two text scales
+   - Proof: `absent: scripts/hud.gd :: HC-16`
    - Next after: none -- hud-controls.md is complete
 
 ## Not in the queue, and why

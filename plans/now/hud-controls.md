@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-8 -- the tray's height matches its content, from the first frame | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-16 -- the tray's height matches its content on a reselection | Dependency: HC-16 shares `scripts/hud.gd` with the now-delivered HC-8 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -41,14 +41,15 @@ for saved UI preferences.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
+| HC-16 | The tray is still short of/taller than its content on a **re**selection, with or without More… open | `hud.gd` | high |
 
-HC-8 is the only slice open here. Its cause is a strong hypothesis, not yet
-confirmed, but Dave's 10 Sep second report made the failure reproducible
-from the headless scenario runner without him -- see the heading's "This is
-a strong hypothesis, not a confirmed cause. Measure first." section. The
-measurement is the implementer's first step, not a prerequisite blocking the
-slice, so it is startable today.
+HC-16 is the only slice open here. HC-8 (10 Sep 2026) shipped the *first-open*
+half of this: the tray's height now matches its content on the first build
+after a selection, at two text scales, with an automated check
+(`tests/test_hc8_tray_first_open.py`). It did not fix a **re**selection --
+see HC-16's heading below for the diagnostic evidence, taken in the same
+session, that this is a harder engine-timing problem than the first-open
+case and needs a high slice, not a medium one.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
@@ -71,114 +72,97 @@ work out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
-**Reasoning level: medium.** A deferred-layout timing question. The cause is
-now strongly indicated but still not measured, and this slice measures first.
+Shipped 10 Sep 2026, first-open scope only. `plans/archive/HC-8_2026-09-10.md`
+holds the full spec, the diagnostic evidence and exactly what shipped versus
+what was split off as HC-16 below.
 
-**Observable problem, first report (Dave, 9 Sep 2026).** "When selecting more…
-in the command tray, then clicking off the bee, then clicking back on, the
-command tray takes up a lot of the screen, with a lot of blank space in the
-tray." His screenshot shows the tray roughly twice as tall as its content.
+## HC-16 — the tray's height matches its content on a reselection
 
-**Observable problem, second report (Dave, 10 Sep 2026, C-18).** Two more
-sightings of the same panel, neither needing a reselect:
+**Reasoning level: high.** HC-8's own measurement (10 Sep 2026) found this is
+not a single-frame staleness question but an unpredictable, multi-pass
+Godot engine-timing problem, so this needs the ownership-boundary-adjacent
+judgement a high slice gets, not a bounded medium fix.
 
-- "When initially starting up the command tray there is unnecessary empty
-  space at the bottom. This empty space disappears if you select more… and
-  then select more… again so the tray collapses." His screenshot shows a
-  selected forager whose Job/Focus/Orders rows end well above the tray's
-  bottom edge.
-- "Sometimes the command tray uses a scroll bar when there's feasibly enough
-  space for it to be expanded."
+**Observable problem (Dave, 9 Sep 2026, the original report).** "When
+selecting more… in the command tray, then clicking off the bee, then
+clicking back on, the command tray takes up a lot of the screen, with a lot
+of blank space in the tray." His screenshot shows the tray roughly twice as
+tall as its content. HC-8 fixed the *first* build of the tray after a
+selection; this is specifically about a *second* (or later) one.
 
-**What the second report changes.** The first report could only be reproduced
-by hand, which is why this slice sat out of the queue waiting on Dave. The
-new one cannot be: it happens on the *first* build of the tray for a fresh
-selection, and a `More…` toggle — which forces a second layout pass over the
-same content — clears it. That is reachable from the headless scenario runner
-without a human, so the measurement below is now the implementer's to take
-rather than Dave's.
+**Diagnostic evidence (10 Sep 2026, this session).** Driving the headless
+scenario runner (`docs/headless-run-contract.md`) through a reselection
+while instrumenting `content.get_combined_minimum_size().y` found the true
+value keeps changing for far longer, and far less predictably, than a
+first-open ever does:
 
-**Established so far.** `more_panel_open` is deliberately sticky (`:389`,
-`:2162`), so `More…` reopening on reselect is intended and is not the defect.
-The blank width was HC-7's cause and is fixed. The blank *height* is separate:
-`ui_panel_layout.gd::apply()` caps the scroll budget at
-`content.get_combined_minimum_size().y` and then sets the panel's height from
-`panel.get_combined_minimum_size().y`. `hud.gd::_resize_command_tray` zeroes
-`command_scroll.custom_minimum_size.y` immediately before that call, so both
-reads land in the same frame as the rebuild that changed the content. Godot
-invalidates a container's minimum size on a deferred pass, so a minimum read
-in that frame can be the previous frame's value — a taller previous selection
-gives a taller tray, and a shorter one gives a scrollbar the content does not
-need. That single mechanism accounts for all three sightings, and
-`_resize_command_tray` is already called deferred for this reason (see its
-comment about C-11/C-12), which is evidence the timing is delicate rather
-than settled.
+- Reselecting from a forager (with `More…` open) to the queen: one traced
+  run went 386 -> 444 -> 466, then held at 466 under long passive
+  observation (40+ deferred reads, no writes). HC-8's bounded reapply loop
+  (re-run `UiPanelLayout.apply()` until four consecutive reads agree, capped
+  at 20 passes) converged at 444 instead in the same scenario -- even
+  raising the stability requirement to 8 consecutive reads still stopped at
+  444, not 466. The act of writing `scroll.custom_minimum_size` on each pass
+  is itself a side effect that reaches a different, also-wrong, fixed point
+  than doing nothing.
+- A signal-driven alternative (wait for `command_content.minimum_size_changed`
+  to go quiet for 3 frames, apply once) also applied at 466 for that same
+  case, but MORE signal firings arrived afterward regardless (444, 334, 250)
+  -- contradicting the passive-read result and showing the signal itself is
+  noisy for this nested-container tray.
+- A reselection with `More…` never opened at all -- plain forager to queen,
+  15 settle ticks in between -- still left the tray 260px+ taller than its
+  content (507px tray, 241px content) using HC-8's shipped fix. This is not
+  a `More…`-specific defect.
 
-**This is a strong hypothesis, not a confirmed cause. Measure first.** Drive
-the headless scenario runner (`docs/headless-run-contract.md`) through: build
-the tray for a bee with a long `More…`, then for one with a short `More…`,
-then toggle `More…` twice on the second. Per frame, record only
-`content.get_combined_minimum_size().y`, the budget `apply()` computes, and
-the tray's final height. If the frame-of-rebuild value differs from the next
-frame's, the minimum is stale and the fix below applies. If it does not,
-report what the numbers say and stop — do not implement.
+**What this rules out.** A single extra deferred pass (HC-8's original
+hypothesis) is not enough -- proven directly, not assumed. Whatever the real
+mechanism is, it is not bounded by a small, predictable number of frames the
+way the first-open case was.
+
+**Where to look next, not yet confirmed.** `_rebuild_role_controls` frees the
+previous selection's rows with `queue_free()` (itself deferred) while
+building the new ones; the new rows' own nested `HFlowContainer`s
+(`command_columns` inside `command_content`, each column's own row containers
+inside that) may each need their own deferred sort pass before
+`get_combined_minimum_size()` reports true, and Godot's `TextServer` label
+shaping is a further candidate for why the settle time varies. None of these
+were confirmed as *the* cause this session -- only that the read stays wrong
+for longer than any bounded pass count or signal-quiet-window tried.
 
 **Files likely to change.** `scripts/hud.gd`. `scripts/ui_panel_layout.gd`
-only if the fault is in the cap itself, which would make this a high slice
-rather than a medium one — escalate if so.
+only if investigation moves the fault into the cap itself, not just the
+timing of the read.
 
 **Files that must not be changed.** `scripts/ui_layout.gd`.
 
-**Current authoritative owner.** `hud.gd::_resize_command_tray` owns when the
-tray is measured; `ui_panel_layout.gd::apply()` owns the arithmetic. Neither
-ownership moves in this slice.
+**Current authoritative owner.** `hud.gd::_resize_command_tray` /
+`_resettle_command_tray` own when the tray is measured; `ui_panel_layout.gd::apply()`
+owns the arithmetic. Neither ownership moves without also updating this line.
 
-**Requirements, if the measurement confirms a stale minimum.**
+**Requirements.**
 
-1. The tray's height equals its content's height plus chrome on the first
-   frame after any selection change, at every text scale.
+1. The tray's height equals its content's height plus chrome within a few
+   frames of a reselection, with or without `More…` open, at every text
+   scale -- proven against the *true* settled value (e.g. via long passive
+   observation in the implementing session), not just self-consistency
+   against the fix's own re-applies.
 2. The tray shows a scrollbar only when its content genuinely exceeds
    `UiLayout.command_tray_max_height()`.
-3. Whatever forces the second measurement — an extra deferred pass, or an
-   explicit `update_minimum_size()` on the rebuilt container — is called in
-   one place with a comment naming this slice, not sprinkled at each caller.
+3. Whatever detects "settled" is called in one place with a comment naming
+   this slice, not sprinkled at each caller.
 
-**Constraints and invariants.** No `reset_size()`, no `panel.size` assignment
-(see `ui_panel_layout.gd`'s header for what those do to a bottom-anchored
-panel). Do not fix this by giving the tray a fixed height. Do not make
-`more_panel_open` non-sticky; that is intended behaviour.
+**Constraints and invariants.** No `reset_size()`, no `panel.size` assignment.
+Do not fix this by giving the tray a fixed height. Do not make
+`more_panel_open` non-sticky.
 
-**State-transition and cleanup behaviour.** The tray is rebuilt from scratch
-on every selection change (`_rebuild_role_controls`). Any cached measurement
-this slice introduces is cleared in that same rebuild, never carried across
-selections.
-
-**Runtime policy.** This runs on selection change only, not per frame. An
-extra layout pass per selection change is acceptable; an extra pass per frame
-is not.
-
-**Edge cases.** Selecting a queen (a short `More…`) straight after a worker (a
-long one), and the reverse. A selection change while the tray is scrolled. A
-viewport resize with the tray already open.
-
-**Automated acceptance checks.** LAY-5's `panel_rect` assertion, comparing
-the tray's outer height against its content's height plus
-`UiLayout.panel_chrome().y` on the frame after a selection change, for a long
-selection followed by a short one. Reuse that assertion; do not add a second
-height helper.
-
-**Regression checks.** LAY-6's `no_collapsed_controls` and `even_columns`
-entries in `tests/fixtures/layout_panels.json` must still pass.
-
-**Check to file:** one check covering the first-open case and the
-deselect-reselect case with `More…` open, at two text scales.
+**Check to file:** one check covering a reselection (forager -> queen and the
+reverse) with `More…` open and without it, at two text scales, using
+`panel_rect`'s `matches_content` condition (`scripts/scenario_actions.gd`,
+added by HC-8) rather than a second height helper.
 
 **Completion.** Update this plan's glance table, archive this heading, and
-re-file C-18 unchanged.
-
-**Escalate rather than guess if:** the measurement points at
-`ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
-That file sizes every persistent panel, so a change there is a high slice.
+re-file C-18 unchanged (C-18 stays open until this half lands too).
 
 HC-6 (paging back through Dr Gallerin's history) shipped 10 Sep 2026; spec
 archived at `plans/archive/HC-6_2026-09-10.md`.
