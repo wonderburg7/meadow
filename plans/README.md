@@ -100,6 +100,7 @@ the archived plan is never reopened or extended.
 | Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
+| A1-A4, B1-B3, C1-C4, D1, E1, F1s, F2s, G1-G3 -- catalogues, shared interfaces, update policy | `plans/design/architecture-review.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
