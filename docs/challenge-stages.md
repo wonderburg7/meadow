@@ -28,7 +28,7 @@ nothing; "past 2.1, where the nectar stores fall and recover" does.
 | `1.10` | return to the hive and deposit the harvest. | `harvest_deposited` | right-click the hive, then right-click the wax cell |
 | `1.11` | automate nectar gathering. | `nectar_target` | give her the Forager role with nectar focus |
 | `1.12` | build a second comb cell. | `second_cell_built` | use Build cell to place a second cell |
-| `1.13` | set the new cell aside for pollen. | `cell_designated` | designate the second cell for pollen |
+| `1.13` | set the new cell aside for pollen. | `pollen_cell_designated` | designate the second cell for pollen |
 | `1.14` | automate pollen gathering. | `pollen_target` | switch her focus to pollen |
 | `1.15` | build a third cell for the colony's next generation. | `third_cell_built` | use Build cell to place a third cell |
 | `1.16` | let the queen lay the colony's first egg. | `first_egg_laid` | -- |

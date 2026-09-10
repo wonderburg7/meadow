@@ -37,15 +37,15 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
 
 ## Next up
 
-1. **[Codex] C1-20 -- the designation stage asks for the designation it names.**
-   Keep Challenge 1 stage 1.13 open until the player explicitly reserves a
-   cell for pollen, without changing Challenge 2's existing general
-   designation goal. This repairs the shared root cause behind C-30 and C-31.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 20 — the designation stage asks for the designation it names"
-   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `docs/challenge-stages.md`
-   - Check: re-file C-30 and C-31 unchanged after the automated regression test passes
-   - Proof: `absent: scripts/challenge_runner.gd :: _goal_check_pollen_cell_designated`
-   - Next after: C1-25 (the queen's harvest is never thrown away without her being told)
+1. **[Codex] C1-25 -- the queen's harvest is never thrown away without her being told.**
+   Narrow Challenge 1's nectar-discard rule to the stage its own comment
+   names, tell the player when it fires, and let the queen keep a load the
+   comb cannot take at every other stage.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 25 — the queen's harvest is never thrown away without her being told"
+   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `scripts/bee_foraging.gd`
+   - Check: one check reproducing Dave's 10 Sep 2026 sequence at stage 1.12
+   - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
+   - Next after: C1-21 (the queen forages pollen without being pushed)
 
 2. **[Claude] HC-13 -- the tray and summary panel's controls match their neighbours.**
    Five confirmed faults in `scripts/hud.gd`: two tray controls that render
@@ -59,17 +59,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/hud.gd :: SUMMARY_HEADER_BUTTON_SIZE`
    - Next after: HC-15 (the tray's three columns take an equal third each)
 
-3. **[Codex] C1-25 -- the queen's harvest is never thrown away without her being told.**
-   Narrow Challenge 1's nectar-discard rule to the stage its own comment
-   names, tell the player when it fires, and let the queen keep a load the
-   comb cannot take at every other stage.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 25 — the queen's harvest is never thrown away without her being told"
-   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `scripts/bee_foraging.gd`
-   - Check: one check reproducing Dave's 10 Sep 2026 sequence at stage 1.12
-   - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
-   - Next after: C1-21 (the queen forages pollen without being pushed)
-
-4. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
+3. **[Claude] HC-15 -- the tray's three columns take an equal third each.**
    LAY-6 measured the Job/Focus/Orders wrappers at 170/100/127px. Divide the
    tray's inner width into three equal parts and tighten `even_columns` from
    its 80px tolerance to 2px so it cannot drift back.
@@ -79,7 +69,7 @@ viewport: not a fault, and C-32 keeps its stated pass condition.
    - Proof: `absent: scripts/hud.gd :: _tray_column_share`
    - Next after: HC-14 (Dr Gallerin's bubble is given its rectangle like every other panel)
 
-5. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
+4. **[Claude] HC-14 -- Dr Gallerin's bubble is given its rectangle like every other panel.**
    Route the bubble through `ui_layout.gd::gallerin_rect()` and
    `ui_panel_layout.gd::apply()`, so all three bottom-row panels get their
    horizontal edges from one owner and an assertion can prove the two gaps

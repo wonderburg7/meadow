@@ -200,7 +200,7 @@ const STAGES_1 := [
 		],
 	},
 	{
-		"id": "1.13", "goal": "cell_designated", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "cell_designation"],
+		"id": "1.13", "goal": "pollen_cell_designated", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "cell_designation"],
 		"instruction": "designate the second cell for pollen",
 		"goal_text": "Goal: set the new cell aside for pollen.",
 		"prompts": [
