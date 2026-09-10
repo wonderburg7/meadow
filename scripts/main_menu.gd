@@ -43,43 +43,43 @@ const STAGES := [
 	{
 		"level": 1,
 		"group": "challenge",
-		"title": "Challenge 1: First Stores",
+		"title": "Challenge 1 First Stores",
 		"blurb": "Found the beginnings of a colony. Build your first cell, gather nectar, and learn how a tiny hive starts to sustain itself.",
 	},
 	{
 		"level": 2,
 		"group": "challenge",
-		"title": "Challenge 2: Brood, Roles and Expansion",
+		"title": "Challenge 2 Brood, Roles and Expansion",
 		"blurb": "Grow the colony from stored food into a working hive. Lay eggs, raise specialist bees, keep nectar flowing, and expand the hive enough to support a balanced workforce.",
 	},
 	{
 		"level": 7,
 		"group": "starter",
-		"title": "Scenario 1 — Queen alone",
+		"title": "Scenario 1 Queen alone",
 		"blurb": "One queen, no workers and no comb. There is no scripted guidance: she must take on the colony's first jobs herself and build everything from nothing.",
 	},
 	{
 		"level": 3,
 		"group": "starter",
-		"title": "Scenario 2 — A working colony",
+		"title": "Scenario 2 A working colony",
 		"blurb": "The queen, three cells, and two foragers — one on nectar, one on pollen. Both resources are coming in from the first moment.",
 	},
 	{
 		"level": 4,
 		"group": "starter",
-		"title": "Scenario 3 — Established nest",
+		"title": "Scenario 3 Established nest",
 		"blurb": "Fifteen cells and a full crew: eleven foragers (eight on nectar, three on pollen), two nurses, two comb workers on both jobs, and two miners. Enough colony that keeping it fed is the challenge, not starting it.",
 	},
 	{
 		"level": 5,
 		"group": "starter",
-		"title": "Scenario 4 — In full swing",
+		"title": "Scenario 4 In full swing",
 		"blurb": "Twenty-two foragers (sixteen on nectar, six on pollen), four nurses, three comb workers and three miners already digging. Twelve cells, four of them full of nectar and two of pollen, so the queen can lay from the first second. A colony big enough that what to do with it is the question.",
 	},
 	{
 		"level": 6,
 		"group": "starter",
-		"title": "Scenario 5 — Thirty strong",
+		"title": "Scenario 5 Thirty strong",
 		"blurb": "Thirty bees: twenty foragers (fourteen on nectar, six on pollen), three nurses, three comb workers, two miners and two honey makers. Eighteen cells in three ring-layers around the centre, half of them already stocked with nectar, pollen and honey.",
 	},
 ]
@@ -398,12 +398,32 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 
 	var label := Label.new()
 	label.text = stage.title
-	label.theme_type_variation = "Small"
+	# "Tiny" (UI-M-2), not "Small" -- the hexagon's own size is fixed
+	# (HEX_SIZE must not change, see the constant's comment) while the text
+	# scale setting ranges up to 2x, so the label picks the smaller of the
+	# theme's two smallest named sizes rather than a one-off font-size
+	# override. That keeps it on UiTheme's shared Theme resource, so it
+	# still tracks Session.text_scale/ui_typeface live with no extra
+	# recompute code here -- headless measurement (Font.get_multiline_
+	# string_size / Label.get_minimum_size against this label's own box)
+	# confirmed every title in STAGES wraps to fit at "Tiny" up to 2x scale;
+	# "Small" does not, for the longest Challenge title.
+	label.theme_type_variation = "Tiny"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.position = Vector2(10.0, 8.0)
-	label.size = Vector2(bbox.x - 20.0, bbox.y - 16.0)
+	# Safety net (UI-M-2 requirement 1): even a title that somehow still
+	# doesn't fit can no longer paint outside the label's own rectangle.
+	label.clip_text = true
+	# Width margin widened from 10px to 22px each side so the label's right
+	# edge stops exactly at the completion tick's left edge (bbox.x - 22,
+	# below) rather than merely at the tile's edge -- a wrapped title's top
+	# line can otherwise sit directly under the tick at the largest text
+	# scale (requirement 4). Symmetric, so the label stays centred in the
+	# tile; measurement confirmed the narrower width doesn't push any title
+	# out of the height budget below.
+	label.position = Vector2(22.0, 8.0)
+	label.size = Vector2(bbox.x - 44.0, bbox.y - 16.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(label)
 

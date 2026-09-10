@@ -63,16 +63,21 @@ stated pass condition.
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
-3. **[Claude] UI-M-2 -- a hexagon's title fits inside it, at every text size.**
-   The pre-run menu's tiles size their text from the theme and their label box
-   from a fixed constant, so the longest Challenge title paints outside its
-   hexagon. Clip the label, make the title fit at every text scale, and drop
-   the punctuation after the Challenge and Scenario numbers.
-   - Plan: `plans/now/ui.md` -- "UI-M-2 — a hexagon's title fits inside it, at every text size"
-   - Files: `scripts/main_menu.gd`, `tests/fixtures/layout_panels.json`
-   - Check: one check on the longest title at the largest text scale, plus the new title punctuation
-   - Proof: `absent: scripts/main_menu.gd :: clip_text`
-   - Next after: UI-P-5 (the pre-run menu's placeholder text is missing)
+3. **[Claude] HC-8 -- the command tray's height matches its content, from the first frame.**
+   `ui_panel_layout.gd::apply()` caps the tray's scroll budget from
+   `content.get_combined_minimum_size().y` in the same frame `hud.gd`
+   zeroes and rebuilds it, and Godot invalidates a container's minimum size
+   on a deferred pass -- so that read can be the previous frame's value.
+   Measure first (the headless scenario runner reproduces it without Dave:
+   build the tray for a long `More…` selection, then a short one, then
+   toggle `More…` twice, recording `content.get_combined_minimum_size().y`,
+   the computed budget and the tray's final height per frame); only implement
+   the fix below if the frame-of-rebuild value is stale.
+   - Plan: `plans/now/hud-controls.md` -- "HC-8 — the tray's height matches its content, from the first frame"
+   - Files: `scripts/hud.gd`
+   - Check: one check covering the first-open case and the deselect-reselect case with More… open, at two text scales
+   - Proof: `absent: scripts/hud.gd :: HC-8`
+   - Next after: none -- hud-controls.md is complete
 
 ## Not in the queue, and why
 
@@ -89,11 +94,6 @@ Each of these wants something from Dave, or something else to ship first.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.
-- **HC-8** (`plans/now/hud-controls.md`) -- the tray is taller than its
-  content until `More…` is toggled. Dave's 10 Sep report made this
-  reproducible from the headless runner rather than by hand, but its own
-  heading still calls for a measurement pass to confirm the cause before a
-  fix is specified, which is why it is not a queue item yet.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
@@ -109,9 +109,11 @@ Each of these wants something from Dave, or something else to ship first.
   unfinished site), but capping builders per site changes build throughput,
   so it wants Dave's live look and a call on intended behaviour. Slice 5
   wants its own reproduction.
-- **UI-P-5** (`plans/now/ui.md`) -- names two plausible causes and says to
-  reproduce the symptom live before choosing between them. None of Dave's
-  six passes since 8 Sep has reported on it.
+- **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
+  headless check ruled both out (the placeholder is present, visible and
+  correctly positioned in a fresh boot), so the real cause needs Dave's own
+  screen, not more static reading. None of Dave's six passes since 8 Sep has
+  reported on it.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely
