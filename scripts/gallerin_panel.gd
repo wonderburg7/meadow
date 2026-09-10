@@ -183,14 +183,19 @@ func _build_bubble() -> void:
 	# (HC-14, requirement 3) -- a FlowContainer's minimum width is the sum
 	# of its children on a single line, since it cannot know it will be
 	# allowed to wrap until it is actually laid out. Routing through a
-	# ScrollContainer is what hides that from the panel, the same way
-	# hud.gd's command tray hides command_columns' minimum from the tray
-	# (ui_panel_layout.gd::apply()'s own docstring: "scroll is the one
-	# control allowed to be smaller than its contents"). Horizontal scroll
-	# stays disabled -- the point is to let the row wrap and the panel grow
-	# taller, never to gain a sideways scrollbar.
+	# ScrollContainer hides that from the panel only on the axis where
+	# scrolling is enabled -- Godot's ScrollContainer propagates a child's
+	# minimum size upward on any axis where its own scroll mode is
+	# DISABLED, since it has no way to let overflow there be reached. HC-14
+	# left horizontal DISABLED on the assumption that disabling scroll was
+	# what hid the width; it does the opposite, and the leaked width shows
+	# up once the bubble is narrow enough to force a wrap (LAY-REGR,
+	# 10 Sep 2026: gallerin's rect went 108px over budget at 800x600 after a
+	# reselect). Both axes need AUTO so neither leaks; the row is still
+	# expected to fit within whatever width it is actually given (no real
+	# overflow), so no scrollbar should ever appear in practice.
 	_bubble_scroll = ScrollContainer.new()
-	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_bubble_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	bubble.add_child(_bubble_scroll)
 
