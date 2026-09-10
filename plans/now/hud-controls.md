@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-5, Dr Gallerin's bubble types its line out | Dependency: HC-6 follows HC-5 in `scripts/gallerin_panel.gd`; HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-6, Dr Gallerin's bubble can be paged back through | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -42,12 +42,10 @@ for saved UI preferences.
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
-| HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-5 edits `scripts/gallerin_panel.gd`, so HC-6 follows it. HC-8 still wants
-the measurement its own heading describes; it is the only slice here whose
-cause is not yet confirmed.
+HC-8 still wants the measurement its own heading describes; it is the only
+slice here whose cause is not yet confirmed.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
@@ -55,11 +53,15 @@ them), HC-3, HC-4, HC-7, HC-9, HC-10, HC-11, HC-12 and HC-13 (10 Sep 2026,
 `plans/archive/HC-13_2026-09-10.md`), HC-15 (10 Sep 2026,
 `plans/archive/HC-15_2026-09-10.md` -- the tray's columns take equal thirds
 whenever three genuinely fit on the row; the specified `GridContainer` swap
-did not survive contact with 800x600, see that file), and HC-14 (10 Sep 2026,
+did not survive contact with 800x600, see that file), HC-14 (10 Sep 2026,
 `plans/archive/HC-14_2026-09-10.md` -- the bubble's rectangle now comes from
 `ui_layout.gd`/`ui_panel_layout.gd` like every other panel; wrapping the
 button row needed a `ScrollContainer`, not just an `HFlowContainer`, see that
-file). Open those for provenance, never to work out what to do.
+file), and HC-5 (10 Sep 2026, `plans/archive/HC-5_2026-09-10.md` -- the
+bubble types its line via `visible_characters`, laid out at final size from
+the first frame, on unscaled time so 4x game speed does not speed up the
+typing, and finishing instantly on click or a new prompt). Open those for
+provenance, never to work out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
@@ -171,43 +173,6 @@ re-file C-18 unchanged.
 **Escalate rather than guess if:** the measurement points at
 `ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
 That file sizes every persistent panel, so a change there is a high slice.
-
-## HC-5 — Dr Gallerin's bubble types its line out
-
-**Reasoning level: medium.** New per-frame state on a panel that already has
-a scheduler.
-
-**What Dave asked (9 Sep 2026).** "Make it so the text in Dr G's speech
-bubble appears one character at a time to simulate her talking."
-
-**Deliver, in `scripts/gallerin_panel.gd`.**
-
-- Add `const TYPE_CHARACTERS_PER_SECOND := 45.0`, plus
-  `var _typing_target: String = ""` and `var _typed_characters: float = 0.0`.
-- `_show_bubble(text)` keeps setting `_bubble_label.text` to the **whole**
-  line, so the bubble is laid out at its final size from the first frame and
-  never grows as it types. It also sets `_typing_target = text` and
-  `_typed_characters = 0.0`, and reveals with `_bubble_label.visible_characters`,
-  which Godot clips without re-running layout.
-- In `_process(delta)`, while `_typed_characters < _typing_target.length()`,
-  advance it by `TYPE_CHARACTERS_PER_SECOND * delta` and write
-  `_bubble_label.visible_characters = int(_typed_characters)`. On reaching the
-  end set `visible_characters = -1` and stop.
-- Use unscaled time. This panel runs `process_mode = ALWAYS` (see the file
-  header), so typing speed must not change when the player sets 4x game
-  speed. If the `delta` reaching `_process` is already multiplied by
-  `Engine.time_scale`, divide it back out and comment why.
-- A click on the bubble, or a new prompt arriving, finishes the current line
-  at once: set `_typed_characters` to the target length rather than starting
-  the next line mid-word.
-
-**Acceptance.** A Challenge prompt appears one character at a time at a
-readable speed, and the bubble is its final size from the first character.
-Setting 4x game speed does not change the typing speed. Clicking the bubble
-completes the line immediately.
-
-**Check to file:** one check covering the typing, the 4x-speed case and
-click-to-finish.
 
 ## HC-6 — Dr Gallerin's bubble can be paged back through
 
