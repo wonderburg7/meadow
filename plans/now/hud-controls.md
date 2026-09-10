@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None startable -- HC-8 still wants its own measurement pass before a fix is specified | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-8 -- the tray's height matches its content, from the first frame | Dependency: HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -43,8 +43,12 @@ for saved UI preferences.
 | --- | --- | --- | --- |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
 
-HC-8 still wants the measurement its own heading describes; it is the only
-slice open here, and its cause is not yet confirmed.
+HC-8 is the only slice open here. Its cause is a strong hypothesis, not yet
+confirmed, but Dave's 10 Sep second report made the failure reproducible
+from the headless scenario runner without him -- see the heading's "This is
+a strong hypothesis, not a confirmed cause. Measure first." section. The
+measurement is the implementer's first step, not a prerequisite blocking the
+slice, so it is startable today.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath

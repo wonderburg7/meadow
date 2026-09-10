@@ -21,4 +21,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-37 -- every control in the tray and the summary panel matches its neighbours](ready/C-37.md)
 - [C-38 -- Dr Gallerin's bubble types its line out](ready/C-38.md)
 - [C-39 -- Dr Gallerin's bubble can be paged back through](ready/C-39.md)
+- [C-40 -- a hexagon's title fits inside it, at every text size](ready/C-40.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
