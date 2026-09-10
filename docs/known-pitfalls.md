@@ -196,6 +196,27 @@ of these has bitten more than once:
   assertions (`scripts/scenario_actions.gd`,
   `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`) are what catches it
   without a human.
+- **A `ScrollContainer` leaks a child's minimum size upward on whichever axis
+  its own scroll is DISABLED, not the axis it's enabled.** The mirror image
+  of the entry above: Godot's `ScrollContainer.get_minimum_size()` only
+  hides a child's minimum on an axis where that axis can actually scroll to
+  reach the overflow; disable scrolling on an axis and the child's minimum
+  there is reported as the container's own, propagating straight up to
+  whatever sizes the container. HC-14 built Dr Gallerin's bubble with
+  horizontal scroll DISABLED specifically to let its button row wrap and
+  stay narrow, on the belief that disabling was what hid the width -- it
+  does the opposite. The leak stayed invisible while the bubble was wide
+  enough that the row never needed to wrap, and only showed once a reselect
+  at 800x600 forced a wrap: the row's un-wrapped single-line minimum (a
+  `FlowContainer`'s minimum is always the single-line sum, per the comment
+  above `gallerin_panel.gd::_build_bubble()`) pushed the panel 108px past
+  its budget and outside the viewport. Fixed 10 Sep 2026 by setting both
+  `horizontal_scroll_mode` and `vertical_scroll_mode` to `SCROLL_MODE_AUTO`
+  -- `tests/test_layout_regression.py` (a real Godot boot, not run by
+  `verify.ps1`) is what caught it. If a `ScrollContainer` wraps content that
+  must be free to shrink below its natural size on an axis, that axis needs
+  scrolling enabled, never disabled, even when no scrollbar is ever meant to
+  appear.
 - **The shared theme scales the type variations, not the base types.**
   `ui_theme.gd` sets `font_size` for Heading/Body/Small/Tiny and, for the
   `Label` and `Button` base types, only colour and font. A control that never
