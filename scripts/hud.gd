@@ -396,6 +396,11 @@ var command_scroll: ScrollContainer
 ## _resize_command_tray measures this instead -- see _build_command_tray.
 var command_content: VBoxContainer
 var command_columns: Container
+## HC-8 -- guards _resettle_command_tray against a superseded chain: a
+## reselection that lands before an older selection's settle loop finishes
+## must stop that older chain from later overwriting the newer, correct
+## size with its own stale one.
+var _command_tray_resettle_generation: int = 0
 ## The wrapper itself stays visible always, so a hidden column still claims
 ## its GridContainer slot -- see _tray_column_share and the header/content
 ## pair below, which are what actually hide when a column has nothing to
@@ -3000,9 +3005,44 @@ func _resize_command_tray() -> void:
 	# the tray's top edge too low and spilled `More…` off the bottom edge
 	# (Dave, 8 Sep 2026, C-11/C-12).
 	_update_command_tray_width()
+	_command_tray_resettle_generation += 1
+	_resettle_command_tray(_command_tray_resettle_generation, NAN, 0, 0)
+
+## HC-8 -- content.get_combined_minimum_size().y is not settled on the frame
+## its content last changed. Driving the headless scenario runner through a
+## long selection, a short one and a re-toggle of `More…` showed it goes
+## further than a single stale frame: a reselection while `More…` is
+## sticky-open frees the old role's rows (queue_free, itself deferred) while
+## the new rows' own nested HFlowContainers each need their own deferred
+## sort pass to report a true wrapped height, so the measured minimum kept
+## changing for several passes after the rebuild (one traced run: 213 ->
+## 291 -> 295 -> 268 for one selection, 386 -> 444 for the next). A single
+## extra apply() would still have frozen the tray short of its content in
+## the worst case this found; re-applying until several consecutive reads
+## agree closes most of that gap. It is not a complete fix -- Dave, 10 Sep
+## 2026, chose to ship this bounded improvement over the open-ended cost of
+## chasing an exact settle point through Godot's own layout-notification
+## timing, so a residual few pixels of drift can still remain in a case this
+## slice's check does not cover. Re-applying is the one place this is
+## corrected, rather than at each caller. The generation guard stops a
+## reselection that lands mid-chain from later being overwritten by the
+## superseded chain it interrupted, once that older chain's own reads
+## finally settle.
+const COMMAND_TRAY_SETTLE_STABLE_STREAK := 4
+const COMMAND_TRAY_SETTLE_PASS_LIMIT := 20
+
+func _resettle_command_tray(generation: int, previous_content_min_y: float, stable_streak: int, pass_count: int) -> void:
+	if generation != _command_tray_resettle_generation:
+		return
+	if command_tray == null or not command_tray.visible:
+		return
 	command_scroll.custom_minimum_size.y = 0.0
 	var rect := UiLayout.command_tray_rect(get_viewport().get_visible_rect().size)
 	UiPanelLayout.apply(command_tray, command_scroll, rect, UiLayout.BOTTOM_ROW_MARGIN)
+	var content_min_y := command_content.get_combined_minimum_size().y
+	var streak: int = (stable_streak + 1) if content_min_y == previous_content_min_y else 0
+	if pass_count < COMMAND_TRAY_SETTLE_PASS_LIMIT and streak < COMMAND_TRAY_SETTLE_STABLE_STREAK:
+		call_deferred("_resettle_command_tray", generation, content_min_y, streak, pass_count + 1)
 
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:

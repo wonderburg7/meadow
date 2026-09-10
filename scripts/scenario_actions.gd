@@ -23,6 +23,7 @@ extends RefCounted
 ## its ticks.
 
 const Settings = preload("res://scripts/settings_catalogue.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 
 ## Called once per _process() tick while main.scenario_active. An "assert"
 ## that fails ends the run (main._end_scenario_run) and stops evaluating
@@ -629,6 +630,18 @@ static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
 		var actual_after_gap: float = rect.position.x - (after_rect.position.x + after_rect.size.x)
 		if absf(actual_after_gap - expected_after_gap) > 1.0:
 			return {"ok": false, "reason": "panel '%s' gap after '%s' is %.1fpx, expected %.1fpx (rect %s, after %s)" % [name, after_name, actual_after_gap, expected_after_gap, rect, after_rect]}
+	## HC-8 -- "command_tray" is the one panel_rect caller whose content
+	## control is reachable by a stable field (hud.command_content); this is
+	## the one place that comparison is made, rather than a second height
+	## helper alongside panel_rect.
+	if condition.has("matches_content"):
+		if name != "command_tray":
+			return {"ok": false, "reason": "matches_content only supports panel 'command_tray'"}
+		var content: Control = main.hud.command_content
+		var expected_height: float = content.get_combined_minimum_size().y + UiLayout.panel_chrome().y
+		var tolerance: float = float(condition.get("tolerance", 1.0))
+		if absf(rect.size.y - expected_height) > tolerance:
+			return {"ok": false, "reason": "panel '%s' height is %.1fpx, content wants %.1fpx (tolerance %.1fpx, rect %s)" % [name, rect.size.y, expected_height, tolerance, rect]}
 	return {"ok": true, "reason": ""}
 
 static func _resolve_named_panel(main: Node2D, name: String) -> Control:
