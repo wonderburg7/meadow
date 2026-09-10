@@ -16,6 +16,10 @@ class_name ChallengeStages
 ## this amount. Unlike the preceding nectar lesson, it teaches a meaningful
 ## reserve rather than filling the cell completely.
 const POLLEN_TARGET := 75.0
+## A nectar trip can be discarded only once the second comb cell is reserved
+## for pollen. Before 1.14 the player can create more nectar space, so taking
+## a gathered load away would silently dead-end the lesson instead.
+const C1_DISCARD_STAGES := ["1.14"]
 ## Challenge 1's automatic nectar/pollen lesson runs at double each queen's
 ## current rate. challenge_runner.gd restores the saved per-bee values on exit.
 const CHALLENGE1_FORAGE_SPEED_MULTIPLIER := 2.0

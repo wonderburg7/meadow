@@ -820,6 +820,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 			# guard does not fire -- a full comb must still keep the load,
 			# which is exactly what the general case below does.
 			if is_instance_valid(bee.world) and bee.world.challenge_runner != null and bee.world.challenge_runner.discards_overflow(bee):
+				bee.world.challenge_runner.announce_overflow_discard()
 				bee.current_load = 0.0
 				bee.current_load_type = ""
 				bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)

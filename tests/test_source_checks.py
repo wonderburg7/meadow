@@ -24,6 +24,9 @@ ENVIRONMENT_CONFIG_PATH = (
 )
 PREREQUISITES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "prerequisites.gd"
 DEBUG_PANEL_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "debug_panel.gd"
+CHALLENGE_RUNNER_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_runner.gd"
+CHALLENGE_STAGES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_stages.gd"
+BEE_FORAGING_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "bee_foraging.gd"
 SPEC = importlib.util.spec_from_file_location("source_checks", SOURCE_CHECKS_PATH)
 source_checks = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(source_checks)
@@ -78,6 +81,40 @@ class ForagingPrerequisiteContractTest(unittest.TestCase):
             "static func _cascade_dependents_off_static", 1
         )[0]
         self.assertIn("_cascade_mutual_exclusion_static(parent)", prerequisite_cascade)
+
+
+class ChallengeOneOverflowContractTest(unittest.TestCase):
+    def test_only_the_pollen_automation_stage_can_discard_queen_nectar(self):
+        stages = CHALLENGE_STAGES_PATH.read_text(encoding="utf-8")
+        runner = CHALLENGE_RUNNER_PATH.read_text(encoding="utf-8")
+        foraging = BEE_FORAGING_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('const C1_DISCARD_STAGES := ["1.14"]', stages)
+        predicate = runner.split("func discards_overflow", 1)[1].split(
+            "func announce_overflow_discard", 1
+        )[0]
+        self.assertIn(
+            "_stages()[_stage_index].id in Stages.C1_DISCARD_STAGES", predicate
+        )
+
+        discard_branch = foraging.split("discards_overflow(bee):", 1)[1].split(
+            "# Keep the load until a cell changes.", 1
+        )[0]
+        self.assertLess(
+            discard_branch.index("announce_overflow_discard()"),
+            discard_branch.index("bee.current_load = 0.0"),
+        )
+
+    def test_each_real_discard_replaces_the_hint_with_an_explanation(self):
+        runner = CHALLENGE_RUNNER_PATH.read_text(encoding="utf-8")
+        prompt = runner.split("func announce_overflow_discard", 1)[1].split(
+            "## Slice 18:", 1
+        )[0]
+
+        self.assertIn("_c1_overflow_discard_count += 1", prompt)
+        self.assertIn("main.gallerin_panel.clear_queue()", prompt)
+        self.assertIn("main.gallerin_panel.show_now({", prompt)
+        self.assertIn("comb has no room for nectar", prompt)
 
 
 class QueueSchemaChecksTest(unittest.TestCase):

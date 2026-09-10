@@ -134,6 +134,10 @@ var _c1_forage_effects_done: bool = false
 ## nothing marks the moment a cell becomes wrong, only its steady state --
 ## and once a second is often enough for a prompt, not a state change.
 var _c1_pollen_cell_nectar_elapsed: float = 0.0
+## One suffix per actual discarded trip. Gallerin deduplicates non-repeatable
+## prompt ids, so this makes the warning visible once for every occurrence.
+## Reset at a stage boundary with the other Challenge 1 prompt state.
+var _c1_overflow_discard_count: int = 0
 
 func _ready() -> void:
 	Session.run_reset.connect(_reset_c2_pollen_rescue)
@@ -375,6 +379,7 @@ func _enter_stage() -> void:
 	# Slice 14: fresh per stage, so 1.14 fires its own camera/speed effects
 	# independently of 1.11's.
 	_c1_forage_effects_done = false
+	_c1_overflow_discard_count = 0
 	# The one place player_driven is ever written. A stage that does not
 	# declare the key drives nothing, so the flag clears itself on the way
 	# out of the manual-forage arc without a matching list to maintain.
@@ -803,17 +808,31 @@ func _drive_c1_forage_effects() -> void:
 	_c1_forage_effects_done = true
 	_run_stage_effects(["camera_follow_queen", "speed_multiplier:4.0"])
 
-## Slice 18: whether `bee`'s overflow load should vanish instead of
-## stranding her at a full comb. Only ever true for the queen carrying
-## nectar while Challenge 1 is running -- bee_foraging.gd routes this
-## question here rather than reading Session itself, so the simulation
-## keeps exactly one opinion about which Challenge is active.
+## Whether `bee`'s overflow load must be discarded instead of waiting at a
+## full comb. Only the pollen-automation stage has legitimately made every
+## cell unavailable to nectar; bee_foraging.gd routes this question here so
+## the simulation keeps one opinion about that Challenge-specific boundary.
 func discards_overflow(bee: Node2D) -> bool:
 	return (
 		active and Session.starting_level == 1
 		and is_instance_valid(main.queen) and bee == main.queen
 		and bee.current_load_type == "nectar"
+		and _stages()[_stage_index].id in Stages.C1_DISCARD_STAGES
 	)
+
+## Called only after discards_overflow() accepts a real deposit attempt. Clear
+## the stage queue first so its hint cannot immediately overwrite the reason
+## this gathered nectar was discarded. The unique id preserves one warning per
+## occurrence even though Gallerin normally deduplicates prompt ids.
+func announce_overflow_discard() -> void:
+	_c1_overflow_discard_count += 1
+	main.gallerin_panel.clear_queue()
+	main.gallerin_panel.show_now({
+		"id": "challenge_1_nectar_overflow_%s_%d" % [_stages()[_stage_index].id, _c1_overflow_discard_count],
+		"trigger": "warning",
+		"repeatable": false,
+		"text": "The comb has no room for nectar: this trip cannot be stored while this cell is reserved for pollen. Empty a cell or build another nectar cell before sending her out again.",
+	})
 
 ## Slice 18: from the pollen-automation stage (1.14) onward, nectar left in
 ## the cell the player designated for pollen has nowhere to be collected
