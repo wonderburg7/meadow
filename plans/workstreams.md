@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C1-20` (`codex/C1-20`) | Codex | the designation stage asks for the designation it names. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 20 — the designation stage asks for the designation it names" |
-| `.worktrees/HC-12` (`claude/HC-12`) | Claude | the project boots with no GDScript warnings. | Claude | in progress | none | `plans/now/hud-controls.md` "HC-12 — the project boots with no GDScript warnings" |
