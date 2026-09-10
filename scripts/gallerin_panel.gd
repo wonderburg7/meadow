@@ -34,7 +34,8 @@ const BUBBLE_TEXT_SIZE := 15
 const BUBBLE_GAP := 8.0
 
 var _icon_button: Button
-var _bubble: PanelContainer
+var bubble: PanelContainer
+var _bubble_scroll: ScrollContainer
 var _bubble_label: Label
 var _bubble_pointer: Polygon2D
 var _hovering_icon: bool = false
@@ -123,31 +124,48 @@ func _build_icon() -> void:
 	_icon_button.add_child(body)
 
 func _build_bubble() -> void:
-	_bubble = PanelContainer.new()
-	_bubble.visible = false
-	_bubble.custom_minimum_size = Vector2(BUBBLE_WIDTH, 0)
-	_bubble.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_bubble.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_bubble.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	# The message belongs beside Gallerin, not above him: leave a small gap
-	# between its pointer and the icon at the bottom-right corner.
-	_bubble.offset_right = -(ICON_MARGIN + ICON_SIZE.x + BUBBLE_GAP)
-	_bubble.offset_bottom = -ICON_MARGIN
-	_bubble.theme = UiTheme.build_theme()
-	_bubble.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	_bubble.mouse_entered.connect(func(): _hovering_bubble = true)
-	_bubble.mouse_exited.connect(func(): _hovering_bubble = false)
-	_bubble.resized.connect(_position_bubble_pointer)
-	add_child(_bubble)
+	bubble = PanelContainer.new()
+	bubble.visible = false
+	# Outer rectangle comes from UiLayout.gallerin_rect() via
+	# UiPanelLayout.apply() in _apply_layout() -- this preset only gives the
+	# bubble the same starting anchors/grow direction as the tray and
+	# summary panel before that first apply() call lands (HC-14).
+	bubble.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	bubble.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	bubble.theme = UiTheme.build_theme()
+	bubble.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
+	bubble.mouse_entered.connect(func(): _hovering_bubble = true)
+	bubble.mouse_exited.connect(func(): _hovering_bubble = false)
+	bubble.resized.connect(_position_bubble_pointer)
+	add_child(bubble)
+
+	# A plain column would report the button row's un-wrapped width as its
+	# own minimum size and drag the panel wider than apply() sizes it to
+	# (HC-14, requirement 3) -- a FlowContainer's minimum width is the sum
+	# of its children on a single line, since it cannot know it will be
+	# allowed to wrap until it is actually laid out. Routing through a
+	# ScrollContainer is what hides that from the panel, the same way
+	# hud.gd's command tray hides command_columns' minimum from the tray
+	# (ui_panel_layout.gd::apply()'s own docstring: "scroll is the one
+	# control allowed to be smaller than its contents"). Horizontal scroll
+	# stays disabled -- the point is to let the row wrap and the panel grow
+	# taller, never to gain a sideways scrollbar.
+	_bubble_scroll = ScrollContainer.new()
+	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_bubble_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	bubble.add_child(_bubble_scroll)
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 6)
-	_bubble.add_child(column)
+	# Without this the column (and everything under it) shrinks to its own
+	# minimum width inside the scroll rather than using the width apply()
+	# actually gives the bubble (same fix hud.gd's command_content needed).
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bubble_scroll.add_child(column)
 
 	_bubble_label = Label.new()
 	_bubble_label.theme_type_variation = "Body"
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_bubble_label.custom_minimum_size = Vector2(BUBBLE_WIDTH - 28.0, 0)
 	column.add_child(_bubble_label)
 	_apply_bubble_font_size()
 
@@ -156,15 +174,18 @@ func _build_bubble() -> void:
 		Vector2(0, -8), Vector2(12, 0), Vector2(0, 8),
 	])
 	_bubble_pointer.color = UiTheme.color("panel_bg")
-	_bubble.add_child(_bubble_pointer)
+	bubble.add_child(_bubble_pointer)
 
-	var row := HBoxContainer.new()
+	# HFlowContainer, not HBoxContainer: at the narrowest band and the
+	# largest text scale the two buttons no longer fit side by side and
+	# must wrap onto a second line rather than pushing the panel wider.
+	var row := HFlowContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	column.add_child(row)
 
 	var dismiss_btn := Button.new()
 	dismiss_btn.text = "Dismiss"
-	dismiss_btn.pressed.connect(func(): _bubble.visible = false)
+	dismiss_btn.pressed.connect(func(): bubble.visible = false)
 	row.add_child(dismiss_btn)
 
 	var disable_btn := Button.new()
@@ -175,18 +196,27 @@ func _build_bubble() -> void:
 ## ui_layout.gd already preloads this script (to read BUBBLE_WIDTH), so
 ## this side uses a runtime load() rather than a top-level preload const
 ## -- a two-way preload const would ask Godot's parser to resolve each
-## script's type before the other has finished compiling.
+## script's type before the other has finished compiling. ui_panel_layout.gd
+## preloads ui_layout.gd itself, so the same cycle rules out preloading it
+## here too.
 func _ui_layout():
 	return load("res://scripts/ui_layout.gd")
 
-## Mirrors the summary panel's own viewport-driven width step
-## (hud.gd::_apply_selection_tray_width) so the bubble never grows into
-## the role/command tray's space at a narrow window size.
+func _ui_panel_layout():
+	return load("res://scripts/ui_panel_layout.gd")
+
+## Gives the bubble its rectangle the way the tray and summary panel get
+## theirs (HC-14), on show and on viewport resize only -- see this script's
+## own _ready() and get_viewport().size_changed connection; _process() must
+## not gain layout work.
 func _apply_layout() -> void:
-	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var width: float = _ui_layout().gallerin_bubble_width(viewport_width)
-	_bubble.custom_minimum_size.x = width
-	_bubble_label.custom_minimum_size.x = width - 28.0
+	var ui_layout = _ui_layout()
+	var rect: Rect2 = ui_layout.gallerin_rect(get_viewport().get_visible_rect().size)
+	# The label needs its content-area width before apply() reads the
+	# panel's combined minimum height below, or that height is computed
+	# from whatever width the label last had.
+	_bubble_label.custom_minimum_size.x = rect.size.x - ui_layout.panel_chrome().x
+	_ui_panel_layout().apply(bubble, _bubble_scroll, rect, ICON_MARGIN)
 	_position_bubble_pointer()
 
 func _position_bubble_pointer() -> void:
@@ -194,7 +224,7 @@ func _position_bubble_pointer() -> void:
 		return
 	# Both controls share a bottom edge, so this is Gallerin's actual vertical
 	# centre even when a longer message makes the bubble grow upward.
-	_bubble_pointer.position = Vector2(_bubble.size.x, _bubble.size.y - ICON_SIZE.y / 2.0)
+	_bubble_pointer.position = Vector2(bubble.size.x, bubble.size.y - ICON_SIZE.y / 2.0)
 
 func _apply_bubble_font_size() -> void:
 	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
@@ -252,4 +282,8 @@ func _show_bubble(text: String) -> void:
 		return
 	_last_message = text
 	_bubble_label.text = text
-	_bubble.visible = true
+	bubble.visible = true
+	# A resize while hidden updates nothing below (Godot does not re-layout
+	# an invisible control), so the rectangle could otherwise be stale from
+	# whatever viewport size was current the last time the bubble was shown.
+	_apply_layout()

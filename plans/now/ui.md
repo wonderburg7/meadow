@@ -311,6 +311,14 @@ against the tile's real hexagon at its real position, and every reported
   and LAY-6 (`plans/archive/LAYOUT_REGRESSION_2026-09-09.md`) built the
   harness that makes this cheap -- a geometry slice extends
   `tests/fixtures/layout_panels.json` rather than filing a check.
+- **Every persistent panel's outer rectangle now comes from `ui_layout.gd`,
+  with no exception left.** Dr Gallerin's bubble was the last one managing
+  its own anchor instead: `ui_layout.gd::gallerin_rect()` existed but said so
+  in its own comment ("not yet wired to a caller"). HC-14 (10 Sep 2026,
+  `plans/archive/HC-14_2026-09-10.md`) wired it through
+  `ui_panel_layout.gd::apply()` like every other panel. A new persistent
+  panel that sizes or positions itself outside this path is the same mistake
+  repeating, not a new one.
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks

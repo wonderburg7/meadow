@@ -89,7 +89,10 @@ static func selection_tray_width(viewport_width: float) -> float:
 	return maxf(0.0, command_tray_left_edge(viewport_width) - SELECTION_TRAY_GAP - SELECTION_TRAY_LEFT_MARGIN)
 
 ## Dr Gallerin's bubble fills the right side band after the tray gap, icon,
-## icon margin and bubble-to-icon gap. It remains readable at narrow widths.
+## icon margin and bubble-to-icon gap. GALLERIN_BUBBLE_MIN_WIDTH keeps it
+## readable at narrow widths even when the band itself is narrower than
+## that floor -- a content concern gallerin_panel.gd's wrapping button row
+## absorbs (HC-14), not a width this function promises the band can hold.
 static func gallerin_bubble_width(viewport_width: float) -> float:
 	var tray_width := command_tray_width(viewport_width)
 	var tray_right_edge := command_tray_left_edge(viewport_width) + tray_width
@@ -136,13 +139,14 @@ static func summary_panel_rect(viewport_size: Vector2) -> Rect2:
 			command_tray_max_height(viewport_size.y))
 
 ## Dr Gallerin's bubble: the bottom-right counterpart of summary_panel_rect,
-## anchored from the tray's right edge rather than the left margin. Not yet
-## wired to a caller -- gallerin_panel.gd manages its own bottom-right
-## anchoring and keeps calling gallerin_bubble_width() directly.
+## its left edge PANEL_GAP past the command tray's right edge rather than a
+## fixed left margin. Its width can fall short of reaching the icon when
+## gallerin_bubble_width() clamps to its floor -- see that function's own
+## comment; this rectangle does not compensate for it.
 static func gallerin_rect(viewport_size: Vector2) -> Rect2:
+	var tray_right_edge := command_tray_left_edge(viewport_size.x) + command_tray_width(viewport_size.x)
 	var width := gallerin_bubble_width(viewport_size.x)
-	var right := viewport_size.x - (GallerinPanel.ICON_MARGIN + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP)
-	return Rect2(right - width, 0.0, width, 0.0)
+	return Rect2(tray_right_edge + PANEL_GAP, 0.0, width, command_tray_max_height(viewport_size.y))
 
 ## A left-side window (Colony/Foraging/Nursery): fixed width, x pinned at
 ## the shared left margin, top and height following the corner readout and
