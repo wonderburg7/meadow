@@ -10,30 +10,19 @@ Do not read the other lane's plan, the archive, `ROADMAP.md` or Git history
 to work out what to do -- the script already decided.
 
 **Current state, after Dave's fourth hands-on pass (9-10 Sep 2026).** Eleven
-checks ran. Everything that pass unblocked has since shipped except one fault,
-and it leads the queue below: Challenge 1 destroys the queen's nectar whenever
-the comb is full, because `challenge_runner.gd::discards_overflow` carries its
-stage restriction in a comment and not in its code, so a rule meant for the
-pollen stage fires at every stage. That is C1-25, the most severe finding in the
-pass -- it loses resources the player gathered by hand and can dead-end the run.
+checks ran, and everything that pass unblocked has now shipped. C1-25, the most
+severe finding, landed on 11 Sep 2026: Challenge 1's nectar-discard rule now
+names stage 1.14 in its code rather than only in a comment, so the queen keeps
+a load the comb cannot take at every earlier stage and is told by Dr Gallerin
+on the one stage that does discard it. Its check is C-42.
 
-The pass's other three fixes (HC-13, HC-14 and HC-15) all landed on 10 Sep 2026
-and their records are in `plans/archive/`. Twelve hands-on checks are waiting in
+The pass's other three fixes (HC-13, HC-14 and HC-15) landed on 10 Sep 2026 and
+their records are in `plans/archive/`. Thirteen hands-on checks are waiting in
 `checks/ready.md`; by rule no queue item is held open for one.
 
 ## Next up
 
-1. **[Codex] C1-25 -- the queen's harvest is never thrown away without her being told.**
-   Narrow Challenge 1's nectar-discard rule to the stage its own comment
-   names, tell the player when it fires, and let the queen keep a load the
-   comb cannot take at every other stage.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 25 — the queen's harvest is never thrown away without her being told"
-   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`, `scripts/bee_foraging.gd`
-   - Check: one check reproducing Dave's 10 Sep 2026 sequence at stage 1.12
-   - Proof: `absent: scripts/challenge_stages.gd :: C1_DISCARD_STAGES`
-   - Next after: C1-21 (the queen forages pollen without being pushed)
-
-2. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
+1. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
    Add a `NECTAR_TARGET` constant beside the existing `POLLEN_TARGET` and
    have the nectar stage's goal check and progress bar use it instead of the
    cell's full 200 capacity, so the queen stops filling it at 150 and the
@@ -44,7 +33,7 @@ and their records are in `plans/archive/`. Twelve hands-on checks are waiting in
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
-3. **[Claude] HC-16 -- the command tray's height matches its content on a reselection.**
+2. **[Claude] HC-16 -- the command tray's height matches its content on a reselection.**
    HC-8 (10 Sep 2026) fixed the tray for the *first* build after a
    selection; reselecting a different bee still leaves it wrong, with or
    without `More…` open -- one traced case left the tray 260px+ taller than
@@ -58,18 +47,31 @@ and their records are in `plans/archive/`. Twelve hands-on checks are waiting in
    - Proof: `absent: scripts/hud.gd :: HC-16`
    - Next after: none -- hud-controls.md is complete
 
+3. **[Codex] C1-21 -- the queen forages pollen without being pushed.**
+   At the pollen stage she stays put when the player switches her focus to
+   Pollen, and only sets off once something else has moved her out of the
+   hive. Trace it headlessly first: the standing hypothesis is that the
+   nectar she is still carrying routes her to a deposit that does not exist,
+   and C1-25 has just made her keep that load rather than lose it, so the
+   stall is now the only way it can end. Fix what the trace shows.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 21 — the queen forages pollen without being pushed"
+   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`
+   - Check: C-7's pollen half, re-run once she leaves on the focus change alone
+   - Proof: `absent: scripts/bee_foraging.gd :: C1-21`
+   - Next after: C1-22 (the stage's camera reaches the pollen stage)
+
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 21, 22, 24 and 26** (`plans/now/challenge-1.md`) --
-  all four are specified. Slice 21 waits on Slice 20 by design: until stage
-  1.13 runs, no cell in the hive accepts pollen and every pollen symptom has
-  that as a sufficient cause. Slice 26 (the marker pulses and shows an
-  off-screen arrow, both Dave's 10 Sep asks) waits on Slice 24, the other
-  open change to the same marker node. Slice 22 is startable on its merits
-  but sits behind C1-25 and C1-23 in the same lane. Slice 24 is next after
-  C1-23 and is queued as its `Next after:`.
+- **Challenge 1 Slices 22, 24 and 26** (`plans/now/challenge-1.md`) -- all
+  three are specified. Slice 26 (the marker pulses and shows an off-screen
+  arrow, both Dave's 10 Sep asks) waits on Slice 24, the other open change to
+  the same marker node. Slice 22 is startable on its merits but sits behind
+  C1-23 and C1-21 in the same lane, and is queued as C1-21's `Next after:`.
+  Slice 24 is next after C1-23 and is queued as its `Next after:`. Slice 21
+  itself is no longer held: Slice 20 has landed, so stage 1.13 runs and a
+  pollen symptom no longer has that as a sufficient cause.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.

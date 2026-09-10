@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C1-25-revived` (`codex/C1-25-revived`) | Codex | the queen's harvest is never thrown away without her being told. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 25 — the queen's harvest is never thrown away without her being told" |

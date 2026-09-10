@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 25 -- the queen's harvest is never thrown away without her being told | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 21-26 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: Slice 23 -- a Challenge 1 wax cell is full at 150 nectar | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 21-26 | Verified: 2026-09-11
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -48,7 +48,6 @@ same shape: a rule whose comment named a stage and whose code did not.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| 25 | The queen's harvest is discarded whenever the comb is full | `challenge_runner.gd`, `challenge_stages.gd`, `bee_foraging.gd` | high |
 | 21 | The queen will not start pollen foraging unaided (C-7) | `bee.gd`, `bee_foraging.gd` | high |
 | 22 | The pollen stage's camera never follows (C-29) | `challenge_runner.gd`, `camera_view.gd` | medium |
 | 23 | A Challenge 1 nectar cell is full at 150, not 200 | `challenge_stages.gd`, `challenge_runner.gd` | low |
@@ -87,169 +86,19 @@ Shipped 10 Sep 2026. Full specification and delivery record:
 
 ## Slice 25 — the queen's harvest is never thrown away without her being told
 
-**Reasoning level: high.** A resource-loss rule with no stage gate, sitting
-in the deposit path every bee in the game uses. The fix is small; getting its
-boundary right is not.
-
-**Purpose and intended outcome.** A load the player watched the queen gather
-is never silently destroyed. Challenge 1 stops dead-ending when the comb
-fills, and the one case where discarding really is the least-bad answer is
-narrowed to the stage that needs it and is announced when it happens.
-
-**Status and dependencies.** Ready. Independent of Slices 20 to 24; it can
-land before or after any of them. It touches
-`scripts/challenge_runner.gd`, which Slice 20 also touches, so the two must
-not run at the same time in the same lane.
-
-**Observable problem (Dave, 10 Sep 2026).** "In Challenge 1, after you filled
-up the nectar cell, if you take the queen out and right-click on a flower so
-she continues to forage nectar, then when you right-click the hive for her to
-return home, she moves to the hive icon, all the resources that she's
-carrying disappear and she continues to forage. So she doesn't actually
-return to the hive or attempt to deposit anything. The resources just
-disappear. And then there's no way for her to return and the challenge gets
-stuck."
-
-**Confirmed root cause.** `bee_foraging.gd::go_to_deposit_cell` reaches a
-branch that sets `bee.current_load = 0.0`, clears `current_load_type` and
-sends the bee back out, whenever `hive.find_cell_for()` returns null, the
-comb is not empty, and `challenge_runner.discards_overflow(bee)` is true. The
-comment above that branch states the intent exactly: "Challenge 1 only: by
-the pollen stage both built cells hold nectar, so a nectar trip genuinely has
-nowhere to go until the player designates a cell for pollen."
-
-`challenge_runner.gd::discards_overflow` does not implement that intent. It
-is:
-
-```
-active and Session.starting_level == 1
-and is_instance_valid(main.queen) and bee == main.queen
-and bee.current_load_type == "nectar"
-```
-
-There is no stage in it. It is therefore true for the queen carrying nectar
-at *every* Challenge 1 stage, including 1.11 the moment the nectar cell
-fills, and 1.12 while the player is being asked to build the second cell.
-That is precisely Dave's reproduction: the first cell is full, no second cell
-has space yet, the queen comes home, and the branch fires. Nothing tells the
-player, so the only visible events are the load vanishing and the queen
-leaving again.
-
-**Contributing causes worth naming in the fix.**
-
-- A comment carried the stage restriction and the code did not. The
-  restriction has to live in the predicate.
-- `discards_overflow` reads `Session.starting_level` to mean "this is
-  Challenge 1". `challenge_runner` already knows which stage it is in; the
-  stage is the thing the rule depends on and the level is not.
-- The discard has no feedback path at all, while the neighbouring case —
-  nectar sitting in the cell designated for pollen — has one
-  (`_drive_c1_pollen_cell_nectar_prompt`). Two responses to one situation,
-  only one of which the player can see.
-
-**Current authoritative owner.** `scripts/challenge_runner.gd` owns the
-predicate. `scripts/bee_foraging.gd` owns the deposit path and calls it.
-`scripts/hive.gd`'s deposit search is not in scope.
-
-**Required reading.** This heading; `bee_foraging.gd::go_to_deposit_cell`;
-`challenge_runner.gd::discards_overflow` and
-`_drive_c1_pollen_cell_nectar_prompt`; `docs/challenge-stages.md` for what
-1.11 to 1.14 ask the player to do.
-
-**Files likely to change.** `scripts/challenge_runner.gd`,
-`scripts/challenge_stages.gd`, `scripts/bee_foraging.gd`.
-
-**Files that must not be changed.** `scripts/hive.gd` — the deposit search
-serves every bee in the game and is not at fault. `scripts/bee.gd`'s command
-functions — `command_return_and_deposit` does the right thing and the load
-survives it. `scripts/game_config.gd`.
-
-**Requirements.**
-
-1. Add `const C1_DISCARD_STAGES := ["1.14"]` to `scripts/challenge_stages.gd`
-   beside the Challenge 1 stage table, with a comment saying why that stage
-   and no other: it is the stage where the second cell is reserved for pollen
-   and a nectar trip therefore has nowhere legitimate to go. If the
-   implementer's trace shows 1.13 needs it too, add 1.13 and say so; do not
-   widen it beyond that without escalating.
-2. `discards_overflow` returns true only when the current stage id is in
-   `C1_DISCARD_STAGES`, in addition to the four conditions it already tests.
-   Read the current stage from the runner's own stage index, not from
-   `Session.starting_level`, which stays only as the "this is Challenge 1"
-   guard it already is.
-3. When the discard does fire, the player is told once per occurrence, using
-   the same `clear_queue()` then `show_now()` pattern
-   `_drive_c1_pollen_cell_nectar_prompt` uses, with a line saying that the
-   comb has no room for nectar and what to do about it. Do not add a second
-   prompting mechanism.
-4. At every stage *not* in `C1_DISCARD_STAGES`, a queen who comes home with a
-   load the comb cannot take keeps it. That is what the general branch below
-   already does — the fix is that she now reaches it — so requirement 4 is a
-   test, not new code.
-5. The player must be able to get out of the state requirement 4 creates.
-   Confirm against the current build that a queen holding an undepositable
-   load can still be commanded: "Empty this cell" on a full cell
-   (`bee.gd::command_empty_cell`) and designating the new cell both free
-   space. If neither is reachable at stage 1.12 because the controls are
-   gated, say so and stop — that is a stage-gating slice, not this one.
-
-**Constraints and invariants.** No bee outside Challenge 1 may ever lose a
-load. `bee_foraging.gd`'s general "keep the load until a cell changes" branch
-and its `deposit_blocked_epoch` guard are correct and stay. The
-`autonomous_state()` wrapper rule holds: any transition this slice adds in
-`bee_foraging.gd` goes through it, or is marked `# player-command`, and
-`tests/source_checks.py` enforces that.
-
-**State-transition and cleanup behaviour.** A stage leaving
-`C1_DISCARD_STAGES` must not leave a bee mid-discard. The discard is a single
-frame's decision inside `go_to_deposit_cell`, so there is no state to unwind;
-assert that rather than assuming it. The once-per-occurrence prompt timer
-resets on stage entry, as the existing pollen-cell prompt's does.
-
-**Runtime policy.** `discards_overflow` is called from the deposit path, which
-runs per think tick per returning bee. Its added stage lookup must be an
-index read, not a search through the stage table.
-
-**Edge cases.** The queen carrying pollen rather than nectar at 1.14. A
-checkpoint restore mid-trip. The player designating the second cell for
-pollen while she is already inside the hive holding nectar. Two cells both
-full at 1.14, which is the case the discard exists for. A save taken with the
-queen holding an undepositable load.
-
-**Automated acceptance checks.** A headless scenario that drives Challenge 1
-to stage 1.12 with the first cell full, sends the queen to a flower and home
-again, and asserts her `current_load` is unchanged on arrival and that the
-colony's nectar total did not fall. A second scenario at 1.14 asserting the
-discard still fires there and that a prompt was shown in the same tick.
-
-**Regression checks.** The nectar arc at stage 1.11, which passes today
-(C-7's nectar half, C-29's nectar stage). A non-Challenge run with a
-deliberately full comb, asserting a forager keeps her load — the general
-branch must be untouched.
-
-**Save/load.** `current_load` and `current_load_type` are saved per bee.
-Requirement 4 means a save can now contain a queen holding an undepositable
-load, which was previously impossible in Challenge 1. Confirm the save
-round-trips it and that she resumes rather than stalling on load.
-
-**Completion and documentation updates.** Update this plan's glance table and
-Status line, archive this heading, regenerate `docs/challenge-stages.md` with
-`python tools/stage_reference.py` if the stage table changed, and file one
-hands-on check covering Dave's exact reproduction.
-
-**Escalate rather than guess if:** the trace shows the discard is also
-reachable for a bee that is not the queen, or outside Challenge 1. Either
-would mean resource loss in open play, which is a different and larger
-problem than this slice.
+Shipped 11 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-25_2026-09-11.md`](../archive/C1-25_2026-09-11.md).
 
 ## Slice 21 — the queen forages pollen without being pushed
 
 **Reasoning level: high.** Bee state machine, and the cause is only partly
 established.
 
-**Depends on Slice 20.** Until stage 1.13 actually runs, no cell in the hive
-will accept pollen, and every symptom below has that as a sufficient cause.
-Do not start this slice before Slice 20 has landed and C-30 has been re-run.
+**Slice 20 has landed** (10 Sep 2026), so stage 1.13 runs and a cell can be
+reserved for pollen. That removes the sufficient cause the symptoms below
+used to have, which is what makes this slice startable. Slice 25 has landed
+too: the queen now keeps a nectar load the comb cannot take instead of losing
+it, so if a carried load is the stall, nothing clears it on its own any more.
 
 **Observable problem (C-7, pollen half).** At stage 1.14 the queen does not
 set off when the player switches her focus to Pollen. Right-clicking the hive
