@@ -101,6 +101,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_open_window(main, action)
 		"viewport_size":
 			_do_viewport_size(main, action)
+		"show_gallerin_prompt":
+			_do_show_gallerin_prompt(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -533,6 +535,20 @@ static func _do_viewport_size(main: Node2D, action: Dictionary) -> void:
 	main.get_window().size = Vector2i(w, h)
 	_log("viewport_size", "%dx%d" % [w, h], "accepted", "")
 
+## {"do": "show_gallerin_prompt", "text": "..."} -- the developer trigger
+## HC-14's panel_rect gap assertions need: Dr Gallerin's bubble (and its
+## Dismiss/Turn-off button row) only exists on screen while a prompt is
+## showing, and nothing else in a scenario fixture puts one there.
+static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void:
+	var text: String = action.get("text", "Test prompt.")
+	Session.gallerin_enabled = true
+	main.gallerin_panel.visible = true
+	main.gallerin_panel.show_now({"id": "scenario_prompt", "text": text, "repeatable": true})
+	if main.gallerin_panel.bubble != null and main.gallerin_panel.bubble.visible:
+		_log("show_gallerin_prompt", text, "accepted", "")
+	else:
+		_log("show_gallerin_prompt", text, "rejected", "bubble did not open")
+
 
 # --- assertion checks -------------------------------------------------
 
@@ -570,14 +586,21 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 	return {"ok": false, "reason": "condition not met"}
 
 ## LAY-5's panel-level check: {"panel": name, "inside_viewport": true,
-## "gap_below": px}. `name` is one of the five panels LAY-5 names, each
-## resolved to the Control whose get_global_rect() is the thing a player
-## actually sees -- command_tray/summary are hud.gd fields, the three
-## windows keep their PanelContainer behind a CanvasLayer (colony_panel.gd,
-## foraging_panel.gd, nursery_panel.gd all name it "panel"). An invisible
-## panel is never asserted on by a fixture -- LAY-5 only calls this once
-## the panel has just been opened -- so no invisible-pass rule is needed
-## here the way LAY-6's control_rect needs one.
+## "gap_below": px, "after_panel": name, "gap": px}. `name` is one of the
+## panels LAY-5/HC-14 name, each resolved to the Control whose
+## get_global_rect() is the thing a player actually sees -- command_tray/
+## summary are hud.gd fields, the three windows keep their PanelContainer
+## behind a CanvasLayer (colony_panel.gd, foraging_panel.gd, nursery_panel.gd
+## all name it "panel"), and "gallerin" is gallerin_panel.gd's speech
+## bubble. An invisible panel is never asserted on by a fixture -- LAY-5
+## only calls this once the panel has just been opened -- so no
+## invisible-pass rule is needed here the way LAY-6's control_rect needs one.
+##
+## "after_panel"/"gap" (HC-14) is how two panels' shared clearance is
+## proven equal without a fixture repeating the same pixel literal twice
+## and trusting it stays in sync: both the summary-to-tray gap and the
+## tray-to-bubble gap assert against the same PANEL_GAP value, so either
+## one drifting from the other fails here rather than needing an eye.
 static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary:
 	var name: String = condition.get("panel", "")
 	var panel: Control = _resolve_named_panel(main, name)
@@ -594,6 +617,18 @@ static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
 		var actual_gap: float = (viewport_rect.position.y + viewport_rect.size.y) - (rect.position.y + rect.size.y)
 		if absf(actual_gap - expected_gap) > 1.0:
 			return {"ok": false, "reason": "panel '%s' gap_below is %.1fpx, expected %.1fpx (rect %s, viewport %s)" % [name, actual_gap, expected_gap, rect, viewport_rect]}
+	if condition.has("after_panel"):
+		var after_name: String = condition["after_panel"]
+		var after_panel: Control = _resolve_named_panel(main, after_name)
+		if after_panel == null:
+			return {"ok": false, "reason": "unknown panel '%s'" % after_name}
+		if not after_panel.visible:
+			return {"ok": false, "reason": "panel '%s' is not visible" % after_name}
+		var after_rect: Rect2 = after_panel.get_global_rect()
+		var expected_after_gap: float = float(condition.get("gap", 0))
+		var actual_after_gap: float = rect.position.x - (after_rect.position.x + after_rect.size.x)
+		if absf(actual_after_gap - expected_after_gap) > 1.0:
+			return {"ok": false, "reason": "panel '%s' gap after '%s' is %.1fpx, expected %.1fpx (rect %s, after %s)" % [name, after_name, actual_after_gap, expected_after_gap, rect, after_rect]}
 	return {"ok": true, "reason": ""}
 
 static func _resolve_named_panel(main: Node2D, name: String) -> Control:
@@ -608,6 +643,8 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 			return main.foraging_panel.panel
 		"nursery":
 			return main.nursery_panel.panel
+		"gallerin":
+			return main.gallerin_panel.bubble
 		_:
 			return null
 

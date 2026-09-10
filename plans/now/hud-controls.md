@@ -1,7 +1,7 @@
 # HUD controls that do not look or behave like controls
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HC-14, Dr Gallerin's bubble is given its rectangle like every other panel | Dependency: HC-5 and HC-6 follow HC-14 in `scripts/gallerin_panel.gd`; HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: HC-5, Dr Gallerin's bubble types its line out | Dependency: HC-6 follows HC-5 in `scripts/gallerin_panel.gd`; HC-8 shares `scripts/hud.gd` with the now-delivered HC-15 | Verified: 2026-09-10
 
 **Objective.** Every built control in the HUD occupies the space it was
 designed for, shows its own text at the size the player asked for, sits where
@@ -41,23 +41,25 @@ for saved UI preferences.
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| HC-14 | Dr Gallerin's bubble sets its own left edge, so its gap is not the shared one (C-18) | `gallerin_panel.gd`, `ui_layout.gd`, `ui_panel_layout.gd` | medium |
 | HC-8 | The tray is taller than its content until More… is toggled (C-18) | `hud.gd` | medium |
 | HC-5 | Dr Gallerin's line appears all at once | `gallerin_panel.gd` | medium |
 | HC-6 | No way to re-read what Dr Gallerin already said | `gallerin_panel.gd` | medium |
 
-HC-14 edits `scripts/gallerin_panel.gd`, so HC-5 follows it and HC-6 follows
-HC-5. HC-8 still wants the measurement its own heading describes; it is the
-only slice here whose cause is not yet confirmed.
+HC-5 edits `scripts/gallerin_panel.gd`, so HC-6 follows it. HC-8 still wants
+the measurement its own heading describes; it is the only slice here whose
+cause is not yet confirmed.
 
 Landed and archived under `plans/archive/`: HC-1 and HC-2 (9 Sep 2026, both
 did what they specified; C-18 and C-32 turned out to have causes beneath
 them), HC-3, HC-4, HC-7, HC-9, HC-10, HC-11, HC-12 and HC-13 (10 Sep 2026,
-`plans/archive/HC-13_2026-09-10.md`), and HC-15 (10 Sep 2026,
+`plans/archive/HC-13_2026-09-10.md`), HC-15 (10 Sep 2026,
 `plans/archive/HC-15_2026-09-10.md` -- the tray's columns take equal thirds
 whenever three genuinely fit on the row; the specified `GridContainer` swap
-did not survive contact with 800x600, see that file). Open those for
-provenance, never to work out what to do.
+did not survive contact with 800x600, see that file), and HC-14 (10 Sep 2026,
+`plans/archive/HC-14_2026-09-10.md` -- the bubble's rectangle now comes from
+`ui_layout.gd`/`ui_panel_layout.gd` like every other panel; wrapping the
+button row needed a `ScrollContainer`, not just an `HFlowContainer`, see that
+file). Open those for provenance, never to work out what to do.
 
 ## HC-8 — the tray's height matches its content, from the first frame
 
@@ -169,133 +171,6 @@ re-file C-18 unchanged.
 **Escalate rather than guess if:** the measurement points at
 `ui_panel_layout.gd::apply()`'s cap rather than at the timing of the read.
 That file sizes every persistent panel, so a change there is a high slice.
-
-## HC-14 — Dr Gallerin's bubble is given its rectangle like every other panel
-
-**Reasoning level: medium.** One panel moves onto the shared layout path.
-The path itself is not changed.
-
-**Purpose and intended outcome.** The gap between the command tray and Dr
-Gallerin's bubble equals the gap between the summary panel and the tray,
-because both come from the same constant applied the same way, and an
-assertion proves it rather than an eye.
-
-**Status and dependencies.** Ready. No dependency. HC-5 and HC-6 follow it,
-because all three edit `scripts/gallerin_panel.gd`.
-
-**Observable problem (Dave, 10 Sep 2026, C-18).** "The space between the
-command tray and the Doctor's speech bubble seems smaller than the space
-between the summary window and the command tray."
-
-**Confirmed root causes.** Two, and they compound.
-
-1. **The bubble's rectangle has two owners, and the declared one is dead
-   code.** `ui_layout.gd::gallerin_rect()` exists, computes the bubble's
-   outer rectangle, and says so in its own comment: "Not yet wired to a
-   caller -- gallerin_panel.gd manages its own bottom-right anchoring and
-   keeps calling gallerin_bubble_width() directly." The summary panel and the
-   tray both go through `ui_panel_layout.gd::apply()`, which assigns their
-   offsets outright. The bubble does not, so nothing in the codebase states
-   that its left edge is `PANEL_GAP` from the tray's right edge.
-2. **The bubble's width is set as a minimum, not as a width.**
-   `gallerin_panel.gd:188` sets `_bubble.custom_minimum_size.x` from
-   `UiLayout.gallerin_bubble_width()`. That is a floor. The bubble's actual
-   width is the larger of that floor and its own content's minimum — the
-   label, the pointer, and the "Dismiss" / "Turn off Dr Gallerin" button row.
-   Because the bubble is `PRESET_BOTTOM_RIGHT` with
-   `grow_horizontal = GROW_DIRECTION_BEGIN`, every pixel of that excess grows
-   leftwards, straight out of the gap. The summary panel cannot do this: its
-   offsets are assigned.
-
-**Measure once before fixing.** Record the summary panel's right edge, the
-tray's left and right edges, and the bubble's left edge, at 1920x1080 and at
-800x600, at the default and largest text scales, with a Challenge prompt
-showing so the button row is present. This confirms which of the two causes
-is producing the difference Dave saw and by how much. It is four numbers from
-LAY-5's `panel_rect`, not an investigation.
-
-**Current authoritative owner.** `scripts/ui_layout.gd` owns every persistent
-panel's outer rectangle. This slice makes that true of the bubble as well,
-rather than adding a new owner.
-
-**Required reading.** This heading, `scripts/ui_layout.gd`'s
-"persistent-rectangle owners" section, `scripts/ui_panel_layout.gd` in full
-(61 lines), and `gallerin_panel.gd`'s `_build_bubble` and its resize handler.
-
-**Files likely to change.** `scripts/gallerin_panel.gd`,
-`scripts/ui_layout.gd`, `scripts/ui_panel_layout.gd`.
-
-**Files that must not be changed.** `scripts/hud.gd` — the tray and summary
-panel are already correct and this slice must not move either. The tray's
-own width fraction and minimum band constants stay as they are.
-
-**Requirements.**
-
-1. The bubble's left edge is assigned, not inferred. Route it through
-   `ui_layout.gd::gallerin_rect()` and `ui_panel_layout.gd::apply()` the way
-   the tray and summary panel already are, so one function decides all three
-   panels' horizontal edges.
-2. `gallerin_rect()` returns a rectangle whose left edge is
-   `command_tray_left_edge + command_tray_width + PANEL_GAP`, expressed from
-   those helpers rather than restated. Delete the "not yet wired to a caller"
-   comment in the same change; a comment that stops being true is how this
-   drifted in the first place.
-3. The bubble never grows past the rectangle it is given. If its content's
-   minimum exceeds the band — the button row at the largest text scale at
-   800x600 is the case to check — the content wraps or the bubble scrolls;
-   the bubble does not widen. `ui_panel_layout.gd::apply()` already caps a
-   scroll child this way, and its header names that as its purpose.
-4. `gallerin_bubble_width()` keeps its clamp, but the clamp's floor becomes a
-   *content* concern rather than a layout one: if the band is narrower than
-   `GALLERIN_BUBBLE_MIN_WIDTH`, say so in a comment and let requirement 3
-   handle the overflow, rather than returning a width the band cannot hold.
-
-**Constraints and invariants.** `ui_panel_layout.gd`'s header rule stands: no
-`reset_size()`, no assignment to `panel.size` or `panel.size.x`, offsets
-only. The icon keeps its own `ICON_MARGIN` anchoring — this slice moves the
-bubble, not Dr Gallerin herself. The bubble's `process_mode = ALWAYS` is
-unrelated and stays.
-
-**Existing patterns to reuse.** `UiLayout.panel_chrome()`,
-`UiPanelLayout.apply()`, `UiLayout.PANEL_GAP`. Add no new constant: the gap
-already has one name.
-
-**State-transition and cleanup behaviour.** The bubble is shown and hidden
-many times per run. Its rectangle must be reapplied on show and on viewport
-resize, and must not be cached across a hide, or a resize while hidden leaves
-it stale.
-
-**Runtime policy.** Layout on show and on viewport resize only. Do not
-compute the rectangle in `_process`; the panel already runs every frame for
-its prompt scheduler and must not gain layout work there.
-
-**Edge cases.** No prompt showing, so the bubble is hidden and only the icon
-is on screen. 800x600, where `gallerin_bubble_width()` currently clamps up to
-its 200px floor. The largest text scale, where the two buttons are widest. A
-prompt arriving during a viewport resize.
-
-**Automated acceptance checks.** A LAY-5 `panel_rect` fixture entry
-asserting, at 1920x1080 and at 800x600, that the summary-panel-to-tray gap
-and the tray-to-bubble gap are equal to within 1px, with a prompt showing.
-That single assertion is the whole point of the slice: it is what would have
-caught this without Dave.
-
-**Regression checks.** The tray's own `panel_rect` and `even_columns`
-entries, unchanged. Dr Gallerin's icon must stay in the bottom-right corner
-at its existing margin. No persistent panel may extend past a viewport edge
-(`plans/now/ui.md`'s durable rule).
-
-**Save/load.** None. The bubble holds no persisted state.
-
-**Completion and documentation updates.** Update the glance table and Status
-line, archive this heading, and note in `plans/now/ui.md`'s durable rules
-that every persistent panel's outer rectangle now comes from
-`ui_layout.gd` — which is the sentence that stops the next panel doing this.
-
-**Escalate rather than guess if:** requirement 3 cannot be met without
-changing `ui_panel_layout.gd::apply()`'s cap for every panel. That function
-sizes the tray, the summary panel and three left-side windows, so a change
-to it is a high slice and a separate one.
 
 ## HC-5 — Dr Gallerin's bubble types its line out
 
