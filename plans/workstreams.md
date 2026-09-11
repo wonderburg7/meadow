@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/queue-fix` (`claude/queue-fix`) | Claude | Retroactive closeout: NEXTSTEPS.md/plans/now/challenge-1.md never refreshed after C1-23 merged, so Codex's proof check correctly refused to reclaim it. | Claude | in progress | none | not a queue slice -- documentation-lifecycle fix per `CLAUDE.md` |
