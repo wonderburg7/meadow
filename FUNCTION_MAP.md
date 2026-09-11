@@ -515,7 +515,7 @@ The session JSONL writer, counters and capture profiles.
 1112 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## hive_cell.gd (1,092 lines)
+## hive_cell.gd (1,106 lines)
 
 One cell: contents, brood, honey ripening, how it draws.
 
@@ -579,11 +579,12 @@ One cell: contents, brood, honey ripening, how it draws.
 885  func brood_ready() -> bool
 888  func clear_cell() -> void
 901  # --- display ------------------------------------------------------
-903  func _refresh() -> void
-1043 func _designation_tag() -> String
-1065 func _priority_mark() -> String
-1078 func _apply_fill_shading() -> void
-1089 func development_percent() -> float
+906  func _resource_outline_colour(resource_type: String) -> Color
+920  func _refresh() -> void
+1057 func _designation_tag() -> String
+1079 func _priority_mark() -> String
+1092 func _apply_fill_shading() -> void
+1103 func development_percent() -> float
 ```
 
 ## settings_catalogue.gd (1,066 lines)

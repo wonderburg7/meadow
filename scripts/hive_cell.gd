@@ -900,6 +900,23 @@ func clear_cell() -> void:
 
 # --- display ------------------------------------------------------
 
+## Returns the shared outline hue for a stored resource or designation.
+## B1's resource catalogue will become the home for this mapping; keep it
+## together here until then so the ring and the contents outline cannot drift.
+func _resource_outline_colour(resource_type: String) -> Color:
+	match resource_type:
+		"nectar":
+			return Color(1.0, 0.85, 0.3)
+		"pollen":
+			return Color(0.7, 0.65, 1.0)
+		"honey":
+			return Color(1.0, 0.55, 0.1)
+		"brood":
+			return Color(0.6, 1.0, 0.7)
+	# A later content kind without its own outline colour remains visible
+	# instead of losing its rim altogether.
+	return Color(0.35, 0.28, 0.12)
+
 func _refresh() -> void:
 	# Independent of everything below -- see Session.show_cell_contents_text.
 	# The text is always computed regardless (cheap, and other logic below
@@ -941,7 +958,7 @@ func _refresh() -> void:
 
 	polygon = Shapes.hexagon_points(cell_size, squashed)
 	_apply_outline_points(outline, cell_size)
-	outline.default_color = Color(0.35, 0.28, 0.12)
+	outline.default_color = _resource_outline_colour(content_type)
 	# An empty cell is drawn as flat colour with no rim, so open comb and
 	# open floor read as one continuous surface instead of a grid of
 	# outlined tiles. Cells with something in them keep their outline.
@@ -949,14 +966,11 @@ func _refresh() -> void:
 	designation_ring.visible = designated_type != "" or keep_empty
 	if keep_empty:
 		designation_ring.default_color = Color(0.85, 0.85, 0.9, 0.9)
-	elif designated_type == "nectar":
-		designation_ring.default_color = Color(1.0, 0.85, 0.3, 0.95)
-	elif designated_type == "pollen":
-		designation_ring.default_color = Color(0.7, 0.65, 1.0, 0.95)
-	elif designated_type == "honey":
-		designation_ring.default_color = Color(1.0, 0.55, 0.1, 0.95)
-	elif designated_type == "brood":
-		designation_ring.default_color = Color(0.6, 1.0, 0.7, 0.95)
+	else:
+		var designation_colour := _resource_outline_colour(designated_type)
+		designation_ring.default_color = Color(
+			designation_colour.r, designation_colour.g, designation_colour.b, 0.95
+		)
 
 	empty_sprite.visible = false
 	match content_type:
