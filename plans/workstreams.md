@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/H1` (`claude/H1`) | Claude | the function map covers what it says it covers. | Claude | in progress | none | `plans/design/architecture-review.md` "H1 — the function map covers what it says it covers" |
-| `.worktrees/C1-22` (`codex/C1-22`) | Codex | the pollen stage's camera never follows. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 22 — the stage's camera reaches the pollen stage" |
