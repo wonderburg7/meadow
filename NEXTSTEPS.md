@@ -60,6 +60,21 @@ resource outlines itself in that resource's colour -- both are specified in
 `plans/now/hive-comb.md` and both are startable, waiting only for a queue
 slot.
 
+**C1-23 shipped 11 Sep 2026, but the queue was never refreshed to say so.**
+`NECTAR_TARGET := 150.0` landed on master that day in three commits
+(`7702760`, `3eae1db`, `29a8c2a`) and its check is C-44
+(`checks/ready/C-44.md`), but this file and `plans/now/challenge-1.md` kept
+listing C1-23 as the Codex lane's leading item -- which is what correctly
+stopped a later `tools/slice.ps1 start -Lane Codex` from claiming it: its
+own stale-proof check refused the claim rather than silently redoing
+finished work. Fixed here, retroactively: the slice's specification moved
+to `plans/archive/C1-23_2026-09-11.md`, C1-22 now leads the Codex lane, and
+Hive comb Slice 5 -- already startable per Dave's 11 Sep 2026 answers and
+file-disjoint from both lanes -- fills the slot C1-23 leaves. Its true
+successor, H4, still cannot enter until C1-22 also lands (it depends on
+both C1-21, already shipped, and C1-22), so it stays in "Not in the queue"
+below rather than being pulled in early.
+
 **C1-21 shipped 11 Sep 2026.** The prescribed headless Challenge trace could
 not be run -- H4 was still open, so `--scenario` cannot start a Challenge at
 all -- and a full static trace of the live code stood in for it instead. The
@@ -84,18 +99,7 @@ new slice needed pulling in to replace it.
 
 ## Next up
 
-1. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
-   Add a `NECTAR_TARGET` constant beside the existing `POLLEN_TARGET` and
-   have the nectar stage's goal check and progress bar use it instead of the
-   cell's full 200 capacity, so the queen stops filling it at 150 and the
-   nectar stage stays a demonstration rather than a chore.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 23 — a Challenge 1 wax cell is full at 150 nectar"
-   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
-   - Check: one check confirming the nectar stage's goal bar fills and the queen stops at 150, not 200
-   - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
-   - Next after: H4 (a headless run can start a Challenge and reach a stage). It lands after C1-22, which is already at 2 below, and before C1-24 -- Dave's decision D of 11 Sep 2026.
-
-2. **[Codex] C1-22 -- the pollen stage's camera never follows.**
+1. **[Codex] C1-22 -- the pollen stage's camera never follows.**
    At stage 1.14 the speed goes to 4x and back correctly, but the camera
    never follows the queen; Dave confirmed this unchanged on a second pass.
    `_run_stage_effects`'s `camera_follow_off` writes `main.following_bee =
@@ -110,7 +114,22 @@ new slice needed pulling in to replace it.
    - Files: `scripts/challenge_runner.gd`, `scripts/camera_view.gd`
    - Check: C-29, re-run once the camera follows at the pollen stage and the waypoint-stage arming gap is fixed
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
-   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15). H4, promoted by C1-23 above, leads the lane by then and is what gives C1-24 an acceptance that can run.
+   - Next after: H4 (a headless run can start a Challenge and reach a stage). H4 depends on this slice landing (alongside C1-21, already shipped), and Dave's 11 Sep 2026 ordering decision places it directly after this slice and before C1-24 and C1-26.
+
+2. **[Codex] Hive comb Slice 5 -- a cell's outline takes the colour of what is in it.**
+   With Cell art on, a built cell's outline stays one shared brown no matter
+   what it holds, so a first deposit is easy to miss; there is no lag, just
+   one colour used for everything. Hoist the nectar/pollen/honey/brood colour
+   lookup the designation ring already uses into one function that both the
+   ring and the outline call, so a cell holding any amount of a resource
+   draws its outline in that resource's colour. An empty cell keeps no
+   outline at all, and a content kind with no colour of its own falls back to
+   today's brown rather than to nothing.
+   - Plan: `plans/now/hive-comb.md` -- "Slice 5 — a cell's outline takes the colour of what is in it"
+   - Files: `scripts/hive_cell.gd`
+   - Check: one check confirming a deposit gives its cell an outline in that resource's colour, and an empty cell stays outline-free
+   - Proof: `present: scripts/hive_cell.gd :: outline.default_color = Color(0.35, 0.28, 0.12)`
+   - Next after: Slice 4 (at most six comb builders per site, one to a wall). Dave's 11 Sep 2026 answer runs Slice 5 first because it is smaller and the one he will see; the two slices are independent and share only `hive_cell.gd`.
 
 3. **[Claude] H1 -- the function map covers what it says it covers.**
    `FUNCTION_MAP.md` says it indexes every script over ~700 lines; thirteen
@@ -136,8 +155,8 @@ the entries below are startable today.
   each states only a headless Challenge assertion, and no headless run can
   start a Challenge. Slice 26 also waits on Slice 24, the other open change
   to the same marker node. The Codex lane reaches them in order without
-  anything being decided here: C1-23 promotes H4, C1-22 promotes Slice 24,
-  and H4 promotes Slice 26.
+  anything being decided here: C1-22 promotes H4, H4 promotes Slice 24, and
+  Slice 24 promotes Slice 26.
 - **The architecture review's A-to-G slices**
   (`plans/design/architecture-review.md`) -- seventeen slices, all specified.
   Dave admitted the three that touch no gameplay file (H3 shipped 11 Sep
@@ -186,16 +205,17 @@ the entries below are startable today.
   run can start a Challenge: the runner starts only for
   `Session.starting_level` 1 or 2, and a `--scenario` launch always sets that
   to the scenario level. **Decided, not blocked** -- Dave placed it after
-  C1-21 and C1-22 and before C1-24 and C1-26 on 11 Sep 2026, and C1-23 above
+  C1-21 and C1-22 and before C1-24 and C1-26 on 11 Sep 2026, and C1-22 above
   names it as its successor, so it enters the Codex lane by the ordinary
-  promotion rather than needing anything from here.
-- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- **both startable,
-  both waiting only for a slot.** Dave answered their two open questions on
-  11 Sep 2026: at most six comb workers per site, one to each wall of the
-  hexagon, using the six-slot mechanism `hive_cell.gd` already has; and a cell
-  holding any amount of a resource draws its outline in that resource's
-  colour. Slice 5 is the smaller and the one Dave sees, so take it first. They
-  share `hive_cell.gd` with nothing in the queue.
+  promotion rather than needing anything from here. C1-21 has already
+  shipped; it is only waiting on C1-22.
+- **Hive comb Slice 4** (`plans/now/hive-comb.md`) -- **startable, waiting
+  only for a slot.** Dave answered its open question on 11 Sep 2026: at most
+  six comb workers per site, one to each wall of the hexagon, using the
+  six-slot mechanism `hive_cell.gd` already has. It shares `hive_cell.gd`
+  with Slice 5 above (different parts of the file, so it rebases cleanly
+  either way) and with nothing else in the queue; Slice 5 above names it as
+  its successor.
 - **The documented smoke scenario fails on master** -- `python
   tools/run_scenario.py test_scenarios/slice1_smoke_test.json` is the first
   command `docs/headless-run-contract.md` gives a new session, and on 11 Sep
