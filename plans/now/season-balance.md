@@ -1,7 +1,7 @@
 # Season balance — the flowering year's peaks and troughs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SB-0 -- the two season readouts SB-1 and SB-2 are measured against | Dependency: SB-1 and SB-2 both wait on SB-0; neither can be simulated until it lands | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: SB-1 -- peak-season production is a rise, not a spike | Dependency: SB-2 waits on SB-1 (both add a value to game_config.gd); neither depends on the other's behaviour | Verified: 2026-09-12
 
 **Objective.** A meadow year that reads as a year: every season has something
 in flower, the summer peak is a good season rather than a different game, and
@@ -28,12 +28,13 @@ comparison that has to be run.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| SB-0 | A year-long run reports stored stock and live flowers per species | `diagnostic_probes.gd`, `diagnostic_log.gd` | yes | low |
-| SB-1 | Peak-season production is a rise, not a spike | `game_config.gd`, `flower.gd` | no — after SB-0 | medium |
-| SB-2 | Out-of-season species become genuinely rare | `game_config.gd`, `flower_species.gd` | no — after SB-0, then SB-1 | low |
+| SB-1 | Peak-season production is a rise, not a spike | `game_config.gd`, `flower.gd` | yes | medium |
+| SB-2 | Out-of-season species become genuinely rare | `game_config.gd`, `flower_species.gd` | no — after SB-1 | low |
 
-SB-0 comes first because it is the only thing that can tell whether SB-1 and
-SB-2 did what they intend. SB-2 follows SB-1 only because both add a value to
+SB-0 shipped 12 Sep 2026 (`plans/archive/SB-0_2026-09-12.md`): it added the
+`resources.stored_nectar`, `resources.stored_pollen` and
+`environment.flowers_by_species` snapshot fields SB-1 and SB-2 both simulate
+against. SB-2 follows SB-1 only because both add a value to
 `scripts/game_config.gd`; neither depends on the other's behaviour.
 
 **Why SB-1 and SB-2 were not startable before (corrected 11 Sep 2026).**
@@ -51,60 +52,6 @@ counts by content, but no stored nectar or pollen amount and no live-flower
 count by species. SB-0 closes that gap. This is `plans/README.md`'s
 sequencing guardrail 2 -- evidence before threshold changes -- applied to a
 plan that had assumed the evidence already existed.
-
-## SB-0 — a year-long run reports what a season change actually did
-
-**Reasoning level: low.** Two rows in an existing allowlist catalogue, plus
-one merge bug that adding a second row in an existing group exposes.
-
-**Purpose.** SB-1 and SB-2 are balance changes, and `CLAUDE.md` rule 2 says a
-balance change is simulated before it ships. Neither can be, because the
-fields their comparisons read do not exist. This slice adds them, and nothing
-else.
-
-**Current state.** `scripts/headless/diagnostic_probes.gd`'s `SNAPSHOT_FIELDS`
-is the allowlist of probes a scenario's diagnostics profile may select; it has
-six entries. `DiagnosticLog::_snapshot` reports `resources.food_stores` (ripe
-honey only), the two rate averages, and cell *counts* per content kind.
-Nothing reports stored nectar or pollen as an amount, and nothing counts live
-flowers by species.
-
-**Required reading.** This heading. `scripts/headless/diagnostic_probes.gd` in
-full (28 lines). `DiagnosticLog::_snapshot` and `_selected_snapshot`.
-
-**Files likely to change.** `scripts/headless/diagnostic_probes.gd`,
-`scripts/diagnostic_log.gd`, `docs/headless-run-contract.md`.
-
-**Files that must not change.** `scripts/hive.gd`, `scripts/flower.gd`,
-`scripts/game_config.gd`. This slice measures; it changes nothing measured.
-
-**Requirements.**
-
-1. `SNAPSHOT_FIELDS` gains `resources.stored_nectar`,
-   `resources.stored_pollen` and `environment.flowers_by_species`. The first
-   two are `hive.total("nectar")` and `hive.total("pollen")`; the third is a
-   species-name-to-count dictionary over live flowers, built the way
-   `_snapshot` already walks the `soil_blocks` group.
-2. **Required discovery, fix it here.** `selected_snapshot`'s `match` assigns a
-   whole sub-dictionary per arm, so two selected fields in one group clobber
-   each other -- selecting `performance.fps` and `performance.top_sections_ms`
-   together loses `fps` today. Adding a second `resources.*` row makes that
-   live. Merge into the group instead of assigning it.
-3. `_snapshot`'s `resources` block gains the same two totals beside
-   `food_stores`, so a run with no selected profile reports them too.
-
-**Constraints and invariants.** Cadence is unchanged -- hourly in game time,
-or a scenario's `snapshot_seconds`. Every existing field keeps its exact key
-and meaning; `food_stores` stays ripe honey only, because
-`scenario_actions.gd`'s `food_stores_at_least` depends on that reading.
-`hive.total()` is a full comb scan, so it runs once per snapshot and never per
-frame.
-
-**Acceptance checks.** A fixture selecting all three new fields produces them
-in `session.jsonl`. A fixture selecting both `performance` fields produces
-both, which fails today. `tools/verify.ps1` green.
-
-**Check to file:** none -- nothing a player sees changes.
 
 ## SB-1 — peak-season production is a rise, not a spike
 

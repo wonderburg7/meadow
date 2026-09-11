@@ -143,6 +143,29 @@ multi-word id itself is fixed here, retroactively -- the item is now
 other queue item, so it can be claimed with `tools/slice.ps1 start -Lane
 Codex` without producing an invalid git branch name.
 
+**HCB-5 shipped 12 Sep 2026.** A built cell's outline now draws in the
+colour of whatever resource it holds, sharing one lookup with the
+designation ring; an empty cell stays outline-free and an unmapped content
+kind falls back to the previous shared brown. Full record:
+`plans/archive/HCB-5_2026-09-12.md`; its check is C-45. Its `Next after`
+(HCB-4) fills the Codex lane's leading slot below.
+
+**SB-0 shipped 12 Sep 2026.** `diagnostic_probes.gd`'s `SNAPSHOT_FIELDS`
+gains `resources.stored_nectar`, `resources.stored_pollen` and
+`environment.flowers_by_species`, and the `match`-per-field merge bug a
+second `resources.*` entry exposed is fixed alongside it: `selected_snapshot`
+now merges each selected field into its group dictionary instead of
+overwriting it, so two fields from the same group (e.g. both `performance.*`
+fields) survive together. `DiagnosticLog::_snapshot`'s unconditional
+`resources` block and `tools/headless/profiles.py`'s allowlist (not in the
+plan's Files list, but required for a fixture selecting the new fields to
+pass validation before Godot launches) both got the same two totals. No
+check filed -- nothing a player sees changes. Full record:
+`plans/archive/SB-0_2026-09-12.md`. Its `Next after` (SB-1) fills the
+Claude lane's slot below. SB-1 does not touch `docs/headless-run-contract.md`,
+so the cross-lane note on H4 below (which used to point at SB-0 owning that
+file) is simplified to plain lane order behind HCB-4.
+
 ## Next up
 
 1. **[Codex] HCB-4 -- at most six comb builders per site, one to a wall.**
@@ -162,35 +185,34 @@ Codex` without producing an invalid git branch name.
    Let a scenario name a Challenge, add a verb that steps through the ordinary
    `debug_advance_stage()` seam to a named stage, expose the current stage id
    to scenario assertions, and prove it with a fixture that reaches 1.14.
-   HCB-4 leads while SB-0 owns `docs/headless-run-contract.md` in the other
-   lane; H4 becomes claimable when either of those leading slices ships.
+   Queued behind HCB-4 above in ordinary lane order; it becomes claimable
+   once HCB-4 ships.
    - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
    - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
    - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
    - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
 
-3. **[Claude] SB-0 -- a year-long run reports what a season change actually did.**
-   SB-1 and SB-2 are balance changes, and `CLAUDE.md` rule 2 says a balance
-   change is simulated before it ships -- but neither can be, because the
-   fields their comparisons need don't exist yet.
-   `scripts/headless/diagnostic_probes.gd`'s `SNAPSHOT_FIELDS` reports ripe
-   honey, two rate averages and cell counts by content, but nothing for
-   stored nectar or pollen as an amount, and nothing for live flowers by
-   species. Add those three fields, and fix the `match`-per-field merge bug
-   that adding a second `resources.*` entry exposes (selecting two fields in
-   the same group currently clobbers one).
-   - Plan: `plans/now/season-balance.md` -- "SB-0 — a year-long run reports what a season change actually did"
-   - Files: `scripts/headless/diagnostic_probes.gd`, `scripts/diagnostic_log.gd`, `docs/headless-run-contract.md`
-   - Check: none needed -- a fixture selecting the three new fields producing them in `session.jsonl`, plus `tools/verify.ps1` green, is the acceptance, and nothing a player sees changes
-   - Proof: `absent: scripts/headless/diagnostic_probes.gd :: resources.stored_nectar`
-   - Next after: SB-1 -- peak-season production is a rise, not a spike (`plans/now/season-balance.md`); startable the moment SB-0's probes exist to simulate it against.
+3. **[Claude] SB-1 -- peak-season production is a rise, not a spike.**
+   `flower.gd::season_strength()` returns a plain sine arch reaching exactly
+   1.0 at the middle of a species' window, twenty times the out-of-season
+   floor, and it is discontinuous at the window edges (eases to 0.0, then
+   jumps to the 0.05 floor one frame later). Add a `peak_season_strength`
+   dial to `game_config.gd`, rewrite the in-window return to arch between the
+   floor and that peak (removing the discontinuity for free), and expose the
+   new value in `settings_catalogue.gd`. Simulate a 60-day headless year at
+   1.0 (today) and 0.75 using SB-0's new snapshot fields before shipping.
+   - Plan: `plans/now/season-balance.md` -- "SB-1 — peak-season production is a rise, not a spike"
+   - Files: `scripts/game_config.gd`, `scripts/flower.gd`, `scripts/settings_catalogue.gd`
+   - Check: one hands-on check watching a season's `+/s` figures peak closer to the shoulder without a jump at the window edge, while out-of-season flowers are unchanged
+   - Proof: `absent: scripts/game_config.gd :: peak_season_strength`
+   - Next after: SB-2 -- out-of-season species become genuinely rare (`plans/now/season-balance.md`); startable the moment SB-1 lands (both add a value to `scripts/game_config.gd`).
 
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- the queue holds three (the floor), and three of
-the entries below are startable today.
+simply a free slot -- the queue holds three (the floor), and none of the
+entries below is startable today.
 
 - **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
   specified, and **neither has an acceptance that can run until H4 lands**:
@@ -216,12 +238,9 @@ the entries below are startable today.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- both name a
-  measurement that does not exist yet: no snapshot field carries stored
-  nectar, stored pollen or live flowers by species. **SB-0** is now in the
-  Claude lane above and adds those three probes; SB-1 becomes startable the
-  moment it lands (SB-0's own `Next after`), and SB-2 follows SB-1 since
-  both add a value to `scripts/game_config.gd`.
+- **SB-2** (`plans/now/season-balance.md`) -- out-of-season species become
+  genuinely rare. Waits on **SB-1**, now in the Claude lane above, since both
+  add a value to `scripts/game_config.gd`; SB-1's own `Next after`.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own
@@ -237,13 +256,6 @@ the entries below are startable today.
   own; it rides with the next slice that opens the cell-art drawing, and is
   recorded in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` under C-20 so it is
   not lost.
-- **HCB-4** (`plans/now/hive-comb.md`) -- **startable, waiting
-  only for a slot.** Dave answered its open question on 11 Sep 2026: at most
-  six comb workers per site, one to each wall of the hexagon, using the
-  six-slot mechanism `hive_cell.gd` already has. It shares `hive_cell.gd`
-  with HCB-5 above (different parts of the file, so it rebases cleanly
-  either way) and with nothing else in the queue; HCB-5 above names it as
-  its successor.
 - **The documented smoke scenario fails on master** -- `python
   tools/run_scenario.py test_scenarios/slice1_smoke_test.json` is the first
   command `docs/headless-run-contract.md` gives a new session, and on 11 Sep

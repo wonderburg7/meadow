@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SB-0` (`claude/SB-0`) | Claude | a year-long run reports what a season change actually did. | Claude | in progress | none | `plans/now/season-balance.md` "SB-0 — a year-long run reports what a season change actually did" |
