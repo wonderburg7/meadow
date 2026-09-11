@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 are in the queue; H4 is new and needs one decision | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; H4 owns `challenge_runner.gd` and needs Dave's call on where it sits relative to Challenge 1; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 shipped 11 Sep 2026; H1 is in the queue; H4 is new and needs one decision | Owner: Dave / Claude Code | Next: H1 -- the function map covers what it says it covers | Dependency: H1 and H2 are independent of everything and of each other; H4 owns `challenge_runner.gd` and needs Dave's call on where it sits relative to Challenge 1; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -667,11 +667,12 @@ four plans that want it.
 
 H1 and H3 touch no `scripts/` file at all, so they conflict with nothing in
 either lane and can run beside any queued gameplay slice. H2 is comment-only but
-is sole owner of `hud.gd` for the few minutes it takes. **H3 comes first**: it
-builds the before/after comparison that A1 onwards each name as their acceptance
-and none of them can currently run. H4 is the same shape for Challenge
-assertions and is the one H slice that does touch `scripts/`, so it is the
-only one that has to queue against the Challenge 1 lane.
+is sole owner of `hud.gd` for the few minutes it takes. **H3 shipped 11 Sep
+2026** (`plans/archive/H3_2026-09-11.md`): it built the before/after
+comparison that A1 onwards each name as their acceptance and none of them
+could previously run. H4 is the same shape for Challenge assertions and is
+the one H slice that does touch `scripts/`, so it is the only one that has
+to queue against the Challenge 1 lane.
 
 ### H1 — the function map covers what it says it covers
 
@@ -738,57 +739,7 @@ cannot overlap F1s, F2s, E1 or any queued HUD slice.
 
 ### H3 — the behaviour-equivalence run
 
-Level: medium. Depends on: nothing. **Every other slice in this plan depends on
-it**, because each states a before/after comparison as its acceptance and none
-of them can currently run one.
-
-- **Required reading.** This heading. F16 above. `docs/headless-run-contract.md`
-  sections "Artefacts" and "Experiment manifests". `tools/run_scenario.py`'s
-  argument parsing and its result-directory handling.
-- **Files to change.** A new `equivalence.py` in `tools/`,
-  `docs/headless-run-contract.md`, `tests/` for the tool's own unit test.
-- **Files not to change.** Anything in `scripts/`. This slice adds an
-  instrument; it does not change the thing being measured.
-- **Requirements.** One command takes a scenario path and a git ref, runs that
-  scenario at the ref and again in the working tree with the same seed, and
-  prints only the summary fields that differ, or one line saying nothing did.
-  Exit non-zero when anything differs, so a slice's acceptance is a command
-  rather than a reading exercise. A `--fields` option narrows the comparison to
-  the fields a given slice actually claims to preserve, since a slice that
-  legitimately changes cadence (A4) will move timing-derived numbers while
-  leaving outcomes alone.
-- **Invariants.** The ref side runs from a throwaway worktree, never by checking
-  the ref out over the working tree. `tools/slice.ps1` already owns worktree
-  creation and `plans/workstreams.md` records open ones; a temporary worktree
-  this tool makes and deletes within one command does not get a ledger row, and
-  the tool must delete it even when a run fails. Both sides use the runner's
-  managed result root, not a path from the scenario.
-- **Implementation guidance.** This is a wrapper over two existing runs and a
-  dictionary diff over the `result.json` each already writes. Do not add a new
-  capture path, a new summary field or a new `DiagnosticLog` counter: if a field
-  a slice needs is missing from the summary, that is a separate finding to
-  report, not something to build here. Windows is the only platform that has to
-  work; follow `run_headless.ps1`'s interpreter resolution rather than assuming
-  `python` is on PATH.
-- **Runtime policy.** None; a developer tool, run on demand.
-- **Automated acceptance.** Against `HEAD` with a clean tree the tool reports no
-  differences and exits zero. A deliberate one-line edit to a balance constant
-  in the working tree makes it exit non-zero and name the field that moved. A
-  unit test covers the diff and the field filter without launching Godot.
-- **Escalation.** If two runs of the same scenario at the same seed on the same
-  code already differ, Meadow is not reproducible enough for this tool to mean
-  what the slices assume. Stop and report which fields drift and by how much —
-  that answer changes twenty acceptance criteria and is Dave's call, not a thing
-  to work around with a tolerance.
-- **A queue entry may name the file this slice creates.** Until 11 Sep 2026
-  `tools/check_docs.py` held two rules that disagreed: `validate_queue_files`
-  allowed "exact paths for files created by a slice", and
-  `check_backticked_paths` then rejected any backticked path not on disk, so
-  this slice's entry had to reserve `tools/run_scenario.py` instead of the
-  tool it creates. Dave settled it that day and the existence check now skips
-  any path declared on a queue item's `Files:` line
-  (`check_docs.py::queue_declared_files`). C1, G1 and F1s below each create a
-  file too, and each may now name it.
+Shipped 11 Sep 2026. `tools/equivalence.py`. Full record: `plans/archive/H3_2026-09-11.md`.
 
 ### H4 — a headless run can start a Challenge and reach a stage
 
