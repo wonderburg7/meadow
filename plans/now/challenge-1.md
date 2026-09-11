@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 22 -- the stage's camera reaches the pollen stage | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 22-26 | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: Slice 24 -- the stage marker is never left in the wrong world (blocked until H4 lands) | Dependency: Slice 24 needs H4 (`plans/design/architecture-review.md`, queued but not yet landed) to land first; Slice 26 waits on Slice 24; Slice 7 waits on both | Verified: 2026-09-11
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -53,31 +53,31 @@ not be run: `plans/archive/C1-21_2026-09-11.md`.
 
 ## Open slices at a glance
 
+Slices 20, 21, 22, 23 and 25 have all shipped; their specifications are
+archived (see the pointers above and `plans/archive/`). What remains:
+
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| 22 | The pollen stage's camera never follows (C-29) | `challenge_runner.gd`, `camera_view.gd` | medium |
-| 23 | A Challenge 1 nectar cell is full at 150, not 200 | `challenge_stages.gd`, `challenge_runner.gd` | low |
 | 24 | A stage marker appears in the meadow at 1.12 (yellow dot) | `challenge_runner.gd` | low |
 | 26 | The marker does not pulse, and vanishes when off screen | `challenge_runner.gd`, `hud.gd` | medium |
 | 7 | The acceptance playthrough and copy pass | docs | -- |
 
 Slice 26 depends on Slice 24, which is the other open change to the same
-marker node. Slices 22, 23 and 24 are otherwise independent of each other.
-Slice 7 runs last.
+marker node. Slice 7 runs last.
 
-**Three of these slices name a headless assertion that cannot be run yet
-(found 11 Sep 2026, narrowed 11 Sep 2026 when Slice 21 shipped on a static
-trace instead).** Slices 22, 24 and 26 each state a headless Challenge
-assertion as their acceptance, and no headless run can start a Challenge at
-all: `challenge_runner.start()` fires only for `Session.starting_level` 1 or
-2, and a `--scenario` launch always sets that to `Levels.SCENARIO_LEVEL_ID`.
-There is no Challenge fixture and no stage-sequence test, whatever Slice 24's
-regression line says. `plans/design/architecture-review.md`'s **H4** is the
-slice that fixes it, and Dave placed it on 11 Sep 2026: after Slices 21 and
-22, before Slices 24 and 26. Slice 22 stays startable because its fix is
-behaviour and Dave's C-29 is its real acceptance. Slices 24 and 26 have no
-acceptance that can run until H4 lands, and H4 enters the queue as C1-23's
-successor, so the ordering happens by itself.
+**Slices 24 and 26 name a headless assertion that cannot be run yet (found 11
+Sep 2026, narrowed 11 Sep 2026 when Slice 21 shipped on a static trace
+instead).** Both state a headless Challenge assertion as their acceptance,
+and no headless run can start a Challenge at all: `challenge_runner.start()`
+fires only for `Session.starting_level` 1 or 2, and a `--scenario` launch
+always sets that to `Levels.SCENARIO_LEVEL_ID`. There is no Challenge
+fixture and no stage-sequence test, whatever Slice 24's regression line
+says. `plans/design/architecture-review.md`'s **H4** is the slice that fixes
+it. Both of H4's dependencies (C1-21 and C1-22) have now shipped, so H4 is
+queued in `NEXTSTEPS.md`'s Codex lane -- not as the lane's leading item,
+since it shares `scripts/main.gd` with the Claude lane's own leading item
+(H2), but as its second item, claimable once one of those two ships. Slices
+24 and 26 stay blocked until H4 actually lands.
 
 Nothing else may be added -- a finding from Slice 7's own run becomes this
 plan's next slice while it is open, and a finding after it closes starts a
@@ -116,75 +116,8 @@ Shipped 11 Sep 2026. Full specification and delivery record:
 
 ## Slice 22 — the stage's camera reaches the pollen stage
 
-**Reasoning level: medium.** Two small failures in one function, one of them
-needing a live or headless observation first.
-
-**Observable problems (C-29).** At stage 1.14 the speed goes to 4x and back
-to 1x correctly, but the camera never follows the queen. Dave re-ran this on
-10 Sep 2026 and reported it unchanged: the nectar stage passes outright, and
-at the pollen stage "speed stops and starts for the pollen foraging, but the
-camera following doesn't start". Two passes, one symptom, no drift -- the
-trace below is still the right first move. Separately, at the
-meadow-waypoint stage, foraging and depositing before visiting all three
-waypoints stops the nectar stage's automation from starting at all.
-
-**Established so far.** `_drive_c1_forage_effects()` (`:798`) applies
-`camera_follow_queen` and `speed_multiplier:4.0` together, gated on
-`_c1_forage_effects_done` and on the queen being in one of
-`CHALLENGE1_FORAGE_TRIGGER_STATES`. `_c1_forage_effects_done` is reset on
-stage entry (`:381`), so the flag is not what suppresses the camera. Because
-both effects are applied in the same call, "speed changed but the camera did
-not" cannot be explained by that function alone: something after it clears
-`main.following_bee`. `_run_stage_effects`'s `camera_follow_off` writes
-`main.following_bee = null` directly (`:582`) rather than going through
-`camera_view._on_follow_bee_toggled`, which is an asymmetry worth removing
-whatever the cause turns out to be.
-
-**Confirm the cause before fixing.** Log every write to `main.following_bee`
-for the duration of stage 1.14 — the setter in `camera_view.gd:114`, the
-direct write in `challenge_runner.gd:582`, and the `is_instance_valid` clear
-in `_handle_follow` (`:124`) — and record which one runs last. The
-`_handle_follow` clear is a live candidate: a checkpoint restore or a bee
-rebuild replaces the queen node, and a stale reference would be nulled
-silently on the next frame.
-
-**Files likely to change.** `scripts/challenge_runner.gd`,
-`scripts/camera_view.gd`.
-
-**Files that must not be changed.** `scripts/main.gd`'s ownership of
-`following_bee` as the single source of truth. Do not add a second
-follow-target field.
-
-**Requirements.**
-
-1. `camera_follow_off` routes through `camera_view._on_follow_bee_toggled(null, false)`
-   so both directions of the toggle have one owner, and add a matching
-   assertion or comment saying that is the only way it is written from here.
-2. Fix whatever the trace names as the last writer. If it is a replaced queen
-   node, re-point the follow target at `main.queen` rather than nulling it.
-3. The waypoint-stage failure: `_drive_c1_forage_effects` fires on the first
-   frame the queen is in a foraging state *at stage 1.11 or 1.14 only*, and
-   `_c1_forage_effects_done` is set true when it does. Establish whether an
-   early forage trip during the waypoint stage leaves the flag or the queen's
-   state such that 1.11 never triggers. The fix is that entering 1.11 arms the
-   effects regardless of what the queen was doing beforehand.
-
-**Constraints and invariants.** The effects must still start when she *sets
-off*, not when the role is assigned — that distinction is what C-29 checks
-and Slice 19 established. Camera-follow and 4x speed must both be off at
-stage exit and after a checkpoint restore.
-
-**Edge cases.** The player turns follow off by hand mid-stage; the stage must
-not turn it back on. The player is in hive view when she sets off.
-
-**Automated acceptance checks.** A headless assertion that at 1.14
-`main.following_bee` is the queen within N ticks of her leaving, and is null
-one tick after the stage completes.
-
-**Regression checks.** Stage 1.11's camera and speed, which pass today.
-
-**Escalate rather than guess if:** the last writer is outside these three
-call sites, which would mean follow-target ownership is genuinely shared.
+Shipped 11 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-22_2026-09-11.md`](../archive/C1-22_2026-09-11.md).
 
 ## Slice 23 — a Challenge 1 wax cell is full at 150 nectar
 

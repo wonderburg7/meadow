@@ -352,7 +352,7 @@ Per-frame entry point, everything not yet split out of main.
 1181 func _end_scenario_run(outcome: String) -> void
 ```
 
-## challenge_runner.gd (1,136 lines)
+## challenge_runner.gd (1,143 lines)
 
 The stage machine, goal checks and stage effects.
 
@@ -371,67 +371,67 @@ The stage machine, goal checks and stage effects.
 347  func _stage_unlock_keys(entries: Array) -> Array
 368  func _queen_allowed_role_ids(entries: Array) -> Array
 376  func _enter_stage() -> void
-435  func _built_cell_count() -> int
-444  func _brood_cell_count() -> int
-454  func _hive_inspection_points() -> Array
-468  func _meadow_inspection_points() -> Array
-480  func _begin_ordered_visit(points: Array, marker_parent: Node2D) -> void
-486  func _clear_ordered_visit() -> void
-491  func _ordered_visit_complete(traveller: Node2D) -> bool
-504  func _show_current_visit_point() -> void
-519  func _update_marker(stage_id: String) -> void
-552  func _show_goal(stage: Dictionary) -> void
-559  func _advance() -> void
-575  func _run_stage_effects(effects: Array) -> void
-611  func debug_advance_stage() -> void
-615  func _complete() -> void
-671  func _on_queen_build_cell_requested() -> void
-677  func on_queen_build_site_chosen(hex: Vector2i) -> void
-693  func _apply_stage_gate_to_ui() -> void
-735  func is_bee_command_locked(bee: Node2D) -> bool
-743  func _setup_opening_tunnel() -> void
-783  func _drive_opening_mine() -> void
-795  func _opening_tunnel_cleared() -> bool
-810  func _drive_c1_forage_effects() -> void
-827  func discards_overflow(bee: Node2D) -> bool
-839  func announce_overflow_discard() -> void
-856  func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void
-875  func on_worker_hatched(bee: Node2D) -> void
-897  func _drive_greeting(delta: float) -> void
-944  func _build_goal_registry() -> void
-977  func _goal_met(goal: String) -> bool
-983  func _goal_check_entrance_tunnel_cleared() -> bool
-986  func _goal_check_queen_reached_cavity() -> bool
-991  func _goal_check_queen_selected() -> bool
-994  func _goal_check_hive_points_visited() -> bool
-997  func _goal_check_first_cell_built() -> bool
-1000 func _goal_check_second_cell_built() -> bool
-1003 func _goal_check_third_cell_built() -> bool
-1006 func _goal_check_nectar_target() -> bool
-1012 func _goal_check_pollen_target() -> bool
-1018 func _goal_check_first_egg_laid() -> bool
-1021 func _goal_check_queen_reached_meadow() -> bool
-1024 func _goal_check_meadow_points_visited() -> bool
-1027 func _goal_check_first_flower_collected() -> bool
-1030 func _goal_check_second_flower_collected() -> bool
-1033 func _goal_check_harvest_deposited() -> bool
-1036 func _goal_check_new_bee_selected() -> bool
-1042 func _goal_check_new_bee_left_hive() -> bool
-1045 func _goal_check_complete() -> bool
-1048 # --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
-1050 func _goal_check_nectar_forager_hatched() -> bool
-1053 # --- Challenge 2 ---------------------------------------------
-1054 func _goal_check_nectar_stabilized() -> bool
-1061 func _goal_check_pollen_foragers_raised() -> bool
-1064 func _goal_check_cell_designated() -> bool
-1070 func _goal_check_pollen_cell_designated() -> bool
-1076 func _goal_check_interim_reserve() -> bool
-1082 func _goal_check_nurse_raised() -> bool
-1085 func _goal_check_persistent_designation_used() -> bool
-1093 func _goal_check_comb_worker_building() -> bool
-1097 func _goal_check_miner_expansion() -> bool
-1104 func _goal_check_c2_complete() -> bool
-1121 func _goal_progress(goal: String) -> Dictionary
+436  func _built_cell_count() -> int
+445  func _brood_cell_count() -> int
+455  func _hive_inspection_points() -> Array
+469  func _meadow_inspection_points() -> Array
+481  func _begin_ordered_visit(points: Array, marker_parent: Node2D) -> void
+487  func _clear_ordered_visit() -> void
+492  func _ordered_visit_complete(traveller: Node2D) -> bool
+505  func _show_current_visit_point() -> void
+520  func _update_marker(stage_id: String) -> void
+553  func _show_goal(stage: Dictionary) -> void
+560  func _advance() -> void
+576  func _run_stage_effects(effects: Array) -> void
+614  func debug_advance_stage() -> void
+618  func _complete() -> void
+674  func _on_queen_build_cell_requested() -> void
+680  func on_queen_build_site_chosen(hex: Vector2i) -> void
+696  func _apply_stage_gate_to_ui() -> void
+738  func is_bee_command_locked(bee: Node2D) -> bool
+746  func _setup_opening_tunnel() -> void
+786  func _drive_opening_mine() -> void
+798  func _opening_tunnel_cleared() -> bool
+813  func _drive_c1_forage_effects() -> void
+834  func discards_overflow(bee: Node2D) -> bool
+846  func announce_overflow_discard() -> void
+863  func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void
+882  func on_worker_hatched(bee: Node2D) -> void
+904  func _drive_greeting(delta: float) -> void
+951  func _build_goal_registry() -> void
+984  func _goal_met(goal: String) -> bool
+990  func _goal_check_entrance_tunnel_cleared() -> bool
+993  func _goal_check_queen_reached_cavity() -> bool
+998  func _goal_check_queen_selected() -> bool
+1001 func _goal_check_hive_points_visited() -> bool
+1004 func _goal_check_first_cell_built() -> bool
+1007 func _goal_check_second_cell_built() -> bool
+1010 func _goal_check_third_cell_built() -> bool
+1013 func _goal_check_nectar_target() -> bool
+1019 func _goal_check_pollen_target() -> bool
+1025 func _goal_check_first_egg_laid() -> bool
+1028 func _goal_check_queen_reached_meadow() -> bool
+1031 func _goal_check_meadow_points_visited() -> bool
+1034 func _goal_check_first_flower_collected() -> bool
+1037 func _goal_check_second_flower_collected() -> bool
+1040 func _goal_check_harvest_deposited() -> bool
+1043 func _goal_check_new_bee_selected() -> bool
+1049 func _goal_check_new_bee_left_hive() -> bool
+1052 func _goal_check_complete() -> bool
+1055 # --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
+1057 func _goal_check_nectar_forager_hatched() -> bool
+1060 # --- Challenge 2 ---------------------------------------------
+1061 func _goal_check_nectar_stabilized() -> bool
+1068 func _goal_check_pollen_foragers_raised() -> bool
+1071 func _goal_check_cell_designated() -> bool
+1077 func _goal_check_pollen_cell_designated() -> bool
+1083 func _goal_check_interim_reserve() -> bool
+1089 func _goal_check_nurse_raised() -> bool
+1092 func _goal_check_persistent_designation_used() -> bool
+1100 func _goal_check_comb_worker_building() -> bool
+1104 func _goal_check_miner_expansion() -> bool
+1111 func _goal_check_c2_complete() -> bool
+1128 func _goal_progress(goal: String) -> Dictionary
 ```
 
 ## diagnostic_log.gd (1,132 lines)

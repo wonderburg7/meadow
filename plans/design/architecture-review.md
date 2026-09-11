@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 shipped 11 Sep 2026; H1 is in the queue; H4 is new and needs one decision | Owner: Dave / Claude Code | Next: H1 -- the function map covers what it says it covers | Dependency: H1 and H2 are independent of everything and of each other; H4 owns `challenge_runner.gd` and needs Dave's call on where it sits relative to Challenge 1; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 shipped 11 Sep 2026; H2 is in the queue; H4 needs Challenge 1's C1-22 to land first | Owner: Dave / Claude Code | Next: H2 -- `hud.gd` gets the section headers the routing rule assumes | Dependency: H2 is independent of everything; H4 owns `challenge_runner.gd` and lands after C1-21 (shipped) and C1-22; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -665,47 +665,23 @@ last and must be sole owner of `bee.gd`. A4, C2, F2s and G3 all want
 holds the one ordered list of everything queued against that file, across all
 four plans that want it.
 
-H1 and H3 touch no `scripts/` file at all, so they conflict with nothing in
-either lane and can run beside any queued gameplay slice. H2 is comment-only but
+H1 and H3 touched no `scripts/` file at all, so they conflicted with nothing in
+either lane and could run beside any queued gameplay slice. H2 is comment-only but
 is sole owner of `hud.gd` for the few minutes it takes. **H3 shipped 11 Sep
 2026** (`plans/archive/H3_2026-09-11.md`): it built the before/after
 comparison that A1 onwards each name as their acceptance and none of them
-could previously run. H4 is the same shape for Challenge assertions and is
-the one H slice that does touch `scripts/`, so it is the only one that has
-to queue against the Challenge 1 lane.
+could previously run. **H1 shipped 11 Sep 2026**
+(`plans/archive/H1_2026-09-11.md`): the function map's file list is now
+derived from a 700-line threshold instead of a hardcoded seven. H4 is the
+same shape as H1 and H3 for Challenge assertions and is the one H slice
+that does touch `scripts/`, so it is the only one that has to queue against
+the Challenge 1 lane.
 
 ### H1 — the function map covers what it says it covers
 
-Level: low. Depends on: nothing. Touches no `scripts/` file.
-
-- **Required reading.** This heading. F13 above. `tools/update_function_map.py`.
-- **Files to change.** `tools/update_function_map.py`, `FUNCTION_MAP.md`
-  (regenerated, not hand-edited).
-- **Files not to change.** Anything in `scripts/`.
-- **Requirements.** `FILES` is derived by walking `scripts/*.gd` and keeping
-  every file over a stated line threshold, rather than being a hardcoded list.
-  The threshold is a named constant set to 700, which is the number the map's
-  own header already claims. Each newly covered file gets a one-line
-  description in the same voice as the existing seven. `--check` fails when a
-  file crosses the threshold and is absent from the map, not only when an
-  indexed file's line numbers have moved.
-- **Invariants.** The seven files already indexed keep their existing
-  descriptions verbatim. The generated format does not change, because
-  `CLAUDE.md` and `plans/README.md` both describe how to grep it.
-- **Implementation guidance.** The descriptions are the only judgement in this
-  slice. `bee_foraging.gd` is the forager's search, scouting, recruitment and
-  species-preference behaviour; `challenge_runner.gd` the stage machine, goal
-  checks and stage effects; `diagnostic_log.gd` the session JSONL writer,
-  counters and capture profiles; `scenario_actions.gd` the headless verbs,
-  `when` clauses and layout assertions; `game_config.gd` the balance fields;
-  `input_selection.gd` selection, drag and placement resolution.
-- **Runtime policy.** None; this is a build-time tool.
-- **Automated acceptance.** `python tools/update_function_map.py --check` exits
-  zero on a clean tree. Temporarily padding any `scripts/*.gd` past 700 lines
-  makes it exit non-zero naming that file. `tools/verify.ps1` stays green.
-- **Escalation.** If the threshold turns out to sweep in a file whose functions
-  are genuinely not worth indexing, say which and why rather than special-casing
-  it in the generator.
+Shipped 11 Sep 2026. `tools/update_function_map.py` now derives its file
+list from a 700-line threshold instead of a hardcoded seven. Full record:
+`plans/archive/H1_2026-09-11.md`.
 
 ### H2 — `hud.gd` gets the section headers the routing rule assumes
 
