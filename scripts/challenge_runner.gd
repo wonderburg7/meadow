@@ -1005,7 +1005,7 @@ func _goal_check_third_cell_built() -> bool:
 
 func _goal_check_nectar_target() -> bool:
 	for cell in main.hive.cells:
-		if is_instance_valid(cell) and cell.content_type == "nectar" and cell.fill_fraction() >= 1.0:
+		if is_instance_valid(cell) and cell.content_type == "nectar" and cell.amount >= Stages.NECTAR_TARGET:
 			return true
 	return false
 
@@ -1123,7 +1123,7 @@ func _goal_progress(goal: String) -> Dictionary:
 		"nectar_target":
 			for cell in main.hive.cells:
 				if is_instance_valid(cell) and cell.content_type == "nectar":
-					return {"current": cell.amount, "target": cell.capacity_for("nectar")}
+					return {"current": cell.amount, "target": Stages.NECTAR_TARGET}
 			return {}
 		"pollen_target":
 			for cell in main.hive.cells:
