@@ -1,12 +1,14 @@
 """Drives tests/fixtures/hc8_tray_first_open_1x.json and _2x.json through a
-real Godot boot -- the headless proof behind HC-8 (plans/now/hud-controls.md):
+real Godot boot -- the headless proof behind HC-8
+(plans/archive/HUD_CONTROLS_2026-09-11.md):
 the command tray's height matches its content on the very first build after a
 selection, at both text scales. Reuses panel_rect's "matches_content"
 assertion (scripts/scenario_actions.gd) rather than adding a second height
 helper; two files rather than one scenario because a genuine "first open"
 needs no prior selection in the same run, and HC-8's own measurement found a
-*re*selection still lands the tray short of its content -- that residual is
-tracked separately (see hud-controls.md), not asserted on here.
+*re*selection still lands the tray short of its content -- that residual was
+tracked separately and shipped as HC-16 (see test_hc16_tray_reselect.py), not
+asserted on here.
 
 Requires a real Godot executable, unlike the rest of tests/ -- skips with a
 clear message naming the missing path rather than failing, matching

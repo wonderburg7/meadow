@@ -2339,6 +2339,25 @@ func _selection_has_command_lock(bees: Array) -> bool:
 			return true
 	return false
 
+## HC-16 -- a plain queue_free() left the old row parented -- and still
+## counted by every nested HFlowContainer's wrap/height computation -- until
+## Godot's own idle pass actually freed it, one to several frames after the
+## new rows were already added alongside it. That is what made a
+## reselection's settle unpredictable rather than merely slow: measuring
+## while stale and fresh rows briefly coexisted found a real but
+## meaningless number, and each old row's actual removal changed that
+## number again later, arriving on no schedule a caller could wait out.
+## remove_child() detaches it from the layout immediately -- so it stops
+## being counted this same frame, before any new row is added -- while the
+## node itself is freed only on queue_free()'s usual deferred pass, since
+## this can run inside the very signal one of these rows (a role-menu
+## PopupMenu's id_pressed) is still emitting, and freeing a node
+## synchronously mid-signal is unsafe.
+static func _detach_and_free_children(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+
 ## The command tray's controls, rebuilt from scratch whenever the
 ## selection changes.
 ##
@@ -2348,14 +2367,10 @@ func _selection_has_command_lock(bees: Array) -> bool:
 ## Follow bee, the backup role, finish-first and Favourite are used far less
 ## often and live under More…; Challenge 1's Build cell command stays primary.
 func _rebuild_role_controls(bees: Array) -> void:
-	for child in job_column.get_children():
-		child.queue_free()
-	for child in focus_column.get_children():
-		child.queue_free()
-	for child in orders_column.get_children():
-		child.queue_free()
-	for child in more_panel.get_children():
-		child.queue_free()
+	_detach_and_free_children(job_column)
+	_detach_and_free_children(focus_column)
+	_detach_and_free_children(orders_column)
+	_detach_and_free_children(more_panel)
 
 	var common_role: int = _common_role(bees)
 	var common_working_role: int = _common_working_role(bees)

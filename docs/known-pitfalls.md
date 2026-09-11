@@ -25,7 +25,7 @@ of these has bitten more than once:
   `reset_size()`.
 - **A container gives a child its minimum size, and three things quietly make
   that zero.** All three shipped at once and were found by eye on 9 Sep 2026
-  (`plans/now/hud-controls.md`). `HFlowContainer` ignores
+  (`plans/archive/HUD_CONTROLS_2026-09-11.md`). `HFlowContainer` ignores
   `size_flags_horizontal` entirely -- that is what lets it wrap -- so three
   columns marked `SIZE_EXPAND_FILL` packed against the tray's left edge.
   `clip_text = true` together with `autowrap_mode` drops a Button's horizontal
@@ -57,7 +57,7 @@ of these has bitten more than once:
   the only bottom-row panel whose left edge is not assigned by
   `ui_panel_layout.gd::apply()`, and its gap to the command tray is whatever
   is left over rather than `PANEL_GAP` by construction -- which is exactly
-  what Dave saw on 10 Sep 2026 (`plans/now/hud-controls.md` HC-14). A helper
+  what Dave saw on 10 Sep 2026 (`plans/archive/HUD_CONTROLS_2026-09-11.md` HC-14). A helper
   written for a caller that never arrived is worse than no helper: it reads
   as the owner while something else owns it. Wire it or delete it in the
   same pass.
@@ -66,7 +66,7 @@ of these has bitten more than once:
   costs a whole line of height. `hud.gd`'s summary panel blanks three of its
   four labels for a soil, flower, obstacle or death selection and hides none
   of them, which is the empty band Dave photographed under "1 soil block
-  selected" (10 Sep 2026, `plans/now/hud-controls.md` HC-13). It grew when
+  selected" (10 Sep 2026, `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-13). It grew when
   HC-4 raised the default text size, because the band is measured in lines.
   Set visibility from whether there is text, in one place, not per call site.
 - **A `theme_type_variation` left unset is not neutral.** Since HC-9 taught
@@ -189,7 +189,7 @@ of these has bitten more than once:
   were handed to a container one column wide and wrapped one per row against
   the tray's left edge. C-18 failed twice for two different reasons, the
   second one invisible because the first fix looked right in the code. See
-  `plans/now/hud-controls.md` HC-7. The general form: **when a layout fix
+  `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-7. The general form: **when a layout fix
   does not show, check the parent chain before rereading the fix.** A child
   laid out at its minimum size inside a parent that is the right size is the
   signature, and LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
@@ -225,7 +225,7 @@ of these has bitten more than once:
   grew and its two buttons did not (C-32). Anything the accessibility setting
   is meant to reach must be reachable from the theme's base type, not only
   from a variation someone remembered to name. See
-  `plans/now/hud-controls.md` HC-9.
+  `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-9.
 - **A goal that asks "is any of them X" passes on the one that was always
   X.** Challenge 1's stage 1.13 asks the player to set the *second* cell
   aside for pollen; its goal check returned true for any cell with any

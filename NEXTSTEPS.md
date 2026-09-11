@@ -16,8 +16,22 @@ names stage 1.14 in its code rather than only in a comment, so the queen keeps
 a load the comb cannot take at every earlier stage and is told by Dr Gallerin
 on the one stage that does discard it. Its check is C-42.
 
+HC-16 landed on 11 Sep 2026: the command tray's height now matches its
+content on a reselection, not just the first build, with or without `More…`
+open. The confirmed cause was `_rebuild_role_controls` freeing the previous
+selection's rows with a plain `queue_free()`, which left them parented (and
+still counted by the tray's nested layout) for one to several frames after
+the new rows were already added; `hud.gd::_detach_and_free_children` now
+detaches each old row immediately instead. That plan had no further open
+slices, so it is archived in full at
+`plans/archive/HUD_CONTROLS_2026-09-11.md`; its check is C-43. With no
+ready slice left in that plan, C1-21 (bee.gd/bee_foraging.gd, file-disjoint
+from the Codex lane's C1-23) moves into the Claude lane below, and C1-22
+(startable on its own merits per `plans/now/challenge-1.md`) fills the
+third slot.
+
 The pass's other three fixes (HC-13, HC-14 and HC-15) landed on 10 Sep 2026 and
-their records are in `plans/archive/`. Thirteen hands-on checks are waiting in
+their records are in `plans/archive/`. Fourteen hands-on checks are waiting in
 `checks/ready.md`; by rule no queue item is held open for one.
 
 ## Next up
@@ -33,21 +47,7 @@ their records are in `plans/archive/`. Thirteen hands-on checks are waiting in
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
-2. **[Claude] HC-16 -- the command tray's height matches its content on a reselection.**
-   HC-8 (10 Sep 2026) fixed the tray for the *first* build after a
-   selection; reselecting a different bee still leaves it wrong, with or
-   without `More…` open -- one traced case left the tray 260px+ taller than
-   its content even after 15 settle ticks. HC-8's own measurement found this
-   is not a single stale frame but an unpredictable multi-pass Godot timing
-   problem, so it needs a high slice, not a medium one -- see the heading's
-   diagnostic evidence.
-   - Plan: `plans/now/hud-controls.md` -- "HC-16 — the tray's height matches its content on a reselection"
-   - Files: `scripts/hud.gd`
-   - Check: one check covering a reselection (forager -> queen and the reverse) with More… open and without it, at two text scales
-   - Proof: `absent: scripts/hud.gd :: HC-16`
-   - Next after: none -- hud-controls.md is complete
-
-3. **[Codex] C1-21 -- the queen forages pollen without being pushed.**
+2. **[Claude] C1-21 -- the queen forages pollen without being pushed.**
    At the pollen stage she stays put when the player switches her focus to
    Pollen, and only sets off once something else has moved her out of the
    hive. Trace it headlessly first: the standing hypothesis is that the
@@ -60,18 +60,35 @@ their records are in `plans/archive/`. Thirteen hands-on checks are waiting in
    - Proof: `absent: scripts/bee_foraging.gd :: C1-21`
    - Next after: C1-22 (the stage's camera reaches the pollen stage)
 
+3. **[Codex] C1-22 -- the pollen stage's camera never follows.**
+   At stage 1.14 the speed goes to 4x and back correctly, but the camera
+   never follows the queen; Dave confirmed this unchanged on a second pass.
+   `_run_stage_effects`'s `camera_follow_off` writes `main.following_bee =
+   null` directly rather than through `camera_view._on_follow_bee_toggled`,
+   an asymmetry worth removing regardless of the trace's answer. Confirm the
+   actual last writer first (log every write to `main.following_bee` for
+   stage 1.14), then fix it; separately, an early forage trip during the
+   meadow-waypoint stage stops the nectar stage's automation from arming at
+   all -- entering 1.11 must arm the effects regardless of what the queen
+   was doing beforehand.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 22 — the stage's camera reaches the pollen stage"
+   - Files: `scripts/challenge_runner.gd`, `scripts/camera_view.gd`
+   - Check: C-29, re-run once the camera follows at the pollen stage and the waypoint-stage arming gap is fixed
+   - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
+   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
+
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
 
-- **Challenge 1 Slices 22, 24 and 26** (`plans/now/challenge-1.md`) -- all
-  three are specified. Slice 26 (the marker pulses and shows an off-screen
-  arrow, both Dave's 10 Sep asks) waits on Slice 24, the other open change to
-  the same marker node. Slice 22 is startable on its merits but sits behind
-  C1-23 and C1-21 in the same lane, and is queued as C1-21's `Next after:`.
-  Slice 24 is next after C1-23 and is queued as its `Next after:`. Slice 21
-  itself is no longer held: Slice 20 has landed, so stage 1.13 runs and a
-  pollen symptom no longer has that as a sufficient cause.
+- **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
+  specified. Slice 26 (the marker pulses and shows an off-screen arrow, both
+  Dave's 10 Sep asks) waits on Slice 24, the other open change to the same
+  marker node. Slice 24 is next after C1-23 and is queued as its
+  `Next after:`. Slice 22 is now in the queue above (C1-22) -- with HC-16
+  landed and its plan archived (`plans/archive/HUD_CONTROLS_2026-09-11.md`),
+  C1-21 moved into the Claude lane it vacated, freeing C1-22 to be queued
+  directly rather than only as C1-21's `Next after:`.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.

@@ -1,0 +1,17 @@
+{
+  "cells": 5,
+  "nectar_foragers": 1,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "viewport_size", "w": 800, "h": 600},
+    {"do": "select_bees", "target": {"current_role": "forager", "count": 1}},
+    {"do": "settle", "ticks": 15},
+    {"do": "select_bees", "target": {"current_role": "laying", "count": 1}},
+    {"do": "settle", "ticks": 15},
+    {"do": "assert", "condition": {"panel": "command_tray", "matches_content": true, "tolerance": 6}},
+    {"do": "select_bees", "target": {"current_role": "forager", "count": 1}},
+    {"do": "settle", "ticks": 15},
+    {"do": "assert", "condition": {"panel": "command_tray", "matches_content": true, "tolerance": 6}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

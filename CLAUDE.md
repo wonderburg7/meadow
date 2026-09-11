@@ -190,7 +190,7 @@ the authority on which tier a branch is in.
 | Settings surviving a run change (built) | `checks/ready.md` or `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` |
 | UI, theme, layout or accessibility | `plans/now/ui.md` |
 | A persistent panel's position, size or gaps (built) | `checks/ready.md` or `plans/archive/PANEL_LAYOUT_2026-09-09.md` for why |
-| A control inside a panel: its size, width or look | `plans/now/hud-controls.md` |
+| A control inside a panel: its size, width or look (built) | `checks/ready.md` or `plans/archive/HUD_CONTROLS_2026-09-11.md` for why |
 | Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
 | Flowers, season, senescence (built) | `checks/ready.md` or `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` |
 | Challenge 2 rescue/recovery messages (built) | `checks/ready.md` or `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` for why |
