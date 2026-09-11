@@ -48,6 +48,19 @@ balance saves with the run; interface preference stays with the player and out
 of the save; developer-only keys save nowhere. F11 and D1 below now carry the
 rule, and D1's second half is no longer blocked.
 
+**D. H4 lands between C1-22 and C1-24.** The 11 Sep plan review found that
+nine slices across three plans assert a headless Challenge that cannot be
+started (F18 below). Dave took the review's recommendation: build H4 after
+C1-21 and C1-22, which are queued and whose acceptance is Dave's own hands-on
+passes, and before C1-24 and C1-26, whose acceptance is nothing but headless
+assertions. H4 therefore enters the Codex lane as C1-23's `Next after:`.
+
+**E. A queue entry may name a file its slice creates.** `check_docs.py`'s
+`validate_queue_files` and `check_backticked_paths` contradicted each other
+about exactly that, and H3 had been working around it by reserving a sibling
+file. The existence check gives way: it now skips any path declared on a
+queue item's `Files:` line. Shipped the same day.
+
 ## Findings at a glance
 
 | # | Finding | Benefit | Effort | Depends on |
@@ -767,27 +780,23 @@ of them can currently run one.
   what the slices assume. Stop and report which fields drift and by how much —
   that answer changes twenty acceptance criteria and is Dave's call, not a thing
   to work around with a tolerance.
-- **Known tooling snag, found queuing this slice.** `tools/check_docs.py` holds
-  two rules that disagree about a file a slice is going to create.
-  `validate_queue_files`'s docstring says it allows "exact paths for files
-  created by a slice", and `check_backticked_paths` then rejects any backticked
-  path that is not on disk, including that one. So this slice's new tool could
-  not be named on its `Files:` line and the queue entry names
-  `tools/run_scenario.py` and the contract doc instead. That is a real conflict
-  and it will bite the next slice that adds a file; it is not H3's to fix, and it
-  is not urgent, because over-claiming an existing sibling file is a safe
-  reservation rather than a wrong one. Raise it with Dave rather than quietly
-  relaxing either rule. **Scope, added by the 11 Sep plan review:** it is not
-  H3 alone. C1 creates `conditions.gd`, G1 creates `actions.gd` and F1s
-  creates `game_panel.gd`, so three more slices in this plan will each hit the
-  same conflict when they are queued, and each will have to reserve some other
-  file instead. Put to Dave as decision D-1 of that review.
+- **A queue entry may name the file this slice creates.** Until 11 Sep 2026
+  `tools/check_docs.py` held two rules that disagreed: `validate_queue_files`
+  allowed "exact paths for files created by a slice", and
+  `check_backticked_paths` then rejected any backticked path not on disk, so
+  this slice's entry had to reserve `tools/run_scenario.py` instead of the
+  tool it creates. Dave settled it that day and the existence check now skips
+  any path declared on a queue item's `Files:` line
+  (`check_docs.py::queue_declared_files`). C1, G1 and F1s below each create a
+  file too, and each may now name it.
 
 ### H4 — a headless run can start a Challenge and reach a stage
 
-Level: medium. Depends on: nothing. **Status: decision required** -- what it
-builds is not in doubt, only when it lands relative to Challenge 1, and that
-is Dave's call because this slice owns `scripts/challenge_runner.gd`.
+Level: medium. Depends on: C1-21 and C1-22 having landed. **Status: ready
+behind those two.** Dave took the ordering decision on 11 Sep 2026 (decision
+D below): H4 lands after C1-21 and C1-22 and before C1-24 and C1-26. It owns
+`scripts/challenge_runner.gd`, so it runs in the Codex lane, and `C1-23`'s
+`Next after:` is what promotes it.
 
 **Why it exists (found by the 11 Sep 2026 plan review, not by either pass
 above).** Nine open slices across three plans state a headless Challenge
@@ -842,20 +851,18 @@ earlier slice rather than a later tidy-up applies to it exactly.
   1.14, and asserts the current stage id; it fails today because no fixture
   can start a Challenge. Every existing fixture under `test_scenarios/`
   produces the same verdict it does now.
-- **Escalation, and the decision this slice is waiting on.** It owns
-  `challenge_runner.gd`, so it cannot run beside any open Challenge 1 slice,
-  and guardrail 14 in `plans/README.md` is where it takes its place in that
-  queue. Three orderings are available. **Before the Challenge 1 arc**: the
-  four Challenge 1 slices get runnable acceptance, but the arc stalls while
-  this lands and the two slices already queued wait behind it. **After the
-  arc**: Challenge 1 finishes the way it has been finishing, on Dave's
-  hands-on passes -- five of which have now found defects the automated
-  checks could not -- and this lands in time for UI-U-1 and the C and G
-  chains, which is when it is next needed. **Between**: after C1-21 and C1-22,
-  which are queued and whose fixes are behaviour rather than assertions, and
-  before C1-24 and C1-26, whose acceptance is *only* headless assertions and
-  which therefore cannot be accepted at all without it. The review's
-  recommendation is the third.
+- **Position, decided.** After C1-21 and C1-22, before C1-24 and C1-26
+  (Dave, 11 Sep 2026). Those first two are already queued and their fixes are
+  behaviour, proved by Dave's C-7 and C-29; the last two have no acceptance at
+  all until this lands. `plans/README.md`'s guardrail 14 carries the same
+  ordering for `challenge_runner.gd` as a whole. When this slice is promoted
+  into `NEXTSTEPS.md` its `Next after:` is **C1-26**, the marker's pulse and
+  off-screen arrow, which is the last Challenge 1 slice this unblocks.
+- **Escalation.** If starting a Challenge from a scenario turns out to need
+  the Challenge itself to behave differently -- a stage that cannot be reached
+  without a player action a scenario verb cannot express -- stop and name the
+  stage. That is a fact about the stage design, not a thing to special-case in
+  the runner.
 
 ### A1 — brood hatching reads the brood bucket
 

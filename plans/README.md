@@ -222,10 +222,10 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     of them read as "not startable" for reasons stated in four different
     places. One list, so nobody re-derives it: Challenge 1's Slices 23, 22,
     24 and 26 (`plans/now/challenge-1.md`) come first and are what the
-    architecture hold is waiting for; **H4**
-    (`plans/design/architecture-review.md`) goes somewhere among them and
-    where is a decision Dave has not yet taken, because Slices 24 and 26 have
-    no runnable acceptance until it lands; then UI-U-1 (`plans/now/ui.md`),
+    architecture hold is waiting for, with **H4**
+    (`plans/design/architecture-review.md`) between Slice 22 and Slice 24
+    because 24 and 26 have no runnable acceptance until it lands (Dave,
+    11 Sep 2026); then UI-U-1 (`plans/now/ui.md`),
     which also needs `debug_panel.gd` free; then the architecture review's A4,
     C2, F2s and G3, which Dave's decision A of 11 Sep 2026 holds behind
     Challenge 1 in any case. A slice
