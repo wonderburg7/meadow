@@ -69,10 +69,18 @@ so a nectar load frozen mid-trip rode untouched all the way to 1.14. Fixed
 with a new stage effect that clears it on 1.13's exit, plus a general
 `bee.gd::set_focus()` fix so any bee genuinely stuck (not just an `IDLING`
 one) wakes up on a focus change. Full record:
-`plans/archive/C1-21_2026-09-11.md`. Its `Next after` (H3) was already
-queued below, so the Claude lane simply drops to four items total, which
-`tools/check_docs.py`'s floor of three still allows -- no lane was emptied,
-so no new slice needed pulling in to replace it.
+`plans/archive/C1-21_2026-09-11.md`.
+
+**H3 shipped 11 Sep 2026.** `tools/equivalence.py` runs a scenario at a
+chosen git ref (from a throwaway detached worktree, never checked out over
+the working tree) and again in the working tree at the same seed, and
+prints only the `result.json` fields that differ -- the missing instrument
+F16 named, now available to every behaviour-preserving slice in
+`plans/design/architecture-review.md`. `docs/headless-run-contract.md`
+documents it under "Behaviour-equivalence runs". Its `Next after` (H1) was
+already queued below, so the Claude lane simply drops to one item, which
+brings the combined queue to three -- `tools/check_docs.py`'s floor -- so no
+new slice needed pulling in to replace it.
 
 ## Next up
 
@@ -104,24 +112,7 @@ so no new slice needed pulling in to replace it.
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15). H4, promoted by C1-23 above, leads the lane by then and is what gives C1-24 an acceptance that can run.
 
-3. **[Claude] H3 -- the behaviour-equivalence run.**
-   Seventeen architecture slices each name a before-and-after scenario
-   comparison as their acceptance, and nothing can run one: the experiment
-   harness compares configuration cases inside a single build by design. Build
-   one command that runs a scenario at a given git ref and again in the working
-   tree at the same seed, prints only the summary fields that differ, and exits
-   non-zero when any do. Touches no `scripts/` file, so it cannot collide with
-   either Challenge 1 lane. The `Files:` line names the tool this slice
-   creates, which `tools/check_docs.py` allows as of 11 Sep 2026; it may still
-   be a flag on `tools/run_scenario.py` instead if that turns out cleaner, and
-   the plan records the trade under H3.
-   - Plan: `plans/design/architecture-review.md` -- "H3 — the behaviour-equivalence run"
-   - Files: `tools/equivalence.py`, `docs/headless-run-contract.md`
-   - Check: none needed -- the acceptance is the tool's own exit status, and a unit test covers the diff without launching Godot
-   - Proof: `absent: docs/headless-run-contract.md :: equivalence`
-   - Next after: H1 (the function map covers what it says it covers)
-
-4. **[Claude] H1 -- the function map covers what it says it covers.**
+3. **[Claude] H1 -- the function map covers what it says it covers.**
    `FUNCTION_MAP.md` says it indexes every script over ~700 lines; thirteen
    scripts are now over 700 and six are missing, including `bee_foraging.gd`
    and `challenge_runner.gd`, both named in the queue above. The generator's
@@ -137,7 +128,7 @@ so no new slice needed pulling in to replace it.
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- the queue holds four (the floor is three), and three of
+simply a free slot -- the queue holds three (the floor), and three of
 the entries below are startable today.
 
 - **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
@@ -149,8 +140,9 @@ the entries below are startable today.
   and H4 promotes Slice 26.
 - **The architecture review's A-to-G slices**
   (`plans/design/architecture-review.md`) -- seventeen slices, all specified.
-  Dave admitted the three that touch no gameplay file (H3 and H1 above, H2
-  behind them) and held the rest until Challenge 1's Slices 21 to 26 have
+  Dave admitted the three that touch no gameplay file (H3 shipped 11 Sep
+  2026; H1 above, H2 behind it) and held the rest until Challenge 1's
+  Slices 21 to 26 have
   vacated `challenge_runner.gd`, which C1-23 and C1-22 above are both still in.
   A2 and D1 are the two that do not touch that file, so they are the ones to
   ask Dave about lifting early if the Challenge 1 arc runs long. Do not lift

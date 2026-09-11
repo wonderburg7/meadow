@@ -349,3 +349,35 @@ contract, or aggregate expectation failure returns non-zero. Successful runs
 print only one verdict; `report.mode: "table"` adds one compact aggregate JSON
 table, never one summary per launched case/seed. The experiment-level
 `report.json` always retains the selected aggregate projection.
+
+## Behaviour-equivalence runs
+
+`--experiment` compares configuration cases inside one build, by design --
+it cannot say whether a code change moved a scenario's outcome. Use
+`tools/equivalence.py` for that: it runs one scenario at a chosen git ref and
+again in the working tree, with the same seed, and prints only the
+`result.json` fields that differ.
+
+```powershell
+python tools\equivalence.py test_scenarios\slice1_smoke_test.json HEAD
+python tools\equivalence.py test_scenarios\slice1_smoke_test.json main --fields outcome,expectations.passed
+```
+
+It exits 0 and prints `no differences: ...` when every compared field
+matches, and exits non-zero and names each moved field otherwise (including
+when the ref-side or working-tree run itself fails or crashes, since that is
+itself a difference). The default field set is every `result.json` field
+that describes behaviour rather than run identity -- `run_id`, `scenario`,
+`process.pid`/`execution`/`wall_seconds` and every artefact path always
+differ between two separate runs and are never compared. `--fields` narrows
+the comparison to what a slice actually claims to preserve, since a
+legitimately cadence-changing slice will move timing-derived fields while
+leaving outcomes alone.
+
+The ref side always runs from a throwaway detached worktree -- the ref is
+never checked out over the working tree -- created and removed within the
+one command; it is not registered in `plans/workstreams.md`, which is for
+worktrees that outlive a single command. Both sides write into the tool's
+own temporary result roots, never a path the scenario supplies. If the
+scenario declares no `random_seed`, one is generated once and used for both
+runs, since the comparison is only meaningful at a matched seed.
