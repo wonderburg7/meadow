@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/H3` (`claude/H3`) | Claude | the behaviour-equivalence run. | Claude | in progress | none | `plans/design/architecture-review.md` "H3 — the behaviour-equivalence run" |
