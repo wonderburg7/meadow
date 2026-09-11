@@ -34,6 +34,17 @@ The pass's other three fixes (HC-13, HC-14 and HC-15) landed on 10 Sep 2026 and
 their records are in `plans/archive/`. Fourteen hands-on checks are waiting in
 `checks/ready.md`; by rule no queue item is held open for one.
 
+**Dave took three decisions on 11 Sep 2026**, from that day's architecture and
+planning audit. They are recorded in full under "Decisions taken 11 Sep 2026" in
+`plans/design/architecture-review.md`; what they change here is the queue.
+Architecture work is admitted, but behind the open Challenge 1 items rather than
+in front of them, so H3 and H1 now fill slots 4 and 5 of the Claude lane and H2
+follows them. Every A-to-G slice in that plan stays out of the queue until
+Challenge 1's Slices 21 to 26 have vacated `challenge_runner.gd`. That plan is
+also now the design pass for four of `plans/design/product-scope.md` section
+6.2's shared foundations, and its settings-persistence slice is unblocked by a
+three-bucket classification rule.
+
 ## Next up
 
 1. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
@@ -58,7 +69,7 @@ their records are in `plans/archive/`. Fourteen hands-on checks are waiting in
    - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`
    - Check: C-7's pollen half, re-run once she leaves on the focus change alone
    - Proof: `absent: scripts/bee_foraging.gd :: C1-21`
-   - Next after: C1-22 (the stage's camera reaches the pollen stage)
+   - Next after: H3 (the behaviour-equivalence run, queued at 4 below)
 
 3. **[Codex] C1-22 -- the pollen stage's camera never follows.**
    At stage 1.14 the speed goes to 4x and back correctly, but the camera
@@ -77,6 +88,36 @@ their records are in `plans/archive/`. Fourteen hands-on checks are waiting in
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
 
+4. **[Claude] H3 -- the behaviour-equivalence run.**
+   Seventeen architecture slices each name a before-and-after scenario
+   comparison as their acceptance, and nothing can run one: the experiment
+   harness compares configuration cases inside a single build by design. Build
+   one command that runs a scenario at a given git ref and again in the working
+   tree at the same seed, prints only the summary fields that differ, and exits
+   non-zero when any do. Touches no `scripts/` file, so it cannot collide with
+   either Challenge 1 lane. The slice may add a sibling tool beside the runner
+   rather than a flag on it; nothing else claims either, and a file that does
+   not exist yet cannot be named on a Files: line, so the entry reserves the
+   runner. The plan records why under H3.
+   - Plan: `plans/design/architecture-review.md` -- "H3 — the behaviour-equivalence run"
+   - Files: `tools/run_scenario.py`, `docs/headless-run-contract.md`
+   - Check: none needed -- the acceptance is the tool's own exit status, and a unit test covers the diff without launching Godot
+   - Proof: `absent: docs/headless-run-contract.md :: equivalence`
+   - Next after: H1 (the function map covers what it says it covers)
+
+5. **[Claude] H1 -- the function map covers what it says it covers.**
+   `FUNCTION_MAP.md` says it indexes every script over ~700 lines; thirteen
+   scripts are now over 700 and six are missing, including `bee_foraging.gd`
+   and `challenge_runner.gd`, both named in the queue above. The generator's
+   file list is hardcoded, so `--check` cannot see the gap. Derive the list
+   from a named threshold and make `--check` fail when a file crosses it
+   unindexed.
+   - Plan: `plans/design/architecture-review.md` -- "H1 — the function map covers what it says it covers"
+   - Files: `tools/update_function_map.py`, `FUNCTION_MAP.md`
+   - Check: none needed -- `python tools/update_function_map.py --check` is the acceptance, and nothing a player sees changes
+   - Proof: `absent: tools/update_function_map.py :: bee_foraging.gd`
+   - Next after: H2 (the HUD and main scripts get the section headers the routing rule assumes)
+
 ## Not in the queue, and why
 
 Each of these wants something from Dave, or something else to ship first.
@@ -89,16 +130,14 @@ Each of these wants something from Dave, or something else to ship first.
   landed and its plan archived (`plans/archive/HUD_CONTROLS_2026-09-11.md`),
   C1-21 moved into the Claude lane it vacated, freeing C1-22 to be queued
   directly rather than only as C1-21's `Next after:`.
-- **The architecture review's twenty slices** (`plans/design/architecture-review.md`)
-  -- specified 10 Sep, extended by a second pass on 11 Sep, none started and
-  none previously listed here either way. Three of them (H1 the function-map
-  coverage, H2 `hud.gd`'s section headers, H3 the behaviour-equivalence run)
-  touch no gameplay file and conflict with neither lane, and H3 builds the
-  before/after comparison the other seventeen each name as their acceptance.
-  What it waits on is Dave's call on two things the 11 Sep audit put to him:
-  whether architecture slices enter the lanes at all while Challenge 1 is the
-  whole queue, and whether that plan is the design pass for `product-scope.md`
-  section 6.2's goal model and job catalogue or is separate from it.
+- **The architecture review's A-to-G slices**
+  (`plans/design/architecture-review.md`) -- seventeen slices, all specified.
+  Dave admitted the three that touch no gameplay file (H3 and H1 above, H2
+  behind them) and held the rest until Challenge 1's Slices 21 to 26 have
+  vacated `challenge_runner.gd`, which C1-23 and C1-22 above are both still in.
+  A2 and D1 are the two that do not touch that file, so they are the ones to
+  ask Dave about lifting early if the Challenge 1 arc runs long. Do not lift
+  the hold unasked.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.

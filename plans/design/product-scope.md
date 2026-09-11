@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: Colony Diagnostics' first slice shipped 4 Sep 2026 (`plans/reference/colony-diagnostics.md`, now reference only); the other four §6.2 foundations (goal model, event director, job catalogue/dispatcher, run policy) still need their own design pass | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-04
+Status: selected design, not scheduled | Owner: Dave | Next: run policy and the event director are the only §6.2 foundations still needing a design pass; the goal model, the job catalogue/dispatcher and the stable catalogues are `plans/design/architecture-review.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-04
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -181,15 +181,19 @@ These are part of alpha stabilisation. They should continue through
 - **Observability:** deterministic balance scenarios and bounded diagnostics
   for every new economy or per-bee hot path.
 
-**Overlap flagged 11 Sep 2026, not yet resolved.** Four of the foundations
-above -- the stable catalogues and resolver, the goal model, the job catalogue
-and dispatcher, and part of the event director -- are the same structures
-`plans/design/architecture-review.md` specifies as B1, C2, C4, F2s, G1 and G2,
-under different names and framed as a behaviour-preserving refactor rather than
-a product foundation. Whether that plan is the design pass this section is
-waiting for, or whether a separate one is still to come, is a decision recorded
-in the 11 Sep audit and not taken here. Read that plan's slices before opening a
-design pass on any of the four.
+**Overlap resolved 11 Sep 2026 (Dave).** `plans/design/architecture-review.md`
+**is** the design pass for four of the foundations above: the stable catalogues
+and resolver, the goal model, the job catalogue and dispatcher, and the
+catalogue half of the event director. They are its B1, C2, C4, F2s, G1 and G2,
+named as a behaviour-preserving refactor because that is how they are being
+built, not because they are a smaller idea than this section describes. Do not
+open a second design pass on any of the four; extend those slices instead.
+
+**Run policy and the event director's selection logic are not covered there**
+and remain this section's own open design work. They are product decisions --
+what a run type does about discovery, difficulty, victory and continuation, and
+how pressure is scheduled -- and the architecture review deliberately proposes
+no gameplay change.
 
 ### 6.3 Core expansion after feedback validates the base
 

@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- reviewed 10 Sep 2026, second pass 11 Sep 2026, no slice started | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; A1-A4 are independent; the B, C, D, E, F and G chains are stated per slice | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 are in the queue | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; every A-G slice is held until Challenge 1's Slices 21-26 have vacated `challenge_runner.gd` | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -18,17 +18,35 @@ applied" so a later session does not re-propose them.
 below is behaviour-preserving unless its Requirements say otherwise and name
 the escalation that must clear first.
 
-**Open question this plan does not answer (raised 11 Sep 2026).**
-`plans/design/product-scope.md` section 6.2 lists nine shared foundations that
-precede content expansion. Four of them -- "stable catalogues and resolver",
-the "goal model", the "job catalogue and dispatcher" and part of the "event
-director" -- are the same structures this plan's B1, C2, C4, F2s, G1 and G2
-build, under different names and framed as a behaviour-preserving refactor.
-Neither file referred to the other until this line. Whether this plan *is* the
-design pass for those foundations, or whether a separate one is still coming
-that could want different shapes, is Dave's call and is recorded in the 11 Sep
-audit as a decision. Until it is taken, treat the B, C and G chains as a
-refactor of what exists, and do not widen any of them toward section 6.2.
+## Decisions taken 11 Sep 2026
+
+Dave answered the three the 11 Sep audit put to him. They are recorded here
+because each one changes what a later session may start, and in one case what
+this plan is *for*.
+
+**A. Architecture work enters the queue now, but does not displace Challenge 1.**
+H3 and H1 are admitted to `NEXTSTEPS.md` behind the open Challenge 1 items, and
+H2 follows them. Every A, B, C, D, E, F and G slice is held until Challenge 1's
+Slices 21 to 26 have vacated `challenge_runner.gd`. The hold is a blunt rule
+rather than a per-file one: A2 and D1 do not touch that file and could in
+principle start earlier, so if the Challenge 1 arc runs long, those two are the
+ones to ask Dave about lifting first. Do not lift the hold unasked.
+
+**B. This plan is the design pass for four of `product-scope.md` section 6.2's
+shared foundations.** The stable catalogues and resolver, the goal model, the
+job catalogue and dispatcher, and the catalogue half of the event director are
+B1, C2, C4, F2s, G1 and G2 below. There will not be a second design pass on
+them, so those slices carry that weight: build each one as the authority its
+foundation needs, not as the narrowest thing that preserves today's behaviour.
+Behaviour preservation stays the *acceptance* -- it is how each step is proved
+safe -- but it is no longer the ceiling on the shape. Run policy and the event
+director's selection logic remain product-scope's own design work and are not
+this plan's to take.
+
+**C. Settings persistence is three buckets, not sixty-one decisions.** Run
+balance saves with the run; interface preference stays with the player and out
+of the save; developer-only keys save nowhere. F11 and D1 below now carry the
+rule, and D1's second half is no longer blocked.
 
 ## Findings at a glance
 
@@ -350,10 +368,14 @@ blocking legitimate balance testing.
 `none` — with `SAVED_SETTINGS` derived from it, and a source check that every
 `GameConfig` field has a row.
 
-**Risks.** Medium, and this one needs Dave. Changing which keys persist changes
-what a saved run restores. The mechanical half — derive the list, add the
-check — is safe; deciding the class of the 61 currently-unsaved keys is a
-gameplay call.
+**Risks.** Medium. Changing which keys persist changes what a saved run
+restores, which is why the classification was Dave's to make; he made it on
+11 Sep 2026 and it is three buckets, not sixty-one judgements. Run balance
+saves with the run. Interface preference stays with the player, in `Session`,
+and out of the save. Developer-only keys save nowhere. The eight fields this
+finding names as looking like balance — `disease_on`, `seasons_on`,
+`rival_hive_on`, `fog_of_war_on`, `season_length_days` and the three
+`lay_weight_*` — are run balance under that rule and move into the save.
 
 **Files.** `scripts/settings_catalogue.gd`, `scripts/save_game.gd`,
 `tests/source_checks.py`.
@@ -706,6 +728,17 @@ of them can currently run one.
   what the slices assume. Stop and report which fields drift and by how much —
   that answer changes twenty acceptance criteria and is Dave's call, not a thing
   to work around with a tolerance.
+- **Known tooling snag, found queuing this slice.** `tools/check_docs.py` holds
+  two rules that disagree about a file a slice is going to create.
+  `validate_queue_files`'s docstring says it allows "exact paths for files
+  created by a slice", and `check_backticked_paths` then rejects any backticked
+  path that is not on disk, including that one. So this slice's new tool could
+  not be named on its `Files:` line and the queue entry names
+  `tools/run_scenario.py` and the contract doc instead. That is a real conflict
+  and it will bite the next slice that adds a file; it is not H3's to fix, and it
+  is not urgent, because over-claiming an existing sibling file is a safe
+  reservation rather than a wrong one. Raise it with Dave rather than quietly
+  relaxing either rule.
 
 ### A1 — brood hatching reads the brood bucket
 
@@ -1051,8 +1084,9 @@ Level: medium. Depends on: C1.
 
 ### D1 — one settings persistence authority
 
-Level: medium. Depends on: nothing. **The second half is blocked on a decision
-from Dave.**
+Level: medium. Depends on: nothing, beyond Decision A's hold. Both halves are
+startable once that lifts: Dave took the classification decision on 11 Sep 2026
+(see "Decisions taken 11 Sep 2026" above).
 
 - **Required reading.** This heading. F11 above.
   `scripts/settings_catalogue.gd`'s header and `TUNABLES` shape.
@@ -1071,20 +1105,24 @@ from Dave.**
   a derived list identical to today's needs no migration. If the decision below
   adds keys, that is a `FORMAT_VERSION` bump and `save_migrations.gd` gains a
   step defaulting the new keys to their `GameConfig` values.
-- **Implementation guidance.** Land it in two halves. First, annotate every row
-  so the derived list is byte-identical to today's `SAVED_SETTINGS`, add the
-  check, and change nothing about what is saved. Second, only after Dave's
-  answer, reclassify. The 25 saved-but-uncatalogued keys need rows adding either
-  way.
+- **Implementation guidance.** Land it in two halves still, because the first
+  half proves the derivation before anything about the save changes. First,
+  annotate every row so the derived list is byte-identical to today's
+  `SAVED_SETTINGS`, add the check, and change nothing about what is saved.
+  Second, apply Dave's rule: run balance saves with the run, interface
+  preference stays in `Session` and out of the save, developer-only saves
+  nowhere. The 25 saved-but-uncatalogued keys need rows adding either way.
+  Classify each of the 61 by asking one question -- would two players loading
+  this save get different colony outcomes if the key were missing? Yes is `run`.
 - **Runtime policy.** Derived once at save time, not per frame.
 - **Automated acceptance.** The derived list equals the current literal, proved
   in `tests/source_checks.py`. `tests/test_save_migrations.py` passes.
-- **Escalation.** **Ask Dave before the second half.** The question is: of the
-  61 catalogued-but-unsaved keys, which are run balance that should survive a
-  save — `disease_on`, `seasons_on`, `rival_hive_on`, `fog_of_war_on`,
-  `season_length_days` and the three `lay_weight_*` fields are the ones that most
-  look like it — and which are interface preferences that correctly stay out?
-  Do not decide this; it changes what a saved run restores.
+- **Escalation.** The classification rule is settled, so do not re-ask it. Stop
+  only for a key the rule genuinely does not sort -- one that changes colony
+  outcomes *and* is plainly an interface preference. Name those keys and say why
+  each resists the rule; do not pick a bucket for them. The eight balance fields
+  F11 names move into the save, so the second half is a `FORMAT_VERSION` bump
+  with a `save_migrations.gd` step, exactly as the Invariants above describe.
 
 ### E1 — one placement tool
 
