@@ -67,10 +67,11 @@ Challenge at all: `challenge_runner.start()` fires only for
 `Levels.SCENARIO_LEVEL_ID`. There is no Challenge fixture and no
 stage-sequence test, whatever Slice 24's regression line says.
 `plans/design/architecture-review.md`'s **H4** is the slice that fixes it, and
-where it sits relative to this arc is a decision waiting on Dave. Until it
-lands, Slices 21 and 22 are still startable -- their fixes are behaviour and
-Dave's C-7 and C-29 are their real acceptance -- but **Slices 24 and 26 have
-no acceptance that can run**, so neither should be queued ahead of H4.
+Dave placed it on 11 Sep 2026: after Slices 21 and 22, before Slices 24 and
+26. Those first two stay startable because their fixes are behaviour and
+Dave's C-7 and C-29 are their real acceptance. Slices 24 and 26 have no
+acceptance that can run until H4 lands, and H4 enters the queue as C1-23's
+successor, so the ordering happens by itself.
 
 Nothing else may be added -- a finding from Slice 7's own run becomes this
 plan's next slice while it is open, and a finding after it closes starts a

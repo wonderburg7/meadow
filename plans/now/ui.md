@@ -110,8 +110,9 @@ start a Challenge, because `challenge_runner.start()` fires only for
 `Session.starting_level` 1 or 2 and a `--scenario` launch always sets it to
 `Levels.SCENARIO_LEVEL_ID` (found 11 Sep 2026).
 `plans/design/architecture-review.md`'s **H4** builds that capability on the
-same forward seam this slice extends; whichever of the two lands first, the
-other uses its seam rather than adding a second. The regression line below
+same forward seam this slice extends, and Dave scheduled it on 11 Sep 2026
+between Challenge 1's Slices 22 and 24, so it lands first and this slice
+extends its seam rather than adding a second. The regression line below
 names "the existing Challenge stage-sequence tests", which also do not
 exist.
 

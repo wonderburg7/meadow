@@ -50,9 +50,15 @@ queue item's scope and took nothing out of the queue. What it changed here:
 the SB entry below now names the real blocker instead of a Godot crash that
 no longer reproduces, and C1-22 names its own successor instead of sharing
 C1-23's, which would have let the Codex lane fall below the floor of three.
-Two things came out of it that are Dave's to decide, and both sit under "Not
-in the queue" below: where the new slice H4 goes relative to Challenge 1, and
-which of `tools/check_docs.py`'s two contradictory rules gives way.
+**Dave answered all four of its questions the same day.** H4, a new slice,
+lands after C1-22 and before C1-24, and enters the Codex lane as C1-23's
+successor. `check_docs.py`'s two contradictory rules are reconciled and
+shipped: a queue item's `Files:` line may now name a file its slice creates,
+which is why H3 at 4 below names the tool it builds. Comb workers are capped
+at six per site, one to each wall, and a cell holding any amount of a
+resource outlines itself in that resource's colour -- both are specified in
+`plans/now/hive-comb.md` and both are startable, waiting only for a queue
+slot.
 
 ## Next up
 
@@ -65,7 +71,7 @@ which of `tools/check_docs.py`'s two contradictory rules gives way.
    - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
    - Check: one check confirming the nectar stage's goal bar fills and the queen stops at 150, not 200
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
-   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
+   - Next after: H4 (a headless run can start a Challenge and reach a stage). It lands after C1-22, which is already at 3 below, and before C1-24 -- Dave's decision D of 11 Sep 2026.
 
 2. **[Claude] C1-21 -- the queen forages pollen without being pushed.**
    At the pollen stage she stays put when the player switches her focus to
@@ -95,7 +101,7 @@ which of `tools/check_docs.py`'s two contradictory rules gives way.
    - Files: `scripts/challenge_runner.gd`, `scripts/camera_view.gd`
    - Check: C-29, re-run once the camera follows at the pollen stage and the waypoint-stage arming gap is fixed
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
-   - Next after: C1-26 (the marker pulses and shows an off-screen arrow when it is off screen). C1-23 above already names C1-24 as its successor, so the Codex lane reaches C1-24 first and C1-26's one dependency is met by the time this item lands.
+   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15). H4, promoted by C1-23 above, leads the lane by then and is what gives C1-24 an acceptance that can run.
 
 4. **[Claude] H3 -- the behaviour-equivalence run.**
    Seventeen architecture slices each name a before-and-after scenario
@@ -104,12 +110,12 @@ which of `tools/check_docs.py`'s two contradictory rules gives way.
    one command that runs a scenario at a given git ref and again in the working
    tree at the same seed, prints only the summary fields that differ, and exits
    non-zero when any do. Touches no `scripts/` file, so it cannot collide with
-   either Challenge 1 lane. The slice may add a sibling tool beside the runner
-   rather than a flag on it; nothing else claims either, and a file that does
-   not exist yet cannot be named on a Files: line, so the entry reserves the
-   runner. The plan records why under H3.
+   either Challenge 1 lane. The `Files:` line names the tool this slice
+   creates, which `tools/check_docs.py` allows as of 11 Sep 2026; it may still
+   be a flag on `tools/run_scenario.py` instead if that turns out cleaner, and
+   the plan records the trade under H3.
    - Plan: `plans/design/architecture-review.md` -- "H3 — the behaviour-equivalence run"
-   - Files: `tools/run_scenario.py`, `docs/headless-run-contract.md`
+   - Files: `tools/equivalence.py`, `docs/headless-run-contract.md`
    - Check: none needed -- the acceptance is the tool's own exit status, and a unit test covers the diff without launching Godot
    - Proof: `absent: docs/headless-run-contract.md :: equivalence`
    - Next after: H1 (the function map covers what it says it covers)
@@ -129,16 +135,17 @@ which of `tools/check_docs.py`'s two contradictory rules gives way.
 
 ## Not in the queue, and why
 
-Each of these wants something from Dave, or something else to ship first.
+Each of these wants something from Dave, something else to ship first, or
+simply a free slot -- the queue is full at five, and three of the entries
+below are startable today.
 
 - **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
-  specified. Slice 26 (the marker pulses and shows an off-screen arrow, both
-  Dave's 10 Sep asks) waits on Slice 24, the other open change to the same
-  marker node. Slice 24 is next after C1-23 and is queued as its
-  `Next after:`. Slice 22 is now in the queue above (C1-22) -- with HC-16
-  landed and its plan archived (`plans/archive/HUD_CONTROLS_2026-09-11.md`),
-  C1-21 moved into the Claude lane it vacated, freeing C1-22 to be queued
-  directly rather than only as C1-21's `Next after:`.
+  specified, and **neither has an acceptance that can run until H4 lands**:
+  each states only a headless Challenge assertion, and no headless run can
+  start a Challenge. Slice 26 also waits on Slice 24, the other open change
+  to the same marker node. The Codex lane reaches them in order without
+  anything being decided here: C1-23 promotes H4, C1-22 promotes Slice 24,
+  and H4 promotes Slice 26.
 - **The architecture review's A-to-G slices**
   (`plans/design/architecture-review.md`) -- seventeen slices, all specified.
   Dave admitted the three that touch no gameplay file (H3 and H1 above, H2
@@ -165,11 +172,6 @@ Each of these wants something from Dave, or something else to ship first.
   species. **SB-0** now leads that plan: it adds those three probes, it is
   startable today, and it shares no file with either lane. It is this lane's
   refill candidate the next time a Claude slot opens.
-- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
-  headless trace found the mechanism (every idle Comb Worker piles onto one
-  unfinished site), but capping builders per site changes build throughput,
-  so it wants Dave's live look and a call on intended behaviour. Slice 5
-  wants its own reproduction.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own
@@ -186,29 +188,21 @@ Each of these wants something from Dave, or something else to ship first.
   recorded in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` under C-20 so it is
   not lost.
 - **H4 -- a headless run can start a Challenge and reach a stage**
-  (`plans/design/architecture-review.md`). New, from the 11 Sep plan review,
-  and **waiting on one decision from Dave**. Nine open slices across three
-  plans state a headless Challenge assertion as their acceptance, and no
-  headless run can start a Challenge: the runner starts only for
+  (`plans/design/architecture-review.md`). Nine open slices across three plans
+  state a headless Challenge assertion as their acceptance, and no headless
+  run can start a Challenge: the runner starts only for
   `Session.starting_level` 1 or 2, and a `--scenario` launch always sets that
-  to the scenario level. There is no Challenge fixture and no stage-sequence
-  test, though three slices name one as their regression check. Two of the
-  nine -- Challenge 1's Slices 24 and 26 -- have no acceptance at all until
-  this lands, so neither should be queued ahead of it. H4 owns
-  `scripts/challenge_runner.gd`, which is why its position is a decision and
-  not a lookup; the plan states the three orderings and recommends landing it
-  after C1-21 and C1-22 and before C1-24 and C1-26.
-- **`tools/check_docs.py` contradicts itself about a file a slice creates**
-  -- `validate_queue_files`'s docstring says a queue `Files:` line may name
-  "exact paths for files created by a slice", and `check_backticked_paths`
-  then rejects any backticked path not on disk, `NEXTSTEPS.md` included. H3
-  above already works around it by reserving `tools/run_scenario.py` instead
-  of the new equivalence tool it will create beside it. Three more slices will hit the
-  same wall: the architecture review's C1 creates `conditions.gd`, G1 creates
-  `actions.gd` and F1s creates `game_panel.gd`. Waiting on Dave's call on
-  which rule gives way -- the plan review's recommendation is that
-  `check_backticked_paths` skip paths inside a queue item's `Files:` line,
-  since `validate_queue_files` has already checked their shape.
+  to the scenario level. **Decided, not blocked** -- Dave placed it after
+  C1-21 and C1-22 and before C1-24 and C1-26 on 11 Sep 2026, and C1-23 above
+  names it as its successor, so it enters the Codex lane by the ordinary
+  promotion rather than needing anything from here.
+- **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- **both startable,
+  both waiting only for a slot.** Dave answered their two open questions on
+  11 Sep 2026: at most six comb workers per site, one to each wall of the
+  hexagon, using the six-slot mechanism `hive_cell.gd` already has; and a cell
+  holding any amount of a resource draws its outline in that resource's
+  colour. Slice 5 is the smaller and the one Dave sees, so take it first. They
+  share `hive_cell.gd` with nothing in the queue.
 - **The documented smoke scenario fails on master** -- `python
   tools/run_scenario.py test_scenarios/slice1_smoke_test.json` is the first
   command `docs/headless-run-contract.md` gives a new session, and on 11 Sep

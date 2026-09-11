@@ -440,6 +440,30 @@ def routable_docs() -> list[Path]:
     return list(seen)
 
 
+def queue_declared_files() -> set[str]:
+    """Paths named on a queue item's `Files:` line, which may not exist yet.
+
+    validate_queue_files deliberately allows a slice to name a file it is
+    going to create -- that is how a queue entry reserves the thing it is
+    about to add. check_backticked_paths then rejected exactly those paths,
+    so the two rules contradicted each other and H3 had to reserve a sibling
+    file instead of the tool it creates. Dave settled it on 11 Sep 2026: the
+    existence check gives way, because validate_queue_files has already
+    proved the path's shape and a queue entry is the one place in the repo
+    where a not-yet-existing path is the point rather than a mistake."""
+    path = ROOT / "NEXTSTEPS.md"
+    if not path.is_file():
+        return set()
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    if not match:
+        return set()
+    declared: set[str] = set()
+    for chunk in re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]:
+        declared |= _item_files(chunk)
+    return declared
+
+
 def check_backticked_paths(errors: list[str]) -> None:
     """A backticked repo path must name a file that exists.
 
@@ -450,10 +474,16 @@ def check_backticked_paths(errors: list[str]) -> None:
     4 Sep 2026 and DESIGN_BACKLOG.md still sent readers to plans/now/. The
     cost of a dead pointer is not tidiness -- it is a session opening a file
     that is not there and then searching for it, which is exactly the
-    expensive path the routing tables exist to avoid."""
+    expensive path the routing tables exist to avoid.
+
+    The one exception is a path a queue item declares on its `Files:` line --
+    see queue_declared_files above."""
+    declared = queue_declared_files()
     for path in routable_docs():
         for raw in BACKTICK_TOKEN.findall(path.read_text(encoding="utf-8")):
             token = raw.strip()
+            if token in declared:
+                continue
             if "/" not in token or " " in token or "://" in token.replace("res://", ""):
                 continue
             if "*" in token or "?" in token:
