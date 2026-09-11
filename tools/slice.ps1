@@ -83,9 +83,15 @@ function Get-NextUpItems {
     foreach ($chunk in $chunks) {
         $itemNumber++
         $trimmed = $chunk.Trim()
+        # Id used to require a single bare token ([\w.-]+), which silently
+        # dropped any item whose id is a multi-word phrase (e.g. "Hive comb
+        # Slice 5") from every list this function produces -- including the
+        # one Assert-CrossLaneOwnership and -Lane selection use to find a
+        # lane's leading item, so the wrong item could be treated as leading
+        # without any error surfacing.
         $headMatch = [regex]::Match(
             $trimmed,
-            '^\*\*\[(?<lane>\w+)\]\s+(?<id>[\w.-]+)\s+--\s+(?<title>.*?)\*\*',
+            '^\*\*\[(?<lane>\w+)\]\s+(?<id>.+?)\s+--\s+(?<title>.*?)\*\*',
             [System.Text.RegularExpressions.RegexOptions]::Singleline
         )
         if (-not $headMatch.Success) {
