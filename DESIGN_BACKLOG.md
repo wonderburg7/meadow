@@ -22,7 +22,7 @@ home per fact: read the plan.
 | Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
 | UI and accessibility | `plans/now/ui.md` |
-| A control inside a HUD panel | `plans/now/hud-controls.md` |
+| A control inside a HUD panel (built) | `plans/archive/HUD_CONTROLS_2026-09-11.md` |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/now/hive-comb.md` |
 | The flowering year's peaks and troughs | `plans/now/season-balance.md` |
 | The check/slice loop itself | `plans/reference/check-loop.md` |

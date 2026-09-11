@@ -133,7 +133,7 @@ disagree.
     argument applies one level below the panel. Three separate controls
     shipped in a state a screenshot showed instantly and no check could see:
     tray columns bunched left, two buttons collapsed to 10px, a menu drawing
-    with no button behind it (`plans/now/hud-controls.md`). A slice that
+    with no button behind it (`plans/archive/HUD_CONTROLS_2026-09-11.md`). A slice that
     places a control inside a container asserts the resulting rectangle
     through LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
     assertions (`scripts/scenario_actions.gd`,
