@@ -165,14 +165,23 @@ function Get-LifecycleProducts {
 function Assert-CrossLaneOwnership {
     param([string]$Root, [object]$Candidate)
 
+    # Candidate is always its own lane's leading item (Get-SlicePreflight
+    # takes -First 1), and check_docs.py only requires the two lanes'
+    # *leading* items to be file-disjoint -- a later, not-yet-claimable item
+    # in the other lane sharing a file is not a real collision, since it
+    # can't be started until the item ahead of it ships.  Checking every
+    # other-lane item here would block a claim the documented rule allows.
     $lifecycle = @(Get-LifecycleProducts)
     $candidateFiles = @($Candidate.Files | Where-Object { $_ -notin $lifecycle })
-    $otherItems = Get-NextUpItems -Root $Root | Where-Object { $_.Lane -ne $Candidate.Lane }
-    foreach ($other in $otherItems) {
-        $otherFiles = @($other.Files | Where-Object { $_ -notin $lifecycle })
+    $otherLead = Get-NextUpItems -Root $Root |
+        Where-Object { $_.Lane -ne $Candidate.Lane } |
+        Sort-Object ItemNumber |
+        Select-Object -First 1
+    if ($otherLead) {
+        $otherFiles = @($otherLead.Files | Where-Object { $_ -notin $lifecycle })
         $shared = @($candidateFiles | Where-Object { $_ -in $otherFiles } | Select-Object -Unique)
         if ($shared) {
-            throw "$($Candidate.Id) and [$($other.Lane)] $($other.Id) both own $($shared -join ', ') -- reorder the queue before claiming either slice"
+            throw "$($Candidate.Id) and [$($otherLead.Lane)] $($otherLead.Id) both own $($shared -join ', ') -- reorder the queue before claiming either slice"
         }
     }
 }
