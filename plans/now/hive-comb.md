@@ -1,7 +1,7 @@
 # Meadow hive comb — auto-build order and cell feedback
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HCB-5 -- a cell's outline takes the colour of what is in it | Dependency: none -- Dave answered both open questions on 11 Sep 2026 and HCB-4 and HCB-5 are independent of each other | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: HCB-4 -- at most six comb builders per site, one to a wall | Dependency: none -- Dave answered both open questions on 11 Sep 2026 | Verified: 2026-09-12
 
 **Objective.** The comb reads correctly as it is built: cells grow in a
 sensible order and a cell's art tells the player what is in it.
@@ -15,18 +15,15 @@ holding a resource being unaffected by the toggle, sprite-aligned hex grid
 geometry and traversal, direction-even hex speed, automine block selection
 and typeface switching.
 
-**Open slices.** HCB-4 and HCB-5, below. **Both are startable.** Dave
-answered the two questions they were waiting on, on 11 Sep 2026:
+**Open slice.** HCB-4, below. **It is startable.** Dave answered the question
+it was waiting on on 11 Sep 2026. HCB-5 shipped on 12 Sep 2026; its full
+specification is archived at `plans/archive/HCB-5_2026-09-12.md`.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
 | HCB-4 | At most six builders per site, one to a wall | `hive.gd`, `bee_building.gd`, `hive_cell.gd` | yes | medium |
-| HCB-5 | A cell's outline takes the colour of what is in it | `hive_cell.gd` | yes | low |
 
-They share `hive_cell.gd` but touch different parts of it -- HCB-4 the
-working-positions block, HCB-5 the refresh's outline colour -- so they are
-independent in substance, and whichever runs first the other rebases cleanly.
-Run HCB-5 first: it is the smaller, and it is the one Dave will see.
+HCB-5 used `hive_cell.gd`'s refresh; HCB-4 owns its working-positions block.
 
 **Authoritative files.** Site selection: `scripts/hive.gd`
 (`create_next_cell_site`, `find_unfinished_cell`). Builder dispatch:
@@ -162,72 +159,5 @@ instead of all at the same one.
 
 **Check to file:** one check for the above.
 
-## HCB-5 — a cell's outline takes the colour of what is in it
-
-**Symptom (Dave, 30 Aug).** With Cell art on, a forager appears to be
-contributing to a cell but the cell's look doesn't change until later.
-
-**Cause, confirmed from the code 11 Sep 2026 -- there is no lag.**
-`hive_cell.gd::add_resource` sets `content_type = resource_type`
-synchronously on the deposit (`:731`), and the presentation gate (`:497-514`)
-redraws at `REFRESHES_PER_SECOND` 6 with a 0.85-1.15 jitter, so at worst about
-190 ms. `outline.visible = content_type != ""` already turns the outline on
-for any amount at all. What is missing is not timing and not the outline: it
-is that the outline is one brown, `Color(0.35, 0.28, 0.12)`, whatever the cell
-holds, so a first deposit changes a pale fill nobody notices and nothing else.
-
-**Dave's answer, 11 Sep 2026.** "Cells with any amount of a particular
-resource should use the outline of that resource."
-
-**Current owner.** `hive_cell.gd`'s refresh owns both the outline's colour and
-the designation ring's, and the ring already carries the per-resource palette
-this slice needs: nectar `(1.0, 0.85, 0.3)`, pollen `(0.7, 0.65, 1.0)`, honey
-`(1.0, 0.55, 0.1)`, brood `(0.6, 1.0, 0.7)`, written as an if-chain a few
-lines below the outline.
-
-**Required reading.** This heading, and `hive_cell.gd`'s refresh from the
-`polygon = Shapes.hexagon_points(cell_size, squashed)` line down past the
-`designation_ring.default_color` chain.
-
-**Files likely to change.** `scripts/hive_cell.gd`.
-
-**Files that must not be changed.** `scripts/resources.gd` -- see the note on
-the catalogue below. `scripts/ui_theme.gd`.
-
-**Requirements.**
-
-1. A built cell holding any amount of a resource draws its outline in that
-   resource's colour rather than the shared brown. An empty cell is unchanged:
-   no outline at all, which is what keeps open comb and open floor reading as
-   one surface.
-2. The outline and the designation ring read one colour lookup, not two. Hoist
-   the existing if-chain into a single function on `hive_cell.gd` that maps a
-   content key to a colour, and have both call it. The ring may keep a
-   different alpha or width; only the hue is shared.
-3. A content kind with no colour of its own -- corpse, jelly if it has none --
-   falls back to today's brown rather than to nothing, so a kind added later
-   cannot make an outline disappear.
-
-**Constraints and invariants.** An unfinished site keeps its own outline
-treatment (`_set_outline_points` at the drawn size, `Color(0.6, 0.5, 0.25,
-0.9)`); this slice does not touch that branch. The cup-versus-flat choice
-stays with `Session.use_cell_sprites` and guardrail 10's measured constants --
-`_apply_outline_points` decides the *shape* and this slice only sets the
-*colour*. Nothing about what a cell holds changes.
-
-**Note for the architecture review's B1.** The colour lookup this slice
-hoists is the same fact B1 puts in the resource catalogue, for all seven
-content kinds rather than four. Write it as one function with a comment saying
-B1 is its future home, so B1 moves it rather than discovering a second
-definition. Do not extend `resources.gd` here: that file is B1's, and B1 is
-held behind Challenge 1.
-
-**Runtime policy.** Unchanged. The colour is set inside the existing 6 Hz
-refresh, and the lookup is a dictionary read.
-
-**Acceptance (what Dave does and sees).** A forager deposits into an empty
-cell and the cell immediately gains an outline in that resource's colour, so
-the first deposit is visible at a glance. A nectar cell and a pollen cell are
-told apart by their outlines. An empty cell still has none.
-
-**Check to file:** one check for the above.
+HCB-5 shipped 12 Sep 2026. Its specification and delivery record are in
+`plans/archive/HCB-5_2026-09-12.md`.

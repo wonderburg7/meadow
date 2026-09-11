@@ -145,20 +145,16 @@ Codex` without producing an invalid git branch name.
 
 ## Next up
 
-1. **[Codex] HCB-5 -- a cell's outline takes the colour of what is in it.**
-   With Cell art on, a built cell's outline stays one shared brown no matter
-   what it holds, so a first deposit is easy to miss; there is no lag, just
-   one colour used for everything. Hoist the nectar/pollen/honey/brood colour
-   lookup the designation ring already uses into one function that both the
-   ring and the outline call, so a cell holding any amount of a resource
-   draws its outline in that resource's colour. An empty cell keeps no
-   outline at all, and a content kind with no colour of its own falls back to
-   today's brown rather than to nothing.
-   - Plan: `plans/now/hive-comb.md` -- "HCB-5 — a cell's outline takes the colour of what is in it"
-   - Files: `scripts/hive_cell.gd`
-   - Check: one check confirming a deposit gives its cell an outline in that resource's colour, and an empty cell stays outline-free
-   - Proof: `present: scripts/hive_cell.gd :: outline.default_color = Color(0.35, 0.28, 0.12)`
-   - Next after: HCB-4 (at most six comb builders per site, one to a wall). Dave's 11 Sep 2026 answer runs HCB-5 first because it is smaller and the one he will see; the two slices are independent and share only `hive_cell.gd`.
+1. **[Codex] HCB-4 -- at most six comb builders per site, one to a wall.**
+   Idle Comb Workers currently pile onto the first unfinished cell, even
+   though a hex already has six wall positions. Give each builder a stable
+   wall slot, skip a site only once all six slots are claimed, and keep an
+   abandoned site resumable when it still has a free wall.
+   - Plan: `plans/now/hive-comb.md` -- "HCB-4 — Cell auto-building: every idle builder piles onto one site"
+   - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `scripts/hive_cell.gd`
+   - Check: a seven-worker comb build never assigns more than six workers to one cell and starts a second site while the first is unfinished
+   - Proof: `present: scripts/hive_cell.gd :: func claim_slot(bee: Node2D) -> int`
+   - Next after: HCB plan complete.
 
 2. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
    Challenge-only acceptance checks cannot run today: scenario launches use
@@ -166,10 +162,8 @@ Codex` without producing an invalid git branch name.
    Let a scenario name a Challenge, add a verb that steps through the ordinary
    `debug_advance_stage()` seam to a named stage, expose the current stage id
    to scenario assertions, and prove it with a fixture that reaches 1.14.
-   Queued behind HCB-5 above, not as the Codex lane's leading item, because
-   it shares `scripts/main.gd` with H2 below -- both cannot be the two lanes'
-   leading item at once. It becomes claimable the moment either H2 ships or
-   HCB-5 does.
+   HCB-4 leads while SB-0 owns `docs/headless-run-contract.md` in the other
+   lane; H4 becomes claimable when either of those leading slices ships.
    - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
    - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
    - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
