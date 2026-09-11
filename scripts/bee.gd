@@ -1831,12 +1831,18 @@ func set_focus(type: String) -> void:
 	if not _is_inside_hive():
 		# Already out foraging -- no need to fly home first.
 		state = State.SEEK_FLOWER
-	elif state == State.IDLING:
+	elif state == State.IDLING or (state == State.IN_HIVE_TO_CELL and target_cell == null):
 		# A bee parked on IDLING (Stage 1.11's freeze_bee) never dispatches
 		# itself again on its own, so a focus change here would otherwise
-		# be silently ignored. Walk her out through the ordinary exit path;
-		# _go_to_exit() calls _default_state_for_role() on arrival, which
-		# picks up the new resource type.
+		# be silently ignored. The same is true of a bee genuinely stuck in
+		# IN_HIVE_TO_CELL with no target_cell -- go_to_deposit_cell's own
+		# retry loop (bee_foraging.gd) only re-searches when the comb
+		# actually changes, so she would otherwise wait out a focus change
+		# too, still holding the old resource. A bee with a real target_cell
+		# is mid-delivery and is left alone to finish it. Walk her out
+		# through the ordinary exit path; _go_to_exit() calls
+		# _default_state_for_role() on arrival, which picks up the new
+		# resource type.
 		state = State.IN_HIVE_TO_EXIT
 	_update_label()
 	_update_role_marker()

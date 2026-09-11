@@ -60,6 +60,20 @@ resource outlines itself in that resource's colour -- both are specified in
 `plans/now/hive-comb.md` and both are startable, waiting only for a queue
 slot.
 
+**C1-21 shipped 11 Sep 2026.** The prescribed headless Challenge trace could
+not be run -- H4 was still open, so `--scenario` cannot start a Challenge at
+all -- and a full static trace of the live code stood in for it instead. The
+real fault: C1-25's stage-1.14 discard rule only ever ran from a bee actively
+retrying a deposit, never from one parked on `IDLING` by Stage 1.11's freeze,
+so a nectar load frozen mid-trip rode untouched all the way to 1.14. Fixed
+with a new stage effect that clears it on 1.13's exit, plus a general
+`bee.gd::set_focus()` fix so any bee genuinely stuck (not just an `IDLING`
+one) wakes up on a focus change. Full record:
+`plans/archive/C1-21_2026-09-11.md`. Its `Next after` (H3) was already
+queued below, so the Claude lane simply drops to four items total, which
+`tools/check_docs.py`'s floor of three still allows -- no lane was emptied,
+so no new slice needed pulling in to replace it.
+
 ## Next up
 
 1. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
@@ -71,22 +85,9 @@ slot.
    - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
    - Check: one check confirming the nectar stage's goal bar fills and the queen stops at 150, not 200
    - Proof: `absent: scripts/challenge_stages.gd :: NECTAR_TARGET`
-   - Next after: H4 (a headless run can start a Challenge and reach a stage). It lands after C1-22, which is already at 3 below, and before C1-24 -- Dave's decision D of 11 Sep 2026.
+   - Next after: H4 (a headless run can start a Challenge and reach a stage). It lands after C1-22, which is already at 2 below, and before C1-24 -- Dave's decision D of 11 Sep 2026.
 
-2. **[Claude] C1-21 -- the queen forages pollen without being pushed.**
-   At the pollen stage she stays put when the player switches her focus to
-   Pollen, and only sets off once something else has moved her out of the
-   hive. Trace it headlessly first: the standing hypothesis is that the
-   nectar she is still carrying routes her to a deposit that does not exist,
-   and C1-25 has just made her keep that load rather than lose it, so the
-   stall is now the only way it can end. Fix what the trace shows.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 21 — the queen forages pollen without being pushed"
-   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`
-   - Check: C-7's pollen half, re-run once she leaves on the focus change alone
-   - Proof: `absent: scripts/bee_foraging.gd :: C1-21`
-   - Next after: H3 (the behaviour-equivalence run, queued at 4 below)
-
-3. **[Codex] C1-22 -- the pollen stage's camera never follows.**
+2. **[Codex] C1-22 -- the pollen stage's camera never follows.**
    At stage 1.14 the speed goes to 4x and back correctly, but the camera
    never follows the queen; Dave confirmed this unchanged on a second pass.
    `_run_stage_effects`'s `camera_follow_off` writes `main.following_bee =
@@ -103,7 +104,7 @@ slot.
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
    - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15). H4, promoted by C1-23 above, leads the lane by then and is what gives C1-24 an acceptance that can run.
 
-4. **[Claude] H3 -- the behaviour-equivalence run.**
+3. **[Claude] H3 -- the behaviour-equivalence run.**
    Seventeen architecture slices each name a before-and-after scenario
    comparison as their acceptance, and nothing can run one: the experiment
    harness compares configuration cases inside a single build by design. Build
@@ -120,7 +121,7 @@ slot.
    - Proof: `absent: docs/headless-run-contract.md :: equivalence`
    - Next after: H1 (the function map covers what it says it covers)
 
-5. **[Claude] H1 -- the function map covers what it says it covers.**
+4. **[Claude] H1 -- the function map covers what it says it covers.**
    `FUNCTION_MAP.md` says it indexes every script over ~700 lines; thirteen
    scripts are now over 700 and six are missing, including `bee_foraging.gd`
    and `challenge_runner.gd`, both named in the queue above. The generator's
@@ -136,8 +137,8 @@ slot.
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- the queue is full at five, and three of the entries
-below are startable today.
+simply a free slot -- the queue holds four (the floor is three), and three of
+the entries below are startable today.
 
 - **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
   specified, and **neither has an acceptance that can run until H4 lands**:

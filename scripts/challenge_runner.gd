@@ -590,6 +590,18 @@ func _run_stage_effects(effects: Array) -> void:
 				main.queen._release_everything()
 				main.queen.clear_navigation_state()
 				main.queen.state = main.Bee.State.IDLING
+			"clear_stale_load:queen":
+				# freeze_bee:queen (1.11's on_exit) parks her on IDLING without
+				# touching current_load, so a nectar trip caught mid-errand
+				# rides IDLING straight through 1.12 and 1.13. discards_overflow()
+				# below never gets a chance to catch it: that check only runs
+				# from bee_foraging.gd's go_to_deposit_cell, which a bee parked
+				# on IDLING never enters. Same discard, same message, run
+				# directly here instead, on entry to 1.14 where it is due.
+				if main.queen.current_load > 0.0 and main.queen.current_load_type == "nectar":
+					main.queen.current_load = 0.0
+					main.queen.current_load_type = ""
+					announce_overflow_discard()
 			_:
 				push_error("challenge_runner: unknown stage effect '%s'" % effect)
 

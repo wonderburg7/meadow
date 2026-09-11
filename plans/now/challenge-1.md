@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 23 -- a Challenge 1 wax cell is full at 150 nectar | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 21-26 | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: Slice 23 -- a Challenge 1 wax cell is full at 150 nectar | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 22-26 | Verified: 2026-09-11
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -44,11 +44,17 @@ gameplay." Slice 20 was that review's first answer -- the disruption is one
 over-broad goal, not the stage design. Slice 25 is its second, and has the
 same shape: a rule whose comment named a stage and whose code did not.
 
+**Slice 21 shipped 11 Sep 2026.** The queen's stall was the same shape again:
+Slice 25's stage-1.14 discard rule only ever ran from a bee actively
+retrying a deposit, never from one parked on `IDLING` by Stage 1.11's
+freeze -- so a nectar load frozen mid-trip rode straight through to 1.14
+untouched. Full record, including why the prescribed headless trace could
+not be run: `plans/archive/C1-21_2026-09-11.md`.
+
 ## Open slices at a glance
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| 21 | The queen will not start pollen foraging unaided (C-7) | `bee.gd`, `bee_foraging.gd` | high |
 | 22 | The pollen stage's camera never follows (C-29) | `challenge_runner.gd`, `camera_view.gd` | medium |
 | 23 | A Challenge 1 nectar cell is full at 150, not 200 | `challenge_stages.gd`, `challenge_runner.gd` | low |
 | 24 | A stage marker appears in the meadow at 1.12 (yellow dot) | `challenge_runner.gd` | low |
@@ -56,20 +62,20 @@ same shape: a rule whose comment named a stage and whose code did not.
 | 7 | The acceptance playthrough and copy pass | docs | -- |
 
 Slice 26 depends on Slice 24, which is the other open change to the same
-marker node. Slices 21, 22, 23 and 24 are otherwise independent of each
-other. Slice 7 runs last.
+marker node. Slices 22, 23 and 24 are otherwise independent of each other.
+Slice 7 runs last.
 
-**Four of these slices name a headless assertion that cannot be run yet
-(found 11 Sep 2026).** Slices 21, 22, 24 and 26 each state a headless
-Challenge assertion as their acceptance, and no headless run can start a
-Challenge at all: `challenge_runner.start()` fires only for
-`Session.starting_level` 1 or 2, and a `--scenario` launch always sets that to
-`Levels.SCENARIO_LEVEL_ID`. There is no Challenge fixture and no
-stage-sequence test, whatever Slice 24's regression line says.
-`plans/design/architecture-review.md`'s **H4** is the slice that fixes it, and
-Dave placed it on 11 Sep 2026: after Slices 21 and 22, before Slices 24 and
-26. Those first two stay startable because their fixes are behaviour and
-Dave's C-7 and C-29 are their real acceptance. Slices 24 and 26 have no
+**Three of these slices name a headless assertion that cannot be run yet
+(found 11 Sep 2026, narrowed 11 Sep 2026 when Slice 21 shipped on a static
+trace instead).** Slices 22, 24 and 26 each state a headless Challenge
+assertion as their acceptance, and no headless run can start a Challenge at
+all: `challenge_runner.start()` fires only for `Session.starting_level` 1 or
+2, and a `--scenario` launch always sets that to `Levels.SCENARIO_LEVEL_ID`.
+There is no Challenge fixture and no stage-sequence test, whatever Slice 24's
+regression line says. `plans/design/architecture-review.md`'s **H4** is the
+slice that fixes it, and Dave placed it on 11 Sep 2026: after Slices 21 and
+22, before Slices 24 and 26. Slice 22 stays startable because its fix is
+behaviour and Dave's C-29 is its real acceptance. Slices 24 and 26 have no
 acceptance that can run until H4 lands, and H4 enters the queue as C1-23's
 successor, so the ordering happens by itself.
 
@@ -105,89 +111,8 @@ Shipped 11 Sep 2026. Full specification and delivery record:
 
 ## Slice 21 — the queen forages pollen without being pushed
 
-**Reasoning level: high.** Bee state machine, and the cause is only partly
-established.
-
-**Slice 20 has landed** (10 Sep 2026), so stage 1.13 runs and a cell can be
-reserved for pollen. That removes the sufficient cause the symptoms below
-used to have, which is what makes this slice startable. Slice 25 has landed
-too: the queen now keeps a nectar load the comb cannot take instead of losing
-it, so if a carried load is the stall, nothing clears it on its own any more.
-
-**Observable problem (C-7, pollen half).** At stage 1.14 the queen does not
-set off when the player switches her focus to Pollen. Right-clicking the hive
-exit starts her; she then forages pollen, returns, and deposits the leftover
-*nectar* she was still carrying.
-
-**Second report (Dave, 10 Sep 2026, C-7).** The same symptom, located more
-precisely: "In Challenge 1 the queen doesn't automatically start moving when
-assigned the forager/pollen role -- she does for the forager/nectar role. She
-only starts automatically moving once she's in the meadow. But this should
-start when initially assigned the role in the hive." So she is stalled
-*inside* the hive, and leaving the hive by any means clears the stall. That
-matches the leading hypothesis below rather than contradicting it: a carried
-load is only in the way while she is indoors, where the deposit dispatch
-runs. Confirm it against the trace all the same.
-
-**Established so far.** `bee.gd::_try_role_work()`'s `Role.FORAGER` branch
-(`:1478`) has no storage precondition — it always enters `SEEK_FLOWER` — so
-the stall is not a refusal to take forager work. Stage 1.11's `on_exit` runs
-`freeze_bee:queen`, which calls `_release_everything()`,
-`clear_navigation_state()` and sets `state = IDLING`; none of those drops
-`current_load`. So the queen enters 1.12 to 1.14 still holding nectar. The
-leading hypothesis is that a carried load routes her to a deposit before any
-role work, and with the nectar cell full and (before Slice 20) the second
-cell also nectar, the deposit search finds nothing and she waits — which is
-exactly the "waits at the inner entrance" symptom from the first C-7 pass.
-
-**This is a hypothesis, not a confirmed cause. Confirm it first.** Use the
-headless scenario runner (`docs/headless-run-contract.md`) to drive Challenge
-1 to 1.14 and record, per think tick: the queen's `state`, `current_load`,
-`carrying` type, and the result of the deposit-cell search. Extract only
-those fields; do not read raw run output back. If the trace does not show her
-blocked on a deposit, stop and report what it does show rather than
-implementing the fix below.
-
-**Files likely to change.** `scripts/bee.gd`, `scripts/bee_foraging.gd`, and
-`scripts/challenge_stages.gd` only if a stage effect is the right home for
-the load-clearing.
-
-**Files that must not be changed.** `scripts/game_config.gd`.
-`scripts/hive.gd`'s deposit-search ordering, unless the trace shows the fault
-is there — in which case escalate, because that path serves every bee.
-
-**Requirements, if the trace confirms the hypothesis.**
-
-1. The queen must not carry a nectar load into the pollen stage. Prefer a
-   stage effect over a change to general bee behaviour: extend
-   `_run_stage_effects` with an effect that deposits or discards the carried
-   load, and give stage 1.13 or 1.14 that effect on entry. Naming it for what
-   it does to the bee, not for the stage, keeps it reusable.
-2. A bee holding a load it cannot deposit anywhere must not stand still
-   indefinitely. Whatever the trace shows as the stall, the fix is that she
-   either finds another home for it or gives it up and takes role work —
-   never that she waits.
-3. A focus change alone starts her (Slice 17 established this for nectar);
-   prove it still holds for pollen once the load is gone.
-
-**Constraints and invariants.** `manual_deposit_pending` must stay false
-outside Challenge 1's manual stages. No change may make a non-Challenge bee
-drop a load — check any new behaviour is behind the stage effect, not in
-`_idle_dispatch`.
-
-**Edge cases.** She is mid-flight when the focus changes. She is inside the
-hive with a partial load. The pollen cell fills while she is still out.
-
-**Automated acceptance checks.** A headless scenario that reaches 1.14 and
-asserts the queen leaves the hive within N think ticks of the focus change,
-with no command issued, and that her load is pollen when she next deposits.
-
-**Regression checks.** Re-run the nectar half of the arc (stage 1.11) and
-assert it still passes — it passes today and must keep passing.
-
-**Escalate rather than guess if:** the trace points at `hive.gd`'s deposit
-search, or the fix would need a bee to discard resources in open play. Both
-change behaviour outside Challenge 1.
+Shipped 11 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-21_2026-09-11.md`](../archive/C1-21_2026-09-11.md).
 
 ## Slice 22 — the stage's camera reaches the pollen stage
 
