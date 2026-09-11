@@ -109,8 +109,15 @@ func _focus_on_bee(bee: Node2D) -> void:
 ## The command tray's "Follow bee" toggle. `bee` null (or `following`
 ## false) stops tracking -- hud.gd emits exactly that on every selection
 ## change, so following never silently outlives the selection it started
-## from.
-func _on_follow_bee_toggled(bee: Node2D, following: bool) -> void:
+## from. Challenge stages use the optional third argument to say their
+## follow target may survive a queen-node rebuild; every ordinary player
+## toggle clears that permission, including a deliberate mid-stage opt-out.
+var _stage_following_queen: bool = false
+
+func _on_follow_bee_toggled(bee: Node2D, following: bool, stage_queen_follow: bool = false) -> void:
+	# This is camera_view's only writer for main.following_bee. Stage code
+	# must route both camera_follow_queen and camera_follow_off through here.
+	_stage_following_queen = following and stage_queen_follow
 	main.following_bee = bee if following else null
 
 ## Continuous camera tracking, called every frame from main._process
@@ -121,7 +128,13 @@ func _handle_follow(_delta: float) -> void:
 	if main.following_bee == null:
 		return
 	if not is_instance_valid(main.following_bee):
-		main.following_bee = null
+		# A checkpoint rebuild can replace the queen node between frames. A
+		# stage-owned queen follow tracks the current queen rather than silently
+		# ending; ordinary player follows still stop when their bee disappears.
+		if _stage_following_queen and is_instance_valid(main.queen):
+			_on_follow_bee_toggled(main.queen, true, true)
+		else:
+			_on_follow_bee_toggled(null, false)
 		return
 	var bee_indoors: bool = main.following_bee.get_parent() == main.hive_root
 	if bee_indoors != main.in_hive_view:

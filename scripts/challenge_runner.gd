@@ -45,7 +45,7 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 const QueenHeartsVfx = preload("res://scripts/queen_hearts_vfx.gd")
 const BeeSpeechBubble = preload("res://scripts/bee_speech_bubble.gd")
 const Bee = preload("res://scripts/bee.gd")
-## Slice 14: 1.11/1.13's camera-follow and 4x speed belong to the moment the
+## Slice 14: 1.11/1.14's camera-follow and 4x speed belong to the moment the
 ## queen actually sets off foraging, not to stage entry -- she has to be
 ## selected to be given the Forager role, and selection clears camera-follow
 ## (see _apply_stage_gate_to_ui). These are the states that mean "she's on
@@ -376,8 +376,9 @@ func _queen_allowed_role_ids(entries: Array) -> Array:
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
-	# Slice 14: fresh per stage, so 1.14 fires its own camera/speed effects
-	# independently of 1.11's.
+	# Fresh per stage, including after a foraging trip during the waypoint
+	# lesson. Entering either automatic-forage stage therefore always arms its
+	# own first departure, whatever state the queen used to be in.
 	_c1_forage_effects_done = false
 	_c1_overflow_discard_count = 0
 	# The one place player_driven is ever written. A stage that does not
@@ -577,9 +578,11 @@ func _run_stage_effects(effects: Array) -> void:
 		var effect: String = str(effect_value)
 		match effect:
 			"camera_follow_queen":
-				main.camera_view._on_follow_bee_toggled(main.queen, true)
+				main.camera_view._on_follow_bee_toggled(main.queen, true, true)
 			"camera_follow_off":
-				main.following_bee = null
+				# Keep both directions with camera_view, the sole owner of the
+				# follow target, so a stage exit cannot leave private camera state.
+				main.camera_view._on_follow_bee_toggled(null, false)
 			"speed_multiplier:1.0", "speed_multiplier:4.0":
 				main.camera_view._on_speed_requested(effect.trim_prefix("speed_multiplier:").to_float())
 			"lock_flower_target:queen":
@@ -815,7 +818,11 @@ func _drive_c1_forage_effects() -> void:
 		return
 	if not is_instance_valid(main.queen):
 		return
-	if main.queen.state not in CHALLENGE1_FORAGE_TRIGGER_STATES:
+	# Walking out through the hive entrance is the start of an automatic trip,
+	# not merely its setup. It is also the state a queen reaches when she
+	# switches focus after the meadow-waypoint lesson, so include it rather
+	# than waiting for a later outdoor state that can race a UI follow-off.
+	if main.queen.state != Bee.State.IN_HIVE_TO_EXIT and main.queen.state not in CHALLENGE1_FORAGE_TRIGGER_STATES:
 		return
 	_c1_forage_effects_done = true
 	_run_stage_effects(["camera_follow_queen", "speed_multiplier:4.0"])
