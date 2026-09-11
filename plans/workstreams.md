@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/H3` (`claude/H3`) | Claude | the behaviour-equivalence run. | Claude | in progress | none | `plans/design/architecture-review.md` "H3 — the behaviour-equivalence run" |
+| `.worktrees/C1-23` (`codex/C1-23`) | Codex | Challenge 1's wax cell is full at 150 nectar, not 200. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 23 — a Challenge 1 wax cell is full at 150 nectar" |
