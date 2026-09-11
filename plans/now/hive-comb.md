@@ -1,7 +1,7 @@
 # Meadow hive comb — auto-build order and cell feedback
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None startable -- Slices 4 and 5 both need Dave's live look before code | Dependency: Slices 4 and 5 need Dave's live look | Verified: 2026-09-03
+Status: active | Owner: Dave / Claude Code | Next: None startable -- Slice 4 needs Dave's call on intended build throughput, Slice 5 is now a one-line design question for him | Dependency: Slice 4 wants Dave's call on capping builders per site; Slice 5 wants his answer on the low-fill cell's look | Verified: 2026-09-11
 
 **Objective.** The comb reads correctly as it is built: cells grow in a
 sensible order and a cell's art tells the player what is in it.
@@ -16,10 +16,13 @@ geometry and traversal, direction-even hex speed, automine block selection
 and typeface switching.
 
 **Open slices.** Slices 4 and 5, below. **Neither is startable and neither
-belongs in `NEXTSTEPS.md`.** Slice 4 has its mechanism already traced but
-capping builders per site is a build-throughput change, so it needs Dave's
-call on intended behaviour first; Slice 5 needs a live repro to say whether
-there is a defect at all. They are independent of each other.
+belongs in `NEXTSTEPS.md`,** and in both cases what they want is one answer
+from Dave rather than more investigation. Slice 4 has its mechanism traced,
+but capping builders per site is a build-throughput change, so it needs his
+call on intended behaviour. Slice 5 no longer needs the live repro it asked
+for -- the 11 Sep 2026 plan review answered it from the code (below) and it
+is now a design question with two options. They are independent of each
+other.
 
 **Authoritative files.** Site selection: `scripts/hive.gd`
 (`create_next_cell_site`, `find_unfinished_cell`). Builder dispatch:
@@ -30,53 +33,31 @@ Slice 4 (it is a balance change). The archives are provenance, never
 orientation.
 
 **Reasoning level.** Slice 4: high -- it changes build throughput and touches
-the idle-dispatch path. Slice 5: low once the live answer exists.
+the idle-dispatch path. Slice 5: low once Dave has chosen between the two
+options under it.
 
-## Slice 4 — Cell auto-building: spiral order looks wrong (live repro needed first)
+## Slice 4 — Cell auto-building: every idle builder piles onto one site
 
 **Symptom (Dave, 30 Aug, general play — distinct from the queen-specific
 auto-spiral bug Challenge 1 Slice 8d already fixed, see
 `plans/now/challenge-1.md`):** ordinary automatic Comb Worker building does
 not appear to grow the comb in the expected spiralling-hexagon shape.
 
-**Traced, not yet confirmed as a bug:** `hive.gd::create_next_cell_site()`
-walks `Shapes.hex_spiral_at(index)` in increasing index order and returns
-the first tile passing `_can_build_on()` — this is a spiral by construction,
-so the spiral math itself is not the suspect. Two live-only candidate
-causes:
+**Cause, confirmed by the 1 Sep headless trace.** `hive.gd::create_next_cell_site()`
+walks `Shapes.hex_spiral_at(index)` in increasing index order and returns the
+first tile passing `_can_build_on()`, so the spiral maths was never the
+suspect and is not the fault. The reproduction is
+`test_scenarios/hive_comb_spiral_repro.json`: four automatic Comb Workers, no
+cells and no miners, a fully open seven-ring interior, stopping after 37
+completed cells. Run it with
+`./tools/run_headless.ps1 test_scenarios/hive_comb_spiral_repro.json`. The
+second candidate cause considered at the time -- that `_can_build_on()` only
+offers dug, walkable tiles, so uneven mining would make a correct spiral look
+wrong -- is ruled out by that fixture, which pre-digs the whole interior and
+still reproduces the symptom.
 
-1. Every idle Comb Worker calls `create_next_cell_site()` independently on
-   its own think-tick. `_start_site_at()` registers the tile
-   (`register_tile`/`invalidate_index`) synchronously inside the same call
-   that creates it, which should make two same-frame calls safe — but this
-   needs confirming live rather than assumed, since dispatch order across
-   many idle bees in one frame hasn't been traced here.
-2. `_can_build_on()` only offers *dug, walkable* tiles. What looks like "not
-   spiralling" may actually be a correct spiral *selection* constrained by
-   which ground has been dug so far — it will look uneven whenever mining
-   hasn't kept pace symmetrically with comb growth, which is the normal case
-   in an ordinary playthrough.
-
-**Action:** reproduce in an isolated Scenario with generous pre-dug, symmetric
-open floor and several idle Comb Workers (removing the digging-asymmetry
-variable) before writing any fix to `create_next_cell_site()` — same
-discipline `challenge-1.md`'s Slice 8d used for its own "confirmed-plausible,
-pending live-boot confirmation" finding.
-
-`test_scenarios/hive_comb_spiral_repro.json` is that reproducible setup: it
-starts four automatic Comb Workers with no cells or miners, expands the fully
-open interior to seven rings, and stops after 37 completed cells (the centre
-plus the first three complete hex rings). Its bounded `build_target` trace
-records every automatic target while the live boot supplies the visual answer;
-it deliberately does not treat a target-order assertion as proof that the
-drawn comb looks right. Run it with
-`./tools/run_headless.ps1 test_scenarios/hive_comb_spiral_repro.json` for the
-deterministic trace, then inspect the same `--scenario` boot visually before
-scoping any change to `create_next_cell_site()`.
-
-**Headless trace run (1 Sep, `run_id=b8cf41b4dc6c`, all 37 cells completed,
-`queen_alive`/`actions_clean` both passed): candidate cause 1 confirmed by
-the trace itself, no visual boot needed to see it.** Of 148 `assigned`
+**What the trace showed (1 Sep, `run_id=b8cf41b4dc6c`, all 37 cells
+completed, `queen_alive`/`actions_clean` both passed).** Of 148 `assigned`
 `build_target` events, 51 land on a `target_hex` that one or more other bees
 were assigned in the very same tick. Tracing the first one: all four workers
 get `target_hex=[0,0]` at `game_time=0.025`; all four `claimed` and
@@ -86,8 +67,8 @@ never grows at more than one site at a time — the four Comb Workers act as
 a single herd walking the spiral tile-by-tile, rather than each opening its
 own site and the ring filling in from several points in parallel.
 
-Mechanism, read from `scripts/bee.gd:1359-1367` and
-`scripts/hive.gd:553-557`: before calling `create_next_cell_site()`, an idle
+Mechanism, read from `bee.gd::_idle_dispatch` (`:1398`) and
+`hive.gd::find_unfinished_cell` (`:553`): before calling `create_next_cell_site()`, an idle
 Comb Worker first calls `hive.find_unfinished_cell()`, which returns the
 first cell in `cells` with `is_built == false` — uncapped, so every idle
 worker piles onto the single most recent unfinished site instead of a new
@@ -95,13 +76,20 @@ one opening once that site already has a builder. `find_unfinished_cell()`
 is also what lets a worker resume a site abandoned mid-build (e.g. after a
 death), which is correct; the bug is that it has no limit on how many
 workers can queue onto the same site while other ring positions sit
-untouched. This is a mechanism finding, not yet a scoped fix — capping
-concurrent builders per site would speed up perceived spiral growth but
-also changes overall build throughput (a balance question, not just a
-visual one per `.claude/rules/simulation.md`), so it needs Dave's live-boot
-look and a call on the intended behaviour before code changes. The `godot`
-MCP server was unavailable both this session and the session that first
-wrote this slice, so that visual step is still outstanding.
+untouched.
+
+**The one thing this slice waits on is Dave's answer, not more evidence.**
+Capping concurrent builders per site would make the comb visibly grow at
+several points at once, and would also change how fast the colony builds
+overall -- a balance question, not a visual one
+(`.claude/rules/simulation.md`). Three readings are available and the fix is
+different for each: **one builder per site** (the comb opens a new site as
+soon as the current one is claimed, fastest-looking, slowest per cell when
+workers are few); **a cap of two or three** (a compromise, and the cap
+becomes a `GameConfig` value); or **leave it** (the herd is how the comb
+builds, and the symptom is a presentation expectation rather than a defect).
+Whichever he picks, the slice that follows simulates the change before it
+ships, per this plan's own rule.
 
 ## Slice 5 — Cell-content feedback lag reading as "nothing happened" (design question, not confirmed a bug)
 
@@ -113,13 +101,21 @@ the moment any resource lands, the cell switches to its ordinary
 fill-fraction shading (a washed-out body plus a full-strength `fill_shape`
 scaled to the amount held) — which starts very pale at a low fill fraction
 and is easy to miss next to the visually richer cup sprite it just replaced.
-`add_resource()` does update `content_type`/`amount` the instant a deposit
-lands, so this reads as a legibility gap, not a functional one, on current
-evidence.
+That is a legibility gap, not a functional one.
 
-**Action:** confirm live that the switch away from the cup sprite really is
-instant on first deposit (it should be, per `add_resource`) rather than
-delayed. If confirmed instant, this becomes a follow-on design question —
-whether a low-fill cell should keep a lighter version of the cup outline
-instead of jumping straight to the current flat wash — not a code fix in
-this slice.
+**Confirmed from the code, 11 Sep 2026 plan review — there is no lag, and no
+live repro is needed.** `hive_cell.gd::add_resource` sets
+`content_type = resource_type` synchronously on the deposit itself (`:731`),
+before it returns, so the cell stops being empty the instant the forager
+delivers. The only thing between that and the screen is the presentation
+gate at `:497-514`, which redraws at `REFRESHES_PER_SECOND` 6 with a
+0.85-1.15 jitter -- at worst about 190 ms, far too fast to read as "nothing
+happened". The plan's own legibility explanation is therefore the whole
+story: what changes is instant, it is just faint.
+
+**What is left is one question for Dave, not a slice.** Should a cell holding
+a little of something keep a lighter version of the cup outline, instead of
+jumping straight to the current pale flat wash? Yes makes a first deposit
+legible at a glance and costs one drawing change in `hive_cell.gd`. No leaves
+the comb reading purely by fill, which is what it does today. Nothing else in
+this plan depends on the answer; it becomes a slice the moment there is one.

@@ -1,7 +1,7 @@
 # Season balance — the flowering year's peaks and troughs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SB-1 -- lower the peak-season production spike | Dependency: none -- SB-1 and SB-2 are both startable | Verified: 2026-09-08
+Status: active | Owner: Dave / Claude Code | Next: SB-0 -- the two season readouts SB-1 and SB-2 are measured against | Dependency: SB-1 and SB-2 both wait on SB-0; neither can be simulated until it lands | Verified: 2026-09-11
 
 **Objective.** A meadow year that reads as a year: every season has something
 in flower, the summer peak is a good season rather than a different game, and
@@ -28,11 +28,83 @@ comparison that has to be run.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| SB-1 | Peak-season production is a rise, not a spike | `game_config.gd`, `flower.gd` | yes | medium |
-| SB-2 | Out-of-season species become genuinely rare | `game_config.gd`, `flower_species.gd` | yes — after SB-1 | low |
+| SB-0 | A year-long run reports stored stock and live flowers per species | `diagnostic_probes.gd`, `diagnostic_log.gd` | yes | low |
+| SB-1 | Peak-season production is a rise, not a spike | `game_config.gd`, `flower.gd` | no — after SB-0 | medium |
+| SB-2 | Out-of-season species become genuinely rare | `game_config.gd`, `flower_species.gd` | no — after SB-0, then SB-1 | low |
 
-SB-2 follows SB-1 only because both add a value to `scripts/game_config.gd`;
-neither depends on the other's behaviour.
+SB-0 comes first because it is the only thing that can tell whether SB-1 and
+SB-2 did what they intend. SB-2 follows SB-1 only because both add a value to
+`scripts/game_config.gd`; neither depends on the other's behaviour.
+
+**Why SB-1 and SB-2 were not startable before (corrected 11 Sep 2026).**
+`NEXTSTEPS.md` held both out on the grounds that the 9 Sep smoke baseline
+exited `0xC0000005` before writing a summary. That failure no longer
+reproduces: on 11 Sep 2026 `python tools/run_scenario.py
+test_scenarios/slice1_smoke_test.json --report verdict` completed in 7.7 s
+with exit code 0 and a classified result. The real obstacle is different and
+was never written down -- **both slices name a measurement that does not
+exist**. `tests/balance_tests.py` is a static analyser over GDScript source
+and runs no simulation at all, so "the balance suite's existing full-year
+scenario" names nothing; and `DiagnosticLog`'s snapshot carries
+`resources.food_stores` (ripe honey only), the two rate averages and cell
+counts by content, but no stored nectar or pollen amount and no live-flower
+count by species. SB-0 closes that gap. This is `plans/README.md`'s
+sequencing guardrail 2 -- evidence before threshold changes -- applied to a
+plan that had assumed the evidence already existed.
+
+## SB-0 — a year-long run reports what a season change actually did
+
+**Reasoning level: low.** Two rows in an existing allowlist catalogue, plus
+one merge bug that adding a second row in an existing group exposes.
+
+**Purpose.** SB-1 and SB-2 are balance changes, and `CLAUDE.md` rule 2 says a
+balance change is simulated before it ships. Neither can be, because the
+fields their comparisons read do not exist. This slice adds them, and nothing
+else.
+
+**Current state.** `scripts/headless/diagnostic_probes.gd`'s `SNAPSHOT_FIELDS`
+is the allowlist of probes a scenario's diagnostics profile may select; it has
+six entries. `DiagnosticLog::_snapshot` reports `resources.food_stores` (ripe
+honey only), the two rate averages, and cell *counts* per content kind.
+Nothing reports stored nectar or pollen as an amount, and nothing counts live
+flowers by species.
+
+**Required reading.** This heading. `scripts/headless/diagnostic_probes.gd` in
+full (28 lines). `DiagnosticLog::_snapshot` and `_selected_snapshot`.
+
+**Files likely to change.** `scripts/headless/diagnostic_probes.gd`,
+`scripts/diagnostic_log.gd`, `docs/headless-run-contract.md`.
+
+**Files that must not change.** `scripts/hive.gd`, `scripts/flower.gd`,
+`scripts/game_config.gd`. This slice measures; it changes nothing measured.
+
+**Requirements.**
+
+1. `SNAPSHOT_FIELDS` gains `resources.stored_nectar`,
+   `resources.stored_pollen` and `environment.flowers_by_species`. The first
+   two are `hive.total("nectar")` and `hive.total("pollen")`; the third is a
+   species-name-to-count dictionary over live flowers, built the way
+   `_snapshot` already walks the `soil_blocks` group.
+2. **Required discovery, fix it here.** `selected_snapshot`'s `match` assigns a
+   whole sub-dictionary per arm, so two selected fields in one group clobber
+   each other -- selecting `performance.fps` and `performance.top_sections_ms`
+   together loses `fps` today. Adding a second `resources.*` row makes that
+   live. Merge into the group instead of assigning it.
+3. `_snapshot`'s `resources` block gains the same two totals beside
+   `food_stores`, so a run with no selected profile reports them too.
+
+**Constraints and invariants.** Cadence is unchanged -- hourly in game time,
+or a scenario's `snapshot_seconds`. Every existing field keeps its exact key
+and meaning; `food_stores` stays ripe honey only, because
+`scenario_actions.gd`'s `food_stores_at_least` depends on that reading.
+`hive.total()` is a full comb scan, so it runs once per snapshot and never per
+frame.
+
+**Acceptance checks.** A fixture selecting all three new fields produces them
+in `session.jsonl`. A fixture selecting both `performance` fields produces
+both, which fails today. `tools/verify.ps1` green.
+
+**Check to file:** none -- nothing a player sees changes.
 
 ## SB-1 — peak-season production is a rise, not a spike
 
@@ -105,10 +177,14 @@ Do not touch `_senescence_scale()`, `out_of_season_ageing_factor`, or
 `season_strength()` and will follow it automatically, which is what keeps the
 panel readouts C-15 confirmed in step with the change.
 
-**Simulate before shipping.** Run the balance suite's existing full-year
-scenario at `peak_season_strength` 1.0 (today's behaviour) and 0.75, and
-report, for each: total nectar and pollen stored over one year, peak stored
-nectar, and the minimum stored nectar in the worst month. The change is
+**Simulate before shipping.** A Meadow year is `season_length_days`, 60 by
+default, so a 60-day headless run is one year and the existing 60-day foraging
+fixtures are the right shape to copy. Add a fixture that runs 60 days with
+`seasons_on` at its default, selecting SB-0's `resources.stored_nectar`,
+`resources.stored_pollen` and `environment.flowers_by_species`, and run it at
+`peak_season_strength` 1.0 (today's behaviour) and 0.75. Report, for each: the
+final stored nectar and pollen, the peak stored nectar across the year's
+snapshots, and the lowest stored nectar in any one-sixth of the year. The change is
 acceptable if the yearly total falls by roughly a fifth to a quarter and the
 worst month does not fall far enough to starve a colony that survives today.
 If the worst month collapses, raise `out_of_season_strength` rather than
@@ -154,9 +230,10 @@ var out_of_season_seed_weight: float = 0.06
 Do not change `season_weight()`'s shape, `out_of_season_strength`, or any
 species' own `weight`. This value is deliberately a single dial.
 
-**Simulate before shipping.** Run the same full-year headless scenario at
-0.15 and 0.06 and report, for four sample days spread across the year, the
-count of live flowers of each species. Acceptable if at every sampled day at
+**Simulate before shipping.** Run SB-1's 60-day fixture at 0.15 and 0.06 and
+report, for four snapshots spread across the year,
+`environment.flowers_by_species` -- the count of live flowers of each species,
+which is the field SB-0 adds for exactly this. Acceptable if at every sampled day at
 least one species is well represented and no species reaches zero anywhere in
 the year. If any species does reach zero, raise the value in 0.02 steps until
 none does, and ship the lowest value that keeps them all present.

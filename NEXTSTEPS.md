@@ -45,6 +45,15 @@ also now the design pass for four of `plans/design/product-scope.md` section
 6.2's shared foundations, and its settings-persistence slice is unblocked by a
 three-bucket classification rule.
 
+**A plan review ran on 11 Sep 2026** over every active plan. It changed no
+queue item's scope and took nothing out of the queue. What it changed here:
+the SB entry below now names the real blocker instead of a Godot crash that
+no longer reproduces, and C1-22 names its own successor instead of sharing
+C1-23's, which would have let the Codex lane fall below the floor of three.
+Two things came out of it that are Dave's to decide, and both sit under "Not
+in the queue" below: where the new slice H4 goes relative to Challenge 1, and
+which of `tools/check_docs.py`'s two contradictory rules gives way.
+
 ## Next up
 
 1. **[Codex] C1-23 -- Challenge 1's wax cell is full at 150 nectar, not 200.**
@@ -86,7 +95,7 @@ three-bucket classification rule.
    - Files: `scripts/challenge_runner.gd`, `scripts/camera_view.gd`
    - Check: C-29, re-run once the camera follows at the pollen stage and the waypoint-stage arming gap is fixed
    - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
-   - Next after: C1-24 (the stage marker is never left in the wrong world, at 1.12 and 1.15)
+   - Next after: C1-26 (the marker pulses and shows an off-screen arrow when it is off screen). C1-23 above already names C1-24 as its successor, so the Codex lane reaches C1-24 first and C1-26's one dependency is met by the time this item lands.
 
 4. **[Claude] H3 -- the behaviour-equivalence run.**
    Seventeen architecture slices each name a before-and-after scenario
@@ -146,11 +155,16 @@ Each of these wants something from Dave, or something else to ship first.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- CR-6 now produces a
-  bounded, classified baseline result, but the 9 Sep smoke baseline still
-  exits `0xC0000005` before writing a summary. Diagnose or repair that Godot
-  environment failure before SB-1 returns with exact `Files:` and `Proof:`
-  values that pass `slice.ps1 doctor`; SB-2 follows it.
+- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- the reason recorded
+  here until 11 Sep 2026, a `0xC0000005` exit from the smoke baseline, no
+  longer reproduces: that scenario now completes in 7.7 s with exit code 0 and
+  a classified result. The real obstacle, found in the 11 Sep plan review, is
+  that both slices name a measurement that does not exist -- there is no
+  full-year *scenario* in the balance suite (it is a static analyser), and no
+  snapshot field carries stored nectar, stored pollen or live flowers by
+  species. **SB-0** now leads that plan: it adds those three probes, it is
+  startable today, and it shares no file with either lane. It is this lane's
+  refill candidate the next time a Claude slot opens.
 - **Hive comb Slices 4 and 5** (`plans/now/hive-comb.md`) -- Slice 4's
   headless trace found the mechanism (every idle Comb Worker piles onto one
   unfinished site), but capping builders per site changes build throughput,
@@ -171,6 +185,40 @@ Each of these wants something from Dave, or something else to ship first.
   own; it rides with the next slice that opens the cell-art drawing, and is
   recorded in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` under C-20 so it is
   not lost.
+- **H4 -- a headless run can start a Challenge and reach a stage**
+  (`plans/design/architecture-review.md`). New, from the 11 Sep plan review,
+  and **waiting on one decision from Dave**. Nine open slices across three
+  plans state a headless Challenge assertion as their acceptance, and no
+  headless run can start a Challenge: the runner starts only for
+  `Session.starting_level` 1 or 2, and a `--scenario` launch always sets that
+  to the scenario level. There is no Challenge fixture and no stage-sequence
+  test, though three slices name one as their regression check. Two of the
+  nine -- Challenge 1's Slices 24 and 26 -- have no acceptance at all until
+  this lands, so neither should be queued ahead of it. H4 owns
+  `scripts/challenge_runner.gd`, which is why its position is a decision and
+  not a lookup; the plan states the three orderings and recommends landing it
+  after C1-21 and C1-22 and before C1-24 and C1-26.
+- **`tools/check_docs.py` contradicts itself about a file a slice creates**
+  -- `validate_queue_files`'s docstring says a queue `Files:` line may name
+  "exact paths for files created by a slice", and `check_backticked_paths`
+  then rejects any backticked path not on disk, `NEXTSTEPS.md` included. H3
+  above already works around it by reserving `tools/run_scenario.py` instead
+  of the new equivalence tool it will create beside it. Three more slices will hit the
+  same wall: the architecture review's C1 creates `conditions.gd`, G1 creates
+  `actions.gd` and F1s creates `game_panel.gd`. Waiting on Dave's call on
+  which rule gives way -- the plan review's recommendation is that
+  `check_backticked_paths` skip paths inside a queue item's `Files:` line,
+  since `validate_queue_files` has already checked their shape.
+- **The documented smoke scenario fails on master** -- `python
+  tools/run_scenario.py test_scenarios/slice1_smoke_test.json` is the first
+  command `docs/headless-run-contract.md` gives a new session, and on 11 Sep
+  2026 it returned `status=failed`, `classification=product_failure`: its one
+  assertion waits on `cells_completed_at_least: 1` and never fires inside the
+  fixture's three days, with ten cells, one builder and one miner. The harness
+  itself is healthy -- exit code 0, a classified result in 7.7 s. This is
+  either a fixture whose assumption stopped holding or a real build-throughput
+  finding, and telling which needs a trace, not a reading. Not a slice until
+  someone has looked: it is one investigation, and nothing waits on it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
 - **The Codex lifecycle's own success measure** -- CR-1 to CR-7 all shipped by

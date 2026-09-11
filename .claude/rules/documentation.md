@@ -45,3 +45,11 @@ future product direction and decisions, respectively. Use
 Before specifying a slice, verify it against the code with a `Proof:` line
 (`plans/README.md` guardrail 12). If two slices need the same thing built,
 that thing is an earlier slice, never a later consolidation.
+
+When you are **writing or editing a plan** rather than following one, read
+`plans/README.md`'s "Writing or editing a plan" -- nine rules covering
+verification, current-versus-target state, whether the work is still needed,
+finding the owner before adding a helper, runtime policy, recording a
+decision once, cross-plan dependencies, escalating instead of redesigning,
+and keeping the structure proportionate. It is the only place those rules
+live; do not restate them in a plan.

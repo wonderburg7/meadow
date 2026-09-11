@@ -59,6 +59,19 @@ Slice 26 depends on Slice 24, which is the other open change to the same
 marker node. Slices 21, 22, 23 and 24 are otherwise independent of each
 other. Slice 7 runs last.
 
+**Four of these slices name a headless assertion that cannot be run yet
+(found 11 Sep 2026).** Slices 21, 22, 24 and 26 each state a headless
+Challenge assertion as their acceptance, and no headless run can start a
+Challenge at all: `challenge_runner.start()` fires only for
+`Session.starting_level` 1 or 2, and a `--scenario` launch always sets that to
+`Levels.SCENARIO_LEVEL_ID`. There is no Challenge fixture and no
+stage-sequence test, whatever Slice 24's regression line says.
+`plans/design/architecture-review.md`'s **H4** is the slice that fixes it, and
+where it sits relative to this arc is a decision waiting on Dave. Until it
+lands, Slices 21 and 22 are still startable -- their fixes are behaviour and
+Dave's C-7 and C-29 are their real acceptance -- but **Slices 24 and 26 have
+no acceptance that can run**, so neither should be queued ahead of H4.
+
 Nothing else may be added -- a finding from Slice 7's own run becomes this
 plan's next slice while it is open, and a finding after it closes starts a
 new `plans/now/` file.
@@ -189,21 +202,21 @@ trace below is still the right first move. Separately, at the
 meadow-waypoint stage, foraging and depositing before visiting all three
 waypoints stops the nectar stage's automation from starting at all.
 
-**Established so far.** `_drive_c1_forage_effects()` (`:758`) applies
+**Established so far.** `_drive_c1_forage_effects()` (`:798`) applies
 `camera_follow_queen` and `speed_multiplier:4.0` together, gated on
 `_c1_forage_effects_done` and on the queen being in one of
 `CHALLENGE1_FORAGE_TRIGGER_STATES`. `_c1_forage_effects_done` is reset on
-stage entry (`:342`), so the flag is not what suppresses the camera. Because
+stage entry (`:381`), so the flag is not what suppresses the camera. Because
 both effects are applied in the same call, "speed changed but the camera did
 not" cannot be explained by that function alone: something after it clears
 `main.following_bee`. `_run_stage_effects`'s `camera_follow_off` writes
-`main.following_bee = null` directly (`:542`) rather than going through
+`main.following_bee = null` directly (`:582`) rather than going through
 `camera_view._on_follow_bee_toggled`, which is an asymmetry worth removing
 whatever the cause turns out to be.
 
 **Confirm the cause before fixing.** Log every write to `main.following_bee`
 for the duration of stage 1.14 — the setter in `camera_view.gd:114`, the
-direct write in `challenge_runner.gd:542`, and the `is_instance_valid` clear
+direct write in `challenge_runner.gd:582`, and the `is_instance_valid` clear
 in `_handle_follow` (`:124`) — and record which one runs last. The
 `_handle_follow` clear is a live candidate: a checkpoint restore or a bee
 rebuild replaces the queen node, and a stale reference would be nulled
@@ -255,7 +268,7 @@ call sites, which would mean follow-target ownership is genuinely shared.
 150 nectar to be full, so the queen fills it to 150 and stops (rather than
 200 which is taking too long so it's boring for the player)."
 
-**Confirmed current behaviour.** `_goal_check_nectar_target()` (`:938`)
+**Confirmed current behaviour.** `_goal_check_nectar_target()` (`:994`)
 passes when a nectar cell's `fill_fraction()` reaches 1.0, which is
 `GameConfig.cell_capacity`, 200. The queen stops because stage 1.11's
 `on_exit` freezes her, so lowering the goal threshold is what makes her stop
@@ -281,7 +294,7 @@ reads.
    shelf's bar fills at the same point the stage clears. Today it returns
    `cell.capacity_for("nectar")`, which would leave the bar at 75% when the
    stage ends.
-4. Check `challenge_stages.gd:272`'s comment about `cell_capacity` being 200
+4. Check `challenge_stages.gd:276`'s comment about `cell_capacity` being 200
    and update it if this changes what it describes.
 
 **Constraints and invariants.** The cell's real capacity stays 200 — this
@@ -305,7 +318,7 @@ the goal text changes; it does not.
 **Reasoning level: low.** One missing guard, already written twice in the
 same function.
 
-**Confirmed root cause.** `challenge_runner.gd::_update_marker()` (`:479`)
+**Confirmed root cause.** `challenge_runner.gd::_update_marker()` (`:519`)
 reparents `_marker` before showing it in two of its branches — `1.6`/`1.19`
 pull it back to `hive_root`, `1.10` pushes it to `meadow_root` — but the
 `["1.2", "1.5", "1.12", "1.15"]` branch sets a hive-local position and makes
