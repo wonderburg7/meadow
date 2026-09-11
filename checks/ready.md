@@ -25,4 +25,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-41 -- the command tray fits its content the first time you select a bee](ready/C-41.md)
 - [C-42 -- the queen keeps a full-comb nectar trip until the player makes room](ready/C-42.md)
 - [C-43 -- the command tray fits its content on a reselection, not just the first time](ready/C-43.md)
+- [C-44 -- Challenge 1's nectar lesson completes at 150](ready/C-44.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
