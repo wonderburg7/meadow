@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/H1` (`claude/H1`) | Claude | the function map covers what it says it covers. | Claude | in progress | none | `plans/design/architecture-review.md` "H1 — the function map covers what it says it covers" |
