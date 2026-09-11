@@ -122,6 +122,28 @@ Hive comb Slice 5, already queued and independent of both, takes the
 leading Codex slot instead; H4 sits behind it as the lane's second item and
 becomes claimable once either H2 or Slice 5 ships.
 
+**H2 shipped 11 Sep 2026.** Ten `# --- section ---` headers went into
+`hud.gd` and six into `main.gd`, comment-only, covering the 1,293 and 331
+lines F14 found unheaded. Two of the plan's eight named boundaries ("role
+controls", "speed controls") turned out to be interleaved with other
+content in the source rather than contiguous; per the slice's own
+Escalation clause that is recorded in the archive rather than acted on.
+Full record: `plans/archive/H2_2026-09-11.md`. H2's departure also resolves
+H4's cross-lane file conflict -- H4 now only waits on ordinary lane order
+behind Hive comb Slice 5, not on a leading-item collision -- but H4 still
+isn't promoted here since Slice 5 hasn't shipped yet. This session also
+fixed two `tools/slice.ps1` bugs surfaced while claiming H2: it was
+checking a claim candidate against every item in the other lane instead of
+just its leading one (contradicting `check_docs.py`'s documented rule), and
+its queue-item parser silently dropped any item whose id is a multi-word
+phrase rather than a single token -- which is exactly Hive comb Slice 5's
+id, so the tool had been treating H4 as the Codex lane's leading item
+without surfacing an error. Both are fixed on master
+(`d4b6c27`, `f1755d9`); a follow-up to give Hive comb Slice 5 a proper
+short id (so it can actually be claimed without producing an invalid git
+branch name) has been flagged separately, not filed as a queue slice since
+nothing currently needs to claim it.
+
 ## Next up
 
 1. **[Codex] Hive comb Slice 5 -- a cell's outline takes the colour of what is in it.**
@@ -155,18 +177,21 @@ becomes claimable once either H2 or Slice 5 ships.
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
    - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
 
-3. **[Claude] H2 -- `hud.gd` gets the section headers the routing rule assumes.**
-   The project's largest file has three `# --- section ---` headers and the
-   first is 41% of the way down it: `scripts/hud.gd` carries no header for
-   its first 1,293 lines -- the whole command tray, role controls, bottom
-   row, goal readout and problem strip -- and `scripts/main.gd`'s first
-   header is at line 583. Comment-only: add headers at the natural
-   boundaries already visible in the code. Nothing else moves or changes.
-   - Plan: `plans/design/architecture-review.md` -- "H2 — `hud.gd` gets the section headers the routing rule assumes"
-   - Files: `scripts/hud.gd`, `scripts/main.gd`
-   - Check: none needed -- `git diff -U0 -- scripts/hud.gd scripts/main.gd` showing only added comment lines, plus `tools/verify.ps1` green, is the acceptance, and nothing a player sees changes
-   - Proof: `absent: scripts/hud.gd :: # --- command tray`
-   - Next after: SB-0 (the balance suite gains stored-nectar, stored-pollen and live-flowers-by-species probes -- `plans/now/season-balance.md`). No further H slice is ready once H2 lands: H4 still waits on Codex's C1-22, and every A-G architecture slice stays held until Challenge 1's Slices 21-26 vacate `challenge_runner.gd`. SB-0 is already named below as this lane's refill candidate.
+3. **[Claude] SB-0 -- a year-long run reports what a season change actually did.**
+   SB-1 and SB-2 are balance changes, and `CLAUDE.md` rule 2 says a balance
+   change is simulated before it ships -- but neither can be, because the
+   fields their comparisons need don't exist yet.
+   `scripts/headless/diagnostic_probes.gd`'s `SNAPSHOT_FIELDS` reports ripe
+   honey, two rate averages and cell counts by content, but nothing for
+   stored nectar or pollen as an amount, and nothing for live flowers by
+   species. Add those three fields, and fix the `match`-per-field merge bug
+   that adding a second `resources.*` entry exposes (selecting two fields in
+   the same group currently clobbers one).
+   - Plan: `plans/now/season-balance.md` -- "SB-0 — a year-long run reports what a season change actually did"
+   - Files: `scripts/headless/diagnostic_probes.gd`, `scripts/diagnostic_log.gd`, `docs/headless-run-contract.md`
+   - Check: none needed -- a fixture selecting the three new fields producing them in `session.jsonl`, plus `tools/verify.ps1` green, is the acceptance, and nothing a player sees changes
+   - Proof: `absent: scripts/headless/diagnostic_probes.gd :: resources.stored_nectar`
+   - Next after: SB-1 -- peak-season production is a rise, not a spike (`plans/now/season-balance.md`); startable the moment SB-0's probes exist to simulate it against.
 
 ## Not in the queue, and why
 
@@ -198,16 +223,12 @@ the entries below are startable today.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- the reason recorded
-  here until 11 Sep 2026, a `0xC0000005` exit from the smoke baseline, no
-  longer reproduces: that scenario now completes in 7.7 s with exit code 0 and
-  a classified result. The real obstacle, found in the 11 Sep plan review, is
-  that both slices name a measurement that does not exist -- there is no
-  full-year *scenario* in the balance suite (it is a static analyser), and no
-  snapshot field carries stored nectar, stored pollen or live flowers by
-  species. **SB-0** now leads that plan: it adds those three probes, it is
-  startable today, and it shares no file with either lane. It is this lane's
-  refill candidate the next time a Claude slot opens.
+- **SB-1 and SB-2** (`plans/now/season-balance.md`) -- both name a
+  measurement that does not exist yet: no snapshot field carries stored
+  nectar, stored pollen or live flowers by species. **SB-0** is now in the
+  Claude lane above and adds those three probes; SB-1 becomes startable the
+  moment it lands (SB-0's own `Next after`), and SB-2 follows SB-1 since
+  both add a value to `scripts/game_config.gd`.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own

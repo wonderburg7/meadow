@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 shipped 11 Sep 2026; H2 is in the queue; H4 needs Challenge 1's C1-22 to land first | Owner: Dave / Claude Code | Next: H2 -- `hud.gd` gets the section headers the routing rule assumes | Dependency: H2 is independent of everything; H4 owns `challenge_runner.gd` and lands after C1-21 (shipped) and C1-22; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1 and H2 shipped 11 Sep 2026; H4 is the Codex lane's second item, behind Hive comb Slice 5 -- its cross-lane file conflict with H2 is resolved now H2 has shipped, so it becomes claimable in ordinary lane order once Slice 5 lands | Owner: Dave / Claude Code | Next: H4 -- a headless run can start a Challenge and reach a stage | Dependency: H4 owns `challenge_runner.gd` and lands after C1-21 and C1-22 (both shipped); every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -685,33 +685,11 @@ list from a 700-line threshold instead of a hardcoded seven. Full record:
 
 ### H2 — `hud.gd` gets the section headers the routing rule assumes
 
-Level: low. Depends on: nothing. Sole owner of `hud.gd` while it runs, so it
-cannot overlap F1s, F2s, E1 or any queued HUD slice.
-
-- **Required reading.** This heading. F14 above. `scripts/bee.gd`'s existing
-  headers, as the model for spacing and voice.
-- **Files to change.** `scripts/hud.gd`, `scripts/main.gd`.
-- **Files not to change.** Every other file. No statement in either file moves.
-- **Requirements.** Comment-only. `hud.gd` gains `# --- section ---` headers
-  covering the 1,293 lines that have none, at the natural boundaries already
-  visible in the code: the signal block, `_ready` and construction, the command
-  tray, the role controls, the bottom row, the speed controls, the Challenge
-  goal readout and the problem strip. `main.gd` gains headers above its first
-  existing one at line 583. Every header uses the existing dashed form so
-  `tools/update_function_map.py` picks them up.
-- **Invariants.** Not one executable line changes. A `git diff --stat` whose
-  only additions are comment lines is the proof.
-- **Implementation guidance.** Do not split either file and do not reorder
-  anything. F14's whole point is that `bee.gd` reached 2,466 readable lines by
-  commenting rather than reorganising, and a split here would collide with four
-  other slices in this plan.
-- **Runtime policy.** Unchanged.
-- **Automated acceptance.** `git diff -U0 -- scripts/hud.gd scripts/main.gd`
-  shows added lines that all begin with whitespace-then-`#`. Regenerate
-  `FUNCTION_MAP.md`; the new headers appear in it. `tools/verify.ps1` green.
-- **Escalation.** If a natural boundary turns out to sit mid-function, that is a
-  real structural finding about `hud.gd`. Record it here; do not act on it in a
-  comment-only slice.
+Shipped 11 Sep 2026. Ten headers in `hud.gd`, six in `main.gd`, comment-only.
+Two of the plan's eight named boundaries ("role controls", "speed controls")
+turned out to be interleaved with other content rather than contiguous --
+recorded rather than acted on, per the slice's own Escalation clause. Full
+record: `plans/archive/H2_2026-09-11.md`.
 
 ### H3 — the behaviour-equivalence run
 
