@@ -89,6 +89,16 @@ Each of these wants something from Dave, or something else to ship first.
   landed and its plan archived (`plans/archive/HUD_CONTROLS_2026-09-11.md`),
   C1-21 moved into the Claude lane it vacated, freeing C1-22 to be queued
   directly rather than only as C1-21's `Next after:`.
+- **The architecture review's twenty slices** (`plans/design/architecture-review.md`)
+  -- specified 10 Sep, extended by a second pass on 11 Sep, none started and
+  none previously listed here either way. Three of them (H1 the function-map
+  coverage, H2 `hud.gd`'s section headers, H3 the behaviour-equivalence run)
+  touch no gameplay file and conflict with neither lane, and H3 builds the
+  before/after comparison the other seventeen each name as their acceptance.
+  What it waits on is Dave's call on two things the 11 Sep audit put to him:
+  whether architecture slices enter the lanes at all while Challenge 1 is the
+  whole queue, and whether that plan is the design pass for `product-scope.md`
+  section 6.2's goal model and job catalogue or is separate from it.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.

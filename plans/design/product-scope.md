@@ -181,6 +181,16 @@ These are part of alpha stabilisation. They should continue through
 - **Observability:** deterministic balance scenarios and bounded diagnostics
   for every new economy or per-bee hot path.
 
+**Overlap flagged 11 Sep 2026, not yet resolved.** Four of the foundations
+above -- the stable catalogues and resolver, the goal model, the job catalogue
+and dispatcher, and part of the event director -- are the same structures
+`plans/design/architecture-review.md` specifies as B1, C2, C4, F2s, G1 and G2,
+under different names and framed as a behaviour-preserving refactor rather than
+a product foundation. Whether that plan is the design pass this section is
+waiting for, or whether a separate one is still to come, is a decision recorded
+in the 11 Sep audit and not taken here. Read that plan's slices before opening a
+design pass on any of the four.
+
 ### 6.3 Core expansion after feedback validates the base
 
 - deeper standing policies, workforce targets and sub-role control;

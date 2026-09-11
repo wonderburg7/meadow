@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- reviewed 10 Sep 2026, no slice started | Owner: Dave / Claude Code | Next: A1 -- brood hatching reads the brood bucket | Dependency: A1-A4 are independent; the B, C, D, E, F and G chains are stated per slice | Verified: 2026-09-10
+Status: active -- reviewed 10 Sep 2026, second pass 11 Sep 2026, no slice started | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; A1-A4 are independent; the B, C, D, E, F and G chains are stated per slice | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -17,6 +17,18 @@ applied" so a later session does not re-propose them.
 **What this plan does not do.** It proposes no gameplay change. Every slice
 below is behaviour-preserving unless its Requirements say otherwise and name
 the escalation that must clear first.
+
+**Open question this plan does not answer (raised 11 Sep 2026).**
+`plans/design/product-scope.md` section 6.2 lists nine shared foundations that
+precede content expansion. Four of them -- "stable catalogues and resolver",
+the "goal model", the "job catalogue and dispatcher" and part of the "event
+director" -- are the same structures this plan's B1, C2, C4, F2s, G1 and G2
+build, under different names and framed as a behaviour-preserving refactor.
+Neither file referred to the other until this line. Whether this plan *is* the
+design pass for those foundations, or whether a separate one is still coming
+that could want different shapes, is Dave's call and is recorded in the 11 Sep
+audit as a decision. Until it is taken, treat the B, C and G chains as a
+refactor of what exists, and do not widen any of them toward section 6.2.
 
 ## Findings at a glance
 
@@ -34,6 +46,11 @@ the escalation that must clear first.
 | F9 | Five windows duplicate construction and lifecycle | high | medium | — |
 | F10 | Stage-gated UI is nine bespoke setters | high | medium | F9 |
 | F1 | Bee work is a hardcoded role switch; no action catalogue | very high | high | F2, F3 |
+| F16 | Twenty behaviour-preserving slices, and no instrument to prove it | very high | low | — |
+| F14 | `hud.gd`'s first section header is at line 1294 | high | very low | — |
+| F13 | Six scripts past the map's own threshold are not in the map | high | very low | — |
+| F15 | A fifth hand-built role key, in `hive.gd` | — | — | corrects A2 |
+| F17 | E1 removes nine flags and leaves nine signals | — | — | corrects E1 |
 
 ## F1 — Bee work is dispatched by a hardcoded role switch
 
@@ -360,6 +377,152 @@ same order in the same conditions.
 **Files.** `scripts/year_winter.gd`, `scripts/problem_messages.gd`,
 `scripts/game_config.gd`, `scripts/settings_catalogue.gd`.
 
+## Second pass — 11 Sep 2026
+
+The 10 Sep review above read `scripts/` for catalogues, shared interfaces and
+update policy. This pass re-read the same tree for the areas it did not cover:
+navigation cost for a coding agent, the instrument each of its own slices
+assumes, dead code, scene-tree access, per-entity update gating, save design and
+signal amplification. Every finding above was re-checked against the live file
+and all twelve still hold. F15 and F17 correct two slices above rather than
+adding work; F13, F14 and F16 are new and each has a slice at the end of this
+file.
+
+## F13 — Six scripts past the map's own threshold are not in the map
+
+**Problem.** `FUNCTION_MAP.md` is the routing instrument CLAUDE.md rule 1 leans
+on, and its coverage list is frozen at the seven files that were largest when it
+was written.
+
+**Evidence.** `tools/update_function_map.py`'s `FILES` is a hardcoded list of
+seven. The file's own header says it indexes "every function and section header
+in the seven scripts still over ~700 lines". Thirteen scripts are now over 700
+lines. The six that are not indexed are `bee_foraging.gd` (1,329),
+`diagnostic_log.gd` (1,132), `challenge_runner.gd` (1,124), `game_config.gd`
+(865), `scenario_actions.gd` (824) and `input_selection.gd` (701). Two of them,
+`bee_foraging.gd` and `challenge_runner.gd`, are named in the `Files:` lines of
+the queue's current items, so the gap is being paid today. `--check` compares
+only the seven it already lists, so `tools/verify.ps1` cannot see the omission.
+
+**Pattern.** Derive `FILES` from a line-count threshold over `scripts/*.gd`
+rather than naming them, and have `--check` fail when a file crosses it without
+being indexed.
+
+**Why it matters.** Coding-agent efficiency, directly. An unindexed 1,300-line
+file is read by grep-and-hope or read whole; the second is the ~500K-token
+outcome rule 1 exists to prevent.
+
+**Risks.** Very low. The generator writes a Markdown file; nothing reads it at
+runtime.
+
+**Files.** `tools/update_function_map.py`, `FUNCTION_MAP.md`.
+
+## F14 — `hud.gd`'s first section header is at line 1294
+
+**Problem.** CLAUDE.md routes any script outside the map to its
+`# --- section ---` headers. The project's largest file has three, and the first
+one is 41% of the way down it.
+
+**Evidence.** `grep -n "^# --- " scripts/hud.gd` returns line 1294 (cell popup),
+2061 (discard warning) and 2109 (readouts). Lines 1 to 1293 — the whole of the
+command tray, the role controls, the bottom row, the goal readout and the
+problem strip — carry no header. `main.gd`'s first header is at line 583. By
+contrast `bee.gd`, at 2,466 lines, has seventeen.
+
+**Pattern.** Add the missing headers. Nothing else: no split, no move. `bee.gd`
+is the worked example of what a file this size should look like, and it was
+reached by commenting rather than by reorganising.
+
+**Why it matters.** Coding-agent efficiency and nothing else. It is the cheapest
+item in either pass of this review and it improves every later HUD slice,
+including F1s, F2s and E1 below.
+
+**Risks.** None. Comments only, no statement changes.
+
+**Files.** `scripts/hud.gd`, `scripts/main.gd`.
+
+## F15 — A fifth hand-built role key, in `hive.gd`, with `FORAGER` as a literal
+
+**Corrects A2 above, does not add a slice.** F7 names four places that build a
+tally key by hand. There is a fifth.
+
+**Evidence.** `scripts/hive.gd:467-473` builds `key` as `"gyne"`, then
+`"0|%s" % cell.hatch_focus` when `cell.hatch_role == 0`, then `"%d|" %
+cell.hatch_role`. Its own comment says it is "keyed the same way the live
+population counts are ... the focus only forms part of the key for foragers",
+which is `Roles.count_key`'s contract restated, with `Roles.FORAGER` written as
+a bare `0`. `bee_enums.gd` declares `enum Role { FORAGER, ... }`, so the literal
+is correct today and silently wrong the moment a role is ever inserted before
+it — the one thing `roles.gd::count_key` was created to make impossible.
+
+**Consequence for A2 as written.** A2's automated acceptance is a source check
+that no file outside `roles.gd` holds the literal `"%d|%s"` or `"%d|"`. That
+check fails on `hive.gd` today, and A2's **Files to change** does not list
+`hive.gd`. A2 as specified cannot pass its own acceptance. Both are corrected in
+A2 below.
+
+**Files.** Folded into A2: `scripts/hive.gd` joins its change list.
+
+## F16 — Twenty behaviour-preserving slices, and no instrument to prove it
+
+**Problem.** Nearly every slice in this plan is behaviour-preserving, and each
+one states its own hand-rolled proof: run a named scenario before the change,
+run it after, compare some named field by eye. That ritual is written out
+twenty times and implemented zero times.
+
+**Evidence.** A1's acceptance is "Run `test_scenarios/colony_30_bees_test.json`
+before and after; the emergence counts in the run summary must be identical."
+A2's is the same scenario "and compare the population lines." A3, B3, C2, E1 and
+G2 each name their own field of their own scenario. The headless tooling is
+otherwise strong — 64 scenarios, seeded runs, `DiagnosticLog` summaries, bounded
+`Perf` capture, layout assertions — but `--experiment` compares
+*configuration cases inside one build*, by design: a case "cannot override
+cells, population, actions, stop conditions, diagnostics, or any other
+starting-state field." Nothing compares one unchanged scenario across two code
+revisions, which is what every slice here actually needs.
+
+**Pattern.** One command that takes a scenario and a git ref, runs the scenario
+on both the ref and the working tree, and prints the fields that differ. The
+runner already writes a `result.json` per run and already resolves a seed, so
+this is a wrapper over two existing runs and a dictionary diff, not new
+measurement machinery.
+
+**Why it matters.** Testability, and it is a precondition for the rest of this
+plan rather than an improvement to it. CLAUDE.md's working-style rule — "the
+second time a check fails for the same reason, build the instrument" — applies
+before the first failure here, because the plan already schedules the same
+manual check twenty times.
+
+**Risks.** Low. A new tool, no production code. The real risk is the opposite
+one: without it, a behaviour-preserving slice is merged on a comparison nobody
+can re-run.
+
+**Files.** A new `equivalence.py` in `tools/` (or a `--baseline` flag on
+`tools/run_scenario.py`), `docs/headless-run-contract.md`.
+
+## F17 — E1 removes nine flags and leaves nine signals
+
+**Corrects E1 above, does not add a slice.** F8's nine `awaiting_*` fields have
+nine matching signals on the other side of the boundary, and E1 does not say
+what happens to them.
+
+**Evidence.** `scripts/hud.gd` declares 36 signals. Nine are one per placement
+tool: `build_cell_requested`, `queen_build_cell_requested`,
+`home_cell_requested`, `home_cell_all_requested`, `mine_home_requested`,
+`mine_target_requested`, `keep_clear_requested`, `forage_start_point_requested`
+and `floral_preference_requested`. Each is connected in `main.gd` to its own
+`_on_*_requested`, which sets its own `awaiting_*` flag. E1 says its change to
+`hud.gd` is "call sites only", which leaves the nine signals and their nine
+handlers standing beside the new catalogue.
+
+**Consequence for E1 as written.** The worst available outcome for a
+consolidation slice is both mechanisms at once: a `PLACEMENT_TOOLS` catalogue
+that a new tool must be added to *and* a bespoke signal and handler it must
+still be given. E1 below now states the signal collapse as a requirement.
+
+**Files.** Folded into E1: one `placement_tool_requested(tool_id: String)`
+replaces the nine.
+
 ## Patterns deliberately not applied
 
 Recorded so a later session does not re-propose them.
@@ -383,6 +546,44 @@ Recorded so a later session does not re-propose them.
 - **Flower recharge and drawing.** `scripts/flower.gd` already has lazy recharge
   and a throttled presentation pass. Leave it.
 
+Added by the 11 Sep second pass, checked and rejected:
+
+- **Gating `Perf` at the call site.** `Perf.begin`/`end` bracket every cell's
+  and every flower's `_process`, so the call count scales with entity count.
+  Both entry points return on `if not Session.perf_enabled` before touching the
+  clock, which is one boolean read. Hoisting the check into the callers would
+  spread the instrumentation contract across two files to save nothing
+  measurable.
+- **Throttling the per-entity `_process` loops.** `hive_cell.gd` and `flower.gd`
+  each already do the right thing and say why in comments: simulation
+  (`_develop_brood`, ageing) runs unconditionally so an off-screen colony
+  behaves identically, presentation is gated on `is_visible_in_tree()` and then
+  staggered with a jittered timer so a hive's worth of cells never redraws on
+  one frame, and flower recharge is lazy. `hud.gd::_process` is gated on
+  `warning_panel.visible`, `cell_group.visible` and `selection_panel.visible`
+  plus a cadence. There is nothing left here to switch off.
+- **Retaining node references or adding a scene-tree index.** There is not one
+  `get_node(` or `find_child(` anywhere in `scripts/`. Relationships are held as
+  typed references already. The 26 `get_nodes_in_group` sites were checked in
+  the 1 Sep review and remain 1 Hz or event-driven except fog's, which is the
+  pinned baseline target.
+- **A dead-code sweep.** There is essentially none to sweep: no unreferenced
+  script, no `TODO`/`FIXME`/`DEPRECATED` marker in `scripts/`, and nine
+  commented-out statements in 31,000 lines. `diagnostic_log.gd`'s
+  `legacy_standard` reads as abandoned and is not — it is the default capture
+  profile, live on six branches.
+- **A spatial index or a cache for the flower search.**
+  `bee_foraging.gd::find_flower` already goes to `main.flower_grid` first and
+  only falls back to a group scan when the grid misses, behind an
+  `allow_full_scan` flag the callers set deliberately. This is the shape the
+  rest of the plan is trying to reach, not a problem.
+- **Changing what the save carries.** `save_game.gd` records dynamic state and
+  replays it onto a freshly built world, so the format is independent of node
+  structure; the migration ladder is present and documented; and
+  `plans/reference/technical-audit.md` already records field by field which
+  forager state is deliberately not saved and why. F11/D1 is the only
+  persistence work this plan should touch.
+
 ## Slices
 
 Dependency-ordered. Each names its minimum reasoning level per CLAUDE.md rule
@@ -391,6 +592,120 @@ Dependency-ordered. Each names its minimum reasoning level per CLAUDE.md rule
 Lanes: A, B, D and E touch disjoint files and can run in either lane. C depends
 on A. F depends on nothing but shares `hud.gd` with any open HUD slice. G is
 last and must be sole owner of `bee.gd`.
+
+H1 and H3 touch no `scripts/` file at all, so they conflict with nothing in
+either lane and can run beside any queued gameplay slice. H2 is comment-only but
+is sole owner of `hud.gd` for the few minutes it takes. **H3 comes first**: it
+builds the before/after comparison that A1 onwards each name as their acceptance
+and none of them can currently run.
+
+### H1 — the function map covers what it says it covers
+
+Level: low. Depends on: nothing. Touches no `scripts/` file.
+
+- **Required reading.** This heading. F13 above. `tools/update_function_map.py`.
+- **Files to change.** `tools/update_function_map.py`, `FUNCTION_MAP.md`
+  (regenerated, not hand-edited).
+- **Files not to change.** Anything in `scripts/`.
+- **Requirements.** `FILES` is derived by walking `scripts/*.gd` and keeping
+  every file over a stated line threshold, rather than being a hardcoded list.
+  The threshold is a named constant set to 700, which is the number the map's
+  own header already claims. Each newly covered file gets a one-line
+  description in the same voice as the existing seven. `--check` fails when a
+  file crosses the threshold and is absent from the map, not only when an
+  indexed file's line numbers have moved.
+- **Invariants.** The seven files already indexed keep their existing
+  descriptions verbatim. The generated format does not change, because
+  `CLAUDE.md` and `plans/README.md` both describe how to grep it.
+- **Implementation guidance.** The descriptions are the only judgement in this
+  slice. `bee_foraging.gd` is the forager's search, scouting, recruitment and
+  species-preference behaviour; `challenge_runner.gd` the stage machine, goal
+  checks and stage effects; `diagnostic_log.gd` the session JSONL writer,
+  counters and capture profiles; `scenario_actions.gd` the headless verbs,
+  `when` clauses and layout assertions; `game_config.gd` the balance fields;
+  `input_selection.gd` selection, drag and placement resolution.
+- **Runtime policy.** None; this is a build-time tool.
+- **Automated acceptance.** `python tools/update_function_map.py --check` exits
+  zero on a clean tree. Temporarily padding any `scripts/*.gd` past 700 lines
+  makes it exit non-zero naming that file. `tools/verify.ps1` stays green.
+- **Escalation.** If the threshold turns out to sweep in a file whose functions
+  are genuinely not worth indexing, say which and why rather than special-casing
+  it in the generator.
+
+### H2 — `hud.gd` gets the section headers the routing rule assumes
+
+Level: low. Depends on: nothing. Sole owner of `hud.gd` while it runs, so it
+cannot overlap F1s, F2s, E1 or any queued HUD slice.
+
+- **Required reading.** This heading. F14 above. `scripts/bee.gd`'s existing
+  headers, as the model for spacing and voice.
+- **Files to change.** `scripts/hud.gd`, `scripts/main.gd`.
+- **Files not to change.** Every other file. No statement in either file moves.
+- **Requirements.** Comment-only. `hud.gd` gains `# --- section ---` headers
+  covering the 1,293 lines that have none, at the natural boundaries already
+  visible in the code: the signal block, `_ready` and construction, the command
+  tray, the role controls, the bottom row, the speed controls, the Challenge
+  goal readout and the problem strip. `main.gd` gains headers above its first
+  existing one at line 583. Every header uses the existing dashed form so
+  `tools/update_function_map.py` picks them up.
+- **Invariants.** Not one executable line changes. A `git diff --stat` whose
+  only additions are comment lines is the proof.
+- **Implementation guidance.** Do not split either file and do not reorder
+  anything. F14's whole point is that `bee.gd` reached 2,466 readable lines by
+  commenting rather than reorganising, and a split here would collide with four
+  other slices in this plan.
+- **Runtime policy.** Unchanged.
+- **Automated acceptance.** `git diff -U0 -- scripts/hud.gd scripts/main.gd`
+  shows added lines that all begin with whitespace-then-`#`. Regenerate
+  `FUNCTION_MAP.md`; the new headers appear in it. `tools/verify.ps1` green.
+- **Escalation.** If a natural boundary turns out to sit mid-function, that is a
+  real structural finding about `hud.gd`. Record it here; do not act on it in a
+  comment-only slice.
+
+### H3 — the behaviour-equivalence run
+
+Level: medium. Depends on: nothing. **Every other slice in this plan depends on
+it**, because each states a before/after comparison as its acceptance and none
+of them can currently run one.
+
+- **Required reading.** This heading. F16 above. `docs/headless-run-contract.md`
+  sections "Artefacts" and "Experiment manifests". `tools/run_scenario.py`'s
+  argument parsing and its result-directory handling.
+- **Files to change.** A new `equivalence.py` in `tools/`,
+  `docs/headless-run-contract.md`, `tests/` for the tool's own unit test.
+- **Files not to change.** Anything in `scripts/`. This slice adds an
+  instrument; it does not change the thing being measured.
+- **Requirements.** One command takes a scenario path and a git ref, runs that
+  scenario at the ref and again in the working tree with the same seed, and
+  prints only the summary fields that differ, or one line saying nothing did.
+  Exit non-zero when anything differs, so a slice's acceptance is a command
+  rather than a reading exercise. A `--fields` option narrows the comparison to
+  the fields a given slice actually claims to preserve, since a slice that
+  legitimately changes cadence (A4) will move timing-derived numbers while
+  leaving outcomes alone.
+- **Invariants.** The ref side runs from a throwaway worktree, never by checking
+  the ref out over the working tree. `tools/slice.ps1` already owns worktree
+  creation and `plans/workstreams.md` records open ones; a temporary worktree
+  this tool makes and deletes within one command does not get a ledger row, and
+  the tool must delete it even when a run fails. Both sides use the runner's
+  managed result root, not a path from the scenario.
+- **Implementation guidance.** This is a wrapper over two existing runs and a
+  dictionary diff over the `result.json` each already writes. Do not add a new
+  capture path, a new summary field or a new `DiagnosticLog` counter: if a field
+  a slice needs is missing from the summary, that is a separate finding to
+  report, not something to build here. Windows is the only platform that has to
+  work; follow `run_headless.ps1`'s interpreter resolution rather than assuming
+  `python` is on PATH.
+- **Runtime policy.** None; a developer tool, run on demand.
+- **Automated acceptance.** Against `HEAD` with a clean tree the tool reports no
+  differences and exits zero. A deliberate one-line edit to a balance constant
+  in the working tree makes it exit non-zero and name the field that moved. A
+  unit test covers the diff and the field filter without launching Godot.
+- **Escalation.** If two runs of the same scenario at the same seed on the same
+  code already differ, Meadow is not reproducible enough for this tool to mean
+  what the slices assume. Stop and report which fields drift and by how much —
+  that answer changes twenty acceptance criteria and is Dave's call, not a thing
+  to work around with a tolerance.
 
 ### A1 — brood hatching reads the brood bucket
 
@@ -429,7 +744,8 @@ Level: medium. Depends on: nothing.
 - **Required reading.** This heading. `scripts/roles.gd`'s "counting keys"
   section. `scripts/main.gd`'s `_role_counts`, `_update_population_readout` and
   `_record_emergence`. `scripts/colony_diagnostics.gd`.
-- **Files to change.** `scripts/main.gd`, `scripts/colony_diagnostics.gd`.
+- **Files to change.** `scripts/main.gd`, `scripts/colony_diagnostics.gd`,
+  `scripts/hive.gd`.
 - **Files not to change.** `scripts/roles.gd`, which is already correct, and
   `scripts/hud.gd`.
 - **Requirements.** `_role_counts()` builds its keys with `Roles.count_key`.
@@ -445,11 +761,17 @@ Level: medium. Depends on: nothing.
   `compute(main, bees, counts)` and reads
   `counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)` plus the pollen key
   for foragers. The one caller is `year_winter.gd::_refresh_signals`, which
-  already has `main._role_counts()` a few lines later.
+  already has `main._role_counts()` a few lines later. `hive.gd:467-473` is the
+  fifth site (F15): its `"gyne"` branch stays, and the two below it become
+  `Roles.count_key(cell.hatch_role, cell.hatch_focus)` — which is what the
+  literal `0` in `elif cell.hatch_role == 0` already means, since `Role.FORAGER`
+  is the first enum member.
 - **Runtime policy.** Unchanged cadence, 1 Hz for signals; one group walk per
   population epoch instead of three per second.
 - **Automated acceptance.** A `tests/source_checks.py` check that no file
-  outside `roles.gd` contains the literal `"%d|%s"` or `"%d|"`. Run
+  outside `roles.gd` contains the literal `"%d|%s"`, `"%d|"` or `"0|%s"`. That
+  check fails on `hive.gd` today, which is why `hive.gd` is on the change list.
+  Then run H3's equivalence command over
   `test_scenarios/colony_30_bees_test.json` and compare the population lines.
 - **Escalation.** If a readout disagrees after the change, that is a real
   pre-existing divergence between two counters. Report which, do not pick one.
@@ -772,12 +1094,18 @@ Level: medium. Depends on: nothing.
   `scripts/input_selection.gd::_finish_drag` and every `_place_*` and
   `_on_*_requested` pair. `scripts/main.gd:311-325`.
 - **Files to change.** `scripts/main.gd`, `scripts/input_selection.gd`,
-  `scripts/hud.gd` for call sites only.
+  `scripts/hud.gd` — call sites, plus the nine signal declarations that F17
+  replaces with one.
 - **Files not to change.** `scripts/orders_zones.gd`, `scripts/bee.gd`.
 - **Requirements.** One `active_placement_tool: String` on `main.gd`, `""`
   meaning none, plus a `PLACEMENT_TOOLS` catalogue in `input_selection.gd`
   carrying id, handler method name, whether ctrl-click queues, whether it forces
   the hive view, and which bees it captures. Requesting a tool clears any other.
+  The nine per-tool signals on `hud.gd` collapse to one
+  `placement_tool_requested(tool_id: String)` and the nine `_on_*_requested`
+  handlers in `main.gd` to one, so a new tool is a catalogue row and nothing
+  else (F17). Leaving both mechanisms standing is the one outcome this slice
+  must not produce.
 - **Invariants.** Each tool does exactly what it does today, including which bees
   it captures. `_on_home_cell_requested` takes only the first selected comb
   worker and `_on_home_cell_all_requested` takes every comb worker in the colony;
