@@ -97,26 +97,34 @@ already queued below, so the Claude lane simply drops to one item, which
 brings the combined queue to three -- `tools/check_docs.py`'s floor -- so no
 new slice needed pulling in to replace it.
 
+**H1 shipped 11 Sep 2026.** `tools/update_function_map.py`'s `FILES` list is
+now derived from a named `LINE_THRESHOLD = 700` constant by walking
+`scripts/*.gd`, instead of being a hardcoded seven; the six scripts F13
+found missing (`bee_foraging.gd`, `challenge_runner.gd`, `diagnostic_log.gd`,
+`scenario_actions.gd`, `game_config.gd`, `input_selection.gd`) now join the
+original seven in `FUNCTION_MAP.md`, each with a one-line description, and
+`--check` fails by name when a file crosses the threshold without one. Full
+record: `plans/archive/H1_2026-09-11.md`. Its `Next after` (H2) fills the
+Claude lane's slot below.
+
+**C1-22 shipped 11 Sep 2026.** `camera_follow_off` now routes through
+`camera_view._on_follow_bee_toggled(null, false)` instead of writing
+`main.following_bee = null` directly, `_handle_follow` re-points a
+stage-owned queen follow at the current queen instead of nulling it when a
+checkpoint rebuild replaces the node, and entering stage 1.11 or 1.14 arms
+that stage's forage effects regardless of what the queen was doing
+beforehand -- fixing the waypoint-stage arming gap. Its full record is at
+`plans/archive/C1-22_2026-09-11.md`. Both of H4's dependencies (C1-21 and
+C1-22) have now shipped, so H4 is admitted below -- but not as the Codex
+lane's leading item: it shares `scripts/main.gd` with H2, this session's own
+Claude-lane refill, and the two lanes' leading items must stay file-disjoint.
+Hive comb Slice 5, already queued and independent of both, takes the
+leading Codex slot instead; H4 sits behind it as the lane's second item and
+becomes claimable once either H2 or Slice 5 ships.
+
 ## Next up
 
-1. **[Codex] C1-22 -- the pollen stage's camera never follows.**
-   At stage 1.14 the speed goes to 4x and back correctly, but the camera
-   never follows the queen; Dave confirmed this unchanged on a second pass.
-   `_run_stage_effects`'s `camera_follow_off` writes `main.following_bee =
-   null` directly rather than through `camera_view._on_follow_bee_toggled`,
-   an asymmetry worth removing regardless of the trace's answer. Confirm the
-   actual last writer first (log every write to `main.following_bee` for
-   stage 1.14), then fix it; separately, an early forage trip during the
-   meadow-waypoint stage stops the nectar stage's automation from arming at
-   all -- entering 1.11 must arm the effects regardless of what the queen
-   was doing beforehand.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 22 — the stage's camera reaches the pollen stage"
-   - Files: `scripts/challenge_runner.gd`, `scripts/camera_view.gd`
-   - Check: C-29, re-run once the camera follows at the pollen stage and the waypoint-stage arming gap is fixed
-   - Proof: `present: scripts/challenge_runner.gd :: main.following_bee = null`
-   - Next after: H4 (a headless run can start a Challenge and reach a stage). H4 depends on this slice landing (alongside C1-21, already shipped), and Dave's 11 Sep 2026 ordering decision places it directly after this slice and before C1-24 and C1-26.
-
-2. **[Codex] Hive comb Slice 5 -- a cell's outline takes the colour of what is in it.**
+1. **[Codex] Hive comb Slice 5 -- a cell's outline takes the colour of what is in it.**
    With Cell art on, a built cell's outline stays one shared brown no matter
    what it holds, so a first deposit is easy to miss; there is no lag, just
    one colour used for everything. Hoist the nectar/pollen/honey/brood colour
@@ -131,18 +139,34 @@ new slice needed pulling in to replace it.
    - Proof: `present: scripts/hive_cell.gd :: outline.default_color = Color(0.35, 0.28, 0.12)`
    - Next after: Slice 4 (at most six comb builders per site, one to a wall). Dave's 11 Sep 2026 answer runs Slice 5 first because it is smaller and the one he will see; the two slices are independent and share only `hive_cell.gd`.
 
-3. **[Claude] H1 -- the function map covers what it says it covers.**
-   `FUNCTION_MAP.md` says it indexes every script over ~700 lines; thirteen
-   scripts are now over 700 and six are missing, including `bee_foraging.gd`
-   and `challenge_runner.gd`, both named in the queue above. The generator's
-   file list is hardcoded, so `--check` cannot see the gap. Derive the list
-   from a named threshold and make `--check` fail when a file crosses it
-   unindexed.
-   - Plan: `plans/design/architecture-review.md` -- "H1 — the function map covers what it says it covers"
-   - Files: `tools/update_function_map.py`, `FUNCTION_MAP.md`
-   - Check: none needed -- `python tools/update_function_map.py --check` is the acceptance, and nothing a player sees changes
-   - Proof: `absent: tools/update_function_map.py :: bee_foraging.gd`
-   - Next after: H2 (the HUD and main scripts get the section headers the routing rule assumes)
+2. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
+   Challenge-only acceptance checks cannot run today: scenario launches use
+   `Levels.SCENARIO_LEVEL_ID`, so `challenge_runner.start()` never fires.
+   Let a scenario name a Challenge, add a verb that steps through the ordinary
+   `debug_advance_stage()` seam to a named stage, expose the current stage id
+   to scenario assertions, and prove it with a fixture that reaches 1.14.
+   Queued behind Slice 5 above, not as the Codex lane's leading item, because
+   it shares `scripts/main.gd` with H2 below -- both cannot be the two lanes'
+   leading item at once. It becomes claimable the moment either H2 ships or
+   Slice 5 does.
+   - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
+   - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
+   - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
+   - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
+   - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
+
+3. **[Claude] H2 -- `hud.gd` gets the section headers the routing rule assumes.**
+   The project's largest file has three `# --- section ---` headers and the
+   first is 41% of the way down it: `scripts/hud.gd` carries no header for
+   its first 1,293 lines -- the whole command tray, role controls, bottom
+   row, goal readout and problem strip -- and `scripts/main.gd`'s first
+   header is at line 583. Comment-only: add headers at the natural
+   boundaries already visible in the code. Nothing else moves or changes.
+   - Plan: `plans/design/architecture-review.md` -- "H2 — `hud.gd` gets the section headers the routing rule assumes"
+   - Files: `scripts/hud.gd`, `scripts/main.gd`
+   - Check: none needed -- `git diff -U0 -- scripts/hud.gd scripts/main.gd` showing only added comment lines, plus `tools/verify.ps1` green, is the acceptance, and nothing a player sees changes
+   - Proof: `absent: scripts/hud.gd :: # --- command tray`
+   - Next after: SB-0 (the balance suite gains stored-nectar, stored-pollen and live-flowers-by-species probes -- `plans/now/season-balance.md`). No further H slice is ready once H2 lands: H4 still waits on Codex's C1-22, and every A-G architecture slice stays held until Challenge 1's Slices 21-26 vacate `challenge_runner.gd`. SB-0 is already named below as this lane's refill candidate.
 
 ## Not in the queue, and why
 
@@ -199,16 +223,6 @@ the entries below are startable today.
   own; it rides with the next slice that opens the cell-art drawing, and is
   recorded in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` under C-20 so it is
   not lost.
-- **H4 -- a headless run can start a Challenge and reach a stage**
-  (`plans/design/architecture-review.md`). Nine open slices across three plans
-  state a headless Challenge assertion as their acceptance, and no headless
-  run can start a Challenge: the runner starts only for
-  `Session.starting_level` 1 or 2, and a `--scenario` launch always sets that
-  to the scenario level. **Decided, not blocked** -- Dave placed it after
-  C1-21 and C1-22 and before C1-24 and C1-26 on 11 Sep 2026, and C1-22 above
-  names it as its successor, so it enters the Codex lane by the ordinary
-  promotion rather than needing anything from here. C1-21 has already
-  shipped; it is only waiting on C1-22.
 - **Hive comb Slice 4** (`plans/now/hive-comb.md`) -- **startable, waiting
   only for a slot.** Dave answered its open question on 11 Sep 2026: at most
   six comb workers per site, one to each wall of the hexagon, using the
