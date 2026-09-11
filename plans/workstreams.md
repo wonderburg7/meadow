@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C1-23` (`codex/C1-23`) | Codex | Challenge 1's wax cell is full at 150 nectar, not 200. | Codex | merged to master, closing out | none | `plans/now/challenge-1.md` "Slice 23 — a Challenge 1 wax cell is full at 150 nectar" (archived) |
 | `.worktrees/queue-fix` (`claude/queue-fix`) | Claude | Retroactive closeout: NEXTSTEPS.md/plans/now/challenge-1.md never refreshed after C1-23 merged, so Codex's proof check correctly refused to reclaim it. | Claude | in progress | none | not a queue slice -- documentation-lifecycle fix per `CLAUDE.md` |
