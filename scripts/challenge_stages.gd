@@ -207,6 +207,7 @@ const STAGES_1 := [
 		"id": "1.13", "goal": "pollen_cell_designated", "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "cell_designation"],
 		"instruction": "designate the second cell for pollen",
 		"goal_text": "Goal: set the new cell aside for pollen.",
+		"on_exit": ["clear_stale_load:queen"],
 		"prompts": [
 			{"id": "1.13_welcome", "trigger": "welcome", "delay": 0.0, "text": "A cell can be reserved for one thing. Set the new one aside for pollen before she brings any home."},
 			{"id": "1.13_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select the empty cell and choose Pollen."},
