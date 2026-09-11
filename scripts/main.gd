@@ -34,6 +34,7 @@ extends Node2D
 ## they read and write this file's fields through their own `main`
 ## reference, the same way bee.gd already did.
 
+# --- signals ------------------------------------------------------
 ## Slice 5 (persistence/event boundaries, CHATGPT_EFFICIENCY_
 ## IMPLEMENTATION_PLAN.md). Each is emitted once at its existing single
 ## mutation chokepoint -- these replace three direct cross-script calls
@@ -47,6 +48,7 @@ signal bee_died(bee: Node2D)
 signal day_changed(day: int)
 signal rain_changed(raining: bool)
 
+# --- preloads and boot constants ----------------------------------
 const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Hive = preload("res://scripts/hive.gd")
@@ -88,6 +90,7 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 ## seeding a given run.
 const DEFAULT_RANDOM_SEED := 12345
 
+# --- delegate systems ---------------------------------------------
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
 ## via Main.tscn, since main.gd is still the only node the scene defines
@@ -116,6 +119,7 @@ var stage_gate: Node
 var challenge_runner: Node
 var debug_panel: Node
 
+# --- world and meadow constants -----------------------------------
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
 const HIVE_INTERIOR_CENTRE := Vector2(20400, 280)
 ## A rectangular field rather than a radial one -- a uniform-angle,
@@ -176,6 +180,7 @@ const BUILD_HOVER_COLOUR := Color(0.55, 1.0, 0.65)
 ## colours since it isn't a queued job, it's a standing reference point.
 const HOME_CELL_COLOUR := Color(0.85, 0.65, 1.0)
 
+# --- state --------------------------------------------------------
 var meadow_root: Node2D
 var hive_root: Node2D
 var meadow_camera: Camera2D
@@ -324,6 +329,7 @@ var pending_forage_bees: Array = []
 var awaiting_floral_preference: bool = false
 var pending_preference_bees: Array = []
 
+# --- _ready and construction --------------------------------------
 func _ready() -> void:
 	add_to_group("world")   # so the settings window can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused

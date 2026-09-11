@@ -19,6 +19,7 @@ const UiIcon = preload("res://scripts/ui_icon.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 
+# --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
 signal view_toggle_requested()
 signal colony_panel_requested()
@@ -122,6 +123,7 @@ signal queen_lay_any_cell_toggled(value: bool)
 ## instead of only sizing itself once in open() (UI-T-2, Dave 8 Sep 2026).
 signal bottom_row_changed()
 
+# --- role controls ------------------------------------------------
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
 ## preload bee.gd just to name them. -1 means "colony default".
 ##
@@ -181,6 +183,7 @@ const PAUSE_TIP := "Pause. The whole colony freezes; you can still look around a
 static func mode_command(role_id: int, mode_key: String) -> String:
 	return "%s_%s" % [Roles.key_for(role_id), mode_key]
 
+# --- shared layout constants --------------------------------------
 ## Shared horizontal gap for every join in the top-right bar's row1/row2/
 ## settings-cog group: row separation, and the gap before the settings
 ## cog. One constant so nothing in the group can drift out of sync --
@@ -216,6 +219,7 @@ const TOP_BAR_ROW_SEPARATION := 4.0
 ## below it, once the shelf's offset is derived rather than hardcoded.
 const GOAL_SHELF_GAP := 12.0
 
+# --- fields -------------------------------------------------------
 ## Set by main.gd right after construction, matching the other systems'
 ## back-reference -- only used to read main.challenge_runner's state for
 ## the selected-bee activity line.
@@ -493,6 +497,7 @@ var _warning_severity: int = -1
 ## last-call-wins rule show_warning always had, just deferred.
 var _pending_warning: Dictionary = {}
 
+# --- problem strip ------------------------------------------------
 ## The at-a-glance problem strip, as [text, severity] pairs, kept so the
 ## corner can be rebuilt without main.gd having to resend it.
 var shown_signals: Array = []
@@ -508,6 +513,7 @@ func _signal_color(severity: int) -> Color:
 		return UiTheme.color("warning")
 	return UiTheme.color("danger")
 
+# --- _ready and construction --------------------------------------
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
 var pending_type: String = ""
@@ -590,6 +596,7 @@ func _style_button(button: BaseButton) -> BaseButton:
 		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	return button
 
+# --- speed controls -----------------------------------------------
 ## Anchored to the top-right rather than positioned at fixed pixels, so
 ## the bar follows the corner when the window is resized. The settings
 ## cog in debug_panel.gd is anchored the same way and reports its own
@@ -764,6 +771,7 @@ func _apply_interface_label_visibility() -> void:
 		var width: float = entry.full_width if Session.show_interface_labels else entry.icon_width
 		entry.button.custom_minimum_size.x = width
 
+# --- Challenge goal readout ---------------------------------------
 ## The goal shelf (UI_PLAN.md section 5): sits directly under the
 ## top-right button row, anchored and widened the same way -- see
 ## set_settings_button_width. Hidden outside a Challenge;
@@ -869,6 +877,7 @@ func set_speed_display(speed_scale: float) -> void:
 	for entry in speed_buttons:
 		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
 
+# --- bottom row ---------------------------------------------------
 ## Four ranked labels (UI_PLAN.md section 5) rather than the old two --
 ## identity/job leads, energy/load and activity follow, trait/quote is
 ## last. The cog sits in its own row, apart from the ranked fields, so
@@ -1153,6 +1162,7 @@ func _resize_selection_panel_to_content() -> void:
 	if not is_equal_approx(selection_panel.offset_top, previous_top):
 		bottom_row_changed.emit()
 
+# --- command tray -------------------------------------------------
 ## Gap between the tray's ranked columns, both the HFlowContainer's own
 ## separation and the even-width split _update_command_tray_width computes
 ## around it -- one constant so the two can never disagree.
