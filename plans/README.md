@@ -180,7 +180,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    geometry or menu-population code; both name two plausible causes. UI-R-1
    is not in that category -- its cause is arithmetic and is worked in the
    plan.
-4. Comb auto-build (hive-comb Slice 4) is a build-throughput change, not a
+4. Comb auto-build (hive-comb HCB-4) is a build-throughput change, not a
    visual one. It needs Dave's call on intended behaviour before code.
 5. If progression is selected, follow `plans/design/progression.md`'s order:
    catalogue → resolver → run definition → modifiers → vertical slice. Do not

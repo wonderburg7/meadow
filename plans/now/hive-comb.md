@@ -1,7 +1,7 @@
 # Meadow hive comb — auto-build order and cell feedback
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 5 -- a cell's outline takes the colour of what is in it | Dependency: none -- Dave answered both open questions on 11 Sep 2026 and Slices 4 and 5 are independent of each other | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: HCB-5 -- a cell's outline takes the colour of what is in it | Dependency: none -- Dave answered both open questions on 11 Sep 2026 and HCB-4 and HCB-5 are independent of each other | Verified: 2026-09-11
 
 **Objective.** The comb reads correctly as it is built: cells grow in a
 sensible order and a cell's art tells the player what is in it.
@@ -15,32 +15,32 @@ holding a resource being unaffected by the toggle, sprite-aligned hex grid
 geometry and traversal, direction-even hex speed, automine block selection
 and typeface switching.
 
-**Open slices.** Slices 4 and 5, below. **Both are startable.** Dave answered
-the two questions they were waiting on, on 11 Sep 2026:
+**Open slices.** HCB-4 and HCB-5, below. **Both are startable.** Dave
+answered the two questions they were waiting on, on 11 Sep 2026:
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| 4 | At most six builders per site, one to a wall | `hive.gd`, `bee_building.gd`, `hive_cell.gd` | yes | medium |
-| 5 | A cell's outline takes the colour of what is in it | `hive_cell.gd` | yes | low |
+| HCB-4 | At most six builders per site, one to a wall | `hive.gd`, `bee_building.gd`, `hive_cell.gd` | yes | medium |
+| HCB-5 | A cell's outline takes the colour of what is in it | `hive_cell.gd` | yes | low |
 
-They share `hive_cell.gd` but touch different parts of it -- Slice 4 the
-working-positions block, Slice 5 the refresh's outline colour -- so they are
+They share `hive_cell.gd` but touch different parts of it -- HCB-4 the
+working-positions block, HCB-5 the refresh's outline colour -- so they are
 independent in substance, and whichever runs first the other rebases cleanly.
-Run Slice 5 first: it is the smaller, and it is the one Dave will see.
+Run HCB-5 first: it is the smaller, and it is the one Dave will see.
 
 **Authoritative files.** Site selection: `scripts/hive.gd`
 (`create_next_cell_site`, `find_unfinished_cell`). Builder dispatch:
 `scripts/bee.gd` (`_idle_dispatch`). Cell art: `scripts/hive_cell.gd`.
 
 **Required reading.** This file only, plus `.claude/rules/simulation.md` for
-Slice 4 (it is a balance change). The archives are provenance, never
+HCB-4 (it is a balance change). The archives are provenance, never
 orientation.
 
-**Reasoning level.** Slice 4: medium -- it changes build throughput, but the
+**Reasoning level.** HCB-4: medium -- it changes build throughput, but the
 mechanism it uses already exists and the rule is now stated rather than
-designed. Slice 5: low.
+designed. HCB-5: low.
 
-## Slice 4 — Cell auto-building: every idle builder piles onto one site
+## HCB-4 — Cell auto-building: every idle builder piles onto one site
 
 **Symptom (Dave, 30 Aug, general play — distinct from the queen-specific
 auto-spiral bug Challenge 1 Slice 8d already fixed, see
@@ -162,7 +162,7 @@ instead of all at the same one.
 
 **Check to file:** one check for the above.
 
-## Slice 5 — a cell's outline takes the colour of what is in it
+## HCB-5 — a cell's outline takes the colour of what is in it
 
 **Symptom (Dave, 30 Aug).** With Cell art on, a forager appears to be
 contributing to a cell but the cell's look doesn't change until later.

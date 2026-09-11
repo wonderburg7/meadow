@@ -69,7 +69,7 @@ stopped a later `tools/slice.ps1 start -Lane Codex` from claiming it: its
 own stale-proof check refused the claim rather than silently redoing
 finished work. Fixed here, retroactively: the slice's specification moved
 to `plans/archive/C1-23_2026-09-11.md`, C1-22 now leads the Codex lane, and
-Hive comb Slice 5 -- already startable per Dave's 11 Sep 2026 answers and
+HCB-5 -- already startable per Dave's 11 Sep 2026 answers and
 file-disjoint from both lanes -- fills the slot C1-23 leaves. Its true
 successor, H4, still cannot enter until C1-22 also lands (it depends on
 both C1-21, already shipped, and C1-22), so it stays in "Not in the queue"
@@ -118,9 +118,9 @@ beforehand -- fixing the waypoint-stage arming gap. Its full record is at
 C1-22) have now shipped, so H4 is admitted below -- but not as the Codex
 lane's leading item: it shares `scripts/main.gd` with H2, this session's own
 Claude-lane refill, and the two lanes' leading items must stay file-disjoint.
-Hive comb Slice 5, already queued and independent of both, takes the
+HCB-5, already queued and independent of both, takes the
 leading Codex slot instead; H4 sits behind it as the lane's second item and
-becomes claimable once either H2 or Slice 5 ships.
+becomes claimable once either H2 or HCB-5 ships.
 
 **H2 shipped 11 Sep 2026.** Ten `# --- section ---` headers went into
 `hud.gd` and six into `main.gd`, comment-only, covering the 1,293 and 331
@@ -130,23 +130,22 @@ content in the source rather than contiguous; per the slice's own
 Escalation clause that is recorded in the archive rather than acted on.
 Full record: `plans/archive/H2_2026-09-11.md`. H2's departure also resolves
 H4's cross-lane file conflict -- H4 now only waits on ordinary lane order
-behind Hive comb Slice 5, not on a leading-item collision -- but H4 still
-isn't promoted here since Slice 5 hasn't shipped yet. This session also
+behind HCB-5, not on a leading-item collision -- but H4 still
+isn't promoted here since HCB-5 hasn't shipped yet. This session also
 fixed two `tools/slice.ps1` bugs surfaced while claiming H2: it was
 checking a claim candidate against every item in the other lane instead of
 just its leading one (contradicting `check_docs.py`'s documented rule), and
 its queue-item parser silently dropped any item whose id is a multi-word
-phrase rather than a single token -- which is exactly Hive comb Slice 5's
-id, so the tool had been treating H4 as the Codex lane's leading item
-without surfacing an error. Both are fixed on master
-(`d4b6c27`, `f1755d9`); a follow-up to give Hive comb Slice 5 a proper
-short id (so it can actually be claimed without producing an invalid git
-branch name) has been flagged separately, not filed as a queue slice since
-nothing currently needs to claim it.
+phrase rather than a single token -- which is exactly what "Hive comb
+Slice 5" was. Both are fixed on master (`d4b6c27`, `f1755d9`); the
+multi-word id itself is fixed here, retroactively -- the item is now
+`plans/now/hive-comb.md`'s HCB-5, a short bare token consistent with every
+other queue item, so it can be claimed with `tools/slice.ps1 start -Lane
+Codex` without producing an invalid git branch name.
 
 ## Next up
 
-1. **[Codex] Hive comb Slice 5 -- a cell's outline takes the colour of what is in it.**
+1. **[Codex] HCB-5 -- a cell's outline takes the colour of what is in it.**
    With Cell art on, a built cell's outline stays one shared brown no matter
    what it holds, so a first deposit is easy to miss; there is no lag, just
    one colour used for everything. Hoist the nectar/pollen/honey/brood colour
@@ -155,11 +154,11 @@ nothing currently needs to claim it.
    draws its outline in that resource's colour. An empty cell keeps no
    outline at all, and a content kind with no colour of its own falls back to
    today's brown rather than to nothing.
-   - Plan: `plans/now/hive-comb.md` -- "Slice 5 — a cell's outline takes the colour of what is in it"
+   - Plan: `plans/now/hive-comb.md` -- "HCB-5 — a cell's outline takes the colour of what is in it"
    - Files: `scripts/hive_cell.gd`
    - Check: one check confirming a deposit gives its cell an outline in that resource's colour, and an empty cell stays outline-free
    - Proof: `present: scripts/hive_cell.gd :: outline.default_color = Color(0.35, 0.28, 0.12)`
-   - Next after: Slice 4 (at most six comb builders per site, one to a wall). Dave's 11 Sep 2026 answer runs Slice 5 first because it is smaller and the one he will see; the two slices are independent and share only `hive_cell.gd`.
+   - Next after: HCB-4 (at most six comb builders per site, one to a wall). Dave's 11 Sep 2026 answer runs HCB-5 first because it is smaller and the one he will see; the two slices are independent and share only `hive_cell.gd`.
 
 2. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
    Challenge-only acceptance checks cannot run today: scenario launches use
@@ -167,10 +166,10 @@ nothing currently needs to claim it.
    Let a scenario name a Challenge, add a verb that steps through the ordinary
    `debug_advance_stage()` seam to a named stage, expose the current stage id
    to scenario assertions, and prove it with a fixture that reaches 1.14.
-   Queued behind Slice 5 above, not as the Codex lane's leading item, because
+   Queued behind HCB-5 above, not as the Codex lane's leading item, because
    it shares `scripts/main.gd` with H2 below -- both cannot be the two lanes'
    leading item at once. It becomes claimable the moment either H2 ships or
-   Slice 5 does.
+   HCB-5 does.
    - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
    - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
    - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
@@ -244,12 +243,12 @@ the entries below are startable today.
   own; it rides with the next slice that opens the cell-art drawing, and is
   recorded in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` under C-20 so it is
   not lost.
-- **Hive comb Slice 4** (`plans/now/hive-comb.md`) -- **startable, waiting
+- **HCB-4** (`plans/now/hive-comb.md`) -- **startable, waiting
   only for a slot.** Dave answered its open question on 11 Sep 2026: at most
   six comb workers per site, one to each wall of the hexagon, using the
   six-slot mechanism `hive_cell.gd` already has. It shares `hive_cell.gd`
-  with Slice 5 above (different parts of the file, so it rebases cleanly
-  either way) and with nothing else in the queue; Slice 5 above names it as
+  with HCB-5 above (different parts of the file, so it rebases cleanly
+  either way) and with nothing else in the queue; HCB-5 above names it as
   its successor.
 - **The documented smoke scenario fails on master** -- `python
   tools/run_scenario.py test_scenarios/slice1_smoke_test.json` is the first
