@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: none admissible -- Phase B step 6 (foraging tier-1 vertical slice) needs the hands-on checks that are paused | Dependency: Phase B step 6 onwards waits for hands-on checks to resume; two skill definitions still open (section 5.9) | Verified: 2026-09-07
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: none admissible -- Phase B step 6 (foraging tier-1 vertical slice) wants a clear run of the open UI and Challenge 1 work rather than to compete with it | Dependency: Phase B step 6 is the first work to gate a capability by skill, which is also `plans/design/architecture-review.md`'s G3; settle which mechanism owns it before either starts. Two skill definitions still open (section 5.9) | Verified: 2026-09-11
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -9,7 +9,9 @@ Canonical detailed plan for the in-run skill tree, campaign meta progression, an
 
 This file is the source of truth for skill-tree/adaptation design — `plans/now/ui.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
-Phase A of section 11 was scheduled on 4 Sep 2026 (`NEXTSTEPS.md`), when Dave paused the hands-on checks and asked for work that does not wait on him: Phase A steps 1-4 and Phase B step 5 change no gameplay and are proved by `tools/verify.ps1` alone. Everything from Phase B step 6 on puts something on screen and stays unscheduled until the checks resume. The design below is unchanged by that scheduling call.
+Phase A of section 11 was scheduled on 4 Sep 2026 (`NEXTSTEPS.md`), when Dave paused the hands-on checks and asked for work that does not wait on him: Phase A steps 1-4 and Phase B step 5 change no gameplay and are proved by `tools/verify.ps1` alone. Everything from Phase B step 6 on puts something on screen. The design below is unchanged by that scheduling call.
+
+**Why step 6 is still unscheduled, corrected 11 Sep 2026.** The pause that held it is over -- Dave ran hands-on passes on 8, 9 (twice) and 10 September, and fourteen checks sit in `checks/ready.md`. Two current reasons replace it. First, step 6's acceptance is something Dave sees, and it would compete for his attention with the open UI and Challenge 1 checks; `NEXTSTEPS.md` states that as the scheduling reason. Second, and the one that needs settling before code, step 6 is **the first work in the project that gates a capability by skill ownership**, and `plans/design/architecture-review.md`'s **G3 -- actions become gateable** proposes the mechanism for exactly that: an `Availability.action_query` that composes feature and skill ownership and asks `progression.gd::is_permitted`. Whichever of the two lands first sets the pattern the other has to fit. G3 is itself held behind Challenge 1 by Dave's decision A of 11 Sep 2026, so neither is imminent; the point is that this is a shared decision, not two independent slices. G3's Required reading already names this file's sections 3 and 4.5; this paragraph is the pointer back.
 
 ## 0. Terminology
 

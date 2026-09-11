@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 are in the queue | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; every A-G slice is held until Challenge 1's Slices 21-26 have vacated `challenge_runner.gd` | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3 and H1 are in the queue; H4 is new and needs one decision | Owner: Dave / Claude Code | Next: H3 -- the behaviour-equivalence run, which every other slice's acceptance assumes | Dependency: H1-H3 are independent of everything and of each other; H4 owns `challenge_runner.gd` and needs Dave's call on where it sits relative to Challenge 1; every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -69,6 +69,7 @@ rule, and D1's second half is no longer blocked.
 | F13 | Six scripts past the map's own threshold are not in the map | high | very low | — |
 | F15 | A fifth hand-built role key, in `hive.gd` | — | — | corrects A2 |
 | F17 | E1 removes nine flags and leaves nine signals | — | — | corrects E1 |
+| F18 | Nine slices assert a headless Challenge that cannot be started | very high | medium | — |
 
 ## F1 — Bee work is dispatched by a hardcoded role switch
 
@@ -186,7 +187,7 @@ mistake this plan is trying to avoid.
 **Problem.** Every Challenge goal predicate runs on every frame of a Challenge
 run, including the ones that scan the whole comb.
 
-**Evidence.** `scripts/challenge_runner.gd:888` declares `GOAL_CADENCE`,
+**Evidence.** `scripts/challenge_runner.gd:907` declares `GOAL_CADENCE`,
 tagging each goal `frame`, `event` or `poll`. A search for `GOAL_CADENCE`
 returns four hits, all of them the declaration and its comments; `_process`
 calls `_goal_met` unconditionally. The `poll`-class checks scan
@@ -213,7 +214,7 @@ and greeting goals stay on `frame`.
 and are called several times a frame from the Challenge runner, the problem
 strip, the winter forecast and the corner readouts.
 
-**Evidence.** `scripts/hive.gd:249`, `:258` and `:266` each open with
+**Evidence.** `scripts/hive.gd:247`, `:257` and `:265` each open with
 `for cell in cells`. There are 28 call sites across the codebase;
 `challenge_runner.gd` alone calls `total()` seven times inside one frame's goal
 evaluation. The comb index (`_content_index`) already exists with epoch
@@ -234,7 +235,7 @@ change. A cache keyed on `index_epoch` would read stale.
 
 ## F6 — `_hatch_ready_brood` walks every cell every frame
 
-**Evidence.** `scripts/main.gd:776` opens
+**Evidence.** `scripts/main.gd:775` opens
 `for cell in hive.cells: if not cell.brood_ready(): continue`, called from
 `_process` unconditionally. `hive.cells_holding("brood")` already exists and is
 used by `colony_diagnostics.gd` and `hive.brood_stage_counts()`.
@@ -545,6 +546,39 @@ still be given. E1 below now states the signal collapse as a requirement.
 **Files.** Folded into E1: one `placement_tool_requested(tool_id: String)`
 replaces the nine.
 
+## F18 — Nine slices assert a headless Challenge that cannot be started
+
+**Found by the 11 Sep 2026 plan review, which read the plans' acceptance
+sections rather than the code.** Every finding above asked whether the code
+could be improved. This one asks whether a slice's stated acceptance can be
+run at all, and for nine slices across three plans the answer is no.
+
+**Evidence.** `main.gd:576` starts the Challenge runner only when
+`Session.starting_level` is 1 or 2. A `--scenario` launch points
+`starting_level` at `Levels.SCENARIO_LEVEL_ID` (`levels.gd:117`), so no
+headless run has ever started a Challenge. `scenario_actions.gd` has no
+Challenge or stage verb among its verbs, `test_scenarios/` holds no Challenge
+fixture, and the "existing stage-sequence test" named as a regression check by
+three separate slices does not exist -- `tests/` reaches Challenge code only
+through static regex in `source_checks.py`.
+
+**Affected.** `plans/now/challenge-1.md` Slices 21, 22, 24 and 26;
+`plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
+the acute pair: their acceptance is *only* headless assertions, so today they
+have no acceptance at all.
+
+**Pattern.** H4 below. It is the same answer as F16's -- build the instrument
+the plans already assume -- and it comes with the same warning: written into
+nine acceptance sections and implemented zero times is how a slice gets merged
+on a check nobody ran.
+
+**Risks.** Medium, and they are scheduling rather than technical: H4 owns
+`scripts/challenge_runner.gd`, the contended file, so it cannot run beside an
+open Challenge 1 slice.
+
+**Files.** Folded into H4: `scripts/main.gd`, `scripts/scenario_actions.gd`,
+`scripts/challenge_runner.gd`, `docs/headless-run-contract.md`.
+
 ## Patterns deliberately not applied
 
 Recorded so a later session does not re-propose them.
@@ -613,13 +647,18 @@ Dependency-ordered. Each names its minimum reasoning level per CLAUDE.md rule
 
 Lanes: A, B, D and E touch disjoint files and can run in either lane. C depends
 on A. F depends on nothing but shares `hud.gd` with any open HUD slice. G is
-last and must be sole owner of `bee.gd`.
+last and must be sole owner of `bee.gd`. A4, C2, F2s and G3 all want
+`scripts/challenge_runner.gd`; `plans/README.md`'s sequencing guardrail 14
+holds the one ordered list of everything queued against that file, across all
+four plans that want it.
 
 H1 and H3 touch no `scripts/` file at all, so they conflict with nothing in
 either lane and can run beside any queued gameplay slice. H2 is comment-only but
 is sole owner of `hud.gd` for the few minutes it takes. **H3 comes first**: it
 builds the before/after comparison that A1 onwards each name as their acceptance
-and none of them can currently run.
+and none of them can currently run. H4 is the same shape for Challenge
+assertions and is the one H slice that does touch `scripts/`, so it is the
+only one that has to queue against the Challenge 1 lane.
 
 ### H1 — the function map covers what it says it covers
 
@@ -738,7 +777,85 @@ of them can currently run one.
   and it will bite the next slice that adds a file; it is not H3's to fix, and it
   is not urgent, because over-claiming an existing sibling file is a safe
   reservation rather than a wrong one. Raise it with Dave rather than quietly
-  relaxing either rule.
+  relaxing either rule. **Scope, added by the 11 Sep plan review:** it is not
+  H3 alone. C1 creates `conditions.gd`, G1 creates `actions.gd` and F1s
+  creates `game_panel.gd`, so three more slices in this plan will each hit the
+  same conflict when they are queued, and each will have to reserve some other
+  file instead. Put to Dave as decision D-1 of that review.
+
+### H4 — a headless run can start a Challenge and reach a stage
+
+Level: medium. Depends on: nothing. **Status: decision required** -- what it
+builds is not in doubt, only when it lands relative to Challenge 1, and that
+is Dave's call because this slice owns `scripts/challenge_runner.gd`.
+
+**Why it exists (found by the 11 Sep 2026 plan review, not by either pass
+above).** Nine open slices across three plans state a headless Challenge
+assertion as their acceptance, and **no headless run can start a Challenge at
+all.** `main.gd:576` calls `challenge_runner.start()` only when
+`Session.starting_level` is 1 or 2; a `--scenario` run always points
+`starting_level` at `Levels.SCENARIO_LEVEL_ID` (`levels.gd:117`), so the
+runner never starts. `scenario_actions.gd`'s verb vocabulary has no Challenge
+or stage verb of any kind, there is no Challenge fixture under
+`test_scenarios/`, and the "existing stage-sequence test" that three slices
+name as their regression check does not exist -- the only Challenge coverage
+in `tests/` is static regex in `source_checks.py`.
+
+The nine: `plans/now/challenge-1.md` Slices 21, 22, 24 and 26;
+`plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. This is F16 one layer
+down -- the same ritual written into nine acceptance sections and implemented
+zero times -- and `plans/README.md`'s rule that a shared prerequisite is an
+earlier slice rather than a later tidy-up applies to it exactly.
+
+- **Required reading.** This heading. `scripts/main.gd`'s `--scenario`
+  handling and its `challenge_runner.start()` call.
+  `scripts/challenge_runner.gd`'s `_advance`, `_enter_stage` and
+  `debug_advance_stage`. `scripts/scenario_actions.gd`'s verb dispatch.
+  `docs/headless-run-contract.md`.
+- **Files to change.** `scripts/main.gd`, `scripts/scenario_actions.gd`,
+  `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, one new
+  fixture under `test_scenarios/`.
+- **Files not to change.** `scripts/challenge_stages.gd`. Stage data does not
+  move to make a stage reachable, which is the same rule UI-U-1 works under.
+- **Requirements.** A scenario may name the Challenge it runs, so
+  `challenge_runner.start()` fires for a `--scenario` launch. A scenario verb
+  advances to a named stage id by stepping the ordinary `_advance()` path
+  until that id is current, so gates, prompts, markers, checkpoints and stage
+  effects are all exercised rather than bypassed -- never by assigning
+  `_stage_index`. A `when` clause and an assertion can read the current stage
+  id. One fixture proves it by reaching 1.14 and asserting the id.
+- **Invariants.** The advance path is the existing one;
+  `debug_advance_stage()` stays the single forward seam and this slice uses
+  it rather than adding a second. Nothing about a Challenge behaves
+  differently because a scenario started it -- if it has to, that is a finding
+  to report, not to work around. Ordinary `--scenario` runs with no Challenge
+  named are unchanged, and every existing fixture keeps its verdict.
+- **Implementation guidance.** The seam UI-U-1 needs for its `◀` button is
+  the same seam; if that slice lands first, this one extends it rather than
+  building a parallel one. A stage whose goal cannot be satisfied by stepping
+  alone -- the ordered-visit beats -- may need the verb to satisfy the goal
+  as well as advance past it; say which stages those are rather than
+  special-casing them silently.
+- **Runtime policy.** Developer and test surface only. Nothing new runs in a
+  player's session.
+- **Automated acceptance.** A fixture that starts Challenge 1, advances to
+  1.14, and asserts the current stage id; it fails today because no fixture
+  can start a Challenge. Every existing fixture under `test_scenarios/`
+  produces the same verdict it does now.
+- **Escalation, and the decision this slice is waiting on.** It owns
+  `challenge_runner.gd`, so it cannot run beside any open Challenge 1 slice,
+  and guardrail 14 in `plans/README.md` is where it takes its place in that
+  queue. Three orderings are available. **Before the Challenge 1 arc**: the
+  four Challenge 1 slices get runnable acceptance, but the arc stalls while
+  this lands and the two slices already queued wait behind it. **After the
+  arc**: Challenge 1 finishes the way it has been finishing, on Dave's
+  hands-on passes -- five of which have now found defects the automated
+  checks could not -- and this lands in time for UI-U-1 and the C and G
+  chains, which is when it is next needed. **Between**: after C1-21 and C1-22,
+  which are queued and whose fixes are behaviour rather than assertions, and
+  before C1-24 and C1-26, whose acceptance is *only* headless assertions and
+  which therefore cannot be accepted at all without it. The review's
+  recommendation is the third.
 
 ### A1 — brood hatching reads the brood bucket
 
@@ -1333,6 +1450,12 @@ Level: medium. Depends on: G2, F2s.
 - **Escalation.** If gating an action makes a bee with no available work behave
   differently from an idle bee today, that is a gameplay outcome. Stop and
   describe both behaviours.
+- **Cross-plan dependency.** `plans/design/progression.md`'s Phase B step 6
+  (the foraging tier-1 vertical slice) is the first work in the project to gate
+  a capability by skill ownership, which is what this slice builds the
+  mechanism for. Whichever lands first sets the pattern the other must fit.
+  Neither is scheduled; settle which one owns skill gating before either
+  starts, rather than discovering it during implementation.
 
 ## Read on demand
 

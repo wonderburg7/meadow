@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None startable -- UI-P-5 wants a live reproduction, UI-U-1 waits for both lanes to vacate `debug_panel.gd`/`challenge_runner.gd` | Dependency: UI-U-1 waits for both lanes to vacate `debug_panel.gd` and `challenge_runner.gd`; UI-P-5 wants a live reproduction | Verified: 2026-09-10
+Status: active | Owner: Dave / Claude Code | Next: None startable -- UI-P-5 wants a live reproduction, UI-U-1 waits for both lanes to vacate `debug_panel.gd`/`challenge_runner.gd` | Dependency: UI-U-1 waits for both lanes to vacate `debug_panel.gd` and `challenge_runner.gd`, and shares its forward-stepping seam with `plans/design/architecture-review.md`'s H4, which its own acceptance needs; UI-P-5 wants a live reproduction | Verified: 2026-09-11
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -42,7 +42,7 @@ condition ships with the way to trigger it" applies to a stage that is
 fifteen stages in. This is the instrument for the whole Challenge 1 group.
 
 **What already exists.** `challenge_runner.gd::debug_advance_stage()`
-(`:559`) steps forward through the ordinary `_advance()` path, so gates,
+(`:599`) steps forward through the ordinary `_advance()` path, so gates,
 prompts, checkpoints, markers and completion are all exercised rather than
 bypassed. The settings window builds its own grouped sections
 (`debug_panel.gd::_make_section`) and already holds a "Triggers" group.
@@ -105,7 +105,15 @@ down.
 **Automated acceptance checks.** A headless test that steps forward to the
 last stage and back to the first, asserting after every step that the stage
 id is what was expected, that `main.following_bee` is null and that the speed
-multiplier is 1.
+multiplier is 1. **That test cannot be written today** -- no headless run can
+start a Challenge, because `challenge_runner.start()` fires only for
+`Session.starting_level` 1 or 2 and a `--scenario` launch always sets it to
+`Levels.SCENARIO_LEVEL_ID` (found 11 Sep 2026).
+`plans/design/architecture-review.md`'s **H4** builds that capability on the
+same forward seam this slice extends; whichever of the two lands first, the
+other uses its seam rather than adding a second. The regression line below
+names "the existing Challenge stage-sequence tests", which also do not
+exist.
 
 **Regression checks.** The existing Challenge stage-sequence tests; C-5,
 which uses the same settings window.
@@ -117,6 +125,9 @@ check that needs a late stage finds it.
 **Note on ownership.** `scripts/debug_panel.gd` is also the Codex lane's
 C2-2 file, and `scripts/challenge_runner.gd` is Challenge 1's. This slice
 must not be queued while either lane has a branch open in those files.
+`plans/README.md`'s sequencing guardrail 14 holds the full list of what is
+queued against `challenge_runner.gd` and in what order; this slice is behind
+Challenge 1's Slices 22, 23, 24 and 26 in it.
 
 **Where the rest of the open UI work is.** Dave's 8 Sep 2026 hands-on pass
 produced seven slices, split by lane so the two can run in parallel without
@@ -132,8 +143,7 @@ sharing a file:
   and LAY-1, which shipped one owner of it, 2026-09-08.
 - `plans/archive/PANEL_LAYOUT_2026-09-09.md` — **every slice landed and C-19 and C-26 passed.** LAY-2 to LAY-4, from
   Dave's 9 Sep pass, and the Godot behaviour that made the command tray fail
-  four times in a row, all shipped 2026-09-09; the file moves to
-  `plans/archive/` once the ledger clears.
+  four times in a row, all shipped 2026-09-09; archived.
 - `plans/archive/LAYOUT_REGRESSION_2026-09-09.md` — **delivered.** LAY-5 and
   LAY-6, the headless checks that fail when a panel leaves the viewport or a
   control inside one has no usable size, both shipped 2026-09-09.

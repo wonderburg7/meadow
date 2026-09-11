@@ -89,6 +89,58 @@ slices remain) becomes that plan's next slice. Once a plan's `Next:` says
 against that area starts a fresh `plans/now/` (or `plans/design/`) file --
 the archived plan is never reopened or extended.
 
+## Writing or editing a plan
+
+<!-- LAYER: durable-rules -->
+
+Nine rules, added 11 Sep 2026 by a review of every active plan. They cover
+what that review found missing; everything else about plan shape is the
+schema above, `.claude/rules/documentation.md` for the lifecycle,
+`plans/reference/check-loop.md` for acceptance wording, and `CLAUDE.md`
+rule 4 for reasoning levels. Do not restate any of those here or in a plan.
+
+1. **Verify before you write, and say what you verified against.** Open the
+   file, run the grep, run the scenario. A plan's `Verified:` date is a claim
+   that someone did. Guardrail 12's `Proof:` line is the same rule at queue
+   level; guardrail 15 is why a line number is never the evidence.
+2. **Separate what exists from what is intended.** Every slice says what is
+   true now and what should be true when it is done. A plan that describes
+   its target as though it already shipped is how a session builds something
+   twice.
+3. **Ask whether the work is still needed before improving it.** When a slice
+   has sat unstarted, check that its defect still exists, that nothing else
+   has solved it, and that something still wants it. Deleting a slice is a
+   good outcome; making an unnecessary one easier to build is not.
+4. **Find the owner before inventing a helper.** Before a slice adds a
+   catalogue, service, evaluator, event, test harness or state field, name
+   what owns that behaviour today and say whether the slice extends it,
+   replaces it, or genuinely needs something new. Two mechanisms for one job
+   is the worst outcome a consolidation slice can reach -- see the
+   architecture review's F17.
+5. **State the runtime policy when a slice adds work that repeats.** Say
+   which it is -- per frame, physics tick, fixed or staggered tick, on an
+   event, on a dirty flag, on day or stage change, only while visible, only
+   while enabled -- and why. Per-frame needs a reason. Do not specify an
+   optimisation with no measurement behind it.
+6. **Record a decision once, where it is made, and supersede it explicitly.**
+   A slice may restate a decision in a sentence and name where it lives; it
+   must not re-argue it. Two apparently live answers to the same question is
+   worse than either answer.
+7. **Check the other active plans, not just this one.** Before adding a
+   slice, look for another plan that already owns the file, the concept or
+   the ordering. Write the dependency down in both places -- a pointer that
+   exists in only one direction is found only by whoever did not need it.
+8. **Escalate rather than redesign quietly.** If implementation shows the
+   plan is wrong about architecture, ownership, saves, gameplay or several
+   later slices, stop and say so with the options and their costs. An
+   adjacent improvement goes to a future slice; an unrelated issue goes to
+   its owning plan; neither enlarges the slice in hand.
+9. **Scale the planning to the risk.** A save migration, a simulation change
+   or a cross-system refactor earns the full structure. A one-constant change
+   earns a heading, the requirement, the invariant and the check. Boilerplate
+   around a small task costs the same context as boilerplate around a large
+   one and buys nothing.
+
 ## Current routing
 
 | If the queue names | Read |
@@ -165,3 +217,25 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 13. Developer triggers all live in `debug_panel.gd`'s "Triggers" group. A
     slice that makes a rare state reachable adds a button there; it does not
     invent a new home (`plans/reference/check-loop.md` P-3).
+14. **`scripts/challenge_runner.gd` is the contended file, and this is the
+    order.** Six open slices across four plans want it, which is why so many
+    of them read as "not startable" for reasons stated in four different
+    places. One list, so nobody re-derives it: Challenge 1's Slices 23, 22,
+    24 and 26 (`plans/now/challenge-1.md`) come first and are what the
+    architecture hold is waiting for; **H4**
+    (`plans/design/architecture-review.md`) goes somewhere among them and
+    where is a decision Dave has not yet taken, because Slices 24 and 26 have
+    no runnable acceptance until it lands; then UI-U-1 (`plans/now/ui.md`),
+    which also needs `debug_panel.gd` free; then the architecture review's A4,
+    C2, F2s and G3, which Dave's decision A of 11 Sep 2026 holds behind
+    Challenge 1 in any case. A slice
+    naming this file that is not next in that order is not startable, whatever
+    its own plan says. Added 11 Sep 2026 by the plan review.
+15. **Cite the symbol, not the line.** A plan may give a line number as a
+    hint, never as the address: `challenge-1.md` carried five numbers that
+    had each moved 40 to 60 lines by the time the slices they belong to were
+    queued, because C1-25 landed in the same file. Write
+    `challenge_runner.gd::_update_marker` and let the reader grep; if a
+    number is genuinely useful, it is a hint to confirm, and a slice that
+    edits a file re-checks the numbers its own plan states. Added 11 Sep 2026
+    by the plan review.
