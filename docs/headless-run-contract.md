@@ -272,7 +272,8 @@ requires explicit allowlisted events and fields.
 ```
 
 Available snapshot fields are deliberately small and typed: `population.total`,
-`resources.food_stores`, `environment.winter_here`,
+`resources.food_stores`, `resources.stored_nectar`, `resources.stored_pollen`,
+`environment.winter_here`, `environment.flowers_by_species`,
 `role_outcomes.cells_completed_total`, `performance.fps`, and
 `performance.top_sections_ms`. Unknown fields, event names, profiles or invalid
 limits are `contract_error` before process launch. Counters and summary facts
