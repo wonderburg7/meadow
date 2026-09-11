@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 23 -- a Challenge 1 wax cell is full at 150 nectar | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 22-26 | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: Slice 22 -- the stage's camera reaches the pollen stage | Dependency: Slice 26 waits on Slice 24; Slice 7 waits on all of 22-26 | Verified: 2026-09-11
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -188,56 +188,8 @@ call sites, which would mean follow-target ownership is genuinely shared.
 
 ## Slice 23 — a Challenge 1 wax cell is full at 150 nectar
 
-**Reasoning level: low.** One constant and two call sites.
-
-**What Dave asked (9 Sep 2026).** "Make challenge 1's wax cells only require
-150 nectar to be full, so the queen fills it to 150 and stops (rather than
-200 which is taking too long so it's boring for the player)."
-
-**Confirmed current behaviour.** `_goal_check_nectar_target()` (`:994`)
-passes when a nectar cell's `fill_fraction()` reaches 1.0, which is
-`GameConfig.cell_capacity`, 200. The queen stops because stage 1.11's
-`on_exit` freezes her, so lowering the goal threshold is what makes her stop
-sooner.
-
-**Files likely to change.** `scripts/challenge_stages.gd`,
-`scripts/challenge_runner.gd`.
-
-**Files that must not be changed.** `scripts/game_config.gd` — this plan's
-durable rule puts Challenge-local numbers on the object or the stage data,
-never on `GameConfig`, and cell capacity is a balance value the whole game
-reads.
-
-**Requirements.**
-
-1. Add `const NECTAR_TARGET := 150.0` to `challenge_stages.gd`, beside the
-   existing `POLLEN_TARGET := 75.0` (`:18`), and mirror its comment.
-2. `_goal_check_nectar_target` compares `cell.amount >= Stages.NECTAR_TARGET`
-   for a cell with `content_type == "nectar"`, exactly as
-   `_goal_check_pollen_target` already does for pollen.
-3. `_goal_progress`'s `"nectar_target"` branch returns
-   `{"current": cell.amount, "target": Stages.NECTAR_TARGET}` so the goal
-   shelf's bar fills at the same point the stage clears. Today it returns
-   `cell.capacity_for("nectar")`, which would leave the bar at 75% when the
-   stage ends.
-4. Check `challenge_stages.gd:276`'s comment about `cell_capacity` being 200
-   and update it if this changes what it describes.
-
-**Constraints and invariants.** The cell's real capacity stays 200 — this
-changes when the *stage* is satisfied, not how much a cell holds. Challenge 2
-is untouched.
-
-**Edge cases.** The queen is carrying more than the remainder when she
-crosses 150; the goal is a poll on the cell's amount, so it simply passes on
-the deposit that crosses it.
-
-**Automated acceptance checks.** A test asserting `nectar_target` is false at
-149 and true at 150, and that the progress dictionary's target is 150.
-
-**Regression checks.** Balance suite, which reads `cell_capacity`.
-
-**Completion and documentation.** Update `docs/challenge-stages.md` only if
-the goal text changes; it does not.
+Shipped 11 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-23_2026-09-11.md`](../archive/C1-23_2026-09-11.md).
 
 ## Slice 24 — the stage marker is never left in the wrong world
 
