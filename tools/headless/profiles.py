@@ -16,7 +16,8 @@ EVENT_TYPES = frozenset({
 })
 DEFAULT_EVENT_TYPES = EVENT_TYPES - {"build_target", "forager_return", "flight_start_resolved"}
 SNAPSHOT_FIELDS = frozenset({
-    "population.total", "resources.food_stores", "environment.winter_here",
+    "population.total", "resources.food_stores", "resources.stored_nectar",
+    "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species",
     "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms",
 })
 SUMMARY_FIELDS = frozenset({

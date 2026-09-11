@@ -450,7 +450,7 @@ The stage machine, goal checks and stage effects.
 1128 func _goal_progress(goal: String) -> Dictionary
 ```
 
-## diagnostic_log.gd (1,132 lines)
+## diagnostic_log.gd (1,134 lines)
 
 The session JSONL writer, counters and capture profiles.
 
@@ -507,12 +507,12 @@ The session JSONL writer, counters and capture profiles.
 861  # --- building entries -----------------------------------------------
 865  func _config_snapshot() -> Dictionary
 873  func _snapshot(world: Node2D) -> Dictionary
-1046 func _performance_snapshot(world: Node2D) -> Dictionary
-1066 func _rate(world: Node2D, key: String) -> float
-1081 func _current_day() -> int
-1085 func _prune_old_sessions() -> void
-1103 func _write(entry: Dictionary) -> void
-1112 func _capture_entry(entry: Dictionary) -> bool
+1048 func _performance_snapshot(world: Node2D) -> Dictionary
+1068 func _rate(world: Node2D, key: String) -> float
+1083 func _current_day() -> int
+1087 func _prune_old_sessions() -> void
+1105 func _write(entry: Dictionary) -> void
+1114 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## hive_cell.gd (1,106 lines)

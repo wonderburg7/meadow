@@ -963,6 +963,8 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"pollen_rate_avg": _rate(world, "pollen"),
 			"nectar_rate_avg": _rate(world, "nectar"),
 			"food_stores": hive.total_honey(),
+			"stored_nectar": hive.total("nectar"),
+			"stored_pollen": hive.total("pollen"),
 		},
 		"cells": {
 			"total": hive.cells.size(),
