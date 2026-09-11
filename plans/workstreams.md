@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/C1-21` (`claude/C1-21`) | Claude | the queen forages pollen without being pushed. | Claude | in progress | none | `plans/now/challenge-1.md` "Slice 21 — the queen forages pollen without being pushed" |
