@@ -12,8 +12,12 @@ extends RefCounted
 ## their differences.
 class_name ChallengeStages
 
+## Challenge 1's 1.11 nectar lesson completes when its nectar cell reaches
+## this amount. It teaches a meaningful reserve rather than filling the cell
+## completely.
+const NECTAR_TARGET := 150.0
 ## Challenge 1's 1.13 pollen lesson completes when its pollen cell reaches
-## this amount. Unlike the preceding nectar lesson, it teaches a meaningful
+## this amount. Like the preceding nectar lesson, it teaches a meaningful
 ## reserve rather than filling the cell completely.
 const POLLEN_TARGET := 75.0
 ## A nectar trip can be discarded only once the second comb cell is reserved
