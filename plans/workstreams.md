@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/H2` (`claude/H2`) | Claude | `hud.gd` gets the section headers the routing rule assumes. | Claude | in progress | none | `plans/design/architecture-review.md` "H2 — `hud.gd` gets the section headers the routing rule assumes" |
