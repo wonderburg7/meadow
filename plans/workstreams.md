@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/B2` (`claude/B2`) | Claude | the comb index derives from the catalogue. | Claude | in progress | none | `plans/design/architecture-review.md` "B2 — the comb index derives from the catalogue" |
-| `.worktrees/C1-7` (`codex/C1-7`) | Codex | Challenge 1 acceptance pass and documentation. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)" |
