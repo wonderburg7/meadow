@@ -239,12 +239,12 @@ func take_energy(energy_wanted: float) -> float:
 		return 0.0
 	var delivered := 0.0
 
-	var honey_units_wanted: float = energy_wanted / max(0.001, GameConfig.honey_energy_factor)
-	var honey_taken: float = take("honey", honey_units_wanted)
-	delivered += honey_taken * GameConfig.honey_energy_factor
-
-	if delivered < energy_wanted:
-		delivered += take("nectar", energy_wanted - delivered)
+	for key in Resources.energy_keys_by_priority():
+		if delivered >= energy_wanted:
+			break
+		var factor: float = max(0.001, Resources.energy_factor_for(key))
+		var units_wanted: float = (energy_wanted - delivered) / factor
+		delivered += take(key, units_wanted) * factor
 	return delivered
 
 func total(resource_type: String) -> float:

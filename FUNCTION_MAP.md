@@ -541,77 +541,77 @@ The session JSONL writer, counters and capture profiles.
 1114 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## hive_cell.gd (1,117 lines)
+## hive_cell.gd (1,115 lines)
 
 One cell: contents, brood, honey ripening, how it draws.
 
 ```
-145  func effective_build_time() -> float
-247  func _ready() -> void
-366  func set_overlay(mode: String) -> void
-372  func _overlay_colour() -> Array
-410  func set_selected(value: bool) -> void
-422  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
-433  func _set_outline_points(line: Line2D, size: float) -> void
-444  func _silhouette_point_to_local(p: Vector2) -> Vector2
-456  func _set_outline_points_cup(line: Line2D, size: float) -> void
-472  func _apply_outline_points(line: Line2D, size: float) -> void
-480  func _set_selection_ring_points() -> void
-499  func _process(delta: float) -> void
-523  func _develop_brood(delta: float) -> void
-544  func _health_factor() -> float
-552  func _larva_dies() -> void
-567  func _invalidate_hive_index() -> void
-582  func bump_display_epoch() -> void
-585  # --- working positions --------------------------------------------
-590  func claim_slot(bee: Node2D) -> int
-601  func release_slot(bee: Node2D) -> void
-608  func has_free_slot() -> bool
-617  func slot_position(index: int) -> Vector2
-624  # --- building -----------------------------------------------------
-626  func start_as_site() -> void
-631  func claim_builder(bee: Node2D) -> void
-635  func release_builder(bee: Node2D) -> void
-641  func add_build_progress(delta: float) -> void
-652  func build_fraction() -> float
-655  # --- contents -----------------------------------------------------
-657  func is_empty() -> bool
-662  func capacity_for(resource_type: String) -> float
-671  func accepts(resource_type: String) -> bool
-690  func is_nursery_cell() -> bool
-693  func space_for(resource_type: String) -> float
-709  func needs_eviction() -> bool
-727  func add_resource(resource_type: String, requested: float) -> float
-758  func take_resource(resource_type: String, requested: float) -> float
-785  func can_withdraw() -> bool
-790  func set_closed(value: bool) -> void
-796  func set_fill_then_close(value: bool) -> void
-804  func fill_fraction() -> float
-811  func set_designation(resource_type: String, explicit: bool = true) -> void
-819  # --- honey ---------------------------------------------------------
-821  func is_ripe_honey() -> bool
-825  func needs_fanning() -> bool
-830  func add_fanning_progress(delta: float) -> void
-839  func ripen_fraction() -> float
-842  # --- brood ---------------------------------------------------------
-844  func start_brood(as_gyne: bool = false) -> void
-857  func develop_time() -> float
-865  func feed_brood(seconds: float, on_honey: bool) -> void
-870  func needs_feeding() -> bool
-874  func seconds_until_death() -> float
-879  # --- clearing a dead larva ------------------------------------------
-881  func needs_cleaning() -> bool
-887  func add_clean_progress(delta: float) -> bool
-893  func clean_fraction() -> float
-896  func brood_ready() -> bool
-899  func clear_cell() -> void
-912  # --- display ------------------------------------------------------
-917  func _resource_outline_colour(resource_type: String) -> Color
-931  func _refresh() -> void
-1068 func _designation_tag() -> String
-1090 func _priority_mark() -> String
-1103 func _apply_fill_shading() -> void
-1114 func development_percent() -> float
+146  func effective_build_time() -> float
+248  func _ready() -> void
+367  func set_overlay(mode: String) -> void
+373  func _overlay_colour() -> Array
+411  func set_selected(value: bool) -> void
+423  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
+434  func _set_outline_points(line: Line2D, size: float) -> void
+445  func _silhouette_point_to_local(p: Vector2) -> Vector2
+457  func _set_outline_points_cup(line: Line2D, size: float) -> void
+473  func _apply_outline_points(line: Line2D, size: float) -> void
+481  func _set_selection_ring_points() -> void
+500  func _process(delta: float) -> void
+524  func _develop_brood(delta: float) -> void
+545  func _health_factor() -> float
+553  func _larva_dies() -> void
+568  func _invalidate_hive_index() -> void
+583  func bump_display_epoch() -> void
+586  # --- working positions --------------------------------------------
+591  func claim_slot(bee: Node2D) -> int
+602  func release_slot(bee: Node2D) -> void
+609  func has_free_slot() -> bool
+618  func slot_position(index: int) -> Vector2
+625  # --- building -----------------------------------------------------
+627  func start_as_site() -> void
+632  func claim_builder(bee: Node2D) -> void
+636  func release_builder(bee: Node2D) -> void
+642  func add_build_progress(delta: float) -> void
+653  func build_fraction() -> float
+656  # --- contents -----------------------------------------------------
+658  func is_empty() -> bool
+663  func capacity_for(resource_type: String) -> float
+669  func accepts(resource_type: String) -> bool
+688  func is_nursery_cell() -> bool
+691  func space_for(resource_type: String) -> float
+707  func needs_eviction() -> bool
+725  func add_resource(resource_type: String, requested: float) -> float
+756  func take_resource(resource_type: String, requested: float) -> float
+783  func can_withdraw() -> bool
+788  func set_closed(value: bool) -> void
+794  func set_fill_then_close(value: bool) -> void
+802  func fill_fraction() -> float
+809  func set_designation(resource_type: String, explicit: bool = true) -> void
+817  # --- honey ---------------------------------------------------------
+819  func is_ripe_honey() -> bool
+823  func needs_fanning() -> bool
+828  func add_fanning_progress(delta: float) -> void
+837  func ripen_fraction() -> float
+840  # --- brood ---------------------------------------------------------
+842  func start_brood(as_gyne: bool = false) -> void
+855  func develop_time() -> float
+863  func feed_brood(seconds: float, on_honey: bool) -> void
+868  func needs_feeding() -> bool
+872  func seconds_until_death() -> float
+877  # --- clearing a dead larva ------------------------------------------
+879  func needs_cleaning() -> bool
+885  func add_clean_progress(delta: float) -> bool
+891  func clean_fraction() -> float
+894  func brood_ready() -> bool
+897  func clear_cell() -> void
+910  # --- display ------------------------------------------------------
+915  func _resource_outline_colour(resource_type: String) -> Color
+929  func _refresh() -> void
+1066 func _designation_tag() -> String
+1088 func _priority_mark() -> String
+1101 func _apply_fill_shading() -> void
+1112 func development_percent() -> float
 ```
 
 ## hive.gd (1,018 lines)

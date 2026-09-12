@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1 and B2 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- and Dave chose A1 as B3's successor accordingly | Owner: Dave / Claude Code | Next: B3 -- cell capacity and acceptance read the catalogue | Dependency: none of A1, A2 or B3 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2 and B3 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- B3's own successor, A1, fills the Claude lane below | Owner: Dave / Claude Code | Next: A1 -- brood hatching reads the brood bucket | Dependency: none of A1, A2 or A3 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -853,35 +853,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/B2_2026-09-12.md`.
 
 ### B3 — cell capacity and acceptance read the catalogue
 
-Level: medium. Depends on: B1, B2.
-
-- **Required reading.** This heading. `scripts/hive_cell.gd`'s "contents"
-  section in full. `scripts/hive.gd::take_energy`.
-- **Files to change.** `scripts/hive_cell.gd`, `scripts/hive.gd`,
-  `scripts/resources.gd`.
-- **Files not to change.** `scripts/save_game.gd` and `scripts/saving.gd`; no
-  save field changes.
-- **Requirements.** `capacity_for` reads `capacity_config` from the catalogue.
-  `space_for` and `needs_eviction` test `storable` and `evictable` rather than
-  naming `brood` and `corpse`. `take_energy` draws in the catalogue's energy
-  priority order instead of its hand-written honey-then-nectar sequence.
-- **Invariants.** Every existing call returns the same value for every existing
-  kind. The ordering of refusals in `accepts` — corpse, closed, keep_empty,
-  designation mismatch — is unchanged; it is load-bearing and the comments say
-  why. Honey's rewetting rule in `add_resource` stays as special-cased code; it
-  is one kind's physics, not catalogue data.
-- **Implementation guidance.** Change one function at a time and run the balance
-  suite between each. Do not attempt `fill_fraction`'s brood branch in this
-  slice.
-- **Runtime policy.** `Resources.entry()` is a linear scan over a seven-row
-  array called from `capacity_for`, which is hot. Add a static `_by_key`
-  dictionary built once in `resources.gd` and have `entry()` read it.
-- **Automated acceptance.** `tests/balance_tests.py` must pass unchanged. Add a
-  case asserting `capacity_for` for all seven kinds against the current
-  `GameConfig` defaults.
-- **Escalation.** If `take_energy`'s order turns out to be observable in balance
-  output, stop: changing what bees eat first is a gameplay change and Dave
-  decides.
+Shipped 12 Sep 2026. Full record: `plans/archive/B3_2026-09-12.md`.
 
 ### C1 — the conditions evaluator, no callers
 

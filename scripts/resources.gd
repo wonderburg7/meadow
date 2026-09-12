@@ -33,6 +33,8 @@ const RESOURCES := [
 		# Nectar's energy factor isn't config-driven -- take_energy() takes
 		# it 1-for-1 with no multiplier, unlike honey below.
 		"energy_factor": 1.0,
+		# take_energy() draws honey (priority 0) before nectar (priority 1).
+		"energy_priority": 1,
 		# Empty means hive_cell.gd::capacity_for()'s default, GameConfig.cell_capacity.
 		"capacity_config": "",
 		"index_bucket": NECTAR,
@@ -66,6 +68,7 @@ const RESOURCES := [
 		# A GameConfig field name, not a literal, because it's a live
 		# tunable (settings_catalogue.gd) -- unlike nectar's fixed 1.0.
 		"energy_factor": "honey_energy_factor",
+		"energy_priority": 0,
 		"capacity_config": "honey_cell_capacity",
 		"index_bucket": HONEY,
 		"storable": true,
@@ -131,11 +134,15 @@ const RESOURCES := [
 
 # --- lookups ------------------------------------------------------
 
+# Built once on first lookup and reused for the process lifetime --
+# entry() is called from hive_cell.gd::capacity_for(), which is hot.
+static var _by_key: Dictionary = {}
+
 static func entry(key: String) -> Dictionary:
-	for resource in RESOURCES:
-		if resource.key == key:
-			return resource
-	return {}
+	if _by_key.is_empty():
+		for resource in RESOURCES:
+			_by_key[resource.key] = resource
+	return _by_key.get(key, {})
 
 static func is_valid(key: String) -> bool:
 	return not entry(key).is_empty()
@@ -148,6 +155,21 @@ static func colour_for(key: String) -> Color:
 
 static func is_energy(key: String) -> bool:
 	return entry(key).get("is_energy", false)
+
+## The energy kinds (honey, nectar) in the order take_energy() should
+## draw them, cheapest colony cost first -- honey before nectar.
+static func energy_keys_by_priority() -> Array:
+	var energy_resources: Array = RESOURCES.filter(func(r): return r.is_energy)
+	energy_resources.sort_custom(func(a, b): return a.energy_priority < b.energy_priority)
+	return energy_resources.map(func(r): return r.key)
+
+## Resolves an entry's `energy_factor`, which is either a literal float
+## (nectar's fixed 1.0) or a GameConfig field name (honey's live tunable).
+static func energy_factor_for(key: String) -> float:
+	var factor = entry(key).get("energy_factor", 0.0)
+	if factor is String:
+		return GameConfig.get(factor) if factor != "" else 0.0
+	return factor
 
 ## The two forager-selectable resources only, in the fixed order they
 ## should be offered/shown. `roles.gd::count_keys` iterates this to build
