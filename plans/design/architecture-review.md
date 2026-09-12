@@ -747,7 +747,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/B3_2026-09-12.md`.
 
 ### C1 — the conditions evaluator, no callers
 
-Level: medium. Depends on: A2, A3.
+Shipped 12 Sep 2026. Full record: `plans/archive/C1_2026-09-12.md`.
 
 - **Required reading.** This heading. F3 above. `scripts/colony_diagnostics.gd`.
   `scripts/scenario_actions.gd::_when_met`. `scripts/challenge_runner.gd`'s

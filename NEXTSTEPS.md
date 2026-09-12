@@ -387,21 +387,17 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] C1 -- the conditions evaluator, no callers.**
-   `challenge_runner.gd`'s `_goal_check_*` block and `scenario_actions.gd::_when_met`
-   each grew their own bespoke condition logic. Add a leaf `conditions.gd` with a
-   static `met(main, spec) -> bool` and `progress(main, spec) -> Dictionary`
-   covering both vocabularies (`day_at_least`, `role_count`, `hive_total`,
-   `cell_count`, `built_cells_at_least`, `brood_cells_at_least`, `queen_alive`,
-   `event_count`, `disease`, `all_of`, `any_of`, `custom`); nothing calls it yet
-   -- that is C2 and C3. It reads role counts from `main._role_counts()` and
-   stock from `hive.total()`, both epoch-cached by A2 and A3, and never walks a
-   group or writes game state.
-   - Plan: `plans/design/architecture-review.md` -- "C1 — the conditions evaluator, no callers"
-   - Files: `scripts/conditions.gd`, `tests/source_checks.py`, `tests/test_conditions.py`
-   - Check: `tests/test_conditions.py` covers every supported key, and a `tests/source_checks.py` check confirms `conditions.gd` contains no assignment reached through `main`
-   - Proof: `present: scripts/scenario_actions.gd :: _when_met`
-   - Next after: C2 -- Challenge goals become data, which depends on C1 and the already-shipped A4.
+3. **[Codex] C2 -- Challenge goals become data.**
+   Move each Challenge stage's completion rule into its stage data as a
+   `condition` dictionary. Count and total goals use `Conditions`; ordered
+   visits, greeting and selection beats, the stability window and tunnel goal
+   remain named `custom` predicates. Remove the hand-built goal registry while
+   preserving every stage result and cadence.
+   - Plan: `plans/design/architecture-review.md` -- "C2 — Challenge goals become data"
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
+   - Check: every Challenge fixture reaches its current final stage id; source checks prove every `_goal_check_*` method has a `custom` stage reference
+   - Proof: `present: scripts/challenge_runner.gd :: func _build_goal_registry`
+   - Next after: C3 -- scenario `when` uses the evaluator.
 
 ## Not in the queue, and why
 
@@ -412,10 +408,8 @@ simply a free slot -- and none of the entries below is startable today.
   (`plans/design/architecture-review.md`), other than A2 and A4 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A2, A3 and A4 have all shipped; C1
-  (depended on both) now leads the Codex lane and E1 is queued behind L-1 in
-  the Claude lane. C2 depends on C1, so it stays out of the queue until C1
-  ships.
+  since those slices have all shipped. A2, A3, A4 and C1 have all shipped;
+  C2 now leads the Codex lane and E1 is queued behind L-1 in the Claude lane.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely
