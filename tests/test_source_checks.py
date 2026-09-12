@@ -340,6 +340,45 @@ class SliceDoctorTest(unittest.TestCase):
         ).stdout
         self.assertEqual("", refs)
 
+    def test_doctor_names_the_bounded_plan_read_and_the_successor(self):
+        """A claimed slice must arrive with its own reading command attached.
+
+        Both agents are told to read only the slice's plan heading, and
+        `tools/heading.py` is the reader that does it, but neither the policy
+        files nor the lifecycle output named it: a 24-task Codex sample used
+        it zero times and read the whole 25 KB queue instead. The command is
+        cheap to emit here and impossible to get wrong downstream.
+        """
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+
+        result = self.run_doctor()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            'python tools/heading.py plans/fixture.md "fixture"', payload["read"]
+        )
+        self.assertEqual("none -- fixture plan is complete", payload["next_after"])
+
+    def test_doctor_reports_whether_the_global_git_excludes_file_is_readable(self):
+        """Report the excludes path and what to type; never change it.
+
+        Codex rollouts log a permissions warning naming the user-level Git
+        excludes file, which reads fine from an ordinary Windows session --
+        so the warning is about sandbox scope, not an ACL. The diagnostic
+        exists so the next run captures which it is instead of guessing, and
+        it is deliberately not a failure: the lifecycle works either way.
+        """
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+
+        result = self.run_doctor()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        diagnostic = json.loads(result.stdout)["git_excludes"]
+        self.assertRegex(diagnostic, r"^(readable|absent|unreadable) \(")
+        if diagnostic.startswith("unreadable"):
+            self.assertIn("icacls", diagnostic)
+
     def test_doctor_and_doc_check_share_unbackticked_proof_error(self):
         self.write_queue("absent: scripts/sample.gd :: new_function")
         doc_errors = []
@@ -650,14 +689,79 @@ class CodexPermissionProfileTest(unittest.TestCase):
             "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish",
             commands["Finish slice"],
         )
+        self.assertEqual(
+            "powershell -NoProfile -ExecutionPolicy Bypass "
+            "-File tools/slice.ps1 resume -Lane Codex",
+            commands["Resume slice closeout"],
+        )
+
+    def test_every_environment_action_is_a_single_unchained_command(self):
+        """One action, one exact command -- no wrapper, no second segment.
+
+        This is the enforcement half of the invocation-shape rule. A
+        lifecycle command chained onto `cd`, `git status` or `Get-Content`,
+        or wrapped in `powershell -Command`, no longer matches
+        .codex/rules/meadow.rules and is denied, which reads in the
+        transcript as the lifecycle failing rather than as a malformed call.
+        """
+        environment = tomllib.loads(
+            ENVIRONMENT_CONFIG_PATH.read_text(encoding="utf-8")
+        )
+
+        for action in environment["actions"]:
+            command = action["command"]
+            with self.subTest(action=action["name"]):
+                for forbidden in ("&&", "||", ";", "|", "2>&1", "-Command"):
+                    self.assertNotIn(forbidden, command)
+                self.assertTrue(
+                    command.startswith(
+                        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/"
+                    ),
+                    command,
+                )
 
     def test_exec_policy_allows_only_canonical_slice_entry_points(self):
         rules = CODEX_RULES_PATH.read_text(encoding="utf-8")
 
-        self.assertIn('["doctor", "start", "finish"]', rules)
+        self.assertIn('["doctor", "start", "finish", "resume"]', rules)
         self.assertIn('decision = "allow"', rules)
         self.assertIn("tools/slice.ps1 abandon", rules)
         self.assertNotIn('pattern = ["git"', rules)
+
+    def test_exec_policy_allows_resume_but_not_destructive_abort(self):
+        """`resume` is the only recovery path, so withholding it cost runs.
+
+        `finish` pushes the merge before it removes the worktree and the
+        ledger row: an interrupted closeout leaves work merged and pushed
+        with cleanup outstanding, and `resume` is what completes it. A
+        24-task Codex sample made 19 resume attempts against a rule that did
+        not allow the command. `abort` throws work away and stays out.
+        """
+        rules = CODEX_RULES_PATH.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "powershell -NoProfile -ExecutionPolicy Bypass "
+            "-File tools/slice.ps1 resume -Lane Codex",
+            rules,
+        )
+        allowed, rejected = rules.split("not_match = [", 1)
+        self.assertNotIn("abort", allowed)
+        self.assertIn("tools/slice.ps1 abort -Lane Codex", rejected)
+
+    def test_exec_policy_rejects_wrapped_and_chained_lifecycle_commands(self):
+        """The allowed shape is one exact command, not a command inside one.
+
+        The rule matches an argv list, so the same words wrapped in
+        `-Command "..."` or chained onto `cd`/`git status` are a different
+        argv and are denied. Sampled runs kept composing those forms and
+        reading the denial as a lifecycle failure, so both shapes are pinned
+        here as counter-examples.
+        """
+        rules = CODEX_RULES_PATH.read_text(encoding="utf-8")
+        rejected = rules.split("not_match = [", 1)[1]
+
+        self.assertIn("-Command", rejected)
+        self.assertIn("; git status", rejected)
 
 
 class VerifyPythonResolutionTest(unittest.TestCase):
