@@ -5,24 +5,19 @@ extends RefCounted
 ## state (year_winter.gd's `_refresh_signals`, `_refresh_panels` and
 ## `_winter_forecast`) into one. See plans/design/colony-diagnostics.md.
 
-static func compute(main: Node2D, bees: Array) -> Dictionary:
+const Roles = preload("res://scripts/roles.gd")
+
+static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary:
 	var starving = 0
 	var hungry = 0
-	var foragers = 0
-	var nurses = 0
-	var comb_workers = 0
 	for b in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
 		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
 			hungry += 1
-		match b.role:
-			main.Bee.Role.FORAGER:
-				foragers += 1
-			main.Bee.Role.NURSERY:
-				nurses += 1
-			main.Bee.Role.BUILDER:
-				comb_workers += 1
+	var foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)) + int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var nurses: int = int(counts.get(Roles.count_key(Roles.NURSE), 0))
+	var comb_workers: int = int(counts.get(Roles.count_key(Roles.COMB_WORKER), 0))
 
 	# Reads hive.gd's mutation-owned content buckets rather than walking
 	# every cell fresh -- the hive only re-scans its cells when a

@@ -172,7 +172,8 @@ func _refresh_signals(delta: float) -> void:
 	main.signal_timer = 1.0
 
 	var bees: Array = get_tree().get_nodes_in_group("bees")
-	var facts: Dictionary = ColonyDiagnostics.compute(main, bees)
+	var counts: Dictionary = main._role_counts()
+	var facts: Dictionary = ColonyDiagnostics.compute(main, bees, counts)
 
 	# A Challenge already tells the player what's wrong and what to do
 	# about it, one stage at a time, through Dr Gallerin -- this generic
@@ -184,7 +185,7 @@ func _refresh_signals(delta: float) -> void:
 	# just before start().
 	if main.challenge_runner.active:
 		main.hud.update_signals([])
-		_refresh_panels(bees, facts)
+		_refresh_panels(bees, facts, counts)
 		Perf.end("signals")
 		return
 
@@ -234,11 +235,10 @@ func _refresh_signals(delta: float) -> void:
 		lines.append(["Raining — nectar is watered down and flying costs more", 0])
 
 	main.hud.update_signals(lines)
-	_refresh_panels(bees, facts)
+	_refresh_panels(bees, facts, counts)
 	Perf.end("signals")
 
-func _refresh_panels(bees: Array, facts: Dictionary) -> void:
-	var counts = main._role_counts()
+func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
 	var energy_share = 0.0
 	for b in bees:
 		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)

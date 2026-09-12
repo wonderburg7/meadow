@@ -919,16 +919,15 @@ var _role_counts_built_epoch: int = -1
 ## against `_population_epoch`: challenge_runner.gd asks this several
 ## times over the course of one stage-check, so a repeat ask gets the
 ## same scan rather than repeating the group walk.
-func _role_counts() -> Dictionary:
+func _role_counts(bees = null) -> Dictionary:
 	if _role_counts_built_epoch == _population_epoch:
 		return _role_counts_cache
 	var counts := {}
-	for b in get_tree().get_nodes_in_group("bees"):
+	var list: Array = bees if bees != null else get_tree().get_nodes_in_group("bees")
+	for b in list:
 		if not is_instance_valid(b):
 			continue
-		var key: String = "%d|" % b.role
-		if b.role == Bee.Role.FORAGER:
-			key = "%d|%s" % [b.role, b.resource_type]
+		var key: String = Roles.count_key(b.role, b.resource_type)
 		counts[key] = int(counts.get(key, 0)) + 1
 	_role_counts_cache = counts
 	_role_counts_built_epoch = _population_epoch
@@ -939,21 +938,11 @@ func _role_counts() -> Dictionary:
 ## would still catch the just-retired old bees alongside their replacements.
 func _update_population_readout(bees = null) -> void:
 	invalidate_population()
-	var foragers := 0
-	var nurses := 0
-	var builders := 0
-	var honey_makers := 0
-	var list: Array = bees if bees != null else get_tree().get_nodes_in_group("bees")
-	for b in list:
-		match b.role:
-			Bee.Role.NURSERY:
-				nurses += 1
-			Bee.Role.BUILDER:
-				builders += 1   # comb workers
-			Bee.Role.FORAGER:
-				foragers += 1
-			Bee.Role.HONEY_MAKER:
-				honey_makers += 1
+	var counts: Dictionary = _role_counts(bees)
+	var foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)) + int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var nurses: int = int(counts.get(Roles.count_key(Roles.NURSE), 0))
+	var builders: int = int(counts.get(Roles.count_key(Roles.COMB_WORKER), 0))
+	var honey_makers: int = int(counts.get(Roles.count_key(Roles.HONEY), 0))
 	hud.update_population(foragers, nurses, builders, honey_makers)
 
 ## Records what just came out of the comb, for the nursery window's
@@ -962,7 +951,7 @@ func _update_population_readout(bees = null) -> void:
 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void:
 	var key: String = "gyne"
 	if not as_gyne:
-		key = "%d|%s" % [role, focus] if role == Bee.Role.FORAGER else "%d|" % role
+		key = Roles.count_key(role, focus)
 	emergence_log.append({"t": Session.sim_time, "key": key})
 
 func _prune_selection() -> void:
