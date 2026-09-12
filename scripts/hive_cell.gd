@@ -239,7 +239,9 @@ var empty_sprite: Sprite2D
 
 ## One working position per wall. A bee claims a slot before it walks
 ## over, and gives it up when it leaves, so bees never stand on top of
-## each other while loading or unloading.
+## each other while loading, unloading, or building. An unfinished cell
+## cannot hold resources, so builders using these shared slots cannot
+## block a forager from depositing.
 var slot_users: Array = [null, null, null, null, null, null]
 
 func _ready() -> void:
@@ -601,6 +603,14 @@ func release_slot(bee: Node2D) -> void:
 		if slot_users[i] == bee:
 			slot_users[i] = null
 
+## Whether another bee can reserve one of this cell's walls. Invalid
+## holders are treated as free here, just as `claim_slot` treats them.
+func has_free_slot() -> bool:
+	for holder in slot_users:
+		if holder == null or not is_instance_valid(holder):
+			return true
+	return false
+
 ## Where a bee holding slot `index` should stand: the midpoint of that
 ## wall, nudged a little outside the hexagon so the bee sits against the
 ## cell rather than on top of its contents.
@@ -624,6 +634,7 @@ func claim_builder(bee: Node2D) -> void:
 
 func release_builder(bee: Node2D) -> void:
 	builders.erase(bee)
+	release_slot(bee)
 
 ## Called once per frame by every builder working here, so contributions
 ## from several bees simply add up.

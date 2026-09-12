@@ -552,7 +552,7 @@ func find_honey_target() -> Node2D:
 
 func find_unfinished_cell() -> Node2D:
 	for cell in cells:
-		if not cell.is_built:
+		if not cell.is_built and cell.has_free_slot():
 			return cell
 	return null
 
