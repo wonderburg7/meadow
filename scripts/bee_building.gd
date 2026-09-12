@@ -60,6 +60,14 @@ static func builder_build(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell):
 		bee.state = bee._default_state_for_role()
 		return
+	# Another builder can finish the shared site earlier in this frame. This
+	# bee still owns a wall until it releases it, even though there is no more
+	# building work to do.
+	if bee.target_cell.is_built:
+		bee.target_cell.release_builder(bee)
+		bee.target_cell = null
+		bee.state = bee._default_state_for_role()
+		return
 	bee.target_cell.add_build_progress(delta)
 	if bee.target_cell.is_built:
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "completed", "build_progress_finished", "arrived", "route_ok")
