@@ -18,6 +18,8 @@ const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
+const Shapes = preload("res://scripts/shapes.gd")
+const Stages = preload("res://scripts/challenge_stages.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
@@ -224,6 +226,22 @@ const GOAL_SHELF_GAP := 12.0
 ## back-reference -- only used to read main.challenge_runner's state for
 ## the selected-bee activity line.
 var main: Node2D
+
+## --- stage marker direction overlay ---------------------------------
+## This is intentionally an overlay rather than another persistent panel.
+## Its CanvasLayer is above Dr Gallerin (layer 15), so an arrow which has
+## been routed around a panel cannot then be drawn underneath that panel.
+const MARKER_ARROW_LAYER := 16
+const MARKER_ARROW_RADIUS := 18.0
+const MARKER_ARROW_EDGE_INSET := 24.0
+const MARKER_ARROW_HYSTERESIS := 2.0
+const MARKER_ARROW_SCAN_STEP := 4.0
+var marker_arrow_overlay: CanvasLayer
+var stage_marker_arrow: Polygon2D
+var _stage_marker_global_position := Vector2.ZERO
+var _stage_marker_visible: bool = false
+var _stage_marker_in_hive: bool = false
+var _marker_exclusion_rects: Array[Rect2] = []
 
 ## The top-left corner. Every readout lives in the colony window now;
 ## this shows only the ones the player has starred there, in a fixed
@@ -566,6 +584,7 @@ func _ready() -> void:
 	_build_command_tray()
 	_build_warning_banner()
 	_build_discard_dialog()
+	_build_stage_marker_arrow()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 ## Re-caps the selection and command trays to the new viewport width
@@ -574,6 +593,30 @@ func _ready() -> void:
 func _on_viewport_size_changed() -> void:
 	_apply_selection_tray_width()
 	call_deferred("_resize_command_tray")
+	_update_stage_marker_arrow()
+
+func _build_stage_marker_arrow() -> void:
+	marker_arrow_overlay = CanvasLayer.new()
+	marker_arrow_overlay.name = "stage_marker_arrow_overlay"
+	marker_arrow_overlay.layer = MARKER_ARROW_LAYER
+	marker_arrow_overlay.process_mode = PROCESS_MODE_ALWAYS
+	add_child(marker_arrow_overlay)
+
+	stage_marker_arrow = Polygon2D.new()
+	stage_marker_arrow.name = "stage_marker_arrow"
+	# A three-sided Shapes circle starts with its point at +X. Rotating the
+	# node therefore aims it directly along the true screen-space bearing.
+	stage_marker_arrow.polygon = Shapes.circle_points(MARKER_ARROW_RADIUS, 3)
+	stage_marker_arrow.color = Stages.MARKER_COLOUR
+	stage_marker_arrow.visible = false
+	marker_arrow_overlay.add_child(stage_marker_arrow)
+
+## Called only by challenge_runner.gd. `in_hive` is presentation state from
+## the runner, not a HUD inference about where the marker belongs.
+func set_stage_marker(global_position: Vector2, visible: bool, in_hive: bool) -> void:
+	_stage_marker_global_position = global_position
+	_stage_marker_visible = visible
+	_stage_marker_in_hive = in_hive
 
 func _make_label(pos: Vector2, variation: String = "Body") -> Label:
 	var l := Label.new()
@@ -2012,6 +2055,7 @@ func _set_lit(key: String, lit: bool) -> void:
 
 func _process(_delta: float) -> void:
 	Perf.begin("hud")
+	_update_stage_marker_arrow()
 	if warning_panel.visible:
 		warning_timer -= _delta
 		var dwell_elapsed := Session.sim_time - _warning_shown_at >= MIN_DWELL_SECONDS
@@ -2037,6 +2081,79 @@ func _process(_delta: float) -> void:
 		elif active_summary_kind == "":
 			_refresh_selection_text()
 	Perf.end("hud")
+
+## The runner supplies the marker's global point and world. This transform is
+## the camera-aware world-to-canvas conversion; CanvasLayer children use the
+## resulting viewport coordinates directly.
+func _stage_marker_screen_position() -> Vector2:
+	var root: Node2D = main.hive_root if _stage_marker_in_hive else main.meadow_root
+	return root.get_global_transform_with_canvas() * root.to_local(_stage_marker_global_position)
+
+func _update_stage_marker_arrow() -> void:
+	if stage_marker_arrow == null:
+		return
+	if not _stage_marker_visible or main == null or main.in_hive_view != _stage_marker_in_hive:
+		stage_marker_arrow.visible = false
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var marker_screen := _stage_marker_screen_position()
+	# A two-pixel hysteresis stops an exactly-edge marker alternating between
+	# its world glyph and the edge arrow as camera rounding changes by a pixel.
+	if marker_screen.x >= -MARKER_ARROW_HYSTERESIS and marker_screen.x <= viewport_size.x + MARKER_ARROW_HYSTERESIS \
+			and marker_screen.y >= -MARKER_ARROW_HYSTERESIS and marker_screen.y <= viewport_size.y + MARKER_ARROW_HYSTERESIS:
+		stage_marker_arrow.visible = false
+		return
+
+	var safe_edge := Rect2(
+		Vector2.ONE * MARKER_ARROW_EDGE_INSET,
+		viewport_size - Vector2.ONE * MARKER_ARROW_EDGE_INSET * 2.0)
+	var edge_point := safe_edge.get_closest_point(marker_screen)
+	_refresh_marker_exclusion_rects(viewport_size)
+	stage_marker_arrow.position = _slide_arrow_along_edge(edge_point, safe_edge)
+	stage_marker_arrow.rotation = (marker_screen - viewport_size * 0.5).angle()
+	stage_marker_arrow.visible = true
+
+## ui_layout.gd owns each persistent panel's geometry. The live controls give
+## their current, content-hugging height; their owner rectangles keep this
+## overlay tied to the same layout contract on resize and future reflow.
+func _refresh_marker_exclusion_rects(viewport_size: Vector2) -> void:
+	_marker_exclusion_rects.clear()
+	_append_marker_panel_exclusion(selection_panel, UiLayout.summary_panel_rect(viewport_size))
+	_append_marker_panel_exclusion(command_tray, UiLayout.command_tray_rect(viewport_size))
+	var gallerin_bubble: Control = null
+	if main != null and main.gallerin_panel != null:
+		gallerin_bubble = main.gallerin_panel.bubble
+	_append_marker_panel_exclusion(gallerin_bubble, UiLayout.gallerin_rect(viewport_size))
+	if corner_column != null and corner_column.visible:
+		_marker_exclusion_rects.append(corner_column.get_global_rect().grow(MARKER_ARROW_RADIUS))
+
+func _append_marker_panel_exclusion(panel: Control, owner_rect: Rect2) -> void:
+	if panel == null or not panel.visible or owner_rect.size.x <= 0.0 or owner_rect.size.y <= 0.0:
+		return
+	_marker_exclusion_rects.append(panel.get_global_rect().grow(MARKER_ARROW_RADIUS))
+
+func _slide_arrow_along_edge(edge_point: Vector2, edge_bounds: Rect2) -> Vector2:
+	if not _marker_arrow_obscured(edge_point):
+		return edge_point
+	var horizontal_edge := is_equal_approx(edge_point.y, edge_bounds.position.y) \
+		or is_equal_approx(edge_point.y, edge_bounds.end.y)
+	var limit: float = edge_bounds.size.x if horizontal_edge else edge_bounds.size.y
+	for offset in range(int(MARKER_ARROW_SCAN_STEP), int(limit + MARKER_ARROW_SCAN_STEP), int(MARKER_ARROW_SCAN_STEP)):
+		for direction in [-1.0, 1.0]:
+			var candidate := edge_point
+			if horizontal_edge:
+				candidate.x = clampf(edge_point.x + offset * direction, edge_bounds.position.x, edge_bounds.end.x)
+			else:
+				candidate.y = clampf(edge_point.y + offset * direction, edge_bounds.position.y, edge_bounds.end.y)
+			if not _marker_arrow_obscured(candidate):
+				return candidate
+	return edge_point # At the minimum supported viewport no clear edge exists.
+
+func _marker_arrow_obscured(point: Vector2) -> bool:
+	for panel_rect in _marker_exclusion_rects:
+		if panel_rect.has_point(point):
+			return true
+	return false
 
 func _request_designation(type: String) -> void:
 	if active_cell and is_instance_valid(active_cell):

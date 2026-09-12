@@ -63,6 +63,10 @@ var main: Node2D
 var active: bool = false
 var _stage_index: int = 0
 var _marker: Polygon2D
+## Presentation belongs to the marker's owner too: the tween is created when
+## the marker becomes visible and is always killed with it, so a completed
+## stage cannot leave an invisible tween running.
+var _marker_pulse: Tween
 ## Ordered-point visit state shared by the hive inspection in 1.4 and the
 ## meadow tour in 1.7. Points stay local to their marker parent so the same
 ## helper works in either world without hard-coding the two worlds' offset.
@@ -257,6 +261,7 @@ func start() -> void:
 func _process(delta: float) -> void:
 	if not active:
 		return
+	_publish_marker_to_hud()
 	if Session.starting_level == 1 and _stage_index == 0:
 		_drive_opening_mine()
 	if Session.starting_level == 1:
@@ -513,12 +518,12 @@ func _show_current_visit_point() -> void:
 	if _marker == null or not is_instance_valid(_marker):
 		return
 	if _visit_point_index >= _visit_points.size():
-		_marker.visible = false
+		_set_marker_visible(false)
 		return
 	if _marker.get_parent() != _visit_marker_parent:
 		_marker.reparent(_visit_marker_parent, false)
 	_marker.position = _visit_points[_visit_point_index].position
-	_marker.visible = true
+	_set_marker_visible(true)
 
 ## Places the shared marker for the current beat. The ordered-visit helper can
 ## reparent it to either world; Bundle C uses the hive root, and Bundle D can
@@ -544,20 +549,54 @@ func _update_marker(stage_id: String) -> void:
 		# but the centre is still the honest "build near here" anchor --
 		# same marker 1.5 already uses for the first cell.
 		_marker.position = main.world_building._hive_centre_local()
-		_marker.visible = true
+		_set_marker_visible(true)
 	elif stage_id in ["1.6", "1.19"]:
 		# Both beats are walked from inside the hive view -- the marker
 		# points at the interior doorway.
 		_marker.position = main.hive_entrance_inside()
-		_marker.visible = true
+		_set_marker_visible(true)
 	elif stage_id == "1.10":
 		# Unlike 1.6/1.19, this beat is walked from the meadow: point at
 		# the hive's meadow-side marker instead of the (meaningless out
 		# here) interior doorway coordinate.
 		_marker.position = main.hive.position
-		_marker.visible = true
+		_set_marker_visible(true)
 	else:
-		_marker.visible = false
+		_set_marker_visible(false)
+
+## Starts/stops the marker's unscaled heartbeat and sends its authoritative
+## world state to hud.gd. The HUD deliberately receives no marker node: it
+## cannot move or otherwise alter the runner-owned world presentation.
+func _set_marker_visible(value: bool) -> void:
+	if _marker == null or not is_instance_valid(_marker):
+		return
+	if _marker.visible == value:
+		_publish_marker_to_hud()
+		return
+	_marker.visible = value
+	if value:
+		_marker.scale = Vector2.ONE
+		_marker_pulse = create_tween()
+		_marker_pulse.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		_marker_pulse.set_ignore_time_scale(true)
+		_marker_pulse.set_loops()
+		_marker_pulse.tween_property(_marker, "scale", Vector2(1.16, 1.16), 0.65) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_marker_pulse.tween_property(_marker, "scale", Vector2.ONE, 0.65) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	else:
+		if _marker_pulse != null and _marker_pulse.is_valid():
+			_marker_pulse.kill()
+		_marker_pulse = null
+		_marker.scale = Vector2.ONE
+	_publish_marker_to_hud()
+
+func _publish_marker_to_hud() -> void:
+	if _marker == null or not is_instance_valid(_marker) or main == null or main.hud == null:
+		return
+	main.hud.set_stage_marker(
+		_marker.global_position, _marker.visible,
+		_marker.get_parent() == main.hive_root)
 
 ## Feeds the goal shelf (hud.gd's set_challenge_goal / UI_PLAN.md section
 ## 5): the stage's own goal text, the goal that was just completed
@@ -644,7 +683,7 @@ func _complete() -> void:
 	main.hud.set_challenge_goal("")
 	main.hud.set_queen_build_button_visible(false)
 	if _marker != null and is_instance_valid(_marker):
-		_marker.visible = false
+		_set_marker_visible(false)
 	if is_instance_valid(main.queen):
 		main.queen.energy_immune = false
 		main.queen.role_restricted_to = []
