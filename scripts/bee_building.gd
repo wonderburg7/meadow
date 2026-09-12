@@ -18,22 +18,27 @@ const BeeForaging = preload("res://scripts/bee_foraging.gd")
 static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.is_built:
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "target_invalid_or_already_built", "not_attempted", "not_checked")
+		if bee.target_cell != null and is_instance_valid(bee.target_cell):
+			bee.target_cell.release_builder(bee)
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
 	# Stands at one of the cell's six walls rather than its centre, so a
 	# builder (the queen included, in Challenge 1) doesn't sit on top of
 	# the comb she's forming and hide it from view while it's drawn.
-	# Always wall 0 rather than whichever is nearest her current
-	# position -- recomputing "nearest" every frame as she approaches
-	# would flip between two walls once she's roughly equidistant and
-	# make her waver instead of walking straight there. Doesn't use
-	# claim_slot/release_slot: that's a separate, six-slot-capped system
-	# for deposit/feed queues, and any number of builders can already
-	# work one cell at once via claim_builder below -- reusing the slot
-	# system here would add a cap on simultaneous builders that never
-	# existed before.
-	var stand_point: Vector2 = bee.target_cell.slot_position(0)
+	# The claimed wall remains stable for the whole approach: picking a
+	# nearest wall every frame could flip between two equidistant walls and
+	# make the bee waver. Builders now share the six-slot system with the
+	# deposit/feed queues, which deliberately caps a build site at one bee
+	# per wall.
+	var slot_index: int = bee.target_cell.claim_slot(bee)
+	if slot_index < 0:
+		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "no_free_build_wall", "not_attempted", "not_checked")
+		bee.target_cell.release_builder(bee)
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		return
+	var stand_point: Vector2 = bee.target_cell.slot_position(slot_index)
 	BeeMovement.move_towards(bee, stand_point, delta)
 	if bee.path_points.is_empty():
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "no_route_to_build_approach", "unreachable", "no_route")
@@ -53,6 +58,14 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 ## abandoned and picked up again later.
 static func builder_build(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell):
+		bee.state = bee._default_state_for_role()
+		return
+	# Another builder can finish the shared site earlier in this frame. This
+	# bee still owns a wall until it releases it, even though there is no more
+	# building work to do.
+	if bee.target_cell.is_built:
+		bee.target_cell.release_builder(bee)
+		bee.target_cell = null
 		bee.state = bee._default_state_for_role()
 		return
 	bee.target_cell.add_build_progress(delta)

@@ -48,7 +48,7 @@ disagree.
 2. **A highlight that must match art is cut from the art.** Never re-derive
    a shape the sprite already defines. Measure the asset, record the
    measurement and how it was taken in a named const, and derive every
-   outline from that one definition (`plans/now/hive-comb.md` Slice 9 is the
+   outline from that one definition (`plans/archive/HIVE_COMB_2026-09-12.md` Slice 9 is the
    worked example).
 3. **A rare condition ships with the way to trigger it.** If a behaviour
    only happens when the simulation obliges -- a nectar collapse, two
