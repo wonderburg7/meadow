@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4 and D1 (both halves) all shipped; A2 is admitted to the Codex lane behind C1-24, since it shares no file with either leading queue item; Dave lifted the hold for B1 specifically on 12 Sep 2026, since D1's shipping left the Claude lane with nothing else startable | Owner: Dave / Claude Code | Next: B1 -- the cell-content catalogue, data only | Dependency: A2 and B1 touch no `challenge_runner.gd`, so both are startable now; every other A, C, D, E, F and G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves) and B1 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Dave lifted the hold for B1 specifically on 12 Sep 2026, since D1's shipping left the Claude lane with nothing else startable, and B2 inherits that same lift as B1's direct successor | Owner: Dave / Claude Code | Next: B2 -- the comb index derives from the catalogue | Dependency: A2 and B2 touch no `challenge_runner.gd`, so both are startable now; every other A, C, D, E, F and G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -845,37 +845,7 @@ Level: medium. Depends on: A3 for the full benefit, but lands without it.
 
 ### B1 — the cell-content catalogue, data only
 
-Level: low. Depends on: nothing. Nothing reads the new rows in this slice.
-
-- **Required reading.** This heading. F2 above. `scripts/resources.gd` in full.
-  `scripts/hive_cell.gd`'s `capacity_for` and `accepts`.
-  `scripts/hive.gd::_content_index`.
-- **Files to change.** `scripts/resources.gd`, `tests/source_checks.py`.
-- **Files not to change.** every consumer; this slice adds data and changes no
-  behaviour.
-- **Requirements.** `RESOURCES` gains rows for `honey`, `jelly`, `brood`,
-  `corpse` and the empty kind. Each row carries `key`, `label`, `colour`,
-  `is_energy`, `energy_factor`, `capacity_config` (the `GameConfig` field name,
-  empty meaning `cell_capacity`), `index_bucket`, `storable`, `designatable`,
-  `evictable`, `config_flag` and `save_policy`. The existing nectar and pollen
-  rows gain the new fields with values matching today's behaviour.
-- **Invariants.** `Resources.keys()` must keep returning **only the
-  forager-selectable resources**. `roles.gd::count_keys` iterates it to build
-  forager tally keys, and adding honey there would invent tally keys no bee can
-  have. Add a separate `Resources.content_keys()` for the full list and leave
-  `keys()` alone. This is the single most likely way to break this slice.
-- **Implementation guidance.** Copy the existing rows' comment style. Take
-  `capacity_config` values from `hive_cell.gd::capacity_for`'s current `match`:
-  honey to `honey_cell_capacity`, jelly to `jelly_cell_capacity`, everything
-  else empty. Take `energy_factor` from `hive.gd::take_energy` — honey
-  `honey_energy_factor`, nectar 1.0, everything else 0.
-- **Runtime policy.** Static const data; no runtime cost.
-- **Automated acceptance.** A `tests/source_checks.py` check that the
-  `index_bucket` values in `resources.gd` are exactly the bucket names
-  `hive.gd::_content_index` builds, and that `Resources.keys()` still returns
-  two entries.
-- **Escalation.** None expected. If a kind resists a field, leave the field
-  empty and say so in a comment rather than inventing a value.
+Shipped 12 Sep 2026. Full record: `plans/archive/B1_2026-09-12.md`.
 
 ### B2 — the comb index derives from the catalogue
 

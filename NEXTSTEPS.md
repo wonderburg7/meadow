@@ -249,6 +249,24 @@ blocking its own `tools/slice.ps1 finish` on C1-24. Removed from the primary
 checkout, per `plans/workstreams.md`'s own rule that it is edited only from
 there.
 
+**B1 shipped 12 Sep 2026.** `resources.gd`'s `RESOURCES` table gained rows
+for `honey`, `jelly`, `brood`, `corpse` and the empty kind, each carrying
+`key`/`label`/`colour`/`is_energy`/`energy_factor`/`capacity_config`/
+`index_bucket`/`storable`/`designatable`/`evictable`/`config_flag`/
+`save_policy` taken from the live `match` statements in `hive_cell.gd` and
+`hive.gd::take_energy`. `Resources.keys()` now returns a fixed two-entry
+literal (nectar, pollen) instead of mapping over the table, so it cannot
+grow by accident; `Resources.content_keys()` is the new full-list accessor.
+`tests/source_checks.py::check_catalogue_alignment` was narrowed to check
+only those two forager-selectable keys against `roles.gd`'s `ROLES` table,
+and a new `check_resource_content_catalogue` proves the table's
+`index_bucket` values exactly match `hive.gd::_content_index()`'s per-
+content-type buckets. Nothing outside the two changed files was touched,
+and nothing reads the new rows yet -- that is B2 onwards. No hands-on check
+filed, since nothing a player sees changes. Full record:
+`plans/archive/B1_2026-09-12.md`. Its `Next after` (B2) fills the Claude
+lane's slot below.
+
 ## Next up
 
 1. **[Codex] C1-26 -- the marker asks to be noticed, and says where it is.**
@@ -260,22 +278,17 @@ there.
    - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
    - Next after: Challenge 1 Slice 7 -- acceptance pass and documentation.
 
-2. **[Claude] B1 -- the cell-content catalogue, data only.**
-   `resources.gd`'s `RESOURCES` table only covers nectar and pollen, the two
-   forager-selectable resources; every other cell content kind (honey, jelly,
-   brood, corpse, empty) is described by a `match` scattered across
-   `hive_cell.gd`, `hive.gd` and other callers instead. Add rows for the five
-   missing kinds with `key`, `label`, `colour`, `is_energy`, `energy_factor`,
-   `capacity_config`, `index_bucket`, `storable`, `designatable`, `evictable`,
-   `config_flag` and `save_policy`, and add `Resources.content_keys()` for the
-   full list -- `Resources.keys()` must keep returning only the two
-   forager-selectable resources, since `roles.gd::count_keys` iterates it to
-   build forager tally keys.
-   - Plan: `plans/design/architecture-review.md` -- "B1 — the cell-content catalogue, data only"
-   - Files: `scripts/resources.gd`, `tests/source_checks.py`
-   - Check: a `tests/source_checks.py` check proves `resources.gd`'s `index_bucket` values are exactly the bucket names `hive.gd::_content_index` builds, and that `Resources.keys()` still returns exactly two entries
-   - Proof: `absent: scripts/resources.gd :: "key": "honey"`
-   - Next after: B2 -- the comb index derives from the catalogue: `hive.gd::_content_index` builds its bucket dictionary from `Resources.content_keys()` plus the two derived buckets instead of a literal.
+2. **[Claude] B2 -- the comb index derives from the catalogue.**
+   `hive.gd::_content_index` builds its bucket dictionary from a nine-name
+   literal instead of deriving it from the catalogue B1 just built. Build it
+   from `Resources.content_keys()` plus the two derived buckets, `unbuilt`
+   and `ripe_honey`, so a future content kind only has to be added in
+   `resources.gd`.
+   - Plan: `plans/design/architecture-review.md` -- "B2 — the comb index derives from the catalogue"
+   - Files: `scripts/hive.gd`
+   - Check: `tests/source_checks.py::check_resource_content_catalogue` still passes with the buckets built from `content_keys()`, and a `test_scenarios/colony_30_bees_test.json` run's summary is unchanged
+   - Proof: `present: scripts/hive.gd :: "": [], "nectar": [], "pollen": [], "honey": [], "jelly": [],`
+   - Next after: B3 -- cell capacity and acceptance read the catalogue.
 
 3. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
