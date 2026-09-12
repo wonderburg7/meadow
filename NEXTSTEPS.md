@@ -205,17 +205,17 @@ the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
 
 ## Next up
 
-1. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
-   Challenge-only acceptance checks cannot run today: scenario launches use
-   `Levels.SCENARIO_LEVEL_ID`, so `challenge_runner.start()` never fires.
-   Let a scenario name a Challenge, add a verb that steps through the ordinary
-   `debug_advance_stage()` seam to a named stage, expose the current stage id
-   to scenario assertions, and prove it with a fixture that reaches 1.14.
-   - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
-   - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
-   - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
-   - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
-   - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
+1. **[Codex] C1-24 -- the stage marker is never left in the wrong world.**
+   A marker shown for stages 1.2, 1.5, 1.12 or 1.15 can remain parented to
+   `meadow_root` after an earlier meadow stage, so its hive-local position
+   becomes a stray yellow dot in the meadow. H4 has made its headless
+   acceptance runnable; C1-24 now establishes the marker world before C1-26
+   adds its presentation.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 24 — the stage marker is never left in the wrong world"
+   - Files: `scripts/challenge_runner.gd`
+   - Check: at stages 1.12 and 1.15 no marker appears in the meadow, and the hive-side marker does appear
+   - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
+   - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
 
 2. **[Claude] D1 -- one settings persistence authority, first half.**
    `save_game.gd::SAVED_SETTINGS` is a hand-maintained literal list with no
@@ -230,17 +230,15 @@ the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
    - Proof: `present: scripts/save_game.gd :: const SAVED_SETTINGS := [`
    - Next after: D1's second half -- reclassify all 61 keys against Dave's rule and move the eight balance fields F11 names into the save, with a `FORMAT_VERSION` bump and migration step.
 
-3. **[Codex] C1-24 -- the stage marker is never left in the wrong world.**
-   A marker shown for stages 1.2, 1.5, 1.12 or 1.15 can remain parented to
-   `meadow_root` after an earlier meadow stage, so its hive-local position
-   becomes a stray yellow dot in the meadow. Queue this behind H4: H4 makes
-   its headless acceptance runnable, and C1-24 then establishes the marker
-   world before C1-26 adds its presentation.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 24 — the stage marker is never left in the wrong world"
-   - Files: `scripts/challenge_runner.gd`
-   - Check: at stages 1.12 and 1.15 no marker appears in the meadow, and the hive-side marker does appear
-   - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
-   - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
+3. **[Codex] A2 -- one role tally.**
+   Role counts are currently built in several incompatible places. Derive the
+   population readout and colony diagnostics from the canonical `Roles.count_key`
+   representation, including the hive's hatch-focus counts.
+   - Plan: `plans/design/architecture-review.md` -- "A2 — one role tally"
+   - Files: `scripts/main.gd`, `scripts/colony_diagnostics.gd`, `scripts/hive.gd`
+   - Check: no file outside `roles.gd` contains the legacy `"%d|%s"`, `"%d|"` or `"0|%s"` count keys; an H3 equivalence run preserves the colony population lines
+   - Proof: `present: scripts/main.gd :: func _role_counts() -> Dictionary`
+   - Next after: A3 -- epoch-cached hive stock totals.
 
 ## Not in the queue, and why
 
@@ -257,9 +255,8 @@ entries below is startable today.
   no `challenge_runner.gd` (H3 and H1 shipped 11 Sep 2026, H2 shipped 11 Sep
   2026, D1's first half above) and held the rest until Challenge 1's Slices
   21 to 26 have vacated that file, which H4 and C1-24 above are both still
-  in. A2 is the other slice that does not touch `challenge_runner.gd`, but it
-  shares `scripts/main.gd` with H4, the Codex lane's current leading item, so
-  it stays held rather than being admitted alongside D1.
+  in. A2 is now admitted above: H4's `scripts/main.gd` ownership has landed,
+  and A2 shares no file with either leading queue item.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.
