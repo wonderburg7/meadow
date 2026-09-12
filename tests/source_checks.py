@@ -475,7 +475,11 @@ def check_catalogue_alignment(problems):
             )
 
     const_strs = dict(re.findall(r'const\s+(\w+)\s*:=\s*"([^"]+)"', resources_src))
-    key_names = re.findall(r'"key":\s*(\w+),', resources_src)
+    # Only the forager-selectable keys (Resources.keys()) tie to a ROLES
+    # sub-mode -- RESOURCES itself now also covers honey/jelly/brood/corpse/
+    # empty (B1 of architecture-review.md's F2), none of which is a forager
+    # mode and none of which belongs in this alignment check.
+    key_names = [n for n in re.findall(r'"key":\s*(\w+),', resources_src) if n in ("NECTAR", "POLLEN")]
     resource_keys = [const_strs[n] for n in key_names if n in const_strs]
     mode_keys = set(re.findall(r'\{"key":\s*"(\w+)",\s*"label"', roles_src))
     for key in resource_keys:
@@ -484,6 +488,83 @@ def check_catalogue_alignment(problems):
                 "resources.gd: resource key %r has no matching forager mode key "
                 "in roles.gd's ROLES table" % key
             )
+
+
+# Buckets hive.gd::_content_index() builds that aren't one per cell
+# content_type -- "unbuilt" groups un-built cells regardless of content,
+# and "ripe_honey" is a honey cell in a particular state, not a distinct
+# content kind. resources.gd has no row for either.
+CONTENT_INDEX_DERIVED_BUCKETS = {"unbuilt", "ripe_honey"}
+
+
+def check_resource_content_catalogue(problems):
+    """B1 of architecture-review.md's F2: resources.gd's RESOURCES table
+    must cover every cell-content kind hive.gd::_content_index() buckets
+    by content_type -- one resources.gd row's "index_bucket" per bucket,
+    no more and no fewer -- and Resources.keys() must still return only
+    the two forager-selectable resources, since roles.gd::count_keys
+    iterates it to build forager tally keys.
+    """
+    resources_path = os.path.join(ROOT, "resources.gd")
+    hive_path = os.path.join(ROOT, "hive.gd")
+    for path in (resources_path, hive_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for resource content catalogue check" % os.path.basename(path))
+            return
+    resources_src = open(resources_path, encoding="utf-8").read()
+    hive_src = open(hive_path, encoding="utf-8").read()
+
+    buckets_match = re.search(r"var\s+buckets\s*:=\s*\{([^}]*)\}", hive_src, re.S)
+    if not buckets_match:
+        problems.append("hive.gd: could not find '_content_index()'s var buckets := { ... }'")
+        return
+    bucket_names = set(re.findall(r'"([^"]*)"\s*:', buckets_match.group(1)))
+    content_kinds = bucket_names - CONTENT_INDEX_DERIVED_BUCKETS
+
+    const_strs = dict(re.findall(r'const\s+(\w+)\s*:=\s*"([^"]*)"', resources_src))
+    index_bucket_names = re.findall(r'"index_bucket":\s*(\w+),', resources_src)
+    index_buckets = set()
+    for n in index_bucket_names:
+        if n not in const_strs:
+            problems.append("resources.gd: \"index_bucket\": %s is not a declared const" % n)
+            continue
+        index_buckets.add(const_strs[n])
+
+    missing = content_kinds - index_buckets
+    if missing:
+        problems.append(
+            "resources.gd: RESOURCES has no row whose index_bucket covers %s, "
+            "which hive.gd::_content_index() buckets by content_type"
+            % sorted(missing)
+        )
+    extra = index_buckets - content_kinds
+    if extra:
+        problems.append(
+            "resources.gd: RESOURCES has a row with index_bucket %s, which "
+            "hive.gd::_content_index() does not bucket by content_type" % sorted(extra)
+        )
+
+    keys_match = re.search(r"static func keys\(\)\s*->\s*Array:\s*\n\s*return\s*(\[[^\]]*\]|RESOURCES[^\n]*)", resources_src)
+    if not keys_match:
+        problems.append("resources.gd: could not find 'static func keys() -> Array:'")
+        return
+    keys_body = keys_match.group(1)
+    if keys_body.strip().startswith("["):
+        key_count = len([k for k in keys_body.strip("[]").split(",") if k.strip()])
+    else:
+        problems.append(
+            "resources.gd: keys() no longer returns a fixed literal -- confirm by "
+            "hand that it still returns exactly the two forager-selectable "
+            "resources, then update this check's parsing"
+        )
+        key_count = None
+    if key_count is not None and key_count != 2:
+        problems.append(
+            "resources.gd: keys() returns %d entries, expected exactly 2 "
+            "(nectar, pollen) -- roles.gd::count_keys iterates it to build "
+            "forager tally keys and a third entry invents one no bee can have"
+            % key_count
+        )
 
 
 # The file holding the settings catalogue (COLLECTIONS/TUNABLES/
@@ -2331,6 +2412,7 @@ def main():
 
     check_autoloads(problems)
     check_catalogue_alignment(problems)
+    check_resource_content_catalogue(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
     check_progression_catalogues(problems)
