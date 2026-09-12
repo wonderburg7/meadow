@@ -193,8 +193,8 @@ at both 0.15 and 0.06, sampling `environment.flowers_by_species` every 3
 sim-days across the full year, showed all six species present at some point
 in the year at both values -- 0.06 introduces no new extinction. Full record:
 `plans/archive/SB-2_2026-09-12.md`; its check is C-25.
-`plans/now/season-balance.md` had no further slices, so it is now marked
-complete in full. **This left the Claude lane empty**, since SB-2 was its
+season-balance.md had no further slices, so the whole plan is now
+archived in full at `plans/archive/SEASON_BALANCE_2026-09-12.md`. **This left the Claude lane empty**, since SB-2 was its
 only item, and nothing else in `plans/now/` is currently startable for
 Claude. Asked in this session, Dave chose to lift the architecture-review
 hold early rather than wait for Challenge 1's Slices 21-26 to vacate
