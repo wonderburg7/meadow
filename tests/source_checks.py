@@ -465,13 +465,11 @@ def check_stage_effects_order(name, lines, problems):
 
 def check_goal_cadence_registry(problems):
     """A4 (plans/design/architecture-review.md): a Challenge stage's "goal"
-    id in challenge_stages.gd, GOAL_CADENCE and _build_goal_registry's
-    _goal_registry in challenge_runner.gd must all name the same set of
-    ids. This is the three-lists problem -- a goal added to the stage data
-    without a matching GOAL_CADENCE entry would fall back to being checked
-    every frame with a loud push_error rather than the cadence the plan
-    intends, and one missing from _goal_registry would never complete at
-    all."""
+    id and its condition in challenge_stages.gd must have a GOAL_CADENCE
+    entry in challenge_runner.gd. C2 makes conditions the authority, so a
+    custom condition must name every remaining _goal_check_* method and no
+    removed registry may remain. A missing cadence would fall back to every
+    frame, while a missing custom reference would make a stage impossible."""
     stages_path = os.path.join(ROOT, "challenge_stages.gd")
     runner_path = os.path.join(ROOT, "challenge_runner.gd")
     for path in (stages_path, runner_path):
@@ -481,7 +479,15 @@ def check_goal_cadence_registry(problems):
     stages_src = open(stages_path, encoding="utf-8").read()
     runner_src = open(runner_path, encoding="utf-8").read()
 
-    stage_goals = set(re.findall(r'"goal":\s*"([^"]+)"', stages_src))
+    stage_rows = re.findall(
+        r'"goal":\s*"([^"]+)"\s*,\s*"condition":\s*(\{[^\n]+?\})', stages_src
+    )
+    stage_goals = {goal for goal, _condition in stage_rows}
+    expected_stage_count = len(re.findall(r'"goal":\s*"([^"]+)"', stages_src))
+    if len(stage_rows) != expected_stage_count:
+        problems.append(
+            "challenge_stages.gd: every stage goal must declare a condition"
+        )
 
     cadence_match = re.search(r"const\s+GOAL_CADENCE\s*:=\s*\{(.*?)\n\}", runner_src, re.S)
     if not cadence_match:
@@ -489,25 +495,23 @@ def check_goal_cadence_registry(problems):
         return
     cadence_goals = set(re.findall(r'"([^"]+)"\s*:', cadence_match.group(1)))
 
-    registry_match = re.search(r"_goal_registry\s*=\s*\{(.*?)\n\t\}", runner_src, re.S)
-    if not registry_match:
-        problems.append(
-            "challenge_runner.gd: could not find '_goal_registry = { ... }' in _build_goal_registry"
-        )
-        return
-    registry_goals = set(re.findall(r'"([^"]+)"\s*:', registry_match.group(1)))
-
     if stage_goals != cadence_goals:
         problems.append(
             "challenge_stages.gd/challenge_runner.gd: stage goal ids and GOAL_CADENCE "
             "keys differ -- stages only: %s; GOAL_CADENCE only: %s"
             % (sorted(stage_goals - cadence_goals), sorted(cadence_goals - stage_goals))
         )
-    if stage_goals != registry_goals:
+    if "func _build_goal_registry" in runner_src or "_goal_registry" in runner_src:
         problems.append(
-            "challenge_stages.gd/challenge_runner.gd: stage goal ids and "
-            "_build_goal_registry keys differ -- stages only: %s; registry only: %s"
-            % (sorted(stage_goals - registry_goals), sorted(registry_goals - stage_goals))
+            "challenge_runner.gd: C2 goal conditions must not retain a goal registry"
+        )
+    custom_refs = set(re.findall(r'"custom":\s*"(_goal_check_[^"]+)"', stages_src))
+    custom_methods = set(re.findall(r'func\s+(_goal_check_[A-Za-z0-9_]+)\s*\(', runner_src))
+    if custom_refs != custom_methods:
+        problems.append(
+            "challenge_stages.gd/challenge_runner.gd: custom stage references and "
+            "_goal_check_* methods differ -- stages only: %s; runner only: %s"
+            % (sorted(custom_refs - custom_methods), sorted(custom_methods - custom_refs))
         )
 
 
