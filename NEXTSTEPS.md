@@ -267,6 +267,29 @@ filed, since nothing a player sees changes. Full record:
 `plans/archive/B1_2026-09-12.md`. Its `Next after` (B2) fills the Claude
 lane's slot below.
 
+**B2 shipped 12 Sep 2026.** `hive.gd::_content_index` now builds its bucket
+dictionary from `Resources.content_keys()` plus the two derived buckets,
+`unbuilt` and `ripe_honey`, instead of a nine-name literal, so a future
+content kind only has to be added in `resources.gd`.
+`tests/source_checks.py::check_resource_content_catalogue` is rewritten to
+match: it confirms `_content_index` derives from `Resources.content_keys()`
+and that every `RESOURCES` row's `index_bucket` still covers its own `key`,
+rather than scanning a literal dict that no longer exists. An equivalence run
+against master on `test_scenarios/colony_30_bees_test.json` showed no
+differences. No hands-on check filed, since nothing a player sees changes.
+Its `Next after` (B3) fills the Claude lane's slot below.
+
+**B3's own successor needed a decision.** B is the last lettered slice in
+`architecture-review.md`'s B series, and every other A/C/D/E/F/G slice was
+held under Decision A until Challenge 1's Slices 21-26 vacated
+`scripts/challenge_runner.gd`. `plans/now/challenge-1.md` shows Slices 20-26
+have all shipped -- only Slice 7 (the docs-only acceptance pass, already
+queued as the Codex lane's leading item) remains, and it does not touch
+`challenge_runner.gd` -- so that hold is lifted. Asked in this session, Dave
+chose A1 -- brood hatching reads the brood bucket -- as B3's successor: level
+low, depends on nothing, touches only `scripts/main.gd`, file-disjoint from
+every open item.
+
 ## Next up
 
 1. **[Codex] C1-7 -- Challenge 1 acceptance pass and documentation.**
@@ -278,17 +301,17 @@ lane's slot below.
    - Proof: `present: plans/now/challenge-1.md :: ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)`
    - Next after: none -- completes Challenge 1.
 
-2. **[Claude] B2 -- the comb index derives from the catalogue.**
-   `hive.gd::_content_index` builds its bucket dictionary from a nine-name
-   literal instead of deriving it from the catalogue B1 just built. Build it
-   from `Resources.content_keys()` plus the two derived buckets, `unbuilt`
-   and `ripe_honey`, so a future content kind only has to be added in
-   `resources.gd`.
-   - Plan: `plans/design/architecture-review.md` -- "B2 — the comb index derives from the catalogue"
-   - Files: `scripts/hive.gd`
-   - Check: `tests/source_checks.py::check_resource_content_catalogue` still passes with the buckets built from `content_keys()`, and a `test_scenarios/colony_30_bees_test.json` run's summary is unchanged
-   - Proof: `present: scripts/hive.gd :: "": [], "nectar": [], "pollen": [], "honey": [], "jelly": [],`
-   - Next after: B3 -- cell capacity and acceptance read the catalogue.
+2. **[Claude] B3 -- cell capacity and acceptance read the catalogue.**
+   `hive_cell.gd::capacity_for` still names `honey` and `jelly` in a `match`
+   instead of reading `capacity_config` off the catalogue, and `space_for`/
+   `needs_eviction` name `brood`/`corpse` instead of testing `storable`/
+   `evictable`. Read `capacity_config`/`storable`/`evictable` from
+   `resources.gd`'s `RESOURCES` table instead.
+   - Plan: `plans/design/architecture-review.md` -- "B3 — cell capacity and acceptance read the catalogue"
+   - Files: `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/resources.gd`
+   - Check: `tests/balance_tests.py` passes unchanged, including a new case asserting `capacity_for` for all seven kinds against current `GameConfig` defaults
+   - Proof: `present: scripts/hive_cell.gd :: func capacity_for(resource_type: String) -> float:`
+   - Next after: A1 -- brood hatching reads the brood bucket.
 
 3. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
@@ -307,12 +330,11 @@ simply a free slot -- the queue holds three (the floor), and none of the
 entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`) -- Dave admitted the four that touch
-  no `challenge_runner.gd` (H3 and H1 shipped 11 Sep 2026, H2 shipped 11 Sep
-  2026, D1's first half above) and held the rest until Challenge 1's Slices
-  21 to 26 have vacated that file, which H4 and C1-24 above are both still
-  in. A2 is now admitted above: H4's `scripts/main.gd` ownership has landed,
-  and A2 shares no file with either leading queue item.
+  (`plans/design/architecture-review.md`), other than A1 and A2 above --
+  Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
+  21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
+  since those slices have all shipped, but the queue holds only three items
+  and A1 and A2 already fill both of this session's open slots.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It

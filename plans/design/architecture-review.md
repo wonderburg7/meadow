@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves) and B1 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Dave lifted the hold for B1 specifically on 12 Sep 2026, since D1's shipping left the Claude lane with nothing else startable, and B2 inherits that same lift as B1's direct successor | Owner: Dave / Claude Code | Next: B2 -- the comb index derives from the catalogue | Dependency: A2 and B2 touch no `challenge_runner.gd`, so both are startable now; every other A, C, D, E, F and G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1 and B2 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- and Dave chose A1 as B3's successor accordingly | Owner: Dave / Claude Code | Next: B3 -- cell capacity and acceptance read the catalogue | Dependency: none of A1, A2 or B3 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -849,26 +849,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/B1_2026-09-12.md`.
 
 ### B2 — the comb index derives from the catalogue
 
-Level: medium. Depends on: B1.
-
-- **Required reading.** This heading. B1's result. `scripts/hive.gd`'s "cell
-  index" section.
-- **Files to change.** `scripts/hive.gd`.
-- **Files not to change.** `scripts/resources.gd`, `scripts/hive_cell.gd`.
-- **Requirements.** `_content_index` builds its bucket dictionary from
-  `Resources.content_keys()` plus the two derived buckets, `unbuilt` and
-  `ripe_honey`, rather than from a literal.
-- **Invariants.** The bucket names, their contents and the `ripe_honey`
-  double-membership rule are unchanged. `cells_holding()` still returns an empty
-  array for an unknown key rather than erroring.
-- **Implementation guidance.** Build the dictionary in a loop, then add
-  `"unbuilt"` and `"ripe_honey"` explicitly with a comment saying they are
-  derived, not content kinds.
-- **Runtime policy.** Unchanged: the index still rebuilds only on `index_epoch`.
-- **Automated acceptance.** The B1 source check now proves the two lists match
-  from the other direction. Run `test_scenarios/colony_30_bees_test.json` and
-  compare the summary.
-- **Escalation.** None.
+Shipped 12 Sep 2026. Full record: `plans/archive/B2_2026-09-12.md`.
 
 ### B3 — cell capacity and acceptance read the catalogue
 
