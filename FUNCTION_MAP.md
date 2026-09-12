@@ -587,19 +587,19 @@ One cell: contents, brood, honey ripening, how it draws.
 1103 func development_percent() -> float
 ```
 
-## settings_catalogue.gd (1,066 lines)
+## settings_catalogue.gd (1,071 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
-959  static func setting_get(key: String)
-962  static func setting_set(key: String, value) -> void
-985  static func reset_config_to_defaults() -> void
-997  static func reset_config_keys(keys: Array) -> void
-1011 static func apply_setting(key: String, value) -> void
-1026 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1044 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1058 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+964  static func setting_get(key: String)
+967  static func setting_set(key: String, value) -> void
+990  static func reset_config_to_defaults() -> void
+1002 static func reset_config_keys(keys: Array) -> void
+1016 static func apply_setting(key: String, value) -> void
+1031 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1049 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1063 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## hive.gd (1,015 lines)
@@ -726,7 +726,7 @@ restart.
 870  func _restart() -> void
 ```
 
-## game_config.gd (865 lines)
+## game_config.gd (870 lines)
 
 The balance fields.
 
@@ -749,9 +749,9 @@ The balance fields.
 655  # --- bee individuality ---
 734  # --- the rival colony ---
 783  # --- seasons ---
-804  # --- disease ---
-832  # --- gynes leaving ---
-839  # --- winter ---
+809  # --- disease ---
+837  # --- gynes leaving ---
+844  # --- winter ---
 ```
 
 ## scenario_actions.gd (824 lines)

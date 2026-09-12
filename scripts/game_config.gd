@@ -794,6 +794,11 @@ var season_length_days: float = 60.0
 ## Flowers outside their species' window keep a small recharge trickle so
 ## a patch never becomes completely dead between flowering seasons.
 var out_of_season_strength: float = 0.05
+## What a species reaches at the very middle of its own flowering window,
+## as a multiple of its nominal recharge rate. Was implicitly 1.0, which
+## made peak season twenty times the out-of-season floor and read as a
+## different game rather than a good summer (Dave, 8 Sep 2026).
+var peak_season_strength: float = 0.75
 ## Out-of-season flowers wear out faster, making an old season's patch turn
 ## over into species suited to the current part of the year.
 var out_of_season_ageing_factor: float = 1.5

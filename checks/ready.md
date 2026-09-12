@@ -13,6 +13,7 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 ## Ready to run
 
 - [C-18 -- the command tray's three columns share its width](ready/C-18.md)
+- [C-24 -- peak season reads as a good summer, not a different game](ready/C-24.md)
 - [C-29 -- the stage's camera and speed switch off when the stage ends](ready/C-29.md)
 - [C-30 -- the new stage makes you designate a cell for pollen before it starts](ready/C-30.md)
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
