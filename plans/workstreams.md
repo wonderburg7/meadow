@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-U-1` (`codex/UI-U-1`) | Codex | step back and forth through Challenge stages. | Codex | in progress | none | `plans/now/ui.md` "UI-U-1 — step back and forth through a Challenge's stages" |
-| `.worktrees/WF-2` (`claude/WF-2`) | Claude | Rewrite the 12 Sep review's "Actions Dave can take now" as operational steps, and withdraw the unsupported Windows Search claim | Claude | in progress | none | `docs/agent-workflow-review-2026-09-12.md` |
