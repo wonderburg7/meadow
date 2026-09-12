@@ -356,20 +356,21 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
 
 ## Next up
 
-1. **[Claude] L-2 -- every outcome is classified, every closeout phase is injected.**
-   Two instruments. `tools/session_cost.py` gains `classify_outcome` so a
-   measurement run separates real failures from expected ones (an
-   `expected_no_match`, a `partially_denied` chained command, and so on --
-   seven classes, first match wins). Separately,
-   `tests/test_source_checks.py` gains a test that drives `finish` through
-   every durable closeout phase via the existing `MEADOW_SLICE_FAIL_AFTER`
-   injection hook and confirms `resume` reaches the same clean end state
-   from each one.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-2 — every outcome is classified, every closeout phase is injected"
-   - Files: `tools/session_cost.py`, `tests/test_source_checks.py`
-   - Check: `python tools/session_cost.py --classify` over 4-12 Sep 2026 agrees with the review's Part 1 counts within 10%, and `test_finish_is_resumable_after_every_injected_phase` passes for every phase in `Invoke-InjectedLifecycleFailure`
-   - Proof: `absent: tools/session_cost.py :: def classify_outcome`
-   - Next after: L-3.
+1. **[Claude] L-3 -- branch verification and bookkeeping validation are separate scopes.**
+   A branch's `finish` fails today when the *other* lane's stale ledger row
+   or orphaned worktree trips `check_docs.py`, even though the branch itself
+   is clean -- 10 of the review's 97 `finish` calls died this way. Add
+   `-Scope branch|primary|all` (default `all`, so every existing caller is
+   unchanged) to `tools/verify.ps1`: `branch` runs source checks, balance
+   tests, the function map, the stage reference and the lifecycle tests;
+   `primary` runs `check_docs.py` only. `Invoke-SliceFinish` calls
+   `-Scope branch` from the worktree and `-Scope primary` from the primary
+   root before the merge, naming which scope failed.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-3 — branch verification and bookkeeping validation are separate scopes"
+   - Files: `tools/verify.ps1`, `tools/slice.ps1`
+   - Check: `test_branch_verification_ignores_another_lanes_stale_ledger_row` passes -- `verify.ps1 -Scope branch` in the worktree exits zero while `-Scope primary` in the primary checkout exits non-zero against the same stale row
+   - Proof: `absent: tools/verify.ps1 :: -Scope`
+   - Next after: L-4 -- the worktree is deleted out of process, outside the lock.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do

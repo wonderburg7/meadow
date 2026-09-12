@@ -2,15 +2,150 @@
 
 import argparse
 import json
+import re
 import statistics
 import time
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
+
+OUTCOME_CLASSES = (
+    "expected_no_match",
+    "partially_denied",
+    "diagnostic_in_success",
+    "test_failure",
+    "environment_failure",
+    "lifecycle_failure",
+    "agent_mistake",
+)
+
+
+def _extract_text(content):
+    """Flatten a tool_result's `content` (a string or a list of blocks) to text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and isinstance(block.get("text"), str):
+                parts.append(block["text"])
+        return "\n".join(parts)
+    return ""
+
+
+def classify_outcome(command: str, result: str, is_error: bool) -> str:
+    """Bucket one tool-call outcome into one of seven classes, first match wins.
+
+    Distinguishes an expected non-zero exit or a diagnostic line inside a
+    successful run from a real failure, so a measurement over raw exit codes
+    does not overcount blockers that were never blockers -- see F12 in
+    docs/agent-workflow-review-2026-09-12.md.
+    """
+    command = command or ""
+    result = result or ""
+
+    if is_error and (not result.strip() or ("ls-remote" in command and "--exit-code" in command)):
+        return "expected_no_match"
+
+    if re.search(r"Permission to use .* has been denied", result) and any(
+        op in command for op in ("&&", "||", ";")
+    ):
+        return "partially_denied"
+
+    if not is_error and "doc checks: FAILED" in result:
+        return "diagnostic_in_success"
+
+    if (
+        is_error
+        and re.search(r"AssertionError|\bFAILED\b|Traceback \(most recent call last\)", result)
+        and "slice.ps1" not in command
+        and "slice.ps1" not in result
+    ):
+        return "test_failure"
+
+    if is_error and re.search(
+        r"(godot|python|powershell)[^\n]{0,60}"
+        r"(not found|not recognized|cannot be loaded|no such file)",
+        result,
+        re.IGNORECASE,
+    ):
+        return "environment_failure"
+
+    if is_error and ("slice.ps1" in command or "slice.ps1" in result):
+        return "lifecycle_failure"
+
+    return "agent_mistake"
+
+
+def _iter_tool_outcomes(files):
+    """Yield (command, result, is_error) for every tool_use/tool_result pair."""
+    for f in files:
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                rows = [json.loads(line) for line in fh if line.strip()]
+        except Exception:
+            continue
+
+        pending = {}
+        for row in rows:
+            if row.get("type") == "assistant":
+                for block in row.get("message", {}).get("content", []) or []:
+                    if isinstance(block, dict) and block.get("type") == "tool_use":
+                        pending[block.get("id")] = block
+            elif row.get("type") == "user":
+                content = row.get("message", {}).get("content")
+                if not isinstance(content, list):
+                    continue
+                for block in content:
+                    if not isinstance(block, dict) or block.get("type") != "tool_result":
+                        continue
+                    tool_use = pending.pop(block.get("tool_use_id"), None)
+                    command = ""
+                    if tool_use:
+                        command = (tool_use.get("input", {}) or {}).get("command", "") or ""
+                    result = _extract_text(block.get("content"))
+                    is_error = bool(block.get("is_error", False))
+                    yield command, result, is_error
+
+
+def _first_timestamp(path):
+    """The session's own first-message time, not the file's mtime.
+
+    A worktree checkout or backup pass can touch every .jsonl's mtime
+    without changing what it records, which silently doubled the session
+    count a file-mtime cutoff selected -- see L-2 in
+    plans/now/agent-lifecycle.md.
+    """
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                ts = json.loads(line).get("timestamp")
+                if ts:
+                    return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+    return None
+
+
+def run_classify(files):
+    """Print the count of flagged tool outcomes in each of the seven classes."""
+    counts = Counter()
+    for command, result, is_error in _iter_tool_outcomes(files):
+        if not is_error and "doc checks: FAILED" not in result:
+            continue
+        counts[classify_outcome(command, result, is_error)] += 1
+
+    for name in OUTCOME_CLASSES:
+        print(f"{name:22s}{counts.get(name, 0)}")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7)
+    parser.add_argument("--classify", action="store_true")
     args = parser.parse_args()
 
     project_dir = Path.home() / ".claude" / "projects" / "C--Users-dl13860-Documents-Meadow-meadow"
@@ -19,7 +154,11 @@ def main():
         return 0
 
     cutoff = time.time() - args.days * 86400
-    files = [f for f in project_dir.glob("*.jsonl") if f.stat().st_mtime >= cutoff]
+    files = [f for f in project_dir.glob("*.jsonl") if (_first_timestamp(f) or 0) >= cutoff]
+
+    if args.classify:
+        run_classify(files)
+        return 0
 
     session_count = 0
     assistant_requests = 0

@@ -616,6 +616,72 @@ class SliceDoctorTest(unittest.TestCase):
                     subprocess.run(["git", "add", "scripts/sample.gd"], cwd=self.root, check=True)
                     subprocess.run(["git", "commit", "-m", "reset mock source"], cwd=self.root, check=True)
 
+    def test_finish_is_resumable_after_every_injected_phase(self):
+        """Every durable closeout phase resumes to the same final state.
+
+        L-2 of plans/now/agent-lifecycle.md: an injected failure after any
+        of the seven phases below must still leave `resume` able to finish
+        the job, with the merge actually landed on master -- not just the
+        worktree and branch cleaned up, which a resumed run could satisfy
+        by abandoning the change instead of completing it.
+        """
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+
+        phases = (
+            "verified", "branch-committed", "merged", "pushed",
+            "worktree-removed", "branch-deleted", "ledger-deleted",
+        )
+        for phase in phases:
+            with self.subTest(phase=phase):
+                started = subprocess.run(
+                    [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+                    cwd=self.root, capture_output=True, text=True,
+                )
+                self.assertEqual(0, started.returncode, started.stderr)
+                (self.root / ".worktrees" / "T-1" / "scripts" / "sample.gd").write_text(
+                    "func new_function():\n\tpass\n", encoding="utf-8"
+                )
+                failed = subprocess.run(
+                    [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                        str(self.root / ".worktrees" / "T-1").replace("'", "''"),
+                        str(self.root / ".worktrees" / "T-1" / "tools" / "slice.ps1").replace("'", "''"),
+                    )],
+                    cwd=self.root, capture_output=True, text=True,
+                    env={**os.environ, "MEADOW_SLICE_FAIL_AFTER": phase},
+                )
+                self.assertNotEqual(0, failed.returncode)
+
+                resumed = subprocess.run(
+                    [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "resume", "-Lane", "Codex"],
+                    cwd=self.root, capture_output=True, text=True,
+                )
+                self.assertEqual(0, resumed.returncode, resumed.stderr)
+                self.assertFalse((self.root / ".worktrees" / "T-1").exists())
+                self.assertEqual("", subprocess.run(
+                    ["git", "branch", "--list", "codex/T-1"], cwd=self.root,
+                    capture_output=True, text=True, check=True,
+                ).stdout)
+                self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+                self.assertIn(
+                    "func new_function():",
+                    (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
+                )
+
+                (self.root / "scripts" / "sample.gd").write_text(
+                    "func existing():\n\tpass\n", encoding="utf-8"
+                )
+                subprocess.run(["git", "add", "scripts/sample.gd"], cwd=self.root, check=True)
+                subprocess.run(["git", "commit", "-m", "reset mock source"], cwd=self.root, check=True)
+
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         start = subprocess.run(

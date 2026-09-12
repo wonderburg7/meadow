@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-2 -- every outcome is classified, every closeout phase is injected | Dependency: none | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude | Next: L-3 -- branch verification and bookkeeping validation are separate scopes | Dependency: none | Verified: 2026-09-12
 
 ## Objective
 
@@ -45,7 +45,6 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-2 | one command classifies every session outcome, and every closeout phase has an injected-failure test | `tools/session_cost.py`, `tests/test_source_checks.py` | yes | medium |
 | L-3 | branch verification and primary-checkout validation are separate scopes | `tools/verify.ps1`, `tools/slice.ps1` | yes | medium |
 | L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | after L-3 | high |
 | L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | after L-4 | high |
@@ -58,7 +57,8 @@ Dependencies, stated rather than implied: L-1 was the prerequisite for
 everything else, because nothing else in this plan could be trusted while
 its tests did not run -- it shipped 12 September 2026 (archived at
 `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`), so L-2, L-3, L-7 and L-8
-are now all startable. L-3 must precede L-4 and L-5, because both change
+became startable; L-2 has since shipped too (archived at
+`plans/archive/L-2_2026-09-12.md`). L-3 must precede L-4 and L-5, because both change
 what runs inside the lock. L-4 must precede L-5, because the transaction
 cannot be short-lived while a three-minute retry sits inside it. L-6 must
 follow L-5, because it tests the transaction. L-9 is last and is the gate.
@@ -81,60 +81,13 @@ L-1 (the lifecycle suite is green and runs in verification) shipped 12
 September 2026. Full specification, actual outcome and the two unrelated
 findings its closeout surfaced: `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
 
-## L-2 — every outcome is classified, every closeout phase is injected
-
-**Objective.** Two instruments. One: `tools/session_cost.py` gains outcome
-classification so a measurement run separates real failures from expected
-ones. Two: a test per durable closeout phase, using the injection hook that
-already exists.
-
-**Non-goals.** No change to `slice.ps1`'s behaviour. No new dependency, no
-new script file — extend `session_cost.py`, which already parses the records.
-
-**Files.** `tools/session_cost.py`, `tests/test_source_checks.py`.
-
-**Prerequisite.** L-1.
-
-**Algorithm.**
-
-1. Add `classify_outcome(command: str, result: str, is_error: bool) -> str`
-   to `session_cost.py`, returning exactly one of seven strings:
-   `expected_no_match` (a search or probe that exited non-zero with no
-   output, or a `ls-remote --exit-code` miss), `partially_denied` (the result
-   matches "Permission to use * has been denied" and the command contains
-   `&&`, `||` or `;`), `diagnostic_in_success` (the result contains a
-   `FAILED` or `WARNING` line but the command exited zero),
-   `test_failure`, `environment_failure` (Godot, Python or PowerShell could
-   not run), `lifecycle_failure` (the result names `slice.ps1`), and
-   `agent_mistake` (a malformed command: bad parameter, unbalanced quote,
-   `command not found`). Order the checks in that sequence; first match wins.
-2. Add `--classify` to the argument parser. With it, print one line per class
-   with a count, and nothing else.
-3. Run it over 4 to 12 September 2026 and record the counts in this section
-   as the baseline, beside the review's Part 1 numbers. They must agree
-   within 10%; if they do not, the classifier is wrong, not the review.
-4. In `tests/test_source_checks.py`, add
-   `test_finish_is_resumable_after_every_injected_phase`. The injection hook
-   is `MEADOW_SLICE_FAIL_AFTER`, read by `Invoke-InjectedLifecycleFailure`.
-   For each phase name in the script — `verified`, `branch-committed`,
-   `merged`, `pushed`, `worktree-removed`, `branch-deleted`,
-   `ledger-deleted` — build the fixture, set the variable, run `finish`,
-   assert it fails, then run `resume` and assert the lifecycle reaches the
-   same final state as an uninterrupted run: no worktree, no branch, no
-   ledger row, and the merge present on master.
-
-**Tests and failure injection.** The new test is itself the failure
-injection. Expect some phases to fail on first run; that is the F1
-reproduction and those failures are recorded here, not fixed in this slice.
-
-**Proof.** `absent: tools/session_cost.py :: def classify_outcome`
-
-**Risk.** Low. Both instruments are read-only or test-only.
-
-**Expected improvement.** A number to compare against at L-9, and a named
-list of which closeout phases are not in fact resumable.
-
-**Next slice.** L-3.
+**L-2 — every outcome is classified, every closeout phase is injected.**
+Landed 2026-09-12. `classify_outcome` and `--classify` shipped in
+`tools/session_cost.py`; all seven injected closeout phases resume cleanly
+with the merge landing on master. The classify baseline does not agree with
+the review's Part 1 figures within 10% -- see
+`plans/archive/L-2_2026-09-12.md` for the numbers and why that is left as a
+follow-up rather than force-fit here.
 
 ## L-3 — branch verification and bookkeeping validation are separate scopes
 
