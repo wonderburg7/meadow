@@ -308,19 +308,40 @@ lane's slot below; A1's own successor is A3 -- epoch-cached hive stock
 totals, the next independent A-series slice, chosen here since A2 (already
 in the Codex lane) is not A1's own to name twice.
 
+**A3 shipped 12 Sep 2026.** `hive.gd`'s `total`, `total_sealed` and
+`total_honey` (F5: full `for cell in cells` scans, called several times a
+frame) now read a single cache built in one pass over `cells`, keyed on a
+new `stock_epoch` counter kept separate from `index_epoch` because an
+ordinary deposit/withdrawal changes `amount` without touching
+content_type/is_built/ripeness. Every `hive_cell.gd` mutator that can move
+a total (`add_resource`, `take_resource`, `set_closed`,
+`set_fill_then_close`, `add_fanning_progress`, `_larva_dies`,
+`start_brood`, `clear_cell`) bumps it, and `saving.gd`'s restore path bumps
+it alongside its existing `invalidate_index()` call. A new static check,
+`check_hive_stock_epoch_cache` in `tests/source_checks.py`, proves the
+cache shape and every bump site; `tools/verify.ps1` is green. The pinned
+performance baseline could not be run to completion in this session --
+four attempts (300s/900s/1500s timeouts, and after priming Godot's
+`.import` cache) each produced only the scenario's config line and no
+snapshot or summary, the same way regardless of timeout length, while a far
+smaller fixture (`colony_30_bees_test.json`) completed normally in the same
+environment. Filed as `checks/ready/C-50.md` rather than blocking the merge
+on it. Full record: `plans/archive/A3_2026-09-12.md`. Its `Next after` (A4)
+fills the Claude lane's slot below.
+
 ## Next up
 
-1. **[Claude] A3 -- epoch-cached hive stock totals.**
-   `hive.gd`'s `total`, `total_sealed` and `total_honey` each walk every cell
-   on every call. Cache all three behind a new `stock_epoch` counter, bumped
-   on any mutation of `amount`, `is_closed`, `fill_then_close` or
-   `ripen_progress` (including the restore path in `saving.gd`), following
-   `_content_index()`'s existing epoch-cache shape.
-   - Plan: `plans/design/architecture-review.md` -- "A3 — epoch-cached hive stock totals"
-   - Files: `scripts/hive.gd`, `scripts/hive_cell.gd`
-   - Check: a new `tests/` case deposits, withdraws, seals and unseals a cell and asserts the totals track after each; `test_scenarios/recommendation_slice0_baseline.json`'s frame time is recorded against `docs/PERFORMANCE_BASELINE.md`
-   - Proof: `present: scripts/hive.gd :: func total(resource_type: String) -> float:`
-   - Next after: A4 -- wire the goal cadence.
+1. **[Claude] A4 -- wire the goal cadence.**
+   `challenge_runner.gd`'s `GOAL_CADENCE` table is declared and never read
+   (F4). Have `_process` consult it per-stage-goal: `frame` runs every frame
+   as now, `poll` at 4 Hz, `event` when `hive.index_epoch` or
+   `main._population_epoch` has moved (4 Hz backstop). Challenge 2's
+   `_c2_nectar_low_seen` sampling moves onto the same 4 Hz tick.
+   - Plan: `plans/design/architecture-review.md` -- "A4 — wire the goal cadence"
+   - Files: `scripts/challenge_runner.gd`
+   - Check: a new `tests/source_checks.py` check that the goal id sets in `challenge_stages.gd`, `GOAL_CADENCE` and `_build_goal_registry` are identical; an existing Challenge scenario fixture completes the same stage sequence
+   - Proof: `absent: scripts/challenge_runner.gd :: GOAL_CADENCE[`
+   - Next after: E1 -- one placement tool, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
 2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
    `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
@@ -341,7 +362,7 @@ in the Codex lane) is not A1's own to name twice.
    - Files: `scripts/main_menu.gd`
    - Check: Dave's live reproduction identifies whether the placeholder is missing or merely obscured
    - Proof: `present: scripts/main_menu.gd :: var detail_placeholder`
-   - Next after: A2 -- one role tally, once A3 has shipped (see "Not in the queue" below).
+   - Next after: A2 -- one role tally.
 
 ## Not in the queue, and why
 
@@ -349,14 +370,16 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`), other than A3 above -- Decision
+  (`plans/design/architecture-review.md`), other than A4 above -- Decision
   A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices 21-26 to
   vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026, since
-  those slices have all shipped. A3 leads the Claude lane. A2 -- one role
-  tally is held out of the Codex lane rather than run alongside it: both
-  slices touch `scripts/hive.gd` (`tools/check_docs.py` flags exactly this as
-  a cross-lane collision waiting to happen), so A2 is re-admitted once A3
-  ships.
+  those slices have all shipped. A4 leads the Claude lane. A2 -- one role
+  tally was held out of the Codex lane while A3 was open, since both touched
+  `scripts/hive.gd`; A3 shipped 12 Sep 2026, so that hold is resolved. A2 is
+  still not in a lane today because UI-P-5 leads the Codex lane ahead of it
+  (see item 3's `Next after` above) -- not because of any remaining
+  collision. C1 depends on both A2 and A3; A3 is done but A2 is not, so C1
+  stays out too.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own

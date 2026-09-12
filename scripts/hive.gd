@@ -152,6 +152,44 @@ func invalidate_index() -> void:
 func cells_holding(content: String) -> Array:
 	return _content_index().get(content, [])
 
+## `total`, `total_sealed` and `total_honey` (below) are read several times
+## a frame -- Challenge goal checks, the problem strip, the winter forecast,
+## corner readouts -- and each used to walk every cell on every call.
+## `stock_epoch` is a **separate** counter from `index_epoch` above: an
+## ordinary deposit or withdrawal changes `amount` without touching
+## content_type/is_built/ripeness, so it would never move `index_epoch`,
+## and a cache keyed on that would serve a stale total. Every mutator that
+## changes `amount`, `is_closed`, `fill_then_close` or `ripen_progress`
+## (hive_cell.gd) bumps this instead, and the restore path (saving.gd)
+## bumps it too, same shape as `index_epoch`'s own restore bump.
+var stock_epoch: int = 0
+var _stock_built_epoch: int = -1
+var _stock_totals: Dictionary = {}
+
+func invalidate_stock() -> void:
+	stock_epoch += 1
+
+func _stock() -> Dictionary:
+	if _stock_built_epoch == stock_epoch:
+		return _stock_totals
+	Perf.begin("hive_stock_rebuild")
+
+	var by_type := {}
+	var sealed := 0.0
+	var honey := 0.0
+	for cell in cells:
+		if not is_instance_valid(cell):
+			continue
+		by_type[cell.content_type] = by_type.get(cell.content_type, 0.0) + cell.amount
+		if not cell.can_withdraw():
+			sealed += cell.amount
+		if cell.is_ripe_honey():
+			honey += cell.amount
+	_stock_totals = {"by_type": by_type, "sealed": sealed, "honey": honey}
+	_stock_built_epoch = stock_epoch
+	Perf.end("hive_stock_rebuild")
+	return _stock_totals
+
 ## Which hex tiles are taken, so comb and soil never overlap.
 ## Keys are axial Vector2i, values are the node sitting there.
 var occupied_tiles: Dictionary = {}
@@ -248,29 +286,17 @@ func take_energy(energy_wanted: float) -> float:
 	return delivered
 
 func total(resource_type: String) -> float:
-	var sum := 0.0
-	for cell in cells:
-		if cell.content_type == resource_type:
-			sum += cell.amount
-	return sum
+	return _stock().get("by_type", {}).get(resource_type, 0.0)
 
 ## How much of the stores is sealed away in closed cells. Counted in the
 ## totals (it is still the colony's) but worth showing separately, since
 ## none of it can be eaten until you open the cells again.
 func total_sealed() -> float:
-	var sum := 0.0
-	for cell in cells:
-		if is_instance_valid(cell) and not cell.can_withdraw():
-			sum += cell.amount
-	return sum
+	return _stock().get("sealed", 0.0)
 
 ## Ripe honey only -- wet mix still drying isn't a store yet.
 func total_honey() -> float:
-	var sum := 0.0
-	for cell in cells:
-		if cell.is_ripe_honey():
-			sum += cell.amount
-	return sum
+	return _stock().get("honey", 0.0)
 
 # --- finding cells ------------------------------------------------
 

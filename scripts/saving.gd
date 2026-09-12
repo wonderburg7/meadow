@@ -58,6 +58,7 @@ func _restore(data: Dictionary) -> void:
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()
 	main.hive.invalidate_index()
+	main.hive.invalidate_stock()
 	main.hive.announce()
 	main._update_population_readout(new_bees)
 	main.hud.show_warning("Run loaded — day %d." % main.day)
@@ -145,10 +146,12 @@ func _restore_cells(cells: Array) -> void:
 		main.hive.register_tile(hex, cell)
 
 	# Every field above was written straight onto the cell rather than
-	# through its mutator methods, so none of the invalidate_index() calls
-	# those methods make ran during restore -- the content buckets need
-	# one explicit bump once the whole cell list is back, not per cell.
+	# through its mutator methods, so none of the invalidate_index() /
+	# invalidate_stock() calls those methods make ran during restore --
+	# the content buckets and stock totals both need one explicit bump
+	# once the whole cell list is back, not per cell.
 	main.hive.invalidate_index()
+	main.hive.invalidate_stock()
 
 func _restore_hive_state(state: Dictionary) -> void:
 	main.hive.keep_clear_tiles.clear()

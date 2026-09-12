@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3 and A1 all shipped; A2 is held out of the Codex lane until A3 ships, since both touch `scripts/hive.gd` and running them in different lanes at once is exactly the cross-lane collision `tools/check_docs.py` warns about; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- A1's own successor, A3, fills the Claude lane below | Owner: Dave / Claude Code | Next: A3 -- epoch-cached hive stock totals | Dependency: A2 and A3 both touch `scripts/hive.gd` and must not run concurrently; neither A2, A3 nor A4 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1 and A3 all shipped; A2's hold (out of the Codex lane while it and A3 both touched `scripts/hive.gd`) is resolved now that A3 has shipped, but A2 is still not in a lane because UI-P-5 leads the Codex lane ahead of it; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- A3's own successor, A4, fills the Claude lane below | Owner: Dave / Claude Code | Next: A4 -- wire the goal cadence | Dependency: C1 depends on both A2 and A3 and stays out until A2 also ships; A4 (`scripts/challenge_runner.gd`) and its named successor E1 (`scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`) are file-disjoint from the Codex lane's current lead, UI-P-5 (`scripts/main_menu.gd`); the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -753,37 +753,8 @@ Level: medium. Depends on: nothing.
 
 ### A3 — epoch-cached hive stock totals
 
-Level: medium. Depends on: nothing.
-
-- **Required reading.** This heading. F5 above. `scripts/hive.gd`'s "cell index"
-  section and its `total`, `total_sealed` and `total_honey`.
-  `scripts/hive_cell.gd`'s `add_resource`, `take_resource`, `set_closed` and
-  `set_fill_then_close`.
-- **Files to change.** `scripts/hive.gd`, `scripts/hive_cell.gd`.
-- **Files not to change.** every caller of `total()`; the signature does not
-  change.
-- **Requirements.** `total`, `total_sealed` and `total_honey` return a cached
-  value recomputed only when a new `stock_epoch` has moved. Every returned
-  number is identical to today's.
-- **Invariants.** `stock_epoch` is a **new** counter, not `index_epoch`.
-  `add_resource` and `take_resource` bump `index_epoch` only on a content-type
-  or ripeness change, so reusing it would serve stale totals after an ordinary
-  deposit. Every mutation of `amount`, `is_closed`, `fill_then_close` or
-  `ripen_progress` bumps `stock_epoch`. The restore path in `saving.gd` bumps it
-  too, as it already does for `index_epoch`.
-- **Implementation guidance.** Compute all three sums in one pass over `cells`
-  inside a private `_stock()` that caches against `stock_epoch`, and have the
-  three public functions read fields off it. Follow `_content_index()`'s shape
-  exactly, including its `Perf.begin`/`Perf.end` pair under a new section name.
-- **Runtime policy.** One comb pass per stock mutation instead of one per call.
-  No timer and no polling: the epoch is the event, per `hive.gd`'s own note.
-- **Automated acceptance.** A new `tests/` case that deposits, withdraws, seals
-  and unseals a cell and asserts the totals track after each. Run the pinned
-  performance baseline `test_scenarios/recommendation_slice0_baseline.json` and
-  record the frame time against `docs/PERFORMANCE_BASELINE.md`.
-- **Escalation.** If any mutation path cannot be given a `stock_epoch` bump
-  without reaching into another script's internals, stop: that is an ownership
-  boundary and Dave decides where the counter lives.
+Shipped 12 Sep 2026. Full record: `plans/archive/A3_2026-09-12.md`. The
+pinned performance baseline is not yet recorded -- `checks/ready/C-50.md`.
 
 ### A4 — wire the goal cadence
 
