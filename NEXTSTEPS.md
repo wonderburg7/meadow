@@ -290,19 +290,36 @@ chose A1 -- brood hatching reads the brood bucket -- as B3's successor: level
 low, depends on nothing, touches only `scripts/main.gd`, file-disjoint from
 every open item.
 
+**B3 shipped 12 Sep 2026.** `hive_cell.gd::capacity_for` now reads
+`capacity_config` off `resources.gd`'s catalogue instead of a `match` naming
+`honey`/`jelly`; `space_for` tests the catalogue's `storable` flag and
+`needs_eviction` tests its `evictable` flag instead of naming `brood`/
+`corpse`; and `hive.gd::take_energy` draws energy kinds in the catalogue's
+new `energy_priority` order (honey before nectar) via two new `resources.gd`
+helpers, `energy_keys_by_priority()` and `energy_factor_for()`, instead of a
+hand-written honey-then-nectar sequence. `resources.gd::entry()` also gained
+the `_by_key` lookup dictionary the slice's Runtime policy called for, since
+it is called from the hot `capacity_for`. `tests/balance_tests.py` gained
+`test_cell_capacity`, checking the catalogue's `capacity_config` for all
+seven kinds against current `GameConfig` defaults. No hands-on check filed,
+since nothing a player sees changes. Full record:
+`plans/archive/B3_2026-09-12.md`. Its `Next after` (A1) fills the Claude
+lane's slot below; A1's own successor is A3 -- epoch-cached hive stock
+totals, the next independent A-series slice, chosen here since A2 (already
+in the Codex lane) is not A1's own to name twice.
+
 ## Next up
 
-1. **[Claude] B3 -- cell capacity and acceptance read the catalogue.**
-   `hive_cell.gd::capacity_for` still names `honey` and `jelly` in a `match`
-   instead of reading `capacity_config` off the catalogue, and `space_for`/
-   `needs_eviction` name `brood`/`corpse` instead of testing `storable`/
-   `evictable`. Read `capacity_config`/`storable`/`evictable` from
-   `resources.gd`'s `RESOURCES` table instead.
-   - Plan: `plans/design/architecture-review.md` -- "B3 — cell capacity and acceptance read the catalogue"
-   - Files: `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/resources.gd`
-   - Check: `tests/balance_tests.py` passes unchanged, including a new case asserting `capacity_for` for all seven kinds against current `GameConfig` defaults
-   - Proof: `present: scripts/hive_cell.gd :: func capacity_for(resource_type: String) -> float:`
-   - Next after: A1 -- brood hatching reads the brood bucket.
+1. **[Claude] A1 -- brood hatching reads the brood bucket.**
+   `main.gd::_hatch_ready_brood` iterates every cell in `hive.cells` looking
+   for ready brood instead of the hive's own brood bucket. Iterate
+   `hive.cells_holding("brood").duplicate()` instead, keeping every per-hatch
+   call in its current order.
+   - Plan: `plans/design/architecture-review.md` -- "A1 — brood hatching reads the brood bucket"
+   - Files: `scripts/main.gd`
+   - Check: emergence counts in `test_scenarios/colony_30_bees_test.json`'s run summary are identical before and after; `tests/source_checks.py` asserts `_hatch_ready_brood` contains no `for cell in hive.cells`
+   - Proof: `present: scripts/main.gd :: func _hatch_ready_brood`
+   - Next after: A3 -- epoch-cached hive stock totals.
 
 2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
    `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
@@ -344,8 +361,9 @@ simply a free slot -- and none of the entries below is startable today.
   (`plans/design/architecture-review.md`), other than A1 and A2 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A2 holds the Codex lane's second
-  slot; A1 is A2's own named successor and is promoted when A2 lands.
+  since those slices have all shipped. A1 leads the Claude lane and A2 holds
+  the Codex lane's second slot; A3, A1's own named successor, is promoted
+  when A1 lands.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It

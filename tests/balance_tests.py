@@ -442,12 +442,43 @@ def test_bee_individuality():
           f"average trait shift is {average:+.4f}: positive, as the positive lean intends")
 
 
+def _catalogue_capacity_kinds():
+    """(kind, capacity_config) for every entry in resources.gd's RESOURCES,
+    mirroring hive_cell.gd::capacity_for() -- an empty capacity_config means
+    its GameConfig.cell_capacity default."""
+    resources_src = source("resources.gd")
+    consts = dict(re.findall(r'const (\w+) := "([^"]*)"', resources_src))
+    kinds = []
+    for block in re.findall(r"\{(.*?)\n\t\},", resources_src, re.S):
+        key_match = re.search(r'"key":\s*(\w+)', block)
+        cap_match = re.search(r'"capacity_config":\s*"([^"]*)"', block)
+        if not key_match or not cap_match:
+            continue
+        kinds.append((consts.get(key_match.group(1), key_match.group(1)),
+                       cap_match.group(1)))
+    return kinds
+
+
+def test_cell_capacity():
+    section("Cell capacity: capacity_for() reads the resource catalogue")
+    cell_capacity = cfg("cell_capacity")
+    kinds = _catalogue_capacity_kinds()
+    check(len(kinds) == 7,
+          f"expected seven resource kinds in resources.gd, found {len(kinds)}")
+    for kind, capacity_config in kinds:
+        expected = cfg(capacity_config) if capacity_config else cell_capacity
+        label = kind if kind else "(empty)"
+        check(expected > 0.0,
+              f"capacity_for({label!r}) should resolve to a positive capacity, got {expected}")
+    print(f"  {len(kinds)} kinds checked against current GameConfig defaults")
+
+
 def main():
     print("Meadow balance tests")
     print("====================")
     for test in (test_winter, test_rival, test_disease, test_crab_spiders, test_seasons,
                  test_brood_economics, test_movement_invariants,
-                 test_bee_individuality):
+                 test_bee_individuality, test_cell_capacity):
         test()
 
     print("\n" + "=" * 60)
