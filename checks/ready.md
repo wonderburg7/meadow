@@ -33,4 +33,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-47 -- Challenge 1's build marker stays in the hive](ready/C-47.md)
 - [C-48 -- Challenge 1's marker remains noticeable and findable](ready/C-48.md)
 - [C-49 -- Challenge stages can be replayed from settings](ready/C-49.md)
+- [C-50 -- record A3's pinned performance baseline](ready/C-50.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

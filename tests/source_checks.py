@@ -615,6 +615,101 @@ def check_resource_content_catalogue(problems):
         )
 
 
+def _func_body(source, func_name):
+    """The text of `func <func_name>(...) -> ...:` up to (not including) the
+    next top-level `func`, or None if the function isn't found. Good enough
+    for the tab-indented bodies every script in this repo uses."""
+    match = re.search(r"\nfunc\s+%s\s*\(" % re.escape(func_name), source)
+    if match is None:
+        return None
+    start = match.start() + 1
+    next_func = re.search(r"\nfunc\s+\w+\s*\(", source[start + 1:])
+    end = len(source) if next_func is None else start + 1 + next_func.start()
+    return source[start:end]
+
+
+# architecture-review.md's A3: hive.gd::total()/total_sealed()/total_honey()
+# used to be full `for cell in cells` scans, called several times a frame
+# (F5). They're now cached against a `stock_epoch` counter -- a *separate*
+# counter from `index_epoch`, because an ordinary deposit/withdrawal changes
+# `amount` without changing content_type/is_built/ripeness, so index_epoch
+# alone would never move and a cache keyed on it would serve a stale total.
+# hive_cell.gd's mutators are checked by name because each is a distinct verb
+# a player triggers: add_resource (deposit), take_resource (withdraw),
+# set_closed (seal/unseal) and set_fill_then_close (fill-then-seal).
+HIVE_STOCK_MUTATORS = ("add_resource", "take_resource", "set_closed", "set_fill_then_close")
+
+
+def check_hive_stock_epoch_cache(problems):
+    """A3 of architecture-review.md's F5: total()/total_sealed()/total_honey()
+    read a cache keyed on their own `stock_epoch`, and every hive_cell.gd
+    mutator that can change what those totals see bumps it."""
+    hive_path = os.path.join(ROOT, "hive.gd")
+    cell_path = os.path.join(ROOT, "hive_cell.gd")
+    saving_path = os.path.join(ROOT, "saving.gd")
+    for path in (hive_path, cell_path, saving_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for hive stock epoch check" % os.path.basename(path))
+            return
+    hive_src = open(hive_path, encoding="utf-8").read()
+    cell_src = open(cell_path, encoding="utf-8").read()
+    saving_src = open(saving_path, encoding="utf-8").read()
+
+    if not re.search(r"var\s+stock_epoch\s*:\s*int\s*=\s*0", hive_src):
+        problems.append(
+            "hive.gd: no 'var stock_epoch: int = 0' -- total()/total_sealed()/"
+            "total_honey() need their own epoch, distinct from index_epoch "
+            "(F5 of architecture-review.md: an amount-only change never "
+            "bumps index_epoch)"
+        )
+    if not re.search(r"func\s+invalidate_stock\s*\(\s*\)\s*->\s*void\s*:", hive_src):
+        problems.append("hive.gd: no 'func invalidate_stock() -> void:'")
+
+    stock_body = _func_body(hive_src, "_stock")
+    if stock_body is None:
+        problems.append(
+            "hive.gd: no 'func _stock()' -- the three totals should read one "
+            "cache built in a single pass over cells, same shape as "
+            "_content_index()"
+        )
+    else:
+        if "stock_epoch" not in stock_body:
+            problems.append("hive.gd: _stock() does not check stock_epoch, so it can never invalidate")
+        if "Perf.begin" not in stock_body or "Perf.end" not in stock_body:
+            problems.append("hive.gd: _stock() is missing the Perf.begin/Perf.end pair _content_index() has")
+        if "for cell in cells" not in stock_body:
+            problems.append("hive.gd: _stock() does not scan 'cells' -- expected one pass building all three sums")
+
+    for func_name in ("total", "total_sealed", "total_honey"):
+        body = _func_body(hive_src, func_name)
+        if body is None:
+            problems.append("hive.gd: no 'func %s'" % func_name)
+        elif "_stock()" not in body:
+            problems.append(
+                "hive.gd: %s() does not read _stock() -- it looks like a full "
+                "cell scan again rather than the cached totals" % func_name
+            )
+
+    for func_name in HIVE_STOCK_MUTATORS:
+        body = _func_body(cell_src, func_name)
+        if body is None:
+            problems.append("hive_cell.gd: no 'func %s'" % func_name)
+        elif "_invalidate_stock()" not in body:
+            problems.append(
+                "hive_cell.gd: %s() does not call _invalidate_stock() -- a "
+                "deposit/withdraw/seal/unseal through this path would leave "
+                "hive.gd's cached totals stale" % func_name
+            )
+
+    if "main.hive.invalidate_stock()" not in saving_src:
+        problems.append(
+            "saving.gd: load-restore path never calls main.hive.invalidate_stock() -- "
+            "restored cells write amount/is_closed/fill_then_close/ripen_progress "
+            "straight onto the cell, bypassing every mutator above, same as "
+            "the existing invalidate_index() call this needs to sit beside"
+        )
+
+
 # The file holding the settings catalogue (COLLECTIONS/TUNABLES/
 # SESSION_KEYS) -- moved out of debug_panel.gd, which is now a view of
 # it. Named here rather than inline so the check follows the catalogue.
@@ -2462,6 +2557,7 @@ def main():
     check_autoloads(problems)
     check_catalogue_alignment(problems)
     check_resource_content_catalogue(problems)
+    check_hive_stock_epoch_cache(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
     check_progression_catalogues(problems)
