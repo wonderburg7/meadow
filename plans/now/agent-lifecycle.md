@@ -30,34 +30,38 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 - `Invoke-SliceFinish` holds one exclusive lock across verification, the
   merge, a push, up to 180 seconds of Windows deletion retries, and a second
   push. Archival and queue refill are manual, outside the lock, by design.
-- `tests/test_source_checks.py` holds the only tests of any of this. It has
-  27 tests, 3 red on `master`, and `tools/verify.ps1` does not run it.
 - The four small fixes of 12 September 2026 landed on `claude/WF-1`: Codex
   may run `resume`; declared actions are single unchained commands; `start`
   and `doctor` print a `read` command and `next_after`; `doctor` reports
   whether the global Git excludes file is readable.
+- L-1 shipped 12 September 2026: `tests/test_source_checks.py` is 32/32
+  green and `tools/verify.ps1` runs it as a third parallel job. Landing it
+  also required a `Get-DoctorEnvironmentFailures` fix outside the slice's
+  stated Non-goals (a native git call's stderr crashed the doctor's
+  environment check under Windows PowerShell 5.1) -- full record at
+  `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
 
 ## Open slices
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-1 | the lifecycle suite is green and runs in verification | `tests/test_source_checks.py`, `tools/verify.ps1` | yes | medium |
-| L-2 | one command classifies every session outcome, and every closeout phase has an injected-failure test | `tools/session_cost.py`, `tests/test_source_checks.py` | after L-1 | medium |
-| L-3 | branch verification and primary-checkout validation are separate scopes | `tools/verify.ps1`, `tools/slice.ps1` | after L-1 | medium |
+| L-3 | branch verification and primary-checkout validation are separate scopes | `tools/verify.ps1`, `tools/slice.ps1` | yes | medium |
 | L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | after L-3 | high |
 | L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | after L-4 | high |
 | L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
-| L-7 | the queue cannot contradict itself | `tools/check_docs.py` | after L-1 | low |
-| L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | after L-1 | medium |
+| L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
+| L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
 | L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | after L-5 | medium |
 
-Dependencies, stated rather than implied: L-1 is the prerequisite for
-everything, because nothing else in this plan can be trusted while its tests
-do not run. L-3 must precede L-4 and L-5, because both change what runs
-inside the lock. L-4 must precede L-5, because the transaction cannot be
-short-lived while a three-minute retry sits inside it. L-6 must follow L-5,
-because it tests the transaction. L-2, L-7 and L-8 need only L-1 and may be
-taken in any order relative to L-3 to L-6. L-9 is last and is the gate.
+Dependencies, stated rather than implied: L-1 was the prerequisite for
+everything else, because nothing else in this plan could be trusted while
+its tests did not run -- it shipped 12 September 2026 (archived at
+`plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`), so L-2, L-3, L-7 and L-8
+became startable; L-2 has since shipped too (archived at
+`plans/archive/L-2_2026-09-12.md`). L-3 must precede L-4 and L-5, because both change
+what runs inside the lock. L-4 must precede L-5, because the transaction
+cannot be short-lived while a three-minute retry sits inside it. L-6 must
+follow L-5, because it tests the transaction. L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -73,60 +77,9 @@ slices each carry an algorithm specific enough to implement without a design
 decision, which is the point; the length is the specification, not history.
 It shortens as slices ship and their specifications move to the archive.
 
-## L-1 — the lifecycle suite is green and runs in verification
-
-**Objective.** Fix the three failing tests in `tests/test_source_checks.py`,
-then add that file to `tools/verify.ps1` so it can never silently rot again.
-
-**Non-goals.** Do not change `slice.ps1`'s behaviour. Do not add the other 14
-`tests/test_*.py` files to verification; several drive Godot and belong to a
-later decision.
-
-**Files.** `tests/test_source_checks.py`, `tools/verify.ps1`. Read
-`scripts/debug_panel.gd` to find the renamed function; do not edit it --
-`UI-U-1` in the Codex lane owns it.
-
-**Prerequisite.** None.
-
-**Algorithm.**
-
-1. `test_mock_slice_can_claim_commit_and_close` fails at "could not
-   regenerate checks/ready.md". In that test's `setUp`, create
-   `checks/ready` as a directory and write `checks/ready.md` with the header
-   `check_docs.py --write-ready-index` expects, before the fixture commit.
-   Run `python tools/check_docs.py --write-ready-index` once in the real
-   repository to see the exact header it writes, and copy that shape.
-2. `test_doctor_reports_all_environment_failures_together` asserts `Python:`
-   is in stderr, but a `git ls-remote` failure now reaches stderr first. The
-   test's intent is that all environment failures are reported together, so
-   assert each expected prefix is present with `assertIn`, in no particular
-   order, rather than relying on which came first.
-3. `test_orientation_flight_and_scouting_are_symmetric_alternatives` raises
-   `IndexError` because `scripts/debug_panel.gd` no longer contains
-   `_cascade_prerequisites_on_static`. Find the function that now performs
-   the prerequisite cascade by grepping `debug_panel.gd` for `prerequisite`,
-   and split on its name. If no such function remains, the contract has moved
-   and the test must be deleted with a one-line comment saying where the
-   behaviour went — do not weaken it to pass.
-4. In `tools/verify.ps1`, add a third `Start-Job` alongside "source checks"
-   and "balance tests", named "lifecycle tests", running
-   `& $interpreter -m unittest tests.test_source_checks`. Follow the two
-   existing jobs exactly, including the `$LASTEXITCODE` throw.
-
-**Tests and failure injection.** All 27 tests pass. Then break `slice.ps1` on
-purpose — delete the `throw` after `git merge` — and confirm
-`tools/verify.ps1` exits non-zero and names "lifecycle tests". Restore it.
-
-**Proof.** `absent: tools/verify.ps1 :: test_source_checks`
-
-**Risk.** Medium. It turns a currently-green gate red for anyone whose tree
-has an unrelated lifecycle regression, which is the point.
-
-**Expected improvement.** The 3 red tests become 0, and any future change to
-`slice.ps1`, the Codex permission profile or the verifier's Python
-resolution fails verification instead of shipping.
-
-**Next slice.** L-2.
+L-1 (the lifecycle suite is green and runs in verification) shipped 12
+September 2026. Full specification, actual outcome and the two unrelated
+findings its closeout surfaced: `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
 
 **L-2 — every outcome is classified, every closeout phase is injected.**
 Landed 2026-09-12. `classify_outcome` and `--classify` shipped in
