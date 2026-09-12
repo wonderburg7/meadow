@@ -517,53 +517,194 @@ requires a before-and-after session measurement and one real canary slice.
 
 ## Part 6 -- Actions Dave can take now
 
-Ordered by how much they save per minute spent.
+Each action says how to know it applies, exactly what to do, and how to tell
+it worked. Dave asked for this shape on 12 September 2026, after the first
+draft gave the reasoning without the steps.
 
-1. **Continue the task you already have open.** When a closeout needs
-   approving or retrying, reply in that task. Opening a fresh "implement the
-   next slice" task to finish yesterday's slice pays the 77K-token opening
-   floor again and re-derives context the open task still holds. 18 of 72
-   sessions in this window did no product work, and most of those were
-   closeout or cleanup.
-2. **Stagger the two lanes' closeouts until F1 and F4 land.** Both lanes
-   mutate the queue and `master` during start and finish, and the lifecycle
-   lock can be held for up to three minutes by a Windows deletion retry. Let
-   one lane's closeout finish before triggering the other's. The work itself
-   can still overlap; only the lifecycle commands collide.
-3. **Grant Codex exactly the resume permission and nothing wider.** The
-   repository side shipped in this pass. If your Codex client also keeps a
-   persistent approval list, add only this, as one line:
-   `powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 resume -Lane Codex`
-   Do not add arbitrary PowerShell, arbitrary Git, or abort.
-4. **Do not repair the Git excludes permissions; there is nothing wrong with
-   them.** `C:\Users\dl13860\.config\git\ignore` grants your account full
-   control and reads fine, and `core.excludesFile` is unset, so Git uses that
-   default path. If a Codex run still warns about it, that is sandbox scope,
-   and the new `git_excludes` line in `slice.ps1 doctor` now says so from
-   inside the sandbox. Only if it reports "unreadable" is there anything to
-   do, and it prints the exact command.
-5. **Exclude the disposable worktree directory from Windows Search.** Open
-   Indexing Options, choose Modify, and clear
-   `C:\Users\dl13860\Documents\Meadow\meadow\.worktrees`. 13 deletion
-   failures in 11 sessions were an external process holding a freshly emptied
-   folder, and the indexer and OneDrive are the two suspects named in
-   `slice.ps1`'s own comment. Worth doing before F1 lands, because it removes
-   the most common trigger rather than the failure mode.
-6. **Keep answering hands-on checks by check id, in batches.** That part of
-   the loop works, and a green branch is never held open for a check.
-7. **After any configuration change, open fresh tasks.** Existing Claude and
-   Codex sessions keep the configuration they started with. The resume
-   permission, the new action and the `read` field only reach a session opened
-   after this merge. Then run one real canary slice per agent before trusting
-   the change.
+### One command answers "is anything outstanding?"
 
-### Where to spend the next session
+Run this in the Meadow folder, any time, from the app's terminal or your own:
 
-- **This session, continued:** approving or retrying this branch's closeout.
-  The one decision it needed, where the queue refill is committed, is
-  answered.
-- **A new session, "implement the next slice":** slice `L-1` of
-  `plans/now/agent-lifecycle.md`, which fixes the three red lifecycle tests
-  and puts that suite inside `tools/verify.ps1`. It is bounded, it needs no
-  design decision, and nothing else in the plan is trustworthy until it is
-  done.
+```
+powershell -NoProfile -File tools/slice.ps1 status
+```
+
+It prints one JSON line per open slice, or `{"state":"idle"}` when nothing is
+open. The `state` field is the whole answer:
+
+| `state` | What it means | What to do |
+| --- | --- | --- |
+| `idle` | No slice is open in either lane. | Nothing. Start new work freely. |
+| `working` | A session is mid-slice. | Nothing. Leave it alone. |
+| `merged; cleanup pending` | The code is on `master` and pushed; the worktree, branch or ledger row was left behind. | Closeout is outstanding. Reply in that slice's session, or run `resume` below. |
+| `worktree missing; resumable` | The branch exists, its folder is gone. | Same: closeout is outstanding. |
+| `ledger-only; repair required` | The ledger names a slice with no branch and no folder. | Say so in a session and let it repair the ledger. |
+
+The recovery command, which is safe to run more than once and does nothing
+when there is nothing to recover:
+
+```
+powershell -NoProfile -File tools/slice.ps1 resume -Lane Claude
+```
+
+Use `-Lane Codex` for the Codex row. This is the same command the Codex fix
+of 12 September added to that agent's permission rules.
+
+### 1. Continue an open task instead of opening a new one
+
+**What "closeout" means.** It is everything after the code is written and
+green: merge the slice branch into `master`, push, delete the worktree and
+the branch, remove the row from `plans/workstreams.md`, move the delivered
+specification into `plans/archive/`, and refill the lane. In Meadow it is one
+command, `tools/slice.ps1 finish`, run by the session from inside its own
+worktree. You never type it.
+
+**How you will know it applies.** Any one of these:
+
+- A session's final report has a `Merged:` line that says anything other than
+  "yes". That line is required to name the specific blocker.
+- A session asks you to approve a command, or stops with a question.
+- A session says a closeout failed: "slice lifecycle is busy", "still waiting
+  for something to release", "could not remove", or a non-zero `finish`.
+- `slice.ps1 status` prints `merged; cleanup pending` or
+  `worktree missing; resumable`.
+
+**What to do.** Reply in that session, in its own thread. "Retry the
+closeout" or "finish the slice" is enough; the session still holds the branch
+name, the worktree path and what it was doing. Do not open a new task and
+type "implement the next slice" -- that claims the *next* slice and leaves
+the unfinished one behind, which is how orphan directories and stale ledger
+rows accumulate.
+
+**How to tell it worked.** The session prints the end-of-slice report with
+`Merged: yes, to master now`, and `slice.ps1 status` returns to `idle` for
+that lane.
+
+### 2. Do not let both lanes start or finish at the same moment
+
+**Why.** `start` and `finish` take an exclusive lock. The work in between
+does not, so the two lanes can implement in parallel all day. Only those two
+moments collide, and a `finish` can hold the lock for up to three minutes
+while Windows releases a folder.
+
+**What to do.** It is about timing your own messages, nothing more. When one
+session is starting or closing out, wait for its reply before telling the
+other lane's session to start or close out. In practice: send "implement the
+next slice" to one agent, wait for it to report that it has claimed the
+slice, then send the other. At the end, let one report `Merged: yes` before
+telling the other to finish.
+
+**How to tell you got it wrong.** A session says "slice lifecycle is busy;
+retry this command after the other lifecycle command completes". That is
+harmless -- it means the lock did its job and nothing was corrupted. Tell
+that session to retry, and it will succeed.
+
+**When this stops mattering.** When L-4 and L-5 land. L-4 removes the
+three-minute hold, L-5 makes a closeout resumable from wherever it stopped.
+
+### 3. If a worktree folder will not delete
+
+**Correction, 12 September 2026.** The first draft of this review told Dave
+to exclude the worktree folder from Windows Search. That recommendation is
+withdrawn: it was not supported by evidence and is very likely wrong. The
+search index does cover the Documents tree, but a query of the index for
+anything under the Meadow folder returns one row, the folder itself. The
+indexer is not crawling inside the repository, so it is not the process
+holding those folders open. The repository is also not inside OneDrive: the
+OneDrive-redirected Documents folder is a different path.
+
+**The likelier holder is the agent's own shell.** A session whose shell is
+still sitting inside `.worktrees/<id>` holds that directory, and Windows will
+not delete a folder that is any process's current directory. That is already
+recorded as a known pitfall, and it is what the WF-1 closeout on 12 September
+deliberately avoided: the shell was moved back to the primary checkout first,
+and `finish` succeeded on its first call.
+
+**What to do.** Nothing pre-emptively. If it happens, the session's own retry
+usually clears it. If a folder is genuinely stuck, this identifies the holder
+in one command, run as administrator:
+
+```
+openfiles /query /fo table | findstr /i worktrees
+```
+
+Report what it names and it becomes evidence for L-4, which makes the failure
+harmless whatever the holder turns out to be by deleting the folder out of
+process, after the holding process has exited.
+
+### 4. Grant Codex the resume permission, and nothing wider
+
+**When this applies.** Only if your Codex client keeps its own persistent
+approval list, separate from the repository's `.codex/rules/meadow.rules`,
+which was fixed on 12 September.
+
+**What to do.** Add exactly this one line, as a single command:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 resume -Lane Codex
+```
+
+Do not add arbitrary PowerShell, arbitrary Git, or `abort`. `abort` throws
+away unmerged work.
+
+### 5. Leave the Git excludes file alone
+
+`C:\Users\dl13860\.config\git\ignore` grants your account full control and
+reads fine, and `core.excludesFile` is unset, so Git uses that path by
+default. Codex's warning about it is sandbox scope, not permissions. The
+`git_excludes` line in `slice.ps1 doctor` now reports which it is from inside
+the sandbox. Act only if it ever reports `unreadable`, and it prints the
+exact command when it does.
+
+### 6. Keep answering hands-on checks by check id, in batches
+
+That part of the loop works. A green branch is never held open waiting for
+one.
+
+### 7. Run a canary slice after any configuration change
+
+**What a canary slice is.** Not a special kind of slice. It is an ordinary
+queued slice, taken through the whole loop in a *freshly opened* session, and
+watched to confirm the configuration change actually reached it. The word
+only describes the purpose.
+
+**Why a fresh session.** A running session keeps the configuration it started
+with. The `resume` permission, the new Codex action, the `read` field and the
+routing changes of 12 September reach only sessions opened after that merge.
+
+**How to run one.**
+
+- *Claude:* open a new Claude Code task in the Meadow folder and send
+  `implement the next slice`. Today that claims `B3`, the Claude lane's
+  leading item.
+- *Codex:* open a new Codex task and send the same. `UI-U-1` is already in
+  progress, so the Codex canary is whichever slice it takes next, or
+  `UI-U-1`'s own closeout if that is still open.
+
+**What passing looks like.** Four things, all visible in the session:
+
+1. It runs `tools/slice.ps1 start -Lane <lane>` rather than opening
+   `NEXTSTEPS.md`.
+2. It then runs the `read` command that `start` printed, a single
+   `tools/heading.py` call, rather than reading the queue or plan whole.
+3. It closes out with one `finish` call that exits zero.
+4. It prints the end-of-slice report, and `slice.ps1 status` returns `idle`
+   for that lane.
+
+Any of those four missing is the finding; say which one and it goes to the
+owning slice in `plans/now/agent-lifecycle.md`.
+
+**When to do this again.** After any change to `.codex/`,
+`.claude/settings.json`, `CLAUDE.md`, `CHATGPT.md` or `tools/slice.ps1`. A
+session's end-of-slice report should say when its slice changed one of those,
+so the prompt to run a canary comes to you rather than being remembered.
+
+## Where to spend the next session
+
+- **This session, continued:** nothing outstanding. WF-1 and WF-2 are merged
+  and their lanes are clear.
+- **A new session, "implement the next slice":** the Claude lane leads with
+  `B3`, a product slice. `L-1` of `plans/now/agent-lifecycle.md` sits behind
+  it and fixes the three red lifecycle tests and puts that suite inside
+  `tools/verify.ps1`. Nothing else in that plan is trustworthy until `L-1` is
+  done, so move it above `B3` in `NEXTSTEPS.md` if you want it taken first.
