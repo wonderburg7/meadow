@@ -129,7 +129,7 @@ Shipped 12 Sep 2026. Full specification and delivery record:
 Shipped 12 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-26_2026-09-12.md`](../archive/C1-26_2026-09-12.md).
 
-### Challenge 1 acceptance pass — shipped 12 Sep 2026
+### Challenge 1 acceptance pass
 
 Archived delivery record: `plans/archive/C1-7_2026-09-12.md`. The retained
 reference below documents the stage contract; delivery detail lives only in
