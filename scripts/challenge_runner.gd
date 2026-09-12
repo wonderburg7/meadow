@@ -525,6 +525,17 @@ func _show_current_visit_point() -> void:
 ## reuse the same path in the meadow without adding a second marker. Challenge
 ## 2 has no single "go here" point, so it never shows one.
 func _update_marker(stage_id: String) -> void:
+	# The marker's coordinates below are local to one of these two worlds.
+	# Select that world before setting them so a prior meadow beat cannot leave
+	# a later hive marker stranded at a meaningless meadow-local position.
+	var marker_parent: Node2D = null
+	if stage_id in ["1.2", "1.5", "1.6", "1.12", "1.15", "1.19"]:
+		marker_parent = main.hive_root
+	elif stage_id == "1.10":
+		marker_parent = main.meadow_root
+	if marker_parent != null and _marker.get_parent() != marker_parent:
+		_marker.reparent(marker_parent, false)
+
 	if stage_id in ["1.4", "1.7"]:
 		_show_current_visit_point()
 	elif stage_id in ["1.2", "1.5", "1.12", "1.15"]:
@@ -536,18 +547,13 @@ func _update_marker(stage_id: String) -> void:
 		_marker.visible = true
 	elif stage_id in ["1.6", "1.19"]:
 		# Both beats are walked from inside the hive view -- the marker
-		# may still be parked in meadow_root from 1.7/1.10's tour, so pull
-		# it back before pointing at the interior doorway.
-		if _marker.get_parent() != main.hive_root:
-			_marker.reparent(main.hive_root, false)
+		# points at the interior doorway.
 		_marker.position = main.hive_entrance_inside()
 		_marker.visible = true
 	elif stage_id == "1.10":
 		# Unlike 1.6/1.19, this beat is walked from the meadow: point at
 		# the hive's meadow-side marker instead of the (meaningless out
 		# here) interior doorway coordinate.
-		if _marker.get_parent() != main.meadow_root:
-			_marker.reparent(main.meadow_root, false)
 		_marker.position = main.hive.position
 		_marker.visible = true
 	else:
