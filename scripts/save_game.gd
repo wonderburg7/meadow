@@ -34,7 +34,14 @@ const SAVE_PATH := "user://meadow_save.json"
 ## hexes, corner entrance) so a save from before that version was dug and
 ## tunnelled differently. _restore_cells defends against a save's cell
 ## landing on what the fresh dig now considers soil.
-const FORMAT_VERSION := 4
+##
+## Bumped 12 Sep 2026 (D1, plans/design/architecture-review.md): the eight
+## balance fields named in save_migrations.gd's _migrate_4_to_5 moved from
+## persist:"none" to persist:"run", so they now go in the save. An older
+## save simply has none of them in its "settings" dict; the migration
+## defaults each to GameConfig's own value rather than leaving that to be
+## discovered as a missing-key default at restore time.
+const FORMAT_VERSION := 5
 
 ## Every GameConfig field worth carrying across, derived from
 ## settings_catalogue.gd's TUNABLES rather than hand-maintained here --

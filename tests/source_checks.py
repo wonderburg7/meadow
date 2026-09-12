@@ -688,6 +688,11 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "handling_experience_visits_to_floor",
     "adaptive_constancy_on", "adaptive_constancy_gain",
     "adaptive_constancy_decay", "adaptive_constancy_weight",
+    # D1 second half (12 Sep 2026): reclassified from persist:"none" to
+    # "run" per Dave's rule, with a FORMAT_VERSION bump and a
+    # save_migrations.gd step covering an older save.
+    "seasons_on", "season_length_days", "disease_on", "rival_hive_on",
+    "fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
 })
 
 PERSIST_VALUES = {"run", "player", "none"}

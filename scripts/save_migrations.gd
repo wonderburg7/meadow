@@ -2,10 +2,11 @@ extends RefCounted
 ## Ordered save-format migrations. Run once by SaveGame.read() before a
 ## parsed save is handed to saving.gd.
 ##
-## Three real FORMAT_VERSION bumps have happened so far (see save_game.gd's
+## Four real FORMAT_VERSION bumps have happened so far (see save_game.gd's
 ## own history comment above FORMAT_VERSION): 1->2 for the hex/entrance
-## geometry change, 2->3 for fog of war's explored-cells map, and 3->4 for
-## explicit-versus-automatic cell designations. The first two are
+## geometry change, 2->3 for fog of war's explored-cells map, 3->4 for
+## explicit-versus-automatic cell designations, and 4->5 for the eight
+## balance fields D1 moved into the save. The first two are
 ## already handled defensively at restore time -- saving.gd::_restore_cells
 ## evicts whatever a fresh dig placed on a saved cell's tile (the 1->2
 ## case), and a missing "fog" key already means "nothing explored yet" via
@@ -19,6 +20,14 @@ extends RefCounted
 ## fields with their own .get() defaults in saving.gd already, unrelated
 ## to the version number, so folding them in here would just create a
 ## second, divergent place recording the same default.
+
+## The eight fields D1's second half (plans/design/architecture-review.md)
+## reclassified from persist:"none" to persist:"run". An older save has
+## none of these in its "settings" dict at all.
+const MIGRATED_SETTINGS_V5 := [
+	"seasons_on", "season_length_days", "disease_on", "rival_hive_on",
+	"fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
+]
 
 ## Applies every known migration step in order until `data`'s version
 ## reaches `target_version` (SaveGame.FORMAT_VERSION), or there's no step
@@ -40,6 +49,9 @@ static func upgrade(data: Dictionary, target_version: int) -> Dictionary:
 			3:
 				out = _migrate_3_to_4(out)
 				version = 4
+			4:
+				out = _migrate_4_to_5(out)
+				version = 5
 			_:
 				return out
 		out["version"] = version
@@ -67,4 +79,19 @@ static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
 static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
 	for cell in data.get("cells", []):
 		cell["designation_explicit"] = str(cell.get("designated", "")) != ""
+	return data
+
+## 4->5: seasons_on, season_length_days, disease_on, rival_hive_on,
+## fog_of_war_on and the three lay_weight_* fields moved from
+## persist:"none" to persist:"run" (D1 second half,
+## plans/design/architecture-review.md), so they now live in "settings".
+## An older save's "settings" dict simply lacks these keys; default each to
+## GameConfig's own value so a save from before this version keeps behaving
+## exactly as it did when these fields were shared, not-saved defaults.
+static func _migrate_4_to_5(data: Dictionary) -> Dictionary:
+	var settings: Dictionary = data.get("settings", {})
+	for key in MIGRATED_SETTINGS_V5:
+		if not settings.has(key):
+			settings[key] = GameConfig.get(key)
+	data["settings"] = settings
 	return data
