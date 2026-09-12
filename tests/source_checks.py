@@ -688,6 +688,22 @@ def _func_body(source, func_name):
 HIVE_STOCK_MUTATORS = ("add_resource", "take_resource", "set_closed", "set_fill_then_close")
 
 
+def check_role_count_key_ownership(problems):
+    """A2 of architecture-review.md: roles.gd is the only owner of the
+    compact role-count-key wire format, so tally callers cannot drift."""
+    forbidden_literals = ('"%d|%s"', '"%d|"', '"0|%s"')
+    for path in glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True):
+        if os.path.basename(path) == "roles.gd":
+            continue
+        source = open(path, encoding="utf-8").read()
+        for literal in forbidden_literals:
+            if literal in source:
+                problems.append(
+                    "%s contains %s -- only roles.gd may format role count keys; "
+                    "use Roles.count_key()" % (os.path.basename(path), literal)
+                )
+
+
 def check_hive_stock_epoch_cache(problems):
     """A3 of architecture-review.md's F5: total()/total_sealed()/total_honey()
     read a cache keyed on their own `stock_epoch`, and every hive_cell.gd
@@ -2607,6 +2623,7 @@ def main():
     check_catalogue_alignment(problems)
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)
+    check_role_count_key_ownership(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
     check_progression_catalogues(problems)

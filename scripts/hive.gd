@@ -12,6 +12,7 @@ signal storage_changed(nectar: float, pollen: float, honey: float, jelly: float)
 const Shapes = preload("res://scripts/shapes.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
 const Resources = preload("res://scripts/resources.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
@@ -497,9 +498,9 @@ func zone_summary() -> Dictionary:
 		if cell.hatch_gyne:
 			key = "gyne"
 		elif cell.hatch_role == 0:
-			key = "0|%s" % cell.hatch_focus
+			key = Roles.count_key(cell.hatch_role, cell.hatch_focus)
 		elif cell.hatch_role > 0:
-			key = "%d|" % cell.hatch_role
+			key = Roles.count_key(cell.hatch_role, cell.hatch_focus)
 		by_role[key] = int(by_role.get(key, 0)) + 1
 	return {"counts": counts, "free": free, "by_role": by_role}
 
