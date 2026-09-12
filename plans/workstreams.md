@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/HCB-4` (`codex/HCB-4`) | Codex | at most six comb builders per site, one to a wall. | Codex | in progress | none | `plans/now/hive-comb.md` "HCB-4 — Cell auto-building: every idle builder piles onto one site" |
-| `.worktrees/SB-1` (`claude/SB-1`) | Claude | peak-season production is a rise, not a spike. | Claude | in progress | none | `plans/now/season-balance.md` "SB-1 — peak-season production is a rise, not a spike" |
