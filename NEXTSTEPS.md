@@ -220,6 +220,35 @@ hold early rather than wait for Challenge 1's Slices 21-26 to vacate
 the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
 `scripts/save_game.gd`, `tests/source_checks.py`) does not.
 
+**D1's second half shipped 12 Sep 2026.** `seasons_on`, `season_length_days`,
+`disease_on`, `rival_hive_on`, `fog_of_war_on` and the three `lay_weight_*`
+fields moved from `persist: "none"` to `persist: "run"` in
+`scripts/settings_catalogue.gd`, per Dave's three-bucket rule. `FORMAT_VERSION`
+bumped 4 -> 5, and `save_migrations.gd` gained a `_migrate_4_to_5` step
+defaulting each of the eight to its `GameConfig` value for an older save.
+`tests/source_checks.py` and `tests/test_save_migrations.py` were updated to
+match; no hands-on check filed, since nothing a player sees changes and the
+migration path is already proved by the automated fixture tests. Full record:
+`plans/archive/D1_2026-09-12.md`. The plan's own `Next after` (B1) is one of
+the architecture-review plan's A-G slices held under Decision A until
+Challenge 1's Slices 21-26 vacate `scripts/challenge_runner.gd` -- not yet
+true, since C1-24 still leads the Codex lane -- and nothing else in
+`plans/now/ui.md`, `plans/now/challenge-1.md` or
+`plans/design/progression.md` is currently startable, which would otherwise
+have left the Claude lane empty. Asked in this session, Dave chose to lift
+the hold for B1 specifically (not the whole A-G backlog): B1 touches only
+`scripts/resources.gd` and `tests/source_checks.py`, file-disjoint from every
+open Challenge 1 slice, and carries a `low` reasoning level with no
+dependencies of its own.
+
+**This session also fixed a stale `plans/workstreams.md` row.** D1's
+worktree/branch were integrated and closed inside this same session, but the
+ledger row naming `.worktrees/D1` was left behind, which is what
+`tools/verify.ps1` was reporting to the Codex lane as a doc-check failure
+blocking its own `tools/slice.ps1 finish` on C1-24. Removed from the primary
+checkout, per `plans/workstreams.md`'s own rule that it is edited only from
+there.
+
 ## Next up
 
 1. **[Codex] C1-24 -- the stage marker is never left in the wrong world.**
@@ -234,21 +263,22 @@ the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
    - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
    - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
 
-2. **[Claude] D1 -- one settings persistence authority, second half.**
-   The first half tagged every `TUNABLES` row with `persist` and proved
-   `save_game.gd::saved_settings()`'s derivation byte-identical to the old
-   literal; nothing about what is saved changed yet. Apply Dave's
-   three-bucket rule (11 Sep 2026): move the eight balance fields F11
-   names -- `disease_on`, `seasons_on`, `rival_hive_on`, `fog_of_war_on`,
-   `season_length_days` and the three `lay_weight_*` fields -- from
-   `persist: "none"` to `persist: "run"`, bump `FORMAT_VERSION`, and give
-   `save_migrations.gd` a step defaulting each to its `GameConfig` value
-   for an older save.
-   - Plan: `plans/design/architecture-review.md` -- "D1 — one settings persistence authority"
-   - Files: `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`, `tests/source_checks.py`, `tests/test_save_migrations.py`
-   - Check: the eight named fields carry `persist: "run"` and appear in `save_game.gd::saved_settings()`'s result; `FORMAT_VERSION` is 5; a v4 fixture loaded through `save_migrations.gd` has each field defaulted from `GameConfig`; `tests/test_save_migrations.py` passes
-   - Proof: `present: scripts/save_game.gd :: const FORMAT_VERSION := 4`
-   - Next after: B1 -- the cell-content catalogue, data only: `resources.gd`'s `RESOURCES` table gains rows for honey/jelly/brood/corpse/empty, so the catalogue says what a cell kind is rather than a `match` scattered across callers.
+2. **[Claude] B1 -- the cell-content catalogue, data only.**
+   `resources.gd`'s `RESOURCES` table only covers nectar and pollen, the two
+   forager-selectable resources; every other cell content kind (honey, jelly,
+   brood, corpse, empty) is described by a `match` scattered across
+   `hive_cell.gd`, `hive.gd` and other callers instead. Add rows for the five
+   missing kinds with `key`, `label`, `colour`, `is_energy`, `energy_factor`,
+   `capacity_config`, `index_bucket`, `storable`, `designatable`, `evictable`,
+   `config_flag` and `save_policy`, and add `Resources.content_keys()` for the
+   full list -- `Resources.keys()` must keep returning only the two
+   forager-selectable resources, since `roles.gd::count_keys` iterates it to
+   build forager tally keys.
+   - Plan: `plans/design/architecture-review.md` -- "B1 — the cell-content catalogue, data only"
+   - Files: `scripts/resources.gd`, `tests/source_checks.py`
+   - Check: a `tests/source_checks.py` check proves `resources.gd`'s `index_bucket` values are exactly the bucket names `hive.gd::_content_index` builds, and that `Resources.keys()` still returns exactly two entries
+   - Proof: `absent: scripts/resources.gd :: "key": "honey"`
+   - Next after: B2 -- the comb index derives from the catalogue: `hive.gd::_content_index` builds its bucket dictionary from `Resources.content_keys()` plus the two derived buckets instead of a literal.
 
 3. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the

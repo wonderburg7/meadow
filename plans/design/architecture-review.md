@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2 and H4 all shipped; D1's first half shipped 12 Sep 2026; A2 is admitted to the Codex lane behind C1-24, since it shares no file with either leading queue item | Owner: Dave / Claude Code | Next: D1's second half -- reclassify persist tags per Dave's rule and bump `FORMAT_VERSION` | Dependency: D1's second half and A2 touch no `challenge_runner.gd`, so both are startable now; every other A-G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4 and D1 (both halves) all shipped; A2 is admitted to the Codex lane behind C1-24, since it shares no file with either leading queue item; Dave lifted the hold for B1 specifically on 12 Sep 2026, since D1's shipping left the Claude lane with nothing else startable | Owner: Dave / Claude Code | Next: B1 -- the cell-content catalogue, data only | Dependency: A2 and B1 touch no `challenge_runner.gd`, so both are startable now; every other A, C, D, E, F and G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -60,6 +60,15 @@ assertions. H4 therefore enters the Codex lane as C1-23's `Next after:`.
 about exactly that, and H3 had been working around it by reserving a sibling
 file. The existence check gives way: it now skips any path declared on a
 queue item's `Files:` line. Shipped the same day.
+
+**F. B1 is admitted early too, 12 Sep 2026.** D1 shipped in full and left the
+Claude lane with nothing else startable -- its own `Next after` (B1) is one of
+the slices Decision A holds, and nothing in `plans/now/ui.md`,
+`plans/now/challenge-1.md` or `plans/design/progression.md` was ready either.
+Asked in this session, Dave chose to lift the hold for B1 specifically rather
+than the whole A-G backlog: it touches only `scripts/resources.gd` and
+`tests/source_checks.py`, file-disjoint from every open Challenge 1 slice.
+Every other A, C, D, E, F and G slice stays held.
 
 ## Findings at a glance
 
@@ -1043,58 +1052,8 @@ Level: medium. Depends on: C1.
 
 ### D1 — one settings persistence authority
 
-**First half shipped 12 Sep 2026.** Every `TUNABLES` row now carries a
-`persist` tag (`run`, `player` or `none`) -- including 47 rows added for
-`GameConfig` fields the catalogue never named at all (F11's 25
-saved-but-uncatalogued keys and 22 fields in neither list), each with no
-`category` so none of them gain a visible settings-window control this
-slice didn't intend to add. `scripts/save_game.gd::saved_settings()`
-derives the saved-keys list from the `run` rows in place of the old
-hand-written literal; `tests/source_checks.py::check_settings_persist`
-proves that derivation byte-identical to the literal it replaced, and
-fails on a `GameConfig` field with no row or a `persist` tag pointing at
-the wrong object. Nothing about what is saved changed. Second half below
-is what remains.
-
-Level: medium. Depends on: nothing, beyond Decision A's hold. The second
-half is startable now: Dave took the classification decision on 11 Sep 2026
-(see "Decisions taken 11 Sep 2026" above).
-
-- **Required reading.** This heading. F11 above.
-  `scripts/settings_catalogue.gd`'s header, `TUNABLES` shape and `persist`
-  field. `scripts/save_game.gd::saved_settings()` and its comment.
-  `.claude/rules/saving.md`.
-- **Files to change.** `scripts/settings_catalogue.gd`, `scripts/save_game.gd`,
-  `tests/source_checks.py`.
-- **Files not to change.** `scripts/session.gd`; player preferences stay there,
-  and this slice must not move any of them into the save.
-- **Requirements.** Every `TUNABLES` row gains `persist`: `run` for a key that
-  goes in the save, `player` for a Session preference that never does, `none`
-  otherwise. `SAVED_SETTINGS` becomes a function deriving the `run` keys. A
-  source check fails when a `GameConfig` field has no `TUNABLES` row, and when a
-  row's `persist` disagrees with what the save actually carries.
-- **Invariants.** The save format version does **not** change in the first half:
-  a derived list identical to today's needs no migration. If the decision below
-  adds keys, that is a `FORMAT_VERSION` bump and `save_migrations.gd` gains a
-  step defaulting the new keys to their `GameConfig` values.
-- **Implementation guidance.** Land it in two halves still, because the first
-  half proves the derivation before anything about the save changes. First,
-  annotate every row so the derived list is byte-identical to today's
-  `SAVED_SETTINGS`, add the check, and change nothing about what is saved.
-  Second, apply Dave's rule: run balance saves with the run, interface
-  preference stays in `Session` and out of the save, developer-only saves
-  nowhere. The 25 saved-but-uncatalogued keys need rows adding either way.
-  Classify each of the 61 by asking one question -- would two players loading
-  this save get different colony outcomes if the key were missing? Yes is `run`.
-- **Runtime policy.** Derived once at save time, not per frame.
-- **Automated acceptance.** The derived list equals the current literal, proved
-  in `tests/source_checks.py`. `tests/test_save_migrations.py` passes.
-- **Escalation.** The classification rule is settled, so do not re-ask it. Stop
-  only for a key the rule genuinely does not sort -- one that changes colony
-  outcomes *and* is plainly an interface preference. Name those keys and say why
-  each resists the rule; do not pick a bucket for them. The eight balance fields
-  F11 names move into the save, so the second half is a `FORMAT_VERSION` bump
-  with a `save_migrations.gd` step, exactly as the Invariants above describe.
+**Shipped in full 12 Sep 2026** (both halves). Full record:
+`plans/archive/D1_2026-09-12.md`.
 
 ### E1 — one placement tool
 
