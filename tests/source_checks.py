@@ -498,12 +498,14 @@ CONTENT_INDEX_DERIVED_BUCKETS = {"unbuilt", "ripe_honey"}
 
 
 def check_resource_content_catalogue(problems):
-    """B1 of architecture-review.md's F2: resources.gd's RESOURCES table
-    must cover every cell-content kind hive.gd::_content_index() buckets
-    by content_type -- one resources.gd row's "index_bucket" per bucket,
-    no more and no fewer -- and Resources.keys() must still return only
-    the two forager-selectable resources, since roles.gd::count_keys
-    iterates it to build forager tally keys.
+    """B1/B2 of architecture-review.md's F2: hive.gd::_content_index() now
+    builds its buckets from Resources.content_keys() plus two explicit
+    derived buckets (CONTENT_INDEX_DERIVED_BUCKETS) -- this proves every
+    RESOURCES row's "index_bucket" still covers its own "key", so the
+    derivation covers the same content kinds the old literal did, and
+    that Resources.keys() still returns only the two forager-selectable
+    resources, since roles.gd::count_keys iterates it to build forager
+    tally keys.
     """
     resources_path = os.path.join(ROOT, "resources.gd")
     hive_path = os.path.join(ROOT, "hive.gd")
@@ -514,12 +516,20 @@ def check_resource_content_catalogue(problems):
     resources_src = open(resources_path, encoding="utf-8").read()
     hive_src = open(hive_path, encoding="utf-8").read()
 
-    buckets_match = re.search(r"var\s+buckets\s*:=\s*\{([^}]*)\}", hive_src, re.S)
-    if not buckets_match:
-        problems.append("hive.gd: could not find '_content_index()'s var buckets := { ... }'")
+    if not re.search(r"for\s+\w+\s+in\s+Resources\.content_keys\(\)\s*:", hive_src):
+        problems.append(
+            "hive.gd: _content_index() no longer builds its buckets from "
+            "Resources.content_keys() -- confirm by hand it still covers "
+            "every cell-content kind, then update this check's parsing"
+        )
         return
-    bucket_names = set(re.findall(r'"([^"]*)"\s*:', buckets_match.group(1)))
-    content_kinds = bucket_names - CONTENT_INDEX_DERIVED_BUCKETS
+    derived_names = set(re.findall(r'buckets\["([^"]*)"\]\s*=\s*\[\]', hive_src))
+    if derived_names != CONTENT_INDEX_DERIVED_BUCKETS:
+        problems.append(
+            "hive.gd: _content_index()'s explicit derived buckets are %s, "
+            "expected exactly %s"
+            % (sorted(derived_names), sorted(CONTENT_INDEX_DERIVED_BUCKETS))
+        )
 
     const_strs = dict(re.findall(r'const\s+(\w+)\s*:=\s*"([^"]*)"', resources_src))
     index_bucket_names = re.findall(r'"index_bucket":\s*(\w+),', resources_src)
@@ -530,11 +540,20 @@ def check_resource_content_catalogue(problems):
             continue
         index_buckets.add(const_strs[n])
 
+    key_names = re.findall(r'"key":\s*(\w+),', resources_src)
+    content_kinds = set()
+    for n in key_names:
+        if n not in const_strs:
+            problems.append("resources.gd: \"key\": %s is not a declared const" % n)
+            continue
+        content_kinds.add(const_strs[n])
+
     missing = content_kinds - index_buckets
     if missing:
         problems.append(
             "resources.gd: RESOURCES has no row whose index_bucket covers %s, "
-            "which hive.gd::_content_index() buckets by content_type"
+            "which hive.gd::_content_index() buckets by content_type via "
+            "Resources.content_keys()"
             % sorted(missing)
         )
     extra = index_buckets - content_kinds
