@@ -232,6 +232,12 @@ GAMECONFIG_ASSIGN_RE = re.compile(
     r"\bGameConfig\.\w+\s*(?:\+=|-=|\*=|/=|=(?!=))"
 )
 
+# conditions.gd is a read-only leaf. A condition may query main, but it must
+# never mutate main itself or a member reached through it.
+CONDITIONS_MAIN_ASSIGN_RE = re.compile(
+    r"\bmain(?:\.\w+)+(?:\s*\[[^\]]+\])?\s*(?:\+=|-=|\*=|/=|=(?!=))"
+)
+
 
 def check_gameconfig_writes(name, code, problems):
     if name in GAMECONFIG_WRITE_ALLOWLIST:
@@ -240,6 +246,17 @@ def check_gameconfig_writes(name, code, problems):
         if GAMECONFIG_ASSIGN_RE.search(line):
             problems.append(
                 "%s:%d  writes GameConfig outside its allowlist: %s"
+                % (name, i, line.strip()[:80])
+            )
+
+
+def check_conditions_read_only(name, code, problems):
+    if name != "conditions.gd":
+        return
+    for i, line in enumerate(code, 1):
+        if CONDITIONS_MAIN_ASSIGN_RE.search(line):
+            problems.append(
+                "%s:%d  assigns through main; conditions.gd must only read cached facts: %s"
                 % (name, i, line.strip()[:80])
             )
 
@@ -2610,6 +2627,7 @@ def main():
         check_declarations(name, code, problems)
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
+        check_conditions_read_only(name, code, problems)
         check_offset_rect_literals(name, lines, problems)
         check_panel_custom_min_size(name, code, problems)
         check_autonomous_transitions(name, lines, problems)
