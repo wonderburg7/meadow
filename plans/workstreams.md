@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/H4` (`codex/H4`) | Codex | a headless run can start a Challenge and reach a stage. | Codex | in progress | none | `plans/design/architecture-review.md` "H4 — a headless run can start a Challenge and reach a stage" |
+| `.worktrees/D1` (`claude/D1`) | Claude | one settings persistence authority, first half. | Claude | in progress | none | `plans/design/architecture-review.md` "D1 — one settings persistence authority" |
