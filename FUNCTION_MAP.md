@@ -728,7 +728,7 @@ restart.
 870  func _restart() -> void
 ```
 
-## game_config.gd (870 lines)
+## game_config.gd (874 lines)
 
 The balance fields.
 
@@ -751,9 +751,9 @@ The balance fields.
 655  # --- bee individuality ---
 734  # --- the rival colony ---
 783  # --- seasons ---
-809  # --- disease ---
-837  # --- gynes leaving ---
-844  # --- winter ---
+813  # --- disease ---
+841  # --- gynes leaving ---
+848  # --- winter ---
 ```
 
 ## scenario_actions.gd (853 lines)

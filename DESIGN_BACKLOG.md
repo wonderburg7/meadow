@@ -24,7 +24,6 @@ home per fact: read the plan.
 | UI and accessibility | `plans/now/ui.md` |
 | A control inside a HUD panel (built) | `plans/archive/HUD_CONTROLS_2026-09-11.md` |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/archive/HIVE_COMB_2026-09-12.md` |
-| The flowering year's peaks and troughs | `plans/now/season-balance.md` |
 | The check/slice loop itself | `plans/reference/check-loop.md` |
 | Derived colony-state facts | `plans/reference/colony-diagnostics.md` |
 | Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
@@ -43,6 +42,7 @@ starts a fresh `plans/now/` or `plans/design/` file.
 | Settings/config ownership | `plans/archive/SETTINGS_CATALOGUE_2026-09-01.md` |
 | Settings surviving a run change | `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` |
 | Codex execution reliability | `plans/archive/CODEX_RELIABILITY_2026-09-09.md` |
+| The flowering year's peaks and troughs | `plans/archive/SEASON_BALANCE_2026-09-12.md` |
 
 ## Deferred product decisions
 
