@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/A2` (`codex/A2`) | Codex | one role tally. | Codex | in progress | none | `plans/design/architecture-review.md` "A2 — one role tally" |
-| `.worktrees/A4` (`claude/A4`) | Claude | wire the goal cadence. | Claude | in progress | none | `plans/design/architecture-review.md` "A4 — wire the goal cadence" |
