@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/A3` (`claude/A3`) | Claude | epoch-cached hive stock totals. | Claude | in progress | none | `plans/design/architecture-review.md` "A3 — epoch-cached hive stock totals" |
+| `.worktrees/UI-P-5` (`codex/UI-P-5`) | Codex | reproduce the missing pre-run placeholder live. | Codex | in progress | none | `plans/now/ui.md` "UI-P-5 — pre-run menu: \"Choose a Challenge or Scenario on the left.\" isn't visible" |
