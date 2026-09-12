@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/B1` (`claude/B1`) | Claude | the cell-content catalogue, data only. | Claude | in progress | none | `plans/design/architecture-review.md` "B1 — the cell-content catalogue, data only" |
 | `.worktrees/C1-26` (`codex/C1-26`) | Codex | the marker asks to be noticed, and says where it is. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 26 — the stage marker asks to be noticed, and says where it is" |
