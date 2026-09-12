@@ -446,6 +446,54 @@ def check_stage_effects_order(name, lines, problems):
         )
 
 
+def check_goal_cadence_registry(problems):
+    """A4 (plans/design/architecture-review.md): a Challenge stage's "goal"
+    id in challenge_stages.gd, GOAL_CADENCE and _build_goal_registry's
+    _goal_registry in challenge_runner.gd must all name the same set of
+    ids. This is the three-lists problem -- a goal added to the stage data
+    without a matching GOAL_CADENCE entry would fall back to being checked
+    every frame with a loud push_error rather than the cadence the plan
+    intends, and one missing from _goal_registry would never complete at
+    all."""
+    stages_path = os.path.join(ROOT, "challenge_stages.gd")
+    runner_path = os.path.join(ROOT, "challenge_runner.gd")
+    for path in (stages_path, runner_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for goal cadence check" % os.path.basename(path))
+            return
+    stages_src = open(stages_path, encoding="utf-8").read()
+    runner_src = open(runner_path, encoding="utf-8").read()
+
+    stage_goals = set(re.findall(r'"goal":\s*"([^"]+)"', stages_src))
+
+    cadence_match = re.search(r"const\s+GOAL_CADENCE\s*:=\s*\{(.*?)\n\}", runner_src, re.S)
+    if not cadence_match:
+        problems.append("challenge_runner.gd: could not find 'const GOAL_CADENCE := { ... }'")
+        return
+    cadence_goals = set(re.findall(r'"([^"]+)"\s*:', cadence_match.group(1)))
+
+    registry_match = re.search(r"_goal_registry\s*=\s*\{(.*?)\n\t\}", runner_src, re.S)
+    if not registry_match:
+        problems.append(
+            "challenge_runner.gd: could not find '_goal_registry = { ... }' in _build_goal_registry"
+        )
+        return
+    registry_goals = set(re.findall(r'"([^"]+)"\s*:', registry_match.group(1)))
+
+    if stage_goals != cadence_goals:
+        problems.append(
+            "challenge_stages.gd/challenge_runner.gd: stage goal ids and GOAL_CADENCE "
+            "keys differ -- stages only: %s; GOAL_CADENCE only: %s"
+            % (sorted(stage_goals - cadence_goals), sorted(cadence_goals - stage_goals))
+        )
+    if stage_goals != registry_goals:
+        problems.append(
+            "challenge_stages.gd/challenge_runner.gd: stage goal ids and "
+            "_build_goal_registry keys differ -- stages only: %s; registry only: %s"
+            % (sorted(stage_goals - registry_goals), sorted(registry_goals - stage_goals))
+        )
+
+
 def check_catalogue_alignment(problems):
     """roles.gd's role ids must match bee_enums.gd's Role enum order
     exactly (see roles.gd's own comment on FORAGER..HONEY) -- a role
@@ -2555,6 +2603,7 @@ def main():
         check_calls(name, code, funcs, problems)
 
     check_autoloads(problems)
+    check_goal_cadence_registry(problems)
     check_catalogue_alignment(problems)
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)

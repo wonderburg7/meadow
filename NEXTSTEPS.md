@@ -329,21 +329,22 @@ environment. Filed as `checks/ready/C-50.md` rather than blocking the merge
 on it. Full record: `plans/archive/A3_2026-09-12.md`. Its `Next after` (A4)
 fills the Claude lane's slot below.
 
+**A4 shipped 12 Sep 2026.** `challenge_runner.gd`'s `_process` now consults
+`GOAL_CADENCE` for the current stage's goal: `frame` every tick as before,
+`poll` on a new 0.25 s timer, `event` as soon as `hive.index_epoch` or
+`main._population_epoch` moves since the last check, with the timer as a
+4 Hz backstop. Challenge 2's `_c2_nectar_low_seen` sampling moved onto the
+same tick. A new `tests/source_checks.py::check_goal_cadence_registry`
+proves the stage goal ids, `GOAL_CADENCE` and `_build_goal_registry` all
+name the same set. Full record: `plans/archive/A4_2026-09-12.md`. Its
+`Next after` (E1) shares `scripts/main.gd` with the Codex lane's leading
+item (A2), so it cannot lead the Claude lane -- L-1, already queued behind
+A4, moves up to lead instead and E1 takes the second slot, claimable once
+either L-1 or A2 ships.
+
 ## Next up
 
-1. **[Claude] A4 -- wire the goal cadence.**
-   `challenge_runner.gd`'s `GOAL_CADENCE` table is declared and never read
-   (F4). Have `_process` consult it per-stage-goal: `frame` runs every frame
-   as now, `poll` at 4 Hz, `event` when `hive.index_epoch` or
-   `main._population_epoch` has moved (4 Hz backstop). Challenge 2's
-   `_c2_nectar_low_seen` sampling moves onto the same 4 Hz tick.
-   - Plan: `plans/design/architecture-review.md` -- "A4 — wire the goal cadence"
-   - Files: `scripts/challenge_runner.gd`
-   - Check: a new `tests/source_checks.py` check that the goal id sets in `challenge_stages.gd`, `GOAL_CADENCE` and `_build_goal_registry` are identical; an existing Challenge scenario fixture completes the same stage sequence
-   - Proof: `absent: scripts/challenge_runner.gd :: GOAL_CADENCE[`
-   - Next after: E1 -- one placement tool, the next dependency-free architecture-review slice, file-disjoint from every open item.
-
-2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
+1. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
    `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
    the Codex permission profile and the verifier's Python resolution. Three of
    its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
@@ -354,6 +355,22 @@ fills the Claude lane's slot below.
    - Check: `python -m unittest tests.test_source_checks` reports 27 passing, and `tools/verify.ps1` fails when `slice.ps1`'s post-merge throw is deleted
    - Proof: `absent: tools/verify.ps1 :: test_source_checks`
    - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
+
+2. **[Claude] E1 -- one placement tool.**
+   Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
+   the same dispatch nine times, with no mutual exclusion between them (F8).
+   Add one `active_placement_tool: String` on `main.gd` plus a
+   `PLACEMENT_TOOLS` catalogue on `input_selection.gd`; collapse `hud.gd`'s
+   nine per-tool signals to one `placement_tool_requested(tool_id)` and
+   `main.gd`'s nine handlers to one lookup. Each tool must still capture
+   exactly the bees it does today. Queued behind L-1 rather than leading: it
+   shares `scripts/main.gd` with the Codex lane's leading item (A2), and the
+   two lanes' leading items must stay file-disjoint.
+   - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
+   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`
+   - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
+   - Proof: `present: scripts/main.gd :: awaiting_build_cell`
+   - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
 3. **[Codex] A2 -- one role tally.**
    Four sites build a role-count key by hand instead of calling
@@ -376,10 +393,10 @@ simply a free slot -- and none of the entries below is startable today.
   (`plans/design/architecture-review.md`), other than A2 and A4 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A4 leads the Claude lane and A2 the
-  Codex lane; A2's own hold (it shared `scripts/hive.gd` with A3) went with
-  A3 shipping on 12 Sep 2026. C1 depends on both A2 and A3, so it is admitted
-  once A2 ships.
+  since those slices have all shipped. A4 shipped 12 Sep 2026; E1 leads the
+  Claude lane and A2 the Codex lane; A2's own hold (it shared
+  `scripts/hive.gd` with A3) went with A3 shipping on 12 Sep 2026. C1 depends
+  on both A2 and A3, so it is admitted once A2 ships.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

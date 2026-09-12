@@ -758,35 +758,15 @@ pinned performance baseline is not yet recorded -- `checks/ready/C-50.md`.
 
 ### A4 — wire the goal cadence
 
-Level: medium. Depends on: A3 for the full benefit, but lands without it.
-
-- **Required reading.** This heading. F4 above. `scripts/challenge_runner.gd`'s
-  `_process`, `GOAL_CADENCE`, `_goal_met` and `_build_goal_registry`.
-- **Files to change.** `scripts/challenge_runner.gd`.
-- **Files not to change.** `scripts/challenge_stages.gd`, `scripts/hive.gd`.
-- **Requirements.** `_process` consults `GOAL_CADENCE` for the current stage's
-  goal. `frame` runs every frame as now. `poll` runs at 4 Hz. `event` runs when
-  `hive.index_epoch` or `main._population_epoch` has moved since the last check,
-  with 4 Hz as a backstop. Challenge 2's `_c2_nectar_low_seen` sampling moves
-  onto the same 4 Hz tick.
-- **Invariants.** Every goal id in `challenge_stages.gd` has a `GOAL_CADENCE`
-  entry; a missing one is an error, not a silent `frame` default. The
-  ordered-visit goals and the greeting and hearts beats stay on `frame`.
-  `_advance()` still runs in the same frame the goal is first seen met.
-- **Implementation guidance.** One `_goal_poll_timer` on the runner, reset to
-  0.25 s. Keep `_goal_met` as it is and gate the call site. Do not change any
-  predicate body in this slice.
-- **Runtime policy.** As stated above: 4 Hz for `poll` and `event`, per frame
-  for `frame`. Worst-case goal latency 250 ms, which no stage's text implies is
-  too slow.
-- **Automated acceptance.** Add a `tests/source_checks.py` check that the goal
-  id sets in `challenge_stages.gd`, `GOAL_CADENCE` and `_build_goal_registry`
-  are identical — this is the three-lists problem, and the check is cheaper than
-  the collapse in C2. Run an existing Challenge scenario fixture and confirm the
-  same stage sequence completes.
-- **Escalation.** If any stage completes in a different order, stop and report
-  which. A stage that needed per-frame detection is a design fact worth
-  recording, not a cadence to widen.
+Shipped 12 Sep 2026. `_process` now gates each stage's goal check on
+`GOAL_CADENCE`: `frame` every tick as before, `poll` on a new 0.25 s
+`_goal_poll_timer`, `event` as soon as `hive.index_epoch` or
+`main._population_epoch` moves since the last check, with the same timer as
+a 250 ms backstop. Challenge 2's `_c2_nectar_low_seen` sampling moved onto
+the same tick. A new `tests/source_checks.py::check_goal_cadence_registry`
+proves `challenge_stages.gd`'s stage goal ids, `GOAL_CADENCE` and
+`_build_goal_registry` all name the same set. Full record:
+`plans/archive/A4_2026-09-12.md`.
 
 ### B1 — the cell-content catalogue, data only
 
