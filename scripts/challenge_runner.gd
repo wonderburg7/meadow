@@ -120,6 +120,20 @@ var _greeting_start_angle: float = 0.0
 ## together.
 var _hearts_timer: float = 0.0
 
+## GOAL_CADENCE's "poll"/"event" backstop, seconds remaining to the next 4 Hz
+## tick (Slice A4). "frame" goals ignore this and check every _process call
+## as before; "poll" goals only check when it fires; "event" goals check
+## early too, the moment _goal_checked_index_epoch/_goal_checked_population_epoch
+## go stale, with this as the worst-case fallback for the rare event a
+## predicate can't reach purely through those two epochs.
+const GOAL_POLL_INTERVAL: float = 0.25
+var _goal_poll_timer: float = 0.0
+## hive.index_epoch/main._population_epoch as last observed at a poll tick,
+## so an "event" goal can tell a real change from "nothing moved since we
+## last looked" without re-running its own predicate every frame.
+var _goal_checked_index_epoch: int = -1
+var _goal_checked_population_epoch: int = -1
+
 ## Challenge 1 only: the queen gathers at twice her normal rate once the
 ## automatic-foraging lesson begins. Keep the actual pre-override values so
 ## traits and debug-tuned rates are restored exactly when the Challenge ends.
@@ -217,6 +231,9 @@ func start() -> void:
 	_new_worker = null
 	_greeting_active = false
 	_hearts_timer = 0.0
+	_goal_poll_timer = 0.0
+	_goal_checked_index_epoch = -1
+	_goal_checked_population_epoch = -1
 	main.awaiting_queen_build_cell = false
 	main.queen.player_driven = false
 	main.queen.flower_switch_locked = false
@@ -287,13 +304,46 @@ func _process(delta: float) -> void:
 		_hearts_timer -= delta
 		if _hearts_timer <= 0.0 and is_instance_valid(main.queen):
 			main.queen.laying_paused = false
+	_goal_poll_timer -= delta
+	var goal_tick_due: bool = _goal_poll_timer <= 0.0
 	if Session.starting_level == 2:
-		_c2_nectar_low_seen = min(_c2_nectar_low_seen, main.hive.total("nectar"))
+		if goal_tick_due:
+			_c2_nectar_low_seen = min(_c2_nectar_low_seen, main.hive.total("nectar"))
 		_check_c2_failure()
 		if not active:   # a restore can end the run mid-frame -- see below
 			return
-	if _goal_met(_stages()[_stage_index].goal):
+	var goal_id: String = _stages()[_stage_index].goal
+	var check_goal_now: bool = _should_check_goal(goal_id, goal_tick_due)
+	if goal_tick_due:
+		_goal_poll_timer = GOAL_POLL_INTERVAL
+		_goal_checked_index_epoch = main.hive.index_epoch
+		_goal_checked_population_epoch = main._population_epoch
+	if check_goal_now and _goal_met(goal_id):
 		_advance()
+
+## GOAL_CADENCE's runtime half (Slice A4 -- see the const's own comment for
+## the "frame"/"poll"/"event" meanings). `goal_tick_due` is true once every
+## GOAL_POLL_INTERVAL seconds, shared with the epoch snapshot above so
+## "event" goals fall back to the same cadence as "poll" ones when nothing
+## epoch-tracked moved. A goal id absent from GOAL_CADENCE is a data bug --
+## tests/source_checks.py catches it before this ever runs -- so this falls
+## back to checking every frame rather than silently never firing.
+func _should_check_goal(goal_id: String, goal_tick_due: bool) -> bool:
+	var cadence: String = GOAL_CADENCE.get(goal_id, "")
+	match cadence:
+		"frame":
+			return true
+		"poll":
+			return goal_tick_due
+		"event":
+			return (
+				goal_tick_due
+				or main.hive.index_epoch != _goal_checked_index_epoch
+				or main._population_epoch != _goal_checked_population_epoch
+			)
+		_:
+			push_error("challenge_runner: goal '%s' has no GOAL_CADENCE entry" % goal_id)
+			return true
 
 ## Challenge 2's soft-failure/rescue, from 2.1 onward (TUTORIAL_PLAN.md's
 ## "Failure and rescue"). Runs every frame once active, but only actually
@@ -1005,14 +1055,13 @@ func _drive_greeting(delta: float) -> void:
 	var angle: float = _greeting_start_angle + t * TAU
 	_new_worker.position = centre + Vector2(cos(angle), sin(angle)) * Stages.GREETING_RADIUS
 
-## Declared cadence per goal id (Slice 4, CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md):
+## Declared cadence per goal id (Slice 4, CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md;
+## wired to _process by Slice A4, architecture-review.md):
 ## "frame" tracks a moving position/state every tick, "event" only ever
 ## flips true once from a discrete happening (a build, a hatch, a
-## selection), "poll" compares accumulated totals against a target. This is
-## documentation for a future optimisation pass, not yet wired to a real
-## schedule -- every goal is still checked once per _process below, exactly
-## as before this slice. Wiring an actual per-cadence schedule is Slice 6's
-## job, only once a Perf capture names this loop as a real hot path.
+## selection), "poll" compares accumulated totals against a target.
+## _should_check_goal() below is what actually reads this per _process
+## call; see its own comment and GOAL_POLL_INTERVAL for the runtime half.
 const GOAL_CADENCE := {
 	"entrance_tunnel_cleared": "frame", "queen_reached_cavity": "frame",
 	"queen_selected": "event", "hive_points_visited": "frame",
