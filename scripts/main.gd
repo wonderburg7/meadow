@@ -780,7 +780,7 @@ func _reseed_meadow(delta: float) -> void:
 ## there comes out the same way without you touching it again.
 func _hatch_ready_brood() -> void:
 	Perf.begin("hatch")
-	for cell in hive.cells:
+	for cell in hive.cells_holding("brood").duplicate():
 		if not cell.brood_ready():
 			continue
 		# A cell with no role named raises an ordinary nectar forager --
