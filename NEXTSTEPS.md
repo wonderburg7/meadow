@@ -341,17 +341,7 @@ in the Codex lane) is not A1's own to name twice.
    - Files: `scripts/main_menu.gd`
    - Check: Dave's live reproduction identifies whether the placeholder is missing or merely obscured
    - Proof: `present: scripts/main_menu.gd :: var detail_placeholder`
-   - Next after: A2 -- one role tally.
-
-4. **[Codex] A2 -- one role tally.**
-   Role counts are currently built in several incompatible places. Derive the
-   population readout and colony diagnostics from the canonical `Roles.count_key`
-   representation, including the hive's hatch-focus counts.
-   - Plan: `plans/design/architecture-review.md` -- "A2 — one role tally"
-   - Files: `scripts/main.gd`, `scripts/colony_diagnostics.gd`, `scripts/hive.gd`
-   - Check: no file outside `roles.gd` contains the legacy `"%d|%s"`, `"%d|"` or `"0|%s"` count keys; an H3 equivalence run preserves the colony population lines
-   - Proof: `present: scripts/main.gd :: func _role_counts() -> Dictionary`
-   - Next after: A3 -- epoch-cached hive stock totals.
+   - Next after: A2 -- one role tally, once A3 has shipped (see "Not in the queue" below).
 
 ## Not in the queue, and why
 
@@ -359,12 +349,14 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`), other than A1 and A2 above --
-  Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
-  21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A1 leads the Claude lane and A2 holds
-  the Codex lane's second slot; A3, A1's own named successor, is promoted
-  when A1 lands.
+  (`plans/design/architecture-review.md`), other than A3 above -- Decision
+  A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices 21-26 to
+  vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026, since
+  those slices have all shipped. A3 leads the Claude lane. A2 -- one role
+  tally is held out of the Codex lane rather than run alongside it: both
+  slices touch `scripts/hive.gd` (`tools/check_docs.py` flags exactly this as
+  a cross-lane collision waiting to happen), so A2 is re-admitted once A3
+  ships.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own
