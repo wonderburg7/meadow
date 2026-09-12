@@ -11,6 +11,7 @@ signal storage_changed(nectar: float, pollen: float, honey: float, jelly: float)
 
 const Shapes = preload("res://scripts/shapes.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
+const Resources = preload("res://scripts/resources.gd")
 
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
@@ -113,10 +114,12 @@ func _content_index() -> Dictionary:
 		return _index
 	Perf.begin("hive_index_rebuild")
 
-	var buckets := {
-		"": [], "nectar": [], "pollen": [], "honey": [], "jelly": [],
-		"brood": [], "corpse": [], "unbuilt": [], "ripe_honey": [],
-	}
+	var buckets := {}
+	for key in Resources.content_keys():
+		buckets[key] = []
+	# Derived buckets: not content kinds, so not in Resources.content_keys().
+	buckets["unbuilt"] = []
+	buckets["ripe_honey"] = []
 	for cell in cells:
 		if not is_instance_valid(cell):
 			continue
