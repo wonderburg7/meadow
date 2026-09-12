@@ -11,6 +11,13 @@ every failure after its first push leaves work merged with cleanup
 outstanding. Make closeout a transaction that is safe to interrupt and safe
 to re-run, prove it under two concurrent lanes, and measure the result.
 
+The second objective is cost, and it is the larger one. Writing code is 25.6%
+of a session's context spend; 47.1% falls after the last product edit, in
+closeout and document curation, and a further 17.4% goes to sessions that
+make no product edit at all. **Target: raise the implementing share above
+40%**, measured the same way at L-9. Nothing in this plan may buy that by
+removing a check.
+
 The evidence is in `docs/agent-workflow-review-2026-09-12.md`; findings are
 cited as F1 to F12 and are not restated here. The 3 September plan is
 complete and archived at `plans/archive/AGENT_WORKFLOW_2026-09-03.md`. It is
@@ -42,7 +49,7 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 | L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | after L-1 | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | after L-1 | medium |
-| L-9 | the session floor is measured, split, and gates this plan | `tools/session_cost.py`, this plan | after L-5 | medium |
+| L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | after L-5 | medium |
 
 Dependencies, stated rather than implied: L-1 is the prerequisite for
 everything, because nothing else in this plan can be trusted while its tests
@@ -313,6 +320,13 @@ must then cover.
    Remove the second and third pushes.
 5. If any phase throws, print the journal's phase and the exact recovery
    command, which is `tools/slice.ps1 resume -Lane <lane>`.
+6. Fill the whole end-of-slice report rather than three quarters of it. The
+   `Next slice`, `Other lane` and `Start it with` lines were left for the
+   session to derive by hand because deriving them needed the owning plan;
+   `next_after` is now parsed and the successor has just been promoted, so
+   all three are lookups. Print the branch diffstat the merge produced in the
+   same block. Between them these are what 639 hand-run `git` calls after the
+   last product edit were reconstructing.
 
 **Tests and failure injection.** Extend L-2's injected-phase test to the two
 new phases and assert `resume` completes them. Add
@@ -328,7 +342,11 @@ files. Every step is a file move or a text edit with a test.
 
 **Expected improvement.** 43 surplus `finish` calls and 10 never-finished
 sessions become 0 retries from partial state. 8 of Dave's 18 mid-session
-questions disappear, because promotion becomes a lookup.
+questions disappear, because promotion becomes a lookup. And the cost
+objective: 845 queue, plan, check and ledger calls after the last product
+edit, roughly 156M tokens or 13% of the window, become one command; the 639
+hand-run `git` calls lose their reason to exist. This is the slice the 40%
+target rests on.
 
 **Next slice.** L-6.
 
@@ -474,9 +492,9 @@ from scratch, and the import-cache false alarm is named on sight.
 ## L-9 — the floor is measured and split, and this plan is gated
 
 **Objective.** W-2 targeted a session-opening floor of 45,000 tokens, never
-measured itself, and the floor is 77,322 today. Make the measurement
-separate what the repository owns from what it does not, then gate this plan
-on it.
+measured itself, and the floor is 77,322 today. Make the measurement separate
+what the repository owns from what it does not, add the phase split F13
+reports so the plan's cost target is checkable, then gate this plan on both.
 
 **Non-goals.** Do not add or remove any deny rule in
 `.claude/settings.json`. This slice measures; a later slice may act.
@@ -488,6 +506,12 @@ in place before the after-measurement is taken.
 
 **Algorithm.**
 
+0. Add `--phases` to `session_cost.py`, printing the four-row table F13
+   reports: requests, context and share for the phases before the first
+   product edit, between the first and last, after the last, and for sessions
+   with no product edit. Bound the phases by edits to `scripts/`, `scenes/`,
+   `shaders/`, `tests/`, `tools/` and `test_scenarios/`, and reproduce F13's
+   figures for 4 to 12 September 2026 within 10% before trusting it.
 1. In `session_cost.py`, split the session-opening context into two figures:
    `repository context`, the tokens attributable to reads of files under the
    repository root in the session's first request, and `host context`, the
@@ -499,7 +523,7 @@ in place before the after-measurement is taken.
    77,322 split into its two parts, and the after.
 
 **Completion gate.** This plan is not complete, and its `Next:` does not
-read `None — plan complete`, until all three hold:
+read `None — plan complete`, until all four hold:
 
 1. `python tools/session_cost.py --days 1` has been run in a session opened
    after L-5 merged, and both the before and after figures are recorded in
@@ -510,6 +534,10 @@ read `None — plan complete`, until all three hold:
    closed out end to end by each lane, in a session opened after the
    configuration changes, with a single `finish` call and no manual repair.
    Name both canary slices here.
+4. The phase split has been re-measured over the sessions since L-5 merged,
+   the same way F13 measured it, and the implementing share is above 40%.
+   Record the four phase figures beside F13's. A share that has not moved
+   means the queue and document work went somewhere else rather than away.
 
 **Proof.** `absent: tools/session_cost.py :: host context`
 

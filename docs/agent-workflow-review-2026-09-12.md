@@ -14,12 +14,20 @@ landed. Part 6 is what Dave can do now.
 
 The previous review's conclusion was that the expensive failures are state
 asserted in prose and never verified by a script. That was right, and the
-fixes it produced work. This review's conclusion is one level down: **the
-enforcement layer built on 3 September is itself unenforced.** The lifecycle
-script now owns claiming, merging, pushing and cleanup, and its own test
-suite -- 27 tests, 3 of them currently red -- is not run by
+fixes it produced work. This review has two conclusions one level down.
+
+**The enforcement layer built on 3 September is itself unenforced.** The
+lifecycle script now owns claiming, merging, pushing and cleanup, and its own
+test suite -- 27 tests, 3 of them currently red -- is not run by
 `tools/verify.ps1`. The full-lifecycle fixture has been failing at the exact
 closeout step that fails in production, on `master`, unseen.
+
+**And writing the code is a quarter of what a session costs.** The other
+three quarters are lifecycle: orienting, verifying, merging, and curating the
+queue, plans and checks afterwards. That split was measured on Dave's
+challenge of 12 September, after the first draft of this review costed the
+session-opening floor and the retries but never asked where the rest went.
+See F13.
 
 ---
 
@@ -88,6 +96,22 @@ Slices that took more than one session: `UI-Q-3` at three, and `UI-T-5`,
 `HC-1`, `PR-A4`, `HC-10` and `D1` at two each. That is 6 of 55
 implementation sessions, materially better than the Codex sample, and not a
 finding on its own.
+
+Where the context actually goes, attributing every request to the phase its
+timestamp falls in. A session's phases are bounded by its first and last edit
+to a file under `scripts/`, `scenes/`, `shaders/`, `tests/`, `tools/` or
+`test_scenarios/`; a session with no such edit is counted whole:
+
+| Phase | Requests | Context | Share |
+| --- | --- | --- | --- |
+| After the last product edit: verify, closeout, queue and docs | 3,114 | 575.7M | 47.1% |
+| Implementing: first product edit to last | 1,531 | 312.8M | 25.6% |
+| Sessions that made no product edit at all | 1,337 | 213.0M | 17.4% |
+| Before the first product edit: orient and claim | 1,100 | 120.6M | 9.9% |
+
+**Writing the code is a quarter of the spend.** The other three quarters are
+lifecycle: deciding what to do, verifying, merging, and curating the queue,
+plans and checks afterwards. See F13.
 
 ## Part 2 -- Codex's 24-task sample, checked against the repository
 
@@ -463,6 +487,56 @@ different things and must be counted separately.
 **Owner** Claude. **Risk** low. **Validation** the measurement baseline
 reproduces Part 1's counts from the same records. **Low-reasoning model**
 yes.
+
+### F13 -- Lifecycle costs three times what implementation costs
+
+**Evidence.** Attributing all 7,082 requests in the window to a phase, the
+implementing phase is 25.6% of context volume and everything else is 74.4%.
+The largest single block, 47.1%, falls after the session's last product edit.
+What happens there, counted as tool calls: 3,047 after the last edit against
+466 product edits, a median of 56 closeout calls per implementation session.
+
+| After the last product edit | Calls | Same calls while implementing |
+| --- | --- | --- |
+| Shell, uncategorised | 687 | 419 |
+| `git` run by hand | 639 | 83 |
+| Editing the queue, plans, checks or ledger | 502 | 91 |
+| Reading the queue, plans, checks or ledger | 343 | 56 |
+| Reading or searching anything else | 230 | 338 |
+| `check_docs.py`, `heading.py`, index generators | 203 | 41 |
+| `verify.ps1` | 202 | 29 |
+| `slice.ps1` | 143 | 17 |
+
+Three things stand out. Hand-run `git` after the edits outnumbers hand-run
+`git` during them almost eight to one, on top of everything `slice.ps1`
+already does. Queue, plan, check and ledger work is 845 calls, all of it
+after the code was finished. And `verify.ps1` runs 3.8 times per session
+after the last edit, when the full verifier takes 7.6 seconds and the docs
+check alone takes 0.6.
+
+**Cost.** Each of those calls is a model request carrying the whole
+conversation, averaging 185K tokens by that point in a session. The 845 queue
+and document calls alone are roughly 156M tokens, 13% of the window.
+
+**Root cause.** Tooling, almost entirely. `finish` deliberately does not
+touch the queue or the archive, so a human-shaped sequence of reads and edits
+does that work every time. It also prints only part of its own end-of-slice
+report, leaving three lines to be derived by hand from the owning plan.
+
+**3 September.** Not identified. That review measured the session-opening
+floor and the total, never the split, so the largest block was invisible.
+
+**Earlier fix.** Not attempted.
+
+**Mechanism.** L-5 already automates the queue refill and the archival for
+reliability reasons. Give it the cost objective too, and two additions that
+cost nothing extra once the transaction exists: `finish` fills its whole
+report, including the successor it just promoted, and prints what it did to
+the branch, so the session does not re-derive either with `git`.
+
+**Owner** Claude. **Risk** covered by L-5's tier. **Validation** the phase
+split is re-measured at L-9 and the implementing share must rise.
+**Low-reasoning model** yes, as part of L-5.
 
 ## Part 4 -- What 3 September shipped, graded
 
