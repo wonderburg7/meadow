@@ -269,14 +269,14 @@ lane's slot below.
 
 ## Next up
 
-1. **[Codex] C1-26 -- the marker asks to be noticed, and says where it is.**
-   Make the stage marker pulse while visible, and add a HUD arrow at the
-   unobscured viewport edge when the marker is off-screen in the active world.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 26 — the stage marker asks to be noticed, and says where it is"
-   - Files: `scripts/challenge_runner.gd`, `scripts/hud.gd`
-   - Check: at a marked stage the marker pulses; moving the camera away shows an edge arrow that is never hidden behind a panel
-   - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
-   - Next after: Challenge 1 Slice 7 -- acceptance pass and documentation.
+1. **[Codex] C1-7 -- Challenge 1 acceptance pass and documentation.**
+   Play Challenge 1 start to finish, verify every acceptance item, then make
+   the required copy and current-document pass.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)"
+   - Files: `docs/challenge-stages.md`
+   - Check: `tools/verify.ps1` passes and every named Challenge 1 acceptance check is observed in a complete playthrough
+   - Proof: `present: plans/now/challenge-1.md :: ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)`
+   - Next after: none -- completes Challenge 1.
 
 2. **[Claude] B2 -- the comb index derives from the catalogue.**
    `hive.gd::_content_index` builds its bucket dictionary from a nine-name
@@ -306,10 +306,6 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- the queue holds three (the floor), and none of the
 entries below is startable today.
 
-- **Challenge 1 Slice 26** (`plans/now/challenge-1.md`) -- it waits for
-  Slice 24, the other open change to the same marker node. The Codex lane
-  reaches it in ordinary order: H4 makes Slice 24's headless assertion
-  runnable, and Slice 24 promotes Slice 26.
 - **The architecture review's remaining A-to-G slices**
   (`plans/design/architecture-review.md`) -- Dave admitted the four that touch
   no `challenge_runner.gd` (H3 and H1 shipped 11 Sep 2026, H2 shipped 11 Sep
@@ -317,9 +313,6 @@ entries below is startable today.
   21 to 26 have vacated that file, which H4 and C1-24 above are both still
   in. A2 is now admitted above: H4's `scripts/main.gd` ownership has landed,
   and A2 shares no file with either leading queue item.
-- **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
-  playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
-  pollen arc work unattended.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It

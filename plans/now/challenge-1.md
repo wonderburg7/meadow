@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 26 -- the stage marker asks to be noticed, and says where it is | Dependency: Slice 7 waits on Slice 26 | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude Code | Next: Slice 7 -- acceptance pass and documentation | Dependency: none | Verified: 2026-09-12
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -53,17 +53,14 @@ not be run: `plans/archive/C1-21_2026-09-11.md`.
 
 ## Open slices at a glance
 
-Slices 20, 21, 22, 23 and 25 have all shipped; their specifications are
+Slices 20 through 26 have all shipped; their specifications are
 archived (see the pointers above and `plans/archive/`). What remains:
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
-| 24 | A stage marker appears in the meadow at 1.12 (yellow dot) | `challenge_runner.gd` | low |
-| 26 | The marker does not pulse, and vanishes when off screen | `challenge_runner.gd`, `hud.gd` | medium |
 | 7 | The acceptance playthrough and copy pass | docs | -- |
 
-Slice 26 depends on Slice 24, which is the other open change to the same
-marker node. Slice 7 runs last.
+Slice 7 runs last.
 
 **Slices 24 and 26 name a headless assertion that cannot be run yet (found 11
 Sep 2026, narrowed 11 Sep 2026 when Slice 21 shipped on a static trace
@@ -124,132 +121,13 @@ Shipped 11 Sep 2026. Full specification and delivery record:
 Shipped 11 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-23_2026-09-11.md`](../archive/C1-23_2026-09-11.md).
 
+## Slice 26 — the stage marker asks to be noticed, and says where it is
+
 Shipped 12 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-24_2026-09-12.md`](../archive/C1-24_2026-09-12.md).
 
-## Slice 26 — the stage marker asks to be noticed, and says where it is
-
-**Reasoning level: medium.** One existing node gains an animation, and one
-new HUD element has to avoid the panels already on screen.
-
-**Purpose and intended outcome.** A player who has been told to right-click a
-marked place can find it, whether it is on screen or not. Two of Dave's 10
-Sep 2026 asks are answered together because both are about the same node.
-
-**Status and dependencies.** Follows Slice 24, which is the other open change
-to the same marker in the same file. Take Slice 24 first; this slice assumes
-the marker is in the world the player is looking at.
-
-**What Dave asked (10 Sep 2026).**
-
-- "Make the yellow 'move here' symbols pulse so they get the player's
-  attention."
-- "If a yellow 'move here' symbol is off screen, show an arrow at the closest
-  point on the screen guiding the player to the symbol. Consider how panels
-  could obscure this so it's still visible."
-
-**Established.** There is exactly one marker: `challenge_runner.gd`'s
-`_marker`, a `Polygon2D` created in the runner's setup, coloured
-`Stages.MARKER_COLOUR`, re-parented between `hive_root` and `meadow_root` and
-positioned by `_update_marker(stage_id)` and `_show_current_visit_point()`.
-It has no animation of any kind and no screen-space counterpart. Challenge 2
-never shows one.
-
-**Current authoritative owner.** `scripts/challenge_runner.gd` owns the
-marker's existence, world and position. `scripts/hud.gd` owns everything
-drawn in screen space, including the panel rectangles the off-screen arrow
-has to avoid. That split is the design: the runner must not draw to the
-screen, and the HUD must not decide where the marker is.
-
-**Required reading.** This heading, `challenge_runner.gd::_update_marker` and
-`_show_current_visit_point`, `scripts/ui_layout.gd`'s persistent-rectangle
-owners, and `scripts/camera_view.gd` for how world coordinates reach the
-screen.
-
-**Files likely to change.** `scripts/challenge_runner.gd`, `scripts/hud.gd`.
-
-**Files that must not be changed.** `scripts/ui_layout.gd` — the arrow reads
-the panel rectangles it already publishes and adds none.
-`scripts/challenge_stages.gd` — no stage data changes.
-
-**Requirements.**
-
-1. While `_marker.visible`, it pulses: a smooth, continuous change of scale
-   or alpha, on a period slow enough to read as a heartbeat rather than a
-   flash. Drive it from a `Tween` set to loop, created when the marker is
-   shown and killed when it is hidden, not from a `_process` accumulator.
-2. The pulse uses unscaled time, so it does not speed up at 4x game speed.
-   Stage 1.11 and 1.14 both set 4x while a marker can be showing, so this is
-   a real case, not a hypothetical.
-3. When the marker is visible but its screen position falls outside the
-   viewport, the HUD shows one arrow at the viewport edge, pointing along the
-   line from the screen centre to the marker. It disappears the moment the
-   marker is on screen.
-4. The arrow is clamped inside the rectangle left over once the persistent
-   panels are excluded — the summary panel, the command tray and Dr
-   Gallerin's bubble along the bottom, and the corner readout at the top.
-   Read those rectangles from `ui_layout.gd`'s existing owner functions; do
-   not restate their geometry. If the true edge point falls behind a panel,
-   slide the arrow along that edge to the nearest point that is not, keeping
-   its rotation pointing at the marker.
-5. The runner publishes the marker's global position and visibility to the
-   HUD through a signal or a single query, in the direction the codebase
-   already uses (`challenge_runner` pushes to `hud` via setters, as
-   `_apply_stage_gate_to_ui` does). The HUD must not reach into
-   `challenge_runner` for it.
-
-**Constraints and invariants.** Presentation never gates simulation: neither
-the pulse nor the arrow may change when a stage completes or where the marker
-is. The arrow is drawn only while a Challenge is active and a marker is
-visible; Challenge 2 and open play show nothing. No new persistent panel — the
-arrow is a lightweight overlay and must not enter the bottom-row layout.
-
-**Existing patterns to reuse.** `Stages.MARKER_COLOUR` for the arrow, so the
-two read as the same thing. `Shapes` for the arrow polygon, matching the
-codebase's flat-polygon placeholder art. `ui_layout.gd`'s rectangle owners
-for the exclusion zone.
-
-**State-transition and cleanup behaviour.** Hiding the marker kills the tween
-and hides the arrow in the same call, so a stage ending cannot leave either
-running. Switching between hive and meadow view hides the arrow if the marker
-is in the other world — a marker in the hive is not "off the right-hand edge"
-of the meadow, and an arrow pointing at it would be a lie. Slice 24 is what
-makes the marker's world reliable, which is why this slice follows it.
-
-**Runtime policy.** The arrow's position is recomputed per frame while it is
-visible, from one world-to-screen transform and a rectangle clamp. That is
-cheap and bounded. The tween costs nothing per frame. Neither may allocate
-per frame.
-
-**Edge cases.** The marker exactly on the viewport edge, where the arrow must
-not flicker on and off — hysteresis, or a small inset, and say which. The
-camera following the queen while the marker is behind her. A viewport resize
-with the arrow showing. The player in hive view at stage 1.10, whose marker
-is in the meadow.
-
-**Automated acceptance checks.** A headless assertion that with the camera
-moved far from the marker the arrow node is visible, its rotation points
-within a few degrees of the true bearing, and its rectangle does not
-intersect any of the three bottom-row panel rectangles; and that with the
-camera on the marker the arrow is hidden. LAY-5's `panel_rect` and LAY-6's
-`control_rect` are the helpers for the intersection test.
-
-**Regression checks.** Slice 24's assertion that the marker is never shown in
-the world the player is not looking at. Stage 1.4's and 1.7's ordered visits,
-where the marker moves between three points in turn.
-
-**Save/load.** None. The marker and the arrow are both rebuilt from the
-current stage.
-
-**Completion and documentation updates.** Update the glance table and Status
-line, archive this heading, and file one check: at a stage with a marker,
-that it pulses, and that walking the camera away puts an arrow at the edge
-which is never hidden behind a panel.
-
-**Escalate rather than guess if:** requirement 4 cannot be satisfied at
-800x600, where the three bottom-row panels plus the corner readout may leave
-too little clear edge for an arrow to be visible at all. That would be a
-question about the bottom row's footprint, not about this arrow.
+Shipped 12 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-26_2026-09-12.md`](../archive/C1-26_2026-09-12.md).
 
 ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
 
