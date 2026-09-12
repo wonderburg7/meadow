@@ -264,6 +264,21 @@ A bee's dispatch loop, player commands, display text, vars.
 2471 func clear_navigation_state() -> void
 ```
 
+## settings_catalogue.gd (1,389 lines)
+
+Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
+
+```
+1282 static func setting_get(key: String)
+1285 static func setting_set(key: String, value) -> void
+1308 static func reset_config_to_defaults() -> void
+1320 static func reset_config_keys(keys: Array) -> void
+1334 static func apply_setting(key: String, value) -> void
+1349 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1367 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1381 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+```
+
 ## bee_foraging.gd (1,329 lines)
 
 The forager's search, scouting, recruitment and species-preference
@@ -587,21 +602,6 @@ One cell: contents, brood, honey ripening, how it draws.
 1090 func _priority_mark() -> String
 1103 func _apply_fill_shading() -> void
 1114 func development_percent() -> float
-```
-
-## settings_catalogue.gd (1,071 lines)
-
-Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
-
-```
-964  static func setting_get(key: String)
-967  static func setting_set(key: String, value) -> void
-990  static func reset_config_to_defaults() -> void
-1002 static func reset_config_keys(keys: Array) -> void
-1016 static func apply_setting(key: String, value) -> void
-1031 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1049 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1063 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## hive.gd (1,015 lines)

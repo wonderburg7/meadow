@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1 and H2 shipped 11 Sep 2026; H4 is the Codex lane's second item, behind HCB-5 -- its cross-lane file conflict with H2 is resolved now H2 has shipped, so it becomes claimable in ordinary lane order once HCB-5 lands | Owner: Dave / Claude Code | Next: H4 -- a headless run can start a Challenge and reach a stage | Dependency: H4 owns `challenge_runner.gd` and lands after C1-21 and C1-22 (both shipped); every A-G slice is held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-11
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2 and H4 all shipped; D1's first half shipped 12 Sep 2026; A2 is admitted to the Codex lane behind C1-24, since it shares no file with either leading queue item | Owner: Dave / Claude Code | Next: D1's second half -- reclassify persist tags per Dave's rule and bump `FORMAT_VERSION` | Dependency: D1's second half and A2 touch no `challenge_runner.gd`, so both are startable now; every other A-G slice stays held until Challenge 1's Slices 21-26 have vacated that file | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -1043,13 +1043,26 @@ Level: medium. Depends on: C1.
 
 ### D1 — one settings persistence authority
 
-Level: medium. Depends on: nothing, beyond Decision A's hold. Both halves are
-startable once that lifts: Dave took the classification decision on 11 Sep 2026
+**First half shipped 12 Sep 2026.** Every `TUNABLES` row now carries a
+`persist` tag (`run`, `player` or `none`) -- including 47 rows added for
+`GameConfig` fields the catalogue never named at all (F11's 25
+saved-but-uncatalogued keys and 22 fields in neither list), each with no
+`category` so none of them gain a visible settings-window control this
+slice didn't intend to add. `scripts/save_game.gd::saved_settings()`
+derives the saved-keys list from the `run` rows in place of the old
+hand-written literal; `tests/source_checks.py::check_settings_persist`
+proves that derivation byte-identical to the literal it replaced, and
+fails on a `GameConfig` field with no row or a `persist` tag pointing at
+the wrong object. Nothing about what is saved changed. Second half below
+is what remains.
+
+Level: medium. Depends on: nothing, beyond Decision A's hold. The second
+half is startable now: Dave took the classification decision on 11 Sep 2026
 (see "Decisions taken 11 Sep 2026" above).
 
 - **Required reading.** This heading. F11 above.
-  `scripts/settings_catalogue.gd`'s header and `TUNABLES` shape.
-  `scripts/save_game.gd::SAVED_SETTINGS` and its comment.
+  `scripts/settings_catalogue.gd`'s header, `TUNABLES` shape and `persist`
+  field. `scripts/save_game.gd::saved_settings()` and its comment.
   `.claude/rules/saving.md`.
 - **Files to change.** `scripts/settings_catalogue.gd`, `scripts/save_game.gd`,
   `tests/source_checks.py`.

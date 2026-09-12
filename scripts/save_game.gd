@@ -17,6 +17,7 @@ extends RefCounted
 ## fixed seed, so they come back identical anyway.
 
 const SaveMigrations = preload("res://scripts/save_migrations.gd")
+const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 
 const SAVE_PATH := "user://meadow_save.json"
 ## Bumped 1 Sep 2026: distinguish explicit cell designations from automatic
@@ -35,91 +36,25 @@ const SAVE_PATH := "user://meadow_save.json"
 ## landing on what the fresh dig now considers soil.
 const FORMAT_VERSION := 4
 
-## Every GameConfig field worth carrying across.
+## Every GameConfig field worth carrying across, derived from
+## settings_catalogue.gd's TUNABLES rather than hand-maintained here --
+## see each row's "persist" field ("run" goes in the save, "player" is a
+## Session preference that never does, "none" is neither). This function's
+## result is byte-identical to the literal list it replaced (D1,
+## plans/design/architecture-review.md); a mismatch between a row's
+## "persist" tag and what a save actually needs is now a single place to
+## fix, checked in tests/source_checks.py, rather than three.
 ##
-## Balance numbers only. The player's interface preferences (starred
-## readouts, info badges, colour-blind mode) deliberately stay out of the
-## save: they belong to the player, not the run, and loading someone
-## else's save should not rearrange your screen. Those live in Session.
-const SAVED_SETTINGS := [
-	"flower_count", "hive_cell_count", "starting_bees", "starting_nurses",
-	"starting_builders", "starting_miners", "starting_honey_makers",
-	"seconds_per_day", "nectar_recharge_rate", "pollen_recharge_rate",
-	"flower_senescence_on", "flower_senescence_floor",
-	"tarsal_markers_on", "tarsal_marker_seconds", "floral_constancy_on",
-	# Orientation flight/scouting/auto-recruitment were missing from this
-	# list entirely -- same gap as the winter numbers below: tuning any of
-	# them in the panel didn't survive a save/load, and a scenario's
-	# config_overrides (checked against this same list -- see
-	# Levels.apply_config_overrides) couldn't turn them on either.
-	"orientation_flight_on", "scouting_on", "auto_recruitment_on",
-	"proximity_recruitment_on",
-	"forage_start_radius", "forage_search_radius",
-	"recruit_lower_threshold_nectar", "recruit_upper_threshold_nectar",
-	"recruit_lower_threshold_pollen", "recruit_upper_threshold_pollen",
-	"recruit_wait_seconds", "recruit_grace_trips", "recruit_start_point_jitter",
-	# Slice 9 (proximity recruitment) -- added alongside the toggle itself
-	# this time, not after the fact (see the comment above this list).
-	"recruit_dance_radius", "recruit_dance_seconds",
-	"recruit_dance_angle_fuzz_degrees", "recruit_dance_distance_fuzz_fraction",
-	"bee_speed", "flower_handling_time", "nectar_collection_rate",
-	"pollen_collection_rate", "deposit_time", "nectar_stomach_capacity",
-	"pollen_stomach_capacity", "cell_capacity", "cell_full_threshold",
-	"egg_pollen_cost", "queen_eat_rate", "queen_speed_factor",
-	"brood_develop_time", "tending_speed_bonus", "brood_feed_seconds",
-	"brood_feed_seconds_honey", "brood_feed_pollen", "brood_feed_nectar",
-	"brood_feed_honey", "brood_feed_threshold", "larva_death_seconds",
-	"cell_clean_time", "nurse_carry_feeds", "nurse_load_time",
-	"hunger_threshold", "bee_eat_rate", "flight_energy_burn",
-	"forager_drink_threshold", "nectar_drink_rate", "crop_drink_threshold",
-	"gyne_size_factor", "gyne_speed_factor", "gyne_energy_factor",
-	"gyne_egg_pollen_cost", "gyne_develop_multiplier", "brood_feed_jelly",
-	"brood_feed_seconds_gyne", "jelly_pollen_cost", "jelly_honey_cost",
-	"jelly_make_time", "jelly_per_batch", "jelly_cell_capacity",
-	"weather_on", "rain_chance_per_day", "rain_min_seconds",
-	"rain_max_seconds", "rain_nectar_dilution", "rain_flight_burn_factor",
-	"rain_forage_limit", "honey_cell_capacity", "honey_energy_factor",
-	"nectar_per_honey", "honey_chew_time", "honey_ripen_time",
-	"honey_rewet_factor", "block_mine_time", "miner_dirt_capacity",
-	"dirt_fill_rate", "dirt_dump_time", "cell_build_time",
-	"build_energy_burn", "hive_interior_rings", "hive_soil_depth",
-	"hive_rock_rings", "hive_entrance_width", "hive_cell_size",
-	"hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
-	"energy_capacity", "energy_burn_rate",
-	"low_energy_warning_fraction", "low_energy_warning_level",
-	"low_energy_gap",
-	# The winter numbers were missing from this list entirely -- tuning
-	# any of them in the panel didn't survive a save/load. Added together
-	# rather than just the new one, since the gap applied to all four.
-	"winter_countdown_days", "winter_length_days",
-	"winter_burn_factor", "winter_lifespan_factor",
-	# Bee individuality.
-	"trait_positive_chance", "trait_magnitude_bands",
-	"fact_trait_matched_chance", "fact_general_chance", "fact_templated_chance",
-	"visual_size_jitter_range", "visual_tint_jitter_range",
-	"milestone_interval", "epitaph_min_gap",
-	# Crab spiders. Added so a --scenario= file can turn predators on
-	# via config_overrides (AI_PLAYTEST_PLAN.md slice 6) -- overrides
-	# are checked against this same list, so it doubles as making
-	# predators_on/attack chance survive an ordinary save/load too,
-	# which they didn't before.
-	"predators_on", "crab_spider_attack_success_chance",
-	# Slices 5/6 (local search, probabilistic choice/patch memory) were
-	# missing from this list entirely, same gap as orientation/scouting
-	# and the winter numbers above -- discovered while adding Slice 7's
-	# own new keys below. Added together so tuning any of these in the
-	# panel, or turning them on via a scenario's config_overrides, now
-	# actually survives a save/load.
-	"forage_perception_radius", "local_search_drift_rate",
-	"forage_search_spiral_step", "forage_search_angle_step",
-	"probabilistic_choice_on", "probabilistic_choice_heading_weight",
-	"known_patches_max", "known_patch_min_spacing",
-	# Slice 7 (handling experience, adaptive constancy).
-	"handling_experience_on", "handling_experience_floor",
-	"handling_experience_visits_to_floor",
-	"adaptive_constancy_on", "adaptive_constancy_gain",
-	"adaptive_constancy_decay", "adaptive_constancy_weight",
-]
+## The player's interface preferences (starred readouts, info badges,
+## colour-blind mode) deliberately stay out of the save: they belong to
+## the player, not the run, and loading someone else's save should not
+## rearrange your screen. Those live in Session, tagged "player".
+static func saved_settings() -> Array:
+	var keys: Array = []
+	for entry in SettingsCatalogue.TUNABLES:
+		if entry.get("persist", "none") == "run":
+			keys.append(entry.key)
+	return keys
 
 static func has_save(path: String = SAVE_PATH) -> bool:
 	return FileAccess.file_exists(path)
@@ -182,7 +117,7 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 
 static func _settings_dict() -> Dictionary:
 	var out := {}
-	for key in SAVED_SETTINGS:
+	for key in saved_settings():
 		out[key] = GameConfig.get(key)
 	return out
 
