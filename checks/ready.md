@@ -34,4 +34,7 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-48 -- Challenge 1's marker remains noticeable and findable](ready/C-48.md)
 - [C-49 -- Challenge stages can be replayed from settings](ready/C-49.md)
 - [C-50 -- record A3's pinned performance baseline](ready/C-50.md)
+- [C-51 -- the HUD is back: every panel and label draws again](ready/C-51.md)
+- [C-52 -- the settings window is about a third of the screen's width, not half](ready/C-52.md)
+- [C-53 -- the Controls list reads as one list, with no gaps](ready/C-53.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

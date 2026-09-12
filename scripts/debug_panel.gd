@@ -381,14 +381,17 @@ func _refresh_challenge_stage_navigation() -> void:
 	challenge_retreat_btn.disabled = not runner.can_debug_retreat_stage()
 	challenge_advance_btn.disabled = not runner.can_debug_advance_stage()
 
+## The controls used to be printed permanently in the top-left corner, and
+## the text carried its own "Controls" heading and blank lines between
+## groups. The section header above it already says Controls, and the blank
+## lines left the list looking gappy rather than grouped (Dave, 12 Sep
+## 2026), so this is one unbroken list in reading order.
 func _make_controls_help() -> Control:
 	var help := Label.new()
 	help.theme_type_variation = "Small"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.custom_minimum_size = Vector2(270, 0)
-	help.text = """Controls
-
-Arrow keys — pan the view
+	help.text = """Arrow keys — pan the view
 Mouse wheel — zoom in and out
 Middle mouse drag — pan the view
 Tab — switch between meadow and hive
@@ -400,7 +403,6 @@ F — frame everything in view
 Ctrl+1..9 — save the selection as a group
 1..9 — select that group again
 Ctrl+Z — undo the last cell reservation
-
 Left click or drag — select bees
 Ctrl+click — add comb or soil to a selection
 Left click a flower, tree or raised area — see what it is
@@ -408,30 +410,37 @@ Left click a comb cell — inspect and set it
 Left click exposed soil — mark it for digging
 Right click a flower — send the selection to collect there
 Right click the ground — move the selection there
-
 Click a warning in the corner to select what it is about."""
 	return help
 
 ## Restart, save/load and the main menu, kept at the top of the panel so
 ## they don't drift below a growing list of settings, with the developer
 ## Triggers group underneath them.
+##
+## Every long-labelled button gets its own full-width row. A button's
+## minimum width is its text width, and the ScrollContainer above has
+## horizontal scrolling disabled, so three long trigger buttons sharing one
+## HBoxContainer used to set the whole window's minimum width -- the panel
+## opened about 915px wide on a 1920px screen instead of PANEL_WIDTH
+## (Dave, 12 Sep 2026). One button per row keeps the widest label, not the
+## sum of three, as the constraint.
 func _build_actions(column: VBoxContainer) -> void:
-	var restart_row := HBoxContainer.new()
-	column.add_child(restart_row)
-
 	var restart_btn := Button.new()
 	_style_button(restart_btn)
 	restart_btn.text = "Restart Run"
 	restart_btn.pressed.connect(_on_restart_pressed)
-	restart_row.add_child(UI.with_info(restart_btn, "Rebuild the meadow and hive from scratch using the current values above, at whichever starting stage you last chose. Everything in progress is lost; the tuning numbers themselves are kept."))
+	_add_action_row(column, restart_btn, "Rebuild the meadow and hive from scratch using the current values above, at whichever starting stage you last chose. Everything in progress is lost; the tuning numbers themselves are kept.")
 
 	var menu_btn := Button.new()
 	_style_button(menu_btn)
 	menu_btn.text = "Return to Main Menu"
 	menu_btn.pressed.connect(_on_main_menu_pressed)
-	restart_row.add_child(UI.with_info(menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have."))
+	_add_action_row(column, menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have.")
 
+	# Save and Load keep their shared row: both labels are short enough that
+	# the pair still fits inside PANEL_WIDTH.
 	var save_row := HBoxContainer.new()
+	save_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_child(save_row)
 
 	save_btn = Button.new()
@@ -452,6 +461,7 @@ func _build_actions(column: VBoxContainer) -> void:
 	# Slice 1) drop a button in rather than each re-laying out this block.
 	var triggers := VBoxContainer.new()
 	triggers.add_theme_constant_override("separation", 0)
+	triggers.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_child(triggers)
 
 	var triggers_header := Label.new()
@@ -459,28 +469,34 @@ func _build_actions(column: VBoxContainer) -> void:
 	triggers_header.theme_type_variation = "Small"
 	triggers.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
 
-	var challenge_row := HBoxContainer.new()
-	triggers.add_child(challenge_row)
-
 	var challenge_advance_btn := Button.new()
 	_style_button(challenge_advance_btn)
 	challenge_advance_btn.text = "Advance Challenge stage"
 	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
-	challenge_row.add_child(UI.with_info(challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder."))
+	_add_action_row(triggers, challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder.")
 
 	var fire_warnings_btn := Button.new()
 	_style_button(fire_warnings_btn)
 	fire_warnings_btn.text = "Fire test warnings"
 	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
-	challenge_row.add_child(UI.with_info(fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own."))
+	_add_action_row(triggers, fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own.")
 
 	var c2_collapse_btn := Button.new()
 	_style_button(c2_collapse_btn)
 	c2_collapse_btn.text = "Force Challenge 2 collapse"
 	c2_collapse_btn.pressed.connect(_on_force_c2_collapse_pressed)
-	challenge_row.add_child(UI.with_info(c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run."))
+	_add_action_row(triggers, c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run.")
 
 	column.add_child(HSeparator.new())
+
+## One action button on its own row, filling the window's width with its
+## info badge pinned to the right. The button expands rather than sitting at
+## its text width so a row of one does not read as a stray short button.
+func _add_action_row(parent: Control, button: Button, tip: String) -> void:
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var row := UI.with_info(button, tip)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(row)
 
 func _make_winter_action() -> Control:
 	var row := HBoxContainer.new()

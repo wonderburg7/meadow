@@ -194,6 +194,16 @@ if (-not $Docs) {
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
     }
+
+    # The Python suites cannot see a GDScript parse error. One headless boot
+    # can: on 12 Sep 2026 a call to a Rect2 method that does not exist in
+    # Godot 4 failed hud.gd's compile, took main.gd down with it and shipped
+    # a game with no HUD at all. Skips itself, passing, where no Godot
+    # binary is installed.
+    Invoke-PythonStage -Name "godot boot" -ScriptPath (Join-Path $repoRoot "tools/godot_compile_check.py") -FailureNote "the project does not boot"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
 }
 
 # docs/challenge-stages.md is generated from scripts/challenge_stages.gd, so

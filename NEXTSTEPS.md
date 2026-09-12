@@ -355,14 +355,17 @@ fills the Claude lane's slot below.
    - Proof: `absent: tools/verify.ps1 :: test_source_checks`
    - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
 
-3. **[Codex] UI-P-5 -- reproduce the missing pre-run placeholder live.**
-   Reproduce and diagnose the missing pre-run menu placeholder from Dave's
-   screen report before changing its implementation.
-   - Plan: `plans/now/ui.md` -- "UI-P-5 — pre-run menu: \"Choose a Challenge or Scenario on the left.\" isn't visible"
-   - Files: `scripts/main_menu.gd`
-   - Check: Dave's live reproduction identifies whether the placeholder is missing or merely obscured
-   - Proof: `present: scripts/main_menu.gd :: var detail_placeholder`
-   - Next after: A2 -- one role tally.
+3. **[Codex] A2 -- one role tally.**
+   Four sites build a role-count key by hand instead of calling
+   `Roles.count_key`, and `ColonyDiagnostics.compute` walks the bees a second
+   time to count roles it was already given. Route every site through
+   `Roles.count_key`, derive `_update_population_readout`'s four numbers from
+   `_role_counts()`, and pass the counts into `compute` rather than recounting.
+   - Plan: `plans/design/architecture-review.md` -- "A2 — one role tally"
+   - Files: `scripts/main.gd`, `scripts/colony_diagnostics.gd`, `scripts/hive.gd`
+   - Check: a `tests/source_checks.py` check that no file outside `roles.gd` contains the literal `"%d|%s"`, `"%d|"` or `"0|%s"`, plus H3's equivalence command over `test_scenarios/colony_30_bees_test.json` with matching population lines
+   - Proof: `present: scripts/hive.gd :: elif cell.hatch_role == 0`
+   - Next after: C1 -- the remaining architecture-review slice that depends on A2.
 
 ## Not in the queue, and why
 
@@ -370,21 +373,13 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`), other than A4 above -- Decision
-  A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices 21-26 to
-  vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026, since
-  those slices have all shipped. A4 leads the Claude lane. A2 -- one role
-  tally was held out of the Codex lane while A3 was open, since both touched
-  `scripts/hive.gd`; A3 shipped 12 Sep 2026, so that hold is resolved. A2 is
-  still not in a lane today because UI-P-5 leads the Codex lane ahead of it
-  (see item 3's `Next after` above) -- not because of any remaining
-  collision. C1 depends on both A2 and A3; A3 is done but A2 is not, so C1
-  stays out too.
-- **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
-  headless check ruled both out (the placeholder is present, visible and
-  correctly positioned in a fresh boot), so the real cause needs Dave's own
-  screen, not more static reading. None of Dave's six passes since 8 Sep has
-  reported on it.
+  (`plans/design/architecture-review.md`), other than A2 and A4 above --
+  Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
+  21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
+  since those slices have all shipped. A4 leads the Claude lane and A2 the
+  Codex lane; A2's own hold (it shared `scripts/hive.gd` with A3) went with
+  A3 shipping on 12 Sep 2026. C1 depends on both A2 and A3, so it is admitted
+  once A2 ships.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely
