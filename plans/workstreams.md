@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/C2` (`codex/C2`) | Codex | Challenge goals become data. | Codex | in progress | none | `plans/design/architecture-review.md` "C2 — Challenge goals become data" |
