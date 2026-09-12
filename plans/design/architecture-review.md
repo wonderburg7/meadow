@@ -714,42 +714,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/A1_2026-09-12.md`.
 
 ### A2 — one role tally
 
-Level: medium. Depends on: nothing.
-
-- **Required reading.** This heading. `scripts/roles.gd`'s "counting keys"
-  section. `scripts/main.gd`'s `_role_counts`, `_update_population_readout` and
-  `_record_emergence`. `scripts/colony_diagnostics.gd`.
-- **Files to change.** `scripts/main.gd`, `scripts/colony_diagnostics.gd`,
-  `scripts/hive.gd`.
-- **Files not to change.** `scripts/roles.gd`, which is already correct, and
-  `scripts/hud.gd`.
-- **Requirements.** `_role_counts()` builds its keys with `Roles.count_key`.
-  `_record_emergence` uses it too. `_update_population_readout` derives its four
-  numbers from `_role_counts()` rather than a second group walk.
-  `ColonyDiagnostics.compute` takes the counts as a parameter instead of
-  counting roles itself.
-- **Invariants.** `_update_population_readout(bees)` keeps its explicit-list
-  parameter and its behaviour on the restore path, where a mid-frame group query
-  still catches retired bees. The energy loop in `compute` stays; only the role
-  `match` goes.
-- **Implementation guidance.** `compute(main, bees)` becomes
-  `compute(main, bees, counts)` and reads
-  `counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)` plus the pollen key
-  for foragers. The one caller is `year_winter.gd::_refresh_signals`, which
-  already has `main._role_counts()` a few lines later. `hive.gd:467-473` is the
-  fifth site (F15): its `"gyne"` branch stays, and the two below it become
-  `Roles.count_key(cell.hatch_role, cell.hatch_focus)` — which is what the
-  literal `0` in `elif cell.hatch_role == 0` already means, since `Role.FORAGER`
-  is the first enum member.
-- **Runtime policy.** Unchanged cadence, 1 Hz for signals; one group walk per
-  population epoch instead of three per second.
-- **Automated acceptance.** A `tests/source_checks.py` check that no file
-  outside `roles.gd` contains the literal `"%d|%s"`, `"%d|"` or `"0|%s"`. That
-  check fails on `hive.gd` today, which is why `hive.gd` is on the change list.
-  Then run H3's equivalence command over
-  `test_scenarios/colony_30_bees_test.json` and compare the population lines.
-- **Escalation.** If a readout disagrees after the change, that is a real
-  pre-existing divergence between two counters. Report which, do not pick one.
+Shipped 12 Sep 2026. Full record: `plans/archive/A2_2026-09-12.md`.
 
 ### A3 — epoch-cached hive stock totals
 

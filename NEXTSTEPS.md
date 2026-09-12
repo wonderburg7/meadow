@@ -342,6 +342,18 @@ item (A2), so it cannot lead the Claude lane -- L-1, already queued behind
 A4, moves up to lead instead and E1 takes the second slot, claimable once
 either L-1 or A2 ships.
 
+**A2 shipped 12 Sep 2026.** Four sites that built a role-count key by hand
+(`main.gd::_role_counts`/`_update_population_readout`,
+`hive.gd::zone_summary`) now call `Roles.count_key` instead of the old
+`"%d|%s"`/`"%d|"`/`"0|%s"` literals, and `colony_diagnostics.gd::compute`
+takes the counts `main.gd` already built as a parameter instead of walking
+the bees a second time. `tests/source_checks.py` gained a check that no file
+outside `roles.gd` contains those literals. Full record:
+`plans/archive/A2_2026-09-12.md`. A2 no longer touches `scripts/main.gd` in
+the Codex lane, so E1's earlier conflict with it is gone -- E1 stays queued
+behind L-1 only because L-1 already led this session, not because of a
+file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
+
 ## Next up
 
 1. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
@@ -372,17 +384,21 @@ either L-1 or A2 ships.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] A2 -- one role tally.**
-   Four sites build a role-count key by hand instead of calling
-   `Roles.count_key`, and `ColonyDiagnostics.compute` walks the bees a second
-   time to count roles it was already given. Route every site through
-   `Roles.count_key`, derive `_update_population_readout`'s four numbers from
-   `_role_counts()`, and pass the counts into `compute` rather than recounting.
-   - Plan: `plans/design/architecture-review.md` -- "A2 — one role tally"
-   - Files: `scripts/main.gd`, `scripts/colony_diagnostics.gd`, `scripts/hive.gd`
-   - Check: a `tests/source_checks.py` check that no file outside `roles.gd` contains the literal `"%d|%s"`, `"%d|"` or `"0|%s"`, plus H3's equivalence command over `test_scenarios/colony_30_bees_test.json` with matching population lines
-   - Proof: `present: scripts/hive.gd :: elif cell.hatch_role == 0`
-   - Next after: C1 -- the remaining architecture-review slice that depends on A2.
+3. **[Codex] C1 -- the conditions evaluator, no callers.**
+   `challenge_runner.gd`'s `_goal_check_*` block and `scenario_actions.gd::_when_met`
+   each grew their own bespoke condition logic. Add a leaf `conditions.gd` with a
+   static `met(main, spec) -> bool` and `progress(main, spec) -> Dictionary`
+   covering both vocabularies (`day_at_least`, `role_count`, `hive_total`,
+   `cell_count`, `built_cells_at_least`, `brood_cells_at_least`, `queen_alive`,
+   `event_count`, `disease`, `all_of`, `any_of`, `custom`); nothing calls it yet
+   -- that is C2 and C3. It reads role counts from `main._role_counts()` and
+   stock from `hive.total()`, both epoch-cached by A2 and A3, and never walks a
+   group or writes game state.
+   - Plan: `plans/design/architecture-review.md` -- "C1 — the conditions evaluator, no callers"
+   - Files: `scripts/conditions.gd`, `tests/source_checks.py`, `tests/test_conditions.py`
+   - Check: `tests/test_conditions.py` covers every supported key, and a `tests/source_checks.py` check confirms `conditions.gd` contains no assignment reached through `main`
+   - Proof: `present: scripts/scenario_actions.gd :: _when_met`
+   - Next after: C2 -- Challenge goals become data, which depends on C1 and the already-shipped A4.
 
 ## Not in the queue, and why
 
@@ -393,10 +409,10 @@ simply a free slot -- and none of the entries below is startable today.
   (`plans/design/architecture-review.md`), other than A2 and A4 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A4 shipped 12 Sep 2026; E1 leads the
-  Claude lane and A2 the Codex lane; A2's own hold (it shared
-  `scripts/hive.gd` with A3) went with A3 shipping on 12 Sep 2026. C1 depends
-  on both A2 and A3, so it is admitted once A2 ships.
+  since those slices have all shipped. A2, A3 and A4 have all shipped; C1
+  (depended on both) now leads the Codex lane and E1 is queued behind L-1 in
+  the Claude lane. C2 depends on C1, so it stays out of the queue until C1
+  ships.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely
