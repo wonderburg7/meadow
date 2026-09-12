@@ -803,8 +803,12 @@ var peak_season_strength: float = 0.75
 ## over into species suited to the current part of the year.
 var out_of_season_ageing_factor: float = 1.5
 ## An out-of-season species retains this fraction of its usual seed weight,
-## so replacements follow the year without making any species disappear.
-var out_of_season_seed_weight: float = 0.15
+## so a species never disappears from the meadow entirely. Lowered 0.15 ->
+## 0.06 on 8 Sep 2026: at 0.15 an out-of-season plant read as a background
+## constant rather than as a rarity (Dave, alongside C-17 passing).
+## It must stay above zero -- C-17's pass condition is "rare rather than
+## absent", and zero would fail it.
+var out_of_season_seed_weight: float = 0.06
 
 # --- disease ---
 ## Pathogen pressure builds in a hive that isn't kept clean and knocks
