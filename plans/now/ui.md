@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None startable -- UI-P-5 wants a live reproduction, UI-U-1 waits for both lanes to vacate `debug_panel.gd`/`challenge_runner.gd` | Dependency: UI-U-1 waits for both lanes to vacate `debug_panel.gd` and `challenge_runner.gd`, and shares its forward-stepping seam with `plans/design/architecture-review.md`'s H4, which its own acceptance needs; UI-P-5 wants a live reproduction | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: UI-U-1 -- step back and forth through Challenge stages | Dependency: UI-U-1's former `debug_panel.gd`/`challenge_runner.gd` lane hold cleared when Challenge 1 Slice 7 shipped; H4 is already integrated. UI-P-5 still wants a live reproduction | Verified: 2026-09-12
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -23,7 +23,7 @@ remains, and neither is startable.
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
-| UI-U-1 | No way to reach a late Challenge stage without replaying it | `debug_panel.gd`, `challenge_runner.gd` | no — both files are in use | medium |
+| UI-U-1 | No way to reach a late Challenge stage without replaying it | `debug_panel.gd`, `challenge_runner.gd` | yes — the former lane hold cleared | medium |
 
 ## UI-U-1 — step back and forth through a Challenge's stages
 

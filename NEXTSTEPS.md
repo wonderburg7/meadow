@@ -292,16 +292,7 @@ every open item.
 
 ## Next up
 
-1. **[Codex] C1-7 -- Challenge 1 acceptance pass and documentation.**
-   Play Challenge 1 start to finish, verify every acceptance item, then make
-   the required copy and current-document pass.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)"
-   - Files: `docs/challenge-stages.md`
-   - Check: `tools/verify.ps1` passes and every named Challenge 1 acceptance check is observed in a complete playthrough
-   - Proof: `present: plans/now/challenge-1.md :: ## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)`
-   - Next after: none -- completes Challenge 1.
-
-2. **[Claude] B3 -- cell capacity and acceptance read the catalogue.**
+1. **[Claude] B3 -- cell capacity and acceptance read the catalogue.**
    `hive_cell.gd::capacity_for` still names `honey` and `jelly` in a `match`
    instead of reading `capacity_config` off the catalogue, and `space_for`/
    `needs_eviction` name `brood`/`corpse` instead of testing `storable`/
@@ -312,6 +303,15 @@ every open item.
    - Check: `tests/balance_tests.py` passes unchanged, including a new case asserting `capacity_for` for all seven kinds against current `GameConfig` defaults
    - Proof: `present: scripts/hive_cell.gd :: func capacity_for(resource_type: String) -> float:`
    - Next after: A1 -- brood hatching reads the brood bucket.
+
+2. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
+   Add developer controls in Game Settings > World and Start for navigating a
+   Challenge's stages through the runner's existing transition path.
+   - Plan: `plans/now/ui.md` -- "UI-U-1 — step back and forth through a Challenge's stages"
+   - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `plans/reference/check-loop.md`
+   - Check: stage navigation rebuilds the same gates, prompts and markers; no skip leaves camera-follow or 4x speed active
+   - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void:`
+   - Next after: UI-P-5 -- reproduce the missing pre-run placeholder live.
 
 3. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the

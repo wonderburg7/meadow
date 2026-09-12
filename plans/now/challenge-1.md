@@ -129,7 +129,11 @@ Shipped 12 Sep 2026. Full specification and delivery record:
 Shipped 12 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-26_2026-09-12.md`](../archive/C1-26_2026-09-12.md).
 
-## Slice 7 — Acceptance pass and documentation (absorbs old Bundle H)
+### Challenge 1 acceptance pass — shipped 12 Sep 2026
+
+Archived delivery record: `plans/archive/C1-7_2026-09-12.md`. The retained
+reference below documents the stage contract; delivery detail lives only in
+the archive.
 
 **Runs after Slices 20-24.** The 29 Aug, 30 Aug, 2 Sep and the two 9 Sep
 attempts at this pass are what found Slices 8, 9/10, 11/13, 16-19 and 20-24
