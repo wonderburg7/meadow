@@ -248,6 +248,30 @@ requires numeric `min` and `max`; and `empty`, `not_empty`, `all_true`, and
 `exists` take no comparison value. Unknown paths, unsupported operators and
 type mismatches are `contract_error`, not failed game assertions.
 
+## Challenge scenarios
+
+A scenario can start either ordinary Challenge by supplying a top-level
+`challenge` value of `1` or `2`. It uses that Challenge's normal starting
+world and stage runner; without this field, scenario launches keep their
+existing synthetic-level behaviour.
+
+`advance_challenge_stage` reaches a named stage through the runner's existing
+`debug_advance_stage()` seam, so every ordinary stage transition and its
+effects run. It does not write the stage index. `challenge_stage_id` is
+available in both an action's `when` clause and an assertion condition.
+
+```json
+{
+  "challenge": 1,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "1.14"},
+    {"do": "assert", "when": {"challenge_stage_id": "1.14"},
+     "condition": {"challenge_stage_id": "1.14"}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}
+```
+
 ## Diagnostic capture profiles
 
 `diagnostics` is optional and applies only to a `--scenario` session; ordinary

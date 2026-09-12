@@ -104,6 +104,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_viewport_size(main, action)
 		"show_gallerin_prompt":
 			_do_show_gallerin_prompt(main, action)
+		"advance_challenge_stage":
+			_do_advance_challenge_stage(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -143,6 +145,9 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 			return false
 	if when.has("disease_at_most"):
 		if main.season == null or not is_instance_valid(main.season) or main.season.disease > float(when["disease_at_most"]):
+			return false
+	if when.has("challenge_stage_id"):
+		if main.challenge_runner.current_stage_id() != str(when["challenge_stage_id"]):
 			return false
 	return true
 
@@ -549,6 +554,30 @@ static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void:
 		_log("show_gallerin_prompt", text, "accepted", "")
 	else:
 		_log("show_gallerin_prompt", text, "rejected", "bubble did not open")
+
+## Advances through the Challenge's existing debug seam until its named stage
+## is current. That seam calls _advance(), so every normal boundary effect,
+## checkpoint, prompt, gate and marker still runs; this action never assigns
+## the runner's private stage index directly.
+static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void:
+	var target_id: String = str(action.get("stage_id", ""))
+	if target_id.is_empty():
+		_log("advance_challenge_stage", str(action), "rejected", "missing stage_id")
+		return
+	if not main.challenge_runner.active:
+		_log("advance_challenge_stage", target_id, "rejected", "no active Challenge")
+		return
+	var guard := 0
+	while main.challenge_runner.active and main.challenge_runner.current_stage_id() != target_id:
+		main.challenge_runner.debug_advance_stage()
+		guard += 1
+		if guard > 100:
+			_log("advance_challenge_stage", target_id, "rejected", "stage was not found")
+			return
+	if main.challenge_runner.current_stage_id() == target_id:
+		_log("advance_challenge_stage", target_id, "accepted", "")
+	else:
+		_log("advance_challenge_stage", target_id, "rejected", "Challenge completed before stage was reached")
 
 
 # --- assertion checks -------------------------------------------------

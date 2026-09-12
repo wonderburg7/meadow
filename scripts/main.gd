@@ -1065,6 +1065,12 @@ func _apply_scenario_boot_arg() -> void:
 	level.erase("stop")
 	var config_overrides: Dictionary = level.get("config_overrides", {})
 	level.erase("config_overrides")
+	# A Challenge scenario uses the Challenge's ordinary level setup, but keeps
+	# the scenario-only controls below (actions, stop conditions, diagnostics)
+	# available to the headless runner. Leaving this absent preserves the
+	# existing synthetic scenario level exactly.
+	var challenge_id: int = int(level.get("challenge", 0))
+	level.erase("challenge")
 	# Dev-only headless action driver (docs/headless-run-contract.md)
 	# -- see scenario_actions.gd. Not a levels.gd field, same
 	# reasoning as stop/config_overrides just above.
@@ -1104,7 +1110,7 @@ func _apply_scenario_boot_arg() -> void:
 
 	Levels.scenario_override = level
 	Levels.apply_config_overrides(config_overrides)
-	Session.starting_level = Levels.SCENARIO_LEVEL_ID
+	Session.starting_level = challenge_id if challenge_id in [1, 2] else Levels.SCENARIO_LEVEL_ID
 	Session.menu_pending = false
 	scenario_active = true
 	scenario_actions = actions
