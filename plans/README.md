@@ -149,7 +149,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
-| Comb autobuild order, cell art, cell rings | `plans/now/hive-comb.md` |
+| Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
 | A1-A4, B1-B3, C1-C4, D1, E1, F1s, F2s, G1-G3 -- catalogues, shared interfaces, update policy | `plans/design/architecture-review.md` |
@@ -205,7 +205,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    Slices 12 and 14 for the two rounds this took.
 10. An outline that must sit on a sprite is measured off that sprite and
     recorded as a named const, never re-derived from a shape that looks
-    similar -- `plans/now/hive-comb.md` Slice 9.
+    similar -- `plans/archive/HIVE_COMB_2026-09-12.md` Slice 9.
 11. Every persistent HUD panel takes its rectangle from `ui_layout.gd`. Two
     panels that share an edge derive from one number; a literal `offset_top`
     in a panel file is how the same overlap keeps coming back

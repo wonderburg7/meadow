@@ -56,9 +56,8 @@ successor. `check_docs.py`'s two contradictory rules are reconciled and
 shipped: a queue item's `Files:` line may now name a file its slice creates,
 which is why H3 at 4 below names the tool it builds. Comb workers are capped
 at six per site, one to each wall, and a cell holding any amount of a
-resource outlines itself in that resource's colour -- both are specified in
-`plans/now/hive-comb.md` and both are startable, waiting only for a queue
-slot.
+resource outlines itself in that resource's colour -- both were specified in
+the now-complete `plans/archive/HIVE_COMB_2026-09-12.md`.
 
 **C1-23 shipped 11 Sep 2026, but the queue was never refreshed to say so.**
 `NECTAR_TARGET := 150.0` landed on master that day in three commits
@@ -139,7 +138,7 @@ its queue-item parser silently dropped any item whose id is a multi-word
 phrase rather than a single token -- which is exactly what "Hive comb
 Slice 5" was. Both are fixed on master (`d4b6c27`, `f1755d9`); the
 multi-word id itself is fixed here, retroactively -- the item is now
-`plans/now/hive-comb.md`'s HCB-5, a short bare token consistent with every
+`plans/archive/HIVE_COMB_2026-09-12.md`'s HCB-5, a short bare token consistent with every
 other queue item, so it can be claimed with `tools/slice.ps1 start -Lane
 Codex` without producing an invalid git branch name.
 
@@ -149,6 +148,15 @@ designation ring; an empty cell stays outline-free and an unmapped content
 kind falls back to the previous shared brown. Full record:
 `plans/archive/HCB-5_2026-09-12.md`; its check is C-45. Its `Next after`
 (HCB-4) fills the Codex lane's leading slot below.
+
+**HCB-4 shipped 12 Sep 2026.** Comb Workers now reserve the six shared wall
+slots while approaching an unfinished site and release them on every existing
+abandon and completion path; a full site is skipped so the next worker opens
+another. The prescribed headless simulations could not run here because Godot
+crashed before writing its session (exit `0xC0000005`), but `verify.ps1` is
+green. The hive-comb plan is complete and archived at
+`plans/archive/HIVE_COMB_2026-09-12.md`; C-46 is the pending hands-on check.
+H4 now leads the Codex lane.
 
 **SB-0 shipped 12 Sep 2026.** `diagnostic_probes.gd`'s `SNAPSHOT_FIELDS`
 gains `resources.stored_nectar`, `resources.stored_pollen` and
@@ -176,48 +184,63 @@ colony's stored nectar/pollen above zero long enough to compare peaks there
 (pre-existing, confirmed on an already-shipped fixture too, not caused by
 this slice), so the rate curve stood in for the plan's stored-total
 comparison. Full record: `plans/archive/SB-1_2026-09-12.md`; its check is
-C-24. Its `Next after` (SB-2) fills the Claude lane's slot below.
+C-24. Its `Next after` (SB-2) filled the Claude lane's slot below.
+
+**SB-2 shipped 12 Sep 2026.** `game_config.gd`'s `out_of_season_seed_weight`
+lowered from 0.15 to 0.06, changing only that one value as specified. A
+matched-seed 60-day A/B on `test_scenarios/foraging_evidence_base.json`
+at both 0.15 and 0.06, sampling `environment.flowers_by_species` every 3
+sim-days across the full year, showed all six species present at some point
+in the year at both values -- 0.06 introduces no new extinction. Full record:
+`plans/archive/SB-2_2026-09-12.md`; its check is C-25.
+`plans/now/season-balance.md` had no further slices, so it is now marked
+complete in full. **This left the Claude lane empty**, since SB-2 was its
+only item, and nothing else in `plans/now/` is currently startable for
+Claude. Asked in this session, Dave chose to lift the architecture-review
+hold early rather than wait for Challenge 1's Slices 21-26 to vacate
+`challenge_runner.gd`, and to admit D1 specifically -- A2 shares
+`scripts/main.gd` with the Codex lane's leading item (H4) and would break
+the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
+`scripts/save_game.gd`, `tests/source_checks.py`) does not.
 
 ## Next up
 
-1. **[Codex] HCB-4 -- at most six comb builders per site, one to a wall.**
-   Idle Comb Workers currently pile onto the first unfinished cell, even
-   though a hex already has six wall positions. Give each builder a stable
-   wall slot, skip a site only once all six slots are claimed, and keep an
-   abandoned site resumable when it still has a free wall.
-   - Plan: `plans/now/hive-comb.md` -- "HCB-4 — Cell auto-building: every idle builder piles onto one site"
-   - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `scripts/hive_cell.gd`
-   - Check: a seven-worker comb build never assigns more than six workers to one cell and starts a second site while the first is unfinished
-   - Proof: `present: scripts/hive_cell.gd :: func claim_slot(bee: Node2D) -> int`
-   - Next after: HCB plan complete.
-
-2. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
+1. **[Codex] H4 -- a headless run can start a Challenge and reach a stage.**
    Challenge-only acceptance checks cannot run today: scenario launches use
    `Levels.SCENARIO_LEVEL_ID`, so `challenge_runner.start()` never fires.
    Let a scenario name a Challenge, add a verb that steps through the ordinary
    `debug_advance_stage()` seam to a named stage, expose the current stage id
    to scenario assertions, and prove it with a fixture that reaches 1.14.
-   Queued behind HCB-4 above in ordinary lane order; it becomes claimable
-   once HCB-4 ships.
    - Plan: `plans/design/architecture-review.md` -- "H4 — a headless run can start a Challenge and reach a stage"
    - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, `test_scenarios/h4_challenge1_stage_advance_test.json`
    - Check: a fixture starts Challenge 1, reaches 1.14 by the ordinary stage-advance path, and asserts that stage id; every existing scenario fixture keeps its verdict
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
    - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
 
-3. **[Claude] SB-2 -- out-of-season species become genuinely rare.**
-   `flower_species.gd::season_weight()` floors an out-of-season species'
-   seeding weight at `GameConfig.out_of_season_seed_weight` (0.15), which over
-   a whole meadow reads as a steady presence rather than an occasional one.
-   Lower the floor to 0.06, changing only that one value. Simulate SB-1's
-   60-day fixture at 0.15 and 0.06 using SB-0's `environment.flowers_by_species`
-   field before shipping, checking no species reaches zero anywhere in the
-   year.
-   - Plan: `plans/now/season-balance.md` -- "SB-2 — out-of-season species become genuinely rare"
-   - Files: `scripts/game_config.gd`, `scripts/flower_species.gd`
-   - Check: a full year with seasons on always has something visibly in flower, but an out-of-season species reads as an occasional find rather than part of the standing mix
-   - Proof: `present: scripts/game_config.gd :: var out_of_season_seed_weight: float = 0.15`
-   - Next after: none -- season-balance.md is complete.
+2. **[Claude] D1 -- one settings persistence authority, first half.**
+   `save_game.gd::SAVED_SETTINGS` is a hand-maintained literal list with no
+   link back to `settings_catalogue.gd`'s `TUNABLES`, so a new setting can be
+   added to one and forgotten in the other. Give every `TUNABLES` row a
+   `persist` tag (`run`, `player` or `none`) and derive `SAVED_SETTINGS` from
+   it, byte-identical to today's list -- this first half changes no save
+   format and moves nothing between `Session` and the save.
+   - Plan: `plans/design/architecture-review.md` -- "D1 — one settings persistence authority"
+   - Files: `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `tests/source_checks.py`
+   - Check: a source check fails when a `GameConfig` field has no `TUNABLES` row, or when a row's `persist` disagrees with what the save actually carries; the derived list equals today's literal
+   - Proof: `present: scripts/save_game.gd :: const SAVED_SETTINGS := [`
+   - Next after: D1's second half -- reclassify all 61 keys against Dave's rule and move the eight balance fields F11 names into the save, with a `FORMAT_VERSION` bump and migration step.
+
+3. **[Codex] C1-24 -- the stage marker is never left in the wrong world.**
+   A marker shown for stages 1.2, 1.5, 1.12 or 1.15 can remain parented to
+   `meadow_root` after an earlier meadow stage, so its hive-local position
+   becomes a stray yellow dot in the meadow. Queue this behind H4: H4 makes
+   its headless acceptance runnable, and C1-24 then establishes the marker
+   world before C1-26 adds its presentation.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 24 — the stage marker is never left in the wrong world"
+   - Files: `scripts/challenge_runner.gd`
+   - Check: at stages 1.12 and 1.15 no marker appears in the meadow, and the hive-side marker does appear
+   - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
+   - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
 
 ## Not in the queue, and why
 
@@ -225,22 +248,18 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- the queue holds three (the floor), and none of the
 entries below is startable today.
 
-- **Challenge 1 Slices 24 and 26** (`plans/now/challenge-1.md`) -- both are
-  specified, and **neither has an acceptance that can run until H4 lands**:
-  each states only a headless Challenge assertion, and no headless run can
-  start a Challenge. Slice 26 also waits on Slice 24, the other open change
-  to the same marker node. The Codex lane reaches them in order without
-  anything being decided here: C1-22 promotes H4, H4 promotes Slice 24, and
-  Slice 24 promotes Slice 26.
-- **The architecture review's A-to-G slices**
-  (`plans/design/architecture-review.md`) -- seventeen slices, all specified.
-  Dave admitted the three that touch no gameplay file (H3 shipped 11 Sep
-  2026; H1 above, H2 behind it) and held the rest until Challenge 1's
-  Slices 21 to 26 have
-  vacated `challenge_runner.gd`, which C1-23 and C1-22 above are both still in.
-  A2 and D1 are the two that do not touch that file, so they are the ones to
-  ask Dave about lifting early if the Challenge 1 arc runs long. Do not lift
-  the hold unasked.
+- **Challenge 1 Slice 26** (`plans/now/challenge-1.md`) -- it waits for
+  Slice 24, the other open change to the same marker node. The Codex lane
+  reaches it in ordinary order: H4 makes Slice 24's headless assertion
+  runnable, and Slice 24 promotes Slice 26.
+- **The architecture review's remaining A-to-G slices**
+  (`plans/design/architecture-review.md`) -- Dave admitted the four that touch
+  no `challenge_runner.gd` (H3 and H1 shipped 11 Sep 2026, H2 shipped 11 Sep
+  2026, D1's first half above) and held the rest until Challenge 1's Slices
+  21 to 26 have vacated that file, which H4 and C1-24 above are both still
+  in. A2 is the other slice that does not touch `challenge_runner.gd`, but it
+  shares `scripts/main.gd` with H4, the Codex lane's current leading item, so
+  it stays held rather than being admitted alongside D1.
 - **Challenge 1 Slice 7** (`plans/now/challenge-1.md`) -- the acceptance
   playthrough. Not worth a sixth attempt until Slices 20 to 26 have made the
   pollen arc work unattended.
