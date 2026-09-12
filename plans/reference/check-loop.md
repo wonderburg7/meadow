@@ -55,6 +55,9 @@ disagree.
    warnings colliding, an emergency recall -- the slice that builds it also
    adds a developer trigger. A check that cannot be run on demand is not a
    check; it is a wait.
+   The settings window's **World & start** section also carries Challenge
+   stage back/forward controls during an active Challenge, so checks that
+   need a late stage can reach it without replaying the whole run.
 4. **A check is filed only if failing it would change something.** State,
    in the entry, what a failure would cause you to do. "Nothing, we would
    assume it works" means do not file it. (Dave dropped the forager-return

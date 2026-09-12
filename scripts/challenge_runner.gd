@@ -166,6 +166,20 @@ func current_stage_id() -> String:
 		return ""
 	return str(_stages()[_stage_index].id)
 
+## Companion read surface for the settings window's Challenge navigator.
+## Keeping the record private means the panel can describe the stage without
+## ever becoming another owner of its index or transition state.
+func current_stage_goal_text() -> String:
+	if not active or _stage_index >= _stages().size():
+		return ""
+	return str(_stages()[_stage_index].goal_text)
+
+func can_debug_retreat_stage() -> bool:
+	return active and _stage_index > 0
+
+func can_debug_advance_stage() -> bool:
+	return active and _stage_index < _stages().size() - 1
+
 ## Section 11 Phase A step 3: this Challenge's explicit skill-policy
 ## overrides, straight out of levels.gd's run definition for
 ## Session.starting_level. Nothing calls this yet -- Phase B step 6 is
@@ -393,6 +407,7 @@ func _enter_stage() -> void:
 	# own first departure, whatever state the queen used to be in.
 	_c1_forage_effects_done = false
 	_c1_overflow_discard_count = 0
+	_c1_pollen_cell_nectar_elapsed = 0.0
 	# The one place player_driven is ever written. A stage that does not
 	# declare the key drives nothing, so the flag clears itself on the way
 	# out of the manual-forage arc without a matching list to maintain.
@@ -409,10 +424,13 @@ func _enter_stage() -> void:
 		if stage.id == "1.8":
 			_c1_queen_collections = 0
 		if stage.id == "1.11":
-			_c1_base_nectar_rate = main.queen.nectar_collection_rate
-			_c1_base_pollen_rate = main.queen.pollen_collection_rate
-			main.queen.nectar_collection_rate *= Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
-			main.queen.pollen_collection_rate *= Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+			# Debug navigation can re-enter this stage. Keep its teaching-rate
+			# override idempotent instead of multiplying it again on every pass.
+			if _c1_base_nectar_rate < 0.0:
+				_c1_base_nectar_rate = main.queen.nectar_collection_rate
+				_c1_base_pollen_rate = main.queen.pollen_collection_rate
+			main.queen.nectar_collection_rate = _c1_base_nectar_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+			main.queen.pollen_collection_rate = _c1_base_pollen_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
 	if Session.starting_level == 1:
 		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
@@ -611,8 +629,7 @@ func _show_goal(stage: Dictionary) -> void:
 
 func _advance() -> void:
 	main.gallerin_panel.clear_queue()
-	var completed_stage: Dictionary = _stages()[_stage_index]
-	_run_stage_effects(completed_stage.get("on_exit", []))
+	var completed_stage: Dictionary = _leave_stage()
 	_last_completed_goal_text = completed_stage.goal_text
 	challenge_stage_cleared.emit(completed_stage.id)
 	_stage_index += 1
@@ -620,6 +637,16 @@ func _advance() -> void:
 		_complete()
 		return
 	_enter_stage()
+
+## Leaves a stage through the same cleanup boundary in either direction.
+## Stage data owns its own exit effects; the final two effects are mandatory
+## because an interrupted automatic forage must never carry camera follow or
+## 4x speed into the stage being replayed.
+func _leave_stage() -> Dictionary:
+	var stage: Dictionary = _stages()[_stage_index]
+	_run_stage_effects(stage.get("on_exit", []))
+	_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
+	return stage
 
 ## Runs small, named stage-boundary effects declared in challenge_stages.gd.
 ## They belong here rather than the data file because each touches live scene
@@ -664,8 +691,19 @@ func _run_stage_effects(effects: Array) -> void:
 ## every causal goal exists. It deliberately uses the ordinary transition path
 ## so gates, prompts, checkpoints, markers and completion are all exercised.
 func debug_advance_stage() -> void:
-	if active:
+	if can_debug_advance_stage():
 		_advance()
+
+## Settings-panel counterpart to debug_advance_stage(). World state is
+## deliberately not rolled back: this only rebuilds the stage's gates,
+## prompts and marker through the ordinary entry path.
+func debug_retreat_stage() -> void:
+	if not can_debug_retreat_stage():
+		return
+	main.gallerin_panel.clear_queue()
+	_leave_stage()
+	_stage_index -= 1
+	_enter_stage()
 
 func _complete() -> void:
 	active = false
