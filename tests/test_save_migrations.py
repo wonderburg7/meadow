@@ -16,7 +16,21 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 FIXTURES = ROOT / "tests" / "fixtures"
 
-FORMAT_VERSION = 4  # must match scripts/save_game.gd's FORMAT_VERSION
+FORMAT_VERSION = 5  # must match scripts/save_game.gd's FORMAT_VERSION
+
+# Mirrors scripts/game_config.gd's defaults for the eight fields
+# save_migrations.gd::_migrate_4_to_5 backfills into an older save's
+# "settings" dict. Update alongside game_config.gd if any default changes.
+GAME_CONFIG_DEFAULTS = {
+    "seasons_on": True,
+    "season_length_days": 60.0,
+    "disease_on": True,
+    "rival_hive_on": False,
+    "fog_of_war_on": True,
+    "lay_weight_low": 1.0,
+    "lay_weight_medium": 2.0,
+    "lay_weight_high": 3.0,
+}
 
 
 def load_fixture(name):
@@ -39,6 +53,13 @@ def migrate_3_to_4(data):
     return data
 
 
+def migrate_4_to_5(data):
+    settings = data.setdefault("settings", {})
+    for key, default in GAME_CONFIG_DEFAULTS.items():
+        settings.setdefault(key, default)
+    return data
+
+
 def upgrade(data, target_version=FORMAT_VERSION):
     version = int(data.get("version", 0))
     out = data
@@ -52,6 +73,9 @@ def upgrade(data, target_version=FORMAT_VERSION):
         elif version == 3:
             out = migrate_3_to_4(out)
             version = 4
+        elif version == 4:
+            out = migrate_4_to_5(out)
+            version = 5
         else:
             return out
         out["version"] = version
@@ -77,7 +101,7 @@ class SaveMigrationsSourceTest(unittest.TestCase):
     def test_migration_ladder_is_contiguous_up_to_format_version(self):
         steps = re.findall(r"_migrate_(\d+)_to_(\d+)", self.source)
         pairs = sorted({(int(a), int(b)) for a, b in steps})
-        self.assertEqual([(1, 2), (2, 3), (3, 4)], pairs)
+        self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5)], pairs)
         self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
 
     def test_read_never_weakens_the_newer_than_current_rejection(self):
@@ -93,12 +117,25 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertIn("fog", data)
         self.assertEqual([], data["fog"])
+        self.assertEqual(GAME_CONFIG_DEFAULTS, data["settings"])
 
     def test_v2_fixture_upgrades_to_current_format(self):
         data = upgrade(load_fixture("save_v2.json"))
         self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertIn("fog", data)
         self.assertEqual([], data["fog"])
+        self.assertEqual(GAME_CONFIG_DEFAULTS, data["settings"])
+
+    def test_v4_fixture_backfills_the_eight_reclassified_settings(self):
+        data = upgrade({"version": 4, "settings": {"queen_eat_rate": 2.0}})
+        self.assertEqual(5, data["version"])
+        self.assertEqual(2.0, data["settings"]["queen_eat_rate"])
+        for key, default in GAME_CONFIG_DEFAULTS.items():
+            self.assertEqual(default, data["settings"][key])
+
+    def test_v4_fixture_keeps_an_explicit_value_already_present(self):
+        data = upgrade({"version": 4, "settings": {"disease_on": False}})
+        self.assertEqual(False, data["settings"]["disease_on"])
 
     def test_v3_designations_remain_explicit(self):
         data = upgrade({"version": 3, "cells": [

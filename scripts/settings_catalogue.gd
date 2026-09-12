@@ -415,19 +415,19 @@ const TUNABLES := [
 		"tip": "The queen's speed as a multiple of a worker's. She is larger, so she is slower.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "lay_weight_low", "label": "Lay weight — low", "step": 1.0, "min": 0.0,
 		"category": "Brood & the queen",
 		"tip": "How much of the queen's laying a low-priority nursery cell gets, relative to the other two tiers. The three weights are a ratio, not percentages: 1 : 2 : 3 means a high cell receives three eggs for every one a low cell receives. Set a weight to zero to stop that tier being laid in at all.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "lay_weight_medium", "label": "Lay weight — medium", "step": 1.0, "min": 0.0,
 		"category": "Brood & the queen",
 		"tip": "The middle tier's share of the queen's laying. This is the default a cell gets when you first put it in the nursery zone.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "lay_weight_high", "label": "Lay weight — high", "step": 1.0, "min": 0.0,
 		"category": "Brood & the queen",
 		"tip": "The top tier's share. Widening the gap between this and the low weight makes the zone a blunter instrument -- fewer cells needed to skew the mix, but less room for fine adjustment.",
@@ -675,13 +675,13 @@ const TUNABLES := [
 
 	# --- Seasons & health ---
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "seasons_on", "label": "Flowering seasons", "toggle": true,
 		"category": "Seasons & health",
 		"tip": "Species come into flower at different times of the year, so the best ground moves through a run. Poppy is early and is the only pollen worth having before the borage arrives; foxglove has a short rich window in midsummer; clover carries most of the year. With this off everything flowers all the time. Takes effect immediately.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "season_length_days", "label": "Season days", "step": 5.0, "min": 5.0,
 		"category": "Seasons & health",
 		"tip": "How long a full year is. Shorter means the flowering windows come round faster and the colony has less time in each.",
@@ -693,7 +693,7 @@ const TUNABLES := [
 		"tip": "What a species reaches at the very middle of its own flowering window, as a multiple of its nominal recharge rate. Lower narrows the gap between peak and out-of-season flowering.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "disease_on", "label": "Pathogens", "toggle": true,
 		"category": "Seasons & health",
 		"tip": "Pressure builds in a hive with dead larvae left in it and in one that is crowded, and it slows brood development and shortens bee lifespans. This is what turns clearing from tidying into work worth doing before you need it -- the cost of ignoring it arrives later and all at once.",
@@ -769,7 +769,7 @@ const TUNABLES := [
 
 	# --- The rival colony ---
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "rival_hive_on", "label": "Rival colony", "toggle": true,
 		"category": "The rival colony",
 		"tip": "Put a second colony in the meadow, run by the game. It isn't a copy of your simulation -- that would double the cost of the game for something you can't watch -- but an abstract colony with a few visible foragers that take nectar from the same real flowers you do. There is no combat: the pressure is entirely economic. Takes effect on Restart Run.",
@@ -1037,7 +1037,7 @@ const TUNABLES := [
 		"tip": "Turn the trees and raised areas in the meadow on or off. With them off they vanish and stop blocking anything, so bees fly in straight lines -- useful for seeing the foraging economics on their own. Takes effect immediately.",
 	},
 	{
-		"persist": "none",
+		"persist": "run",
 		"key": "fog_of_war_on", "label": "Fog of war", "toggle": true,
 		"category": "World & start",
 		"tip": "Hide meadow ground no bee has explored yet, and dim ground that's been seen before but has no bee near it right now. Turn off to see the whole meadow at once, same as before this existed. Takes effect immediately.",
