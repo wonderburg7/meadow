@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2 and B3 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- B3's own successor, A1, fills the Claude lane below | Owner: Dave / Claude Code | Next: A1 -- brood hatching reads the brood bucket | Dependency: none of A1, A2 or A3 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3 and A1 all shipped; A2 is admitted to the Codex lane, since C1-24 (its former blocker) has also shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- A1's own successor, A3, fills the Claude lane below | Owner: Dave / Claude Code | Next: A3 -- epoch-cached hive stock totals | Dependency: none of A2, A3 or A4 touches `challenge_runner.gd`, and the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -710,33 +710,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/H4_2026-09-12.md`.
 
 ### A1 — brood hatching reads the brood bucket
 
-Level: low. Depends on: nothing.
-
-- **Required reading.** This heading. `scripts/main.gd::_hatch_ready_brood`.
-  `scripts/hive.gd`'s "cell index" section.
-- **Files to change.** `scripts/main.gd`.
-- **Files not to change.** `scripts/hive.gd`, `scripts/hive_cell.gd`.
-- **Requirements.** `_hatch_ready_brood` iterates `hive.cells_holding("brood")`
-  instead of `hive.cells`. Every bee that hatched before still hatches, in the
-  same order.
-- **Invariants.** `cell.clear_cell()` invalidates the content index mid-loop, so
-  iterate a duplicate of the returned array, never the live one. The per-hatch
-  calls — `_record_emergence`, `world_building._spawn_hatched_bee`,
-  `challenge_runner.on_worker_hatched`, `hive.record_birth`,
-  `_update_population_readout` — keep their current order.
-- **Implementation guidance.** One statement changes: `for cell in hive.cells:`
-  becomes `for cell in hive.cells_holding("brood").duplicate():`. The
-  `if not cell.brood_ready(): continue` guard stays, because a brood cell is not
-  necessarily ready.
-- **Runtime policy.** Still called once per frame from `main._process`; the set
-  walked drops from every cell to the brood cells only.
-- **Automated acceptance.** Run `test_scenarios/colony_30_bees_test.json` before
-  and after; the emergence counts in the run summary must be identical. Add a
-  `tests/source_checks.py` assertion that `_hatch_ready_brood` contains no
-  `for cell in hive.cells`.
-- **Escalation.** If the brood bucket turns out not to be invalidated by
-  `start_brood`, stop and say so rather than adding a second invalidation
-  source.
+Shipped 12 Sep 2026. Full record: `plans/archive/A1_2026-09-12.md`.
 
 ### A2 — one role tally
 

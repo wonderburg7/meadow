@@ -310,16 +310,17 @@ in the Codex lane) is not A1's own to name twice.
 
 ## Next up
 
-1. **[Claude] A1 -- brood hatching reads the brood bucket.**
-   `main.gd::_hatch_ready_brood` iterates every cell in `hive.cells` looking
-   for ready brood instead of the hive's own brood bucket. Iterate
-   `hive.cells_holding("brood").duplicate()` instead, keeping every per-hatch
-   call in its current order.
-   - Plan: `plans/design/architecture-review.md` -- "A1 — brood hatching reads the brood bucket"
-   - Files: `scripts/main.gd`
-   - Check: emergence counts in `test_scenarios/colony_30_bees_test.json`'s run summary are identical before and after; `tests/source_checks.py` asserts `_hatch_ready_brood` contains no `for cell in hive.cells`
-   - Proof: `present: scripts/main.gd :: func _hatch_ready_brood`
-   - Next after: A3 -- epoch-cached hive stock totals.
+1. **[Claude] A3 -- epoch-cached hive stock totals.**
+   `hive.gd`'s `total`, `total_sealed` and `total_honey` each walk every cell
+   on every call. Cache all three behind a new `stock_epoch` counter, bumped
+   on any mutation of `amount`, `is_closed`, `fill_then_close` or
+   `ripen_progress` (including the restore path in `saving.gd`), following
+   `_content_index()`'s existing epoch-cache shape.
+   - Plan: `plans/design/architecture-review.md` -- "A3 — epoch-cached hive stock totals"
+   - Files: `scripts/hive.gd`, `scripts/hive_cell.gd`
+   - Check: a new `tests/` case deposits, withdraws, seals and unseals a cell and asserts the totals track after each; `test_scenarios/recommendation_slice0_baseline.json`'s frame time is recorded against `docs/PERFORMANCE_BASELINE.md`
+   - Proof: `present: scripts/hive.gd :: func total(resource_type: String) -> float:`
+   - Next after: A4 -- wire the goal cadence.
 
 2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
    `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,

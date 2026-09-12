@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-U-1` (`codex/UI-U-1`) | Codex | step back and forth through Challenge stages. | Codex | in progress | none | `plans/now/ui.md` "UI-U-1 — step back and forth through a Challenge's stages" |
-| `.worktrees/A1` (`claude/A1`) | Claude | brood hatching reads the brood bucket. | Claude | in progress | none | `plans/design/architecture-review.md` "A1 — brood hatching reads the brood bucket" |
