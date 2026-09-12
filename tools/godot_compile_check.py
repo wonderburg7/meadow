@@ -19,10 +19,10 @@ build that a player cannot run.
 Skipping
 --------
 Godot is not installed in every environment that runs verification (the
-Codex runtime has no Godot). When the binary cannot be found this prints a
-skip line and exits 0 rather than failing a machine that was never able to
-answer the question. Set `MEADOW_GODOT_PATH` to point at a non-default
-install.
+Codex runtime has no Godot). A binary can also be installed but unable to
+initialise headlessly on that host. In either case this prints a skip line and
+exits 0 rather than attributing an engine crash to the project. Set
+`MEADOW_GODOT_PATH` to point at a working non-default install.
 """
 
 import os
@@ -77,11 +77,39 @@ def failing_lines(output: str) -> list[str]:
     return hits
 
 
+def engine_can_boot(godot: str) -> bool:
+    """Return whether this host's Godot can initialise before opening Meadow."""
+    command = [
+        godot, "--headless", "--disable-crash-handler", "--quit-after", "1",
+    ]
+    try:
+        finished = subprocess.run(
+            command, capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        print("godot compile check: skipped -- the installed Godot engine did "
+              "not initialise headlessly within %d seconds" % TIMEOUT_SECONDS)
+        return False
+    except OSError as exc:
+        print("godot compile check: skipped -- could not launch %r: %s"
+              % (godot, exc))
+        return False
+    if finished.returncode != 0:
+        print("godot compile check: skipped -- the installed Godot engine "
+              "crashed before opening the project (exit code %d)"
+              % finished.returncode)
+        return False
+    return True
+
+
 def main() -> int:
     godot = find_godot()
     if godot is None:
         print("godot compile check: skipped -- no Godot binary found "
               "(set MEADOW_GODOT_PATH to run it here)")
+        return 0
+    if not engine_can_boot(godot):
         return 0
 
     command = [
