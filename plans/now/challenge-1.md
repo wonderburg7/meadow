@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 24 -- the stage marker is never left in the wrong world (blocked until H4 lands) | Dependency: Slice 24 needs H4 (`plans/design/architecture-review.md`, queued but not yet landed) to land first; Slice 26 waits on Slice 24; Slice 7 waits on both | Verified: 2026-09-11
+Status: active | Owner: Dave / Claude Code | Next: Slice 26 -- the stage marker asks to be noticed, and says where it is | Dependency: Slice 7 waits on Slice 26 | Verified: 2026-09-12
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -124,48 +124,8 @@ Shipped 11 Sep 2026. Full specification and delivery record:
 Shipped 11 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-23_2026-09-11.md`](../archive/C1-23_2026-09-11.md).
 
-## Slice 24 — the stage marker is never left in the wrong world
-
-**Reasoning level: low.** One missing guard, already written twice in the
-same function.
-
-**Confirmed root cause.** `challenge_runner.gd::_update_marker()` (`:519`)
-reparents `_marker` before showing it in two of its branches — `1.6`/`1.19`
-pull it back to `hive_root`, `1.10` pushes it to `meadow_root` — but the
-`["1.2", "1.5", "1.12", "1.15"]` branch sets a hive-local position and makes
-the marker visible without reparenting it. Stages 1.7 and 1.10 leave the
-marker parented to `meadow_root`, so at 1.12 it appears in the meadow at a
-coordinate that means nothing there. That is Dave's yellow dot: "A yellow dot
-appears in the meadow when getting to the 'use build cell and place a second
-cell beside the first' stage."
-
-**Files likely to change.** `scripts/challenge_runner.gd`.
-
-**Files that must not be changed.** Anything else.
-
-**Requirements.**
-
-1. Give the `["1.2", "1.5", "1.12", "1.15"]` branch the same reparent guard
-   the `1.6`/`1.19` branch has, before it sets the position.
-2. Better: hoist the guard so every branch states the parent it wants and one
-   line does the reparenting. Four branches each remembering to reparent is
-   how the fourth was missed; one place that always does it cannot be.
-
-**Constraints and invariants.** `reparent(parent, false)` keeps the local
-transform, which is what these branches want — they all assign a local
-position immediately afterwards. Do not switch to global positioning.
-
-**Edge cases.** 1.15 has the same defect and the same fix; it was not
-reported only because 1.10's meadow trip is further behind it. Fix both.
-
-**Automated acceptance checks.** A headless assertion that on entering each
-of 1.2, 1.5, 1.12 and 1.15 the marker's parent is `hive_root`, and on
-entering 1.10 it is `meadow_root`.
-
-**Regression checks.** The existing stage-sequence test.
-
-**Check to file:** one check that no marker appears in the meadow at 1.12 or
-1.15, and that the hive-side marker does appear.
+Shipped 12 Sep 2026. Full specification and delivery record:
+[`plans/archive/C1-24_2026-09-12.md`](../archive/C1-24_2026-09-12.md).
 
 ## Slice 26 — the stage marker asks to be noticed, and says where it is
 

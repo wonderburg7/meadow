@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C1-24` (`codex/C1-24`) | Codex | the stage marker is never left in the wrong world. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 24 — the stage marker is never left in the wrong world" |
 | `.worktrees/B1` (`claude/B1`) | Claude | the cell-content catalogue, data only. | Claude | in progress | none | `plans/design/architecture-review.md` "B1 — the cell-content catalogue, data only" |

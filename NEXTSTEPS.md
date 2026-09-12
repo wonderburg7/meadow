@@ -251,17 +251,14 @@ there.
 
 ## Next up
 
-1. **[Codex] C1-24 -- the stage marker is never left in the wrong world.**
-   A marker shown for stages 1.2, 1.5, 1.12 or 1.15 can remain parented to
-   `meadow_root` after an earlier meadow stage, so its hive-local position
-   becomes a stray yellow dot in the meadow. H4 has made its headless
-   acceptance runnable; C1-24 now establishes the marker world before C1-26
-   adds its presentation.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 24 — the stage marker is never left in the wrong world"
-   - Files: `scripts/challenge_runner.gd`
-   - Check: at stages 1.12 and 1.15 no marker appears in the meadow, and the hive-side marker does appear
+1. **[Codex] C1-26 -- the marker asks to be noticed, and says where it is.**
+   Make the stage marker pulse while visible, and add a HUD arrow at the
+   unobscured viewport edge when the marker is off-screen in the active world.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 26 — the stage marker asks to be noticed, and says where it is"
+   - Files: `scripts/challenge_runner.gd`, `scripts/hud.gd`
+   - Check: at a marked stage the marker pulses; moving the camera away shows an edge arrow that is never hidden behind a panel
    - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
-   - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
+   - Next after: Challenge 1 Slice 7 -- acceptance pass and documentation.
 
 2. **[Claude] B1 -- the cell-content catalogue, data only.**
    `resources.gd`'s `RESOURCES` table only covers nectar and pollen, the two
