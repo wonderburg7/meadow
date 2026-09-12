@@ -356,17 +356,21 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
 
 ## Next up
 
-1. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
-   `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
-   the Codex permission profile and the verifier's Python resolution. Three of
-   its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
-   file at all, so the closeout machinery every slice depends on is unverified.
-   Fix the three, then add the suite to the verifier as a third job.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-1 — the lifecycle suite is green and runs in verification"
-   - Files: `tests/test_source_checks.py`, `tools/verify.ps1`
-   - Check: `python -m unittest tests.test_source_checks` reports 27 passing, and `tools/verify.ps1` fails when `slice.ps1`'s post-merge throw is deleted
-   - Proof: `absent: tools/verify.ps1 :: test_source_checks`
-   - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
+1. **[Claude] L-3 -- branch verification and bookkeeping validation are separate scopes.**
+   A branch's `finish` fails today when the *other* lane's stale ledger row
+   or orphaned worktree trips `check_docs.py`, even though the branch itself
+   is clean -- 10 of the review's 97 `finish` calls died this way. Add
+   `-Scope branch|primary|all` (default `all`, so every existing caller is
+   unchanged) to `tools/verify.ps1`: `branch` runs source checks, balance
+   tests, the function map, the stage reference and the lifecycle tests;
+   `primary` runs `check_docs.py` only. `Invoke-SliceFinish` calls
+   `-Scope branch` from the worktree and `-Scope primary` from the primary
+   root before the merge, naming which scope failed.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-3 — branch verification and bookkeeping validation are separate scopes"
+   - Files: `tools/verify.ps1`, `tools/slice.ps1`
+   - Check: `test_branch_verification_ignores_another_lanes_stale_ledger_row` passes -- `verify.ps1 -Scope branch` in the worktree exits zero while `-Scope primary` in the primary checkout exits non-zero against the same stale row
+   - Proof: `absent: tools/verify.ps1 :: -Scope`
+   - Next after: L-4 -- the worktree is deleted out of process, outside the lock.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
