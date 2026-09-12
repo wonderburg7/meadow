@@ -24,6 +24,7 @@ extends Polygon2D
 
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Resources = preload("res://scripts/resources.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 
@@ -660,13 +661,10 @@ func is_empty() -> bool:
 ## Honey cells hold their own amount, which can be tuned separately from
 ## the raw-store cells.
 func capacity_for(resource_type: String) -> float:
-	match resource_type:
-		"honey":
-			return GameConfig.honey_cell_capacity
-		"jelly":
-			return GameConfig.jelly_cell_capacity
-		_:
-			return GameConfig.cell_capacity
+	var config_field: String = Resources.entry(resource_type).get("capacity_config", "")
+	if config_field == "":
+		return GameConfig.cell_capacity
+	return GameConfig.get(config_field)
 
 func accepts(resource_type: String) -> bool:
 	if not is_built:
@@ -693,7 +691,7 @@ func is_nursery_cell() -> bool:
 func space_for(resource_type: String) -> float:
 	if not is_built:
 		return 0.0
-	if content_type == "brood" or content_type == "corpse":
+	if content_type != "" and not Resources.entry(content_type).get("storable", false):
 		return 0.0
 	if not accepts(resource_type):
 		return 0.0
@@ -711,7 +709,7 @@ func needs_eviction() -> bool:
 		return false
 	# A body isn't cargo -- clearing it is its own job (needs_cleaning),
 	# because it ends up thrown away rather than moved to another cell.
-	if content_type == "" or content_type == "brood" or content_type == "corpse":
+	if content_type == "" or not Resources.entry(content_type).get("evictable", false):
 		return false
 	if evict_requested:
 		return true

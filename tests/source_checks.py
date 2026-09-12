@@ -377,6 +377,35 @@ def check_autonomous_transitions(name, lines, problems):
             )
 
 
+HATCH_BROOD_FILE = "main.gd"
+HATCH_BROOD_FUNC = "_hatch_ready_brood"
+
+
+def check_hatch_brood_iteration(name, lines, problems):
+    """_hatch_ready_brood() must walk the brood bucket (A1), not every
+    cell in the hive -- a colony with thousands of empty/stocked cells
+    otherwise pays a full-hive scan every frame for the few that are
+    actually brooding."""
+    if name != HATCH_BROOD_FILE:
+        return
+    inside = False
+    for line in lines:
+        if line.startswith(("func ", "static func ")):
+            if inside:
+                break
+            inside = "func %s(" % HATCH_BROOD_FUNC in line
+            continue
+        if not inside:
+            continue
+        if re.search(r"for\s+cell\s+in\s+hive\.cells\s*:", strip_code(line)):
+            problems.append(
+                "%s: %s iterates hive.cells directly -- use "
+                "hive.cells_holding(\"brood\") so the loop only visits "
+                "brood cells"
+                % (name, HATCH_BROOD_FUNC)
+            )
+
+
 STAGE_EFFECTS_FILE = "challenge_runner.gd"
 STAGE_EFFECTS_FUNC = "_enter_stage"
 STAGE_EFFECTS_RUN_CALL = "_run_stage_effects("
@@ -2426,6 +2455,7 @@ def main():
         check_panel_custom_min_size(name, code, problems)
         check_autonomous_transitions(name, lines, problems)
         check_stage_effects_order(name, lines, problems)
+        check_hatch_brood_iteration(name, lines, problems)
         funcs, _members = collect_names(code, source)
         check_calls(name, code, funcs, problems)
 

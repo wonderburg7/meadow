@@ -290,21 +290,51 @@ chose A1 -- brood hatching reads the brood bucket -- as B3's successor: level
 low, depends on nothing, touches only `scripts/main.gd`, file-disjoint from
 every open item.
 
+**B3 shipped 12 Sep 2026.** `hive_cell.gd::capacity_for` now reads
+`capacity_config` off `resources.gd`'s catalogue instead of a `match` naming
+`honey`/`jelly`; `space_for` tests the catalogue's `storable` flag and
+`needs_eviction` tests its `evictable` flag instead of naming `brood`/
+`corpse`; and `hive.gd::take_energy` draws energy kinds in the catalogue's
+new `energy_priority` order (honey before nectar) via two new `resources.gd`
+helpers, `energy_keys_by_priority()` and `energy_factor_for()`, instead of a
+hand-written honey-then-nectar sequence. `resources.gd::entry()` also gained
+the `_by_key` lookup dictionary the slice's Runtime policy called for, since
+it is called from the hot `capacity_for`. `tests/balance_tests.py` gained
+`test_cell_capacity`, checking the catalogue's `capacity_config` for all
+seven kinds against current `GameConfig` defaults. No hands-on check filed,
+since nothing a player sees changes. Full record:
+`plans/archive/B3_2026-09-12.md`. Its `Next after` (A1) fills the Claude
+lane's slot below; A1's own successor is A3 -- epoch-cached hive stock
+totals, the next independent A-series slice, chosen here since A2 (already
+in the Codex lane) is not A1's own to name twice.
+
 ## Next up
 
-1. **[Claude] B3 -- cell capacity and acceptance read the catalogue.**
-   `hive_cell.gd::capacity_for` still names `honey` and `jelly` in a `match`
-   instead of reading `capacity_config` off the catalogue, and `space_for`/
-   `needs_eviction` name `brood`/`corpse` instead of testing `storable`/
-   `evictable`. Read `capacity_config`/`storable`/`evictable` from
-   `resources.gd`'s `RESOURCES` table instead.
-   - Plan: `plans/design/architecture-review.md` -- "B3 — cell capacity and acceptance read the catalogue"
-   - Files: `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/resources.gd`
-   - Check: `tests/balance_tests.py` passes unchanged, including a new case asserting `capacity_for` for all seven kinds against current `GameConfig` defaults
-   - Proof: `present: scripts/hive_cell.gd :: func capacity_for(resource_type: String) -> float:`
-   - Next after: A1 -- brood hatching reads the brood bucket.
+1. **[Claude] A3 -- epoch-cached hive stock totals.**
+   `hive.gd`'s `total`, `total_sealed` and `total_honey` each walk every cell
+   on every call. Cache all three behind a new `stock_epoch` counter, bumped
+   on any mutation of `amount`, `is_closed`, `fill_then_close` or
+   `ripen_progress` (including the restore path in `saving.gd`), following
+   `_content_index()`'s existing epoch-cache shape.
+   - Plan: `plans/design/architecture-review.md` -- "A3 — epoch-cached hive stock totals"
+   - Files: `scripts/hive.gd`, `scripts/hive_cell.gd`
+   - Check: a new `tests/` case deposits, withdraws, seals and unseals a cell and asserts the totals track after each; `test_scenarios/recommendation_slice0_baseline.json`'s frame time is recorded against `docs/PERFORMANCE_BASELINE.md`
+   - Proof: `present: scripts/hive.gd :: func total(resource_type: String) -> float:`
+   - Next after: A4 -- wire the goal cadence.
 
-2. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
+2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
+   `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
+   the Codex permission profile and the verifier's Python resolution. Three of
+   its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
+   file at all, so the closeout machinery every slice depends on is unverified.
+   Fix the three, then add the suite to the verifier as a third job.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-1 — the lifecycle suite is green and runs in verification"
+   - Files: `tests/test_source_checks.py`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_source_checks` reports 27 passing, and `tools/verify.ps1` fails when `slice.ps1`'s post-merge throw is deleted
+   - Proof: `absent: tools/verify.ps1 :: test_source_checks`
+   - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
+
+3. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
    Add developer controls in Game Settings > World and Start for navigating a
    Challenge's stages through the runner's existing transition path.
    - Plan: `plans/now/ui.md` -- "UI-U-1 — step back and forth through a Challenge's stages"
@@ -313,7 +343,7 @@ every open item.
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void:`
    - Next after: UI-P-5 -- reproduce the missing pre-run placeholder live.
 
-3. **[Codex] A2 -- one role tally.**
+4. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
    population readout and colony diagnostics from the canonical `Roles.count_key`
    representation, including the hive's hatch-focus counts.
@@ -326,15 +356,15 @@ every open item.
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- the queue holds three (the floor), and none of the
-entries below is startable today.
+simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
   (`plans/design/architecture-review.md`), other than A1 and A2 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped, but the queue holds only three items
-  and A1 and A2 already fill both of this session's open slots.
+  since those slices have all shipped. A1 leads the Claude lane and A2 holds
+  the Codex lane's second slot; A3, A1's own named successor, is promoted
+  when A1 lands.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
@@ -367,12 +397,14 @@ entries below is startable today.
   someone has looked: it is one investigation, and nothing waits on it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
-- **The Codex lifecycle's own success measure** -- CR-1 to CR-7 all shipped by
-  9 Sep 2026 and the plan is archived at
-  `plans/archive/CODEX_RELIABILITY_2026-09-09.md`, but its stated measure was
-  ten throwaway lifecycle exercises including parallel lanes and injected
-  failures, and those were never run. It is not a defect and nothing waits on
-  it, so it is not a slice; it becomes one only if a lifecycle failure recurs.
+- **The Codex lifecycle's own success measure** -- admitted. CR-1 to CR-7
+  shipped by 9 Sep 2026 and that plan is archived, but its measure -- ten
+  throwaway lifecycle exercises with parallel lanes and injected failures --
+  was never run, and it said it became a slice only if a lifecycle failure
+  recurred. It has: `docs/agent-workflow-review-2026-09-12.md` counts 39
+  non-zero `finish` exits in 97 calls on the Claude side and 20 of 20 on the
+  Codex side. The work is now `plans/now/agent-lifecycle.md`, whose L-1 is in
+  the Claude lane above and whose L-2 and L-6 are those exercises.
 
 ## Copy-paste prompts
 

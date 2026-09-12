@@ -1,6 +1,19 @@
 # Meadow's managed Windows policy keeps shared .git metadata outside the
 # writable sandbox. These exact lifecycle entry points are the reviewed
 # escape hatch; all other PowerShell commands keep their normal policy.
+#
+# `resume` is in the list because it is the only recovery path: `finish`
+# pushes before it deletes the worktree and the ledger row, so an
+# interrupted closeout leaves merged-and-pushed work with cleanup
+# outstanding, and `resume` is what completes it. Without the rule, the
+# recovery step was the one command Codex could not run.
+#
+# The pattern matches an argv list, so it only ever allows a lifecycle
+# command invoked *directly*. Wrapping the same words inside
+# `powershell -Command "..."`, or chaining them onto `cd`, `git status` or
+# `Get-Content` with `;`, `&&` or a pipe, produces a different argv and is
+# not allowed -- run each lifecycle command on its own, exactly as spelled
+# in the not_match examples' allowed counterparts.
 prefix_rule(
     pattern = [
         ["powershell", "powershell.exe"],
@@ -9,7 +22,7 @@ prefix_rule(
         "Bypass",
         "-File",
         "tools/slice.ps1",
-        ["doctor", "start", "finish"],
+        ["doctor", "start", "finish", "resume"],
     ],
     decision = "allow",
     justification = "Meadow's reviewed slice lifecycle needs its shared Git metadata and configured origin.",
@@ -17,9 +30,13 @@ prefix_rule(
         "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 doctor -Lane Codex",
         "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 start -Lane Codex",
         "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 resume -Lane Codex",
     ],
     not_match = [
         "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 abandon",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 abort -Lane Codex",
         "powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1",
+        "powershell -NoProfile -ExecutionPolicy Bypass -Command \"cd .worktrees/C1-25; ./tools/slice.ps1 finish\"",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish; git status",
     ],
 )
