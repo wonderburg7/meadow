@@ -1,7 +1,7 @@
 # Season balance — the flowering year's peaks and troughs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SB-2 -- out-of-season species become genuinely rare | Dependency: none -- SB-1 shipped | Verified: 2026-09-12
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none | Verified: 2026-09-12
 
 **Objective.** A meadow year that reads as a year: every season has something
 in flower, the summer peak is a good season rather than a different game, and
@@ -26,9 +26,7 @@ comparison that has to be run.
 
 ## Open slices at a glance
 
-| Slice | Outcome | Owns | Startable | Reasoning |
-| --- | --- | --- | --- | --- |
-| SB-2 | Out-of-season species become genuinely rare | `game_config.gd`, `flower_species.gd` | yes | low |
+None. All three slices below have shipped and the plan is complete.
 
 SB-0 shipped 12 Sep 2026 (`plans/archive/SB-0_2026-09-12.md`): it added the
 `resources.stored_nectar`, `resources.stored_pollen` and
@@ -60,47 +58,9 @@ count by species. SB-0 closes that gap. This is `plans/README.md`'s
 sequencing guardrail 2 -- evidence before threshold changes -- applied to a
 plan that had assumed the evidence already existed.
 
-## SB-2 — out-of-season species become genuinely rare
-
-**Reasoning level: low.** One value, one existing formula.
-
-**Evidence (Dave, 8 Sep 2026, alongside C-17 passing).** C-17 passed in full:
-"every season retains visible flowers, out-of-season flowers remain rare
-rather than absent, and panel text/rates agree." The one note: "Out-of-season
-plants should be more rare."
-
-**Cause.** `scripts/flower_species.gd::season_weight()` (~line 185) floors an
-out-of-season species' seeding weight at `GameConfig.out_of_season_seed_weight`,
-currently 0.15 — a species out of its window still seeds at fifteen per cent
-of its usual rarity weight, which over a whole meadow is a steady presence
-rather than an occasional one.
-
-**Deliver.** Lower the floor, and only the floor. In
-`scripts/game_config.gd` (~line 802):
-
-```gdscript
-## An out-of-season species retains this fraction of its usual seed weight,
-## so a species never disappears from the meadow entirely. Lowered 0.15 ->
-## 0.06 on 8 Sep 2026: at 0.15 an out-of-season plant read as a background
-## constant rather than as a rarity (Dave, alongside C-17 passing).
-## It must stay above zero -- C-17's pass condition is "rare rather than
-## absent", and zero would fail it.
-var out_of_season_seed_weight: float = 0.06
-```
-
-Do not change `season_weight()`'s shape, `out_of_season_strength`, or any
-species' own `weight`. This value is deliberately a single dial.
-
-**Simulate before shipping.** Run SB-1's 60-day fixture at 0.15 and 0.06 and
-report, for four snapshots spread across the year,
-`environment.flowers_by_species` -- the count of live flowers of each species,
-which is the field SB-0 adds for exactly this. Acceptable if at every sampled day at
-least one species is well represented and no species reaches zero anywhere in
-the year. If any species does reach zero, raise the value in 0.02 steps until
-none does, and ship the lowest value that keeps them all present.
-
-**Acceptance.** Play or headless-watch a full year with seasons on. Something
-is visibly in flower all year, as C-17 required, but an out-of-season species
-now reads as an occasional find rather than as part of the standing mix.
-
-**Check to file:** C-25, which re-runs C-17's condition against the new value.
+SB-2 shipped 12 Sep 2026 (`plans/archive/SB-2_2026-09-12.md`):
+`game_config.gd`'s `out_of_season_seed_weight` lowered from 0.15 to 0.06. A
+matched-seed 60-day A/B at both values showed every species present at some
+point across the full year at both, so 0.06 introduces no new extinction.
+Its check is C-25. This was the plan's last open slice; the plan is now
+complete and no follow-up is queued.
