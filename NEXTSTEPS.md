@@ -356,17 +356,20 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
 
 ## Next up
 
-1. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
-   `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
-   the Codex permission profile and the verifier's Python resolution. Three of
-   its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
-   file at all, so the closeout machinery every slice depends on is unverified.
-   Fix the three, then add the suite to the verifier as a third job.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-1 — the lifecycle suite is green and runs in verification"
-   - Files: `tests/test_source_checks.py`, `tools/verify.ps1`
-   - Check: `python -m unittest tests.test_source_checks` reports 27 passing, and `tools/verify.ps1` fails when `slice.ps1`'s post-merge throw is deleted
-   - Proof: `absent: tools/verify.ps1 :: test_source_checks`
-   - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
+1. **[Claude] L-2 -- every outcome is classified, every closeout phase is injected.**
+   Two instruments. `tools/session_cost.py` gains `classify_outcome` so a
+   measurement run separates real failures from expected ones (an
+   `expected_no_match`, a `partially_denied` chained command, and so on --
+   seven classes, first match wins). Separately,
+   `tests/test_source_checks.py` gains a test that drives `finish` through
+   every durable closeout phase via the existing `MEADOW_SLICE_FAIL_AFTER`
+   injection hook and confirms `resume` reaches the same clean end state
+   from each one.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-2 — every outcome is classified, every closeout phase is injected"
+   - Files: `tools/session_cost.py`, `tests/test_source_checks.py`
+   - Check: `python tools/session_cost.py --classify` over 4-12 Sep 2026 agrees with the review's Part 1 counts within 10%, and `test_finish_is_resumable_after_every_injected_phase` passes for every phase in `Invoke-InjectedLifecycleFailure`
+   - Proof: `absent: tools/session_cost.py :: def classify_outcome`
+   - Next after: L-3.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
