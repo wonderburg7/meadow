@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-P-5 -- reproduce the missing pre-run placeholder live | Dependency: Dave's live reproduction | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude Code | Next: no open UI slice | Dependency: none | Verified: 2026-09-12
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -16,14 +16,18 @@ UI-U-1, a developer control for reaching a late Challenge stage without
 replaying the whole Challenge, shipped 12 Sep 2026; see
 `plans/archive/UI-U-1_2026-09-12.md`. Dave's 10 Sep 2026 pass added UI-M-2 (the
 pre-run menu's hexagon titles spilling outside their tiles), shipped the same
-day -- see `plans/archive/UI-M-2_2026-09-10.md`. UI-P-5 is what remains and
-needs a live reproduction before it is startable.
+day -- see `plans/archive/UI-M-2_2026-09-10.md`. UI-P-5's 12 Sep live
+reproduction showed its placeholder visibly present, so it closed with no code
+change; see `plans/archive/UI-P-5_2026-09-12.md`. Dave's 12 Sep 2026 pass
+found the whole HUD missing -- a `Rect2` method that does not exist in Godot 4
+failed `hud.gd`'s compile and took `main.gd` down with it -- and added two
+smaller findings about the settings window. All three shipped the same day as
+UI-B-1, together with a Godot boot stage in `tools/verify.ps1` so a parse
+error cannot reach `master` again; see `plans/archive/UI-B-1_2026-09-12.md`.
 
 ## Open slices at a glance
 
-| Slice | Outcome | Owns | Startable | Reasoning |
-| --- | --- | --- | --- | --- |
-| UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
+No UI slice is currently open.
 
 ## UI-U-1 — step back and forth through a Challenge's stages
 
@@ -231,11 +235,16 @@ against the tile's real hexagon at its real position, and every reported
 
 ## UI-P — remaining fixes from Dave's 30 Aug hands-on pass
 
-UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. P-5 is all that is
-left, and it needs a live reproduction before any code. Dave's 8 Sep pass did
-not report on it, so it stays where it is.
+UI-P-1 to P-4 and P-6 to P-8 shipped; see the archive. UI-P-5's 12 Sep live
+reproduction found the requested placeholder visibly present, so it closed with
+no implementation change; see `plans/archive/UI-P-5_2026-09-12.md`.
 
-### UI-P-5 — pre-run menu: "Choose a Challenge or Scenario on the left." isn't visible
+### UI-P-5 — pre-run placeholder live reproduction
+
+**Shipped 12 Sep 2026 — no code change; see
+`plans/archive/UI-P-5_2026-09-12.md`.** Dave's supplied maximised 1920×1080
+capture at default text scale visibly shows `Choose a Challenge or Scenario on
+the left.` below the Settings cog. The symptom did not reproduce.
 
 **Symptom (Dave, 30 Aug):** the placeholder text can't be found anywhere on
 screen before a Challenge/Scenario is picked.
@@ -281,10 +290,9 @@ theories reproduces. The placeholder's `text_secondary` colour
 legible against the backdrop by eye, so that's not an obvious third cause
 either, though it was not measured for contrast. Godot's `--resolution` flag
 had no effect on the measured rect in headless mode, so the 800x600 edge
-case is still unverified this way. The real cause is still open; it needs
-Dave's own screen (headless geometry can't see contrast, DPI, or whatever
-about his actual boot differs from a fresh worktree's), not more static
-reading.
+case is still unverified this way. Dave's subsequent live capture at 1920×1080
+with the default text scale visibly showed the placeholder below the Settings
+cog. The symptom did not reproduce, so no code change is warranted.
 
 ## Closed groups — pointers only
 

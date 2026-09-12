@@ -310,19 +310,7 @@ in the Codex lane) is not A1's own to name twice.
 
 ## Next up
 
-1. **[Claude] A3 -- epoch-cached hive stock totals.**
-   `hive.gd`'s `total`, `total_sealed` and `total_honey` each walk every cell
-   on every call. Cache all three behind a new `stock_epoch` counter, bumped
-   on any mutation of `amount`, `is_closed`, `fill_then_close` or
-   `ripen_progress` (including the restore path in `saving.gd`), following
-   `_content_index()`'s existing epoch-cache shape.
-   - Plan: `plans/design/architecture-review.md` -- "A3 — epoch-cached hive stock totals"
-   - Files: `scripts/hive.gd`, `scripts/hive_cell.gd`
-   - Check: a new `tests/` case deposits, withdraws, seals and unseals a cell and asserts the totals track after each; `test_scenarios/recommendation_slice0_baseline.json`'s frame time is recorded against `docs/PERFORMANCE_BASELINE.md`
-   - Proof: `present: scripts/hive.gd :: func total(resource_type: String) -> float:`
-   - Next after: A4 -- wire the goal cadence.
-
-2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
+1. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
    `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
    the Codex permission profile and the verifier's Python resolution. Three of
    its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
@@ -334,14 +322,29 @@ in the Codex lane) is not A1's own to name twice.
    - Proof: `absent: tools/verify.ps1 :: test_source_checks`
    - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
 
-3. **[Codex] UI-P-5 -- reproduce the missing pre-run placeholder live.**
-   Reproduce and diagnose the missing pre-run menu placeholder from Dave's
-   screen report before changing its implementation.
-   - Plan: `plans/now/ui.md` -- "UI-P-5 — pre-run menu: \"Choose a Challenge or Scenario on the left.\" isn't visible"
-   - Files: `scripts/main_menu.gd`
-   - Check: Dave's live reproduction identifies whether the placeholder is missing or merely obscured
-   - Proof: `present: scripts/main_menu.gd :: var detail_placeholder`
-   - Next after: A2 -- one role tally, once A3 has shipped (see "Not in the queue" below).
+2. **[Codex] A3 -- epoch-cached hive stock totals.**
+   `hive.gd`'s `total`, `total_sealed` and `total_honey` each walk every cell
+   on every call. Cache all three behind a new `stock_epoch` counter, bumped
+   on any mutation of `amount`, `is_closed`, `fill_then_close` or
+   `ripen_progress` (including the restore path in `saving.gd`), following
+   `_content_index()`'s existing epoch-cache shape.
+   - Plan: `plans/design/architecture-review.md` -- "A3 — epoch-cached hive stock totals"
+   - Files: `scripts/hive.gd`, `scripts/hive_cell.gd`
+   - Check: a new `tests/` case deposits, withdraws, seals and unseals a cell and asserts the totals track after each; `test_scenarios/recommendation_slice0_baseline.json`'s frame time is recorded against `docs/PERFORMANCE_BASELINE.md`
+   - Proof: `present: scripts/hive.gd :: func total(resource_type: String) -> float:`
+   - Next after: A4 -- wire the goal cadence.
+
+3. **[Codex] A2 -- one role tally.**
+   Four sites build a role-count key by hand instead of calling
+   `Roles.count_key`, and `ColonyDiagnostics.compute` walks the bees a second
+   time to count roles it was already given. Route every site through
+   `Roles.count_key`, derive `_update_population_readout`'s four numbers from
+   `_role_counts()`, and pass the counts into `compute` rather than recounting.
+   - Plan: `plans/design/architecture-review.md` -- "A2 — one role tally"
+   - Files: `scripts/main.gd`, `scripts/colony_diagnostics.gd`, `scripts/hive.gd`
+   - Check: a `tests/source_checks.py` check that no file outside `roles.gd` contains the literal `"%d|%s"`, `"%d|"` or `"0|%s"`, plus H3's equivalence command over `test_scenarios/colony_30_bees_test.json` with matching population lines
+   - Proof: `present: scripts/hive.gd :: elif cell.hatch_role == 0`
+   - Next after: A4 -- wire the goal cadence.
 
 ## Not in the queue, and why
 
@@ -349,19 +352,13 @@ Each of these wants something from Dave, something else to ship first, or
 simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`), other than A3 above -- Decision
-  A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices 21-26 to
-  vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026, since
-  those slices have all shipped. A3 leads the Claude lane. A2 -- one role
-  tally is held out of the Codex lane rather than run alongside it: both
-  slices touch `scripts/hive.gd` (`tools/check_docs.py` flags exactly this as
-  a cross-lane collision waiting to happen), so A2 is re-admitted once A3
-  ships.
-- **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
-  headless check ruled both out (the placeholder is present, visible and
-  correctly positioned in a fresh boot), so the real cause needs Dave's own
-  screen, not more static reading. None of Dave's six passes since 8 Sep has
-  reported on it.
+  (`plans/design/architecture-review.md`), other than A2 and A3 above --
+  Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
+  21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
+  since those slices have all shipped. A2 and A3 both touch `scripts/hive.gd`,
+  so both sit in the Codex lane, one behind the other, rather than one in each
+  lane where they would be a cross-lane collision waiting to happen. A4 onwards
+  wait for a free slot.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

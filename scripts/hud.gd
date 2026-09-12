@@ -2107,7 +2107,13 @@ func _update_stage_marker_arrow() -> void:
 	var safe_edge := Rect2(
 		Vector2.ONE * MARKER_ARROW_EDGE_INSET,
 		viewport_size - Vector2.ONE * MARKER_ARROW_EDGE_INSET * 2.0)
-	var edge_point := safe_edge.get_closest_point(marker_screen)
+	# Rect2 has no closest-point helper in Godot 4, so clamp each axis into
+	# the safe edge instead. Calling a method that does not exist is a parse
+	# error, not a runtime one, so it took main.gd's whole compile down with
+	# it and the HUD never built (Dave's 12 Sep report: every panel gone).
+	var edge_point := Vector2(
+		clampf(marker_screen.x, safe_edge.position.x, safe_edge.end.x),
+		clampf(marker_screen.y, safe_edge.position.y, safe_edge.end.y))
 	_refresh_marker_exclusion_rects(viewport_size)
 	stage_marker_arrow.position = _slide_arrow_along_edge(edge_point, safe_edge)
 	stage_marker_arrow.rotation = (marker_screen - viewport_size * 0.5).angle()
