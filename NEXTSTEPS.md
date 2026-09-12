@@ -161,10 +161,22 @@ fields) survive together. `DiagnosticLog::_snapshot`'s unconditional
 plan's Files list, but required for a fixture selecting the new fields to
 pass validation before Godot launches) both got the same two totals. No
 check filed -- nothing a player sees changes. Full record:
-`plans/archive/SB-0_2026-09-12.md`. Its `Next after` (SB-1) fills the
-Claude lane's slot below. SB-1 does not touch `docs/headless-run-contract.md`,
-so the cross-lane note on H4 below (which used to point at SB-0 owning that
-file) is simplified to plain lane order behind HCB-4.
+`plans/archive/SB-0_2026-09-12.md`.
+
+**SB-1 shipped 12 Sep 2026.** `game_config.gd` gained `peak_season_strength`
+(0.75), and `flower.gd::season_strength()`'s in-window return now arches
+between `out_of_season_strength` and `peak_season_strength` instead of
+between 0 and 1 -- which also removes the old edge discontinuity, since both
+formulas now agree exactly at the window edge. `settings_catalogue.gd`
+exposes the new dial. A 60-day headless A/B (today's 1.0 vs the new 0.75, on
+`test_scenarios/foraging_evidence_base.json`) showed identical colony
+survival in both runs and a materially narrower peak nectar-gathering rate
+(12.26 -> 6.85); no 60-day fixture in `test_scenarios/` currently keeps a
+colony's stored nectar/pollen above zero long enough to compare peaks there
+(pre-existing, confirmed on an already-shipped fixture too, not caused by
+this slice), so the rate curve stood in for the plan's stored-total
+comparison. Full record: `plans/archive/SB-1_2026-09-12.md`; its check is
+C-24. Its `Next after` (SB-2) fills the Claude lane's slot below.
 
 ## Next up
 
@@ -193,20 +205,19 @@ file) is simplified to plain lane order behind HCB-4.
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void`
    - Next after: Challenge 1 Slice 24 -- the stage marker is never left in the wrong world. H4 is the shared prerequisite that gives Slice 24's stated headless acceptance a runnable path.
 
-3. **[Claude] SB-1 -- peak-season production is a rise, not a spike.**
-   `flower.gd::season_strength()` returns a plain sine arch reaching exactly
-   1.0 at the middle of a species' window, twenty times the out-of-season
-   floor, and it is discontinuous at the window edges (eases to 0.0, then
-   jumps to the 0.05 floor one frame later). Add a `peak_season_strength`
-   dial to `game_config.gd`, rewrite the in-window return to arch between the
-   floor and that peak (removing the discontinuity for free), and expose the
-   new value in `settings_catalogue.gd`. Simulate a 60-day headless year at
-   1.0 (today) and 0.75 using SB-0's new snapshot fields before shipping.
-   - Plan: `plans/now/season-balance.md` -- "SB-1 — peak-season production is a rise, not a spike"
-   - Files: `scripts/game_config.gd`, `scripts/flower.gd`, `scripts/settings_catalogue.gd`
-   - Check: one hands-on check watching a season's `+/s` figures peak closer to the shoulder without a jump at the window edge, while out-of-season flowers are unchanged
-   - Proof: `absent: scripts/game_config.gd :: peak_season_strength`
-   - Next after: SB-2 -- out-of-season species become genuinely rare (`plans/now/season-balance.md`); startable the moment SB-1 lands (both add a value to `scripts/game_config.gd`).
+3. **[Claude] SB-2 -- out-of-season species become genuinely rare.**
+   `flower_species.gd::season_weight()` floors an out-of-season species'
+   seeding weight at `GameConfig.out_of_season_seed_weight` (0.15), which over
+   a whole meadow reads as a steady presence rather than an occasional one.
+   Lower the floor to 0.06, changing only that one value. Simulate SB-1's
+   60-day fixture at 0.15 and 0.06 using SB-0's `environment.flowers_by_species`
+   field before shipping, checking no species reaches zero anywhere in the
+   year.
+   - Plan: `plans/now/season-balance.md` -- "SB-2 — out-of-season species become genuinely rare"
+   - Files: `scripts/game_config.gd`, `scripts/flower_species.gd`
+   - Check: a full year with seasons on always has something visibly in flower, but an out-of-season species reads as an occasional find rather than part of the standing mix
+   - Proof: `present: scripts/game_config.gd :: var out_of_season_seed_weight: float = 0.15`
+   - Next after: none -- season-balance.md is complete.
 
 ## Not in the queue, and why
 
@@ -238,9 +249,6 @@ entries below is startable today.
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
   edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
   waits for both lanes to vacate them.
-- **SB-2** (`plans/now/season-balance.md`) -- out-of-season species become
-  genuinely rare. Waits on **SB-1**, now in the Claude lane above, since both
-  add a value to `scripts/game_config.gd`; SB-1's own `Next after`.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own

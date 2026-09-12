@@ -583,6 +583,11 @@ const TUNABLES := [
 		"tip": "How long a full year is. Shorter means the flowering windows come round faster and the colony has less time in each.",
 	},
 	{
+		"key": "peak_season_strength", "label": "Peak season strength", "step": 0.05, "min": 0.1, "max": 1.5,
+		"category": "Seasons & health",
+		"tip": "What a species reaches at the very middle of its own flowering window, as a multiple of its nominal recharge rate. Lower narrows the gap between peak and out-of-season flowering.",
+	},
+	{
 		"key": "disease_on", "label": "Pathogens", "toggle": true,
 		"category": "Seasons & health",
 		"tip": "Pressure builds in a hive with dead larvae left in it and in one that is crowded, and it slows brood development and shortens bee lifespans. This is what turns clearing from tidying into work worth doing before you need it -- the cost of ignoring it arrives later and all at once.",

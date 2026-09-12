@@ -302,8 +302,15 @@ func season_strength() -> float:
 		return GameConfig.out_of_season_strength
 	var span: float = max(0.001, season_end - season_start)
 	var through: float = (f - season_start) / span
-	# a smooth arch: 0 at both ends, 1 in the middle
-	return sin(through * PI)
+	# A smooth arch from the out-of-season floor up to peak_season_strength
+	# and back. Interpolating from the floor rather than from zero also
+	# removes the old discontinuity: the curve used to ease to 0.0 at the
+	# window edge and then jump to out_of_season_strength.
+	return lerpf(
+		GameConfig.out_of_season_strength,
+		GameConfig.peak_season_strength,
+		sin(through * PI)
+	)
 
 func get_available(resource_type: String) -> float:
 	return nectar_amount if resource_type == "nectar" else pollen_amount
