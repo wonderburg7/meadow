@@ -344,6 +344,96 @@ behaviour.
 1324 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
+## challenge_runner.gd (1,233 lines)
+
+The stage machine, goal checks and stage effects.
+
+```
+146  func _ready() -> void
+149  func _reset_c2_pollen_rescue() -> void
+152  func _stages() -> Array
+157  func current_stage_instruction() -> String
+164  func current_stage_id() -> String
+172  func current_stage_goal_text() -> String
+177  func can_debug_retreat_stage() -> bool
+180  func can_debug_advance_stage() -> bool
+189  func run_skill_grants() -> Array
+192  func run_skill_bans() -> Array
+195  func run_skill_delays() -> Dictionary
+198  func start() -> void
+275  func _process(delta: float) -> void
+303  func _check_c2_failure() -> void
+363  func _c2_index(stage_id: String) -> int
+373  func _stage_unlock_keys(entries: Array) -> Array
+394  func _queen_allowed_role_ids(entries: Array) -> Array
+402  func _enter_stage() -> void
+466  func _built_cell_count() -> int
+475  func _brood_cell_count() -> int
+485  func _hive_inspection_points() -> Array
+499  func _meadow_inspection_points() -> Array
+511  func _begin_ordered_visit(points: Array, marker_parent: Node2D) -> void
+517  func _clear_ordered_visit() -> void
+522  func _ordered_visit_complete(traveller: Node2D) -> bool
+535  func _show_current_visit_point() -> void
+550  func _update_marker(stage_id: String) -> void
+588  func _set_marker_visible(value: bool) -> void
+612  func _publish_marker_to_hud() -> void
+623  func _show_goal(stage: Dictionary) -> void
+630  func _advance() -> void
+645  func _leave_stage() -> Dictionary
+655  func _run_stage_effects(effects: Array) -> void
+693  func debug_advance_stage() -> void
+700  func debug_retreat_stage() -> void
+708  func _complete() -> void
+764  func _on_queen_build_cell_requested() -> void
+770  func on_queen_build_site_chosen(hex: Vector2i) -> void
+786  func _apply_stage_gate_to_ui() -> void
+828  func is_bee_command_locked(bee: Node2D) -> bool
+836  func _setup_opening_tunnel() -> void
+876  func _drive_opening_mine() -> void
+888  func _opening_tunnel_cleared() -> bool
+903  func _drive_c1_forage_effects() -> void
+924  func discards_overflow(bee: Node2D) -> bool
+936  func announce_overflow_discard() -> void
+953  func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void
+972  func on_worker_hatched(bee: Node2D) -> void
+994  func _drive_greeting(delta: float) -> void
+1041 func _build_goal_registry() -> void
+1074 func _goal_met(goal: String) -> bool
+1080 func _goal_check_entrance_tunnel_cleared() -> bool
+1083 func _goal_check_queen_reached_cavity() -> bool
+1088 func _goal_check_queen_selected() -> bool
+1091 func _goal_check_hive_points_visited() -> bool
+1094 func _goal_check_first_cell_built() -> bool
+1097 func _goal_check_second_cell_built() -> bool
+1100 func _goal_check_third_cell_built() -> bool
+1103 func _goal_check_nectar_target() -> bool
+1109 func _goal_check_pollen_target() -> bool
+1115 func _goal_check_first_egg_laid() -> bool
+1118 func _goal_check_queen_reached_meadow() -> bool
+1121 func _goal_check_meadow_points_visited() -> bool
+1124 func _goal_check_first_flower_collected() -> bool
+1127 func _goal_check_second_flower_collected() -> bool
+1130 func _goal_check_harvest_deposited() -> bool
+1133 func _goal_check_new_bee_selected() -> bool
+1139 func _goal_check_new_bee_left_hive() -> bool
+1142 func _goal_check_complete() -> bool
+1145 # --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
+1147 func _goal_check_nectar_forager_hatched() -> bool
+1150 # --- Challenge 2 ---------------------------------------------
+1151 func _goal_check_nectar_stabilized() -> bool
+1158 func _goal_check_pollen_foragers_raised() -> bool
+1161 func _goal_check_cell_designated() -> bool
+1167 func _goal_check_pollen_cell_designated() -> bool
+1173 func _goal_check_interim_reserve() -> bool
+1179 func _goal_check_nurse_raised() -> bool
+1182 func _goal_check_persistent_designation_used() -> bool
+1190 func _goal_check_comb_worker_building() -> bool
+1194 func _goal_check_miner_expansion() -> bool
+1201 func _goal_check_c2_complete() -> bool
+1218 func _goal_progress(goal: String) -> Dictionary
+```
+
 ## main.gd (1,206 lines)
 
 Per-frame entry point, everything not yet split out of main.
@@ -389,91 +479,6 @@ Per-frame entry point, everything not yet split out of main.
 1139 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
 1179 func _is_whole_number(value: Variant) -> bool
 1193 func _end_scenario_run(outcome: String) -> void
-```
-
-## challenge_runner.gd (1,195 lines)
-
-The stage machine, goal checks and stage effects.
-
-```
-146  func _ready() -> void
-149  func _reset_c2_pollen_rescue() -> void
-152  func _stages() -> Array
-157  func current_stage_instruction() -> String
-164  func current_stage_id() -> String
-175  func run_skill_grants() -> Array
-178  func run_skill_bans() -> Array
-181  func run_skill_delays() -> Dictionary
-184  func start() -> void
-261  func _process(delta: float) -> void
-289  func _check_c2_failure() -> void
-349  func _c2_index(stage_id: String) -> int
-359  func _stage_unlock_keys(entries: Array) -> Array
-380  func _queen_allowed_role_ids(entries: Array) -> Array
-388  func _enter_stage() -> void
-448  func _built_cell_count() -> int
-457  func _brood_cell_count() -> int
-467  func _hive_inspection_points() -> Array
-481  func _meadow_inspection_points() -> Array
-493  func _begin_ordered_visit(points: Array, marker_parent: Node2D) -> void
-499  func _clear_ordered_visit() -> void
-504  func _ordered_visit_complete(traveller: Node2D) -> bool
-517  func _show_current_visit_point() -> void
-532  func _update_marker(stage_id: String) -> void
-570  func _set_marker_visible(value: bool) -> void
-594  func _publish_marker_to_hud() -> void
-605  func _show_goal(stage: Dictionary) -> void
-612  func _advance() -> void
-628  func _run_stage_effects(effects: Array) -> void
-666  func debug_advance_stage() -> void
-670  func _complete() -> void
-726  func _on_queen_build_cell_requested() -> void
-732  func on_queen_build_site_chosen(hex: Vector2i) -> void
-748  func _apply_stage_gate_to_ui() -> void
-790  func is_bee_command_locked(bee: Node2D) -> bool
-798  func _setup_opening_tunnel() -> void
-838  func _drive_opening_mine() -> void
-850  func _opening_tunnel_cleared() -> bool
-865  func _drive_c1_forage_effects() -> void
-886  func discards_overflow(bee: Node2D) -> bool
-898  func announce_overflow_discard() -> void
-915  func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void
-934  func on_worker_hatched(bee: Node2D) -> void
-956  func _drive_greeting(delta: float) -> void
-1003 func _build_goal_registry() -> void
-1036 func _goal_met(goal: String) -> bool
-1042 func _goal_check_entrance_tunnel_cleared() -> bool
-1045 func _goal_check_queen_reached_cavity() -> bool
-1050 func _goal_check_queen_selected() -> bool
-1053 func _goal_check_hive_points_visited() -> bool
-1056 func _goal_check_first_cell_built() -> bool
-1059 func _goal_check_second_cell_built() -> bool
-1062 func _goal_check_third_cell_built() -> bool
-1065 func _goal_check_nectar_target() -> bool
-1071 func _goal_check_pollen_target() -> bool
-1077 func _goal_check_first_egg_laid() -> bool
-1080 func _goal_check_queen_reached_meadow() -> bool
-1083 func _goal_check_meadow_points_visited() -> bool
-1086 func _goal_check_first_flower_collected() -> bool
-1089 func _goal_check_second_flower_collected() -> bool
-1092 func _goal_check_harvest_deposited() -> bool
-1095 func _goal_check_new_bee_selected() -> bool
-1101 func _goal_check_new_bee_left_hive() -> bool
-1104 func _goal_check_complete() -> bool
-1107 # --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
-1109 func _goal_check_nectar_forager_hatched() -> bool
-1112 # --- Challenge 2 ---------------------------------------------
-1113 func _goal_check_nectar_stabilized() -> bool
-1120 func _goal_check_pollen_foragers_raised() -> bool
-1123 func _goal_check_cell_designated() -> bool
-1129 func _goal_check_pollen_cell_designated() -> bool
-1135 func _goal_check_interim_reserve() -> bool
-1141 func _goal_check_nurse_raised() -> bool
-1144 func _goal_check_persistent_designation_used() -> bool
-1152 func _goal_check_comb_worker_building() -> bool
-1156 func _goal_check_miner_expansion() -> bool
-1163 func _goal_check_c2_complete() -> bool
-1180 func _goal_progress(goal: String) -> Dictionary
 ```
 
 ## diagnostic_log.gd (1,134 lines)
@@ -692,50 +697,54 @@ The comb as a whole: cells, navigation, finding a cell.
 1017 func announce() -> void
 ```
 
-## debug_panel.gd (874 lines)
+## debug_panel.gd (946 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-63   func _style_button(button: BaseButton) -> BaseButton
-68   func _ready() -> void
-172  func _report_settings_button_width() -> void
-177  func _rows_in(category: String) -> Array
-199  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-230  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-238  func open_to_categories(categories: Array) -> void
-258  func collapse_all() -> void
-266  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-320  func _make_controls_help() -> Control
-354  func _build_actions(column: VBoxContainer) -> void
-421  func _make_winter_action() -> Control
-433  func _on_winter_pressed() -> void
-439  func _on_challenge_advance_pressed() -> void
-452  func _on_fire_test_warnings_pressed() -> void
-485  func _on_force_c2_collapse_pressed() -> void
-503  func set_save_load_enabled(enabled: bool) -> void
-511  func set_toggle(key: String, value: bool) -> void
-516  func _on_save_pressed() -> void
-527  func _on_load_pressed() -> void
-539  func _toggle_panel() -> void
-553  func _apply_layer_for_context() -> void
-558  func _make_row(entry: Dictionary) -> Control
-601  func _make_control_slot() -> HBoxContainer
-610  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-640  func _make_toggle_row(entry: Dictionary) -> Control
-711  func _make_options_row(entry: Dictionary) -> Control
-744  func _option_display(entry: Dictionary, value) -> String
-748  func _cycle_option(entry: Dictionary, direction: int) -> void
-763  func _cascade_prerequisites_on(key: String) -> void
-777  func _cascade_dependents_off(key: String) -> void
-785  func _cascade_mutual_exclusion(key: String) -> void
-794  func _make_star_row(entry: Dictionary) -> Control
-835  func _adjust(entry: Dictionary, delta: float) -> void
-850  func _format_value(v) -> String
-857  func _on_restart_pressed() -> void
-862  func _on_main_menu_pressed() -> void
-870  func _restart() -> void
+70   func _style_button(button: BaseButton) -> BaseButton
+75   func _ready() -> void
+179  func _report_settings_button_width() -> void
+184  func _rows_in(category: String) -> Array
+206  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+237  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+245  func open_to_categories(categories: Array) -> void
+265  func collapse_all() -> void
+273  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+333  func _make_challenge_stage_navigation() -> Control
+362  func _process(_delta: float) -> void
+365  func _refresh_challenge_stage_navigation() -> void
+384  func _make_controls_help() -> Control
+418  func _build_actions(column: VBoxContainer) -> void
+485  func _make_winter_action() -> Control
+497  func _on_winter_pressed() -> void
+503  func _on_challenge_advance_pressed() -> void
+510  func _on_challenge_retreat_pressed() -> void
+524  func _on_fire_test_warnings_pressed() -> void
+557  func _on_force_c2_collapse_pressed() -> void
+575  func set_save_load_enabled(enabled: bool) -> void
+583  func set_toggle(key: String, value: bool) -> void
+588  func _on_save_pressed() -> void
+599  func _on_load_pressed() -> void
+611  func _toggle_panel() -> void
+625  func _apply_layer_for_context() -> void
+630  func _make_row(entry: Dictionary) -> Control
+673  func _make_control_slot() -> HBoxContainer
+682  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+712  func _make_toggle_row(entry: Dictionary) -> Control
+783  func _make_options_row(entry: Dictionary) -> Control
+816  func _option_display(entry: Dictionary, value) -> String
+820  func _cycle_option(entry: Dictionary, direction: int) -> void
+835  func _cascade_prerequisites_on(key: String) -> void
+849  func _cascade_dependents_off(key: String) -> void
+857  func _cascade_mutual_exclusion(key: String) -> void
+866  func _make_star_row(entry: Dictionary) -> Control
+907  func _adjust(entry: Dictionary, delta: float) -> void
+922  func _format_value(v) -> String
+929  func _on_restart_pressed() -> void
+934  func _on_main_menu_pressed() -> void
+942  func _restart() -> void
 ```
 
 ## game_config.gd (874 lines)

@@ -54,6 +54,13 @@ var sections: Dictionary = {}
 var section_headers: Dictionary = {}
 var collection_bodies: Dictionary = {}
 var collection_headers: Dictionary = {}
+## This row exists only inside the World & start section and is hidden outside
+## an active Challenge. Its values remain runner-owned.
+var challenge_stage_row: Control
+var challenge_stage_label: Label
+var challenge_retreat_btn: Button
+var challenge_advance_btn: Button
+var _challenge_stage_navigation_key: String = ""
 ## The collapse button promises a two-press sequence; count its presses rather
 ## than inferring which step it should take from stores the rescue may refill.
 var _c2_collapse_presses: int = 0
@@ -302,6 +309,8 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 			body.add_child(_make_options_row(entry))
 		else:
 			body.add_child(_make_row(entry))
+	if category == "World & start":
+		body.add_child(_make_challenge_stage_navigation())
 
 	# The controls used to be printed permanently in the top-left corner.
 	# They are now a real topic rather than an appendix to Appearance.
@@ -316,6 +325,61 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 
 	sections[category] = body
 	return wrapper
+
+## Developer-only navigation for a live Challenge. The runner exposes only
+## read methods and transition methods, so this view cannot mutate stage
+## state directly. It stays in this section rather than the general Triggers
+## group because it describes the active world's current Challenge state.
+func _make_challenge_stage_navigation() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+
+	challenge_retreat_btn = Button.new()
+	_style_button(challenge_retreat_btn)
+	challenge_retreat_btn.text = "◀"
+	challenge_retreat_btn.custom_minimum_size = Vector2(28, 0)
+	challenge_retreat_btn.pressed.connect(_on_challenge_retreat_pressed)
+	row.add_child(challenge_retreat_btn)
+
+	challenge_stage_label = Label.new()
+	challenge_stage_label.theme_type_variation = "Small"
+	challenge_stage_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	challenge_stage_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(challenge_stage_label)
+
+	challenge_advance_btn = Button.new()
+	_style_button(challenge_advance_btn)
+	challenge_advance_btn.text = "▶"
+	challenge_advance_btn.custom_minimum_size = Vector2(28, 0)
+	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
+	row.add_child(challenge_advance_btn)
+
+	var wrapped_row := UI.with_info(row, "Debug only: step through an active Challenge's stages. Going back rebuilds the stage's gates, prompts and marker, but does not undo the hive, cells or bees; a goal already satisfied may advance again immediately.")
+	wrapped_row.visible = false
+	challenge_stage_row = wrapped_row
+	return wrapped_row
+
+func _process(_delta: float) -> void:
+	_refresh_challenge_stage_navigation()
+
+func _refresh_challenge_stage_navigation() -> void:
+	if challenge_stage_row == null:
+		return
+	var worlds := get_tree().get_nodes_in_group("world")
+	var runner = null if worlds.is_empty() else worlds[0].challenge_runner
+	var active: bool = runner != null and runner.active
+	var stage_id: String = runner.current_stage_id() if active else ""
+	var stage_goal: String = runner.current_stage_goal_text() if active else ""
+	var key: String = "%s|%s|%s|%s" % [active, stage_id, stage_goal, runner.can_debug_retreat_stage() if active else false]
+	if key == _challenge_stage_navigation_key:
+		return
+	_challenge_stage_navigation_key = key
+	challenge_stage_row.visible = active
+	if not active:
+		return
+	challenge_stage_label.text = "%s — %s" % [stage_id, stage_goal]
+	challenge_retreat_btn.disabled = not runner.can_debug_retreat_stage()
+	challenge_advance_btn.disabled = not runner.can_debug_advance_stage()
 
 func _make_controls_help() -> Control:
 	var help := Label.new()
@@ -441,6 +505,14 @@ func _on_challenge_advance_pressed() -> void:
 	if worlds.is_empty():
 		return
 	worlds[0].challenge_runner.debug_advance_stage()
+	_refresh_challenge_stage_navigation()
+
+func _on_challenge_retreat_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	worlds[0].challenge_runner.debug_retreat_stage()
+	_refresh_challenge_stage_navigation()
 
 ## Fires the same three warning-banner shapes the simulation only produces
 ## by chance, so the throttle in hud.gd::show_warning can be watched
