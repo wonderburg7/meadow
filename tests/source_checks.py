@@ -626,6 +626,172 @@ def check_settings_keys(problems):
             )
 
 
+# D1 (plans/design/architecture-review.md): the frozen SAVED_SETTINGS
+# literal this slice replaced with a derivation from TUNABLES' "persist"
+# rows. Not the source of truth any more -- save_game.gd::saved_settings()
+# is -- but kept here so a regression (a "persist" tag drifting from what
+# used to be saved) is caught rather than silently changing a player's
+# save. Only D1's second half, a deliberate reclassification with its own
+# FORMAT_VERSION bump, is allowed to change this set.
+ORIGINAL_SAVED_SETTINGS = frozenset({
+    "flower_count", "hive_cell_count", "starting_bees", "starting_nurses",
+    "starting_builders", "starting_miners", "starting_honey_makers",
+    "seconds_per_day", "nectar_recharge_rate", "pollen_recharge_rate",
+    "flower_senescence_on", "flower_senescence_floor",
+    "tarsal_markers_on", "tarsal_marker_seconds", "floral_constancy_on",
+    "orientation_flight_on", "scouting_on", "auto_recruitment_on",
+    "proximity_recruitment_on",
+    "forage_start_radius", "forage_search_radius",
+    "recruit_lower_threshold_nectar", "recruit_upper_threshold_nectar",
+    "recruit_lower_threshold_pollen", "recruit_upper_threshold_pollen",
+    "recruit_wait_seconds", "recruit_grace_trips", "recruit_start_point_jitter",
+    "recruit_dance_radius", "recruit_dance_seconds",
+    "recruit_dance_angle_fuzz_degrees", "recruit_dance_distance_fuzz_fraction",
+    "bee_speed", "flower_handling_time", "nectar_collection_rate",
+    "pollen_collection_rate", "deposit_time", "nectar_stomach_capacity",
+    "pollen_stomach_capacity", "cell_capacity", "cell_full_threshold",
+    "egg_pollen_cost", "queen_eat_rate", "queen_speed_factor",
+    "brood_develop_time", "tending_speed_bonus", "brood_feed_seconds",
+    "brood_feed_seconds_honey", "brood_feed_pollen", "brood_feed_nectar",
+    "brood_feed_honey", "brood_feed_threshold", "larva_death_seconds",
+    "cell_clean_time", "nurse_carry_feeds", "nurse_load_time",
+    "hunger_threshold", "bee_eat_rate", "flight_energy_burn",
+    "forager_drink_threshold", "nectar_drink_rate", "crop_drink_threshold",
+    "gyne_size_factor", "gyne_speed_factor", "gyne_energy_factor",
+    "gyne_egg_pollen_cost", "gyne_develop_multiplier", "brood_feed_jelly",
+    "brood_feed_seconds_gyne", "jelly_pollen_cost", "jelly_honey_cost",
+    "jelly_make_time", "jelly_per_batch", "jelly_cell_capacity",
+    "weather_on", "rain_chance_per_day", "rain_min_seconds",
+    "rain_max_seconds", "rain_nectar_dilution", "rain_flight_burn_factor",
+    "rain_forage_limit", "honey_cell_capacity", "honey_energy_factor",
+    "nectar_per_honey", "honey_chew_time", "honey_ripen_time",
+    "honey_rewet_factor", "block_mine_time", "miner_dirt_capacity",
+    "dirt_fill_rate", "dirt_dump_time", "cell_build_time",
+    "build_energy_burn", "hive_interior_rings", "hive_soil_depth",
+    "hive_rock_rings", "hive_entrance_width", "hive_cell_size",
+    "hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
+    "energy_capacity", "energy_burn_rate",
+    "low_energy_warning_fraction", "low_energy_warning_level",
+    "low_energy_gap",
+    "winter_countdown_days", "winter_length_days",
+    "winter_burn_factor", "winter_lifespan_factor",
+    "trait_positive_chance", "trait_magnitude_bands",
+    "fact_trait_matched_chance", "fact_general_chance", "fact_templated_chance",
+    "visual_size_jitter_range", "visual_tint_jitter_range",
+    "milestone_interval", "epitaph_min_gap",
+    "predators_on", "crab_spider_attack_success_chance",
+    "forage_perception_radius", "local_search_drift_rate",
+    "forage_search_spiral_step", "forage_search_angle_step",
+    "probabilistic_choice_on", "probabilistic_choice_heading_weight",
+    "known_patches_max", "known_patch_min_spacing",
+    "handling_experience_on", "handling_experience_floor",
+    "handling_experience_visits_to_floor",
+    "adaptive_constancy_on", "adaptive_constancy_gain",
+    "adaptive_constancy_decay", "adaptive_constancy_weight",
+})
+
+PERSIST_VALUES = {"run", "player", "none"}
+
+
+def check_settings_persist(problems):
+    """Every TUNABLES row states what happens to it at save time (D1,
+    plans/design/architecture-review.md): "run" (goes in the save via
+    save_game.gd::saved_settings()), "player" (a Session preference, never
+    saved) or "none" (neither). Checks three things a hand-maintained
+    third list used to let drift apart: every GameConfig field has a row
+    at all, a row's persist tag names a real vocabulary and points at the
+    right object (a "player" row is a SESSION_KEYS entry, not a GameConfig
+    field, and vice versa), and the "run" rows as a set exactly reproduce
+    the literal SAVED_SETTINGS this slice replaced.
+    """
+    catalogue_path = os.path.join(ROOT, CATALOGUE_FILE)
+    config_path = os.path.join(ROOT, "game_config.gd")
+    for path in (catalogue_path, config_path):
+        if not os.path.exists(path):
+            problems.append(
+                "%s not found for settings persist check" % os.path.basename(path)
+            )
+            return
+    catalogue_src = open(catalogue_path, encoding="utf-8").read()
+    config_src = open(config_path, encoding="utf-8").read()
+
+    tunables = catalogue_block(catalogue_src, "TUNABLES")
+    session_block = catalogue_block(catalogue_src, "SESSION_KEYS")
+    if tunables is None or session_block is None:
+        problems.append(
+            "%s: could not find const TUNABLES/SESSION_KEYS -- has the "
+            "catalogue moved? update CATALOGUE_FILE" % CATALOGUE_FILE
+        )
+        return
+
+    session_keys = set(re.findall(r'"(\w+)"', session_block))
+    config_vars = set(
+        re.findall(r"^(?:@\w+(?:\([^)]*\))?\s+)?var\s+(\w+)", config_src, re.M)
+    )
+
+    persist_by_key = {}
+    for entry in _entry_blocks(tunables):
+        key_match = re.search(r'"key":\s*"(\w+)"', entry)
+        if not key_match:
+            continue  # reported by check_settings_keys
+        key = key_match.group(1)
+        if key in persist_by_key:
+            continue  # duplicate, reported by check_settings_keys
+
+        persist = _quoted(_field(entry, "persist"))
+        if persist is None:
+            problems.append(
+                '%s: TUNABLES row %r has no "persist" tag (run/player/none)'
+                % (CATALOGUE_FILE, key)
+            )
+            continue
+        if persist not in PERSIST_VALUES:
+            problems.append(
+                '%s: TUNABLES row %r has persist %r, not one of run/player/none'
+                % (CATALOGUE_FILE, key, persist)
+            )
+            continue
+        persist_by_key[key] = persist
+
+        if re.search(r'"star":\s*true', entry):
+            continue  # a pinned-stat row -- moves through neither object
+
+        if persist == "player":
+            if key not in session_keys:
+                problems.append(
+                    '%s: %r is tagged persist "player" but is not a '
+                    "SESSION_KEYS entry" % (CATALOGUE_FILE, key)
+                )
+        elif key not in config_vars:
+            problems.append(
+                "%s: %r is tagged persist %r but is not a game_config.gd var"
+                % (CATALOGUE_FILE, key, persist)
+            )
+
+    for field in sorted(config_vars):
+        if field not in persist_by_key:
+            problems.append(
+                '%s: GameConfig field %r has no TUNABLES row -- add one '
+                'with a "persist" tag' % (CATALOGUE_FILE, field)
+            )
+
+    run_keys = {key for key, persist in persist_by_key.items() if persist == "run"}
+    missing = ORIGINAL_SAVED_SETTINGS - run_keys
+    extra = run_keys - ORIGINAL_SAVED_SETTINGS
+    if missing:
+        problems.append(
+            "%s: persist derivation drops %s from today's save -- D1's "
+            "first half must reproduce SAVED_SETTINGS exactly; reclassifying "
+            "is the second half's job" % (CATALOGUE_FILE, sorted(missing))
+        )
+    if extra:
+        problems.append(
+            "%s: persist derivation adds %s to today's save -- D1's first "
+            "half must reproduce SAVED_SETTINGS exactly; reclassifying is "
+            "the second half's job" % (CATALOGUE_FILE, sorted(extra))
+        )
+
+
 # --- progression catalogues ---------------------------------------
 # skills.gd, adaptations.gd and features.gd are pure data that nothing
 # reads yet (progression.md Phase A step 1), which is exactly why they
@@ -2161,6 +2327,7 @@ def main():
     check_autoloads(problems)
     check_catalogue_alignment(problems)
     check_settings_keys(problems)
+    check_settings_persist(problems)
     check_progression_catalogues(problems)
     check_progression_resolver(problems)
     check_progression_foraging_rules(problems)

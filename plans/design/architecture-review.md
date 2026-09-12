@@ -1113,13 +1113,26 @@ Level: medium. Depends on: C1.
 
 ### D1 — one settings persistence authority
 
-Level: medium. Depends on: nothing, beyond Decision A's hold. Both halves are
-startable once that lifts: Dave took the classification decision on 11 Sep 2026
+**First half shipped 12 Sep 2026.** Every `TUNABLES` row now carries a
+`persist` tag (`run`, `player` or `none`) -- including 47 rows added for
+`GameConfig` fields the catalogue never named at all (F11's 25
+saved-but-uncatalogued keys and 22 fields in neither list), each with no
+`category` so none of them gain a visible settings-window control this
+slice didn't intend to add. `scripts/save_game.gd::saved_settings()`
+derives the saved-keys list from the `run` rows in place of the old
+hand-written literal; `tests/source_checks.py::check_settings_persist`
+proves that derivation byte-identical to the literal it replaced, and
+fails on a `GameConfig` field with no row or a `persist` tag pointing at
+the wrong object. Nothing about what is saved changed. Second half below
+is what remains.
+
+Level: medium. Depends on: nothing, beyond Decision A's hold. The second
+half is startable now: Dave took the classification decision on 11 Sep 2026
 (see "Decisions taken 11 Sep 2026" above).
 
 - **Required reading.** This heading. F11 above.
-  `scripts/settings_catalogue.gd`'s header and `TUNABLES` shape.
-  `scripts/save_game.gd::SAVED_SETTINGS` and its comment.
+  `scripts/settings_catalogue.gd`'s header, `TUNABLES` shape and `persist`
+  field. `scripts/save_game.gd::saved_settings()` and its comment.
   `.claude/rules/saving.md`.
 - **Files to change.** `scripts/settings_catalogue.gd`, `scripts/save_game.gd`,
   `tests/source_checks.py`.
