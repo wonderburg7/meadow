@@ -481,11 +481,13 @@ pass. `CHATGPT.md` said the queue holds two to five items where
 `check_docs.py` enforces three to five, and it told Codex to read the plan
 heading without naming the reader.
 
-One contradiction is **not** resolved here, because it is Dave's to settle.
-`CHATGPT.md` says the queue is updated on `master` after a merge, never on
-the branch. `CLAUDE.md` and current practice refill the queue inside the
-slice's own worktree so the edit travels with the merge. F8's mechanism has
-to do one or the other. It is item 7 in Part 6.
+A third contradiction is now settled. `CHATGPT.md` said the queue is updated
+on `master` after a merge and never on the branch; `CLAUDE.md` and current
+practice refill it inside the slice's own worktree. Dave chose the worktree,
+12 September 2026, so the refill travels into `master` inside the merge
+commit: one push, one atomic state, and a failed closeout leaves `master`
+untouched. Slice L-5 deletes the contradicting rule and L-6 covers the
+two-lanes-refilling-at-once conflict that the choice permits.
 
 ## Part 5 -- What this pass landed
 
@@ -549,12 +551,7 @@ Ordered by how much they save per minute spent.
    the most common trigger rather than the failure mode.
 6. **Keep answering hands-on checks by check id, in batches.** That part of
    the loop works, and a green branch is never held open for a check.
-7. **Settle one ownership question.** Where is the queue refill committed: on
-   `master` after the merge, as `CHATGPT.md` says, or inside the slice's
-   worktree so it travels with the merge, as `CLAUDE.md` and current practice
-   do? F8's closeout transaction has to pick one. Either answer is
-   implementable; leaving it open blocks that slice.
-8. **After any configuration change, open fresh tasks.** Existing Claude and
+7. **After any configuration change, open fresh tasks.** Existing Claude and
    Codex sessions keep the configuration they started with. The resume
    permission, the new action and the `read` field only reach a session opened
    after this merge. Then run one real canary slice per agent before trusting
@@ -562,8 +559,9 @@ Ordered by how much they save per minute spent.
 
 ### Where to spend the next session
 
-- **This session, continued:** approving or retrying this branch's closeout,
-  and answering item 7 above.
+- **This session, continued:** approving or retrying this branch's closeout.
+  The one decision it needed, where the queue refill is committed, is
+  answered.
 - **A new session, "implement the next slice":** slice `L-1` of
   `plans/now/agent-lifecycle.md`, which fixes the three red lifecycle tests
   and puts that suite inside `tools/verify.ps1`. It is bounded, it needs no

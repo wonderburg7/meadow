@@ -38,7 +38,7 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 | L-2 | one command classifies every session outcome, and every closeout phase has an injected-failure test | `tools/session_cost.py`, `tests/test_source_checks.py` | after L-1 | medium |
 | L-3 | branch verification and primary-checkout validation are separate scopes | `tools/verify.ps1`, `tools/slice.ps1` | after L-1 | medium |
 | L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | after L-3 | high |
-| L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py` | after L-4 | high |
+| L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | after L-4 | high |
 | L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | after L-1 | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | after L-1 | medium |
@@ -278,13 +278,15 @@ queue refilled and the specification archived inside the transaction.
 **Non-goals.** Do not change the queue's item schema or the ledger's row
 format. Do not decide where the refill is committed — see the decision below.
 
-**Files.** `tools/slice.ps1`, `tools/check_docs.py`.
+**Files.** `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md`.
 
-**Prerequisite.** L-4, and Dave's answer to the ownership question in the
-review's Part 6 item 7: the queue refill is committed either on `master`
-after the merge or in the slice's worktree so it travels with the merge.
-**Do not start this slice until that is answered**; both are implementable
-and the choice changes step 3.
+**Prerequisite.** L-4. The ownership question is settled: Dave, 12 Sep 2026 --
+**the refill is committed in the slice's worktree, so it travels into
+`master` inside the merge commit.** One push, one atomic state, and a failed
+closeout leaves `master` untouched. Two consequences this slice carries:
+`CHATGPT.md`'s "never on the branch" rule is deleted in the same commit, and
+two lanes refilling at once can conflict in `NEXTSTEPS.md`, which L-6 case 3
+must then cover.
 
 **Algorithm.**
 
@@ -297,13 +299,16 @@ and the choice changes step 3.
    the merge checks whether it has already landed with
    `Test-SliceBranchMerged`; the ledger edit already tolerates an absent row;
    the branch deletion already checks the ref exists.
-3. Add the two manual steps as phases before the single push. `archived`:
-   move the delivered slice's specification out of its `plans/now/` file into
-   the archive, as ID_date.md, leaving the one-line pointer
-   `plans/README.md` requires. `refilled`: remove the delivered item from
-   `## Next up` and promote the item its `Next after:` names; if
-   `Next after:` says `none -- <plan> is complete`, do not promote, and print
-   that the lane needs a new item.
+3. Add the two manual steps as phases, on the branch, before the merge, so
+   both land inside the merge commit. `archived`: move the delivered slice's
+   specification out of its `plans/now/` file into the archive, as
+   ID_date.md, leaving the one-line pointer `plans/README.md` requires.
+   `refilled`: remove the delivered item from `## Next up` and promote the
+   item its `Next after:` names; if `Next after:` says
+   `none -- <plan> is complete`, do not promote, and print that the lane
+   needs a new item. Commit both onto the slice branch, then merge. Delete
+   `CHATGPT.md`'s rule that the queue is updated on `master` and never on the
+   branch, and `CLAUDE.md`'s matching sentence if it disagrees.
 4. Push once, after `refilled`, with every commit the transaction made.
    Remove the second and third pushes.
 5. If any phase throws, print the journal's phase and the exact recovery
@@ -354,9 +359,13 @@ queue holding one `[Claude]` and one `[Codex]` item that share no file:
 4. Remote ahead: push an unrelated commit to the bare remote, then finish;
    assert closeout either integrates it or fails with a message naming the
    remote state, and never leaves a half-pushed transaction.
-5. Dirty coordination files: leave uncommitted edits in
-   `plans/workstreams.md` in the primary checkout, then finish; assert the
-   transaction refuses before the merge with a message naming the file.
+5. Dirty coordination files, and the conflict Dave's 12 Sep decision
+   allows: leave uncommitted edits in `plans/workstreams.md` in the primary
+   checkout, then finish, and assert the transaction refuses before the merge
+   with a message naming the file. Then have both lanes refill
+   `NEXTSTEPS.md` on their own branches and merge in sequence; assert the
+   second merge either succeeds or fails naming the queue, and never leaves a
+   half-pushed transaction.
 6. Retry after a push succeeded and cleanup failed: inject failure after
    `pushed`, assert `resume` completes and the end state matches an
    uninterrupted run.
