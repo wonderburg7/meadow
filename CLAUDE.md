@@ -11,12 +11,17 @@ reconstructing history.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md`. It holds three to five ready slices in two lanes;
-   take the first unclaimed **[Claude]** item. "Implement the next slice" means exactly
-   that and needs no other context.
-2. Open only the `Plan:` file and heading that item names --
-   `python tools/heading.py <file> "<heading>"` prints that one section and
-   stops at the next heading. `plans/README.md` defines the layers and
+1. Run `tools/slice.ps1 start -Lane Claude`. It claims the first unclaimed
+   **[Claude]** item, opens its worktree, and prints the slice as JSON:
+   `id`, `plan`, `heading`, `files`, `check`, `proof`, `next_after`, and a
+   `read` field holding the exact command for its plan section. That is
+   "implement the next slice"; it needs no other context. Use
+   `doctor -Lane Claude` to see the same briefing without claiming it.
+2. Run the `read` command it printed -- `python tools/heading.py <file>
+   "<heading>"` prints that one section and stops at the next heading.
+   Do not read `NEXTSTEPS.md` whole to find the same lines: it is 25 KB, the
+   section is under 1 KB, and the whole file is then re-sent on every later
+   request in the session. `plans/README.md` defines the layers and
    on-demand fetch rules.
 3. For code work, load the relevant path-scoped `.claude/rules/` file and use
    `FUNCTION_MAP.md`/search to read only the affected source section.

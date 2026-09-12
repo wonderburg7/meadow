@@ -310,6 +310,18 @@ function Test-Proof {
     }
 }
 
+function Get-SliceReadCommand {
+    # The one bounded read a session needs before writing code: the slice's
+    # own plan section, printed by tools/heading.py and stopping at the next
+    # heading. Emitting the exact command is what replaced telling each agent
+    # to "read only the Plan: file and heading" in prose -- CHATGPT.md named
+    # neither the reader nor its arguments, and a sampled 24 Codex tasks used
+    # it zero times while reading the whole 25 KB queue instead.
+    param([object]$Candidate)
+    if (-not $Candidate.Plan -or -not $Candidate.Heading) { return "" }
+    return "python tools/heading.py $($Candidate.Plan) `"$($Candidate.Heading)`""
+}
+
 function Get-SlicePreflight {
     param([string]$Lane)
 
@@ -383,6 +395,40 @@ function Get-ConfiguredGodotPath {
     }
 
     return $null
+}
+
+function Get-GlobalExcludesDiagnostic {
+    # A read-only probe, reported rather than enforced. Codex rollouts have
+    # logged a permissions warning naming the user-level Git excludes file;
+    # from an ordinary Windows session the same file reads fine, so the
+    # warning is about the path being outside the sandbox's readable scope,
+    # not about its ACL. Either way the answer is the same: say which path
+    # Git resolved, whether this process can read it, and what to type.
+    # Never touch a file outside the repository to "fix" it.
+    $configured = (git config --get core.excludesFile 2>$null)
+    if ($LASTEXITCODE -ne 0) { $configured = "" }
+    $configured = "$configured".Trim()
+    $source = "core.excludesFile"
+    $path = $configured
+    if (-not $path) {
+        $source = "Git default"
+        $base = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $env:USERPROFILE ".config" }
+        $path = Join-Path (Join-Path $base "git") "ignore"
+    }
+    if (-not (Test-Path -LiteralPath $path)) {
+        return "absent ($source): $path -- nothing to read; no action needed unless you want a personal ignore file there"
+    }
+    try {
+        [void][System.IO.File]::ReadAllBytes($path)
+        return "readable ($source): $path"
+    }
+    catch {
+        return ("unreadable ($source): $path -- $($_.Exception.Message). " +
+            "Fix it from an ordinary Windows shell with: " +
+            "icacls `"$path`" /grant `"$env:USERNAME`":R    " +
+            "or point Git at a path inside your profile with: " +
+            "git config --global core.excludesFile `"$(Join-Path $env:USERPROFILE '.gitignore_global')`"")
+    }
 }
 
 function Get-DoctorEnvironmentFailures {
@@ -519,16 +565,19 @@ function Invoke-SliceDoctor {
     }
 
     [ordered]@{
-        status   = "ready"
-        id       = $preflight.Id
-        lane     = $Lane
-        plan     = $preflight.Candidate.Plan
-        heading  = $preflight.Candidate.Heading
-        files    = $preflight.Candidate.Files
-        check    = $preflight.Candidate.Check
-        proof    = $preflight.Candidate.Proof
-        branch   = $preflight.Branch
-        worktree = $preflight.WorktreeRelative
+        status       = "ready"
+        id           = $preflight.Id
+        lane         = $Lane
+        plan         = $preflight.Candidate.Plan
+        heading      = $preflight.Candidate.Heading
+        read         = Get-SliceReadCommand -Candidate $preflight.Candidate
+        files        = $preflight.Candidate.Files
+        check        = $preflight.Candidate.Check
+        proof        = $preflight.Candidate.Proof
+        next_after   = $preflight.Candidate.NextAfter
+        branch       = $preflight.Branch
+        worktree     = $preflight.WorktreeRelative
+        git_excludes = Get-GlobalExcludesDiagnostic
     } | ConvertTo-Json -Compress
 }
 
@@ -574,14 +623,16 @@ function Invoke-SliceStart {
     }
 
     $result = [ordered]@{
-        id       = $id
-        plan     = $candidate.Plan
-        heading  = $candidate.Heading
-        files    = $candidate.Files
-        check    = $candidate.Check
-        proof    = $candidate.Proof
-        branch   = $branch
-        worktree = $worktreeRelative
+        id         = $id
+        plan       = $candidate.Plan
+        heading    = $candidate.Heading
+        read       = Get-SliceReadCommand -Candidate $candidate
+        files      = $candidate.Files
+        check      = $candidate.Check
+        proof      = $candidate.Proof
+        next_after = $candidate.NextAfter
+        branch     = $branch
+        worktree   = $worktreeRelative
     }
     $result | ConvertTo-Json -Compress
 }
