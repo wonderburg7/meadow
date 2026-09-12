@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C1-26` (`codex/C1-26`) | Codex | the marker asks to be noticed, and says where it is. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 26 — the stage marker asks to be noticed, and says where it is" |
+| `.worktrees/B2` (`claude/B2`) | Claude | the comb index derives from the catalogue. | Claude | in progress | none | `plans/design/architecture-review.md` "B2 — the comb index derives from the catalogue" |
