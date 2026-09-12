@@ -163,6 +163,14 @@ if (-not $Docs) {
                 throw "balance_tests.py exited with code $LASTEXITCODE"
             }
         })
+        (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
+            param($interpreter, $root)
+            Set-Location $root
+            & $interpreter -m unittest tests.test_source_checks
+            if ($LASTEXITCODE -ne 0) {
+                throw "tests.test_source_checks exited with code $LASTEXITCODE"
+            }
+        })
     )
 
     Wait-Job -Job $jobs | Out-Null

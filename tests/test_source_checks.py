@@ -23,7 +23,7 @@ ENVIRONMENT_CONFIG_PATH = (
     SOURCE_CHECKS_PATH.parent.parent / ".codex" / "environment.toml"
 )
 PREREQUISITES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "prerequisites.gd"
-DEBUG_PANEL_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "debug_panel.gd"
+SETTINGS_CATALOGUE_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "settings_catalogue.gd"
 CHALLENGE_RUNNER_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_runner.gd"
 CHALLENGE_STAGES_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "challenge_stages.gd"
 BEE_FORAGING_PATH = SOURCE_CHECKS_PATH.parent.parent / "scripts" / "bee_foraging.gd"
@@ -76,8 +76,8 @@ class ForagingPrerequisiteContractTest(unittest.TestCase):
         self.assertIn('"scouting_on": "orientation_flight_on"', mutual_exclusion_map)
         self.assertIn("MUTUALLY_EXCLUSIVE.has(key)", source)
 
-        debug_panel_source = DEBUG_PANEL_PATH.read_text(encoding="utf-8")
-        prerequisite_cascade = debug_panel_source.split("static func _cascade_prerequisites_on_static", 1)[1].split(
+        settings_catalogue_source = SETTINGS_CATALOGUE_PATH.read_text(encoding="utf-8")
+        prerequisite_cascade = settings_catalogue_source.split("static func _cascade_prerequisites_on_static", 1)[1].split(
             "static func _cascade_dependents_off_static", 1
         )[0]
         self.assertIn("_cascade_mutual_exclusion_static(parent)", prerequisite_cascade)
@@ -219,10 +219,29 @@ class SliceDoctorTest(unittest.TestCase):
         (self.root / "plans").mkdir()
         (self.root / "scripts").mkdir()
         (self.root / ".codex").mkdir()
+        (self.root / "checks" / "ready").mkdir(parents=True)
         shutil.copy2(SLICE_PATH, self.root / "tools" / "slice.ps1")
         shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
+        shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
         (self.root / "plans" / "workstreams.md").write_text(
             "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"
+        )
+        (self.root / "checks" / "ready.md").write_text(
+            "# Ready hands-on checks\n"
+            "\n"
+            "<!-- CONTEXT: player-checks | LAYER: on-demand -->\n"
+            "\n"
+            "Shipped behaviours that static checks cannot prove. Each ready check has its own\n"
+            "record, so parallel feature slices do not edit a shared page. Reply by id, for\n"
+            'example: "C-1 pass" or "C-1 fails: <what I saw>".\n'
+            "\n"
+            "This index is generated during slice closeout. Move a confirmed or superseded\n"
+            "entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; move an on-demand check\n"
+            "that cannot run to `checks/blocked.md`, naming its unblocker.\n"
+            "\n"
+            "## Ready to run\n"
+            "\n",
+            encoding="utf-8",
         )
         (self.root / "scripts" / "sample.gd").write_text(
             "func existing():\n\tpass\n", encoding="utf-8"
@@ -415,10 +434,8 @@ class SliceDoctorTest(unittest.TestCase):
         result = self.run_doctor("-PythonPath", str(self.root / "missing-python.exe"))
 
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("Python:", result.stderr)
-        self.assertIn("Godot:", result.stderr)
-        self.assertIn("Git identity:", result.stderr)
-        self.assertIn("Remote reachability:", result.stderr)
+        for prefix in ("Python:", "Godot:", "Git identity:", "Remote reachability:"):
+            self.assertIn(prefix, result.stderr)
 
     def test_mock_slice_can_claim_commit_and_close(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

@@ -439,6 +439,12 @@ function Get-DoctorEnvironmentFailures {
 
     $failures = @()
 
+    # A native command's stderr becomes a terminating error under "Stop" (see
+    # verify.ps1's Invoke-PythonStage), which would otherwise abort this
+    # function on the first failing git call and lose every failure gathered
+    # before it. This assignment is local to the function scope.
+    $ErrorActionPreference = "Continue"
+
     $verifyScript = Join-Path $Root "tools\verify.ps1"
     $runtimeArgs = @{ ResolvePythonOnly = $true }
     if ($RequestedPythonPath) {
