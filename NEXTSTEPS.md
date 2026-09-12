@@ -410,7 +410,7 @@ simply a free slot -- and none of the entries below is startable today.
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
   since those slices have all shipped. A2, A3, A4 and C1 have all shipped;
-  C2 now leads the Codex lane and E1 is queued behind L-1 in the Claude lane.
+  C2 now leads the Codex lane and E1 is queued behind L-3 in the Claude lane.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely
