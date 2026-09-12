@@ -186,6 +186,23 @@ this slice), so the rate curve stood in for the plan's stored-total
 comparison. Full record: `plans/archive/SB-1_2026-09-12.md`; its check is
 C-24. Its `Next after` (SB-2) filled the Claude lane's slot below.
 
+**D1's first half shipped 12 Sep 2026.** Every `TUNABLES` row in
+`scripts/settings_catalogue.gd` now carries a `persist` tag (`run`,
+`player` or `none`), including 47 new rows for `GameConfig` fields the
+catalogue never named at all -- F11's 25 saved-but-uncatalogued keys and
+22 fields in neither list -- each with no `category` so none of them gain
+a visible settings-window control this half didn't intend to add.
+`scripts/save_game.gd::saved_settings()` derives the saved-keys list from
+the `run` rows in place of the old hand-written `SAVED_SETTINGS` literal;
+a new check, `tests/source_checks.py::check_settings_persist`, proves
+that derivation byte-identical to the literal it replaced and fails on a
+`GameConfig` field with no row or a `persist` tag pointing at the wrong
+object. Nothing about what is saved changed, so no `FORMAT_VERSION` bump
+and no hands-on check -- nothing a player sees is different yet. Full
+record: `plans/design/architecture-review.md`'s D1 heading. Its second
+half -- reclassifying per Dave's rule and bumping `FORMAT_VERSION` -- fills
+the Claude lane's slot below.
+
 **SB-2 shipped 12 Sep 2026.** `game_config.gd`'s `out_of_season_seed_weight`
 lowered from 0.15 to 0.06, changing only that one value as specified. A
 matched-seed 60-day A/B on `test_scenarios/foraging_evidence_base.json`
@@ -217,18 +234,21 @@ the lanes' file-disjoint rule, while D1 (`scripts/settings_catalogue.gd`,
    - Proof: `present: scripts/challenge_runner.gd :: func _update_marker(stage_id: String) -> void`
    - Next after: Challenge 1 Slice 26 -- the marker asks to be noticed, and says where it is.
 
-2. **[Claude] D1 -- one settings persistence authority, first half.**
-   `save_game.gd::SAVED_SETTINGS` is a hand-maintained literal list with no
-   link back to `settings_catalogue.gd`'s `TUNABLES`, so a new setting can be
-   added to one and forgotten in the other. Give every `TUNABLES` row a
-   `persist` tag (`run`, `player` or `none`) and derive `SAVED_SETTINGS` from
-   it, byte-identical to today's list -- this first half changes no save
-   format and moves nothing between `Session` and the save.
+2. **[Claude] D1 -- one settings persistence authority, second half.**
+   The first half tagged every `TUNABLES` row with `persist` and proved
+   `save_game.gd::saved_settings()`'s derivation byte-identical to the old
+   literal; nothing about what is saved changed yet. Apply Dave's
+   three-bucket rule (11 Sep 2026): move the eight balance fields F11
+   names -- `disease_on`, `seasons_on`, `rival_hive_on`, `fog_of_war_on`,
+   `season_length_days` and the three `lay_weight_*` fields -- from
+   `persist: "none"` to `persist: "run"`, bump `FORMAT_VERSION`, and give
+   `save_migrations.gd` a step defaulting each to its `GameConfig` value
+   for an older save.
    - Plan: `plans/design/architecture-review.md` -- "D1 — one settings persistence authority"
-   - Files: `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `tests/source_checks.py`
-   - Check: a source check fails when a `GameConfig` field has no `TUNABLES` row, or when a row's `persist` disagrees with what the save actually carries; the derived list equals today's literal
-   - Proof: `present: scripts/save_game.gd :: const SAVED_SETTINGS := [`
-   - Next after: D1's second half -- reclassify all 61 keys against Dave's rule and move the eight balance fields F11 names into the save, with a `FORMAT_VERSION` bump and migration step.
+   - Files: `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`, `tests/source_checks.py`, `tests/test_save_migrations.py`
+   - Check: the eight named fields carry `persist: "run"` and appear in `save_game.gd::saved_settings()`'s result; `FORMAT_VERSION` is 5; a v4 fixture loaded through `save_migrations.gd` has each field defaulted from `GameConfig`; `tests/test_save_migrations.py` passes
+   - Proof: `present: scripts/save_game.gd :: const FORMAT_VERSION := 4`
+   - Next after: B1 -- the cell-content catalogue, data only: `resources.gd`'s `RESOURCES` table gains rows for honey/jelly/brood/corpse/empty, so the catalogue says what a cell kind is rather than a `match` scattered across callers.
 
 3. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
