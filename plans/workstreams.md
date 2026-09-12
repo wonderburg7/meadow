@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/D1` (`claude/D1`) | Claude | one settings persistence authority, second half. | Claude | in progress | none | `plans/design/architecture-review.md` "D1 — one settings persistence authority" |
+| `.worktrees/C1-24` (`codex/C1-24`) | Codex | the stage marker is never left in the wrong world. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 24 — the stage marker is never left in the wrong world" |
