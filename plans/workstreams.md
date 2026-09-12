@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-U-1` (`codex/UI-U-1`) | Codex | step back and forth through Challenge stages. | Codex | in progress | none | `plans/now/ui.md` "UI-U-1 — step back and forth through a Challenge's stages" |
+| `.worktrees/WF-3` (`claude/WF-3`) | Claude | Phase-attributed token measurement: add finding F13 and give L-5 and L-9 explicit cost targets | Claude | in progress | none | `plans/now/agent-lifecycle.md` |
