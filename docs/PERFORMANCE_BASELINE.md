@@ -55,3 +55,20 @@ Manual acceptance remains necessary: with fog enabled at the target zoom,
 move a bee one tile horizontally and diagonally, overlap two bees, then return
 one indoors. The visible disc must not flicker, a tile covered by the remaining
 bee must stay lit, and a tile discovered by either bee must remain explored.
+
+## Recorded baseline -- 13 Sep 2026 (A3, C-50)
+
+Run by Claude Code on Dave's Windows 11 development machine, headless, with
+`--fixed-fps 60`, from the primary checkout at `2a64a8e`. 120 warm-up frames,
+480 measured. Compare each row only with the same row of a later run.
+
+| Row | mean ms | p95 ms |
+| --- | --- | --- |
+| `frame_time_ms` | 12.83 | 29.95 |
+| `bee_state_miner` | 0.09 | 0.12 |
+| `fog_of_war_update` | 2.81 | 19.51 |
+| `fog_of_war_relight` | 2.68 | 19.34 |
+
+Run it from the primary checkout, or from a worktree whose Godot import cache
+has been primed: the same command stalled at its config line four times
+inside a fresh A3 worktree.

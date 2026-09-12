@@ -149,6 +149,8 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
+| UI-W-1..UI-W-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/now/ui-w.md` |
+| CB-1, CB-2 -- comb builders per site and per wall | `plans/now/comb-builders.md` |
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
