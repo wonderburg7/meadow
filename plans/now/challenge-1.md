@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 7 -- acceptance pass and documentation | Dependency: none | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude Code | Next: Slice 27 -- a Challenge 1 wax cell holds 150 nectar, not 200 | Dependency: none | Verified: 2026-09-12
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -51,6 +51,14 @@ freeze -- so a nectar load frozen mid-trip rode straight through to 1.14
 untouched. Full record, including why the prescribed headless trace could
 not be run: `plans/archive/C1-21_2026-09-11.md`.
 
+**What Dave's 12 Sep pass found.** C-30, C-44 and C-47 passed. C-7's and
+C-29's pollen halves were not reached -- the Pollen focus only appears once
+1.13's cell is set aside for pollen, which that run had not done -- so both
+are re-runs, not faults. C-31 and C-42 could not arise, because Challenge 1
+has two meanings of a full cell: the 1.11 lesson ends at 150, but the cell
+holds 200, so a later trip took it to 155. Slice 27 gives it one. C-48 was
+reworded; Dave could not tell which marker it meant.
+
 ## Open slices at a glance
 
 Slices 20 through 26 have all shipped; their specifications are
@@ -58,23 +66,14 @@ archived (see the pointers above and `plans/archive/`). What remains:
 
 | Slice | What it fixes | Files | Level |
 | --- | --- | --- | --- |
+| 27 | A Challenge 1 wax cell holds 150 nectar, not 200 | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/hive_cell.gd`, `tests/source_checks.py` | medium |
 | 7 | The acceptance playthrough and copy pass | docs | -- |
 
-Slice 7 runs last.
+Slice 27 is startable now. Slice 7 runs last.
 
-**Slices 24 and 26 name a headless assertion that cannot be run yet (found 11
-Sep 2026, narrowed 11 Sep 2026 when Slice 21 shipped on a static trace
-instead).** Both state a headless Challenge assertion as their acceptance,
-and no headless run can start a Challenge at all: `challenge_runner.start()`
-fires only for `Session.starting_level` 1 or 2, and a `--scenario` launch
-always sets that to `Levels.SCENARIO_LEVEL_ID`. There is no Challenge
-fixture and no stage-sequence test, whatever Slice 24's regression line
-says. `plans/design/architecture-review.md`'s **H4** is the slice that fixes
-it. Both of H4's dependencies (C1-21 and C1-22) have now shipped, so H4 is
-queued in `NEXTSTEPS.md`'s Codex lane -- not as the lane's leading item,
-since it shares `scripts/main.gd` with the Claude lane's own leading item
-(H2), but as its second item, claimable once one of those two ships. Slices
-24 and 26 stay blocked until H4 actually lands.
+**H4 has shipped.** A headless run can now start a Challenge
+(`test_scenarios/h4_challenge1_stage_advance_test.json`), so a
+slice here may state a headless Challenge assertion again.
 
 Nothing else may be added -- a finding from Slice 7's own run becomes this
 plan's next slice while it is open, and a finding after it closes starts a
@@ -95,6 +94,104 @@ own playthrough plus a copy/doc pass, not a reasoning-bounded code slice.
 **Numbering never restarts.** C-7 once named "Slice 14", archived on 3 Sep,
 so the check pointed at a specification nobody could open. A retired number
 is never reused.
+
+## Slice 27 — a Challenge 1 wax cell holds 150 nectar, not 200
+
+**Purpose.** In Dave's 12 Sep 2026 pass the queen "fills the nectar cell to
+150 and then stops (though she does add to it later)", and a later trip took
+it to 155. **Decision (Dave, 13 Sep 2026, in session): cap every Challenge 1
+wax cell at 150 nectar.** C1-23's own title already promised this. Once the
+cell is really full at 150, C-31's nectar caught in the pollen cell and
+C-42's full comb can both happen.
+
+**Status.** Startable. It is queued behind C2 in the Codex lane, because both
+touch `scripts/challenge_runner.gd` and `scripts/challenge_stages.gd`.
+
+**Root cause (confirmed).** C1-23 (`3eae1db`) changed only the goal
+(`_goal_check_nectar_target`, which compares `amount` with
+`Stages.NECTAR_TARGET`) and the progress bar. The cell's capacity still
+comes from `hive_cell.gd::capacity_for("nectar")`, which reads
+`GameConfig.cell_capacity` (200). So "full" has two owners:
+- 1.11 ends at 150, and `freeze_bee:queen` parks her there -- that is the
+  "stops at 150";
+- `space_for()` still reports 50 of room, so her next trip deposits there --
+  that is the 155.
+
+**Owner.** `hive_cell.gd` owns capacity. `challenge_stages.gd` owns Challenge
+1's numbers. `challenge_runner.gd` applies per-cell Challenge-only overrides;
+`build_time_override` and `FAST_BUILD_TIME` are the precedent.
+
+**Required reading.**
+- This section.
+- `docs/challenge-stages.md`, rows 1.10-1.15.
+- `hive_cell.gd`: `effective_build_time`, `capacity_for`, `space_for`,
+  `add_resource`, `fill_fraction`, and `_ready`'s `capacity =` line.
+- `challenge_runner.gd`: `on_queen_build_site_chosen`, and every other place
+  it sets `build_time_override`.
+- `levels.gd`'s header comment, which explains why this must not be a
+  `GameConfig` write.
+
+**Files likely to change.** `scripts/challenge_stages.gd`,
+`scripts/challenge_runner.gd`, `scripts/hive_cell.gd`, `tests/source_checks.py`.
+
+**Must not change.**
+- `GameConfig.cell_capacity`, or any other `GameConfig` value.
+- `settings_catalogue.gd`.
+- `POLLEN_TARGET`.
+- Challenge 2 capacities; its thresholds assume 200.
+- Honey and jelly capacity.
+- The goal and progress code in `challenge_runner.gd`, which C2 is turning
+  into data.
+
+**Requirements.**
+1. `challenge_stages.gd`: add `C1_NECTAR_CELL_CAPACITY := 150.0`, and define
+   `NECTAR_TARGET` as that constant, so the lesson and the cell share one
+   number.
+2. `hive_cell.gd`: add `var nectar_capacity_override: float = 0.0` beside
+   `build_time_override`. `capacity_for("nectar")` returns it when it is above
+   zero. Make `_ready`'s `capacity` assignment go through `capacity_for`, or
+   confirm that `add_resource` refreshes it before any read.
+3. `challenge_runner.gd`: set `site.nectar_capacity_override =
+   Stages.C1_NECTAR_CELL_CAPACITY` wherever `build_time_override` is set, and
+   only when `Session.starting_level == 1`.
+4. `tests/source_checks.py`: add a check in the style of
+   `check_hive_stock_epoch_cache`. It proves `capacity_for` reads the
+   override, that every `build_time_override =` line in `challenge_runner.gd`
+   has a matching `nectar_capacity_override =`, and that `NECTAR_TARGET`
+   derives from `C1_NECTAR_CELL_CAPACITY`.
+
+**Constraints.**
+- Open-world and Challenge 2 cells behave exactly as now.
+- In Challenge 1 no deposit can take a nectar cell above 150.
+- The overflow discard stays limited to 1.14.
+- C-44 (the lesson completes on the deposit that reaches 150) still holds.
+
+**State and cleanup.** The override lives on the cell node and is freed with
+the run; a Challenge restart rebuilds the cells. Debug stage stepping does not
+undo cells, so the overrides stay correct.
+
+**Runtime.** `capacity_for` is on the deposit path. The change adds one float
+comparison and no allocation.
+
+**Edge cases.**
+- 1.13's pollen cell keeps pollen capacity 200; the override is nectar-only.
+- Brood cells from 1.15 onwards are unaffected.
+- A Challenge 1 cell created by any path other than the one that sets
+  `build_time_override` would miss the cap. Grep for site creation reachable
+  in Challenge 1 before finishing.
+
+**Regression.** `tools/verify.ps1` and
+`test_scenarios/h4_challenge1_stage_advance_test.json`. **Save/load:**
+Challenge runs are not saved (a settled decision). If `saving.gd` serialises
+cell fields generically, keep the override out of the save.
+
+**Completion.** Move C-31 and C-42 from `checks/blocked.md` back to ready,
+unchanged. Archive this section to plans/archive/C1-27_<date>.md and
+leave a pointer.
+
+**Level:** medium. **Escalate if** a Challenge 1 cell can be created without
+passing the override point, or if pollen or brood cells should also cap. Both
+are gameplay calls for Dave.
 
 ## Slice 20 — the designation stage asks for the designation it names
 

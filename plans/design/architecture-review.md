@@ -719,7 +719,8 @@ Shipped 12 Sep 2026. Full record: `plans/archive/A2_2026-09-12.md`.
 ### A3 — epoch-cached hive stock totals
 
 Shipped 12 Sep 2026. Full record: `plans/archive/A3_2026-09-12.md`. The
-pinned performance baseline is not yet recorded -- `checks/ready/C-50.md`.
+pinned performance baseline was recorded on 13 Sep 2026 in
+`docs/PERFORMANCE_BASELINE.md` (C-50, archived).
 
 ### A4 — wire the goal cadence
 

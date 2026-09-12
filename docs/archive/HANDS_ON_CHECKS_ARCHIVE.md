@@ -516,3 +516,322 @@ event at the input boundary -- was the right one, and UI-S-4's lost-selection
 theory stays retired. The diagnostic logging UI-S-4 added is what proved it
 and is kept.
 Owner was `plans/now/ui-bottom-row.md` UI-S-4b.
+
+## Confirmed in Dave's pass of 12 Sep 2026
+
+Each entry below passed as written. C-50 was never a player check; Claude Code ran it on 13 Sep 2026 and its entry says so.
+
+### C-30 -- the new stage makes you designate a cell for pollen before it starts
+
+Play Challenge 1 to stage 1.13, right after the second cell finishes building
+(`docs/challenge-stages.md` lists every stage id and what it asks). Try
+waiting, or right-clicking things unrelated to the cell.
+
+PASS: the stage will not clear until you select the second cell and choose
+Pollen; once you do, it clears immediately into the pollen-automation stage
+that follows.
+
+Owner: `plans/now/challenge-1.md` Slice 18.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-32 -- the soil panel's two buttons are full width and labelled
+
+Select a soil block at the default text scale, then at the largest text scale.
+
+PASS: at both scales, "Mark for digging" and "Clear marks" each span the
+panel's width, show their label, and pressing each does what it says; at the
+largest scale a label wraps onto a second line and the button grows taller
+rather than the panel growing wider.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-2.
+
+Re-run note (Dave, 10 Sep 2026). The buttons' text now scales, which is what
+HC-9 set out to do. Labels wrapping onto a second line at a smaller viewport
+is within this check's stated pass condition and Dave confirmed on 10 Sep
+2026 that it is not a fault. What remains is the blank band above the two
+buttons: the soil summary leaves its energy, activity and trait labels
+visible while empty, and an empty Godot Label still asks for a full line of
+height. That is HC-13's third requirement.
+
+HC-13 landed on 10 Sep 2026: an empty summary label is no longer shown,
+and the panel retakes its height so the space is reclaimed rather than
+left blank. Ready to re-run.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-37 -- every control in the tray and the summary panel matches its neighbours
+
+Start Challenge 1 and select the queen. Read the command tray, open `More…`,
+and look at the summary panel's header. Then click a soil block, a tree and a
+death mark in turn, and finally click a cell and read its "Raises:" row. Play
+on to stage 1.16, where the queen is taught her laying job, and select her
+again.
+
+PASS: the current-job marker and the "Change to…" menu are the same lettering
+size as every other control in the tray; the Favourite star and the cog beside
+it are the same height; a soil, obstacle or death summary shows only the lines
+it has text for, with no blank band above the buttons; before stage 1.16 the
+`More…` panel offers neither "Lay in plain comb too" nor "Finish the job
+first", and no empty "If idle:" row is left where they were; after 1.16 the
+plain-comb checkbox is there; and the cell popup's "Raises:" choices that open
+a menu end in an ellipsis, as the tray's "Change to…" does.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-13.
+
+A failure changes something: the tray sizes and the star's height would mean
+the theme's `Small` variation is not what those controls fall through to, the
+blank band would mean the summary panel's height is not being retaken when its
+content shrinks, and a checkbox showing early would mean `allowed_role_keys`
+does not carry the laying key at the stage `challenge_stages.gd` says it does.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-38 -- Dr Gallerin's bubble types its line out
+
+Trigger a Challenge prompt so Dr Gallerin's bubble appears (any welcome/hint
+line, or click his icon after one has shown once). Watch the text appear a
+character at a time rather than all at once, and note the bubble's size --
+it should already be its final size on the very first character, not grow
+as more text reveals. Then set game speed to 4x (Game Settings > World, or
+the speed control) and trigger another prompt: the typing speed should look
+the same as at 1x. Finally, mid-type, left-click anywhere on the bubble.
+
+PASS: the line reveals one character at a time at a readable pace; the
+bubble does not resize while typing; 4x game speed does not speed up the
+typing; and clicking the bubble completes the line immediately.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-5.
+
+A failure changes something: text appearing all at once would mean
+`visible_characters` isn't being driven from `_process()`; the bubble
+growing as it types would mean the label isn't holding the full text from
+the start; typing speeding up at 4x would mean `Engine.time_scale` isn't
+being divided back out of `delta`; and a click doing nothing would mean
+`gui_input` isn't wired to finish the line.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-39 -- Dr Gallerin's bubble can be paged back through
+
+Trigger several Challenge prompts (or click his icon repeatedly after
+different lines have shown) so at least three lines have appeared in his
+bubble. Click `◀` in the bubble's button row: the previous line should
+appear in full, instantly -- not typed out. Keep clicking `◀` until you
+reach the very first line shown; it should be disabled there rather than
+doing nothing silently. Click `▶` back to the newest line the same way,
+noting it disables at that end too. Then trigger a new prompt (or wait for
+a queued one) while paged back to an older line: it should not replace what
+you're reading. Click `▶` back to the newest line afterwards -- the new
+prompt should be waiting there.
+
+PASS: `◀`/`▶` step through previous lines one at a time, each shown in full
+rather than typed; both arrows disable at their respective end instead of
+doing nothing; and a prompt that becomes due while an older line is shown
+waits until you return to the newest line rather than snatching the bubble.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-6.
+
+A failure changes something: the arrows doing nothing would mean
+`_history`/`_history_index` aren't wired to the button row; a paged-back
+line typing out would mean `_show_history_entry()` isn't bypassing the
+typing effect; a live end failing to disable would mean
+`_update_history_buttons()` isn't being called after every history change;
+and a new prompt replacing an older line being read would mean the
+`_fire_due_prompts()` guard in `_process()` isn't checking
+`_history_index` against the newest entry.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-40 -- a hexagon's title fits inside it, at every text size
+
+In Game Settings > Accessibility, set Text scale to 2.0 (the maximum), then
+return to the pre-run menu. Look at "Challenge 2 Brood, Roles and Expansion"
+(the longest title) and "Scenario 3 Established nest" (the longest Scenario
+title): both should read in full inside their own hexagon, not spilling
+onto the backdrop or getting cut off mid-word. Check a completed stage's `✓`
+tick sits cleanly in its corner, not crossed by the wrapped title. Then set
+Text scale back to 1.0 and confirm every title still reads "Challenge 1
+First Stores", "Challenge 2 Brood, Roles and Expansion", "Scenario 1 Queen
+alone" and so on -- no colon after the Challenge number, no dash after the
+Scenario number.
+
+PASS: every title is fully readable inside its hexagon at text scale 1.0 and
+2.0, the completion tick is never crossed by title text, and none of the
+seven titles has a colon or dash after its number.
+
+Owner: `plans/now/ui.md` UI-M-2.
+
+A failure changes something: text still spilling outside the hexagon at 2.0
+would mean the label's `theme_type_variation` is back on a size too large for
+its box, or `clip_text` isn't set; the tick being crossed would mean the
+label's box still reaches under it; a surviving colon or dash would mean the
+`STAGES` table wasn't fully updated.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-41 -- the command tray fits its content the first time you select a bee
+
+Start a fresh run. Select any single bee (a forager is easiest). Look at the
+command tray: its bottom edge should sit right after the last row of
+content (Job/Focus/Orders, or the `More…` button if that's the last visible
+row) -- no unneeded band of empty space below it, and no scrollbar unless
+the tray's content genuinely does not fit the screen. Then select a
+different bee of a very different kind (the queen, if she's selectable) and
+check the same thing again on that first selection.
+
+PASS: the tray's bottom edge tracks its content on the *first* time each
+bee is selected -- no unnecessary empty space, no unneeded scrollbar.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-8.
+
+This only covers the first time a given selection state is built. Reselecting
+back and forth between bees is now covered separately by C-43 (HC-16) --
+this check is specifically about whether the *first* build is right, which
+is what C-18's "unnecessary empty space at the bottom" on startup was about.
+
+A failure changes something: empty space or a spurious scrollbar reappearing
+here would mean `hud.gd::_resettle_command_tray`'s stability loop is no
+longer converging before the tray is shown, which the automated check
+(`tests/test_hc8_tray_first_open.py`) did not catch for some content shape
+or text scale it doesn't cover.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-43 -- the command tray fits its content on a reselection, not just the first time
+
+Start a fresh run. Select a forager, open `More…`, then select a very
+different bee (the queen, if she's selectable) while `More…` is still open.
+Look at the command tray: its bottom edge should sit right after the last
+row of content, no unneeded band of empty space below it and no scrollbar
+unless the content genuinely does not fit. Switch back to the forager and
+check the same thing again. Then repeat the whole forager <-> queen
+reselection with `More…` closed. Try it at the default text size and at the
+largest one (Settings > Accessibility).
+
+PASS: the tray's height tracks its content on every reselection, not just
+the first build of a given selection state -- with `More…` open and with it
+closed, in both directions, at both text sizes.
+
+Owner: `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-16 (`plans/archive/HC-16_2026-09-11.md` for the full delivery record).
+
+C-18's original report was exactly this: reselecting a bee after opening
+`More…` left the tray "taking up a lot of the screen, with a lot of blank
+space in the tray." HC-8 fixed the *first* build after a selection; this
+covers every later one. The confirmed cause was `_rebuild_role_controls`
+freeing the previous selection's rows with a plain `queue_free()`, which
+left them parented -- and still counted by the tray's nested
+`HFlowContainer`s -- for one to several frames after the new rows were
+already added, so the tray briefly measured a mix of old and new content
+and could settle on a plausible but wrong height. `hud.gd::_detach_and_free_children`
+now detaches each old row from its column immediately, before any new row
+is added.
+
+Proven headlessly against a real Godot boot (not just self-consistency): with
+the fix reverted, `tests/fixtures/hc16_tray_reselect_1x.json` fails; with it
+in place, all four new fixtures pass --
+`hc16_tray_reselect_1x.json`/`_2x.json` (no `More…`) and
+`hc16_tray_reselect_more_1x.json`/`_2x.json` (`More…` open), run by
+`tests/test_hc16_tray_reselect.py`. This hands-on check is the one thing
+the headless proof cannot see for itself: whether the fix reads as right on
+Dave's own screen, not only against a pixel tolerance.
+
+A failure changes something: a wrong tray height reappearing here on a
+reselection, after the automated fixtures above pass, would mean the fixed
+seed and viewport sizes those fixtures use do not cover a content shape or
+timing case the real game hits -- worth widening the fixtures before
+treating it as fixed again.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-44 -- Challenge 1's nectar lesson completes at 150
+
+Play Challenge 1 to stage 1.11, "automate nectar gathering", and give the
+queen the Forager role with nectar focus. Watch the numeric goal bar as she
+deposits nectar into the first wax cell.
+
+PASS: the goal bar becomes full and the stage advances on the deposit that
+brings the cell to at least 150 nectar, without waiting for 200; the stage's
+exit freezes the queen at that point.
+
+Owner: `plans/now/challenge-1.md` Slice 23.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-45 -- Cell contents colour their outline
+
+With Cell art on, have a forager deposit nectar into an empty built cell, then
+empty that cell again. Compare its outline before the deposit, with nectar in
+it, and after it is empty.
+
+PASS: the first nectar deposit gives the cell a pale-yellow nectar outline,
+and the built cell has no outline both before the deposit and after it is
+empty.
+
+Owner: `plans/archive/HIVE_COMB_2026-09-12.md` HCB-5.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-47 -- Challenge 1's build marker stays in the hive
+
+Play Challenge 1 through stages 1.12 and 1.15. At each build-cell stage,
+look in both the hive and meadow views before placing the cell.
+
+PASS: no yellow marker appears in the meadow. The yellow build marker appears
+inside the hive, at the cell-building anchor.
+
+Owner: `plans/now/challenge-1.md` Slice 24.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-51 -- the HUD is back: every panel and label draws again
+
+Start a run and play for a minute. Look at the corner readouts, select a
+bee, select a comb cell, and open the colony and nursery windows.
+
+PASS: the corner readouts, the summary panel, the command tray, the goal
+shelf and the warning corner all draw, and selecting a bee or a cell fills
+them; nothing that used to be on screen is missing.
+
+Owner: `plans/archive/UI-B-1_2026-09-12.md`.
+
+Why it matters: `scripts/hud.gd` called `Rect2.get_closest_point()`, which
+does not exist in Godot 4. A parse error fails the compile of every script
+that depends on it, so `scripts/main.gd` never loaded and the whole HUD went
+with it (Dave's 12 Sep 2026 report, with screenshots). `tools/verify.ps1`
+now boots Godot and fails on any script error, so this class of break cannot
+reach `master` again -- this check is the human confirmation that the HUD
+Dave lost is the HUD he has back.
+
+Passed (Dave, 12 Sep 2026).
+
+### C-50 -- record A3's pinned performance baseline
+
+Run the pinned baseline scenario and record its frame time against
+`docs/PERFORMANCE_BASELINE.md`, alongside the existing exploratory-profile
+note:
+
+```powershell
+python tools/run_scenario.py test_scenarios/recommendation_slice0_baseline.json --fixed-fps 60 --report brief
+```
+
+PASS: the run produces a `summary.performance` block (mean/p95 wall-clock ms
+for total frame time and the three target sections), and that number is
+written into `docs/PERFORMANCE_BASELINE.md`.
+
+Owner: `plans/design/architecture-review.md` A3.
+
+Filed instead of run in-session: four attempts in this session (default
+300s timeout, 900s, 1500s, and after priming Godot's `.import` cache with an
+`--editor --quit` boot) each produced only the scenario's initial config
+line in the session log and no snapshot or summary line at all -- not slow,
+stalled, the same way regardless of timeout length. That is worth a look on
+its own if it recurs (this scenario is 85 foragers + 24 miners with the fog
+CPU path on; `colony_30_bees_test.json`, far smaller, completed in 5.4s in
+the same environment), but it did not block A3's own correctness: `tools/
+verify.ps1` is green, including a new static check
+(`check_hive_stock_epoch_cache` in `tests/source_checks.py`) that proves
+`stock_epoch` exists, is distinct from `index_epoch`, and is bumped by
+every deposit/withdraw/seal/unseal path in `hive_cell.gd`.
+
+Run by Claude Code on 13 Sep 2026 from the primary checkout rather than a worktree: it completed (`outcome: performance_capture_complete`) and its numbers are recorded in `docs/PERFORMANCE_BASELINE.md`. The four stalls above all ran inside the A3 worktree, which fits the known fresh-worktree failure (no Godot import cache, so scripts silently fail to compile) -- likely, not proven.

@@ -62,7 +62,7 @@ the now-complete `plans/archive/HIVE_COMB_2026-09-12.md`.
 **C1-23 shipped 11 Sep 2026, but the queue was never refreshed to say so.**
 `NECTAR_TARGET := 150.0` landed on master that day in three commits
 (`7702760`, `3eae1db`, `29a8c2a`) and its check is C-44
-(`checks/ready/C-44.md`), but this file and `plans/now/challenge-1.md` kept
+(C-44, passed 12 Sep 2026 and archived), but this file and `plans/now/challenge-1.md` kept
 listing C1-23 as the Codex lane's leading item -- which is what correctly
 stopped a later `tools/slice.ps1 start -Lane Codex` from claiming it: its
 own stale-proof check refused the claim rather than silently redoing
@@ -325,8 +325,9 @@ four attempts (300s/900s/1500s timeouts, and after priming Godot's
 `.import` cache) each produced only the scenario's config line and no
 snapshot or summary, the same way regardless of timeout length, while a far
 smaller fixture (`colony_30_bees_test.json`) completed normally in the same
-environment. Filed as `checks/ready/C-50.md` rather than blocking the merge
-on it. Full record: `plans/archive/A3_2026-09-12.md`. Its `Next after` (A4)
+environment. Filed as C-50 rather than blocking the merge on it; it has
+since run from the primary checkout and is recorded in
+`docs/PERFORMANCE_BASELINE.md` (13 Sep 2026). Full record: `plans/archive/A3_2026-09-12.md`. Its `Next after` (A4)
 fills the Claude lane's slot below.
 
 **A4 shipped 12 Sep 2026.** `challenge_runner.gd`'s `_process` now consults
@@ -400,10 +401,46 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
    - Proof: `present: scripts/challenge_runner.gd :: func _build_goal_registry`
    - Next after: C3 -- scenario `when` uses the evaluator.
 
+4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
+   At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
+   beside "Raises:" in a selected cell's tray (C-34, 12 Sep 2026), so the
+   stage cannot be finished the way it is taught. Stale gating is ruled out --
+   `_apply_cell_popup_gating` runs on every show. Add a `select_cell`
+   scenario action and a `visible` option on the `control` assertion, prove
+   the fault in a Challenge 2 fixture, then fix the cause the failure names.
+   - Plan: `plans/now/ui-w.md` -- "UI-W-2 — Challenge 2's cell tray offers a Forager to raise"
+   - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`
+   - Check: a new test_scenarios/uiw2_challenge2_raises_forager_test.json fails on master and passes after the fix -- at 2.2 the Forager hatch menu is visible with a usable rect inside the command tray
+   - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
+   - Next after: UI-W-3 -- a comb cell's tray uses three columns.
+
+5. **[Codex] C1-27 -- a Challenge 1 wax cell holds 150 nectar, not 200.**
+   C1-23 moved the nectar lesson's goal to 150 but left the cell's capacity
+   at `GameConfig.cell_capacity` (200), so a later trip tops the cell past
+   150 (Dave saw 155) and a full comb never happens at 150. Dave chose on 13
+   Sep 2026 to cap Challenge 1's wax cells at 150. Add a per-cell
+   `nectar_capacity_override` beside `build_time_override`, set from one
+   Challenge 1 constant where the runner already sets the build-time
+   override; open world and Challenge 2 stay at 200. Leave the goal code
+   alone -- C2 is rewriting it.
+   - Plan: `plans/now/challenge-1.md` -- "Slice 27 — a Challenge 1 wax cell holds 150 nectar, not 200"
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/hive_cell.gd`, `tests/source_checks.py`
+   - Check: a new `tests/source_checks.py` check proves `capacity_for` reads `nectar_capacity_override` and that `challenge_runner.gd` sets it wherever it sets `build_time_override`; `tools/verify.ps1` green
+   - Proof: `absent: scripts/hive_cell.gd :: nectar_capacity_override`
+   - Next after: C1-7 -- the Challenge 1 acceptance playthrough, which Dave runs.
+
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- and none of the entries below is startable today.
+simply a free slot in its lane.
+
+- **UI-W-1, UI-W-3, UI-W-4 and CB-1** (`plans/now/ui-w.md`,
+  `plans/now/comb-builders.md`) -- from Dave's 12 Sep 2026 pass, each fully
+  specified and waiting only for a queue slot. UI-W-3 follows UI-W-2 in
+  `scripts/hud.gd`; UI-W-1 shares `scripts/scenario_actions.gd` with UI-W-2;
+  UI-W-4 follows UI-W-1 in `scripts/ui_layout.gd`. CB-1 is file-disjoint from
+  everything queued and is the next pick when a lane empties. CB-2 waits for
+  CB-1's measurement to name its cause.
 
 - **The architecture review's remaining A-to-G slices**
   (`plans/design/architecture-review.md`), other than A2 and A4 above --
