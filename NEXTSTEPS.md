@@ -334,14 +334,14 @@ in the Codex lane) is not A1's own to name twice.
    - Proof: `absent: tools/verify.ps1 :: test_source_checks`
    - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
 
-3. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
-   Add developer controls in Game Settings > World and Start for navigating a
-   Challenge's stages through the runner's existing transition path.
-   - Plan: `plans/now/ui.md` -- "UI-U-1 — step back and forth through a Challenge's stages"
-   - Files: `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `plans/reference/check-loop.md`
-   - Check: stage navigation rebuilds the same gates, prompts and markers; no skip leaves camera-follow or 4x speed active
-   - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void:`
-   - Next after: UI-P-5 -- reproduce the missing pre-run placeholder live.
+3. **[Codex] UI-P-5 -- reproduce the missing pre-run placeholder live.**
+   Reproduce and diagnose the missing pre-run menu placeholder from Dave's
+   screen report before changing its implementation.
+   - Plan: `plans/now/ui.md` -- "UI-P-5 — pre-run menu: \"Choose a Challenge or Scenario on the left.\" isn't visible"
+   - Files: `scripts/main_menu.gd`
+   - Check: Dave's live reproduction identifies whether the placeholder is missing or merely obscured
+   - Proof: `present: scripts/main_menu.gd :: var detail_placeholder`
+   - Next after: A2 -- one role tally.
 
 4. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
@@ -365,11 +365,6 @@ simply a free slot -- and none of the entries below is startable today.
   since those slices have all shipped. A1 leads the Claude lane and A2 holds
   the Codex lane's second slot; A3, A1's own named successor, is promoted
   when A1 lands.
-- **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
-  for stepping back and forth through a Challenge's stages, which is the
-  instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
-  edits both `scripts/debug_panel.gd` and `scripts/challenge_runner.gd`, so it
-  waits for both lanes to vacate them.
 - **UI-P-5** (`plans/now/ui.md`) -- named two plausible causes; a 10 Sep 2026
   headless check ruled both out (the placeholder is present, visible and
   correctly positioned in a fresh boot), so the real cause needs Dave's own

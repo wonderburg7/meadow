@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-U-1 -- step back and forth through Challenge stages | Dependency: UI-U-1's former `debug_panel.gd`/`challenge_runner.gd` lane hold cleared when Challenge 1 Slice 7 shipped; H4 is already integrated. UI-P-5 still wants a live reproduction | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude Code | Next: UI-P-5 -- reproduce the missing pre-run placeholder live | Dependency: Dave's live reproduction | Verified: 2026-09-12
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -13,19 +13,21 @@ UI-R-1 to UI-R-3 and UI-S-1 to UI-S-4 are shipped and archived
 confirmed C-3, C-16, C-4, C-8, and the greater part of C-9, C-11 and C-13,
 and produced the UI-T group below. Dave's second 9 Sep 2026 pass added
 UI-U-1, a developer control for reaching a late Challenge stage without
-replaying the whole Challenge. Dave's 10 Sep 2026 pass added UI-M-2 (the
+replaying the whole Challenge, shipped 12 Sep 2026; see
+`plans/archive/UI-U-1_2026-09-12.md`. Dave's 10 Sep 2026 pass added UI-M-2 (the
 pre-run menu's hexagon titles spilling outside their tiles), shipped the same
-day -- see `plans/archive/UI-M-2_2026-09-10.md`. UI-P-5 and UI-U-1 are what
-remains, and neither is startable.
+day -- see `plans/archive/UI-M-2_2026-09-10.md`. UI-P-5 is what remains and
+needs a live reproduction before it is startable.
 
 ## Open slices at a glance
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
 | UI-P-5 | The pre-run menu's placeholder text is missing | `main_menu.gd` | no — live repro | medium |
-| UI-U-1 | No way to reach a late Challenge stage without replaying it | `debug_panel.gd`, `challenge_runner.gd` | yes — the former lane hold cleared | medium |
 
 ## UI-U-1 — step back and forth through a Challenge's stages
+
+**Shipped 12 Sep 2026 — see `plans/archive/UI-U-1_2026-09-12.md`.**
 
 **Reasoning level: medium.** The forward seam exists; the backward one does
 not, and stepping backwards has to leave the run in a state the stage can
