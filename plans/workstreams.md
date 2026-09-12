@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/WF-1` (`claude/WF-1`) | Claude | Combined 12 Sep workflow review, the four small lifecycle/config fixes, and the new agent-lifecycle plan | Claude | in progress | none | `plans/now/agent-lifecycle.md` (created by this branch) |
