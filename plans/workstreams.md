@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/C1` (`codex/C1`) | Codex | the conditions evaluator, no callers. | Codex | in progress | none | `plans/design/architecture-review.md` "C1 — the conditions evaluator, no callers" |
