@@ -155,6 +155,13 @@ func current_stage_instruction() -> String:
 		return ""
 	return str(_stages()[_stage_index].get("instruction", ""))
 
+## Dev/test read surface for scenario assertions. The stage record remains
+## private; callers can observe its stable id without reaching into the index.
+func current_stage_id() -> String:
+	if not active or _stage_index >= _stages().size():
+		return ""
+	return str(_stages()[_stage_index].id)
+
 ## Section 11 Phase A step 3: this Challenge's explicit skill-policy
 ## overrides, straight out of levels.gd's run definition for
 ## Session.starting_level. Nothing calls this yet -- Phase B step 6 is

@@ -697,77 +697,7 @@ Shipped 11 Sep 2026. `tools/equivalence.py`. Full record: `plans/archive/H3_2026
 
 ### H4 — a headless run can start a Challenge and reach a stage
 
-Level: medium. Depends on: C1-21 and C1-22 having landed. **Status: ready
-behind those two.** Dave took the ordering decision on 11 Sep 2026 (decision
-D below): H4 lands after C1-21 and C1-22 and before C1-24 and C1-26. It owns
-`scripts/challenge_runner.gd`, so it runs in the Codex lane, and `C1-23`'s
-`Next after:` is what promotes it.
-
-**Why it exists (found by the 11 Sep 2026 plan review, not by either pass
-above).** Nine open slices across three plans state a headless Challenge
-assertion as their acceptance, and **no headless run can start a Challenge at
-all.** `main.gd:576` calls `challenge_runner.start()` only when
-`Session.starting_level` is 1 or 2; a `--scenario` run always points
-`starting_level` at `Levels.SCENARIO_LEVEL_ID` (`levels.gd:117`), so the
-runner never starts. `scenario_actions.gd`'s verb vocabulary has no Challenge
-or stage verb of any kind, there is no Challenge fixture under
-`test_scenarios/`, and the "existing stage-sequence test" that three slices
-name as their regression check does not exist -- the only Challenge coverage
-in `tests/` is static regex in `source_checks.py`.
-
-The nine: `plans/now/challenge-1.md` Slices 21, 22, 24 and 26;
-`plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. This is F16 one layer
-down -- the same ritual written into nine acceptance sections and implemented
-zero times -- and `plans/README.md`'s rule that a shared prerequisite is an
-earlier slice rather than a later tidy-up applies to it exactly.
-
-- **Required reading.** This heading. `scripts/main.gd`'s `--scenario`
-  handling and its `challenge_runner.start()` call.
-  `scripts/challenge_runner.gd`'s `_advance`, `_enter_stage` and
-  `debug_advance_stage`. `scripts/scenario_actions.gd`'s verb dispatch.
-  `docs/headless-run-contract.md`.
-- **Files to change.** `scripts/main.gd`, `scripts/scenario_actions.gd`,
-  `scripts/challenge_runner.gd`, `docs/headless-run-contract.md`, one new
-  fixture under `test_scenarios/`.
-- **Files not to change.** `scripts/challenge_stages.gd`. Stage data does not
-  move to make a stage reachable, which is the same rule UI-U-1 works under.
-- **Requirements.** A scenario may name the Challenge it runs, so
-  `challenge_runner.start()` fires for a `--scenario` launch. A scenario verb
-  advances to a named stage id by stepping the ordinary `_advance()` path
-  until that id is current, so gates, prompts, markers, checkpoints and stage
-  effects are all exercised rather than bypassed -- never by assigning
-  `_stage_index`. A `when` clause and an assertion can read the current stage
-  id. One fixture proves it by reaching 1.14 and asserting the id.
-- **Invariants.** The advance path is the existing one;
-  `debug_advance_stage()` stays the single forward seam and this slice uses
-  it rather than adding a second. Nothing about a Challenge behaves
-  differently because a scenario started it -- if it has to, that is a finding
-  to report, not to work around. Ordinary `--scenario` runs with no Challenge
-  named are unchanged, and every existing fixture keeps its verdict.
-- **Implementation guidance.** The seam UI-U-1 needs for its `◀` button is
-  the same seam; if that slice lands first, this one extends it rather than
-  building a parallel one. A stage whose goal cannot be satisfied by stepping
-  alone -- the ordered-visit beats -- may need the verb to satisfy the goal
-  as well as advance past it; say which stages those are rather than
-  special-casing them silently.
-- **Runtime policy.** Developer and test surface only. Nothing new runs in a
-  player's session.
-- **Automated acceptance.** A fixture that starts Challenge 1, advances to
-  1.14, and asserts the current stage id; it fails today because no fixture
-  can start a Challenge. Every existing fixture under `test_scenarios/`
-  produces the same verdict it does now.
-- **Position, decided.** After C1-21 and C1-22, before C1-24 and C1-26
-  (Dave, 11 Sep 2026). Those first two are already queued and their fixes are
-  behaviour, proved by Dave's C-7 and C-29; the last two have no acceptance at
-  all until this lands. `plans/README.md`'s guardrail 14 carries the same
-  ordering for `challenge_runner.gd` as a whole. When this slice is promoted
-  into `NEXTSTEPS.md` its `Next after:` is **C1-26**, the marker's pulse and
-  off-screen arrow, which is the last Challenge 1 slice this unblocks.
-- **Escalation.** If starting a Challenge from a scenario turns out to need
-  the Challenge itself to behave differently -- a stage that cannot be reached
-  without a player action a scenario verb cannot express -- stop and name the
-  stage. That is a fact about the stage design, not a thing to special-case in
-  the runner.
+Shipped 12 Sep 2026. Full record: `plans/archive/H4_2026-09-12.md`.
 
 ### A1 — brood hatching reads the brood bucket
 
