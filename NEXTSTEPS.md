@@ -444,8 +444,8 @@ simply a free slot -- and none of the entries below is startable today.
   was never run, and it said it became a slice only if a lifecycle failure
   recurred. It has: `docs/agent-workflow-review-2026-09-12.md` counts 39
   non-zero `finish` exits in 97 calls on the Claude side and 20 of 20 on the
-  Codex side. The work is now `plans/now/agent-lifecycle.md`, whose L-1 is in
-  the Claude lane above and whose L-2 and L-6 are those exercises.
+  Codex side. The work is now `plans/now/agent-lifecycle.md`, whose L-2 is in
+  the Claude lane above and whose L-6 is that exercise.
 
 ## Copy-paste prompts
 
