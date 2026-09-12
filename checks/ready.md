@@ -31,4 +31,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-45 -- Cell contents colour their outline](ready/C-45.md)
 - [C-46 -- comb builders spread across six walls before opening another site](ready/C-46.md)
 - [C-47 -- Challenge 1's build marker stays in the hive](ready/C-47.md)
+- [C-48 -- Challenge 1's marker remains noticeable and findable](ready/C-48.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
