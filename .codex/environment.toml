@@ -41,3 +41,16 @@ name = "Finish slice"
 icon = "check"
 command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish"
 platform = "win32"
+
+# Recovery, not a second way to finish. `finish` pushes the merge before it
+# removes the worktree and the ledger row, so an interrupted closeout leaves
+# work merged and pushed with cleanup outstanding; `resume` completes exactly
+# that and is safe to run repeatedly. Every command here is deliberately a
+# single unchained invocation -- `tests/test_source_checks.py` asserts it,
+# because a lifecycle command wrapped in `-Command` or chained onto
+# `cd`/`git status` no longer matches .codex/rules/meadow.rules and is denied.
+[[actions]]
+name = "Resume slice closeout"
+icon = "refresh"
+command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 resume -Lane Codex"
+platform = "win32"
