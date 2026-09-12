@@ -304,7 +304,19 @@ every open item.
    - Proof: `present: scripts/hive_cell.gd :: func capacity_for(resource_type: String) -> float:`
    - Next after: A1 -- brood hatching reads the brood bucket.
 
-2. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
+2. **[Claude] L-1 -- the lifecycle suite is green and runs in verification.**
+   `tests/test_source_checks.py` holds the only tests of `tools/slice.ps1`,
+   the Codex permission profile and the verifier's Python resolution. Three of
+   its 27 tests are red on `master`, and `tools/verify.ps1` does not run the
+   file at all, so the closeout machinery every slice depends on is unverified.
+   Fix the three, then add the suite to the verifier as a third job.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-1 — the lifecycle suite is green and runs in verification"
+   - Files: `tests/test_source_checks.py`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_source_checks` reports 27 passing, and `tools/verify.ps1` fails when `slice.ps1`'s post-merge throw is deleted
+   - Proof: `absent: tools/verify.ps1 :: test_source_checks`
+   - Next after: L-2 -- every outcome is classified, every closeout phase is injected.
+
+3. **[Codex] UI-U-1 -- step back and forth through Challenge stages.**
    Add developer controls in Game Settings > World and Start for navigating a
    Challenge's stages through the runner's existing transition path.
    - Plan: `plans/now/ui.md` -- "UI-U-1 — step back and forth through a Challenge's stages"
@@ -313,7 +325,7 @@ every open item.
    - Proof: `present: scripts/challenge_runner.gd :: func debug_advance_stage() -> void:`
    - Next after: UI-P-5 -- reproduce the missing pre-run placeholder live.
 
-3. **[Codex] A2 -- one role tally.**
+4. **[Codex] A2 -- one role tally.**
    Role counts are currently built in several incompatible places. Derive the
    population readout and colony diagnostics from the canonical `Roles.count_key`
    representation, including the hive's hatch-focus counts.
@@ -326,15 +338,14 @@ every open item.
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
-simply a free slot -- the queue holds three (the floor), and none of the
-entries below is startable today.
+simply a free slot -- and none of the entries below is startable today.
 
 - **The architecture review's remaining A-to-G slices**
   (`plans/design/architecture-review.md`), other than A1 and A2 above --
   Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
   21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped, but the queue holds only three items
-  and A1 and A2 already fill both of this session's open slots.
+  since those slices have all shipped. A2 holds the Codex lane's second
+  slot; A1 is A2's own named successor and is promoted when A2 lands.
 - **UI-U-1** (`plans/now/ui.md`) -- arrows in Game Settings > World and Start
   for stepping back and forth through a Challenge's stages, which is the
   instrument for reaching stages 1.12 to 1.14 without a full playthrough. It
@@ -367,12 +378,14 @@ entries below is startable today.
   someone has looked: it is one investigation, and nothing waits on it.
 - **Save/load during an active Challenge** -- a settled design decision, not
   a defect. `DESIGN_BACKLOG.md` holds it; it is not restated here.
-- **The Codex lifecycle's own success measure** -- CR-1 to CR-7 all shipped by
-  9 Sep 2026 and the plan is archived at
-  `plans/archive/CODEX_RELIABILITY_2026-09-09.md`, but its stated measure was
-  ten throwaway lifecycle exercises including parallel lanes and injected
-  failures, and those were never run. It is not a defect and nothing waits on
-  it, so it is not a slice; it becomes one only if a lifecycle failure recurs.
+- **The Codex lifecycle's own success measure** -- admitted. CR-1 to CR-7
+  shipped by 9 Sep 2026 and that plan is archived, but its measure -- ten
+  throwaway lifecycle exercises with parallel lanes and injected failures --
+  was never run, and it said it became a slice only if a lifecycle failure
+  recurred. It has: `docs/agent-workflow-review-2026-09-12.md` counts 39
+  non-zero `finish` exits in 97 calls on the Claude side and 20 of 20 on the
+  Codex side. The work is now `plans/now/agent-lifecycle.md`, whose L-1 is in
+  the Claude lane above and whose L-2 and L-6 are those exercises.
 
 ## Copy-paste prompts
 

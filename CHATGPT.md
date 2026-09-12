@@ -172,12 +172,17 @@ commits distinct.
 
 ## Session routing
 
-- Treat `NEXTSTEPS.md` as the only canonical current queue. It holds two to
-  five ready slices split into a **[Claude] lane** and a **[Codex] lane**. Take the
-  first unclaimed **[Codex]** item and nothing else -- "implement the next
-  slice" means exactly that. Read only the `Plan:` file and heading that item
-  names; do not read the Claude lane's plan, the archive or Git history to
-  work out what to do.
+- Do not read `NEXTSTEPS.md` to find your work. `tools/slice.ps1 start -Lane
+  Codex` claims the first unclaimed **[Codex]** item and prints it as JSON:
+  `id`, `plan`, `heading`, `files`, `check`, `proof`, `next_after`, and a
+  `read` field holding the exact command that prints that slice's plan
+  section and nothing else. Run the `read` command; that is the whole
+  briefing. `doctor -Lane Codex` prints the same thing without claiming
+  anything. The queue file is 25 KB and the section you need is under 1 KB.
+- Do not read the Claude lane's plan, the archive or Git history to work out
+  what to do. The queue holds three to five ready slices in two lanes
+  (`tools/check_docs.py` enforces the bounds); the lane's leading item is
+  already the decision.
 - The lanes are guaranteed not to share a file (`tools/check_docs.py` proves
   it), so a Codex branch and a Claude branch can run at the same time without
   conflicting. If the slice you are on turns out to need a file the other
