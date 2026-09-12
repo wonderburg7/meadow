@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/D1` (`claude/D1`) | Claude | one settings persistence authority, second half. | Claude | in progress | none | `plans/design/architecture-review.md` "D1 — one settings persistence authority" |
