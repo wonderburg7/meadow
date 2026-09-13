@@ -185,9 +185,14 @@ if (-not $Docs) {
             }
         }
         else {
-            Receive-Job -Job $job
+            # unittest writes its progress dots to stderr. Under Windows
+            # PowerShell 5.1 with ErrorActionPreference Stop, Receive-Job
+            # re-emits that as a NativeCommandError and aborts a passing run,
+            # so print stderr as text and judge the job by its State: the job
+            # throws on a non-zero exit code.
+            Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { Write-Output $_.ToString() }
             if ($job.State -ne "Completed") {
-                Write-Error "$($job.Name) did not complete successfully."
+                Write-Output "$($job.Name): FAILED"
                 $failed = $true
             }
         }
