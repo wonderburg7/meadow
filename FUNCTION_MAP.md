@@ -740,6 +740,51 @@ restart.
 958  func _restart() -> void
 ```
 
+## scenario_actions.gd (889 lines)
+
+The headless verbs, `when` clauses and layout assertions.
+
+```
+45   static func run_pending(main: Node2D, actions: Array) -> void
+68   static func log_unresolved(actions: Array) -> void
+85   static func _do_settle(action: Dictionary) -> bool
+94   static func _execute(main: Node2D, action: Dictionary) -> void
+126  # --- triggers -----------------------------------------------------
+136  static func _when_met(main: Node2D, when: Dictionary) -> bool
+151  static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary
+202  # --- selectors ------------------------------------------------------
+206  static func _resolve_bees(main: Node2D, target: Dictionary) -> Array
+224  static func _resolve_cell(main: Node2D, hex: Array) -> Node2D
+234  static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D
+244  # --- verbs ------------------------------------------------------------
+261  static func _do_assign_role(main: Node2D, action: Dictionary) -> void
+317  static func _do_designate_cell(main: Node2D, action: Dictionary) -> void
+341  static func _do_queue_build(main: Node2D, action: Dictionary) -> void
+367  static func _do_queue_mine(main: Node2D, action: Dictionary) -> void
+398  static func _do_set_config(_main: Node2D, action: Dictionary) -> void
+411  static func _do_hatch_role(main: Node2D, action: Dictionary) -> void
+428  static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void
+474  static func _do_select_bees(main: Node2D, action: Dictionary) -> void
+505  static func _do_select_soil(main: Node2D, action: Dictionary) -> void
+531  static func _do_open_window(main: Node2D, action: Dictionary) -> void
+571  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
+584  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
+598  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
+619  # --- assertion checks -------------------------------------------------
+629  static func _do_assert(main: Node2D, action: Dictionary) -> bool
+639  static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
+670  static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
+712  static func _resolve_named_panel(main: Node2D, name: String) -> Control
+741  static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
+780  static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
+820  static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
+837  static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
+848  static func _collect_empty_labels(node: Node, out: Array) -> void
+854  static func _collect_collapsed_controls(node: Node, out: Array) -> void
+867  static func _resolve_scoped_path(main: Node2D, path: String) -> Node
+888  static func _log(do: String, target_desc: String, result: String, reason: String) -> void
+```
+
 ## game_config.gd (874 lines)
 
 The balance fields.
@@ -766,51 +811,6 @@ The balance fields.
 813  # --- disease ---
 841  # --- gynes leaving ---
 848  # --- winter ---
-```
-
-## scenario_actions.gd (853 lines)
-
-The headless verbs, `when` clauses and layout assertions.
-
-```
-32   static func run_pending(main: Node2D, actions: Array) -> void
-55   static func log_unresolved(actions: Array) -> void
-72   static func _do_settle(action: Dictionary) -> bool
-81   static func _execute(main: Node2D, action: Dictionary) -> void
-113  # --- triggers -----------------------------------------------------
-118  static func _when_met(main: Node2D, when: Dictionary) -> bool
-154  static func _population(main: Node2D, role_key: String) -> int
-166  # --- selectors ------------------------------------------------------
-170  static func _resolve_bees(main: Node2D, target: Dictionary) -> Array
-188  static func _resolve_cell(main: Node2D, hex: Array) -> Node2D
-198  static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D
-208  # --- verbs ------------------------------------------------------------
-225  static func _do_assign_role(main: Node2D, action: Dictionary) -> void
-281  static func _do_designate_cell(main: Node2D, action: Dictionary) -> void
-305  static func _do_queue_build(main: Node2D, action: Dictionary) -> void
-331  static func _do_queue_mine(main: Node2D, action: Dictionary) -> void
-362  static func _do_set_config(_main: Node2D, action: Dictionary) -> void
-375  static func _do_hatch_role(main: Node2D, action: Dictionary) -> void
-392  static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void
-438  static func _do_select_bees(main: Node2D, action: Dictionary) -> void
-469  static func _do_select_soil(main: Node2D, action: Dictionary) -> void
-495  static func _do_open_window(main: Node2D, action: Dictionary) -> void
-535  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
-548  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
-562  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
-583  # --- assertion checks -------------------------------------------------
-593  static func _do_assert(main: Node2D, action: Dictionary) -> bool
-603  static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
-634  static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
-676  static func _resolve_named_panel(main: Node2D, name: String) -> Control
-705  static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
-744  static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
-784  static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
-801  static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
-812  static func _collect_empty_labels(node: Node, out: Array) -> void
-818  static func _collect_collapsed_controls(node: Node, out: Array) -> void
-831  static func _resolve_scoped_path(main: Node2D, path: String) -> Node
-852  static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
 ## input_selection.gd (701 lines)
