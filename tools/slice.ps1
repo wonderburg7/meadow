@@ -49,6 +49,50 @@ function Invoke-WithLifecycleLock {
     }
 }
 
+function Get-PendingDeletionsPath {
+    param([string]$Root)
+    $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($commonDir)) { $commonDir = Join-Path $Root $commonDir }
+    return Join-Path $commonDir "meadow-slice-pending-deletions"
+}
+
+function Add-PendingWorktreeDeletion {
+    param([string]$Root, [string]$WorktreeRelative)
+    $queuePath = Get-PendingDeletionsPath -Root $Root
+    $existing = if (Test-Path -LiteralPath $queuePath) { @(Get-Content -LiteralPath $queuePath) } else { @() }
+    if ($WorktreeRelative -notin $existing) {
+        Add-Content -LiteralPath $queuePath -Value $WorktreeRelative
+    }
+}
+
+function Get-PendingWorktreeDeletions {
+    param([string]$Root)
+    $queuePath = Get-PendingDeletionsPath -Root $Root
+    if (-not (Test-Path -LiteralPath $queuePath)) { return @() }
+    return @(Get-Content -LiteralPath $queuePath | Where-Object { $_ -and $_.Trim() })
+}
+
+function Remove-PendingWorktreeDirectories {
+    param([string]$Root)
+    $queuePath = Get-PendingDeletionsPath -Root $Root
+    if (-not (Test-Path -LiteralPath $queuePath)) { return }
+    $paths = Get-PendingWorktreeDeletions -Root $Root
+    $remaining = @()
+    foreach ($relative in $paths) {
+        $fullPath = Join-Path $Root $relative
+        if (Test-Path -LiteralPath $fullPath) {
+            try { Remove-Item -LiteralPath $fullPath -Recurse -Force -ErrorAction Stop } catch {}
+        }
+        if (Test-Path -LiteralPath $fullPath) { $remaining += $relative }
+    }
+    if ($remaining.Count -gt 0) {
+        Set-Content -LiteralPath $queuePath -Value $remaining
+    }
+    else {
+        Remove-Item -LiteralPath $queuePath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Get-PrimaryRoot {
     $commonDir = (git rev-parse --git-common-dir).Trim()
     if ($LASTEXITCODE -ne 0) {
@@ -553,6 +597,7 @@ function Invoke-SliceDoctor {
     )
 
     $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    Remove-PendingWorktreeDirectories -Root $root
     $failures = @(Get-DoctorEnvironmentFailures -Root $root -RequestedPythonPath $PythonPath)
 
     try {
@@ -584,6 +629,7 @@ function Invoke-SliceDoctor {
         branch       = $preflight.Branch
         worktree     = $preflight.WorktreeRelative
         git_excludes = Get-GlobalExcludesDiagnostic
+        pending_deletions = Get-PendingWorktreeDeletions -Root $root
     } | ConvertTo-Json -Compress
 }
 
@@ -941,25 +987,15 @@ function Invoke-SliceFinish {
         # `git worktree remove` can deregister the worktree and still fail to
         # delete the directory (an external process briefly holding it open --
         # OneDrive and the Search Indexer both do this on a freshly emptied
-        # folder, same as a running Godot instance can). Once git has let go
-        # of it, re-running `git worktree remove` just fails with "is not a
-        # working tree" -- retry the plain delete instead.
-        $maxAttempts = 60
-        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            if (-not (Test-Path -LiteralPath $worktreePath)) { break }
-            try {
-                Remove-Item -LiteralPath $worktreePath -Recurse -Force -ErrorAction Stop
-                break
-            }
-            catch {
-                if ($attempt -eq $maxAttempts) { throw "could not remove $worktreeRelative -- $($_.Exception.Message)" }
-                if ($attempt % 5 -eq 0) {
-                    Write-Output "$id -- still waiting for something to release $worktreeRelative (attempt $attempt of $maxAttempts)"
-                }
-                Start-Sleep -Seconds 3
-            }
-        }
+        # folder, same as a running Godot instance can). Prune git's own
+        # records regardless -- they are correct even when the directory
+        # lags -- and queue the directory for a later slice command to
+        # retry, rather than holding the lifecycle lock while we wait.
         git worktree prune
+        if (Test-Path -LiteralPath $worktreePath) {
+            Add-PendingWorktreeDeletion -Root $root -WorktreeRelative $worktreeRelative
+            Write-Output "$id -- $worktreeRelative could not be deleted; queued in pending deletions for retry at the next slice command"
+        }
     }
     Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
 
@@ -1027,10 +1063,10 @@ function Invoke-SliceFinish {
 }
 
 switch ($Command) {
-    "start"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
-    "finish" { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
+    "start"  { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
+    "finish" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
     "doctor" { Invoke-SliceDoctor -Lane $Lane -PythonPath $PythonPath }
     "status" { Invoke-SliceStatus -Lane $Lane }
-    "resume" { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
+    "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
     "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
 }
