@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-4 -- the worktree is deleted out of process, outside the lock | Dependency: none | Verified: 2026-09-13
+Status: active | Owner: Dave / Claude | Next: L-5 -- closeout is an idempotent resumable transaction | Dependency: none | Verified: 2026-09-14
 
 ## Objective
 
@@ -50,8 +50,7 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | yes | high |
-| L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | after L-4 | high |
+| L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | yes | high |
 | L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
@@ -63,9 +62,9 @@ its tests did not run -- it shipped 12 September 2026 (archived at
 `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`), so L-2, L-3, L-7 and L-8
 became startable; L-2 and L-3 have since shipped too (archived at
 `plans/archive/L-2_2026-09-12.md` and `plans/archive/L-3_2026-09-13.md`).
-L-4 must precede L-5, because the transaction cannot be short-lived while a
-three-minute retry sits inside it. L-6 must follow L-5, because it tests the
-transaction. L-9 is last and is the gate.
+L-4 shipped 14 September 2026 (archived at
+`plans/archive/L-4_2026-09-14.md`), so L-5 is now startable. L-6 must follow
+L-5, because it tests the transaction. L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -97,56 +96,11 @@ L-3 (branch verification and bookkeeping validation are separate scopes)
 shipped 13 September 2026. Full specification and outcome:
 `plans/archive/L-3_2026-09-13.md`.
 
-## L-4 — the worktree is deleted out of process, outside the lock
-
-**Objective.** Remove the 60-attempt, 3-second retry loop from inside the
-lifecycle lock. Deletion happens after the process holding the directory has
-exited.
-
-**Non-goals.** Do not try to identify or kill whatever holds the directory
-beyond the existing `Godot*` stop. Do not leave a registered worktree behind:
-git's own bookkeeping must be correct even when the directory survives.
-
-**Files.** `tools/slice.ps1`.
-
-**Prerequisite.** L-3.
-
-**Algorithm.**
-
-1. In `Invoke-SliceFinish`, replace the retry loop with: `git worktree
-   remove` once; if the directory still exists, `git worktree prune` so git's
-   records are correct, then write the path into a queue file
-   a queue file beside the lifecycle lock, named meadow-slice-pending-deletions (one path per line, appended, no
-   duplicates) and continue. Closeout does not fail because a directory
-   survived.
-2. Add a `Remove-PendingWorktreeDirectories` function, called at the start of
-   every `start`, `finish`, `resume` and `doctor`, before the lock is taken.
-   It reads the queue file, tries `Remove-Item -Recurse -Force` on each path
-   once, and rewrites the file with only the paths that still exist.
-3. `doctor` reports the queue as a `pending_deletions` array so a surviving
-   directory is visible rather than silent.
-4. `check_docs.py`'s orphan-directory check must not fail on a directory
-   listed in the queue file. Read the queue file, skip those paths, and say
-   so in the check's message.
-
-**Tests and failure injection.** Add
-`test_finish_completes_when_the_worktree_directory_cannot_be_deleted`: hold
-an open file handle inside the fixture worktree, run `finish`, assert it
-exits zero, assert the branch merged and the ledger row is gone, assert the
-path is in the queue file, and assert `check_docs.py` passes. Then release
-the handle, run `doctor`, and assert the directory is gone and the queue file
-is empty.
-
-**Proof.** `present: tools/slice.ps1 :: $maxAttempts = 60`
-
-**Risk.** High. It changes what "closeout succeeded" means. The invariant to
-hold: git's worktree registry and the ledger are always correct; only the
-directory may lag.
-
-**Expected improvement.** 13 deletion failures in 11 sessions, up to 180
-seconds each inside the lock, become 0 failures and no lock time.
-
-**Next slice.** L-5.
+L-4 (the worktree is deleted out of process, outside the lock) shipped 14
+September 2026: `Invoke-SliceFinish` now tries one `git worktree remove` and
+queues a survivor in `meadow-slice-pending-deletions` instead of retrying
+inside the lock; `doctor` reports the queue and `check_docs.py` skips listed
+paths. Full specification and outcome: `plans/archive/L-4_2026-09-14.md`.
 
 ## L-5 — closeout is an idempotent resumable transaction
 

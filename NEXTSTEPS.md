@@ -375,21 +375,24 @@ C2's `Next after` (C3) now leads the Codex lane below.
 
 ## Next up
 
-1. **[Claude] L-4 -- the worktree is deleted out of process, outside the lock.**
-   `Invoke-SliceFinish` holds a 60-attempt, 3-second retry loop for deleting
-   the worktree directory inside the lifecycle lock -- 13 deletion failures
-   in 11 sessions, up to 180 seconds each. Replace it with one `git worktree
-   remove`; on failure, `git worktree prune` (so git's records stay correct)
-   and append the path to a queue file (`meadow-slice-pending-deletions`,
-   beside the lifecycle lock). Add `Remove-PendingWorktreeDirectories`,
-   called at the start of every `start`/`finish`/`resume`/`doctor` before the
-   lock, to retry once and prune the file. `doctor` reports the queue as
-   `pending_deletions`; `check_docs.py`'s orphan check skips listed paths.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-4 — the worktree is deleted out of process, outside the lock"
-   - Files: `tools/slice.ps1`
-   - Check: `test_finish_completes_when_the_worktree_directory_cannot_be_deleted` passes -- with an open handle held inside the fixture worktree, `finish` exits zero, the branch merges and the ledger row clears, the path lands in the queue file, and `check_docs.py` still passes; releasing the handle and running `doctor` clears both the directory and the queue file
-   - Proof: `present: tools/slice.ps1 :: $maxAttempts = 60`
-   - Next after: L-5 -- closeout is an idempotent resumable transaction.
+1. **[Claude] L-5 -- closeout is an idempotent resumable transaction.**
+   One closeout, one recorded phase journal, one push, and the queue
+   refilled and the specification archived inside the transaction. Write a
+   closeout journal (`meadow-slice-closeout.json`, beside the lifecycle
+   lock) after each phase; on entry, skip every phase up to the recorded
+   one. Add `archived` (move the delivered slice's spec out of `plans/now/`
+   into the archive, leaving the pointer) and `refilled` (remove the
+   delivered item from `## Next up`, promote its `Next after:` item) as
+   phases on the branch, before the merge, so both land inside the merge
+   commit; push once, after `refilled`. Delete `CHATGPT.md`'s "queue is
+   updated on master, never on the branch" rule and `CLAUDE.md`'s matching
+   sentence. Fill the whole end-of-slice report -- `Next slice`, `Other
+   lane` and `Start it with` become lookups once `next_after` is parsed.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-5 — closeout is an idempotent resumable transaction"
+   - Files: `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md`
+   - Check: extend L-2's injected-phase test to the `archived`/`refilled` phases and assert `resume` completes them; add `test_closeout_pushes_exactly_once` (counts pushes against a local bare remote's reflog) and `test_refill_promotes_the_named_successor` (queue is one item shorter, the successor is present, the specification moved)
+   - Proof: `present: tools/slice.ps1 :: queue not refilled by 'finish'`
+   - Next after: L-6 -- two lanes closing out at once is a test, not a hope.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
