@@ -189,50 +189,24 @@ func _refresh_signals(delta: float) -> void:
 		Perf.end("signals")
 		return
 
-	var lines: Array = []
-
-	var starving: int = facts.starving
-	var hungry: int = facts.hungry
-	var foragers: int = facts.foragers
-	var nurses: int = facts.nurses
-	var comb_workers: int = facts.comb_workers
-	var hungry_brood: int = facts.hungry_brood
-	var free_cells: int = facts.free_cells
-
 	# Not part of ColonyDiagnostics.compute -- used only here, so left as a
 	# single direct read rather than moved.
 	var dead_cells: int = main.hive.cells_holding("corpse").size()
 
-	# A 4th element, where present, is a "category" used to sort a signal
-	# into the Colony/Nursery drawers' "needing attention" blocks
-	# (UI_PLAN.md section 15 slice 4) -- separate from the 3rd element
-	# ("action"), which is what a click on this line does in hud.gd's
-	# corner strip. The two can differ: a line worth flagging in the
-	# nursery drawer isn't always one with something sensible to select.
-	if starving > 0:
-		lines.append([ProblemMessages.starving(bees, starving), 2, "starving"])
-	if hungry_brood > 0:
-		lines.append(["%d larvae are going hungry" % hungry_brood, 2, "hungry_brood", "brood"])
-	if dead_cells > 0:
-		lines.append(["%d cells blocked by dead larvae" % dead_cells, 2, "dead_cells", "brood"])
-	if main.day >= int(GameConfig.pollen_warning_first_day) and main.hive.total("pollen") < GameConfig.egg_pollen_cost * 0.5:
-		lines.append(["Almost no pollen — the queen cannot lay", 2, "", "brood"])
-	if main.hive.total("nectar") < 40.0 and main.hive.total_honey() < 10.0:
-		lines.append(["Food is running out", 2])
-	if nurses == 0 and main.hive.cells_holding("brood").size() > 0:
-		lines.append(["No nurses — brood will not develop at all", 2, "", "brood"])
-	if free_cells == 0:
-		lines.append([ProblemMessages.no_free_cells(bees, main.queen), 1])
-	if hungry > 0:
-		lines.append([ProblemMessages.hungry(bees, hungry), 1, "hungry"])
-	if foragers == 0:
-		lines.append([ProblemMessages.no_foragers(main.queen), 1, ""])
-	if comb_workers == 0 and dead_cells > 0:
-		lines.append(["No comb workers to clear the blocked cells", 1, "dead_cells", "brood"])
-	if Session.rain_intensity > GameConfig.rain_forage_limit:
-		lines.append(["Raining hard — foragers are grounded", 1])
-	elif Session.rain_intensity > 0.05:
-		lines.append(["Raining — nectar is watered down and flying costs more", 0])
+	# A 4th element, where present, is a category used to sort a signal into
+	# the Colony/Nursery drawers' "needing attention" blocks. The 3rd element
+	# is the corner-strip click action; the catalogue preserves their distinct
+	# meanings and the optional array shape HUD already consumes.
+	var lines := ProblemMessages.signal_lines({
+		"bees": bees, "queen": main.queen, "day": main.day,
+		"starving": facts.starving, "hungry": facts.hungry,
+		"foragers": facts.foragers, "nurses": facts.nurses,
+		"comb_workers": facts.comb_workers, "hungry_brood": facts.hungry_brood,
+		"free_cells": facts.free_cells, "dead_cells": dead_cells,
+		"brood_cells": main.hive.cells_holding("brood").size(),
+		"pollen": main.hive.total("pollen"), "nectar": main.hive.total("nectar"),
+		"honey": main.hive.total_honey(), "rain_intensity": Session.rain_intensity,
+	})
 
 	main.hud.update_signals(lines)
 	_refresh_panels(bees, facts, counts)

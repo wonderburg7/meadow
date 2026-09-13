@@ -1002,6 +1002,8 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     # save_migrations.gd step covering an older save.
     "seasons_on", "season_length_days", "disease_on", "rival_hive_on",
     "fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
+    # C4 (13 Sep 2026): warning thresholds are run-tunable catalogue values.
+    "pollen_warning_stock_multiplier", "nectar_warning_total", "honey_warning_total",
 })
 
 PERSIST_VALUES = {"run", "player", "none"}
