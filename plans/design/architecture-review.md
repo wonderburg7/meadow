@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1 and C2 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C3 -- scenario `when` uses the evaluator | Dependency: C3 depends only on C1 (shipped) and is file-disjoint from every open item; the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-13
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2 and C3 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C4 -- the signal catalogue | Dependency: C4 depends only on C1 (shipped) and is file-disjoint from every open item; the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-13
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -788,24 +788,7 @@ Shipped 13 Sep 2026. Full record: `plans/archive/C2_2026-09-13.md`.
 
 ### C3 — scenario `when` uses the evaluator
 
-Level: low. Depends on: C1.
-
-- **Required reading.** This heading. `scripts/scenario_actions.gd`'s `_when_met`
-  and `_population`. `docs/headless-run-contract.md`.
-- **Files to change.** `scripts/scenario_actions.gd`.
-- **Files not to change.** any file under `test_scenarios/`; every existing
-  fixture must keep working untouched.
-- **Requirements.** `_when_met` delegates to `Conditions.met`. The six existing
-  key names keep working and map onto the evaluator's keys. `_population` is
-  deleted in favour of `main._role_counts()`.
-- **Invariants.** Fixture compatibility is absolute. `food_stores_at_least`
-  keeps meaning ripe honey only, as it does today, however odd that reads.
-- **Implementation guidance.** Keep a small translation table from the legacy key
-  names to the evaluator's spec so no fixture has to change.
-- **Runtime policy.** Called once per scenario tick, as now.
-- **Automated acceptance.** Every fixture under `test_scenarios/` produces the
-  same verdict, and `tests/test_headless_verdicts.py` passes unchanged.
-- **Escalation.** None expected.
+Shipped 13 Sep 2026. Full record: `plans/archive/C3_2026-09-13.md`.
 
 ### C4 — the signal catalogue
 

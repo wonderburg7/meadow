@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C3` (`codex/C3`) | Codex | scenario `when` uses the evaluator. | Codex | in progress | none | `plans/design/architecture-review.md` "C3 — scenario `when` uses the evaluator" |
 | `.worktrees/L-4` (`claude/L-4`) | Claude | the worktree is deleted out of process, outside the lock. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-4 — the worktree is deleted out of process, outside the lock" |

@@ -407,18 +407,17 @@ C2's `Next after` (C3) now leads the Codex lane below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] C3 -- scenario `when` uses the evaluator.**
-   `scenario_actions.gd::_when_met` still runs its own six-key match instead
-   of delegating to `conditions.gd`'s evaluator (C1), and `_population`
-   duplicates `main._role_counts()`. Make `_when_met` call `Conditions.met`
-   via a small legacy-key translation table so every existing fixture keeps
-   its verdict unchanged, and delete `_population` in favour of
-   `main._role_counts()`.
-   - Plan: `plans/design/architecture-review.md` -- "C3 — scenario `when` uses the evaluator"
-   - Files: `scripts/scenario_actions.gd`
-   - Check: every fixture under `test_scenarios/` produces the same verdict as today; `tests/test_headless_verdicts.py` passes unchanged
-   - Proof: `present: scripts/scenario_actions.gd :: func _population`
-   - Next after: C4 -- the signal catalogue, one of Decision B's foundation slices, depends only on C1 (shipped) and is file-disjoint from every open item.
+3. **[Codex] C4 -- the signal catalogue.**
+   Put the problem-strip signal definitions in one ordered catalogue: each
+   row carries its C1 evaluator condition, severity, category, click action
+   and message function. Replace the existing inline thresholds with named
+   `GameConfig` fields while preserving every current line, order and
+   severity.
+   - Plan: `plans/design/architecture-review.md` -- "C4 — the signal catalogue"
+   - Files: `scripts/year_winter.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`
+   - Check: a `tests/` case asserts the exact signal line list for each of the six currently distinct colony states
+   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
+   - Next after: C1-27 -- the existing next Codex lane item remains file-disjoint.
 
 4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
