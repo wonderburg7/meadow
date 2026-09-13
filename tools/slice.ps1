@@ -808,6 +808,9 @@ function Invoke-SliceFinish {
     if ($PythonPath -and $verifyCmd.Parameters.ContainsKey("PythonPath")) {
         $verifyArgs["PythonPath"] = $PythonPath
     }
+    if ($verifyCmd.Parameters.ContainsKey("Scope")) {
+        $verifyArgs["Scope"] = "branch"
+    }
     try {
         $verifyOutput = & $verifyScript @verifyArgs 2>&1
         $verifyExit = $LASTEXITCODE
@@ -818,7 +821,7 @@ function Invoke-SliceFinish {
     }
     $verifyOutput | ForEach-Object { Write-Output $_ }
     if ($verifyExit -ne 0) {
-        Write-Error "$id -- tools/verify.ps1 failed; branch left untouched"
+        Write-Error "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched"
         exit 1
     }
     Invoke-InjectedLifecycleFailure -Phase "verified"
@@ -862,6 +865,29 @@ function Invoke-SliceFinish {
     $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
     if ($primaryBranch -ne "master") {
         throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
+    }
+
+    $primaryVerifyScript = Join-Path $root "tools\verify.ps1"
+    $primaryVerifyCmd = Get-Command $primaryVerifyScript
+    $primaryVerifyArgs = @{}
+    if ($primaryVerifyCmd.Parameters.ContainsKey("PythonPath") -and $PythonPath) {
+        $primaryVerifyArgs["PythonPath"] = $PythonPath
+    }
+    if ($primaryVerifyCmd.Parameters.ContainsKey("Scope")) {
+        $primaryVerifyArgs["Scope"] = "primary"
+    }
+    try {
+        $primaryVerifyOutput = & $primaryVerifyScript @primaryVerifyArgs 2>&1
+        $primaryVerifyExit = $LASTEXITCODE
+    }
+    catch {
+        $primaryVerifyOutput = $_ | Out-String
+        $primaryVerifyExit = 1
+    }
+    $primaryVerifyOutput | ForEach-Object { Write-Output $_ }
+    if ($primaryVerifyExit -ne 0) {
+        Write-Error "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched"
+        exit 1
     }
 
     $title = if ($item) { $item.Title } else { $branch }

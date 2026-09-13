@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import tomllib
 import unittest
@@ -436,6 +437,103 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         for prefix in ("Python:", "Godot:", "Git identity:", "Remote reachability:"):
             self.assertIn(prefix, result.stderr)
+
+    def test_branch_verification_ignores_another_lanes_stale_ledger_row(self):
+        """A branch's own suites must not fail on the other lane's leftover
+        ledger bookkeeping -- only the primary checkout's run is on the hook
+        for that (see check_docs.py's `primary_checkout` docstring)."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+
+        stub_exit_zero = "import sys\nsys.exit(0)\n"
+        tests_dir = self.root / "tests"
+        tests_dir.mkdir()
+        (tests_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "source_checks.py").write_text(stub_exit_zero, encoding="utf-8")
+        (tests_dir / "balance_tests.py").write_text(stub_exit_zero, encoding="utf-8")
+        (tests_dir / "test_source_checks.py").write_text(
+            "import unittest\n\n\n"
+            "class Placeholder(unittest.TestCase):\n"
+            "    def test_noop(self):\n"
+            "        pass\n",
+            encoding="utf-8",
+        )
+        (self.root / "tools" / "update_function_map.py").write_text(
+            stub_exit_zero, encoding="utf-8"
+        )
+        (self.root / "tools" / "godot_compile_check.py").write_text(
+            stub_exit_zero, encoding="utf-8"
+        )
+        (self.root / "tools" / "stage_reference.py").write_text(
+            stub_exit_zero, encoding="utf-8"
+        )
+
+        # A row naming a worktree that was never created with 'git worktree
+        # add' -- exactly what a killed session, or a lane mid-closeout,
+        # leaves behind.
+        ledger_path = self.root / "plans" / "workstreams.md"
+        ledger_path.write_text(
+            ledger_path.read_text(encoding="utf-8")
+            + "| `.worktrees/ghost` (`codex/ghost`) | Codex |\n",
+            encoding="utf-8",
+        )
+
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "fixture: stub suites and a stale ledger row"],
+            cwd=self.root,
+            check=True,
+        )
+
+        worktree = self.root / ".worktrees" / "scope-test"
+        subprocess.run(
+            ["git", "worktree", "add", "-b", "claude/scope-test", str(worktree)],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        branch_result = subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-File",
+                str(worktree / "tools" / "verify.ps1"),
+                "-Scope",
+                "branch",
+                "-PythonPath",
+                sys.executable,
+            ],
+            cwd=worktree,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        self.assertEqual(
+            0, branch_result.returncode, branch_result.stdout + branch_result.stderr
+        )
+
+        primary_result = subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-File",
+                str(self.root / "tools" / "verify.ps1"),
+                "-Scope",
+                "primary",
+                "-PythonPath",
+                sys.executable,
+            ],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        self.assertNotEqual(0, primary_result.returncode)
+        self.assertIn(
+            "stale row, worktree no longer exists: .worktrees/ghost",
+            primary_result.stdout + primary_result.stderr,
+        )
 
     def test_mock_slice_can_claim_commit_and_close(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

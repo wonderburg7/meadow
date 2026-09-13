@@ -3,7 +3,9 @@ param(
     [string]$PythonPath,
     [switch]$Quiet,
     [switch]$Docs,
-    [switch]$ResolvePythonOnly
+    [switch]$ResolvePythonOnly,
+    [ValidateSet("branch", "primary", "all")]
+    [string]$Scope = "all"
 )
 
 $ErrorActionPreference = "Stop"
@@ -143,9 +145,15 @@ if ($ResolvePythonOnly) {
 $env:PYTHONDONTWRITEBYTECODE = "1"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 
-# -Docs skips the source, balance and function-map stages: a documentation-only
-# slice does not need the code suites.
-if (-not $Docs) {
+# -Scope separates the branch's own suites from the primary checkout's
+# planning/ledger check, so a stale row left by the other lane's worktree
+# cannot fail a branch that never touched it. -Docs still skips the source,
+# balance and function-map stages within the branch scope: a
+# documentation-only slice does not need the code suites.
+$runBranchScope = $Scope -in @("branch", "all")
+$runPrimaryScope = $Scope -in @("primary", "all")
+
+if ($runBranchScope -and -not $Docs) {
     $jobs = @(
         (Start-Job -Name "source checks" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
@@ -219,15 +227,23 @@ if (-not $Docs) {
     }
 }
 
-# docs/challenge-stages.md is generated from scripts/challenge_stages.gd, so
-# a stage edit that does not regenerate it fails here rather than leaving a
-# reference nobody can trust (Dave, 8 Sep 2026).
-Invoke-PythonStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py") -ScriptArgs @("--check") -FailureNote "run python tools/stage_reference.py"
-if ($lastStageExit -ne 0) {
-    exit $lastStageExit
+if ($runBranchScope) {
+    # docs/challenge-stages.md is generated from scripts/challenge_stages.gd,
+    # so a stage edit that does not regenerate it fails here rather than
+    # leaving a reference nobody can trust (Dave, 8 Sep 2026).
+    Invoke-PythonStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py") -ScriptArgs @("--check") -FailureNote "run python tools/stage_reference.py"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
 }
 
-# The doc stage's failures are planning bookkeeping, not a code failure, and
-# say so -- the code suites' passes stay visible above them.
-Invoke-PythonStage -Name "doc checks" -ScriptPath (Join-Path $repoRoot "tools/check_docs.py") -FailureNote "planning/ledger, not code"
-exit $lastStageExit
+if ($runPrimaryScope) {
+    # The doc stage's failures are planning bookkeeping, not a code failure,
+    # and say so -- the code suites' passes stay visible above them.
+    Invoke-PythonStage -Name "doc checks" -ScriptPath (Join-Path $repoRoot "tools/check_docs.py") -FailureNote "planning/ledger, not code"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
+}
+
+exit 0
