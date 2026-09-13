@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/L-4` (`claude/L-4`) | Claude | the worktree is deleted out of process, outside the lock. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-4 — the worktree is deleted out of process, outside the lock" |
 | `.worktrees/C4` (`codex/C4`) | Codex | the signal catalogue. | Codex | in progress | none | `plans/design/architecture-review.md` "C4 — the signal catalogue" |
