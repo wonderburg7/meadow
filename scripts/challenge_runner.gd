@@ -55,6 +55,7 @@ const CHALLENGE1_FORAGE_TRIGGER_STATES = [Bee.State.SEEK_FLOWER, Bee.State.TO_FL
 ## Stage records, prompt records and static targets/timings for both
 ## Challenges -- pure data, see challenge_stages.gd's own header.
 const Stages = preload("res://scripts/challenge_stages.gd")
+const Conditions = preload("res://scripts/conditions.gd")
 ## Named feedback definitions (stage-clear, warning/toast prompts) -- see
 ## challenge_feedback.gd's own header.
 const Feedback = preload("res://scripts/challenge_feedback.gd")
@@ -216,7 +217,6 @@ func start() -> void:
 	_c2_pollen_rescue_used = false
 	_c2_rescue_suppressed_logged = false
 	_last_completed_goal_text = ""
-	_build_goal_registry()
 	main.stage_gate.start()
 	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
 	# so a load mid-Challenge would silently drop it -- disabled for the
@@ -1077,54 +1077,17 @@ const GOAL_CADENCE := {
 	"comb_worker_building": "poll", "miner_expansion": "poll", "c2_complete": "poll",
 }
 
-## Goal predicates, one per stage data's `goal` key, keyed the same way and
-## bound to a small `_goal_check_<id>` method below (a Dictionary of bound
-## Callables, rather than inline lambdas, keeps every predicate body an
-## ordinary multi-line function -- lambdas here would have to nest inside a
-## Dictionary literal, which only single-expression bodies survive
-## cleanly). Built once by start() (main is unset before then). Adding a
-## stage's goal means adding a `_goal_check_*` method, a row here and a
-## GOAL_CADENCE entry -- _goal_met/_process never need editing.
-var _goal_registry: Dictionary = {}
-
-func _build_goal_registry() -> void:
-	_goal_registry = {
-		"entrance_tunnel_cleared": Callable(self, "_goal_check_entrance_tunnel_cleared"),
-		"queen_reached_cavity": Callable(self, "_goal_check_queen_reached_cavity"),
-		"queen_selected": Callable(self, "_goal_check_queen_selected"),
-		"hive_points_visited": Callable(self, "_goal_check_hive_points_visited"),
-		"first_cell_built": Callable(self, "_goal_check_first_cell_built"),
-		"second_cell_built": Callable(self, "_goal_check_second_cell_built"),
-		"third_cell_built": Callable(self, "_goal_check_third_cell_built"),
-		"nectar_target": Callable(self, "_goal_check_nectar_target"),
-		"pollen_target": Callable(self, "_goal_check_pollen_target"),
-		"first_egg_laid": Callable(self, "_goal_check_first_egg_laid"),
-		"queen_reached_meadow": Callable(self, "_goal_check_queen_reached_meadow"),
-		"meadow_points_visited": Callable(self, "_goal_check_meadow_points_visited"),
-		"first_flower_collected": Callable(self, "_goal_check_first_flower_collected"),
-		"second_flower_collected": Callable(self, "_goal_check_second_flower_collected"),
-		"harvest_deposited": Callable(self, "_goal_check_harvest_deposited"),
-		"new_bee_selected": Callable(self, "_goal_check_new_bee_selected"),
-		"new_bee_left_hive": Callable(self, "_goal_check_new_bee_left_hive"),
-		"complete": Callable(self, "_goal_check_complete"),
-		"nectar_forager_hatched": Callable(self, "_goal_check_nectar_forager_hatched"),
-		"nectar_stabilized": Callable(self, "_goal_check_nectar_stabilized"),
-		"pollen_foragers_raised": Callable(self, "_goal_check_pollen_foragers_raised"),
-		"cell_designated": Callable(self, "_goal_check_cell_designated"),
-		"pollen_cell_designated": Callable(self, "_goal_check_pollen_cell_designated"),
-		"interim_reserve": Callable(self, "_goal_check_interim_reserve"),
-		"nurse_raised": Callable(self, "_goal_check_nurse_raised"),
-		"persistent_designation_used": Callable(self, "_goal_check_persistent_designation_used"),
-		"comb_worker_building": Callable(self, "_goal_check_comb_worker_building"),
-		"miner_expansion": Callable(self, "_goal_check_miner_expansion"),
-		"c2_complete": Callable(self, "_goal_check_c2_complete"),
-	}
-
 func _goal_met(goal: String) -> bool:
-	if not _goal_registry.has(goal):
+	var stage: Dictionary = _stages()[_stage_index]
+	if str(stage.get("goal", "")) != goal or not stage.has("condition"):
+		push_error("challenge_runner: goal '%s' has no condition" % goal)
 		return false
-	var check: Callable = _goal_registry[goal]
-	return check.call() if check.is_valid() else false
+	var condition: Dictionary = stage.condition
+	if condition.has("custom"):
+		var method := str(condition.custom)
+		# The source contract pairs every custom reference with one method.
+		return bool(Callable(self, method).call())
+	return Conditions.met(main, condition)
 
 func _goal_check_entrance_tunnel_cleared() -> bool:
 	return _opening_tunnel_cleared()
@@ -1140,15 +1103,6 @@ func _goal_check_queen_selected() -> bool:
 func _goal_check_hive_points_visited() -> bool:
 	return _ordered_visit_complete(main.queen)
 
-func _goal_check_first_cell_built() -> bool:
-	return _built_cell_count() >= 1
-
-func _goal_check_second_cell_built() -> bool:
-	return _built_cell_count() >= 2
-
-func _goal_check_third_cell_built() -> bool:
-	return _built_cell_count() >= 3
-
 func _goal_check_nectar_target() -> bool:
 	for cell in main.hive.cells:
 		if is_instance_valid(cell) and cell.content_type == "nectar" and cell.amount >= Stages.NECTAR_TARGET:
@@ -1160,9 +1114,6 @@ func _goal_check_pollen_target() -> bool:
 		if is_instance_valid(cell) and cell.content_type == "pollen" and cell.amount >= Stages.POLLEN_TARGET:
 			return true
 	return false
-
-func _goal_check_first_egg_laid() -> bool:
-	return _brood_cell_count() >= 1
 
 func _goal_check_queen_reached_meadow() -> bool:
 	return is_instance_valid(main.queen) and not main.queen._is_inside_hive()
@@ -1191,11 +1142,6 @@ func _goal_check_new_bee_left_hive() -> bool:
 func _goal_check_complete() -> bool:
 	return true
 
-# --- Challenge 1's 1.16 also uses this: the first hatch is a nectar
-# Forager by default, and the goal doesn't care which Challenge asked.
-func _goal_check_nectar_forager_hatched() -> bool:
-	return main._role_counts().get(Roles.count_key(Roles.FORAGER, "nectar"), 0) >= 1
-
 # --- Challenge 2 ---------------------------------------------
 func _goal_check_nectar_stabilized() -> bool:
 	# It has to have actually dropped and come back, not just sat above the
@@ -1203,30 +1149,6 @@ func _goal_check_nectar_stabilized() -> bool:
 	var dropped: bool = _c2_nectar_low_seen <= _c2_nectar_at_stage_entry - Stages.C2_STABILITY_DROP
 	var recovered: bool = main.hive.total("nectar") >= _c2_nectar_low_seen + Stages.C2_STABILITY_RECOVERY
 	return dropped and recovered
-
-func _goal_check_pollen_foragers_raised() -> bool:
-	return main._role_counts().get(Roles.count_key(Roles.FORAGER, "pollen"), 0) >= 1
-
-func _goal_check_cell_designated() -> bool:
-	for cell in main.hive.cells:
-		if is_instance_valid(cell) and cell.designated_type in ["nectar", "pollen", "brood"]:
-			return true
-	return false
-
-func _goal_check_pollen_cell_designated() -> bool:
-	for cell in main.hive.cells:
-		if is_instance_valid(cell) and cell.designated_type == "pollen" and cell.designation_is_explicit:
-			return true
-	return false
-
-func _goal_check_interim_reserve() -> bool:
-	return (
-		main.hive.total("nectar") >= Stages.C2_INTERIM_NECTAR
-		and main.hive.total("pollen") >= Stages.C2_INTERIM_POLLEN
-	)
-
-func _goal_check_nurse_raised() -> bool:
-	return main._role_counts().get(Roles.count_key(Roles.NURSE), 0) >= 1
 
 func _goal_check_persistent_designation_used() -> bool:
 	var locked := 0
@@ -1247,36 +1169,28 @@ func _goal_check_miner_expansion() -> bool:
 	var built: bool = _built_cell_count() > _c2_cells_built_at_stage_entry
 	return has_miner and dug and built
 
-func _goal_check_c2_complete() -> bool:
-	var counts: Dictionary = main._role_counts()
-	return (
-		main.hive.total("nectar") >= Stages.C2_COMPLETE_NECTAR
-		and main.hive.total("pollen") >= Stages.C2_COMPLETE_POLLEN
-		and counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0) >= Stages.C2_COMPLETE_NECTAR_FORAGERS
-		and counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0) >= Stages.C2_COMPLETE_POLLEN_FORAGERS
-		and counts.get(Roles.count_key(Roles.NURSE), 0) >= Stages.C2_COMPLETE_NURSES
-		and counts.get(Roles.count_key(Roles.COMB_WORKER), 0) >= Stages.C2_COMPLETE_BUILDERS
-		and counts.get(Roles.count_key(Roles.MINER), 0) >= Stages.C2_COMPLETE_MINERS
-	)
-
 ## Numeric progress for a goal with a single countable target -- feeds
 ## the goal shelf's tertiary progress bar (UI_PLAN.md section 5). Most
 ## goals here have nothing to count ("select the queen" is a yes/no), so
 ## this only covers the handful that do; an empty Dictionary tells
 ## _show_goal there's no bar to show.
 func _goal_progress(goal: String) -> Dictionary:
-	match goal:
-		"nectar_target":
+	var stage: Dictionary = _stages()[_stage_index]
+	if str(stage.get("goal", "")) != goal:
+		return {}
+	var condition: Dictionary = stage.get("condition", {})
+	if condition.has("custom"):
+		return _custom_goal_progress(str(condition.custom))
+	return Conditions.progress(main, condition)
+
+func _custom_goal_progress(method: String) -> Dictionary:
+	match method:
+		"_goal_check_nectar_target":
 			for cell in main.hive.cells:
 				if is_instance_valid(cell) and cell.content_type == "nectar":
 					return {"current": cell.amount, "target": Stages.NECTAR_TARGET}
-			return {}
-		"pollen_target":
+		"_goal_check_pollen_target":
 			for cell in main.hive.cells:
 				if is_instance_valid(cell) and cell.content_type == "pollen":
 					return {"current": cell.amount, "target": Stages.POLLEN_TARGET}
-			return {}
-		"first_egg_laid":
-			return {"current": _brood_cell_count(), "target": 1.0}
-		_:
-			return {}
+	return {}
