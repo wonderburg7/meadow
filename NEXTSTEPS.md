@@ -375,21 +375,21 @@ C2's `Next after` (C3) now leads the Codex lane below.
 
 ## Next up
 
-1. **[Claude] L-3 -- branch verification and bookkeeping validation are separate scopes.**
-   A branch's `finish` fails today when the *other* lane's stale ledger row
-   or orphaned worktree trips `check_docs.py`, even though the branch itself
-   is clean -- 10 of the review's 97 `finish` calls died this way. Add
-   `-Scope branch|primary|all` (default `all`, so every existing caller is
-   unchanged) to `tools/verify.ps1`: `branch` runs source checks, balance
-   tests, the function map, the stage reference and the lifecycle tests;
-   `primary` runs `check_docs.py` only. `Invoke-SliceFinish` calls
-   `-Scope branch` from the worktree and `-Scope primary` from the primary
-   root before the merge, naming which scope failed.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-3 — branch verification and bookkeeping validation are separate scopes"
-   - Files: `tools/verify.ps1`, `tools/slice.ps1`
-   - Check: `test_branch_verification_ignores_another_lanes_stale_ledger_row` passes -- `verify.ps1 -Scope branch` in the worktree exits zero while `-Scope primary` in the primary checkout exits non-zero against the same stale row
-   - Proof: `absent: tools/verify.ps1 :: -Scope`
-   - Next after: L-4 -- the worktree is deleted out of process, outside the lock.
+1. **[Claude] L-4 -- the worktree is deleted out of process, outside the lock.**
+   `Invoke-SliceFinish` holds a 60-attempt, 3-second retry loop for deleting
+   the worktree directory inside the lifecycle lock -- 13 deletion failures
+   in 11 sessions, up to 180 seconds each. Replace it with one `git worktree
+   remove`; on failure, `git worktree prune` (so git's records stay correct)
+   and append the path to a queue file (`meadow-slice-pending-deletions`,
+   beside the lifecycle lock). Add `Remove-PendingWorktreeDirectories`,
+   called at the start of every `start`/`finish`/`resume`/`doctor` before the
+   lock, to retry once and prune the file. `doctor` reports the queue as
+   `pending_deletions`; `check_docs.py`'s orphan check skips listed paths.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-4 — the worktree is deleted out of process, outside the lock"
+   - Files: `tools/slice.ps1`
+   - Check: `test_finish_completes_when_the_worktree_directory_cannot_be_deleted` passes -- with an open handle held inside the fixture worktree, `finish` exits zero, the branch merges and the ledger row clears, the path lands in the queue file, and `check_docs.py` still passes; releasing the handle and running `doctor` clears both the directory and the queue file
+   - Proof: `present: tools/slice.ps1 :: $maxAttempts = 60`
+   - Next after: L-5 -- closeout is an idempotent resumable transaction.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do

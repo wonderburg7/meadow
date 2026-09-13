@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-3 -- branch verification and bookkeeping validation are separate scopes | Dependency: none | Verified: 2026-09-12
+Status: active | Owner: Dave / Claude | Next: L-4 -- the worktree is deleted out of process, outside the lock | Dependency: none | Verified: 2026-09-13
 
 ## Objective
 
@@ -40,13 +40,17 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
   stated Non-goals (a native git call's stderr crashed the doctor's
   environment check under Windows PowerShell 5.1) -- full record at
   `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
+- L-3 shipped 13 September 2026: `verify.ps1 -Scope branch|primary|all`
+  separates a branch's own suites from the primary checkout's ledger check.
+  Closeout surfaced the exact defect L-4 targets -- the worktree directory
+  stayed locked after verification and failed to delete -- full record at
+  `plans/archive/L-3_2026-09-13.md`.
 
 ## Open slices
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-3 | branch verification and primary-checkout validation are separate scopes | `tools/verify.ps1`, `tools/slice.ps1` | yes | medium |
-| L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | after L-3 | high |
+| L-4 | the worktree is deleted out of process, with no retry loop inside the lock | `tools/slice.ps1` | yes | high |
 | L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | after L-4 | high |
 | L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
@@ -57,11 +61,11 @@ Dependencies, stated rather than implied: L-1 was the prerequisite for
 everything else, because nothing else in this plan could be trusted while
 its tests did not run -- it shipped 12 September 2026 (archived at
 `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`), so L-2, L-3, L-7 and L-8
-became startable; L-2 has since shipped too (archived at
-`plans/archive/L-2_2026-09-12.md`). L-3 must precede L-4 and L-5, because both change
-what runs inside the lock. L-4 must precede L-5, because the transaction
-cannot be short-lived while a three-minute retry sits inside it. L-6 must
-follow L-5, because it tests the transaction. L-9 is last and is the gate.
+became startable; L-2 and L-3 have since shipped too (archived at
+`plans/archive/L-2_2026-09-12.md` and `plans/archive/L-3_2026-09-13.md`).
+L-4 must precede L-5, because the transaction cannot be short-lived while a
+three-minute retry sits inside it. L-6 must follow L-5, because it tests the
+transaction. L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -89,48 +93,9 @@ the review's Part 1 figures within 10% -- see
 `plans/archive/L-2_2026-09-12.md` for the numbers and why that is left as a
 follow-up rather than force-fit here.
 
-## L-3 — branch verification and bookkeeping validation are separate scopes
-
-**Objective.** A branch's verification must not fail because of the other
-lane's leftover state.
-
-**Non-goals.** Do not delete any check. Every check that runs today still
-runs; only where it runs changes.
-
-**Files.** `tools/verify.ps1`, `tools/slice.ps1`.
-
-**Prerequisite.** L-1.
-
-**Algorithm.**
-
-1. Add `-Scope` to `verify.ps1`, a `ValidateSet` of `branch`, `primary` and
-   `all`, defaulting to `all` so every existing caller is unchanged.
-2. `branch` runs source checks, balance tests, the function map, the stage
-   reference and the lifecycle tests. `primary` runs `check_docs.py` only.
-   `all` runs both, in the present order and with the present output.
-3. In `check_docs.py`, nothing changes. The split is entirely in the caller.
-4. In `Invoke-SliceFinish`, call `verify.ps1 -Scope branch` from the worktree
-   where it calls `verify.ps1` today. After `Set-Location` to the primary
-   root and before the merge, call `verify.ps1 -Scope primary` there. Its
-   failure message must say which scope failed and that the branch is
-   untouched.
-
-**Tests and failure injection.** In `tests/test_source_checks.py`, add
-`test_branch_verification_ignores_another_lanes_stale_ledger_row`: build the
-fixture, add a ledger row naming a worktree that does not exist, and assert
-`verify.ps1 -Scope branch` in the worktree exits zero while
-`verify.ps1 -Scope primary` in the primary checkout exits non-zero.
-
-**Proof.** `absent: tools/verify.ps1 :: -Scope`
-
-**Risk.** Medium. Every caller of `verify.ps1` is affected if the default
-changes; it must not.
-
-**Expected improvement.** The 10 `finish` calls that died inside
-verification, and the 2 sessions that never recovered, become 0 for causes
-belonging to the other lane.
-
-**Next slice.** L-4.
+L-3 (branch verification and bookkeeping validation are separate scopes)
+shipped 13 September 2026. Full specification and outcome:
+`plans/archive/L-3_2026-09-13.md`.
 
 ## L-4 — the worktree is deleted out of process, outside the lock
 
