@@ -24,6 +24,19 @@ extends RefCounted
 
 const Settings = preload("res://scripts/settings_catalogue.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const Conditions = preload("res://scripts/conditions.gd")
+
+## Fixture-facing `when` names translated to Conditions' shared vocabulary.
+## The two threshold directions intentionally share one event_count/disease
+## condition; _legacy_when_spec preserves each direction as a separate child.
+const LEGACY_WHEN_KEY_MAP := {
+	"day_at_least": "day_at_least",
+	"population_at_least": "role_count",
+	"event_count_at_least": "event_count", "event_count_at_most": "event_count",
+	"cells_completed_at_least": "built_cells_at_least",
+	"queen_alive": "queen_alive",
+	"disease_at_least": "disease", "disease_at_most": "disease",
+}
 
 ## Called once per _process() tick while main.scenario_active. An "assert"
 ## that fails ends the run (main._end_scenario_run) and stops evaluating
@@ -113,54 +126,77 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 # --- triggers -----------------------------------------------------
 
 ## Shared by "when" (gates an action) and "assert" (checks one without
-## gating anything) -- same shape either way. An empty dict is always met,
-## so an action with no "when" fires the very first tick it's checked.
+## gating anything) -- same shape either way. Scenario fixtures retain their
+## established vocabulary here, translated into Conditions' shared vocabulary
+## before evaluation. Two legacy predicates remain local compatibility checks:
+## food_stores_at_least deliberately means *ripe* honey (not all honey), and
+## a population query without a role means every cached role bucket combined.
+## An empty dict is always met, so an action with no "when" fires the very
+## first tick it's checked.
 static func _when_met(main: Node2D, when: Dictionary) -> bool:
 	if when.is_empty():
 		return true
-	if when.has("day_at_least") and main.day < int(when["day_at_least"]):
+	var spec := _legacy_when_spec(main, when)
+	if spec.is_empty() and not when.is_empty():
 		return false
-	if when.has("food_stores_at_least") and main.hive.total_honey() < float(when["food_stores_at_least"]):
-		return false
-	if when.has("population_at_least"):
-		var spec: Dictionary = when["population_at_least"]
-		if _population(main, spec.get("role", "")) < int(spec.get("count", 0)):
-			return false
-	if when.has("event_count_at_least"):
-		var spec: Dictionary = when["event_count_at_least"]
-		if DiagnosticLog.event_count(spec.get("type", ""), spec.get("subtype", "")) < int(spec.get("count", 0)):
-			return false
-	if when.has("event_count_at_most"):
-		var spec: Dictionary = when["event_count_at_most"]
-		if DiagnosticLog.event_count(spec.get("type", ""), spec.get("subtype", "")) > int(spec.get("count", 0)):
-			return false
-	if when.has("cells_completed_at_least") and DiagnosticLog.cell_completed_count() < int(when["cells_completed_at_least"]):
-		return false
-	if when.has("queen_alive"):
-		var queen_alive: bool = main.queen != null and is_instance_valid(main.queen) and not main.colony_lost
-		if queen_alive != bool(when["queen_alive"]):
-			return false
-	if when.has("disease_at_least"):
-		if main.season == null or not is_instance_valid(main.season) or main.season.disease < float(when["disease_at_least"]):
-			return false
-	if when.has("disease_at_most"):
-		if main.season == null or not is_instance_valid(main.season) or main.season.disease > float(when["disease_at_most"]):
-			return false
 	if when.has("challenge_stage_id"):
 		if main.challenge_runner.current_stage_id() != str(when["challenge_stage_id"]):
 			return false
-	return true
+	return Conditions.met(main, spec)
 
-static func _population(main: Node2D, role_key: String) -> int:
-	var bees: Array = main.get_tree().get_nodes_in_group("bees")
-	if role_key == "":
-		return bees.size()
-	var role_id: int = main.Roles.id_for_key(role_key)
-	var count := 0
-	for b in bees:
-		if is_instance_valid(b) and b.role == role_id:
-			count += 1
-	return count
+
+## Returns Conditions' vocabulary for a legacy scenario `when` dictionary.
+## `{}` means a compatibility condition failed, never a valid empty spec:
+## _when_met has already handled an actually empty `when` before reaching here.
+static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary:
+	# Keep a true evaluator condition even for a legacy `when` containing
+	# only a compatibility predicate (or challenge_stage_id below).
+	var spec := {"all_of": []}
+	if when.has("day_at_least"):
+		spec[LEGACY_WHEN_KEY_MAP["day_at_least"]] = when["day_at_least"]
+	if when.has("food_stores_at_least"):
+		# total("honey") includes wet mix; the old trigger, and its fixtures,
+		# intentionally count only ripe honey through total_honey().
+		if main.hive.total_honey() < float(when["food_stores_at_least"]):
+			return {}
+	if when.has("population_at_least"):
+		var population: Dictionary = when["population_at_least"]
+		var role_key: String = str(population.get("role", ""))
+		if role_key == "":
+			var total := 0
+			for count in main._role_counts().values():
+				total += int(count)
+			if total < int(population.get("count", 0)):
+				return {}
+		else:
+			spec[LEGACY_WHEN_KEY_MAP["population_at_least"]] = {"role": role_key, "at_least": int(population.get("count", 0))}
+	if when.has("event_count_at_least") or when.has("event_count_at_most"):
+		var event_conditions: Array = spec["all_of"]
+		if when.has("event_count_at_least"):
+			var at_least: Dictionary = when["event_count_at_least"]
+			event_conditions.append({LEGACY_WHEN_KEY_MAP["event_count_at_least"]: {
+				"type": at_least.get("type", ""), "subtype": at_least.get("subtype", ""),
+				"at_least": int(at_least.get("count", 0)),
+			}})
+		if when.has("event_count_at_most"):
+			var at_most: Dictionary = when["event_count_at_most"]
+			event_conditions.append({LEGACY_WHEN_KEY_MAP["event_count_at_most"]: {
+				"type": at_most.get("type", ""), "subtype": at_most.get("subtype", ""),
+				"at_most": int(at_most.get("count", 0)),
+			}})
+		spec["all_of"] = event_conditions
+	if when.has("cells_completed_at_least"):
+		spec[LEGACY_WHEN_KEY_MAP["cells_completed_at_least"]] = when["cells_completed_at_least"]
+	if when.has("queen_alive"):
+		spec[LEGACY_WHEN_KEY_MAP["queen_alive"]] = when["queen_alive"]
+	if when.has("disease_at_least") or when.has("disease_at_most"):
+		var disease_spec := {}
+		if when.has("disease_at_least"):
+			disease_spec["at_least"] = when["disease_at_least"]
+		if when.has("disease_at_most"):
+			disease_spec["at_most"] = when["disease_at_most"]
+		spec[LEGACY_WHEN_KEY_MAP["disease_at_least"]] = disease_spec
+	return spec
 
 
 # --- selectors ------------------------------------------------------
