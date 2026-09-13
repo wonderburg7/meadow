@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C2` (`codex/C2`) | Codex | Challenge goals become data. | Codex | in progress | none | `plans/design/architecture-review.md` "C2 — Challenge goals become data" |
+| `.worktrees/L-3` (`claude/L-3`) | Claude | branch verification and bookkeeping validation are separate scopes. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-3 — branch verification and bookkeeping validation are separate scopes" |
