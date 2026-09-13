@@ -611,6 +611,130 @@ class SliceDoctorTest(unittest.TestCase):
             (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
         )
 
+    def test_finish_completes_when_the_worktree_directory_cannot_be_deleted(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($PythonPath -and -not (Test-Path -LiteralPath $PythonPath)) { exit 1 }\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\n"
+            "exit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"],
+            cwd=self.root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "use mock verifier"],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        start = subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-File",
+                str(self.root / "tools" / "slice.ps1"),
+                "start",
+                "-Lane",
+                "Codex",
+            ],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        with (worktree / "scripts" / "sample.gd").open(
+            "a", encoding="utf-8"
+        ) as source:
+            source.write("\nfunc new_function():\n\tpass\n")
+
+        held_path = worktree / "held-open.txt"
+        held_path.write_text("locked", encoding="utf-8")
+        handle = open(held_path, "r", encoding="utf-8")
+        try:
+            finish = subprocess.run(
+                [
+                    self.powershell,
+                    "-NoProfile",
+                    "-Command",
+                    "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                        str(worktree).replace("'", "''"),
+                        str(worktree / "tools" / "slice.ps1").replace("'", "''"),
+                    ),
+                ],
+                cwd=self.root,
+                capture_output=True,
+                text=True,
+                timeout=90,
+            )
+            self.assertEqual(0, finish.returncode, finish.stderr)
+            self.assertIn("Slice landed: T-1", finish.stdout)
+            self.assertIn("queued in pending deletions", finish.stdout)
+            self.assertTrue(worktree.exists())
+
+            self.assertEqual(
+                [],
+                subprocess.run(
+                    ["git", "branch", "--list", "codex/T-1"],
+                    cwd=self.root,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout.splitlines(),
+            )
+            self.assertEqual(
+                [],
+                [
+                    line
+                    for line in (self.root / "plans" / "workstreams.md")
+                    .read_text(encoding="utf-8")
+                    .splitlines()
+                    if "T-1" in line
+                ],
+            )
+
+            common_dir = subprocess.run(
+                ["git", "rev-parse", "--git-common-dir"],
+                cwd=self.root,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            queue_path = (
+                (self.root / common_dir).resolve() / "meadow-slice-pending-deletions"
+            )
+            self.assertTrue(queue_path.exists())
+            self.assertIn(
+                ".worktrees/T-1", queue_path.read_text(encoding="utf-8")
+            )
+
+            # check_docs.py's orphan-directory check must skip a directory
+            # named in the pending-deletions queue rather than fail on it.
+            errors: list[str] = []
+            warnings: list[str] = []
+            original_root = check_docs.ROOT
+            check_docs.ROOT = self.root
+            try:
+                check_docs.check_workstreams(errors, warnings)
+            finally:
+                check_docs.ROOT = original_root
+            self.assertEqual([], errors)
+            self.assertTrue(
+                any("meadow-slice-pending-deletions" in warning for warning in warnings)
+            )
+        finally:
+            handle.close()
+
+        doctor = self.run_doctor()
+        self.assertFalse(worktree.exists())
+        self.assertFalse(queue_path.exists())
+
     def test_resume_completes_a_failure_after_merge(self):
         """A merge is durable even when the original finish process dies."""
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

@@ -712,17 +712,48 @@ def ledger_worktree_rows() -> list[tuple[str, Path]]:
     return rows
 
 
-def check_workstreams(errors: list[str]) -> None:
+def pending_worktree_deletions() -> set[str]:
+    """Directory names slice.ps1 could not delete at closeout and queued for
+    a later slice command to retry (tools/slice.ps1, meadow-slice-pending-deletions).
+
+    These sit outside Git's worktree registry until the retry succeeds, so
+    check_workstreams must not mistake them for orphans."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=ROOT, capture_output=True, text=True, check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return set()
+    queue_path = (ROOT / result.stdout.strip()).resolve() / "meadow-slice-pending-deletions"
+    if not queue_path.exists():
+        return set()
+    names: set[str] = set()
+    for line in queue_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            names.add(Path(line).name)
+    return names
+
+
+def check_workstreams(errors: list[str], warnings: list[str]) -> None:
     """A worktree/branch is registered in plans/workstreams.md for exactly as long as it exists."""
     registered = git_worktree_paths()
     if registered is None:
         errors.append("could not run 'git worktree list' to validate plans/workstreams.md")
         return
 
+    pending = pending_worktree_deletions()
     worktree_dir = (primary_checkout() / ".worktrees").resolve()
     if worktree_dir.is_dir():
         for entry in sorted(worktree_dir.iterdir()):
             if entry.is_dir() and entry.resolve() not in registered:
+                if entry.name in pending:
+                    warnings.append(
+                        f".worktrees/{entry.name}: not registered with 'git worktree', but queued in "
+                        "meadow-slice-pending-deletions -- skipping, not an orphan"
+                    )
+                    continue
                 errors.append(
                     f".worktrees/{entry.name}: orphaned directory, not registered with 'git worktree' -- remove it"
                 )
@@ -762,7 +793,7 @@ def main() -> int:
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)
     check_checks(errors)
-    check_workstreams(errors)
+    check_workstreams(errors, warnings)
 
     for warning in warnings:
         print(f"WARNING: {warning}")
