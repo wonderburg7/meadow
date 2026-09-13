@@ -355,6 +355,24 @@ the Codex lane, so E1's earlier conflict with it is gone -- E1 stays queued
 behind L-1 only because L-1 already led this session, not because of a
 file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
 
+**C1 shipped 12 Sep 2026, and C2 shipped 13 Sep 2026, but the queue was
+never refreshed to say so.** `conditions.gd`'s evaluator landed as C1, then
+`challenge_stages.gd` gained a `condition` dictionary on every stage and
+`challenge_runner.gd`'s hand-built `_build_goal_registry`/`_goal_registry`
+were deleted in favour of reading each stage's own condition (`3c988c6`,
+finished in `4c0e699`, merged `6289216`) -- but this file kept listing C2 as
+the Codex lane's leading item, which is what correctly stopped a later
+`tools/slice.ps1 start -Lane Codex` from claiming it: its own stale-proof
+check refused the claim (`present: scripts/challenge_runner.gd :: func
+_build_goal_registry` no longer holds) rather than silently redoing
+finished work. Fixed here, retroactively: C1's specification is archived at
+`plans/archive/C1_2026-09-12.md` and C2's at
+`plans/archive/C2_2026-09-13.md`; `tools/verify.ps1` is green on master
+throughout, including source checks, balance tests, a Godot boot and the
+stage reference regeneration, so no hands-on check was needed for either --
+both are behaviour-preserving refactors with nothing a player sees changed.
+C2's `Next after` (C3) now leads the Codex lane below.
+
 ## Next up
 
 1. **[Claude] L-3 -- branch verification and bookkeeping validation are separate scopes.**
@@ -389,17 +407,18 @@ file clash. Its `Next after` (C1) fills the Codex lane's leading slot below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] C2 -- Challenge goals become data.**
-   Move each Challenge stage's completion rule into its stage data as a
-   `condition` dictionary. Count and total goals use `Conditions`; ordered
-   visits, greeting and selection beats, the stability window and tunnel goal
-   remain named `custom` predicates. Remove the hand-built goal registry while
-   preserving every stage result and cadence.
-   - Plan: `plans/design/architecture-review.md` -- "C2 — Challenge goals become data"
-   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`
-   - Check: every Challenge fixture reaches its current final stage id; source checks prove every `_goal_check_*` method has a `custom` stage reference
-   - Proof: `present: scripts/challenge_runner.gd :: func _build_goal_registry`
-   - Next after: C3 -- scenario `when` uses the evaluator.
+3. **[Codex] C3 -- scenario `when` uses the evaluator.**
+   `scenario_actions.gd::_when_met` still runs its own six-key match instead
+   of delegating to `conditions.gd`'s evaluator (C1), and `_population`
+   duplicates `main._role_counts()`. Make `_when_met` call `Conditions.met`
+   via a small legacy-key translation table so every existing fixture keeps
+   its verdict unchanged, and delete `_population` in favour of
+   `main._role_counts()`.
+   - Plan: `plans/design/architecture-review.md` -- "C3 — scenario `when` uses the evaluator"
+   - Files: `scripts/scenario_actions.gd`
+   - Check: every fixture under `test_scenarios/` produces the same verdict as today; `tests/test_headless_verdicts.py` passes unchanged
+   - Proof: `present: scripts/scenario_actions.gd :: func _population`
+   - Next after: C4 -- the signal catalogue, one of Decision B's foundation slices, depends only on C1 (shipped) and is file-disjoint from every open item.
 
 4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control

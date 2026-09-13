@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1 and A3 all shipped; A2's hold (out of the Codex lane while it and A3 both touched `scripts/hive.gd`) is resolved now that A3 has shipped, but A2 is still not in a lane because UI-P-5 leads the Codex lane ahead of it; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) -- A3's own successor, A4, fills the Claude lane below | Owner: Dave / Claude Code | Next: A4 -- wire the goal cadence | Dependency: C1 depends on both A2 and A3 and stays out until A2 also ships; A4 (`scripts/challenge_runner.gd`) and its named successor E1 (`scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`) are file-disjoint from the Codex lane's current lead, UI-P-5 (`scripts/main_menu.gd`); the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-12
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1 and C2 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C3 -- scenario `when` uses the evaluator | Dependency: C3 depends only on C1 (shipped) and is file-disjoint from every open item; the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-13
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -784,36 +784,7 @@ Shipped 12 Sep 2026. Full record: `plans/archive/C1_2026-09-12.md`.
 
 ### C2 — Challenge goals become data
 
-Level: high. Depends on: C1, A4.
-
-- **Required reading.** This heading. C1's result.
-  `scripts/challenge_stages.gd`'s `STAGES_1` and `STAGES_2`.
-  `scripts/challenge_runner.gd`'s goal registry, `_goal_met` and
-  `_goal_progress`.
-- **Files to change.** `scripts/challenge_stages.gd`,
-  `scripts/challenge_runner.gd`.
-- **Files not to change.** `conditions.gd`.
-- **Requirements.** Each stage row gains a `condition` dictionary. The goals
-  that are counts or totals lose their `_goal_check_*` method. The goals that
-  are not — the ordered visits, the greeting, the stability window, the entrance
-  tunnel, selection state — keep theirs behind
-  `{"custom": "_goal_check_x"}`. `_build_goal_registry`'s hand-written
-  dictionary is deleted, and `custom` resolves by name.
-- **Invariants.** Every stage completes on exactly the same condition it does
-  today. `GOAL_CADENCE` keeps one entry per goal and A4's three-list source
-  check keeps passing. `_goal_progress`'s three numeric bars come from
-  `Conditions.progress` and show the same numbers.
-- **Implementation guidance.** Convert one stage at a time, running the
-  Challenge scenario fixture between each. Expect roughly a third to stay
-  `custom`; that is the intended outcome, not a failure.
-- **Runtime policy.** As A4 set it. `poll` goals now cost one dictionary walk
-  over cached facts rather than a comb scan.
-- **Automated acceptance.** A headless run of each Challenge fixture reaching
-  the same final stage id. A source check that no `_goal_check_*` method exists
-  without a `custom` reference naming it.
-- **Escalation.** A stage whose condition changes meaning during conversion is a
-  gameplay change. Stop, name the stage and both readings, and let Dave choose,
-  per CLAUDE.md rule 5.
+Shipped 13 Sep 2026. Full record: `plans/archive/C2_2026-09-13.md`.
 
 ### C3 — scenario `when` uses the evaluator
 
