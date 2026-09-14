@@ -370,6 +370,39 @@ def check_queue_successors(errors: list[str]) -> None:
         )
 
 
+def check_queue_section_agreement(errors: list[str], text: str | None = None) -> None:
+    """An id cannot be both ready ('## Next up') and waiting ('## Not in the
+    queue, and why') at once -- that is what let UI-U-1 sit in both places
+    with nothing to catch it."""
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    next_match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    not_queued_match = re.search(
+        r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE
+    )
+    if not next_match or not not_queued_match:
+        return
+
+    next_ids = []
+    for chunk in re.split(r"^\d+\.\s+", next_match.group(1), flags=re.MULTILINE)[1:]:
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if item_match:
+            next_ids.append(item_match.group(1))
+
+    # Only the bolded lead of each bullet counts -- the prose that follows it
+    # legitimately mentions other ids as the reason this one is waiting.
+    for bullet_match in re.finditer(
+        r"^-\s+\*\*(.+?)\*\*", not_queued_match.group(1), re.MULTILINE
+    ):
+        bold_lead = bullet_match.group(1)
+        for next_id in next_ids:
+            if re.search(rf"\b{re.escape(next_id)}\b", bold_lead):
+                errors.append(
+                    f"NEXTSTEPS.md: '{next_id}' is listed as ready in '## Next up' and also "
+                    "named in '## Not in the queue, and why' -- it cannot be both"
+                )
+
+
 def check_queue_proofs(errors: list[str]) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
@@ -789,6 +822,7 @@ def main() -> int:
     check_queue_files(errors)
     check_queue_proofs(errors)
     check_queue_successors(errors)
+    check_queue_section_agreement(errors)
     check_markdown_links(errors)
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)
