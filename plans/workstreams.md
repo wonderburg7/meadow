@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/C4` (`codex/C4`) | Codex | the signal catalogue. | Codex | in progress | none | `plans/design/architecture-review.md` "C4 — the signal catalogue" |
 | `.worktrees/L-5` (`claude/L-5`) | Claude | closeout is an idempotent resumable transaction. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-5 — closeout is an idempotent resumable transaction" |

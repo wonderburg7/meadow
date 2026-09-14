@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2 and C3 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C4 -- the signal catalogue | Dependency: C4 depends only on C1 (shipped) and is file-disjoint from every open item; the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-13
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2, C3 and C4 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C1-27 -- Challenge 1 wax-cell capacity correction | Dependency: the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-14
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -792,31 +792,8 @@ Shipped 13 Sep 2026. Full record: `plans/archive/C3_2026-09-13.md`.
 
 ### C4 — the signal catalogue
 
-Level: medium. Depends on: C1.
-
-- **Required reading.** This heading. F12 above.
-  `scripts/year_winter.gd::_refresh_signals`. `scripts/problem_messages.gd`.
-- **Files to change.** `scripts/year_winter.gd`, `scripts/problem_messages.gd`,
-  `scripts/game_config.gd`, `scripts/settings_catalogue.gd`.
-- **Files not to change.** `scripts/hud.gd::update_signals`; the array shape it
-  receives does not change.
-- **Requirements.** A `SIGNALS` catalogue with id, condition in C1's vocabulary,
-  severity, category, click action and message function name. The inline
-  thresholds `40.0` and `10.0` and the `0.5` multiplier become named
-  `GameConfig` fields with catalogue rows.
-- **Invariants.** The same lines appear, in the same order, at the same
-  severities, in the same conditions. The Challenge early-return that clears the
-  strip stays exactly where it is. The optional fourth category element keeps
-  its current meaning.
-- **Implementation guidance.** Order is load-bearing — the strip shows
-  severity-2 lines first because they are listed first. Keep the catalogue in the
-  current order and iterate it.
-- **Runtime policy.** Still the existing 1 Hz signal tick.
-- **Automated acceptance.** A `tests/` case driving a constructed colony state
-  through the catalogue and asserting the exact line list, for the six states the
-  current chain distinguishes.
-- **Escalation.** If a threshold's new default would change when a warning first
-  fires, keep today's value and say so.
+Shipped 14 Sep 2026. Full record:
+[`plans/archive/C4_2026-09-14.md`](../archive/C4_2026-09-14.md).
 
 ### D1 — one settings persistence authority
 

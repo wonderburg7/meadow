@@ -410,32 +410,7 @@ C2's `Next after` (C3) now leads the Codex lane below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] C4 -- the signal catalogue.**
-   Put the problem-strip signal definitions in one ordered catalogue: each
-   row carries its C1 evaluator condition, severity, category, click action
-   and message function. Replace the existing inline thresholds with named
-   `GameConfig` fields while preserving every current line, order and
-   severity.
-   - Plan: `plans/design/architecture-review.md` -- "C4 — the signal catalogue"
-   - Files: `scripts/year_winter.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`
-   - Check: a `tests/` case asserts the exact signal line list for each of the six currently distinct colony states
-   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
-   - Next after: C1-27 -- the existing next Codex lane item remains file-disjoint.
-
-4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
-   At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
-   beside "Raises:" in a selected cell's tray (C-34, 12 Sep 2026), so the
-   stage cannot be finished the way it is taught. Stale gating is ruled out --
-   `_apply_cell_popup_gating` runs on every show. Add a `select_cell`
-   scenario action and a `visible` option on the `control` assertion, prove
-   the fault in a Challenge 2 fixture, then fix the cause the failure names.
-   - Plan: `plans/now/ui-w.md` -- "UI-W-2 — Challenge 2's cell tray offers a Forager to raise"
-   - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`
-   - Check: a new test_scenarios/uiw2_challenge2_raises_forager_test.json fails on master and passes after the fix -- at 2.2 the Forager hatch menu is visible with a usable rect inside the command tray
-   - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
-   - Next after: UI-W-3 -- a comb cell's tray uses three columns.
-
-5. **[Codex] C1-27 -- a Challenge 1 wax cell holds 150 nectar, not 200.**
+3. **[Codex] C1-27 -- a Challenge 1 wax cell holds 150 nectar, not 200.**
    C1-23 moved the nectar lesson's goal to 150 but left the cell's capacity
    at `GameConfig.cell_capacity` (200), so a later trip tops the cell past
    150 (Dave saw 155) and a full comb never happens at 150. Dave chose on 13
@@ -449,6 +424,19 @@ C2's `Next after` (C3) now leads the Codex lane below.
    - Check: a new `tests/source_checks.py` check proves `capacity_for` reads `nectar_capacity_override` and that `challenge_runner.gd` sets it wherever it sets `build_time_override`; `tools/verify.ps1` green
    - Proof: `absent: scripts/hive_cell.gd :: nectar_capacity_override`
    - Next after: C1-7 -- the Challenge 1 acceptance playthrough, which Dave runs.
+
+4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
+   At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
+   beside "Raises:" in a selected cell's tray (C-34, 12 Sep 2026), so the
+   stage cannot be finished the way it is taught. Stale gating is ruled out --
+   `_apply_cell_popup_gating` runs on every show. Add a `select_cell`
+   scenario action and a `visible` option on the `control` assertion, prove
+   the fault in a Challenge 2 fixture, then fix the cause the failure names.
+   - Plan: `plans/now/ui-w.md` -- "UI-W-2 — Challenge 2's cell tray offers a Forager to raise"
+   - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`
+   - Check: a new test_scenarios/uiw2_challenge2_raises_forager_test.json fails on master and passes after the fix -- at 2.2 the Forager hatch menu is visible with a usable rect inside the command tray
+   - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
+   - Next after: UI-W-3 -- a comb cell's tray uses three columns.
 
 ## Not in the queue, and why
 
