@@ -6,6 +6,109 @@ extends RefCounted
 ## condition's protagonist stable across the strip's one-second refreshes, and
 ## the fallbacks keep every warning honest when no relevant individual exists.
 
+## The problem strip is an ordered catalogue, rather than a second set of
+## decisions living in year_winter.gd. `condition` deliberately uses the
+## shared condition vocabulary's `custom` leaf: these facts are already
+## computed by ColonyDiagnostics, and the signal-specific comparisons do not
+## belong in that general-purpose evaluator. A null action/category means the
+## corresponding optional array element is omitted, preserving HUD's shape.
+const SIGNALS := [
+	{"id": "starving", "condition": {"custom": "starving"}, "severity": 2, "action": "starving", "category": null, "message": "signal_starving"},
+	{"id": "hungry_brood", "condition": {"custom": "hungry_brood"}, "severity": 2, "action": "hungry_brood", "category": "brood", "message": "signal_hungry_brood"},
+	{"id": "dead_cells", "condition": {"custom": "dead_cells"}, "severity": 2, "action": "dead_cells", "category": "brood", "message": "signal_dead_cells"},
+	{"id": "low_pollen", "condition": {"custom": "low_pollen"}, "severity": 2, "action": "", "category": "brood", "message": "signal_low_pollen"},
+	{"id": "low_food", "condition": {"custom": "low_food"}, "severity": 2, "action": null, "category": null, "message": "signal_low_food"},
+	{"id": "no_nurses", "condition": {"custom": "no_nurses"}, "severity": 2, "action": "", "category": "brood", "message": "signal_no_nurses"},
+	{"id": "no_free_cells", "condition": {"custom": "no_free_cells"}, "severity": 1, "action": null, "category": null, "message": "signal_no_free_cells"},
+	{"id": "hungry", "condition": {"custom": "hungry"}, "severity": 1, "action": "hungry", "category": null, "message": "signal_hungry"},
+	{"id": "no_foragers", "condition": {"custom": "no_foragers"}, "severity": 1, "action": "", "category": null, "message": "signal_no_foragers"},
+	{"id": "no_comb_workers", "condition": {"custom": "no_comb_workers"}, "severity": 1, "action": "dead_cells", "category": "brood", "message": "signal_no_comb_workers"},
+	{"id": "hard_rain", "condition": {"custom": "hard_rain"}, "severity": 1, "action": null, "category": null, "message": "signal_hard_rain"},
+	{"id": "rain", "condition": {"custom": "rain"}, "severity": 0, "action": null, "category": null, "message": "signal_rain"},
+]
+
+
+static func signal_lines(state: Dictionary) -> Array:
+	var lines: Array = []
+	for signal in SIGNALS:
+		if not _matches(state, signal.condition):
+			continue
+		var line: Array = [Callable(ProblemMessages, str(signal.message)).call(state), int(signal.severity)]
+		if signal.action != null:
+			line.append(signal.action)
+		if signal.category != null:
+			line.append(signal.category)
+		lines.append(line)
+	return lines
+
+
+static func _matches(state: Dictionary, condition: Dictionary) -> bool:
+	# SIGNALS only needs C1's `custom` vocabulary leaf. Keeping the dispatch
+	# here makes each predicate testable against a constructed colony state,
+	# while Conditions remains a read-only evaluator of live main state.
+	match str(condition.get("custom", "")):
+		"starving": return int(state.starving) > 0
+		"hungry_brood": return int(state.hungry_brood) > 0
+		"dead_cells": return int(state.dead_cells) > 0
+		"low_pollen": return int(state.day) >= int(GameConfig.pollen_warning_first_day) and float(state.pollen) < GameConfig.egg_pollen_cost * GameConfig.pollen_warning_stock_multiplier
+		"low_food": return float(state.nectar) < GameConfig.nectar_warning_total and float(state.honey) < GameConfig.honey_warning_total
+		"no_nurses": return int(state.nurses) == 0 and int(state.brood_cells) > 0
+		"no_free_cells": return int(state.free_cells) == 0
+		"hungry": return int(state.hungry) > 0
+		"no_foragers": return int(state.foragers) == 0
+		"no_comb_workers": return int(state.comb_workers) == 0 and int(state.dead_cells) > 0
+		"hard_rain": return float(state.rain_intensity) > GameConfig.rain_forage_limit
+		"rain": return float(state.rain_intensity) > 0.05 and float(state.rain_intensity) <= GameConfig.rain_forage_limit
+	return false
+
+
+static func signal_starving(state: Dictionary) -> String:
+	return starving(state.bees, int(state.starving))
+
+
+static func signal_hungry_brood(state: Dictionary) -> String:
+	return "%d larvae are going hungry" % int(state.hungry_brood)
+
+
+static func signal_dead_cells(state: Dictionary) -> String:
+	return "%d cells blocked by dead larvae" % int(state.dead_cells)
+
+
+static func signal_low_pollen(_state: Dictionary) -> String:
+	return "Almost no pollen — the queen cannot lay"
+
+
+static func signal_low_food(_state: Dictionary) -> String:
+	return "Food is running out"
+
+
+static func signal_no_nurses(_state: Dictionary) -> String:
+	return "No nurses — brood will not develop at all"
+
+
+static func signal_no_free_cells(state: Dictionary) -> String:
+	return no_free_cells(state.bees, state.queen)
+
+
+static func signal_hungry(state: Dictionary) -> String:
+	return hungry(state.bees, int(state.hungry))
+
+
+static func signal_no_foragers(state: Dictionary) -> String:
+	return no_foragers(state.queen)
+
+
+static func signal_no_comb_workers(_state: Dictionary) -> String:
+	return "No comb workers to clear the blocked cells"
+
+
+static func signal_hard_rain(_state: Dictionary) -> String:
+	return "Raining hard — foragers are grounded"
+
+
+static func signal_rain(_state: Dictionary) -> String:
+	return "Raining — nectar is watered down and flying costs more"
+
 static func starving(bees: Array, count: int) -> String:
 	var bee := _first_bee(bees, func(candidate):
 		return candidate.energy < GameConfig.energy_capacity * 0.15

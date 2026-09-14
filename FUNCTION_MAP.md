@@ -272,19 +272,19 @@ A bee's dispatch loop, player commands, display text, vars.
 2471 func clear_navigation_state() -> void
 ```
 
-## settings_catalogue.gd (1,389 lines)
+## settings_catalogue.gd (1,407 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
-1282 static func setting_get(key: String)
-1285 static func setting_set(key: String, value) -> void
-1308 static func reset_config_to_defaults() -> void
-1320 static func reset_config_keys(keys: Array) -> void
-1334 static func apply_setting(key: String, value) -> void
-1349 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1367 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1381 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1300 static func setting_get(key: String)
+1303 static func setting_set(key: String, value) -> void
+1326 static func reset_config_to_defaults() -> void
+1338 static func reset_config_keys(keys: Array) -> void
+1352 static func apply_setting(key: String, value) -> void
+1367 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1385 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1399 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,329 lines)
@@ -785,7 +785,7 @@ The headless verbs, `when` clauses and layout assertions.
 888  static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## game_config.gd (874 lines)
+## game_config.gd (880 lines)
 
 The balance fields.
 
@@ -795,22 +795,22 @@ The balance fields.
 403  # --- foraging ---
 412  # --- hive ---
 439  # --- the nursery zone ---
-494  # --- eating ---
-502  # --- flight ---
-533  # --- gynes ---
-548  # --- royal jelly ---
-558  # --- weather ---
-576  # --- warnings ---
-585  # --- honey ---
-601  # --- comb building ---
-621  # --- hive geometry ---
-650  # --- bee life ---
-655  # --- bee individuality ---
-734  # --- the rival colony ---
-783  # --- seasons ---
-813  # --- disease ---
-841  # --- gynes leaving ---
-848  # --- winter ---
+500  # --- eating ---
+508  # --- flight ---
+539  # --- gynes ---
+554  # --- royal jelly ---
+564  # --- weather ---
+582  # --- warnings ---
+591  # --- honey ---
+607  # --- comb building ---
+627  # --- hive geometry ---
+656  # --- bee life ---
+661  # --- bee individuality ---
+740  # --- the rival colony ---
+789  # --- seasons ---
+819  # --- disease ---
+847  # --- gynes leaving ---
+854  # --- winter ---
 ```
 
 ## input_selection.gd (701 lines)

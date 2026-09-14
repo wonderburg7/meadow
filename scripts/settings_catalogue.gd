@@ -88,6 +88,24 @@ const TUNABLES := [
 		"category": "World & start",
 		"tip": "The \"almost no pollen\" line is kept off the problem strip until this day. A colony this young genuinely has no pollen and there is nothing useful to do about it, so warning from the first minute only teaches you to ignore the strip.",
 	},
+	{
+		"persist": "run",
+		"key": "pollen_warning_stock_multiplier", "label": "Pollen warning x egg cost", "step": 0.05, "min": 0.0,
+		"category": "World & start",
+		"tip": "Show the low-pollen warning when stores fall below this multiple of the pollen needed for one egg. At 0.5, the warning begins below half an egg's worth, matching the original signal.",
+	},
+	{
+		"persist": "run",
+		"key": "nectar_warning_total", "label": "Nectar warning below", "step": 5.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "One half of the food warning: it appears only when both raw nectar and honey are below their own limits.",
+	},
+	{
+		"persist": "run",
+		"key": "honey_warning_total", "label": "Honey warning below", "step": 1.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "The stored-honey half of the food warning. Raising it makes the warning arrive earlier only when nectar is also low.",
+	},
 
 	# --- Flowers ---
 	{
