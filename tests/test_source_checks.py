@@ -312,6 +312,30 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def write_refill(self, worktree: Path, delivered_id: str = "T-1") -> None:
+        """Simulate the session's own archive-and-refill edit on the branch.
+
+        L-5 makes `finish` gate on this (and commit it inside the merge)
+        rather than perform it: the archived write-up and a successor's own
+        Plan/Files/Check/Proof/Next after lines are still authored by hand,
+        same as today. This fixture's `Next after:` is always "none -- ...
+        is complete", so the refill is just removal; promotion is exercised
+        separately in test_refill_promotes_the_named_successor.
+        """
+        archive_dir = worktree / "plans" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        (archive_dir / f"{delivered_id}_2026-01-01.md").write_text(
+            f"# {delivered_id} (archived)\n\nShipped in this fixture.\n",
+            encoding="utf-8",
+        )
+        (worktree / "NEXTSTEPS.md").write_text("## Next up\n\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "archive and refill the queue"],
+            cwd=worktree,
+            check=True,
+        )
+
     def run_doctor(self, *extra_args: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
@@ -577,6 +601,7 @@ class SliceDoctorTest(unittest.TestCase):
             "a", encoding="utf-8"
         ) as source:
             source.write("\nfunc new_function():\n\tpass\n")
+        self.write_refill(worktree)
 
         finish = subprocess.run(
             [
@@ -653,6 +678,7 @@ class SliceDoctorTest(unittest.TestCase):
             "a", encoding="utf-8"
         ) as source:
             source.write("\nfunc new_function():\n\tpass\n")
+        self.write_refill(worktree)
 
         held_path = worktree / "held-open.txt"
         held_path.write_text("locked", encoding="utf-8")
@@ -754,6 +780,7 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, start.returncode, start.stderr)
         worktree = self.root / ".worktrees" / "T-1"
         (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
         failed = subprocess.run(
             [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
                 str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
@@ -787,8 +814,8 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         phases = (
-            "started", "verified", "branch-committed", "merged", "pushed",
-            "worktree-removed", "branch-deleted", "ledger-deleted",
+            "started", "verified", "branch-committed", "archived", "refilled",
+            "merged", "pushed", "worktree-removed", "branch-deleted", "ledger-deleted",
         )
         for phase in phases:
             with self.subTest(phase=phase):
@@ -801,11 +828,20 @@ class SliceDoctorTest(unittest.TestCase):
                 )
                 if phase == "started":
                     self.assertNotEqual(0, started.returncode)
+                    # The worktree still exists despite the injected failure
+                    # (it lands after `git worktree add`) -- resume finishes
+                    # it, which means the same archive/refill edit a session
+                    # would already have made has to be there too.
+                    (self.root / ".worktrees" / "T-1" / "scripts" / "sample.gd").write_text(
+                        "func new_function():\n\tpass\n", encoding="utf-8"
+                    )
+                    self.write_refill(self.root / ".worktrees" / "T-1")
                 else:
                     self.assertEqual(0, started.returncode, started.stderr)
                     (self.root / ".worktrees" / "T-1" / "scripts" / "sample.gd").write_text(
                         "func new_function():\n\tpass\n", encoding="utf-8"
                     )
+                    self.write_refill(self.root / ".worktrees" / "T-1")
                     failed = subprocess.run(
                         [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
                             str(self.root / ".worktrees" / "T-1").replace("'", "''"),
@@ -828,15 +864,18 @@ class SliceDoctorTest(unittest.TestCase):
                 ).stdout)
                 self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
 
-                if phase != "started":
-                    # Return the mock source to the queued proof before
-                    # claiming the next subcase. This commit is ordinary
-                    # fixture setup; the next finish pushes it with its merge.
-                    (self.root / "scripts" / "sample.gd").write_text(
-                        "func existing():\n\tpass\n", encoding="utf-8"
-                    )
-                    subprocess.run(["git", "add", "scripts/sample.gd"], cwd=self.root, check=True)
-                    subprocess.run(["git", "commit", "-m", "reset mock source"], cwd=self.root, check=True)
+                # The refill just consumed T-1 from NEXTSTEPS.md, and every
+                # phase (including "started", whose worktree still went
+                # through the same resume-driven finish) restored the mock
+                # source to the queued proof. Put both back before claiming
+                # the next subcase -- ordinary fixture setup, pushed with the
+                # next iteration's own merge.
+                (self.root / "scripts" / "sample.gd").write_text(
+                    "func existing():\n\tpass\n", encoding="utf-8"
+                )
+                self.write_queue("`absent: scripts/sample.gd :: new_function`")
+                subprocess.run(["git", "add", "scripts/sample.gd", "NEXTSTEPS.md"], cwd=self.root, check=True)
+                subprocess.run(["git", "commit", "-m", "reset mock source and queue"], cwd=self.root, check=True)
 
     def test_finish_is_resumable_after_every_injected_phase(self):
         """Every durable closeout phase resumes to the same final state.
@@ -859,7 +898,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         phases = (
-            "verified", "branch-committed", "merged", "pushed",
+            "verified", "branch-committed", "archived", "refilled", "merged", "pushed",
             "worktree-removed", "branch-deleted", "ledger-deleted",
         )
         for phase in phases:
@@ -872,6 +911,7 @@ class SliceDoctorTest(unittest.TestCase):
                 (self.root / ".worktrees" / "T-1" / "scripts" / "sample.gd").write_text(
                     "func new_function():\n\tpass\n", encoding="utf-8"
                 )
+                self.write_refill(self.root / ".worktrees" / "T-1")
                 failed = subprocess.run(
                     [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
                         str(self.root / ".worktrees" / "T-1").replace("'", "''"),
@@ -901,8 +941,135 @@ class SliceDoctorTest(unittest.TestCase):
                 (self.root / "scripts" / "sample.gd").write_text(
                     "func existing():\n\tpass\n", encoding="utf-8"
                 )
-                subprocess.run(["git", "add", "scripts/sample.gd"], cwd=self.root, check=True)
-                subprocess.run(["git", "commit", "-m", "reset mock source"], cwd=self.root, check=True)
+                self.write_queue("`absent: scripts/sample.gd :: new_function`")
+                subprocess.run(["git", "add", "scripts/sample.gd", "NEXTSTEPS.md"], cwd=self.root, check=True)
+                subprocess.run(["git", "commit", "-m", "reset mock source and queue"], cwd=self.root, check=True)
+
+    def test_closeout_pushes_exactly_once(self):
+        """The whole transaction reaches the remote in one push.
+
+        Before L-5, finish pushed once after the ready-index commit and
+        again after the ledger commit. Counting reflog entries on the bare
+        remote's master ref is a direct count of push invocations: each
+        `git push` adds exactly one entry regardless of how many commits it
+        carries.
+        """
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(
+            ["git", "config", "core.logAllRefUpdates", "always"],
+            cwd=self.remote,
+            check=True,
+        )
+
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
+
+        before = subprocess.run(
+            ["git", "reflog", "show", "--format=%H", "refs/heads/master"],
+            cwd=self.remote, capture_output=True, text=True,
+        ).stdout.splitlines()
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertEqual(0, finish.returncode, finish.stderr)
+
+        after = subprocess.run(
+            ["git", "reflog", "show", "--format=%H", "refs/heads/master"],
+            cwd=self.remote, capture_output=True, text=True,
+        ).stdout.splitlines()
+        self.assertEqual(1, len(after) - len(before), finish.stdout + finish.stderr)
+
+    def test_refill_promotes_the_named_successor(self):
+        """`refilled` gates on the branch's own edit rather than authoring
+        it; once that edit is committed, closeout confirms the queue is one
+        item shorter, the successor leads, and the spec has moved."""
+        (self.root / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            "1. **[Codex] T-1 -- fixture.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture\n"
+            "   - Files: `scripts/sample.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+            "   - Next after: T-2 -- the fixture's own successor.\n"
+            "\n"
+            "2. **[Codex] T-2 -- fixture successor.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture successor\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- fixture plan is complete\n",
+            encoding="utf-8",
+        )
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+
+        archive_dir = worktree / "plans" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        (archive_dir / "T-1_2026-01-01.md").write_text(
+            "# T-1 (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+        )
+        (worktree / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            "1. **[Codex] T-2 -- fixture successor.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture successor\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- fixture plan is complete\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True
+        )
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertEqual(0, finish.returncode, finish.stderr)
+        self.assertIn("Next slice:   T-2 -- fixture successor.", finish.stdout)
+
+        merged_queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertNotIn("[Codex] T-1", merged_queue)
+        self.assertIn("[Codex] T-2", merged_queue)
+        self.assertTrue((self.root / "plans" / "archive" / "T-1_2026-01-01.md").exists())
 
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

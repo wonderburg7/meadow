@@ -373,26 +373,38 @@ stage reference regeneration, so no hands-on check was needed for either --
 both are behaviour-preserving refactors with nothing a player sees changed.
 C2's `Next after` (C3) now leads the Codex lane below.
 
+**L-5 shipped 14 September 2026.** `tools/slice.ps1`'s closeout is now one
+transaction: a JSON phase journal beside the lifecycle lock
+(`meadow-slice-closeout.json`) records `verified`, `branch-committed`,
+`archived`, `refilled` and `merged`, and `finish` skips whichever of those a
+resumed run already completed. Two new phases gate the merge: `archived`
+refuses it until the delivered slice's specification has moved to
+`plans/archive/` and `refilled` refuses it until the delivered item is gone
+from `## Next up` (its named successor added, unless the plan is complete) --
+both edits are still made by hand, on the branch, now enforced rather than
+optional. `Invoke-SlicePostMergeCleanup` is the one shared post-merge tail
+for both `finish` and `resume`, and pushes exactly once, at the end, instead
+of `finish`'s old two separate pushes. `CHATGPT.md` and `CLAUDE.md`'s "queue
+updated on master, never on the branch" rules are rewritten for the new
+contract. Full record: `plans/archive/L-5_2026-09-14.md`. Its `Next after`
+(L-6) fills the Claude lane's slot below.
+
 ## Next up
 
-1. **[Claude] L-5 -- closeout is an idempotent resumable transaction.**
-   One closeout, one recorded phase journal, one push, and the queue
-   refilled and the specification archived inside the transaction. Write a
-   closeout journal (`meadow-slice-closeout.json`, beside the lifecycle
-   lock) after each phase; on entry, skip every phase up to the recorded
-   one. Add `archived` (move the delivered slice's spec out of `plans/now/`
-   into the archive, leaving the pointer) and `refilled` (remove the
-   delivered item from `## Next up`, promote its `Next after:` item) as
-   phases on the branch, before the merge, so both land inside the merge
-   commit; push once, after `refilled`. Delete `CHATGPT.md`'s "queue is
-   updated on master, never on the branch" rule and `CLAUDE.md`'s matching
-   sentence. Fill the whole end-of-slice report -- `Next slice`, `Other
-   lane` and `Start it with` become lookups once `next_after` is parsed.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-5 — closeout is an idempotent resumable transaction"
-   - Files: `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md`
-   - Check: extend L-2's injected-phase test to the `archived`/`refilled` phases and assert `resume` completes them; add `test_closeout_pushes_exactly_once` (counts pushes against a local bare remote's reflog) and `test_refill_promotes_the_named_successor` (queue is one item shorter, the successor is present, the specification moved)
-   - Proof: `present: tools/slice.ps1 :: queue not refilled by 'finish'`
-   - Next after: L-6 -- two lanes closing out at once is a test, not a hope.
+1. **[Claude] L-6 -- two lanes closing out at once is a test, not a hope.**
+   One test class, six tests, each building a fixture with a queue holding
+   one `[Claude]` and one `[Codex]` item that share no file: both lanes
+   closing out independently, simultaneous claims racing the lifecycle lock,
+   one lane finishing while the other still works, a remote-ahead push, a
+   dirty-coordination-file refusal plus two lanes refilling in sequence, and
+   resuming after `pushed` succeeds but cleanup fails. Every case that fails
+   on first run is a real defect, fixed in this slice or escalated per
+   `plans/README.md` rule 8 if it changes the transaction's design.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-6 — two lanes closing out at once is a test"
+   - Files: `tests/test_source_checks.py`
+   - Check: the six new tests in `tests/test_source_checks.py`, run by `tools/verify.ps1`; nothing player-facing changes, so Dave has nothing to try
+   - Proof: `absent: tests/test_source_checks.py :: def test_two_lanes_close_out_independently`
+   - Next after: L-7 -- the queue cannot contradict itself.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do

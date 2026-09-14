@@ -145,8 +145,10 @@ necessary. The full Codex handoff policy is in `CHATGPT.md`.
 **Closeout:** run `tools/slice.ps1 finish` from inside the slice's worktree,
 immediately after integrating any branch (Codex hand-off or Claude's own
 worktree), never deferred. Claude still moves the delivered slice's
-specification into `plans/archive/` and refills the queue by hand; `finish`
-does not touch either.
+specification into `plans/archive/` and refills the queue by hand, but now
+**on the branch, before running `finish`**: its `archived` and `refilled`
+phases refuse to merge until both edits are committed there, then carry them
+into the merge commit -- there is no separate queue-refresh step afterwards.
 
 A worktree or branch is never kept open solely because a hands-on check is
 still outstanding — the check moves to `checks/ready.md`; the worktree

@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-5 -- closeout is an idempotent resumable transaction | Dependency: none | Verified: 2026-09-14
+Status: active | Owner: Dave / Claude | Next: L-6 -- two lanes closing out at once is a test, not a hope | Dependency: none | Verified: 2026-09-14
 
 ## Objective
 
@@ -28,8 +28,10 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 - 97 `finish` calls produced 54 closeouts. 39 exited non-zero; 24 of 54
   sessions retried; 10 never got a clean exit. Codex: 20 of 20 non-zero.
 - `Invoke-SliceFinish` holds one exclusive lock across verification, the
-  merge, a push, up to 180 seconds of Windows deletion retries, and a second
-  push. Archival and queue refill are manual, outside the lock, by design.
+  merge and a single push, with up to 180 seconds of Windows deletion
+  retries. Archival and queue refill are still authored by hand, but as of
+  L-5 they happen on the branch and are gated, not manual-and-unenforced,
+  before `finish` will merge.
 - The four small fixes of 12 September 2026 landed on `claude/WF-1`: Codex
   may run `resume`; declared actions are single unchained commands; `start`
   and `doctor` print a `read` command and `next_after`; `doctor` reports
@@ -50,11 +52,10 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-5 | closeout is an idempotent resumable transaction that refills the queue | `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md` | yes | high |
-| L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | after L-5 | high |
+| L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | yes | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
-| L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | after L-5 | medium |
+| L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | yes | medium |
 
 Dependencies, stated rather than implied: L-1 was the prerequisite for
 everything else, because nothing else in this plan could be trusted while
@@ -63,8 +64,9 @@ its tests did not run -- it shipped 12 September 2026 (archived at
 became startable; L-2 and L-3 have since shipped too (archived at
 `plans/archive/L-2_2026-09-12.md` and `plans/archive/L-3_2026-09-13.md`).
 L-4 shipped 14 September 2026 (archived at
-`plans/archive/L-4_2026-09-14.md`), so L-5 is now startable. L-6 must follow
-L-5, because it tests the transaction. L-9 is last and is the gate.
+`plans/archive/L-4_2026-09-14.md`), and L-5 shipped the same day (archived at
+`plans/archive/L-5_2026-09-14.md`), so L-6 is now startable -- it tests the
+transaction L-5 just built. L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -102,78 +104,9 @@ queues a survivor in `meadow-slice-pending-deletions` instead of retrying
 inside the lock; `doctor` reports the queue and `check_docs.py` skips listed
 paths. Full specification and outcome: `plans/archive/L-4_2026-09-14.md`.
 
-## L-5 — closeout is an idempotent resumable transaction
-
-**Objective.** One closeout, one recorded phase journal, one push, and the
-queue refilled and the specification archived inside the transaction.
-
-**Non-goals.** Do not change the queue's item schema or the ledger's row
-format. Do not decide where the refill is committed — see the decision below.
-
-**Files.** `tools/slice.ps1`, `tools/check_docs.py`, `CHATGPT.md`.
-
-**Prerequisite.** L-4. The ownership question is settled: Dave, 12 Sep 2026 --
-**the refill is committed in the slice's worktree, so it travels into
-`master` inside the merge commit.** One push, one atomic state, and a failed
-closeout leaves `master` untouched. Two consequences this slice carries:
-`CHATGPT.md`'s "never on the branch" rule is deleted in the same commit, and
-two lanes refilling at once can conflict in `NEXTSTEPS.md`, which L-6 case 3
-must then cover.
-
-**Algorithm.**
-
-1. Write a phase journal at a closeout journal beside the lifecycle lock in the shared git directory, named meadow-slice-closeout.json holding `id`,
-   `branch`, `lane` and the last completed phase, using the phase names the
-   injection hook already uses. Write it after each phase. Delete it when the
-   transaction completes.
-2. On entry, if a journal exists for this branch, skip every phase up to and
-   including the recorded one. Each phase must be individually idempotent:
-   the merge checks whether it has already landed with
-   `Test-SliceBranchMerged`; the ledger edit already tolerates an absent row;
-   the branch deletion already checks the ref exists.
-3. Add the two manual steps as phases, on the branch, before the merge, so
-   both land inside the merge commit. `archived`: move the delivered slice's
-   specification out of its `plans/now/` file into the archive, as
-   ID_date.md, leaving the one-line pointer `plans/README.md` requires.
-   `refilled`: remove the delivered item from `## Next up` and promote the
-   item its `Next after:` names; if `Next after:` says
-   `none -- <plan> is complete`, do not promote, and print that the lane
-   needs a new item. Commit both onto the slice branch, then merge. Delete
-   `CHATGPT.md`'s rule that the queue is updated on `master` and never on the
-   branch, and `CLAUDE.md`'s matching sentence if it disagrees.
-4. Push once, after `refilled`, with every commit the transaction made.
-   Remove the second and third pushes.
-5. If any phase throws, print the journal's phase and the exact recovery
-   command, which is `tools/slice.ps1 resume -Lane <lane>`.
-6. Fill the whole end-of-slice report rather than three quarters of it. The
-   `Next slice`, `Other lane` and `Start it with` lines were left for the
-   session to derive by hand because deriving them needed the owning plan;
-   `next_after` is now parsed and the successor has just been promoted, so
-   all three are lookups. Print the branch diffstat the merge produced in the
-   same block. Between them these are what 639 hand-run `git` calls after the
-   last product edit were reconstructing.
-
-**Tests and failure injection.** Extend L-2's injected-phase test to the two
-new phases and assert `resume` completes them. Add
-`test_closeout_pushes_exactly_once`, counting pushes with a local bare remote
-and its reflog. Add `test_refill_promotes_the_named_successor`, asserting the
-queue is one item shorter, the successor is present, and the specification
-moved.
-
-**Proof.** `present: tools/slice.ps1 :: queue not refilled by 'finish'`
-
-**Risk.** High. Save-and-schema class: it writes the queue and moves plan
-files. Every step is a file move or a text edit with a test.
-
-**Expected improvement.** 43 surplus `finish` calls and 10 never-finished
-sessions become 0 retries from partial state. 8 of Dave's 18 mid-session
-questions disappear, because promotion becomes a lookup. And the cost
-objective: 845 queue, plan, check and ledger calls after the last product
-edit, roughly 156M tokens or 13% of the window, become one command; the 639
-hand-run `git` calls lose their reason to exist. This is the slice the 40%
-target rests on.
-
-**Next slice.** L-6.
+L-5 (closeout is one transaction: a phase journal, one push, and
+archive+refill committed on the branch before merge) shipped 14 September
+2026. Full specification and outcome: `plans/archive/L-5_2026-09-14.md`.
 
 ## L-6 — two lanes closing out at once is a test
 
