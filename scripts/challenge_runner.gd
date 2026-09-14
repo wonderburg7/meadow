@@ -824,6 +824,8 @@ func on_queen_build_site_chosen(hex: Vector2i) -> void:
 	if site == null:
 		return
 	site.build_time_override = Stages.FAST_BUILD_TIME
+	if Session.starting_level == 1:
+		site.nectar_capacity_override = Stages.C1_NECTAR_CELL_CAPACITY
 	main.queen.target_cell = site
 	main.queen.state = main.Bee.State.TO_BUILD_SITE
 

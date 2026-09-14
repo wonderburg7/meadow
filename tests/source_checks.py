@@ -795,6 +795,64 @@ def check_hive_stock_epoch_cache(problems):
         )
 
 
+def check_challenge_1_nectar_capacity(problems):
+    """C1-27: Challenge 1's nectar goal and per-cell cap share one owner."""
+    stages_path = os.path.join(ROOT, "challenge_stages.gd")
+    runner_path = os.path.join(ROOT, "challenge_runner.gd")
+    cell_path = os.path.join(ROOT, "hive_cell.gd")
+    for path in (stages_path, runner_path, cell_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for Challenge 1 nectar capacity check" % os.path.basename(path))
+            return
+
+    stages_src = open(stages_path, encoding="utf-8").read()
+    runner_src = open(runner_path, encoding="utf-8").read()
+    cell_src = open(cell_path, encoding="utf-8").read()
+
+    if not re.search(r"const\s+C1_NECTAR_CELL_CAPACITY\s*:=\s*150\.0", stages_src):
+        problems.append("challenge_stages.gd: C1_NECTAR_CELL_CAPACITY must be 150.0")
+    if not re.search(
+        r"const\s+NECTAR_TARGET\s*:=\s*C1_NECTAR_CELL_CAPACITY", stages_src
+    ):
+        problems.append(
+            "challenge_stages.gd: NECTAR_TARGET must derive from "
+            "C1_NECTAR_CELL_CAPACITY"
+        )
+
+    capacity_body = _func_body(cell_src, "capacity_for")
+    if capacity_body is None or not re.search(
+        r'resource_type\s*==\s*"nectar"\s+and\s+nectar_capacity_override\s*>\s*0\.0',
+        capacity_body,
+    ):
+        problems.append(
+            "hive_cell.gd: capacity_for() does not read the positive "
+            "nectar_capacity_override for nectar"
+        )
+
+    build_assignments = list(re.finditer(r"^\s*(\w+)\.build_time_override\s*=.*$", runner_src, re.MULTILINE))
+    if not build_assignments:
+        problems.append("challenge_runner.gd: no build_time_override assignment to pair with the nectar cap")
+    for assignment in build_assignments:
+        line_end = runner_src.find("\n", assignment.end())
+        line_end = len(runner_src) if line_end == -1 else line_end
+        following = "\n".join(runner_src[line_end:].splitlines()[:3])
+        site = assignment.group(1)
+        if not re.search(
+            r"%s\.nectar_capacity_override\s*=\s*Stages\.C1_NECTAR_CELL_CAPACITY"
+            % re.escape(site),
+            following,
+        ):
+            problems.append(
+                "challenge_runner.gd: %s.build_time_override assignment has no "
+                "matching %s.nectar_capacity_override assignment" % (site, site)
+            )
+        elif "if Session.starting_level == 1:" not in following:
+            problems.append(
+                "challenge_runner.gd: %s.nectar_capacity_override is not "
+                "limited to Challenge 1" % site
+            )
+
+
 # The file holding the settings catalogue (COLLECTIONS/TUNABLES/
 # SESSION_KEYS) -- moved out of debug_panel.gd, which is now a view of
 # it. Named here rather than inline so the check follows the catalogue.
@@ -2647,6 +2705,7 @@ def main():
     check_catalogue_alignment(problems)
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)
+    check_challenge_1_nectar_capacity(problems)
     check_role_count_key_ownership(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
