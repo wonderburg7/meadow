@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/C1-27` (`codex/C1-27`) | Codex | a Challenge 1 wax cell holds 150 nectar, not 200. | Codex | in progress | none | `plans/now/challenge-1.md` "Slice 27 — a Challenge 1 wax cell holds 150 nectar, not 200" |
-| `.worktrees/L-6` (`claude/L-6`) | Claude | two lanes closing out at once is a test, not a hope. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-6 — two lanes closing out at once is a test" |
