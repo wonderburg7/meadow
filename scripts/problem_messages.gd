@@ -30,16 +30,38 @@ const SIGNALS := [
 
 static func signal_lines(state: Dictionary) -> Array:
 	var lines: Array = []
-	for signal in SIGNALS:
-		if not _matches(state, signal.condition):
+	for entry in SIGNALS:
+		if not _matches(state, entry.condition):
 			continue
-		var line: Array = [Callable(ProblemMessages, str(signal.message)).call(state), int(signal.severity)]
-		if signal.action != null:
-			line.append(signal.action)
-		if signal.category != null:
-			line.append(signal.category)
+		var line: Array = [_dispatch(str(entry.message), state), int(entry.severity)]
+		if entry.action != null:
+			line.append(entry.action)
+		if entry.category != null:
+			line.append(entry.category)
 		lines.append(line)
 	return lines
+
+
+## SIGNALS names each row's message function by its string identifier
+## rather than a Callable, since a static function cannot bind `self` to
+## address its own script for dynamic dispatch (there is no instance, and
+## this file preloading itself back is not allowed). One `match` covering
+## the same identifiers `SIGNALS` already lists keeps both in one place.
+static func _dispatch(message: String, state: Dictionary) -> String:
+	match message:
+		"signal_starving": return signal_starving(state)
+		"signal_hungry_brood": return signal_hungry_brood(state)
+		"signal_dead_cells": return signal_dead_cells(state)
+		"signal_low_pollen": return signal_low_pollen(state)
+		"signal_low_food": return signal_low_food(state)
+		"signal_no_nurses": return signal_no_nurses(state)
+		"signal_no_free_cells": return signal_no_free_cells(state)
+		"signal_hungry": return signal_hungry(state)
+		"signal_no_foragers": return signal_no_foragers(state)
+		"signal_no_comb_workers": return signal_no_comb_workers(state)
+		"signal_hard_rain": return signal_hard_rain(state)
+		"signal_rain": return signal_rain(state)
+	return ""
 
 
 static func _matches(state: Dictionary, condition: Dictionary) -> bool:
