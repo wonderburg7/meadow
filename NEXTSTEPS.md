@@ -459,7 +459,7 @@ lane's slot below.
    - Files: `plans/now/challenge-1.md`, `checks/ready/C-7.md`, `checks/ready/C-31.md`, `checks/ready/C-42.md`
    - Check: Dave completes C-7, C-31 and C-42; `tools/verify.ps1` green
    - Proof: `present: checks/ready/C-7.md :: PASS:`
-   - Next after: none -- Challenge 1 closes unless the acceptance pass finds a new defect.
+   - Next after: none -- Challenge 1 is complete.
 
 4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
