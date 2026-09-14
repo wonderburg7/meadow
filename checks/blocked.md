@@ -57,24 +57,6 @@ three would mean it uses less vertical space"). Re-run the cell half only.
 
 Owner: `plans/now/ui-w.md` UI-W-3.
 
-### C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself
-
-Play Challenge 1 slowly through 1.12 (build a second comb cell) and 1.13 (set
-the new cell aside for pollen) -- `docs/challenge-stages.md` lists every
-stage. Once the second cell is built and the first is completely full, let
-the queen bring home one more nectar trip, so it lands in the second cell,
-before you set that cell to Pollen. When 1.14 (switch her focus to pollen)
-begins with nectar still in that cell, watch for Dr Gallerin, then select the
-queen, select the cell and press "Empty this cell".
-
-PASS: Dr Gallerin says the pollen cell has nectar in it and to empty it or build another cell; pressing "Empty this cell" sends the queen to carry the nectar out herself, with no role change and no second bee needed.
-
-Blocked by: Challenge 1 Slice 27. In Dave's 12 Sep 2026 run the situation
-could not arise: the first cell's real capacity is 200, not 150, so the extra
-trip went into it (to 155) instead of into the second cell.
-
-Owner: `plans/now/challenge-1.md` Slice 27.
-
 ### C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager
 
 Start Challenge 2 and stay in stage 2.1 (watch the nectar stores fall, then
@@ -92,24 +74,6 @@ this wording before the check moves back: 2.1 has not taught the Forager
 role, so nothing can be raised as one there.
 
 Owner: `plans/now/ui-w.md` UI-W-2.
-
-### C-42 -- the queen keeps her nectar when the comb has no room
-
-What this checks: the queen never loses nectar she gathered just because
-there is nowhere to put it. In Challenge 1 at stage 1.12 (build a second comb
-cell), before building it, make sure the first cell is completely full. Send
-the queen to a flower, bring her home, and watch her at the hive. Then build
-the second cell. Later, at 1.14 (switch her focus to pollen), fill every
-nectar cell and let her bring nectar home again.
-
-PASS: at 1.12 she waits at the hive still carrying her nectar and the cell's total does not change, and once the second cell exists she puts that same load into it; at 1.14 Dr Gallerin warns there is no room for nectar before that trip is thrown away.
-
-Blocked by: Challenge 1 Slice 27. Today a Challenge 1 cell is only
-completely full at 200: at 150 the lesson ends and she stops, but a later
-trip tops the cell up past 150 (Dave, 12 Sep 2026), so "full" never happens
-where this check expects it.
-
-Owner: `plans/now/challenge-1.md` Slice 27.
 
 ### C-46 -- comb builders spread across six walls before opening another site
 

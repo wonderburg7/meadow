@@ -422,20 +422,16 @@ contract. Full record: `plans/archive/L-5_2026-09-14.md`. Its `Next after`
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-3. **[Codex] C1-27 -- a Challenge 1 wax cell holds 150 nectar, not 200.**
-   C1-23 moved the nectar lesson's goal to 150 but left the cell's capacity
-   at `GameConfig.cell_capacity` (200), so a later trip tops the cell past
-   150 (Dave saw 155) and a full comb never happens at 150. Dave chose on 13
-   Sep 2026 to cap Challenge 1's wax cells at 150. Add a per-cell
-   `nectar_capacity_override` beside `build_time_override`, set from one
-   Challenge 1 constant where the runner already sets the build-time
-   override; open world and Challenge 2 stay at 200. Leave the goal code
-   alone -- C2 is rewriting it.
-   - Plan: `plans/now/challenge-1.md` -- "Slice 27 — a Challenge 1 wax cell holds 150 nectar, not 200"
-   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/hive_cell.gd`, `tests/source_checks.py`
-   - Check: a new `tests/source_checks.py` check proves `capacity_for` reads `nectar_capacity_override` and that `challenge_runner.gd` sets it wherever it sets `build_time_override`; `tools/verify.ps1` green
-   - Proof: `absent: scripts/hive_cell.gd :: nectar_capacity_override`
-   - Next after: C1-7 -- the Challenge 1 acceptance playthrough, which Dave runs.
+3. **[Codex] C1-7 -- the Challenge 1 acceptance playthrough and copy pass.**
+   Run the complete Challenge 1 acceptance pass now that the nectar and pollen
+   arcs are executable. Record any new findings in this plan, complete the
+   current ready checks, and update the user-facing Challenge documentation
+   only where the pass proves it inaccurate.
+   - Plan: `plans/now/challenge-1.md` -- "Challenge 1 acceptance pass"
+   - Files: `plans/now/challenge-1.md`, `checks/ready/C-7.md`, `checks/ready/C-31.md`, `checks/ready/C-42.md`
+   - Check: Dave completes C-7, C-31 and C-42; `tools/verify.ps1` green
+   - Proof: `present: checks/ready/C-7.md :: PASS:`
+   - Next after: none -- Challenge 1 closes unless the acceptance pass finds a new defect.
 
 4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control

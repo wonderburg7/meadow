@@ -12,10 +12,10 @@ extends RefCounted
 ## their differences.
 class_name ChallengeStages
 
-## Challenge 1's 1.11 nectar lesson completes when its nectar cell reaches
-## this amount. It teaches a meaningful reserve rather than filling the cell
-## completely.
-const NECTAR_TARGET := 150.0
+## Challenge 1's wax cells hold this much nectar. The 1.11 lesson completes
+## when one reaches that capacity, so the goal and storage rule cannot drift.
+const C1_NECTAR_CELL_CAPACITY := 150.0
+const NECTAR_TARGET := C1_NECTAR_CELL_CAPACITY
 ## Challenge 1's 1.13 pollen lesson completes when its pollen cell reaches
 ## this amount. Like the preceding nectar lesson, it teaches a meaningful
 ## reserve rather than filling the cell completely.

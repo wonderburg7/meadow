@@ -138,6 +138,11 @@ var builders: Array = []
 ## cell in the hive (or into a save, if building outlasts the Challenge).
 var build_time_override: float = -1.0
 
+## Zero means "use the normal nectar capacity". Challenge 1 sets this on
+## its wax-cell sites so its 150-nectar lesson does not change other modes,
+## resources, or the shared GameConfig autoload.
+var nectar_capacity_override: float = 0.0
+
 ## Set by whichever of hive.gd/world_building.gd/saving.gd created this
 ## cell, so _health_factor can reach main.season directly instead of a
 ## per-frame get_nodes_in_group lookup on the brood-development path.
@@ -247,7 +252,7 @@ var slot_users: Array = [null, null, null, null, null, null]
 
 func _ready() -> void:
 	add_to_group("hive_cells")
-	capacity = GameConfig.cell_capacity
+	capacity = capacity_for("nectar")
 	cell_size = GameConfig.hive_cell_size
 	squashed = Session.use_sprite_hex_grid
 
@@ -671,6 +676,8 @@ func is_empty() -> bool:
 ## Honey cells hold their own amount, which can be tuned separately from
 ## the raw-store cells.
 func capacity_for(resource_type: String) -> float:
+	if resource_type == "nectar" and nectar_capacity_override > 0.0:
+		return nectar_capacity_override
 	var config_field: String = Resources.entry(resource_type).get("capacity_config", "")
 	if config_field == "":
 		return GameConfig.cell_capacity
