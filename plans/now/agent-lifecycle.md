@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-6 -- two lanes closing out at once is a test, not a hope | Dependency: none | Verified: 2026-09-14
+Status: active | Owner: Dave / Claude | Next: L-7 -- the queue cannot contradict itself | Dependency: none | Verified: 2026-09-14
 
 ## Objective
 
@@ -52,7 +52,6 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-6 | two lanes closing out at once is a test, not a hope | `tests/test_source_checks.py` | yes | high |
 | L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
 | L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | yes | medium |
@@ -64,9 +63,10 @@ its tests did not run -- it shipped 12 September 2026 (archived at
 became startable; L-2 and L-3 have since shipped too (archived at
 `plans/archive/L-2_2026-09-12.md` and `plans/archive/L-3_2026-09-13.md`).
 L-4 shipped 14 September 2026 (archived at
-`plans/archive/L-4_2026-09-14.md`), and L-5 shipped the same day (archived at
-`plans/archive/L-5_2026-09-14.md`), so L-6 is now startable -- it tests the
-transaction L-5 just built. L-9 is last and is the gate.
+`plans/archive/L-4_2026-09-14.md`), L-5 shipped the same day (archived at
+`plans/archive/L-5_2026-09-14.md`), and L-6 shipped the same day too
+(archived at `plans/archive/L-6_2026-09-14.md`), so L-7 is now startable.
+L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -108,57 +108,12 @@ L-5 (closeout is one transaction: a phase journal, one push, and
 archive+refill committed on the branch before merge) shipped 14 September
 2026. Full specification and outcome: `plans/archive/L-5_2026-09-14.md`.
 
-## L-6 — two lanes closing out at once is a test
-
-**Objective.** State the concurrency contract as a test, over the five cases
-that actually happened.
-
-**Non-goals.** Do not remove the lifecycle lock. Do not make the lanes share
-a worktree.
-
-**Files.** `tests/test_source_checks.py`.
-
-**Prerequisite.** L-5.
-
-**Algorithm.** One test class, five tests, each building a fixture with a
-queue holding one `[Claude]` and one `[Codex]` item that share no file:
-
-1. `test_two_lanes_close_out_independently` — claim both, finish both in
-   sequence, assert both merged, both worktrees gone, both rows gone, the
-   queue refilled twice.
-2. Simultaneous claims: run two `start` calls concurrently; assert exactly
-   one wins the lock and the other exits non-zero with the busy message, and
-   that re-running the loser then succeeds.
-3. One lane finishing while the other works: claim both, finish one, assert
-   the other's worktree, branch and row are untouched and its `finish` then
-   succeeds with no rebase.
-4. Remote ahead: push an unrelated commit to the bare remote, then finish;
-   assert closeout either integrates it or fails with a message naming the
-   remote state, and never leaves a half-pushed transaction.
-5. Dirty coordination files, and the conflict Dave's 12 Sep decision
-   allows: leave uncommitted edits in `plans/workstreams.md` in the primary
-   checkout, then finish, and assert the transaction refuses before the merge
-   with a message naming the file. Then have both lanes refill
-   `NEXTSTEPS.md` on their own branches and merge in sequence; assert the
-   second merge either succeeds or fails naming the queue, and never leaves a
-   half-pushed transaction.
-6. Retry after a push succeeded and cleanup failed: inject failure after
-   `pushed`, assert `resume` completes and the end state matches an
-   uninterrupted run.
-
-**Tests and failure injection.** The slice is the test. Every case that fails
-on first run is a real defect and is fixed in this slice or, if it changes
-the transaction's design, escalated per `plans/README.md` rule 8.
-
-**Proof.** `absent: tests/test_source_checks.py :: def test_two_lanes_close_out_independently`
-
-**Risk.** High to discover, low to land: it adds no production code unless a
-case fails.
-
-**Expected improvement.** The 10 lifecycle-busy collisions and the 5 queue
-drift refusals become a covered contract rather than a surprise.
-
-**Next slice.** L-7.
+L-6 (the concurrency contract, over the five cases that actually happened,
+as `TwoLaneCloseoutTest`'s six tests) shipped 14 September 2026. One real
+defect surfaced and was fixed: nothing refused an uncommitted edit to
+`plans/workstreams.md` or `checks/ready.md` in the primary checkout before
+merging; `Invoke-SliceFinish` now does. Full specification and outcome:
+`plans/archive/L-6_2026-09-14.md`.
 
 ## L-7 — the queue cannot contradict itself
 

@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 import unittest
 
@@ -1300,6 +1301,359 @@ class VerifyPythonResolutionTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(override.resolve(), Path(result.stdout.strip()).resolve())
+
+
+class TwoLaneCloseoutTest(unittest.TestCase):
+    """L-6: the concurrency contract as a test, over the five cases that
+    actually happened (plans/now/agent-lifecycle.md). Every fixture claims
+    one [Claude] and one [Codex] item that share no file."""
+
+    # Every line is deliberately distinct between the two items, including
+    # "Next after:" -- an identical line in both blocks (e.g. two items both
+    # ending "none -- fixture plan is complete") gives Git's merge an
+    # ambiguous anchor to match, and it picks the wrong one. A third,
+    # unclaimed item sits between them: Git's merge cannot cleanly resolve
+    # two adjacent-but-different deletions with no unchanged line between
+    # them, even when the deletions themselves are disjoint -- exactly the
+    # spurious conflict a two-item queue would hit on every double-finish,
+    # which the real queue's floor of three items never does.
+    CLAUDE_ITEM = (
+        "1. **[Claude] A-1 -- claude fixture.**\n"
+        "   - Plan: `plans/fixture.md` -- claude fixture\n"
+        "   - Files: `scripts/sample.gd`\n"
+        "   - Check: deterministic, claude-owned\n"
+        "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+        "   - Next after: none -- claude fixture plan is complete\n"
+    )
+    ANCHOR_ITEM = (
+        "2. **[Claude] Z-9 -- unclaimed filler.**\n"
+        "   - Plan: `plans/fixture.md` -- filler\n"
+        "   - Files: `scripts/filler.gd`\n"
+        "   - Check: deterministic, filler\n"
+        "   - Proof: `absent: scripts/filler.gd :: new_function`\n"
+        "   - Next after: none -- filler plan is complete\n"
+    )
+    CODEX_ITEM = (
+        "3. **[Codex] B-1 -- codex fixture.**\n"
+        "   - Plan: `plans/fixture.md` -- codex fixture\n"
+        "   - Files: `scripts/other.gd`\n"
+        "   - Check: deterministic, codex-owned\n"
+        "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+        "   - Next after: none -- codex fixture plan is complete\n"
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.powershell = shutil.which("pwsh") or shutil.which("powershell")
+        if not cls.powershell:
+            raise unittest.SkipTest("PowerShell is required for slice.ps1 lifecycle tests")
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.remote_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        self.remote = Path(self.remote_dir.name) / "origin.git"
+        (self.root / "tools").mkdir()
+        (self.root / "plans").mkdir()
+        (self.root / "scripts").mkdir()
+        (self.root / "checks" / "ready").mkdir(parents=True)
+        shutil.copy2(SLICE_PATH, self.root / "tools" / "slice.ps1")
+        shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
+        shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
+        (self.root / "plans" / "workstreams.md").write_text(
+            "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"
+        )
+        (self.root / "checks" / "ready.md").write_text(
+            "# Ready hands-on checks\n\n## Ready to run\n\n", encoding="utf-8"
+        )
+        (self.root / "scripts" / "sample.gd").write_text(
+            "func existing():\n\tpass\n", encoding="utf-8"
+        )
+        (self.root / "scripts" / "other.gd").write_text(
+            "func existing():\n\tpass\n", encoding="utf-8"
+        )
+        subprocess.run(["git", "init", "-b", "master"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "init", "--bare", str(self.remote)], capture_output=True, text=True, check=True)
+        subprocess.run(["git", "config", "user.name", "Meadow Test"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.email", "meadow@example.invalid"], cwd=self.root, check=True)
+        # A mock verifier: -Scope branch|primary succeed unconditionally so
+        # these tests exercise the lifecycle transaction, not the real suites.
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet, [string]$Scope)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "fixture"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "remote", "add", "origin", str(self.remote)], cwd=self.root, check=True)
+        subprocess.run(["git", "push", "-u", "origin", "master"], cwd=self.root, capture_output=True, text=True, check=True)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+        self.remote_dir.cleanup()
+
+    def write_two_lane_queue(self, items=None):
+        body = "".join(
+            items if items is not None
+            else [self.CLAUDE_ITEM, "\n", self.ANCHOR_ITEM, "\n", self.CODEX_ITEM]
+        )
+        (self.root / "NEXTSTEPS.md").write_text("## Next up\n\n" + body, encoding="utf-8")
+        subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "queue both lanes"], cwd=self.root, capture_output=True, text=True, check=True)
+
+    def run_slice(self, *args, env=None, cwd=None, timeout=90):
+        return subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), *args],
+            cwd=cwd or self.root, capture_output=True, text=True, timeout=timeout,
+            env={**os.environ, **env} if env else None,
+        )
+
+    def run_finish(self, worktree, env=None, timeout=90):
+        return subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=timeout,
+            env={**os.environ, **env} if env else None,
+        )
+
+    def deliver(self, worktree, source_file, delivered_id, keep_item):
+        """Edit the delivered source file to satisfy its proof, archive its
+        spec, and rewrite NEXTSTEPS.md keeping only the other lane's item --
+        the archive+refill edit L-5 requires committed on the branch."""
+        (worktree / "scripts" / source_file).write_text(
+            "func new_function():\n\tpass\n", encoding="utf-8"
+        )
+        archive_dir = worktree / "plans" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        (archive_dir / f"{delivered_id}_2026-01-01.md").write_text(
+            f"# {delivered_id} (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+        )
+        (worktree / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n" + (keep_item or ""), encoding="utf-8"
+        )
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", f"archive {delivered_id} and refill the queue"],
+            cwd=worktree, check=True,
+        )
+
+    def branch_exists(self, branch):
+        return bool(subprocess.run(
+            ["git", "branch", "--list", branch], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip())
+
+    def test_two_lanes_close_out_independently(self):
+        self.write_two_lane_queue()
+        start_a = self.run_slice("start", "-Lane", "Claude")
+        self.assertEqual(0, start_a.returncode, start_a.stderr)
+        start_b = self.run_slice("start", "-Lane", "Codex")
+        self.assertEqual(0, start_b.returncode, start_b.stderr)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        worktree_b = self.root / ".worktrees" / "B-1"
+
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+        finish_a = self.run_finish(worktree_a)
+        self.assertEqual(0, finish_a.returncode, finish_a.stderr)
+
+        self.deliver(worktree_b, "other.gd", "B-1", self.CLAUDE_ITEM + "\n" + self.ANCHOR_ITEM)
+        finish_b = self.run_finish(worktree_b)
+        self.assertEqual(0, finish_b.returncode, finish_b.stderr)
+
+        self.assertFalse(worktree_a.exists())
+        self.assertFalse(worktree_b.exists())
+        self.assertFalse(self.branch_exists("claude/A-1"))
+        self.assertFalse(self.branch_exists("codex/B-1"))
+        ledger = (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8")
+        self.assertNotIn("A-1", ledger)
+        self.assertNotIn("B-1", ledger)
+        merged_queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertNotIn("A-1", merged_queue)
+        self.assertNotIn("B-1", merged_queue)
+        self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+        self.assertIn("func new_function():", (self.root / "scripts" / "other.gd").read_text(encoding="utf-8"))
+
+    def test_simultaneous_claims_one_wins_the_lock(self):
+        self.write_two_lane_queue()
+        common_dir = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        lock_path = (self.root / common_dir).resolve() / "meadow-slice-lifecycle.lock"
+
+        holder_script = (
+            "$stream = [System.IO.File]::Open('{}', [System.IO.FileMode]::OpenOrCreate, "
+            "[System.IO.FileAccess]::Write, [System.IO.FileShare]::None)\n"
+            "Start-Sleep -Seconds 4\n"
+            "$stream.Dispose()\n"
+        ).format(str(lock_path).replace("'", "''"))
+        holder = subprocess.Popen(
+            [self.powershell, "-NoProfile", "-Command", holder_script],
+            cwd=self.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        try:
+            time.sleep(1.5)
+            loser = self.run_slice("start", "-Lane", "Claude")
+            self.assertNotEqual(0, loser.returncode)
+            self.assertIn("slice lifecycle is busy", loser.stderr)
+        finally:
+            holder.wait(timeout=30)
+
+        retry = self.run_slice("start", "-Lane", "Claude")
+        self.assertEqual(0, retry.returncode, retry.stderr)
+        self.assertTrue((self.root / ".worktrees" / "A-1").exists())
+
+    def test_one_lane_finishing_leaves_the_other_untouched(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Codex").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        worktree_b = self.root / ".worktrees" / "B-1"
+
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+        finish_a = self.run_finish(worktree_a)
+        self.assertEqual(0, finish_a.returncode, finish_a.stderr)
+
+        # The other lane's worktree, branch and ledger row survive A's merge
+        # untouched -- it never rebases onto the new master tip.
+        self.assertTrue(worktree_b.exists())
+        self.assertTrue(self.branch_exists("codex/B-1"))
+        self.assertIn("B-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+        b_head_before = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=worktree_b, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+        self.deliver(worktree_b, "other.gd", "B-1", self.CLAUDE_ITEM + "\n" + self.ANCHOR_ITEM)
+        b_head_after_deliver = subprocess.run(
+            ["git", "rev-parse", "HEAD~0"], cwd=worktree_b, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        # deliver() only added one commit on top of the pre-A-merge head --
+        # no rebase happened underneath it.
+        parent = subprocess.run(
+            ["git", "rev-parse", f"{b_head_after_deliver}^"], cwd=worktree_b, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        self.assertEqual(b_head_before, parent)
+
+        finish_b = self.run_finish(worktree_b)
+        self.assertEqual(0, finish_b.returncode, finish_b.stderr)
+        self.assertFalse(worktree_b.exists())
+        self.assertFalse(self.branch_exists("codex/B-1"))
+
+    def test_remote_ahead_integrates_or_fails_naming_remote_state(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+
+        # An unrelated commit lands on the remote's master from outside this
+        # checkout -- exactly what the other lane's own finish, pushing from
+        # its own primary checkout, would also produce.
+        other_clone_dir = tempfile.TemporaryDirectory()
+        try:
+            other_clone = Path(other_clone_dir.name) / "clone"
+            subprocess.run(["git", "clone", str(self.remote), str(other_clone)], capture_output=True, text=True, check=True)
+            subprocess.run(["git", "config", "user.name", "Other Lane"], cwd=other_clone, check=True)
+            subprocess.run(["git", "config", "user.email", "other@example.invalid"], cwd=other_clone, check=True)
+            (other_clone / "unrelated.txt").write_text("unrelated change\n", encoding="utf-8")
+            subprocess.run(["git", "add", "unrelated.txt"], cwd=other_clone, check=True)
+            subprocess.run(["git", "commit", "-m", "unrelated remote commit"], cwd=other_clone, check=True)
+            subprocess.run(["git", "push", "origin", "master"], cwd=other_clone, capture_output=True, text=True, check=True)
+        finally:
+            other_clone_dir.cleanup()
+
+        finish = self.run_finish(worktree_a)
+        if finish.returncode == 0:
+            # Integrated: the unrelated remote commit is present on local
+            # master and the slice still landed cleanly.
+            self.assertIn("unrelated.txt", subprocess.run(
+                ["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True
+            ).stdout)
+            self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+        else:
+            combined = finish.stdout + finish.stderr
+            self.assertTrue(
+                any(marker in combined for marker in ("rejected", "non-fast-forward", "fetch first", "behind")),
+                combined,
+            )
+            # Never a half-pushed transaction: resume must still be able to
+            # find and complete this lane's outstanding work, not silently
+            # report it already done.
+            resumed = self.run_slice("resume", "-Lane", "Claude")
+            self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+            self.assertFalse(worktree_a.exists())
+            self.assertFalse(self.branch_exists("claude/A-1"))
+
+    def test_dirty_coordination_file_refuses_before_the_merge(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+
+        # An uncommitted edit to the shared ledger in the primary checkout --
+        # never made from inside a feature branch, per CLAUDE.md, but a stray
+        # edit or an interrupted `start` from the other lane can leave one.
+        ledger_path = self.root / "plans" / "workstreams.md"
+        ledger_path.write_text(ledger_path.read_text(encoding="utf-8") + "dirty\n", encoding="utf-8")
+        before = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+        finish = self.run_finish(worktree_a)
+        self.assertNotEqual(0, finish.returncode)
+        self.assertIn("plans/workstreams.md", finish.stdout + finish.stderr)
+        after = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        self.assertEqual(before, after)
+        self.assertTrue(worktree_a.exists())
+        self.assertTrue(self.branch_exists("claude/A-1"))
+
+        # Clean it up (the edit reverts to what is already committed, so
+        # there is nothing left to commit), then both lanes refill
+        # NEXTSTEPS.md on their own branches and merge in sequence -- the
+        # conflict Dave's 12 Sep decision allows, over the queue file rather
+        # than the ledger.
+        subprocess.run(["git", "checkout", "--", "plans/workstreams.md"], cwd=self.root, check=True)
+
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Codex").returncode)
+        worktree_b = self.root / ".worktrees" / "B-1"
+        self.deliver(worktree_b, "other.gd", "B-1", self.CLAUDE_ITEM + "\n" + self.ANCHOR_ITEM)
+
+        finish_a = self.run_finish(worktree_a)
+        self.assertEqual(0, finish_a.returncode, finish_a.stderr)
+
+        finish_b = self.run_finish(worktree_b)
+        combined = finish_b.stdout + finish_b.stderr
+        if finish_b.returncode == 0:
+            self.assertFalse(worktree_b.exists())
+        else:
+            self.assertIn("NEXTSTEPS.md", combined)
+        # Never a half-pushed transaction either way.
+        resumed = self.run_slice("resume", "-Lane", "Codex")
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+
+    def test_resume_after_push_succeeded_and_cleanup_failed(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+
+        failed = self.run_finish(worktree_a, env={"MEADOW_SLICE_FAIL_AFTER": "pushed"})
+        self.assertNotEqual(0, failed.returncode)
+
+        resumed = self.run_slice("resume", "-Lane", "Claude")
+        self.assertEqual(0, resumed.returncode, resumed.stderr)
+        self.assertFalse(worktree_a.exists())
+        self.assertFalse(self.branch_exists("claude/A-1"))
+        self.assertNotIn("A-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+        self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+
+        remote_head = subprocess.run(
+            ["git", "rev-parse", "master"], cwd=self.remote, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        local_head = subprocess.run(
+            ["git", "rev-parse", "master"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        self.assertEqual(local_head, remote_head)
 
 
 class CodexLocalEnvironmentTest(unittest.TestCase):

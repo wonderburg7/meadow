@@ -387,24 +387,37 @@ for both `finish` and `resume`, and pushes exactly once, at the end, instead
 of `finish`'s old two separate pushes. `CHATGPT.md` and `CLAUDE.md`'s "queue
 updated on master, never on the branch" rules are rewritten for the new
 contract. Full record: `plans/archive/L-5_2026-09-14.md`. Its `Next after`
-(L-6) fills the Claude lane's slot below.
+(L-6) filled the Claude lane's slot next.
+
+**L-6 shipped 14 September 2026.** `TwoLaneCloseoutTest` in
+`tests/test_source_checks.py` states the concurrency contract as six tests
+against a two-lane fixture. One real defect surfaced: nothing refused an
+uncommitted edit to `plans/workstreams.md` or `checks/ready.md` in the
+primary checkout before merging, so a stray edit there could be silently
+folded into or discarded by a slice's merge. `Invoke-SliceFinish`
+(`tools/slice.ps1`) now runs a `git status --porcelain` check over those
+files after the primary-branch check and before the merge, throwing and
+naming the dirty file(s). Every other case (independent double-finish,
+simultaneous-claim lock contention, one lane finishing while the other
+works, a remote-ahead push, resume after `pushed` succeeds but cleanup
+fails) passed against L-5's transaction unchanged. Full record:
+`plans/archive/L-6_2026-09-14.md`. Its `Next after` (L-7) fills the Claude
+lane's slot below.
 
 ## Next up
 
-1. **[Claude] L-6 -- two lanes closing out at once is a test, not a hope.**
-   One test class, six tests, each building a fixture with a queue holding
-   one `[Claude]` and one `[Codex]` item that share no file: both lanes
-   closing out independently, simultaneous claims racing the lifecycle lock,
-   one lane finishing while the other still works, a remote-ahead push, a
-   dirty-coordination-file refusal plus two lanes refilling in sequence, and
-   resuming after `pushed` succeeds but cleanup fails. Every case that fails
-   on first run is a real defect, fixed in this slice or escalated per
-   `plans/README.md` rule 8 if it changes the transaction's design.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-6 — two lanes closing out at once is a test"
-   - Files: `tests/test_source_checks.py`
-   - Check: the six new tests in `tests/test_source_checks.py`, run by `tools/verify.ps1`; nothing player-facing changes, so Dave has nothing to try
-   - Proof: `absent: tests/test_source_checks.py :: def test_two_lanes_close_out_independently`
-   - Next after: L-7 -- the queue cannot contradict itself.
+1. **[Claude] L-7 -- the queue cannot contradict itself.**
+   `NEXTSTEPS.md` can list an id as both ready (in `## Next up`) and not
+   startable (in `## Not in the queue, and why`) with nothing to catch it.
+   Add `check_queue_section_agreement(errors)` to `tools/check_docs.py`,
+   matching ids in both sections' bolded leads; register it with the other
+   queue checks so `verify.ps1`'s doc stage runs it; fix any live
+   contradiction in the same commit.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-7 — the queue cannot contradict itself"
+   - Files: `tools/check_docs.py`
+   - Check: `test_an_id_in_both_queue_sections_is_rejected` in `QueueSchemaChecksTest`, run by `tools/verify.ps1`; nothing player-facing changes, so Dave has nothing to try
+   - Proof: `absent: tools/check_docs.py :: def check_queue_section_agreement`
+   - Next after: L-8 -- a Godot failure names which of five things broke.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
