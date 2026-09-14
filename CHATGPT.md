@@ -42,12 +42,17 @@ block, and Claude reviews the full diff and then runs `finish`. A hands-on
 check outstanding is never a reason to hold a branch open -- file it in
 `checks/ready.md` and finish.
 
-`finish` does not refill the queue or archive the delivered slice's
-specification. Do both by hand after it succeeds, for your own lane only:
-promote the item's `Next after:` into the `[Codex]` lane, pull one ready slice
-from an owning plan if that empties the lane, and move the shipped slice's
-specification into `plans/archive/` leaving a one-line pointer. Never edit the
-`[Claude]` lane's entries.
+`finish` does not author the refill or the archive write-up -- do both by
+hand, for your own lane only, **before** running `finish`, on the slice's own
+branch: promote the item's `Next after:` into the `[Codex]` lane (pulling one
+ready slice from an owning plan if that empties it), and move the shipped
+slice's specification into `plans/archive/` leaving a one-line pointer. Never
+edit the `[Claude]` lane's entries. `finish` gates on both: its `archived`
+and `refilled` phases refuse to merge until the specification has moved and
+the delivered item is gone from `## Next up`, and once they pass, both
+commits land inside the merge itself -- there is no separate queue-refresh
+step afterwards, and no window where the merge lands but the refill does
+not.
 
 ### Documentation and project-state ownership
 
@@ -62,9 +67,10 @@ integration path.
 Canonical coordination files describe the state of the integrated `master`
 branch, so their ownership is stricter:
 
-- `NEXTSTEPS.md` is the canonical integrated-project queue. Update it on
-  `master` after a merge lands, never on the branch: whoever integrated the
-  slice refills its lane.
+- `NEXTSTEPS.md` is the canonical integrated-project queue. Update it on the
+  slice's own branch, before running `finish`: the refill travels into
+  `master` inside the merge commit that `finish` makes, so there is no
+  separate step on `master` afterwards and no window where the two disagree.
 - `NEXTSTEPS.md` and `plans/` are shared with Claude. They state the
   integrated project priority.
 - `CLAUDE.md`, `CHATGPT.md` and `AGENTS.md` are tool-policy and orientation

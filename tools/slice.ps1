@@ -49,6 +49,62 @@ function Invoke-WithLifecycleLock {
     }
 }
 
+# The order closeout phases happen in. A phase journal only ever records one
+# of these; "done through phase X" means every phase up to and including X's
+# index. Post-merge phases (worktree-removed, branch-deleted, ledger-deleted,
+# pushed) are shared with Invoke-SlicePostMergeCleanup, which resume already
+# reaches once Test-SliceBranchMerged is true -- ground truth, not the
+# journal, is what makes that leg resumable, so it is not re-litigated here.
+$script:ClosingPhaseOrder = @("verified", "branch-committed", "archived", "refilled", "merged")
+
+function Get-ClosingJournalPath {
+    param([string]$Root)
+    $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($commonDir)) { $commonDir = Join-Path $Root $commonDir }
+    return Join-Path $commonDir "meadow-slice-closeout.json"
+}
+
+function Get-ClosingJournal {
+    # Returns $null unless a journal exists AND names this exact branch --
+    # a journal from a different, already-finished slice must never be read
+    # as this one's progress.
+    param([string]$Root, [string]$Branch)
+    $path = Get-ClosingJournalPath -Root $Root
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    try {
+        $journal = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    }
+    catch {
+        return $null
+    }
+    if ($journal.branch -ne $Branch) { return $null }
+    return $journal
+}
+
+function Write-ClosingJournal {
+    param([string]$Root, [string]$Id, [string]$Branch, [string]$Lane, [string]$Phase)
+    $path = Get-ClosingJournalPath -Root $Root
+    ([ordered]@{ id = $Id; branch = $Branch; lane = $Lane; phase = $Phase } | ConvertTo-Json -Compress) |
+        Set-Content -LiteralPath $path -NoNewline
+}
+
+function Remove-ClosingJournal {
+    param([string]$Root)
+    Remove-Item -LiteralPath (Get-ClosingJournalPath -Root $Root) -Force -ErrorAction SilentlyContinue
+}
+
+function Test-ClosingPhaseDone {
+    # True once $Journal already recorded $Phase or a later one, so
+    # Invoke-SliceFinish can skip straight past it on resume instead of
+    # redoing a durable step (or re-running verify.ps1) a second time.
+    param([object]$Journal, [string]$Phase)
+    if (-not $Journal) { return $false }
+    $doneIndex = $script:ClosingPhaseOrder.IndexOf([string]$Journal.phase)
+    $phaseIndex = $script:ClosingPhaseOrder.IndexOf($Phase)
+    if ($doneIndex -lt 0 -or $phaseIndex -lt 0) { return $false }
+    return $doneIndex -ge $phaseIndex
+}
+
 function Get-PendingDeletionsPath {
     param([string]$Root)
     $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
@@ -109,6 +165,17 @@ function Get-NextUpItems {
     param([string]$Root)
 
     $text = Get-Content -Raw -LiteralPath (Join-Path $Root "NEXTSTEPS.md")
+    return Get-NextUpItemsFromText -Text $text
+}
+
+function Get-NextUpItemsFromText {
+    # Split out so closeout can read the queue as committed on master --
+    # separately from the branch's own worktree copy, which a slice now edits
+    # in place as part of the same transaction (see Invoke-SliceFinish's
+    # "archived"/"refilled" phases).
+    param([string]$Text)
+
+    $text = $Text
     $sectionMatch = [regex]::Match(
         $text,
         '^## Next up\s*$(.*?)(?=^## |\z)',
@@ -720,7 +787,7 @@ function Test-SliceBranchMerged {
 }
 
 function Remove-SliceLedgerRow {
-    param([string]$Root, [object]$Target)
+    param([string]$Root, [object]$Target, [switch]$SkipPush)
     $ledgerPath = Join-Path $Root "plans\workstreams.md"
     $marker = '`' + $Target.WorktreeRelative + '`'
     $lines = @(Get-Content -LiteralPath $ledgerPath)
@@ -731,21 +798,72 @@ function Remove-SliceLedgerRow {
     if ($LASTEXITCODE -ne 0) { throw "git add failed" }
     git -C $Root commit -m "Remove the $($Target.Id) worktree row from the ledger`n`n$(Get-LaneTrailer -Lane $Target.Lane)" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-    git -c http.sslBackend=openssl -C $Root push
-    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    if (-not $SkipPush) {
+        git -c http.sslBackend=openssl -C $Root push
+        if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    }
     return $true
 }
 
 function Invoke-SlicePostMergeCleanup {
-    param([string]$Root, [object]$Target)
+    # Everything that happens once the branch is known to be merged: it is
+    # the single tail both Invoke-SliceFinish (the common case) and
+    # Invoke-SliceResume (recovering after an interrupted finish) call, so
+    # there is exactly one place that regenerates the ready-check index,
+    # removes the worktree/branch/ledger row, and pushes -- once, at the end,
+    # with every commit the transaction made. Before this unification, finish
+    # pushed after the ready-index commit *and* after the ledger commit,
+    # while resume's own repair path skipped the ready-index step entirely.
+    param([string]$Root, [object]$Target, [string]$PythonPath)
+
+    $trailer = Get-LaneTrailer -Lane $Target.Lane
+
+    # The ready-check page is a shared index, deliberately generated only
+    # here, once the feature branch is known to be merged. This keeps
+    # parallel branches from appending to the same Markdown file.
+    $indexGenerator = Join-Path $Root "tools\check_docs.py"
+    $verifyScript = Join-Path $Root "tools\verify.ps1"
+    $python = if ($PythonPath) { $PythonPath } else { & $verifyScript -ResolvePythonOnly }
+    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
+        throw "could not resolve Python for the ready-check index"
+    }
+    & $python $indexGenerator --write-ready-index
+    if ($LASTEXITCODE -ne 0) { throw "could not regenerate checks/ready.md" }
+    git -C $Root add -- checks/ready.md
+    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    git -C $Root diff --cached --quiet -- checks/ready.md
+    if ($LASTEXITCODE -ne 0) {
+        git -C $Root commit -m "$($Target.Id) -- refresh ready-check index`n`n$trailer" | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed while refreshing ready-check index" }
+    }
+    Invoke-InjectedLifecycleFailure -Phase "ready-index"
+
     if (Test-Path -LiteralPath $Target.WorktreePath) {
-        git -C $Root worktree remove --force $Target.WorktreeRelative 2>$null
+        # No stderr redirect here: PowerShell 5.1 wraps a redirected native
+        # stderr line in a terminating ErrorRecord under $ErrorActionPreference
+        # = "Stop", turning git's own "failed to delete" message (the normal
+        # outcome of the case handled two lines down) into an uncaught
+        # exception instead of the non-zero exit code this checks for.
+        git -C $Root worktree remove --force $Target.WorktreeRelative
         if ($LASTEXITCODE -ne 0 -and (Test-Path -LiteralPath $Target.WorktreePath)) {
-            Remove-Item -LiteralPath $Target.WorktreePath -Recurse -Force
+            # `git worktree remove` can deregister the worktree and still fail
+            # to delete the directory (an external process briefly holding it
+            # open -- OneDrive and the Search Indexer both do this on a
+            # freshly emptied folder, same as a running Godot instance can).
+            Remove-Item -LiteralPath $Target.WorktreePath -Recurse -Force -ErrorAction SilentlyContinue
         }
         git -C $Root worktree prune
     }
+    if (Test-Path -LiteralPath $Target.WorktreePath) {
+        # Prune git's own records regardless -- they are correct even when
+        # the directory lags -- and queue the directory for a later slice
+        # command to retry, rather than holding the lifecycle lock while we
+        # wait.
+        Add-PendingWorktreeDeletion -Root $Root -WorktreeRelative $Target.WorktreeRelative
+        Write-Output "$($Target.Id) -- $($Target.WorktreeRelative) could not be deleted; queued in pending deletions for retry at the next slice command"
+    }
     Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
+
     git -C $Root show-ref --verify --quiet "refs/heads/$($Target.Branch)"
     if ($LASTEXITCODE -eq 0) {
         # The branch is already proven to be the second parent of its merge.
@@ -756,13 +874,21 @@ function Invoke-SlicePostMergeCleanup {
         if ($LASTEXITCODE -ne 0) { throw "git branch cleanup failed" }
     }
     Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
+
+    $removed = Remove-SliceLedgerRow -Root $Root -Target $Target -SkipPush
+    if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-deleted" }
+
+    # The one push for the whole transaction: every commit the merge, the
+    # ready-index refresh and the ledger removal made travels together.
+    git -c http.sslBackend=openssl -C $Root push
+    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    Invoke-InjectedLifecycleFailure -Phase "pushed"
+
     git -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch | Out-Null
     if ($LASTEXITCODE -eq 0) {
         git -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch
         if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
     }
-    $removed = Remove-SliceLedgerRow -Root $Root -Target $Target
-    if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-deleted" }
 }
 
 function Invoke-SliceStatus {
@@ -795,7 +921,8 @@ function Invoke-SliceResume {
     }
     $target = Get-SliceTarget -Root $root -Lane $Lane
     if (Test-SliceBranchMerged -Root $root -Branch $target.Branch) {
-        Invoke-SlicePostMergeCleanup -Root $root -Target $target
+        Invoke-SlicePostMergeCleanup -Root $root -Target $target -PythonPath $PythonPath
+        Remove-ClosingJournal -Root $root
         Write-Output "Slice resumed: $($target.Id) -- post-merge cleanup complete"
         return
     }
@@ -814,6 +941,28 @@ function Invoke-SliceAbort {
     if ($LASTEXITCODE -eq 0) { git -C $root branch -D $target.Branch }
     [void](Remove-SliceLedgerRow -Root $root -Target $target)
     Write-Output "Slice aborted: $($target.Id)"
+}
+
+function Get-SuccessorId {
+    # A `Next after:` value is prose ("L-6 -- two lanes closing out at once is
+    # a test, not a hope."), not a queue item -- only its leading token is an
+    # id. `none -- <plan> is complete` is the one value that names no
+    # successor at all.
+    param([string]$NextAfter)
+    if (-not $NextAfter -or $NextAfter -match '^\s*none\b') { return $null }
+    return ($NextAfter -split '--', 2)[0].Trim()
+}
+
+function Get-CopyPastePromptLine {
+    # The exact block under "## Copy-paste prompts" for $Lane, so "Start it
+    # with" in the end-of-slice report is a lookup instead of the generic
+    # "tools/slice.ps1 start -Lane <lane with a free head>" a session then had
+    # to translate into an actual prompt by hand.
+    param([string]$Text, [string]$Lane)
+    $pattern = "(?is)$([regex]::Escape($Lane)), implementing:\s*``````\s*\r?\n(.*?)``````"
+    $match = [regex]::Match($Text, $pattern)
+    if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    return $null
 }
 
 function Invoke-SliceFinish {
@@ -839,41 +988,57 @@ function Invoke-SliceFinish {
     }
     $id = $branchMatch.Groups["id"].Value
     $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
+    $otherLane = if ($lane -eq "Claude") { "Codex" } else { "Claude" }
     $trailer = Get-LaneTrailer -Lane $lane
     $worktreeRelative = ".worktrees/$id"
 
-    $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
-    $verifyCmd = Get-Command $verifyScript
-    # A hashtable splat, not an array: array splatting passes its elements as
-    # positional arguments, so "-Quiet" bound to verify.ps1's $PythonPath and
-    # every closeout died on "the supplied Python interpreter does not exist".
-    $verifyArgs = @{}
-    if ($verifyCmd.Parameters.ContainsKey("Quiet")) {
-        $verifyArgs["Quiet"] = $true
-    }
-    if ($PythonPath -and $verifyCmd.Parameters.ContainsKey("PythonPath")) {
-        $verifyArgs["PythonPath"] = $PythonPath
-    }
-    if ($verifyCmd.Parameters.ContainsKey("Scope")) {
-        $verifyArgs["Scope"] = "branch"
-    }
-    try {
-        $verifyOutput = & $verifyScript @verifyArgs 2>&1
-        $verifyExit = $LASTEXITCODE
-    }
-    catch {
-        $verifyOutput = $_ | Out-String
-        $verifyExit = 1
-    }
-    $verifyOutput | ForEach-Object { Write-Output $_ }
-    if ($verifyExit -ne 0) {
-        Write-Error "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched"
-        exit 1
-    }
-    Invoke-InjectedLifecycleFailure -Phase "verified"
+    $journal = Get-ClosingJournal -Root $worktreeRoot -Branch $branch
 
-    $items = Get-NextUpItems -Root $worktreeRoot
-    $item = $items | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+    $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified")) {
+        $verifyCmd = Get-Command $verifyScript
+        # A hashtable splat, not an array: array splatting passes its elements as
+        # positional arguments, so "-Quiet" bound to verify.ps1's $PythonPath and
+        # every closeout died on "the supplied Python interpreter does not exist".
+        $verifyArgs = @{}
+        if ($verifyCmd.Parameters.ContainsKey("Quiet")) {
+            $verifyArgs["Quiet"] = $true
+        }
+        if ($PythonPath -and $verifyCmd.Parameters.ContainsKey("PythonPath")) {
+            $verifyArgs["PythonPath"] = $PythonPath
+        }
+        if ($verifyCmd.Parameters.ContainsKey("Scope")) {
+            $verifyArgs["Scope"] = "branch"
+        }
+        try {
+            $verifyOutput = & $verifyScript @verifyArgs 2>&1
+            $verifyExit = $LASTEXITCODE
+        }
+        catch {
+            $verifyOutput = $_ | Out-String
+            $verifyExit = 1
+        }
+        $verifyOutput | ForEach-Object { Write-Output $_ }
+        if ($verifyExit -ne 0) {
+            Write-Error "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched"
+            exit 1
+        }
+        Invoke-InjectedLifecycleFailure -Phase "verified"
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
+    }
+    else {
+        Write-Output "$id -- tools/verify.ps1 (-Scope branch) already passed this closeout; skipping"
+    }
+
+    # The delivered item's own metadata (Title, Check, Plan, Heading, Next
+    # after) must come from master's committed queue, not the worktree's --
+    # the "refilled" phase below has the session edit that very file on the
+    # branch, and by the time finish reaches it the branch's own copy may no
+    # longer list this id at all.
+    $masterNextSteps = (git show "master:NEXTSTEPS.md" | Out-String)
+    if ($LASTEXITCODE -ne 0) { throw "could not read NEXTSTEPS.md from master" }
+    $masterItems = Get-NextUpItemsFromText -Text $masterNextSteps
+    $item = $masterItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
     $handsOnNote = "none needed"
     if ($item -and $item.Check -match '(?i)hands-on check') {
         $readyDirectory = Join-Path $worktreeRoot "checks\ready"
@@ -887,18 +1052,57 @@ function Invoke-SliceFinish {
         $handsOnNote = "checks/ready/ gained $($newEntries -join ', ')"
     }
     elseif (-not $item) {
-        Write-Output "$id -- no NEXTSTEPS.md entry found; skipping the hands-on-check gate"
+        Write-Output "$id -- no NEXTSTEPS.md entry found on master; skipping the hands-on-check gate"
     }
 
-    git add -A
-    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-    $staged = git diff --cached --name-only
-    if ($staged) {
-        $commitMessage = "$id -- finish outstanding work`n`n$trailer"
-        git commit -m $commitMessage | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "branch-committed")) {
+        git add -A
+        if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+        $staged = git diff --cached --name-only
+        if ($staged) {
+            $commitMessage = "$id -- finish outstanding work`n`n$trailer"
+            git commit -m $commitMessage | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+        }
+        Invoke-InjectedLifecycleFailure -Phase "branch-committed"
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "branch-committed"
     }
-    Invoke-InjectedLifecycleFailure -Phase "branch-committed"
+
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "archived")) {
+        if ($item) {
+            $archiveMatches = @(Get-ChildItem -Path (Join-Path $worktreeRoot "plans\archive") -Filter "$id`_*.md" -File -ErrorAction SilentlyContinue)
+            $planPath = Join-Path $worktreeRoot $item.Plan
+            $headingStillLive = $false
+            if ($item.Heading -and (Test-Path -LiteralPath $planPath -PathType Leaf)) {
+                $planText = Get-Content -Raw -LiteralPath $planPath
+                $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
+                $headingStillLive = $headingRegex.IsMatch($planText)
+            }
+            if (-not $archiveMatches -or $headingStillLive) {
+                Write-Error "$id -- move the delivered slice's specification out of $($item.Plan) into plans/archive/$id`_<date>.md, leaving a one-line pointer where the heading was, then commit on this branch before finishing"
+                exit 1
+            }
+        }
+        Invoke-InjectedLifecycleFailure -Phase "archived"
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "archived"
+    }
+
+    $successorId = if ($item) { Get-SuccessorId -NextAfter $item.NextAfter } else { $null }
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "refilled")) {
+        if ($item) {
+            $branchItems = Get-NextUpItems -Root $worktreeRoot
+            if ($branchItems | Where-Object { $_.Id -eq $id }) {
+                Write-Error "$id -- remove its own entry from NEXTSTEPS.md's ## Next up (adding its named successor's full Plan/Files/Check/Proof/Next after entry unless Next after: says the plan is complete), then commit on this branch before finishing"
+                exit 1
+            }
+            if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
+                Write-Error "$id -- NEXTSTEPS.md's Next after: names '$successorId' but no [$lane] item with that id is in ## Next up yet -- add its full Plan/Files/Check/Proof/Next after entry, then commit on this branch before finishing"
+                exit 1
+            }
+        }
+        Invoke-InjectedLifecycleFailure -Phase "refilled"
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "refilled"
+    }
 
     Get-Process -Name "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -937,129 +1141,73 @@ function Invoke-SliceFinish {
     }
 
     $title = if ($item) { $item.Title } else { $branch }
-    $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
-    # -F <file> rather than -m <string>: a Title containing a double quote
-    # (FL-2's own did -- 'means "barely", not "not at all"') survives
-    # PowerShell's native-argument re-quoting fine as string content, but
-    # broke when handed to git as a command-line argument, failing the
-    # merge with a mangled ref-like error ("not something we can merge").
-    # A file sidesteps command-line quoting entirely.
-    $mergeMessageFile = New-TemporaryFile
-    try {
-        # Set-Content's UTF8 always writes a BOM in Windows PowerShell 5.1
-        # (no utf8NoBOM encoding exists here), which git would fold into
-        # the commit message as a leading invisible character -- write
-        # the file directly instead.
-        [System.IO.File]::WriteAllText($mergeMessageFile, $mergeMessage, (New-Object System.Text.UTF8Encoding $false))
-        git merge --no-ff $branch -F $mergeMessageFile
-        if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
-    }
-    finally {
-        Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
-    }
-    Invoke-InjectedLifecycleFailure -Phase "merged"
-
-    # The ready-check page is a shared index, deliberately generated only in
-    # the primary checkout once the feature branch has landed. This keeps
-    # parallel branches from appending to the same Markdown file.
-    $indexGenerator = Join-Path $root "tools\check_docs.py"
-    $python = if ($PythonPath) { $PythonPath } else { & $verifyScript -ResolvePythonOnly }
-    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
-        throw "could not resolve Python for the ready-check index"
-    }
-    & $python $indexGenerator --write-ready-index
-    if ($LASTEXITCODE -ne 0) { throw "could not regenerate checks/ready.md" }
-    git add -- checks/ready.md
-    $indexStaged = git diff --cached --name-only
-    if ($indexStaged) {
-        $indexMessage = "$id -- refresh ready-check index`n`n$trailer"
-        git commit -m $indexMessage | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "git commit failed while refreshing ready-check index" }
-    }
-
-    git -c http.sslBackend=openssl push
-    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
-    Invoke-InjectedLifecycleFailure -Phase "pushed"
-
-    $worktreePath = Join-Path $root $worktreeRelative
-    git worktree remove $worktreeRelative
-    if ($LASTEXITCODE -ne 0) {
-        # `git worktree remove` can deregister the worktree and still fail to
-        # delete the directory (an external process briefly holding it open --
-        # OneDrive and the Search Indexer both do this on a freshly emptied
-        # folder, same as a running Godot instance can). Prune git's own
-        # records regardless -- they are correct even when the directory
-        # lags -- and queue the directory for a later slice command to
-        # retry, rather than holding the lifecycle lock while we wait.
-        git worktree prune
-        if (Test-Path -LiteralPath $worktreePath) {
-            Add-PendingWorktreeDeletion -Root $root -WorktreeRelative $worktreeRelative
-            Write-Output "$id -- $worktreeRelative could not be deleted; queued in pending deletions for retry at the next slice command"
+    $preMergeSha = (git -C $root rev-parse HEAD).Trim()
+    if (-not (Test-SliceBranchMerged -Root $root -Branch $branch)) {
+        $mergeMessage = "Merge ${branch}: $title`n`n$trailer"
+        # -F <file> rather than -m <string>: a Title containing a double quote
+        # (FL-2's own did -- 'means "barely", not "not at all"') survives
+        # PowerShell's native-argument re-quoting fine as string content, but
+        # broke when handed to git as a command-line argument, failing the
+        # merge with a mangled ref-like error ("not something we can merge").
+        # A file sidesteps command-line quoting entirely.
+        $mergeMessageFile = New-TemporaryFile
+        try {
+            # Set-Content's UTF8 always writes a BOM in Windows PowerShell 5.1
+            # (no utf8NoBOM encoding exists here), which git would fold into
+            # the commit message as a leading invisible character -- write
+            # the file directly instead.
+            [System.IO.File]::WriteAllText($mergeMessageFile, $mergeMessage, (New-Object System.Text.UTF8Encoding $false))
+            git merge --no-ff $branch -F $mergeMessageFile
+            if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+        }
+        finally {
+            Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
         }
     }
-    Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
+    Invoke-InjectedLifecycleFailure -Phase "merged"
+    Write-ClosingJournal -Root $root -Id $id -Branch $branch -Lane $lane -Phase "merged"
 
-    # This branch was just merged with --no-ff above. Use the same local
-    # merge-based cleanup as resume, without requiring a remote branch that a
-    # slice intentionally never pushed.
-    git branch -D $branch
-    if ($LASTEXITCODE -ne 0) { throw "git branch cleanup failed" }
-    Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
+    $target = [PSCustomObject]@{
+        Id = $id; Lane = $lane; Branch = $branch
+        WorktreeRelative = $worktreeRelative; WorktreePath = (Join-Path $root $worktreeRelative)
+    }
+    Invoke-SlicePostMergeCleanup -Root $root -Target $target -PythonPath $PythonPath
+    Remove-ClosingJournal -Root $root
 
-    git -c http.sslBackend=openssl ls-remote --exit-code --heads origin $branch | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        git -c http.sslBackend=openssl push origin --delete $branch
-        if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+    # Both lookups below read master's NEXTSTEPS.md as the merge just left
+    # it: the delivered item gone, its successor (if any) promoted. That is
+    # what turns "Next slice" and "Other lane" into lookups instead of a
+    # session having to open the file and work it out by hand.
+    $mergedNextSteps = Get-Content -Raw -LiteralPath (Join-Path $root "NEXTSTEPS.md")
+    $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
+
+    $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
+    if ($item -and -not $successorId) {
+        $nextSliceLine = $item.NextAfter
+    }
+    elseif ($successorId) {
+        $successorItem = $mergedItems | Where-Object { $_.Id -eq $successorId -and $_.Lane -eq $lane } | Select-Object -First 1
+        $nextSliceLine = if ($successorItem) { "$($successorItem.Id) -- $($successorItem.Title)" } else { "$successorId -- (not found in NEXTSTEPS.md; check the refill)" }
     }
 
-    $ledgerPath = Join-Path $root "plans\workstreams.md"
-    # A ledger row wraps the worktree path in backticks, and a backtick is the
-    # escape character in a PowerShell wildcard: "*`<path>`*" asks -like for a
-    # *literal* asterisk, so no row ever matched, the file was rewritten
-    # unchanged, and the commit below then died on "nothing to commit". Match
-    # the row as an ordinal substring instead of a wildcard.
-    $rowMarker = '`' + $worktreeRelative + '`'
-    $lines = @(Get-Content -LiteralPath $ledgerPath)
-    $keep = @($lines | Where-Object { $_.IndexOf($rowMarker, [System.StringComparison]::Ordinal) -lt 0 })
-    if ($keep.Count -eq $lines.Count) {
-        Write-Output "$id -- no ledger row names $worktreeRelative; leaving plans/workstreams.md alone"
-    }
-    else {
-        Set-Content -LiteralPath $ledgerPath -Value $keep
-    }
+    $otherLead = $mergedItems | Where-Object { $_.Lane -eq $otherLane } | Sort-Object ItemNumber | Select-Object -First 1
+    $otherLaneLine = if ($otherLead) { "$($otherLead.Id) -- $($otherLead.Title), untouched by this merge" } else { "no [$otherLane] item in the queue -- check NEXTSTEPS.md" }
 
-    git add "plans/workstreams.md"
-    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-    # An empty commit exits 1, so a ledger that is already clean -- a re-run
-    # after a partial closeout -- must not fail the run. Ask what is staged.
-    git diff --cached --quiet
-    if ($LASTEXITCODE -ne 0) {
-        $deleteMessage = "Remove the $id worktree row from the ledger`n`n$trailer"
-        git commit -m $deleteMessage | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-
-        git -c http.sslBackend=openssl push
-        if ($LASTEXITCODE -ne 0) { throw "git push failed" }
-        Invoke-InjectedLifecycleFailure -Phase "ledger-deleted"
-    }
-    else {
-        Write-Output "$id -- ledger already clean; nothing to commit"
-    }
-
-    $queueLine = "queue not refilled by 'finish' -- check NEXTSTEPS.md by hand"
-    if ($item -and $item.NextAfter) {
-        $queueLine = "$lane lane now leads with $($item.NextAfter)"
-    }
+    $startLine = Get-CopyPastePromptLine -Text $mergedNextSteps -Lane $lane
+    if (-not $startLine) { $startLine = "tools/slice.ps1 start -Lane $lane" }
 
     Write-Output ""
     Write-Output "Slice landed: $id -- $title"
     Write-Output "Branch:       $branch  |  verify.ps1: green"
     Write-Output "Merged:       yes, to master now"
     Write-Output "Hands-on:     $handsOnNote"
-    Write-Output "Queue:        $queueLine"
-    Write-Output "Next slice:   see 'Next after:' on the item above, or the owning plan in plans/now/"
-    Write-Output "Other lane:   check NEXTSTEPS.md -- untouched by this merge"
-    Write-Output "Start it with: tools/slice.ps1 start -Lane <lane with a free head>"
+    Write-Output "Queue:        $lane lane now leads with $nextSliceLine"
+    Write-Output "Next slice:   $nextSliceLine"
+    Write-Output "Other lane:   $otherLaneLine"
+    Write-Output "Start it with: $startLine"
+    Write-Output ""
+    Write-Output "Diffstat:"
+    git -C $root diff --stat $preMergeSha master | ForEach-Object { Write-Output $_ }
 }
 
 switch ($Command) {
