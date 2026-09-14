@@ -1117,6 +1117,18 @@ function Invoke-SliceFinish {
         throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
     }
 
+    # plans/workstreams.md and checks/ready.md are written by the lifecycle
+    # itself (Get-LifecycleProducts), from the primary checkout, never from a
+    # branch. An uncommitted edit already sitting there -- a stray hand edit,
+    # or another lane's `start`/`finish` caught mid-write -- must not be
+    # silently folded into this merge or silently discarded by it.
+    $dirtyCoordination = @(git -C $root status --porcelain --untracked-files=no -- (Get-LifecycleProducts) |
+        ForEach-Object { $_.ToString() })
+    if ($dirtyCoordination) {
+        $dirtyFiles = @($dirtyCoordination | ForEach-Object { $_.Substring(3).Trim() } | Select-Object -Unique)
+        throw "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', '); commit or discard them before finishing"
+    }
+
     $primaryVerifyScript = Join-Path $root "tools\verify.ps1"
     $primaryVerifyCmd = Get-Command $primaryVerifyScript
     $primaryVerifyArgs = @{}
