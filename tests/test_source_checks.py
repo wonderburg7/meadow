@@ -204,6 +204,43 @@ class QueueSchemaChecksTest(unittest.TestCase):
 
         self.assertEqual([], errors)
 
+    def test_an_id_in_both_queue_sections_is_rejected(self):
+        text = (
+            "## Next up\n\n"
+            "1. **[Claude] X-1 -- does a thing.**\n"
+            "   - Plan: `plans/now/x.md`\n"
+            "   - Files: `scripts/x.gd`\n"
+            "   - Check: something\n"
+            "   - Proof: `absent: scripts/x.gd :: thing`\n"
+            "   - Next after: X-2.\n\n"
+            "## Not in the queue, and why\n\n"
+            "- **X-1** -- waiting on Dave.\n"
+        )
+        errors = []
+
+        check_docs.check_queue_section_agreement(errors, text)
+
+        self.assertEqual(1, len(errors), errors)
+        self.assertIn("X-1", errors[0])
+
+    def test_a_prose_mention_of_a_ready_id_is_not_rejected(self):
+        text = (
+            "## Next up\n\n"
+            "1. **[Claude] X-1 -- does a thing.**\n"
+            "   - Plan: `plans/now/x.md`\n"
+            "   - Files: `scripts/x.gd`\n"
+            "   - Check: something\n"
+            "   - Proof: `absent: scripts/x.gd :: thing`\n"
+            "   - Next after: X-2.\n\n"
+            "## Not in the queue, and why\n\n"
+            "- **X-3** -- waits for X-1 to ship first.\n"
+        )
+        errors = []
+
+        check_docs.check_queue_section_agreement(errors, text)
+
+        self.assertEqual([], errors)
+
 
 class SliceDoctorTest(unittest.TestCase):
     @classmethod

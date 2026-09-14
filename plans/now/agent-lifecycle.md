@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-7 -- the queue cannot contradict itself | Dependency: none | Verified: 2026-09-14
+Status: active | Owner: Dave / Claude | Next: L-8 -- a Godot failure names which of five things broke | Dependency: none | Verified: 2026-09-14
 
 ## Objective
 
@@ -52,7 +52,6 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-7 | the queue cannot contradict itself | `tools/check_docs.py` | yes | low |
 | L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
 | L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | yes | medium |
 
@@ -64,8 +63,9 @@ became startable; L-2 and L-3 have since shipped too (archived at
 `plans/archive/L-2_2026-09-12.md` and `plans/archive/L-3_2026-09-13.md`).
 L-4 shipped 14 September 2026 (archived at
 `plans/archive/L-4_2026-09-14.md`), L-5 shipped the same day (archived at
-`plans/archive/L-5_2026-09-14.md`), and L-6 shipped the same day too
-(archived at `plans/archive/L-6_2026-09-14.md`), so L-7 is now startable.
+`plans/archive/L-5_2026-09-14.md`), L-6 shipped the same day too (archived
+at `plans/archive/L-6_2026-09-14.md`), and L-7 shipped the same day too
+(archived at `plans/archive/L-7_2026-09-14.md`), so L-8 is now startable.
 L-9 is last and is the gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
@@ -115,46 +115,14 @@ defect surfaced and was fixed: nothing refused an uncommitted edit to
 merging; `Invoke-SliceFinish` now does. Full specification and outcome:
 `plans/archive/L-6_2026-09-14.md`.
 
-## L-7 — the queue cannot contradict itself
-
-**Objective.** `NEXTSTEPS.md` currently lists `UI-U-1` as ready and also
-explains that it is not startable. Make that a verification failure.
-
-**Non-goals.** Do not change the queue's schema or its size bounds. Do not
-promote the existing cross-lane file-overlap warning in this slice.
-
-**Files.** `tools/check_docs.py`.
-
-**Prerequisite.** L-1.
-
-**Algorithm.**
-
-1. Add `check_queue_section_agreement(errors)`. Parse the ids in `## Next up`
-   with the existing item parser. Parse the `## Not in the queue, and why`
-   section's bolded entry names. An id appearing in both is an error naming
-   the id and both sections.
-2. Match on the bolded lead of each bullet, not the whole paragraph: the
-   prose legitimately mentions other ids as reasons.
-3. Register the check in the same list as the other queue checks so it runs
-   in `verify.ps1`'s doc stage.
-4. Fix the live contradiction in the same commit: `UI-U-1` is either ready or
-   it is not. The queue holds it as the Codex lane's leading item, so remove
-   its "not in the queue" bullet and correct the paragraph that names `A1` as
-   filling a slot `A2` occupies.
-
-**Tests and failure injection.** Add
-`test_an_id_in_both_queue_sections_is_rejected` in the existing
-`QueueSchemaChecksTest`, with a fixture naming one id in both sections.
-
-**Proof.** `absent: tools/check_docs.py :: def check_queue_section_agreement`
-
-**Risk.** Low.
-
-**Expected improvement.** The stale-queue class that the 3 September review
-ranked critical, and that recurred 9 days later, becomes enforced rather than
-described.
-
-**Next slice.** L-8.
+L-7 (the queue cannot contradict itself) shipped 14 September 2026.
+`check_queue_section_agreement` in `tools/check_docs.py` rejects an id that
+is both ready in `## Next up` and named in `## Not in the queue, and why`,
+matching only each bullet's bolded lead so legitimate prose mentions of
+other ids stay allowed. The plan's own `UI-U-1`/`A1`/`A2` contradiction had
+already been overtaken by later slices by the time this landed, so there
+was nothing live left to fix. Full specification and outcome:
+`plans/archive/L-7_2026-09-14.md`.
 
 ## L-8 — a Godot failure names which of five things broke
 

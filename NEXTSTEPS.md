@@ -404,20 +404,35 @@ fails) passed against L-5's transaction unchanged. Full record:
 `plans/archive/L-6_2026-09-14.md`. Its `Next after` (L-7) fills the Claude
 lane's slot below.
 
+**L-7 shipped 14 September 2026.** `check_queue_section_agreement` in
+`tools/check_docs.py` now rejects an id that is both ready in `## Next up`
+and named in `## Not in the queue, and why`, matching only each bullet's
+bolded lead so a legitimate prose mention of another id stays allowed. The
+plan's own `UI-U-1`/`A1`/`A2` contradiction had already been overtaken by
+later slices by the time this landed, so there was nothing live left to fix.
+A fresh worktree's headless Godot boot check failed on the missing `.godot`
+import cache during this slice -- the known false alarm L-8 (below)
+classifies as `import_cache_missing`, not a regression here; `tools/
+check_docs.py` and the full `tests/test_source_checks.py` suite were run
+directly to confirm this slice's own scope. Full record:
+`plans/archive/L-7_2026-09-14.md`. Its `Next after` (L-8) fills the Claude
+lane's slot below.
+
 ## Next up
 
-1. **[Claude] L-7 -- the queue cannot contradict itself.**
-   `NEXTSTEPS.md` can list an id as both ready (in `## Next up`) and not
-   startable (in `## Not in the queue, and why`) with nothing to catch it.
-   Add `check_queue_section_agreement(errors)` to `tools/check_docs.py`,
-   matching ids in both sections' bolded leads; register it with the other
-   queue checks so `verify.ps1`'s doc stage runs it; fix any live
-   contradiction in the same commit.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-7 — the queue cannot contradict itself"
-   - Files: `tools/check_docs.py`
-   - Check: `test_an_id_in_both_queue_sections_is_rejected` in `QueueSchemaChecksTest`, run by `tools/verify.ps1`; nothing player-facing changes, so Dave has nothing to try
-   - Proof: `absent: tools/check_docs.py :: def check_queue_section_agreement`
-   - Next after: L-8 -- a Godot failure names which of five things broke.
+1. **[Claude] L-8 -- a Godot failure names which of five things broke.**
+   Today MCP-unavailable, editor-unavailable, a baseline environment crash, a
+   scenario failure and a genuine product failure all share one exit path, and
+   one of them (a fresh worktree's missing `.godot` import cache) is a false
+   alarm about the game. Add `Get-GodotCapability` to `tools/slice.ps1`,
+   returning one of the five states with a one-line reason; call it from
+   `doctor` as `godot_capability`; rewrite `docs/headless-run-contract.md`'s
+   triage prose around the five names.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-8 — a Godot failure names which of five things broke"
+   - Files: `tools/slice.ps1`, `docs/headless-run-contract.md`
+   - Check: `test_godot_capability_names_each_failure_state`, driving all five states; nothing player-facing changes, so Dave has nothing to try
+   - Proof: `absent: tools/slice.ps1 :: function Get-GodotCapability`
+   - Next after: L-9 -- the floor is measured and split, and this plan is gated.
 
 2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
