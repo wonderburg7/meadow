@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/C1-7` (`codex/C1-7`) | Codex | the Challenge 1 acceptance playthrough and copy pass. | Codex | in progress | none | `plans/now/challenge-1.md` "Challenge 1 acceptance pass" |
