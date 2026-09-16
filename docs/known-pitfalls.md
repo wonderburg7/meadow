@@ -6,6 +6,15 @@ Moved out of root `CLAUDE.md` in the Aug 2026 context restructure
 automatically when a `.gd` file is touched. Worth knowing, because each
 of these has bitten more than once:
 
+- **A wrapping Label in an HBox with no expand flag reads one letter per
+  line.** An autowrap Label's minimum width is about zero, so unless the
+  HBox it sits in (and any `UI.with_info()` wrapper round that HBox) has
+  `SIZE_EXPAND_FILL`, the row gets its minimum width and the label wraps
+  after every glyph, while neighbouring buttons with no minimum height
+  stretch to its full height. It hit the settings window's stage row twice
+  (C-49, 12 and 17 Sep 2026). `no_collapsed_controls` in
+  `scripts/scenario_actions.gd` now fails on any visible wrapping label
+  under 24px wide, and `tests/fixtures/settings_stage_row.json` drives it.
 - **Bulk renames hitting identifiers.** "Architect" → "Comb worker"
   produced `var comb workers := 0`. Blank screen, because a parse error
   in `main.gd` means the only scene won't load. `source_checks.py` now
