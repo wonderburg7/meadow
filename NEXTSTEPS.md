@@ -418,6 +418,14 @@ directly to confirm this slice's own scope. Full record:
 `plans/archive/L-7_2026-09-14.md`. Its `Next after` (L-8) fills the Claude
 lane's slot below.
 
+**Dave's 17 Sep 2026 hands-on pass.** Eight checks: C-48 passed and is
+archived; the rest were fixed in session on `claude/pass-0917` and refiled
+(C-7, C-24, C-29, C-31, C-42, with new C-54 and C-55) or moved to
+`checks/blocked.md` behind a new slice (C-25 behind SF-1 in
+`plans/now/season-feel.md`, C-49 behind C1F-1 in `plans/now/c1-followups.md`).
+The settings stage row is fixed with a headless check, so UI-W-1 no longer
+touches `scripts/scenario_actions.gd`.
+
 ## Next up
 
 1. **[Claude] L-8 -- a Godot failure names which of five things broke.**
@@ -462,7 +470,21 @@ lane's slot below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-4. **[Codex] G1 -- the action catalogue, data only.**
+4. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from.**
+   Dave's C-49 (17 Sep 2026): the settings stage arrows rebuild gates and
+   prompts but never the world, so going back into a stage whose goal the
+   world already meets advances again, and the queen, tunnel and cells never
+   match the stage shown. Dave chose, in session, that each stage declares its
+   starting world. Add a `setup` record to each Challenge 1 stage and a new
+   `scripts/challenge_stage_setup.gd` that applies it on both debug arrows,
+   never on a natural advance.
+   - Plan: `plans/now/c1-followups.md` -- "C1F-1 — each Challenge 1 stage sets up the world it starts from"
+   - Files: `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`
+   - Check: a new test_scenarios/c1f1_stage_setup_test.json steps forward to 1.19 and back to 1.1 and asserts each stage stays put for 2 seconds; it fails on master at the first retreat into a met goal
+   - Proof: `absent: scripts/challenge_runner.gd :: ChallengeStageSetup`
+   - Next after: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop.
+
+5. **[Codex] G1 -- the action catalogue, data only.**
    `bee.gd::_try_role_work` picks each role's work through a hardcoded
    `match` (F1), so no gate, skill or season can reach a unit of work without
    another arm. Transcribe it into a new `scripts/actions.gd`: one row per
@@ -484,11 +506,18 @@ simply a free slot in its lane.
 
 - **UI-W-1, UI-W-3, UI-W-4 and CB-1** (`plans/now/ui-w.md`,
   `plans/now/comb-builders.md`) -- from Dave's 12 Sep 2026 pass, each fully
-  specified and waiting only for a queue slot. UI-W-3 follows UI-W-2 in
-  `scripts/hud.gd`; UI-W-1 shares `scripts/scenario_actions.gd` with UI-W-2;
-  UI-W-4 follows UI-W-1 in `scripts/ui_layout.gd`. CB-1 adds to
+  specified and waiting only for a queue slot (the queue holds five). UI-W-3
+  follows UI-W-2 in `scripts/hud.gd`; UI-W-1 (now the settings width and
+  Controls list only) waits for a slot; UI-W-4, which since 17 Sep also makes
+  way for an open settings window, follows UI-W-1 in `scripts/ui_layout.gd`. CB-1 adds to
   `scripts/scenario_actions.gd` as UI-W-2 does, so it waits for UI-W-2 to
   land. CB-2 waits for CB-1's measurement to name its cause.
+
+- **C1F-2** (`plans/now/c1-followups.md`) -- the headless proof for C-7 and
+  C-42; it starts its run at 1.14 through C1F-1's setup, so it follows C1F-1.
+- **SF-1** (`plans/now/season-feel.md`) -- a new run's meadow starts with the
+  season mix it settles into (C-25, 17 Sep 2026); fully specified, waiting
+  only for a queue slot.
 
 - **The architecture review's remaining slices**
   (`plans/design/architecture-review.md`) -- everything through C4 has
