@@ -20,7 +20,7 @@ home per fact: read the plan.
 | Progression, colony adaptations and skills | `plans/design/progression.md` |
 | Catalogues, shared interfaces and update policy | `plans/design/architecture-review.md` |
 | Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
-| Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
+| Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | UI and accessibility | `plans/now/ui.md` |
 | A control inside a HUD panel (built) | `plans/archive/HUD_CONTROLS_2026-09-11.md` |
 | Hive comb rendering, hex-grid settings and comb autobuild | `plans/archive/HIVE_COMB_2026-09-12.md` |

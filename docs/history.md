@@ -96,7 +96,7 @@ All three were last known to need Dave's hands-on check; none has had
 a specific correction since, but none has an explicit "confirmed
 working" either — see `NEXTSTEPS.md`.
 
-**Updated 28 Aug — Challenge 1: First Stores, `plans/now/challenge-1.md`:**
+**Updated 28 Aug — Challenge 1: First Stores, `plans/archive/CHALLENGE1_2026-09-15.md`:**
 
 Challenge 1 ("First Stores") is playable end to end: found a colony
 from a lone queen, place comb cells by hand, collect and deposit nectar

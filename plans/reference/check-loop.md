@@ -68,7 +68,7 @@ disagree.
    must return the other one, not stop the bee. *Broken again on 9 Sep
    2026:* `freeze_bee:queen` parks the queen on `IDLING` at the end of a
    Challenge 1 stage, and two stages later a focus change lands on a bee who
-   will never act on it (`plans/now/challenge-1.md` Slice 17). The rule was
+   will never act on it (`plans/archive/CHALLENGE1_2026-09-15.md` Slice 17). The rule was
    written and nothing enforced it, which is why rule 8 below exists.
 6. **Every persistent panel takes its rectangle from `ui_layout.gd`.** No
    HUD panel file may carry a literal `offset_top`/`offset_left`. Panels
@@ -126,7 +126,7 @@ disagree.
    re-diagnosed from prose.
 
 9. **An `Owner:` line names a section that still exists.** C-7's owner was
-   "`plans/now/challenge-1.md` Slice 14", a slice archived on 3 Sep 2026, so
+   "`plans/archive/CHALLENGE1_2026-09-15.md` Slice 14", a slice archived on 3 Sep 2026, so
    the check pointed at a specification nobody could open. Two habits keep
    this true: re-point every check an archived slice owned in the same pass
    that archives it, and never reuse a retired slice number -- Challenge 1's

@@ -1758,7 +1758,7 @@ func command_deposit_at(cell: Node2D) -> void:
 ## (BeeBuilding.builder_go_to_haul_source/_target, dispatched purely by
 ## state -- neither checks role) -- but commanded directly, so it works for
 ## any bee, including the queen, whom Challenge 1 forbids ever taking
-## Role.BUILDER (durable rule, plans/now/challenge-1.md). Her own role is
+## Role.BUILDER (durable rule, plans/archive/CHALLENGE1_2026-09-15.md). Her own role is
 ## left untouched; she returns to her own role's idle dispatch the moment
 ## the cell is empty. Slice 18.
 func command_empty_cell(cell: Node2D) -> void:

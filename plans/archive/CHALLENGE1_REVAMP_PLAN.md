@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: historical-record | LAYER: history | LOAD: search Bundle only -->
 Archived: 2026-08-28. Bundles A–G are delivered. The only live scope is
-Bundle H in `plans/now/challenge-1.md`; this ledger preserves its detailed
+Bundle H in `plans/archive/CHALLENGE1_2026-09-15.md`; this ledger preserves its detailed
 specification and delivery evidence.
 
 Bundles A-G are built; Bundle H remains. Each bundle is sized for one session

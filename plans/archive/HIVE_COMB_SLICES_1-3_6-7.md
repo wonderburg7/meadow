@@ -131,7 +131,7 @@ unaffected.
 are not rendering.
 
 **Confirmed-plausible, pending a live scene-inspector look -- same
-discipline as Slice 9g in `plans/now/challenge-1.md`, which flagged exactly
+discipline as Slice 9g in `plans/archive/CHALLENGE1_2026-09-15.md`, which flagged exactly
 this shape of bug as one of two candidates without yet pinning it down.**
 
 `hive_cell.gd::_ready()` sets `z_index = 2 * axial.y + axial.x` (~line 221),
@@ -182,7 +182,7 @@ above it, before picking option 1 over option 2 -- same discipline Slice
 9g's own writeup already asks for.
 
 **Cross-reference:** if this is confirmed, re-check Slice 9g
-(`plans/now/challenge-1.md`) -- its "second manually-built cell never
+(`plans/archive/CHALLENGE1_2026-09-15.md`) -- its "second manually-built cell never
 renders" may be this same bug if that cell also happened to land above the
 centre row, in which case one fix closes both.
 

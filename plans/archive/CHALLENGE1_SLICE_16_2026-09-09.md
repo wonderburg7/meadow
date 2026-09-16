@@ -1,6 +1,6 @@
 # Challenge 1 — Slice 16, delivered 9 September 2026
 
-Extracted from `plans/now/challenge-1.md` on landing. See that file for the
+Extracted from `plans/archive/CHALLENGE1_2026-09-15.md` on landing. See that file for the
 plan's current state and open slices (17-19, then 7).
 
 ## Slice 16 — the queen works more than one flower at 1.11 — DONE 9 Sep 2026

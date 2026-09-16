@@ -43,7 +43,7 @@ of these has bitten more than once:
   Challenge, the bee, the resource and nothing about the stage -- so a rule
   meant for one stage destroyed the queen's nectar at every stage, and Dave
   found it by watching a load vanish (10 Sep 2026,
-  `plans/now/challenge-1.md` Slice 25). Challenge 1's stage 1.13 goal was the
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 25). Challenge 1's stage 1.13 goal was the
   same mistake a month earlier: `cell_designated` was documented as "the
   second cell is set aside for pollen" and implemented as "any cell is
   designated at all" (Slice 20). When a comment names a narrower case than
@@ -169,7 +169,7 @@ of these has bitten more than once:
   every one of N call sites, give it one name, one choke point, and a
   `source_checks.py` rule that fails the build when a new call site
   bypasses it — otherwise the only test is playing the game until it goes
-  wrong. See `plans/now/challenge-1.md` Slices 11-12.
+  wrong. See `plans/archive/CHALLENGE1_2026-09-15.md` Slices 11-12.
 - **Centring a control on the viewport when its two reserves differ.** The
   command tray reserves 390px on the left and 544px on the right, then
   anchors `PRESET_CENTER_BOTTOM` — so it renders 77px right of the band it
@@ -236,7 +236,7 @@ of these has bitten more than once:
   goal that names a specific object must check that object, and a goal about
   a player's choice must distinguish the choice from the automatic default;
   `designation_is_explicit` was already there to do it. See
-  `plans/now/challenge-1.md` Slice 20.
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 20.
 - **A marker reparented by some branches and not others ends up in the wrong
   world.** `challenge_runner.gd::_update_marker` reparents the shared stage
   marker in two of its four branches. The branch covering stages 1.2, 1.5,
@@ -244,7 +244,7 @@ of these has bitten more than once:
   reparenting, so after the meadow tour at 1.7/1.10 the marker stays in the
   meadow and a yellow dot appears in open ground. If several branches share
   one node, the parent belongs in one place that always runs, not in each
-  branch that remembers. See `plans/now/challenge-1.md` Slice 24.
+  branch that remembers. See `plans/archive/CHALLENGE1_2026-09-15.md` Slice 24.
 
 ## PowerShell tooling: three ways `slice.ps1 finish` broke at once
 

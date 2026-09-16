@@ -7,7 +7,7 @@ Five findings from Dave's 31 Aug hands-on pass across `checks/ready.md`'s
 efficiency Slice 4/5, Challenge 1/2 and crab-spider checks. Each was traced
 against live source before being written up here, not guessed from symptoms
 — see each slice for confirmed-vs-hypothesis evidence, matching the
-discipline `plans/now/challenge-1.md` Slices 8–9 already use.
+discipline `plans/archive/CHALLENGE1_2026-09-15.md` Slices 8–9 already use.
 
 Everything confirmed clean in this pass (efficiency Slices 1–2, crab spiders,
 Challenge 1 Bundle F) is recorded in `checks/ready.md`'s update, not here —
@@ -216,7 +216,7 @@ for the identical reason.
 change in `challenge_stages.gd`, no logic touched — matches this project's
 "a per-stage restriction/unlock list must be derived correctly, not
 hand-maintained inconsistently" durable rule already stated in
-`plans/now/challenge-1.md`.
+`plans/archive/CHALLENGE1_2026-09-15.md`.
 
 **Acceptance:** starting Challenge 2 fresh, the Meadow button is visible
 from the opening stage; the Foraging window button stays visible across

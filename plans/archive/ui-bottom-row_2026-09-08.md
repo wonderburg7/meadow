@@ -16,7 +16,7 @@ still there.
 scrolled content instead of the scroller, and the summary panel can no
 longer grow through its 16px gap. This was the plan's last open slice. C-18
 is re-filed in `checks/ready.md`, and C-7 (`checks/ready.md`, owned by
-`plans/now/challenge-1.md` Slice 14) moved back there unchanged once its
+`plans/archive/CHALLENGE1_2026-09-15.md` Slice 14) moved back there unchanged once its
 blocker shipped.
 
 **UI-T-1 shipped 2026-09-08.** The tray no longer runs off the bottom edge.
