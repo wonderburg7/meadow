@@ -103,13 +103,18 @@ class ChallengeOneOverflowContractTest(unittest.TestCase):
         self.assertIn("bee == main.queen", predicate)
         self.assertIn('bee.current_load_type == "nectar"', predicate)
 
-        discard_branch = foraging.split("discards_overflow(bee):", 1)[1].split(
+        self.assertIn("challenge_runner.discards_overflow(bee)", foraging)
+        discard_branch = foraging.split("if challenge_discards:", 1)[1].split(
             "# Keep the load until a cell changes.", 1
         )[0]
         self.assertLess(
             discard_branch.index("announce_overflow_discard()"),
             discard_branch.index("bee.current_load = 0.0"),
         )
+        # C-42, 17 Sep 2026: after a discard she waits in the hive; walking
+        # straight back out looped forever, each trip thrown away.
+        self.assertIn("State.IDLING", discard_branch)
+        self.assertNotIn("IN_HIVE_TO_EXIT", discard_branch)
         retained_load = foraging.split("# Keep the load until a cell changes.", 1)[1].split(
             "var approach", 1
         )[0]

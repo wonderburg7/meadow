@@ -43,6 +43,16 @@ const LEVELS := {
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		# Challenge 1 does not teach backup roles: a queen set to Laying with
+		# no backup chosen takes this one (a Roles key) automatically, so the
+		# first hatch is fed without a separate lesson (Dave, 17 Sep 2026).
+		# Absent on every other level, which leaves the backup to the player.
+		"queen_laying_backup": "nurse",
+		# Reserving a stocked cell for another resource never throws its
+		# contents away here: the cell keeps them, Dr Gallerin says so at
+		# 1.14, and "Empty this cell" has the queen carry them out (C-31,
+		# Dave, 17 Sep 2026). Absent elsewhere, which keeps the discard.
+		"designation_keeps_stores": true,
 	},
 	# Challenge 2: Brood, Roles and Expansion (TUTORIAL_PLAN.md). 5 cells,
 	# stocked from the last-built backward (see world_building.gd::

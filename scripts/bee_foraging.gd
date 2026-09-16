@@ -802,7 +802,19 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		# A full comb cannot receive this trip yet.  As with a miner that
 		# remembers no work, avoid repeating the same global search on every
 		# think tick until a cell mutation makes a new answer possible.
-		if bee.deposit_blocked_epoch == bee.hive.index_epoch:
+		# Forget a target that can no longer take this load first: left in
+		# place, it made a waiting bee look mid-delivery to set_focus(), so a
+		# Challenge 1 queen switched to pollen at 1.14 never set off (C-7).
+		release_cell_slot(bee)
+		bee.target_cell = null
+		var challenge_discards: bool = (
+			is_instance_valid(bee.world) and bee.world.challenge_runner != null
+			and bee.world.challenge_runner.discards_overflow(bee)
+		)
+		# The epoch gate is skipped while a discard is due: a load that began
+		# waiting before 1.14 would otherwise never reach the discard below,
+		# because entering the stage changes no cell (C-42).
+		if bee.deposit_blocked_epoch == bee.hive.index_epoch and not challenge_discards:
 			return
 		bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
 		if bee.target_cell == null:
@@ -819,11 +831,16 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 			# player designates a cell for pollen. Outside Challenge 1 this
 			# guard does not fire -- a full comb must still keep the load,
 			# which is exactly what the general case below does.
-			if is_instance_valid(bee.world) and bee.world.challenge_runner != null and bee.world.challenge_runner.discards_overflow(bee):
+			if challenge_discards:
 				bee.world.challenge_runner.announce_overflow_discard()
 				bee.current_load = 0.0
 				bee.current_load_type = ""
-				bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+				# Wait in the hive rather than walking straight back out for
+				# another trip with nowhere to go: that looped forever, each
+				# load thrown away at the door (C-42, 17 Sep 2026). A focus
+				# change, a new role or a player command wakes her, as
+				# Dr Gallerin's warning tells the player.
+				bee.state = autonomous_state(bee, State.IDLING)
 				return
 			# Keep the load until a cell changes.  Discarding it here made a
 			# full comb silently erase every later foraging trip.

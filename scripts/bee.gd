@@ -33,6 +33,7 @@ const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Levels = preload("res://scripts/levels.gd")
 const BeeIdentity = preload("res://scripts/bee_identity.gd")
 ## Only for HiveCell.EMPTY_COLOR -- the comb worker's role ring is drawn in
 ## the same colour as an empty wax cell, so the two read as the same
@@ -1816,6 +1817,14 @@ func set_focus(type: String) -> void:
 		return
 	resource_type = type
 	flower_cooldowns.clear()
+	# Challenge 1's pollen stage has no cell for nectar, so a load of it
+	# still aboard when her focus moves to pollen is thrown away here, with
+	# the same warning as at a full comb, rather than silently overwritten
+	# by her first pollen visit (C-42, 17 Sep 2026).
+	if current_load > 0.0 and current_load_type != type and is_instance_valid(world) 			and world.challenge_runner != null and world.challenge_runner.discards_overflow(self):
+		world.challenge_runner.announce_overflow_discard()
+		current_load = 0.0
+		current_load_type = ""
 	if current_flower:
 		current_flower.release(self)
 		current_flower = null
@@ -1831,7 +1840,7 @@ func set_focus(type: String) -> void:
 	if not _is_inside_hive():
 		# Already out foraging -- no need to fly home first.
 		state = State.SEEK_FLOWER
-	elif state == State.IDLING or (state == State.IN_HIVE_TO_CELL and target_cell == null):
+	elif state == State.IDLING or (state == State.IN_HIVE_TO_CELL and not _has_deliverable_target()):
 		# A bee parked on IDLING (Stage 1.11's freeze_bee) never dispatches
 		# itself again on its own, so a focus change here would otherwise
 		# be silently ignored. The same is true of a bee genuinely stuck in
@@ -1851,6 +1860,15 @@ func set_focus(type: String) -> void:
 ## backup, and only Miner, Nursery and Builder ever actually check
 ## theirs (see _idle_dispatch) -- the hud only offers the control for
 ## bees currently doing one of those.
+## Whether this bee's deposit target can still take what she carries. A
+## target that filled up or was re-designated counts as none: she is
+## waiting, not mid-delivery (C-7, 17 Sep 2026).
+func _has_deliverable_target() -> bool:
+	return (
+		target_cell != null and is_instance_valid(target_cell)
+		and target_cell.space_for(current_load_type) > 0.0
+	)
+
 func set_secondary_role(new_role: int) -> void:
 	secondary_role = -1 if new_role == role else new_role
 
@@ -1901,6 +1919,13 @@ func _apply_role(new_role: int) -> void:
 	nurse_fetching = ""
 	nurse_jelly = 0.0
 	var now_indoors := BeeStatus.works_indoors(self)
+
+	if is_queen and new_role == Role.EGG_LAYER and secondary_role == -1:
+		# A run may name the backup a Laying queen takes by default; see
+		# levels.gd's "queen_laying_backup". The player can still change it.
+		var backup_key: String = str(Levels.get_level(Session.starting_level).get("queen_laying_backup", ""))
+		if backup_key != "":
+			set_secondary_role(Roles.id_for_key(backup_key))
 
 	if _is_inside_hive():
 		# already in the hive: either start the new indoor job here, or
