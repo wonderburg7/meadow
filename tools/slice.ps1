@@ -735,6 +735,19 @@ function Invoke-SliceStart {
 
         git worktree add $worktreeRelative -b $branch | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git worktree add failed" }
+
+        # A fresh worktree has no .godot import cache, so its first headless
+        # Godot boot (tools/godot_compile_check.py, run from verify.ps1) has
+        # to reimport the whole project from scratch -- slow enough to blow
+        # past that check's 180s timeout and hang `finish`'s verify step
+        # before it ever writes a closeout journal (C1-7, 16 Sep 2026).
+        # Best-effort: a host with no Godot installed has no cache to copy.
+        $primaryGodotCache = Join-Path $root ".godot"
+        if (Test-Path -LiteralPath $primaryGodotCache) {
+            $worktreeGodotCache = Join-Path (Join-Path $root $worktreeRelative) ".godot"
+            Copy-Item -LiteralPath $primaryGodotCache -Destination $worktreeGodotCache -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
         Invoke-InjectedLifecycleFailure -Phase "started"
     }
     finally {
