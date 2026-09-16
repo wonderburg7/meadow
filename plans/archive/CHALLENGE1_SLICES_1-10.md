@@ -1,9 +1,9 @@
 # Challenge 1 revamp — Slices 1-6, 8, 9 and 10 execution record
 
 <!-- CONTEXT: plan | LAYER: history -->
-Status: complete -- every slice below is code-complete and merged to master (last: 1 Sep 2026) | Owner: Dave / Claude Code | Next: None -- archived record; the live file is `plans/now/challenge-1.md` (Slice 7 only) | Dependency: none | Verified: 2026-09-01
+Status: complete -- every slice below is code-complete and merged to master (last: 1 Sep 2026) | Owner: Dave / Claude Code | Next: None -- archived record; the live file is `plans/archive/CHALLENGE1_2026-09-15.md` (Slice 7 only) | Dependency: none | Verified: 2026-09-01
 
-Archived 1 Sep 2026 from `plans/now/challenge-1.md` so the live file holds only
+Archived 1 Sep 2026 from `plans/archive/CHALLENGE1_2026-09-15.md` so the live file holds only
 the one unshipped slice. Findings, traces and confirmed-vs-hypothesis evidence
 for Slices 1-6, 8, 9 and 10 are kept here for provenance. The outstanding
 hands-on confirmations for this work live in `checks/ready.md`, which points

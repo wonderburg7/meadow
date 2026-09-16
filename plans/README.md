@@ -148,7 +148,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
-| Challenge 1 stages and acceptance | `plans/now/challenge-1.md` |
+| Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | UI-W-1..UI-W-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/now/ui-w.md` |
 | CB-1, CB-2 -- comb builders per site and per wall | `plans/now/comb-builders.md` |
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
@@ -190,7 +190,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    begin adaptations, campaign meta, or legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth
-   per-symptom boolean to `bee.gd`; see `plans/now/challenge-1.md` Slice 12
+   per-symptom boolean to `bee.gd`; see `plans/archive/CHALLENGE1_2026-09-15.md` Slice 12
    for why that pattern kept failing.
 7. A run change resets only the `GameConfig` keys a preset or Challenge
    actually writes, never the whole object -- see
@@ -204,7 +204,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    given) fires from `_process` when that happens, not at stage entry.
 9. A lock flag on a bee says what it forbids and returns the *other*
    autonomous option. `State.IDLING` is correct only under `player_driven`,
-   where the player supplies the next state. See `plans/now/challenge-1.md`
+   where the player supplies the next state. See `plans/archive/CHALLENGE1_2026-09-15.md`
    Slices 12 and 14 for the two rounds this took.
 10. An outline that must sit on a sprite is measured off that sprite and
     recorded as a named const, never re-derived from a shape that looks
@@ -224,7 +224,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     order.** Six open slices across four plans want it, which is why so many
     of them read as "not startable" for reasons stated in four different
     places. One list, so nobody re-derives it: Challenge 1's Slices 23, 22,
-    24 and 26 (`plans/now/challenge-1.md`) come first and are what the
+    24 and 26 (`plans/archive/CHALLENGE1_2026-09-15.md`) come first and are what the
     architecture hold is waiting for, with **H4**
     (`plans/design/architecture-review.md`) between Slice 22 and Slice 24
     because 24 and 26 have no runnable acceptance until it lands (Dave,

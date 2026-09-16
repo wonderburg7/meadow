@@ -72,7 +72,7 @@ how long a mentor stays eligible before her next trip clears it). If the
 lists themselves stay empty, it's a threshold-tuning question (the band is
 too narrow for typical colony conditions). Either answer is real evidence;
 guessing a threshold change without this read first would match
-`plans/now/challenge-1.md`'s "not a blind fix" precedent for exactly this
+`plans/archive/CHALLENGE1_2026-09-15.md`'s "not a blind fix" precedent for exactly this
 kind of unconfirmed finding.
 
 **Result (2 Sep 2026, X2): confirmed operational; no threshold change.**

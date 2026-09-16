@@ -3,9 +3,9 @@
 <!-- CONTEXT: archive | LAYER: provenance -->
 Status: shipped 9 Sep 2026 | Owner: Dave / Claude Code | Verified: 2026-09-09
 
-Delivered from `plans/now/challenge-1.md`'s C-7 finding (Dave's 9 Sep 2026
+Delivered from `plans/archive/CHALLENGE1_2026-09-15.md`'s C-7 finding (Dave's 9 Sep 2026
 hands-on pass). Kept here for provenance only -- see
-`plans/now/challenge-1.md` for current work.
+`plans/archive/CHALLENGE1_2026-09-15.md` for current work.
 
 ## Slice 18 — pollen has somewhere to go, and the player learns why
 

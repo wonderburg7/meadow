@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: historical-record | LAYER: history -->
 Archived: 2026-08-28. Its live boundaries are now in
-`plans/now/challenge-1.md`. Challenge 1 is playable and Bundles A–G are
+`plans/archive/CHALLENGE1_2026-09-15.md`. Challenge 1 is playable and Bundles A–G are
 delivered. The historical
 Challenge 1/2 design and delivered mechanics are preserved in
 `docs/archive/TUTORIAL_PLAN_2026-08-24.md`.

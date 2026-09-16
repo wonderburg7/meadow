@@ -110,7 +110,7 @@ Owner was `plans/archive/LAY-1_2026-09-08.md`.
 ## 3 Sep 2026 -- hands-on pass over the 31 Aug / 1-3 Sep fixes
 
 Eleven entries confirmed, one dropped, one superseded. The five that failed
-are slices in their owning plans, not entries here: `plans/now/challenge-1.md`
+are slices in their owning plans, not entries here: `plans/archive/CHALLENGE1_2026-09-15.md`
 Slices 14-15, `plans/now/hive-comb.md` Slice 9, `plans/now/ui.md` UI-S-1 to
 UI-S-4, and `plans/now/challenge-2.md`. Two new asks became
 `plans/now/flowers.md`, and the process findings from the pass became
@@ -129,7 +129,7 @@ UI-S-4, and `plans/now/challenge-2.md`. Two new asks became
   meadow points, gathering from two flowers, being sent home and depositing
   by hand. One issue came out of it -- once she *is* given the Forager role
   at 1.11 she still pauses at flowers instead of foraging -- which is
-  `plans/now/challenge-1.md` Slice 14.
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 14.
 - **Challenge 1 Bundle D -- Slice 11's acceptance.** Confirmed on all three
   clauses: worked dry at 1.8 she stays at the flower; after the 1.10 manual
   deposit she stays inside the hive; the Job column reads "Laying"
@@ -149,11 +149,11 @@ UI-S-4, and `plans/now/challenge-2.md`. Two new asks became
 - **Challenge 1 Slice 9 fixes (9a-9j).** Confirmed except 9i's camera-follow
   and 4x speed, which never fire: the effects are set at stage entry and
   cancelled inside the same `_enter_stage()` call. That half is
-  `plans/now/challenge-1.md` Slice 14; every other item in 9a-9j passed.
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 14; every other item in 9a-9j passed.
 - **Challenge 1 selection-panel vocabulary (Slice 13), outside a Challenge.**
   Confirmed: nothing changes in a Scenario. The in-Challenge half did not
   pass -- the line is taught vocabulary but still not useful -- which is
-  `plans/now/challenge-1.md` Slice 15.
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 15.
 - **Nectar/pollen recharge reads as stuck -- the C1 half.** Confirmed: a
   dandelion showed `+0.00/s` on day 23, so the panel's rate really does
   reflect season and senescence rather than the nominal figure. The C2 half
@@ -255,7 +255,7 @@ slices in their owning plans, not entries here.
   `checks/ready.md` alongside the confirmed line, not archived here, since
   the heading as a whole isn't done).
 - Five further items from the same pass were found broken, not confirmed --
-  see `plans/now/challenge-1.md` Slice 10 (Challenge 1 Bundle D/E),
+  see `plans/archive/CHALLENGE1_2026-09-15.md` Slice 10 (Challenge 1 Bundle D/E),
   `plans/now/hive-comb.md` Slice 6 (cell rendering), and
   `plans/active/foraging-evidence.md` Slices 1-3 (orientation flight,
   proximity recruitment, safe forager return reserve), and the updated
@@ -380,7 +380,7 @@ Owner was `plans/now/ui.md` UI-Q-1/UI-Q-2.
 
 PASS confirmed. Every waiting stage from 1.1 to 1.14 reads "Now: waiting for
 instruction", with the stage's action appended from 1.2 on, and every working
-stage still narrates the activity. `plans/now/challenge-1.md` Slice 15 is
+stage still narrates the activity. `plans/archive/CHALLENGE1_2026-09-15.md` Slice 15 is
 closed.
 
 ### C-9 -- cell highlight rings follow the cup sprite's own silhouette
@@ -531,7 +531,7 @@ PASS: the stage will not clear until you select the second cell and choose
 Pollen; once you do, it clears immediately into the pollen-automation stage
 that follows.
 
-Owner: `plans/now/challenge-1.md` Slice 18.
+Owner: `plans/archive/CHALLENGE1_2026-09-15.md` Slice 18.
 
 Passed (Dave, 12 Sep 2026).
 
@@ -754,7 +754,7 @@ PASS: the goal bar becomes full and the stage advances on the deposit that
 brings the cell to at least 150 nectar, without waiting for 200; the stage's
 exit freezes the queen at that point.
 
-Owner: `plans/now/challenge-1.md` Slice 23.
+Owner: `plans/archive/CHALLENGE1_2026-09-15.md` Slice 23.
 
 Passed (Dave, 12 Sep 2026).
 
@@ -780,7 +780,7 @@ look in both the hive and meadow views before placing the cell.
 PASS: no yellow marker appears in the meadow. The yellow build marker appears
 inside the hive, at the cell-building anchor.
 
-Owner: `plans/now/challenge-1.md` Slice 24.
+Owner: `plans/archive/CHALLENGE1_2026-09-15.md` Slice 24.
 
 Passed (Dave, 12 Sep 2026).
 

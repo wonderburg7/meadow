@@ -5,7 +5,7 @@ Status: archived | Owner: Dave / Claude Code | Next: None — archived record | 
 
 Provenance only. These five slices are shipped and merged; their hands-on
 confirmations are C-7 and C-8 in `checks/ready.md`. The live plan is
-`plans/now/challenge-1.md`, which holds only Slice 7 (Dave's acceptance
+`plans/archive/CHALLENGE1_2026-09-15.md`, which holds only Slice 7 (Dave's acceptance
 pass) and this area's durable rules. Do not reopen anything here — a new
 finding against Challenge 1 while that plan is open becomes its next
 slice; a finding after it closes starts a new `plans/now/` file

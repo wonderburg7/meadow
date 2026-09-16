@@ -1,6 +1,6 @@
 # Challenge 1 — Slice 17, delivered 9 September 2026
 
-Extracted from `plans/now/challenge-1.md` on landing. See that file for the
+Extracted from `plans/archive/CHALLENGE1_2026-09-15.md` on landing. See that file for the
 plan's current state and open slices (18-19, then 7).
 
 ## Slice 17 — changing a bee's focus wakes her up — DONE 9 Sep 2026

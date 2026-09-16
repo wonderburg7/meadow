@@ -13,7 +13,7 @@ distilled elsewhere. Major current pointers are:
 
 | Topic | Current or durable pointer |
 | --- | --- |
-| Challenge 1 / Challenge 2 boundary | `plans/now/challenge-1.md` |
+| Challenge 1 / Challenge 2 boundary | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | UI | `plans/now/ui.md` |
 | Foraging evidence | `plans/active/foraging-evidence.md` |
 | Progression design | `plans/design/progression.md` |

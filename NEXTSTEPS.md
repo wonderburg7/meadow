@@ -27,7 +27,7 @@ slices, so it is archived in full at
 `plans/archive/HUD_CONTROLS_2026-09-11.md`; its check is C-43. With no
 ready slice left in that plan, C1-21 (bee.gd/bee_foraging.gd, file-disjoint
 from the Codex lane's C1-23) moves into the Claude lane below, and C1-22
-(startable on its own merits per `plans/now/challenge-1.md`) fills the
+(startable on its own merits per `plans/archive/CHALLENGE1_2026-09-15.md`) fills the
 third slot.
 
 The pass's other three fixes (HC-13, HC-14 and HC-15) landed on 10 Sep 2026 and
@@ -62,7 +62,7 @@ the now-complete `plans/archive/HIVE_COMB_2026-09-12.md`.
 **C1-23 shipped 11 Sep 2026, but the queue was never refreshed to say so.**
 `NECTAR_TARGET := 150.0` landed on master that day in three commits
 (`7702760`, `3eae1db`, `29a8c2a`) and its check is C-44
-(C-44, passed 12 Sep 2026 and archived), but this file and `plans/now/challenge-1.md` kept
+(C-44, passed 12 Sep 2026 and archived), but this file and `plans/archive/CHALLENGE1_2026-09-15.md` kept
 listing C1-23 as the Codex lane's leading item -- which is what correctly
 stopped a later `tools/slice.ps1 start -Lane Codex` from claiming it: its
 own stale-proof check refused the claim rather than silently redoing
@@ -233,7 +233,7 @@ migration path is already proved by the automated fixture tests. Full record:
 the architecture-review plan's A-G slices held under Decision A until
 Challenge 1's Slices 21-26 vacate `scripts/challenge_runner.gd` -- not yet
 true, since C1-24 still leads the Codex lane -- and nothing else in
-`plans/now/ui.md`, `plans/now/challenge-1.md` or
+`plans/now/ui.md`, `plans/archive/CHALLENGE1_2026-09-15.md` or
 `plans/design/progression.md` is currently startable, which would otherwise
 have left the Claude lane empty. Asked in this session, Dave chose to lift
 the hold for B1 specifically (not the whole A-G backlog): B1 touches only
@@ -282,7 +282,7 @@ Its `Next after` (B3) fills the Claude lane's slot below.
 **B3's own successor needed a decision.** B is the last lettered slice in
 `architecture-review.md`'s B series, and every other A/C/D/E/F/G slice was
 held under Decision A until Challenge 1's Slices 21-26 vacated
-`scripts/challenge_runner.gd`. `plans/now/challenge-1.md` shows Slices 20-26
+`scripts/challenge_runner.gd`. `plans/archive/CHALLENGE1_2026-09-15.md` shows Slices 20-26
 have all shipped -- only Slice 7 (the docs-only acceptance pass, already
 queued as the Codex lane's leading item) remains, and it does not touch
 `challenge_runner.gd` -- so that hold is lifted. Asked in this session, Dave
@@ -434,23 +434,7 @@ lane's slot below.
    - Proof: `absent: tools/slice.ps1 :: function Get-GodotCapability`
    - Next after: L-9 -- the floor is measured and split, and this plan is gated.
 
-2. **[Claude] E1 -- one placement tool.**
-   Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
-   the same dispatch nine times, with no mutual exclusion between them (F8).
-   Add one `active_placement_tool: String` on `main.gd` plus a
-   `PLACEMENT_TOOLS` catalogue on `input_selection.gd`; collapse `hud.gd`'s
-   nine per-tool signals to one `placement_tool_requested(tool_id)` and
-   `main.gd`'s nine handlers to one lookup. Each tool must still capture
-   exactly the bees it does today. Queued behind L-1 rather than leading: it
-   shares `scripts/main.gd` with the Codex lane's leading item (A2), and the
-   two lanes' leading items must stay file-disjoint.
-   - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
-   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`
-   - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
-   - Proof: `present: scripts/main.gd :: awaiting_build_cell`
-   - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
-
-4. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
+2. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
    beside "Raises:" in a selected cell's tray (C-34, 12 Sep 2026), so the
    stage cannot be finished the way it is taught. Stale gating is ruled out --
@@ -463,6 +447,36 @@ lane's slot below.
    - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
    - Next after: UI-W-3 -- a comb cell's tray uses three columns.
 
+3. **[Claude] E1 -- one placement tool.**
+   Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
+   the same dispatch nine times, with no mutual exclusion between them (F8).
+   Add one `active_placement_tool: String` on `main.gd` plus a
+   `PLACEMENT_TOOLS` catalogue on `input_selection.gd`; collapse `hud.gd`'s
+   nine per-tool signals to one `placement_tool_requested(tool_id)` and
+   `main.gd`'s nine handlers to one lookup. Each tool must still capture
+   exactly the bees it does today. It follows UI-W-2 because both change
+   `scripts/hud.gd`.
+   - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
+   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`
+   - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
+   - Proof: `present: scripts/main.gd :: awaiting_build_cell`
+   - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
+
+4. **[Codex] G1 -- the action catalogue, data only.**
+   `bee.gd::_try_role_work` picks each role's work through a hardcoded
+   `match` (F1), so no gate, skill or season can reach a unit of work without
+   another arm. Transcribe it into a new `scripts/actions.gd`: one row per
+   unit of work, in today's per-role order, carrying `id`, `label`, `roles`,
+   `band`, `modes`, `find`, `feature`, `skill`, `gate_key`, `config_flag` and
+   `season`, with every gate, skill and feature field empty. Nothing reads it
+   yet and `scripts/bee.gd` does not change. Its dependencies B3 and C1 have
+   both shipped, and it shares no file with any Claude-lane item.
+   - Plan: `plans/design/architecture-review.md` -- "G1 — the action catalogue, data only"
+   - Files: `scripts/actions.gd`, `tests/source_checks.py`
+   - Check: a `tests/source_checks.py` check that every `find` name resolves to a real function, every `roles` id is a real role, and each role's band sequence has no gaps or duplicates; nothing player-facing changes, so Dave has nothing to try
+   - Proof: `absent: tests/source_checks.py :: def check_action_catalogue`
+   - Next after: G2 -- the dispatcher reads the catalogue, sole owner of `scripts/bee.gd`.
+
 ## Not in the queue, and why
 
 Each of these wants something from Dave, something else to ship first, or
@@ -472,16 +486,15 @@ simply a free slot in its lane.
   `plans/now/comb-builders.md`) -- from Dave's 12 Sep 2026 pass, each fully
   specified and waiting only for a queue slot. UI-W-3 follows UI-W-2 in
   `scripts/hud.gd`; UI-W-1 shares `scripts/scenario_actions.gd` with UI-W-2;
-  UI-W-4 follows UI-W-1 in `scripts/ui_layout.gd`. CB-1 is file-disjoint from
-  everything queued and is the next pick when a lane empties. CB-2 waits for
-  CB-1's measurement to name its cause.
+  UI-W-4 follows UI-W-1 in `scripts/ui_layout.gd`. CB-1 adds to
+  `scripts/scenario_actions.gd` as UI-W-2 does, so it waits for UI-W-2 to
+  land. CB-2 waits for CB-1's measurement to name its cause.
 
-- **The architecture review's remaining A-to-G slices**
-  (`plans/design/architecture-review.md`), other than A2 and A4 above --
-  Decision A's hold (every A/C/D/E/F/G slice waits for Challenge 1's Slices
-  21-26 to vacate `scripts/challenge_runner.gd`) is lifted as of 12 Sep 2026,
-  since those slices have all shipped. A2, A3, A4 and C1 have all shipped;
-  C2 now leads the Codex lane and E1 is queued behind L-3 in the Claude lane.
+- **The architecture review's remaining slices**
+  (`plans/design/architecture-review.md`) -- everything through C4 has
+  shipped. E1 is in the Claude lane and G1 in the Codex lane. F1s waits for
+  UI-W-2 and UI-W-1 to clear `scripts/scenario_actions.gd`; F2s follows F1s;
+  G2 follows G1 and G3 follows G2.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) --
   the foraging tier-1 vertical slice is where the tree panel, the HUD button
   and run saving first appear. Phase A (steps 1-4) is complete precisely

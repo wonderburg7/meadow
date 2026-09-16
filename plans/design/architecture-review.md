@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2, C3 and C4 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/now/challenge-1.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: C1-27 -- Challenge 1 wax-cell capacity correction | Dependency: the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-14
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2, C3 and C4 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/archive/CHALLENGE1_2026-09-15.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: E1 -- one placement tool (Claude lane) and G1 -- the action catalogue, data only (Codex lane) | Dependency: the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-14
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -64,7 +64,7 @@ queue item's `Files:` line. Shipped the same day.
 **F. B1 is admitted early too, 12 Sep 2026.** D1 shipped in full and left the
 Claude lane with nothing else startable -- its own `Next after` (B1) is one of
 the slices Decision A holds, and nothing in `plans/now/ui.md`,
-`plans/now/challenge-1.md` or `plans/design/progression.md` was ready either.
+`plans/archive/CHALLENGE1_2026-09-15.md` or `plans/design/progression.md` was ready either.
 Asked in this session, Dave chose to lift the hold for B1 specifically rather
 than the whole A-G backlog: it touches only `scripts/resources.gd` and
 `tests/source_checks.py`, file-disjoint from every open Challenge 1 slice.
@@ -584,7 +584,7 @@ fixture, and the "existing stage-sequence test" named as a regression check by
 three separate slices does not exist -- `tests/` reaches Challenge code only
 through static regex in `source_checks.py`.
 
-**Affected.** `plans/now/challenge-1.md` Slices 21, 22, 24 and 26;
+**Affected.** `plans/archive/CHALLENGE1_2026-09-15.md` Slices 21, 22, 24 and 26;
 `plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
 the acute pair: their acceptance is *only* headless assertions, so today they
 have no acceptance at all.
