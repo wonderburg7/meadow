@@ -1,7 +1,7 @@
 # Challenge 1 — the acceptance pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: Slice 7 -- the Challenge 1 acceptance playthrough | Dependency: none | Verified: 2026-09-14
+Status: complete | Owner: Dave / Claude Code | Next: none -- Challenge 1 is complete | Dependency: none | Verified: 2026-09-15
 
 **Objective.** Challenge 1 teaches the game's core loop without ever
 advancing on behaviour the player did not command, and without ever taking
@@ -134,45 +134,9 @@ Shipped 12 Sep 2026. Full specification and delivery record:
 Shipped 12 Sep 2026. Full specification and delivery record:
 [`plans/archive/C1-26_2026-09-12.md`](../archive/C1-26_2026-09-12.md).
 
-### Challenge 1 acceptance pass
-
-Archived delivery record: `plans/archive/C1-7_2026-09-12.md`. The retained
-reference below documents the stage contract; delivery detail lives only in
-the archive.
-
-**Runs after Slices 20-24.** The 29 Aug, 30 Aug, 2 Sep and the two 9 Sep
-attempts at this pass are what found Slices 8, 9/10, 11/13, 16-19 and 20-24
-respectively. It is not worth a sixth attempt until the pollen arc works
-unattended.
-
-Once Slices 20-24 are in:
-
-- Run `.\tools\verify.ps1` (source + balance suites, function map,
-  planning-metadata checks).
-- Boot the project (`mcp__godot__*` if available this session) and play
-  Challenge 1 start to finish, checking every item in the brief's
-  "Acceptance checks" section directly (repeated here for a literal
-  checklist pass):
-  - No locked panel or role button is visible early.
-  - The Meadow button appears only after the queen enters the meadow.
-  - Manual stages never advance through automatic movement, collection,
-    building or deposit.
-  - The Forager role and its Nectar/Pollen options unlock only at their
-    specified stages.
-  - The queen stops when the nectar cell is full.
-  - Pollen foraging continues until the pollen cell reaches ≥75.
-  - Cell building never changes the queen's role to Comb worker.
-  - All visible buttons respond across their complete bounds.
-- Do the copy/current-doc pass that was Bundle H: consistent Gallerin voice
-  across the new/changed lines (1.10, 1.12, 1.13, 1.14 especially), update any
-  user-facing Challenge 1 / UI-unlock documentation to match, regenerate
-  `FUNCTION_MAP.md` only if one of its six indexed scripts' functions moved.
-- Add exactly the hands-on checks that still need Dave's eyes to
-  `checks/ready.md` (short action, expected result, pointer) — the
-  automated boot pass above covers structural correctness, not feel.
-- Rewrite this file's Status line and `NEXTSTEPS.md`'s current-slice entry
-  once this is genuinely done; archive execution detail here to
-  `plans/archive/` per the documentation lifecycle rule.
+Challenge 1 acceptance pass shipped 15 Sep 2026. Delivery records:
+[`plans/archive/C1-7_2026-09-12.md`](../archive/C1-7_2026-09-12.md) and
+[`plans/archive/C1-7_2026-09-15.md`](../archive/C1-7_2026-09-15.md).
 
 <!-- LAYER: durable-rules -->
 
