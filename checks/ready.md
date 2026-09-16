@@ -15,6 +15,8 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-24 -- peak season reads as a good summer, not a different game](ready/C-24.md)
 - [C-25 -- out-of-season flowers read as a rare find, not a standing mix](ready/C-25.md)
 - [C-29 -- the stage's camera and speed switch off when the stage ends](ready/C-29.md)
+- [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
+- [C-42 -- the queen keeps her nectar when the comb has no room](ready/C-42.md)
 - [C-48 -- Challenge 1's marker remains noticeable and findable](ready/C-48.md)
 - [C-49 -- Challenge stages can be replayed from settings](ready/C-49.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
