@@ -588,6 +588,128 @@ def check_catalogue_alignment(problems):
             )
 
 
+ACTION_REQUIRED_FIELDS = (
+    "id", "label", "roles", "band", "modes", "find", "feature", "skill",
+    "gate_key", "config_flag", "season",
+)
+
+
+def check_action_catalogue(problems):
+    """G1 of architecture-review.md: the action table is a transcription of
+    bee.gd::_try_role_work, not a second dispatcher. Check its schema, that
+    every named finder exists somewhere in the current scripts, every role is
+    a roles.gd id, each role's bands are a contiguous priority sequence, and
+    the source still contains the branch landmarks the rows describe."""
+    actions_path = os.path.join(ROOT, "actions.gd")
+    roles_path = os.path.join(ROOT, "roles.gd")
+    bee_path = os.path.join(ROOT, "bee.gd")
+    for path in (actions_path, roles_path, bee_path):
+        if not os.path.exists(path):
+            problems.append("%s not found for action catalogue check" % os.path.basename(path))
+            return
+
+    actions_src = open(actions_path, encoding="utf-8").read()
+    actions_block = catalogue_block(actions_src, "ACTIONS")
+    if actions_block is None:
+        problems.append("actions.gd: could not find const ACTIONS")
+        return
+    entries = _entry_blocks(actions_block)
+    if not entries:
+        problems.append("actions.gd: ACTIONS must contain one row per current work action")
+        return
+
+    roles_src = open(roles_path, encoding="utf-8").read()
+    role_names = set(re.findall(r"^const\s+(\w+)\s*:=\s*\d+\s*$", roles_src, re.M))
+    role_values = {
+        name: int(value)
+        for name, value in re.findall(r"^const\s+(\w+)\s*:=\s*(\d+)\s*$", roles_src, re.M)
+    }
+
+    declared_functions = set()
+    for path in glob.glob(os.path.join(ROOT, "*.gd")):
+        source = open(path, encoding="utf-8").read()
+        declared_functions.update(re.findall(r"^\s*(?:static\s+)?func\s+(\w+)", source, re.M))
+
+    ids = set()
+    bands_by_role = {}
+    for entry in entries:
+        missing = [field for field in ACTION_REQUIRED_FIELDS if _field(entry, field) is None]
+        action_id = _quoted(_field(entry, "id")) or "<unnamed action>"
+        if missing:
+            problems.append("actions.gd: %s is missing field(s) %s" % (action_id, missing))
+            continue
+        if action_id in ids:
+            problems.append("actions.gd: duplicate action id %r" % action_id)
+        ids.add(action_id)
+
+        find_name = _quoted(_field(entry, "find"))
+        if find_name not in declared_functions:
+            problems.append(
+                "actions.gd: %s.find %r is not a real function in scripts/"
+                % (action_id, find_name)
+            )
+
+        band_raw = (_field(entry, "band") or "").strip()
+        if not band_raw.isdigit():
+            problems.append("actions.gd: %s.band must be a non-negative integer" % action_id)
+            continue
+        roles_raw = _field(entry, "roles") or ""
+        role_refs = re.findall(r"Roles\.(\w+)", roles_raw)
+        if not role_refs:
+            problems.append("actions.gd: %s.roles must name at least one Roles id" % action_id)
+            continue
+        for role_name in role_refs:
+            if role_name not in role_names:
+                problems.append(
+                    "actions.gd: %s.roles names Roles.%s, which roles.gd does not define"
+                    % (action_id, role_name)
+                )
+                continue
+            bands_by_role.setdefault(role_values[role_name], []).append(int(band_raw))
+
+        for field in ("feature", "skill", "gate_key", "config_flag", "season"):
+            if _quoted(_field(entry, field)) != "":
+                problems.append(
+                    "actions.gd: %s.%s must stay empty until G3 enables action gates"
+                    % (action_id, field)
+                )
+
+    for role_id, bands in bands_by_role.items():
+        expected = list(range(len(bands)))
+        if sorted(bands) != expected:
+            problems.append(
+                "actions.gd: role id %d has bands %s, expected contiguous %s"
+                % (role_id, sorted(bands), expected)
+            )
+
+    bee_src = open(bee_path, encoding="utf-8").read()
+    landmarks = {
+        "nurse_feed_brood": "var brood = hive.find_brood_cell()",
+        "nurse_store_jelly": "state = State.TO_JELLY_CELL",
+        "nurse_make_jelly": "BeeNursery.can_make_jelly(self)",
+        "comb_clean_cell": "hive.find_cell_needing_cleaning()",
+        "comb_evict_cell": "hive.find_cell_needing_eviction()",
+        "comb_restock": "BeeBuilding.find_restock_job(self)",
+        "comb_build": "_take_next_build_target()",
+        "mine_queued_block": "var block = _next_queued_block()",
+        "mine_marked_block": "hive.find_marked_block(_mine_reference_point())",
+        "mine_automine_block": "hive.find_nearest_edge_block(",
+        "honey_deposit_load": "var pot = hive.find_honey_target()",
+        "honey_fan_cell": "var drying = hive.find_cell_needing_fanning()",
+        "honey_fetch_nectar": "var nectar_cell = hive.find_cell_with(\"nectar\")",
+        "queen_lay_egg": "hive.has_room_for_egg()",
+        "forager_seek_flower": "state = State.SEEK_FLOWER",
+    }
+    for action_id, landmark in landmarks.items():
+        if action_id not in ids:
+            problems.append("actions.gd: missing current work action %s" % action_id)
+        elif landmark not in bee_src:
+            problems.append(
+                "bee.gd: action catalogue row %s no longer matches _try_role_work (%s)"
+                % (action_id, landmark)
+            )
+
+
 # Buckets hive.gd::_content_index() builds that aren't one per cell
 # content_type -- "unbuilt" groups un-built cells regardless of content,
 # and "ripe_honey" is a honey cell in a particular state, not a distinct
@@ -2703,6 +2825,7 @@ def main():
     check_autoloads(problems)
     check_goal_cadence_registry(problems)
     check_catalogue_alignment(problems)
+    check_action_catalogue(problems)
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)
     check_challenge_1_nectar_capacity(problems)

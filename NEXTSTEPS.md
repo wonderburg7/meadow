@@ -462,20 +462,18 @@ lane's slot below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-4. **[Codex] G1 -- the action catalogue, data only.**
-   `bee.gd::_try_role_work` picks each role's work through a hardcoded
-   `match` (F1), so no gate, skill or season can reach a unit of work without
-   another arm. Transcribe it into a new `scripts/actions.gd`: one row per
-   unit of work, in today's per-role order, carrying `id`, `label`, `roles`,
-   `band`, `modes`, `find`, `feature`, `skill`, `gate_key`, `config_flag` and
-   `season`, with every gate, skill and feature field empty. Nothing reads it
-   yet and `scripts/bee.gd` does not change. Its dependencies B3 and C1 have
-   both shipped, and it shares no file with any Claude-lane item.
-   - Plan: `plans/design/architecture-review.md` -- "G1 — the action catalogue, data only"
-   - Files: `scripts/actions.gd`, `tests/source_checks.py`
-   - Check: a `tests/source_checks.py` check that every `find` name resolves to a real function, every `roles` id is a real role, and each role's band sequence has no gaps or duplicates; nothing player-facing changes, so Dave has nothing to try
-   - Proof: `absent: tests/source_checks.py :: def check_action_catalogue`
-   - Next after: G2 -- the dispatcher reads the catalogue, sole owner of `scripts/bee.gd`.
+4. **[Codex] G2 -- the dispatcher reads the catalogue.**
+   Replace `bee.gd::_try_role_work`'s hardcoded role `match` with the G1
+   catalogue, preserving every current action's priority and mode filtering.
+   Resolve each role's rows once at load rather than filtering the full table on
+   every 8 Hz think tick. Keep the queen's brood-before-laying exception in
+   `_idle_dispatch`, the secondary-role break-off rule, and the miner's
+   `_mining_no_work_epoch` memo unchanged.
+   - Plan: `plans/design/architecture-review.md` -- "G2 — the dispatcher reads the catalogue"
+   - Files: `scripts/bee.gd`, `scripts/bee_building.gd`, `scripts/bee_egg_laying.gd`, `scripts/bee_foraging.gd`, `scripts/bee_honey.gd`, `scripts/bee_mining.gd`, `scripts/bee_nursery.gd`
+   - Check: a headless equivalence run of `test_scenarios/recommendation_slice0_baseline.json` and `test_scenarios/colony_30_bees_test.json` to their fixed day counts, with identical population, stock and emergence summaries before and after; record frame time against `docs/PERFORMANCE_BASELINE.md`
+   - Proof: `present: scripts/bee.gd :: func _try_role_work`
+   - Next after: G3 -- actions become gateable.
 
 ## Not in the queue, and why
 
