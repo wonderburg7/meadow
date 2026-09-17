@@ -426,21 +426,31 @@ archived; the rest were fixed in session on `claude/pass-0917` and refiled
 The settings stage row is fixed with a headless check, so UI-W-1 no longer
 touches `scripts/scenario_actions.gd`.
 
+**L-8 shipped 17 September 2026.** `Get-GodotCapability` in `tools/slice.ps1`
+now returns `mcp_unavailable`, `editor_unavailable`, `import_cache_missing`,
+`environment_crash` or `ready` with a one-line reason, checked in that order
+so the import-cache false alarm (the one this queue already carried a note
+about, above) is ruled out before the boot probe that would otherwise
+misreport it as a crash. `doctor` reports it as `godot_capability`; only
+`editor_unavailable` still blocks `doctor` itself, unchanged. Full record:
+`plans/archive/L-8_2026-09-17.md`. Its `Next after` (L-9) fills the Claude
+lane's slot below.
+
 ## Next up
 
-1. **[Claude] L-8 -- a Godot failure names which of five things broke.**
-   Today MCP-unavailable, editor-unavailable, a baseline environment crash, a
-   scenario failure and a genuine product failure all share one exit path, and
-   one of them (a fresh worktree's missing `.godot` import cache) is a false
-   alarm about the game. Add `Get-GodotCapability` to `tools/slice.ps1`,
-   returning one of the five states with a one-line reason; call it from
-   `doctor` as `godot_capability`; rewrite `docs/headless-run-contract.md`'s
-   triage prose around the five names.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-8 — a Godot failure names which of five things broke"
-   - Files: `tools/slice.ps1`, `docs/headless-run-contract.md`
-   - Check: `test_godot_capability_names_each_failure_state`, driving all five states; nothing player-facing changes, so Dave has nothing to try
-   - Proof: `absent: tools/slice.ps1 :: function Get-GodotCapability`
-   - Next after: L-9 -- the floor is measured and split, and this plan is gated.
+1. **[Claude] L-9 -- the floor is measured and split, and this plan is gated.**
+   W-2 targeted a session-opening floor of 45,000 tokens, never measured
+   itself, and the floor is 77,322 today. Add `--phases` to
+   `tools/session_cost.py`, printing the four-row phase table F13 reports;
+   split session-opening context into `repository context` and `host
+   context`; print both under `--days N`; record the before/after figures in
+   the plan. This slice measures only -- the plan's own completion gate
+   needs evidence from later sessions too and stays open until then.
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-9 — the floor is measured and split, and this plan is gated"
+   - Files: `tools/session_cost.py`, `plans/now/agent-lifecycle.md`
+   - Check: `python tools/session_cost.py --days 1 --phases` prints the four-row phase table and the repository/host context split; nothing player-facing changes, so Dave has nothing to try
+   - Proof: `absent: tools/session_cost.py :: host context`
+   - Next after: none -- agent-lifecycle plan is complete
 
 2. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control

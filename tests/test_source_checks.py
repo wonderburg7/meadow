@@ -505,6 +505,87 @@ class SliceDoctorTest(unittest.TestCase):
         for prefix in ("Python:", "Godot:", "Git identity:", "Remote reachability:"):
             self.assertIn(prefix, result.stderr)
 
+    def test_godot_capability_names_each_failure_state(self):
+        """Get-GodotCapability must tell an MCP failure apart from an
+        editor, environment or import-cache one, and from a genuinely ready
+        Godot -- see L-8. Today all five shared one exit path.
+        """
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        godot_dir = self.root / ".godot"
+        system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        cmd_exe = system_root / "System32" / "cmd.exe"
+
+        # mcp_unavailable: checked ahead of the editor and cache states
+        # below, so an unresolvable MCP command is named even when a
+        # perfectly good Godot is also configured.
+        (self.root / ".mcp.json").write_text(
+            json.dumps(
+                {"mcpServers": {"godot": {"command": "meadow-test-nonexistent-mcp"}}}
+            ),
+            encoding="utf-8",
+        )
+        result = self.run_doctor()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "mcp_unavailable", json.loads(result.stdout)["godot_capability"]["state"]
+        )
+        (self.root / ".mcp.json").unlink()
+
+        # editor_unavailable already blocks doctor outright, unchanged by
+        # this slice, so it is driven and proven the same way as
+        # test_doctor_reports_all_environment_failures_together: through
+        # the failure message, since doctor never reaches the JSON payload
+        # in this case.
+        (self.root / ".codex" / "config.toml").write_text(
+            "[mcp_servers.godot.env]\nGODOT_PATH = 'missing-godot.exe'\n",
+            encoding="utf-8",
+        )
+        result = self.run_doctor()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Godot: configured executable does not exist", result.stderr)
+
+        # import_cache_missing: a real, existing executable but no .godot
+        # directory yet -- the false alarm this state exists to name before
+        # the boot probe below ever runs and could misreport it.
+        (self.root / ".codex" / "config.toml").write_text(
+            "[mcp_servers.godot.env]\n"
+            f"GODOT_PATH = '{Path(self.powershell).as_posix()}'\n",
+            encoding="utf-8",
+        )
+        self.assertFalse(godot_dir.exists())
+        result = self.run_doctor()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "import_cache_missing",
+            json.loads(result.stdout)["godot_capability"]["state"],
+        )
+
+        godot_dir.mkdir()
+
+        # environment_crash: the fixture executable runs but rejects the
+        # Godot-style probe flags it is given -- a real access violation is
+        # not reproducible portably, but a non-zero exit drives the same
+        # branch.
+        result = self.run_doctor()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "environment_crash",
+            json.loads(result.stdout)["godot_capability"]["state"],
+        )
+
+        # ready: a real executable that accepts (and ignores) the probe's
+        # arguments and exits cleanly once its closed stdin hits EOF.
+        (self.root / ".codex" / "config.toml").write_text(
+            "[mcp_servers.godot.env]\n"
+            f"GODOT_PATH = '{cmd_exe.as_posix()}'\n",
+            encoding="utf-8",
+        )
+        result = self.run_doctor()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "ready", json.loads(result.stdout)["godot_capability"]["state"]
+        )
+
     def test_branch_verification_ignores_another_lanes_stale_ledger_row(self):
         """A branch's own suites must not fail on the other lane's leftover
         ledger bookkeeping -- only the primary checkout's run is on the hook

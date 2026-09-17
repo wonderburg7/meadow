@@ -71,6 +71,27 @@ starting the child process. An engine crash therefore returns an exit status
 and is captured in the run artefacts; it must not leave an `Application Error`
 dialog waiting for input.
 
+## Diagnosing a Godot failure
+
+`tools/slice.ps1 doctor -Lane <lane>` reports `godot_capability`, naming
+which of five things is actually wrong before triage starts from scratch:
+
+- `mcp_unavailable` -- the MCP command configured in `.mcp.json` (normally
+  `npx`) cannot be resolved on PATH. Fix the MCP server's own setup; Godot
+  itself has not been reached yet.
+- `editor_unavailable` -- no Godot executable was found on PATH, in
+  `GODOT_PATH`, or in `.codex/config.toml`. This is the one state that
+  already blocks `doctor` itself; install Godot or point one of those at it.
+- `import_cache_missing` -- the repository has no `.godot` directory, which
+  is normal for a fresh worktree. The next headless run recompiles and
+  passes; this is not a regression and not a reason to change anything.
+- `environment_crash` -- the configured executable exists and the import
+  cache is present, but a minimal `--headless --disable-crash-handler
+  --quit-after 1` still exited non-zero or never returned. Something about
+  this host's Godot install, not the project, is broken.
+- `ready` -- the engine boots headlessly on its own. A failing scenario run
+  is therefore a genuine scenario or product failure, not an environment one.
+
 ## Background jobs
 
 Add `--background` when the same foreground command will take long enough

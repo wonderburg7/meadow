@@ -508,6 +508,105 @@ function Get-ConfiguredGodotPath {
     return $null
 }
 
+function Get-GodotCapability {
+    param([string]$Root)
+
+    $mcpConfigPath = Join-Path $Root ".mcp.json"
+    if (Test-Path -LiteralPath $mcpConfigPath -PathType Leaf) {
+        try {
+            $mcpConfig = Get-Content -Raw -LiteralPath $mcpConfigPath | ConvertFrom-Json
+        }
+        catch {
+            return [PSCustomObject]@{
+                state  = "mcp_unavailable"
+                reason = "$mcpConfigPath could not be parsed: $($_.Exception.Message)"
+            }
+        }
+        $mcpCommand = $mcpConfig.mcpServers.godot.command
+        if ($mcpCommand -and -not (Get-Command $mcpCommand -CommandType Application -ErrorAction SilentlyContinue)) {
+            return [PSCustomObject]@{
+                state  = "mcp_unavailable"
+                reason = "configured MCP command '$mcpCommand' in $mcpConfigPath cannot be resolved on PATH"
+            }
+        }
+    }
+
+    $godotPath = Get-ConfiguredGodotPath -Root $Root
+    if (-not $godotPath) {
+        return [PSCustomObject]@{
+            state  = "editor_unavailable"
+            reason = "no executable was found on PATH, in GODOT_PATH, or in .codex/config.toml"
+        }
+    }
+    if (-not (Test-Path -LiteralPath $godotPath -PathType Leaf)) {
+        return [PSCustomObject]@{
+            state  = "editor_unavailable"
+            reason = "configured executable does not exist: $godotPath"
+        }
+    }
+
+    # Checked before the boot probe below: a fresh worktree with no .godot
+    # cache fails the same probe with a non-zero exit and would otherwise be
+    # misreported as environment_crash -- the false alarm this state exists
+    # to name on sight.
+    if (-not (Test-Path -LiteralPath (Join-Path $Root ".godot") -PathType Container)) {
+        return [PSCustomObject]@{
+            state  = "import_cache_missing"
+            reason = "no .godot directory in $Root; a fresh worktree's headless run fails to compile and misreports as a gameplay collapse"
+        }
+    }
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $godotPath
+    $psi.Arguments = "--headless --disable-crash-handler --quit-after 1"
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+
+    try {
+        $process = [System.Diagnostics.Process]::Start($psi)
+    }
+    catch {
+        return [PSCustomObject]@{
+            state  = "environment_crash"
+            reason = "$godotPath failed to launch: $($_.Exception.Message)"
+        }
+    }
+
+    # Stdin is closed rather than inherited so a build that misparses these
+    # arguments as an interactive prompt hits EOF instead of hanging.
+    $process.StandardInput.Close()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $bootProbeTimeoutMs = 20000
+    $exited = $process.WaitForExit($bootProbeTimeoutMs)
+    if (-not $exited) {
+        try { $process.Kill() } catch {}
+        return [PSCustomObject]@{
+            state  = "environment_crash"
+            reason = "$godotPath --headless --quit-after 1 did not exit within $($bootProbeTimeoutMs / 1000) seconds"
+        }
+    }
+    if ($process.ExitCode -ne 0) {
+        $detail = @($stderrTask.Result, $stdoutTask.Result) |
+            ForEach-Object { ($_ -split "`r?`n" | Where-Object { $_.Trim() } | Select-Object -Last 1) } |
+            Where-Object { $_ } |
+            Select-Object -First 1
+        if (-not $detail) { $detail = "no output" }
+        return [PSCustomObject]@{
+            state  = "environment_crash"
+            reason = "$godotPath --headless --quit-after 1 exited with code $($process.ExitCode): $detail"
+        }
+    }
+
+    return [PSCustomObject]@{
+        state  = "ready"
+        reason = "$godotPath booted headlessly and exited cleanly"
+    }
+}
+
 function Get-GlobalExcludesDiagnostic {
     # A read-only probe, reported rather than enforced. Codex rollouts have
     # logged a permissions warning naming the user-level Git excludes file;
@@ -696,6 +795,7 @@ function Invoke-SliceDoctor {
         branch       = $preflight.Branch
         worktree     = $preflight.WorktreeRelative
         git_excludes = Get-GlobalExcludesDiagnostic
+        godot_capability = Get-GodotCapability -Root $root
         pending_deletions = Get-PendingWorktreeDeletions -Root $root
     } | ConvertTo-Json -Compress
 }
