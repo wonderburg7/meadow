@@ -333,11 +333,18 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 func _make_challenge_stage_navigation() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
+	# Both this row and the with_info() wrapper below must expand, as in
+	# _add_action_row(). Without it the row sits at its minimum width, the
+	# autowrap label's minimum is about zero, and the stage name wrapped one
+	# letter per line between two stretched arrows (C-49, 12 and 17 Sep
+	# 2026). scenario_actions.gd's no_collapsed_controls now fails on it.
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	challenge_retreat_btn = Button.new()
 	_style_button(challenge_retreat_btn)
 	challenge_retreat_btn.text = "◀"
-	challenge_retreat_btn.custom_minimum_size = Vector2(28, 0)
+	challenge_retreat_btn.custom_minimum_size = Vector2(28, 24)
+	challenge_retreat_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	challenge_retreat_btn.pressed.connect(_on_challenge_retreat_pressed)
 	row.add_child(challenge_retreat_btn)
 
@@ -350,11 +357,13 @@ func _make_challenge_stage_navigation() -> Control:
 	challenge_advance_btn = Button.new()
 	_style_button(challenge_advance_btn)
 	challenge_advance_btn.text = "▶"
-	challenge_advance_btn.custom_minimum_size = Vector2(28, 0)
+	challenge_advance_btn.custom_minimum_size = Vector2(28, 24)
+	challenge_advance_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
 	row.add_child(challenge_advance_btn)
 
 	var wrapped_row := UI.with_info(row, "Debug only: step through an active Challenge's stages. Going back rebuilds the stage's gates, prompts and marker, but does not undo the hive, cells or bees; a goal already satisfied may advance again immediately.")
+	wrapped_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapped_row.visible = false
 	challenge_stage_row = wrapped_row
 	return wrapped_row

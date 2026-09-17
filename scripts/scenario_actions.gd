@@ -543,6 +543,16 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 			_log("open_window", window_key, "rejected", "tray 'More…' panel did not open")
 		return
 
+	if window_key == "settings":
+		# The settings window is not a year_winter toggle panel. "sections"
+		# names the category sections to expand, e.g. ["World & start"].
+		main.debug_panel.open_to_categories(action.get("sections", []))
+		if main.debug_panel.panel.visible:
+			_log("open_window", window_key, "accepted", "")
+		else:
+			_log("open_window", window_key, "rejected", "settings window did not open")
+		return
+
 	var panel: CanvasLayer = null
 	match window_key:
 		"colony":
@@ -723,6 +733,8 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 			return main.nursery_panel.panel
 		"gallerin":
 			return main.gallerin_panel.bubble
+		"settings":
+			return main.debug_panel.panel
 		_:
 			return null
 
@@ -857,6 +869,13 @@ static func _collect_collapsed_controls(node: Node, out: Array) -> void:
 			var rect: Rect2 = (child as Control).get_global_rect()
 			if rect.size.x < 8.0 or rect.size.y < 8.0:
 				out.append("%s (%s)" % [child.get_path(), rect])
+		# A wrapping label squeezed to a glyph's width reads one letter per
+		# line: its minimum width is about zero, so a container without an
+		# expand flag gives it nothing (C-49; docs/known-pitfalls.md).
+		elif child is Label and (child as Label).is_visible_in_tree() 				and (child as Label).autowrap_mode != TextServer.AUTOWRAP_OFF 				and (child as Label).text != "":
+			var label_rect: Rect2 = (child as Label).get_global_rect()
+			if label_rect.size.x < 24.0:
+				out.append("%s (%s, wrapping label)" % [child.get_path(), label_rect])
 		_collect_collapsed_controls(child, out)
 
 ## Resolves a control_rect/even_columns/no_collapsed_controls path against a
@@ -879,6 +898,8 @@ static func _resolve_scoped_path(main: Node2D, path: String) -> Node:
 			root = main.hud.command_tray
 		"gallerin_panel":
 			root = main.gallerin_panel
+		"settings":
+			root = main.debug_panel.panel
 		_:
 			return null
 	if root == null or segments.size() == 1:

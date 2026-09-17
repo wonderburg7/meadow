@@ -502,6 +502,7 @@ func _spawn_bee(focus: String) -> void:
 	bee.position = main.hive.position
 	main.meadow_root.add_child(bee)
 	bee.setup(main.hive, focus, main.next_bee_id, main.Bee.Role.FORAGER, main)
+	_stagger_starter_age(bee)
 	main.next_bee_id += 1
 
 func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> Node2D:
@@ -531,8 +532,20 @@ func _spawn_indoor_bee(role: int) -> Node2D:
 	bee.position = _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
 	main.hive_root.add_child(bee)
 	bee.setup(main.hive, "nectar", main.next_bee_id, role, main)
+	_stagger_starter_age(bee)
 	main.next_bee_id += 1
 	return bee
+
+## Founders only: a hatched bee is newborn by definition. Seeded from the
+## bee id rather than the global stream, so this does not reshuffle the
+## meadow layout or any scenario that follows the fixed seed.
+func _stagger_starter_age(bee: Node2D) -> void:
+	var spread: float = clampf(GameConfig.starter_age_spread, 0.0, 0.9)
+	if spread <= 0.0:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("starter_age_%d" % bee.bee_id)
+	bee.age_seconds = rng.randf() * spread * bee.BeeSurvival.lifespan_seconds(bee)
 
 ## Part of main.gd's public surface -- bee.gd calls `world.move_bee_into_hive(self)`.
 func move_bee_into_hive(bee: Node2D) -> void:

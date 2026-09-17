@@ -240,8 +240,8 @@ const STAGES_1 := [
 		"id": "1.16", "goal": "first_egg_laid", "condition": {"brood_cells_at_least": 1}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: let the queen lay the colony's first egg.",
 		"prompts": [
-			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying, with Nursing as her backup. A queen who only seeks empty cells would overlook the hungry brood already depending on her."},
-			{"id": "1.16_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose Laying as the queen's role and Nursing as her backup, then keep one cell free."},
+			{"id": "1.16_welcome", "trigger": "welcome", "delay": 0.0, "text": "Set her to Laying. She will feed any hungry brood before seeking an empty cell, since a delayed egg costs only time and a starving larva costs far more."},
+			{"id": "1.16_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose Laying as the queen's role, then keep one cell free."},
 		],
 	},
 	{
@@ -249,7 +249,7 @@ const STAGES_1 := [
 		"goal_text": "Goal: care for the egg until the first worker hatches.",
 		"prompts": [
 			{"id": "1.17_welcome", "trigger": "welcome", "delay": 0.0, "text": "An egg is a promise with a feeding schedule. Keep the young bee supplied and watch what pollen becomes."},
-			{"id": "1.17_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen's Nursing backup lets her feed developing brood whenever laying is blocked."},
+			{"id": "1.17_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "The queen feeds the developing brood herself. Keep nectar and pollen in the comb so she has something to feed it with."},
 		],
 	},
 	{

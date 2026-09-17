@@ -919,6 +919,12 @@ const TUNABLES := [
 
 	# --- Bee life ---
 	{
+		"persist": "none",
+		"key": "starter_age_spread", "label": "Starting age spread", "step": 0.1, "min": 0.0, "max": 0.9,
+		"category": "Bee life",
+		"tip": "Starting bees begin at a random age up to this fraction of their lifespan, so the founders do not all die of old age together. 0 starts every one newly hatched.",
+	},
+	{
 		"persist": "run",
 		"key": "bee_lifespan_days", "label": "Lifespan days", "step": 5.0, "min": 1.0,
 		"category": "Bee life",

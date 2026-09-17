@@ -29,6 +29,9 @@ from analyze_session import load_entries  # noqa: E402
 from run_scenario import DEFAULT_GODOT_PATH, run_once  # noqa: E402
 
 FIXTURE = ROOT / "tests" / "fixtures" / "layout_panels.json"
+# The settings window during a Challenge: its stage row once drew a wrapping
+# label one letter per line between stretched arrows (C-49, UI-W-1).
+SETTINGS_FIXTURE = ROOT / "tests" / "fixtures" / "settings_stage_row.json"
 
 
 def _resolve_godot_path() -> str | None:
@@ -43,6 +46,12 @@ def _resolve_godot_path() -> str | None:
 
 class LayoutRegressionTest(unittest.TestCase):
     def test_layout_panels_fixture_passes(self):
+        self._assert_fixture_passes(FIXTURE)
+
+    def test_settings_stage_row_fixture_passes(self):
+        self._assert_fixture_passes(SETTINGS_FIXTURE)
+
+    def _assert_fixture_passes(self, fixture: Path):
         godot_path = _resolve_godot_path()
         if not godot_path:
             self.skipTest(
@@ -51,7 +60,7 @@ class LayoutRegressionTest(unittest.TestCase):
                 % DEFAULT_GODOT_PATH
             )
 
-        session_file = run_once(FIXTURE, godot_path, timeout=120)
+        session_file = run_once(fixture, godot_path, timeout=120)
         self.assertIsNotNone(
             session_file,
             "scenario run produced no session_*.jsonl -- see stderr above for the launch failure",

@@ -113,3 +113,41 @@ Blocked by: UI-W-1. Dave's 12 Sep 2026 run: "still too big a gap between each
 item in the list", after the blank lines were removed.
 
 Owner: `plans/now/ui-w.md` UI-W-1.
+
+### C-25 -- out-of-season flowers read as a rare find, not a standing mix
+
+With Season days 5 (Game Settings > Seasons & health), restart the run and
+play at 8x. Look around the meadow at three or four points in the year,
+starting straight after the restart, clicking a handful of flowers each time
+-- the summary panel says whether each one is in season.
+
+PASS: there are always some flowers in the meadow, but at every point, including the first minute of the run, only an occasional flower you click is out of season.
+
+Owner: `plans/now/season-feel.md` SF-1.
+
+Blocked by: SF-1 (a new run's meadow starts with the season mix it will
+settle into). Semi pass (Dave, 17 Sep 2026): later in the year off-season
+flowers are rare, but at the start "big proportions of all species" are
+about, many out of season, until the founding flowers die. A re-run before
+SF-1 lands would fail the same way.
+
+### C-49 -- Challenge stages can be replayed from settings
+
+Start Challenge 1, open Game Settings > World & start, and step forward and
+back across every stage with the stage arrows, including across 1.11
+(automate nectar gathering) and 1.14 (automate pollen gathering), which
+follow the queen and speed the game up.
+
+PASS: after each arrow the queen, the tunnel, the comb cells and their stores match the stage shown, its gates, prompts and marker are rebuilt, the stage shown stays put until you act, the back arrow is disabled at the first stage and the forward arrow at the last, and the camera follows no bee at normal speed.
+
+Owner: `plans/now/c1-followups.md` C1F-1.
+
+Blocked by: C1F-1 (each Challenge 1 stage sets up the world it starts from).
+Partial pass (Dave, 17 Sep 2026): gates, prompts and marker rebuild, the
+arrows disable at both ends, and follow and speed reset on every arrow. Going
+back fails at some stages (for example from 1.11) because the earlier
+stage's goal is already met in the world and it advances again; the queen,
+tunnel soil and cells never change. Dave chose, in session, that each stage
+sets up its world. The stage row's layout (letters one per line, tall arrows)
+is fixed on `claude/pass-0917` with a headless check; see C-49's history in
+`docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`.

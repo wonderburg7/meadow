@@ -6,6 +6,57 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 17 Sep 2026 -- Dave's hands-on pass
+
+Eight checks run. C-48 passed and is recorded here. C-24 failed and was
+refiled against Dave's new season range; C-7, C-29, C-31 and C-42 were fixed
+in session on `claude/pass-0917` and refiled for re-run; C-25 and C-49 moved
+to `checks/blocked.md` behind SF-1 (`plans/now/season-feel.md`) and C1F-1
+(`plans/now/c1-followups.md`). Dave's extra asks: staggered starter ages
+(shipped, C-54), automatic Nursing backup in Challenge 1 (shipped, C-55), the
+settings stage row (shipped with a headless check), and Dr Gallerin's bubble
+height with room for the settings window (UI-W-4, `plans/now/ui-w.md`).
+
+### C-48 -- Challenge 1's marker remains noticeable and findable
+
+What this checks: the yellow circle Challenge 1 draws to show where to go or
+build next. It appears at 1.2 (the cavity to send the queen into), 1.5 (the
+centre to build the first cell on), 1.6 (the doorway to send her outside),
+1.10, 1.12, 1.15 and 1.19 -- `docs/challenge-stages.md` says what each stage
+asks. Use Game Settings > World & start's stage arrows to jump to 1.5. Watch
+the circle at normal speed and at 4x, then pan the view with the arrow keys
+until the circle is off screen, then back.
+
+PASS: the circle gently grows and shrinks at both speeds; while it is off screen a yellow arrow sits at the screen edge pointing towards it, clear of the bottom panels, Dr Gallerin's bubble and the corner readout; the arrow disappears as soon as the circle is back on screen, and no arrow shows after Tab switches to the meadow view.
+
+Owner: `plans/archive/CHALLENGE1_2026-09-15.md` Slice 26.
+
+Reworded 13 Sep 2026: Dave's 12 Sep pass could not tell which marker the old
+wording meant.
+
+Passed (Dave, 17 Sep 2026).
+
+### C-49 -- Challenge stages can be replayed from settings
+
+Start either Challenge, open Game Settings > World & start, and use the
+stage arrows to move forward, then back, across a stage that follows the
+queen or speeds the game up. Repeat until the first and last stages.
+
+PASS: each arrow rebuilds the shown stage's gates, prompts and marker; the
+back arrow is disabled at the first stage and the forward arrow at the last;
+after every move the camera follows no bee and the speed is normal.
+
+Owner: `plans/now/ui.md` UI-U-1.
+
+Re-run note (Dave, 12 Sep 2026). The stage row itself draws badly: its
+arrow buttons are far too tall and the stage name runs one letter per line
+(screenshot). The cause is confirmed and owned by `plans/now/ui-w.md` UI-W-1.
+The arrows still work, so the PASS above can still be judged now; the row's
+layout gets its own re-run note when UI-W-1 lands.
+
+Superseded (17 Sep 2026) by the blocked C-49 in `checks/blocked.md`, whose
+PASS now includes the world matching the stage shown.
+
 ## 10 Sep 2026 -- Dave's fourth hands-on pass
 
 Eleven checks run. Four confirmed and recorded here; two of the four carried a

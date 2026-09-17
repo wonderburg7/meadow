@@ -207,7 +207,7 @@ func _designate_one(cell: Node2D, type: String) -> void:
 		cell.set_designation(type)
 		return
 
-	if main.hive.has_room_elsewhere(cell.content_type, cell):
+	if main.hive.has_room_elsewhere(cell.content_type, cell) 			or bool(main.Levels.get_level(Session.starting_level).get("designation_keeps_stores", false)):
 		cell.set_designation(type)
 	elif Session.warn_on_discard:
 		main.hud.show_discard_warning(cell, type, cell.content_type, cell.amount)

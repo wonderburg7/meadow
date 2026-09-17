@@ -14,6 +14,10 @@ var flower_lifespan_variation: float = 0.4   # +/- this fraction, so they don't 
 var flower_regrow_seconds: float = 2.0       # gap between replacements seeding
 var hive_cell_count: float = 5.0        # cells the hive starts with; builders add more
 var starting_bees: float = 3.0
+## A starting bee begins somewhere between newly hatched and this fraction
+## of her lifespan, so a run's founders do not all die of old age on the
+## same day (Dave, 17 Sep 2026). 0 restores the old all-newborn start.
+var starter_age_spread: float = 0.5
 var starting_nurses: float = 1.0        # without at least one nurse, laid eggs never reach a cell
 var starting_builders: float = 0.0
 var seconds_per_day: float = 200.0      # real seconds in one in-game day
@@ -797,14 +801,16 @@ var seasons_on: bool = true
 ## How long a full year is. Winter is scheduled separately and does not
 ## come out of this.
 var season_length_days: float = 60.0
-## Flowers outside their species' window keep a small recharge trickle so
-## a patch never becomes completely dead between flowering seasons.
-var out_of_season_strength: float = 0.05
+## A flower outside its species' window still recharges at this multiple of
+## its nominal rate. Dave, 17 Sep 2026 (C-24): the lean spell is 75% of the
+## nominal rate and full season 125%, so a 0.1/s flower gives 0.075/s out of
+## season and 0.125/s at its peak. Was 0.05, a fifteenth of the old peak.
+var out_of_season_strength: float = 0.75
 ## What a species reaches at the very middle of its own flowering window,
-## as a multiple of its nominal recharge rate. Was implicitly 1.0, which
-## made peak season twenty times the out-of-season floor and read as a
-## different game rather than a good summer (Dave, 8 Sep 2026).
-var peak_season_strength: float = 0.75
+## as a multiple of its nominal recharge rate. Was implicitly 1.0 (twenty
+## times the old floor), then 0.75 on 8 Sep 2026 (still fifteen times it);
+## 1.25 since 17 Sep 2026, against the 0.75 floor above (C-24).
+var peak_season_strength: float = 1.25
 ## Out-of-season flowers wear out faster, making an old season's patch turn
 ## over into species suited to the current part of the year.
 var out_of_season_ageing_factor: float = 1.5

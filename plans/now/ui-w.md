@@ -16,13 +16,14 @@ stage arrows do and stays ready.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UI-W-1 | The settings window is a quarter of the screen, its stage row reads normally, its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd` | yes | medium |
+| UI-W-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
 | UI-W-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd` | yes | high |
 | UI-W-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | after UI-W-2 | medium |
-| UI-W-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-W-1 | medium |
+| UI-W-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-W-1 | medium |
 
-**Dependencies.** UI-W-1 and UI-W-2 both add to `scripts/scenario_actions.gd`,
-so they cannot run in parallel lanes. UI-W-3 follows UI-W-2 (`scripts/hud.gd`,
+**Dependencies.** UI-W-1 no longer touches `scripts/scenario_actions.gd`: its
+settings-window assertions shipped on `claude/pass-0917` (17 Sep 2026), so it
+shares no file with UI-W-2. UI-W-3 follows UI-W-2 (`scripts/hud.gd`,
 and it uses UI-W-2's `select_cell` action). UI-W-4 follows UI-W-1
 (`scripts/ui_layout.gd`). UI-W-2 leads because it is the only one that stops a
 Challenge being finished.
@@ -38,9 +39,16 @@ stage data in `scripts/challenge_stages.gd`.
 ## UI-W-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list
 
 **Purpose.** C-52 partly passed ("about a fifth ... could be bigger, up to 25%
-of the screen's width"), C-49's stage row draws its arrows as tall strips with
-the stage name one letter per line (Dave's screenshot), and C-53 failed
-("still too big a gap between each item"). All three are one window's layout.
+of the screen's width") and C-53 failed ("still too big a gap between each
+item"). Both are one window's layout.
+
+**Already shipped (17 Sep 2026, `claude/pass-0917`).** Requirement 2 (the
+stage row) and requirement 4 (the wrapping-label instrument, `"settings"` in
+`open_window`, `_resolve_named_panel` and `_resolve_scoped_path`), after Dave
+reported the stage row a second time. `tests/fixtures/settings_stage_row.json`
+runs `no_collapsed_controls` on the settings window during Challenge 1, and
+`tests/test_layout_regression.py` drives it. Skip those two requirements;
+extend that fixture rather than writing `uiw1_settings_window_test.json`.
 
 **Root causes.**
 - *Width, confirmed.* `debug_panel.gd` sets `PANEL_WIDTH := 320.0` on the panel
@@ -72,8 +80,8 @@ owns persistent rectangles.
 `grep -n debug_panel scripts/main.gd`.
 
 **Files likely to change.** `scripts/debug_panel.gd`, `scripts/ui_layout.gd`,
-`scripts/scenario_actions.gd`, new test_scenarios/uiw1_settings_window_test.json,
-`docs/known-pitfalls.md`.
+`tests/fixtures/settings_stage_row.json` (add the width and Controls
+assertions there).
 
 **Requirements.**
 1. Add `UiLayout.settings_window_width(viewport_width)`:
@@ -297,6 +305,17 @@ test_scenarios/uiw4_gallerin_bubble_height_test.json.
    Typing still reveals one character at a time, but layout uses the whole
    line. Correct the `_show_bubble` comment.
 4. A line taller than the ceiling scrolls, using the existing scroll.
+5. Make way for the settings window (Dave, 17 Sep 2026: "unless the settings
+   window is in the way, in which case shorten and use the scroll bar"). The
+   settings panel sits top-right and the bubble bottom-right, so they share a
+   column. Give `UiLayout.gallerin_rect()` an optional `avoid: Rect2`
+   (default empty). When it is non-empty and overlaps the bubble's horizontal
+   span, the height ceiling becomes
+   `minf(ceiling, bubble_bottom - (avoid.end.y + PANEL_GAP))`, floored at one
+   line's height. `gallerin_panel.gd` passes the settings panel's global rect
+   while it is visible (reach it through the `"debug_panel"` group, as
+   `main.gd` documents), and re-applies layout from that panel's
+   `visibility_changed` and `resized` signals -- not from `_process`.
 
 **Constraints.** `_process` gains no layout work. Bubble width, bottom edge,
 pointer position, typing speed and paging (C-38, C-39) are unchanged.
@@ -308,7 +327,10 @@ pointer position, typing speed and paging (C-38, C-39) are unchanged.
 - a short prompt hugs its content.
 
 At 800x600 the bubble is at most 200px, and at every size it stays inside the
-viewport.
+viewport. With the settings window open (`open_window` `settings`, which
+already exists), a 2,000-character prompt's bubble top is at least 16px below
+the settings panel's bottom and its scroll is active; closing settings
+returns it to 360±1px.
 
 **Edge cases.** Text scale 1.5. Paging back to a shorter or longer line
 re-applies layout; check `_apply_layout`'s callers. A window resize mid-line.
