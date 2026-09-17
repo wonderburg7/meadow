@@ -1150,15 +1150,33 @@ function Invoke-SlicePostMergeCleanup {
 
     # The one push for the whole transaction: every commit the merge, the
     # ready-index refresh and the ledger removal made travels together.
-    git -c http.sslBackend=openssl -C $Root push
-    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push) -ne 0) { throw "git push failed" }
     Invoke-InjectedLifecycleFailure -Phase "pushed"
 
-    git -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        git -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch
-        if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+    if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch) -eq 0) {
+        if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch) -ne 0) { throw "git push origin --delete failed" }
     }
+}
+
+function Invoke-GitQuiet {
+    # A native command's stderr becomes a terminating ErrorRecord in
+    # PowerShell 5.1 whenever the *caller* redirects it -- `finish *> log.txt`,
+    # or a wrapper piping through 2>&1 -- and `git push` writes its progress
+    # to stderr on every success. Closeout then aborted after the merge, with
+    # the branch already gone and the push not made (17 Sep 2026; the same
+    # trap is why the worktree-remove call below carries its own note). Every
+    # git call that talks to the remote goes through here, so the exit code
+    # decides the outcome no matter how the session is invoking the script.
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & git @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+    }
+    finally {
+        $ErrorActionPreference = $previous
+    }
+    return $LASTEXITCODE
 }
 
 function Invoke-SliceStatus {
