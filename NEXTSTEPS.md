@@ -67,6 +67,13 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
    - Proof: `present: scripts/flower_species.gd :: static func season_weight(species: Dictionary) -> float:`
    - Next after: none -- season-feel is complete.
 
+3. **[Codex] SM-1 -- find why the smoke scenario never completes a cell**
+   - Plan: `plans/now/smoke-scenario.md` -- "SM-1 — find why the smoke scenario never completes a cell"
+   - Files: `test_scenarios/slice1_smoke_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/slice1_smoke_test.json` returns status=passed twice on the same seed, and the delivery note classifies the cause as stale fixture or product defect with numbers
+   - Proof: `present: test_scenarios/slice1_smoke_test.json :: "cells_completed_at_least": 1`
+   - Next after: none -- smoke-scenario is complete.
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
@@ -78,8 +85,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows G2 and F2s.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
-- **`test_scenarios/slice1_smoke_test.json` fails on master** -- one investigation, not yet specified as a slice.
-
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
