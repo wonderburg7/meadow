@@ -4,7 +4,12 @@ This file is the entry point for ChatGPT and Codex sessions in this
 repository.
 
 **Before reading or acting on any other project file, read `CHATGPT.md` and
-follow its file-editing and hand-off conventions.**
+follow its file-editing and hand-off conventions.** Its "Risk-proportional
+closeout" section is needed only once the code is green: skip it when
+starting, and read it then with
+`python tools/heading.py CHATGPT.md "Risk-proportional closeout"`. To start
+implementing, follow its "Session routing" -- `tools/slice.ps1 start -Lane
+Codex` -- and never read `NEXTSTEPS.md` whole.
 
 Codex has the same rights as Claude Code to read and edit Meadow's game and
 source files, including the primary worktree, for an assigned task. Like

@@ -164,7 +164,7 @@ function Get-PrimaryRoot {
 function Get-NextUpItems {
     param([string]$Root)
 
-    $text = Get-Content -Raw -LiteralPath (Join-Path $Root "NEXTSTEPS.md")
+    $text = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $Root "NEXTSTEPS.md")
     return Get-NextUpItemsFromText -Text $text
 }
 
@@ -187,7 +187,13 @@ function Get-NextUpItemsFromText {
     }
     $section = $sectionMatch.Groups[1].Value
 
-    $chunks = [regex]::Split($section, '(?m)^\d+\.\s+') | Where-Object { $_.Trim() -ne "" }
+    # Each lane has its own "### <Lane> lane" subsection. Split on those
+    # first and drop each part's preamble (the text before its "1."), so the
+    # next lane's heading never runs on into the last item's Next after line.
+    $chunks = @()
+    foreach ($part in [regex]::Split($section, '(?m)^(?=### )')) {
+        $chunks += @([regex]::Split($part, '(?m)^\d+\.\s+') | Select-Object -Skip 1)
+    }
 
     $items = @()
     $itemNumber = 0
@@ -243,7 +249,9 @@ function Get-NextUpItemsFromText {
         $planSplit = [regex]::Match($planLine, '^`([^`]+)`\s*--\s*(.+?)\.?$')
         if ($planSplit.Success) {
             $planFile = $planSplit.Groups[1].Value
-            $heading = $planSplit.Groups[2].Value.Trim()
+            # Queue entries quote the heading; the quotes are not part of it,
+            # and left in they doubled up in the printed read command.
+            $heading = $planSplit.Groups[2].Value.Trim().Trim('"')
         }
 
         $files = @()
@@ -408,7 +416,7 @@ function Test-Proof {
     if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
         return $false
     }
-    $content = Get-Content -Raw -LiteralPath $target
+    $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $target
     $found = $content.Contains($needle)
     if ($mode -eq "present") {
         return $found
@@ -1187,7 +1195,7 @@ function Invoke-SliceFinish {
             $planPath = Join-Path $worktreeRoot $item.Plan
             $headingStillLive = $false
             if ($item.Heading -and (Test-Path -LiteralPath $planPath -PathType Leaf)) {
-                $planText = Get-Content -Raw -LiteralPath $planPath
+                $planText = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
                 $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
                 $headingStillLive = $headingRegex.IsMatch($planText)
             }
@@ -1303,7 +1311,7 @@ function Invoke-SliceFinish {
     # it: the delivered item gone, its successor (if any) promoted. That is
     # what turns "Next slice" and "Other lane" into lookups instead of a
     # session having to open the file and work it out by hand.
-    $mergedNextSteps = Get-Content -Raw -LiteralPath (Join-Path $root "NEXTSTEPS.md")
+    $mergedNextSteps = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $root "NEXTSTEPS.md")
     $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
 
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"

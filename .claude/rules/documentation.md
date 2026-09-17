@@ -9,18 +9,31 @@ paths:
 # Planning-document lifecycle
 
 Use the smallest current document that answers the task. `NEXTSTEPS.md` is the
-only canonical current queue. It holds three to five ready slices, tagged
-`[Claude]` or `[Codex]`, each with `Plan:`, `Files:`, `Check:`, `Proof:`
-and `Next after:` lines. A `Next after:` line must name the slice that
-follows -- the only accepted alternative is `none -- <plan> is complete`.
-That is what makes a lane refill itself by lookup rather than investigation,
-and it is why the floor is 3 and stays there (Dave, D-2, 8 Sep 2026).
+only canonical current queue, and it holds the queue and nothing else: no
+history log, no per-item prose (the `Plan:` section holds that), one line per
+"not in the queue" entry. Git and `plans/archive/` hold history.
 
-Only work that can be started immediately belongs there;
-anything waiting on a hands-on check, a live repro or a decision from Dave
-goes under `## Not in the queue, and why`. `tools/check_docs.py` enforces all
-of this, including that the two lanes' leading items share no file. Do not
-append a session diary or duplicate plan detail there.
+`## Next up` has two subsections, `### Claude lane` and `### Codex lane`, each
+holding up to five ready slices tagged `[Claude]`/`[Codex]` to match, each
+with `Plan:`, `Files:`, `Check:`, `Proof:` and `Next after:` lines. No file
+may appear in both lanes, so the two branches never disrupt each other; a
+session edits only its own lane's subsection. The whole queue never drops
+below three (Dave, D-2, 8 Sep 2026). A `Next after:` line must name the slice
+that follows -- the only accepted alternative is `none -- <plan> is complete`
+-- which is what makes a lane refill itself by lookup.
+
+**Admission test:** an item belongs only if a model could start writing code
+on it today and the defect still exists, which its `Proof:` line asserts as
+`present:`/`absent: <path> :: <substring>`. Anything waiting on a hands-on
+check, a live repro, another slice or a decision from Dave goes under
+`## Not in the queue, and why` with one line saying what it waits for. When
+Dave reports a hands-on pass, anything it unblocks moves into a lane.
+`tools/check_docs.py` enforces all of this. Closeout order (archive, refill,
+`finish`) is in `plans/reference/closeout.md`.
+
+Do not read `NEXTSTEPS.md` whole to find work -- `tools/slice.ps1 start` or
+`doctor` prints the item. To edit it at closeout, read it (it is small now),
+change only your lane, and keep it small.
 
 Every live file in `plans/now/`, `plans/active/`, `plans/design/` or
 `plans/reference/` has one compact Status line containing Owner, Next,

@@ -246,6 +246,30 @@ class QueueSchemaChecksTest(unittest.TestCase):
 
         self.assertEqual([], errors)
 
+    def test_lane_subsections_split_cleanly(self):
+        item = (
+            "1. **[{lane}] {id} -- does a thing**\n"
+            "   - Plan: `plans/now/x.md` -- \"{id}\"\n"
+            "   - Files: `scripts/{id}.gd`\n"
+            "   - Check: something\n"
+            "   - Proof: `absent: scripts/x.gd :: thing`\n"
+            "   - Next after: {id}-next.\n\n"
+        )
+        text = (
+            "## Next up\n\n### Claude lane\n\nPreamble.\n\n"
+            + item.format(lane="Claude", id="A-1")
+            + "### Codex lane\n\nPreamble.\n\n"
+            + item.format(lane="Codex", id="B-1")
+            + "## Not in the queue, and why\n"
+        )
+
+        items = check_docs.queue_item_chunks(text)
+
+        self.assertEqual(["Claude", "Codex"], [lane for lane, _ in items])
+        # The Codex heading must not run on into the Claude item's last line.
+        self.assertNotIn("Codex lane", items[0][1])
+        self.assertIsNone(check_docs.queue_item_chunks("# no queue\n"))
+
 
 class SliceDoctorTest(unittest.TestCase):
     @classmethod
