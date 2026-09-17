@@ -72,6 +72,13 @@ Every other A, C, D, E, F and G slice stays held.
 
 ## Findings at a glance
 
+**Which of these are still live (17 Sep 2026 plan review).** F4, F5, F6, F7,
+F13, F14, F16 and F18 are closed by the A, H and D slices named in the Status
+line above, and F2/F3 by the B and C chains; the table is kept as the
+evidence those slices were built from, not as a work list. The findings with
+an open slice below are **F8** (E1), **F9** (F1s), **F10** (F2s), **F1** (G2
+and G3) and **F17** (E1's second half). Do not re-propose a closed one.
+
 | # | Finding | Benefit | Effort | Depends on |
 | --- | --- | --- | --- | --- |
 | F6 | `_hatch_ready_brood` walks every cell every frame | high | very low | — |

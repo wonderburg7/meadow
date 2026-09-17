@@ -91,8 +91,14 @@ reason to open a slice on its own.
 
 **Not covered by the architecture review, deliberately.** That review's A3
 caches the `total()` family and B2 builds the bucket dictionary from the
-catalogue; neither touches the `find_*` functions below. Do A3 and B2 first --
-they are specified and cheap -- and only then measure this.
+catalogue; neither touches the `find_*` functions below.
+
+**Precondition met, 17 Sep 2026.** A3 and B2 have both shipped, so the
+instrumentation step below is now the next thing to do here rather than
+something waiting on another slice. It is still a measurement, not a fix: it
+is admissible as a queue item only in the shape "add the Perf section, run
+the baseline, report the numbers, and specify the change only if the section
+is non-trivial".
 
 `_content_index()` maintains epoch-invalidated buckets keyed
 `"" / nectar / pollen / honey / jelly / brood / corpse / unbuilt / ripe_honey`,
@@ -133,8 +139,10 @@ unaffected either way.
 **Mostly owned elsewhere now.** `plans/design/architecture-review.md`'s A2
 makes `ColonyDiagnostics.compute` take role counts as a parameter instead of
 walking the bee group itself, which removes the largest duplicate in this call
-tree. Do A2 first; what follows is only the residue A2 leaves behind, and it is
-not worth a slice on its own.
+tree. A2 shipped, so what follows is the residue it left behind: roughly a
+dozen lines, covered by the existing `signals` Perf section, and best carried
+by the next slice that opens `year_winter.gd` rather than queued on its
+own.
 
 In one tick of `year_winter.gd::_refresh_signals`,
 `get_nodes_in_group("bees")` is called there and again in `_winter_forecast`
