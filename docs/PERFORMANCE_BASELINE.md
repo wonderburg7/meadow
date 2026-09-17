@@ -56,6 +56,24 @@ move a bee one tile horizontally and diagonally, overlap two bees, then return
 one indoors. The visible disc must not flicker, a tile covered by the remaining
 bee must stay lit, and a tile discovered by either bee must remain explored.
 
+## G2 re-measure -- 17 Sep 2026 (the catalogue dispatcher)
+
+Same fixture (`test_scenarios/recommendation_slice0_baseline.json`), same
+seed, same machine, run once per side within a few minutes of each other, so
+these two rows compare with each other and not with the pinned baseline
+below. The catalogue walk is not slower than the `match` it replaced.
+
+| Row | master mean ms | G2 mean ms | master p95 ms | G2 p95 ms |
+| --- | --- | --- | --- | --- |
+| `frame_time_ms` | 10.35 | 10.13 | 19.12 | 17.32 |
+| `bee_state_miner` | 0.077 | 0.085 | 0.104 | 0.106 |
+| `fog_of_war_update` | 2.98 | 2.87 | 10.14 | 9.73 |
+| `fog_of_war_relight` | 3.08 | 2.97 | 10.27 | 9.83 |
+
+Every gameplay counter in the same runs' `report.json` summaries is identical
+between the two sides; the timing rows above are the only difference the
+comparison found.
+
 ## Recorded baseline -- 13 Sep 2026 (A3, C-50)
 
 Run by Claude Code on Dave's Windows 11 development machine, headless, with

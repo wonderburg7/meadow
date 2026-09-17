@@ -164,26 +164,54 @@ static func feed_brood(bee: Node2D, cell: Node2D) -> void:
 ## use any cell, same as other resources -- but with none pending, jelly
 ## may only go in a cell the player has explicitly pinned to it, or it
 ## spills into whatever ordinary comb happens to be empty.
-static func jelly_storage_cell(bee: Node2D, except: Node2D = null) -> Node2D:
+static func _jelly_storage_target(bee: Node2D, except: Node2D = null) -> Node2D:
 	if bee.hive.has_gyne_brood():
 		return bee.hive.find_cell_for("jelly", except)
 	return bee.hive.find_designated_cell_for("jelly", except)
 
 
-static func can_make_jelly(bee: Node2D) -> bool:
+static func _can_make_jelly(bee: Node2D) -> bool:
 	# no point making it if nothing needs it and there's nowhere to put it
-	if not bee.hive.has_gyne_brood() and jelly_storage_cell(bee) == null:
+	if not bee.hive.has_gyne_brood() and _jelly_storage_target(bee) == null:
 		return false
 	if bee.hive.total("pollen") < GameConfig.jelly_pollen_cost:
 		return false
 	return bee.hive.total_honey() >= GameConfig.jelly_honey_cost
 
 
+## Catalogue finders all take one bee and return whether they started work.
+static func find_brood_cell(bee: Node2D) -> bool:
+	var brood = bee.hive.find_brood_cell()
+	if brood == null or (bee.role != Role.NURSERY and not brood.needs_feeding()):
+		return false
+	if brood.needs_feeding() and not can_feed(bee, brood):
+		if nurse_restock_errand(bee, brood.brood_is_gyne):
+			return true
+	bee.target_cell = brood
+	bee.state = State.TO_BROOD
+	return true
+
+
+static func jelly_storage_cell(bee: Node2D) -> bool:
+	if bee.nurse_jelly <= 0.0 or bee.hive.find_cell_for("jelly") == null:
+		return false
+	bee.state = State.TO_JELLY_CELL
+	return true
+
+
+static func can_make_jelly(bee: Node2D) -> bool:
+	if not _can_make_jelly(bee):
+		return false
+	bee.timer = GameConfig.jelly_make_time
+	bee.state = State.MAKING_JELLY
+	return true
+
+
 ## Standing still while her glands do the work. The pollen and honey are
 ## taken at the start, so a batch that is interrupted still costs.
 static func nurse_make_jelly(bee: Node2D, delta: float) -> void:
 	if bee.timer == GameConfig.jelly_make_time:
-		if not can_make_jelly(bee):
+		if not _can_make_jelly(bee):
 			bee.state = State.NURSE_IDLE
 			return
 		bee.hive.take("pollen", GameConfig.jelly_pollen_cost)
@@ -201,14 +229,14 @@ static func nurse_make_jelly(bee: Node2D, delta: float) -> void:
 static func nurse_go_to_jelly_cell(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for("jelly") <= 0.0:
 		BeeForaging.release_cell_slot(bee)
-		bee.target_cell = jelly_storage_cell(bee)
+		bee.target_cell = _jelly_storage_target(bee)
 		if bee.target_cell == null:
 			bee.state = State.NURSE_IDLE
 		return
 
 	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
 	if approach < 0:
-		bee.target_cell = jelly_storage_cell(bee, bee.target_cell)
+		bee.target_cell = _jelly_storage_target(bee, bee.target_cell)
 		return
 	if approach == 1:
 		bee.timer = GameConfig.nurse_load_time

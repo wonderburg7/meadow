@@ -53,28 +53,21 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
 
-1. **[Codex] G2 -- the dispatcher reads the catalogue**
-   - Plan: `plans/design/architecture-review.md` -- "G2 — the dispatcher reads the catalogue"
-   - Files: `scripts/bee.gd`, `scripts/bee_building.gd`, `scripts/bee_egg_laying.gd`, `scripts/bee_foraging.gd`, `scripts/bee_honey.gd`, `scripts/bee_mining.gd`, `scripts/bee_nursery.gd`
-   - Check: a headless equivalence run of `test_scenarios/recommendation_slice0_baseline.json` and `test_scenarios/colony_30_bees_test.json` to their fixed day counts, with identical population, stock and emergence summaries before and after; record frame time against `docs/PERFORMANCE_BASELINE.md`
-   - Proof: `present: scripts/bee.gd :: func _try_role_work`
-   - Next after: G3 -- actions become gateable.
-
-2. **[Codex] SM-1 -- find why the smoke scenario never completes a cell**
+1. **[Codex] SM-1 -- find why the smoke scenario never completes a cell**
    - Plan: `plans/now/smoke-scenario.md` -- "SM-1 — find why the smoke scenario never completes a cell"
    - Files: `test_scenarios/slice1_smoke_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/slice1_smoke_test.json` returns status=passed twice on the same seed, and the delivery note classifies the cause as stale fixture or product defect with numbers
    - Proof: `present: test_scenarios/slice1_smoke_test.json :: "cells_completed_at_least": 1`
    - Next after: none -- smoke-scenario is complete.
 
-3. **[Codex] SF-1 -- a new run's meadow starts with the season mix it will settle into**
+2. **[Codex] SF-1 -- a new run's meadow starts with the season mix it will settle into**
    - Plan: `plans/now/season-feel.md` -- "SF-1 — a new run's meadow starts with the season mix it will settle into"
    - Files: `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/diagnostic_log.gd`, `test_scenarios/sf1_founding_flower_mix_test.json`
    - Check: the fixture's run summary at Season days 5 -- the day-0 out-of-season share of flowers is within 5 points of the day-5 share and below 15%, asserted in a Python test that reads the two new DiagnosticLog counters; hands-on check C-25 moves to ready
    - Proof: `present: scripts/flower_species.gd :: static func season_weight(species: Dictionary) -> float:`
    - Next after: none -- season-feel is complete.
 
-4. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
+3. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
    - Plan: `plans/reference/technical-audit.md` -- "PERF-1 — measure `find_food_cell` before changing it"
    - Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
    - Check: two runs of `test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60` with perf enabled report the new `hive_find_food` section within 10% of each other, and the delivery note says whether it is trivial or worth a follow-up slice, with the numbers
@@ -89,7 +82,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **UI-W-4** (`plans/now/ui-w.md`) -- follows UI-W-1 in `scripts/ui_layout.gd`.
 - **CB-2** (`plans/now/comb-builders.md`) -- its cause is what CB-1 measures, and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.
-- **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows G2 and F2s.
+- **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

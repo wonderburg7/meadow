@@ -15,6 +15,41 @@ const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
+## Catalogue finders all take one bee and return whether they started work.
+static func find_cell_needing_cleaning(bee: Node2D) -> bool:
+	var dead = bee.hive.find_cell_needing_cleaning()
+	if dead == null:
+		return false
+	bee.target_cell = dead
+	bee.state = State.TO_CLEAN_CELL
+	return true
+
+
+static func find_cell_needing_eviction(bee: Node2D) -> bool:
+	var source = bee.hive.find_cell_needing_eviction()
+	if source == null:
+		return false
+	bee.target_cell = source
+	bee.state = State.TO_HAUL_SOURCE
+	return true
+
+
+static func create_cell_site_at(bee: Node2D) -> bool:
+	var site: Node2D = null
+	while site == null and bee._take_next_build_target():
+		site = bee.hive.create_cell_site_at(bee.manual_build_hex)
+		bee.has_manual_build_target = false
+	if site == null:
+		site = bee.hive.find_unfinished_cell()
+	if site == null:
+		site = bee.hive.create_next_cell_site(bee.home_hex if bee.has_home_hex else Vector2i.ZERO)
+	if site == null:
+		return false
+	bee.target_cell = site
+	bee.state = State.TO_BUILD_SITE
+	DiagnosticLog.log_build_target(bee, site, "assigned", "build_work_selected", "pending", "not_checked")
+	return true
+
 static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.is_built:
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "released", "target_invalid_or_already_built", "not_attempted", "not_checked")

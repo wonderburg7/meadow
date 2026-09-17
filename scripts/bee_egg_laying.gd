@@ -9,6 +9,15 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
+## Catalogue finder: all rows take one bee and report whether work started.
+static func has_room_for_egg(bee: Node2D) -> bool:
+	if not bee.is_queen or bee.laying_paused:
+		return false
+	if not bee.hive.has_room_for_egg() or bee.hive.find_cell_with("pollen") == null:
+		return false
+	bee.state = State.SEEK_POLLEN
+	return true
+
 ## A gyne egg is a far bigger investment than a worker one, so the queen
 ## has to eat considerably more before she can lay it. She looks at what
 ## the colony has actually asked for: if any free cell is set aside to
