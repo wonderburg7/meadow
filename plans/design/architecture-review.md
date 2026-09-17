@@ -806,10 +806,20 @@ Level: medium. Depends on: nothing.
 
 - **Required reading.** This heading. F8 above.
   `scripts/input_selection.gd::_finish_drag` and every `_place_*` and
-  `_on_*_requested` pair. `scripts/main.gd:311-325`.
+  `_on_*_requested` pair. `main.gd`'s `awaiting_*` block, which its
+  "Click a spot" comment heads.
 - **Files to change.** `scripts/main.gd`, `scripts/input_selection.gd`,
-  `scripts/hud.gd` — call sites, plus the nine signal declarations that F17
-  replaces with one.
+  `scripts/hud.gd`, `scripts/challenge_runner.gd` — call sites, plus the
+  signal declarations that F17 replaces with one.
+- **Where the flags actually are (checked 17 Sep 2026).** Nine `awaiting_*`
+  fields are declared in `main.gd`; `input_selection.gd` reads them in 28
+  places and `challenge_runner.gd` writes `awaiting_queen_build_cell` in two
+  (`_leave_stage` and the queen-build step). `hud.gd` reads none of them —
+  it carries the signals, not the flags — so the cursor hints are not a
+  caller to chase. Seven of the nine have a `*_requested` signal on `hud.gd`;
+  `forage_start` and `floral_preference` are requested from elsewhere and
+  handled in `input_selection.gd`, so count them in the catalogue but expect
+  their entry points to differ.
 - **Files not to change.** `scripts/orders_zones.gd`, `scripts/bee.gd`.
 - **Requirements.** One `active_placement_tool: String` on `main.gd`, `""`
   meaning none, plus a `PLACEMENT_TOOLS` catalogue in `input_selection.gd`

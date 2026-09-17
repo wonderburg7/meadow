@@ -20,11 +20,14 @@ What remains needs a new mechanism (C1F-1) and the instrument that uses it
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| C1F-1 | Each settings stage arrow puts the queen, tunnel, cells and stores where that stage begins, so going back always stays back | new `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd` (one new action), new test_scenarios/c1f1_stage_setup_test.json | after UI-W-2 | high |
+| C1F-1 | Each settings stage arrow puts the queen, tunnel, cells and stores where that stage begins, so going back always stays back | new `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd` (one new action), new test_scenarios/c1f1_stage_setup_test.json | after UI-W-2 and E1 | medium |
 | C1F-2 | A headless run proves the queen sets off on pollen at 1.14 and does not loop on a full comb | `scripts/scenario_actions.gd`, new test_scenarios/c1f2_queen_pollen_departure_test.json | after C1F-1 | medium |
 
 **Dependencies.** C1F-1 adds one action to `scripts/scenario_actions.gd`, as
-UI-W-2 does, so it follows UI-W-2 in the Claude lane. C1F-2 starts its fixture at 1.14 through C1F-1's setup;
+UI-W-2 does, so it follows UI-W-2 in the Claude lane. It also follows E1
+(`plans/design/architecture-review.md`), because requirement 5 clears the
+placement tool E1 replaces: taken in the other order, C1F-1 writes seven
+`awaiting_*` clears that E1 then deletes. C1F-2 starts its fixture at 1.14 through C1F-1's setup;
 without it a headless run cannot reach 1.14 with two built cells. C1F-2 also
 edits `scripts/scenario_actions.gd`, which UI-W-2 (`plans/now/ui-w.md`) owns
 while it is open, so C1F-2 waits for UI-W-2 as well.
@@ -98,6 +101,10 @@ Challenge 2's stage records, and natural stage advance (a goal met in play).
      `_new_worker` (1.18 onwards); false removes it.
    - `runner: {...}` -- runner counters the stage's goal reads, today only
      `c1_queen_collections`.
+   - `selection: "none" | "queen" | "new_worker"` -- what is selected when
+     the stage begins. Two Challenge 1 goals are selection checks
+     (`_goal_check_queen_selected`, `_goal_check_new_bee_selected`), so
+     without this key requirement 4 cannot hold at 1.3 or 1.18.
 2. `ChallengeStageSetup.apply(runner, main, setup: Dictionary)` applies them
    in the order above, then calls `main.hive.build_navigation()`,
    `main.hive.refresh_edge_flags()` and `main.hive.announce()` once.
@@ -110,6 +117,56 @@ Challenge 2's stage records, and natural stage advance (a goal met in play).
 5. Release the queen first (`_release_everything()`,
    `clear_navigation_state()`, `current_flower = null`, `target_cell = null`,
    state `IDLING`), as `freeze_bee:queen` does, so no errand survives a jump.
+   Clear the placement tool in the same step -- after E1 that is
+   `main.active_placement_tool = ""`, and `challenge_runner.gd` already
+   writes `awaiting_queen_build_cell` in two places -- so a jump taken while
+   "Build cell" is armed does not leave the next click placing a cell.
+
+### The setup each stage declares
+
+Authored 17 Sep 2026 by the plan review so the slice writes data, not
+judgement. Each row is the world at that stage's *start*: it makes that
+stage's own goal false and every earlier stage's goal true (requirement 4).
+Keys not named in a row keep their previous value. Cell order is build order;
+cell 0 is the first cell built.
+
+| Stage | What the stage asks (`docs/challenge-stages.md`) | Setup |
+| --- | --- | --- |
+| 1.1 | Let the queen open the entrance tunnel | `tunnel_open: false`, `queen_at: "meadow_door"`, `built_cells: 0`, `selection: "none"` |
+| 1.2 | Guide her through the tunnel into the cavity | `tunnel_open: true`, `queen_at: "tunnel"`, `built_cells: 0` |
+| 1.3 | Select the queen | `queen_at: "cavity"`, `selection: "none"` |
+| 1.4 | Visit the marked points inside the hive | `queen_at: "cavity"`, `selection: "queen"` |
+| 1.5 | Build the first wax cell | `queen_at: "cavity"`, `built_cells: 0` |
+| 1.6 | Send the queen out to the meadow | `queen_at: "hive_floor"`, `built_cells: 1` |
+| 1.7 | Visit the marked points in the meadow | `queen_at: "meadow_door"`, `built_cells: 1` |
+| 1.8 | Collect from a first flower | `queen_at: "meadow_door"`, `queen_load: {"amount": 0.0}`, `runner: {"c1_queen_collections": 0}` |
+| 1.9 | Collect from a second flower | `queen_at: "meadow_door"`, `runner: {"c1_queen_collections": 1}` |
+| 1.10 | Bring the load home and deposit it in a cell | `queen_at: "meadow_door"`, `queen_load: {"type": "nectar", "amount": 5.0}`, `built_cells: 1`, `runner: {"c1_queen_collections": 2}` |
+| 1.11 | Set her to Forager (nectar) and fill a cell to 150 | `queen_at: "hive_floor"`, `queen_load: {"amount": 0.0}`, `built_cells: 1`, `cell_stores: [{"type": "nectar", "amount": 0.0}]`, `queen_role: "egg_layer"` |
+| 1.12 | Build a second cell | `built_cells: 1`, `cell_stores: [{"type": "nectar", "amount": 150.0}]`, `queen_role: "forager"`, `queen_focus: "nectar"` |
+| 1.13 | Reserve the new cell for pollen | `built_cells: 2`, `cell_stores: [{"type": "nectar", "amount": 150.0}]`, `pollen_cell: -1` |
+| 1.14 | Switch her focus to pollen and fill that cell to 75 | `built_cells: 2`, `pollen_cell: 1`, `cell_stores: [{"type": "nectar", "amount": 150.0}]`, `queen_focus: "nectar"` |
+| 1.15 | Build a third cell | `built_cells: 2`, `cell_stores: [{"type": "nectar", "amount": 150.0}, {"type": "pollen", "amount": 75.0}]` |
+| 1.16 | Set her to Laying and lay the first egg | `built_cells: 3`, `cell_stores: [{"type": "nectar", "amount": 150.0}, {"type": "pollen", "amount": 75.0}]`, `brood_cells: 0`, `queen_role: "forager"` |
+| 1.17 | Keep the brood fed until a worker hatches | `brood_cells: 1`, `queen_role: "egg_layer"`, `new_worker: false` |
+| 1.18 | Select the new worker | `new_worker: true`, `selection: "none"` |
+| 1.19 | Send the new worker out to the meadow | `new_worker: true` (inside the hive), `selection: "new_worker"` |
+| 1.20 | Nothing -- the Challenge is complete | none; see the exception below |
+
+**Three things this table relies on, each read from
+`challenge_runner.gd::_enter_stage` on 17 Sep 2026.**
+
+- 1.4 and 1.7 need no visit progress in their setup: `_enter_stage` calls
+  `_begin_ordered_visit` for those two ids and `_clear_ordered_visit` for
+  every other, so the counter restarts on entry either way.
+- 1.8 needs no counter in its setup either -- `_enter_stage` sets
+  `_c1_queen_collections = 0` at that id -- but 1.9 and 1.10 do, because
+  nothing resets it again.
+- **1.20 is the exception to requirement 4.** `_goal_check_complete` returns
+  `true` unconditionally, so no setup can make it false. `_complete()` has
+  run by then and the arrows are disabled, so there is nothing to protect;
+  give 1.20 an empty setup and say so in the source check's allowance rather
+  than trying to satisfy the rule.
 
 **Constraints and invariants.** Setup runs only for `Session.starting_level
 == 1`; a Challenge 2 jump stays gates-only (see Escalate). No save format
@@ -148,7 +205,11 @@ back across every stage. PASS: after each arrow the queen, the tunnel, the
 comb cells and their stores match the stage shown, and the stage shown stays
 put until you act." Archive this section; set `Next:` to C1F-2.
 
-**Level:** high (ownership boundary and event ordering).
+**Level:** medium (17 Sep 2026 plan review, lowered from high). The
+ownership boundary and the setup vocabulary are settled above, and the table
+is written, so what remains is mechanical: one new script, one dispatch
+change and one fixture. **Hand it back to a high-reasoning model** if the
+table turns out to be wrong about a goal, which is the escalation below.
 
 **Escalate if** a stage's goal cannot be made false by setup alone, if cell
 removal needs a change in `hive.gd`'s index beyond `announce()`, or if Dave

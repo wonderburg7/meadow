@@ -223,19 +223,19 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     slice that makes a rare state reachable adds a button there; it does not
     invent a new home (`plans/reference/check-loop.md` P-3).
 14. **`scripts/challenge_runner.gd` is the contended file, and this is the
-    order.** Six open slices across four plans want it, which is why so many
-    of them read as "not startable" for reasons stated in four different
-    places. One list, so nobody re-derives it: Challenge 1's Slices 23, 22,
-    24 and 26 (`plans/archive/CHALLENGE1_2026-09-15.md`) come first and are what the
-    architecture hold is waiting for, with **H4**
-    (`plans/design/architecture-review.md`) between Slice 22 and Slice 24
-    because 24 and 26 have no runnable acceptance until it lands (Dave,
-    11 Sep 2026); then UI-U-1 (`plans/now/ui.md`),
-    which also needs `debug_panel.gd` free; then the architecture review's A4,
-    C2, F2s and G3, which Dave's decision A of 11 Sep 2026 holds behind
-    Challenge 1 in any case. A slice
-    naming this file that is not next in that order is not startable, whatever
-    its own plan says. Added 11 Sep 2026 by the plan review.
+    order.** Several open slices across three plans want it, which is why so
+    many of them read as "not startable" for reasons stated in different
+    places. One list, so nobody re-derives it, rewritten 17 Sep 2026 by the
+    plan review because every slice the previous list named has shipped:
+    **UI-W-2** (`plans/now/ui-w.md`, `_apply_stage_gate_to_ui` only, and only
+    if its fixture confirms H1), then **E1**
+    (`plans/design/architecture-review.md`, the two
+    `awaiting_queen_build_cell` writes), then **C1F-1**
+    (`plans/now/c1-followups.md`, which adds the stage-setup call to both
+    debug arrows), then the architecture review's **F2s** and **G3** in that
+    order. A slice naming this file that is not next in that order is not
+    startable, whatever its own plan says. Added 11 Sep 2026 by the plan
+    review.
 15. **Cite the symbol, not the line.** A plan may give a line number as a
     hint, never as the address: `challenge-1.md` carried five numbers that
     had each moved 40 to 60 lines by the time the slices they belong to were
