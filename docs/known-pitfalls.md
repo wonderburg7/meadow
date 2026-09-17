@@ -301,3 +301,24 @@ mv .git/HEAD.lock .git/stale_locks/HEAD.lock.$(date +%s)   # if present
 
 Nothing is actually wrong with the repo when this happens. Don't spend
 a turn investigating it — move the lock and retry.
+
+## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
+
+The Bash tool already runs in the right working directory, so prefixing a
+command with `cd "<absolute path>" &&` buys nothing — but it is the single
+largest source of denied tool calls on this project. A scan of 21 days of
+transcripts (17 Sep 2026) found ~58 denials whose command began with a `cd`
+into the repository root or a `.worktrees/<id>` directory, against 41–139
+`partially_denied` outcomes in the same window from
+`python tools/session_cost.py --classify`.
+
+Two things make it expensive. A compound command is checked as a whole, so
+one denied half denies the call and the whole turn is spent; and the deny
+rules in `.claude/settings.json` are path-based, so chaining an innocent
+command onto one that touches `plans/archive/` or `docs/archive/` loses
+both. Write the command bare, one job per call, and let the deny rules
+refuse only the part that should be refused.
+
+The read-only inspection commands this project actually uses are allow-listed
+in `.claude/settings.json`; if a plain `sed -n`/`grep`/`git show` is refused,
+the path it names is denied on purpose — do not reach for a workaround.

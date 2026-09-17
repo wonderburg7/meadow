@@ -25,7 +25,8 @@ KINDS = (
     "session_end",
     "slice_claimed",
     "slice_finished",
-    "slice_stop",
+    # Not "slice_stop": tools/slice.ps1 records stops in its own
+    # meadow-slice-stops.jsonl ledger, read by session_cost.py --stops.
     "verify_stage",
     "headless_run",
     "env_capability",

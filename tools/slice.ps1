@@ -19,7 +19,7 @@ $script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Index -- grep a name rather than reading this file (1,400 lines):
 #   grep -n "^function <Name>" tools/slice.ps1, then read only that function.
-#   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure
+#   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure, Add-SliceStopRecord
 #   --- lock and journal ---    Invoke-WithLifecycleLock, *-ClosingJournal, pending deletions
 #   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
@@ -46,6 +46,44 @@ function Stop-Slice {
     $exception = New-Object System.Exception $Cause
     $exception.Data["Fix"] = $Fix
     throw $exception
+}
+
+function Add-SliceStopRecord {
+    # One line per stop, appended to a ledger beside the other lifecycle state
+    # in the git common directory, so `tools/session_cost.py --stops` can say
+    # which phase actually costs the retries. Before this, that was guesswork:
+    # a session sees its own stop and no others, and the 39 lifecycle_failure
+    # outcomes a week carried no phase with them.
+    #
+    # Never throws. It runs from the top-level catch handler, where an error
+    # of its own would replace the real failure -- the same way Pop-Location
+    # once masked a failed ledger commit (see Invoke-SliceFinish).
+    param([string]$Cause)
+    try {
+        # No 2>$null: redirecting a native command's stderr under
+        # $ErrorActionPreference = "Stop" turns git's own message into a
+        # terminating error, which is exactly what this must not raise.
+        $commonDir = git rev-parse --git-common-dir
+        if ($LASTEXITCODE -ne 0 -or -not $commonDir) { return }
+        $commonDir = ([string]$commonDir).Trim()
+        if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
+            $commonDir = Join-Path (Get-Location).Path $commonDir
+        }
+        $context = $script:SliceContext
+        $record = [ordered]@{
+            at      = (Get-Date).ToString("s")
+            command = $context.Command
+            id      = $context.Id
+            lane    = $context.Lane
+            step    = $context.Step
+            cause   = $Cause
+        }
+        Add-Content -LiteralPath (Join-Path $commonDir "meadow-slice-stops.jsonl") `
+            -Value ($record | ConvertTo-Json -Compress)
+    }
+    catch {
+        # A measurement is never a reason to lose the diagnosis.
+    }
 }
 
 function Get-DefaultSliceFix {
@@ -93,19 +131,7 @@ function Write-SliceFailure {
     $lines += "  Retry:  $(Get-SliceRetryLine)"
     $lines += "  This block is the whole diagnosis -- there is no need to read tools/slice.ps1."
     foreach ($line in $lines) { [Console]::Error.WriteLine($line) }
-
-    # Every stop passes here, so this one line is the whole census of which
-    # automation fails and at which step. Without it a stop is visible only to
-    # the session that hit it.
-    Write-Diagnostic -Kind "slice_stop" -Fields @{
-        cmd  = $context.Command
-        id   = $context.Id
-        lane = $context.Lane
-        step = $context.Step
-        ok   = $false
-        ms   = [int]$script:SliceStopwatch.ElapsedMilliseconds
-        detail = $cause
-    }
+    Add-SliceStopRecord -Cause $cause
 }
 
 # --- lock and journal ---
@@ -1179,15 +1205,33 @@ function Invoke-SlicePostMergeCleanup {
 
     # The one push for the whole transaction: every commit the merge, the
     # ready-index refresh and the ledger removal made travels together.
-    git -c http.sslBackend=openssl -C $Root push
-    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push) -ne 0) { throw "git push failed" }
     Invoke-InjectedLifecycleFailure -Phase "pushed"
 
-    git -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        git -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch
-        if ($LASTEXITCODE -ne 0) { throw "git push origin --delete failed" }
+    if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root ls-remote --exit-code --heads origin $Target.Branch) -eq 0) {
+        if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push origin --delete $Target.Branch) -ne 0) { throw "git push origin --delete failed" }
     }
+}
+
+function Invoke-GitQuiet {
+    # A native command's stderr becomes a terminating ErrorRecord in
+    # PowerShell 5.1 whenever the *caller* redirects it -- `finish *> log.txt`,
+    # or a wrapper piping through 2>&1 -- and `git push` writes its progress
+    # to stderr on every success. Closeout then aborted after the merge, with
+    # the branch already gone and the push not made (17 Sep 2026; the same
+    # trap is why the worktree-remove call below carries its own note). Every
+    # git call that talks to the remote goes through here, so the exit code
+    # decides the outcome no matter how the session is invoking the script.
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & git @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+    }
+    finally {
+        $ErrorActionPreference = $previous
+    }
+    return $LASTEXITCODE
 }
 
 function Invoke-SliceStatus {
@@ -1250,6 +1294,25 @@ function Get-SuccessorId {
     param([string]$NextAfter)
     if (-not $NextAfter -or $NextAfter -match '^\s*none\b') { return $null }
     return ($NextAfter -split '--', 2)[0].Trim()
+}
+
+function Test-SuccessorDeferred {
+    # A successor is not always admissible the moment its predecessor lands:
+    # G3 followed G2 but waits on F2s, and the queue's own rule sends a
+    # blocked item to "## Not in the queue, and why". Before 17 Sep 2026 the
+    # refill gate knew only "in the lane", so closing such a slice meant
+    # either queueing an unstartable item or lying in its `Next after:` line.
+    # Only the bolded lead of each bullet counts, the same rule
+    # check_docs.py's check_queue_section_agreement uses, so the prose naming
+    # other ids as reasons stays allowed.
+    param([string]$Text, [string]$Id)
+    if (-not $Id) { return $false }
+    $section = [regex]::Match($Text, '(?ms)^## Not in the queue, and why\s*$(.*?)(?=^## |\Z)')
+    if (-not $section.Success) { return $false }
+    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*')) {
+        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") { return $true }
+    }
+    return $false
 }
 
 function Get-CopyPastePromptLine {
@@ -1379,6 +1442,22 @@ function Invoke-SliceFinish {
                 $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
                 $headingStillLive = $headingRegex.IsMatch($planText)
             }
+            # An id can be reused: plans/now/ui-w.md's UI-W-1..4 repeat four
+            # ids that shipped from the ui-windows plan in September, so a
+            # file named <id>_<date>.md is not on its own evidence that *this*
+            # slice was archived -- an old namesake would satisfy the gate
+            # while this slice's specification was simply deleted. Require a
+            # record that names this slice's own heading. Deliberately not a
+            # git range: `finish` is resumable after the merge, where every
+            # such range is empty (17 Sep 2026 plan review).
+            $archiveNamesThisSlice = -not $item.Heading
+            foreach ($candidate in $archiveMatches) {
+                $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
+                if ($candidateText -like "*$($item.Heading)*") { $archiveNamesThisSlice = $true; break }
+            }
+            if ($archiveMatches -and -not $archiveNamesThisSlice -and -not $headingStillLive) {
+                Stop-Slice -Cause "$id -- plans/archive/ has $($archiveMatches.Count) file(s) for this id, none naming '$($item.Heading)': the id is reused, so nothing there records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, including its heading text, commit it on this branch, and retry"
+            }
             if (-not $archiveMatches -or $headingStillLive) {
                 $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
                 Stop-Slice -Cause "$id -- $archiveState" -Fix "move the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md (write it with Bash if the file tools refuse plans/archive/), leave a one-line pointer where the heading was, commit on this branch, and retry"
@@ -1397,7 +1476,10 @@ function Invoke-SliceFinish {
                 Stop-Slice -Cause "$id -- its own entry is still in NEXTSTEPS.md's ### $lane lane" -Fix "on this branch, delete the $id item from ### $lane lane, add its successor ($($item.NextAfter)) with full Plan/Files/Check/Proof/Next after lines unless that says the plan is complete, renumber the lane, run python tools/check_docs.py, commit, and retry"
             }
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
-                Stop-Slice -Cause "$id -- Next after: names '$successorId' but no [$lane] item with that id is in NEXTSTEPS.md yet" -Fix "on this branch, add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), run python tools/check_docs.py, commit, and retry"
+                $branchQueueText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $worktreeRoot "NEXTSTEPS.md")
+                if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId)) {
+                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
+                }
             }
         }
         Invoke-InjectedLifecycleFailure -Phase "refilled"

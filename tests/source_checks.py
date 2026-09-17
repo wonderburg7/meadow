@@ -595,11 +595,7 @@ ACTION_REQUIRED_FIELDS = (
 
 
 def check_action_catalogue(problems):
-    """G1 of architecture-review.md: the action table is a transcription of
-    bee.gd::_try_role_work, not a second dispatcher. Check its schema, that
-    every named finder exists somewhere in the current scripts, every role is
-    a roles.gd id, each role's bands are a contiguous priority sequence, and
-    the source still contains the branch landmarks the rows describe."""
+    """G1/G2: validate the action data and the catalogue-driven dispatcher."""
     actions_path = os.path.join(ROOT, "actions.gd")
     roles_path = os.path.join(ROOT, "roles.gd")
     bee_path = os.path.join(ROOT, "bee.gd")
@@ -625,10 +621,18 @@ def check_action_catalogue(problems):
         for name, value in re.findall(r"^const\s+(\w+)\s*:=\s*(\d+)\s*$", roles_src, re.M)
     }
 
-    declared_functions = set()
-    for path in glob.glob(os.path.join(ROOT, "*.gd")):
-        source = open(path, encoding="utf-8").read()
-        declared_functions.update(re.findall(r"^\s*(?:static\s+)?func\s+(\w+)", source, re.M))
+    role_modules = {
+        "NURSE": "bee_nursery.gd",
+        "COMB_WORKER": "bee_building.gd",
+        "MINER": "bee_mining.gd",
+        "HONEY": "bee_honey.gd",
+        "QUEEN": "bee_egg_laying.gd",
+        "FORAGER": "bee_foraging.gd",
+    }
+    module_sources = {
+        role: open(os.path.join(ROOT, filename), encoding="utf-8").read()
+        for role, filename in role_modules.items()
+    }
 
     ids = set()
     bands_by_role = {}
@@ -641,13 +645,6 @@ def check_action_catalogue(problems):
         if action_id in ids:
             problems.append("actions.gd: duplicate action id %r" % action_id)
         ids.add(action_id)
-
-        find_name = _quoted(_field(entry, "find"))
-        if find_name not in declared_functions:
-            problems.append(
-                "actions.gd: %s.find %r is not a real function in scripts/"
-                % (action_id, find_name)
-            )
 
         band_raw = (_field(entry, "band") or "").strip()
         if not band_raw.isdigit():
@@ -667,6 +664,17 @@ def check_action_catalogue(problems):
                 continue
             bands_by_role.setdefault(role_values[role_name], []).append(int(band_raw))
 
+            find_name = _quoted(_field(entry, "find"))
+            finder_pattern = (
+                r"^static\s+func\s+%s\(bee:\s*Node2D\)\s*->\s*bool:"
+                % re.escape(find_name)
+            )
+            if not re.search(finder_pattern, module_sources[role_name], re.M):
+                problems.append(
+                    "actions.gd: %s.find %r must be a uniform bool finder in %s"
+                    % (action_id, find_name, role_modules[role_name])
+                )
+
         for field in ("feature", "skill", "gate_key", "config_flag", "season"):
             if _quoted(_field(entry, field)) != "":
                 problems.append(
@@ -683,31 +691,20 @@ def check_action_catalogue(problems):
             )
 
     bee_src = open(bee_path, encoding="utf-8").read()
-    landmarks = {
-        "nurse_feed_brood": "var brood = hive.find_brood_cell()",
-        "nurse_store_jelly": "state = State.TO_JELLY_CELL",
-        "nurse_make_jelly": "BeeNursery.can_make_jelly(self)",
-        "comb_clean_cell": "hive.find_cell_needing_cleaning()",
-        "comb_evict_cell": "hive.find_cell_needing_eviction()",
-        "comb_restock": "BeeBuilding.find_restock_job(self)",
-        "comb_build": "_take_next_build_target()",
-        "mine_queued_block": "var block = _next_queued_block()",
-        "mine_marked_block": "hive.find_marked_block(_mine_reference_point())",
-        "mine_automine_block": "hive.find_nearest_edge_block(",
-        "honey_deposit_load": "var pot = hive.find_honey_target()",
-        "honey_fan_cell": "var drying = hive.find_cell_needing_fanning()",
-        "honey_fetch_nectar": "var nectar_cell = hive.find_cell_with(\"nectar\")",
-        "queen_lay_egg": "hive.has_room_for_egg()",
-        "forager_seek_flower": "state = State.SEEK_FLOWER",
-    }
-    for action_id, landmark in landmarks.items():
-        if action_id not in ids:
-            problems.append("actions.gd: missing current work action %s" % action_id)
-        elif landmark not in bee_src:
-            problems.append(
-                "bee.gd: action catalogue row %s no longer matches _try_role_work (%s)"
-                % (action_id, landmark)
-            )
+    required_dispatch = (
+        "static var _actions_by_role: Dictionary = _build_actions_by_role()",
+        "for action in _actions_by_role.get(r, []):",
+        "finder.call(action.find, self)",
+    )
+    for statement in required_dispatch:
+        if statement not in bee_src:
+            problems.append("bee.gd: G2 dispatcher is missing %r" % statement)
+    dispatch_start = bee_src.find("func _try_role_work")
+    dispatch_end = bee_src.find("static func _build_actions_by_role", dispatch_start)
+    if dispatch_start < 0 or dispatch_end < 0:
+        problems.append("bee.gd: could not isolate G2 dispatcher")
+    elif "match r:" in bee_src[dispatch_start:dispatch_end]:
+        problems.append("bee.gd: _try_role_work must not retain a role match")
 
 
 # Buckets hive.gd::_content_index() builds that aren't one per cell

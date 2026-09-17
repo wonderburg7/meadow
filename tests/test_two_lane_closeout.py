@@ -134,7 +134,12 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         archive_dir = worktree / "plans" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
         (archive_dir / f"{delivered_id}_2026-01-01.md").write_text(
-            f"# {delivered_id} (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+            # The gate reads the record for the heading the queue item
+            # names, so an older slice that reused the id cannot satisfy it.
+            f"# {delivered_id} -- "
+            + ("claude fixture" if delivered_id == "A-1" else "codex fixture")
+            + " (archived)" + chr(10) + chr(10) + "Shipped in this fixture." + chr(10),
+            encoding="utf-8",
         )
         (worktree / "NEXTSTEPS.md").write_text(
             "## Next up\n\n" + (keep_item or ""), encoding="utf-8"

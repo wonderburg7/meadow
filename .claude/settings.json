@@ -7,6 +7,29 @@
       "Read(./plans/archive/**)",
       "Read(./ROADMAP.md)",
       "Read(./DESIGN_BACKLOG.md)"
+    ],
+    "allow": [
+      "Bash(sed -n *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(git log*)",
+      "Bash(git rev-parse*)",
+      "Bash(git branch --list*)",
+      "Bash(git worktree list*)",
+      "Bash(python tools/check_docs.py*)",
+      "Bash(python tools/heading.py*)",
+      "Bash(python tools/new_check.py*)",
+      "Bash(python tools/session_cost.py*)",
+      "Bash(python tools/stage_reference.py*)",
+      "Bash(python tools/update_function_map.py*)",
+      "Bash(python -m unittest tests.*)"
     ]
   },
   "enabledPlugins": {

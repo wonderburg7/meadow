@@ -51,11 +51,11 @@ Orders columns across the tray; then select a comb cell and look again.
 
 PASS: at 1920x1080 the tray's columns divide its width into equal parts with equal gaps and equal space at each end -- Job, Focus and Orders for a bee; Reserve for, Priority and Raises for a cell -- and at 800x600 they either do the same or wrap onto more rows with nothing clipped.
 
-Blocked by: UI-W-3, which gives a cell's tray its third column. Dave's
+Blocked by: UI-X-3, which gives a cell's tray its third column. Dave's
 12 Sep 2026 run passed the bee half; a cell still shows two columns ("using
 three would mean it uses less vertical space"). Re-run the cell half only.
 
-Owner: `plans/now/ui-w.md` UI-W-3.
+Owner: `plans/now/ui-x.md` UI-X-3.
 
 ### C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager
 
@@ -67,13 +67,13 @@ Raises to Forager -- Pollen, and play until 2.2 clears.
 
 PASS: during 2.1 Dr Gallerin warns that every new bee costs pollen and some should be kept back; at low pollen, exactly once per run, the colony receives three bee-costs of pollen with a line explaining that no pollen means no new bees, and the same low-pollen state does not top the store up again; once the pollen Forager is raised no further rescue occurs.
 
-Blocked by: UI-W-2. In Dave's 12 Sep 2026 run there was no Forager control
+Blocked by: UI-X-2. In Dave's 12 Sep 2026 run there was no Forager control
 beside "Raises:" at 2.2 at all (confirmed in session, 13 Sep 2026), so the
-pollen Forager could not be chosen. UI-W-2 also re-checks the 2.1 half of
+pollen Forager could not be chosen. UI-X-2 also re-checks the 2.1 half of
 this wording before the check moves back: 2.1 has not taught the Forager
 role, so nothing can be raised as one there.
 
-Owner: `plans/now/ui-w.md` UI-W-2.
+Owner: `plans/now/ui-x.md` UI-X-2.
 
 ### C-46 -- comb builders spread across six walls before opening another site
 
@@ -97,10 +97,10 @@ Open the settings cog in a run, at the default text scale on a maximised
 
 PASS: the window is about a quarter of the screen wide, the action buttons and the Triggers buttons each read in full, and no row forces a horizontal scrollbar.
 
-Blocked by: UI-W-1. Dave's 12 Sep 2026 run: the window was about a fifth of
+Blocked by: UI-X-1. Dave's 12 Sep 2026 run: the window was about a fifth of
 the screen (it is a fixed 320px) and "could be bigger, up to 25%".
 
-Owner: `plans/now/ui-w.md` UI-W-1.
+Owner: `plans/now/ui-x.md` UI-X-1.
 
 ### C-53 -- the Controls list reads as one list, with no gaps
 
@@ -109,10 +109,10 @@ and open the Controls section.
 
 PASS: the control lines sit close together like one list, with no visible gap between one line and the next, there is no second "Controls" heading, and every line is readable at the window's width.
 
-Blocked by: UI-W-1. Dave's 12 Sep 2026 run: "still too big a gap between each
+Blocked by: UI-X-1. Dave's 12 Sep 2026 run: "still too big a gap between each
 item in the list", after the blank lines were removed.
 
-Owner: `plans/now/ui-w.md` UI-W-1.
+Owner: `plans/now/ui-x.md` UI-X-1.
 
 ### C-25 -- out-of-season flowers read as a rare find, not a standing mix
 

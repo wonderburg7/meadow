@@ -16,20 +16,28 @@ the development workflow and touches no game code; they never share a file.
 **State.** WD-0 shipped 17 September 2026 and built the spine:
 `tools/diagnostics.ps1` and `tools/diagnostics.py` append one JSON object per
 line to `<git-common-dir>/meadow-diagnostics.jsonl`; `tools/slice.ps1` records
-`slice_claimed`, `slice_finished` and `slice_stop`; `tools/verify.ps1` records
-`verify_stage` with a duration; `.claude/settings.json`'s SessionStart and
-Stop hooks record `session_start`/`session_end` through `tools/hook_log.py`;
-and `python tools/session_cost.py --events` prints the summary. Four of the
-nine kinds in `tools/diagnostics.py`'s `KINDS` have no writer yet, and the
-four slices below write them. Specification and outcome:
+`slice_claimed` and `slice_finished`; `tools/verify.ps1` records `verify_stage`
+with a duration; `.claude/settings.json`'s SessionStart and Stop hooks record
+`session_start`/`session_end` through `tools/hook_log.py`; and
+`python tools/session_cost.py --events` prints the summary. Four of the eight
+kinds in `tools/diagnostics.py`'s `KINDS` have no writer yet, and the four
+slices below write them. Specification and outcome:
 `plans/archive/WD-0_2026-09-17.md`.
 
+**This log does not record stops.** `tools/slice.ps1` writes them to its own
+`meadow-slice-stops.jsonl` and `python tools/session_cost.py --stops` tallies
+them by step; `plans/now/agent-lifecycle.md`'s L-12 is gated on that output.
+No slice here may add a `slice_stop` kind, move that ledger, or change
+`--stops`. Two answers to "what stopped" is the outcome this plan exists to
+avoid, not a redundancy worth having.
+
 **Against `plans/now/agent-lifecycle.md`.** That plan owns
-`tools/session_cost.py`'s `--days`, `--classify` and `--phases` and the L-9
-gate, and has no open slice. This plan adds modes beside those and never
-changes them: `--classify` reads transcripts and stays the gate's measure,
-`--events` reads the event log and is corroborating evidence only. Nothing
-here changes L-9's gate wording.
+`tools/session_cost.py`'s `--days`, `--classify`, `--phases` and `--stops`,
+the L-9 gate and the open slices L-10 to L-13. This plan adds `--events`
+beside those and changes none of them. Where the two could overlap, that plan
+wins: it was there first and its gates are written against its own numbers.
+L-13 rewrites `tools/slice.ps1`'s closeout, so a slice here that touches that
+file says so in its delivery note.
 
 ## Open slices at a glance
 

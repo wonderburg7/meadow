@@ -21,10 +21,8 @@ instead:
 Nothing below has an owning plan. Each needs a design or evidence pass before
 it can become one.
 
-- winter and wider seasonal pressure;
-- sprites with a measured procedural fallback;
-- save slots and Challenge-aware save/load;
-- weather, rivals, disease and broader predator systems;
+- winter, sprites, Challenge-aware save/load and the wider ecology systems:
+  `DESIGN_BACKLOG.md`'s "Deferred product decisions" holds the decision on each.
 - second-hive-site progression;
 - player-managed stocking routes and nectar-spoilage economy work.
 

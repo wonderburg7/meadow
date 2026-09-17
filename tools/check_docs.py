@@ -403,6 +403,94 @@ def check_queue_successors(errors: list[str]) -> None:
         )
 
 
+def check_queue_items_state_a_level(warnings: list[str]) -> None:
+    """Every queued item's plan states the reasoning level for that slice.
+
+    `tools/slice.ps1`'s Get-SliceLevel reads a `Level:` line inside the
+    slice's own section, else its row in the plan's "Open slices at a glance"
+    table, and reports "unstated" when it finds neither -- which turns the
+    model and connector advice in `start`/`doctor` into a guess. A warning,
+    not an error: an item can be queued before its plan has been rewritten,
+    but nobody should have to discover it at `start`.
+    """
+    path = ROOT / "NEXTSTEPS.md"
+    text = path.read_text(encoding="utf-8")
+    items = queue_item_chunks(text)
+    if items is None:
+        return
+    for index, (_, chunk) in enumerate(items, start=1):
+        plan_match = re.search(r"- Plan: `([^`]+)` -- \"([^\"]+)\"", chunk)
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if not plan_match or not item_match:
+            continue
+        plan_path = ROOT / plan_match.group(1)
+        if not plan_path.is_file():
+            continue   # check_queue_files reports a missing plan
+        plan_text = plan_path.read_text(encoding="utf-8")
+        heading, slice_id = plan_match.group(2), item_match.group(1)
+        section = ""
+        heading_match = re.search(
+            r"(?m)^(#{1,6})\s+.*%s.*$" % re.escape(heading), plan_text
+        )
+        if heading_match:
+            depth = len(heading_match.group(1))
+            rest = plan_text[heading_match.end():]
+            end = re.search(r"(?m)^#{1,%d}\s" % depth, rest)
+            section = rest[: end.start()] if end else rest
+        if re.search(r"(?i)Level:(?:\*\*)?\s*(low|medium|high)\b", section):
+            continue
+        row = r"(?im)^\|\s*%s\s*\|.*\|\s*(low|medium|high)\s*\|\s*$" % re.escape(slice_id)
+        if re.search(row, plan_text):
+            continue
+        warnings.append(
+            f"NEXTSTEPS.md item {index} ({slice_id}): its plan states no reasoning level, "
+            "so tools/slice.ps1 can only guess which model to advise. Add a "
+            "'Level: low|medium|high' line to the slice's section, or a level "
+            "column to its row in the plan's open-slices table"
+        )
+
+
+def check_queue_ids_are_unused(warnings: list[str]) -> None:
+    """A queued id that already has an archive record is an id reused.
+
+    `plans/now/ui-w.md`'s UI-W-1 to UI-W-4 reuse the ids of four different
+    slices that shipped from `plans/now/ui-windows.md` on 8 Sep 2026. Two
+    things then go wrong: grepping the archive for the id finds the wrong
+    slice, and `tools/slice.ps1 finish`'s archive gate sees a
+    `plans/archive/<id>_*.md` that was written for something else. The gate
+    now also requires that file to name the slice's own heading, and this
+    warning is the earlier notice. Found by the 17 Sep 2026 plan review.
+    """
+    path = ROOT / "NEXTSTEPS.md"
+    text = path.read_text(encoding="utf-8")
+    items = queue_item_chunks(text)
+    if items is None:
+        return
+    for index, (_, chunk) in enumerate(items, start=1):
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if not item_match:
+            continue
+        slice_id = item_match.group(1)
+        existing = sorted((ROOT / "plans" / "archive").glob(f"{slice_id}_*.md"))
+        if not existing:
+            continue
+        plan_match = re.search(r"- Plan: `([^`]+)`", chunk)
+        if plan_match:
+            plan_path = ROOT / plan_match.group(1)
+            # An owning plan that says the id is reused, and why, has already
+            # answered this; the closeout gate still requires the archive
+            # record to be one the slice's own branch wrote.
+            if plan_path.is_file() and "reuses the id" in plan_path.read_text(encoding="utf-8"):
+                continue
+        names = ", ".join(f.name for f in existing)
+        warnings.append(
+            f"NEXTSTEPS.md item {index} ({slice_id}): that id already has an archive "
+            f"record ({names}). Reusing a slice id makes both the archive and "
+            "tools/slice.ps1's archive gate ambiguous -- give the open slice a "
+            "fresh id, or say in its plan why the id is being reused"
+        )
+
+
 def check_queue_section_agreement(errors: list[str], text: str | None = None) -> None:
     """An id cannot be both ready ('## Next up') and waiting ('## Not in the
     queue, and why') at once -- that is what let UI-U-1 sit in both places
@@ -852,6 +940,8 @@ def main() -> int:
     check_next_steps(errors, warnings)
     check_queue_files(errors)
     check_queue_proofs(errors)
+    check_queue_items_state_a_level(warnings)
+    check_queue_ids_are_unused(warnings)
     check_queue_successors(errors)
     check_queue_section_agreement(errors)
     check_markdown_links(errors)

@@ -33,16 +33,18 @@ const ACTIONS := [
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 
-	# Maintenance outranks stocking and building. Mode filters reproduce the
-	# current early return for maintain/restock-only comb workers.
+	# Maintenance outranks stocking and building. A Stocking comb worker clears
+	# and evicts too: bee.gd's pre-catalogue branch ran both for every mode but
+	# "build", and only the *restock* and *build* steps were mode-specific.
+	# Corrected 17 Sep 2026 during G2's integration review.
 	{
 		"id": "comb_clean_cell", "label": "Clean cell", "roles": [Roles.COMB_WORKER],
-		"band": 0, "modes": ["maintain", "both"], "find": "find_cell_needing_cleaning",
+		"band": 0, "modes": ["maintain", "restock", "both"], "find": "find_cell_needing_cleaning",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "comb_evict_cell", "label": "Evict cell stores", "roles": [Roles.COMB_WORKER],
-		"band": 1, "modes": ["maintain", "both"], "find": "find_cell_needing_eviction",
+		"band": 1, "modes": ["maintain", "restock", "both"], "find": "find_cell_needing_eviction",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
@@ -98,7 +100,7 @@ const ACTIONS := [
 	},
 	{
 		"id": "forager_seek_flower", "label": "Seek flower", "roles": [Roles.FORAGER],
-		"band": 0, "modes": [], "find": "seek_flower",
+		"band": 0, "modes": [], "find": "start_seek_flower",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 ]
