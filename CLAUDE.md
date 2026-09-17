@@ -31,7 +31,9 @@ lane. Queue rules: `.claude/rules/documentation.md`.
 1. **Context-efficient:** a file read early is re-sent on every later request;
    at ~90 requests a 6K-token read costs ~500K. Read the routed section
    (`python tools/heading.py <file> "<heading>"`), not the file; never a folder.
-   Do not search `_backups/`.
+   Do not search `_backups/`. When `tools/slice.ps1` stops, its "stopped"
+   block is the diagnosis; don't read the script. When a test fails, run
+   that one test and read only its function.
 2. **Architecturally right:** role data lives in `scripts/roles.gd`;
    `GameConfig` owns balance values; `Session` owns run/UI state;
    presentation never gates simulation; balance changes are simulated first.
@@ -69,9 +71,17 @@ Queue:        <lane> lane now leads with <id> -- <name>
 Next slice:   <id> -- <one line on what it does>
 Other lane:   <id> -- <name>, untouched by this merge
 Start it with: <the copy-paste prompt line from NEXTSTEPS.md>
+Next model:   <model> (plan level: <level>)
+Connectors:   active now: <every MCP connector this session has tools from>
+Toggle:       on: <connectors the next slice needs, or none>; off: <the rest>
 ```
 
 "Waiting for a hands-on check" is never a valid `Merged: no` reason.
+`finish` prints `Next model` and `Toggle` from the next slice's plan level and
+files (`Get-SliceAdvice` in `tools/slice.ps1`; `doctor`/`start` print the same
+as `advice`). `Connectors: active now` is filled in by the session from its
+own tool list, since no script can see it. Every other report or hand-off that
+names a next slice carries the same three lines.
 
 ## Where to route a change
 

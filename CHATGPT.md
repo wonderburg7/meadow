@@ -109,7 +109,9 @@ reviewing, but should state the specific trigger rather than repeat Codex's
 work by default.
 
 **A slice Codex closed out itself ends with the end-of-slice report** in
-`CLAUDE.md`, "End-of-slice report" -- `finish` prints it. Dave should not be
+`CLAUDE.md`, "End-of-slice report" -- `finish` prints it, including the
+`Next model` and `Toggle` lines; fill in `Connectors: active now` with the
+connectors this Codex session has. Dave should not be
 able to tell from the report which agent ran the slice. Post it in the chat
 unprompted; there is no hand-off block for a slice nobody has to integrate.
 

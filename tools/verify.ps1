@@ -174,9 +174,9 @@ if ($runBranchScope -and -not $Docs) {
         (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
             Set-Location $root
-            & $interpreter -m unittest tests.test_source_checks
+            & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment
             if ($LASTEXITCODE -ne 0) {
-                throw "tests.test_source_checks exited with code $LASTEXITCODE"
+                throw "workflow unittest modules exited with code $LASTEXITCODE"
             }
         })
     )
