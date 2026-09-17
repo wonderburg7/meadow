@@ -907,35 +907,7 @@ Level: medium. Depends on: F1s.
 
 ### G1 — the action catalogue, data only
 
-Level: medium. Depends on: B3, C1. Nothing reads the catalogue in this slice.
-
-- **Required reading.** This heading. F1 above. `scripts/bee.gd::_try_role_work`
-  in full. `scripts/roles.gd`. `scripts/availability.gd`.
-- **Files to change.** a new `actions.gd` in `scripts/`, `tests/source_checks.py`.
-- **Files not to change.** `scripts/bee.gd`, not one line in this slice.
-- **Requirements.** One row per unit of work `_try_role_work` can start, in the
-  exact order it tries them today. Each row carries `id`, `label`, `roles` (the
-  role ids that offer it), `band` (an integer priority within a role, matching
-  today's order), `modes` (which sub-modes of the role enable it, empty meaning
-  all), `find` (the name of the function that finds and starts the work),
-  `feature`, `skill`, `gate_key`, `config_flag` and `season`.
-- **Invariants.** The catalogue is a transcription, not a redesign. Its order,
-  read per role, must reproduce today's arms exactly — including the nurse's
-  jelly-only branch, the comb worker's clean-then-evict-then-restock-then-build
-  order, the miner's queued-then-marked-then-automine order, and the honey
-  maker's load-then-fan-then-fetch order. Every `gate_key`, `skill` and `feature`
-  field ships empty; filling them is G3, and a value here would change behaviour
-  the moment G2 lands.
-- **Implementation guidance.** Write the catalogue beside the existing function
-  and add a source check comparing the two, rather than trusting a read.
-- **Runtime policy.** Static const data.
-- **Automated acceptance.** A `tests/source_checks.py` check that every `find`
-  name resolves to a real function, that every `roles` id is a real role, and
-  that the per-role band sequence has no gaps or duplicates.
-- **Escalation.** If a branch cannot be described as one row — the queen's
-  brood-before-laying exception in `_idle_dispatch` is the known case — record it
-  as a named exception in the catalogue's header rather than bending the schema.
-  That exception belongs to the dispatcher, not to an action.
+Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
 
 ### G2 — the dispatcher reads the catalogue
 
