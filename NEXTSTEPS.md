@@ -74,6 +74,13 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
    - Proof: `present: scripts/flower_species.gd :: static func season_weight(species: Dictionary) -> float:`
    - Next after: none -- season-feel is complete.
 
+4. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
+   - Plan: `plans/reference/technical-audit.md` -- "PERF-1 — measure `find_food_cell` before changing it"
+   - Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
+   - Check: two runs of `test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60` with perf enabled report the new `hive_find_food` section within 10% of each other, and the delivery note says whether it is trivial or worth a follow-up slice, with the numbers
+   - Proof: `absent: scripts/hive.gd :: hive_find_food`
+   - Next after: none -- technical-audit section A is complete unless PERF-1's numbers open a follow-up.
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
