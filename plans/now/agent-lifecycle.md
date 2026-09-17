@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-8 -- a Godot failure names which of five things broke | Dependency: none | Verified: 2026-09-14
+Status: active | Owner: Dave / Claude | Next: L-9 -- the floor is measured and split, and this plan is gated | Dependency: none | Verified: 2026-09-17
 
 ## Objective
 
@@ -52,7 +52,6 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 | Slice | Outcome | Owns | Startable | Reasoning |
 | --- | --- | --- | --- | --- |
-| L-8 | a Godot failure names which of five things broke | `tools/slice.ps1`, `docs/headless-run-contract.md` | yes | medium |
 | L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | yes | medium |
 
 Dependencies, stated rather than implied: L-1 was the prerequisite for
@@ -65,8 +64,9 @@ L-4 shipped 14 September 2026 (archived at
 `plans/archive/L-4_2026-09-14.md`), L-5 shipped the same day (archived at
 `plans/archive/L-5_2026-09-14.md`), L-6 shipped the same day too (archived
 at `plans/archive/L-6_2026-09-14.md`), and L-7 shipped the same day too
-(archived at `plans/archive/L-7_2026-09-14.md`), so L-8 is now startable.
-L-9 is last and is the gate.
+(archived at `plans/archive/L-7_2026-09-14.md`), so L-8 became startable.
+L-8 shipped 17 September 2026 (archived at `plans/archive/L-8_2026-09-17.md`),
+leaving L-9 as this plan's last slice and its gate.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -76,11 +76,6 @@ never the formats.
 
 **Read for any slice here:** this plan's own section and nothing else. F1 to
 F12 in the review are the evidence and do not need rereading to implement.
-
-This file exceeds the 260-line soft limit and holds no delivered slice. Nine
-slices each carry an algorithm specific enough to implement without a design
-decision, which is the point; the length is the specification, not history.
-It shortens as slices ship and their specifications move to the archive.
 
 L-1 (the lifecycle suite is green and runs in verification) shipped 12
 September 2026. Full specification, actual outcome and the two unrelated
@@ -124,51 +119,14 @@ already been overtaken by later slices by the time this landed, so there
 was nothing live left to fix. Full specification and outcome:
 `plans/archive/L-7_2026-09-14.md`.
 
-## L-8 — a Godot failure names which of five things broke
-
-**Objective.** Distinguish MCP unavailable, editor unavailable, baseline
-environment crash, scenario failure and product failure. Today all five share
-one exit path, and one of them is a false alarm about the game.
-
-**Non-goals.** Do not fix the Windows headless access violation. Do not
-change any scenario or assertion. This slice only classifies.
-
-**Files.** `tools/slice.ps1`, `docs/headless-run-contract.md`.
-
-**Prerequisite.** L-1.
-
-**Algorithm.**
-
-1. Add `Get-GodotCapability` to `slice.ps1`, returning one of five states
-   with a one-line reason: `mcp_unavailable` (the configured MCP command
-   cannot be resolved), `editor_unavailable` (no executable found on PATH, in
-   `GODOT_PATH`, or in `.codex/config.toml` — the check
-   `Get-ConfiguredGodotPath` already performs), `environment_crash` (the
-   executable runs but a minimal `--headless --quit` exits non-zero or with
-   an access violation), `import_cache_missing` (the repository has no
-   `.godot` directory, which makes a fresh worktree's run fail to compile and
-   misreport as a gameplay collapse), and `ready`.
-2. Call it from `doctor` and report it as `godot_capability`. Do not make
-   anything but `editor_unavailable` a doctor failure — it is the only one
-   that already is.
-3. In `docs/headless-run-contract.md`, replace the current triage prose with
-   the five state names and what each means for the reader. Delete whatever
-   the five states now make redundant; do not add a section alongside it.
-
-**Tests and failure injection.** Add
-`test_godot_capability_names_each_failure_state`, driving all five: an
-unresolvable MCP command, a missing executable, an executable that exits
-non-zero, a fixture with no `.godot`, and the real configuration.
-
-**Proof.** `absent: tools/slice.ps1 :: function Get-GodotCapability`
-
-**Risk.** Medium. A wrong classification is worse than none, so each state
-needs its own test.
-
-**Expected improvement.** 36 failed headless runs stop starting their triage
-from scratch, and the import-cache false alarm is named on sight.
-
-**Next slice.** L-9.
+L-8 (a Godot failure names which of five things broke) shipped 17
+September 2026. `Get-GodotCapability` in `tools/slice.ps1` returns one of
+`mcp_unavailable`, `editor_unavailable`, `import_cache_missing`,
+`environment_crash` or `ready`, checked in that order so the import-cache
+false alarm is ruled out before the boot probe that would otherwise
+misreport it; `doctor` reports it as `godot_capability`, and only
+`editor_unavailable` still blocks `doctor` itself. Full specification and
+outcome: `plans/archive/L-8_2026-09-17.md`.
 
 ## L-9 — the floor is measured and split, and this plan is gated
 
