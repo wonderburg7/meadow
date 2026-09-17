@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 import statistics
+import subprocess
 import time
 from collections import Counter
 from datetime import datetime
@@ -290,12 +291,173 @@ def run_phases(files):
         print(f"{PHASE_LABELS[phase]:58s}{requests[phase]:>7d}{context[phase]:>14d}{share:>7.1f}%")
 
 
+NO_EDIT_LABELS = {
+    "read_only": "Read-only: a question, review or investigation that wrote nothing",
+    "docs_only": "Documentation, plan or queue edits only -- no product file",
+    "other": "Edited something outside both the product dirs and Markdown",
+}
+
+
+def _edit_paths(rows, repo_root):
+    """Every file path an Edit/Write/NotebookEdit touched, repository-relative."""
+    paths = []
+    for row in rows:
+        if row.get("type") != "assistant":
+            continue
+        for block in row.get("message", {}).get("content", []) or []:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            if block.get("name") not in ("Edit", "Write", "NotebookEdit"):
+                continue
+            raw = (block.get("input", {}) or {}).get("file_path") or (
+                block.get("input", {}) or {}
+            ).get("notebook_path")
+            if not raw:
+                continue
+            path = raw.replace("\\", "/")
+            if repo_root:
+                root = repo_root.replace("\\", "/").rstrip("/") + "/"
+                if path.lower().startswith(root.lower()):
+                    path = path[len(root):]
+            paths.append(path)
+    return paths
+
+
+def run_no_edit_reasons(files):
+    """Split the 'no product edit' sessions into why they made none.
+
+    That row is a quarter of the project's context spend, and as one number it
+    is unactionable: a planning session that legitimately wrote no code and a
+    session that failed before it could both land in it. Costing them apart is
+    what says whether the quarter is waste or work.
+    """
+    requests = Counter()
+    context = Counter()
+    sessions = Counter()
+
+    for f in files:
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                rows = [json.loads(line) for line in fh if line.strip()]
+        except Exception:
+            continue
+        if len(rows) < 4:
+            continue
+
+        repo_root = next((r.get("cwd") for r in rows if r.get("cwd")), None)
+
+        sizes = []
+        made_product_edit = False
+        for row in rows:
+            if row.get("type") != "assistant":
+                continue
+            message = row.get("message", {})
+            usage = message.get("usage")
+            if not usage:
+                continue
+            sizes.append(
+                usage.get("input_tokens", 0)
+                + usage.get("cache_read_input_tokens", 0)
+                + usage.get("cache_creation_input_tokens", 0)
+            )
+            if any(_product_edit(b, repo_root) for b in message.get("content", []) or []):
+                made_product_edit = True
+
+        if not sizes or made_product_edit:
+            continue
+
+        edits = _edit_paths(rows, repo_root)
+        if not edits:
+            reason = "read_only"
+        elif all(path.lower().endswith(".md") for path in edits):
+            reason = "docs_only"
+        else:
+            reason = "other"
+
+        sessions[reason] += 1
+        requests[reason] += len(sizes)
+        context[reason] += sum(sizes)
+
+    total_context = sum(context.values()) or 1
+    print(f"{'':68s}{'sessions':>9s}{'requests':>10s}{'context':>14s}{'share':>8s}")
+    for reason in ("read_only", "docs_only", "other"):
+        share = 100 * context[reason] / total_context
+        print(
+            f"{NO_EDIT_LABELS[reason]:68s}{sessions[reason]:>9d}"
+            f"{requests[reason]:>10d}{context[reason]:>14d}{share:>7.1f}%"
+        )
+
+
+def _stops_ledger_path():
+    """tools/slice.ps1 writes its stop ledger into the git common directory,
+    beside the closeout journal and the pending-deletions queue -- outside any
+    worktree, so every lane appends to the same file."""
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=Path(__file__).resolve().parent.parent,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if out.returncode != 0 or not out.stdout.strip():
+        return None
+    common = Path(out.stdout.strip())
+    if not common.is_absolute():
+        common = Path(__file__).resolve().parent.parent / common
+    return common / "meadow-slice-stops.jsonl"
+
+
+def run_stops():
+    """Tally tools/slice.ps1's recorded stops by the step that raised them.
+
+    `--classify` counts lifecycle_failure outcomes but cannot say which phase
+    produced them, so the fix was always chosen by anecdote. This names the
+    step, which is what decides whether automating a gate is worth it.
+    """
+    path = _stops_ledger_path()
+    if path is None or not path.exists():
+        print("no stop ledger yet -- tools/slice.ps1 writes one the next time a command stops")
+        return
+
+    by_step = Counter()
+    by_command = Counter()
+    total = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except Exception:
+            continue
+        total += 1
+        by_command[record.get("command") or "?"] += 1
+        by_step[record.get("step") or "(no step recorded)"] += 1
+
+    print(f"stops recorded               {total}")
+    print(f"by command                   " + ", ".join(f"{c}={n}" for c, n in by_command.most_common()))
+    print("")
+    print("most expensive steps (each stop is a read, a fix and a retry):")
+    for step, count in by_step.most_common(10):
+        print(f"{count:>5d}  {step}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--classify", action="store_true")
     parser.add_argument("--phases", action="store_true")
+    parser.add_argument("--no-edit-reasons", action="store_true")
+    parser.add_argument("--stops", action="store_true")
     args = parser.parse_args()
+
+    # The stop ledger is repository state, not session transcripts, so it is
+    # readable even when no session directory exists.
+    if args.stops:
+        run_stops()
+        return 0
 
     project_dir = Path.home() / ".claude" / "projects" / "C--Users-dl13860-Documents-Meadow-meadow"
     if not project_dir.exists():
@@ -311,6 +473,10 @@ def main():
 
     if args.phases:
         run_phases(files)
+        return 0
+
+    if args.no_edit_reasons:
+        run_no_edit_reasons(files)
         return 0
 
     session_count = 0
