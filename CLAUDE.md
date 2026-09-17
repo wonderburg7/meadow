@@ -30,7 +30,9 @@ lane. Queue rules: `.claude/rules/documentation.md`.
 
 1. **Context-efficient:** a file read early is re-sent on every later request;
    at ~90 requests a 6K-token read costs ~500K. Read the routed section
-   (`python tools/heading.py <file> "<heading>"`), not the file; never a folder.
+   (`python tools/heading.py <file> "<heading>"`) or the routed function
+   (`python tools/func.py <file> <function> [<function> ...]`), not the file;
+   never a folder.
    Do not search `_backups/`. When `tools/slice.ps1` stops, its "stopped"
    block is the diagnosis; don't read the script. When a test fails, run
    that one test and read only its function.

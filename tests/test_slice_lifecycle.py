@@ -983,6 +983,70 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertIn("[Codex] T-2", merged_queue)
         self.assertTrue((self.root / "plans" / "archive" / "T-1_2026-01-01.md").exists())
 
+    def test_refill_accepts_a_successor_that_is_not_startable_yet(self):
+        """A successor is not always admissible when its predecessor lands.
+        G2's was G3, which waits on F2s. The refill gate takes a bullet under
+        '## Not in the queue, and why' in place of a lane item, so closeout
+        never has to queue unstartable work or weaken a `Next after:` line."""
+        (self.root / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            "1. **[Codex] T-1 -- fixture.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture\n"
+            "   - Files: `scripts/sample.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+            "   - Next after: T-2 -- the fixture's own successor.\n"
+            "\n## Not in the queue, and why\n\n"
+            "- **T-9** (`plans/fixture.md`) -- waits on something else.\n",
+            encoding="utf-8",
+        )
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
+        )
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+
+        archive_dir = worktree / "plans" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        (archive_dir / "T-1_2026-01-01.md").write_text(
+            "# T-1 (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+        )
+        (worktree / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            "## Not in the queue, and why\n\n"
+            "- **T-2** (`plans/fixture.md`) -- follows T-1 but waits on T-9.\n"
+            "- **T-9** (`plans/fixture.md`) -- waits on something else.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "archive T-1 and defer T-2"], cwd=worktree, check=True
+        )
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+
+        merged_queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertNotIn("[Codex] T-1", merged_queue)
+        self.assertIn("**T-2**", merged_queue)
+
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         start = subprocess.run(

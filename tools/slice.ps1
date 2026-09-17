@@ -1223,6 +1223,25 @@ function Get-SuccessorId {
     return ($NextAfter -split '--', 2)[0].Trim()
 }
 
+function Test-SuccessorDeferred {
+    # A successor is not always admissible the moment its predecessor lands:
+    # G3 followed G2 but waits on F2s, and the queue's own rule sends a
+    # blocked item to "## Not in the queue, and why". Before 17 Sep 2026 the
+    # refill gate knew only "in the lane", so closing such a slice meant
+    # either queueing an unstartable item or lying in its `Next after:` line.
+    # Only the bolded lead of each bullet counts, the same rule
+    # check_docs.py's check_queue_section_agreement uses, so the prose naming
+    # other ids as reasons stays allowed.
+    param([string]$Text, [string]$Id)
+    if (-not $Id) { return $false }
+    $section = [regex]::Match($Text, '(?ms)^## Not in the queue, and why\s*$(.*?)(?=^## |\Z)')
+    if (-not $section.Success) { return $false }
+    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*')) {
+        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") { return $true }
+    }
+    return $false
+}
+
 function Get-CopyPastePromptLine {
     # The exact block under "## Copy-paste prompts" for $Lane, so "Start it
     # with" in the end-of-slice report is a lookup instead of the generic
@@ -1350,6 +1369,24 @@ function Invoke-SliceFinish {
                 $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
                 $headingStillLive = $headingRegex.IsMatch($planText)
             }
+            # An id can be reused: plans/now/ui-w.md's UI-W-1..4 repeat four
+            # ids that shipped from ui-windows.md in September, so "a file
+            # named <id>_<date>.md exists" is not on its own evidence that
+            # *this* slice was archived -- an old namesake would satisfy the
+            # gate while this slice's specification was simply deleted. The
+            # archive record has to be one this branch wrote
+            # (17 Sep 2026 plan review).
+            $archiveWrittenHere = $false
+            foreach ($candidate in $archiveMatches) {
+                $relative = "plans/archive/" + $candidate.Name
+                $touched = @(git -C $worktreeRoot log --format=%H "master..HEAD" -- $relative)
+                if ($LASTEXITCODE -eq 0 -and $touched.Count -gt 0) { $archiveWrittenHere = $true; break }
+                $staged = @(git -C $worktreeRoot status --porcelain -- $relative)
+                if ($staged.Count -gt 0) { $archiveWrittenHere = $true; break }
+            }
+            if ($archiveMatches -and -not $archiveWrittenHere -and -not $headingStillLive) {
+                Stop-Slice -Cause "$id -- plans/archive/ already held $($archiveMatches.Count) file(s) for this id before this branch, and this branch wrote none: the id is reused, so nothing here records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, commit it on this branch, and retry"
+            }
             if (-not $archiveMatches -or $headingStillLive) {
                 $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
                 Stop-Slice -Cause "$id -- $archiveState" -Fix "move the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md (write it with Bash if the file tools refuse plans/archive/), leave a one-line pointer where the heading was, commit on this branch, and retry"
@@ -1368,7 +1405,10 @@ function Invoke-SliceFinish {
                 Stop-Slice -Cause "$id -- its own entry is still in NEXTSTEPS.md's ### $lane lane" -Fix "on this branch, delete the $id item from ### $lane lane, add its successor ($($item.NextAfter)) with full Plan/Files/Check/Proof/Next after lines unless that says the plan is complete, renumber the lane, run python tools/check_docs.py, commit, and retry"
             }
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
-                Stop-Slice -Cause "$id -- Next after: names '$successorId' but no [$lane] item with that id is in NEXTSTEPS.md yet" -Fix "on this branch, add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), run python tools/check_docs.py, commit, and retry"
+                $branchQueueText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $worktreeRoot "NEXTSTEPS.md")
+                if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId)) {
+                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
+                }
             }
         }
         Invoke-InjectedLifecycleFailure -Phase "refilled"
