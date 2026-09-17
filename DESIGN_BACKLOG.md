@@ -20,13 +20,15 @@ home per fact: read the plan.
 | Progression, colony adaptations and skills | `plans/design/progression.md` |
 | Catalogues, shared interfaces and update policy | `plans/design/architecture-review.md` |
 | Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
-| Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | UI and accessibility | `plans/now/ui.md` |
-| A control inside a HUD panel (built) | `plans/archive/HUD_CONTROLS_2026-09-11.md` |
-| Hive comb rendering, hex-grid settings and comb autobuild | `plans/archive/HIVE_COMB_2026-09-12.md` |
 | The check/slice loop itself | `plans/reference/check-loop.md` |
 | Derived colony-state facts | `plans/reference/colony-diagnostics.md` |
 | Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
+| Challenge 1 follow-ups from hands-on passes | `plans/now/c1-followups.md` |
+| Comb builder placement and the per-site cap | `plans/now/comb-builders.md` |
+| How the flowering year feels at the start of a run | `plans/now/season-feel.md` |
+| The headless smoke scenario | `plans/now/smoke-scenario.md` |
+| Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
 
 ## Areas whose plan is complete
 
@@ -43,6 +45,10 @@ starts a fresh `plans/now/` or `plans/design/` file.
 | Settings surviving a run change | `plans/archive/SETTINGS_PERSISTENCE_2026-09-03.md` |
 | Codex execution reliability | `plans/archive/CODEX_RELIABILITY_2026-09-09.md` |
 | The flowering year's peaks and troughs | `plans/archive/SEASON_BALANCE_2026-09-12.md` |
+| Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
+| A control inside a HUD panel (built) | `plans/archive/HUD_CONTROLS_2026-09-11.md` |
+| Hive comb rendering, hex-grid settings and comb autobuild | `plans/archive/HIVE_COMB_2026-09-12.md` |
+
 
 ## Deferred product decisions
 
