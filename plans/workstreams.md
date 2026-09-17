@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/G1` (`codex/G1`) | Codex | the action catalogue, data only. | Codex | in progress | none | `plans/design/architecture-review.md` "G1 — the action catalogue, data only" |
-| `.worktrees/L-8` (`claude/L-8`) | Claude | a Godot failure names which of five things broke. | Claude | in progress | none | `plans/now/agent-lifecycle.md` "L-8 — a Godot failure names which of five things broke" |
