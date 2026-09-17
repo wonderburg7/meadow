@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/G1` (`codex/G1`) | Codex | the action catalogue, data only. | Codex | in progress | none | `plans/design/architecture-review.md` "G1 — the action catalogue, data only" |
-| `.worktrees/pass-0917` (`claude/pass-0917`) | Claude | Dave's 17 Sep hands-on pass: triage C-7/24/25/29/31/42/48/49 and ship the fixes that need no further planning. | Claude Code | in progress | none | hands-on pass triage, no queue item (plans/now/c1-followups.md lands with it) |
