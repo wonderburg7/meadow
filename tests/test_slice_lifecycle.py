@@ -130,7 +130,7 @@ class SliceDoctorTest(unittest.TestCase):
         archive_dir = worktree / "plans" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
         (archive_dir / f"{delivered_id}_2026-01-01.md").write_text(
-            f"# {delivered_id} (archived)\n\nShipped in this fixture.\n",
+            f"# {delivered_id} -- fixture (archived)\n\nShipped in this fixture.\n",
             encoding="utf-8",
         )
         (worktree / "NEXTSTEPS.md").write_text("## Next up\n\n", encoding="utf-8")
@@ -952,7 +952,7 @@ class SliceDoctorTest(unittest.TestCase):
         archive_dir = worktree / "plans" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
         (archive_dir / "T-1_2026-01-01.md").write_text(
-            "# T-1 (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+            "# T-1 -- fixture (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
         )
         (worktree / "NEXTSTEPS.md").write_text(
             "## Next up\n\n"
@@ -1021,7 +1021,7 @@ class SliceDoctorTest(unittest.TestCase):
         archive_dir = worktree / "plans" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
         (archive_dir / "T-1_2026-01-01.md").write_text(
-            "# T-1 (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
+            "# T-1 -- fixture (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
         )
         (worktree / "NEXTSTEPS.md").write_text(
             "## Next up\n\n"

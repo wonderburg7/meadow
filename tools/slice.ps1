@@ -1370,22 +1370,20 @@ function Invoke-SliceFinish {
                 $headingStillLive = $headingRegex.IsMatch($planText)
             }
             # An id can be reused: plans/now/ui-w.md's UI-W-1..4 repeat four
-            # ids that shipped from ui-windows.md in September, so "a file
-            # named <id>_<date>.md exists" is not on its own evidence that
-            # *this* slice was archived -- an old namesake would satisfy the
-            # gate while this slice's specification was simply deleted. The
-            # archive record has to be one this branch wrote
-            # (17 Sep 2026 plan review).
-            $archiveWrittenHere = $false
+            # ids that shipped from the ui-windows plan in September, so a
+            # file named <id>_<date>.md is not on its own evidence that *this*
+            # slice was archived -- an old namesake would satisfy the gate
+            # while this slice's specification was simply deleted. Require a
+            # record that names this slice's own heading. Deliberately not a
+            # git range: `finish` is resumable after the merge, where every
+            # such range is empty (17 Sep 2026 plan review).
+            $archiveNamesThisSlice = -not $item.Heading
             foreach ($candidate in $archiveMatches) {
-                $relative = "plans/archive/" + $candidate.Name
-                $touched = @(git -C $worktreeRoot log --format=%H "master..HEAD" -- $relative)
-                if ($LASTEXITCODE -eq 0 -and $touched.Count -gt 0) { $archiveWrittenHere = $true; break }
-                $staged = @(git -C $worktreeRoot status --porcelain -- $relative)
-                if ($staged.Count -gt 0) { $archiveWrittenHere = $true; break }
+                $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
+                if ($candidateText -like "*$($item.Heading)*") { $archiveNamesThisSlice = $true; break }
             }
-            if ($archiveMatches -and -not $archiveWrittenHere -and -not $headingStillLive) {
-                Stop-Slice -Cause "$id -- plans/archive/ already held $($archiveMatches.Count) file(s) for this id before this branch, and this branch wrote none: the id is reused, so nothing here records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, commit it on this branch, and retry"
+            if ($archiveMatches -and -not $archiveNamesThisSlice -and -not $headingStillLive) {
+                Stop-Slice -Cause "$id -- plans/archive/ has $($archiveMatches.Count) file(s) for this id, none naming '$($item.Heading)': the id is reused, so nothing there records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, including its heading text, commit it on this branch, and retry"
             }
             if (-not $archiveMatches -or $headingStillLive) {
                 $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
