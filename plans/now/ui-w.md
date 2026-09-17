@@ -29,6 +29,14 @@ UI-W-2 leads because it is the only one that stops a Challenge being
 finished; UI-W-1 comes next because it shares no file with anything and
 returns two blocked checks to Dave (17 Sep 2026 plan review).
 
+**This group reuses the ids UI-W-1 to UI-W-4**, which belonged to four
+unrelated slices that shipped from the since-archived ui-windows plan on
+8 Sep 2026 and are archived under those names. Grep the archive for the slice's subject,
+not its id, and when one of these closes out, its record must be written by
+its own branch -- `tools/slice.ps1 finish` checks that, because an old
+namesake would otherwise satisfy the archive gate on its own (17 Sep 2026
+plan review).
+
 **Required reading for any slice.** Its own section below, and the functions it
 names. Never `plans/archive/`.
 
