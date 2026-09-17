@@ -34,5 +34,29 @@
   },
   "enabledPlugins": {
     "gitkraken-hooks@gitkraken": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" session_start",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" session_end",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
   }
 }

@@ -200,6 +200,16 @@ Level: high
 
 ## Standing rules
 
+**A second log now exists beside this plan's, and the boundary between them
+is fixed.** `plans/now/workflow-diagnostics.md` added an event log written by
+the scripts themselves (`meadow-diagnostics.jsonl`) and a `--events` mode to
+`tools/session_cost.py`, covering verify stages, sessions and cost by branch.
+**Stops are not in it.** `tools/slice.ps1`'s own `meadow-slice-stops.jsonl`
+and `--stops` stay the single record of what stopped, because L-12's gate is
+written against them; `--events` prints a pointer to `--stops` rather than a
+second count. `--days`, `--classify` and `--phases` are likewise untouched and
+stay this plan's and L-9's measures.
+
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
 `tools/check_docs.py` with regular expressions that have each been fixed

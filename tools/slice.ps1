@@ -12,6 +12,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# The diagnostic log (tools/diagnostics.ps1) is a measurement only: it never
+# gates a command, and Write-Diagnostic swallows its own errors.
+. (Join-Path $PSScriptRoot "diagnostics.ps1")
+$script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
 # Index -- grep a name rather than reading this file (1,400 lines):
 #   grep -n "^function <Name>" tools/slice.ps1, then read only that function.
 #   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure, Add-SliceStopRecord
@@ -1060,6 +1065,17 @@ function Invoke-SliceStart {
         branch     = $branch
         worktree   = $worktreeRelative
     }
+    # `branch` is the join key: a Claude Code transcript records neither the
+    # slice id nor the advised level, so without this the cost of a session
+    # can never be attributed to the slice it was spent on.
+    Write-Diagnostic -Root $root -Kind "slice_claimed" -Fields @{
+        id     = $id
+        lane   = $Lane
+        branch = $branch
+        level  = $result.advice.level
+        ok     = $true
+        ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
+    }
     $result | ConvertTo-Json -Compress
 }
 
@@ -1587,6 +1603,14 @@ function Invoke-SliceFinish {
 
     $startLine = Get-CopyPastePromptLine -Text $mergedNextSteps -Lane $lane
     if (-not $startLine) { $startLine = "tools/slice.ps1 start -Lane $lane" }
+
+    Write-Diagnostic -Root $root -Kind "slice_finished" -Fields @{
+        id     = $id
+        lane   = $lane
+        branch = $branch
+        ok     = $true
+        ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
+    }
 
     Write-Output ""
     Write-Output "Slice landed: $id -- $title"

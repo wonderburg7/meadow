@@ -88,6 +88,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
 - **L-13** (`plans/now/agent-lifecycle.md`) -- integrates L-10 and L-11; needs both merged.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
+- **WD-1, WD-2, WD-3, WD-4** (`plans/now/workflow-diagnostics.md`) -- all four are startable and own no file in either lane; they wait for a free slot in the Claude lane.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

@@ -104,6 +104,7 @@ names a next slice carries the same three lines.
 | Recurrent bug classes | `docs/known-pitfalls.md` |
 | Naming a system consistently | `GAME_MODEL.md` |
 | Why a built system is the way it is | `checks/ready.md`, then grep `plans/archive/` for its id |
+| How the workflow itself is performing | `python tools/session_cost.py --events` |
 
 Paths are repo-relative. The seven largest scripts are indexed in
 `FUNCTION_MAP.md`; for any other, search its `# --- section ---` headers.
