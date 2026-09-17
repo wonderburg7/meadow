@@ -926,9 +926,9 @@ Level: medium. Depends on: F1s.
 
 Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
 
-### G2 — the dispatcher reads the catalogue
-
-Shipped 17 September 2026 — [archive](../archive/G2_2026-09-17.md).
+**The dispatcher reading the catalogue (G2)** shipped 17 September 2026 —
+[archive](../archive/G2_2026-09-17.md). Its integration review corrected two
+behaviour differences, both recorded there.
 
 ### G3 — actions become gateable
 
