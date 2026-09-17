@@ -91,13 +91,13 @@ static func take_orientation_flight(bee: Node2D) -> void:
 ## to a full-meadow scan: it hands off to State.SEARCHING's spiral
 ## instead. See search_for_flower below, which re-runs this same bounded
 ## check every frame while the spiral widens.
-static func seek_flower(bee: Node2D) -> bool:
+static func seek_flower(bee: Node2D) -> void:
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
 	if BeeStatus.grounded(bee):
 		bee.state = autonomous_state(bee, State.TO_HIVE)
-		return true
+		return
 
 	# A run of thin or rejected flowers means whatever's merely nearby has
 	# already proven disappointing several visits running -- go straight
@@ -106,15 +106,28 @@ static func seek_flower(bee: Node2D) -> bool:
 	if bee.thin_visit_streak >= GameConfig.poor_patch_search_streak:
 		bee.thin_visit_streak = 0
 		_start_searching(bee)
-		return true
+		return
 
 	var best := _perceive_flower(bee)
 	if best != null:
 		_commit_to_flower(bee, best)
-		return true
+		return
 
 	# Nothing in sight from right here either -- same widening loop.
 	_start_searching(bee)
+
+
+## Catalogue finder: a forager always has work, because seek_flower itself
+## handles "nothing out there" by heading home. It hands the bee to
+## State.SEEK_FLOWER rather than perceiving here, so the work stays inside
+## the bee_seek_flower Perf section and on the same think tick it used
+## before the catalogue (G2 integration review, 17 Sep 2026). It goes through
+## autonomous_state, which the pre-catalogue branch in bee.gd skipped: that
+## branch predated the choke point and no Challenge stage makes a
+## player-driven bee a Forager, so this tightens the documented invariant
+## without changing any behaviour the game can currently reach.
+static func start_seek_flower(bee: Node2D) -> bool:
+	bee.state = autonomous_state(bee, State.SEEK_FLOWER)
 	return true
 
 

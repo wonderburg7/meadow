@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; H3, H1, H2, H4, D1 (both halves), B1, B2, B3, A1, A2, A3, A4, C1, C2, C3 and C4 all shipped; Decision A's hold is lifted as of 12 Sep 2026 -- Challenge 1's Slices 20-26 have all shipped per `plans/archive/CHALLENGE1_2026-09-15.md`, leaving only the docs-only Slice 7 (which does not touch `challenge_runner.gd`) | Owner: Dave / Claude Code | Next: E1 -- one placement tool (Claude lane) and G1 -- the action catalogue, data only (Codex lane) | Dependency: the hold on the rest of A/C/D/E/F/G is lifted now that Challenge 1's blocking slices have shipped | Verified: 2026-09-14
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, leaving E1, F1s, F2s and G3 | Owner: Dave / Claude Code | Next: E1 -- one placement tool (Claude lane); the Codex lane leads with SM-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -928,42 +928,7 @@ Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
 
 ### G2 — the dispatcher reads the catalogue
 
-Level: high. Depends on: G1. Must be sole owner of `scripts/bee.gd`.
-
-- **Required reading.** This heading. G1's result. `scripts/bee.gd`'s
-  `_try_role_work`, `_idle_dispatch` and `_maybe_break_off_secondary`.
-  `.claude/rules/simulation.md`. `.claude/rules/performance.md`.
-- **Files to change.** `scripts/bee.gd`, and the `bee_*.gd` module whose function
-  a row names, only to give it a uniform signature.
-- **Files not to change.** `scripts/hud.gd`, `scripts/challenge_runner.gd`,
-  `scripts/orders_zones.gd`; the player-facing surface does not move in this
-  slice.
-- **Requirements.** `_try_role_work(r)` walks the catalogue rows for role `r` in
-  band order, skipping rows whose `modes` exclude this bee's current sub-mode,
-  and calls each row's `find` until one returns true. The `match` goes. Behaviour
-  is identical.
-- **Invariants.** The queen's brood-before-laying exception stays in
-  `_idle_dispatch`, where it is today. `role_restricted_to` keeps its current
-  meaning until G3. `working_secondary` and the break-off rule are untouched. The
-  miner's `_mining_no_work_epoch` memo must survive; it is a documented
-  performance contract in `docs/PERFORMANCE_BASELINE.md`, and dropping it makes
-  every idle miner walk the soil set every think tick.
-- **Implementation guidance.** Land it behind a plain boolean const at the top of
-  `bee.gd` so both paths can run in one build, run the equivalence fixture
-  against each, then delete the old path in the same commit. Do not leave the
-  const behind.
-- **Runtime policy.** `_try_role_work` runs on the 8 Hz think tick, unchanged.
-  Resolve the catalogue rows for a role once into a static per-role array at
-  load, not per call; a linear filter of the whole catalogue on every think tick
-  for every bee would be a regression.
-- **Automated acceptance.** A headless equivalence run: the pinned baseline
-  `test_scenarios/recommendation_slice0_baseline.json` plus
-  `colony_30_bees_test.json`, both to a fixed day count, producing identical
-  population, stock and emergence summaries before and after. Frame time recorded
-  against `docs/PERFORMANCE_BASELINE.md`.
-- **Escalation.** Any summary difference at all, however small, stops the slice.
-  This is the core loop, and a "close enough" result is a gameplay change nobody
-  chose.
+Shipped 17 September 2026 — [archive](../archive/G2_2026-09-17.md).
 
 ### G3 — actions become gateable
 
@@ -998,12 +963,14 @@ Level: medium. Depends on: G2, F2s.
 - **Escalation.** If gating an action makes a bee with no available work behave
   differently from an idle bee today, that is a gameplay outcome. Stop and
   describe both behaviours.
-- **Cross-plan dependency.** `plans/design/progression.md`'s Phase B step 6
-  (the foraging tier-1 vertical slice) is the first work in the project to gate
-  a capability by skill ownership, which is what this slice builds the
-  mechanism for. Whichever lands first sets the pattern the other must fit.
-  Neither is scheduled; settle which one owns skill gating before either
-  starts, rather than discovering it during implementation.
+- **Cross-plan dependency, settled (Dave, 17 September 2026).** Skill gating
+  is **split by kind**, and the decision is recorded once, in
+  `plans/design/progression.md` section 11. In short: `progression.gd` is the
+  single store of what the colony owns; this slice's `action_query` gates the
+  *work* a bee may start (roles, modes, jobs) and asks that store; skill
+  *effects* gate values and behaviour switches where the behaviour branches.
+  So G3 and Phase B step 6 no longer block each other, and neither sets a
+  pattern the other has to follow.
 
 ## Read on demand
 
