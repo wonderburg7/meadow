@@ -84,6 +84,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
+- **L-10, L-11** (`plans/now/agent-lifecycle.md`) -- ready now; the Claude lane is full at five.
+- **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
+- **L-13** (`plans/now/agent-lifecycle.md`) -- integrates L-10 and L-11; needs both merged.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

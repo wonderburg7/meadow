@@ -14,7 +14,7 @@ $ErrorActionPreference = "Stop"
 
 # Index -- grep a name rather than reading this file (1,400 lines):
 #   grep -n "^function <Name>" tools/slice.ps1, then read only that function.
-#   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure
+#   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure, Add-SliceStopRecord
 #   --- lock and journal ---    Invoke-WithLifecycleLock, *-ClosingJournal, pending deletions
 #   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
@@ -41,6 +41,44 @@ function Stop-Slice {
     $exception = New-Object System.Exception $Cause
     $exception.Data["Fix"] = $Fix
     throw $exception
+}
+
+function Add-SliceStopRecord {
+    # One line per stop, appended to a ledger beside the other lifecycle state
+    # in the git common directory, so `tools/session_cost.py --stops` can say
+    # which phase actually costs the retries. Before this, that was guesswork:
+    # a session sees its own stop and no others, and the 39 lifecycle_failure
+    # outcomes a week carried no phase with them.
+    #
+    # Never throws. It runs from the top-level catch handler, where an error
+    # of its own would replace the real failure -- the same way Pop-Location
+    # once masked a failed ledger commit (see Invoke-SliceFinish).
+    param([string]$Cause)
+    try {
+        # No 2>$null: redirecting a native command's stderr under
+        # $ErrorActionPreference = "Stop" turns git's own message into a
+        # terminating error, which is exactly what this must not raise.
+        $commonDir = git rev-parse --git-common-dir
+        if ($LASTEXITCODE -ne 0 -or -not $commonDir) { return }
+        $commonDir = ([string]$commonDir).Trim()
+        if (-not [System.IO.Path]::IsPathRooted($commonDir)) {
+            $commonDir = Join-Path (Get-Location).Path $commonDir
+        }
+        $context = $script:SliceContext
+        $record = [ordered]@{
+            at      = (Get-Date).ToString("s")
+            command = $context.Command
+            id      = $context.Id
+            lane    = $context.Lane
+            step    = $context.Step
+            cause   = $Cause
+        }
+        Add-Content -LiteralPath (Join-Path $commonDir "meadow-slice-stops.jsonl") `
+            -Value ($record | ConvertTo-Json -Compress)
+    }
+    catch {
+        # A measurement is never a reason to lose the diagnosis.
+    }
 }
 
 function Get-DefaultSliceFix {
@@ -88,6 +126,7 @@ function Write-SliceFailure {
     $lines += "  Retry:  $(Get-SliceRetryLine)"
     $lines += "  This block is the whole diagnosis -- there is no need to read tools/slice.ps1."
     foreach ($line in $lines) { [Console]::Error.WriteLine($line) }
+    Add-SliceStopRecord -Cause $cause
 }
 
 # --- lock and journal ---
