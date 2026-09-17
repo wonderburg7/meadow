@@ -10,6 +10,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Stage results are recorded to the shared diagnostic log so that "which check
+# fails, how often, and how long it takes" is a query rather than an
+# impression. Write-Diagnostic never fails its caller -- see tools/diagnostics.ps1.
+. (Join-Path $PSScriptRoot "diagnostics.ps1")
+
 # A failed stage only names itself when a switch was passed; the plain
 # no-switch run prints exactly what it always has.
 $labelFailures = $Quiet.IsPresent -or $Docs.IsPresent
@@ -87,8 +92,16 @@ function Write-StageResult {
         [string]$Name,
         [bool]$Ok,
         [object[]]$Output,
-        [string]$FailureNote
+        [string]$FailureNote,
+        [int]$Ms = 0
     )
+
+    Write-Diagnostic -Kind "verify_stage" -Fields @{
+        stage = $Name
+        ok    = $Ok
+        ms    = $Ms
+        scope = $Scope
+    }
 
     if ($Ok) {
         if ($Quiet) {
@@ -121,6 +134,7 @@ function Invoke-PythonStage {
     )
 
     $captured = @()
+    $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     if ($Quiet) {
         # A native command's stderr becomes a terminating error under "Stop",
         # so capture with errors demoted to ordinary output lines.
@@ -133,7 +147,8 @@ function Invoke-PythonStage {
         $exit = $LASTEXITCODE
     }
 
-    Write-StageResult -Name $Name -Ok ($exit -eq 0) -Output $captured -FailureNote $FailureNote
+    $stageTimer.Stop()
+    Write-StageResult -Name $Name -Ok ($exit -eq 0) -Output $captured -FailureNote $FailureNote -Ms ([int]$stageTimer.ElapsedMilliseconds)
     $script:lastStageExit = $exit
 }
 
@@ -184,10 +199,16 @@ if ($runBranchScope -and -not $Docs) {
     Wait-Job -Job $jobs | Out-Null
     $failed = $false
     foreach ($job in $jobs) {
+        # A job records its own start and end, so the three parallel stages --
+        # the slowest in the run -- are measured without a stopwatch each.
+        $jobMs = 0
+        if ($job.PSBeginTime -and $job.PSEndTime) {
+            $jobMs = [int](($job.PSEndTime - $job.PSBeginTime).TotalMilliseconds)
+        }
         if ($Quiet) {
             $captured = @(Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
             $ok = ($job.State -eq "Completed")
-            Write-StageResult -Name $job.Name -Ok $ok -Output $captured
+            Write-StageResult -Name $job.Name -Ok $ok -Output $captured -Ms $jobMs
             if (-not $ok) {
                 $failed = $true
             }
@@ -199,7 +220,12 @@ if ($runBranchScope -and -not $Docs) {
             # so print stderr as text and judge the job by its State: the job
             # throws on a non-zero exit code.
             Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { Write-Output $_.ToString() }
-            if ($job.State -ne "Completed") {
+            $ok = ($job.State -eq "Completed")
+            # The -Quiet branch above records its stages through
+            # Write-StageResult; this branch prints directly, so it records
+            # its own or the plain run would be missing from the log.
+            Write-Diagnostic -Kind "verify_stage" -Fields @{ stage = $job.Name; ok = $ok; ms = $jobMs; scope = $Scope }
+            if (-not $ok) {
                 Write-Output "$($job.Name): FAILED"
                 $failed = $true
             }

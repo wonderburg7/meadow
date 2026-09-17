@@ -65,6 +65,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         (self.root / "checks" / "ready").mkdir(parents=True)
         shutil.copy2(SLICE_PATH, self.root / "tools" / "slice.ps1")
         shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
+        shutil.copy2(DIAGNOSTICS_PATH, self.root / "tools" / "diagnostics.ps1")
         shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
         (self.root / "plans" / "workstreams.md").write_text(
             "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"

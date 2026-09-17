@@ -76,6 +76,13 @@ L-8 shipped 17 September 2026 (archived at `plans/archive/L-8_2026-09-17.md`),
 so L-9 became startable. L-9 shipped the same day (archived at
 `plans/archive/L-9_2026-09-17.md`), leaving no further slice in this plan.
 
+**A second measurement now exists beside this plan's.**
+`plans/now/workflow-diagnostics.md` added an event log written by the
+scripts themselves and a `--events` mode to `tools/session_cost.py`. It does
+not touch `--days`, `--classify` or `--phases`, which stay this plan's and
+L-9's measures; the event log's lifecycle-stop count is corroborating
+evidence for L-9's gate, never a substitute for it.
+
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
 `tools/check_docs.py` with regular expressions that have each been fixed

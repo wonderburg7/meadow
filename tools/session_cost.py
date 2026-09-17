@@ -4,10 +4,24 @@ import argparse
 import json
 import re
 import statistics
+import sys
 import time
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from diagnostics import read_events
+
+
+def _cutoff_iso(days: int) -> str:
+    """The oldest `ts` an event may carry to be in the window.
+
+    Event timestamps are "YYYY-MM-DDTHH:MM:SSZ", so comparing them as strings
+    is the same as comparing the instants -- no parsing per event.
+    """
+    return (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 OUTCOME_CLASSES = (
     "expected_no_match",
@@ -290,12 +304,145 @@ def run_phases(files):
         print(f"{PHASE_LABELS[phase]:58s}{requests[phase]:>7d}{context[phase]:>14d}{share:>7.1f}%")
 
 
+def _session_totals():
+    """session id -> (requests, context tokens, output tokens), across worktrees.
+
+    A worktree session's transcript lands in its own ~/.claude/projects
+    directory, keyed by the worktree path, so the join globs every directory
+    whose name starts with this project's slug. The other report modes keep
+    reading the primary directory alone: their published baselines (L-9) were
+    measured that way, and widening them silently would move the numbers.
+    """
+    totals = {}
+    home = Path.home() / ".claude" / "projects"
+    if not home.exists():
+        return totals
+    for project_dir in home.glob("C--Users-dl13860-Documents-Meadow-meadow*"):
+        for f in project_dir.glob("*.jsonl"):
+            requests = context = output = 0
+            try:
+                with f.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        if not line.strip():
+                            continue
+                        try:
+                            row = json.loads(line)
+                        except Exception:
+                            continue
+                        if row.get("type") != "assistant":
+                            continue
+                        usage = row.get("message", {}).get("usage")
+                        if not usage:
+                            continue
+                        requests += 1
+                        context += (
+                            usage.get("input_tokens", 0)
+                            + usage.get("cache_read_input_tokens", 0)
+                            + usage.get("cache_creation_input_tokens", 0)
+                        )
+                        output += usage.get("output_tokens", 0)
+            except Exception:
+                continue
+            if requests:
+                totals[f.stem] = (requests, context, output)
+    return totals
+
+
+def run_events(days: int):
+    """Print the diagnostic log's summary: what ran, what stopped, what it cost.
+
+    Reads <git-common-dir>/meadow-diagnostics.jsonl -- see tools/diagnostics.py.
+    Nothing here reads a transcript body, so it stays cheap to run often.
+    """
+    events = [e for e in read_events() if e.get("ts", "") >= _cutoff_iso(days)]
+    if not events:
+        print(f"no diagnostic events in the last {days} days")
+        print("the log is written by tools/slice.ps1, tools/verify.ps1 and the")
+        print("SessionStart/Stop hooks in .claude/settings.json")
+        return
+
+    kinds = Counter(e["kind"] for e in events)
+    print(f"window                       last {days} days, {len(events)} events")
+    print(f"by kind                      {', '.join(f'{k}={v}' for k, v in kinds.most_common())}")
+    print()
+
+    claimed = [e for e in events if e["kind"] == "slice_claimed"]
+    finished = [e for e in events if e["kind"] == "slice_finished"]
+    stops = [e for e in events if e["kind"] == "slice_stop"]
+    print(f"slices claimed / finished    {len(claimed)} / {len(finished)}")
+    if stops:
+        by_step = Counter(f"{e.get('cmd', '?')}:{e.get('step') or 'unknown step'}" for e in stops)
+        print(f"lifecycle stops              {len(stops)}")
+        for name, count in by_step.most_common(6):
+            print(f"  {name:56s}{count}")
+    else:
+        print("lifecycle stops              0")
+    print()
+
+    stages = [e for e in events if e["kind"] == "verify_stage"]
+    if stages:
+        failures = Counter(e.get("stage", "?") for e in stages if not e.get("ok"))
+        runs = Counter(e.get("stage", "?") for e in stages)
+        print(f"verify stages run            {len(stages)}")
+        if failures:
+            print(f"verify failures              {', '.join(f'{k}={v}' for k, v in failures.most_common())}")
+        else:
+            print("verify failures              none")
+        durations = {}
+        for e in stages:
+            if e.get("ms"):
+                durations.setdefault(e.get("stage", "?"), []).append(e["ms"])
+        for stage in sorted(durations, key=lambda s: -statistics.median(durations[s]))[:6]:
+            median_s = statistics.median(durations[stage]) / 1000
+            print(f"  {stage:32s}{runs[stage]:>4d} runs   median {median_s:6.1f}s")
+        print()
+
+    totals = _session_totals()
+    by_branch = {}
+    for e in events:
+        if e["kind"] != "session_start":
+            continue
+        branch = e.get("branch") or "(unknown branch)"
+        hit = totals.get(e.get("session", ""))
+        if not hit:
+            continue
+        requests, context, output = hit
+        row = by_branch.setdefault(branch, [0, 0, 0, 0])
+        row[0] += 1
+        row[1] += requests
+        row[2] += context
+        row[3] += output
+
+    claimed_branches = {e.get("branch"): e.get("id") for e in claimed}
+    if by_branch:
+        print("cost by branch (sessions / requests / context tokens / output tokens)")
+        for branch, (sessions, requests, context, output) in sorted(
+            by_branch.items(), key=lambda kv: -kv[1][2]
+        )[:12]:
+            label = claimed_branches.get(branch) or branch
+            print(f"  {label:32s}{sessions:>4d}{requests:>8d}{context:>12d}{output:>10d}")
+    else:
+        print("cost by branch               no session joined a transcript yet")
+        print("  (the SessionStart hook has to have run at least once)")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--classify", action="store_true")
     parser.add_argument("--phases", action="store_true")
+    parser.add_argument(
+        "--events",
+        action="store_true",
+        help="summarise the diagnostic event log: lifecycle stops, verify failures, cost by branch",
+    )
     args = parser.parse_args()
+
+    # --events reads the diagnostic log, not the transcript directory, so it
+    # answers before the project-directory check below.
+    if args.events:
+        run_events(args.days)
+        return 0
 
     project_dir = Path.home() / ".claude" / "projects" / "C--Users-dl13860-Documents-Meadow-meadow"
     if not project_dir.exists():

@@ -19,6 +19,9 @@ SOURCE_CHECKS_PATH = Path(__file__).with_name("source_checks.py")
 CHECK_DOCS_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "check_docs.py"
 SLICE_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "slice.ps1"
 VERIFY_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "verify.ps1"
+# slice.ps1 and verify.ps1 both dot-source this, so a fixture repository that
+# omits it runs a script that cannot start.
+DIAGNOSTICS_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "diagnostics.ps1"
 CODEX_CONFIG_PATH = SOURCE_CHECKS_PATH.parent.parent / ".codex" / "config.toml"
 CODEX_RULES_PATH = (
     SOURCE_CHECKS_PATH.parent.parent / ".codex" / "rules" / "meadow.rules"

@@ -92,6 +92,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows G2 and F2s.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
+- **WD-1, WD-2, WD-3, WD-4** (`plans/now/workflow-diagnostics.md`) -- all four are startable and own no file in either lane; they wait for a free slot in the Claude lane.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
