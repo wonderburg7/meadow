@@ -1,7 +1,7 @@
 # Comb builders — at most six to a site, one to a wall
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CB-1 -- measure where comb builders stand and how many work one site | Dependency: none | Verified: 2026-09-13
+Status: active | Owner: Dave / Claude Code | Next: CB-1 -- measure where comb builders stand and how many work one site | Dependency: none | Verified: 2026-09-17
 
 **Objective.** When idle comb workers build on their own, no more than six
 work one unfinished cell, each stands at a different wall, and a seventh
@@ -19,10 +19,13 @@ than guessing at a fix (`CLAUDE.md`, "Working style").
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CB-1 | A headless run reports, per unfinished cell, how many bees build it and where they stand | `scripts/scenario_actions.gd` (or the summary writer it names), a new fixture | yes | high |
-| CB-2 | The fix CB-1's numbers point to; C-46 passes | decided by CB-1 | no -- its cause is not yet known | decided by CB-1 |
+| CB-1 | A headless run reports, per unfinished cell, how many bees build it and where they stand | `scripts/scenario_actions.gd` (or the summary writer it names), a new fixture | yes | medium |
+| CB-2 | The fix CB-1's numbers point to; C-46 passes | decided by CB-1 | no -- its cause is not yet known, and its files wait on G2 | decided by CB-1 |
 
-CB-2 depends on CB-1. Neither changes balance values.
+CB-2 depends on CB-1, and also on the Codex lane's **G2**
+(`plans/design/architecture-review.md`), which is rewriting `bee.gd`'s
+dispatch and touches the `bee_*.gd` modules CB-2's fix would edit. Neither
+slice changes balance values.
 
 ## CB-1 — measure where comb builders stand and how many work one site
 
@@ -74,7 +77,13 @@ or `bee.gd`, and any `GameConfig` value. CB-1 observes and nothing else.
 1. **Fixture.** An open interior with no queued builds, 12 comb workers on
    the Building focus, a fixed seed, and one simulated day.
 2. **Sampling.** Sample every 0.5 simulated seconds, in scenario runs only.
-   For each unfinished cell record:
+   `scenario_actions.gd` is already called once per `_process` tick while
+   `main.scenario_active` (its file header says so), so accumulate the
+   elapsed time there rather than adding a timer or a `_process` of your own.
+   Walk the unfinished cells and, for each, its own `slot_users` and
+   `builders` -- never every bee against every cell -- and keep running
+   maxima instead of an array of samples, so a day of sampling allocates
+   nothing per tick. For each unfinished cell record:
    - bees in `BUILDING` targeting it;
    - bees holding one of its slots;
    - distinct slot indices in use;
@@ -100,7 +109,9 @@ which hypothesis the numbers support, with those numbers, and CB-2's section
 below is rewritten into a concrete specification.
 
 **Regression.** `tools/verify.ps1`. (`slice1_smoke_test.json` already fails
-on master, per `NEXTSTEPS.md`. Note it; do not fix it here.)
+on master; that is the Codex lane's **SM-1**, `plans/now/smoke-scenario.md`.
+Note it, do not fix it here -- and read SM-1's delivery note first if it has
+landed, because its classification may already name the cause of H2.)
 
 **Escalate if** every assertion passes. If the colony already does what HCB-4
 intended, C-46 is seeing something else, and Dave's clarification (a
@@ -127,5 +138,7 @@ Not startable until CB-1 names the cause. Fixed now, whatever that cause is:
   allocation is not.
 - **Save/load.** Read `.claude/rules/saving.md` first. A restored run must not
   leave a `BUILDING` bee without a slot.
+- **Sequencing.** Do not start until G2 has merged: it is sole owner of
+  `bee.gd` and reshapes the `bee_*.gd` signatures this fix would edit.
 - **Completion.** Move C-46 from `checks/blocked.md` back to ready. Archive
   this plan with `Next: None — plan complete`.

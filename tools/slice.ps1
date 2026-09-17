@@ -12,6 +12,86 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Index -- grep a name rather than reading this file (1,400 lines):
+#   grep -n "^function <Name>" tools/slice.ps1, then read only that function.
+#   --- failure reporting ---   Stop-Slice, Set-SliceStep, Write-SliceFailure
+#   --- lock and journal ---    Invoke-WithLifecycleLock, *-ClosingJournal, pending deletions
+#   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
+#   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
+#   --- environment ---         Get-GodotCapability, Get-DoctorEnvironmentFailures
+#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish
+#   --- post-merge ---          Invoke-SlicePostMergeCleanup
+# A failing command prints one "slice <command> stopped" block naming the
+# step, cause, fix and how to retry. That block is the diagnosis.
+
+# --- failure reporting ---
+
+$script:SliceContext = [ordered]@{ Command = $Command; Id = ""; Lane = $Lane; Step = "" }
+
+function Set-SliceStep {
+    param([string]$Step)
+    $script:SliceContext.Step = $Step
+}
+
+function Stop-Slice {
+    # A known stop with its remedy. It throws, so the top-level handler prints
+    # it in the standard block instead of PowerShell's script-position dump,
+    # which pointed sessions into this file to work out what went wrong.
+    param([string]$Cause, [string]$Fix)
+    $exception = New-Object System.Exception $Cause
+    $exception.Data["Fix"] = $Fix
+    throw $exception
+}
+
+function Get-DefaultSliceFix {
+    param([string]$Cause)
+    if ($Cause -match 'lifecycle is busy') {
+        return "another session is mid start/finish/resume; wait for it to end, then retry"
+    }
+    if ($Cause -match 'git (merge|pull)') {
+        return "git's own message is printed above. Resolve the conflict in the primary checkout (edit, git add, git commit); a conflict between lanes means a Files: line in NEXTSTEPS.md was wrong -- fix it in the same pass"
+    }
+    if ($Cause -match 'git push') {
+        return "git's own message is printed above. If the remote is ahead, run git pull --no-rebase in the primary checkout, then retry; if it is an auth or network error, retry once it is fixed"
+    }
+    if ($Cause -match '^git |git \w+ failed') {
+        return "git's own message is printed above; run git status where the step ran, fix what it names, then retry"
+    }
+    if ($Cause -match 'injected lifecycle failure') {
+        return "a test injected this stop (MEADOW_SLICE_FAIL_AFTER); unset it and retry"
+    }
+    return "act on the cause above; if it names no file, run tools/slice.ps1 status -Lane <lane> to see the lifecycle state"
+}
+
+function Get-SliceRetryLine {
+    $context = $script:SliceContext
+    $laneArg = if ($context.Lane) { $context.Lane } else { "<lane>" }
+    switch ($context.Command) {
+        "finish" { return "rerun tools/slice.ps1 finish from the slice worktree (phases already done are skipped); once merged, use tools/slice.ps1 resume -Lane $laneArg from the primary checkout" }
+        "start"  { return "rerun tools/slice.ps1 start -Lane $laneArg" }
+        "resume" { return "rerun tools/slice.ps1 resume -Lane $laneArg" }
+        default  { return "rerun tools/slice.ps1 $($context.Command) -Lane $laneArg" }
+    }
+}
+
+function Write-SliceFailure {
+    param([System.Management.Automation.ErrorRecord]$Record)
+    $context = $script:SliceContext
+    $cause = $Record.Exception.Message
+    $fix = $Record.Exception.Data["Fix"]
+    if (-not $fix) { $fix = Get-DefaultSliceFix -Cause $cause }
+    $lines = @("", "slice $($context.Command) stopped -- nothing after this step ran")
+    if ($context.Id) { $lines += "  Slice:  $($context.Id) ($($context.Lane) lane)" }
+    if ($context.Step) { $lines += "  Step:   $($context.Step)" }
+    $lines += "  Cause:  $cause"
+    $lines += "  Fix:    $fix"
+    $lines += "  Retry:  $(Get-SliceRetryLine)"
+    $lines += "  This block is the whole diagnosis -- there is no need to read tools/slice.ps1."
+    foreach ($line in $lines) { [Console]::Error.WriteLine($line) }
+}
+
+# --- lock and journal ---
+
 # Tests (and an operator diagnosing a real interruption) can stop immediately
 # after a durable lifecycle phase.  Nothing reads this value during normal
 # operation, and `resume` derives its work from Git and the ledger rather than
@@ -161,10 +241,12 @@ function Get-PrimaryRoot {
     return (Split-Path -Parent $commonDir)
 }
 
+# --- queue parsing ---
+
 function Get-NextUpItems {
     param([string]$Root)
 
-    $text = Get-Content -Raw -LiteralPath (Join-Path $Root "NEXTSTEPS.md")
+    $text = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $Root "NEXTSTEPS.md")
     return Get-NextUpItemsFromText -Text $text
 }
 
@@ -187,7 +269,13 @@ function Get-NextUpItemsFromText {
     }
     $section = $sectionMatch.Groups[1].Value
 
-    $chunks = [regex]::Split($section, '(?m)^\d+\.\s+') | Where-Object { $_.Trim() -ne "" }
+    # Each lane has its own "### <Lane> lane" subsection. Split on those
+    # first and drop each part's preamble (the text before its "1."), so the
+    # next lane's heading never runs on into the last item's Next after line.
+    $chunks = @()
+    foreach ($part in [regex]::Split($section, '(?m)^(?=### )')) {
+        $chunks += @([regex]::Split($part, '(?m)^\d+\.\s+') | Select-Object -Skip 1)
+    }
 
     $items = @()
     $itemNumber = 0
@@ -243,7 +331,9 @@ function Get-NextUpItemsFromText {
         $planSplit = [regex]::Match($planLine, '^`([^`]+)`\s*--\s*(.+?)\.?$')
         if ($planSplit.Success) {
             $planFile = $planSplit.Groups[1].Value
-            $heading = $planSplit.Groups[2].Value.Trim()
+            # Queue entries quote the heading; the quotes are not part of it,
+            # and left in they doubled up in the printed read command.
+            $heading = $planSplit.Groups[2].Value.Trim().Trim('"')
         }
 
         $files = @()
@@ -408,7 +498,7 @@ function Test-Proof {
     if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
         return $false
     }
-    $content = Get-Content -Raw -LiteralPath $target
+    $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $target
     $found = $content.Contains($needle)
     if ($mode -eq "present") {
         return $found
@@ -421,6 +511,8 @@ function Test-Proof {
     }
 }
 
+# --- briefing ---
+
 function Get-SliceReadCommand {
     # The one bounded read a session needs before writing code: the slice's
     # own plan section, printed by tools/heading.py and stopping at the next
@@ -431,6 +523,63 @@ function Get-SliceReadCommand {
     param([object]$Candidate)
     if (-not $Candidate.Plan -or -not $Candidate.Heading) { return "" }
     return "python tools/heading.py $($Candidate.Plan) `"$($Candidate.Heading)`""
+}
+
+function Get-SliceLevel {
+    # The minimum reasoning level the owning plan states for this slice: a
+    # "Level: <x>" line inside its section, else its row in an "Open slices
+    # at a glance" table. "unstated" when neither exists.
+    param([string]$Root, [object]$Candidate)
+    if (-not $Candidate.Plan) { return "unstated" }
+    $planPath = Join-Path $Root $Candidate.Plan
+    if (-not (Test-Path -LiteralPath $planPath -PathType Leaf)) { return "unstated" }
+    $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
+    if ($Candidate.Heading) {
+        $start = [regex]::Match($text, '(?im)^(?<hashes>#{1,6})\s+.*' + [regex]::Escape($Candidate.Heading) + '.*$')
+        if ($start.Success) {
+            $depth = $start.Groups['hashes'].Value.Length
+            $rest = $text.Substring($start.Index + $start.Length)
+            $end = [regex]::Match($rest, "(?m)^#{1,$depth}\s")
+            $section = if ($end.Success) { $rest.Substring(0, $end.Index) } else { $rest }
+            $levelMatch = [regex]::Match($section, '(?i)Level:(?:\*\*)?\s*(low|medium|high)\b')
+            if ($levelMatch.Success) { return $levelMatch.Groups[1].Value.ToLower() }
+        }
+    }
+    $row = [regex]::Match($text, '(?im)^\|\s*' + [regex]::Escape($Candidate.Id) + '\s*\|.*\|\s*(low|medium|high)\s*\|\s*$')
+    if ($row.Success) { return $row.Groups[1].Value.ToLower() }
+    return "unstated"
+}
+
+function Get-SliceAdvice {
+    # Which model and which connectors a slice needs, derived from facts the
+    # queue and plan already hold so every briefing and report agrees.
+    # Model follows CLAUDE.md rule 4: the routine model for bounded work, the
+    # strongest only where the plan says the reasoning is hard. Connectors:
+    # git, headless runs and file edits need no MCP connector, and every
+    # enabled connector's tool listing is re-sent on every request, so the
+    # default is all off; the Godot connector is worth its cost only when a
+    # slice edits scenes or on-screen UI, where a live boot shows the result.
+    param([string]$Root, [object]$Candidate, [string]$Lane)
+    $level = Get-SliceLevel -Root $Root -Candidate $Candidate
+    if ($Lane -eq "Codex") {
+        $model = if ($level -eq "unstated") { "Codex default model; the plan states no level -- use medium reasoning" } else { "Codex default model at $level reasoning" }
+    }
+    else {
+        $model = switch ($level) {
+            "high"   { "claude-opus-5" }
+            "medium" { "claude-sonnet-5" }
+            "low"    { "claude-sonnet-5 at low effort" }
+            default  { "claude-sonnet-5; the plan states no level -- say so in the report" }
+        }
+    }
+    $uiFile = @($Candidate.Files | Where-Object { $_ -match '\.(tscn|tres)$' -or $_ -match '^scripts/(hud|ui_[a-z_]+|[a-z_]+_panel|debug_panel|main)\.gd$' })
+    $connectorsOn = if ($uiFile.Count -gt 0) { @("godot") } else { @() }
+    return [ordered]@{
+        level          = $level
+        model          = $model
+        connectors_on  = @($connectorsOn)
+        connectors_off = "every other MCP connector (Notion, computer-use, GitKraken, Claude Docs, scheduled tasks, MCP registry, music, design data)"
+    }
 }
 
 function Get-SlicePreflight {
@@ -482,6 +631,8 @@ function Get-SlicePreflight {
         WorktreePath = $worktreePath
     }
 }
+
+# --- environment ---
 
 function Get-ConfiguredGodotPath {
     param([string]$Root)
@@ -756,6 +907,8 @@ function Get-DoctorEnvironmentFailures {
     return $failures
 }
 
+# --- commands ---
+
 function Invoke-SliceDoctor {
     param(
         [string]$Lane,
@@ -792,6 +945,7 @@ function Invoke-SliceDoctor {
         check        = $preflight.Candidate.Check
         proof        = $preflight.Candidate.Proof
         next_after   = $preflight.Candidate.NextAfter
+        advice       = Get-SliceAdvice -Root $root -Candidate $preflight.Candidate -Lane $Lane
         branch       = $preflight.Branch
         worktree     = $preflight.WorktreeRelative
         git_excludes = Get-GlobalExcludesDiagnostic
@@ -863,6 +1017,7 @@ function Invoke-SliceStart {
         check      = $candidate.Check
         proof      = $candidate.Proof
         next_after = $candidate.NextAfter
+        advice     = Get-SliceAdvice -Root $root -Candidate $candidate -Lane $Lane
         branch     = $branch
         worktree   = $worktreeRelative
     }
@@ -917,6 +1072,8 @@ function Remove-SliceLedgerRow {
     }
     return $true
 }
+
+# --- post-merge ---
 
 function Invoke-SlicePostMergeCleanup {
     # Everything that happens once the branch is known to be merged: it is
@@ -1084,23 +1241,23 @@ function Invoke-SliceFinish {
     $worktreeRoot = (Get-Location).Path
     $root = Get-PrimaryRoot
 
+    Set-SliceStep "locating the slice worktree"
     if ((Resolve-Path -LiteralPath $worktreeRoot).Path -eq (Resolve-Path -LiteralPath $root).Path) {
-        Write-Error "run 'slice.ps1 finish' from inside a slice worktree, not the primary checkout"
-        exit 1
+        Stop-Slice -Cause "finish was run from the primary checkout" -Fix "cd into the slice's worktree (.worktrees/<id>) and run it there; if the branch is already merged, run tools/slice.ps1 resume -Lane <lane> from here instead"
     }
 
     $branch = (git rev-parse --abbrev-ref HEAD).Trim()
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "not inside a git branch"
-        exit 1
+        Stop-Slice -Cause "not inside a git branch" -Fix "cd into the slice's worktree (.worktrees/<id>)"
     }
     $branchMatch = [regex]::Match($branch, '^(?<prefix>claude|codex)/(?<id>.+)$')
     if (-not $branchMatch.Success) {
-        Write-Error "not on a slice branch (claude/<id> or codex/<id>): current branch is $branch"
-        exit 1
+        Stop-Slice -Cause "not on a slice branch (claude/<id> or codex/<id>): current branch is $branch" -Fix "finish closes only a branch made by tools/slice.ps1 start; merge any other branch by hand"
     }
     $id = $branchMatch.Groups["id"].Value
     $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
+    $script:SliceContext.Id = $id
+    $script:SliceContext.Lane = $lane
     $otherLane = if ($lane -eq "Claude") { "Codex" } else { "Claude" }
     $trailer = Get-LaneTrailer -Lane $lane
     $worktreeRelative = ".worktrees/$id"
@@ -1108,6 +1265,7 @@ function Invoke-SliceFinish {
     $journal = Get-ClosingJournal -Root $worktreeRoot -Branch $branch
 
     $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
+    Set-SliceStep "branch verification (tools/verify.ps1 -Scope branch)"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified")) {
         $verifyCmd = Get-Command $verifyScript
         # A hashtable splat, not an array: array splatting passes its elements as
@@ -1133,8 +1291,7 @@ function Invoke-SliceFinish {
         }
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
-            Write-Error "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched"
-            exit 1
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree lacks the .godot import cache -- copy .godot from the primary checkout into the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
@@ -1148,6 +1305,7 @@ function Invoke-SliceFinish {
     # the "refilled" phase below has the session edit that very file on the
     # branch, and by the time finish reaches it the branch's own copy may no
     # longer list this id at all.
+    Set-SliceStep "hands-on check gate"
     $masterNextSteps = (git show "master:NEXTSTEPS.md" | Out-String)
     if ($LASTEXITCODE -ne 0) { throw "could not read NEXTSTEPS.md from master" }
     $masterItems = Get-NextUpItemsFromText -Text $masterNextSteps
@@ -1159,8 +1317,7 @@ function Invoke-SliceFinish {
         $masterChecks = @(git -C $root ls-tree -r --name-only master -- checks/ready | ForEach-Object { Split-Path -Leaf $_ })
         $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
         if (-not $newEntries) {
-            Write-Error "$id -- Check: names a hands-on check but checks/ready/ gained no independently owned C-<id>.md record -- file it before finishing"
-            exit 1
+            Stop-Slice -Cause "$id -- Check: names a hands-on check but checks/ready/ gained no independently owned C-<id>.md record" -Fix "write checks/ready/C-<next free number>.md on this branch in the format plans/reference/closeout.md 'Filing a hands-on check' gives, commit, and retry"
         }
         $handsOnNote = "checks/ready/ gained $($newEntries -join ', ')"
     }
@@ -1168,6 +1325,7 @@ function Invoke-SliceFinish {
         Write-Output "$id -- no NEXTSTEPS.md entry found on master; skipping the hands-on-check gate"
     }
 
+    Set-SliceStep "committing outstanding work on the branch"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "branch-committed")) {
         git add -A
         if ($LASTEXITCODE -ne 0) { throw "git add failed" }
@@ -1181,19 +1339,20 @@ function Invoke-SliceFinish {
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "branch-committed"
     }
 
+    Set-SliceStep "archive gate (the slice's plan section must be in plans/archive/)"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "archived")) {
         if ($item) {
             $archiveMatches = @(Get-ChildItem -Path (Join-Path $worktreeRoot "plans\archive") -Filter "$id`_*.md" -File -ErrorAction SilentlyContinue)
             $planPath = Join-Path $worktreeRoot $item.Plan
             $headingStillLive = $false
             if ($item.Heading -and (Test-Path -LiteralPath $planPath -PathType Leaf)) {
-                $planText = Get-Content -Raw -LiteralPath $planPath
+                $planText = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
                 $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
                 $headingStillLive = $headingRegex.IsMatch($planText)
             }
             if (-not $archiveMatches -or $headingStillLive) {
-                Write-Error "$id -- move the delivered slice's specification out of $($item.Plan) into plans/archive/$id`_<date>.md, leaving a one-line pointer where the heading was, then commit on this branch before finishing"
-                exit 1
+                $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
+                Stop-Slice -Cause "$id -- $archiveState" -Fix "move the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md (write it with Bash if the file tools refuse plans/archive/), leave a one-line pointer where the heading was, commit on this branch, and retry"
             }
         }
         Invoke-InjectedLifecycleFailure -Phase "archived"
@@ -1201,16 +1360,15 @@ function Invoke-SliceFinish {
     }
 
     $successorId = if ($item) { Get-SuccessorId -NextAfter $item.NextAfter } else { $null }
+    Set-SliceStep "refill gate (NEXTSTEPS.md's $lane lane)"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "refilled")) {
         if ($item) {
             $branchItems = Get-NextUpItems -Root $worktreeRoot
             if ($branchItems | Where-Object { $_.Id -eq $id }) {
-                Write-Error "$id -- remove its own entry from NEXTSTEPS.md's ## Next up (adding its named successor's full Plan/Files/Check/Proof/Next after entry unless Next after: says the plan is complete), then commit on this branch before finishing"
-                exit 1
+                Stop-Slice -Cause "$id -- its own entry is still in NEXTSTEPS.md's ### $lane lane" -Fix "on this branch, delete the $id item from ### $lane lane, add its successor ($($item.NextAfter)) with full Plan/Files/Check/Proof/Next after lines unless that says the plan is complete, renumber the lane, run python tools/check_docs.py, commit, and retry"
             }
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
-                Write-Error "$id -- NEXTSTEPS.md's Next after: names '$successorId' but no [$lane] item with that id is in ## Next up yet -- add its full Plan/Files/Check/Proof/Next after entry, then commit on this branch before finishing"
-                exit 1
+                Stop-Slice -Cause "$id -- Next after: names '$successorId' but no [$lane] item with that id is in NEXTSTEPS.md yet" -Fix "on this branch, add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), run python tools/check_docs.py, commit, and retry"
             }
         }
         Invoke-InjectedLifecycleFailure -Phase "refilled"
@@ -1225,9 +1383,10 @@ function Invoke-SliceFinish {
     # gone -- and, sitting in a `finally`, replaced whatever real error was
     # propagating, so a failed ledger commit surfaced as a path error.
     Set-Location -LiteralPath $root
+    Set-SliceStep "primary checkout checks"
     $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
     if ($primaryBranch -ne "master") {
-        throw "primary checkout is on '$primaryBranch', not master -- switch it to master before finishing a slice"
+        Stop-Slice -Cause "primary checkout is on '$primaryBranch', not master" -Fix "in the primary checkout run git switch master (commit or stash-by-WIP-commit anything there first), then retry"
     }
 
     # plans/workstreams.md and checks/ready.md are written by the lifecycle
@@ -1239,9 +1398,10 @@ function Invoke-SliceFinish {
         ForEach-Object { $_.ToString() })
     if ($dirtyCoordination) {
         $dirtyFiles = @($dirtyCoordination | ForEach-Object { $_.Substring(3).Trim() } | Select-Object -Unique)
-        throw "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', '); commit or discard them before finishing"
+        Stop-Slice -Cause "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', ')" -Fix "in the primary checkout, git diff those files: commit them if they are a deliberate edit, or git checkout -- them if they are a stray one, then retry"
     }
 
+    Set-SliceStep "primary verification (tools/verify.ps1 -Scope primary)"
     $primaryVerifyScript = Join-Path $root "tools\verify.ps1"
     $primaryVerifyCmd = Get-Command $primaryVerifyScript
     $primaryVerifyArgs = @{}
@@ -1261,10 +1421,10 @@ function Invoke-SliceFinish {
     }
     $primaryVerifyOutput | ForEach-Object { Write-Output $_ }
     if ($primaryVerifyExit -ne 0) {
-        Write-Error "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched"
-        exit 1
+        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched" -Fix "the failing check is printed above; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
     }
 
+    Set-SliceStep "merging into master"
     $title = if ($item) { $item.Title } else { $branch }
     $preMergeSha = (git -C $root rev-parse HEAD).Trim()
     if (-not (Test-SliceBranchMerged -Root $root -Branch $branch)) {
@@ -1296,14 +1456,16 @@ function Invoke-SliceFinish {
         Id = $id; Lane = $lane; Branch = $branch
         WorktreeRelative = $worktreeRelative; WorktreePath = (Join-Path $root $worktreeRelative)
     }
+    Set-SliceStep "post-merge cleanup (ready-check index, worktree, branch, ledger row, push)"
     Invoke-SlicePostMergeCleanup -Root $root -Target $target -PythonPath $PythonPath
     Remove-ClosingJournal -Root $root
+    Set-SliceStep "printing the report (the merge and cleanup are done)"
 
     # Both lookups below read master's NEXTSTEPS.md as the merge just left
     # it: the delivered item gone, its successor (if any) promoted. That is
     # what turns "Next slice" and "Other lane" into lookups instead of a
     # session having to open the file and work it out by hand.
-    $mergedNextSteps = Get-Content -Raw -LiteralPath (Join-Path $root "NEXTSTEPS.md")
+    $mergedNextSteps = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $root "NEXTSTEPS.md")
     $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
 
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
@@ -1313,6 +1475,16 @@ function Invoke-SliceFinish {
     elseif ($successorId) {
         $successorItem = $mergedItems | Where-Object { $_.Id -eq $successorId -and $_.Lane -eq $lane } | Select-Object -First 1
         $nextSliceLine = if ($successorItem) { "$($successorItem.Id) -- $($successorItem.Title)" } else { "$successorId -- (not found in NEXTSTEPS.md; check the refill)" }
+    }
+
+    $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
+    $queueLine = if ($laneLead) { "$lane lane now leads with $($laneLead.Id) -- $($laneLead.Title)" } else { "$lane lane is empty -- refill it from an owning plan" }
+    $adviceLine = "none -- the $lane lane is empty"
+    $connectorLine = "none needed"
+    if ($laneLead) {
+        $advice = Get-SliceAdvice -Root $root -Candidate $laneLead -Lane $lane
+        $adviceLine = "$($advice.model) (plan level: $($advice.level))"
+        $connectorLine = if ($advice.connectors_on.Count -gt 0) { "on: $($advice.connectors_on -join ', '); off: $($advice.connectors_off)" } else { "on: none; off: $($advice.connectors_off)" }
     }
 
     $otherLead = $mergedItems | Where-Object { $_.Lane -eq $otherLane } | Sort-Object ItemNumber | Select-Object -First 1
@@ -1326,8 +1498,11 @@ function Invoke-SliceFinish {
     Write-Output "Branch:       $branch  |  verify.ps1: green"
     Write-Output "Merged:       yes, to master now"
     Write-Output "Hands-on:     $handsOnNote"
-    Write-Output "Queue:        $lane lane now leads with $nextSliceLine"
+    Write-Output "Queue:        $queueLine"
     Write-Output "Next slice:   $nextSliceLine"
+    Write-Output "Next model:   $adviceLine"
+    Write-Output "Connectors:   active now: <the session fills this in from its own tool list>"
+    Write-Output "Toggle:       $connectorLine"
     Write-Output "Other lane:   $otherLaneLine"
     Write-Output "Start it with: $startLine"
     Write-Output ""
@@ -1335,6 +1510,7 @@ function Invoke-SliceFinish {
     git -C $root diff --stat $preMergeSha master | ForEach-Object { Write-Output $_ }
 }
 
+try {
 switch ($Command) {
     "start"  { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
     "finish" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
@@ -1342,4 +1518,9 @@ switch ($Command) {
     "status" { Invoke-SliceStatus -Lane $Lane }
     "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
     "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
+}
+}
+catch {
+    Write-SliceFailure -Record $_
+    exit 1
 }

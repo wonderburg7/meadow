@@ -1,7 +1,7 @@
 # Technical audit — current contracts
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
-Status: reference | Owner: Dave / Claude Code | Next: measure before any new hot-path work | Dependency: a named measured bottleneck | Verified: 2026-09-11
+Status: reference | Owner: Dave / Claude Code | Next: PERF-1 -- measure `find_food_cell` before changing it (Codex lane) | Dependency: none -- A2, A3 and B2 have shipped | Verified: 2026-09-17
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at
@@ -91,8 +91,14 @@ reason to open a slice on its own.
 
 **Not covered by the architecture review, deliberately.** That review's A3
 caches the `total()` family and B2 builds the bucket dictionary from the
-catalogue; neither touches the `find_*` functions below. Do A3 and B2 first --
-they are specified and cheap -- and only then measure this.
+catalogue; neither touches the `find_*` functions below.
+
+**Precondition met, 17 Sep 2026.** A3 and B2 have both shipped, so the
+instrumentation step below is now the next thing to do here rather than
+something waiting on another slice. It is still a measurement, not a fix: it
+is admissible as a queue item only in the shape "add the Perf section, run
+the baseline, report the numbers, and specify the change only if the section
+is non-trivial".
 
 `_content_index()` maintains epoch-invalidated buckets keyed
 `"" / nectar / pollen / honey / jelly / brood / corpse / unbuilt / ripe_honey`,
@@ -122,19 +128,61 @@ that a two-bucket walk would subtly change; leave them alone.
 
 **Instrumentation needed first.** The hive's index *rebuild* is instrumented
 (`hive_index_rebuild`); its *queries* are not, so today their cost is only
-visible folded into `bee_state_nurse`/`bee_state_forager`. Add a
-`Perf.begin("hive_find_food")` pair, run
-`test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60`, and
-only act if the section is non-trivial. Determinism and save format are
-unaffected either way.
+visible folded into `bee_state_nurse`/`bee_state_forager`. That measurement is
+now a queued slice:
+
+#### PERF-1 — measure `find_food_cell` before changing it
+
+**Level:** medium. **Startable:** yes. **Owns:** `scripts/hive.gd`.
+
+**Purpose.** Turn "two full passes over `cells`, on every think tick, for
+every hungry bee inside the hive" into a number, so the bucket rewrite above
+is either justified or dropped. This slice measures and does not change
+behaviour -- the same shape as CB-1 and SM-1.
+
+**Required reading.** This section and section A's table above.
+`hive.gd::find_food_cell`, `hive.gd::_content_index` and the existing
+`Perf.begin("hive_index_rebuild")` pair beside it. `docs/performance.md`,
+its "what to instrument" part only. `.claude/rules/performance.md`.
+
+**Requirements.**
+1. Bracket `find_food_cell`'s body with `Perf.begin("hive_find_food")` /
+   `Perf.end("hive_find_food")`, following the existing pair's placement
+   exactly. Both calls already return immediately when `Session.perf_enabled`
+   is false, so normal play with the counter off gains one boolean read per
+   call and nothing else. Add no other section in this slice.
+2. Run `test_scenarios/recommendation_slice0_baseline.json` at
+   `--fixed-fps 60` with perf enabled, from a worktree that has a `.godot`
+   import cache. Read back only the `hive_find_food` section's total and its
+   share of the frame, never the raw output.
+3. Record both numbers, and the colony size they were measured at, in
+   `docs/PERFORMANCE_BASELINE.md` and in the delivery note.
+
+**Must not change.** `find_food_cell`'s logic, any other `find_*` function,
+`_content_index`, and any `GameConfig` value. No bucket rewrite in this
+slice: section A above already argues the equivalence for the top three
+functions, and that argument becomes a slice only if the numbers support it.
+
+**Acceptance.** Two runs at the same seed report the section within 10% of
+each other, and the delivery note states plainly whether the section is
+trivial (drop section A, and say so here) or worth a follow-up slice (name
+it, with the numbers).
+
+**Escalate if** the section cannot be read without changing how `Perf`
+aggregates, or if the two runs disagree by more than 10%, which would mean
+the measurement, not the code, is the thing to fix first.
+
+Determinism and save format are unaffected either way.
 
 ### B. The 1 Hz colony refresh walks the same sets more than once
 
 **Mostly owned elsewhere now.** `plans/design/architecture-review.md`'s A2
 makes `ColonyDiagnostics.compute` take role counts as a parameter instead of
 walking the bee group itself, which removes the largest duplicate in this call
-tree. Do A2 first; what follows is only the residue A2 leaves behind, and it is
-not worth a slice on its own.
+tree. A2 shipped, so what follows is the residue it left behind: roughly a
+dozen lines, covered by the existing `signals` Perf section, and best carried
+by the next slice that opens `year_winter.gd` rather than queued on its
+own.
 
 In one tick of `year_winter.gd::_refresh_signals`,
 `get_nodes_in_group("bees")` is called there and again in `_winter_forecast`

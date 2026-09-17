@@ -109,7 +109,9 @@ reviewing, but should state the specific trigger rather than repeat Codex's
 work by default.
 
 **A slice Codex closed out itself ends with the end-of-slice report** in
-`CLAUDE.md`, "End-of-slice report" -- `finish` prints it. Dave should not be
+`CLAUDE.md`, "End-of-slice report" -- `finish` prints it, including the
+`Next model` and `Toggle` lines; fill in `Connectors: active now` with the
+connectors this Codex session has. Dave should not be
 able to tell from the report which agent ran the slice. Post it in the chat
 unprompted; there is no hand-off block for a slice nobody has to integrate.
 
@@ -184,12 +186,13 @@ commits distinct.
   `read` field holding the exact command that prints that slice's plan
   section and nothing else. Run the `read` command; that is the whole
   briefing. `doctor -Lane Codex` prints the same thing without claiming
-  anything. The queue file is 25 KB and the section you need is under 1 KB.
+  anything. Reading the queue file itself is never needed to start.
 - Do not read the Claude lane's plan, the archive or Git history to work out
-  what to do. The queue holds three to five ready slices in two lanes
-  (`tools/check_docs.py` enforces the bounds); the lane's leading item is
-  already the decision.
-- The lanes are guaranteed not to share a file (`tools/check_docs.py` proves
+  what to do. `NEXTSTEPS.md` holds two independent lanes, `### Claude lane`
+  and `### Codex lane`, up to five items each (`tools/check_docs.py`
+  enforces it); your lane's leading item is already the decision. At
+  closeout, edit only the `### Codex lane` subsection.
+- No file appears in both lanes (`tools/check_docs.py` proves
   it), so a Codex branch and a Claude branch can run at the same time without
   conflicting. If the slice you are on turns out to need a file the other
   lane's leading item names, stop and say so rather than editing it -- that

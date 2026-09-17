@@ -103,7 +103,7 @@ def check_context_layout(errors: list[str]) -> None:
         errors.append("CHATGPT_NEXTSTEPS.md is retired; use the shared NEXTSTEPS.md and plans/")
 
 
-# Normally exactly QUEUE_SIZE_MAX (five slices keep both lanes stocked). The
+# Normally LANE_SIZE_MAX in each lane (five slices keep a lane stocked). The
 # floor is what the queue is allowed to drop to when a slice ships with no
 # genuinely startable successor -- refilling with a not-yet-ready item would
 # violate the admission test.
@@ -117,8 +117,31 @@ def check_context_layout(errors: list[str]) -> None:
 # finished. Together those two rules are what makes the queue refill itself:
 # promoting an item's named successor is a lookup, not an investigation.
 QUEUE_SIZE_MIN = 3
-QUEUE_SIZE_MAX = 5
+# Each lane holds up to five items under its own "### <Lane> lane" heading
+# (Dave, 17 Sep 2026: two lanes, five next steps each). The floor above still
+# counts the whole queue.
+LANE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
+NEXT_UP_SECTION = re.compile(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE)
+LANE_HEADING = re.compile(r"^###\s+(\w+)\s+lane\s*$", re.MULTILINE)
+
+
+def queue_item_chunks(text: str) -> list[tuple[str | None, str]] | None:
+    """Every '## Next up' item as (lane heading it sits under, item text).
+
+    Items are split per '### <Lane> lane' subsection first, so the next
+    subsection's heading and preamble never run on into the last item's
+    `Next after:` line. None when the section is missing."""
+    match = NEXT_UP_SECTION.search(text)
+    if not match:
+        return None
+    chunks: list[tuple[str | None, str]] = []
+    for part in re.split(r"^(?=### )", match.group(1), flags=re.MULTILINE):
+        heading = LANE_HEADING.match(part)
+        lane = heading.group(1) if heading else None
+        for chunk in re.split(r"^\d+\.\s+", part, flags=re.MULTILINE)[1:]:
+            chunks.append((lane, chunk))
+    return chunks
 REQUIRED_ITEM_FIELDS = ("Plan:", "Files:", "Check:", "Proof:", "Next after:")
 PROOF_LABEL = re.compile(r"^\s*-\s*Proof:\s*(.*?)\s*$", re.MULTILINE)
 PROOF_LINE = re.compile(r"^\s*-\s*Proof:\s*`([^`]*)`\s*$", re.MULTILINE)
@@ -239,12 +262,11 @@ def check_queue_files(errors: list[str]) -> None:
     """Every unclaimed item must expose the exact file set used by overlap checks."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
-    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
-    if not match:
+    items = queue_item_chunks(text)
+    if items is None:
         return
-    chunks = re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]
     active_slice_ids = _active_slice_ids()
-    for index, chunk in enumerate(chunks, start=1):
+    for index, (_, chunk) in enumerate(items, start=1):
         item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
         if item_match and item_match.group(1) in active_slice_ids:
             continue
@@ -252,23 +274,23 @@ def check_queue_files(errors: list[str]) -> None:
 
 
 def check_next_steps(errors: list[str], warnings: list[str]) -> None:
-    """The queue holds QUEUE_SIZE_MIN-QUEUE_SIZE_MAX ready slices, in two lanes that cannot collide."""
+    """The queue holds at least QUEUE_SIZE_MIN ready slices, at most
+    LANE_SIZE_MAX per lane, in two lanes that share no file."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
-    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
-    if not match:
+    items = queue_item_chunks(text)
+    if items is None:
         errors.append("NEXTSTEPS.md: missing a '## Next up' section")
         return
-    section = match.group(1)
+    section = NEXT_UP_SECTION.search(text).group(1)
 
-    chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
-    if not (QUEUE_SIZE_MIN <= len(chunks) <= QUEUE_SIZE_MAX):
+    if len(items) < QUEUE_SIZE_MIN:
         errors.append(
-            f"NEXTSTEPS.md: expected {QUEUE_SIZE_MIN}-{QUEUE_SIZE_MAX} next-step items, found {len(chunks)}"
+            f"NEXTSTEPS.md: expected at least {QUEUE_SIZE_MIN} next-step items, found {len(items)}"
         )
 
     lane_order: list[tuple[str, str]] = []
-    for index, chunk in enumerate(chunks, start=1):
+    for index, (heading_lane, chunk) in enumerate(items, start=1):
         lane_match = re.match(r"\*\*\[(\w+)\]", chunk)
         if not lane_match or lane_match.group(1) not in LANES:
             errors.append(
@@ -276,6 +298,11 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
                 + ", ".join(f"**[{lane}]" for lane in LANES)
             )
             continue
+        if heading_lane is not None and heading_lane != lane_match.group(1):
+            errors.append(
+                f"NEXTSTEPS.md item {index}: tagged [{lane_match.group(1)}] but listed "
+                f"under '### {heading_lane} lane'"
+            )
         lane_order.append((lane_match.group(1), chunk))
 
         # Proof has a stricter dedicated validator below, including the wholly
@@ -292,6 +319,11 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
 
     lanes_present = {lane for lane, _ in lane_order}
     for lane in LANES:
+        lane_size = sum(1 for item_lane, _ in lane_order if item_lane == lane)
+        if lane_size > LANE_SIZE_MAX:
+            errors.append(
+                f"NEXTSTEPS.md: the {lane} lane holds {lane_size} items; at most {LANE_SIZE_MAX}"
+            )
         if lane not in lanes_present:
             errors.append(f"NEXTSTEPS.md: no [{lane}] item -- both lanes must have work to run in parallel")
 
@@ -320,14 +352,16 @@ def check_next_steps(errors: list[str], warnings: list[str]) -> None:
 
     # A non-leading item becomes a leading one as soon as its lane empties, so
     # cross-lane overlap further down the queue is a collision waiting for a
-    # merge. Same-lane overlap is fine: a lane is worked top to bottom.
+    # merge -- an error since 17 Sep 2026, when the lanes became two
+    # independent five-item queues. Same-lane overlap is fine: a lane is
+    # worked top to bottom.
     for lane_a, chunk_a in lane_order:
         for lane_b, chunk_b in lane_order:
             if lane_a >= lane_b:
                 continue
             overlap = _item_files(chunk_a) & _item_files(chunk_b)
             if overlap:
-                warnings.append(
+                errors.append(
                     f"NEXTSTEPS.md: a [{lane_a}] and a [{lane_b}] item both name "
                     + ", ".join(sorted(overlap))
                     + " -- they will collide once both lanes reach them; put them "
@@ -349,11 +383,10 @@ def check_queue_successors(errors: list[str]) -> None:
     """Every queue item names the slice that follows it, or says its plan is done."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
-    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
-    if not match:
+    items = queue_item_chunks(text)
+    if items is None:
         return
-    chunks = re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]
-    for index, chunk in enumerate(chunks, start=1):
+    for index, (_, chunk) in enumerate(items, start=1):
         line = NO_SUCCESSOR.search(chunk)
         if not line:
             continue   # check_next_steps already reports the missing field
@@ -376,15 +409,15 @@ def check_queue_section_agreement(errors: list[str], text: str | None = None) ->
     with nothing to catch it."""
     if text is None:
         text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
-    next_match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
+    items = queue_item_chunks(text)
     not_queued_match = re.search(
         r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE
     )
-    if not next_match or not not_queued_match:
+    if items is None or not not_queued_match:
         return
 
     next_ids = []
-    for chunk in re.split(r"^\d+\.\s+", next_match.group(1), flags=re.MULTILINE)[1:]:
+    for _, chunk in items:
         item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
         if item_match:
             next_ids.append(item_match.group(1))
@@ -412,14 +445,12 @@ def check_queue_proofs(errors: list[str]) -> None:
     its registered worktree is being verified for merge."""
     path = ROOT / "NEXTSTEPS.md"
     text = path.read_text(encoding="utf-8")
-    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
-    if not match:
+    items = queue_item_chunks(text)
+    if items is None:
         return
-    section = match.group(1)
-    chunks = re.split(r"^\d+\.\s+", section, flags=re.MULTILINE)[1:]
     active_slice_ids = _active_slice_ids()
 
-    for index, chunk in enumerate(chunks, start=1):
+    for index, (_, chunk) in enumerate(items, start=1):
         item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
         if item_match and item_match.group(1) in active_slice_ids:
             continue
@@ -488,11 +519,11 @@ def queue_declared_files() -> set[str]:
     if not path.is_file():
         return set()
     text = path.read_text(encoding="utf-8")
-    match = re.search(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE)
-    if not match:
+    items = queue_item_chunks(text)
+    if items is None:
         return set()
     declared: set[str] = set()
-    for chunk in re.split(r"^\d+\.\s+", match.group(1), flags=re.MULTILINE)[1:]:
+    for _, chunk in items:
         declared |= _item_files(chunk)
     return declared
 
@@ -723,7 +754,7 @@ def ledger_worktree_rows() -> list[tuple[str, Path]]:
     """(raw path as written, resolved path) for each data row in plans/workstreams.md.
 
     Read from the primary checkout, not from ROOT. The ledger is edited only
-    there (CLAUDE.md, "Coordinating and closing out workstreams"), so a branch
+    there (plans/reference/closeout.md, "Branches follow the lanes"), so a branch
     carries whatever copy it forked from -- reading the local one made every
     row look stale from inside a worktree and pushed sessions into editing the
     ledger on the branch, which is the conflict the rule exists to prevent."""
