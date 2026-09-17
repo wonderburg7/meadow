@@ -9,6 +9,33 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 
+## Catalogue finders all take one bee and return whether they started work.
+static func _start_mining(bee: Node2D, block: Node2D, mark: bool = false) -> bool:
+	if block == null:
+		return false
+	if mark:
+		block.set_marked(true)
+	bee._mining_no_work_epoch = -1
+	bee.target_block = block
+	bee.state = State.TO_MINE_SITE
+	return true
+
+
+static func _next_queued_block(bee: Node2D) -> bool:
+	var block = bee._next_queued_block()
+	if block != null and bee.hive.mine_stand_hex(block) == null:
+		block = null
+	return _start_mining(bee, block)
+
+
+static func find_marked_block(bee: Node2D) -> bool:
+	return _start_mining(bee, bee.hive.find_marked_block(bee._mine_reference_point()))
+
+
+static func find_nearest_edge_block(bee: Node2D) -> bool:
+	var from_point: Vector2 = bee._mine_reference_point() if bee.has_mine_home else Vector2(INF, INF)
+	return _start_mining(bee, bee.hive.find_nearest_edge_block(from_point), true)
+
 ## Miners used to be walked at the block's own centre. Soil is solid, so
 ## routing found no path to it at all and _move_towards's "no safe route,
 ## stay put" branch left the bee standing still forever -- which is why

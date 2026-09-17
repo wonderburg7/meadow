@@ -9,6 +9,39 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
+## Catalogue finders all take one bee and return whether they started work.
+static func find_honey_target(bee: Node2D) -> bool:
+	if bee.honey_load <= 0.0:
+		return false
+	var pot = bee.hive.find_honey_target()
+	if pot == null:
+		return false
+	bee.target_cell = pot
+	bee.state = State.TO_HONEY_CELL
+	return true
+
+
+static func find_cell_needing_fanning(bee: Node2D) -> bool:
+	if bee.honey_load > 0.0:
+		return false
+	var drying = bee.hive.find_cell_needing_fanning()
+	if drying == null:
+		return false
+	bee.fan_target = drying
+	bee.state = State.FANNING
+	return true
+
+
+static func find_cell_with(bee: Node2D) -> bool:
+	if bee.honey_load > 0.0:
+		return false
+	var nectar_cell = bee.hive.find_cell_with("nectar")
+	if nectar_cell == null or bee.hive.find_honey_target() == null:
+		return false
+	bee.target_cell = nectar_cell
+	bee.state = State.TO_NECTAR_CELL
+	return true
+
 ## Nectar is mostly water and ferments; honey keeps, and packs several
 ## times the energy into the same cell. A honey maker takes nectar back
 ## out of the comb, chews enzymes into it, spits the mix into a cell of

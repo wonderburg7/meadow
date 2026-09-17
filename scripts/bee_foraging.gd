@@ -117,6 +117,20 @@ static func seek_flower(bee: Node2D) -> void:
 	_start_searching(bee)
 
 
+## Catalogue finder: a forager always has work, because seek_flower itself
+## handles "nothing out there" by heading home. It hands the bee to
+## State.SEEK_FLOWER rather than perceiving here, so the work stays inside
+## the bee_seek_flower Perf section and on the same think tick it used
+## before the catalogue (G2 integration review, 17 Sep 2026). It goes through
+## autonomous_state, which the pre-catalogue branch in bee.gd skipped: that
+## branch predated the choke point and no Challenge stage makes a
+## player-driven bee a Forager, so this tightens the documented invariant
+## without changing any behaviour the game can currently reach.
+static func start_seek_flower(bee: Node2D) -> bool:
+	bee.state = autonomous_state(bee, State.SEEK_FLOWER)
+	return true
+
+
 ## A fresh SEARCHING bout from scratch -- shared by seek_flower's "nothing
 ## in sight" fallback and its poor_patch_search_streak shortcut above.
 static func _start_searching(bee: Node2D) -> void:

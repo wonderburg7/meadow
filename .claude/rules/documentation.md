@@ -26,7 +26,14 @@ that follows -- the only accepted alternative is `none -- <plan> is complete`
 on it today and the defect still exists, which its `Proof:` line asserts as
 `present:`/`absent: <path> :: <substring>`. Anything waiting on a hands-on
 check, a live repro, another slice or a decision from Dave goes under
-`## Not in the queue, and why` with one line saying what it waits for. When
+`## Not in the queue, and why` with one line saying what it waits for.
+**That includes a `Next after:` successor.** Closing a slice does not make
+its successor admissible -- G2's named G3, which waits on F2s -- so at
+closeout the successor goes into the lane if it is startable and under
+`## Not in the queue, and why` if it is not, with its id as the bullet's
+bolded lead. `tools/slice.ps1 finish`'s refill gate accepts either, and
+nothing else; do not weaken a `Next after:` line to `none` to get past it
+(17 Sep 2026). When
 Dave reports a hands-on pass, anything it unblocks moves into a lane.
 `tools/check_docs.py` enforces all of this. Closeout order (archive, refill,
 `finish`) is in `plans/reference/closeout.md`.

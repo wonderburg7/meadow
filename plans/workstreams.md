@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/G2` (`codex/G2`) | Codex | the dispatcher reads the catalogue. | Codex | in progress | none | `plans/design/architecture-review.md` "G2 — the dispatcher reads the catalogue" |

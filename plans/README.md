@@ -135,6 +135,19 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
    later slices, stop and say so with the options and their costs. An
    adjacent improvement goes to a future slice; an unrelated issue goes to
    its owning plan; neither enlarges the slice in hand.
+10. **A restriction naming another slice expires when that slice ships.**
+    A plan that says "do not touch `x.gd`, slice Y owns it", "not startable
+    until Y", or "Y is next in this order" is describing a queue that moves
+    underneath it. Re-verify every such sentence when you touch the plan, and
+    always before queueing the item: if Y is archived, the restriction is
+    gone, and leaving it there costs an implementing session an escalation it
+    should never have had to make. The 17 Sep 2026 plan review found four --
+    UI-W-2 barred from `challenge_runner.gd` by C2, guardrail 14's entire
+    ordered list, CB-1 pointing at a queue entry that had become SM-1, and
+    UI-W-1 still specifying two requirements that had shipped.
+    `tools/check_docs.py` warns about the archived-id case; the other shapes
+    are yours to check. Added 17 Sep 2026 by the plan review.
+
 9. **Scale the planning to the risk.** A save migration, a simulation change
    or a cross-system refactor earns the full structure. A one-constant change
    earns a heading, the requirement, the invariant and the check. Boilerplate
@@ -243,4 +256,8 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     `challenge_runner.gd::_update_marker` and let the reader grep; if a
     number is genuinely useful, it is a hint to confirm, and a slice that
     edits a file re-checks the numbers its own plan states. Added 11 Sep 2026
-    by the plan review.
+    by the plan review. A `Required reading` list of function names is
+    followed with `python tools/func.py <file> <name> [<name> ...]`, which
+    prints each function with its doc comment and nothing else, so a plan may
+    name several functions in a 3,000-line script without costing the file
+    (added 17 Sep 2026).
