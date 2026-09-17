@@ -91,13 +91,13 @@ static func take_orientation_flight(bee: Node2D) -> void:
 ## to a full-meadow scan: it hands off to State.SEARCHING's spiral
 ## instead. See search_for_flower below, which re-runs this same bounded
 ## check every frame while the spiral widens.
-static func seek_flower(bee: Node2D) -> void:
+static func seek_flower(bee: Node2D) -> bool:
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
 	if BeeStatus.grounded(bee):
 		bee.state = autonomous_state(bee, State.TO_HIVE)
-		return
+		return true
 
 	# A run of thin or rejected flowers means whatever's merely nearby has
 	# already proven disappointing several visits running -- go straight
@@ -106,15 +106,16 @@ static func seek_flower(bee: Node2D) -> void:
 	if bee.thin_visit_streak >= GameConfig.poor_patch_search_streak:
 		bee.thin_visit_streak = 0
 		_start_searching(bee)
-		return
+		return true
 
 	var best := _perceive_flower(bee)
 	if best != null:
 		_commit_to_flower(bee, best)
-		return
+		return true
 
 	# Nothing in sight from right here either -- same widening loop.
 	_start_searching(bee)
+	return true
 
 
 ## A fresh SEARCHING bout from scratch -- shared by seek_flower's "nothing

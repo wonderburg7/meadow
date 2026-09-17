@@ -49,6 +49,20 @@ const BeeBuilding = preload("res://scripts/bee_building.gd")
 const BeeMining = preload("res://scripts/bee_mining.gd")
 const BeeHoney = preload("res://scripts/bee_honey.gd")
 const BeeEggLaying = preload("res://scripts/bee_egg_laying.gd")
+const Actions = preload("res://scripts/actions.gd")
+
+## The catalogue is grouped once when this script loads. `_try_role_work` runs
+## on every idle bee's think tick, so filtering the full catalogue there would
+## turn a data refactor into a hot-path regression.
+static var _actions_by_role: Dictionary = _build_actions_by_role()
+const ROLE_ACTION_FINDERS := {
+	Roles.NURSE: BeeNursery,
+	Roles.COMB_WORKER: BeeBuilding,
+	Roles.MINER: BeeMining,
+	Roles.HONEY: BeeHoney,
+	Roles.QUEEN: BeeEggLaying,
+	Roles.FORAGER: BeeForaging,
+}
 
 var speed: float = 110.0
 var flower_handling_time: float = 2.0
@@ -1303,188 +1317,44 @@ func _maybe_break_off_secondary() -> void:
 ## true if it found something (and has already changed state), false if
 ## there was genuinely nothing to do.
 func _try_role_work(r: int) -> bool:
-	match r:
-		Role.NURSERY:
-			# A nurse set to Jelly only ever makes jelly. Feed and Anything
-			# both tend to hungry brood first -- a larva can't wait, but
-			# jelly can be batched up whenever there's slack -- so Anything
-			# only falls back to jelly work once no brood needs feeding.
-			if nurse_mode == "jelly":
-				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
-					state = State.TO_JELLY_CELL
-					return true
-				if BeeNursery.can_make_jelly(self):
-					timer = GameConfig.jelly_make_time
-					state = State.MAKING_JELLY
-					return true
-				return false
-
-			# The queen lays directly into a cell (see _queen_lay), so
-			# there's never a loose egg on the floor to fetch -- a
-			# nurse's job is feeding brood already in a cell.
-			var brood = hive.find_brood_cell()
-			# A bee nursing only as a backup (the queen, by default)
-			# takes the job when a larva is actually waiting to be fed.
-			# A dedicated nurse also stands over already-fed brood,
-			# because that speeds up the time the larva has food for.
-			# Without this distinction the queen would ping-pong
-			# between the brood nest and her own idle state forever.
-			if brood != null and (r == role or brood.needs_feeding()):
-				# Load up before walking over. A nurse feeds from what she
-				# is carrying, so an empty-handed one goes to the stores
-				# first.
-				if brood.needs_feeding() and not BeeNursery.can_feed(self, brood):
-					if BeeNursery.nurse_restock_errand(self, brood.brood_is_gyne):
-						return true
-				target_cell = brood
-				state = State.TO_BROOD
-				return true
-
-			# Nothing waiting to be fed -- an Anything-mode nurse fills the
-			# gap making jelly instead of standing idle. "both" is the
-			# sub-mode's actual key (roles.gd) -- not "anything", which
-			# no code ever assigns to nurse_mode.
-			if nurse_mode == "both":
-				if nurse_jelly > 0.0 and hive.find_cell_for("jelly") != null:
-					state = State.TO_JELLY_CELL
-					return true
-				if BeeNursery.can_make_jelly(self):
-					timer = GameConfig.jelly_make_time
-					state = State.MAKING_JELLY
-					return true
-
-			return false
-
-		Role.BUILDER:
-			# Comb workers do two kinds of work, and which of them this one
-			# is willing to take depends on its mode.
-			#
-			# Maintenance, in priority order: clear dead larvae out of
-			# cells (a body blocks the cell entirely, so this is urgent),
-			# then shift stores out of cells the player has re-designated
-			# or asked to be emptied.
-			if architect_mode != "build":
-				var dead = hive.find_cell_needing_cleaning()
-				if dead:
-					target_cell = dead
-					state = State.TO_CLEAN_CELL
-					return true
-
-				var source = hive.find_cell_needing_eviction()
-				if source:
-					target_cell = source
-					state = State.TO_HAUL_SOURCE
-					return true
-
-			# Keeping chosen cells topped up. Ranked with maintenance
-			# rather than building, because it's the same kind of job --
-			# moving what the colony already has to where it's wanted --
-			# and because a half-built cell can wait while the winter
-			# store runs dry.
-			if architect_mode == "restock" or architect_mode == "both":
-				if BeeBuilding.find_restock_job(self):
-					return true
-
-			if architect_mode == "maintain" or architect_mode == "restock":
-				return false
-
-			var site: Node2D = null
-			# The player's own order comes first, worked front to back.
-			# Entries that have become unbuildable are skipped inside
-			# _take_next_build_target rather than stalling the queue.
-			while site == null and _take_next_build_target():
-				site = hive.create_cell_site_at(manual_build_hex)
-				has_manual_build_target = false
-			if site == null:
-				site = hive.find_unfinished_cell()
-			if site == null:
-				# grows outward from this comb worker's own home cell if it
-				# has been given one, otherwise from the middle of the comb
-				site = hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO)
-			if site:
-				target_cell = site
-				state = State.TO_BUILD_SITE
-				DiagnosticLog.log_build_target(self, site, "assigned", "build_work_selected", "pending", "not_checked")
-				return true
-			return false
-
-		Role.MINER:
-			if _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine:
-				return false
-			# Blocks the player marked always come first, automine or
-			# not -- an explicit instruction outranks the automatic
-			# choice, so switching automine on doesn't make a miner
-			# ignore the blocks you flagged. Only once every marked
-			# block is dealt with does an automining bee pick its own:
-			# the exposed block nearest the central wax cell, so the
-			# hive opens up around itself rather than at the rim.
-			# This miner's own order first, in the order it was given.
-			var block = _next_queued_block()
-			if block != null and hive.mine_stand_hex(block) == null:
-				block = null   # still buried; take another job meanwhile
-			if block == null:
-				block = hive.find_marked_block(_mine_reference_point())
-			if block == null and automine:
-				block = hive.find_nearest_edge_block(_mine_reference_point() if has_mine_home else Vector2(INF, INF))
-				if block != null:
-					block.set_marked(true)
-			if block != null:
-				_mining_no_work_epoch = -1
-				target_block = block
-				state = State.TO_MINE_SITE
-				return true
-			_mining_no_work_epoch = hive.mining_work_epoch
-			_mining_no_work_automine = automine
-			return false
-
-		Role.HONEY_MAKER:
-			# Still holding mix from a previous trip -- put that down
-			# before doing anything else, or fetching a fresh load of
-			# nectar would overwrite it and the work would be lost.
-			if honey_load > 0.0:
-				var pot = hive.find_honey_target()
-				if pot != null:
-					target_cell = pot
-					state = State.TO_HONEY_CELL
-					return true
-				return false
-
-			# Drying cells already spat into come next: wet mix isn't
-			# a store until the water is fanned off it, so leaving it
-			# to fetch more nectar just piles up unusable cells.
-			var drying = hive.find_cell_needing_fanning()
-			if drying != null:
-				fan_target = drying
-				state = State.FANNING
-				return true
-			var nectar_cell = hive.find_cell_with("nectar")
-			if nectar_cell != null and hive.find_honey_target() != null:
-				target_cell = nectar_cell
-				state = State.TO_NECTAR_CELL
-				return true
-			return false
-
-		Role.EGG_LAYER:
-			# Only the queen ever has this role. She goes back to laying
-			# the moment there's both pollen to eat and somewhere to put
-			# an egg; the rest of the time her backup role (nursing, by
-			# default) picks up the slack.
-			if not is_queen or laying_paused:
-				return false
-			if hive.has_room_for_egg() and hive.find_cell_with("pollen") != null:
-				state = State.SEEK_POLLEN
-				return true
-			return false
-
-		Role.FORAGER:
-			# No cheap way to know in advance whether a flower's worth
-			# visiting -- _seek_flower already handles "nothing out
-			# there" gracefully by heading home, so just hand off to it.
-			state = State.SEEK_FLOWER
+	# The Hive owns mining-work invalidation. Keep this guard outside the
+	# catalogue walk: otherwise an idle miner would still call all three
+	# mining finders after it had already established this epoch has no work.
+	if r == Role.MINER and _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine:
+		return false
+	var finder = ROLE_ACTION_FINDERS.get(r)
+	if finder == null:
+		return false
+	for action in _actions_by_role.get(r, []):
+		var modes: Array = action.modes
+		if not modes.is_empty() and not _action_mode_for_role(r) in modes:
+			continue
+		if finder.call(action.find, self):
 			return true
+	if r == Role.MINER:
+		_mining_no_work_epoch = hive.mining_work_epoch
+		_mining_no_work_automine = automine
+	return false
 
-		_:
-			return false
+
+static func _build_actions_by_role() -> Dictionary:
+	var grouped: Dictionary = {}
+	for action in Actions.ACTIONS:
+		for action_role in action.roles:
+			if not grouped.has(action_role):
+				grouped[action_role] = []
+			grouped[action_role].append(action)
+	return grouped
+
+
+func _action_mode_for_role(r: int) -> String:
+	if r == Role.NURSERY:
+		return nurse_mode
+	if r == Role.BUILDER:
+		return architect_mode
+	if r == Role.MINER:
+		return "automine" if automine else ""
+	return ""
 
 # --- building -----------------------------------------------------
 ## Moved to bee_building.gd -- see BEE_SPLIT_PLAN.md.
