@@ -1325,9 +1325,11 @@ func _try_role_work(r: int) -> bool:
 	var finder = ROLE_ACTION_FINDERS.get(r)
 	if finder == null:
 		return false
+	# Resolved once, not per row: this runs on every idle bee's think tick.
+	var mode: String = _action_mode_for_role(r)
 	for action in _actions_by_role.get(r, []):
 		var modes: Array = action.modes
-		if not modes.is_empty() and not _action_mode_for_role(r) in modes:
+		if not modes.is_empty() and not mode in modes:
 			continue
 		if finder.call(action.find, self):
 			return true
