@@ -10,9 +10,9 @@ remain in `CLAUDE.md` and `CHATGPT.md`, not in parallel queues or plans.
 
 <!-- LAYER: immediate-task -->
 
-1. Read `NEXTSTEPS.md` only. It holds three to five ready slices in a
-   `[Claude]` lane and a `[Codex]` lane; take the first unclaimed item in
-   your own lane.
+1. Run `tools/slice.ps1 start -Lane <yours>`; it claims your lane's first
+   item from `NEXTSTEPS.md` (two lanes, up to five items each, sharing no
+   file) and prints the one `read` command you need. Do not read the queue.
 2. Open the `Plan:` file/heading that item names with a targeted search. Read
    its status line and only the section needed for the assigned task.
 3. Load code rules, a check list, design reference, or historical record only
@@ -216,7 +216,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     in a panel file is how the same overlap keeps coming back
     (`plans/reference/check-loop.md` P-2).
 12. A queue item's `Proof:` line is the check for "does the behaviour already
-    exist" (`tools/check_docs.py`, `NEXTSTEPS.md` "Keeping the queue true").
+    exist" (`tools/check_docs.py`, `.claude/rules/documentation.md`).
     X3/UI-P-2 cost a queue slot and a worktree because nobody opened
     `ui_theme.gd` first.
 13. Developer triggers all live in `debug_panel.gd`'s "Triggers" group. A

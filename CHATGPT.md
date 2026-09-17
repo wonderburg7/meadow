@@ -184,12 +184,13 @@ commits distinct.
   `read` field holding the exact command that prints that slice's plan
   section and nothing else. Run the `read` command; that is the whole
   briefing. `doctor -Lane Codex` prints the same thing without claiming
-  anything. The queue file is 25 KB and the section you need is under 1 KB.
+  anything. Reading the queue file itself is never needed to start.
 - Do not read the Claude lane's plan, the archive or Git history to work out
-  what to do. The queue holds three to five ready slices in two lanes
-  (`tools/check_docs.py` enforces the bounds); the lane's leading item is
-  already the decision.
-- The lanes are guaranteed not to share a file (`tools/check_docs.py` proves
+  what to do. `NEXTSTEPS.md` holds two independent lanes, `### Claude lane`
+  and `### Codex lane`, up to five items each (`tools/check_docs.py`
+  enforces it); your lane's leading item is already the decision. At
+  closeout, edit only the `### Codex lane` subsection.
+- No file appears in both lanes (`tools/check_docs.py` proves
   it), so a Codex branch and a Claude branch can run at the same time without
   conflicting. If the slice you are on turns out to need a file the other
   lane's leading item names, stop and say so rather than editing it -- that
