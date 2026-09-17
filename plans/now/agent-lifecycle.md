@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-9 -- the floor is measured and split, and this plan is gated | Dependency: none | Verified: 2026-09-17
+Status: active | Owner: Dave / Claude | Next: None -- L-9 shipped, but the completion gate is unmet; wait for future sessions' evidence, no further slice | Dependency: none | Verified: 2026-09-17
 
 ## Objective
 
@@ -11,12 +11,14 @@ every failure after its first push leaves work merged with cleanup
 outstanding. Make closeout a transaction that is safe to interrupt and safe
 to re-run, prove it under two concurrent lanes, and measure the result.
 
-The second objective is cost, and it is the larger one. Writing code is 25.6%
-of a session's context spend; 47.1% falls after the last product edit, in
-closeout and document curation, and a further 17.4% goes to sessions that
-make no product edit at all. **Target: raise the implementing share above
-40%**, measured the same way at L-9. Nothing in this plan may buy that by
-removing a check.
+The second objective is cost, and it is the larger one. Writing code was
+25.6% of a session's context spend at F13's measurement; 47.1% fell after
+the last product edit, in closeout and document curation, and a further
+17.4% went to sessions that made no product edit at all. **Target: raise the
+implementing share above 40%.** L-9 built the re-measurement
+(`session_cost.py --phases`); over the seven sessions since L-5 merged the
+share is 40.0% -- the threshold itself, not yet above it, on too small a
+sample to call moved. Nothing in this plan may buy that by removing a check.
 
 The evidence is in `docs/agent-workflow-review-2026-09-12.md`; findings are
 cited as F1 to F12 and are not restated here. The 3 September plan is
@@ -47,12 +49,17 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
   Closeout surfaced the exact defect L-4 targets -- the worktree directory
   stayed locked after verification and failed to delete -- full record at
   `plans/archive/L-3_2026-09-13.md`.
+- L-9 shipped 17 September 2026: `session_cost.py --phases` and the
+  repository/host context split exist and were checked against live
+  sessions, but the completion gate is unmet on three of its four
+  conditions, so the plan is not yet complete -- full record at
+  `plans/archive/L-9_2026-09-17.md`.
 
 ## Open slices
 
-| Slice | Outcome | Owns | Startable | Reasoning |
-| --- | --- | --- | --- | --- |
-| L-9 | the floor and the phase split are measured, and gate this plan | `tools/session_cost.py`, this plan | yes | medium |
+None. L-9, this plan's last slice, shipped 17 September 2026; the
+completion gate it checks is not yet satisfied, so the plan stays `active`
+without a further slice to implement -- see `plans/archive/L-9_2026-09-17.md`.
 
 Dependencies, stated rather than implied: L-1 was the prerequisite for
 everything else, because nothing else in this plan could be trusted while
@@ -66,7 +73,8 @@ L-4 shipped 14 September 2026 (archived at
 at `plans/archive/L-6_2026-09-14.md`), and L-7 shipped the same day too
 (archived at `plans/archive/L-7_2026-09-14.md`), so L-8 became startable.
 L-8 shipped 17 September 2026 (archived at `plans/archive/L-8_2026-09-17.md`),
-leaving L-9 as this plan's last slice and its gate.
+so L-9 became startable. L-9 shipped the same day (archived at
+`plans/archive/L-9_2026-09-17.md`), leaving no further slice in this plan.
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
@@ -128,63 +136,14 @@ misreport it; `doctor` reports it as `godot_capability`, and only
 `editor_unavailable` still blocks `doctor` itself. Full specification and
 outcome: `plans/archive/L-8_2026-09-17.md`.
 
-## L-9 — the floor is measured and split, and this plan is gated
-
-**Objective.** W-2 targeted a session-opening floor of 45,000 tokens, never
-measured itself, and the floor is 77,322 today. Make the measurement separate
-what the repository owns from what it does not, add the phase split F13
-reports so the plan's cost target is checkable, then gate this plan on both.
-
-**Non-goals.** Do not add or remove any deny rule in
-`.claude/settings.json`. This slice measures; a later slice may act.
-
-**Files.** `tools/session_cost.py`, this plan.
-
-**Prerequisite.** L-5, so that the routing fixes and the transaction are both
-in place before the after-measurement is taken.
-
-**Algorithm.**
-
-0. Add `--phases` to `session_cost.py`, printing the four-row table F13
-   reports: requests, context and share for the phases before the first
-   product edit, between the first and last, after the last, and for sessions
-   with no product edit. Bound the phases by edits to `scripts/`, `scenes/`,
-   `shaders/`, `tests/`, `tools/` and `test_scenarios/`, and reproduce F13's
-   figures for 4 to 12 September 2026 within 10% before trusting it.
-1. In `session_cost.py`, split the session-opening context into two figures:
-   `repository context`, the tokens attributable to reads of files under the
-   repository root in the session's first request, and `host context`, the
-   remainder — system prompt, tool schemas, MCP server definitions, plugin
-   and skill listings.
-2. Print both, with the total, under `--days N`. Keep the existing
-   single-figure line so nothing that parses the output breaks.
-3. Record here, in a three-row table: the 3 September before, today's
-   77,322 split into its two parts, and the after.
-
-**Completion gate.** This plan is not complete, and its `Next:` does not
-read `None — plan complete`, until all four hold:
-
-1. `python tools/session_cost.py --days 1` has been run in a session opened
-   after L-5 merged, and both the before and after figures are recorded in
-   the table above.
-2. `python tools/session_cost.py --days 7 --classify` shows zero
-   `lifecycle_failure` outcomes across that window.
-3. One real product slice — not a fixture — has been claimed, implemented and
-   closed out end to end by each lane, in a session opened after the
-   configuration changes, with a single `finish` call and no manual repair.
-   Name both canary slices here.
-4. The phase split has been re-measured over the sessions since L-5 merged,
-   the same way F13 measured it, and the implementing share is above 40%.
-   Record the four phase figures beside F13's. A share that has not moved
-   means the queue and document work went somewhere else rather than away.
-
-**Proof.** `absent: tools/session_cost.py :: host context`
-
-**Risk.** Medium. The attribution in step 1 is a heuristic; state its rule in
-the code so a later reader can judge it.
-
-**Expected improvement.** W-2's failure mode — a target set against a number
-the repository could not move, and never checked — cannot repeat.
-
-**Next slice.** None. L-9 is the gate; when it passes, this plan is complete
-and moves to `plans/archive/`.
+L-9 (the floor is measured and split, and this plan is gated) shipped 17
+September 2026. `tools/session_cost.py` gained `--phases` (F13's four-row
+requests/context/share table, reproduced within 10% for 4-12 Sep) and split
+`--days N`'s session-opening figure into `repository context` and `host
+context`. The completion gate was checked the same session: of its four
+conditions, only the measurement-ran-once condition is met; the other three
+(zero `lifecycle_failure` over 7 days, a named canary slice per lane, and an
+implementing share re-measured above 40%) are not yet, so the plan stays
+`active` with no further slice pending future sessions' evidence. Full
+specification, the before/12-Sep/after table and the gate check:
+`plans/archive/L-9_2026-09-17.md`.
