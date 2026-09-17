@@ -17,7 +17,7 @@ re-run against those numbers.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SF-1 | At the start of a run only an occasional flower is out of season, as later in the year | `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, new test_scenarios/sf1_founding_flower_mix_test.json | yes | medium |
+| SF-1 | At the start of a run only an occasional flower is out of season, as later in the year | `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/diagnostic_log.gd`, new test_scenarios/sf1_founding_flower_mix_test.json | yes | medium |
 
 **Required reading.** SF-1's section below only.
 
@@ -47,19 +47,25 @@ rare."
 **Files likely to change.** `scripts/world_building.gd` (founding seed loop and
 `_seed_flower`), `scripts/flower.gd` (setup takes an optional starting age),
 `scripts/flower_species.gd` (`season_weight`/`pick_species_index` take an
-optional year fraction), a new fixture, and `scenario_actions.gd` only if
-step 1 needs a condition that does not exist -- in which case stop, because
-UI-W-2 owns that file (see Escalate).
+optional year fraction), `scripts/diagnostic_log.gd` (the two counters step 1
+needs), and a new fixture. **Not `scenario_actions.gd`**: nothing there or in
+`tools/run_scenario.py` reads a flower's season today (checked 17 Sep 2026),
+and that file belongs to the Claude lane, so the measurement goes through the
+diagnostics summary instead -- see requirement 1.
 
 **Must not change.** `GameConfig.out_of_season_seed_weight` (0.06),
 `flower_lifespan_days`, replacement seeding's timing, and Challenge 1's Poppy
 exclusion.
 
 **Requirements.**
-1. *Measure first.* Add a diagnostic count of founders in and out of season
-   (use `DiagnosticLog`'s existing summary counters; `flower.gd::in_season()`
-   is the test) at t=0, day 1, day 3 and day 5, for Season days 5 and 60,
-   seed 4242. Record the four numbers per year length in the delivery note.
+1. *Measure first.* Add two counters to `DiagnosticLog` beside its existing
+   flower counters -- flowers in season and flowers out of season
+   (`flower.gd::in_season()` is the test) -- so they appear in the hourly
+   snapshot and the run summary, which `tools/run_scenario.py` already
+   validates through `tools/headless/profiles.py`'s `validate_diagnostics`. Read them
+   at t=0, day 1, day 3 and day 5, for Season days 5 and 60, seed 4242.
+   Record the four numbers per year length in the delivery note, and read
+   back only those fields, never the raw output.
    If the day-0 out-of-season share is above 15%, the unconfirmed cause is
    real: fix that first (seed after the clock and settings are reset) and
    re-measure before step 2.
@@ -80,10 +86,13 @@ species) -- accept the one-off layout change and say so in the delivery note.
 shorter than a founder's age (wrap with `fposmod`). Challenge 1's excluded
 species. A restart after changing Season days.
 
-**Automated acceptance.** `sf1_founding_flower_mix_test.json` at Season days 5:
-the day-0 out-of-season share of flowers is within 5 percentage points of the
-day-5 share, and below 15%. Fails on master if step 1 shows the day-0 share
-above the day-5 one.
+**Automated acceptance.** `sf1_founding_flower_mix_test.json` at Season days
+5, with the assertion in a Python test beside `tests/test_layout_regression.py`
+(the fixture produces the summary; the test reads the two counters out of it,
+because the scenario `assert` vocabulary has no season condition and must not
+grow one in this lane): the day-0 out-of-season share of flowers is within 5
+percentage points of the day-5 share, and below 15%. Fails on master if step 1
+shows the day-0 share above the day-5 one.
 
 **Regression.** `tools/verify.ps1` (the seasons balance test must still find
 something in flower, and a pollen source, all year).
@@ -94,6 +103,7 @@ then again on days 2 and 4. PASS: at every look, including the first, only
 an occasional flower is out of season." Archive this section; set `Next:` to
 `None — plan complete` if nothing else was filed.
 
-**Level:** medium. **Escalate if** step 1 needs a scenario condition (UI-W-2
-owns `scenario_actions.gd`), or if founders born in the past visibly thin the
+**Level:** medium. **Escalate if** the two counters cannot be read out of the
+run summary without a scenario condition (the Claude lane owns
+`scenario_actions.gd`), or if founders born in the past visibly thin the
 meadow at the start.

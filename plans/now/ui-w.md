@@ -1,7 +1,7 @@
 # UI-W — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-W-2 -- Challenge 2's cell tray offers a Forager to raise | Dependency: none | Verified: 2026-09-13
+Status: active | Owner: Dave / Claude Code | Next: UI-W-2 -- Challenge 2's cell tray offers a Forager to raise | Dependency: none | Verified: 2026-09-17
 
 **Objective.** The findings from Dave's 12 Sep 2026 hands-on pass that belong
 to the HUD and the settings window, each fixed at its owner and each with a
@@ -17,16 +17,17 @@ stage arrows do and stays ready.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | UI-W-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
-| UI-W-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd` | yes | high |
+| UI-W-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd` | yes | medium |
 | UI-W-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | after UI-W-2 | medium |
 | UI-W-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-W-1 | medium |
 
-**Dependencies.** UI-W-1 no longer touches `scripts/scenario_actions.gd`: its
-settings-window assertions shipped on `claude/pass-0917` (17 Sep 2026), so it
-shares no file with UI-W-2. UI-W-3 follows UI-W-2 (`scripts/hud.gd`,
-and it uses UI-W-2's `select_cell` action). UI-W-4 follows UI-W-1
-(`scripts/ui_layout.gd`). UI-W-2 leads because it is the only one that stops a
-Challenge being finished.
+**Dependencies.** UI-W-1 no longer touches `scripts/scenario_actions.gd`, so
+it shares no file with UI-W-2 and can follow it straight away in the Claude
+lane. UI-W-3 follows UI-W-2 (`scripts/hud.gd`, and it uses UI-W-2's
+`select_cell` action). UI-W-4 follows UI-W-1 (`scripts/ui_layout.gd`).
+UI-W-2 leads because it is the only one that stops a Challenge being
+finished; UI-W-1 comes next because it shares no file with anything and
+returns two blocked checks to Dave (17 Sep 2026 plan review).
 
 **Required reading for any slice.** Its own section below, and the functions it
 names. Never `plans/archive/`.
@@ -42,27 +43,17 @@ stage data in `scripts/challenge_stages.gd`.
 of the screen's width") and C-53 failed ("still too big a gap between each
 item"). Both are one window's layout.
 
-**Already shipped (17 Sep 2026, `claude/pass-0917`).** Requirement 2 (the
-stage row) and requirement 4 (the wrapping-label instrument, `"settings"` in
-`open_window`, `_resolve_named_panel` and `_resolve_scoped_path`), after Dave
-reported the stage row a second time. `tests/fixtures/settings_stage_row.json`
-runs `no_collapsed_controls` on the settings window during Challenge 1, and
-`tests/test_layout_regression.py` drives it. Skip those two requirements;
-extend that fixture rather than writing `uiw1_settings_window_test.json`.
+**Scope.** The stage row and the wrapping-label instrument are done, so
+this slice is the window's width and the Controls list only. The instrument
+they left is `tests/fixtures/settings_stage_row.json`, driven by
+`tests/test_layout_regression.py`, which runs `no_collapsed_controls` on the
+settings window during Challenge 1; `open_window` already accepts
+`"settings"`. Extend that fixture rather than writing a new one.
 
 **Root causes.**
 - *Width, confirmed.* `debug_panel.gd` sets `PANEL_WIDTH := 320.0` on the panel
   and its scroll. 320px is a sixth of 1920. No function in `ui_layout.gd` owns
   this rectangle, against `plans/now/ui.md`'s one-owner rule.
-- *Stage row, confirmed.* `_make_challenge_stage_navigation()` puts an autowrap
-  Label (`SIZE_EXPAND_FILL`) in an HBoxContainer, then wraps it with
-  `UI.with_info()`, which returns another HBoxContainer. Neither box gets
-  `SIZE_EXPAND_FILL`, so the row sits at its minimum width. An autowrap Label's
-  minimum width is about zero, so it wraps after every glyph. The 28px arrow
-  buttons have no minimum height and stretch to match. `_add_action_row()`
-  already avoids this trap by setting the flag on both the button and the
-  `with_info` row, so the same rule has been written by hand in one place and
-  missed in the other.
 - *Controls gap, hypothesis.* UI-B-1 removed the blank lines. What remains is
   line pitch: the `Small` (13px) type with the active pixel font, plus Label's
   default `line_spacing`. It has not been measured. Also,
@@ -72,11 +63,10 @@ extend that fixture rather than writing `uiw1_settings_window_test.json`.
 owns persistent rectangles.
 
 **Required reading.** In `debug_panel.gd`: the panel/scroll build (every
-`PANEL_WIDTH` use), `_make_challenge_stage_navigation`, `_make_controls_help`,
-`_add_action_row`. In `ui_layout.gd`: its constants and `left_window_rect`. In
-`scenario_actions.gd`: `_execute`, `_do_open_window`, `_resolve_named_panel`,
-`_resolve_scoped_path`, `_check_no_collapsed_controls`,
-`_collect_collapsed_controls`. Find how `main` reaches the settings window with
+`PANEL_WIDTH` use), `_make_controls_help`, `_add_action_row`. In
+`ui_layout.gd`: its constants and `left_window_rect`. Nothing in
+`scenario_actions.gd` needs reading: the fixture's actions and conditions all
+exist. Find how `main` reaches the settings window with
 `grep -n debug_panel scripts/main.gd`.
 
 **Files likely to change.** `scripts/debug_panel.gd`, `scripts/ui_layout.gd`,
@@ -90,20 +80,11 @@ assertions there).
    1920 gives 480. `debug_panel.gd` uses it for the panel and the scroll, and
    re-applies it from `get_viewport().size_changed`, as `gallerin_panel.gd`
    does. Remove `PANEL_WIDTH`.
-2. Stage row: set `SIZE_EXPAND_FILL` on `row` and on the `with_info` wrapper,
-   the same as `_add_action_row`. Give both arrows
-   `custom_minimum_size = Vector2(28, 24)` and
-   `size_flags_vertical = SIZE_SHRINK_CENTER` so they never stretch.
-3. Controls list: first log the label's `get_line_height()` and font size from
+2. Controls list: first log the label's `get_line_height()` and font size from
    the fixture, and record both numbers in the delivery note. Replace the fixed
    270 with `SIZE_EXPAND_FILL`, and set a `line_spacing` theme override on this
    label only, so the line pitch is at most the font size plus 2px. Do not
    change the theme-wide `Small` variation.
-4. The instrument: `_collect_collapsed_controls` also reports a visible Label
-   whose `autowrap_mode` is not `AUTOWRAP_OFF` and whose width is under 24px.
-   `open_window` accepts `"settings"`, plus an optional `"sections": [...]` to
-   expand, and `_resolve_named_panel` and `_resolve_scoped_path` accept
-   `"settings"`.
 
 **Constraints and invariants.** Horizontal scrolling stays disabled. The
 `ROW_LABEL_WIDTH` row layout is unchanged. The panel's top offset is unchanged.
@@ -118,10 +99,15 @@ accepted. At text scale 1.5 the stage label wraps to two or three lines and
 the arrows stay 24px. With no Challenge running the row is hidden. With info
 badges on, no row overflows.
 
-**Automated acceptance.** A new fixture at 1920x1080, `"challenge": 1`, opens
-settings with World & start and Controls expanded, then asserts:
-- `panel_rect settings` is inside the viewport, with width 480±1;
-- `no_collapsed_controls` passes on `settings`, and fails on master;
+**Automated acceptance.** Extend `tests/fixtures/settings_stage_row.json`
+(1920x1080, `"challenge": 1`, World & start and Controls expanded) so that it
+asserts:
+- `panel_rect settings` is inside the viewport, with width 480±1. **This is
+  the assertion that fails on master**, where `PANEL_WIDTH` is 320: record
+  that failure message before the fix.
+- `no_collapsed_controls` still passes on `settings`. It passes on master
+  too, since the stage-row fix landed; it is a regression guard here, not the
+  failing assertion.
 - the same fixture passes at 800x600.
 
 **Regression checks.** `tools/verify.ps1`, the existing LAY fixtures in
@@ -129,10 +115,9 @@ settings with World & start and Controls expanded, then asserts:
 hot-path impact.
 
 **Completion.** Move C-52 and C-53 from `checks/blocked.md` back to ready, with
-PASS lines as written there. Add a C-49 re-run note saying the stage row now
-reads on one or two lines. Add a `docs/known-pitfalls.md` entry: an autowrap
-Label in an HBox without expand flags collapses to one glyph per line. Archive
-this section and update the index above.
+PASS lines as written there. Archive this section and update the index above.
+(The autowrap pitfall is already in `docs/known-pitfalls.md`, and C-49's
+stage-row re-run note is already filed.)
 
 **Escalate if** any row at 800x600 overflows at the new width, if the row can
 only be fixed by changing `UI.with_info()` for every caller, or if the line
@@ -162,6 +147,14 @@ from both `set_allowed_role_keys` and `set_allowed_designation_keys`, so
   equal share may push the menu out of the tray's clipped scroll area.
 - H3: another path hides the Nursery column or `hatch_row` in Challenge 2.
   Search for `hatch_row.visible` and the column wrappers' `visible`.
+- H4: the control was never built. `_build_nursery_controls` skips any
+  `hatch_options()` entry whose role is not in `allowed_role_keys`
+  (`continue`, just above `_make_hatch_menu`), and gating afterwards only
+  shows or hides what that loop built. Today `_build_command_tray` runs from
+  `hud.gd::_ready`, when the list is empty, so this only bites if some path
+  rebuilds the tray after the gate is applied -- a Challenge restart or a
+  resumed run. Check `_build_command_tray`'s callers before the others; it is
+  the cheapest of the four to rule out.
 
 **Also wrong: the check's wording.** C-34 asked for nectar Foragers during
 2.1, but 2.1 does not unlock `"forager"`, and `_apply_cell_popup_gating` hides
@@ -182,11 +175,14 @@ Find what a left-click on a comb cell calls with
 `grep -n show_cell_popup scripts/input_selection.gd`.
 
 **Files likely to change.** `scripts/scenario_actions.gd`, `scripts/hud.gd`,
-new test_scenarios/uiw2_challenge2_raises_forager_test.json.
+`scripts/challenge_runner.gd` (`_apply_stage_gate_to_ui` only, and only for
+H1), new test_scenarios/uiw2_challenge2_raises_forager_test.json.
 
 **Must not change.** `scripts/challenge_stages.gd`, `Roles.ROLES`, the shape
-of `hatch_options()`. `scripts/challenge_runner.gd` is also off limits here,
-because the Codex lane's C2 owns it.
+of `hatch_options()`. `scripts/challenge_runner.gd` **is** available now -- C2
+shipped, and no open Codex-lane slice names it -- but only
+`_apply_stage_gate_to_ui` may change, and only if H1 is what the fixture's
+failure message confirms. Nothing else in that file, and no stage record.
 
 **Requirements.**
 1. *Instrument first.* Add a `select_cell` action,
@@ -222,9 +218,13 @@ Challenge runs are not saved.
 **Completion.** Re-word C-34 so its 2.1 half is achievable, and move it back to
 ready. Archive this section, and name UI-W-3 next.
 
-**Escalate if** the cause is in `challenge_runner.gd`: stop and report, because
-it collides with C2. Also escalate if `select_cell` cannot reuse the click
-path without copying selection logic.
+**Level:** medium. The four hypotheses below are enumerated and the fixture's
+failure message picks between them, which is bounded work. **Hand the slice to
+a high-reasoning model** if that message matches none of H1-H4, or if the fix
+needs more of `challenge_runner.gd` than `_apply_stage_gate_to_ui`.
+
+**Escalate if** `select_cell` cannot reuse the click path without copying
+selection logic, or if the fix would change a stage record.
 
 ## UI-W-3 — a comb cell's tray uses three columns
 

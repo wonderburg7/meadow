@@ -18,7 +18,7 @@ slice by Dave's decision, 17 Sep 2026.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SM-1 | The smoke scenario passes on master, and the delivery note says whether the fixture or the colony was wrong | `test_scenarios/slice1_smoke_test.json` | yes | high |
+| SM-1 | The smoke scenario passes on master, and the delivery note says whether the fixture or the colony was wrong | `test_scenarios/slice1_smoke_test.json` | yes | medium |
 
 **Required reading.** SM-1's section below, and only the summary/assertion
 section of `docs/headless-run-contract.md`.
@@ -54,5 +54,7 @@ on the same seed, and `tools/verify.ps1` stays green.
 this section; set `Next: None — plan complete`, or name the product-defect
 slice if step 3 found one.
 
-**Level:** high (ambiguous bug; the classification decides whether a gameplay
-slice follows). **Escalate if** the cause is a product defect.
+**Level:** medium (17 Sep 2026 plan review, lowered from high). The three
+steps above are scripted, the extraction fields are named, and the one
+ambiguous outcome -- a product defect -- is an escalation rather than a
+decision this slice makes. **Escalate if** the cause is a product defect.
