@@ -142,9 +142,9 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
     always before queueing the item: if Y is archived, the restriction is
     gone, and leaving it there costs an implementing session an escalation it
     should never have had to make. The 17 Sep 2026 plan review found four --
-    UI-W-2 barred from `challenge_runner.gd` by C2, guardrail 14's entire
+    UI-X-2 barred from `challenge_runner.gd` by C2, guardrail 14's entire
     ordered list, CB-1 pointing at a queue entry that had become SM-1, and
-    UI-W-1 still specifying two requirements that had shipped.
+    UI-X-1 still specifying two requirements that had shipped.
     `tools/check_docs.py` warns about the archived-id case; the other shapes
     are yours to check. Added 17 Sep 2026 by the plan review.
 
@@ -164,7 +164,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/now/c1-followups.md` |
 | SF-1 -- a new run's founding flower mix; the season recharge range | `plans/now/season-feel.md` |
-| UI-W-1..UI-W-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/now/ui-w.md` |
+| UI-X-1..UI-X-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/now/ui-x.md` |
 | CB-1, CB-2 -- comb builders per site and per wall | `plans/now/comb-builders.md` |
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
@@ -240,7 +240,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     many of them read as "not startable" for reasons stated in different
     places. One list, so nobody re-derives it, rewritten 17 Sep 2026 by the
     plan review because every slice the previous list named has shipped:
-    **UI-W-2** (`plans/now/ui-w.md`, `_apply_stage_gate_to_ui` only, and only
+    **UI-X-2** (`plans/now/ui-x.md`, `_apply_stage_gate_to_ui` only, and only
     if its fixture confirms H1), then **E1**
     (`plans/design/architecture-review.md`, the two
     `awaiting_queen_build_cell` writes), then **C1F-1**

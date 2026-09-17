@@ -14,19 +14,19 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise**
-   - Plan: `plans/now/ui-w.md` -- "UI-W-2 — Challenge 2's cell tray offers a Forager to raise"
+1. **[Claude] UI-X-2 -- Challenge 2's cell tray offers a Forager to raise**
+   - Plan: `plans/now/ui-x.md` -- "UI-X-2 — Challenge 2's cell tray offers a Forager to raise"
    - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`
    - Check: a new test_scenarios/uiw2_challenge2_raises_forager_test.json fails on master and passes after the fix -- at 2.2 the Forager hatch menu is visible with a usable rect inside the command tray
    - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
-   - Next after: UI-W-3 -- a comb cell's tray uses three columns.
+   - Next after: UI-X-3 -- a comb cell's tray uses three columns.
 
-2. **[Claude] UI-W-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list**
-   - Plan: `plans/now/ui-w.md` -- "UI-W-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list"
+2. **[Claude] UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list**
+   - Plan: `plans/now/ui-x.md` -- "UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list"
    - Files: `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json`
    - Check: `tests/fixtures/settings_stage_row.json` gains a width assertion -- the settings panel is 480±1 px wide inside a 1920x1080 viewport -- which fails on master, where `PANEL_WIDTH` is 320; `no_collapsed_controls` still passes there and at 800x600
    - Proof: `present: scripts/debug_panel.gd :: PANEL_WIDTH := 320.0`
-   - Next after: UI-W-4 -- Dr Gallerin's bubble grows to a third of the window's height.
+   - Next after: UI-X-4 -- Dr Gallerin's bubble grows to a third of the window's height.
 
 3. **[Claude] E1 -- one placement tool**
    - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
@@ -78,8 +78,8 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **UI-W-3** (`plans/now/ui-w.md`) -- uses UI-W-2's `select_cell` action.
-- **UI-W-4** (`plans/now/ui-w.md`) -- follows UI-W-1 in `scripts/ui_layout.gd`.
+- **UI-X-3** (`plans/now/ui-x.md`) -- uses UI-X-2's `select_cell` action.
+- **UI-X-4** (`plans/now/ui-x.md`) -- follows UI-X-1 in `scripts/ui_layout.gd`.
 - **CB-2** (`plans/now/comb-builders.md`) -- its cause is what CB-1 measures, and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.

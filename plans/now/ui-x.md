@@ -1,7 +1,7 @@
-# UI-W — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
+# UI-X — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-W-2 -- Challenge 2's cell tray offers a Forager to raise | Dependency: none | Verified: 2026-09-17
+Status: active | Owner: Dave / Claude Code | Next: UI-X-2 -- Challenge 2's cell tray offers a Forager to raise | Dependency: none | Verified: 2026-09-17
 
 **Objective.** The findings from Dave's 12 Sep 2026 hands-on pass that belong
 to the HUD and the settings window, each fixed at its owner and each with a
@@ -16,26 +16,25 @@ stage arrows do and stays ready.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UI-W-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
-| UI-W-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd` | yes | medium |
-| UI-W-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | after UI-W-2 | medium |
-| UI-W-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-W-1 | medium |
+| UI-X-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
+| UI-X-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd` | yes | medium |
+| UI-X-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | after UI-X-2 | medium |
+| UI-X-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-X-1 | medium |
 
-**Dependencies.** UI-W-1 no longer touches `scripts/scenario_actions.gd`, so
-it shares no file with UI-W-2 and can follow it straight away in the Claude
-lane. UI-W-3 follows UI-W-2 (`scripts/hud.gd`, and it uses UI-W-2's
-`select_cell` action). UI-W-4 follows UI-W-1 (`scripts/ui_layout.gd`).
-UI-W-2 leads because it is the only one that stops a Challenge being
-finished; UI-W-1 comes next because it shares no file with anything and
+**Dependencies.** UI-X-1 no longer touches `scripts/scenario_actions.gd`, so
+it shares no file with UI-X-2 and can follow it straight away in the Claude
+lane. UI-X-3 follows UI-X-2 (`scripts/hud.gd`, and it uses UI-X-2's
+`select_cell` action). UI-X-4 follows UI-X-1 (`scripts/ui_layout.gd`).
+UI-X-2 leads because it is the only one that stops a Challenge being
+finished; UI-X-1 comes next because it shares no file with anything and
 returns two blocked checks to Dave (17 Sep 2026 plan review).
 
-**This group reuses the ids UI-W-1 to UI-W-4**, which belonged to four
+**Renamed from UI-W to UI-X on 17 Sep 2026.** The four UI-W ids belonged to
 unrelated slices that shipped from the since-archived ui-windows plan on
-8 Sep 2026 and are archived under those names. Grep the archive for the slice's subject,
-not its id, and when one of these closes out, its record must be written by
-its own branch -- `tools/slice.ps1 finish` checks that, because an old
-namesake would otherwise satisfy the archive gate on its own (17 Sep 2026
-plan review).
+8 Sep 2026 and are archived under those names, so grepping the archive for
+this group's ids found the wrong records, and `tools/slice.ps1`'s archive
+gate could be satisfied by an old namesake. The checks these slices re-open
+(C-18, C-34, C-52, C-53) name the new ids.
 
 **Required reading for any slice.** Its own section below, and the functions it
 names. Never `plans/archive/`.
@@ -45,7 +44,7 @@ callers; changing its size flags reflows every settings row), the `TOP_BAR_*`
 constants in `scripts/hud.gd`, `scripts/settings_catalogue.gd`, and Challenge
 stage data in `scripts/challenge_stages.gd`.
 
-## UI-W-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list
+## UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list
 
 **Purpose.** C-52 partly passed ("about a fifth ... could be bigger, up to 25%
 of the screen's width") and C-53 failed ("still too big a gap between each
@@ -131,7 +130,7 @@ stage-row re-run note is already filed.)
 only be fixed by changing `UI.with_info()` for every caller, or if the line
 pitch can only be fixed theme-wide.
 
-## UI-W-2 — Challenge 2's cell tray offers a Forager to raise
+## UI-X-2 — Challenge 2's cell tray offers a Forager to raise
 
 **Purpose.** Stage 2.2 asks the player to raise a pollen Forager. In Dave's
 12 Sep 2026 run a selected cell's tray had no Forager control beside
@@ -224,7 +223,7 @@ lists both Nectar and Pollen. Text scale 1.5.
 Challenge runs are not saved.
 
 **Completion.** Re-word C-34 so its 2.1 half is achievable, and move it back to
-ready. Archive this section, and name UI-W-3 next.
+ready. Archive this section, and name UI-X-3 next.
 
 **Level:** medium. The four hypotheses below are enumerated and the fixture's
 failure message picks between them, which is bounded work. **Hand the slice to
@@ -234,7 +233,7 @@ needs more of `challenge_runner.gd` than `_apply_stage_gate_to_ui`.
 **Escalate if** `select_cell` cannot reuse the click path without copying
 selection logic, or if the fix would change a stage record.
 
-## UI-W-3 — a comb cell's tray uses three columns
+## UI-X-3 — a comb cell's tray uses three columns
 
 **Purpose.** The bee half of C-18 passed. For a comb cell the tray shows two
 columns, and Dave wants three so it uses less height. **Decision (Dave, 13 Sep
@@ -274,7 +273,7 @@ is unchanged.
 
 The fixture also passes at 800x600, where the columns may wrap.
 
-**Regression.** `tools/verify.ps1`, the UI-W-2 fixture and the LAY fixtures.
+**Regression.** `tools/verify.ps1`, the UI-X-2 fixture and the LAY fixtures.
 C-41 and C-43 (the tray fits its content) must still hold.
 
 **Completion.** Move C-18 from blocked back to ready (the cell half only), and
@@ -283,7 +282,7 @@ archive this section.
 **Level:** medium. **Escalate if** three columns do not fit at 1920x1080
 without wrapping.
 
-## UI-W-4 — Dr Gallerin's bubble grows to a third of the window's height
+## UI-X-4 — Dr Gallerin's bubble grows to a third of the window's height
 
 **Purpose.** Dave, 12 Sep 2026: "Dr Gallerin's bubble should be able to take
 up [more] vertical space. make it so it can take up to a third of the height of

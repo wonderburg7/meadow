@@ -20,17 +20,17 @@ What remains needs a new mechanism (C1F-1) and the instrument that uses it
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| C1F-1 | Each settings stage arrow puts the queen, tunnel, cells and stores where that stage begins, so going back always stays back | new `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd` (one new action), new test_scenarios/c1f1_stage_setup_test.json | after UI-W-2 and E1 | medium |
+| C1F-1 | Each settings stage arrow puts the queen, tunnel, cells and stores where that stage begins, so going back always stays back | new `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd` (one new action), new test_scenarios/c1f1_stage_setup_test.json | after UI-X-2 and E1 | medium |
 | C1F-2 | A headless run proves the queen sets off on pollen at 1.14 and does not loop on a full comb | `scripts/scenario_actions.gd`, new test_scenarios/c1f2_queen_pollen_departure_test.json | after C1F-1 | medium |
 
 **Dependencies.** C1F-1 adds one action to `scripts/scenario_actions.gd`, as
-UI-W-2 does, so it follows UI-W-2 in the Claude lane. It also follows E1
+UI-X-2 does, so it follows UI-X-2 in the Claude lane. It also follows E1
 (`plans/design/architecture-review.md`), because requirement 5 clears the
 placement tool E1 replaces: taken in the other order, C1F-1 writes seven
 `awaiting_*` clears that E1 then deletes. C1F-2 starts its fixture at 1.14 through C1F-1's setup;
 without it a headless run cannot reach 1.14 with two built cells. C1F-2 also
-edits `scripts/scenario_actions.gd`, which UI-W-2 (`plans/now/ui-w.md`) owns
-while it is open, so C1F-2 waits for UI-W-2 as well.
+edits `scripts/scenario_actions.gd`, which UI-X-2 (`plans/now/ui-x.md`) owns
+while it is open, so C1F-2 waits for UI-X-2 as well.
 
 **Required reading for any slice.** Its own section below. Nothing in
 `plans/archive/` is needed.
