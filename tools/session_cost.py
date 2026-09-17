@@ -19,6 +19,90 @@ OUTCOME_CLASSES = (
     "agent_mistake",
 )
 
+# A file edited under any of these directories is a "product edit" -- the
+# boundary F13 (docs/agent-workflow-review-2026-09-12.md) uses to split a
+# session into orienting, implementing and closeout phases.
+PRODUCT_DIRS = ("scripts/", "scenes/", "shaders/", "tests/", "tools/", "test_scenarios/")
+
+PHASE_NAMES = ("after_last", "implementing", "no_edit", "before_first")
+PHASE_LABELS = {
+    "after_last": "After the last product edit: verify, closeout, queue and docs",
+    "implementing": "Implementing: first product edit to last",
+    "no_edit": "Sessions that made no product edit at all",
+    "before_first": "Before the first product edit: orient and claim",
+}
+
+# CLAUDE.md, memory and rules files are inlined into a session's opening
+# turn as "Contents of <path> (...):\n<file text>" blocks (see the
+# <system-reminder> wrapper this tool itself runs inside). A block whose
+# path falls under the session's own repository/worktree root is
+# "repository context"; everything else in the opening request -- system
+# prompt, tool schemas, MCP/plugin/skill listings -- is "host context",
+# recovered as the remainder rather than measured directly, since neither
+# is logged on its own. Token counts are estimated at 4 characters per
+# token, the standard rough ratio for English/code text; treat the split
+# as an estimate, not an exact accounting.
+_CONTENTS_MARKER = re.compile(r"Contents of (.+):\n")
+_CHARS_PER_TOKEN = 4
+
+
+def _row_texts(row):
+    """Yield every plain-text string a row carries (message content, attachments)."""
+    message = row.get("message")
+    if isinstance(message, dict):
+        content = message.get("content")
+        if isinstance(content, str):
+            yield content
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and isinstance(block.get("text"), str):
+                    yield block["text"]
+    for block in row.get("rendered") or []:
+        if isinstance(block, dict) and isinstance(block.get("content"), str):
+            yield block["content"]
+
+
+def _repo_context_chars(rows, repo_root):
+    """Characters of "Contents of <path>" blocks under `repo_root`, before the
+    first assistant reply -- see the module-level note on repository/host
+    context above."""
+    if not repo_root:
+        return 0
+    repo_root = repo_root.lower()
+    total = 0
+    for row in rows:
+        if row.get("type") == "assistant" and row.get("message", {}).get("usage"):
+            break
+        for text in _row_texts(row):
+            matches = list(_CONTENTS_MARKER.finditer(text))
+            for i, m in enumerate(matches):
+                path = re.sub(r"\s*\([^)]*\)\s*$", "", m.group(1)).strip()
+                if not path.lower().startswith(repo_root):
+                    continue
+                start = m.end()
+                end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+                total += end - start
+    return total
+
+
+def _product_edit(block, repo_root):
+    """True if an assistant content block is a file edit under a product dir."""
+    if not isinstance(block, dict) or block.get("type") != "tool_use":
+        return False
+    if block.get("name") not in ("Edit", "Write", "NotebookEdit"):
+        return False
+    path = (block.get("input", {}) or {}).get("file_path") or (
+        block.get("input", {}) or {}
+    ).get("notebook_path")
+    if not path:
+        return False
+    path = path.replace("\\", "/")
+    if repo_root:
+        repo_root_norm = repo_root.replace("\\", "/").rstrip("/") + "/"
+        if path.lower().startswith(repo_root_norm.lower()):
+            path = path[len(repo_root_norm):]
+    return any(f"/{d}" in f"/{path}".lower() or path.lower().startswith(d) for d in PRODUCT_DIRS)
+
 
 def _extract_text(content):
     """Flatten a tool_result's `content` (a string or a list of blocks) to text."""
@@ -142,10 +226,75 @@ def run_classify(files):
         print(f"{name:22s}{counts.get(name, 0)}")
 
 
+def run_phases(files):
+    """Print the four-row phase table F13 reports (requests, context, share).
+
+    A session's assistant requests, in order, are split around its first and
+    last product edit -- see PRODUCT_DIRS. A session with no product edit is
+    counted whole, in its own row, rather than split.
+    """
+    requests = Counter()
+    context = Counter()
+
+    for f in files:
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                rows = [json.loads(line) for line in fh if line.strip()]
+        except Exception:
+            continue
+
+        if len(rows) < 4:
+            continue
+
+        repo_root = next((r.get("cwd") for r in rows if r.get("cwd")), None)
+
+        sizes = []
+        edit_indices = []
+        for row in rows:
+            if row.get("type") != "assistant":
+                continue
+            message = row.get("message", {})
+            usage = message.get("usage")
+            if not usage:
+                continue
+            sizes.append(
+                usage.get("input_tokens", 0)
+                + usage.get("cache_read_input_tokens", 0)
+                + usage.get("cache_creation_input_tokens", 0)
+            )
+            if any(_product_edit(b, repo_root) for b in message.get("content", []) or []):
+                edit_indices.append(len(sizes) - 1)
+
+        if not sizes:
+            continue
+
+        if not edit_indices:
+            requests["no_edit"] += len(sizes)
+            context["no_edit"] += sum(sizes)
+            continue
+
+        first_edit, last_edit = min(edit_indices), max(edit_indices)
+        for i, size in enumerate(sizes):
+            if i < first_edit:
+                phase = "before_first"
+            elif i <= last_edit:
+                phase = "implementing"
+            else:
+                phase = "after_last"
+            requests[phase] += 1
+            context[phase] += size
+
+    total_context = sum(context.values()) or 1
+    for phase in PHASE_NAMES:
+        share = 100 * context[phase] / total_context
+        print(f"{PHASE_LABELS[phase]:58s}{requests[phase]:>7d}{context[phase]:>14d}{share:>7.1f}%")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--classify", action="store_true")
+    parser.add_argument("--phases", action="store_true")
     args = parser.parse_args()
 
     project_dir = Path.home() / ".claude" / "projects" / "C--Users-dl13860-Documents-Meadow-meadow"
@@ -160,11 +309,17 @@ def main():
         run_classify(files)
         return 0
 
+    if args.phases:
+        run_phases(files)
+        return 0
+
     session_count = 0
     assistant_requests = 0
     context_sizes = []
     output_tokens_sum = 0
     session_opening_contexts = []
+    session_repo_contexts = []
+    session_host_contexts = []
     tool_counts = Counter()
 
     for f in files:
@@ -184,6 +339,7 @@ def main():
 
         session_count += 1
         first_context = None
+        repo_root = next((r.get("cwd") for r in rows if r.get("cwd")), None)
 
         for row in rows:
             if row.get("type") != "assistant":
@@ -210,6 +366,10 @@ def main():
 
         if first_context is not None:
             session_opening_contexts.append(first_context)
+            repo_chars = _repo_context_chars(rows, repo_root)
+            repo_tokens = min(first_context, repo_chars // _CHARS_PER_TOKEN)
+            session_repo_contexts.append(repo_tokens)
+            session_host_contexts.append(first_context - repo_tokens)
 
     def median(values):
         return statistics.median(values) if values else 0
@@ -229,6 +389,8 @@ def main():
     print(f"context/request median       {median(context_sizes)}")
     print(f"context/request p90          {p90(context_sizes)}")
     print(f"session-opening context      {median(session_opening_contexts)}")
+    print(f"session-opening repository   {median(session_repo_contexts)}")
+    print(f"session-opening host context {median(session_host_contexts)}")
     print(f"tool calls                   {sum(tool_counts.values())}")
     print(f"top tools                    {top_tools}")
 

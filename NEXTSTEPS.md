@@ -433,26 +433,16 @@ so the import-cache false alarm (the one this queue already carried a note
 about, above) is ruled out before the boot probe that would otherwise
 misreport it as a crash. `doctor` reports it as `godot_capability`; only
 `editor_unavailable` still blocks `doctor` itself, unchanged. Full record:
-`plans/archive/L-8_2026-09-17.md`. Its `Next after` (L-9) fills the Claude
-lane's slot below.
+`plans/archive/L-8_2026-09-17.md`. Its `Next after` (L-9) then shipped the
+same day: `session_cost.py --phases` and the repository/host context split
+now exist, but the completion gate they feed is unmet on three of its four
+conditions, so `plans/now/agent-lifecycle.md` has no further slice and does
+not refill the Claude lane -- full record at
+`plans/archive/L-9_2026-09-17.md`. UI-W-2 leads the Claude lane below.
 
 ## Next up
 
-1. **[Claude] L-9 -- the floor is measured and split, and this plan is gated.**
-   W-2 targeted a session-opening floor of 45,000 tokens, never measured
-   itself, and the floor is 77,322 today. Add `--phases` to
-   `tools/session_cost.py`, printing the four-row phase table F13 reports;
-   split session-opening context into `repository context` and `host
-   context`; print both under `--days N`; record the before/after figures in
-   the plan. This slice measures only -- the plan's own completion gate
-   needs evidence from later sessions too and stays open until then.
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-9 — the floor is measured and split, and this plan is gated"
-   - Files: `tools/session_cost.py`, `plans/now/agent-lifecycle.md`
-   - Check: `python tools/session_cost.py --days 1 --phases` prints the four-row phase table and the repository/host context split; nothing player-facing changes, so Dave has nothing to try
-   - Proof: `absent: tools/session_cost.py :: host context`
-   - Next after: none -- agent-lifecycle plan is complete
-
-2. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
+1. **[Claude] UI-W-2 -- Challenge 2's cell tray offers a Forager to raise.**
    At stage 2.2 ("raise a pollen Forager") Dave found no Forager control
    beside "Raises:" in a selected cell's tray (C-34, 12 Sep 2026), so the
    stage cannot be finished the way it is taught. Stale gating is ruled out --
@@ -465,7 +455,7 @@ lane's slot below.
    - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
    - Next after: UI-W-3 -- a comb cell's tray uses three columns.
 
-3. **[Claude] E1 -- one placement tool.**
+2. **[Claude] E1 -- one placement tool.**
    Nine `awaiting_*` placement flags and nine `_on_*_requested` handlers do
    the same dispatch nine times, with no mutual exclusion between them (F8).
    Add one `active_placement_tool: String` on `main.gd` plus a
@@ -480,7 +470,7 @@ lane's slot below.
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class, the next dependency-free architecture-review slice, file-disjoint from every open item.
 
-4. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from.**
+3. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from.**
    Dave's C-49 (17 Sep 2026): the settings stage arrows rebuild gates and
    prompts but never the world, so going back into a stage whose goal the
    world already meets advances again, and the queen, tunnel and cells never
@@ -494,7 +484,7 @@ lane's slot below.
    - Proof: `absent: scripts/challenge_runner.gd :: ChallengeStageSetup`
    - Next after: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop.
 
-5. **[Codex] G2 -- the dispatcher reads the catalogue.**
+4. **[Codex] G2 -- the dispatcher reads the catalogue.**
    Replace `bee.gd::_try_role_work`'s hardcoded role `match` with the G1
    catalogue, preserving every current action's priority and mode filtering.
    Resolve each role's rows once at load rather than filtering the full table on
