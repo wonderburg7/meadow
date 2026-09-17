@@ -89,10 +89,10 @@ share is mostly made of.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-10 | The delivered slice's plan section moves itself to `plans/archive/` | tools/archive_slice.py, `tools/heading.py`, `tests/test_slice_lifecycle.py` | medium |
-| L-11 | The delivered item leaves its lane without being retyped | tools/refill_lane.py, `tests/test_source_checks.py` | medium |
+| L-10 | A closing slice's plan section moves itself to `plans/archive/` | tools/archive_slice.py, `tools/heading.py`, `tests/test_slice_lifecycle.py` | medium |
+| L-11 | A closing slice leaves its lane without being retyped | tools/refill_lane.py, `tests/test_source_checks.py` | medium |
 | L-12 | A plan's slice section carries the queue lines it is refilled from | `tools/check_docs.py`, `plans/now/*.md` | high |
-| L-13 | Closeout is one command: the gates become actions | `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
+| L-13 | Closeout is one command, and the gates become actions | `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
 
 Dependencies, stated rather than implied: L-10 and L-11 are independent of
 each other, and either may ship first. L-13 is their integration and needs
@@ -103,17 +103,22 @@ here that touches every live plan, and the instrument that would justify it
 only started recording on 17 Sep 2026. None of the four may be bought by
 removing a check.
 
-**L-10 -- the delivered slice's plan section moves itself to the archive.**
+### L-10 — a closing slice's plan section moves itself to the archive
+
 `finish`'s `archived` phase checks that the section named by the item's
 `Plan:`/`Heading:` has been moved by hand into plans/archive/<id>_<date>.md
-with a one-line pointer left behind. The move is a verbatim cut and paste, so
+with a one-line pointer left behind. Since 17 Sep 2026 that gate reads the
+record's *text* for the slice's own heading rather than trusting the
+filename, because ids are reused -- so the tool must write the section
+including its heading line, which a verbatim move does anyway. The move is a verbatim cut and paste, so
 the session pays to read the section and then pays again, in output tokens,
 to reproduce it -- and `plans/archive/**` is denied to the file tools, so the
 reproduction goes through a Bash heredoc, which breaks past about forty
 lines. Build tools/archive_slice.py <id>: resolve `Plan:` and `Heading:`
 from master's queue, cut the section using `heading.py`'s existing boundary
 logic (export it rather than copying it), write the archive file, leave the
-pointer. It must refuse to run on a dirty working tree, so that `git checkout
+pointer. `tools/func.py` is the precedent, added 17 Sep 2026: one small
+reader beside `heading.py`, not a new subsystem. It must refuse to run on a dirty working tree, so that `git checkout
 --` always undoes it; a bad move destroys a plan section otherwise.
 *Non-goals:* it does not commit, does not touch `NEXTSTEPS.md` (L-11), and
 does not change `finish` (L-13).
@@ -121,10 +126,12 @@ does not change `finish` (L-13).
 the first id, and asserts the archive file holds that section verbatim, the
 live plan keeps exactly a one-line pointer where the heading was, the second
 section is unchanged byte-for-byte, and a dirty tree exits non-zero.
+Level: medium
 - Proof: `absent: tools/slice.ps1 :: archive_slice`
-- Next after: L-11 -- the delivered item leaves its lane without being retyped.
+- Next after: L-11 -- a closing slice leaves its lane without being retyped.
 
-**L-11 -- the delivered item leaves its lane without being retyped.**
+### L-11 — a closing slice leaves its lane without being retyped
+
 The other half of the same retry loop: deleting the delivered item from its
 lane and renumbering the survivors is Markdown editing with no judgment in it
 at all. Build tools/refill_lane.py --delete <id>: remove the item from its
@@ -139,10 +146,12 @@ L-12 exists -- and it does not touch `## Not in the queue, and why`.
 gone, the lane is renumbered contiguously from 1, the other lane is unchanged
 byte-for-byte, and `check_docs.py` passes on the result; a fixture whose
 deletion would drop the whole queue below three exits non-zero instead.
+Level: medium
 - Proof: `absent: tools/slice.ps1 :: refill_lane`
 - Next after: L-13 -- closeout is one command.
 
-**L-12 -- a plan's slice section carries the queue lines it is refilled from.**
+### L-12 — a plan's slice section carries the queue lines it is refilled from
+
 *Gated: see the dependency note above.* Adding the successor means reading its
 plan section and hand-writing five queue lines from prose, which is where the
 refill gate usually stops a closeout. Give each open slice section in
@@ -163,10 +172,12 @@ proof check and refuse an item whose `Proof:` no longer holds.
 disagree and passes when they match; `--add` reproduces an existing queue
 entry byte-for-byte from its plan's block; `--add` exits non-zero on a slice
 whose proof no longer holds.
+Level: high
 - Proof: `absent: tools/check_docs.py :: check_plan_queue_blocks`
 - Next after: L-13 -- closeout is one command.
 
-**L-13 -- closeout is one command: the gates become actions.**
+### L-13 — closeout is one command, and the gates become actions
+
 With L-10 and L-11 merged, fold them into `finish` so that the archive move
 and the lane deletion happen rather than being demanded. Add one journal
 phase that runs both tools and commits, ordered before the existing
@@ -183,8 +194,11 @@ and `tests/test_two_lane_closeout.py` still resumes to a clean merge on
 master; a closeout over the fixture repository completes from `verify` to
 `merge` with no hand edit in between; a journal written in the old phase order
 resumes without skipping a durable step.
+Level: high
 - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
 - Next after: none -- agent-lifecycle is complete.
+
+## Standing rules
 
 **Do not change** `plans/workstreams.md`'s format or `NEXTSTEPS.md`'s item
 schema in this plan. Both are parsed by `tools/slice.ps1` and
