@@ -1,29 +1,24 @@
 # UI-X — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list | Dependency: none | Verified: 2026-09-18
+Status: active | Owner: Dave / Claude Code | Next: UI-X-4 -- Dr Gallerin's bubble grows to a third of the window's height | Dependency: none | Verified: 2026-09-18
 
 **Objective.** The findings from Dave's 12 Sep 2026 hands-on pass that belong
 to the HUD and the settings window, each fixed at its owner and each with a
 headless assertion so the same class of fault fails verification next time.
 
-**State.** UI-X-2 and UI-X-3 have shipped (`plans/archive/UI-X-2_2026-09-18.md`,
-`plans/archive/UI-X-3_2026-09-18.md`). `plans/now/ui.md` keeps the durable UI
-rules and points here. The checks these slices re-open wait in
-`checks/blocked.md` (C-52, C-53); C-18's cell half and C-34 are back in
-`checks/ready.md`; C-49's own PASS is about what the stage arrows do and
+**State.** UI-X-1, UI-X-2 and UI-X-3 have shipped (`plans/archive/UI-X-1_2026-09-18.md`,
+`plans/archive/UI-X-2_2026-09-18.md`, `plans/archive/UI-X-3_2026-09-18.md`).
+`plans/now/ui.md` keeps the durable UI rules and points here. The checks
+these slices re-open are all back in `checks/ready.md` (C-18's cell half,
+C-34, C-52, C-53); C-49's own PASS is about what the stage arrows do and
 stays ready.
 
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UI-X-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
-| UI-X-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-X-1 | medium |
-
-**Dependencies.** UI-X-1 shares no file with UI-X-4 and can run alongside it
-in the Claude lane until UI-X-4 wants `scripts/ui_layout.gd`. UI-X-4 follows
-UI-X-1 (`scripts/ui_layout.gd`).
+| UI-X-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | yes | medium |
 
 **Renamed from UI-W to UI-X on 17 Sep 2026.** The four UI-W ids belonged to
 unrelated slices that shipped from the since-archived ui-windows plan on
@@ -40,91 +35,7 @@ callers; changing its size flags reflows every settings row), the `TOP_BAR_*`
 constants in `scripts/hud.gd`, `scripts/settings_catalogue.gd`, and Challenge
 stage data in `scripts/challenge_stages.gd`.
 
-## UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list
-
-**Purpose.** C-52 partly passed ("about a fifth ... could be bigger, up to 25%
-of the screen's width") and C-53 failed ("still too big a gap between each
-item"). Both are one window's layout.
-
-**Scope.** The stage row and the wrapping-label instrument are done, so
-this slice is the window's width and the Controls list only. The instrument
-they left is `tests/fixtures/settings_stage_row.json`, driven by
-`tests/test_layout_regression.py`, which runs `no_collapsed_controls` on the
-settings window during Challenge 1; `open_window` already accepts
-`"settings"`. Extend that fixture rather than writing a new one.
-
-**Root causes.**
-- *Width, confirmed.* `debug_panel.gd` sets `PANEL_WIDTH := 320.0` on the panel
-  and its scroll. 320px is a sixth of 1920. No function in `ui_layout.gd` owns
-  this rectangle, against `plans/now/ui.md`'s one-owner rule.
-- *Controls gap, hypothesis.* UI-B-1 removed the blank lines. What remains is
-  line pitch: the `Small` (13px) type with the active pixel font, plus Label's
-  default `line_spacing`. It has not been measured. Also,
-  `custom_minimum_size.x = 270` stops the list reflowing at a wider window.
-
-**Owner.** `scripts/debug_panel.gd` builds the window. `scripts/ui_layout.gd`
-owns persistent rectangles.
-
-**Required reading.** In `debug_panel.gd`: the panel/scroll build (every
-`PANEL_WIDTH` use), `_make_controls_help`, `_add_action_row`. In
-`ui_layout.gd`: its constants and `left_window_rect`. Nothing in
-`scenario_actions.gd` needs reading: the fixture's actions and conditions all
-exist. Find how `main` reaches the settings window with
-`grep -n debug_panel scripts/main.gd`.
-
-**Files likely to change.** `scripts/debug_panel.gd`, `scripts/ui_layout.gd`,
-`tests/fixtures/settings_stage_row.json` (add the width and Controls
-assertions there).
-
-**Requirements.**
-1. Add `UiLayout.settings_window_width(viewport_width)`:
-   `maxf(SETTINGS_WINDOW_MIN_WIDTH, viewport_width * SETTINGS_WINDOW_WIDTH_FRACTION)`,
-   with the minimum at 320.0 and the fraction at 0.25 (Dave: "up to 25%"), so
-   1920 gives 480. `debug_panel.gd` uses it for the panel and the scroll, and
-   re-applies it from `get_viewport().size_changed`, as `gallerin_panel.gd`
-   does. Remove `PANEL_WIDTH`.
-2. Controls list: first log the label's `get_line_height()` and font size from
-   the fixture, and record both numbers in the delivery note. Replace the fixed
-   270 with `SIZE_EXPAND_FILL`, and set a `line_spacing` theme override on this
-   label only, so the line pitch is at most the font size plus 2px. Do not
-   change the theme-wide `Small` variation.
-
-**Constraints and invariants.** Horizontal scrolling stays disabled. The
-`ROW_LABEL_WIDTH` row layout is unchanged. The panel's top offset is unchanged.
-`_process` gains no layout work. C-22 (sections reset closed) still holds.
-
-**State and cleanup.** `_refresh_challenge_stage_navigation` still owns the
-row's visibility. A hidden row is not collapsed, because the collector already
-skips invisible controls.
-
-**Edge cases.** At 800x600 the 320 floor is 40% of the width, which is
-accepted. At text scale 1.5 the stage label wraps to two or three lines and
-the arrows stay 24px. With no Challenge running the row is hidden. With info
-badges on, no row overflows.
-
-**Automated acceptance.** Extend `tests/fixtures/settings_stage_row.json`
-(1920x1080, `"challenge": 1`, World & start and Controls expanded) so that it
-asserts:
-- `panel_rect settings` is inside the viewport, with width 480±1. **This is
-  the assertion that fails on master**, where `PANEL_WIDTH` is 320: record
-  that failure message before the fix.
-- `no_collapsed_controls` still passes on `settings`. It passes on master
-  too, since the stage-row fix landed; it is a regression guard here, not the
-  failing assertion.
-- the same fixture passes at 800x600.
-
-**Regression checks.** `tools/verify.ps1`, the existing LAY fixtures in
-`test_scenarios/` and `h4_challenge1_stage_advance_test.json`. No save/load or
-hot-path impact.
-
-**Completion.** Move C-52 and C-53 from `checks/blocked.md` back to ready, with
-PASS lines as written there. Archive this section and update the index above.
-(The autowrap pitfall is already in `docs/known-pitfalls.md`, and C-49's
-stage-row re-run note is already filed.)
-
-**Escalate if** any row at 800x600 overflows at the new width, if the row can
-only be fixed by changing `UI.with_info()` for every caller, or if the line
-pitch can only be fixed theme-wide.
+**UI-X-1** -- delivered; see `plans/archive/UI-X-1_2026-09-18.md`.
 
 **UI-X-2** -- delivered; see `plans/archive/UI-X-2_2026-09-18.md`.
 

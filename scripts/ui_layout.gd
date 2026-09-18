@@ -36,6 +36,14 @@ const COMMAND_TRAY_WIDTH_FRACTION := 0.5
 const COMMAND_TRAY_MIN_WIDTH := 200.0
 const GALLERIN_BUBBLE_MIN_WIDTH := 200.0
 
+## The settings window: up to a quarter of the viewport's width, never
+## narrower than its old fixed width (Dave: "up to 25%", UI-X-1).
+const SETTINGS_WINDOW_MIN_WIDTH := 320.0
+const SETTINGS_WINDOW_WIDTH_FRACTION := 0.25
+
+static func settings_window_width(viewport_width: float) -> float:
+	return maxf(SETTINGS_WINDOW_MIN_WIDTH, viewport_width * SETTINGS_WINDOW_WIDTH_FRACTION)
+
 ## Left-side windows start beneath the live corner column, then use the same
 ## clearance as the bottom-row panels. Their content scrolls within the
 ## remaining screen height rather than covering either edge.

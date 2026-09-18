@@ -27,18 +27,16 @@ const Settings = preload("res://scripts/settings_catalogue.gd")
 const Hud = preload("res://scripts/hud.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
-
-## Fixed panel/scroll width -- widened from 300 (Dave's 29 Aug report:
-## turning on "Show info icons" pushed some rows' toggle controls past
-## 300 and into an unwanted horizontal scrollbar) to comfortably fit a
-## row's longest label plus its now-visible info badge.
-const PANEL_WIDTH := 320.0
+const UiLayout = preload("res://scripts/ui_layout.gd")
 
 var value_labels: Dictionary = {}
 ## setting key -> its CheckBox, so the cascade helpers below can refresh
 ## a row's display when they flip a toggle other than the one clicked.
 var toggle_boxes: Dictionary = {}
 var panel: PanelContainer
+## Kept so _apply_panel_width() can resize it alongside the panel on
+## get_viewport().size_changed, the same pattern gallerin_panel.gd uses.
+var panel_scroll: ScrollContainer
 var toggle_button: Button
 ## Greyed out for the length of an active Challenge -- see
 ## set_save_load_enabled, called by challenge_runner.gd.
@@ -139,28 +137,33 @@ func _ready() -> void:
 	# horizontal gap -- previously a flat 40, which only cleared row 1 and
 	# left the panel opening underneath row 2 (Dave's 29 Aug report).
 	panel.offset_top = 8 + Hud.TOP_BAR_CONTROL_HEIGHT * 2.0 + Hud.TOP_BAR_ROW_SEPARATION + Hud.TOP_BAR_BUTTON_GAP
-	panel.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
+	# UiLayout.settings_window_width() owns this rectangle's width -- up to
+	# a quarter of the viewport, floored at the window's old fixed width
+	# (Dave: "up to 25%", UI-X-1). Re-applied on resize by _apply_panel_width.
+	var panel_width := UiLayout.settings_window_width(vp.x)
+	panel.custom_minimum_size = Vector2(panel_width, 0)
 	panel.visible = false
 	add_child(panel)
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(PANEL_WIDTH, min(560.0, vp.y - 80.0))
+	panel_scroll = ScrollContainer.new()
+	panel_scroll.custom_minimum_size = Vector2(panel_width, min(560.0, vp.y - 80.0))
 	# A row's info badge (UI.info_badge) is invisible by default
-	# (Session.show_info_badges); PANEL_WIDTH already accounts for its
-	# footprint once shown, but disabling horizontal scroll is a cheap
+	# (Session.show_info_badges); the panel's width already accounts for
+	# its footprint once shown, but disabling horizontal scroll is a cheap
 	# second guard so a slightly-too-long label clips rather than
 	# stranding a row's toggle off to the right behind a scrollbar
 	# (Dave's 29 Aug report on "Show info icons").
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
+	panel_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(panel_scroll)
 
-	# PANEL_WIDTH includes room for optional info badges; keep the rows a
-	# deliberate small distance from the scrollbar instead of letting that
-	# spare width read as accidental slack when badges are hidden.
+	# The panel's width includes room for optional info badges; keep the
+	# rows a deliberate small distance from the scrollbar instead of
+	# letting that spare width read as accidental slack when badges are
+	# hidden.
 	var content_margin := MarginContainer.new()
 	content_margin.add_theme_constant_override("margin_right", 6)
 	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(content_margin)
+	panel_scroll.add_child(content_margin)
 
 	var column := VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -175,6 +178,16 @@ func _ready() -> void:
 			collection.name, collection.categories, false
 		))
 	collapse_all()
+
+	get_viewport().size_changed.connect(_apply_panel_width)
+
+## Keeps the panel at UiLayout.settings_window_width() of whatever the
+## viewport resizes to, the same pattern gallerin_panel.gd's _apply_layout
+## uses for its own bubble.
+func _apply_panel_width() -> void:
+	var width := UiLayout.settings_window_width(get_viewport().get_visible_rect().size.x)
+	panel.custom_minimum_size.x = width
+	panel_scroll.custom_minimum_size.x = width
 
 func _report_settings_button_width() -> void:
 	for hud in get_tree().get_nodes_in_group("huds"):
@@ -399,7 +412,20 @@ func _make_controls_help() -> Control:
 	var help := Label.new()
 	help.theme_type_variation = "Small"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.custom_minimum_size = Vector2(270, 0)
+	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Measured at ready (Small variation, this profile's saved text_scale
+	# 1.5): get_line_height() 24px against a 20px font -- Godot's own
+	# ~1.2x default leading (13px/16px at scale 1.0), which read as the
+	# too-big gap in C-53. Pitch is tightened to font size + 2px by pulling
+	# the label's own line_spacing negative, computed live off whatever
+	# scale is active rather than a pixel literal, and only for this label
+	# rather than the theme-wide "Small" variation every other Small label
+	# still uses.
+	help.ready.connect(func() -> void:
+		var font_size := help.get_theme_font_size("font_size")
+		var pitch := help.get_line_height()
+		help.add_theme_constant_override("line_spacing", font_size + 2 - pitch)
+	)
 	help.text = """Arrow keys — pan the view
 Mouse wheel — zoom in and out
 Middle mouse drag — pan the view
@@ -430,7 +456,7 @@ Click a warning in the corner to select what it is about."""
 ## minimum width is its text width, and the ScrollContainer above has
 ## horizontal scrolling disabled, so three long trigger buttons sharing one
 ## HBoxContainer used to set the whole window's minimum width -- the panel
-## opened about 915px wide on a 1920px screen instead of PANEL_WIDTH
+## opened about 915px wide on a 1920px screen instead of the panel's own width
 ## (Dave, 12 Sep 2026). One button per row keeps the widest label, not the
 ## sum of three, as the constraint.
 func _build_actions(column: VBoxContainer) -> void:
@@ -447,7 +473,7 @@ func _build_actions(column: VBoxContainer) -> void:
 	_add_action_row(column, menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have.")
 
 	# Save and Load keep their shared row: both labels are short enough that
-	# the pair still fits inside PANEL_WIDTH.
+	# the pair still fits inside the panel's width.
 	var save_row := HBoxContainer.new()
 	save_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_child(save_row)

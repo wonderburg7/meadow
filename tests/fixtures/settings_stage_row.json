@@ -8,6 +8,7 @@
     {"do": "settle", "ticks": 3},
     {"do": "assert", "condition": {"panel": "settings", "inside_viewport": true}},
     {"do": "assert", "condition": {"root": "settings"}},
+    {"do": "assert", "condition": {"control": "settings", "min_size": [479, 0]}},
     {"do": "viewport_size", "w": 800, "h": 600},
     {"do": "settle", "ticks": 3},
     {"do": "assert", "condition": {"panel": "settings", "inside_viewport": true}},

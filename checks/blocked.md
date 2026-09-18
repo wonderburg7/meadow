@@ -63,30 +63,6 @@ cell.
 
 Owner: `plans/now/comb-builders.md` CB-1.
 
-### C-52 -- the settings window is about a quarter of the screen's width
-
-Open the settings cog in a run, at the default text scale on a maximised
-1920x1080 window.
-
-PASS: the window is about a quarter of the screen wide, the action buttons and the Triggers buttons each read in full, and no row forces a horizontal scrollbar.
-
-Blocked by: UI-X-1. Dave's 12 Sep 2026 run: the window was about a fifth of
-the screen (it is a fixed 320px) and "could be bigger, up to 25%".
-
-Owner: `plans/now/ui-x.md` UI-X-1.
-
-### C-53 -- the Controls list reads as one list, with no gaps
-
-Open the settings cog, expand Interface (or whichever collection holds it)
-and open the Controls section.
-
-PASS: the control lines sit close together like one list, with no visible gap between one line and the next, there is no second "Controls" heading, and every line is readable at the window's width.
-
-Blocked by: UI-X-1. Dave's 12 Sep 2026 run: "still too big a gap between each
-item in the list", after the blank lines were removed.
-
-Owner: `plans/now/ui-x.md` UI-X-1.
-
 ### C-25 -- out-of-season flowers read as a rare find, not a standing mix
 
 With Season days 5 (Game Settings > Seasons & health), restart the run and
