@@ -42,6 +42,13 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
    - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once its gate is met.
 
+5. **[Claude] UI-Y -- toggleable panel background texture**
+   - Plan: `plans/now/ui.md` -- "UI-Y — toggleable panel background texture"
+   - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `scripts/session.gd`
+   - Check: a hands-on pass with each theme palette (dark/light/high-contrast) -- set the new Appearance option to `comb`, then `grain`, then back to `flat`, confirm the panel edge and text position never move and text stays legible
+   - Proof: `absent: scripts/settings_catalogue.gd :: panel_texture`
+   - Next after: none -- UI-Y is complete.
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
