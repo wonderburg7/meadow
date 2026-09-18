@@ -34,7 +34,11 @@ PLAN_LINE = re.compile(r"- Plan: `([^`]+)` -- \"([^\"]+)\"")
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    # Decoded as UTF-8 explicitly: the queue carries em dashes, and a text
+    # pipe on Windows would otherwise decode `git show` as cp1252, mangling
+    # the heading this tool then fails to find.
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True,
+                          text=True, encoding="utf-8", errors="replace")
 
 
 def queue_text(root: Path, base: str) -> str:

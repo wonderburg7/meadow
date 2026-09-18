@@ -1139,13 +1139,13 @@ class ArchiveSliceTest(unittest.TestCase):
         return subprocess.run(
             [sys.executable, str(SLICE_PATH.with_name("archive_slice.py")), "X-1",
              "--root", str(self.root), "--date", "2026-09-18", *extra],
-            capture_output=True, text=True, cwd=self.root,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=self.root,
         )
 
     def test_moves_the_section_verbatim_and_leaves_a_pointer(self):
         result = self.run_tool()
 
-        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         first_start = self.PLAN.index("## X-1")
         second_start = self.PLAN.index("## X-2")
         first_section = self.PLAN[first_start:second_start]
@@ -1180,5 +1180,5 @@ class ArchiveSliceTest(unittest.TestCase):
 
         result = self.run_tool()
 
-        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertTrue((self.root / "plans" / "archive" / "X-1_2026-09-18.md").exists())

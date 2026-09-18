@@ -283,7 +283,7 @@ class RefillLaneTest(unittest.TestCase):
         return subprocess.run(
             [sys.executable, str(CHECK_DOCS_PATH.with_name("refill_lane.py")),
              "--delete", slice_id, "--root", str(self.root)],
-            capture_output=True, text=True, cwd=self.root,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=self.root,
         )
 
     def test_deletes_and_renumbers_its_own_lane_only(self):
