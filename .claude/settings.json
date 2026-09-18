@@ -25,6 +25,9 @@
       "Bash(git worktree list*)",
       "Bash(python tools/check_docs.py*)",
       "Bash(python tools/heading.py*)",
+      "Bash(python tools/func.py*)",
+      "Bash(python tools/archive_slice.py*)",
+      "Bash(python tools/refill_lane.py*)",
       "Bash(python tools/new_check.py*)",
       "Bash(python tools/session_cost.py*)",
       "Bash(python tools/stage_reference.py*)",
@@ -54,6 +57,18 @@
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" session_end",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" tool_bash",
+            "timeout": 10
           }
         ]
       }
