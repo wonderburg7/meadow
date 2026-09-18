@@ -440,6 +440,21 @@ def run_events(days: int):
         print("  (the SessionStart hook has to have run at least once)")
 
     _print_level_drift(claimed, events, totals)
+    _print_bash_calls(events)
+
+
+def _print_bash_calls(events):
+    """WD-4: how many Bash tool calls ran, how many failed, and which commands
+    fail most -- the retry cost --classify can only guess at."""
+    calls = [e for e in events if e["kind"] == "tool_bash"]
+    if not calls:
+        return
+    failed = [e for e in calls if not e.get("ok", True)]
+    print()
+    print(f"bash tool calls              {len(calls)} run, {len(failed)} failed")
+    if failed:
+        top = Counter(e.get("cmd") or "?" for e in failed).most_common(6)
+        print(f"  failing commands           {', '.join(f'{c}={n}' for c, n in top)}")
 
 
 def _level_allows(level: str, model: str) -> bool:

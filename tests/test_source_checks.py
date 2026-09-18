@@ -428,6 +428,26 @@ class DiagnosticWritersTest(unittest.TestCase):
         self.assertNotIn("S-2 ", printed)
         self.assertIn("not assessable: 1", printed)
 
+    def test_bash_call_summary_counts_failures_by_command(self):
+        spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
+        session_cost = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(session_cost)
+        import io, contextlib
+        events = [
+            {"kind": "tool_bash", "cmd": "git", "ok": True},
+            {"kind": "tool_bash", "cmd": "git", "ok": False},
+            {"kind": "tool_bash", "cmd": "python", "ok": False},
+            {"kind": "session_start"},
+        ]
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            session_cost._print_bash_calls(events)
+
+        self.assertIn("bash tool calls              3 run, 2 failed", out.getvalue())
+        self.assertIn("git=1", out.getvalue())
+        self.assertIn("python=1", out.getvalue())
+
     def test_level_drift_with_nothing_claimed_prints_none(self):
         spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
         session_cost = importlib.util.module_from_spec(spec)
