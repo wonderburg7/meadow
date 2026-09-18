@@ -1,7 +1,7 @@
 # Workflow diagnostics — the log that says where the system loses time and tokens
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: WD-4 -- Dave pastes the PostToolUse hook into .claude/settings.json | Dependency: none -- the hook script half of WD-4 landed 18 Sep 2026 | Verified: 2026-09-18
+Status: active | Owner: Dave / Claude Code | Next: WD-4 -- Dave pastes the PostToolUseFailure hook into .claude/settings.json | Dependency: none -- the hook script half of WD-4 landed 18 Sep 2026 | Verified: 2026-09-18
 
 **Objective.** A review of how the development system itself is running --
 which automation stops, which check fails, what a slice costs -- should be a
@@ -63,35 +63,29 @@ first word does not) and `ok`, false when the tool response reports an
 error. It prints nothing and exits 0 on any input, including malformed JSON;
 `tests/test_source_checks.py`'s `DiagnosticWritersTest` proves both.
 
-**What remains, and why it is Dave's.** The hook is not wired: a Claude Code
-session is refused edits to `.claude/settings.json` (the harness treats the
-file as its own configuration), so the block below has to be pasted by hand.
-In `.claude/settings.json`, inside `"hooks"`, after the `"Stop"` entry's
+**What remains, and why it is Dave's.** A Claude Code session is refused
+edits to `.claude/settings.json` (the harness treats the file as its own
+configuration), so the hook blocks have to be pasted by hand. The
+`PostToolUse` block was pasted on 18 Sep 2026 and proved to fire, but
+`PostToolUse` runs only after a tool call *succeeds*, so the failed command
+-- the one WD-4 exists to count -- never reached the log. The second block
+is `PostToolUseFailure`, which the script handles as `tool_bash_failed`. In
+`.claude/settings.json`, inside `"hooks"`, after the `"PostToolUse"` entry's
 closing `]`, add a comma and then:
 
 ```json
-    "PostToolUse": [
+    "PostToolUseFailure": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" tool_bash",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" tool_bash_failed",
             "timeout": 10
           }
         ]
       }
     ]
-```
-
-In the same file, under `"permissions"` → `"allow"`, after the
-`"Bash(python tools/heading.py*)",` line, add the three closeout tools that
-sessions now run so they stop producing permission prompts:
-
-```json
-      "Bash(python tools/func.py*)",
-      "Bash(python tools/archive_slice.py*)",
-      "Bash(python tools/refill_lane.py*)",
 ```
 
 **The one rule this slice must not break.** The hook prints nothing to stdout
@@ -104,10 +98,12 @@ docstring already says so; keep it true.
 `tools/diagnostics.py`'s 1 MB rotation is what makes that safe; do not raise
 `MAX_BYTES` to keep more history.
 
-**Check.** With the block pasted, start a session and run `git status` and
+**Check.** With both blocks pasted, start a session and run `git status` and
 `git nosuchcommand`. `python tools/session_cost.py --events` then shows
-`tool_bash=2`, and the session's transcript contains no hook output -- which
-is the proof the token cost is nil. When that holds, move this section to
+`tool_bash=2` (one event with `ok=true`, one with `ok=false`), and the
+session's transcript contains no hook output -- which is the proof the token
+cost is nil. Half of this held on 18 Sep 2026: `tool_bash=1` with the
+success hook alone. When that holds, move this section to
 plans/archive/WD-4_(date).md, set this plan's `Next:` to
 `None -- plan complete` and move the file to `plans/archive/`.
 

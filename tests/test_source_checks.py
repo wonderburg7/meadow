@@ -368,6 +368,26 @@ class DiagnosticWritersTest(unittest.TestCase):
         self.assertFalse(events[0]["ok"])
         self.assertNotIn("path/to/file", json.dumps(events[0]))
 
+    def test_failure_hook_records_the_same_kind_with_ok_false(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1",
+            "tool_input": {"command": "git nosuchcommand"},
+            "error": "exit code 1",
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash_failed"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        events = self.events()
+        self.assertEqual(1, len(events), events)
+        self.assertEqual("tool_bash", events[0]["kind"])
+        self.assertEqual("git", events[0]["cmd"])
+        self.assertFalse(events[0]["ok"])
+
     def test_bash_hook_survives_a_malformed_payload(self):
         result = subprocess.run(
             [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
