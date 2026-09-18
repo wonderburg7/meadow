@@ -12,7 +12,7 @@
       "do": "assert",
       "when": {"challenge_stage_id": "2.2"},
       "condition": {
-        "control": "command_tray/command_scroll/command_content/cell_group/cell_primary_columns/nursery_column_wrapper/nursery_column/hatch_row/hatch_forager_menu",
+        "control": "command_tray/command_scroll/command_content/cell_group/cell_primary_columns/raises_column_wrapper/raises_column/hatch_row/hatch_forager_menu",
         "visible": true,
         "min_size": [40, 16],
         "inside": "command_tray"

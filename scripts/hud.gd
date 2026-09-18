@@ -1427,7 +1427,8 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	live_buttons["designation_any"] = auto_btn
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
-	_build_nursery_controls(_build_cell_action_column(cell_primary_columns, "Nursery"))
+	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
+	_build_raises_controls(_build_cell_action_column(cell_primary_columns, "Raises"))
 
 	cell_more_button = Button.new()
 	_style_button(cell_more_button)
@@ -1481,7 +1482,7 @@ func _build_cell_action_column(parent: Container, title: String) -> VBoxContaine
 ## raises. Reserving the cell itself is done from the "Reserve for" column's
 ## Eggs/Unreserve buttons -- this column used to duplicate that with its own
 ## "Nursery zone" Add/Remove pair, which UI-C removed (UI_PLAN.md).
-func _build_nursery_controls(column: VBoxContainer) -> void:
+func _build_priority_controls(column: VBoxContainer) -> void:
 	var tier_row := HBoxContainer.new()
 	column.add_child(tier_row)
 
@@ -1514,6 +1515,11 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 	open_btn.pressed.connect(func(): nursery_window_requested.emit())
 	open_row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every reserved cell glows in the colour of the role it raises."))
 
+## What a bee raised in this cell becomes: the role, its lock, and whether
+## it raises a gyne. Split from _build_priority_controls by UI-X-3 so the
+## cell tray's Nursery column fits in three narrower columns instead of one
+## tall one.
+func _build_raises_controls(column: VBoxContainer) -> void:
 	# Which role a bee raised here comes out as.
 	hatch_row = HFlowContainer.new()
 	hatch_row.name = "hatch_row"

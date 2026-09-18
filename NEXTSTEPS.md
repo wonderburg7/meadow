@@ -14,35 +14,28 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] UI-X-3 -- a comb cell's tray uses three columns**
-   - Plan: `plans/now/ui-x.md` -- "UI-X-3 — a comb cell's tray uses three columns"
-   - Files: `scripts/hud.gd`
-   - Check: a new test_scenarios/uiw3_cell_tray_columns_test.json passes at 1920x1080 and 800x600 -- three columns (Reserve for/Priority/Raises) via even_columns on cell_primary_columns, no_collapsed_controls, and a lower recorded tray height for the same cell than before the change -- which fails on master, where the Nursery column is not yet split
-   - Proof: `absent: scripts/hud.gd :: "_build_raises_controls"`
-   - Next after: none -- UI-X-3 gates nothing further in ui-x; the plan is complete once UI-X-4 (queued from UI-X-1) ships.
-
-2. **[Claude] UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list**
+1. **[Claude] UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list**
    - Plan: `plans/now/ui-x.md` -- "UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list"
    - Files: `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json`
    - Check: `tests/fixtures/settings_stage_row.json` gains a width assertion -- the settings panel is 480±1 px wide inside a 1920x1080 viewport -- which fails on master, where `PANEL_WIDTH` is 320; `no_collapsed_controls` still passes there and at 800x600
    - Proof: `present: scripts/debug_panel.gd :: PANEL_WIDTH := 320.0`
    - Next after: UI-X-4 -- Dr Gallerin's bubble grows to a third of the window's height.
 
-3. **[Claude] E1 -- one placement tool**
+2. **[Claude] E1 -- one placement tool**
    - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
    - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
    - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class.
 
-4. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
+3. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
    - Plan: `plans/now/c1-followups.md` -- "C1F-1 — each Challenge 1 stage sets up the world it starts from"
    - Files: `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`
    - Check: a new test_scenarios/c1f1_stage_setup_test.json steps forward to 1.19 and back to 1.1 and asserts each stage stays put for 2 seconds; it fails on master at the first retreat into a met goal
    - Proof: `absent: scripts/challenge_runner.gd :: ChallengeStageSetup`
    - Next after: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop.
 
-5. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
+4. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
    - Plan: `plans/now/comb-builders.md` -- "CB-1 — measure where comb builders stand and how many work one site"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
    - Check: two headless runs of the new fixture report identical per-site builder counts and stand points, and the delivery note names which of H1-H3 the numbers support

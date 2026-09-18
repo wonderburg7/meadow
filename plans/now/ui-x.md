@@ -1,30 +1,29 @@
 # UI-X — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-X-3 -- a comb cell's tray uses three columns | Dependency: none | Verified: 2026-09-18
+Status: active | Owner: Dave / Claude Code | Next: UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list | Dependency: none | Verified: 2026-09-18
 
 **Objective.** The findings from Dave's 12 Sep 2026 hands-on pass that belong
 to the HUD and the settings window, each fixed at its owner and each with a
 headless assertion so the same class of fault fails verification next time.
 
-**State.** UI-X-2 has shipped (`plans/archive/UI-X-2_2026-09-18.md`).
-`plans/now/ui.md` keeps the durable UI rules and points here. The checks
-these slices re-open wait in `checks/blocked.md` (C-18, C-52, C-53); C-34 is
-back in `checks/ready.md`; C-49's own PASS is about what the stage arrows do
-and stays ready.
+**State.** UI-X-2 and UI-X-3 have shipped (`plans/archive/UI-X-2_2026-09-18.md`,
+`plans/archive/UI-X-3_2026-09-18.md`). `plans/now/ui.md` keeps the durable UI
+rules and points here. The checks these slices re-open wait in
+`checks/blocked.md` (C-52, C-53); C-18's cell half and C-34 are back in
+`checks/ready.md`; C-49's own PASS is about what the stage arrows do and
+stays ready.
 
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | UI-X-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
-| UI-X-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | yes | medium |
 | UI-X-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-X-1 | medium |
 
-**Dependencies.** UI-X-1 shares no file with UI-X-3 and can run alongside it
-in the Claude lane. UI-X-3 is now startable: it used UI-X-2's `select_cell`
-action, which shipped with UI-X-2 (`scripts/scenario_actions.gd`). UI-X-4
-follows UI-X-1 (`scripts/ui_layout.gd`).
+**Dependencies.** UI-X-1 shares no file with UI-X-4 and can run alongside it
+in the Claude lane until UI-X-4 wants `scripts/ui_layout.gd`. UI-X-4 follows
+UI-X-1 (`scripts/ui_layout.gd`).
 
 **Renamed from UI-W to UI-X on 17 Sep 2026.** The four UI-W ids belonged to
 unrelated slices that shipped from the since-archived ui-windows plan on
@@ -129,54 +128,7 @@ pitch can only be fixed theme-wide.
 
 **UI-X-2** -- delivered; see `plans/archive/UI-X-2_2026-09-18.md`.
 
-## UI-X-3 — a comb cell's tray uses three columns
-
-**Purpose.** The bee half of C-18 passed. For a comb cell the tray shows two
-columns, and Dave wants three so it uses less height. **Decision (Dave, 13 Sep
-2026, in session):** split Nursery into two columns, giving *Reserve for |
-Priority | Raises*. More… (Emptying, Sealing) is unchanged.
-
-**Root cause, confirmed.** `_build_cell_group` makes two
-`_build_cell_action_column` calls into `cell_primary_columns`: "Reserve for"
-and "Nursery". `_build_nursery_controls` stacks Priority, Open nursery window,
-Raises, Keep for every bee and the gyne row in one column, and that stack is
-the tray's height. `_update_command_tray_width` already runs
-`_apply_even_column_widths(cell_primary_columns.get_children())`, so a third
-column gets an equal share with no further change.
-
-**Files.** `scripts/hud.gd` and a new test_scenarios/uiw3_cell_tray_columns_test.json.
-
-**Requirements.**
-- Split `_build_nursery_controls` in two:
-  - `_build_priority_controls(column)`: the Priority row and Open nursery window;
-  - `_build_raises_controls(column)`: the Raises row, Keep for every bee, and gyne.
-- Build three columns titled "Reserve for", "Priority" and "Raises".
-- Keep the field names `hatch_row`, `lock_row` and `gyne_row` (gating reads
-  them), the `live_buttons` keys, and `show_cell_popup`'s
-  `hatch_row.queue_sort()`.
-- Name `cell_primary_columns` so the fixture can address it.
-
-**Constraints.** A column whose controls are all gated off keeps its slot, the
-same rule the bee tray follows (Dave, 10 Sep 2026). `_apply_cell_popup_gating`
-is unchanged.
-
-**Acceptance.** The fixture runs at 1920x1080, then `select_cell`, then:
-- `even_columns` on `command_tray/.../cell_primary_columns` finds three columns;
-- `panel_rect command_tray` passes with `matches_content`;
-- `no_collapsed_controls` passes;
-- the tray's height for the same cell is lower than before the change, with
-  both numbers recorded.
-
-The fixture also passes at 800x600, where the columns may wrap.
-
-**Regression.** `tools/verify.ps1`, the UI-X-2 fixture and the LAY fixtures.
-C-41 and C-43 (the tray fits its content) must still hold.
-
-**Completion.** Move C-18 from blocked back to ready (the cell half only), and
-archive this section.
-
-**Level:** medium. **Escalate if** three columns do not fit at 1920x1080
-without wrapping.
+**UI-X-3** -- delivered; see `plans/archive/UI-X-3_2026-09-18.md`.
 
 ## UI-X-4 — Dr Gallerin's bubble grows to a third of the window's height
 

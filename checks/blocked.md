@@ -44,16 +44,7 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
-### C-18 -- the command tray's three columns share its width
-
-Select a bee at 1920x1080, then at 800x600, and look at the Job, Focus and
-Orders columns across the tray; then select a comb cell and look again.
-
-PASS: at 1920x1080 the tray's columns divide its width into equal parts with equal gaps and equal space at each end -- Job, Focus and Orders for a bee; Reserve for, Priority and Raises for a cell -- and at 800x600 they either do the same or wrap onto more rows with nothing clipped.
-
-Blocked by: UI-X-3, which gives a cell's tray its third column. Dave's
-12 Sep 2026 run passed the bee half; a cell still shows two columns ("using
-three would mean it uses less vertical space"). Re-run the cell half only.
+**C-18** -- unblocked 18 Sep 2026 by UI-X-3; see `checks/ready/C-18.md`.
 
 Owner: `plans/now/ui-x.md` UI-X-3.
 
