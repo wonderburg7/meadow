@@ -44,36 +44,9 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
-### C-18 -- the command tray's three columns share its width
-
-Select a bee at 1920x1080, then at 800x600, and look at the Job, Focus and
-Orders columns across the tray; then select a comb cell and look again.
-
-PASS: at 1920x1080 the tray's columns divide its width into equal parts with equal gaps and equal space at each end -- Job, Focus and Orders for a bee; Reserve for, Priority and Raises for a cell -- and at 800x600 they either do the same or wrap onto more rows with nothing clipped.
-
-Blocked by: UI-X-3, which gives a cell's tray its third column. Dave's
-12 Sep 2026 run passed the bee half; a cell still shows two columns ("using
-three would mean it uses less vertical space"). Re-run the cell half only.
+**C-18** -- unblocked 18 Sep 2026 by UI-X-3; see `checks/ready/C-18.md`.
 
 Owner: `plans/now/ui-x.md` UI-X-3.
-
-### C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager
-
-Start Challenge 2 and stay in stage 2.1 (watch the nectar stores fall, then
-recover them) long enough for Dr Gallerin's stronger hint. Let pollen run
-below one bee's cost, then move into 2.2 (raise a pollen Forager) without
-raising one at once. Let it run briefly, then select an empty cell, set
-Raises to Forager -- Pollen, and play until 2.2 clears.
-
-PASS: during 2.1 Dr Gallerin warns that every new bee costs pollen and some should be kept back; at low pollen, exactly once per run, the colony receives three bee-costs of pollen with a line explaining that no pollen means no new bees, and the same low-pollen state does not top the store up again; once the pollen Forager is raised no further rescue occurs.
-
-Blocked by: UI-X-2. In Dave's 12 Sep 2026 run there was no Forager control
-beside "Raises:" at 2.2 at all (confirmed in session, 13 Sep 2026), so the
-pollen Forager could not be chosen. UI-X-2 also re-checks the 2.1 half of
-this wording before the check moves back: 2.1 has not taught the Forager
-role, so nothing can be raised as one there.
-
-Owner: `plans/now/ui-x.md` UI-X-2.
 
 ### C-46 -- comb builders spread across six walls before opening another site
 

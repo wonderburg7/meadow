@@ -1362,6 +1362,7 @@ var live_buttons: Dictionary = {}
 ## shape the way a bee's role-dependent rows do.
 func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_group = VBoxContainer.new()
+	cell_group.name = "cell_group"
 	cell_group.add_theme_constant_override("separation", 2)
 	cell_group.visible = false
 	parent.add_child(cell_group)
@@ -1371,6 +1372,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
+	cell_primary_columns.name = "cell_primary_columns"
 	cell_primary_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	cell_group.add_child(cell_primary_columns)
 
@@ -1425,7 +1427,8 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	live_buttons["designation_any"] = auto_btn
 	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
 
-	_build_nursery_controls(_build_cell_action_column(cell_primary_columns, "Nursery"))
+	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
+	_build_raises_controls(_build_cell_action_column(cell_primary_columns, "Raises"))
 
 	cell_more_button = Button.new()
 	_style_button(cell_more_button)
@@ -1452,7 +1455,13 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 ## independent accordions: the whole row is meant to scan like the selected-
 ## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
 func _build_cell_action_column(parent: Container, title: String) -> VBoxContainer:
+	# Named like _build_tray_column's job/focus/orders pair, so LAY-6's
+	# assertions (and UI-X-2's hatch menus below) can address this column
+	# by a stable path under the "command_tray" root -- see
+	# scenario_actions.gd::_resolve_scoped_path.
+	var slug: String = title.to_lower().replace(" ", "_")
 	var wrapper := VBoxContainer.new()
+	wrapper.name = "%s_column_wrapper" % slug
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(wrapper)
@@ -1464,6 +1473,7 @@ func _build_cell_action_column(parent: Container, title: String) -> VBoxContaine
 	wrapper.add_child(header)
 
 	var body := VBoxContainer.new()
+	body.name = "%s_column" % slug
 	body.add_theme_constant_override("separation", 2)
 	wrapper.add_child(body)
 	return body
@@ -1472,7 +1482,7 @@ func _build_cell_action_column(parent: Container, title: String) -> VBoxContaine
 ## raises. Reserving the cell itself is done from the "Reserve for" column's
 ## Eggs/Unreserve buttons -- this column used to duplicate that with its own
 ## "Nursery zone" Add/Remove pair, which UI-C removed (UI_PLAN.md).
-func _build_nursery_controls(column: VBoxContainer) -> void:
+func _build_priority_controls(column: VBoxContainer) -> void:
 	var tier_row := HBoxContainer.new()
 	column.add_child(tier_row)
 
@@ -1505,8 +1515,14 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 	open_btn.pressed.connect(func(): nursery_window_requested.emit())
 	open_row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every reserved cell glows in the colour of the role it raises."))
 
+## What a bee raised in this cell becomes: the role, its lock, and whether
+## it raises a gyne. Split from _build_priority_controls by UI-X-3 so the
+## cell tray's Nursery column fits in three narrower columns instead of one
+## tall one.
+func _build_raises_controls(column: VBoxContainer) -> void:
 	# Which role a bee raised here comes out as.
 	hatch_row = HFlowContainer.new()
+	hatch_row.name = "hatch_row"
 	column.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
@@ -1677,6 +1693,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 	menu.theme_type_variation = "Small"
 	var options: Array = entry.options
 	var role_value: int = entry.role
+	menu.name = "hatch_%s_menu" % Roles.key_for(role_value)
 	var popup := menu.get_popup()
 	for i in range(options.size()):
 		popup.add_item(options[i].label, i)

@@ -12,9 +12,11 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 
 ## Ready to run
 
+- [C-18 -- the command tray's three columns share its width](ready/C-18.md)
 - [C-24 -- peak season reads as a good summer, not a different game](ready/C-24.md)
 - [C-29 -- the stage's camera and speed switch off when the stage ends](ready/C-29.md)
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
+- [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-42 -- the queen keeps her nectar when the comb has no room](ready/C-42.md)
 - [C-54 -- a run's starting bees do not all die of old age together](ready/C-54.md)
 - [C-55 -- Challenge 1's queen takes Nursing as her backup by herself](ready/C-55.md)

@@ -872,7 +872,17 @@ func _apply_stage_gate_to_ui() -> void:
 	main.hud.set_hatch_lock_visible(main.stage_gate.is_unlocked("hatch_lock"))
 	main.hud.set_soil_marking_visible(main.stage_gate.is_unlocked("miner"))
 	main.hud.set_command_locked_bees([main.queen] if queen_command_locked and is_instance_valid(main.queen) else [])
-	main.hud.update_selection(main.selected_bees)
+	# UI-X-2, H1: update_selection([]) reads an empty bee list as "nothing
+	# is selected" and hides the command tray and cell popup to match
+	# (hud.gd::update_selection -- "a bee selection always wins over a
+	# cell selection's content"). A stage transition is not a selection
+	# change, so calling it here with no bees selected silently closed an
+	# open cell's tray out from under the player -- the Raises row (and
+	# any hatch role it had just unlocked, e.g. Forager at 2.2) along with
+	# it. set_allowed_role_keys above already re-gates an open cell popup
+	# in place; only a genuine bee selection needs the reset below.
+	if not main.selected_bees.is_empty() or main.selected_cells.is_empty():
+		main.hud.update_selection(main.selected_bees)
 
 ## Whether player-issued commands should be rejected for this bee. Kept as
 ## a Challenge-runner query so input_selection.gd does not need to know what
