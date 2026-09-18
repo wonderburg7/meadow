@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-X-1` (`claude/UI-X-1`) | Claude | the settings window: a quarter of the screen, a readable stage row, a tight Controls list | Claude | in progress | none | `plans/now/ui-x.md` UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list |
