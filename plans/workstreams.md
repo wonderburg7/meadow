@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-X-4` (`claude/UI-X-4`) | Claude | Dr Gallerin's bubble grows to a third of the window's height | Claude | in progress | none | `plans/now/ui-x.md` UI-X-4 — Dr Gallerin's bubble grows to a third of the window's height |
