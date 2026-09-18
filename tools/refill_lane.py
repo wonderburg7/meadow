@@ -85,6 +85,10 @@ def main() -> int:
                         help="repository root (default: this checkout)")
     args = parser.parse_args()
     root = Path(args.root).resolve()
+    # Plans carry em dashes and curly quotes; a Windows console defaults to
+    # cp1252, so ask for UTF-8 the way tools/heading.py does.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     queue_path = root / "NEXTSTEPS.md"
 
     original = queue_path.read_text(encoding="utf-8")
