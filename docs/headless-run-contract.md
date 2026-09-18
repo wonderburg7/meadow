@@ -143,6 +143,10 @@ Each eventual run directory has these stable JSON artefacts:
   the run directory.
 - `report.json` is optional and is the selected report projection, never an
   automatic raw-log dump.
+- Every verdict run also appends one `headless_run` event (fixture, status,
+  classification, wall time, exit code) to the workflow diagnostic log that
+  `python tools/session_cost.py --events` reads. Nothing in the run directory
+  depends on it, and a logging failure never fails a run.
 
 All three envelopes use `schema_version: 1`. New optional fields are allowed;
 changing the meaning or type of an existing field requires a new version.

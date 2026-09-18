@@ -3,13 +3,16 @@
 Wired to SessionStart and Stop in .claude/settings.json. It is what gives
 tools/session_cost.py a session-to-branch join, and so a per-slice cost --
 a transcript records neither its branch nor the slice it was claimed for.
+Also wired to PostToolUse for Bash (WD-4): every shell call records its
+first word and whether it failed, which is the one count of retried
+commands that costs no tokens to collect.
 
 Two hard rules, because this runs on every session:
   * print nothing. A hook's stdout is fed back into the model's context, so
     any output here would be charged to every session that ever starts.
   * exit 0 whatever happens. A hook that fails blocks the session.
 
-Usage: python tools/hook_log.py <session_start|session_end>
+Usage: python tools/hook_log.py <session_start|session_end|tool_bash>
 """
 
 from __future__ import annotations
@@ -44,7 +47,7 @@ def _branch(cwd: str) -> str:
 
 def main() -> int:
     kind = sys.argv[1] if len(sys.argv) > 1 else "session_start"
-    if kind not in ("session_start", "session_end"):
+    if kind not in ("session_start", "session_end", "tool_bash"):
         return 0
 
     payload = {}
@@ -56,6 +59,20 @@ def main() -> int:
         payload = {}
 
     cwd = payload.get("cwd") or str(Path.cwd())
+    if kind == "tool_bash":
+        # Only the command's first word: a full line can hold a path or a
+        # commit message, and answers no question the first word does not.
+        command = str((payload.get("tool_input", {}) or {}).get("command", ""))
+        words = command.split()
+        write_event(
+            kind,
+            root=cwd,
+            session=payload.get("session_id", ""),
+            cmd=words[0] if words else "",
+            ok=not (payload.get("tool_response", {}) or {}).get("is_error", False),
+        )
+        return 0
+
     write_event(
         kind,
         root=cwd,

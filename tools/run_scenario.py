@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from diagnostics import write_event  # noqa: E402
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
@@ -517,6 +518,18 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         _write_json(run_dir / "report.json", report(analysis, "brief"))
         result["artefacts"] = dict(artefacts, report="report.json")
     _write_json(result_path, result)
+    # WD-1: the one record of how often headless runs fail and how long they
+    # take. Written after the result file, never before it, and never from
+    # the manifest runner, which calls this once per scenario already.
+    write_event(
+        "headless_run",
+        fixture=Path(metadata["path"]).name,
+        status=status,
+        classification=classification,
+        ms=int(result["process"]["wall_seconds"] * 1000),
+        exit_code=returncode if returncode is not None else -1,
+        ok=(status == "passed"),
+    )
     line = _terminal_line(status, run_id, result_path, outcome=result["outcome"],
                           reason=reason.get("kind") if reason else None)
     assert fits_stdout_budget(line + "\n", failed=status != "passed")

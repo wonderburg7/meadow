@@ -1085,3 +1085,100 @@ class SliceDoctorTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ArchiveSliceTest(unittest.TestCase):
+    """tools/archive_slice.py against a throwaway repository (L-10). Pure
+    Python, so it runs where the PowerShell suites above skip."""
+
+    PLAN = (
+        "# Plan\n\n"
+        "<!-- CONTEXT: plan | LAYER: immediate-task -->\n"
+        "Status: active | Owner: t | Next: X-1 | Dependency: none | Verified: 2026-09-18\n\n"
+        "| Slice | Outcome | Level |\n| --- | --- | --- |\n"
+        "| X-1 | first | low |\n| X-2 | second | low |\n\n"
+        "## X-1 — the first slice\n\n"
+        "Body of the first slice.\n\n"
+        "```gd\n## a doc comment that is not a heading\n```\n\n"
+        "Level: low\n\n"
+        "## X-2 — the second slice\n\n"
+        "Body of the second slice, byte for byte.\n"
+    )
+    QUEUE = (
+        "# Next steps\n\n## Next up\n\n### Claude lane\n\n"
+        "1. **[Claude] X-1 -- the first slice**\n"
+        "   - Plan: `plans/now/x.md` -- \"X-1 — the first slice\"\n"
+        "   - Files: `scripts/x.gd`\n"
+        "   - Check: something\n"
+        "   - Proof: `absent: scripts/x.gd :: thing`\n"
+        "   - Next after: X-2 -- the second slice.\n\n"
+        "### Codex lane\n\n"
+        "1. **[Codex] Y-1 -- another**\n"
+        "   - Plan: `plans/now/y.md` -- \"Y-1\"\n"
+        "   - Files: `scripts/y.gd`\n"
+        "   - Check: something\n"
+        "   - Proof: `absent: scripts/y.gd :: thing`\n"
+        "   - Next after: none -- y is complete.\n\n"
+        "## Not in the queue, and why\n"
+    )
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        (self.root / "plans" / "now").mkdir(parents=True)
+        (self.root / "plans" / "now" / "x.md").write_text(self.PLAN, encoding="utf-8")
+        (self.root / "NEXTSTEPS.md").write_text(self.QUEUE, encoding="utf-8")
+        for args in (["init", "-q", "-b", "master"], ["add", "."],
+                     ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "seed"]):
+            subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def run_tool(self, *extra):
+        return subprocess.run(
+            [sys.executable, str(SLICE_PATH.with_name("archive_slice.py")), "X-1",
+             "--root", str(self.root), "--date", "2026-09-18", *extra],
+            capture_output=True, text=True, cwd=self.root,
+        )
+
+    def test_moves_the_section_verbatim_and_leaves_a_pointer(self):
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        first_start = self.PLAN.index("## X-1")
+        second_start = self.PLAN.index("## X-2")
+        first_section = self.PLAN[first_start:second_start]
+        archived = (self.root / "plans" / "archive" / "X-1_2026-09-18.md").read_text(encoding="utf-8")
+        self.assertIn(first_section, archived)
+        self.assertTrue(archived.startswith("Landed 2026-09-18 on `master`. Live plan: `plans/now/x.md`."))
+
+        plan = (self.root / "plans" / "now" / "x.md").read_text(encoding="utf-8")
+        expected_pointer = "X-1 shipped 2026-09-18; its specification is `plans/archive/X-1_2026-09-18.md`.\n\n"
+        self.assertEqual(
+            self.PLAN[:first_start].replace("| X-1 | first | low |\n", "") + expected_pointer + self.PLAN[second_start:],
+            plan,
+        )
+        self.assertNotIn("## X-1", plan)
+        self.assertIn("## X-2 — the second slice\n\nBody of the second slice, byte for byte.\n", plan)
+
+    def test_refuses_a_dirty_working_tree(self):
+        (self.root / "NEXTSTEPS.md").write_text(self.QUEUE + "\n- **Z** -- edited.\n", encoding="utf-8")
+
+        result = self.run_tool()
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("uncommitted", result.stderr)
+        self.assertFalse((self.root / "plans" / "archive").exists())
+        self.assertEqual(self.PLAN, (self.root / "plans" / "now" / "x.md").read_text(encoding="utf-8"))
+
+    def test_reads_the_queue_from_master_when_the_branch_has_refilled(self):
+        subprocess.run(["git", "checkout", "-q", "-b", "claude/X-1"], cwd=self.root, check=True, capture_output=True)
+        (self.root / "NEXTSTEPS.md").write_text(self.QUEUE.replace("X-1", "X-9"), encoding="utf-8")
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "refill"],
+                       cwd=self.root, check=True, capture_output=True)
+
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertTrue((self.root / "plans" / "archive" / "X-1_2026-09-18.md").exists())

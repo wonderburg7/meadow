@@ -962,6 +962,17 @@ function Invoke-SliceDoctor {
     $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
     Remove-PendingWorktreeDirectories -Root $root
     $failures = @(Get-DoctorEnvironmentFailures -Root $root -RequestedPythonPath $PythonPath)
+    # WD-2: one env_capability event per doctor, so "how often does the
+    # environment rather than the code block a session?" has an answer.
+    # `detail` is the category before the first colon, never the message.
+    $godotCapability = Get-GodotCapability -Root $root
+    Write-Diagnostic -Root $root -Kind "env_capability" -Fields @{
+        lane     = $Lane
+        godot    = $godotCapability
+        failures = $failures.Count
+        ok       = ($failures.Count -eq 0)
+        detail   = if ($failures.Count -gt 0) { ($failures[0] -split ':')[0] } else { "" }
+    }
 
     try {
         $preflight = Get-SlicePreflight -Lane $Lane
@@ -993,7 +1004,7 @@ function Invoke-SliceDoctor {
         branch       = $preflight.Branch
         worktree     = $preflight.WorktreeRelative
         git_excludes = Get-GlobalExcludesDiagnostic
-        godot_capability = Get-GodotCapability -Root $root
+        godot_capability = $godotCapability
         pending_deletions = Get-PendingWorktreeDeletions -Root $root
     } | ConvertTo-Json -Compress
 }
@@ -1460,7 +1471,7 @@ function Invoke-SliceFinish {
             }
             if (-not $archiveMatches -or $headingStillLive) {
                 $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
-                Stop-Slice -Cause "$id -- $archiveState" -Fix "move the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md (write it with Bash if the file tools refuse plans/archive/), leave a one-line pointer where the heading was, commit on this branch, and retry"
+                Stop-Slice -Cause "$id -- $archiveState" -Fix "on this branch run python tools/archive_slice.py $id (it moves the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md and leaves a one-line pointer; it needs a clean tree, so commit first), commit, and retry"
             }
         }
         Invoke-InjectedLifecycleFailure -Phase "archived"
@@ -1473,7 +1484,7 @@ function Invoke-SliceFinish {
         if ($item) {
             $branchItems = Get-NextUpItems -Root $worktreeRoot
             if ($branchItems | Where-Object { $_.Id -eq $id }) {
-                Stop-Slice -Cause "$id -- its own entry is still in NEXTSTEPS.md's ### $lane lane" -Fix "on this branch, delete the $id item from ### $lane lane, add its successor ($($item.NextAfter)) with full Plan/Files/Check/Proof/Next after lines unless that says the plan is complete, renumber the lane, run python tools/check_docs.py, commit, and retry"
+                Stop-Slice -Cause "$id -- its own entry is still in NEXTSTEPS.md's ### $lane lane" -Fix "on this branch run python tools/refill_lane.py --delete $id (it removes the item from ### $lane lane and renumbers), add its successor ($($item.NextAfter)) with full Plan/Files/Check/Proof/Next after lines unless that says the plan is complete, run python tools/check_docs.py, commit, and retry"
             }
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
                 $branchQueueText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $worktreeRoot "NEXTSTEPS.md")

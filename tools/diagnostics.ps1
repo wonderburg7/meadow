@@ -28,8 +28,8 @@ function Get-DiagnosticsPath {
 function Write-Diagnostic {
     # Kind is the event vocabulary; Fields are the event's own values. `ts` and
     # `kind` are always present, everything else only when the caller has it.
-    # Kinds in use: slice_claimed, slice_finished, slice_stop, verify_stage,
-    # session_start, session_end.
+    # The vocabulary is the KINDS tuple in tools/diagnostics.py; stops are
+    # not in it (tools/slice.ps1 keeps its own ledger for those).
     param(
         [Parameter(Mandatory = $true)][string]$Kind,
         [hashtable]$Fields = @{},

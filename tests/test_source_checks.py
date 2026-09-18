@@ -245,3 +245,178 @@ class QueueSchemaChecksTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RefillLaneTest(unittest.TestCase):
+    """tools/refill_lane.py --delete over a two-lane fixture (L-11)."""
+
+    ITEM = (
+        "{n}. **[{lane}] {id} -- does a thing**\n"
+        "   - Plan: `plans/now/x.md` -- \"{id}\"\n"
+        "   - Files: `scripts/{id}.gd`\n"
+        "   - Check: something\n"
+        "   - Proof: `absent: scripts/sample.gd :: {id}_built`\n"
+        "   - Next after: none -- x is complete.\n\n"
+    )
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        (self.root / "scripts").mkdir()
+        (self.root / "scripts" / "sample.gd").write_text("func existing():\n\tpass\n", encoding="utf-8")
+        (self.root / "plans" / "now").mkdir(parents=True)
+        (self.root / "plans" / "now" / "x.md").write_text("# x\n", encoding="utf-8")
+        self.claude = "### Claude lane\n\nPreamble.\n\n" + "".join(
+            self.ITEM.format(n=n, lane="Claude", id=f"A-{n}") for n in (1, 2, 3)
+        )
+        self.codex = "### Codex lane\n\nPreamble.\n\n" + "".join(
+            self.ITEM.format(n=n, lane="Codex", id=f"B-{n}") for n in (1, 2)
+        )
+        self.tail = "## Not in the queue, and why\n\n- **C-1** -- waits.\n"
+        self.queue = "# Next steps\n\n## Next up\n\n" + self.claude + self.codex + self.tail
+        (self.root / "NEXTSTEPS.md").write_text(self.queue, encoding="utf-8")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def run_tool(self, slice_id):
+        return subprocess.run(
+            [sys.executable, str(CHECK_DOCS_PATH.with_name("refill_lane.py")),
+             "--delete", slice_id, "--root", str(self.root)],
+            capture_output=True, text=True, cwd=self.root,
+        )
+
+    def test_deletes_and_renumbers_its_own_lane_only(self):
+        result = self.run_tool("A-2")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        text = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        expected_claude = "### Claude lane\n\nPreamble.\n\n" + "".join(
+            self.ITEM.format(n=n, lane="Claude", id=slice_id)
+            for n, slice_id in ((1, "A-1"), (2, "A-3"))
+        )
+        self.assertEqual("# Next steps\n\n## Next up\n\n" + expected_claude + self.codex + self.tail, text)
+        self.assertNotIn("A-2", text)
+        errors = []
+        check_docs.ROOT = self.root
+        check_docs.check_next_steps(errors, [], text=text)
+        check_docs.check_queue_proofs(errors, text=text)
+        self.assertEqual([], errors)
+
+    def test_refuses_to_drop_the_queue_below_the_floor(self):
+        self.assertEqual(0, self.run_tool("A-3").returncode)
+        self.assertEqual(0, self.run_tool("A-2").returncode)
+        before = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+
+        result = self.run_tool("B-2")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("at least 3", result.stderr)
+        self.assertEqual(before, (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
+
+    def test_refuses_to_empty_a_lane(self):
+        self.assertEqual(0, self.run_tool("B-2").returncode)
+
+        result = self.run_tool("B-1")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("no [Codex] item", result.stderr)
+
+    def test_unknown_id_is_an_error(self):
+        result = self.run_tool("Z-9")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual(self.queue, (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
+
+
+class DiagnosticWritersTest(unittest.TestCase):
+    """The WD-3 level-drift join and the WD-4 Bash hook, without a session."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        subprocess.run(["git", "init", "-q", "-b", "master"], cwd=self.root, check=True, capture_output=True)
+        self.tools = CHECK_DOCS_PATH.parent
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def events(self):
+        path = self.root / ".git" / "meadow-diagnostics.jsonl"
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    def test_bash_hook_records_the_first_word_and_prints_nothing(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1",
+            "tool_input": {"command": "git nosuchcommand --flag path/to/file"},
+            "tool_response": {"is_error": True},
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        events = self.events()
+        self.assertEqual(1, len(events), events)
+        self.assertEqual("tool_bash", events[0]["kind"])
+        self.assertEqual("git", events[0]["cmd"])
+        self.assertFalse(events[0]["ok"])
+        self.assertNotIn("path/to/file", json.dumps(events[0]))
+
+    def test_bash_hook_survives_a_malformed_payload(self):
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input="not json", capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+
+    def test_level_drift_reports_a_model_outside_the_plan_level(self):
+        spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
+        session_cost = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(session_cost)
+        from collections import Counter
+        import io, contextlib
+        claimed = [
+            {"kind": "slice_claimed", "id": "S-1", "branch": "claude/S-1", "level": "medium"},
+            {"kind": "slice_claimed", "id": "S-2", "branch": "claude/S-2", "level": "low"},
+            {"kind": "slice_claimed", "id": "S-3", "branch": "claude/S-3", "level": "unstated"},
+        ]
+        events = claimed + [
+            {"kind": "session_start", "branch": "claude/S-1", "session": "a"},
+            {"kind": "session_start", "branch": "claude/S-2", "session": "b"},
+        ]
+        totals = {
+            "a": (5, 0, 0, Counter({"claude-opus-5-20260401": 4, "claude-sonnet-5-20260401": 1})),
+            "b": (2, 0, 0, Counter({"claude-haiku-4-5-20251001": 2})),
+        }
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            session_cost._print_level_drift(claimed, events, totals)
+
+        printed = out.getvalue()
+        self.assertIn("level drift (slice, plan level, models actually used)", printed)
+        self.assertIn("S-1", printed)
+        self.assertIn("claude-opus-5-20260401=4", printed)
+        self.assertNotIn("S-2 ", printed)
+        self.assertIn("not assessable: 1", printed)
+
+    def test_level_drift_with_nothing_claimed_prints_none(self):
+        spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
+        session_cost = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(session_cost)
+        import io, contextlib
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            session_cost._print_level_drift([], [], {})
+
+        self.assertIn("level drift                  none", out.getvalue())
+        self.assertIn("not assessable: 0", out.getvalue())

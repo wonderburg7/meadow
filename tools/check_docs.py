@@ -258,10 +258,10 @@ def validate_queue_proof(body: str, index: int, root: Path, errors: list[str]) -
         )
 
 
-def check_queue_files(errors: list[str]) -> None:
+def check_queue_files(errors: list[str], text: str | None = None) -> None:
     """Every unclaimed item must expose the exact file set used by overlap checks."""
-    path = ROOT / "NEXTSTEPS.md"
-    text = path.read_text(encoding="utf-8")
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
     items = queue_item_chunks(text)
     if items is None:
         return
@@ -273,11 +273,14 @@ def check_queue_files(errors: list[str]) -> None:
         validate_queue_files(chunk, index, errors)
 
 
-def check_next_steps(errors: list[str], warnings: list[str]) -> None:
+def check_next_steps(errors: list[str], warnings: list[str], text: str | None = None) -> None:
     """The queue holds at least QUEUE_SIZE_MIN ready slices, at most
-    LANE_SIZE_MAX per lane, in two lanes that share no file."""
-    path = ROOT / "NEXTSTEPS.md"
-    text = path.read_text(encoding="utf-8")
+    LANE_SIZE_MAX per lane, in two lanes that share no file.
+
+    `text` lets tools/refill_lane.py check a candidate queue before writing
+    it; the other queue checks take it for the same reason."""
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
     items = queue_item_chunks(text)
     if items is None:
         errors.append("NEXTSTEPS.md: missing a '## Next up' section")
@@ -379,10 +382,10 @@ NO_SUCCESSOR = re.compile(r"^\s*-\s*Next after:\s*(.+?)\s*$", re.MULTILINE)
 PLAN_COMPLETE = re.compile("none.*(complete|finished|last slice)", re.IGNORECASE)
 
 
-def check_queue_successors(errors: list[str]) -> None:
+def check_queue_successors(errors: list[str], text: str | None = None) -> None:
     """Every queue item names the slice that follows it, or says its plan is done."""
-    path = ROOT / "NEXTSTEPS.md"
-    text = path.read_text(encoding="utf-8")
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
     items = queue_item_chunks(text)
     if items is None:
         return
@@ -524,15 +527,15 @@ def check_queue_section_agreement(errors: list[str], text: str | None = None) ->
                 )
 
 
-def check_queue_proofs(errors: list[str]) -> None:
+def check_queue_proofs(errors: list[str], text: str | None = None) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
     X3 sat at the head of a lane, with a worktree open, for a fix that had
     shipped three days earlier -- this is what would have caught it. An
     in-progress slice is the exception: its proof is expected to flip while
     its registered worktree is being verified for merge."""
-    path = ROOT / "NEXTSTEPS.md"
-    text = path.read_text(encoding="utf-8")
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
     items = queue_item_chunks(text)
     if items is None:
         return

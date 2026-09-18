@@ -42,12 +42,15 @@ block, and Claude reviews the full diff and then runs `finish`. A hands-on
 check outstanding is never a reason to hold a branch open -- file it in
 `checks/ready.md` and finish.
 
-`finish` does not author the refill or the archive write-up -- do both by
-hand, for your own lane only, **before** running `finish`, on the slice's own
-branch: promote the item's `Next after:` into the `[Codex]` lane (pulling one
-ready slice from an owning plan if that empties it), and move the shipped
-slice's specification into `plans/archive/` leaving a one-line pointer. Never
-edit the `[Claude]` lane's entries. `finish` gates on both: its `archived`
+`finish` does not author the refill or the archive write-up. Two tools do
+the mechanical halves; run both, for your own lane only, **before** running
+`finish`, on the slice's own branch: `python tools/archive_slice.py <id>` (on
+a clean tree) moves the shipped slice's specification into `plans/archive/`
+and leaves a one-line pointer, and `python tools/refill_lane.py --delete <id>`
+removes the delivered item and renumbers the `[Codex]` lane. Then promote the
+item's `Next after:` into the lane by hand (pulling one ready slice from an
+owning plan if that leaves it short). Never edit the `[Claude]` lane's
+entries. `finish` gates on both: its `archived`
 and `refilled` phases refuse to merge until the specification has moved and
 the delivered item is gone from `## Next up`, and once they pass, both
 commits land inside the merge itself -- there is no separate queue-refresh

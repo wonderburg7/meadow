@@ -35,6 +35,13 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Proof: `absent: scripts/scenario_actions.gd :: builders_per_site`
    - Next after: CB-2 -- the fix CB-1 identifies.
 
+4. **[Claude] L-13 -- closeout is one command, and the gates become actions**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-13 — closeout is one command, and the gates become actions"
+   - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
+   - Check: every injected-failure phase in `tests/test_slice_lifecycle.py` and `tests/test_two_lane_closeout.py` still resumes to a clean merge on master, a closeout over the fixture repository completes from `verify` to `merge` with no hand edit in between, and a journal written in the old phase order resumes without skipping a durable step
+   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
+   - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once its gate is met.
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
@@ -68,11 +75,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
-- **L-10, L-11** (`plans/now/agent-lifecycle.md`) -- ready now; the Claude lane is full at five.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
-- **L-13** (`plans/now/agent-lifecycle.md`) -- integrates L-10 and L-11; needs both merged.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
-- **WD-1, WD-2, WD-3, WD-4** (`plans/now/workflow-diagnostics.md`) -- all four are startable and own no file in either lane; they wait for a free slot in the Claude lane.
+- **WD-4** (`plans/now/workflow-diagnostics.md`) -- its script half shipped; it waits for Dave to paste the PostToolUse block into `.claude/settings.json`, which a session cannot edit. The exact text is in the plan.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

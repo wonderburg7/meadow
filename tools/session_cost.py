@@ -57,6 +57,16 @@ PHASE_LABELS = {
 # is logged on its own. Token counts are estimated at 4 characters per
 # token, the standard rough ratio for English/code text; treat the split
 # as an estimate, not an exact accounting.
+# The model each stated level asks for -- mirrors Get-SliceAdvice in
+# tools/slice.ps1. A model outside its level's entry is drift, in whichever
+# direction; CLAUDE.md rule 4 treats both as mistakes. Matched by prefix,
+# because a transcript records a dated id such as claude-sonnet-5-20260401.
+LEVEL_MODELS = {
+    "low": ("claude-sonnet-5", "claude-haiku-4-5"),
+    "medium": ("claude-sonnet-5",),
+    "high": ("claude-opus-5",),
+}
+
 _CONTENTS_MARKER = re.compile(r"Contents of (.+):\n")
 _CHARS_PER_TOKEN = 4
 
@@ -306,7 +316,10 @@ def run_phases(files):
 
 
 def _session_totals():
-    """session id -> (requests, context tokens, output tokens), across worktrees.
+    """session id -> (requests, context tokens, output tokens, models), across worktrees.
+
+    `models` is a Counter of each assistant row's message.model, which is
+    what --events joins against the slice's plan level (WD-3).
 
     A worktree session's transcript lands in its own ~/.claude/projects
     directory, keyed by the worktree path, so the join globs every directory
@@ -321,6 +334,7 @@ def _session_totals():
     for project_dir in home.glob("C--Users-dl13860-Documents-Meadow-meadow*"):
         for f in project_dir.glob("*.jsonl"):
             requests = context = output = 0
+            models = Counter()
             try:
                 with f.open("r", encoding="utf-8") as fh:
                     for line in fh:
@@ -332,6 +346,9 @@ def _session_totals():
                             continue
                         if row.get("type") != "assistant":
                             continue
+                        model = row.get("message", {}).get("model")
+                        if model:
+                            models[model] += 1
                         usage = row.get("message", {}).get("usage")
                         if not usage:
                             continue
@@ -345,7 +362,7 @@ def _session_totals():
             except Exception:
                 continue
             if requests:
-                totals[f.stem] = (requests, context, output)
+                totals[f.stem] = (requests, context, output, models)
     return totals
 
 
@@ -403,7 +420,7 @@ def run_events(days: int):
         hit = totals.get(e.get("session", ""))
         if not hit:
             continue
-        requests, context, output = hit
+        requests, context, output, _ = hit
         row = by_branch.setdefault(branch, [0, 0, 0, 0])
         row[0] += 1
         row[1] += requests
@@ -421,6 +438,50 @@ def run_events(days: int):
     else:
         print("cost by branch               no session joined a transcript yet")
         print("  (the SessionStart hook has to have run at least once)")
+
+    _print_level_drift(claimed, events, totals)
+
+
+def _level_allows(level: str, model: str) -> bool:
+    return any(model.startswith(prefix) for prefix in LEVEL_MODELS[level])
+
+
+def _print_level_drift(claimed, events, totals):
+    """WD-3: each claimed slice's plan level against the models its sessions
+    actually ran at. A slice with no stated level, or whose branch joined no
+    transcript, is counted rather than guessed at."""
+    sessions_by_branch = {}
+    for e in events:
+        if e["kind"] == "session_start" and e.get("branch"):
+            sessions_by_branch.setdefault(e["branch"], []).append(e.get("session", ""))
+
+    drift = []
+    not_assessable = 0
+    for e in claimed:
+        level = e.get("level", "unstated")
+        if level not in LEVEL_MODELS:
+            not_assessable += 1
+            continue
+        models = Counter()
+        for session in sessions_by_branch.get(e.get("branch"), []):
+            hit = totals.get(session)
+            if hit:
+                models.update(hit[3])
+        if not models:
+            not_assessable += 1
+            continue
+        if any(not _level_allows(level, model) for model in models):
+            drift.append((e.get("id", "?"), level, models))
+
+    print()
+    if drift:
+        print("level drift (slice, plan level, models actually used)")
+        for slice_id, level, models in drift:
+            used = ", ".join(f"{m}={n}" for m, n in models.most_common())
+            print(f"  {slice_id:32s}{level:8s} {used}")
+    else:
+        print("level drift                  none")
+    print(f"  not assessable: {not_assessable}")
 NO_EDIT_LABELS = {
     "read_only": "Read-only: a question, review or investigation that wrote nothing",
     "docs_only": "Documentation, plan or queue edits only -- no product file",
