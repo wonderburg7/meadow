@@ -163,7 +163,7 @@ Level: high
 ## Standing rules
 
 **A second log now exists beside this plan's, and the boundary between them
-is fixed.** `plans/now/workflow-diagnostics.md` added an event log written by
+is fixed.** `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` added an event log written by
 the scripts themselves (`meadow-diagnostics.jsonl`) and a `--events` mode to
 `tools/session_cost.py`, covering verify stages, sessions and cost by branch.
 **Stops are not in it.** `tools/slice.ps1`'s own `meadow-slice-stops.jsonl`

@@ -173,7 +173,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | L-12, L-13 -- closeout as one command, queue lines carried by the plan (L-1..L-11 are archived) | `plans/now/agent-lifecycle.md` |
-| WD-4 -- the Bash tool-call hook; WD-0..WD-3, the workflow event log and `--events` | `plans/now/workflow-diagnostics.md` |
+| WD-0..WD-4 -- the workflow event log, its writers and `--events` | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` (complete) |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 | Provenance for a shipped slice | `plans/archive/` (search only) |

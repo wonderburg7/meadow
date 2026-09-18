@@ -77,7 +77,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
-- **WD-4** (`plans/now/workflow-diagnostics.md`) -- its script half shipped; it waits for Dave to paste the PostToolUse block into `.claude/settings.json`, which a session cannot edit. The exact text is in the plan.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
