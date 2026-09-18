@@ -1,0 +1,137 @@
+{
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "viewport_size",
+      "w": 1920,
+      "h": 1080
+    },
+    {
+      "do": "show_gallerin_prompt",
+      "text": "Hi!"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "max_height": 100.0
+      }
+    },
+    {
+      "do": "show_gallerin_prompt",
+      "text": "Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisions made together. Bees rely on decisio"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "min_height": 90.0,
+        "max_height": 360.0
+      }
+    },
+    {
+      "do": "show_gallerin_prompt",
+      "text": "Bees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions made together.\nBees rely on decisions m"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "height": 360.0,
+        "tolerance": 5.0
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "scroll_active": true
+      }
+    },
+    {
+      "do": "open_window",
+      "window": "settings"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "below_panel": "settings",
+        "gap": 16.0
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "scroll_active": true
+      }
+    },
+    {
+      "do": "close_window",
+      "window": "settings"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "height": 360.0,
+        "tolerance": 5.0
+      }
+    },
+    {
+      "do": "viewport_size",
+      "w": 800,
+      "h": 600
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "height": 200.0,
+        "tolerance": 5.0
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel": "gallerin",
+        "scroll_active": true
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "root": "gallerin_panel"
+      }
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  }
+}

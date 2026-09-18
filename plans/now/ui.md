@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-X-2 -- see `plans/now/ui-x.md` | Dependency: none | Verified: 2026-09-17
+Status: active | Owner: Dave / Claude Code | Next: None outstanding -- see `plans/archive/UI-X_2026-09-18.md` | Dependency: none | Verified: 2026-09-18
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.
@@ -14,10 +14,10 @@ UI-B-1's did.
 
 ## Open slices at a glance
 
-Dave's 12 Sep 2026 pass opened the UI-W group: the settings window's width,
-stage row and Controls list (UI-X-1), Challenge 2's missing Forager to raise
-(UI-X-2), a cell tray's third column (UI-X-3) and Dr Gallerin's bubble height
-(UI-X-4). Specifications and dependencies: `plans/now/ui-x.md`.
+None. Dave's 12 Sep 2026 pass (UI-X-1 through UI-X-4: the settings window's
+width, stage row and Controls list, Challenge 2's missing Forager to raise, a
+cell tray's third column and Dr Gallerin's bubble height) shipped 18 Sep
+2026 -- see `plans/archive/UI-X_2026-09-18.md`.
 
 ## Durable rules
 

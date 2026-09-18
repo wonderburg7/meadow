@@ -29,8 +29,8 @@ UI-X-2 does, so it follows UI-X-2 in the Claude lane. It also follows E1
 placement tool E1 replaces: taken in the other order, C1F-1 writes seven
 `awaiting_*` clears that E1 then deletes. C1F-2 starts its fixture at 1.14 through C1F-1's setup;
 without it a headless run cannot reach 1.14 with two built cells. C1F-2 also
-edits `scripts/scenario_actions.gd`, which UI-X-2 (`plans/now/ui-x.md`) owns
-while it is open, so C1F-2 waits for UI-X-2 as well.
+edits `scripts/scenario_actions.gd`; UI-X-2 (`plans/archive/UI-X-2_2026-09-18.md`)
+used to own that file too, but has since shipped, so that wait is clear.
 
 **Required reading for any slice.** Its own section below. Nothing in
 `plans/archive/` is needed.

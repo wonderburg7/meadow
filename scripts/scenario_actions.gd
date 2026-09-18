@@ -115,6 +115,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_select_cell(main, action)
 		"open_window":
 			_do_open_window(main, action)
+		"close_window":
+			_do_close_window(main, action)
 		"viewport_size":
 			_do_viewport_size(main, action)
 		"show_gallerin_prompt":
@@ -598,6 +600,19 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 		return
 	_log("open_window", window_key, "accepted", "")
 
+## {"do": "close_window", "window": "settings"} -- panel.visible = false
+## directly, the same thing debug_panel.gd's own "Return to Main Menu"
+## handler does (_on_main_menu_pressed()). Only "settings" is needed so
+## far -- UI-X-4's fixture checks the bubble's ceiling grows back once the
+## settings window stops sharing its column.
+static func _do_close_window(main: Node2D, action: Dictionary) -> void:
+	var window_key: String = action.get("window", "")
+	if window_key == "settings":
+		main.debug_panel.panel.visible = false
+		_log("close_window", window_key, "accepted", "")
+		return
+	_log("close_window", str(action), "rejected", "unknown window")
+
 ## Sets the root window's size directly rather than relying on Godot's
 ## --resolution command-line flag, whose behaviour --headless doesn't
 ## guarantee. LAY-5: lets a fixture cover the three supported sizes
@@ -742,6 +757,55 @@ static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
 		var tolerance: float = float(condition.get("tolerance", 1.0))
 		if absf(rect.size.y - expected_height) > tolerance:
 			return {"ok": false, "reason": "panel '%s' height is %.1fpx, content wants %.1fpx (tolerance %.1fpx, rect %s)" % [name, rect.size.y, expected_height, tolerance, rect]}
+	## UI-X-4: {"panel": name, "height": px, "tolerance": px} checks the
+	## rendered height directly, for panels (like gallerin) whose height
+	## comes from a fraction/ceiling rule rather than matching its content.
+	if condition.has("height"):
+		var expected_height2: float = float(condition["height"])
+		var tolerance2: float = float(condition.get("tolerance", 1.0))
+		if absf(rect.size.y - expected_height2) > tolerance2:
+			return {"ok": false, "reason": "panel '%s' height is %.1fpx, expected %.1fpx (tolerance %.1fpx, rect %s)" % [name, rect.size.y, expected_height2, tolerance2, rect]}
+	## UI-X-4: {"panel": name, "below_panel": other_name, "gap": px} --
+	## the vertical counterpart of "after_panel"/"gap" above, for the bubble
+	## clearing the settings window's bottom edge rather than two panels
+	## sharing a row (Dave, 17 Sep 2026: "unless the settings window is in
+	## the way ... shorten").
+	if condition.has("below_panel"):
+		var below_name: String = condition["below_panel"]
+		var below_panel: Control = _resolve_named_panel(main, below_name)
+		if below_panel == null:
+			return {"ok": false, "reason": "unknown panel '%s'" % below_name}
+		if not below_panel.visible:
+			return {"ok": false, "reason": "panel '%s' is not visible" % below_name}
+		var below_rect: Rect2 = below_panel.get_global_rect()
+		var expected_below_gap: float = float(condition.get("gap", 0))
+		var actual_below_gap: float = rect.position.y - (below_rect.position.y + below_rect.size.y)
+		if actual_below_gap < expected_below_gap - 1.0:
+			return {"ok": false, "reason": "panel '%s' gap below '%s' is %.1fpx, expected at least %.1fpx (rect %s, below %s)" % [name, below_name, actual_below_gap, expected_below_gap, rect, below_rect]}
+	## UI-X-4: {"panel": name, "min_height": px} / {"max_height": px} -- a
+	## one-sided bound, for acceptance criteria phrased as "taller than" or
+	## "at most" rather than a single expected number.
+	if condition.has("min_height"):
+		var min_height: float = float(condition["min_height"])
+		if rect.size.y < min_height:
+			return {"ok": false, "reason": "panel '%s' height is %.1fpx, expected at least %.1fpx (rect %s)" % [name, rect.size.y, min_height, rect]}
+	if condition.has("max_height"):
+		var max_height: float = float(condition["max_height"])
+		if rect.size.y > max_height:
+			return {"ok": false, "reason": "panel '%s' height is %.1fpx, expected at most %.1fpx (rect %s)" % [name, rect.size.y, max_height, rect]}
+	## UI-X-4: {"panel": "gallerin", "scroll_active": true} -- whether the
+	## bubble's content is taller than the visible area it was given, i.e.
+	## the ceiling actually clipped it rather than the panel hugging shorter
+	## content (see ui_panel_layout.gd::apply()'s comment on that split).
+	if condition.has("scroll_active"):
+		if name != "gallerin":
+			return {"ok": false, "reason": "scroll_active only supports panel 'gallerin'"}
+		var expected_scroll: bool = bool(condition["scroll_active"])
+		var scroll: ScrollContainer = main.gallerin_panel._bubble_scroll
+		var content: Control = scroll.get_child(0) as Control
+		var actual_scroll: bool = content != null and content.get_combined_minimum_size().y > scroll.size.y + 0.5
+		if actual_scroll != expected_scroll:
+			return {"ok": false, "reason": "panel 'gallerin' scroll_active is %s, expected %s" % [actual_scroll, expected_scroll]}
 	return {"ok": true, "reason": ""}
 
 static func _resolve_named_panel(main: Node2D, name: String) -> Control:
