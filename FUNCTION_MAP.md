@@ -694,55 +694,56 @@ The comb as a whole: cells, navigation, finding a cell.
 1044 func announce() -> void
 ```
 
-## debug_panel.gd (971 lines)
+## debug_panel.gd (997 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
-70   func _style_button(button: BaseButton) -> BaseButton
-75   func _ready() -> void
-179  func _report_settings_button_width() -> void
-184  func _rows_in(category: String) -> Array
-206  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-237  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-245  func open_to_categories(categories: Array) -> void
-265  func collapse_all() -> void
-273  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-333  func _make_challenge_stage_navigation() -> Control
-371  func _process(_delta: float) -> void
-374  func _refresh_challenge_stage_navigation() -> void
-398  func _make_controls_help() -> Control
-436  func _build_actions(column: VBoxContainer) -> void
-504  func _add_action_row(parent: Control, button: Button, tip: String) -> void
-510  func _make_winter_action() -> Control
-522  func _on_winter_pressed() -> void
-528  func _on_challenge_advance_pressed() -> void
-535  func _on_challenge_retreat_pressed() -> void
-549  func _on_fire_test_warnings_pressed() -> void
-582  func _on_force_c2_collapse_pressed() -> void
-600  func set_save_load_enabled(enabled: bool) -> void
-608  func set_toggle(key: String, value: bool) -> void
-613  func _on_save_pressed() -> void
-624  func _on_load_pressed() -> void
-636  func _toggle_panel() -> void
-650  func _apply_layer_for_context() -> void
-655  func _make_row(entry: Dictionary) -> Control
-698  func _make_control_slot() -> HBoxContainer
-707  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-737  func _make_toggle_row(entry: Dictionary) -> Control
-808  func _make_options_row(entry: Dictionary) -> Control
-841  func _option_display(entry: Dictionary, value) -> String
-845  func _cycle_option(entry: Dictionary, direction: int) -> void
-860  func _cascade_prerequisites_on(key: String) -> void
-874  func _cascade_dependents_off(key: String) -> void
-882  func _cascade_mutual_exclusion(key: String) -> void
-891  func _make_star_row(entry: Dictionary) -> Control
-932  func _adjust(entry: Dictionary, delta: float) -> void
-947  func _format_value(v) -> String
-954  func _on_restart_pressed() -> void
-959  func _on_main_menu_pressed() -> void
-967  func _restart() -> void
+68   func _style_button(button: BaseButton) -> BaseButton
+73   func _ready() -> void
+187  func _apply_panel_width() -> void
+192  func _report_settings_button_width() -> void
+197  func _rows_in(category: String) -> Array
+219  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+250  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+258  func open_to_categories(categories: Array) -> void
+278  func collapse_all() -> void
+286  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+346  func _make_challenge_stage_navigation() -> Control
+384  func _process(_delta: float) -> void
+387  func _refresh_challenge_stage_navigation() -> void
+411  func _make_controls_help() -> Control
+462  func _build_actions(column: VBoxContainer) -> void
+530  func _add_action_row(parent: Control, button: Button, tip: String) -> void
+536  func _make_winter_action() -> Control
+548  func _on_winter_pressed() -> void
+554  func _on_challenge_advance_pressed() -> void
+561  func _on_challenge_retreat_pressed() -> void
+575  func _on_fire_test_warnings_pressed() -> void
+608  func _on_force_c2_collapse_pressed() -> void
+626  func set_save_load_enabled(enabled: bool) -> void
+634  func set_toggle(key: String, value: bool) -> void
+639  func _on_save_pressed() -> void
+650  func _on_load_pressed() -> void
+662  func _toggle_panel() -> void
+676  func _apply_layer_for_context() -> void
+681  func _make_row(entry: Dictionary) -> Control
+724  func _make_control_slot() -> HBoxContainer
+733  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+763  func _make_toggle_row(entry: Dictionary) -> Control
+834  func _make_options_row(entry: Dictionary) -> Control
+867  func _option_display(entry: Dictionary, value) -> String
+871  func _cycle_option(entry: Dictionary, direction: int) -> void
+886  func _cascade_prerequisites_on(key: String) -> void
+900  func _cascade_dependents_off(key: String) -> void
+908  func _cascade_mutual_exclusion(key: String) -> void
+917  func _make_star_row(entry: Dictionary) -> Control
+958  func _adjust(entry: Dictionary, delta: float) -> void
+973  func _format_value(v) -> String
+980  func _on_restart_pressed() -> void
+985  func _on_main_menu_pressed() -> void
+993  func _restart() -> void
 ```
 
 ## scenario_actions.gd (939 lines)
