@@ -16,7 +16,7 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 1. **[Claude] E1 -- one placement tool**
    - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
-   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`, `docs/headless-run-contract.md`, `test_scenarios/e1_placement_exclusion_test.json`
    - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class.
@@ -34,6 +34,20 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Check: two headless runs of the new fixture report identical per-site builder counts and stand points, and the delivery note names which of H1-H3 the numbers support
    - Proof: `absent: scripts/scenario_actions.gd :: builders_per_site`
    - Next after: CB-2 -- the fix CB-1 identifies.
+
+4. **[Claude] WD-1 -- a headless run records what it cost and whether it worked**
+   - Plan: `plans/now/workflow-diagnostics.md` -- "WD-1 — a headless run records what it cost and whether it worked"
+   - Files: `tools/run_scenario.py`
+   - Check: `python tools/run_scenario.py test_scenarios/slice1_smoke_test.json` then `python tools/session_cost.py --events` shows `headless_run=1` under "by kind", and a second run shows 2
+   - Proof: `absent: tools/run_scenario.py :: headless_run`
+   - Next after: WD-2 -- `slice doctor` records which of the environment classes was in the way.
+
+5. **[Claude] WD-2 -- `slice doctor` records which of the environment classes was in the way**
+   - Plan: `plans/now/workflow-diagnostics.md` -- "WD-2 — `slice doctor` records which of the environment classes was in the way"
+   - Files: `tools/slice.ps1`
+   - Check: `.\tools\slice.ps1 doctor -Lane Claude` then `python tools/session_cost.py --events` shows `env_capability=1`, and `python -m unittest tests.test_slice_lifecycle tests.test_two_lane_closeout` stays green
+   - Proof: `absent: tools/slice.ps1 :: env_capability`
+   - Next after: WD-3 -- `--events` reports the model a slice was worked at against the level its plan states.
 
 ### Codex lane
 
@@ -68,11 +82,11 @@ One line each: the id, its plan, and the single thing it waits for.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
-- **L-10, L-11** (`plans/now/agent-lifecycle.md`) -- ready now; the Claude lane is full at five.
+- **L-10, L-11** (`plans/now/agent-lifecycle.md`) -- ready now; they wait for a free slot in the Claude lane, which is full at five.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
 - **L-13** (`plans/now/agent-lifecycle.md`) -- integrates L-10 and L-11; needs both merged.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
-- **WD-1, WD-2, WD-3, WD-4** (`plans/now/workflow-diagnostics.md`) -- all four are startable and own no file in either lane; they wait for a free slot in the Claude lane.
+- **WD-3, WD-4** (`plans/now/workflow-diagnostics.md`) -- both startable and file-disjoint from both lanes; they wait for a free slot in the Claude lane, which is full at five.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

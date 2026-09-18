@@ -44,10 +44,6 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
-**C-18** -- unblocked 18 Sep 2026 by UI-X-3; see `checks/ready/C-18.md`.
-
-Owner: `plans/archive/UI-X-3_2026-09-18.md`.
-
 ### C-46 -- comb builders spread across six walls before opening another site
 
 Give at least seven idle bees the Comb worker job with the Building focus,

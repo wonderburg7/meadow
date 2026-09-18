@@ -200,6 +200,46 @@ class QueueSchemaChecksTest(unittest.TestCase):
         self.assertEqual(1, len(errors), errors)
         self.assertIn("X-1", errors[0])
 
+    def _two_lane_queue(self, claude_items: int) -> str:
+        items = []
+        for n in range(1, claude_items + 1):
+            items.append(
+                f"{n}. **[Claude] X-{n} -- does a thing.**\n"
+                f"   - Plan: `plans/now/x.md`\n   - Files: `scripts/x{n}.gd`\n"
+                "   - Check: something\n"
+                f"   - Proof: `absent: scripts/x{n}.gd :: thing`\n"
+                f"   - Next after: X-{n + 1}.\n\n"
+            )
+        return (
+            "## Next up\n\n### Claude lane\n\n" + "".join(items)
+            + "### Codex lane\n\n1. **[Codex] Y-1 -- does a thing.**\n"
+            "   - Plan: `plans/now/y.md`\n   - Files: `scripts/y.gd`\n"
+            "   - Check: something\n   - Proof: `absent: scripts/y.gd :: thing`\n"
+            "   - Next after: Y-2.\n\n"
+            "## Not in the queue, and why\n\n"
+            "- **Z-1** (`plans/now/z.md`) -- ready now; the Claude lane is full at five.\n"
+            "- **Z-2** (`plans/now/z.md`) -- waits for a decision from Dave.\n"
+        )
+
+    def test_a_full_lane_reason_is_rejected_when_the_lane_has_a_free_slot(self):
+        errors = []
+        check_docs.check_not_in_queue_reasons(errors, self._two_lane_queue(3))
+        self.assertEqual(1, len(errors), errors)
+        self.assertIn("Z-1", errors[0])
+        self.assertIn("holds 3 of 5", errors[0])
+
+    def test_a_full_lane_reason_passes_when_the_lane_is_full(self):
+        errors = []
+        check_docs.check_not_in_queue_reasons(errors, self._two_lane_queue(5))
+        self.assertEqual([], errors)
+
+    def test_a_full_lane_reason_must_name_the_lane(self):
+        text = self._two_lane_queue(5).replace("the Claude lane is full at five", "the lane is full at five")
+        errors = []
+        check_docs.check_not_in_queue_reasons(errors, text)
+        self.assertEqual(1, len(errors), errors)
+        self.assertIn("names no lane", errors[0])
+
     def test_a_prose_mention_of_a_ready_id_is_not_rejected(self):
         text = (
             "## Next up\n\n"

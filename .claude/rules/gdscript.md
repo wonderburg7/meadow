@@ -14,8 +14,7 @@ calling a change done:
 
 Pass `-PythonPath` when Python is not on `PATH`.
 
-Neither is a real GDScript parser (see "Verifying without Godot" in
-`CLAUDE.md`). If `mcp__godot__*` tools are available this session, boot
+Neither is a real GDScript parser (see "Verification" in `CLAUDE.md`). If `mcp__godot__*` tools are available this session, boot
 the project with them before saying something is ready to test.
 
 **The `:=` landmine.** `var x := some_loosely_typed_ref.SomeClass.new()`
@@ -37,5 +36,5 @@ local/field name already means on the node type it's declared on.
 
 **Section headers, not top-to-bottom reads.** Every long script is
 divided by `# --- section name ---` headers — grep for those (or check
-`FUNCTION_MAP.md` for the six biggest scripts) rather than reading a
+`FUNCTION_MAP.md` for every script over 700 lines) rather than reading a
 1,000+ line file start to finish.

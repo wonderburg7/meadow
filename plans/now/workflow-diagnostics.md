@@ -13,16 +13,12 @@ until someone asks.
 `plans/reference/colony-diagnostics.md` record what the bees did. This plan is
 the development workflow and touches no game code; they never share a file.
 
-**State.** WD-0 shipped 17 September 2026 and built the spine:
-`tools/diagnostics.ps1` and `tools/diagnostics.py` append one JSON object per
-line to `<git-common-dir>/meadow-diagnostics.jsonl`; `tools/slice.ps1` records
-`slice_claimed` and `slice_finished`; `tools/verify.ps1` records `verify_stage`
-with a duration; `.claude/settings.json`'s SessionStart and Stop hooks record
-`session_start`/`session_end` through `tools/hook_log.py`; and
-`python tools/session_cost.py --events` prints the summary. Four of the eight
-kinds in `tools/diagnostics.py`'s `KINDS` have no writer yet, and the four
-slices below write them. Specification and outcome:
-`plans/archive/WD-0_2026-09-17.md`.
+**State.** WD-0 shipped 17 September 2026 and built the spine: the two
+writers (`tools/diagnostics.ps1`, `tools/diagnostics.py`), the events
+`tools/slice.ps1`, `tools/verify.ps1` and the session hooks already write,
+and `python tools/session_cost.py --events` as the reader. Four of the eight
+kinds in `tools/diagnostics.py`'s `KINDS` have no writer; the four slices
+below write them. Record: `plans/archive/WD-0_2026-09-17.md`.
 
 **This log does not record stops.** `tools/slice.ps1` writes them to its own
 `meadow-slice-stops.jsonl` and `python tools/session_cost.py --stops` tallies
@@ -178,23 +174,31 @@ assistant rows carry `message.model`; and `_session_totals` in
    assistant row's `message.model` value, skipping rows with no model. Update
    its one existing caller in `run_events` to unpack four values and ignore
    the fourth where it is not needed.
-2. Add a module-level mapping beside `PHASE_LABELS`, and a comment saying it
-   mirrors `Get-SliceAdvice` in `tools/slice.ps1`, which is where the rule
-   actually lives:
+2. Add a module-level reader beside `PHASE_LABELS` that takes the rule from
+   its one home rather than copying it (`re` and `Path` are already
+   imported; the reader was checked against the live switch on 18 Sep 2026
+   and returns high, medium and low):
    ```python
-   # The model each stated level asks for -- mirrors Get-SliceAdvice in
-   # tools/slice.ps1. A model outside its level's entry is drift, in whichever
-   # direction; CLAUDE.md rule 4 treats both as mistakes.
-   LEVEL_MODELS = {
-       "low": ("claude-sonnet-5", "claude-haiku-4-5"),
-       "medium": ("claude-sonnet-5",),
-       "high": ("claude-opus-5",),
-   }
+   # The model each stated level asks for lives in Get-SliceAdvice in
+   # tools/slice.ps1. Read it out of the switch there, the way
+   # tests/balance_tests.py reads tuning values out of game_config.gd, so
+   # there is one copy. A model outside its level's entry is drift, in
+   # whichever direction; CLAUDE.md rule 4 treats both as mistakes.
+   def level_models() -> dict[str, tuple[str, ...]]:
+       text = (Path(__file__).resolve().parent / "slice.ps1").read_text(encoding="utf-8")
+       block = text.split("function Get-SliceAdvice", 1)[1].split("$uiFile", 1)[0]
+       return {
+           level: (model,)
+           for level, model in re.findall(r'"(low|medium|high)"\s*\{\s*"([a-z0-9-]+)', block)
+       }
    ```
    Match a transcript's model against an entry by `startswith`, because a
-   transcript records a dated id such as `claude-sonnet-5-20260401`.
+   transcript records a dated id such as `claude-sonnet-5-20260401`. Do not
+   add a literal model name to `tools/session_cost.py`; if the reader finds
+   nothing, print `level drift               not assessable: the rule in
+   tools/slice.ps1 did not parse` and stop.
 3. Add a `level_drift` section at the end of `run_events`. For each
-   `slice_claimed` event with a `level` in `LEVEL_MODELS`, find every
+   `slice_claimed` event with a `level` in `level_models()`, find every
    `session_start` on the same `branch`, take those sessions' models, and
    print one line per slice where a model was used that its level does not
    allow:

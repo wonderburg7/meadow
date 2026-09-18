@@ -524,6 +524,51 @@ def check_queue_section_agreement(errors: list[str], text: str | None = None) ->
                 )
 
 
+# A "Not in the queue" bullet that blames a full lane is only true while that
+# lane holds LANE_SIZE_MAX items. On 18 Sep 2026 two such bullets (L-10/L-11
+# and WD-1..4) sat under a Claude lane holding three items: two slots idle on
+# a sentence that had been true when it was written and nothing to notice.
+LANE_FULL_REASON = re.compile(r"(lane is full|full at five|free slot)", re.IGNORECASE)
+LANE_NAMED = re.compile(r"\b(Claude|Codex) lane\b")
+
+
+def check_not_in_queue_reasons(errors: list[str], text: str | None = None) -> None:
+    """A waiting item that blames a full lane is wrong the moment that lane
+    has a free slot; say which lane, and be right about it."""
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    items = queue_item_chunks(text)
+    not_queued_match = re.search(
+        r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE
+    )
+    if items is None or not not_queued_match:
+        return
+    lane_sizes = {lane: 0 for lane in LANES}
+    for _, chunk in items:
+        lane_match = re.match(r"\*\*\[(\w+)\]", chunk)
+        if lane_match and lane_match.group(1) in lane_sizes:
+            lane_sizes[lane_match.group(1)] += 1
+    for bullet in re.findall(r"^-\s+.*$", not_queued_match.group(1), re.MULTILINE):
+        if not LANE_FULL_REASON.search(bullet):
+            continue
+        lead = re.match(r"^-\s+\*\*(.+?)\*\*", bullet)
+        name = lead.group(1) if lead else bullet[:40]
+        lane_match = LANE_NAMED.search(bullet)
+        if not lane_match:
+            errors.append(
+                f"NEXTSTEPS.md: '{name}' waits for a lane slot but names no lane -- "
+                "write 'the Claude lane' or 'the Codex lane' so the claim can be checked"
+            )
+            continue
+        lane = lane_match.group(1)
+        if lane_sizes[lane] < LANE_SIZE_MAX:
+            errors.append(
+                f"NEXTSTEPS.md: '{name}' waits for a free slot in the {lane} lane, "
+                f"but that lane holds {lane_sizes[lane]} of {LANE_SIZE_MAX} -- queue it, "
+                "or state the real reason it waits"
+            )
+
+
 def check_queue_proofs(errors: list[str]) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
@@ -944,6 +989,7 @@ def main() -> int:
     check_queue_ids_are_unused(warnings)
     check_queue_successors(errors)
     check_queue_section_agreement(errors)
+    check_not_in_queue_reasons(errors)
     check_markdown_links(errors)
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)

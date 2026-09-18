@@ -1,6 +1,6 @@
 # Meadow game model — shared vocabulary
 
-Slice 1 of `DESIGN_BACKLOG.md` section 13 (systems/language/architecture
+Slice 1 of `docs/archive/DESIGN_BACKLOG_2026-08-24.md` section 13 (systems/language/architecture
 map). Trimmed on purpose: the 9-part system template, the bee-model
 vocabulary, and the core architecture terms. No gameplay-term table and
 no availability-state lifecycle yet — those are later slices, added only
@@ -9,7 +9,9 @@ added a two-term version of that vocabulary, but only for the one place
 it was needed — see "Availability-lifecycle terms" below.
 
 This file is a reference for describing systems consistently, not a
-rename of anything. Nothing here requires touching code.
+rename of anything. Nothing here requires touching code. Section 13 and
+its slice order live in the archived 24 Aug snapshot named above; the live
+`DESIGN_BACKLOG.md` has had no numbered sections since 11 Sep 2026.
 
 ## The 9-part system template
 
@@ -38,7 +40,7 @@ a card, an onboarding note), cover these nine parts:
 7. **Availability** — whether the system is unlocked, gated behind a
    prerequisite, or hidden at the current stage (Challenge stage gates,
    `Prerequisites`/`TOGGLE_PREREQUISITE`). The report's full 12-term
-   lifecycle stays parked (`DESIGN_BACKLOG.md` §13) — most systems here
+   lifecycle stays parked (`docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13) — most systems here
    still just get named as having *an* availability state, without a
    fixed set of terms. The one exception is the settings-window
    prerequisite tree itself, where "Locked" vs "Available" turned out to
@@ -127,7 +129,7 @@ than propose a new layer.
 
 ## Piloting the 9-part card
 
-Slice 2 of `DESIGN_BACKLOG.md` section 13. Two cards, checked against
+Slice 2 of `docs/archive/DESIGN_BACKLOG_2026-08-24.md` section 13. Two cards, checked against
 the live code rather than written from memory of what it's meant to do
 — where that surfaced a real gap, the card says so instead of papering
 over it (see Foraging's Persistence entry below).
@@ -225,11 +227,11 @@ over it (see Foraging's Persistence entry below).
    `predators_on → {crab_spider_recruit_suppression_on,
    alarm_pheromone_on}`. Lives entirely inside `debug_panel.gd` — a
    presentation file — which is section 13's one confirmed live pain
-   point (`DESIGN_BACKLOG.md` §13): the cascade rule is data, not UI,
+   point (`docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13): the cascade rule is data, not UI,
    and nothing outside the settings window can currently ask "is X
    actually available" without going through a checkbox widget --
    fixed by slice 3, see point 6 below.
-6. **Presentation** — split as of slice 3 (`DESIGN_BACKLOG.md` §13):
+6. **Presentation** — split as of slice 3 (`docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13):
    the dictionary and the two lookups the cascade needs
    (`direct_parent`, `direct_dependents`) now live in
    `scripts/prerequisites.gd`, a non-visual `RefCounted` catalogue in
@@ -248,7 +250,7 @@ over it (see Foraging's Persistence entry below).
    pressing it cascades the prerequisite on rather than refusing the
    click (`_cascade_prerequisites_on`). These two terms are a slice-4
    trim of the report's full 12-term Unimplemented → Hidden vocabulary,
-   which stays parked everywhere else (`DESIGN_BACKLOG.md` §13) — they
+   which stays parked everywhere else (`docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13) — they
    name only the one distinction this mechanic actually has. Whether a
    toggle *shows up at all* is separate and unrelated: that's
    `stage_gate.gd` gating UI by Challenge stage ("Hidden" in the
@@ -276,7 +278,7 @@ auto_recruitment_on}`, and `predators_on → {crab_spider_recruit_
 suppression_on, alarm_pheromone_on}`). Not a general-purpose vocabulary
 — every other system's Availability heading stays as slice 1 left it
 ("names *that* a system has an availability state, without a fixed set
-of terms"), per `DESIGN_BACKLOG.md` §13's warning against a blanket
+of terms"), per `docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13's warning against a blanket
 relabelling of every toggle in the game.
 
 - **Available** — a toggle with no prerequisite, or whose prerequisite
@@ -303,7 +305,7 @@ Availability card's "output" being checkbox widgets rather than a
 distinct data write. Neither took long to write once the code was
 actually open. Whether that's worth generalising to the other ~18
 systems in the original report's table is Dave's call — see
-`DESIGN_BACKLOG.md` §13's slice order for what's next either way
+`docs/archive/DESIGN_BACKLOG_2026-08-24.md` §13's slice order for what's next either way
 (slice 3, extracting `TOGGLE_PREREQUISITE` into a non-visual catalogue,
 and slice 4, naming the Available/Locked distinction above, are both
 now done -- see that section's Status line).

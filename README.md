@@ -130,8 +130,7 @@ scripts/              all game code
   season.gd           the year: seasons, disease, winter, gynes
   spatial_grid.gd     bucketed lookups for flowers and obstacles
   hud.gd              readouts, panels, popups
-tests/                the two suites above
-_backups/             snapshots taken before large changes
+tests/                the two suites above, plus the workflow unittest modules
 ```
 
 Design direction lives in `DESIGN_BACKLOG.md` and `ROADMAP.md`; selected work

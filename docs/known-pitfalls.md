@@ -322,3 +322,13 @@ refuse only the part that should be refused.
 The read-only inspection commands this project actually uses are allow-listed
 in `.claude/settings.json`; if a plain `sed -n`/`grep`/`git show` is refused,
 the path it names is denied on purpose — do not reach for a workaround.
+
+**Why four paths are denied to the `Read` tool, and the one sanctioned way
+round it (Dave, 18 Sep 2026).** `ROADMAP.md`, `DESIGN_BACKLOG.md`,
+`plans/archive/**` and `docs/archive/**` are on the deny list because an
+implementing session opening any of them to decide what to do is the
+expensive path the queue exists to remove -- the queue has already decided.
+The list is not secrecy. A review or planning session that is asked to read
+one of them reads it with `git show HEAD:<path>` (allow-listed) and says so
+in its report; a `.json` file cannot carry this note, which is why it lives
+here. Do not widen the deny list, and do not add a `Read` allow for them.
