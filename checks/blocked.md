@@ -46,7 +46,7 @@ Owner: none currently.
 
 **C-18** -- unblocked 18 Sep 2026 by UI-X-3; see `checks/ready/C-18.md`.
 
-Owner: `plans/now/ui-x.md` UI-X-3.
+Owner: `plans/archive/UI-X-3_2026-09-18.md`.
 
 ### C-46 -- comb builders spread across six walls before opening another site
 

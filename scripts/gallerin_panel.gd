@@ -90,6 +90,16 @@ func _ready() -> void:
 	_last_text_scale = Session.text_scale
 	visible = Session.gallerin_enabled
 	get_viewport().size_changed.connect(_apply_layout)
+	# The settings window is built before this node (main.gd), so it's
+	# already in the "debug_panel" group -- the same reach-across-the-tree
+	# pattern main_menu.gd's Settings button uses the other way. Its
+	# visibility/resize, not _process(), is what should trigger a re-layout
+	# when it starts or stops sharing the bottom-right column (UI-X-4).
+	var settings_panels := get_tree().get_nodes_in_group("debug_panel")
+	if not settings_panels.is_empty():
+		var settings_panel: PanelContainer = settings_panels[0].panel
+		settings_panel.visibility_changed.connect(_apply_layout)
+		settings_panel.resized.connect(_apply_layout)
 	_apply_layout()
 
 func _process(delta: float) -> void:
@@ -210,6 +220,13 @@ func _build_bubble() -> void:
 	_bubble_label = Label.new()
 	_bubble_label.theme_type_variation = "Body"
 	_bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# The default, VC_CHARS_BEFORE_SHAPING, shapes only the characters
+	# visible_characters currently reveals, so _show_bubble()'s
+	# visible_characters = 0 measured the combined minimum height of an
+	# empty line rather than the full message (UI-X-4). AFTER_SHAPING shapes
+	# the whole line first and clips what's drawn afterwards, so the height
+	# _apply_layout() reads is correct from the first frame.
+	_bubble_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	column.add_child(_bubble_label)
 	_apply_bubble_font_size()
 
@@ -277,13 +294,25 @@ func _ui_panel_layout():
 ## not gain layout work.
 func _apply_layout() -> void:
 	var ui_layout = _ui_layout()
-	var rect: Rect2 = ui_layout.gallerin_rect(get_viewport().get_visible_rect().size)
+	var rect: Rect2 = ui_layout.gallerin_rect(get_viewport().get_visible_rect().size, _settings_panel_rect())
 	# The label needs its content-area width before apply() reads the
 	# panel's combined minimum height below, or that height is computed
 	# from whatever width the label last had.
 	_bubble_label.custom_minimum_size.x = rect.size.x - ui_layout.panel_chrome().x
 	_ui_panel_layout().apply(bubble, _bubble_scroll, rect, ICON_MARGIN)
 	_position_bubble_pointer()
+
+## Empty when the settings window is closed or not yet built (a fresh boot's
+## first _apply_layout() call, before _ready() connects its signals below) --
+## gallerin_rect() treats an empty rect as "nothing to avoid".
+func _settings_panel_rect() -> Rect2:
+	var settings_panels := get_tree().get_nodes_in_group("debug_panel")
+	if settings_panels.is_empty():
+		return Rect2()
+	var settings_panel: PanelContainer = settings_panels[0].panel
+	if settings_panel == null or not settings_panel.visible:
+		return Rect2()
+	return settings_panel.get_global_rect()
 
 func _position_bubble_pointer() -> void:
 	if _bubble_pointer == null:
@@ -410,7 +439,10 @@ func _show_bubble(text: String) -> void:
 	# The label always holds the whole line so the bubble is laid out (and
 	# sized by _apply_layout() below) at its final size from the first
 	# frame -- visible_characters clips what's drawn without re-running
-	# layout, so the bubble never grows as it types.
+	# layout, so the bubble never grows as it types. That relies on
+	# _bubble_label.visible_characters_behavior being VC_CHARS_AFTER_SHAPING
+	# (set in _build_bubble()); the default shapes only what's visible, so
+	# an empty first line would size the bubble to nothing (UI-X-4).
 	_bubble_label.text = text
 	_typing_target = text
 	_typed_characters = 0.0

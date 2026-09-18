@@ -36,6 +36,12 @@ const COMMAND_TRAY_WIDTH_FRACTION := 0.5
 const COMMAND_TRAY_MIN_WIDTH := 200.0
 const GALLERIN_BUBBLE_MIN_WIDTH := 200.0
 
+## The bubble may grow no taller than this fraction of the viewport (Dave,
+## 12 Sep 2026: "make it so it can take up to a third of the height of the
+## window") -- a tighter ceiling than command_tray_max_height() everywhere
+## except the narrowest windows, where that ceiling is already lower.
+const GALLERIN_MAX_HEIGHT_FRACTION := 1.0 / 3.0
+
 ## The settings window: up to a quarter of the viewport's width, never
 ## narrower than its old fixed width (Dave: "up to 25%", UI-X-1).
 const SETTINGS_WINDOW_MIN_WIDTH := 320.0
@@ -151,10 +157,24 @@ static func summary_panel_rect(viewport_size: Vector2) -> Rect2:
 ## fixed left margin. Its width can fall short of reaching the icon when
 ## gallerin_bubble_width() clamps to its floor -- see that function's own
 ## comment; this rectangle does not compensate for it.
-static func gallerin_rect(viewport_size: Vector2) -> Rect2:
+##
+## Height is capped at GALLERIN_MAX_HEIGHT_FRACTION of the viewport (Dave,
+## 12 Sep 2026), tighter than command_tray_max_height() except at the
+## narrowest windows. `avoid`, when non-empty and sharing the bubble's
+## horizontal span, is the settings window's rect (Dave, 17 Sep 2026: "unless
+## the settings window is in the way ... shorten and use the scroll bar") --
+## the ceiling then shortens to clear it by PANEL_GAP, floored at one line's
+## height so the bubble never collapses to nothing.
+static func gallerin_rect(viewport_size: Vector2, avoid: Rect2 = Rect2()) -> Rect2:
 	var tray_right_edge := command_tray_left_edge(viewport_size.x) + command_tray_width(viewport_size.x)
 	var width := gallerin_bubble_width(viewport_size.x)
-	return Rect2(tray_right_edge + PANEL_GAP, 0.0, width, command_tray_max_height(viewport_size.y))
+	var left := tray_right_edge + PANEL_GAP
+	var ceiling := minf(command_tray_max_height(viewport_size.y), viewport_size.y * GALLERIN_MAX_HEIGHT_FRACTION)
+	if avoid.size != Vector2.ZERO and left < avoid.position.x + avoid.size.x and left + width > avoid.position.x:
+		var bubble_bottom := viewport_size.y - GallerinPanel.ICON_MARGIN
+		var one_line := GallerinPanel.BUBBLE_TEXT_SIZE * 2.0 + panel_chrome().y
+		ceiling = maxf(one_line, minf(ceiling, bubble_bottom - (avoid.position.y + avoid.size.y + PANEL_GAP)))
+	return Rect2(left, 0.0, width, ceiling)
 
 ## A left-side window (Colony/Foraging/Nursery): fixed width, x pinned at
 ## the shared left margin, top and height following the corner readout and

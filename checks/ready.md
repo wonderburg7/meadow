@@ -22,4 +22,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-53 -- the Controls list reads as one list, with no gaps](ready/C-53.md)
 - [C-54 -- a run's starting bees do not all die of old age together](ready/C-54.md)
 - [C-55 -- Challenge 1's queen takes Nursing as her backup by herself](ready/C-55.md)
+- [C-56 -- Dr Gallerin's long lines show in full, up to a third of the screen](ready/C-56.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

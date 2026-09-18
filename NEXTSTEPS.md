@@ -14,28 +14,21 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] UI-X-4 -- Dr Gallerin's bubble grows to a third of the window's height**
-   - Plan: `plans/now/ui-x.md` -- "UI-X-4 — Dr Gallerin's bubble grows to a third of the window's height"
-   - Files: `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd`, `test_scenarios/uiw4_gallerin_bubble_height_test.json`
-   - Check: the new fixture's `panel_rect gallerin` assertion at 1920x1080 -- a 2,000-character prompt gives a bubble height of 360±1px with its scroll active -- fails on master, where the bubble sizes to an empty first line (`visible_characters_behavior` defaults to `VC_CHARS_BEFORE_SHAPING`) rather than a third of the window
-   - Proof: `absent: scripts/ui_layout.gd :: GALLERIN_MAX_HEIGHT_FRACTION`
-   - Next after: none -- UI-X is complete once UI-X-4 ships.
-
-2. **[Claude] E1 -- one placement tool**
+1. **[Claude] E1 -- one placement tool**
    - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
    - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
    - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class.
 
-3. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
+2. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
    - Plan: `plans/now/c1-followups.md` -- "C1F-1 — each Challenge 1 stage sets up the world it starts from"
    - Files: `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`
    - Check: a new test_scenarios/c1f1_stage_setup_test.json steps forward to 1.19 and back to 1.1 and asserts each stage stays put for 2 seconds; it fails on master at the first retreat into a met goal
    - Proof: `absent: scripts/challenge_runner.gd :: ChallengeStageSetup`
    - Next after: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop.
 
-4. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
+3. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
    - Plan: `plans/now/comb-builders.md` -- "CB-1 — measure where comb builders stand and how many work one site"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
    - Check: two headless runs of the new fixture report identical per-site builder counts and stand points, and the delivery note names which of H1-H3 the numbers support
