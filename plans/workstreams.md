@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-X-2` (`claude/UI-X-2`) | Claude | Challenge 2's cell tray offers a Forager to raise | Claude | in progress | none | `plans/now/ui-x.md` UI-X-2 — Challenge 2's cell tray offers a Forager to raise |
