@@ -93,7 +93,7 @@ the archived plan is never reopened or extended.
 
 <!-- LAYER: durable-rules -->
 
-Nine rules, added 11 Sep 2026 by a review of every active plan. They cover
+Ten rules, added 11 and 17 Sep 2026 by reviews of every active plan. They cover
 what that review found missing; everything else about plan shape is the
 schema above, `.claude/rules/documentation.md` for the lifecycle,
 `plans/reference/check-loop.md` for acceptance wording, and `CLAUDE.md`
@@ -135,7 +135,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
    later slices, stop and say so with the options and their costs. An
    adjacent improvement goes to a future slice; an unrelated issue goes to
    its owning plan; neither enlarges the slice in hand.
-10. **A restriction naming another slice expires when that slice ships.**
+9. **A restriction naming another slice expires when that slice ships.**
     A plan that says "do not touch `x.gd`, slice Y owns it", "not startable
     until Y", or "Y is next in this order" is describing a queue that moves
     underneath it. Re-verify every such sentence when you touch the plan, and
@@ -148,7 +148,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
     `tools/check_docs.py` warns about the archived-id case; the other shapes
     are yours to check. Added 17 Sep 2026 by the plan review.
 
-9. **Scale the planning to the risk.** A save migration, a simulation change
+10. **Scale the planning to the risk.** A save migration, a simulation change
    or a cross-system refactor earns the full structure. A one-constant change
    earns a heading, the requirement, the invariant and the check. Boilerplate
    around a small task costs the same context as boilerplate around a large
@@ -158,7 +158,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 
 | If the queue names | Read |
 | --- | --- |
-| UI-R, UI-Q, UI-P, UI-D | `plans/now/ui.md` |
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
@@ -169,11 +168,13 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
-| A1-A4, B1-B3, C1-C4, D1, E1, F1s, F2s, G1-G3 -- catalogues, shared interfaces, update policy | `plans/design/architecture-review.md` |
+| E1, F1s, F2s, G3 -- one placement tool, a shared window base, the gate table, gateable actions | `plans/design/architecture-review.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | L-12, L-13 -- closeout as one command, queue lines carried by the plan (L-1..L-11 are archived) | `plans/now/agent-lifecycle.md` |
 | WD-0..WD-4 -- the workflow event log, its writers and `--events` | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` (complete) |
+| SM-1 -- the headless smoke scenario fails on master | `plans/now/smoke-scenario.md` |
+| PERF-1 -- measure `find_food_cell` before changing it | `plans/reference/technical-audit.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
 | Provenance for a shipped slice | `plans/archive/` (search only) |
@@ -241,8 +242,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     many of them read as "not startable" for reasons stated in different
     places. One list, so nobody re-derives it, rewritten 17 Sep 2026 by the
     plan review because every slice the previous list named has shipped:
-    **UI-X-2** (`plans/archive/UI-X-2_2026-09-18.md`, `_apply_stage_gate_to_ui`
-    only, and only if its fixture confirms H1 -- shipped), then **E1**
+    **E1**
     (`plans/design/architecture-review.md`, the two
     `awaiting_queen_build_cell` writes), then **C1F-1**
     (`plans/now/c1-followups.md`, which adds the stage-setup call to both

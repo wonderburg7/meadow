@@ -16,7 +16,7 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 1. **[Claude] E1 -- one placement tool**
    - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
-   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`, `docs/headless-run-contract.md`, `test_scenarios/e1_placement_exclusion_test.json`
    - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
    - Proof: `present: scripts/main.gd :: awaiting_build_cell`
    - Next after: F1s -- a shared window base class.

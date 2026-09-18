@@ -36,7 +36,8 @@ state, so a load mid-Challenge would silently drop it.
 `debug_panel.gd::set_save_load_enabled(false)` is called from
 `challenge_runner.gd::start()` and re-enabled in `_complete()` — don't
 bypass this without also giving `SaveGame` a Challenge-aware schema
-first (see `DESIGN_BACKLOG.md` §11 for the deferred alternative).
+first (see `DESIGN_BACKLOG.md`, "Deferred product decisions", for the deferred
+alternative).
 
 **`TutorialCheckpoint.clear()` runs once, near the top of
 `main.gd::_ready()`**, because every Challenge exit path (menu, restart,
@@ -44,10 +45,10 @@ load, post-game-over restart) already reloads the scene. If a future
 exit path is added that *doesn't* reload the scene, it needs its own
 explicit `clear()` call — don't assume the boot-time clear covers it.
 
-**`GameConfig` writes are allowlisted.** Only `game_config.gd`,
-`debug_panel.gd`, `save_game.gd` and `levels.gd` may assign into
-`GameConfig` fields — `tests/source_checks.py`'s
-`check_gameconfig_writes` enforces this. A Challenge-local override
+**`GameConfig` writes are allowlisted.** The allowlist lives in one place,
+`GAMECONFIG_WRITE_ALLOWLIST` in `tests/source_checks.py`, and
+`check_gameconfig_writes` enforces it -- read the list there rather than
+from a copy here. A Challenge-local override
 (e.g. a fast build time) belongs on the object it affects (see
 `HiveCell.build_time_override`/`effective_build_time()`), never on the
 shared autoload.

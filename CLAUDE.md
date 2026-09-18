@@ -106,7 +106,7 @@ names a next slice carries the same three lines.
 | Why a built system is the way it is | `checks/ready.md`, then grep `plans/archive/` for its id |
 | How the workflow itself is performing | `python tools/session_cost.py --events` |
 
-Paths are repo-relative. The seven largest scripts are indexed in
+Paths are repo-relative. Every script over 700 lines is indexed in
 `FUNCTION_MAP.md`; for any other, search its `# --- section ---` headers.
 
 ## Working style

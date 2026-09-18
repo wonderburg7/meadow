@@ -35,56 +35,18 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 ## Current state
 
-- 97 `finish` calls produced 54 closeouts. 39 exited non-zero; 24 of 54
-  sessions retried; 10 never got a clean exit. Codex: 20 of 20 non-zero.
-- `Invoke-SliceFinish` holds one exclusive lock across verification, the
-  merge and a single push, with up to 180 seconds of Windows deletion
-  retries. As of L-5, archival and queue refill happen on the branch and
-  are gated before `finish` will merge; as of L-10 and L-11 (below) two
-  tools perform them, and only the successor is still typed by hand.
-- The four small fixes of 12 September 2026 landed on `claude/WF-1`: Codex
-  may run `resume`; declared actions are single unchained commands; `start`
-  and `doctor` print a `read` command and `next_after`; `doctor` reports
-  whether the global Git excludes file is readable.
-- L-1 shipped 12 September 2026: `tests/test_source_checks.py` is 32/32
-  green and `tools/verify.ps1` runs it as a third parallel job. Landing it
-  also required a `Get-DoctorEnvironmentFailures` fix outside the slice's
-  stated Non-goals (a native git call's stderr crashed the doctor's
-  environment check under Windows PowerShell 5.1) -- full record at
-  `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
-- L-3 shipped 13 September 2026: `verify.ps1 -Scope branch|primary|all`
-  separates a branch's own suites from the primary checkout's ledger check.
-  Closeout surfaced the exact defect L-4 targets -- the worktree directory
-  stayed locked after verification and failed to delete -- full record at
-  `plans/archive/L-3_2026-09-13.md`.
-- L-9 shipped 17 September 2026: `session_cost.py --phases` and the
-  repository/host context split exist and were checked against live
-  sessions, but the completion gate is unmet on three of its four
-  conditions, so the plan is not yet complete -- full record at
-  `plans/archive/L-9_2026-09-17.md`.
-- Instrumentation and permission work landed on
-  `claude/slice-automation-opportunities` (17 Sep 2026), outside the slice
-  queue, because it is what tells L-10 to L-13 where to aim:
-  `tools/slice.ps1` records every stop to `meadow-slice-stops.jsonl` in the
-  git common directory and `session_cost.py --stops` tallies them by step;
-  `session_cost.py --no-edit-reasons` splits the no-product-edit quarter
-  (over 7 days: 30.1% read-only, 36.3% Markdown-only, 33.6% other);
-  `tools/new_check.py` allocates the next free `C-<n>` and writes the record
-  skeleton, reading `docs/archive/` which an agent's own file tools cannot;
-  `.claude/settings.json` allow-lists the read-only commands that produced
-  most denials, and `docs/known-pitfalls.md` records the `cd … && …` habit
-  that caused ~58 of them.
-- The completion gate stands at: 39 `lifecycle_failure` outcomes over the 7
-  days to 17 Sep 2026 against a required zero, no canary slice named per
-  lane, and the implementing share below 40% on every window measured. Only
-  the measurement-ran-once condition is met.
-- L-10 and L-11 landed 18 September 2026 on `claude/cool-brown-cbnlkg`,
-  outside the queue: `python tools/archive_slice.py <id>` moves a slice's
-  plan section to `plans/archive/` and `python tools/refill_lane.py
-  --delete <id>` removes its queue item and renumbers the lane. `finish`'s
-  archive and refill stop blocks name them, and `plans/reference/closeout.md`
-  runs them as steps 1 and 2. Records: `plans/archive/L-10_2026-09-18.md`,
-  `plans/archive/L-11_2026-09-18.md`.
+L-1 to L-11 have shipped (one pointer each under "Standing rules" below);
+closeout is a journaled transaction whose `archived` and `refilled` phases
+are performed by `tools/archive_slice.py` and `tools/refill_lane.py`
+(L-10, L-11); L-12 and L-13 turn what is still typed by hand into actions. The
+instruments those slices aim at landed on 17 Sep 2026: the stops ledger
+(`session_cost.py --stops`), `--no-edit-reasons`, `tools/new_check.py` and
+the allow-listed read-only commands in `.claude/settings.json`. The
+completion gate stands at 39 `lifecycle_failure` outcomes in the seven days
+to 17 Sep against a required zero, no canary slice named per lane, and the
+implementing share below 40% on every window measured; only the
+measurement-ran-once condition is met. The measured evidence is
+`docs/agent-workflow-review-2026-09-12.md`, not this section.
 
 ## Open slices
 
@@ -182,7 +144,7 @@ never the formats.
 F12 in the review are the evidence and do not need rereading to implement.
 
 Shipped, one pointer each -- the full specification and outcome of every one
-is in its archive record, and none of them needs rereading to work on L-10 to
+is in its archive record, and none of them needs rereading to work on L-12 or
 L-13:
 
 - L-1, the lifecycle suite is green and runs in verification (12 Sep) --
@@ -206,3 +168,7 @@ L-13:
   `plans/archive/L-8_2026-09-17.md`.
 - L-9, the floor is measured and split, and this plan is gated (17 Sep) --
   `plans/archive/L-9_2026-09-17.md`.
+- L-10, `tools/archive_slice.py` moves a closing slice's plan section to the
+  archive (18 Sep) -- `plans/archive/L-10_2026-09-18.md`.
+- L-11, `tools/refill_lane.py --delete` removes a queue item and renumbers
+  its lane (18 Sep) -- `plans/archive/L-11_2026-09-18.md`.

@@ -28,8 +28,8 @@ don't rename it without a good reason, the save format depends on it.
 
 **`GameConfig` is balance numbers, read-only from here.** `Session` is
 run/UI state. The test: would a designer tune it to change how the game
-plays? Then `GameConfig` (written only by `game_config.gd`,
-`settings_catalogue.gd`, `save_game.gd`, `levels.gd` — see
+plays? Then `GameConfig` (written only by the files in
+`tests/source_checks.py`'s `GAMECONFIG_WRITE_ALLOWLIST` -- see
 `.claude/rules/saving.md`). Does it describe *this* run or *this*
 player? Then `Session`.
 

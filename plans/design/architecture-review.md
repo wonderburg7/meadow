@@ -817,7 +817,13 @@ Level: medium. Depends on: nothing.
   "Click a spot" comment heads.
 - **Files to change.** `scripts/main.gd`, `scripts/input_selection.gd`,
   `scripts/hud.gd`, `scripts/challenge_runner.gd` — call sites, plus the
-  signal declarations that F17 replaces with one.
+  signal declarations that F17 replaces with one. Also
+  `scripts/scenario_actions.gd` and the verb list in
+  `docs/headless-run-contract.md`, for the two verbs the acceptance needs
+  (added 18 Sep 2026: no existing verb arms a placement tool or delivers a
+  click, so the acceptance as first written could not be run).
+  `scenario_actions.gd` sits in the Claude lane behind E1 (C1F-1, CB-1), so
+  this costs no cross-lane conflict.
 - **Where the flags actually are (checked 17 Sep 2026).** Nine `awaiting_*`
   fields are declared in `main.gd`; `input_selection.gd` reads them in 28
   places and `challenge_runner.gd` writes `awaiting_queen_build_cell` in two
@@ -849,7 +855,21 @@ Level: medium. Depends on: nothing.
 - **Runtime policy.** Unchanged; these are input-driven, not per-frame.
 - **Automated acceptance.** A scenario fixture that activates Build cell, then
   Mine target, then clicks, and asserts a mine target was set and no cell was
-  placed. That case fails today, which is the point.
+  placed. That case fails today, which is the point. **Instrument.** Two
+  verbs in `scenario_actions.gd::_execute`'s `match`, beside `queue_mine`:
+  `request_placement_tool`, whose `tool` names a `PLACEMENT_TOOLS` id and
+  which calls the one request function this slice gives `main.gd`; and
+  `click_world`, whose `x`, `y` and `view` (`hive` or `meadow`) set the drag
+  start and end to that point in that root and call
+  `input_selection._finish_drag(false)`. One assertion condition,
+  `selected_mine_queue_at_least`, added in `scenario_actions.gd::_when_met`
+  in the same `if when.has(...)` shape as `challenge_stage_id`, reading
+  `main.selected_bees[0].mine_queue.size()`. The fixture is
+  test_scenarios/e1_placement_exclusion_test.json: select one miner,
+  `request_placement_tool` for the build tool, then for the mine tool,
+  `click_world` on a soil block, settle one tick, then `assert`
+  `selected_mine_queue_at_least: 1` and `built_cells_at_least` equal to the
+  count at the start. Both verbs go in the contract doc's verb list.
 - **Escalation.** If any tool turns out to be legitimately concurrent with
   another, stop; mutual exclusion is then a gameplay decision.
 
