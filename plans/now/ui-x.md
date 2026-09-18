@@ -1,33 +1,30 @@
 # UI-X — Dave's 12 Sep 2026 pass: settings window, cell tray, Dr Gallerin
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-X-2 -- Challenge 2's cell tray offers a Forager to raise | Dependency: none | Verified: 2026-09-17
+Status: active | Owner: Dave / Claude Code | Next: UI-X-3 -- a comb cell's tray uses three columns | Dependency: none | Verified: 2026-09-18
 
 **Objective.** The findings from Dave's 12 Sep 2026 hands-on pass that belong
 to the HUD and the settings window, each fixed at its owner and each with a
 headless assertion so the same class of fault fails verification next time.
 
-**State.** Nothing here has shipped. `plans/now/ui.md` keeps the durable UI
-rules and points here. The checks these slices re-open wait in
-`checks/blocked.md` (C-18, C-34, C-52, C-53); C-49's own PASS is about what the
-stage arrows do and stays ready.
+**State.** UI-X-2 has shipped (`plans/archive/UI-X-2_2026-09-18.md`).
+`plans/now/ui.md` keeps the durable UI rules and points here. The checks
+these slices re-open wait in `checks/blocked.md` (C-18, C-52, C-53); C-34 is
+back in `checks/ready.md`; C-49's own PASS is about what the stage arrows do
+and stays ready.
 
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | UI-X-1 | The settings window is a quarter of the screen and its Controls list has no gaps | `scripts/debug_panel.gd`, `scripts/ui_layout.gd`, `tests/fixtures/settings_stage_row.json` | yes | medium |
-| UI-X-2 | At Challenge 2's 2.2 a cell's tray offers Forager — Pollen to raise | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd` | yes | medium |
-| UI-X-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | after UI-X-2 | medium |
+| UI-X-3 | A comb cell's tray has three columns and is shorter | `scripts/hud.gd` | yes | medium |
 | UI-X-4 | Dr Gallerin's bubble shows a long line in full, up to a third of the window's height, and makes way for an open settings window | `scripts/gallerin_panel.gd`, `scripts/ui_layout.gd` | after UI-X-1 | medium |
 
-**Dependencies.** UI-X-1 no longer touches `scripts/scenario_actions.gd`, so
-it shares no file with UI-X-2 and can follow it straight away in the Claude
-lane. UI-X-3 follows UI-X-2 (`scripts/hud.gd`, and it uses UI-X-2's
-`select_cell` action). UI-X-4 follows UI-X-1 (`scripts/ui_layout.gd`).
-UI-X-2 leads because it is the only one that stops a Challenge being
-finished; UI-X-1 comes next because it shares no file with anything and
-returns two blocked checks to Dave (17 Sep 2026 plan review).
+**Dependencies.** UI-X-1 shares no file with UI-X-3 and can run alongside it
+in the Claude lane. UI-X-3 is now startable: it used UI-X-2's `select_cell`
+action, which shipped with UI-X-2 (`scripts/scenario_actions.gd`). UI-X-4
+follows UI-X-1 (`scripts/ui_layout.gd`).
 
 **Renamed from UI-W to UI-X on 17 Sep 2026.** The four UI-W ids belonged to
 unrelated slices that shipped from the since-archived ui-windows plan on
@@ -130,108 +127,7 @@ stage-row re-run note is already filed.)
 only be fixed by changing `UI.with_info()` for every caller, or if the line
 pitch can only be fixed theme-wide.
 
-## UI-X-2 — Challenge 2's cell tray offers a Forager to raise
-
-**Purpose.** Stage 2.2 asks the player to raise a pollen Forager. In Dave's
-12 Sep 2026 run a selected cell's tray had no Forager control beside
-"Raises:" at all. He confirmed in session on 13 Sep 2026 that the button was
-missing, not overlooked. Stage 2.2 cannot be finished the way it is taught.
-
-**Confirmed.** The Raises controls are built once, in
-`hud.gd::_build_nursery_controls`, while `allowed_role_keys` is empty, so a
-"Forager…" menu (`_make_hatch_menu`) does get built. Its visibility is set by
-`_apply_cell_popup_gating()`, which runs on every `_refresh_cell_popup()` and
-from both `set_allowed_role_keys` and `set_allowed_designation_keys`, so
-**stale gating is ruled out**. Stage 2.2's `unlocked_keys` include
-`"forager"`.
-
-**Hypotheses, to test in this order.**
-- H1: `"forager"` is not unlocked when the cell is shown.
-  `stage_gate._unlocked` lacks it, for example because
-  `_apply_stage_gate_to_ui` runs before stage 2.2's unlocks are applied.
-- H2: the menu is visible but has no usable rectangle. `hatch_row` is an
-  HFlowContainer that "skips sorting while hidden", and the Nursery column's
-  equal share may push the menu out of the tray's clipped scroll area.
-- H3: another path hides the Nursery column or `hatch_row` in Challenge 2.
-  Search for `hatch_row.visible` and the column wrappers' `visible`.
-- H4: the control was never built. `_build_nursery_controls` skips any
-  `hatch_options()` entry whose role is not in `allowed_role_keys`
-  (`continue`, just above `_make_hatch_menu`), and gating afterwards only
-  shows or hides what that loop built. Today `_build_command_tray` runs from
-  `hud.gd::_ready`, when the list is empty, so this only bites if some path
-  rebuilds the tray after the gate is applied -- a Challenge restart or a
-  resumed run. Check `_build_command_tray`'s callers before the others; it is
-  the cheapest of the four to rule out.
-
-**Also wrong: the check's wording.** C-34 asked for nectar Foragers during
-2.1, but 2.1 does not unlock `"forager"`, and `_apply_cell_popup_gating` hides
-the colony-default entry whenever keys are restricted. 2.1 therefore offers
-nothing to raise by that route. Re-word C-34 before moving it back to ready.
-
-**Owner.** `challenge_runner.gd::_apply_stage_gate_to_ui` decides what is
-unlocked, and `hud.gd` only applies it. Keep it that way.
-
-**Required reading.** In `hud.gd`: `_build_nursery_controls`,
-`_make_hatch_menu`, `show_cell_popup`, `_refresh_cell_popup`,
-`_apply_cell_popup_gating`, `set_allowed_role_keys`. In `challenge_runner.gd`:
-`_stage_unlock_keys`, `_enter_stage`, `_apply_stage_gate_to_ui`. Stages
-2.1-2.3 in `challenge_stages.gd`. The fixture
-`test_scenarios/h4_challenge1_stage_advance_test.json`. In
-`scenario_actions.gd`: `_execute`, `_do_select_soil`, the `control` condition.
-Find what a left-click on a comb cell calls with
-`grep -n show_cell_popup scripts/input_selection.gd`.
-
-**Files likely to change.** `scripts/scenario_actions.gd`, `scripts/hud.gd`,
-`scripts/challenge_runner.gd` (`_apply_stage_gate_to_ui` only, and only for
-H1), new test_scenarios/uiw2_challenge2_raises_forager_test.json.
-
-**Must not change.** `scripts/challenge_stages.gd`, `Roles.ROLES`, the shape
-of `hatch_options()`. `scripts/challenge_runner.gd` **is** available now -- C2
-shipped, and no open Codex-lane slice names it -- but only
-`_apply_stage_gate_to_ui` may change, and only if H1 is what the fixture's
-failure message confirms. Nothing else in that file, and no stage record.
-
-**Requirements.**
-1. *Instrument first.* Add a `select_cell` action,
-   `{"do": "select_cell", "built_index": 0}`, that calls the same function a
-   left-click on a comb cell calls. Do not copy its logic. Give the `control`
-   condition an optional `"visible": true`, so a hidden control fails instead
-   of passing silently. Name the menu `hatch_<role key>_menu`, for example
-   `hatch_forager_menu`, in `_make_hatch_menu`.
-2. The fixture uses `"challenge": 2`, advances to `2.2`, runs `select_cell`,
-   then asserts: `control` on
-   `command_tray/.../hatch_forager_menu` is visible, has `min_size [40, 16]`,
-   and is `inside command_tray`; `no_collapsed_controls` passes on
-   `command_tray`. Run it on master, where it must fail, and record the failure
-   message.
-3. Fix whichever hypothesis the message confirms, at its owner. The fixture
-   must pass afterwards.
-
-**Constraints.** Outside a Challenge every Raises option stays visible. At 2.1
-Forager stays hidden, which is the design. The gyne row stays hidden while
-roles are restricted.
-
-**State transitions.** A stage change while the tray is open re-gates through
-the setters. A stage change while it is closed gates on the next show. Both
-paths must keep working. No per-frame work is added.
-
-**Edge cases.** A debug step back from 2.2 to 2.1 hides Forager again. The menu
-lists both Nectar and Pollen. Text scale 1.5.
-
-**Regression checks.** `tools/verify.ps1`, the H4 fixture,
-`c2_no_jelly_cell_test.json` and the LAY fixtures. No save/load impact:
-Challenge runs are not saved.
-
-**Completion.** Re-word C-34 so its 2.1 half is achievable, and move it back to
-ready. Archive this section, and name UI-X-3 next.
-
-**Level:** medium. The four hypotheses below are enumerated and the fixture's
-failure message picks between them, which is bounded work. **Hand the slice to
-a high-reasoning model** if that message matches none of H1-H4, or if the fix
-needs more of `challenge_runner.gd` than `_apply_stage_gate_to_ui`.
-
-**Escalate if** `select_cell` cannot reuse the click path without copying
-selection logic, or if the fix would change a stage record.
+**UI-X-2** -- delivered; see `plans/archive/UI-X-2_2026-09-18.md`.
 
 ## UI-X-3 — a comb cell's tray uses three columns
 

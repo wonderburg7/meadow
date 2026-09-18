@@ -1362,6 +1362,7 @@ var live_buttons: Dictionary = {}
 ## shape the way a bee's role-dependent rows do.
 func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_group = VBoxContainer.new()
+	cell_group.name = "cell_group"
 	cell_group.add_theme_constant_override("separation", 2)
 	cell_group.visible = false
 	parent.add_child(cell_group)
@@ -1371,6 +1372,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	# bottom-left summary panel; repeating it here was what made the centre
 	# tray unnecessarily tall.
 	cell_primary_columns = HFlowContainer.new()
+	cell_primary_columns.name = "cell_primary_columns"
 	cell_primary_columns.add_theme_constant_override("separation", int(TRAY_COLUMN_SEPARATION))
 	cell_group.add_child(cell_primary_columns)
 
@@ -1452,7 +1454,13 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 ## independent accordions: the whole row is meant to scan like the selected-
 ## bee Job/Focus/Orders row, with only the lower-frequency row behind More….
 func _build_cell_action_column(parent: Container, title: String) -> VBoxContainer:
+	# Named like _build_tray_column's job/focus/orders pair, so LAY-6's
+	# assertions (and UI-X-2's hatch menus below) can address this column
+	# by a stable path under the "command_tray" root -- see
+	# scenario_actions.gd::_resolve_scoped_path.
+	var slug: String = title.to_lower().replace(" ", "_")
 	var wrapper := VBoxContainer.new()
+	wrapper.name = "%s_column_wrapper" % slug
 	wrapper.add_theme_constant_override("separation", 3)
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(wrapper)
@@ -1464,6 +1472,7 @@ func _build_cell_action_column(parent: Container, title: String) -> VBoxContaine
 	wrapper.add_child(header)
 
 	var body := VBoxContainer.new()
+	body.name = "%s_column" % slug
 	body.add_theme_constant_override("separation", 2)
 	wrapper.add_child(body)
 	return body
@@ -1507,6 +1516,7 @@ func _build_nursery_controls(column: VBoxContainer) -> void:
 
 	# Which role a bee raised here comes out as.
 	hatch_row = HFlowContainer.new()
+	hatch_row.name = "hatch_row"
 	column.add_child(hatch_row)
 	var hatch_title := Label.new()
 	hatch_title.text = "Raises:"
@@ -1677,6 +1687,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 	menu.theme_type_variation = "Small"
 	var options: Array = entry.options
 	var role_value: int = entry.role
+	menu.name = "hatch_%s_menu" % Roles.key_for(role_value)
 	var popup := menu.get_popup()
 	for i in range(options.size()):
 		popup.add_item(options[i].label, i)

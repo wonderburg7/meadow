@@ -14,12 +14,12 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] UI-X-2 -- Challenge 2's cell tray offers a Forager to raise**
-   - Plan: `plans/now/ui-x.md` -- "UI-X-2 — Challenge 2's cell tray offers a Forager to raise"
-   - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`, `scripts/challenge_runner.gd`
-   - Check: a new test_scenarios/uiw2_challenge2_raises_forager_test.json fails on master and passes after the fix -- at 2.2 the Forager hatch menu is visible with a usable rect inside the command tray
-   - Proof: `absent: scripts/scenario_actions.gd :: "select_cell"`
-   - Next after: UI-X-3 -- a comb cell's tray uses three columns.
+1. **[Claude] UI-X-3 -- a comb cell's tray uses three columns**
+   - Plan: `plans/now/ui-x.md` -- "UI-X-3 — a comb cell's tray uses three columns"
+   - Files: `scripts/hud.gd`
+   - Check: a new test_scenarios/uiw3_cell_tray_columns_test.json passes at 1920x1080 and 800x600 -- three columns (Reserve for/Priority/Raises) via even_columns on cell_primary_columns, no_collapsed_controls, and a lower recorded tray height for the same cell than before the change -- which fails on master, where the Nursery column is not yet split
+   - Proof: `absent: scripts/hud.gd :: "_build_raises_controls"`
+   - Next after: none -- UI-X-3 gates nothing further in ui-x; the plan is complete once UI-X-4 (queued from UI-X-1) ships.
 
 2. **[Claude] UI-X-1 -- the settings window: a quarter of the screen, a readable stage row, a tight Controls list**
    - Plan: `plans/now/ui-x.md` -- "UI-X-1 — the settings window: a quarter of the screen, a readable stage row, a tight Controls list"
@@ -78,7 +78,6 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **UI-X-3** (`plans/now/ui-x.md`) -- uses UI-X-2's `select_cell` action.
 - **UI-X-4** (`plans/now/ui-x.md`) -- follows UI-X-1 in `scripts/ui_layout.gd`.
 - **CB-2** (`plans/now/comb-builders.md`) -- its cause is what CB-1 measures, and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **C1F-2** (`plans/now/c1-followups.md`) -- starts its run through C1F-1's stage setup.

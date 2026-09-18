@@ -1,0 +1,28 @@
+{
+  "challenge": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "2.1"},
+    {"do": "viewport_size", "w": 800, "h": 600},
+    {"do": "select_cell", "built_index": 0},
+    {"do": "settle", "ticks": 5},
+    {"do": "advance_challenge_stage", "stage_id": "2.2"},
+    {"do": "settle", "ticks": 20},
+    {
+      "do": "assert",
+      "when": {"challenge_stage_id": "2.2"},
+      "condition": {
+        "control": "command_tray/command_scroll/command_content/cell_group/cell_primary_columns/nursery_column_wrapper/nursery_column/hatch_row/hatch_forager_menu",
+        "visible": true,
+        "min_size": [40, 16],
+        "inside": "command_tray"
+      }
+    },
+    {
+      "do": "assert",
+      "when": {"challenge_stage_id": "2.2"},
+      "condition": {"root": "command_tray"}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

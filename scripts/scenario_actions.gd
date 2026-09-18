@@ -111,6 +111,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_select_bees(main, action)
 		"select_soil":
 			_do_select_soil(main, action)
+		"select_cell":
+			_do_select_cell(main, action)
 		"open_window":
 			_do_open_window(main, action)
 		"viewport_size":
@@ -522,6 +524,29 @@ static func _do_select_soil(main: Node2D, action: Dictionary) -> void:
 	main.input_selection._select_blocks(blocks, false)
 	_log("select_soil", "%d blocks" % blocks.size(), "accepted", "")
 
+## Selects a built comb cell the same way a single non-additive click does --
+## input_selection.gd::_select_cells, the function _cell_at's result resolves
+## to once a click lands on a cell. "built_index" orders the "hive_cells"
+## group's built members by axial tile (q then r), so a fixture doesn't need
+## to know which tile a Challenge happens to have built by the stage it's
+## testing.
+static func _do_select_cell(main: Node2D, action: Dictionary) -> void:
+	var built_index: int = int(action.get("built_index", 0))
+	var built_cells: Array = main.get_tree().get_nodes_in_group("hive_cells").filter(
+		func(c): return is_instance_valid(c) and c.is_built
+	)
+	built_cells.sort_custom(func(a, b):
+		if a.axial.x != b.axial.x:
+			return a.axial.x < b.axial.x
+		return a.axial.y < b.axial.y
+	)
+	if built_index < 0 or built_index >= built_cells.size():
+		_log("select_cell", str(action), "rejected",
+			"no built cell at index %d (%d built)" % [built_index, built_cells.size()])
+		return
+	main.input_selection._select_cells([built_cells[built_index]], false)
+	_log("select_cell", "built_index %d" % built_index, "accepted", "")
+
 ## Opens one of the left-side windows or the command tray's "More…" panel,
 ## through the same functions their buttons call
 ## (main.gd wires colony_button/foraging_button to year_winter._toggle_panel,
@@ -743,7 +768,9 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 ## silently -- see the plan's own reasoning: visibility is what
 ## _rebuild_role_controls legitimately toggles, so asserting on a hidden
 ## control would make every fixture a list of which columns happen to be
-## shown this tick.
+## shown this tick. UI-X-2: {"visible": true} opts a fixture out of that
+## silent pass, for the cases where a control being hidden at all -- not
+## just its rect -- is the bug under test.
 ##
 ## "same_height_as" (HC-13) is the one thing a per-control minimum cannot
 ## say: that two neighbouring controls are the same height as each other.
@@ -757,6 +784,8 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		return {"ok": false, "reason": "control '%s' not found" % path}
 	var control: Control = node as Control
 	if not control.is_visible_in_tree():
+		if condition.get("visible", false):
+			return {"ok": false, "reason": "control '%s' is not visible" % path}
 		return {"ok": true, "reason": ""}
 	var rect: Rect2 = control.get_global_rect()
 	var min_size_arr: Array = condition.get("min_size", [0, 0])
