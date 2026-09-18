@@ -12,6 +12,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Git's stdout is UTF-8. Without this, capturing it through a pipeline (e.g.
+# `git show ... | Out-String`) decodes via the console's OEM/ANSI codepage on
+# Windows PowerShell 5.1, silently corrupting non-ASCII bytes (an em dash
+# became three garbage codepoints) before any string comparison runs.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 # The diagnostic log (tools/diagnostics.ps1) is a measurement only: it never
 # gates a command, and Write-Diagnostic swallows its own errors.
 . (Join-Path $PSScriptRoot "diagnostics.ps1")
