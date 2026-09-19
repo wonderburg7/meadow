@@ -32,6 +32,7 @@ Do not load this entire directory, `plans/archive/`, `ROADMAP.md`,
 | `plans/now/` | An executable current/successor slice. One file per active area. | Only when `NEXTSTEPS.md` points here. |
 | `plans/active/` | A live validation or evidence campaign that is not necessarily next. Empty today. | Only for that campaign. |
 | `plans/design/` | Agreed, unscheduled product design. | Only after that product direction is selected. |
+| `plans/observations/` | Append-only, evidence-backed signals about recurring system, architecture, organisation, or process friction. | During a deliberate triage or when recording a material signal; not during ordinary plan routing. |
 | `plans/reference/` | Durable technical contracts and reopening criteria. | Only for the matching kind of change. |
 | `plans/archive/` | Completed, superseded, and detailed execution records. | Never for orientation; search for provenance only. |
 | `plans/workstreams.md` | Live ledger of open branches/worktrees, their scope and status. | Only when creating or integrating parallel work, never as part of ordinary session routing. |
@@ -173,6 +174,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | L-12, L-13 -- closeout as one command, queue lines carried by the plan (L-1..L-11 are archived) | `plans/now/agent-lifecycle.md` |
 | WD-0..WD-4 -- the workflow event log, its writers and `--events` | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` (complete) |
+| System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
 | SM-1 -- the headless smoke scenario routes builders from walkable spawn tiles | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` (complete) |
 | PERF-1 -- measure `find_food_cell` before changing it | `plans/reference/technical-audit.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
