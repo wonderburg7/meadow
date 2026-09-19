@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-13 -- closeout is one command, and the gates become actions | Dependency: none -- L-10 and L-11 landed 18 Sep 2026 | Verified: 2026-09-18
+Status: active | Owner: Dave / Claude | Next: L-12 -- a plan's slice section carries the queue lines it is refilled from (gated: see its section) | Dependency: none -- L-13 landed 19 Sep 2026 | Verified: 2026-09-19
 
 ## Objective
 
