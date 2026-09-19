@@ -31,7 +31,7 @@ $script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 #   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
 #   --- environment ---         Get-GodotCapability, Get-DoctorEnvironmentFailures
-#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish
+#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish, Invoke-SliceArchiveAndRefill
 #   --- post-merge ---          Invoke-SlicePostMergeCleanup
 # A failing command prints one "slice <command> stopped" block naming the
 # step, cause, fix and how to retry. That block is the diagnosis.
