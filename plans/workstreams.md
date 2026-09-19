@@ -59,4 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SM-1` (`codex/SM-1`) | Codex | find why the smoke scenario never completes a cell | Codex | in progress | none | `plans/now/smoke-scenario.md` SM-1 — find why the smoke scenario never completes a cell |
+| `.worktrees/SM-1` (`codex/SM-1`) | Codex | find why the smoke scenario never completes a cell | Codex | in progress | none | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` SM-1 — find why the smoke scenario never completes a cell |

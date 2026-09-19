@@ -27,7 +27,7 @@ home per fact: read the plan.
 | Challenge 1 follow-ups from hands-on passes | `plans/now/c1-followups.md` |
 | Comb builder placement and the per-site cap | `plans/now/comb-builders.md` |
 | How the flowering year feels at the start of a run | `plans/now/season-feel.md` |
-| The headless smoke scenario | `plans/now/smoke-scenario.md` |
+| The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
 
 ## Areas whose plan is complete

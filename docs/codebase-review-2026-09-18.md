@@ -1076,7 +1076,7 @@ table (parsed by `tools/slice.ps1`); any `Status:` line's field set.
 6. In `plans/README.md` "Current routing", delete the UI-R/Q/P/D row and
    the L-1..L-9 row; change the A1..G3 row to "E1, F1s, F2s, G3"; add rows
    for "WD-1..WD-4" → `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, "PERF-1" →
-   `plans/reference/technical-audit.md`, "SM-1" → `plans/now/smoke-scenario.md`.
+   `plans/reference/technical-audit.md`, "SM-1" → `plans/archive/SMOKE_SCENARIO_2026-09-19.md`.
    Renumber the "Writing or editing a plan" rules 1 to 10 in order.
 7. Run `python tools/check_docs.py`.
 

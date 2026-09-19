@@ -46,21 +46,14 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
 
-1. **[Codex] SM-1 -- find why the smoke scenario never completes a cell**
-   - Plan: `plans/now/smoke-scenario.md` -- "SM-1 — find why the smoke scenario never completes a cell"
-   - Files: `test_scenarios/slice1_smoke_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/slice1_smoke_test.json` returns status=passed twice on the same seed, and the delivery note classifies the cause as stale fixture or product defect with numbers
-   - Proof: `present: test_scenarios/slice1_smoke_test.json :: "cells_completed_at_least": 1`
-   - Next after: none -- smoke-scenario is complete.
-
-2. **[Codex] SF-1 -- a new run's meadow starts with the season mix it will settle into**
+1. **[Codex] SF-1 -- a new run's meadow starts with the season mix it will settle into**
    - Plan: `plans/now/season-feel.md` -- "SF-1 — a new run's meadow starts with the season mix it will settle into"
    - Files: `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/diagnostic_log.gd`, `test_scenarios/sf1_founding_flower_mix_test.json`
    - Check: the fixture's run summary at Season days 5 -- the day-0 out-of-season share of flowers is within 5 points of the day-5 share and below 15%, asserted in a Python test that reads the two new DiagnosticLog counters; hands-on check C-25 moves to ready
    - Proof: `present: scripts/flower_species.gd :: static func season_weight(species: Dictionary) -> float:`
    - Next after: none -- season-feel is complete.
 
-3. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
+2. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
    - Plan: `plans/reference/technical-audit.md` -- "PERF-1 — measure `find_food_cell` before changing it"
    - Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
    - Check: two runs of `test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60` with perf enabled report the new `hive_find_food` section within 10% of each other, and the delivery note says whether it is trivial or worth a follow-up slice, with the numbers
