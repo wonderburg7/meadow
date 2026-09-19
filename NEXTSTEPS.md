@@ -14,35 +14,28 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] E1 -- one placement tool**
-   - Plan: `plans/design/architecture-review.md` -- "E1 — one placement tool"
-   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`, `docs/headless-run-contract.md`, `test_scenarios/e1_placement_exclusion_test.json`
-   - Check: a scenario fixture that activates Build cell, then Mine target, then clicks, asserting a mine target was set and no cell was placed (fails today)
-   - Proof: `present: scripts/main.gd :: awaiting_build_cell`
-   - Next after: F1s -- a shared window base class.
-
-2. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
+1. **[Claude] C1F-1 -- each Challenge 1 stage sets up the world it starts from**
    - Plan: `plans/now/c1-followups.md` -- "C1F-1 — each Challenge 1 stage sets up the world it starts from"
    - Files: `scripts/challenge_stage_setup.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/scenario_actions.gd`
    - Check: a new test_scenarios/c1f1_stage_setup_test.json steps forward to 1.19 and back to 1.1 and asserts each stage stays put for 2 seconds; it fails on master at the first retreat into a met goal
    - Proof: `absent: scripts/challenge_runner.gd :: ChallengeStageSetup`
    - Next after: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop.
 
-3. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
+2. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
    - Plan: `plans/now/comb-builders.md` -- "CB-1 — measure where comb builders stand and how many work one site"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
    - Check: two headless runs of the new fixture report identical per-site builder counts and stand points, and the delivery note names which of H1-H3 the numbers support
    - Proof: `absent: scripts/scenario_actions.gd :: builders_per_site`
    - Next after: CB-2 -- the fix CB-1 identifies.
 
-4. **[Claude] L-13 -- closeout is one command, and the gates become actions**
+3. **[Claude] L-13 -- closeout is one command, and the gates become actions**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-13 — closeout is one command, and the gates become actions"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
    - Check: every injected-failure phase in `tests/test_slice_lifecycle.py` and `tests/test_two_lane_closeout.py` still resumes to a clean merge on master, a closeout over the fixture repository completes from `verify` to `merge` with no hand edit in between, and a journal written in the old phase order resumes without skipping a durable step
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
    - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once its gate is met.
 
-5. **[Claude] UI-Y -- toggleable panel background texture**
+4. **[Claude] UI-Y -- toggleable panel background texture**
    - Plan: `plans/now/ui.md` -- "UI-Y — toggleable panel background texture"
    - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `scripts/session.gd`
    - Check: a hands-on pass with each theme palette (dark/light/high-contrast) -- set the new Appearance option to `comb`, then `grain`, then back to `flat`, confirm the panel edge and text position never move and text stays legible
