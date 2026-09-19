@@ -1,7 +1,7 @@
 # Meadow UI — open slices and durable rules
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UI-Y -- toggleable panel background texture | Dependency: none | Verified: 2026-09-19
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete (UI-Y shipped; hands-on check C-60) | Dependency: none | Verified: 2026-09-19
 
 **Objective.** The HUD and pre-run menu are legible, correctly placed and
 accessible, and every persistent panel takes its rectangle from one owner.

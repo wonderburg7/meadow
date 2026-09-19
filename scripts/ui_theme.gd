@@ -118,13 +118,15 @@ static func readable_accent(accent: Color) -> Color:
 ## its own StyleBoxFlat. Corner radius is deliberately modest (not a
 ## smooth circular arc) so the pixel-art language survives the rounding,
 ## per UI_PLAN.md section 6.
-static var _panel_stylebox: StyleBoxFlat
+static var _panel_stylebox: PanelBox
+static var _texture_cache: Dictionary = {}
 static var _button_styleboxes: Dictionary = {}
 static var _active_theme: Theme
 
 static func panel_stylebox() -> StyleBoxFlat:
 	if _panel_stylebox == null:
-		_panel_stylebox = StyleBoxFlat.new()
+		_panel_stylebox = PanelBox.new()
+		_panel_stylebox.texture_source = Callable(panel_texture_image)
 		_refresh_panel_stylebox(_panel_stylebox)
 	return _panel_stylebox
 
@@ -137,6 +139,85 @@ static func _refresh_panel_stylebox(box: StyleBoxFlat) -> void:
 	box.content_margin_right = 10
 	box.content_margin_top = 8
 	box.content_margin_bottom = 8
+
+## Panel stylebox that draws the flat rounded panel exactly as StyleBoxFlat
+## would, then lays the chosen `panel_texture` inside the border. Margins and
+## the outer rectangle are untouched, so no layout moves when it changes.
+class PanelBox:
+	extends StyleBoxFlat
+	var _base := StyleBoxFlat.new()
+	## Returns the texture to lay inside the border (or null); set by
+	## panel_stylebox() since an inner class cannot name its own script.
+	var texture_source: Callable
+
+	func _draw(to_canvas_item: RID, rect: Rect2) -> void:
+		_base.bg_color = bg_color
+		_base.border_color = border_color
+		_base.set_border_width_all(border_width_left)
+		_base.set_corner_radius_all(corner_radius_top_left)
+		_base.draw(to_canvas_item, rect)
+		var tex: Texture2D = texture_source.call(Session.panel_texture)
+		if tex == null:
+			return
+		var inset := float(border_width_left) + 2.0
+		var inner := rect.grow(-inset)
+		if inner.size.x <= 0.0 or inner.size.y <= 0.0:
+			return
+		RenderingServer.canvas_item_add_texture_rect(
+			to_canvas_item, inner, tex.get_rid(), true)
+
+## Tileable texture for a panel_texture option, or null for "flat". Cached per
+## option and palette; refresh() clears the cache on any appearance change.
+static func panel_texture_image(mode: String) -> Texture2D:
+	if mode != "comb" and mode != "grain":
+		return null
+	var key := mode + ":" + Session.ui_theme
+	if not _texture_cache.has(key):
+		_texture_cache[key] = _build_panel_texture(mode)
+	return _texture_cache[key]
+
+static func _build_panel_texture(mode: String) -> Texture2D:
+	var bg := color("panel_bg")
+	var line := color("panel_line")
+	if line.a >= 1.0:
+		line.a = 0.35
+	var img: Image
+	if mode == "comb":
+		# Pointy-top hexagon lattice, period 12x18: centres at (0,0) and
+		# (6,9). A pixel is on an edge where its two nearest centres are
+		# almost equally far.
+		img = Image.create(12, 18, false, Image.FORMAT_RGBA8)
+		var centres := []
+		for cy in range(-1, 3):
+			for cx in range(-1, 3):
+				centres.append(Vector2(cx * 12, cy * 18))
+				centres.append(Vector2(cx * 12 + 6, cy * 18 + 9))
+		for y in 18:
+			for x in 12:
+				var p := Vector2(x + 0.5, y + 0.5)
+				var d1 := 1e9
+				var d2 := 1e9
+				for c in centres:
+					var d := p.distance_to(c)
+					if d < d1:
+						d2 = d1
+						d1 = d
+					elif d < d2:
+						d2 = d
+				img.set_pixel(x, y, line if d2 - d1 < 1.3 else Color(0, 0, 0, 0))
+	else:
+		# Per-pixel value jitter around panel_bg; kept small in high contrast
+		# so the AAA body-text pairing is never disturbed.
+		var spread := 0.03 if Session.ui_theme == "high_contrast" else 0.07
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20260919
+		img = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+		for y in 64:
+			for x in 64:
+				var c := bg.lightened(rng.randf_range(0.0, spread)) 					if rng.randf() < 0.5 else bg.darkened(rng.randf_range(0.0, spread))
+				c.a = 0.6
+				img.set_pixel(x, y, c)
+	return ImageTexture.create_from_image(img)
 
 ## The seven interaction states every interactive control should draw
 ## from (UI_PLAN.md section 11), rather than each panel inventing its
@@ -228,7 +309,7 @@ static func build_theme() -> Theme:
 ## The settings whose change must reach every open control. One list, read
 ## by the settings window and by the headless set_config verb alike, so a
 ## fixture that changes text scale sees what the player sees (C-53).
-const APPEARANCE_KEYS := ["text_scale", "ui_theme", "ui_typeface"]
+const APPEARANCE_KEYS := ["text_scale", "ui_theme", "ui_typeface", "panel_texture"]
 
 static func refresh_for_setting(key: String) -> void:
 	if key in APPEARANCE_KEYS:
@@ -240,6 +321,7 @@ static func refresh_for_setting(key: String) -> void:
 static func refresh() -> void:
 	var theme := active_theme()
 	_refresh_theme_resource(theme)
+	_texture_cache.clear()
 	if _panel_stylebox != null:
 		_refresh_panel_stylebox(_panel_stylebox)
 	for state in _button_styleboxes:

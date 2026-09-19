@@ -1044,6 +1044,14 @@ const TUNABLES := [
 	},
 	{
 		"persist": "player",
+		"key": "panel_texture", "label": "Panel texture",
+		"options": ["flat", "comb", "grain"],
+		"option_labels": {"flat": "Flat", "comb": "Honeycomb", "grain": "Grain"},
+		"category": "Appearance",
+		"tip": "Optional texture inside every panel's background: a faint honeycomb, or fine grain. Flat is the plain colour. Panel edges and text never move. Takes effect immediately.",
+	},
+	{
+		"persist": "player",
 		"key": "show_speed_8x", "label": "Show 8x speed button", "toggle": true,
 		"category": "Interface",
 		"tip": "Adds an 8x button next to 1x/2x/4x in the top-right bar, for skipping a stretch you've already seen. Off by default -- most runs don't need it, and there is more happening per second at 8x than you can follow by watching the bees. Takes effect immediately.",
@@ -1299,7 +1307,7 @@ const SESSION_KEYS := [
 	"use_sprite_hex_grid", "use_radial_hex_speed", "show_forager_labels",
 	"show_recruitment_highlight",
 	"gallerin_enabled", "show_crab_spiders",
-	"ui_theme", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
+	"ui_theme", "panel_texture", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
 	"tooltip_delay", "show_speed_8x", "show_interface_labels",
 ]
 
