@@ -916,11 +916,16 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertIn("[Codex] T-2", merged_queue)
         self.assertTrue((self.root / "plans" / "archive" / "T-1_2026-01-01.md").exists())
 
-    def test_refill_accepts_a_successor_that_is_not_startable_yet(self):
-        """A successor is not always admissible when its predecessor lands.
-        G2's was G3, which waits on F2s. The refill gate takes a bullet under
-        '## Not in the queue, and why' in place of a lane item, so closeout
-        never has to queue unstartable work or weaken a `Next after:` line."""
+    DEFERRED_SUCCESSOR_SECTION = (
+        "## Not in the queue, and why\n\n"
+        "- **T-2** (`plans/fixture.md`) -- follows T-1 but waits on T-9.\n"
+        "- **T-9** (`plans/fixture.md`) -- waits on something else.\n"
+    )
+
+    def finish_with_a_deferred_successor(self, lane_after_refill=""):
+        """Close T-1, whose `Next after:` names T-2, with T-2 deferred under
+        '## Not in the queue, and why' and $lane_after_refill as the Codex
+        lane the refill leaves. Returns the finish process."""
         (self.root / "NEXTSTEPS.md").write_text(
             "## Next up\n\n"
             "1. **[Codex] T-1 -- fixture.**\n"
@@ -957,10 +962,7 @@ class SliceDoctorTest(unittest.TestCase):
             "# T-1 -- fixture (archived)\n\nShipped in this fixture.\n", encoding="utf-8"
         )
         (worktree / "NEXTSTEPS.md").write_text(
-            "## Next up\n\n"
-            "## Not in the queue, and why\n\n"
-            "- **T-2** (`plans/fixture.md`) -- follows T-1 but waits on T-9.\n"
-            "- **T-9** (`plans/fixture.md`) -- waits on something else.\n",
+            "## Next up\n\n" + lane_after_refill + self.DEFERRED_SUCCESSOR_SECTION,
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
@@ -968,17 +970,48 @@ class SliceDoctorTest(unittest.TestCase):
             ["git", "commit", "-m", "archive T-1 and defer T-2"], cwd=worktree, check=True
         )
 
-        finish = subprocess.run(
+        return subprocess.run(
             [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
                 str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
             )],
             cwd=self.root, capture_output=True, text=True, timeout=90,
         )
+
+    def test_refill_accepts_a_successor_that_is_not_startable_yet(self):
+        """A successor is not always admissible when its predecessor lands.
+        G2's was G3, which waits on F2s. The refill gate takes a bullet under
+        '## Not in the queue, and why' in place of a lane item, so closeout
+        never has to queue unstartable work or weaken a `Next after:` line."""
+        finish = self.finish_with_a_deferred_successor()
         self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
 
         merged_queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
         self.assertNotIn("[Codex] T-1", merged_queue)
         self.assertIn("**T-2**", merged_queue)
+        self.assertIn(
+            "Next slice:   none -- the Codex lane is empty (T-2 is deferred: follows T-1 but waits on T-9.)",
+            finish.stdout,
+        )
+
+    def test_report_names_the_lane_lead_when_the_successor_is_deferred(self):
+        """Closing L-13 on 19 Sep 2026, whose successor L-12 is gated, printed
+        'L-12 -- (not found in NEXTSTEPS.md; check the refill)', which read as
+        a failed refill. A deferred successor is deliberate: the next slice is
+        the lane's new lead, and the report says why the successor waits."""
+        finish = self.finish_with_a_deferred_successor(
+            "1. **[Codex] T-3 -- fixture lead.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture lead\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- fixture plan is complete\n\n"
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn(
+            "Next slice:   T-3 -- fixture lead.  (T-2 is deferred: follows T-1 but waits on T-9.)",
+            finish.stdout,
+        )
+        self.assertNotIn("not found in NEXTSTEPS.md", finish.stdout)
 
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

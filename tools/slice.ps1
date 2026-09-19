@@ -1336,13 +1336,27 @@ function Test-SuccessorDeferred {
     # check_docs.py's check_queue_section_agreement uses, so the prose naming
     # other ids as reasons stays allowed.
     param([string]$Text, [string]$Id)
-    if (-not $Id) { return $false }
+    return ($null -ne (Get-SuccessorDeferralReason -Text $Text -Id $Id))
+}
+
+function Get-SuccessorDeferralReason {
+    # The rest of $Id's bullet under "## Not in the queue, and why" -- the
+    # part after its " -- ", which says what it waits for -- or $null when
+    # $Id is not deferred there. The end-of-slice report quotes it, so a
+    # deferred successor reads as deliberate rather than a failed refill.
+    param([string]$Text, [string]$Id)
+    if (-not $Id) { return $null }
     $section = [regex]::Match($Text, '(?ms)^## Not in the queue, and why\s*$(.*?)(?=^## |\Z)')
-    if (-not $section.Success) { return $false }
-    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*')) {
-        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") { return $true }
+    if (-not $section.Success) { return $null }
+    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*(.*?)\r?$')) {
+        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") {
+            $rest = $bullet.Groups[2].Value.Trim()
+            $parts = $rest -split '\s--\s', 2
+            if ($parts.Count -eq 2) { return $parts[1].Trim() }
+            return $rest
+        }
     }
-    return $false
+    return $null
 }
 
 function Get-CopyPastePromptLine {
@@ -1690,16 +1704,29 @@ function Invoke-SliceFinish {
     $mergedNextSteps = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $root "NEXTSTEPS.md")
     $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
 
+    $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
+
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
     if ($item -and -not $successorId) {
         $nextSliceLine = $item.NextAfter
     }
     elseif ($successorId) {
         $successorItem = $mergedItems | Where-Object { $_.Id -eq $successorId -and $_.Lane -eq $lane } | Select-Object -First 1
-        $nextSliceLine = if ($successorItem) { "$($successorItem.Id) -- $($successorItem.Title)" } else { "$successorId -- (not found in NEXTSTEPS.md; check the refill)" }
+        $deferralReason = if ($successorItem) { $null } else { Get-SuccessorDeferralReason -Text $mergedNextSteps -Id $successorId }
+        if ($successorItem) {
+            $nextSliceLine = "$($successorItem.Id) -- $($successorItem.Title)"
+        }
+        elseif ($null -ne $deferralReason) {
+            # The refill gate accepted a deferred successor (L-13 -> L-12 on
+            # 19 Sep 2026), so the next slice is simply the lane's new lead.
+            $deferralNote = "$successorId is deferred"
+            if ($deferralReason) { $deferralNote += ": $deferralReason" }
+            $nextSliceLine = if ($laneLead) { "$($laneLead.Id) -- $($laneLead.Title)  ($deferralNote)" } else { "none -- the $lane lane is empty ($deferralNote)" }
+        }
+        else {
+            $nextSliceLine = "$successorId -- (not found in NEXTSTEPS.md; check the refill)"
+        }
     }
-
-    $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
     $queueLine = if ($laneLead) { "$lane lane now leads with $($laneLead.Id) -- $($laneLead.Title)" } else { "$lane lane is empty -- refill it from an owning plan" }
     $adviceLine = "none -- the $lane lane is empty"
     $connectorLine = "none needed"
