@@ -92,6 +92,8 @@ static func take_orientation_flight(bee: Node2D) -> void:
 ## instead. See search_for_flower below, which re-runs this same bounded
 ## check every frame while the spiral widens.
 static func seek_flower(bee: Node2D) -> void:
+	if _walk_out_if_indoors(bee):
+		return
 	# Heavy rain: a trip costs more in wet-wing flight than the watered
 	# down nectar brings back, so there is no point going out. Wait it out
 	# at the hive instead.
@@ -131,6 +133,23 @@ static func start_seek_flower(bee: Node2D) -> bool:
 	return true
 
 
+## Flowers are only looked for from the meadow. Under hive_root a bee's
+## position is hive-local while a flower's is meadow-space, so perceiving
+## from indoors "finds" flowers at meaningless points inside the hive, flies
+## to them and even collects from them (C-7, C-29, C-31, 19 Sep 2026). Any
+## path that lands an indoor bee on SEEK_FLOWER or SEARCHING -- above all
+## _idle_dispatch sending an indoor Forager to her finder, as at the end of
+## an "Empty this cell" trip -- walks her out through the ordinary exit
+## instead, and _leave_hive_and_resume starts the search in the meadow.
+## Checked here, at the two states' own per-frame steps, rather than at
+## each caller, so a new caller cannot forget it.
+static func _walk_out_if_indoors(bee: Node2D) -> bool:
+	if not bee._is_inside_hive():
+		return false
+	bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+	return true
+
+
 ## A fresh SEARCHING bout from scratch -- shared by seek_flower's "nothing
 ## in sight" fallback and its poor_patch_search_streak shortcut above.
 static func _start_searching(bee: Node2D) -> void:
@@ -161,6 +180,8 @@ static func _start_searching(bee: Node2D) -> void:
 ## old relaxed full-meadow scan once; if that's also empty, go home,
 ## matching seek_flower's pre-Slice-5 genuinely-empty behaviour exactly.
 static func search_for_flower(bee: Node2D, delta: float) -> void:
+	if _walk_out_if_indoors(bee):
+		return
 	if BeeStatus.grounded(bee):
 		bee.state = autonomous_state(bee, State.TO_HIVE)
 		return

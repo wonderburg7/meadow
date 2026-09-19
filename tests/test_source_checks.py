@@ -57,6 +57,32 @@ class ForagingPrerequisiteContractTest(unittest.TestCase):
         self.assertIn("_cascade_mutual_exclusion_static(parent)", prerequisite_cascade)
 
 
+class IndoorForagingContractTest(unittest.TestCase):
+    """19 Sep 2026: a Forager left idle inside the hive was dispatched to
+    SEEK_FLOWER there, read meadow flower positions as hive-local offsets and
+    'foraged' invisible flowers indoors (C-7, C-29, C-31). The guard lives at
+    the two flower-finding steps, so no caller can forget it."""
+
+    def _body(self, source: str, func: str) -> str:
+        return source.split("static func %s(" % func, 1)[1].split("\nstatic func ", 1)[0]
+
+    def test_flower_finding_walks_an_indoor_bee_out_first(self):
+        foraging = BEE_FORAGING_PATH.read_text(encoding="utf-8")
+        guard = self._body(foraging, "_walk_out_if_indoors")
+        self.assertIn("bee._is_inside_hive()", guard)
+        self.assertIn("autonomous_state(bee, State.IN_HIVE_TO_EXIT)", guard)
+        for func in ("seek_flower", "search_for_flower"):
+            body = self._body(foraging, func)
+            first = [line.strip() for line in body.splitlines()[1:] if line.strip()][0]
+            self.assertEqual("if _walk_out_if_indoors(bee):", first, func)
+
+    def test_pollen_stage_effects_wait_for_the_pollen_focus(self):
+        runner = CHALLENGE_RUNNER_PATH.read_text(encoding="utf-8")
+        drive = runner.split("func _drive_c1_forage_effects", 1)[1].split("\nfunc ", 1)[0]
+        gate = drive.index('if stage_id == "1.14" and main.queen.resource_type != "pollen":')
+        self.assertLess(gate, drive.index("_c1_forage_effects_done = true"))
+
+
 class ChallengeOneOverflowContractTest(unittest.TestCase):
     def test_only_the_pollen_automation_stage_can_discard_queen_nectar(self):
         stages = CHALLENGE_STAGES_PATH.read_text(encoding="utf-8")

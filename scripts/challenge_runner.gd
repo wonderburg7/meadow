@@ -976,6 +976,13 @@ func _drive_c1_forage_effects() -> void:
 	# than waiting for a later outdoor state that can race a UI follow-off.
 	if main.queen.state != Bee.State.IN_HIVE_TO_EXIT and main.queen.state not in CHALLENGE1_FORAGE_TRIGGER_STATES:
 		return
+	# 1.14 opens with the queen already a nectar Forager, often mid-trip, so
+	# her state alone fired the effects at stage entry. Selecting her to
+	# press Pollen then cleared camera-follow (every selection change does),
+	# leaving 4x speed without the camera -- C-29's pollen half, seen on 10,
+	# 12, 17 and 19 Sep 2026. The pollen trip starts when the focus does.
+	if stage_id == "1.14" and main.queen.resource_type != "pollen":
+		return
 	_c1_forage_effects_done = true
 	_run_stage_effects(["camera_follow_queen", "speed_multiplier:4.0"])
 
@@ -995,14 +1002,22 @@ func discards_overflow(bee: Node2D) -> bool:
 ## the stage queue first so its hint cannot immediately overwrite the reason
 ## this gathered nectar was discarded. The unique id preserves one warning per
 ## occurrence even though Gallerin normally deduplicates prompt ids.
-func announce_overflow_discard() -> void:
+## The two ways a Challenge 1 queen loses a nectar load at 1.14 get their
+## own lines. Both name the pollen-only cell, because "no room" read as
+## false to Dave with that cell standing empty (C-42, 19 Sep 2026).
+func announce_overflow_discard(focus_switch: bool = false) -> void:
+	var text: String = (
+		"The comb has no room for nectar: your nectar cells are full, and the empty cell is set aside for pollen, so it takes pollen only. She threw this trip away and will wait in the hive. Switch her focus to Pollen to fill that cell, or build another cell for nectar."
+		if not focus_switch else
+		"She dropped the nectar she was carrying: a forager brings home one kind at a time, and she is going out for pollen for the cell you set aside."
+	)
 	_c1_overflow_discard_count += 1
 	main.gallerin_panel.clear_queue()
 	main.gallerin_panel.show_now({
 		"id": "challenge_1_nectar_overflow_%s_%d" % [_stages()[_stage_index].id, _c1_overflow_discard_count],
 		"trigger": "warning",
 		"repeatable": false,
-		"text": "The comb has no room for nectar: this trip cannot be stored while this cell is reserved for pollen. Empty a cell or build another nectar cell before sending her out again.",
+		"text": text,
 	})
 
 ## Slice 18: from the pollen-automation stage (1.14) onward, nectar left in

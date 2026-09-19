@@ -152,6 +152,7 @@ static func hatch_options() -> Array:
 			for mode in role.modes:
 				options.append({
 					"label": "%s — %s" % [role.label, mode.label],
+					"mode": mode.key,
 					"focus": mode.key if role.id != Roles.MINER else "nectar",
 					"automine": role.id == Roles.MINER and mode.key == "automine",
 				})
@@ -468,6 +469,9 @@ var lock_row: HBoxContainer
 ## One entry per hatch_options() choice, so _refresh_cell_popup can hide
 ## the ones for a role the current Challenge hasn't unlocked yet.
 var hatch_option_controls: Array = []
+## Shown in place of the Raises options while a Challenge stage has unlocked
+## none of them, so the row never reads as a title with nothing under it.
+var hatch_locked_note: Label
 ## How many cells the popup's buttons will act on. 1 unless the player
 ## has a multi-cell selection.
 var selected_cell_count: int = 1
@@ -1549,7 +1553,15 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 		else:
 			control = _make_hatch_menu(entry)
 			hatch_row.add_child(control)
-		hatch_option_controls.append({"role": entry.role, "control": control})
+		hatch_option_controls.append({"role": entry.role, "control": control, "options": options})
+
+	# Challenge 2's first stage unlocks no role a cell can raise, and the
+	# row showed "Raises:" and nothing else (Dave, 19 Sep 2026).
+	hatch_locked_note = Label.new()
+	hatch_locked_note.text = "Nothing to choose yet -- a later stage unlocks this."
+	hatch_locked_note.theme_type_variation = "Small"
+	hatch_locked_note.visible = false
+	hatch_row.add_child(hatch_locked_note)
 
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
@@ -1695,8 +1707,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 	var role_value: int = entry.role
 	menu.name = "hatch_%s_menu" % Roles.key_for(role_value)
 	var popup := menu.get_popup()
-	for i in range(options.size()):
-		popup.add_item(options[i].label, i)
+	_fill_hatch_menu(popup, role_value, options)
 	popup.id_pressed.connect(func(id: int):
 		_request_hatch_role(role_value, options[id].focus, options[id].automine)
 	)
@@ -1708,6 +1719,22 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 ## A nudge, not an interruption: it sits at the top of the screen, the
 ## game carries on running behind it, and it clears itself after a while
 ## if the player doesn't dismiss it.
+
+## A Raises menu offers only the modes its Challenge stage has unlocked, by
+## the same gate key the bee's own mode row uses (Availability.mode_gate_key).
+## Item ids stay the option's index, so id_pressed still reads options[id].
+## Before this the menu listed every mode, so unlocking nectar Foragers at
+## Challenge 2's 2.1 would also have let the player raise the pollen Forager
+## that 2.2 asks for (19 Sep 2026). Returns how many items it offers.
+func _fill_hatch_menu(popup: PopupMenu, role_value: int, options: Array) -> int:
+	popup.clear()
+	for i in range(options.size()):
+		var mode: String = options[i].get("mode", "")
+		var gate_key: String = Availability.mode_gate_key(role_value, mode)
+		if mode != "" and not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
+			continue
+		popup.add_item(options[i].label, i)
+	return popup.item_count
 
 const WARNING_SECONDS := 18.0
 
@@ -2030,9 +2057,16 @@ func _apply_cell_popup_gating() -> void:
 		var btn: Button = live_buttons.get("designation_%s" % suffix)
 		if btn != null:
 			btn.visible = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
+	var any_raise_option := false
 	for entry in hatch_option_controls:
 		var role: int = entry.role
 		entry.control.visible = allowed_role_keys.is_empty() or (role != -1 and allowed_role_keys.has(Roles.key_for(role)))
+		if entry.control is MenuButton:
+			var offered: int = _fill_hatch_menu((entry.control as MenuButton).get_popup(), role, entry.options)
+			entry.control.visible = entry.control.visible and offered > 0
+		any_raise_option = any_raise_option or entry.control.visible
+	if hatch_locked_note != null:
+		hatch_locked_note.visible = not any_raise_option
 	if gyne_row != null:
 		gyne_row.visible = allowed_role_keys.is_empty()
 	if lock_row != null:
@@ -2337,7 +2371,10 @@ func update_signals(lines: Array) -> void:
 ## every setter without thrashing labels every frame.
 func _refresh_corner() -> void:
 	Perf.begin("corner_refresh")
-	var signature := ""
+	# Text scale is part of what the corner looks like: its labels carry
+	# font-size overrides, which UiTheme.refresh() cannot reach, so without
+	# it a text-size change never rebuilt them (19 Sep 2026).
+	var signature := "scale=%s\n" % Session.text_scale
 	for key in CORNER_ORDER:
 		if Session.pinned_stats.has(key):
 			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
@@ -3265,6 +3302,8 @@ func set_allowed_mode_keys(keys: Array) -> void:
 	allowed_mode_keys = keys
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
+		_apply_cell_popup_gating()
 
 ## See the allowed_designation_keys field comment. Re-applies immediately
 ## if the cell popup is currently open, same as set_allowed_role_keys

@@ -1,0 +1,72 @@
+{
+  "random_seed": 5353,
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  },
+  "actions": [
+    {
+      "do": "viewport_size",
+      "w": 1920,
+      "h": 1080
+    },
+    {
+      "do": "set_config",
+      "key": "text_scale",
+      "value": 1.5
+    },
+    {
+      "do": "open_window",
+      "window": "settings",
+      "sections": [
+        "Controls"
+      ]
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "settings/**/ControlsHelp",
+        "visible": true,
+        "max_leading": 2
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "text_scale",
+      "value": 2.0
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "settings/**/ControlsHelp",
+        "visible": true,
+        "max_leading": 2
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "text_scale",
+      "value": 1.0
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "settings/**/ControlsHelp",
+        "visible": true,
+        "max_leading": 2
+      }
+    }
+  ]
+}

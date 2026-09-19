@@ -1694,7 +1694,7 @@ func set_focus(type: String) -> void:
 	# the same warning as at a full comb, rather than silently overwritten
 	# by her first pollen visit (C-42, 17 Sep 2026).
 	if current_load > 0.0 and current_load_type != type and is_instance_valid(world) 			and world.challenge_runner != null and world.challenge_runner.discards_overflow(self):
-		world.challenge_runner.announce_overflow_discard()
+		world.challenge_runner.announce_overflow_discard(true)
 		current_load = 0.0
 		current_load_type = ""
 	if current_flower:

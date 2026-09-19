@@ -138,7 +138,7 @@ Found by applying `plans/README.md` rule 10 to every live plan:
   "Shipped, one pointer each". The README says history moves to the archive
   at a slice transition; here it is stated twice in one live file.
 - `checks/blocked.md` still carries a two-line stub for C-18 ("unblocked 18
-  Sep 2026 ... see `checks/ready/C-18.md`") between real blocked entries.
+  Sep 2026 ... see checks/ready/C-18.md", since archived) between real blocked entries.
 
 *Effort.* All quick; doc only. Incremental: yes.
 

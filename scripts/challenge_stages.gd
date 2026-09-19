@@ -322,7 +322,7 @@ static func c2_pollen_rescue_amount() -> float:
 ## than opening on a stage id that looks like two are missing.
 const STAGES_2 := [
 	{
-		"id": "2.1", "goal": "nectar_stabilized", "condition": {"custom": "_goal_check_nectar_stabilized"}, "unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window"],
+		"id": "2.1", "goal": "nectar_stabilized", "condition": {"custom": "_goal_check_nectar_stabilized"}, "unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar"],
 		"goal_text": "Goal: watch the nectar stores fall, then recover them.",
 		"prompts": [
 			{"id": "2.1_welcome", "trigger": "welcome", "delay": 0.0, "text": "Notice the nectar stores. Bees do not run on enthusiasm alone; movement, work, and survival all cost energy."},

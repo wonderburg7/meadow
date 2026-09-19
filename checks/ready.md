@@ -12,15 +12,10 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 
 ## Ready to run
 
-- [C-18 -- the command tray's three columns share its width](ready/C-18.md)
-- [C-24 -- peak season reads as a good summer, not a different game](ready/C-24.md)
 - [C-29 -- the stage's camera and speed switch off when the stage ends](ready/C-29.md)
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
-- [C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager](ready/C-34.md)
 - [C-42 -- the queen keeps her nectar when the comb has no room](ready/C-42.md)
-- [C-52 -- the settings window is about a quarter of the screen's width](ready/C-52.md)
 - [C-53 -- the Controls list reads as one list, with no gaps](ready/C-53.md)
-- [C-54 -- a run's starting bees do not all die of old age together](ready/C-54.md)
-- [C-55 -- Challenge 1's queen takes Nursing as her backup by herself](ready/C-55.md)
-- [C-56 -- Dr Gallerin's long lines show in full, up to a third of the screen](ready/C-56.md)
+- [C-57 -- Challenge 2's first stage lets a cell raise a nectar Forager, not yet a pollen one](ready/C-57.md)
+- [C-58 -- the top-left readouts follow the text size](ready/C-58.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

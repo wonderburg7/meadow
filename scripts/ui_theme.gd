@@ -225,6 +225,15 @@ static func active_theme() -> Theme:
 static func build_theme() -> Theme:
 	return active_theme()
 
+## The settings whose change must reach every open control. One list, read
+## by the settings window and by the headless set_config verb alike, so a
+## fixture that changes text scale sees what the player sees (C-53).
+const APPEARANCE_KEYS := ["text_scale", "ui_theme", "ui_typeface"]
+
+static func refresh_for_setting(key: String) -> void:
+	if key in APPEARANCE_KEYS:
+		refresh()
+
 ## Reapplies all palette, scale and typeface values to the same resources.
 ## Theme and StyleBox resources emit change notifications as they mutate, so
 ## controls already holding them redraw without being rebuilt.

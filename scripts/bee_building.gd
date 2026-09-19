@@ -370,6 +370,16 @@ static func builder_dump_waste(bee: Node2D, delta: float) -> void:
 	bee.carrying_corpse = false
 	if bee.world:
 		bee.world.move_bee_into_hive(bee)
+	# An "Empty this cell" order ends when the cell is empty, not after one
+	# stomachful. A builder would find the cell again through
+	# find_cell_needing_eviction, but a bee whose own role never looks for
+	# eviction work -- Challenge 1's Forager queen (C-31) -- dropped the
+	# order after the first trip. target_cell is still the source here:
+	# only a cleaned corpse arrives with it cleared.
+	var source: Node2D = bee.target_cell
+	if source != null and is_instance_valid(source) and source.needs_eviction():
+		bee.state = State.TO_HAUL_SOURCE
+		return
 	bee.target_cell = null
 	bee.state = State.BUILD_IDLE
 

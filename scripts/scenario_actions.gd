@@ -23,6 +23,7 @@ extends RefCounted
 ## its ticks.
 
 const Settings = preload("res://scripts/settings_catalogue.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const Conditions = preload("res://scripts/conditions.gd")
 
@@ -405,6 +406,7 @@ static func _do_set_config(_main: Node2D, action: Dictionary) -> void:
 		_log("set_config", str(action), "rejected", "missing key or value")
 		return
 	Settings.apply_setting(key, action["value"])
+	UiTheme.refresh_for_setting(key)
 	_log("set_config", "%s = %s" % [key, action["value"]], "accepted", "")
 
 ## Calls orders_zones._on_cell_hatch_role_requested -- the same function
@@ -851,6 +853,12 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		if condition.get("visible", false):
 			return {"ok": false, "reason": "control '%s' is not visible" % path}
 		return {"ok": true, "reason": ""}
+	if condition.has("max_leading"):
+		var leading: Dictionary = _label_leading(control)
+		if leading.is_empty():
+			return {"ok": false, "reason": "control '%s' is not a Label" % path}
+		if leading.leading > float(condition["max_leading"]):
+			return {"ok": false, "reason": "control '%s' lines are %dpx apart for a %dpx font: %dpx leading, at most %s allowed" % [path, leading.pitch, leading.font_size, leading.leading, condition["max_leading"]]}
 	var rect: Rect2 = control.get_global_rect()
 	var min_size_arr: Array = condition.get("min_size", [0, 0])
 	var expected := Vector2(float(min_size_arr[0]), float(min_size_arr[1]))
@@ -876,6 +884,20 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		if absf(rect.size.y - peer_height) > 1.0:
 			return {"ok": false, "reason": "control '%s' is %.1fpx tall but '%s' is %.1fpx" % [path, rect.size.y, peer_path, peer_height]}
 	return {"ok": true, "reason": ""}
+
+## "max_leading" (C-53): how far apart a Label draws consecutive list items,
+## less its font size. The pitch is the font's line height plus the label's
+## line_spacing and, since each new line starts a paragraph, paragraph_spacing --
+## the numbers Label itself draws with, read after any theme change, so a
+## spacing measured once and left stale by a text-scale change fails here.
+static func _label_leading(control: Control) -> Dictionary:
+	if not (control is Label):
+		return {}
+	var label := control as Label
+	var font_size: int = label.get_theme_font_size("font_size")
+	var pitch: int = (int(label.get_theme_font("font").get_height(font_size))
+		+ label.get_theme_constant("line_spacing") + label.get_theme_constant("paragraph_spacing"))
+	return {"font_size": font_size, "pitch": pitch, "leading": pitch - font_size}
 
 ## LAY-6 change 2: {"container": "<path>", "children": n, "tolerance": px}.
 ## Fails when the first n visible children's widths, or the gaps between
@@ -997,6 +1019,10 @@ static func _resolve_scoped_path(main: Node2D, path: String) -> Node:
 			return null
 	if root == null or segments.size() == 1:
 		return root
+	# "settings/**/ControlsHelp": a named control anywhere under the root, for
+	# panels built from nested containers whose own names are incidental.
+	if segments.size() == 3 and segments[1] == "**":
+		return root.find_child(segments[2], true, false)
 	return root.get_node_or_null("/".join(segments.slice(1)))
 
 static func _log(do: String, target_desc: String, result: String, reason: String) -> void:

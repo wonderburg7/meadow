@@ -16,6 +16,19 @@ reads on one line. Their re-run notes are on C-7, C-29, C-31, C-42 and C-49.
 What remains needs a new mechanism (C1F-1) and the instrument that uses it
 (C1F-2).
 
+**19 Sep 2026 pass, fixed in session** (re-run notes on C-7, C-29, C-31,
+C-42). An idle Forager inside the hive was dispatched to flower-seeking
+where she stood and, reading meadow positions as hive-local ones, "foraged"
+invisible flowers indoors -- the pollen stage's real fault on 17 and 19 Sep.
+`bee_foraging.gd::_walk_out_if_indoors` now walks her out first, at the two
+flower-finding steps. The 1.14 camera and speed wait for her Pollen focus,
+since selecting her to press it cleared a follow that had already fired.
+"Empty this cell" continues until the cell is empty
+(`bee_building.gd::builder_dump_waste`). The 1.14 overflow warning names the
+pollen-only cell (Dave: it stays pollen-only). `tests/test_source_checks.py`'s
+`IndoorForagingContractTest` pins the first two statically; C1F-2 below
+proves them at runtime.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
@@ -227,7 +240,7 @@ discard sat behind the deposit epoch gate; after a discard she walked
 straight out for another trip. This slice proves the fix stays fixed.
 
 **Files likely to change.** `scripts/scenario_actions.gd` (a `queen_inside_hive`
-condition beside `challenge_stage_id` in the shared when/assert checker, and a `set_queen_load` action), new
+condition beside `challenge_stage_id` in the shared when/assert checker, and the `set_queen_load`, `set_cell_contents` and `empty_cell` actions), new
 test_scenarios/c1f2_queen_pollen_departure_test.json.
 
 **Requirements.**
@@ -239,8 +252,22 @@ test_scenarios/c1f2_queen_pollen_departure_test.json.
 2. Fixture B: same start, focus stays nectar, queen sent to a flower. Assert
    exactly one `challenge_1_nectar_overflow` Gallerin prompt within 120 game
    seconds and `queen_inside_hive` true 30 seconds after it.
+3. Fixture A also asserts, from `assign_role` to departure, that the queen is
+   never in `SEEK_FLOWER`, `SEARCHING`, `TO_FLOWER` or `COLLECTING` while
+   `queen_inside_hive` is true (a `queen_state_in` list beside
+   `queen_inside_hive` in the same checker), and that the Challenge's
+   camera-follow is on 10 game seconds after the Pollen focus is set.
+4. Fixture C: same start, with nectar stocked in the pollen cell and the
+   queen told to empty it. Neither verb exists yet: add `set_cell_contents`
+   (`{"hex": [q, r], "resource": "nectar", "amount": n}`, through the cell's
+   own `add_resource`) and `empty_cell` (`{"hex": [q, r]}`, calling
+   `bee.gd::command_empty_cell` on the queen -- the button's own function) to
+   `scripts/scenario_actions.gd`, beside `designate_cell`. Assert the cell is
+   empty within 120 game seconds and that the queen then leaves the hive (`queen_inside_hive` false) without a player command.
 
-**Acceptance.** Both fixtures pass on the branch; reverting
+**Acceptance.** All three fixtures pass on the branch; reverting
 `bee_foraging.gd::go_to_deposit_cell`'s `bee.target_cell = null` line makes A
+fail, removing the `_walk_out_if_indoors` call from `seek_flower` makes A's
+requirement 3 fail, and removing `builder_dump_waste`'s continuation makes C
 fail. **Level:** medium. **Escalate if** reaching 1.14 headlessly needs more
 than C1F-1's setup.

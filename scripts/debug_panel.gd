@@ -410,22 +410,27 @@ func _refresh_challenge_stage_navigation() -> void:
 ## 2026), so this is one unbroken list in reading order.
 func _make_controls_help() -> Control:
 	var help := Label.new()
+	help.name = "ControlsHelp"
 	help.theme_type_variation = "Small"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Measured at ready (Small variation, this profile's saved text_scale
-	# 1.5): get_line_height() 24px against a 20px font -- Godot's own
-	# ~1.2x default leading (13px/16px at scale 1.0), which read as the
-	# too-big gap in C-53. Pitch is tightened to font size + 2px by pulling
-	# the label's own line_spacing negative, computed live off whatever
-	# scale is active rather than a pixel literal, and only for this label
-	# rather than the theme-wide "Small" variation every other Small label
-	# still uses.
-	help.ready.connect(func() -> void:
+	# The list's pitch is its font size plus 2px (C-53). Munro's line height
+	# is ~1.2x its size (24px at 20px, text scale 1.5), and Godot's default
+	# Label line_spacing adds 3px more, which read as a gap between every
+	# item. UI-X-1 measured this once at ready; the spacing then went stale
+	# whenever text scale changed, because UiTheme.refresh() resizes the
+	# font in place (23px apart at 1.5, measured headlessly 19 Sep 2026).
+	# So it is recomputed on every theme change, from the font Label will
+	# actually draw with. The inequality guard matters: setting an override
+	# is itself a theme change, and would otherwise recurse.
+	var tighten := func() -> void:
 		var font_size := help.get_theme_font_size("font_size")
-		var pitch := help.get_line_height()
-		help.add_theme_constant_override("line_spacing", font_size + 2 - pitch)
-	)
+		var height := int(help.get_theme_font("font").get_height(font_size))
+		var spacing := font_size + 2 - height
+		if not help.has_theme_constant_override("line_spacing") or help.get_theme_constant("line_spacing") != spacing:
+			help.add_theme_constant_override("line_spacing", spacing)
+	help.ready.connect(tighten)
+	help.theme_changed.connect(tighten)
 	help.text = """Arrow keys — pan the view
 Mouse wheel — zoom in and out
 Middle mouse drag — pan the view
@@ -876,8 +881,7 @@ func _cycle_option(entry: Dictionary, direction: int) -> void:
 	idx = (idx + direction + options.size()) % options.size()
 	var new_value: String = options[idx]
 	Settings.setting_set(entry.key, new_value)
-	if entry.key == "ui_theme" or entry.key == "ui_typeface":
-		UiTheme.refresh()
+	UiTheme.refresh_for_setting(entry.key)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _option_display(entry, new_value)]
 
 ## UI-syncing wrapper over the catalogue's
@@ -961,8 +965,7 @@ func _adjust(entry: Dictionary, delta: float) -> void:
 	if entry.has("max"):
 		new_value = min(new_value, entry.max)
 	Settings.setting_set(entry.key, new_value)
-	if entry.key == "text_scale":
-		UiTheme.refresh()
+	UiTheme.refresh_for_setting(entry.key)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _format_value(new_value)]
 	if entry.key == "tooltip_delay":
 		# Godot's own project-wide tooltip timer, rather than something

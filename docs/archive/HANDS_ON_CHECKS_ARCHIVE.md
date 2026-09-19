@@ -6,6 +6,139 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 19 Sep 2026 -- Dave's hands-on pass
+
+Thirteen checks run. Seven passed and are recorded here: C-18, C-24, C-34,
+C-52, C-54, C-55 and C-56. C-7, C-29, C-31, C-42 and C-53 failed or
+partly passed; each was diagnosed and fixed in session and carries a
+re-run note. Dave's extra findings became C-57 (Challenge 2's Raises
+menu, with 2.1 now unlocking the nectar Forager, Dave's decision) and
+C-58 (the top-left readouts and text size). C-42's pollen-only cell
+stays pollen-only (Dave, in session).
+
+### C-18 -- the command tray's three columns share its width
+
+Select a bee at 1920x1080, then at 800x600, and look at the Job, Focus and
+Orders columns across the tray; then select a comb cell and look again.
+
+PASS: at 1920x1080 the tray's columns divide its width into equal parts with equal gaps and equal space at each end -- Job, Focus and Orders for a bee; Reserve for, Priority and Raises for a cell -- and at 800x600 they either do the same or wrap onto more rows with nothing clipped.
+
+Owner: `plans/archive/UI-X-3_2026-09-18.md`.
+
+Unblocked 18 Sep 2026. UI-X-3 split the cell tray's Nursery column into
+Priority and Raises, so a comb cell's tray now shows three columns --
+Reserve for, Priority, Raises -- matching the bee tray's three-column shape.
+The bee half already passed on Dave's 12 Sep 2026 run; re-run the cell half.
+
+Passed (Dave, 19 Sep 2026).
+
+### C-24 -- peak season reads as a good summer, not a different game
+
+What this checks: how much more a flower gives in the middle of its own
+flowering season than outside it. In Game Settings > Seasons & health, set
+"Season days" to 5 (the shortest year), restart the run and play at 8x. Click
+one flower and keep its summary panel (bottom left) open. Watch the
+"Nectar: ... (+x/s)" figure for a minute or two as its season comes and goes.
+
+PASS: the +/s figure climbs smoothly to a peak and falls smoothly away again, and out of season it never drops below about three fifths of its peak (0.75x against 1.25x of the flower's normal rate).
+
+If it fails, `GameConfig.out_of_season_strength` (0.75) and
+`peak_season_strength` (1.25) are wrong or not what the summary panel reads.
+
+Owner: `plans/now/season-feel.md` (values set on `claude/pass-0917`).
+
+Re-run note (Dave, 17 Sep 2026). Failed against the old 0.05/0.75 values:
+"flowers' nectar rates quickly falling to one tenth of their peak season
+rate". Dave set the new range in session: off season 75% of the normal rate,
+peak 125%. Re-run as written above.
+
+Passed (Dave, 19 Sep 2026).
+
+### C-34 -- Challenge 2 keeps enough pollen to raise its first pollen Forager
+
+Start Challenge 2 and stay in stage 2.1 (watch the nectar stores fall, then
+recover them) long enough for Dr Gallerin's stronger hint. Let pollen run
+below one bee's cost, then move into 2.2 (raise a pollen Forager) without
+raising one at once. Let it run briefly, then select an empty cell, set
+Raises to Forager -- Pollen, and play until 2.2 clears.
+
+PASS: during 2.1 Dr Gallerin warns that every new bee costs pollen and some should be kept back; at low pollen, exactly once per run, the colony receives three bee-costs of pollen with a line explaining that no pollen means no new bees, and the same low-pollen state does not top the store up again; once the pollen Forager is raised no further rescue occurs.
+
+Owner: `plans/archive/UI-X-2_2026-09-18.md`.
+
+Unblocked 18 Sep 2026. UI-X-2 fixed the missing Forager control: a stage
+transition while a cell's tray was open closed the whole tray (not a role-
+unlock gap), so selecting the cell freshly after 2.2 begins -- as this check
+already asks -- reaches a working "Raises: Forager..." menu. 2.1's own text
+above was re-checked and does not ask to raise anything as a Forager during
+2.1 (the role has no unlock there by design); nothing in this check's
+wording needed changing.
+
+Passed (Dave, 19 Sep 2026).
+
+### C-52 -- the settings window is about a quarter of the screen's width
+
+Open the settings cog in a run, at the default text scale on a maximised
+1920x1080 window.
+
+PASS: the window is about a quarter of the screen wide, the action buttons and the Triggers buttons each read in full, and no row forces a horizontal scrollbar.
+
+Owner: `plans/archive/UI-X-1_2026-09-18.md`.
+
+Unblocked 18 Sep 2026. UI-X-1 replaced the settings window's fixed 320px
+width with `UiLayout.settings_window_width()` -- a quarter of the viewport,
+floored at 320px -- so a 1920x1080 window now opens the panel 480px wide.
+
+Passed (Dave, 19 Sep 2026).
+
+### C-54 -- a run's starting bees do not all die of old age together
+
+Start a new run from Restart Run with the default settings. Select each
+starting bee in turn and read "Age" and "Left" in the summary panel (bottom
+left).
+
+PASS: the starting bees show different ages, from newly hatched up to about half a lifespan, rather than all reading the same.
+
+If it fails, the founders still share one death day, and `starter_age_spread`
+in `scripts/game_config.gd` (Game Settings > Bee life > Starting age spread)
+is not reaching the spawn in `scripts/world_building.gd`.
+
+Owner: `plans/now/c1-followups.md` (17 Sep fixes, `claude/pass-0917`).
+
+Passed (Dave, 19 Sep 2026).
+
+### C-55 -- Challenge 1's queen takes Nursing as her backup by herself
+
+Play Challenge 1 to 1.16, where Dr Gallerin asks you to let the queen lay the
+colony's first egg (`docs/challenge-stages.md`). Select the queen and give her
+the Laying role only; do not open her backup choice. Read Dr Gallerin's lines
+at 1.16 and 1.17, then look at the queen's backup in her command tray.
+
+PASS: her backup already reads Nursing, and neither of Dr Gallerin's lines asks you to choose a backup.
+
+If it fails, the first hatch can starve with nobody feeding it, and
+`queen_laying_backup` in `scripts/levels.gd` is not being applied.
+
+Owner: `plans/now/c1-followups.md` (17 Sep fixes, `claude/pass-0917`).
+
+Passed (Dave, 19 Sep 2026).
+
+### C-56 -- Dr Gallerin's long lines show in full, up to a third of the screen
+
+Trigger a long Dr Gallerin prompt (the developer/debug trigger, or any real
+prompt of a few hundred characters or more) at the default window size.
+
+PASS: the bubble grows past its old few-line size, up to about a third of the window's height, and a line too long for that shows the rest via the bubble's scrollbar rather than being cut off silently.
+
+Owner: `plans/archive/UI-X-4_2026-09-18.md`.
+
+Filed 18 Sep 2026. `UiLayout.GALLERIN_MAX_HEIGHT_FRACTION` caps the bubble at
+a third of the viewport height (was effectively uncapped), and
+`_bubble_label.visible_characters_behavior = VC_CHARS_AFTER_SHAPING` fixed
+the bug that had it sizing to an empty first line instead.
+
+Passed (Dave, 19 Sep 2026).
+
 ## 17 Sep 2026 -- Dave's hands-on pass
 
 Eight checks run. C-48 passed and is recorded here. C-24 failed and was

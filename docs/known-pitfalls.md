@@ -323,6 +323,17 @@ The read-only inspection commands this project actually uses are allow-listed
 in `.claude/settings.json`; if a plain `sed -n`/`grep`/`git show` is refused,
 the path it names is denied on purpose — do not reach for a workaround.
 
+**A bee under `hive_root` is in hive-local coordinates; a flower is not
+(19 Sep 2026).** Parenting decides the space `bee.position` is in. A
+Forager idling indoors was dispatched to flower-seeking where she stood,
+compared her hive-local position with meadow flower positions, and flew to,
+and drank from, points inside the hive where no flower was -- C-7's pollen
+half failed on this through three passes while each fix looked elsewhere.
+Any behaviour that compares a bee's position with a meadow thing must first
+put her in the meadow; for flowers that rule lives in
+`bee_foraging.gd::_walk_out_if_indoors`, and `bee.gd::set_focus` says the
+same for focus changes.
+
 **Why four paths are denied to the `Read` tool, and the one sanctioned way
 round it (Dave, 18 Sep 2026).** `ROADMAP.md`, `DESIGN_BACKLOG.md`,
 `plans/archive/**` and `docs/archive/**` are on the deny list because an
