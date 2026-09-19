@@ -14,14 +14,7 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] UI-Y -- toggleable panel background texture**
-   - Plan: `plans/now/ui.md` -- "UI-Y — toggleable panel background texture"
-   - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `scripts/session.gd`
-   - Check: a hands-on pass with each theme palette (dark/light/high-contrast) -- set the new Appearance option to `comb`, then `grain`, then back to `flat`, confirm the panel edge and text position never move and text stays legible
-   - Proof: `absent: scripts/settings_catalogue.gd :: panel_texture`
-   - Next after: none -- UI-Y is complete.
-
-2. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
+1. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
    - Plan: `plans/now/c1-followups.md` -- "C1F-2 — a headless run proves the queen's pollen departure and no discard loop"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/c1f2_queen_pollen_departure_test.json`
    - Check: fixtures A, B and C in the new scenario pass, and reverting `bee_foraging.gd::go_to_deposit_cell`'s `bee.target_cell = null` line makes A fail
