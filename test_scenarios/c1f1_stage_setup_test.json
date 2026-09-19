@@ -1,0 +1,514 @@
+{
+  "challenge": 1,
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.2"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.2"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.3"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.3"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.4"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.4"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.5"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.5"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.6"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.6"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.7"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.7"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.8"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.8"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.9"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.9"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.10"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.10"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.11"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.11"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.12"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.12"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.13"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.13"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.14"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.14"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.15"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.15"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.16"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.16"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.17"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.17"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.18"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.18"
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.19"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.19"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.18"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.18"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.17"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.17"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.16"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.16"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.15"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.15"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.14"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.14"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.13"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.13"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.12"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.12"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.11"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.11"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.10"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.10"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.9"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.9"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.8"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.8"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.7"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.7"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.6"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.6"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.5"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.5"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.4"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.4"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.3"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.3"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.2"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.2"
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.1"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.1"
+      }
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  }
+}

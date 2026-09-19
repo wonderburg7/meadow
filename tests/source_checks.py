@@ -914,6 +914,35 @@ def check_hive_stock_epoch_cache(problems):
         )
 
 
+def check_challenge_1_stage_setup(problems):
+    """C1F-1: every Challenge 1 record declares a setup, in the known vocabulary."""
+    stages_path = os.path.join(ROOT, "challenge_stages.gd")
+    setup_path = os.path.join(ROOT, "challenge_stage_setup.gd")
+    if not (os.path.exists(stages_path) and os.path.exists(setup_path)):
+        problems.append("challenge_stages.gd / challenge_stage_setup.gd not found for stage setup check")
+        return
+    stages_src = open(stages_path, encoding="utf-8").read()
+    setup_src = open(setup_path, encoding="utf-8").read()
+    keys_match = re.search(r"const KEYS := \[(.*?)\]", setup_src, re.S)
+    allowed = set(re.findall(r'"(\w+)"', keys_match.group(1))) if keys_match else set()
+    block = re.search(r"const STAGES_1 := \[(.*?)\r?\nconst ", stages_src, re.S)
+    if not block or not allowed:
+        problems.append("challenge_stage_setup: could not read STAGES_1 or KEYS")
+        return
+    records = re.findall(r'"setup": (\{.*\}),\r?\n\s*"id": "(1\.\d+)"', block.group(1))
+    ids = {rid for _, rid in records}
+    for n in range(1, 21):
+        if "1.%d" % n not in ids:
+            problems.append("challenge_stages.gd: stage 1.%d has no setup record" % n)
+    for body, rid in records:
+        # 1.20 is complete unconditionally (_goal_check_complete), so no setup
+        # can make its goal false: its empty setup is the documented exception.
+        # Nested dicts hold values, not vocabulary: collapse them first.
+        for key in re.findall(r'"(\w+)":', re.sub(r"\{[^{}]*\}", "{}", body[1:-1])):
+            if key not in allowed:
+                problems.append("stage %s setup uses unknown key '%s'" % (rid, key))
+
+
 def check_challenge_1_nectar_capacity(problems):
     """C1-27: Challenge 1's nectar goal and per-cell cap share one owner."""
     stages_path = os.path.join(ROOT, "challenge_stages.gd")
@@ -2826,6 +2855,7 @@ def main():
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)
     check_challenge_1_nectar_capacity(problems)
+    check_challenge_1_stage_setup(problems)
     check_role_count_key_ownership(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
