@@ -18,4 +18,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-53 -- the Controls list reads as one list, with no gaps](ready/C-53.md)
 - [C-57 -- Challenge 2's first stage lets a cell raise a nectar Forager, not yet a pollen one](ready/C-57.md)
 - [C-58 -- the top-left readouts follow the text size](ready/C-58.md)
+- [C-59 -- One placement tool at a time](ready/C-59.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
