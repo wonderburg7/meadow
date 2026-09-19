@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, leaving E1, F1s, F2s and G3 | Owner: Dave / Claude Code | Next: E1 -- one placement tool (Claude lane); the Codex lane leads with SM-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, and E1 shipped 19 Sep 2026, leaving F1s, F2s and G3 | Owner: Dave / Claude Code | Next: F1s -- a shared window base class, once `scripts/scenario_actions.gd` is clear of the Claude lane; the Codex lane leads with SM-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -807,71 +807,7 @@ Shipped 14 Sep 2026. Full record:
 **Shipped in full 12 Sep 2026** (both halves). Full record:
 `plans/archive/D1_2026-09-12.md`.
 
-### E1 — one placement tool
-
-Level: medium. Depends on: nothing.
-
-- **Required reading.** This heading. F8 above.
-  `scripts/input_selection.gd::_finish_drag` and every `_place_*` and
-  `_on_*_requested` pair. `main.gd`'s `awaiting_*` block, which its
-  "Click a spot" comment heads.
-- **Files to change.** `scripts/main.gd`, `scripts/input_selection.gd`,
-  `scripts/hud.gd`, `scripts/challenge_runner.gd` — call sites, plus the
-  signal declarations that F17 replaces with one. Also
-  `scripts/scenario_actions.gd` and the verb list in
-  `docs/headless-run-contract.md`, for the two verbs the acceptance needs
-  (added 18 Sep 2026: no existing verb arms a placement tool or delivers a
-  click, so the acceptance as first written could not be run).
-  `scenario_actions.gd` sits in the Claude lane behind E1 (C1F-1, CB-1), so
-  this costs no cross-lane conflict.
-- **Where the flags actually are (checked 17 Sep 2026).** Nine `awaiting_*`
-  fields are declared in `main.gd`; `input_selection.gd` reads them in 28
-  places and `challenge_runner.gd` writes `awaiting_queen_build_cell` in two
-  (`_leave_stage` and the queen-build step). `hud.gd` reads none of them —
-  it carries the signals, not the flags — so the cursor hints are not a
-  caller to chase. Seven of the nine have a `*_requested` signal on `hud.gd`;
-  `forage_start` and `floral_preference` are requested from elsewhere and
-  handled in `input_selection.gd`, so count them in the catalogue but expect
-  their entry points to differ.
-- **Files not to change.** `scripts/orders_zones.gd`, `scripts/bee.gd`.
-- **Requirements.** One `active_placement_tool: String` on `main.gd`, `""`
-  meaning none, plus a `PLACEMENT_TOOLS` catalogue in `input_selection.gd`
-  carrying id, handler method name, whether ctrl-click queues, whether it forces
-  the hive view, and which bees it captures. Requesting a tool clears any other.
-  The nine per-tool signals on `hud.gd` collapse to one
-  `placement_tool_requested(tool_id: String)` and the nine `_on_*_requested`
-  handlers in `main.gd` to one, so a new tool is a catalogue row and nothing
-  else (F17). Leaving both mechanisms standing is the one outcome this slice
-  must not produce.
-- **Invariants.** Each tool does exactly what it does today, including which bees
-  it captures. `_on_home_cell_requested` takes only the first selected comb
-  worker and `_on_home_cell_all_requested` takes every comb worker in the colony;
-  that difference is deliberate and commented, and must survive. The nine
-  `awaiting_*` fields are removed, not left as aliases.
-- **Implementation guidance.** The if-chain in `_finish_drag` becomes one lookup.
-  Keep the current chain order as the catalogue's order so any accidental
-  reliance on it is preserved. Search for `awaiting_` and change every hit; the
-  HUD's cursor hints read some of them.
-- **Runtime policy.** Unchanged; these are input-driven, not per-frame.
-- **Automated acceptance.** A scenario fixture that activates Build cell, then
-  Mine target, then clicks, and asserts a mine target was set and no cell was
-  placed. That case fails today, which is the point. **Instrument.** Two
-  verbs in `scenario_actions.gd::_execute`'s `match`, beside `queue_mine`:
-  `request_placement_tool`, whose `tool` names a `PLACEMENT_TOOLS` id and
-  which calls the one request function this slice gives `main.gd`; and
-  `click_world`, whose `x`, `y` and `view` (`hive` or `meadow`) set the drag
-  start and end to that point in that root and call
-  `input_selection._finish_drag(false)`. One assertion condition,
-  `selected_mine_queue_at_least`, added in `scenario_actions.gd::_when_met`
-  in the same `if when.has(...)` shape as `challenge_stage_id`, reading
-  `main.selected_bees[0].mine_queue.size()`. The fixture is
-  test_scenarios/e1_placement_exclusion_test.json: select one miner,
-  `request_placement_tool` for the build tool, then for the mine tool,
-  `click_world` on a soil block, settle one tick, then `assert`
-  `selected_mine_queue_at_least: 1` and `built_cells_at_least` equal to the
-  count at the start. Both verbs go in the contract doc's verb list.
-- **Escalation.** If any tool turns out to be legitimately concurrent with
-  another, stop; mutual exclusion is then a gameplay decision.
+E1 shipped 2026-09-19; its specification is `plans/archive/E1_2026-09-19.md`.
 
 ### F1s — a shared window base class
 
