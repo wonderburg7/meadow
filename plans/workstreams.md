@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SF-1` (`codex/SF-1`) | Codex | a new run's meadow starts with the season mix it will settle into | Codex | in progress | none | `plans/now/season-feel.md` SF-1 — a new run's meadow starts with the season mix it will settle into |
