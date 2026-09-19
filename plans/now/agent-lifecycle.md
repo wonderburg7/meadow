@@ -61,7 +61,6 @@ made of.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-12 | A plan's slice section carries the queue lines it is refilled from | `tools/check_docs.py`, `plans/now/*.md` | high |
-| L-13 | Closeout is one command, and the gates become actions | `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
 
 Dependencies, stated rather than implied: L-10 and L-11 have shipped, so
 L-13, their integration, is startable. **L-12 is deliberately gated** -- do not start it until
@@ -100,27 +99,7 @@ Level: high
 - Proof: `absent: tools/check_docs.py :: check_plan_queue_blocks`
 - Next after: L-13 -- closeout is one command.
 
-### L-13 — closeout is one command, and the gates become actions
-
-With L-10 and L-11 merged, fold them into `finish` so that the archive move
-and the lane deletion happen rather than being demanded. Add one journal
-phase that runs both tools and commits, ordered before the existing
-`archived` and `refilled` gates -- the gates stay, as the proof that the
-action worked and as the path for a branch merged by hand.
-*The hazard is the journal, not the tools.* `Test-ClosingPhaseDone` compares
-positions in `$script:ClosingPhaseOrder`, so a new phase inserted in the
-middle changes what a journal written by the previous version means on
-resume. Decide explicitly what an in-flight journal from the old order does,
-and cover it: an interrupted closeout that resumes into a different phase
-order is exactly the class of defect L-5 and L-6 were built to stop.
-*Acceptance:* every injected-failure phase in `tests/test_slice_lifecycle.py`
-and `tests/test_two_lane_closeout.py` still resumes to a clean merge on
-master; a closeout over the fixture repository completes from `verify` to
-`merge` with no hand edit in between; a journal written in the old phase order
-resumes without skipping a durable step.
-Level: high
-- Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
-- Next after: none -- agent-lifecycle is complete.
+L-13 shipped 2026-09-19; its specification is `plans/archive/L-13_2026-09-19.md`.
 
 ## Standing rules
 
