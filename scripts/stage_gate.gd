@@ -28,6 +28,7 @@ const ACCESSIBILITY_KEYS := [
 	"colour_blind_mode",
 	"settings_cog",
 	"ui_theme",
+	"panel_texture",
 	"text_scale",
 	"ui_typeface",
 	"reduced_motion",

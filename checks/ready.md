@@ -20,4 +20,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-57 -- Challenge 2's first stage lets a cell raise a nectar Forager, not yet a pollen one](ready/C-57.md)
 - [C-58 -- the top-left readouts follow the text size](ready/C-58.md)
 - [C-59 -- One placement tool at a time](ready/C-59.md)
+- [C-60 -- Panel texture: flat, honeycomb and grain](ready/C-60.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

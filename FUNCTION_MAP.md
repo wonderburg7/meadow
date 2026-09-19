@@ -277,19 +277,19 @@ A bee's dispatch loop, player commands, display text, vars.
 2368 func clear_navigation_state() -> void
 ```
 
-## settings_catalogue.gd (1,413 lines)
+## settings_catalogue.gd (1,421 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
-1306 static func setting_get(key: String)
-1309 static func setting_set(key: String, value) -> void
-1332 static func reset_config_to_defaults() -> void
-1344 static func reset_config_keys(keys: Array) -> void
-1358 static func apply_setting(key: String, value) -> void
-1373 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1391 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1405 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1314 static func setting_get(key: String)
+1317 static func setting_set(key: String, value) -> void
+1340 static func reset_config_to_defaults() -> void
+1352 static func reset_config_keys(keys: Array) -> void
+1366 static func apply_setting(key: String, value) -> void
+1381 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1399 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1413 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,381 lines)
