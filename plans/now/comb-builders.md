@@ -108,10 +108,9 @@ fixture.
 which hypothesis the numbers support, with those numbers, and CB-2's section
 below is rewritten into a concrete specification.
 
-**Regression.** `tools/verify.ps1`. (`slice1_smoke_test.json` already fails
-on master; that is the Codex lane's **SM-1**, `plans/now/smoke-scenario.md`.
-Note it, do not fix it here -- and read SM-1's delivery note first if it has
-landed, because its classification may already name the cause of H2.)
+**Regression.** `tools/verify.ps1`. (`slice1_smoke_test.json` is covered by
+the shipped Codex **SM-1**, `plans/archive/SMOKE_SCENARIO_2026-09-19.md`.
+Read its delivery note before treating a smoke failure as an H2 regression.)
 
 **Escalate if** every assertion passes. If the colony already does what HCB-4
 intended, C-46 is seeing something else, and Dave's clarification (a
