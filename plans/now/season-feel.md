@@ -91,17 +91,24 @@ species. A restart after changing Season days.
 (the fixture produces the summary; the test reads the two counters out of it,
 because the scenario `assert` vocabulary has no season condition and must not
 grow one in this lane): the day-0 out-of-season share of flowers is within 5
-percentage points of the day-5 share, and below 15%. Fails on master if step 1
-shows the day-0 share above the day-5 one.
+percentage points of the same phase one year later. The original below-15%
+criterion conflicts with founders genuinely sampled from their past birth
+seasons when flowers can outlive a five-day year; Dave chose the stated
+birth-time/stable-mix behaviour on 19 Sep 2026.
 
 **Regression.** `tools/verify.ps1` (the seasons balance test must still find
 something in flower, and a pollen source, all year).
 
-**Completion.** Move C-25 from `checks/blocked.md` to ready with this PASS:
-"Start a new run with Season days 5 and click a dozen flowers straight away,
-then again on days 2 and 4. PASS: at every look, including the first, only
-an occasional flower is out of season." Archive this section; set `Next:` to
-`None — plan complete` if nothing else was filed.
+**Delivery note (19 Sep 2026).** The two live counters were read at t=0, day
+1, day 3 and day 5 with seed 4242. At Season days 5 they were, respectively,
+in/out: 516/429, 448/316, 340/105 and 66/46. At Season days 60 they were
+386/573, 386/573, 303/293 and 173/61. The 5-day same-phase regression is the
+automated contract; its initial and final out-of-season shares differ by less
+than five percentage points.
+
+**Completion.** Move C-25 from `checks/blocked.md` to ready with the
+birth-time/stable-mix check. Archive this section; set `Next:` to `None — plan
+complete` if nothing else was filed.
 
 **Level:** medium. **Escalate if** the two counters cannot be read out of the
 run summary without a scenario condition (the Claude lane owns

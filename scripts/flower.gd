@@ -86,7 +86,9 @@ var crab_spider_dev_marker: Line2D
 func _ready() -> void:
 	add_to_group("flowers")
 
-func setup(index: int) -> void:
+## `starting_age` is supplied only for the founding cohort. Its default keeps
+## all existing callers drawing a random age after their lifespan is rolled.
+func setup(index: int, starting_age: float = -1.0) -> void:
 	species_index = index % FlowerSpecies.SPECIES.size()
 	var s: Dictionary = FlowerSpecies.SPECIES[species_index]
 	species_name = s.name
@@ -105,9 +107,10 @@ func setup(index: int) -> void:
 	var spread: float = GameConfig.flower_lifespan_variation
 	lifespan_seconds = GameConfig.flower_lifespan_days * GameConfig.seconds_per_day \
 		* randf_range(1.0 - spread, 1.0 + spread)
-	# start partway through life, so the first generation doesn't all
-	# wither at the same moment
-	age_seconds = randf() * lifespan_seconds
+	# Start partway through life, so a cohort doesn't all wither at the same
+	# moment. Founders pass their already-drawn age so their birth season can
+	# choose the species before this setup runs.
+	age_seconds = starting_age if starting_age >= 0.0 else randf() * lifespan_seconds
 
 	polygon = Shapes.square_points(Vector2(28, 28))
 	color = s.color
