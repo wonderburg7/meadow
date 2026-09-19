@@ -54,6 +54,14 @@ on the same seed, and `tools/verify.ps1` stays green.
 this section; set `Next: None — plan complete`, or name the product-defect
 slice if step 3 found one.
 
+**Delivery (19 Sep 2026).** Product defect fixed: a random indoor spawn could
+land on soil, so the builder had no navigation start tile and repeatedly
+released its build site. Indoor bees now spawn on the nearest walkable tile.
+With seed 4242, the first new cell completes at day 1 / 107.75 simulated
+seconds; both standard smoke runs report `cells_completed=1`, no deaths, and
+`actions_resolved`. The fixture now requires 11 built cells, distinguishing
+its 10 starting cells from the new completion.
+
 **Level:** medium (17 Sep 2026 plan review, lowered from high). The three
 steps above are scripted, the extraction fields are named, and the one
 ambiguous outcome -- a product defect -- is an escalation rather than a

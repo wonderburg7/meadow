@@ -529,7 +529,11 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 
 func _spawn_indoor_bee(role: int) -> Node2D:
 	var bee = main.Bee.new()
-	bee.position = _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
+	# Indoor roles begin on the walkable navigation graph. The former random
+	# point could land in a soil tile, leaving a builder unable to route to
+	# any comb site (and therefore permanently idle) from its first tick.
+	var spawn_point := _hive_centre_local() + Vector2(randf_range(-50, 50), randf_range(60, 110))
+	bee.position = main.hive.nearest_walkable_point(spawn_point)
 	main.hive_root.add_child(bee)
 	bee.setup(main.hive, "nectar", main.next_bee_id, role, main)
 	_stagger_starter_age(bee)

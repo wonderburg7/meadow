@@ -6,10 +6,11 @@
   "actions": [
     {
       "do": "assert",
-      "when": {"cells_completed_at_least": 1},
+      "when": {"cells_completed_at_least": 11},
       "condition": {
         "queen_alive": true,
-        "population_at_least": {"count": 1}
+        "population_at_least": {"count": 1},
+        "cells_completed_at_least": 11
       }
     }
   ],
