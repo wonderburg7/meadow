@@ -75,24 +75,3 @@ settle into). Semi pass (Dave, 17 Sep 2026): later in the year off-season
 flowers are rare, but at the start "big proportions of all species" are
 about, many out of season, until the founding flowers die. A re-run before
 SF-1 lands would fail the same way.
-
-### C-49 -- Challenge stages can be replayed from settings
-
-Start Challenge 1, open Game Settings > World & start, and step forward and
-back across every stage with the stage arrows, including across 1.11
-(automate nectar gathering) and 1.14 (automate pollen gathering), which
-follow the queen and speed the game up.
-
-PASS: after each arrow the queen, the tunnel, the comb cells and their stores match the stage shown, its gates, prompts and marker are rebuilt, the stage shown stays put until you act, the back arrow is disabled at the first stage and the forward arrow at the last, and the camera follows no bee at normal speed.
-
-Owner: `plans/now/c1-followups.md` C1F-1.
-
-Blocked by: C1F-1 (each Challenge 1 stage sets up the world it starts from).
-Partial pass (Dave, 17 Sep 2026): gates, prompts and marker rebuild, the
-arrows disable at both ends, and follow and speed reset on every arrow. Going
-back fails at some stages (for example from 1.11) because the earlier
-stage's goal is already met in the world and it advances again; the queen,
-tunnel soil and cells never change. Dave chose, in session, that each stage
-sets up its world. The stage row's layout (letters one per line, tall arrows)
-is fixed on `claude/pass-0917` with a headless check; see C-49's history in
-`docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`.

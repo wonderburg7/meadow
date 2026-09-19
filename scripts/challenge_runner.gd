@@ -45,6 +45,7 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 const QueenHeartsVfx = preload("res://scripts/queen_hearts_vfx.gd")
 const BeeSpeechBubble = preload("res://scripts/bee_speech_bubble.gd")
 const Bee = preload("res://scripts/bee.gd")
+const StageSetup = preload("res://scripts/challenge_stage_setup.gd")
 ## Slice 14: 1.11/1.14's camera-follow and 4x speed belong to the moment the
 ## queen actually sets off foraging, not to stage entry -- she has to be
 ## selected to be given the Forager role, and selection clears camera-follow
@@ -742,18 +743,30 @@ func _run_stage_effects(effects: Array) -> void:
 ## every causal goal exists. It deliberately uses the ordinary transition path
 ## so gates, prompts, checkpoints, markers and completion are all exercised.
 func debug_advance_stage() -> void:
-	if can_debug_advance_stage():
+	if not can_debug_advance_stage():
+		return
+	if Session.starting_level != 1:
 		_advance()
+		return
+	main.gallerin_panel.clear_queue()
+	var completed_stage: Dictionary = _leave_stage()
+	_last_completed_goal_text = completed_stage.goal_text
+	challenge_stage_cleared.emit(completed_stage.id)
+	_stage_index += 1
+	StageSetup.apply(self, main, _stages()[_stage_index].get("setup", {}))
+	_enter_stage()
 
-## Settings-panel counterpart to debug_advance_stage(). World state is
-## deliberately not rolled back: this only rebuilds the stage's gates,
-## prompts and marker through the ordinary entry path.
+## Settings-panel counterpart to debug_advance_stage(). Challenge 1 applies the
+## destination stage's declared world (challenge_stage_setup.gd) so a goal the
+## world already meets cannot advance it again; Challenge 2 stays gates-only.
 func debug_retreat_stage() -> void:
 	if not can_debug_retreat_stage():
 		return
 	main.gallerin_panel.clear_queue()
 	_leave_stage()
 	_stage_index -= 1
+	if Session.starting_level == 1:
+		StageSetup.apply(self, main, _stages()[_stage_index].get("setup", {}))
 	_enter_stage()
 
 func _complete() -> void:

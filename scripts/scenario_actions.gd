@@ -128,6 +128,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_show_gallerin_prompt(main, action)
 		"advance_challenge_stage":
 			_do_advance_challenge_stage(main, action)
+		"retreat_challenge_stage":
+			_do_retreat_challenge_stage(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -696,6 +698,27 @@ static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void:
 ## is current. That seam calls _advance(), so every normal boundary effect,
 ## checkpoint, prompt, gate and marker still runs; this action never assigns
 ## the runner's private stage index directly.
+## Mirror of _do_advance_challenge_stage: steps back through the debug
+## retreat seam, so the destination stage's setup is applied at each step.
+static func _do_retreat_challenge_stage(main: Node2D, action: Dictionary) -> void:
+	var target_id: String = str(action.get("stage_id", ""))
+	if target_id.is_empty():
+		_log("retreat_challenge_stage", str(action), "rejected", "missing stage_id")
+		return
+	if not main.challenge_runner.active:
+		_log("retreat_challenge_stage", target_id, "rejected", "no active Challenge")
+		return
+	var guard := 0
+	while main.challenge_runner.can_debug_retreat_stage() and main.challenge_runner.current_stage_id() != target_id:
+		main.challenge_runner.debug_retreat_stage()
+		guard += 1
+		if guard > 100:
+			break
+	if main.challenge_runner.current_stage_id() == target_id:
+		_log("retreat_challenge_stage", target_id, "accepted", "")
+	else:
+		_log("retreat_challenge_stage", target_id, "rejected", "stage was not found")
+
 static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void:
 	var target_id: String = str(action.get("stage_id", ""))
 	if target_id.is_empty():
