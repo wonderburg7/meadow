@@ -297,6 +297,20 @@ available in both an action's `when` clause and an assertion condition.
 }
 ```
 
+## Placement verbs
+
+`request_placement_tool` arms one of the click-a-spot tools by its
+`input_selection.gd::PLACEMENT_TOOLS` id (`{"do": "request_placement_tool",
+"tool": "mine_target"}`), through the same function the HUD buttons reach.
+It is rejected if the tool is unknown or no eligible bee is selected.
+`click_world` delivers a left click by setting the drag start and end and
+calling `_finish_drag(false)`: `x`, `y` and `view` (`hive` or `meadow`) give a
+point local to that root, or `soil_hex: [q, r]` clicks that soil block.
+`select_bees` also accepts `{"any_of": [selector, ...]}` to select several
+roles at once, in the order given. The assertion condition
+`selected_mine_queue_at_least` reads the first selected bee's mine queue.
+`test_scenarios/e1_placement_exclusion_test.json` uses all of them.
+
 ## Diagnostic capture profiles
 
 `diagnostics` is optional and applies only to a `--scenario` session; ordinary

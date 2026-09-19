@@ -48,30 +48,14 @@ signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
 signal cell_empty_by_bee_requested(cell: Node2D)
 ## Whether the queen lays a gyne into this cell rather than a worker.
 signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
-## "Click a spot" modes -- main.gd puts itself into a placement mode when
-## these fire, and consumes the next click in the relevant view instead
-## of treating it as a normal select/drag.
-signal build_cell_requested()
-## Challenge 1 only -- a "Build cell" button in the queen's own selection
-## panel, replacing the generic Job-row-then-placement-click flow for
-## that one first cell. See set_queen_build_button_visible.
-signal queen_build_cell_requested()
-## Sets the tile the *selected* comb worker builds outward from -- its own
-## centre of operations, rather than the middle of the comb. Applies to
-## one bee only, even if several are selected -- see home_cell_all_requested
-## for the colony-wide version.
-signal home_cell_requested()
-## The same, but for every comb worker in the colony at once, not just
-## the current selection.
-signal home_cell_all_requested()
-## The same for a miner: the tile it works outward from when choosing
-## which soil to dig next.
-signal mine_home_requested()
-## "Mine": the next click (ctrl to add more) sets this miner's own list
-## of blocks to dig, in order.
-signal mine_target_requested()
-## "Keep clear": the next click flags a tile no comb worker will build on.
-signal keep_clear_requested()
+## "Click a spot" modes -- main.gd arms the named tool from
+## input_selection.gd::PLACEMENT_TOOLS and consumes the next click in the
+## relevant view instead of treating it as a normal select/drag. "Work from
+## here" for comb workers (`home_cell`) applies to one bee only, even if several
+## are selected; `home_cell_all` is the colony-wide version. `queen_build_cell`
+## is Challenge 1's direct button in the queen's panel (see
+## set_queen_build_button_visible).
+signal placement_tool_requested(tool_id: String)
 ## Restocking. The currently selected comb becomes the cells this
 ## comb worker keeps full of `resource`.
 signal restock_targets_requested(resource: String)
@@ -96,15 +80,11 @@ signal winter_window_requested()
 signal signal_clicked(action: String)
 ## Marks or clears the digging flag on every selected soil block.
 signal soil_mark_requested(mark: bool)
-signal forage_start_point_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
 signal secondary_role_requested(role_key: String)
 ## Whether reassigning the selected bees waits for their current job.
 signal finish_first_requested(value: bool)
-## Enters "click a flower" mode -- only offered when floral constancy is
-## on in tuning. See GameConfig.floral_constancy_on.
-signal floral_preference_requested()
 ## The star in the single-bee panel -- only offered for one bee at a
 ## time, see BEE_INDIVIDUALITY_PLAN.md section 7.
 signal favourite_requested(value: bool)
@@ -2609,7 +2589,7 @@ func _build_queen_build_row(column: VBoxContainer) -> void:
 	button.text = "Build cell"
 	button.custom_minimum_size = Vector2(0, 26)
 	button.theme_type_variation = "Small"
-	button.pressed.connect(func(): queen_build_cell_requested.emit())
+	button.pressed.connect(func(): placement_tool_requested.emit("queen_build_cell"))
 	column.add_child(button)
 
 ## Continuous camera tracking (UI_PLAN.md section 15 slice 3) -- only
@@ -2713,25 +2693,25 @@ func _build_orders_row(common_role: int, first) -> void:
 		Bee.Role.FORAGER:
 			var has_start: bool = first != null and first.has_forage_start_point()
 			orders_column.add_child(_action_button("Clear start" if has_start else "Start here",
-				func(): forage_start_point_requested.emit(),
+				func(): placement_tool_requested.emit("forage_start"),
 				"Click this, then click a spot in the meadow. The selected foragers head there first on every trip out, so you can split them across different parts of the meadow instead of them all drifting to whichever flower is nearest the entrance."))
 			if GameConfig.floral_constancy_on:
 				var pref: String = first.preferred_species if first != null else ""
 				orders_column.add_child(_action_button(("Flower: %s" % pref) if pref != "" else "Pick a flower",
-					func(): floral_preference_requested.emit(),
+					func(): placement_tool_requested.emit("floral_preference"),
 					"Click this, then click a flower. The selected foragers will only ever visit that species from then on, even walking past a nearer flower of something else -- real bees do this too."))
 		Bee.Role.BUILDER:
 			orders_column.add_child(_action_button("Build here",
-				func(): build_cell_requested.emit(),
+				func(): placement_tool_requested.emit("build_cell"),
 				"Click this, then click any open tile -- including ground that has been mined out. Hold Ctrl and keep clicking to queue up several: they are built in the order you click them, and a faint line shows that order while this bee is selected."))
 			orders_column.add_child(_action_button("Keep clear",
-				func(): keep_clear_requested.emit(),
+				func(): placement_tool_requested.emit("keep_clear"),
 				"Click this, then click a tile to reserve it as open floor. No comb worker will ever build there, so you can keep a corridor through the comb or a landing area by the entrance. Clicking a reserved tile again releases it. This applies to every comb worker, not just this one, and the reserved tiles show whenever any comb worker is selected."))
 			orders_column.add_child(_action_button("Work from here",
-				func(): home_cell_requested.emit(),
+				func(): placement_tool_requested.emit("home_cell"),
 				"Click this, then click a tile. That tile becomes the selected comb worker's centre of operations: left to itself it fills the space around it outwards in a spiral, rather than always adding to the middle. Applies to this one bee only, even if you have several selected -- use \"Set for all comb workers\" below to change every comb worker at once."))
 			orders_column.add_child(_action_button("Set for all comb workers",
-				func(): home_cell_all_requested.emit(),
+				func(): placement_tool_requested.emit("home_cell_all"),
 				"Click this, then click a tile. Every comb worker in the colony -- not just the selected ones -- gets that tile as its centre of operations. Use this to redirect the whole team at once; use \"Work from here\" above to give one bee its own spot."))
 
 			# Restocking needs three things chosen, so it gets its own
@@ -2740,10 +2720,10 @@ func _build_orders_row(common_role: int, first) -> void:
 				_build_restock_row(first)
 		Bee.Role.MINER:
 			orders_column.add_child(_action_button("Mine",
-				func(): mine_target_requested.emit(),
+				func(): placement_tool_requested.emit("mine_target"),
 				"Click this, then click a soil block for the selected miners to dig. Hold Ctrl and keep clicking to queue several: they are dug in the order you click them, and a faint line shows that order while the miner is selected."))
 			orders_column.add_child(_action_button("Work from here",
-				func(): mine_home_requested.emit(),
+				func(): placement_tool_requested.emit("mine_home"),
 				"Click this, then click a tile. The selected miners will always dig whichever soil is nearest that tile, rather than whichever is nearest wherever they finished the last block. Keeps a team working through one face."))
 
 ## The restock sub-mode's own buttons: which cells to keep full, of what,

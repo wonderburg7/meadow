@@ -234,7 +234,8 @@ func start() -> void:
 	_goal_poll_timer = 0.0
 	_goal_checked_index_epoch = -1
 	_goal_checked_population_epoch = -1
-	main.awaiting_queen_build_cell = false
+	if main.active_placement_tool == "queen_build_cell":
+		main.input_selection.clear_placement_tool()
 	main.queen.player_driven = false
 	main.queen.flower_switch_locked = false
 	main.queen.role_change_locked = false
@@ -613,7 +614,7 @@ func _update_marker(stage_id: String) -> void:
 		_show_current_visit_point()
 	elif stage_id in ["1.2", "1.5", "1.12", "1.15"]:
 		# The actual site 1.12/1.15 land on spirals out from here rather
-		# than sitting exactly on it (see _on_queen_build_cell_requested),
+		# than sitting exactly on it (see the queen_build_cell placement tool),
 		# but the centre is still the honest "build near here" anchor --
 		# same marker 1.5 already uses for the first cell.
 		_marker.position = main.world_building._hive_centre_local()
@@ -808,14 +809,11 @@ func _complete() -> void:
 ## assign-role-then-click-a-spot
 ## flow (see hud.gd's set_queen_build_button_visible).
 ##
-## Arms a Challenge-only player placement mode. The queen keeps her real
-## role: TO_BUILD_SITE and BUILDING work from target_cell, while assigning
-## BUILDER would make idle dispatch auto-start another build after this one.
-func _on_queen_build_cell_requested() -> void:
-	if not is_instance_valid(main.queen):
-		return
-	main.awaiting_queen_build_cell = true
-	main.input_selection._ensure_hive_view()
+## The button arms the "queen_build_cell" placement tool (see
+## input_selection.gd::PLACEMENT_TOOLS), a Challenge-only player placement
+## mode. The queen keeps her real role: TO_BUILD_SITE and BUILDING work from
+## target_cell, while assigning BUILDER would make idle dispatch auto-start
+## another build after this one.
 
 func on_queen_build_site_chosen(hex: Vector2i) -> void:
 	if not is_instance_valid(main.queen) or not main.hive.can_build_on(hex):

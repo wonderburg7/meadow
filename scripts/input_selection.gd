@@ -80,32 +80,8 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	main.dragging = false
 	main.selection_layer.queue_redraw()
 
-	if main.awaiting_build_cell:
-		_place_build_cell(main.drag_start, add_to_group_selection)
-		return
-	if main.awaiting_queen_build_cell:
-		_place_queen_build_cell(main.drag_start)
-		return
-	if main.awaiting_mine_target:
-		_place_mine_target(main.drag_start, add_to_group_selection)
-		return
-	if main.awaiting_keep_clear:
-		_place_keep_clear(main.drag_start, add_to_group_selection)
-		return
-	if main.awaiting_home_cell:
-		_place_home_cell(main.drag_start)
-		return
-	if main.awaiting_home_cell_all:
-		_place_home_cell_all(main.drag_start)
-		return
-	if main.awaiting_mine_home:
-		_place_mine_home(main.drag_start)
-		return
-	if main.awaiting_forage_start:
-		_place_forage_start(main.drag_start)
-		return
-	if main.awaiting_floral_preference:
-		_place_floral_preference(main.drag_start)
+	if main.active_placement_tool != "":
+		_place_with_active_tool(add_to_group_selection)
 		return
 
 	var box = Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
@@ -304,6 +280,96 @@ func _hex_at(global_point: Vector2) -> Vector2i:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
 	return main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 
+## The "click a spot" tools, entered from the HUD and consumed by the next
+## left click (see _finish_drag). Only one is ever active -- main.gd's
+## active_placement_tool. A new tool is a row here plus a `_place_*` handler
+## (F17). Row order is the order the old per-tool flag chain tested them in.
+##   handler   -- method called with (drag_start, keep_adding)
+##   queues    -- ctrl-click keeps the tool armed to queue several
+##   view      -- view the tool forces: "hive" or "meadow"
+##   captures  -- main.gd field that takes the bees the tool acts on when it
+##                is armed ("" = none; the handler finds its own)
+##   role      -- Bee.Role name a captured bee must have
+##   first_only-- only the first selected bee is considered
+const PLACEMENT_TOOLS: Array = [
+	{"id": "build_cell", "handler": "_place_build_cell", "queues": true, "view": "hive",
+		"captures": "pending_builder_bees", "role": "BUILDER"},
+	{"id": "queen_build_cell", "handler": "_place_queen_build_cell", "queues": false, "view": "hive",
+		"captures": "", "requires_queen": true},
+	{"id": "mine_target", "handler": "_place_mine_target", "queues": true, "view": "hive",
+		"captures": "pending_mine_target_bees", "role": "MINER"},
+	{"id": "keep_clear", "handler": "_place_keep_clear", "queues": true, "view": "hive",
+		"captures": ""},
+	# Deliberate: "home_cell" takes only the first selected comb worker,
+	# "home_cell_all" every comb worker in the colony (found at placement).
+	# Only the single bee this panel is showing -- not the whole selection.
+	# A box-selected group of comb workers used to all get retargeted at
+	# once here, which is one click doing far more than the button next to
+	# it implied. See _on_home_cell_all_requested for the deliberate
+	# colony-wide version.
+	{"id": "home_cell", "handler": "_place_home_cell", "queues": false, "view": "hive",
+		"captures": "pending_home_bees", "role": "BUILDER", "first_only": true},
+	{"id": "home_cell_all", "handler": "_place_home_cell_all", "queues": false, "view": "hive",
+		"captures": ""},
+	{"id": "mine_home", "handler": "_place_mine_home", "queues": false, "view": "hive",
+		"captures": "pending_mine_bees", "role": "MINER"},
+	{"id": "forage_start", "handler": "_place_forage_start", "queues": false, "view": "meadow",
+		"captures": "pending_forage_bees", "role": "FORAGER"},
+	{"id": "floral_preference", "handler": "_place_floral_preference", "queues": false, "view": "meadow",
+		"captures": "pending_preference_bees", "role": "FORAGER"},
+]
+
+func _placement_tool_def(tool_id: String) -> Dictionary:
+	for def in PLACEMENT_TOOLS:
+		if def["id"] == tool_id:
+			return def
+	return {}
+
+## The one request function behind every placement button (hud.gd's
+## placement_tool_requested). Arms `tool_id`, dropping whichever tool was
+## armed before. A request with nobody eligible to act is ignored and leaves
+## the current tool as it was.
+func request_placement_tool(tool_id: String) -> void:
+	var def: Dictionary = _placement_tool_def(tool_id)
+	if def.is_empty():
+		return
+	if def.get("requires_queen", false) and not is_instance_valid(main.queen):
+		return
+	var field: String = def["captures"]
+	var captured: Array = []
+	if field != "":
+		var role: int = main.Bee.Role[def["role"]]
+		var candidates: Array = main.selected_bees
+		if def.get("first_only", false):
+			candidates = candidates.slice(0, 1)
+		captured = candidates.filter(func(b): return is_instance_valid(b) and b.role == role)
+		if captured.is_empty():
+			return
+	clear_placement_tool()
+	if field != "":
+		main.set(field, captured)
+	main.active_placement_tool = tool_id
+	if def["view"] == "hive":
+		_ensure_hive_view()
+	elif main.in_hive_view:
+		main.in_hive_view = false
+		main.camera_view._apply_view()
+
+## Disarms whichever tool is active and forgets the bees it had captured.
+func clear_placement_tool() -> void:
+	main.active_placement_tool = ""
+	for def in PLACEMENT_TOOLS:
+		if def["captures"] != "":
+			main.set(def["captures"], [])
+
+func _place_with_active_tool(ctrl_held: bool) -> void:
+	var def: Dictionary = _placement_tool_def(main.active_placement_tool)
+	var keep_adding: bool = def.get("queues", false) and ctrl_held
+	var handler := Callable(self, def["handler"])
+	handler.call(main.drag_start, keep_adding)
+	if not keep_adding:
+		clear_placement_tool()
+
 func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
 	var hex: Vector2i = _hex_at(global_point)
 	for b in main.pending_builder_bees:
@@ -313,21 +379,9 @@ func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
 			b.queue_build_target(hex)
 		else:
 			b.set_manual_build_target(hex)
-	if keep_adding:
-		return
-	main.awaiting_build_cell = false
-	main.pending_builder_bees = []
 
-func _place_queen_build_cell(global_point: Vector2) -> void:
-	main.awaiting_queen_build_cell = false
+func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void:
 	main.challenge_runner.on_queen_build_site_chosen(_hex_at(global_point))
-
-func _on_build_cell_requested() -> void:
-	main.pending_builder_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.BUILDER)
-	if main.pending_builder_bees.is_empty():
-		return
-	main.awaiting_build_cell = true
-	_ensure_hive_view()
 
 func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
 	var block = _soil_at(global_point)
@@ -339,38 +393,18 @@ func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
 				b.queue_mine_target(block)
 			else:
 				b.set_mine_target(block)
-	if keep_adding:
-		return
-	main.awaiting_mine_target = false
-	main.pending_mine_target_bees = []
-
-func _on_mine_target_requested() -> void:
-	main.pending_mine_target_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.MINER)
-	if main.pending_mine_target_bees.is_empty():
-		return
-	main.awaiting_mine_target = true
-	_ensure_hive_view()
 
 func _place_keep_clear(global_point: Vector2, keep_adding: bool) -> void:
 	var hex: Vector2i = _hex_at(global_point)
 	if main.hive.tile_is_walkable(hex):
 		main.hive.set_keep_clear(hex, not main.hive.is_keep_clear(hex))
-	if keep_adding:
-		return
-	main.awaiting_keep_clear = false
 
-func _on_keep_clear_requested() -> void:
-	main.awaiting_keep_clear = true
-	_ensure_hive_view()
-
-func _place_home_cell(global_point: Vector2) -> void:
-	main.awaiting_home_cell = false
+func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
 	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in main.pending_home_bees:
 		if is_instance_valid(b):
 			b.set_home_hex(hex)
-	main.pending_home_bees = []
 	main.hud.update_selection(main.selected_bees)
 
 ## The selected bee empties `cell` herself -- see Bee.command_empty_cell.
@@ -383,28 +417,9 @@ func _on_cell_empty_by_bee_requested(cell: Node2D) -> void:
 	if is_instance_valid(bee):
 		bee.command_empty_cell(cell)
 
-## Only the single bee this panel is showing -- not the whole selection.
-## A box-selected group of comb workers used to all get retargeted at
-## once here, which is one click doing far more than the button next to
-## it implied. See _on_home_cell_all_requested for the deliberate
-## colony-wide version.
-func _on_home_cell_requested() -> void:
-	main.pending_home_bees = []
-	if not main.selected_bees.is_empty():
-		var first: Node2D = main.selected_bees[0]
-		if is_instance_valid(first) and first.role == main.Bee.Role.BUILDER:
-			main.pending_home_bees = [first]
-	if main.pending_home_bees.is_empty():
-		return
-	main.awaiting_home_cell = true
-	if not main.in_hive_view:
-		main.in_hive_view = true
-		main.camera_view._apply_view()
-
 ## Every comb worker in the colony, not just the current selection --
 ## the explicit broadcast counterpart to _on_home_cell_requested.
-func _place_home_cell_all(global_point: Vector2) -> void:
-	main.awaiting_home_cell_all = false
+func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
 	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in get_tree().get_nodes_in_group("bees"):
@@ -412,48 +427,27 @@ func _place_home_cell_all(global_point: Vector2) -> void:
 			b.set_home_hex(hex)
 	main.hud.update_selection(main.selected_bees)
 
-func _on_home_cell_all_requested() -> void:
-	main.awaiting_home_cell_all = true
-	if not main.in_hive_view:
-		main.in_hive_view = true
-		main.camera_view._apply_view()
-
-func _place_mine_home(global_point: Vector2) -> void:
-	main.awaiting_mine_home = false
+func _place_mine_home(global_point: Vector2, _keep_adding: bool = false) -> void:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
 	var hex: Vector2i = main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 	for b in main.pending_mine_bees:
 		if is_instance_valid(b):
 			b.set_mine_home_hex(hex)
-	main.pending_mine_bees = []
 	main.hud.update_selection(main.selected_bees)
 
-func _on_mine_home_requested() -> void:
-	main.pending_mine_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.MINER)
-	if main.pending_mine_bees.is_empty():
-		return
-	main.awaiting_mine_home = true
-	if not main.in_hive_view:
-		main.in_hive_view = true
-		main.camera_view._apply_view()
-
-func _place_forage_start(global_point: Vector2) -> void:
-	main.awaiting_forage_start = false
+func _place_forage_start(global_point: Vector2, _keep_adding: bool = false) -> void:
 	var meadow_point: Vector2 = main.meadow_root.to_local(global_point)
 	for b in main.pending_forage_bees:
 		if is_instance_valid(b):
 			b.set_forage_start_point(meadow_point)
-	main.pending_forage_bees = []
 
-func _place_floral_preference(global_point: Vector2) -> void:
-	main.awaiting_floral_preference = false
+func _place_floral_preference(global_point: Vector2, _keep_adding: bool = false) -> void:
 	var flower = main.world_building._flower_at(global_point)
 	if flower:
 		for b in main.pending_preference_bees:
 			if is_instance_valid(b):
 				b.set_preferred_species(flower.species_name)
 		main.hud.update_selection(main.selected_bees)
-	main.pending_preference_bees = []
 
 ## Right-clicking near the hive's entrance tile is its own command,
 ## checked before the plain flower/move-to-point cases below -- it sends
@@ -568,24 +562,6 @@ func _on_role_selection_requested(role: int, focus: String) -> void:
 
 	main.hud.update_selection(main.selected_bees)
 
-func _on_forage_start_point_requested() -> void:
-	main.pending_forage_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.FORAGER)
-	if main.pending_forage_bees.is_empty():
-		return
-	main.awaiting_forage_start = true
-	if main.in_hive_view:
-		main.in_hive_view = false
-		main.camera_view._apply_view()
-
-func _on_floral_preference_requested() -> void:
-	main.pending_preference_bees = main.selected_bees.filter(func(b): return is_instance_valid(b) and b.role == main.Bee.Role.FORAGER)
-	if main.pending_preference_bees.is_empty():
-		return
-	main.awaiting_floral_preference = true
-	if main.in_hive_view:
-		main.in_hive_view = false
-		main.camera_view._apply_view()
-
 func _ensure_hive_view() -> void:
 	if not main.in_hive_view:
 		main.in_hive_view = true
@@ -630,11 +606,11 @@ func _draw_hive_orders() -> void:
 			if b.has_mine_home:
 				_draw_home_marker(_tile_centre(b.mine_home_hex))
 
-	if any_architect or main.awaiting_keep_clear:
+	if any_architect or main.active_placement_tool == "keep_clear":
 		for hex in main.hive.keep_clear_tiles.keys():
 			_draw_tile_outline(_tile_centre(hex), main.KEEP_CLEAR_COLOUR, 2.0, true)
 
-	if main.awaiting_build_cell or main.awaiting_queen_build_cell:
+	if main.active_placement_tool in ["build_cell", "queen_build_cell"]:
 		_draw_build_hover()
 
 ## Which tile the mouse is over right now, drawn only while "Build here"

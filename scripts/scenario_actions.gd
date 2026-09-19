@@ -102,6 +102,10 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_queue_build(main, action)
 		"queue_mine":
 			_do_queue_mine(main, action)
+		"request_placement_tool":
+			_do_request_placement_tool(main, action)
+		"click_world":
+			_do_click_world(main, action)
 		"set_config":
 			_do_set_config(main, action)
 		"hatch_role":
@@ -146,6 +150,11 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		return false
 	if when.has("challenge_stage_id"):
 		if main.challenge_runner.current_stage_id() != str(when["challenge_stage_id"]):
+			return false
+	if when.has("selected_mine_queue_at_least"):
+		if main.selected_bees.is_empty() or not is_instance_valid(main.selected_bees[0]):
+			return false
+		if main.selected_bees[0].mine_queue.size() < int(when["selected_mine_queue_at_least"]):
 			return false
 	return Conditions.met(main, spec)
 
@@ -213,6 +222,14 @@ static func _resolve_bees(main: Node2D, target: Dictionary) -> Array:
 		func(b): return is_instance_valid(b)
 	)
 	bees.sort_custom(func(a, b): return a.bee_id < b.bee_id)
+
+	if target.has("any_of"):
+		var picked: Array = []
+		for part in target["any_of"]:
+			for b in _resolve_bees(main, part):
+				if not picked.has(b):
+					picked.append(b)
+		return picked
 
 	if target.has("bee_ids"):
 		var ids: Array = target["bee_ids"]
@@ -390,6 +407,38 @@ static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 			"%d bee(s) didn't end up with that block queued" % bad.size())
 		return
 	_log("queue_mine", "%d bees -> %s" % [bees.size(), hex], "accepted", "")
+
+## Arms a placement tool through input_selection.request_placement_tool, the
+## function hud.gd's placement_tool_requested signal is wired to. `tool` is a
+## PLACEMENT_TOOLS id. Rejected when the tool is unknown or nothing ends up armed.
+static func _do_request_placement_tool(main: Node2D, action: Dictionary) -> void:
+	var tool_id: String = str(action.get("tool", ""))
+	main.input_selection.request_placement_tool(tool_id)
+	if main.active_placement_tool != tool_id:
+		_log("request_placement_tool", tool_id, "rejected", "tool unknown or no eligible bees selected")
+		return
+	_log("request_placement_tool", tool_id, "accepted", "")
+
+## Delivers a plain left click at a world point: sets the drag start and end
+## there and calls input_selection._finish_drag(false), the function a real
+## mouse release reaches. `x`, `y` are local to the `view` root ("hive" or
+## "meadow"); `soil_hex` [q, r] instead clicks the centre of that soil block.
+static func _do_click_world(main: Node2D, action: Dictionary) -> void:
+	var point: Vector2
+	if action.has("soil_hex"):
+		var block: Node2D = _resolve_soil_block(main, action["soil_hex"])
+		if block == null:
+			_log("click_world", str(action), "rejected", "no soil block at that hex")
+			return
+		point = block.global_position
+	else:
+		var root: Node2D = main.hive_root if str(action.get("view", "hive")) == "hive" else main.meadow_root
+		point = root.to_global(Vector2(float(action.get("x", 0.0)), float(action.get("y", 0.0))))
+	main.dragging = true
+	main.drag_start = point
+	main.drag_current = point
+	main.input_selection._finish_drag(false)
+	_log("click_world", str(action), "accepted", "")
 
 ## Calls the settings catalogue's apply_setting -- the same
 ## setting-plus-cascade function the settings-window checkbox handler

@@ -310,23 +310,17 @@ var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre"
 var panning: bool = false          # middle mouse button held
 var pan_anchor: Vector2 = Vector2.ZERO
 
-## "Click a spot" placement modes, entered from the HUD. While one is
-## active the next left click in the relevant view is consumed as the
-## placement rather than a normal select/drag.
-var awaiting_build_cell: bool = false
-var awaiting_queen_build_cell: bool = false
-var awaiting_home_cell: bool = false
-var awaiting_home_cell_all: bool = false
-var awaiting_mine_home: bool = false
-var awaiting_mine_target: bool = false
-var awaiting_keep_clear: bool = false
+## "Click a spot" placement: the id of the one tool armed from the HUD ("" =
+## none). While one is active the next left click in the relevant view is
+## consumed as the placement rather than a normal select/drag. The catalogue
+## is input_selection.gd::PLACEMENT_TOOLS.
+var active_placement_tool: String = ""
+## Bees each tool captured when armed; cleared with the tool.
 var pending_builder_bees: Array = []
 var pending_home_bees: Array = []
 var pending_mine_bees: Array = []
 var pending_mine_target_bees: Array = []
-var awaiting_forage_start: bool = false
 var pending_forage_bees: Array = []
-var awaiting_floral_preference: bool = false
 var pending_preference_bees: Array = []
 
 # --- _ready and construction --------------------------------------
@@ -478,13 +472,7 @@ func _ready() -> void:
 	hud.cell_empty_by_bee_requested.connect(input_selection._on_cell_empty_by_bee_requested)
 	hud.cell_keep_empty_requested.connect(orders_zones._on_cell_keep_empty_requested)
 	hud.cell_gyne_requested.connect(orders_zones._on_cell_gyne_requested)
-	hud.build_cell_requested.connect(input_selection._on_build_cell_requested)
-	hud.queen_build_cell_requested.connect(challenge_runner._on_queen_build_cell_requested)
-	hud.home_cell_requested.connect(input_selection._on_home_cell_requested)
-	hud.home_cell_all_requested.connect(input_selection._on_home_cell_all_requested)
-	hud.mine_home_requested.connect(input_selection._on_mine_home_requested)
-	hud.mine_target_requested.connect(input_selection._on_mine_target_requested)
-	hud.keep_clear_requested.connect(input_selection._on_keep_clear_requested)
+	hud.placement_tool_requested.connect(input_selection.request_placement_tool)
 	hud.restock_targets_requested.connect(orders_zones._on_restock_targets_requested)
 	hud.restock_sources_requested.connect(orders_zones._on_restock_sources_requested)
 	hud.restock_clear_requested.connect(orders_zones._on_restock_clear_requested)
@@ -495,10 +483,8 @@ func _ready() -> void:
 	hud.nursery_window_requested.connect(year_winter._on_nursery_window_requested)
 	hud.winter_window_requested.connect(func(): winter_panel.toggle())
 	hud.signal_clicked.connect(year_winter._on_signal_clicked)
-	hud.forage_start_point_requested.connect(input_selection._on_forage_start_point_requested)
 	hud.secondary_role_requested.connect(orders_zones._on_secondary_role_requested)
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
-	hud.floral_preference_requested.connect(input_selection._on_floral_preference_requested)
 	hud.favourite_requested.connect(orders_zones._on_favourite_requested)
 	hud.follow_bee_toggled.connect(camera_view._on_follow_bee_toggled)
 	add_child(hud)
