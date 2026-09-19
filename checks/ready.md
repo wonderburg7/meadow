@@ -14,8 +14,8 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 
 - [C-29 -- the stage's camera and speed switch off when the stage ends](ready/C-29.md)
 - [C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself](ready/C-31.md)
-- [C-49 -- Challenge stages can be replayed from settings](ready/C-49.md)
 - [C-42 -- the queen keeps her nectar when the comb has no room](ready/C-42.md)
+- [C-49 -- Challenge stages can be replayed from settings](ready/C-49.md)
 - [C-53 -- the Controls list reads as one list, with no gaps](ready/C-53.md)
 - [C-57 -- Challenge 2's first stage lets a cell raise a nectar Forager, not yet a pollen one](ready/C-57.md)
 - [C-58 -- the top-left readouts follow the text size](ready/C-58.md)
