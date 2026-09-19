@@ -118,7 +118,18 @@ screenshot, or which bees he counted) is needed before CB-2.
 
 ## CB-2 — the fix CB-1 identifies
 
-Not startable until CB-1 names the cause. Fixed now, whatever that cause is:
+**CB-1 result (2026-09-19, fixture `cb1_comb_builders_per_site_test.json`,
+seed 4242, 12 comb workers on Building, one day, 200 samples, identical over
+two runs).** `max_builders_per_site` 6 (pass), `building_without_slot` 0
+(pass), `min_builder_spacing_px` 11.47 against the 13.6 needed (fail).
+The numbers support **H1**: the slot cap holds and nobody builds without a
+slot, but two builders at one site stand closer than 0.8 of a cell size apart,
+which matches builders bunching rather than ringing the six walls. H2 is not
+supported. H3 is not separated by these numbers. CB-1 did not record the
+snapped stand points themselves, so CB-2 starts by confirming the snap
+(`hive.nearest_walkable_point()` on each `slot_position`) is what merges them.
+
+CB-2 is the H1 fix; startable once G2 has merged. Fixed now:
 
 - **Invariants.**
   - CB-1's assertions pass.

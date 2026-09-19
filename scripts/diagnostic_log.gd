@@ -60,6 +60,10 @@ var _session_path: String = ""
 ## with, not just which one it asked for.
 var scenario_random_seed: int = 12345
 var _queen_alive: bool = true
+## CB-1: running maxima/minimum written by ScenarioActions.sample_comb_build_sites
+## (scenario runs only). min_builder_spacing_px stays -1.0 until two builders
+## have shared a site.
+var comb_build_sites: Dictionary = {}
 var _diagnostics: Dictionary = DiagnosticProfileScript.standard()
 var _diagnostic_event_lines: Dictionary = {}
 var _diagnostic_snapshot_lines: int = 0
@@ -181,6 +185,9 @@ func start_session() -> void:
 	_honey_batches_deposited = 0
 	_cells_ripened = 0
 	_queen_alive = true
+	comb_build_sites = {"max_builders_per_site": 0, "max_slots_held": 0,
+		"max_distinct_slots": 0, "building_without_slot": 0,
+		"min_builder_spacing_px": -1.0, "samples": 0}
 	_diagnostic_event_lines.clear()
 	_diagnostic_snapshot_lines = 0
 	_diagnostic_last_snapshot.clear()
@@ -803,6 +810,7 @@ func end_session(outcome: String) -> void:
 		"blocks_mined": _blocks_mined,
 		"honey_batches_deposited": _honey_batches_deposited,
 		"cells_ripened": _cells_ripened,
+		"comb_build_sites": comb_build_sites,
 	}
 	if not _performance_capture_config.is_empty():
 		summary["performance"] = Perf.capture_summary()

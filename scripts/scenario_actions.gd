@@ -44,6 +44,7 @@ const LEGACY_WHEN_KEY_MAP := {
 ## the rest of this tick's actions -- everything already resolved stays
 ## resolved, and log_unresolved (below) records whatever never got there.
 static func run_pending(main: Node2D, actions: Array) -> void:
+	sample_comb_build_sites(main)
 	for action in actions:
 		if action.get("_resolved", false):
 			continue
@@ -59,6 +60,53 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 				return
 		else:
 			_execute(main, action)
+
+
+## CB-1: Session.sim_time of the last comb-builder sample.
+static var _last_build_sample: float = -1.0e9
+const BUILD_SAMPLE_SECONDS := 0.5
+
+## Samples every unfinished cell's own builders and slot_users every 0.5
+## simulated seconds and folds them into DiagnosticLog.comb_build_sites as
+## running maxima (and one minimum), so a day of sampling allocates nothing
+## per tick. Observation only: it changes no simulation state.
+static func sample_comb_build_sites(main: Node2D) -> void:
+	if Session.sim_time - _last_build_sample < BUILD_SAMPLE_SECONDS:
+		return
+	_last_build_sample = Session.sim_time
+	var stats: Dictionary = DiagnosticLog.comb_build_sites
+	if stats.is_empty() or main.hive == null:
+		return
+	stats["samples"] = int(stats["samples"]) + 1
+	for cell in main.hive.cells:
+		if not is_instance_valid(cell) or cell.is_built:
+			continue
+		var building: int = 0
+		var without_slot: int = 0
+		var holders: int = 0
+		var distinct: int = 0
+		for holder in cell.slot_users:
+			if holder != null and is_instance_valid(holder):
+				holders += 1
+				distinct += 1
+		var stand_points: Array = []
+		for bee in cell.builders:
+			if not is_instance_valid(bee) or bee.state != bee.State.BUILDING or bee.target_cell != cell:
+				continue
+			building += 1
+			if not cell.slot_users.has(bee):
+				without_slot += 1
+			stand_points.append(bee.position)
+		for i in range(stand_points.size()):
+			for j in range(i + 1, stand_points.size()):
+				var gap: float = stand_points[i].distance_to(stand_points[j])
+				var best: float = float(stats["min_builder_spacing_px"])
+				if best < 0.0 or gap < best:
+					stats["min_builder_spacing_px"] = gap
+		stats["max_builders_per_site"] = maxi(int(stats["max_builders_per_site"]), building)
+		stats["max_slots_held"] = maxi(int(stats["max_slots_held"]), holders)
+		stats["max_distinct_slots"] = maxi(int(stats["max_distinct_slots"]), distinct)
+		stats["building_without_slot"] = maxi(int(stats["building_without_slot"]), without_slot)
 
 
 ## Called from main.gd::_end_scenario_run, before DiagnosticLog closes the
