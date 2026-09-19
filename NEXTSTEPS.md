@@ -14,21 +14,14 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] L-13 -- closeout is one command, and the gates become actions**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-13 — closeout is one command, and the gates become actions"
-   - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
-   - Check: every injected-failure phase in `tests/test_slice_lifecycle.py` and `tests/test_two_lane_closeout.py` still resumes to a clean merge on master, a closeout over the fixture repository completes from `verify` to `merge` with no hand edit in between, and a journal written in the old phase order resumes without skipping a durable step
-   - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
-   - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once its gate is met.
-
-2. **[Claude] UI-Y -- toggleable panel background texture**
+1. **[Claude] UI-Y -- toggleable panel background texture**
    - Plan: `plans/now/ui.md` -- "UI-Y — toggleable panel background texture"
    - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `scripts/session.gd`
    - Check: a hands-on pass with each theme palette (dark/light/high-contrast) -- set the new Appearance option to `comb`, then `grain`, then back to `flat`, confirm the panel edge and text position never move and text stays legible
    - Proof: `absent: scripts/settings_catalogue.gd :: panel_texture`
    - Next after: none -- UI-Y is complete.
 
-3. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
+2. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
    - Plan: `plans/now/c1-followups.md` -- "C1F-2 — a headless run proves the queen's pollen departure and no discard loop"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/c1f2_queen_pollen_departure_test.json`
    - Check: fixtures A, B and C in the new scenario pass, and reverting `bee_foraging.gd::go_to_deposit_cell`'s `bee.target_cell = null` line makes A fail

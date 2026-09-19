@@ -727,7 +727,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         phases = (
-            "started", "verified", "branch-committed", "archived", "refilled",
+            "started", "verified", "branch-committed", "actions-committed", "archived", "refilled",
             "merged", "pushed", "worktree-removed", "branch-deleted", "ledger-deleted",
         )
         for phase in phases:

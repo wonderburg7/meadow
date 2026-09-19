@@ -1,7 +1,7 @@
 # Closing a slice — branches, merges, checks and the queue
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: at closeout only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-09-18
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-09-19
 
 Read this when a slice's code is done, or when integrating a Codex branch.
 `tools/slice.ps1 finish` enforces the phases below; this file says why.
@@ -33,27 +33,31 @@ same pass.
 ## Closeout order
 
 Run `tools/slice.ps1 finish` from inside the slice's worktree immediately
-after integrating any branch, never deferred. **Before running it, on the
-branch:**
+after integrating any branch, never deferred. It commits outstanding work,
+then (L-13) does the two mechanical edits itself and commits each:
+`python tools/archive_slice.py <id>` moves the delivered slice's
+specification into plans/archive/(id)_(date).md, leaves a one-line pointer
+and drops its row from the plan's open-slices table; `python
+tools/refill_lane.py --delete <id>` removes the item from its lane and
+renumbers it, refusing a queue that would fail `tools/check_docs.py`. The
+`archived` and `refilled` gates then prove both happened. **Before running
+it, on the branch:**
 
-1. On a clean tree, run `python tools/archive_slice.py <id>`. It moves the
-   delivered slice's specification into plans/archive/(id)_(date).md,
-   leaves a one-line pointer where the heading was and drops the slice's row
-   from the plan's open-slices table. Then update the plan's Status line.
-2. Run `python tools/refill_lane.py --delete <id>`. It removes the delivered
-   item from its lane, renumbers the lane and refuses to write a queue that
-   would fail `tools/check_docs.py`. Then add the item's `Next after:`
-   successor to the **same lane's** subsection with full
-   `Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines (or under
-   `## Not in the queue, and why` if it is not startable), and if that
-   leaves the lane short, pull the next ready, file-disjoint slice from an
-   owning plan (at most five per lane).
-3. Update the owning plan's `Next:` field. After a plan's last slice, set
-   `Next: None — plan complete` and list every follow-up with where it was
-   filed. A finding from the plan's own checks becomes its next slice while
-   the plan is open; one that surfaces after it is archived starts a new plan.
-4. Commit. `finish`'s `archived` and `refilled` phases refuse to merge until
-   both edits are committed, then carry them into the merge commit.
+1. Update the owning plan's Status line and `Next:` field. After a plan's
+   last slice, set `Next: None — plan complete` and list every follow-up with
+   where it was filed. A finding from the plan's own checks becomes its next
+   slice while the plan is open; one that surfaces after it is archived
+   starts a new plan.
+2. Add the item's `Next after:` successor to the **same lane's** subsection
+   with full `Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines (or under
+   `## Not in the queue, and why` if it is not startable), and if the
+   deletion would leave the lane short, pull the next ready, file-disjoint
+   slice from an owning plan (at most five per lane). If `refill_lane.py`
+   refuses, `finish` stops naming this step; do it and retry.
+
+Either edit may be left uncommitted: `finish` commits it first. A branch that
+did the archive or the deletion by hand passes straight through, because each
+tool runs only when its step is still owed.
 
 Edit only your own lane's subsection of `NEXTSTEPS.md`; the other lane's
 branch is editing the other one, and separate subsections keep the two merges

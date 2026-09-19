@@ -368,5 +368,156 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertEqual(local_head, remote_head)
 
 
+    # --- L-13: finish does the archive move and the lane deletion itself ---
+
+    # One section per queued slice, so tools/archive_slice.py has a real
+    # heading to move and check_docs.py's queue/plan agreement holds.
+    REAL_PLAN = (
+        "# Fixture plan\n\n"
+        "Status: active\n\n"
+        "### A-1 -- claude fixture\n\nAdd new_function to sample.gd.\nLevel: low\n\n"
+        "### A-2 -- claude second\n\nAdd new_function to second.gd.\nLevel: low\n\n"
+        "### Z-9 -- filler\n\nAdd new_function to filler.gd.\nLevel: low\n\n"
+        "### B-1 -- codex fixture\n\nAdd new_function to other.gd.\nLevel: low\n"
+    )
+
+    @staticmethod
+    def real_item(number, lane, slice_id, title, source):
+        return (
+            f"{number}. **[{lane}] {slice_id} -- {title}**\n"
+            f"   - Plan: `plans/fixture.md` -- \"{slice_id} -- {title}\"\n"
+            f"   - Files: `scripts/{source}`\n"
+            f"   - Check: deterministic, {title}\n"
+            f"   - Proof: `absent: scripts/{source} :: new_function`\n"
+            f"   - Next after: none -- the {title} plan is complete.\n"
+        )
+
+    def use_real_closeout_tools(self):
+        """The production queue shape (two `### <Lane> lane` subsections,
+        four items so one delivery leaves the floor of three), a plan section
+        for each item, the real L-10/L-11 tools, and a mock verifier that
+        resolves the running interpreter -- so `finish` itself has to archive
+        and refill, with nothing prepared by hand."""
+        for name in ("archive_slice.py", "refill_lane.py", "heading.py"):
+            shutil.copy2(SLICE_PATH.with_name(name), self.root / "tools" / name)
+        for source in ("second.gd", "filler.gd"):
+            (self.root / "scripts" / source).write_text("func existing():\n\tpass\n", encoding="utf-8")
+        (self.root / "plans" / "fixture.md").write_text(self.REAL_PLAN, encoding="utf-8")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet, [string]$Scope)\n"
+            "if ($ResolvePythonOnly) { Write-Output '" + sys.executable.replace("'", "''") + "' }\nexit 0\n",
+            encoding="utf-8",
+        )
+        (self.root / "NEXTSTEPS.md").write_text(
+            "# Next steps\n\n## Next up\n\n### Claude lane\n\n"
+            + self.real_item(1, "Claude", "A-1", "claude fixture", "sample.gd") + "\n"
+            + self.real_item(2, "Claude", "A-2", "claude second", "second.gd") + "\n"
+            + self.real_item(3, "Claude", "Z-9", "filler", "filler.gd") + "\n"
+            + "### Codex lane\n\n"
+            + self.real_item(1, "Codex", "B-1", "codex fixture", "other.gd") + "\n"
+            + "## Not in the queue, and why\n\n- Nothing is held back in this fixture.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "real closeout tools"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "push", "origin", "master"], cwd=self.root, capture_output=True, text=True, check=True)
+
+    def claim_and_code_a1(self):
+        """Claim A-1 and make only the code change -- no archive, no queue edit."""
+        started = self.run_slice("start", "-Lane", "Claude")
+        self.assertEqual(0, started.returncode, started.stdout + started.stderr)
+        worktree = self.root / ".worktrees" / "A-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        return worktree
+
+    def write_journal(self, phase):
+        """A closeout journal exactly as the pre-L-13 phase order wrote it."""
+        (self.root / ".git" / "meadow-slice-closeout.json").write_text(
+            json.dumps({"id": "A-1", "branch": "claude/A-1", "lane": "Claude", "phase": phase},
+                       separators=(",", ":")),
+            encoding="utf-8",
+        )
+
+    def assert_a1_closed_out(self):
+        self.assertFalse(self.branch_exists("claude/A-1"))
+        self.assertFalse((self.root / ".worktrees" / "A-1").exists())
+        self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+        records = list((self.root / "plans" / "archive").glob("A-1_*.md"))
+        self.assertEqual(1, len(records))
+        self.assertIn("### A-1 -- claude fixture", records[0].read_text(encoding="utf-8"))
+        plan = (self.root / "plans" / "fixture.md").read_text(encoding="utf-8")
+        self.assertNotIn("### A-1", plan)
+        self.assertIn("A-1 shipped", plan)
+        queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertNotIn("A-1", queue)
+        self.assertIn("1. **[Claude] A-2", queue)
+        self.assertIn("1. **[Codex] B-1", queue)
+
+    def test_finish_archives_and_refills_with_no_hand_edit(self):
+        self.use_real_closeout_tools()
+        worktree = self.claim_and_code_a1()
+
+        finished = self.run_finish(worktree)
+        self.assertEqual(0, finished.returncode, finished.stdout + finished.stderr)
+        self.assert_a1_closed_out()
+        log = subprocess.run(
+            ["git", "log", "--format=%s", "master"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout
+        self.assertIn("A-1 -- archive its plan section", log)
+        self.assertIn("A-1 -- remove it from the Claude lane", log)
+
+    def test_failure_after_the_actions_resumes_to_a_clean_merge(self):
+        self.use_real_closeout_tools()
+        worktree = self.claim_and_code_a1()
+
+        failed = self.run_finish(worktree, env={"MEADOW_SLICE_FAIL_AFTER": "actions-committed"})
+        self.assertNotEqual(0, failed.returncode)
+        resumed = self.run_slice("resume", "-Lane", "Claude")
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        self.assert_a1_closed_out()
+
+    def test_old_order_journal_at_branch_committed_still_runs_the_actions(self):
+        """The pre-L-13 order went straight from branch-committed to the
+        archive gate. Resuming that journal must run the inserted phase, not
+        read it as already passed."""
+        self.use_real_closeout_tools()
+        worktree = self.claim_and_code_a1()
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
+        self.write_journal("branch-committed")
+
+        resumed = self.run_slice("resume", "-Lane", "Claude")
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        self.assert_a1_closed_out()
+
+    def test_old_order_journal_at_archived_holds_at_the_refill_gate(self):
+        """A pre-L-13 journal at "archived" skips the inserted action (the old
+        version had already passed the archive gate), so the refill is still
+        owed by hand: the gate must hold the merge rather than skip it."""
+        self.use_real_closeout_tools()
+        worktree = self.claim_and_code_a1()
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
+        subprocess.run([sys.executable, str(worktree / "tools" / "archive_slice.py"), "A-1", "--root", str(worktree)],
+                       capture_output=True, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "archive A-1 by hand"], cwd=worktree, capture_output=True, check=True)
+        self.write_journal("archived")
+
+        held = self.run_slice("resume", "-Lane", "Claude")
+        self.assertNotEqual(0, held.returncode)
+        self.assertIn("still in NEXTSTEPS.md", held.stdout + held.stderr)
+        self.assertTrue(self.branch_exists("claude/A-1"))
+        self.assertIn("A-1", (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
+
+        subprocess.run([sys.executable, str(worktree / "tools" / "refill_lane.py"), "--delete", "A-1", "--root", str(worktree)],
+                       capture_output=True, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "refill by hand"], cwd=worktree, capture_output=True, check=True)
+        resumed = self.run_slice("resume", "-Lane", "Claude")
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        self.assert_a1_closed_out()
+
+
 if __name__ == "__main__":
     unittest.main()
