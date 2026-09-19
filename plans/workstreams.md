@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/E1` (`claude/E1`) | Claude | one placement tool | Claude | in progress | none | `plans/design/architecture-review.md` E1 — one placement tool |
 | `.worktrees/SM-1` (`codex/SM-1`) | Codex | find why the smoke scenario never completes a cell | Codex | in progress | none | `plans/now/smoke-scenario.md` SM-1 — find why the smoke scenario never completes a cell |
