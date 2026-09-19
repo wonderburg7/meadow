@@ -1039,7 +1039,7 @@ function Invoke-SliceStart {
     if ($ledgerContent.Length -gt 0 -and -not ($ledgerContent.EndsWith("`n"))) {
         [System.IO.File]::AppendAllText($ledgerPath, "`r`n")
     }
-    Add-Content -LiteralPath $ledgerPath -Value $row
+    [System.IO.File]::AppendAllText($ledgerPath, $row + "`r`n")
 
     Push-Location $root
     try {
@@ -1131,10 +1131,11 @@ function Remove-SliceLedgerRow {
     param([string]$Root, [object]$Target, [switch]$SkipPush)
     $ledgerPath = Join-Path $Root "plans\workstreams.md"
     $marker = '`' + $Target.WorktreeRelative + '`'
-    $lines = @(Get-Content -LiteralPath $ledgerPath)
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $lines = @([System.IO.File]::ReadAllLines($ledgerPath, $utf8))
     $keep = @($lines | Where-Object { $_.IndexOf($marker, [System.StringComparison]::Ordinal) -lt 0 })
     if ($keep.Count -eq $lines.Count) { return $false }
-    Set-Content -LiteralPath $ledgerPath -Value $keep
+    [System.IO.File]::WriteAllLines($ledgerPath, [string[]]$keep, $utf8)
     git -C $Root add "plans/workstreams.md"
     if ($LASTEXITCODE -ne 0) { throw "git add failed" }
     git -C $Root commit -m "Remove the $($Target.Id) worktree row from the ledger`n`n$(Get-LaneTrailer -Lane $Target.Lane)" | Out-Null
