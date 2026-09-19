@@ -14,28 +14,21 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] CB-1 -- measure where comb builders stand and how many work one site**
-   - Plan: `plans/now/comb-builders.md` -- "CB-1 — measure where comb builders stand and how many work one site"
-   - Files: `scripts/scenario_actions.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
-   - Check: two headless runs of the new fixture report identical per-site builder counts and stand points, and the delivery note names which of H1-H3 the numbers support
-   - Proof: `absent: scripts/scenario_actions.gd :: builders_per_site`
-   - Next after: CB-2 -- the fix CB-1 identifies.
-
-2. **[Claude] L-13 -- closeout is one command, and the gates become actions**
+1. **[Claude] L-13 -- closeout is one command, and the gates become actions**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-13 — closeout is one command, and the gates become actions"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
    - Check: every injected-failure phase in `tests/test_slice_lifecycle.py` and `tests/test_two_lane_closeout.py` still resumes to a clean merge on master, a closeout over the fixture repository completes from `verify` to `merge` with no hand edit in between, and a journal written in the old phase order resumes without skipping a durable step
    - Proof: `absent: tools/slice.ps1 :: Invoke-SliceArchiveAndRefill`
    - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once its gate is met.
 
-3. **[Claude] UI-Y -- toggleable panel background texture**
+2. **[Claude] UI-Y -- toggleable panel background texture**
    - Plan: `plans/now/ui.md` -- "UI-Y — toggleable panel background texture"
    - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `scripts/session.gd`
    - Check: a hands-on pass with each theme palette (dark/light/high-contrast) -- set the new Appearance option to `comb`, then `grain`, then back to `flat`, confirm the panel edge and text position never move and text stays legible
    - Proof: `absent: scripts/settings_catalogue.gd :: panel_texture`
    - Next after: none -- UI-Y is complete.
 
-4. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
+3. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
    - Plan: `plans/now/c1-followups.md` -- "C1F-2 — a headless run proves the queen's pollen departure and no discard loop"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/c1f2_queen_pollen_departure_test.json`
    - Check: fixtures A, B and C in the new scenario pass, and reverting `bee_foraging.gd::go_to_deposit_cell`'s `bee.target_cell = null` line makes A fail
@@ -64,7 +57,7 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **CB-2** (`plans/now/comb-builders.md`) -- its cause is what CB-1 measures, and its fix waits for G2 to finish with the `bee_*.gd` modules.
+- **CB-2** (`plans/now/comb-builders.md`) -- CB-1 measured the cause (H1: builder stand points bunch, min spacing 11.47px vs 13.6px), and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
