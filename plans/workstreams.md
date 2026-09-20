@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/PERF-1` (`codex/PERF-1`) | Codex | measure `find_food_cell` before changing it | Codex | in progress | none | `plans/reference/technical-audit.md` PERF-1 — measure `find_food_cell` before changing it |
 | `.worktrees/V-1` (`claude/V-1`) | Claude | verification regenerates its generated files instead of asserting them | Claude | in progress | none | `plans/now/verification-cost.md` V-1 — verification regenerates its generated files instead of asserting them |
