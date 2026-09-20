@@ -8,6 +8,10 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import backlog  # noqa: E402
+
 
 ROOT = Path(__file__).resolve().parent.parent
 PLAN_PATTERN = re.compile(r"^Status:\s*(.+)$", re.MULTILINE)
@@ -593,6 +597,97 @@ def check_queue_proofs(errors: list[str], text: str | None = None) -> None:
         validate_queue_proof(chunk, index, ROOT, errors)
 
 
+# --- the backlog NEXTSTEPS.md refills itself from ---------------------------
+#
+# A live plan's open slice section may carry a fenced ```queue block holding
+# the exact item that slice would be queued as (tools/backlog.py). Two things
+# then have to stay true: the block and any live queue entry for that id must
+# say the same thing, and a lane short of five while an admissible block waits
+# is a lane nobody topped up. The second is a warning, because five is a
+# ceiling the backlog reaches when it has startable work, never a reason to
+# queue something that is not (Dave, 21 Sep 2026).
+
+
+def plan_queue_blocks() -> list:
+    """Every parseable queue block in the live plans; malformed ones are the
+    business of check_plan_queue_blocks, which reports them as errors."""
+    entries, _ = backlog.collect(current_plans(), ROOT)
+    return entries
+
+
+def _block_shape(body: str) -> str:
+    """A queue item or a block body reduced to what the two must share."""
+    lines = [line[len(backlog.QUEUE_INDENT):]
+             if line.startswith(backlog.QUEUE_INDENT) else line
+             for line in body.replace("\r", "").split("\n")]
+    return "\n".join(line.rstrip() for line in lines).strip("\n")
+
+
+def check_plan_queue_blocks(errors: list[str], warnings: list[str]) -> None:
+    """Plan blocks parse, agree with the live queue, and get used."""
+    text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    entries, problems = backlog.collect(current_plans(), ROOT)
+    errors.extend(problems)
+
+    items = queue_item_chunks(text) or []
+    queued: dict[str, str] = {}
+    for _, chunk in items:
+        match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        if match:
+            queued[match.group(1)] = chunk
+
+    for entry in entries:
+        chunk = queued.get(entry.slice_id)
+        if chunk is None:
+            continue
+        # The block is what a refill copies in. If the two have drifted, the
+        # next refill of that id would quietly queue the stale one.
+        if _block_shape(chunk) != _block_shape(entry.body):
+            errors.append(
+                f"{entry.plan}:{entry.line}: {entry.slice_id}'s queue block and its live "
+                "'## Next up' entry disagree. They are the same five lines written twice; "
+                "make the block match the queue, or the queue match the block"
+            )
+        if entry.gated:
+            errors.append(
+                f"{entry.plan}:{entry.line}: {entry.slice_id} is queued in '## Next up' but "
+                "its block is fenced ```queue-gated. Open the fence to ```queue, or take "
+                "the item out of the lane"
+            )
+
+    # A gated block whose proof has stopped holding is work that happened while
+    # the gate was shut -- the X3 failure, caught one step earlier.
+    for entry in entries:
+        if not entry.gated or entry.slice_id in queued:
+            continue
+        proof_errors: list[str] = []
+        validate_queue_proof(entry.body, 0, ROOT, proof_errors)
+        if proof_errors:
+            warnings.append(
+                f"{entry.plan}:{entry.line}: {entry.slice_id} is gated, but its Proof: no "
+                "longer holds -- the defect it describes may already be fixed. Re-verify it "
+                "before the gate is opened"
+            )
+
+    lane_sizes = {lane: 0 for lane in LANES}
+    for _, chunk in items:
+        match = re.match(r"\*\*\[(\w+)\]", chunk)
+        if match and match.group(1) in lane_sizes:
+            lane_sizes[match.group(1)] += 1
+    waiting: dict[str, list[str]] = {lane: [] for lane in LANES}
+    for entry in entries:
+        if entry.gated or entry.slice_id in queued or entry.lane not in lane_sizes:
+            continue
+        waiting[entry.lane].append(entry.slice_id)
+    for lane, size in lane_sizes.items():
+        if size < LANE_SIZE_MAX and waiting[lane]:
+            warnings.append(
+                f"NEXTSTEPS.md: the {lane} lane holds {size} of {LANE_SIZE_MAX} and the "
+                f"backlog offers {', '.join(waiting[lane])} -- run "
+                f"python tools/refill_lane.py --top-up --lane {lane}"
+            )
+
+
 def check_markdown_links(errors: list[str]) -> None:
     files = (
         list(ROOT.glob("*.md"))
@@ -661,6 +756,11 @@ def queue_declared_files() -> set[str]:
     declared: set[str] = set()
     for _, chunk in items:
         declared |= _item_files(chunk)
+    # A backlog block is the same reservation written one step earlier: it is
+    # where a slice first names the file it is going to create, so it needs the
+    # same licence the queue item it will become already has.
+    for entry in plan_queue_blocks():
+        declared |= _item_files(entry.body)
     return declared
 
 
@@ -993,6 +1093,7 @@ def main() -> int:
     check_queue_successors(errors)
     check_queue_section_agreement(errors)
     check_not_in_queue_reasons(errors)
+    check_plan_queue_blocks(errors, warnings)
     check_markdown_links(errors)
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)
