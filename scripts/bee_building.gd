@@ -81,7 +81,7 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
-	if bee.position.distance_to(stand_point) < 12.0:
+	if bee.position.distance_to(stand_point) < 2.0:
 		bee.target_cell.claim_builder(bee)
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "claimed", "arrived_at_build_approach", "arrived", "route_ok")
 		bee.state = State.BUILDING

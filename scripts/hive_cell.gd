@@ -248,6 +248,11 @@ var empty_sprite: Sprite2D
 ## each other while loading, unloading, or building. An unfinished cell
 ## cannot hold resources, so builders using these shared slots cannot
 ## block a forager from depositing.
+## How far outside its wall a slot's stand point sits, as a multiple of the
+## wall midpoint's offset from the cell centre (see `slot_position`).
+const SLOT_REACH := 1.35
+const SQUASHED_SLOT_Y_REACH := 1.65
+
 var slot_users: Array = [null, null, null, null, null, null]
 
 func _ready() -> void:
@@ -635,7 +640,12 @@ func slot_position(index: int) -> Vector2:
 		return position
 	var midpoints := Shapes.hexagon_edge_midpoints(cell_size, squashed)
 	var edge_offset: Vector2 = midpoints[index % 6]
-	return position + edge_offset * 1.35
+	# On the squashed grid the two walls on each side sit only half a cell
+	# apart vertically, so a plain 1.35 nudge leaves their stand points
+	# 11.5px apart and builders bunch. Stretching y alone keeps every pair
+	# of stand points at least 0.8 of a cell apart.
+	var y_reach: float = SQUASHED_SLOT_Y_REACH if squashed else SLOT_REACH
+	return position + Vector2(edge_offset.x * SLOT_REACH, edge_offset.y * y_reach)
 
 # --- building -----------------------------------------------------
 

@@ -44,17 +44,3 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
-### C-46 -- comb builders spread across six walls before opening another site
-
-Give at least seven idle bees the Comb worker job with the Building focus,
-with open floor in the hive and no cells marked, and watch them start
-building on their own. Watch the first unfinished cell and the next one that
-begins while it is still unfinished.
-
-PASS: no more than six workers stand at the first cell, each at a different wall, and the seventh starts a second site rather than joining the first.
-
-Blocked by: CB-2, after CB-1 measures the fault. Dave's 12 Sep 2026 run: the
-builders did not stand around the six walls, and more than six built one
-cell.
-
-Owner: `plans/now/comb-builders.md` CB-1.

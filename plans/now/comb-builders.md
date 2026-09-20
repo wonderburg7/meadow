@@ -1,7 +1,7 @@
 # Comb builders — at most six to a site, one to a wall
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CB-2 -- the H1 fix (builders bunch: stand points overlap), queued in the Claude lane | Dependency: none -- G2 shipped 17 Sep 2026 | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete; C-46 (checks/ready/C-46.md) is ready to re-run | Dependency: none -- G2 shipped 17 Sep 2026 | Verified: 2026-09-20
 
 **Objective.** When idle comb workers build on their own, no more than six
 work one unfinished cell, each stands at a different wall, and a seventh
@@ -19,7 +19,6 @@ than guessing at a fix (`CLAUDE.md`, "Working style").
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CB-2 | Each of a site's six walls has its own reachable stand point; C-46 passes | `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json` | yes | high |
 
 CB-2 depended on CB-1 and on **G2** (`plans/design/architecture-review.md`),
 which rewrote `bee.gd`'s dispatch and the `bee_*.gd` modules CB-2's fix
@@ -35,42 +34,4 @@ inside `hive.gd`, stop and escalate rather than taking the file.
 
 CB-1 shipped 2026-09-19; its specification is `plans/archive/CB-1_2026-09-19.md`.
 
-## CB-2 — the fix CB-1 identifies
-
-**CB-1 result (2026-09-19, fixture `cb1_comb_builders_per_site_test.json`,
-seed 4242, 12 comb workers on Building, one day, 200 samples, identical over
-two runs).** `max_builders_per_site` 6 (pass), `building_without_slot` 0
-(pass), `min_builder_spacing_px` 11.47 against the 13.6 needed (fail).
-The numbers support **H1**: the slot cap holds and nobody builds without a
-slot, but two builders at one site stand closer than 0.8 of a cell size apart,
-which matches builders bunching rather than ringing the six walls. H2 is not
-supported. H3 is not separated by these numbers. CB-1 did not record the
-snapped stand points themselves, so CB-2 starts by confirming the snap
-(`hive.nearest_walkable_point()` on each `slot_position`) is what merges them.
-
-CB-2 is the H1 fix; startable once G2 has merged. Fixed now:
-
-- **Invariants.**
-  - CB-1's assertions pass.
-  - One builder still contributes the same build progress per second.
-  - The six-slot cap for depositing and feeding is unchanged.
-  - A site with a free wall is still found by `find_unfinished_cell()`.
-- **Guidance, not decisions.**
-  - For H1: give each slot a reachable stand point of its own (snap each wall
-    to a distinct walkable point), rather than letting every approach snap to
-    one tile.
-  - For H2: `builder_build()` requires `target_cell.slot_users.has(bee)` and
-    otherwise sends the bee back to `TO_BUILD_SITE`.
-- **Hot path.** `builder_build()` runs for every building bee every frame.
-  Count the calls and the builder population before adding any check
-  (`.claude/rules/performance.md`). A scan of six slots is acceptable; an
-  allocation is not.
-- **Save/load.** Read `.claude/rules/saving.md` first. A restored run must not
-  leave a `BUILDING` bee without a slot.
-- **Sequencing.** Do not start until G2 has merged: it is sole owner of
-  `bee.gd` and reshapes the `bee_*.gd` signatures this fix would edit.
-- **Completion.** Move C-46 from `checks/blocked.md` back to ready. Archive
-  this plan with `Next: None — plan complete`.
-
-Level: high -- `builder_build()` is a per-frame, per-builder path and a
-restored run must not leave a `BUILDING` bee without a slot.
+CB-2 shipped 2026-09-20; its specification is `plans/archive/CB-2_2026-09-20.md`.
