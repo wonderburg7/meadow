@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: observation-intake | LAYER: active -->
 
-Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-19
+Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-20
 
 ## Purpose and boundary
 
@@ -132,3 +132,98 @@ explicit request from Dave.
   stage only if they support it. Queued in the Claude lane. Removing the
   `MEADOW_FINISH_VERIFY` exclusion stays out of scope: `tools/slice.ps1`
   is the other lane's.
+
+### 2026-09-20 — preflight refusals are counted as the most expensive "step"
+
+- Source: ad hoc (repository maintenance pass)
+- Area: tooling / telemetry
+- Signal: `python tools/session_cost.py --stops` ranks `"(no step recorded)"`
+  first, at 19 of 53 stops against 8 for the real leader. All 19 are preflight
+  refusals raised before any step ran (14 `start`, 5 `finish`), so the list
+  that exists to rank steps is led by something that is not a step.
+- Evidence: `.git/meadow-slice-stops.jsonl`, 53 records, 18-20 Sep 2026; every
+  no-step record carries an empty `step` and a populated `cause`.
+  `run_stops` in `tools/session_cost.py` folds them in with
+  `by_step[record.get("step") or "(no step recorded)"]`.
+- Consequence: `plans/now/agent-lifecycle.md` gates L-12 on `--stops` showing
+  the refill step "among the two most frequent", so a real step has to outrank
+  a bucket that is not a step. The gate cannot be read fairly until the two
+  are separated. The preflight causes are themselves discarded as signal.
+- Candidate direction: Hypothesis — split the ledger on whether `step` is set,
+  rank only the stepped records, and report the preflight ones separately by
+  cause. Low risk: one function, no change to the writer or the ledger.
+- Disposition: promoted 2026-09-20 to a new plan, `plans/now/stop-readout.md`,
+  as ST-1. Queued in the Codex lane, which already owns
+  `tools/session_cost.py`. `tools/slice.ps1` stays out of scope -- changing
+  the writer would re-date the 53 existing records.
+
+### 2026-09-20 — a finished slice's terminal plan is cleaned up by the next session
+
+- Source: ad hoc (repository maintenance pass)
+- Area: process
+- Signal: a slice archives its own specification, which empties its plan's
+  open-slices table and leaves the plan itself in `plans/now/` marked
+  complete. `tools/check_docs.py`'s terminal-plan rule then fails for the
+  *next* session, which pays to diagnose and clean up work it did not do.
+- Evidence: twice in two days. CB-2 left `plans/now/comb-builders.md` live and
+  V-2's closeout archived it (`3c0f99f`, 20 Sep). T-3 left
+  `plans/now/workflow-telemetry.md` live and this pass archived it
+  (`46a514f`, 20 Sep). In both cases the archiving session's own verification
+  was green; the error only appears once the plan's last slice is gone.
+- Consequence: the cost lands on a session that has no context for the plan,
+  and it arrives as a verification failure rather than a closeout step. It
+  also blocks the lane: `finish` cannot complete while primary verification
+  fails, so the next slice cannot be claimed.
+- Candidate direction: Hypothesis — `tools/archive_slice.py` already knows it
+  has removed a plan's last open-slices row; it could archive the plan file in
+  the same commit, or `finish` could stop with a named step when the row it
+  just removed was the last one. Either keeps the cost in the session that
+  created it. Needs checking against a plan that legitimately keeps a live
+  section after its last queued slice.
+- Disposition: untriaged.
+
+### 2026-09-20 — a finished-but-unmerged worktree blocks its lane's next claim
+
+- Source: ad hoc (repository maintenance pass)
+- Area: process / lifecycle
+- Signal: 9 of 53 recorded stops are `<lane> lane already has an open
+  worktree`, raised when the previous slice's worktree still exists because
+  its branch was never merged. The blocked session cannot claim anything until
+  someone closes the earlier slice.
+- Evidence: `.git/meadow-slice-stops.jsonl`, by cause: `SF-1` 3, `SM-1` 2,
+  `T-3` 2, `UI-X-2` 1, `PERF-1` 1. The `T-3` pair is this pass: `codex/T-3`
+  carried both its implementation and its archive commit and was still
+  unmerged a day later, holding `.worktrees/T-3` open.
+- Consequence: the lane stalls silently. The stop names the worktree but not
+  whether its branch is finished, so the next session must reconstruct that
+  before it can decide between finishing and abandoning.
+- Candidate direction: Hypothesis — the preflight stop could say whether the
+  named branch is green and ahead of master, which is the fact that decides
+  between "finish it" and "abandon it". Related to ST-1, which is what makes
+  this count visible in `--stops` at all; hold until ST-1 lands and the count
+  can be tracked.
+- Disposition: untriaged.
+
+### 2026-09-20 — verify.ps1's `-RegenerateOnly` switch was lost when V-1 superseded it
+
+- Source: ad hoc (repository maintenance pass)
+- Area: tooling
+- Signal: `claude/verify-regenerate-docs-ee5f6c` (commit `779cd48`, 20 Sep)
+  implemented the regenerate-instead-of-assert behaviour and was never merged;
+  V-1 landed the same outcome on master independently and more simply, by
+  reusing `Invoke-PythonStage` with a `-RegenerateNote` flag. The superseded
+  branch also carried a `-RegenerateOnly` switch that master has no equivalent
+  for: regenerate the generated files without running the rest of the suite.
+- Evidence: `git show 779cd48 -- tools/verify.ps1` lines 7 and 214 against
+  master's `Invoke-RegenerateStage` at `tools/verify.ps1:216`.
+- Consequence: none today -- the shipped behaviour is complete. The branch is
+  retained only so the switch is not silently discarded; nothing else on it is
+  worth keeping, and it is 53 commits behind master, so it must never be built
+  on (`plans/workstreams.md`, "Never start new work from a branch that has
+  diverged").
+- Candidate direction: Hypothesis — a session that next edits `tools/verify.ps1`
+  either ports `-RegenerateOnly` as a few lines on top of the current
+  `Invoke-RegenerateStage`, or decides it is not wanted. Either way the branch
+  is deleted in that pass.
+- Disposition: untriaged. Owner: whoever takes the next `tools/verify.ps1`
+  slice (the Claude lane, `plans/now/verification-cost.md`).
