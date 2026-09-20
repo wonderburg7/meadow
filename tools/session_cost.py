@@ -630,7 +630,18 @@ def run_stops():
     by_step = Counter()
     by_command = Counter()
     total = 0
-    for line in path.read_text(encoding="utf-8").splitlines():
+    # The ledger predates its explicit UTF-8 writer: Windows PowerShell 5.1
+    # used its ANSI code page (CP1252 here) for older entries. Decode each
+    # JSONL record independently so one legacy/corrupt byte cannot hide every
+    # later stop.
+    for raw_line in path.read_bytes().splitlines():
+        try:
+            line = raw_line.decode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                line = raw_line.decode("cp1252")
+            except UnicodeDecodeError:
+                continue
         line = line.strip()
         if not line:
             continue
