@@ -42,6 +42,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnostics import write_event  # noqa: E402
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
+from godot_compile_check import failing_lines  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
                                   compose_case_scenario, evaluate_aggregate_expectations,
@@ -331,6 +332,37 @@ def _terminal_line(status: str, run_id: str, result_path: Path, *,
     return " ".join(fields)
 
 
+def _compile_failure_details(process_log: Path) -> tuple[str, str | None] | None:
+    """Return the primary build failure and its script, if it did not compile.
+
+    Use the boot-time compile check's exact matcher so the two headless entry
+    points cannot drift over which Godot diagnostics make a build unrunnable.
+    """
+    output = process_log.read_text(encoding="utf-8")
+    hits = failing_lines(output)
+    if not hits:
+        return None
+    # Godot's SCRIPT ERROR line is the useful primary diagnosis. A following
+    # Parse Error or load failure supplies context, but is not a better first
+    # action for someone repairing the broken script.
+    error_line = next((line for line in hits if line.startswith("SCRIPT ERROR:")), hits[0])
+    script_match = re.search(r"res://[A-Za-z0-9_./-]+\.gd", output)
+    return error_line, script_match.group(0) if script_match else None
+
+
+def _report_compile_failure(error_line: str, script: str | None, process_log: Path) -> None:
+    print("error: compile failure: %s" % error_line, file=sys.stderr)
+    if script is not None:
+        print("  script: %s" % script, file=sys.stderr)
+    print("  process log: %s" % process_log, file=sys.stderr)
+    # New worktrees normally have no imported cache; an unrelated parse error
+    # becomes visible on their first headless boot, rather than being hidden by
+    # an existing cache from an older checkout.
+    if ROOT.joinpath(".git").is_file() and not ROOT.joinpath(".godot").is_dir():
+        print("  note: this worktree has no .godot import cache; its first headless boot "
+              "commonly exposes a pre-existing script compile error.", file=sys.stderr)
+
+
 def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
                          fixed_fps: int | None, result_root: Path,
                          seed_override: int | None = None, emit: bool = True) -> int:
@@ -428,8 +460,10 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
             process_outcome = run_headless_process(cmd, timeout)
         returncode = process_outcome.returncode
         process_stdout = process_outcome.stdout
-        process_log.write_text("--- stdout ---\n%s\n--- stderr ---\n%s" %
-                               (process_outcome.stdout, process_outcome.stderr), encoding="utf-8")
+        process_output = "--- stdout ---\n%s\n--- stderr ---\n%s" % (
+            process_outcome.stdout, process_outcome.stderr
+        )
+        process_log.write_text(process_output, encoding="utf-8")
         if process_outcome.kind == "timed_out":
             status = "timed_out"
             reason = {"kind": "timeout", "timeout_seconds": timeout}
@@ -438,12 +472,23 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         elif process_outcome.kind == "environment_failure":
             status = "crashed"
             reason = {"kind": "environment", "message": process_outcome.message}
+        else:
+            compile_details = _compile_failure_details(process_log)
+            if compile_details is not None:
+                compile_error, compile_script = compile_details
+                status = "compile_error"
+                reason = {"kind": "compile", "message": compile_error}
+                if compile_script is not None:
+                    reason["script"] = compile_script
+                _report_compile_failure(compile_error, compile_script, process_log)
     except OSError as error:
         status = "crashed"
         reason = {"kind": "crash", "message": str(error)}
         process_log.write_text(str(error) + "\n", encoding="utf-8")
 
-    if session_path.is_file():
+    # Godot can exit cleanly after a script fails to compile and leave a
+    # zero-filled session. That file is evidence, not scenario data.
+    if status != "compile_error" and session_path.is_file():
         try:
             entries = load_entries(session_path)
         except (OSError, json.JSONDecodeError) as error:
@@ -491,6 +536,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         action_counts[problem_kind] = action_counts.get(problem_kind, 0) + 1
     classification = ("pass" if status == "passed" else
                       "timeout" if status == "timed_out" else
+                      "compile_failure" if status == "compile_error" else
                       "environment_failure" if status == "crashed" else
                       "product_failure")
     result = {
