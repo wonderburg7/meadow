@@ -165,7 +165,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/now/c1-followups.md` |
 | SF-1 -- a new run's founding flower mix; the season recharge range | `plans/now/season-feel.md` |
 | UI-X-1..UI-X-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/archive/UI-X_2026-09-18.md` (complete) |
-| CB-1, CB-2 -- comb builders per site and per wall | `plans/now/comb-builders.md` |
+| CB-1, CB-2 -- comb builders per site and per wall | `plans/archive/comb-builders_2026-09-20.md` |
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |

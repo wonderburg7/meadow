@@ -208,7 +208,7 @@ Re-sequencing that would make later slices cheaper (front-loading):
 
 #### A-5. Plans a coding agent could misread
 
-- `plans/now/comb-builders.md` CB-1 requirement 2: "accumulate the elapsed
+- `plans/archive/comb-builders_2026-09-20.md` CB-1 requirement 2: "accumulate the elapsed
   time there rather than adding a timer" -- correct, but the file header it
   cites says `run_pending` is "called once per `_process` tick", which is
   `main.gd::_process` only while unpaused and only when `scenario_active`.
