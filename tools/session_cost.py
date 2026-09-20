@@ -639,6 +639,9 @@ def run_stops():
         return
 
     by_step = Counter()
+    preflight_by_cause = Counter()
+    step_total = 0
+    preflight_total = 0
     by_command = Counter()
     total = 0
     # The ledger predates its explicit UTF-8 writer: Windows PowerShell 5.1
@@ -662,10 +665,22 @@ def run_stops():
             continue
         total += 1
         by_command[record.get("command") or "?"] += 1
-        by_step[record.get("step") or "(no step recorded)"] += 1
+        step = record.get("step")
+        if step:
+            step_total += 1
+            by_step[step] += 1
+        else:
+            preflight_total += 1
+            preflight_by_cause[record.get("cause") or "?"] += 1
 
     print(f"stops recorded               {total}")
+    print(f"stops in steps               {step_total}")
+    print(f"preflight refusals           {preflight_total}")
     print(f"by command                   " + ", ".join(f"{c}={n}" for c, n in by_command.most_common()))
+    print("")
+    print("preflight refusals by cause:")
+    for cause, count in preflight_by_cause.most_common():
+        print(f"{count:>5d}  {cause}")
     print("")
     print("most expensive steps (each stop is a read, a fix and a retry):")
     for step, count in by_step.most_common(10):
