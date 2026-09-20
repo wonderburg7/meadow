@@ -4,8 +4,9 @@ Wired to SessionStart and Stop in .claude/settings.json. It is what gives
 tools/session_cost.py a session-to-branch join, and so a per-slice cost --
 a transcript records neither its branch nor the slice it was claimed for.
 Also wired to PostToolUse and PostToolUseFailure for Bash (WD-4): every
-shell call records its first word and whether it failed, which is the one
-count of retried commands that costs no tokens to collect. PostToolUse runs
+shell call records a short token for the command that ran and whether it
+failed, which is the one count of retried commands that costs no tokens to
+collect. PostToolUse runs
 only after a tool call succeeds, so a failed command reaches this script
 through PostToolUseFailure as `tool_bash_failed`; both write one `tool_bash`
 event and differ only in `ok`.
@@ -21,6 +22,7 @@ Usage: python tools/hook_log.py <session_start|session_end|tool_bash|tool_bash_f
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -48,6 +50,38 @@ def _branch(cwd: str) -> str:
     return ""
 
 
+def _bash_command_token(command: str) -> str:
+    """Return the first program that can do work, without retaining input.
+
+    A leading directory change and environment assignments describe setup,
+    rather than the command whose retries the event log is meant to tally.
+    This deliberately recognises only the shell separators Codex commonly
+    emits; it is a compact classifier, not a shell parser.
+    """
+    for segment in re.split(r"&&|;|\|", command):
+        words = segment.split()
+        if not words or words[0] == "cd":
+            continue
+
+        index = 0
+        while index < len(words) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[index]):
+            index += 1
+        if index == len(words):
+            continue
+
+        program = words[index]
+        if program in ("python", "python3", "powershell", "pwsh"):
+            script_suffix = ".py" if program in ("python", "python3") else ".ps1"
+            script = next(
+                (word for word in words[index + 1:] if word.lower().endswith(script_suffix)),
+                "",
+            )
+            if script:
+                return f"{program} {script.rsplit('/', 1)[-1].rsplit('\\', 1)[-1]}"
+        return program
+    return ""
+
+
 def main() -> int:
     kind = sys.argv[1] if len(sys.argv) > 1 else "session_start"
     if kind not in ("session_start", "session_end", "tool_bash", "tool_bash_failed"):
@@ -63,10 +97,9 @@ def main() -> int:
 
     cwd = payload.get("cwd") or str(Path.cwd())
     if kind in ("tool_bash", "tool_bash_failed"):
-        # Only the command's first word: a full line can hold a path or a
-        # commit message, and answers no question the first word does not.
+        # Keep one short command token, never a command line: paths, arguments
+        # and commit messages do not belong in the diagnostic event log.
         command = str((payload.get("tool_input", {}) or {}).get("command", ""))
-        words = command.split()
         failed = kind == "tool_bash_failed" or bool(
             (payload.get("tool_response", {}) or {}).get("is_error", False)
         )
@@ -74,7 +107,7 @@ def main() -> int:
             "tool_bash",
             root=cwd,
             session=payload.get("session_id", ""),
-            cmd=words[0] if words else "",
+            cmd=_bash_command_token(command),
             ok=not failed,
         )
         return 0
