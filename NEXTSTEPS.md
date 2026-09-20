@@ -21,6 +21,13 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Proof: `absent: scripts/foraging_panel.gd :: extends GamePanel`
    - Next after: F2s -- a declarative UI gate table.
 
+2. **[Claude] CB-2 -- every build wall gets its own place to stand**
+   - Plan: `plans/now/comb-builders.md` -- "CB-2 — the fix CB-1 identifies"
+   - Files: `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
+   - Check: two runs of `test_scenarios/cb1_comb_builders_per_site_test.json` at seed 4242 report `min_builder_spacing_px` at or above 13.6 with `max_builders_per_site` still 6 and `building_without_slot` still 0, identical over the two runs; C-46 moves from `checks/blocked.md` to ready
+   - Proof: `present: scripts/hive_cell.gd :: return position + edge_offset * 1.35`
+   - Next after: none -- comb-builders is complete once C-46 is ready to re-run.
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
@@ -36,7 +43,6 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **CB-2** (`plans/now/comb-builders.md`) -- CB-1 measured the cause (H1: builder stand points bunch, min spacing 11.47px vs 13.6px), and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **F2s, G3** (`plans/design/architecture-review.md`) -- F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.

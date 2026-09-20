@@ -1,7 +1,7 @@
 # Comb builders — at most six to a site, one to a wall
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CB-2 -- the H1 fix (builders bunch: stand points overlap), waiting on G2 | Dependency: none | Verified: 2026-09-17
+Status: active | Owner: Dave / Claude Code | Next: CB-2 -- the H1 fix (builders bunch: stand points overlap), queued in the Claude lane | Dependency: none -- G2 shipped 17 Sep 2026 | Verified: 2026-09-20
 
 **Objective.** When idle comb workers build on their own, no more than six
 work one unfinished cell, each stands at a different wall, and a seventh
@@ -19,12 +19,19 @@ than guessing at a fix (`CLAUDE.md`, "Working style").
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CB-2 | The fix CB-1's numbers point to; C-46 passes | decided by CB-1 | no -- its cause is not yet known, and its files wait on G2 | decided by CB-1 |
+| CB-2 | Each of a site's six walls has its own reachable stand point; C-46 passes | `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json` | yes | high |
 
-CB-2 depends on CB-1, and also on the Codex lane's **G2**
-(`plans/design/architecture-review.md`), which is rewriting `bee.gd`'s
-dispatch and touches the `bee_*.gd` modules CB-2's fix would edit. Neither
-slice changes balance values.
+CB-2 depended on CB-1 and on **G2** (`plans/design/architecture-review.md`),
+which rewrote `bee.gd`'s dispatch and the `bee_*.gd` modules CB-2's fix
+edits. Both have shipped -- CB-1 on 19 Sep 2026, G2 on 17 Sep 2026 -- so CB-2
+is startable and is queued in the Claude lane. Neither slice changes balance
+values.
+
+**`scripts/hive.gd` is not CB-2's to edit.** The Codex lane's PERF-1 owns it
+while it measures `find_food_cell`, and no file may sit in both lanes. CB-2
+may call `hive.nearest_walkable_point()` and `hive.tile_is_walkable()`, which
+are already public and read-only; if the fix turns out to need a change
+inside `hive.gd`, stop and escalate rather than taking the file.
 
 CB-1 shipped 2026-09-19; its specification is `plans/archive/CB-1_2026-09-19.md`.
 
@@ -64,3 +71,6 @@ CB-2 is the H1 fix; startable once G2 has merged. Fixed now:
   `bee.gd` and reshapes the `bee_*.gd` signatures this fix would edit.
 - **Completion.** Move C-46 from `checks/blocked.md` back to ready. Archive
   this plan with `Next: None — plan complete`.
+
+Level: high -- `builder_build()` is a per-frame, per-builder path and a
+restored run must not leave a `BUILDING` bee without a slot.
