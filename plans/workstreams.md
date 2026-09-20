@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-14` (`codex/L-14`) | Codex | the stops ledger survives a non-ASCII stop cause | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-14 — the stops ledger survives a non-ASCII stop cause |
