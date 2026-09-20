@@ -63,7 +63,7 @@ queue item's `Files:` line. Shipped the same day.
 
 **F. B1 is admitted early too, 12 Sep 2026.** D1 shipped in full and left the
 Claude lane with nothing else startable -- its own `Next after` (B1) is one of
-the slices Decision A holds, and nothing in `plans/now/ui.md`,
+the slices Decision A holds, and nothing in `plans/archive/ui_2026-09-20.md`,
 `plans/archive/CHALLENGE1_2026-09-15.md` or `plans/design/progression.md` was ready either.
 Asked in this session, Dave chose to lift the hold for B1 specifically rather
 than the whole A-G backlog: it touches only `scripts/resources.gd` and
@@ -592,7 +592,7 @@ three separate slices does not exist -- `tests/` reaches Challenge code only
 through static regex in `source_checks.py`.
 
 **Affected.** `plans/archive/CHALLENGE1_2026-09-15.md` Slices 21, 22, 24 and 26;
-`plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
+`plans/archive/ui_2026-09-20.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
 the acute pair: their acceptance is *only* headless assertions, so today they
 have no acceptance at all.
 

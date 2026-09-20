@@ -92,7 +92,7 @@ names a next slice carries the same three lines.
 | Closing a slice, merging, filing a check | `plans/reference/closeout.md` |
 | Parallel branch/worktree coordination | `plans/workstreams.md` |
 | Settings, `GameConfig` ownership | `scripts/settings_catalogue.gd` |
-| UI, theme, layout or accessibility | `plans/now/ui.md` |
+| UI, theme, layout or accessibility | `plans/archive/ui_2026-09-20.md` |
 | Headless layout/geometry assertions | `scripts/scenario_actions.gd` |
 | What a Challenge stage id means | `docs/challenge-stages.md` |
 | How checks, slices and acceptance work | `plans/reference/check-loop.md` |

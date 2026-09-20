@@ -74,7 +74,7 @@ section 4.
    test-script convention give every catalogue slice an executed test for
    the cost of the Godot boot `verify.ps1` already pays. **2D-3, plan 4.2.**
 7. **Merge and lane rules live in four files, the routing table in
-   `plans/README.md` is stale in four rows, and `plans/now/ui.md` holds no
+   `plans/README.md` is stale in four rows, and `plans/archive/ui_2026-09-20.md` holds no
    open slice.** Doc-only consolidation. **2B-2, 2A-2, plan 4.5.**
 8. **WD-3, as specified, adds a second copy of the level-to-model rule** and
    says so ("mirrors `Get-SliceAdvice`"). The project's own precedent
@@ -129,7 +129,7 @@ Found by applying `plans/README.md` rule 10 to every live plan:
   for WD-1..4, PERF-1 or SM-1, which are the three newest plans.
 - `plans/README.md`, "Writing or editing a plan": rules are numbered 1 to 8,
   then 10, then 9. A model that is told "rule 9" opens the wrong one.
-- `plans/now/ui.md` has "Open slices at a glance: None" yet sits in
+- `plans/archive/ui_2026-09-20.md` has "Open slices at a glance: None" yet sits in
   `plans/now/`, whose contract is "an executable current/successor slice".
   Its 60 lines of durable layout rules belong in `plans/reference/`, where
   `check-loop.md` already restates two of them (see B-2).
@@ -248,8 +248,8 @@ the retry loop `docs/known-pitfalls.md`'s last section measures.
 | Rule | Homes today | Recommended single home |
 | --- | --- | --- |
 | One branch per lane, merge when green, never hold for a hands-on check | `plans/workstreams.md` "When to merge"; `plans/reference/closeout.md` "When to merge"; `CHATGPT.md` (two paragraphs); `plans/README.md` read order; `CLAUDE.md` session route; `.claude/rules/documentation.md` | `plans/reference/closeout.md`. `workstreams.md` keeps its ledger table and the five "Lanes" bullets only; `CHATGPT.md` keeps one sentence and the `heading.py` command |
-| Every persistent panel takes its rectangle from `ui_layout.gd` | `plans/README.md` guardrail 11; `plans/reference/check-loop.md` rule 6; `plans/now/ui.md` (twice); `plans/design/architecture-review.md` F9 | A plans/reference/ui-rules.md made from `ui.md`'s "Durable rules"; the other three become one-line pointers |
-| Presentation may be skipped, simulation may not | `CLAUDE.md` rule 2; `.claude/rules/simulation.md`; `plans/now/ui.md`; `GAME_MODEL.md`; comments in `main.gd`, `hive_cell.gd` | `.claude/rules/simulation.md` (it loads itself on the files where it matters); `CLAUDE.md` rule 2 stays as the four-word version |
+| Every persistent panel takes its rectangle from `ui_layout.gd` | `plans/README.md` guardrail 11; `plans/reference/check-loop.md` rule 6; `plans/archive/ui_2026-09-20.md` (twice); `plans/design/architecture-review.md` F9 | A plans/reference/ui-rules.md made from `ui.md`'s "Durable rules"; the other three become one-line pointers |
+| Presentation may be skipped, simulation may not | `CLAUDE.md` rule 2; `.claude/rules/simulation.md`; `plans/archive/ui_2026-09-20.md`; `GAME_MODEL.md`; comments in `main.gd`, `hive_cell.gd` | `.claude/rules/simulation.md` (it loads itself on the files where it matters); `CLAUDE.md` rule 2 stays as the four-word version |
 | Read a function, not a file | `CLAUDE.md` rule 1; `.claude/rules/gdscript.md`; `.claude/rules/lifecycle-tooling.md`; `plans/README.md` guardrail 15 | `CLAUDE.md` rule 1 (always loaded); the rest cite it |
 | The `GameConfig` write allowlist | `.claude/rules/saving.md`; `.claude/rules/simulation.md`; `tests/source_checks.py` | `tests/source_checks.py` is the authority; both rule files say "the allowlist is `GAMECONFIG_WRITE_ALLOWLIST` in `tests/source_checks.py`" and name no files |
 
@@ -568,7 +568,7 @@ cheaper come first, then by dependency. Each states what it unblocks.
 | 3.8 | **CH-1: a Challenge is a level-record field** (plan 4.3) | moderate | medium | `scripts/levels.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/main.gd`, `scripts/world_building.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/scenario_actions.gd`, `tests/source_checks.py` | a third Challenge; G3's stage-named actions built on the right shape. Queue after C1F-1 per guardrail 14 |
 | 3.9 | **CH-3: `cadence` moves into the stage record** | quick | low | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `tests/source_checks.py` | one table per stage instead of two; rides with CH-2 if convenient |
 | 3.10 | **CH-2: the five id-literal branches become stage keys** (plan 4.4) | moderate | medium | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `tests/source_checks.py` | a third Challenge needs no runner edit for entry behaviour |
-| 3.11 | **DOC-2: one home for the merge rules; `ui.md` to reference** (plan 4.5) | moderate, doc only | low | `plans/reference/closeout.md`, `plans/workstreams.md`, `CHATGPT.md`, `plans/now/ui.md` → plans/reference/ui-rules.md, `plans/README.md`, `plans/reference/check-loop.md`, `DESIGN_BACKLOG.md` | the planning model reads one statement per rule |
+| 3.11 | **DOC-2: one home for the merge rules; `ui.md` to reference** (plan 4.5) | moderate, doc only | low | `plans/reference/closeout.md`, `plans/workstreams.md`, `CHATGPT.md`, `plans/archive/ui_2026-09-20.md` → plans/reference/ui-rules.md, `plans/README.md`, `plans/reference/check-loop.md`, `DESIGN_BACKLOG.md` | the planning model reads one statement per rule |
 | 3.12 | **PF-1: per-frame housekeeping** (C-2's first three bullets) | quick | low | `scripts/debug_panel.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd` | nothing; three allocations a frame gone. Lowest priority |
 | 3.13 | **C1F-1 fixture addition** (A-4): assert one world fact per retreat | quick | low | `plans/now/c1-followups.md` | a wrong setup row fails on its own row |
 
@@ -1034,19 +1034,19 @@ key's default cannot mean "do nothing" without changing a Challenge 2 stage.
 *Owning plan: `plans/now/agent-lifecycle.md` "Standing rules" is the nearest owner; or run it as a documentation-only branch with `verify.ps1 -Docs`. Level: low.*
 
 **Purpose.** Findings B-2 and A-2: the merge/lane rule has four homes, the
-panel-rectangle rule has four, and `plans/now/ui.md` holds durable rules and
+panel-rectangle rule has four, and `plans/archive/ui_2026-09-20.md` holds durable rules and
 no slice.
 
 **Required reading.** This section. `plans/reference/closeout.md` "When to
 merge" and "Branches follow the lanes". `plans/workstreams.md` "Lanes" and
 "When to merge". `CHATGPT.md` "Purpose and operating modes" paragraphs 3 to
-5. `plans/now/ui.md` "Durable rules". `plans/README.md` "Directory contract"
+5. `plans/archive/ui_2026-09-20.md` "Durable rules". `plans/README.md` "Directory contract"
 and guardrail 11. `plans/reference/check-loop.md` rule 6.
 `.claude/rules/documentation.md` (for what `check_docs.py` enforces).
 
 **Files likely to change.** `plans/reference/closeout.md`,
 `plans/workstreams.md`, `CHATGPT.md`, new plans/reference/ui-rules.md
-(moved from `plans/now/ui.md`, which is deleted), `plans/README.md`,
+(moved from `plans/archive/ui_2026-09-20.md`, which is deleted), `plans/README.md`,
 `plans/reference/check-loop.md`, `DESIGN_BACKLOG.md`, `CLAUDE.md`'s routing
 table row for UI.
 
@@ -1062,7 +1062,7 @@ table (parsed by `tools/slice.ps1`); any `Status:` line's field set.
    timing as Claude", and `python tools/heading.py plans/reference/closeout.md "When to merge"`.
    Keep "Risk-proportional closeout" whole; it is the one thing only
    `CHATGPT.md` says.
-3. `git mv plans/now/ui.md plans/reference/ui-rules.md`. Change its header
+3. `git mv plans/archive/ui_2026-09-20.md plans/reference/ui-rules.md`. Change its header
    to `<!-- CONTEXT: plan | LAYER: reference -->` and `Status: reference`.
    Delete "Open slices at a glance", "UI-P", "Closed groups" (leave one line
    pointing at `plans/archive/UI-X_2026-09-18.md` for the last shipped
@@ -1070,7 +1070,7 @@ table (parsed by `tools/slice.ps1`); any `Status:` line's field set.
 4. In `plans/README.md` guardrail 11 and `plans/reference/check-loop.md`
    rule 6, keep the first sentence and replace the rest with "Full rule and
    its history: plans/reference/ui-rules.md."
-5. Update every backticked `plans/now/ui.md` (`grep -rl "plans/now/ui.md" --include=*.md .`)
+5. Update every backticked `plans/archive/ui_2026-09-20.md` (`grep -rl "plans/archive/ui_2026-09-20.md" --include=*.md .`)
    to the new path: `plans/README.md` routing table, `DESIGN_BACKLOG.md`,
    `CLAUDE.md`'s "UI, theme, layout or accessibility" row.
 6. In `plans/README.md` "Current routing", delete the UI-R/Q/P/D row and
@@ -1081,7 +1081,7 @@ table (parsed by `tools/slice.ps1`); any `Status:` line's field set.
 7. Run `python tools/check_docs.py`.
 
 **Acceptance.** `check_docs.py` passes. `grep -rn "one slice, one branch" --include=*.md .`
-returns exactly one file. `grep -rln "plans/now/ui.md"` returns nothing.
+returns exactly one file. `grep -rln "plans/archive/ui_2026-09-20.md"` returns nothing.
 `tools/slice.ps1 doctor -Lane Claude` still parses the ledger (its table is
 untouched).
 
@@ -1089,7 +1089,7 @@ untouched).
 
 ```
 - Plan: plans/now/agent-lifecycle.md -- "DOC-2 — one home for the merge rules, and the UI rules move to reference"
-- Files: plans/reference/closeout.md, plans/workstreams.md, CHATGPT.md, plans/reference/ui-rules.md, plans/now/ui.md, plans/README.md, plans/reference/check-loop.md, DESIGN_BACKLOG.md, CLAUDE.md
+- Files: plans/reference/closeout.md, plans/workstreams.md, CHATGPT.md, plans/reference/ui-rules.md, plans/archive/ui_2026-09-20.md, plans/README.md, plans/reference/check-loop.md, DESIGN_BACKLOG.md, CLAUDE.md
 - Check: check_docs.py passes and "one slice, one branch" appears in exactly one Markdown file
 - Proof: absent: plans/reference/ui-rules.md :: Durable rules
 - Next after: none.
