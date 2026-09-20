@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T-2` (`codex/T-2`) | Codex | level drift joins on something that exists | Codex | in progress | none | `plans/now/workflow-telemetry.md` T-2 — level drift joins on something that exists |
