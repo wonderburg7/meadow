@@ -21,18 +21,18 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Proof: `absent: scripts/foraging_panel.gd :: extends GamePanel`
    - Next after: F2s -- a declarative UI gate table.
 
+2. **[Claude] CB-2 -- every build wall gets its own place to stand**
+   - Plan: `plans/now/comb-builders.md` -- "CB-2 — the fix CB-1 identifies"
+   - Files: `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
+   - Check: two runs of `test_scenarios/cb1_comb_builders_per_site_test.json` at seed 4242 report `min_builder_spacing_px` at or above 13.6 with `max_builders_per_site` still 6 and `building_without_slot` still 0, identical over the two runs; C-46 moves from `checks/blocked.md` to ready
+   - Proof: `present: scripts/hive_cell.gd :: return position + edge_offset * 1.35`
+   - Next after: none -- comb-builders is complete once C-46 is ready to re-run.
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
 
-1. **[Codex] SF-1 -- a new run's meadow starts with the season mix it will settle into**
-   - Plan: `plans/now/season-feel.md` -- "SF-1 — a new run's meadow starts with the season mix it will settle into"
-   - Files: `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/diagnostic_log.gd`, `test_scenarios/sf1_founding_flower_mix_test.json`
-   - Check: the fixture's run summary at Season days 5 -- the day-0 out-of-season share of flowers is within 5 points of the day-5 share and below 15%, asserted in a Python test that reads the two new DiagnosticLog counters; hands-on check C-25 moves to ready
-   - Proof: `present: scripts/flower_species.gd :: static func season_weight(species: Dictionary) -> float:`
-   - Next after: none -- season-feel is complete.
-
-2. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
+1. **[Codex] PERF-1 -- measure `find_food_cell` before changing it**
    - Plan: `plans/reference/technical-audit.md` -- "PERF-1 — measure `find_food_cell` before changing it"
    - Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
    - Check: two runs of `test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60` with perf enabled report the new `hive_find_food` section within 10% of each other, and the delivery note says whether it is trivial or worth a follow-up slice, with the numbers
@@ -43,7 +43,6 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **CB-2** (`plans/now/comb-builders.md`) -- CB-1 measured the cause (H1: builder stand points bunch, min spacing 11.47px vs 13.6px), and its fix waits for G2 to finish with the `bee_*.gd` modules.
 - **F2s, G3** (`plans/design/architecture-review.md`) -- F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.

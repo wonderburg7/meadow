@@ -53,7 +53,7 @@ func _build_meadow() -> void:
 	_build_microhabitat_zones()
 
 	for i in range(int(GameConfig.flower_count)):
-		_seed_flower()
+		_seed_flower(true)
 
 	_rebuild_flower_grid()
 
@@ -197,9 +197,23 @@ func _random_point_in_zone(habitat: String) -> Vector2:
 	var dist := sqrt(randf()) * radius
 	return centre + Vector2(cos(angle), sin(angle)) * dist
 
-func _seed_flower() -> void:
+## Founders are sampled as though they were born earlier in this same year,
+## rather than all being born in today's season. Replacements retain the
+## current-season selection used before SF-1.
+func _seed_flower(founding: bool = false) -> void:
 	var excluded_species: Array = ["Poppy"] if Session.starting_level == 1 else []
-	var species_index = main.FlowerSpecies.pick_species_index(excluded_species)
+	var starting_age := -1.0
+	var birth_fraction := -1.0
+	if founding:
+		# Draw this before species so a founder's birth date, not the season
+		# at the instant the world appears, chooses its species. The age uses
+		# the nominal lifetime; setup still gives every flower its normal
+		# independently varied lifespan.
+		starting_age = randf() * GameConfig.flower_lifespan_days * GameConfig.seconds_per_day
+		var year_days: float = maxf(1.0, GameConfig.season_length_days)
+		var birth_day: float = 1.0 + (Session.sim_time - starting_age) / maxf(1.0, GameConfig.seconds_per_day)
+		birth_fraction = fposmod(birth_day, year_days) / year_days
+	var species_index = main.FlowerSpecies.pick_species_index(excluded_species, birth_fraction)
 	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
@@ -257,7 +271,7 @@ func _seed_flower() -> void:
 		var flower = main.Flower.new()
 		flower.position = pos
 		main.meadow_root.add_child(flower)
-		flower.setup(species_index)
+		flower.setup(species_index, starting_age)
 		main.CrabSpider.maybe_spawn(flower)
 
 func _is_clear_ground(point: Vector2) -> bool:

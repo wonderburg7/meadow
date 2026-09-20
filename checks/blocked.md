@@ -58,20 +58,3 @@ builders did not stand around the six walls, and more than six built one
 cell.
 
 Owner: `plans/now/comb-builders.md` CB-1.
-
-### C-25 -- out-of-season flowers read as a rare find, not a standing mix
-
-With Season days 5 (Game Settings > Seasons & health), restart the run and
-play at 8x. Look around the meadow at three or four points in the year,
-starting straight after the restart, clicking a handful of flowers each time
--- the summary panel says whether each one is in season.
-
-PASS: there are always some flowers in the meadow, but at every point, including the first minute of the run, only an occasional flower you click is out of season.
-
-Owner: `plans/now/season-feel.md` SF-1.
-
-Blocked by: SF-1 (a new run's meadow starts with the season mix it will
-settle into). Semi pass (Dave, 17 Sep 2026): later in the year off-season
-flowers are rare, but at the start "big proportions of all species" are
-about, many out of season, until the founding flowers die. A re-run before
-SF-1 lands would fail the same way.

@@ -1,0 +1,20 @@
+{
+  "cells": 10, "nectar_foragers": 3, "pollen_foragers": 2,
+  "nurses": 1, "builders": 1, "miners": 1,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 4242,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "season_length_days": 5
+  },
+  "diagnostics": {
+    "profile": "custom",
+    "events": [],
+    "snapshots": {
+      "every_sim_seconds": 0.1,
+      "fields": ["environment.flowers_in_season", "environment.flowers_out_of_season"],
+      "only_when_changed": true
+    }
+  },
+  "stop": {"max_days": 6}
+}

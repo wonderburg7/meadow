@@ -537,7 +537,7 @@ Per-frame entry point, everything not yet split out of main.
 1168 func _end_scenario_run(outcome: String) -> void
 ```
 
-## diagnostic_log.gd (1,142 lines)
+## diagnostic_log.gd (1,163 lines)
 
 The session JSONL writer, counters and capture profiles.
 
@@ -584,22 +584,23 @@ The session JSONL writer, counters and capture profiles.
 688  func event_count(type: String, subtype: String = "") -> int
 735  func tick(delta: float, world: Node2D) -> void
 769  func end_session(outcome: String) -> void
-823  func session_path() -> String
-827  func set_queen_alive(alive: bool) -> void
-831  func configure_scenario_diagnostics(raw: Variant) -> bool
-840  func configure_performance_capture(config: Dictionary) -> void
-844  func effective_diagnostics() -> Dictionary
-850  func _snapshot_interval() -> float
-863  func _selected_snapshot(world: Node2D) -> Dictionary
-869  # --- building entries -----------------------------------------------
-873  func _config_snapshot() -> Dictionary
-881  func _snapshot(world: Node2D) -> Dictionary
-1056 func _performance_snapshot(world: Node2D) -> Dictionary
-1076 func _rate(world: Node2D, key: String) -> float
-1091 func _current_day() -> int
-1095 func _prune_old_sessions() -> void
-1113 func _write(entry: Dictionary) -> void
-1122 func _capture_entry(entry: Dictionary) -> bool
+826  func session_path() -> String
+830  func set_queen_alive(alive: bool) -> void
+834  func configure_scenario_diagnostics(raw: Variant) -> bool
+843  func configure_performance_capture(config: Dictionary) -> void
+847  func effective_diagnostics() -> Dictionary
+853  func _snapshot_interval() -> float
+866  func _selected_snapshot(world: Node2D) -> Dictionary
+872  # --- building entries -----------------------------------------------
+876  func _config_snapshot() -> Dictionary
+884  func _snapshot(world: Node2D) -> Dictionary
+1051 func _flower_season_counts(world: Node2D) -> Dictionary
+1077 func _performance_snapshot(world: Node2D) -> Dictionary
+1097 func _rate(world: Node2D, key: String) -> float
+1112 func _current_day() -> int
+1116 func _prune_old_sessions() -> void
+1134 func _write(entry: Dictionary) -> void
+1143 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## hive_cell.gd (1,139 lines)

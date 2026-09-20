@@ -770,6 +770,7 @@ func end_session(outcome: String) -> void:
 	if _ended or _file == null:
 		_ended = true
 		return
+	var flower_season_counts := _flower_season_counts(get_tree().current_scene)
 	var summary := {
 		"type": "summary",
 		"game_time": Session.sim_time,
@@ -791,6 +792,8 @@ func end_session(outcome: String) -> void:
 		"tarsal_rejections": _tarsal_rejections,
 		"flower_visits": _flower_visits,
 		"unique_flowers_visited": _flowers_visited_ids.size(),
+		"flowers_in_season": flower_season_counts.in_season,
+		"flowers_out_of_season": flower_season_counts.out_of_season,
 		"stall_recoveries": _stall_recoveries,
 		"forager_deliveries": _forager_deliveries,
 		"forager_delivery_amount": _forager_delivery_amount,
@@ -930,6 +933,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 		for f in world.get_tree().get_nodes_in_group("flowers"):
 			if is_instance_valid(f) and f.has_crab_spider:
 				active_spiders += 1
+	var flower_season_counts := _flower_season_counts(world)
 
 	var hive: Node2D = world.hive
 	var by_contents: Dictionary = {}
@@ -985,6 +989,8 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"season_fraction": Flower.season_fraction(),
 			"disease": world.season.disease if world.season != null and is_instance_valid(world.season) else 0.0,
 			"winter_here": Session.winter_here,
+			"flowers_in_season": flower_season_counts.in_season,
+			"flowers_out_of_season": flower_season_counts.out_of_season,
 		},
 		"foraging_behaviour": {
 			"orientation_flight_on": GameConfig.orientation_flight_on,
@@ -1038,6 +1044,21 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"marked_soil_blocks": marked_blocks,
 		},
 	}
+
+
+## Live rather than cumulative: a flower can become in- or out-of-season as
+## the calendar advances, even when no flower is born or dies in that hour.
+func _flower_season_counts(world: Node2D) -> Dictionary:
+	var in_season := 0
+	var out_of_season := 0
+	for flower in world.get_tree().get_nodes_in_group("flowers"):
+		if not is_instance_valid(flower):
+			continue
+		if flower.in_season():
+			in_season += 1
+		else:
+			out_of_season += 1
+	return {"in_season": in_season, "out_of_season": out_of_season}
 
 
 ## fps and game_speed are free reads (Engine.get_frames_per_second(),

@@ -1518,6 +1518,8 @@ function Invoke-SliceFinish {
         if ($verifyCmd.Parameters.ContainsKey("Scope")) {
             $verifyArgs["Scope"] = "branch"
         }
+        $previousFinishVerify = $env:MEADOW_FINISH_VERIFY
+        $env:MEADOW_FINISH_VERIFY = "1"
         try {
             $verifyOutput = & $verifyScript @verifyArgs 2>&1
             $verifyExit = $LASTEXITCODE
@@ -1525,6 +1527,14 @@ function Invoke-SliceFinish {
         catch {
             $verifyOutput = $_ | Out-String
             $verifyExit = 1
+        }
+        finally {
+            if ($null -eq $previousFinishVerify) {
+                Remove-Item Env:MEADOW_FINISH_VERIFY -ErrorAction SilentlyContinue
+            }
+            else {
+                $env:MEADOW_FINISH_VERIFY = $previousFinishVerify
+            }
         }
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {

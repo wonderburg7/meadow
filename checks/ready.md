@@ -22,3 +22,4 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-59 -- One placement tool at a time](ready/C-59.md)
 - [C-60 -- panel texture: flat, honeycomb and grain in all three themes](ready/C-60.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
+- [C-25 -- founders reflect their birth seasons](ready/C-25.md)
