@@ -14,14 +14,7 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] C1F-2 -- a headless run proves the queen's pollen departure and no discard loop**
-   - Plan: `plans/now/c1-followups.md` -- "C1F-2 — a headless run proves the queen's pollen departure and no discard loop"
-   - Files: `scripts/scenario_actions.gd`, `test_scenarios/c1f2_queen_pollen_departure_test.json`
-   - Check: fixtures A, B and C in the new scenario pass, and reverting `bee_foraging.gd::go_to_deposit_cell`'s `bee.target_cell = null` line makes A fail
-   - Proof: `absent: scripts/scenario_actions.gd :: queen_inside_hive`
-   - Next after: none -- c1-followups is complete.
-
-2. **[Claude] F1s -- a shared window base class**
+1. **[Claude] F1s -- a shared window base class**
    - Plan: `plans/design/architecture-review.md` -- "F1s — a shared window base class"
    - Files: `scripts/game_panel.gd`, `scripts/colony_panel.gd`, `scripts/winter_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/year_winter.gd`
    - Check: `tests/test_layout_regression.py` passes unchanged and every panel's on-screen rectangle is pixel-identical; one hands-on check filed for opening and closing each window at two text scales
