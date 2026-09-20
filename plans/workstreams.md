@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/V-1` (`claude/V-1`) | Claude | verification regenerates its generated files instead of asserting them | Claude | in progress | none | `plans/now/verification-cost.md` V-1 — verification regenerates its generated files instead of asserting them |
