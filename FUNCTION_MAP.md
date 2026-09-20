@@ -476,6 +476,72 @@ Per-frame entry point, everything not yet split out of main.
 1168 func _end_scenario_run(outcome: String) -> void
 ```
 
+## diagnostic_log.gd (1,155 lines)
+
+The session JSONL writer, counters and capture profiles.
+
+```
+121  func _ready() -> void
+129  func _notification(what: int) -> void
+134  func start_session() -> void
+197  func log_death(bee: Node2D) -> void
+230  func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void
+254  func log_recruitment_match(seeker: Node2D, mentor: Node2D, via: String = "queue") -> void
+287  func log_recruitment_followup(bee: Node2D, trip_index: int, trip_rate: float) -> void
+309  func count_recruit_partner_overlap() -> void
+319  func log_forager_settled(bee: Node2D) -> void
+337  func log_orientation_flight(bee: Node2D) -> void
+353  func count_flower_visit(flower: Node2D) -> void
+362  func record_handling_visit(species: String, prior_experience: int, seconds: float) -> void
+376  func count_forager_delivery(amount: float) -> void
+383  func count_flower_senescence() -> void
+390  func count_flower_senescence_loss(nectar: float, pollen: float) -> void
+395  func _experience_bucket(prior_experience: int) -> String
+407  func count_tarsal_mark() -> void
+416  func count_tarsal_rejection() -> void
+427  func log_stall_recovery(bee: Node2D, goal: Vector2) -> void
+456  func log_build_target(bee: Node2D, cell: Node2D, transition: String, reason: String,
+481  func log_forager_return(bee: Node2D, phase: String, required_energy: float) -> void
+491  func log_flight_start_resolved(bee: Node2D, source: String, requested: Vector2, resolved: Dictionary) -> void
+503  func _nearby_obstacle_identity(bee: Node2D) -> String
+526  func log_scouting_settled(bee: Node2D) -> void
+543  func count_brood_feed() -> void
+550  func count_brood_hatch(role: int, mode: String) -> void
+557  func count_jelly_batch() -> void
+562  func count_larval_death() -> void
+568  func count_cell_completed() -> void
+573  func cell_completed_count() -> int
+579  func count_cell_cleaned() -> void
+586  func count_cell_evicted() -> void
+592  func count_cell_restocked() -> void
+598  func count_block_mined() -> void
+604  func count_honey_batch_deposited() -> void
+610  func count_cell_ripened() -> void
+618  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
+634  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
+663  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
+681  func event_count(type: String, subtype: String = "") -> int
+728  func tick(delta: float, world: Node2D) -> void
+762  func end_session(outcome: String) -> void
+818  func session_path() -> String
+822  func set_queen_alive(alive: bool) -> void
+826  func configure_scenario_diagnostics(raw: Variant) -> bool
+835  func configure_performance_capture(config: Dictionary) -> void
+839  func effective_diagnostics() -> Dictionary
+845  func _snapshot_interval() -> float
+858  func _selected_snapshot(world: Node2D) -> Dictionary
+864  # --- building entries -----------------------------------------------
+868  func _config_snapshot() -> Dictionary
+876  func _snapshot(world: Node2D) -> Dictionary
+1043 func _flower_season_counts(world: Node2D) -> Dictionary
+1069 func _performance_snapshot(world: Node2D) -> Dictionary
+1089 func _rate(world: Node2D, key: String) -> float
+1104 func _current_day() -> int
+1108 func _prune_old_sessions() -> void
+1126 func _write(entry: Dictionary) -> void
+1135 func _capture_entry(entry: Dictionary) -> bool
+```
+
 ## hive_cell.gd (1,139 lines)
 
 One cell: contents, brood, honey ripening, how it draws.
@@ -548,71 +614,6 @@ One cell: contents, brood, honey ripening, how it draws.
 1112 func _priority_mark() -> String
 1125 func _apply_fill_shading() -> void
 1136 func development_percent() -> float
-```
-
-## diagnostic_log.gd (1,134 lines)
-
-The session JSONL writer, counters and capture profiles.
-
-```
-121  func _ready() -> void
-129  func _notification(what: int) -> void
-134  func start_session() -> void
-197  func log_death(bee: Node2D) -> void
-230  func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void
-254  func log_recruitment_match(seeker: Node2D, mentor: Node2D, via: String = "queue") -> void
-287  func log_recruitment_followup(bee: Node2D, trip_index: int, trip_rate: float) -> void
-309  func count_recruit_partner_overlap() -> void
-319  func log_forager_settled(bee: Node2D) -> void
-337  func log_orientation_flight(bee: Node2D) -> void
-353  func count_flower_visit(flower: Node2D) -> void
-362  func record_handling_visit(species: String, prior_experience: int, seconds: float) -> void
-376  func count_forager_delivery(amount: float) -> void
-383  func count_flower_senescence() -> void
-390  func count_flower_senescence_loss(nectar: float, pollen: float) -> void
-395  func _experience_bucket(prior_experience: int) -> String
-407  func count_tarsal_mark() -> void
-416  func count_tarsal_rejection() -> void
-427  func log_stall_recovery(bee: Node2D, goal: Vector2) -> void
-456  func log_build_target(bee: Node2D, cell: Node2D, transition: String, reason: String,
-481  func log_forager_return(bee: Node2D, phase: String, required_energy: float) -> void
-491  func log_flight_start_resolved(bee: Node2D, source: String, requested: Vector2, resolved: Dictionary) -> void
-503  func _nearby_obstacle_identity(bee: Node2D) -> String
-526  func log_scouting_settled(bee: Node2D) -> void
-543  func count_brood_feed() -> void
-550  func count_brood_hatch(role: int, mode: String) -> void
-557  func count_jelly_batch() -> void
-562  func count_larval_death() -> void
-568  func count_cell_completed() -> void
-573  func cell_completed_count() -> int
-579  func count_cell_cleaned() -> void
-586  func count_cell_evicted() -> void
-592  func count_cell_restocked() -> void
-598  func count_block_mined() -> void
-604  func count_honey_batch_deposited() -> void
-610  func count_cell_ripened() -> void
-618  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
-634  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
-663  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
-681  func event_count(type: String, subtype: String = "") -> int
-728  func tick(delta: float, world: Node2D) -> void
-762  func end_session(outcome: String) -> void
-815  func session_path() -> String
-819  func set_queen_alive(alive: bool) -> void
-823  func configure_scenario_diagnostics(raw: Variant) -> bool
-832  func configure_performance_capture(config: Dictionary) -> void
-836  func effective_diagnostics() -> Dictionary
-842  func _snapshot_interval() -> float
-855  func _selected_snapshot(world: Node2D) -> Dictionary
-861  # --- building entries -----------------------------------------------
-865  func _config_snapshot() -> Dictionary
-873  func _snapshot(world: Node2D) -> Dictionary
-1048 func _performance_snapshot(world: Node2D) -> Dictionary
-1068 func _rate(world: Node2D, key: String) -> float
-1083 func _current_day() -> int
-1087 func _prune_old_sessions() -> void
-1105 func _write(entry: Dictionary) -> void
-1114 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## scenario_actions.gd (1,078 lines)

@@ -186,7 +186,14 @@ if ($runBranchScope -and -not $Docs) {
                 throw "balance_tests.py exited with code $LASTEXITCODE"
             }
         })
-        (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
+    )
+    # The lifecycle suite itself drives finish/resume in temporary
+    # repositories. Running it from the finish verifier recursively starts
+    # another finish verifier, so the outer closeout can never return. It
+    # remains part of ordinary verification; closeout runs the non-recursive
+    # branch checks here instead.
+    if ($env:MEADOW_FINISH_VERIFY -ne "1") {
+        $jobs += (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
             Set-Location $root
             & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment
@@ -194,7 +201,7 @@ if ($runBranchScope -and -not $Docs) {
                 throw "workflow unittest modules exited with code $LASTEXITCODE"
             }
         })
-    )
+    }
 
     Wait-Job -Job $jobs | Out-Null
     $failed = $false
