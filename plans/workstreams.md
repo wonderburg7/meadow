@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/T-3` (`codex/T-3`) | Codex | a headless run that did not compile fails as a compile failure | Codex | in progress | none | `plans/now/workflow-telemetry.md` T-3 — a headless run that did not compile fails as a compile failure |
-| `.worktrees/F1s` (`claude/F1s`) | Claude | a shared window base class | Claude | in progress | none | `plans/design/architecture-review.md` F1s — a shared window base class |
