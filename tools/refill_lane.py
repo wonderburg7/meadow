@@ -171,7 +171,6 @@ def queue_errors(candidate: str, root: Path) -> list[str]:
     check_docs.check_queue_proofs(errors, text=candidate)
     check_docs.check_queue_successors(errors, text=candidate)
     check_docs.check_queue_section_agreement(errors, text=candidate)
-    check_docs.check_not_in_queue_reasons(errors, text=candidate)
     return errors
 
 

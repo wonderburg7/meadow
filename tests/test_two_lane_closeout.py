@@ -398,7 +398,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         for each item, the real L-10/L-11 tools, and a mock verifier that
         resolves the running interpreter -- so `finish` itself has to archive
         and refill, with nothing prepared by hand."""
-        for name in ("archive_slice.py", "refill_lane.py", "heading.py"):
+        for name in ("archive_slice.py", "refill_lane.py", "backlog.py", "heading.py"):
             shutil.copy2(SLICE_PATH.with_name(name), self.root / "tools" / name)
         for source in ("second.gd", "filler.gd"):
             (self.root / "scripts" / source).write_text("func existing():\n\tpass\n", encoding="utf-8")
@@ -464,7 +464,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             ["git", "log", "--format=%s", "master"], cwd=self.root, capture_output=True, text=True, check=True
         ).stdout
         self.assertIn("A-1 -- archive its plan section", log)
-        self.assertIn("A-1 -- remove it from the Claude lane", log)
+        self.assertIn("A-1 -- refill the Claude lane", log)
 
     def test_failure_after_the_actions_resumes_to_a_clean_merge(self):
         self.use_real_closeout_tools()
