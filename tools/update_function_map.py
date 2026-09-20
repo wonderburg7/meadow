@@ -141,9 +141,13 @@ def main() -> int:
         print("FUNCTION_MAP.md is up to date.")
         return 0
 
+    before = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else None
+    if before == content:
+        print(f"unchanged {OUTPUT.relative_to(ROOT)}")
+        return 0
     with OUTPUT.open("w", encoding="utf-8", newline="\n") as f:
         f.write(content)
-    print(f"Wrote {OUTPUT.relative_to(ROOT)}")
+    print(f"regenerated {OUTPUT.relative_to(ROOT)} (was stale)")
     return 0
 
 

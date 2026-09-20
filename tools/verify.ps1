@@ -130,7 +130,8 @@ function Invoke-PythonStage {
         [string]$Name,
         [string]$ScriptPath,
         [string[]]$ScriptArgs = @(),
-        [string]$FailureNote
+        [string]$FailureNote,
+        [switch]$RegenerateNote
     )
 
     $captured = @()
@@ -149,7 +150,22 @@ function Invoke-PythonStage {
 
     $stageTimer.Stop()
     Write-StageResult -Name $Name -Ok ($exit -eq 0) -Output $captured -FailureNote $FailureNote -Ms ([int]$stageTimer.ElapsedMilliseconds)
+    if ($RegenerateNote -and $exit -eq 0) {
+        # Never silent: say what the generator did, whether or not -Quiet hid it.
+        $captured | Where-Object { $_ -like "regenerated *" } | ForEach-Object { Write-Output "${Name}: $_" }
+    }
     $script:lastStageExit = $exit
+}
+
+# Runs a generator in write mode, then re-asserts with --check so a generator
+# that cannot reproduce its own output still fails. A regeneration is reported
+# in the stage output (even under -Quiet) and left uncommitted in the tree.
+function Invoke-RegenerateStage {
+    param([string]$Name, [string]$ScriptPath)
+
+    Invoke-PythonStage -Name $Name -ScriptPath $ScriptPath -RegenerateNote
+    if ($script:lastStageExit -ne 0) { return }
+    Invoke-PythonStage -Name "$Name (recheck)" -ScriptPath $ScriptPath -ScriptArgs @("--check")
 }
 
 $python = Resolve-Python $PythonPath
@@ -196,7 +212,7 @@ if ($runBranchScope -and -not $Docs) {
         $jobs += (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
             Set-Location $root
-            & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment
+            & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated
             if ($LASTEXITCODE -ne 0) {
                 throw "workflow unittest modules exited with code $LASTEXITCODE"
             }
@@ -244,7 +260,7 @@ if ($runBranchScope -and -not $Docs) {
         exit 1
     }
 
-    Invoke-PythonStage -Name "function map" -ScriptPath (Join-Path $repoRoot "tools/update_function_map.py") -ScriptArgs @("--check")
+    Invoke-RegenerateStage -Name "function map" -ScriptPath (Join-Path $repoRoot "tools/update_function_map.py")
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
     }
@@ -264,7 +280,7 @@ if ($runBranchScope) {
     # docs/challenge-stages.md is generated from scripts/challenge_stages.gd,
     # so a stage edit that does not regenerate it fails here rather than
     # leaving a reference nobody can trust (Dave, 8 Sep 2026).
-    Invoke-PythonStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py") -ScriptArgs @("--check") -FailureNote "run python tools/stage_reference.py"
+    Invoke-RegenerateStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py")
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
     }

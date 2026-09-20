@@ -14,35 +14,28 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] V-1 -- verification regenerates its generated files instead of asserting them**
-   - Plan: `plans/now/verification-cost.md` -- "V-1 — verification regenerates its generated files instead of asserting them"
-   - Files: `tools/verify.ps1`, `tools/update_function_map.py`, `tools/stage_reference.py`, `tests/test_verify_generated.py`
-   - Check: with `FUNCTION_MAP.md` made stale by hand, `.\tools\verify.ps1` completes green having rewritten it and said so in the stage output; a generator that exits non-zero still fails the stage; `tests/test_verify_generated.py` covers both
-   - Proof: `present: tools/verify.ps1 :: -ScriptArgs @("--check")`
-   - Next after: V-2 -- the lifecycle suite runs where it can fail.
-
-2. **[Claude] F1s -- a shared window base class**
+1. **[Claude] F1s -- a shared window base class**
    - Plan: `plans/design/architecture-review.md` -- "F1s — a shared window base class"
    - Files: `scripts/game_panel.gd`, `scripts/colony_panel.gd`, `scripts/winter_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/year_winter.gd`
    - Check: `tests/test_layout_regression.py` passes unchanged and every panel's on-screen rectangle is pixel-identical; one hands-on check filed for opening and closing each window at two text scales
    - Proof: `absent: scripts/foraging_panel.gd :: extends GamePanel`
    - Next after: F2s -- a declarative UI gate table.
 
-3. **[Claude] CB-2 -- every build wall gets its own place to stand**
+2. **[Claude] CB-2 -- every build wall gets its own place to stand**
    - Plan: `plans/now/comb-builders.md` -- "CB-2 — the fix CB-1 identifies"
    - Files: `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
    - Check: two runs of `test_scenarios/cb1_comb_builders_per_site_test.json` at seed 4242 report `min_builder_spacing_px` at or above 13.6 with `max_builders_per_site` still 6 and `building_without_slot` still 0, identical over the two runs; C-46 moves from `checks/blocked.md` to ready
    - Proof: `present: scripts/hive_cell.gd :: return position + edge_offset * 1.35`
    - Next after: none -- comb-builders is complete once C-46 is ready to re-run.
 
-4. **[Claude] V-2 -- the lifecycle suite runs where it can fail**
+3. **[Claude] V-2 -- the lifecycle suite runs where it can fail**
    - Plan: `plans/now/verification-cost.md` -- "V-2 — the lifecycle suite runs where it can fail"
    - Files: `tools/verify.ps1`
    - Check: the two `lifecycle tests` failures of the last seven days are found and classified in the delivery note; if both are lifecycle-tooling defects, a branch touching only `scripts/*.gd` runs `.\tools\verify.ps1` without the 230s stage and prints why it skipped, while a branch touching `tools/slice.ps1` still runs it and `-Scope primary` always does
    - Proof: `present: tools/verify.ps1 :: $env:MEADOW_FINISH_VERIFY -ne "1"`
    - Next after: V-3 -- the routing rule's section headers actually exist.
 
-5. **[Claude] V-3 -- the routing rule's section headers actually exist**
+4. **[Claude] V-3 -- the routing rule's section headers actually exist**
    - Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
    - Files: `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py`
    - Check: each of the six files has `# --- section ---` headers at its real boundaries with no header inside a function and no code line moved; `python tools/update_function_map.py` warns for any file over 700 lines whose first header falls after its first tenth; `.\tools\verify.ps1` green including the Godot boot
