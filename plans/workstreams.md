@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PERF-1` (`codex/PERF-1`) | Codex | measure `find_food_cell` before changing it | Codex | in progress | none | `plans/reference/technical-audit.md` PERF-1 — measure `find_food_cell` before changing it |
