@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends GamePanel
 ## Dr Gallerin: the Challenge tutorial's non-blocking moth mentor. See
 ## TUTORIAL_PLAN.md's "Dr Gallerin" section for the character brief and
 ## the prompt-type list this scheduler works from.
@@ -23,7 +23,6 @@ extends CanvasLayer
 ## shapes.gd's circle_points, not a sprite.
 
 const Shapes = preload("res://scripts/shapes.gd")
-const UiTheme = preload("res://scripts/ui_theme.gd")
 
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
@@ -81,9 +80,10 @@ var _shown_ids: Dictionary = {}
 var _stage_elapsed: float = 0.0
 
 func _ready() -> void:
-	process_mode = PROCESS_MODE_ALWAYS
-	layer = 15   # above the HUD, below the settings window and main menu
-	add_to_group("gallerin")   # so debug_panel.gd's toggle can find this node live
+	# layer 15: above the HUD, below the settings window and main menu.
+	# The "gallerin" group is how debug_panel.gd's toggle finds this node live.
+	# Not a left window: the bubble anchors bottom-left and is never closed by them.
+	setup_layer("gallerin", "gallerin", 15)
 
 	_build_icon()
 	_build_bubble()
@@ -170,6 +170,13 @@ func _build_icon() -> void:
 	body.color = Color(0.34, 0.27, 0.20)
 	body.position = centre
 	_icon_button.add_child(body)
+
+## The bubble, not a themed panel, is what layout assertions measure.
+func rect_control() -> Control:
+	return bubble
+
+func is_open() -> bool:
+	return bubble != null and bubble.visible
 
 func _build_bubble() -> void:
 	bubble = PanelContainer.new()

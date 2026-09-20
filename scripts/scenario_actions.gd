@@ -773,16 +773,10 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 			_log("open_window", window_key, "rejected", "settings window did not open")
 		return
 
-	var panel: CanvasLayer = null
-	match window_key:
-		"colony":
-			panel = main.colony_panel
-		"foraging":
-			panel = main.foraging_panel
-		"nursery":
-			panel = main.nursery_panel
-		_:
-			pass
+	var panel: GamePanel = _game_panel(main, window_key)
+	# The winter window has no left-window toggle; only the three below open here.
+	if panel != null and not panel.is_in_group("left_window"):
+		panel = null
 	if panel == null:
 		_log("open_window", str(action), "rejected", "unknown window")
 		return
@@ -1130,18 +1124,19 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 			return main.hud.command_tray
 		"summary":
 			return main.hud.selection_panel
-		"colony":
-			return main.colony_panel.panel
-		"foraging":
-			return main.foraging_panel.panel
-		"nursery":
-			return main.nursery_panel.panel
-		"gallerin":
-			return main.gallerin_panel.bubble
 		"settings":
 			return main.debug_panel.panel
 		_:
-			return null
+			var window := _game_panel(main, name)
+			return window.rect_control() if window != null else null
+
+## The registry: every GamePanel joins the "game_panel" group under its
+## window_key, so a window name resolves without a hand-kept match.
+static func _game_panel(main: Node2D, key: String) -> GamePanel:
+	for node in main.get_tree().get_nodes_in_group("game_panel"):
+		if node.window_key == key:
+			return node
+	return null
 
 ## LAY-6 change 1: {"control": "<path>", "min_size": [w, h], "inside":
 ## "<path>", "same_height_as": "<path>"}. An invisible control passes

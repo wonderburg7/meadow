@@ -2846,6 +2846,12 @@ def main():
         check_stage_effects_order(name, lines, problems)
         check_hatch_brood_iteration(name, lines, problems)
         funcs, _members = collect_names(code, source)
+        # A panel inheriting GamePanel may call its base's functions bare.
+        if re.search(r"^extends GamePanel", source, re.M):
+            base_source = open(os.path.join(ROOT, "game_panel.gd"), encoding="utf-8").read()
+            base_funcs, _ = collect_names(
+                [strip_code(line) for line in base_source.split(chr(10))], base_source)
+            funcs = funcs | base_funcs
         check_calls(name, code, funcs, problems)
 
     check_autoloads(problems)

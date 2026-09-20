@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends GamePanel
 ## The nursery zone window: what the colony is currently set up to
 ## produce, what it is actually made of, and what has been coming out of
 ## the comb lately.
@@ -16,11 +16,7 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
-const UiLayout = preload("res://scripts/ui_layout.gd")
-const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
-const UiTheme = preload("res://scripts/ui_theme.gd")
 
-signal closed()
 ## A readout here has been starred or unstarred into the top-left corner.
 signal pinned_changed()
 ## A line in "Brood needing attention" was clicked -- see colony_panel.gd's
@@ -93,9 +89,6 @@ static func row_order() -> Array:
 
 const TIER_NAMES := ["Low", "Medium", "High"]
 
-var panel: PanelContainer
-var main: Node2D
-var scroll_container: ScrollContainer
 var zone_label: Label
 var brood_stages_label: Label
 var tier_label: Label
@@ -108,24 +101,9 @@ var needing_attention_column: VBoxContainer
 var needing_attention_ok_label: Label
 
 func _ready() -> void:
-	process_mode = PROCESS_MODE_ALWAYS
-	layer = 11
-	add_to_group("nursery_panel")
-	main = get_parent() as Node2D
-
-	panel = PanelContainer.new()
-	panel.theme = UiTheme.build_theme()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
-	panel.custom_minimum_size = Vector2(330, 0)
-	panel.visible = false
-	add_child(panel)
-
-	scroll_container = ScrollContainer.new()
-	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	panel.add_child(scroll_container)
+	setup_layer("nursery", "nursery_panel")
+	build_left_window(330)
+	build_scroll_body()
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
@@ -196,8 +174,7 @@ func _ready() -> void:
 	column.add_child(HSeparator.new())
 
 	intended_roles_label = _make_readout(_section_body(column, "Intended roles"), "Small")
-	get_viewport().size_changed.connect(_apply_left_window_rect)
-	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	connect_left_window_reflow()
 
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
@@ -276,37 +253,6 @@ func _make_readout(column: Node, variation: String) -> Label:
 	label.custom_minimum_size = Vector2(300, 0)
 	column.add_child(label)
 	return label
-
-func toggle() -> void:
-	if panel.visible:
-		close()
-	else:
-		open()
-
-func _apply_left_window_rect() -> void:
-	var rect := UiLayout.left_window_rect(
-		get_viewport().get_visible_rect().size, panel.custom_minimum_size.x,
-		main.hud.corner_bottom(), main.hud.selection_panel_top()
-	)
-	panel.offset_top = rect.position.y
-	UiPanelLayout.apply(panel, scroll_container, rect)
-
-## The bottom row (summary panel) changed height while this window may
-## already be open -- reflow it rather than waiting for the next open().
-func _on_bottom_row_changed() -> void:
-	if panel.visible:
-		_apply_left_window_rect()
-
-func open() -> void:
-	_apply_left_window_rect()
-	panel.visible = true
-
-func close() -> void:
-	panel.visible = false
-	closed.emit()
-
-func is_open() -> bool:
-	return panel.visible
 
 ## The colour a zone cell should glow, given the role it is set to raise.
 static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:

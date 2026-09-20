@@ -85,6 +85,54 @@ function Resolve-Python {
     throw "Python was not found on PATH or in the codex-primary-runtime dependency tree. Install Python, or rerun with -PythonPath <path-to-python.exe>."
 }
 
+# The branch and the first failing line ride on each stage event, so a failure
+# in the log can be classified without rerunning it (V-2: five lifecycle
+# failures in seven days could not be told apart).
+$stageBranch = ""
+try { $stageBranch = (& git -C $PSScriptRoot branch --show-current 2>$null | Out-String).Trim() } catch { }
+
+function Get-FailureLine {
+    param([object[]]$Output)
+    foreach ($line in $Output) {
+        $text = "$line".Trim()
+        if ($text -match '^(FAIL:|ERROR:|Traceback|.*Error:|.*exited with code)') {
+            return $text
+        }
+    }
+    return ""
+}
+
+# The lifecycle suite runs on a branch only when its diff against master can
+# reach it, and always in the primary scope (V-2). The list is the tooling the
+# suite drives.
+function Test-LifecycleTouched {
+    $paths = @("tools/slice.ps1", "tools/hook_log.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/check_docs.py", "tools/verify.ps1", "NEXTSTEPS.md", "tests/")
+    try {
+        $changed = @(& git -C $PSScriptRoot diff --name-only "$(if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" })...HEAD" 2>$null)
+        $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)
+        if ($LASTEXITCODE -ne 0) { return $true }
+    }
+    catch { return $true }
+    foreach ($file in $changed) {
+        foreach ($path in $paths) {
+            if ($file -eq $path -or ($path.EndsWith("/") -and $file.StartsWith($path))) { return $true }
+        }
+    }
+    return $false
+}
+
+function Start-LifecycleJob {
+    param($Interpreter, $Root)
+    Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root -ScriptBlock {
+        param($interpreter, $root)
+        Set-Location $root
+        & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated
+        if ($LASTEXITCODE -ne 0) {
+            throw "workflow unittest modules exited with code $LASTEXITCODE"
+        }
+    }
+}
+
 # One line per stage under -Quiet; a stage that fails replays everything it
 # printed, so nothing is lost by being quiet on success.
 function Write-StageResult {
@@ -96,12 +144,17 @@ function Write-StageResult {
         [int]$Ms = 0
     )
 
-    Write-Diagnostic -Kind "verify_stage" -Fields @{
-        stage = $Name
-        ok    = $Ok
-        ms    = $Ms
-        scope = $Scope
+    $fields = @{
+        stage  = $Name
+        ok     = $Ok
+        ms     = $Ms
+        scope  = $Scope
+        branch = $stageBranch
     }
+    if (-not $Ok) {
+        $fields.failure = Get-FailureLine -Output $Output
+    }
+    Write-Diagnostic -Kind "verify_stage" -Fields $fields
 
     if ($Ok) {
         if ($Quiet) {
@@ -209,14 +262,13 @@ if ($runBranchScope -and -not $Docs) {
     # remains part of ordinary verification; closeout runs the non-recursive
     # branch checks here instead.
     if ($env:MEADOW_FINISH_VERIFY -ne "1") {
-        $jobs += (Start-Job -Name "lifecycle tests" -ArgumentList $python, $repoRoot -ScriptBlock {
-            param($interpreter, $root)
-            Set-Location $root
-            & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated
-            if ($LASTEXITCODE -ne 0) {
-                throw "workflow unittest modules exited with code $LASTEXITCODE"
-            }
-        })
+        if (Test-LifecycleTouched) {
+            $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot)
+        }
+        else {
+            Write-Output "lifecycle tests: skipped -- branch touches no lifecycle tooling"
+            Write-Diagnostic -Kind "verify_stage" -Fields @{ stage = "lifecycle tests"; skipped = $true; scope = $Scope; branch = $stageBranch }
+        }
     }
 
     Wait-Job -Job $jobs | Out-Null
@@ -242,12 +294,15 @@ if ($runBranchScope -and -not $Docs) {
             # re-emits that as a NativeCommandError and aborts a passing run,
             # so print stderr as text and judge the job by its State: the job
             # throws on a non-zero exit code.
-            Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { Write-Output $_.ToString() }
+            $plainOutput = @(Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
+            $plainOutput | ForEach-Object { Write-Output $_ }
             $ok = ($job.State -eq "Completed")
             # The -Quiet branch above records its stages through
             # Write-StageResult; this branch prints directly, so it records
             # its own or the plain run would be missing from the log.
-            Write-Diagnostic -Kind "verify_stage" -Fields @{ stage = $job.Name; ok = $ok; ms = $jobMs; scope = $Scope }
+            $plainFields = @{ stage = $job.Name; ok = $ok; ms = $jobMs; scope = $Scope; branch = $stageBranch }
+            if (-not $ok) { $plainFields.failure = Get-FailureLine -Output $plainOutput }
+            Write-Diagnostic -Kind "verify_stage" -Fields $plainFields
             if (-not $ok) {
                 Write-Output "$($job.Name): FAILED"
                 $failed = $true
@@ -283,6 +338,22 @@ if ($runBranchScope) {
     Invoke-RegenerateStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py")
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
+    }
+}
+
+if ($Scope -eq "primary" -and $env:MEADOW_FINISH_VERIFY -ne "1") {
+    # The post-merge run: the suite runs here whatever the diff was.
+    $lifecycleTimer = [System.Diagnostics.Stopwatch]::StartNew()
+    $lifecycleJob = Start-LifecycleJob -Interpreter $python -Root $repoRoot
+    Wait-Job -Job $lifecycleJob | Out-Null
+    $lifecycleOutput = @(Receive-Job -Job $lifecycleJob -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
+    $lifecycleOk = ($lifecycleJob.State -eq "Completed")
+    Remove-Job -Job $lifecycleJob -Force
+    Write-StageResult -Name "lifecycle tests" -Ok $lifecycleOk -Output $lifecycleOutput -Ms ([int]$lifecycleTimer.ElapsedMilliseconds)
+    if (-not $lifecycleOk) {
+        if (-not $Quiet) { $lifecycleOutput | ForEach-Object { Write-Output $_ } }
+        Write-Output "lifecycle tests: FAILED"
+        exit 1
     }
 }
 

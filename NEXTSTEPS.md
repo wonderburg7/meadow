@@ -14,33 +14,19 @@ and history in Git and `plans/archive/` (the old log is
 
 Up to five items, worked top to bottom. No file here may appear in the Codex lane.
 
-1. **[Claude] F1s -- a shared window base class**
-   - Plan: `plans/design/architecture-review.md` -- "F1s — a shared window base class"
-   - Files: `scripts/game_panel.gd`, `scripts/colony_panel.gd`, `scripts/winter_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/year_winter.gd`
-   - Check: `tests/test_layout_regression.py` passes unchanged and every panel's on-screen rectangle is pixel-identical; one hands-on check filed for opening and closing each window at two text scales
-   - Proof: `absent: scripts/foraging_panel.gd :: extends GamePanel`
-   - Next after: F2s -- a declarative UI gate table.
-
-2. **[Claude] CB-2 -- every build wall gets its own place to stand**
-   - Plan: `plans/now/comb-builders.md` -- "CB-2 — the fix CB-1 identifies"
-   - Files: `scripts/bee_building.gd`, `scripts/hive_cell.gd`, `test_scenarios/cb1_comb_builders_per_site_test.json`
-   - Check: two runs of `test_scenarios/cb1_comb_builders_per_site_test.json` at seed 4242 report `min_builder_spacing_px` at or above 13.6 with `max_builders_per_site` still 6 and `building_without_slot` still 0, identical over the two runs; C-46 moves from `checks/blocked.md` to ready
-   - Proof: `present: scripts/hive_cell.gd :: return position + edge_offset * 1.35`
-   - Next after: none -- comb-builders is complete once C-46 is ready to re-run.
-
-3. **[Claude] V-2 -- the lifecycle suite runs where it can fail**
-   - Plan: `plans/now/verification-cost.md` -- "V-2 — the lifecycle suite runs where it can fail"
-   - Files: `tools/verify.ps1`
-   - Check: the two `lifecycle tests` failures of the last seven days are found and classified in the delivery note; if both are lifecycle-tooling defects, a branch touching only `scripts/*.gd` runs `.\tools\verify.ps1` without the 230s stage and prints why it skipped, while a branch touching `tools/slice.ps1` still runs it and `-Scope primary` always does
-   - Proof: `present: tools/verify.ps1 :: $env:MEADOW_FINISH_VERIFY -ne "1"`
-   - Next after: V-3 -- the routing rule's section headers actually exist.
-
-4. **[Claude] V-3 -- the routing rule's section headers actually exist**
+1. **[Claude] V-3 -- the routing rule's section headers actually exist**
    - Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
    - Files: `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py`
    - Check: each of the six files has `# --- section ---` headers at its real boundaries with no header inside a function and no code line moved; `python tools/update_function_map.py` warns for any file over 700 lines whose first header falls after its first tenth; `.\tools\verify.ps1` green including the Godot boot
    - Proof: `absent: scripts/bee_foraging.gd :: # ---`
    - Next after: none -- verification-cost is complete.
+
+2. **[Claude] F2s -- a declarative UI gate table**
+   - Plan: `plans/design/architecture-review.md` -- "F2s — a declarative UI gate table"
+   - Files: `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/availability.gd`
+   - Check: a source check fails if any `stage_gate.ACCESSIBILITY_KEYS` entry appears in the gate table and every gate key in `challenge_stages.gd`'s `unlocked_keys` has a table row or a documented reason for none; a Challenge fixture reaching a late stage shows the same controls as before
+   - Proof: `absent: scripts/hud.gd :: func apply_gates`
+   - Next after: G3 -- once the skill-gating decision in `plans/design/progression.md` section 11 is taken.
 
 ### Codex lane
 
@@ -58,7 +44,7 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **F2s, G3** (`plans/design/architecture-review.md`) -- F2s follows F1s; G3 follows F2s now that G2 has shipped.
+- **G3** (`plans/design/architecture-review.md`) -- follows F2s and the skill-gating decision in `plans/design/progression.md` section 11.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.

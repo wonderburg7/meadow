@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, and E1 shipped 19 Sep 2026, leaving F1s, F2s and G3 | Owner: Dave / Claude Code | Next: F1s -- a shared window base class, now queued in the Claude lane; the Codex lane leads with PERF-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -809,39 +809,7 @@ Shipped 14 Sep 2026. Full record:
 
 E1 shipped 2026-09-19; its specification is `plans/archive/E1_2026-09-19.md`.
 
-### F1s — a shared window base class
-
-Level: medium. Depends on: nothing. Sole owner of the five panel files.
-
-- **Required reading.** This heading. F9 above. `scripts/colony_panel.gd` and
-  `scripts/winter_panel.gd`'s `_ready` and lifecycle functions.
-  `scripts/ui_layout.gd`, `scripts/ui_panel_layout.gd`. `plans/README.md`'s
-  sequencing guardrail 11.
-- **Files to change.** a new `game_panel.gd` in `scripts/`, the five panel scripts,
-  `scripts/year_winter.gd`, `scripts/scenario_actions.gd`.
-- **Files not to change.** `scripts/ui_theme.gd`, `scripts/ui_layout.gd`; the
-  base class calls them, it does not change them.
-- **Requirements.** `GamePanel extends CanvasLayer` owns `process_mode`, `layer`,
-  group registration, the `PanelContainer` with its theme and stylebox, the
-  rectangle from `ui_layout.gd`, and `open`, `close`, `toggle` and `is_open`.
-  Each panel keeps only its own content and its own `refresh`. A registry maps
-  the names `scenario_actions.gd` already uses to instances, replacing
-  `_resolve_named_panel` and `_do_open_window`'s match.
-- **Invariants.** Every panel's on-screen rectangle is pixel-identical after the
-  change. The Gallerin bubble is not a left-side window and must not be forced
-  into the left-window close-others group. `winter_panel.gd` anchors top-right,
-  so the base must support both anchorings rather than assuming one.
-- **Implementation guidance.** Convert one panel at a time, running the layout
-  assertions between each. `foraging_panel.gd` is the simplest and is the right
-  one to convert first.
-- **Runtime policy.** Unchanged. `year_winter._refresh_panels` still refreshes
-  only open panels; that gate moves into the registry walk.
-- **Automated acceptance.** `tests/test_layout_regression.py` must pass
-  unchanged, and its `panel_rect` assertions are the instrument here. One
-  hands-on check in `checks/ready.md` covering opening and closing each window at
-  two text scales.
-- **Escalation.** If two panels genuinely need different `layer` values, put the
-  value in the subclass rather than widening the base.
+F1s shipped 2026-09-20; its specification is `plans/archive/F1s_2026-09-20.md`.
 
 ### F2s — a declarative UI gate table
 

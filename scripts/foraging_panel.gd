@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends GamePanel
 ## Foraging ecology plan Slice 1 (FORAGING_ECOLOGY_PLAN.md): a read-only
 ## window onto the trip-level detail foraging_stats.gd now tracks --
 ## Overview, Species, Recruitment, exactly the brief's three sections
@@ -12,13 +12,7 @@ extends CanvasLayer
 ## requirement the brief puts on foraging_stats.gd.
 
 const UI = preload("res://scripts/ui.gd")
-const UiLayout = preload("res://scripts/ui_layout.gd")
-const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
-const UiTheme = preload("res://scripts/ui_theme.gd")
 
-var panel: PanelContainer
-var main: Node2D
-var scroll_container: ScrollContainer
 var overview_label: Label
 var recruitment_label: Label
 var species_column: VBoxContainer
@@ -26,24 +20,9 @@ var species_empty_label: Label
 var gate_hint_label: Label
 
 func _ready() -> void:
-	process_mode = PROCESS_MODE_ALWAYS
-	layer = 11
-	add_to_group("foraging_panel")
-	main = get_parent() as Node2D
-
-	panel = PanelContainer.new()
-	panel.theme = UiTheme.build_theme()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
-	panel.custom_minimum_size = Vector2(340, 0)
-	panel.visible = false
-	add_child(panel)
-
-	scroll_container = ScrollContainer.new()
-	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	panel.add_child(scroll_container)
+	setup_layer("foraging", "foraging_panel")
+	build_left_window(340)
+	build_scroll_body()
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
@@ -85,8 +64,7 @@ func _ready() -> void:
 	recruitment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	recruitment_label.custom_minimum_size = Vector2(310, 0)
 	recruitment.add_child(recruitment_label)
-	get_viewport().size_changed.connect(_apply_left_window_rect)
-	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	connect_left_window_reflow()
 
 ## Same collapsible-section pattern as colony_panel.gd -- open by default
 ## here since this panel is short enough not to need remembering state.
@@ -111,36 +89,6 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 		call_deferred("_apply_left_window_rect")
 	)
 	return body
-
-func _apply_left_window_rect() -> void:
-	var rect := UiLayout.left_window_rect(
-		get_viewport().get_visible_rect().size, panel.custom_minimum_size.x,
-		main.hud.corner_bottom(), main.hud.selection_panel_top()
-	)
-	panel.offset_top = rect.position.y
-	UiPanelLayout.apply(panel, scroll_container, rect)
-
-## The bottom row (summary panel) changed height while this window may
-## already be open -- reflow it rather than waiting for the next open().
-func _on_bottom_row_changed() -> void:
-	if panel.visible:
-		_apply_left_window_rect()
-
-func toggle() -> void:
-	if panel.visible:
-		close()
-	else:
-		open()
-
-func open() -> void:
-	_apply_left_window_rect()
-	panel.visible = true
-
-func close() -> void:
-	panel.visible = false
-
-func is_open() -> bool:
-	return panel.visible
 
 ## Called once a second by year_winter.gd, same as colony_panel.refresh --
 ## reads main.foraging_stats plus DiagnosticLog's own running counts.
