@@ -25,7 +25,7 @@ home per fact: read the plan.
 | Derived colony-state facts | `plans/reference/colony-diagnostics.md` |
 | Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
 | Challenge 1 follow-ups from hands-on passes | `plans/now/c1-followups.md` |
-| Comb builder placement and the per-site cap | `plans/now/comb-builders.md` |
+| Comb builder placement and the per-site cap | `plans/archive/comb-builders_2026-09-20.md` |
 | How the flowering year feels at the start of a run | `plans/now/season-feel.md` |
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |

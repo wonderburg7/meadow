@@ -1,7 +1,7 @@
 # Comb builders — at most six to a site, one to a wall
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None — plan complete; C-46 (checks/ready/C-46.md) is ready to re-run | Dependency: none -- G2 shipped 17 Sep 2026 | Verified: 2026-09-20
+Status: archived | Owner: Dave / Claude Code | Next: None — plan complete; C-46 (checks/ready/C-46.md) is ready to re-run | Dependency: none -- G2 shipped 17 Sep 2026 | Verified: 2026-09-20
 
 **Objective.** When idle comb workers build on their own, no more than six
 work one unfinished cell, each stands at a different wall, and a seventh
