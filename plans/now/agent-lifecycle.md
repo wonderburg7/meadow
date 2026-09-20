@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-14 -- the stops ledger survives a non-ASCII stop cause (L-12 stays gated behind it) | Dependency: none -- L-13 landed 19 Sep 2026 | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude | Next: L-12 -- a plan's slice section carries the queue lines it is refilled from (gated: not startable until `session_cost.py --stops` ranks the refill step in the top two) | Dependency: none -- L-13 landed 19 Sep 2026, L-14 landed 20 Sep 2026 | Verified: 2026-09-20
 
 ## Objective
 

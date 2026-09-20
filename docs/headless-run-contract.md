@@ -170,10 +170,16 @@ changing the meaning or type of an existing field requires a new version.
 }
 ```
 
-`status` is one of `passed`, `failed`, `contract_error`, `timed_out`, or
-`crashed`. `outcome` may be `null` when Godot did not write a summary. Paths
-in `artefacts` are relative to the result directory, never scenario-supplied
-absolute paths.
+`status` is one of `passed`, `failed`, `contract_error`, `compile_error`,
+`timed_out`, or `crashed`. A `compile_error` means Godot logged a script
+compile or load failure even if it exited zero and wrote a session file; the
+runner reports the first `SCRIPT ERROR:` line, its named script when Godot
+supplies one, and the existing `process.log` path instead of treating
+zero-valued session data as a gameplay result. In a
+worktree with no `.godot` import cache, the first headless boot commonly
+reveals such a pre-existing error. `outcome` may be `null` when Godot did not
+write a summary. Paths in `artefacts` are relative to the result directory,
+never scenario-supplied absolute paths.
 
 ### `failure.json`
 
@@ -192,9 +198,9 @@ absolute paths.
 ```
 
 `reason.kind` is one of `expectation`, `action`, `assertion`, `contract`,
-`timeout`, `crash`, or `missing_summary`. Event and action tails are bounded;
-when data is omitted, `truncated` is true and the relevant artefact path is
-present.
+`compile`, `timeout`, `crash`, or `missing_summary`. Event and action tails
+are bounded; when data is omitted, `truncated` is true and the relevant
+artefact path is present.
 
 Godot prints `MEADOW_RESULT_PATH=<exact path>` after it closes the scenario
 JSONL. The runner requires that sentinel and never infers a session directory

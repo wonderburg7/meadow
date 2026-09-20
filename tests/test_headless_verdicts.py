@@ -130,6 +130,40 @@ class HeadlessVerdictTest(unittest.TestCase):
                 self.assertEqual(1, run_verdict_scenario(scenario, "unused", 1, 30, root / "results"))
             launch.assert_not_called()
 
+    def test_script_error_is_a_compile_failure_before_zero_session_analysis(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scenario = root / "scenario.json"
+            scenario.write_text(json.dumps({"random_seed": 4242}), encoding="utf-8")
+            zero_session = '{"type":"summary","outcome":"actions_resolved","game_time":0,"day":0}\n'
+            script_error = "SCRIPT ERROR: Parse Error: Could not resolve class \\\"Broken\\\"."
+            script_path = "res://scripts/broken.gd"
+
+            def fake_godot(command, _timeout):
+                session_arg = next(item for item in command if item.startswith("--headless-session-path="))
+                session = Path(session_arg.split("=", 1)[1])
+                session.write_text(zero_session, encoding="utf-8")
+                return HeadlessRunOutcome("completed", 123, 0,
+                                          "MEADOW_RESULT_PATH=%s\n" % session,
+                                          "%s\n          at: GDScript::reload (%s:1)\n" % (script_error, script_path), 0.1)
+
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with mock.patch("run_scenario.run_headless_process", side_effect=fake_godot), \
+                 contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                self.assertEqual(1, run_verdict_scenario(scenario, "unused", 1, 30, root / "results"))
+
+            result_path = Path(stdout.getvalue().strip().rsplit("result=", 1)[1])
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            failure = json.loads((result_path.parent / "failure.json").read_text(encoding="utf-8"))
+            self.assertEqual("compile_error", result["status"])
+            self.assertEqual("compile_failure", result["classification"])
+            self.assertIsNone(result["outcome"])
+            self.assertEqual({"kind": "compile", "message": script_error, "script": script_path}, failure["reason"])
+            self.assertIn(script_error, stderr.getvalue())
+            self.assertIn(script_path, stderr.getvalue())
+            self.assertIn(str(result_path.parent / "process.log"), stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

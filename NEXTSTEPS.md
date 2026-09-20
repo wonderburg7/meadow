@@ -32,12 +32,12 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
 
-1. **[Codex] T-3 -- a headless run that did not compile fails as a compile failure**
-   - Plan: `plans/now/workflow-telemetry.md` -- "T-3 — a headless run that did not compile fails as a compile failure"
-   - Files: `tools/run_scenario.py`, `docs/headless-run-contract.md`
-   - Check: a deliberate parse error in one script makes a scenario run fail naming that script, the first `SCRIPT ERROR:` line and the `process.log` path, instead of writing a session file of zeroes; with the error reverted, an ordinary run is unchanged in output, artefact names and timing
-   - Proof: `absent: tools/run_scenario.py :: SCRIPT ERROR`
-   - Next after: none -- workflow-telemetry is complete.
+1. **[Codex] ST-1 -- preflight refusals stop crowding the step ranking**
+   - Plan: `plans/now/stop-readout.md` -- "ST-1 — preflight refusals stop crowding the step ranking"
+   - Files: `tools/session_cost.py`, `tests/test_session_cost_stops.py`
+   - Check: `python tools/session_cost.py --stops` on the real ledger prints a "most expensive steps" list whose entries all carry a step, with the 19 preflight refusals reported separately and tallied by cause, and the two totals summing to `stops recorded`
+   - Proof: `present: tools/session_cost.py :: (no step recorded)`
+   - Next after: none -- stop-readout is complete once ST-1 ships.
 
 ## Not in the queue, and why
 
@@ -46,7 +46,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
 - **G3** (`plans/design/architecture-review.md`) -- follows F2s and the skill-gating decision in `plans/design/progression.md` section 11.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
-- **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
+- **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops. Measured 20 Sep 2026 over 53 stops: the two refill steps stand at 1 each against 8 for the archive gate, so the gate is not met; ST-1 must land first for the ranking to be readable at all.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
