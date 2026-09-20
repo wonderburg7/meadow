@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends GamePanel
 ## The colony overview: what the whole hive is made of, what it holds,
 ## how it is doing, and how that has changed -- in one place, with each
 ## role tally doubling as a selector.
@@ -17,9 +17,6 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
-const UiLayout = preload("res://scripts/ui_layout.gd")
-const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
-const UiTheme = preload("res://scripts/ui_theme.gd")
 
 ## Emitted when a role tally is clicked. `focus` narrows foragers to one
 ## resource; "" means the whole role.
@@ -60,9 +57,6 @@ const PLOT_SERIES := [
 	{"key": "honey", "label": "Honey", "colour": Color(0.95, 0.45, 0.25)},
 ]
 
-var panel: PanelContainer
-var main: Node2D
-var scroll_container: ScrollContainer
 var count_labels: Dictionary = {}   # count key -> Button
 var stat_labels: Dictionary = {}    # stat key -> Label
 var star_buttons: Dictionary = {}   # stat key -> Button
@@ -90,24 +84,9 @@ var needing_attention_column: VBoxContainer
 var needing_attention_ok_label: Label
 
 func _ready() -> void:
-	process_mode = PROCESS_MODE_ALWAYS
-	layer = 11
-	add_to_group("colony_panel")
-	main = get_parent() as Node2D
-
-	panel = PanelContainer.new()
-	panel.theme = UiTheme.build_theme()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
-	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
-	panel.custom_minimum_size = Vector2(330, 0)
-	panel.visible = false
-	add_child(panel)
-
-	scroll_container = ScrollContainer.new()
-	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	panel.add_child(scroll_container)
+	setup_layer("colony", "colony_panel")
+	build_left_window(330)
+	build_scroll_body()
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
@@ -157,8 +136,7 @@ func _ready() -> void:
 	favourites_column.add_child(favourites_empty_label)
 
 	_build_plot(_section(column, "Over time", false))
-	get_viewport().size_changed.connect(_apply_left_window_rect)
-	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	connect_left_window_reflow()
 	Session.run_reset.connect(_collapse_all)
 
 ## The five states a plain Godot Button actually looks up ("selected" and
@@ -388,36 +366,6 @@ func _draw_plot() -> void:
 		_series_label(), int(latest), int(change),
 		int(round((float(history[count - 1].t) - float(history[0].t)) / 60.0)),
 	]
-
-func _apply_left_window_rect() -> void:
-	var rect := UiLayout.left_window_rect(
-		get_viewport().get_visible_rect().size, panel.custom_minimum_size.x,
-		main.hud.corner_bottom(), main.hud.selection_panel_top()
-	)
-	panel.offset_top = rect.position.y
-	UiPanelLayout.apply(panel, scroll_container, rect)
-
-## The bottom row (summary panel) changed height while this window may
-## already be open -- reflow it rather than waiting for the next open().
-func _on_bottom_row_changed() -> void:
-	if panel.visible:
-		_apply_left_window_rect()
-
-func toggle() -> void:
-	if panel.visible:
-		close()
-	else:
-		open()
-
-func open() -> void:
-	_apply_left_window_rect()
-	panel.visible = true
-
-func close() -> void:
-	panel.visible = false
-
-func is_open() -> bool:
-	return panel.visible
 
 ## Called each second by main.gd with the live figures. `counts` is keyed
 ## by "role|focus" to match ROLE_ROWS. `texts` carries the ready-made

@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, and E1 shipped 19 Sep 2026, leaving F1s, F2s and G3 | Owner: Dave / Claude Code | Next: F1s -- a shared window base class, now queued in the Claude lane; the Codex lane leads with PERF-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
