@@ -1100,14 +1100,18 @@ function Invoke-SliceStart {
         branch     = $branch
         worktree   = $worktreeRelative
     }
-    # `branch` is the join key: a Claude Code transcript records neither the
-    # slice id nor the advised level, so without this the cost of a session
-    # can never be attributed to the slice it was spent on.
+    # The session id is the level-drift join key.  A claim creates its branch
+    # after the session began, so joining the hook's pre-existing branch to
+    # this new one can never work.  CLAUDE_SESSION_ID is supplied to both the
+    # lifecycle command and the SessionStart hook; omit it when a non-Claude
+    # caller does not provide one so the append-only diagnostic schema stays
+    # backward compatible.
     Write-Diagnostic -Root $root -Kind "slice_claimed" -Fields @{
         id     = $id
         lane   = $Lane
         branch = $branch
         level  = $result.advice.level
+        session = $env:CLAUDE_SESSION_ID
         ok     = $true
         ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
     }
