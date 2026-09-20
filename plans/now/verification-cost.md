@@ -1,7 +1,7 @@
 # Verification cost — stop paying for checks that carry no information
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: V-1 -- verification regenerates its generated files instead of asserting them, queued in the Claude lane | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude Code | Next: V-3 -- the routing rule's section headers actually exist | Dependency: none | Verified: 2026-09-20
 
 **Objective.** `tools/verify.ps1` runs before every commit, so anything it
 spends is multiplied by every slice. Two of its costs are measured and neither
@@ -139,3 +139,17 @@ right region.
 - **Completion.** Archive this plan with `Next: None — plan complete`.
 
 Level: low -- mechanical, comment-only, one acceptance check.
+
+**V-2 delivery note (20 Sep 2026).** The log held five failed `lifecycle tests`
+runs in seven days, not two (18 Sep 22:25, 19 Sep 11:14, 20 Sep 10:59, 11:04,
+15:45), and `verify_stage` events carried no branch or failure text, so none
+could be classified. Dave chose to record first and scope anyway: every stage
+event now carries `branch` and, on failure, `failure` (the first failing
+line); the lifecycle stage runs only when the diff against `master` touches
+`tools/slice.ps1`, `tools/hook_log.py`, `tools/archive_slice.py`,
+`tools/refill_lane.py`, `tools/check_docs.py`, `tools/verify.ps1`,
+`NEXTSTEPS.md` or `tests/`, otherwise prints `skipped -- branch touches no
+lifecycle tooling` and logs `skipped: true`. `-Scope primary` now runs it
+always. Re-check the failure classification once a week of new events exist.
+The `MEADOW_FINISH_VERIFY` guard stays; removing it needs `tools/slice.ps1`
+(Codex lane).
