@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: C1F-2 -- a headless run proves the queen's pollen departure and no discard loop | Dependency: none | Verified: 2026-09-19
+Status: active | Owner: Dave / Claude Code | Next: None -- plan complete; one known gap filed below (C1F-G1) | Dependency: none | Verified: 2026-09-20
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
@@ -91,3 +91,21 @@ fail, removing the `_walk_out_if_indoors` call from `seek_flower` makes A's
 requirement 3 fail, and removing `builder_dump_waste`'s continuation makes C
 fail. **Level:** medium. **Escalate if** reaching 1.14 headlessly needs more
 than C1F-1's setup.
+
+## Known gap C1F-G1 -- the `target_cell = null` revert does not fail fixture A
+
+Filed 20 Sep 2026 at C1F-2's closeout, for a higher-reasoning session to plan.
+C1F-2's fixtures A, B and C pass, and removing `builder_dump_waste`'s
+continuation makes C fail and removing `seek_flower`'s `_walk_out_if_indoors`
+call crashes the run. Reverting `bee_foraging.gd::go_to_deposit_cell`'s
+`bee.target_cell = null` does **not** fail A, so that line's regression is not
+guarded. Why: at 1.14 `challenge_discards` is true, so the function overwrites
+`target_cell` from `find_cell_for` whatever the line did; the line only matters
+on the epoch-gate early return, before 1.14. A fixture that reaches it needs the
+queen waiting at a full comb *before* 1.14 and then carried into the stage, but
+`challenge_stage_setup.gd::apply` calls `_release_queen` on every jump and so
+wipes that state. Options for the plan: a stage-setup key that skips the release,
+a scenario action that sets the state after the jump but before the first think
+tick, or a unit-level check of `go_to_deposit_cell`. Fixture A's departure window
+is also 10 s + 50 s, not the 30 s the plan asked for: the queen needs longer than
+30 game seconds to walk out.
