@@ -526,16 +526,20 @@ func brood_stage_counts() -> Dictionary:
 ## it carries several times the energy per unit, so a bee spends less
 ## time at the cell and the same comb feeds far more of them.
 func find_food_cell(except: Node2D = null) -> Node2D:
+	Perf.begin("hive_find_food")
 	for cell in cells:
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.is_ripe_honey() and cell.amount > 0.0:
+			Perf.end("hive_find_food")
 			return cell
 	for cell in cells:
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.content_type == "nectar" and cell.amount > 0.0:
+			Perf.end("hive_find_food")
 			return cell
+	Perf.end("hive_find_food")
 	return null
 
 func has_room_for_egg() -> bool:
