@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-12 -- a plan's slice section carries the queue lines it is refilled from (gated: see its section) | Dependency: none -- L-13 landed 19 Sep 2026 | Verified: 2026-09-19
+Status: active | Owner: Dave / Claude | Next: L-14 -- the stops ledger survives a non-ASCII stop cause (L-12 stays gated behind it) | Dependency: none -- L-13 landed 19 Sep 2026 | Verified: 2026-09-20
 
 ## Objective
 
@@ -60,18 +60,73 @@ made of.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
+| L-14 | The stops ledger survives a non-ASCII stop cause, so `--stops` can be read at all | `tools/slice.ps1`, `tools/session_cost.py` | medium |
 | L-12 | A plan's slice section carries the queue lines it is refilled from | `tools/check_docs.py`, `plans/now/*.md` | high |
 
-Dependencies, stated rather than implied: L-10 and L-11 have shipped, so
-L-13, their integration, is startable. **L-12 is deliberately gated** -- do not start it until
+Dependencies, stated rather than implied: L-10, L-11 and L-13 have shipped.
+**L-12 is deliberately gated** -- do not start it until
 `python tools/session_cost.py --stops` shows the refill step among the two
 most frequent stops over at least ten recorded stops. It is the only slice
 here that touches every live plan, and the instrument that would justify it
 only started recording on 17 Sep 2026. Neither may be bought by removing a check.
+**L-14 comes first because that gate currently cannot be read at all**: the
+ledger has 39 records and `--stops` raises before it counts one of them.
+L-14 does not decide L-12; it makes the decision possible.
 
 L-10 shipped 2026-09-18; its specification is `plans/archive/L-10_2026-09-18.md`.
 
 L-11 shipped 2026-09-18; its specification is `plans/archive/L-11_2026-09-18.md`.
+
+### L-14 — the stops ledger survives a non-ASCII stop cause
+
+**The defect.** `Write-SliceStop` appends each stop with
+`Add-Content -LiteralPath ... -Value (... | ConvertTo-Json -Compress)` and no
+`-Encoding` (`tools/slice.ps1`, around line 88). Windows PowerShell 5.1 has no
+UTF-8 default, so the line lands in the current ANSI codepage. `run_stops` in
+`tools/session_cost.py` then reads the whole file with
+`read_text(encoding="utf-8")`, which raises `UnicodeDecodeError` on the first
+byte that is not ASCII and returns nothing at all.
+
+**Evidence (20 Sep 2026, ad hoc).** `.git/meadow-slice-stops.jsonl` holds 39
+records in 8270 bytes with 8 non-ASCII bytes. At offset 1298 the text reads
+`'UI-X-4 G\xc7\xf6 Dr Gallerin...'` -- an em dash that went through the console
+codepage twice on its way in. `python tools/session_cost.py --stops` exits 1
+with a `UnicodeDecodeError` traceback and prints no tally.
+
+**Consequence.** L-12's gate is written against `--stops`, so the gate cannot
+be evaluated: 39 stops are recorded and none of them is readable. The same
+plan's completion gate cites 39 `lifecycle_failure` outcomes, so the one
+instrument that would say which closeout step to automate next is dark, and
+will stay dark, because every future stop lands in the same file.
+
+**The fix has a pattern to copy in the repository already.**
+`tools/diagnostics.ps1` (around line 65) writes its own JSONL through
+`[System.Text.Encoding]::UTF8.GetBytes($line)` for exactly this reason, and
+`--events` reads it without trouble. `Write-SliceStop` is the one writer that
+did not follow it.
+
+- **Write side.** Append the stop record as explicit UTF-8 bytes, the way
+  `tools/diagnostics.ps1` does. Do not reach for `-Encoding utf8`: in 5.1 that
+  writes a BOM, which `slice.ps1` already works around elsewhere (the merge
+  message at around line 1686).
+- **Read side.** A single bad byte must never cost the whole report. Read the
+  ledger tolerantly and skip only the record that will not decode. Every other
+  mode in `session_cost.py` reads a file with strict UTF-8 as well; fix the
+  ones that read a PowerShell-written file, and leave the rest alone.
+- **Do not rewrite the existing ledger.** It is the record of what stopped;
+  the repaired reader must produce a tally over the 39 records already there,
+  mangled dash and all.
+- **Out of scope.** The schema, the writers of `meadow-diagnostics.jsonl`, and
+  `--days`/`--classify`/`--phases`/`--events`. This plan's standing rule holds:
+  extend the parsers, never the formats.
+
+*Acceptance:* `python tools/session_cost.py --stops` prints a tally over the
+current ledger without it being edited by hand; a stop whose cause contains an
+em dash is written and read back as the same text; a record with a
+deliberately corrupt byte costs that one record, not the report.
+Level: medium
+- Proof: `present: tools/slice.ps1 :: Add-Content -LiteralPath (Join-Path $commonDir "meadow-slice-stops.jsonl")`
+- Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from, once the repaired --stops can be read against its gate.
 
 ### L-12 — a plan's slice section carries the queue lines it is refilled from
 

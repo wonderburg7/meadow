@@ -39,6 +39,13 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
    - Proof: `absent: scripts/hive.gd :: hive_find_food`
    - Next after: none -- technical-audit section A is complete unless PERF-1's numbers open a follow-up.
 
+2. **[Codex] L-14 -- the stops ledger survives a non-ASCII stop cause**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-14 — the stops ledger survives a non-ASCII stop cause"
+   - Files: `tools/slice.ps1`, `tools/session_cost.py`
+   - Check: `python tools/session_cost.py --stops` prints a tally over the existing 39-record ledger with no hand editing; a stop cause containing an em dash is written and read back unchanged; a record with a corrupt byte costs that record and not the report
+   - Proof: `present: tools/slice.ps1 :: Add-Content -LiteralPath (Join-Path $commonDir "meadow-slice-stops.jsonl")`
+   - Next after: L-12 -- a plan's slice section carries the queue lines it is refilled from.
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
