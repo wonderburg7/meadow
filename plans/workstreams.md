@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/T-3` (`codex/T-3`) | Codex | a headless run that did not compile fails as a compile failure | Codex | in progress | none | `plans/now/workflow-telemetry.md` T-3 — a headless run that did not compile fails as a compile failure |
+| `.worktrees/CB-2` (`claude/CB-2`) | Claude | every build wall gets its own place to stand | Claude | in progress | none | `plans/now/comb-builders.md` CB-2 — the fix CB-1 identifies |
