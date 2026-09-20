@@ -20,7 +20,7 @@ home per fact: read the plan.
 | Progression, colony adaptations and skills | `plans/design/progression.md` |
 | Catalogues, shared interfaces and update policy | `plans/design/architecture-review.md` |
 | Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
-| UI and accessibility | `plans/now/ui.md` |
+| UI and accessibility | `plans/archive/ui_2026-09-20.md` |
 | The check/slice loop itself | `plans/reference/check-loop.md` |
 | Derived colony-state facts | `plans/reference/colony-diagnostics.md` |
 | Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
