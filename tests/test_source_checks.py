@@ -470,8 +470,8 @@ class DiagnosticWritersTest(unittest.TestCase):
         from collections import Counter
         import io, contextlib
         claimed = [
-            {"kind": "slice_claimed", "id": "S-1", "branch": "claude/S-1", "level": "medium"},
-            {"kind": "slice_claimed", "id": "S-2", "branch": "claude/S-2", "level": "low"},
+            {"kind": "slice_claimed", "id": "S-1", "branch": "claude/S-1", "session": "a", "level": "medium"},
+            {"kind": "slice_claimed", "id": "S-2", "branch": "claude/S-2", "session": "b", "level": "low"},
             {"kind": "slice_claimed", "id": "S-3", "branch": "claude/S-3", "level": "unstated"},
         ]
         events = claimed + [
@@ -493,6 +493,26 @@ class DiagnosticWritersTest(unittest.TestCase):
         self.assertIn("claude-opus-5-20260401=4", printed)
         self.assertNotIn("S-2 ", printed)
         self.assertIn("not assessable: 1", printed)
+
+    def test_level_drift_keeps_keyless_claims_as_dated_history(self):
+        spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
+        session_cost = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(session_cost)
+        from collections import Counter
+        import io, contextlib
+        claimed = [
+            {"kind": "slice_claimed", "id": "old", "level": "medium", "ts": "2026-09-19T12:00:00Z"},
+            {"kind": "slice_claimed", "id": "new", "session": "s1", "level": "medium", "ts": "2026-09-20T12:00:00Z"},
+        ]
+        totals = {"s1": (1, 0, 0, Counter({"claude-sonnet-5-20260401": 1}))}
+
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            session_cost._print_level_drift(claimed, [], totals)
+
+        printed = out.getvalue()
+        self.assertIn("not assessable: 1", printed)
+        self.assertIn("not assessable: 1 (before 2026-09-20)", printed)
 
     def test_bash_call_summary_counts_failures_by_command(self):
         spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")

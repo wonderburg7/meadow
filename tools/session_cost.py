@@ -463,25 +463,32 @@ def _level_allows(level: str, model: str) -> bool:
 
 def _print_level_drift(claimed, events, totals):
     """WD-3: each claimed slice's plan level against the models its sessions
-    actually ran at. A slice with no stated level, or whose branch joined no
-    transcript, is counted rather than guessed at."""
-    sessions_by_branch = {}
-    for e in events:
-        if e["kind"] == "session_start" and e.get("branch"):
-            sessions_by_branch.setdefault(e["branch"], []).append(e.get("session", ""))
+    actually ran at. A slice with no stated level, no session join key, or no
+    transcript is counted rather than guessed at."""
 
     drift = []
     not_assessable = 0
+    historical = []
+    keyed_dates = []
     for e in claimed:
+        session = e.get("session", "")
+        if session:
+            keyed_dates.append(e.get("ts", ""))
+        else:
+            # Claims written before T-2 have no common key with the hook.
+            # They remain visible as a finite, dated backlog instead of
+            # looking like current sessions that failed to report a model.
+            historical.append(e)
+            not_assessable += 1
+            continue
         level = e.get("level", "unstated")
         if level not in LEVEL_MODELS:
             not_assessable += 1
             continue
         models = Counter()
-        for session in sessions_by_branch.get(e.get("branch"), []):
-            hit = totals.get(session)
-            if hit:
-                models.update(hit[3])
+        hit = totals.get(session)
+        if hit:
+            models.update(hit[3])
         if not models:
             not_assessable += 1
             continue
@@ -497,6 +504,10 @@ def _print_level_drift(claimed, events, totals):
     else:
         print("level drift                  none")
     print(f"  not assessable: {not_assessable}")
+    if historical:
+        dated = [date for date in keyed_dates if date]
+        cutoff = min(dated)[:10] if dated else "the session-join rollout"
+        print(f"  not assessable: {len(historical)} (before {cutoff})")
 NO_EDIT_LABELS = {
     "read_only": "Read-only: a question, review or investigation that wrote nothing",
     "docs_only": "Documentation, plan or queue edits only -- no product file",

@@ -46,21 +46,14 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
 
-1. **[Codex] T-2 -- level drift joins on something that exists**
-   - Plan: `plans/now/workflow-telemetry.md` -- "T-2 — level drift joins on something that exists"
-   - Files: `tools/slice.ps1`, `tools/session_cost.py`, `tests/test_source_checks.py`
-   - Check: a slice claimed after the change is reported by `python tools/session_cost.py --events` as assessed -- named under level drift or counted in-level -- rather than falling into `not assessable`; the 12 older claims are still counted, dated, and never raise; an older record missing the new key still parses
-   - Proof: `present: tools/session_cost.py :: sessions_by_branch.get(e.get("branch"), [])`
-   - Next after: T-1 -- `tool_bash` records the command that ran.
-
-2. **[Codex] T-1 -- `tool_bash` records the command that ran, not the `cd` in front of it**
+1. **[Codex] T-1 -- `tool_bash` records the command that ran, not the `cd` in front of it**
    - Plan: `plans/now/workflow-telemetry.md` -- "T-1 — `tool_bash` records the command that ran"
    - Files: `tools/hook_log.py`, `tools/session_cost.py`, `tests/test_source_checks.py`
    - Check: a `cd X && python tools/foo.py` payload records `python foo.py` and a `VAR=1 git status` payload records `git`, both covered in `tests/test_source_checks.py`; the field is still one short token with no path, argument or message in it; `python tools/session_cost.py --events` reports the same `bash tool calls` count as before
    - Proof: `present: tools/hook_log.py :: cmd=words[0] if words else ""`
    - Next after: T-3 -- a headless run that did not compile fails as a compile failure.
 
-3. **[Codex] T-3 -- a headless run that did not compile fails as a compile failure**
+2. **[Codex] T-3 -- a headless run that did not compile fails as a compile failure**
    - Plan: `plans/now/workflow-telemetry.md` -- "T-3 — a headless run that did not compile fails as a compile failure"
    - Files: `tools/run_scenario.py`, `docs/headless-run-contract.md`
    - Check: a deliberate parse error in one script makes a scenario run fail naming that script, the first `SCRIPT ERROR:` line and the `process.log` path, instead of writing a session file of zeroes; with the error reverted, an ordinary run is unchanged in output, artefact names and timing
