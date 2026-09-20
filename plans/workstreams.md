@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/T-1` (`codex/T-1`) | Codex | `tool_bash` records the command that ran, not the `cd` in front of it | Codex | in progress | none | `plans/now/workflow-telemetry.md` T-1 — `tool_bash` records the command that ran |
