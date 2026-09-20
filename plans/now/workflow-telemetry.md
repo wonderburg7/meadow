@@ -1,7 +1,7 @@
 # Workflow telemetry — make the instruments answer the questions they were built for
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: T-2 -- level drift joins on something that exists, queued in the Codex lane behind L-14 | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Codex | Next: T-1 -- `tool_bash` records the command that ran, queued in the Codex lane behind L-14 | Dependency: none | Verified: 2026-09-20
 
 **Objective.** `plans/now/agent-lifecycle.md` sets a measured target -- raise
 the implementing share of a session's context above 40% -- and every decision
@@ -40,7 +40,6 @@ while triaging it, and this plan is where all three are owned.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T-2 | `--events` reports level drift for real slices instead of `not assessable: 12` | `tools/slice.ps1`, `tools/session_cost.py`, `tests/test_source_checks.py` | yes | medium |
 | T-1 | `tool_bash` records the command that ran, not the `cd` in front of it | `tools/hook_log.py`, `tools/session_cost.py`, `tests/test_source_checks.py` | yes | medium |
 | T-3 | A headless run that did not compile fails as a compile failure | `tools/run_scenario.py`, `docs/headless-run-contract.md` | yes | medium |
 
@@ -56,38 +55,7 @@ None of the three depends on the Claude lane.
 lane's (`plans/now/verification-cost.md`), as are the six `scripts/*.gd`
 files V-3 headers. Nothing here needs them.
 
-## T-2 — level drift joins on something that exists
-
-`_print_level_drift` in `tools/session_cost.py` joins a claim to its sessions
-by branch name. It cannot work: `tools/slice.ps1` writes `slice_claimed` with
-the branch it just created for the slice, and `tools/hook_log.py` writes
-`session_start` with the branch the session's own cwd is on, which is the
-session branch the harness made. WD-3's readout has therefore been `none`
-since it shipped, and that `none` reads as "no drift" rather than "no data".
-
-Give the join a key that both sides have. Fixed now:
-
-- **Invariants.**
-  - The JSONL schema stays append-only and backward compatible: an older
-    record missing the new key still parses, and still counts as not
-    assessable rather than raising.
-  - A slice with no stated level is still counted, not guessed at.
-  - `--events` still prints in one screen; this adds no new section.
-- **Guidance, not decisions.** The cheapest key is the session id, which
-  `hook_log.py` already writes on every record and which `slice.ps1` can
-  learn from the same hook environment, or from the most recent
-  `session_start` in the ledger at claim time. A worktree-path key or a
-  time-window join are the alternatives; prefer whichever needs no new
-  guessing, and say in the delivery note which you took and why.
-- **Honesty about the past.** The 12 existing claims have no such key and
-  cannot be repaired. Print `not assessable: N (before <date>)` for them, so
-  the backlog of unjoinable records is visibly finite and shrinks.
-- **Proof it worked.** Claim a slice, run a request, then
-  `python tools/session_cost.py --events` names that slice under level drift
-  or reports it assessed and in-level -- not `not assessable`.
-
-Level: medium -- two writers and one reader, an acceptance check, no
-ownership boundary moved.
+T-2 shipped 2026-09-20; its specification is `plans/archive/T-2_2026-09-20.md`.
 
 ## T-1 — `tool_bash` records the command that ran
 
