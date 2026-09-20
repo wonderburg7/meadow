@@ -386,7 +386,7 @@ class SliceDoctorTest(unittest.TestCase):
         (tests_dir / "__init__.py").write_text("", encoding="utf-8")
         (tests_dir / "source_checks.py").write_text(stub_exit_zero, encoding="utf-8")
         (tests_dir / "balance_tests.py").write_text(stub_exit_zero, encoding="utf-8")
-        for module in ("test_source_checks", "test_slice_lifecycle", "test_two_lane_closeout", "test_codex_environment"):
+        for module in ("test_source_checks", "test_slice_lifecycle", "test_two_lane_closeout", "test_codex_environment", "test_verify_generated"):
             (tests_dir / f"{module}.py").write_text(
                 "import unittest\n\n\n"
                 "class Placeholder(unittest.TestCase):\n"

@@ -142,8 +142,12 @@ def main() -> int:
             )
             return 1
         return 0
+    before = TARGET.read_text(encoding="utf-8") if TARGET.exists() else None
+    if before == rendered:
+        print(f"unchanged {TARGET.relative_to(ROOT)}")
+        return 0
     TARGET.write_text(rendered, encoding="utf-8")
-    print(f"wrote {TARGET.relative_to(ROOT)}")
+    print(f"regenerated {TARGET.relative_to(ROOT)} (was stale)")
     return 0
 
 
