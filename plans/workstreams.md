@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T-3` (`codex/T-3`) | Codex | a headless run that did not compile fails as a compile failure | Codex | in progress | none | `plans/now/workflow-telemetry.md` T-3 — a headless run that did not compile fails as a compile failure |
