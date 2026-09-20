@@ -21,6 +21,13 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
    - Proof: `absent: scripts/scenario_actions.gd :: queen_inside_hive`
    - Next after: none -- c1-followups is complete.
 
+2. **[Claude] F1s -- a shared window base class**
+   - Plan: `plans/design/architecture-review.md` -- "F1s — a shared window base class"
+   - Files: `scripts/game_panel.gd`, `scripts/colony_panel.gd`, `scripts/winter_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/year_winter.gd`
+   - Check: `tests/test_layout_regression.py` passes unchanged and every panel's on-screen rectangle is pixel-identical; one hands-on check filed for opening and closing each window at two text scales
+   - Proof: `absent: scripts/foraging_panel.gd :: extends GamePanel`
+   - Next after: F2s -- a declarative UI gate table.
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude lane.
@@ -44,7 +51,7 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 One line each: the id, its plan, and the single thing it waits for.
 
 - **CB-2** (`plans/now/comb-builders.md`) -- CB-1 measured the cause (H1: builder stand points bunch, min spacing 11.47px vs 13.6px), and its fix waits for G2 to finish with the `bee_*.gd` modules.
-- **F1s, F2s, G3** (`plans/design/architecture-review.md`) -- F1s needs `scripts/scenario_actions.gd` clear of the Claude lane; F2s follows F1s; G3 follows F2s now that G2 has shipped.
+- **F2s, G3** (`plans/design/architecture-review.md`) -- F2s follows F1s; G3 follows F2s now that G2 has shipped.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
 - **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
