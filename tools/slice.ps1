@@ -85,8 +85,14 @@ function Add-SliceStopRecord {
             step    = $context.Step
             cause   = $Cause
         }
-        Add-Content -LiteralPath (Join-Path $commonDir "meadow-slice-stops.jsonl") `
-            -Value ($record | ConvertTo-Json -Compress)
+        # Windows PowerShell 5.1's Add-Content default is the active ANSI
+        # code page.  The shared JSONL ledger needs a stable encoding because
+        # session_cost.py reads it after the originating console is gone.
+        $line = ($record | ConvertTo-Json -Compress) + "`n"
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($line)
+        $path = Join-Path $commonDir "meadow-slice-stops.jsonl"
+        $stream = [System.IO.File]::Open($path, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+        try { $stream.Write($bytes, 0, $bytes.Length) } finally { $stream.Dispose() }
     }
     catch {
         # A measurement is never a reason to lose the diagnosis.
