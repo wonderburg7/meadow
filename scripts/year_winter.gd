@@ -303,7 +303,7 @@ func _refresh_recruit_gap(bees: Array) -> void:
 			])
 	main.hud.update_recruit_gap("Recruiting — %s" % " · ".join(parts))
 
-func _toggle_panel(panel: CanvasLayer) -> void:
+func _toggle_panel(panel: GamePanel) -> void:
 	if panel == main.nursery_panel:
 		_on_nursery_window_requested()
 		return
@@ -313,8 +313,8 @@ func _toggle_panel(panel: CanvasLayer) -> void:
 	_close_other_left_windows(panel)
 	panel.open()
 
-func _close_other_left_windows(opening: CanvasLayer) -> void:
-	for window in [main.colony_panel, main.foraging_panel, main.nursery_panel]:
+func _close_other_left_windows(opening: GamePanel) -> void:
+	for window in main.get_tree().get_nodes_in_group("left_window"):
 		if window != opening and window.is_open():
 			window.close()
 

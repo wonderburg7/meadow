@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends GamePanel
 ## The winter forecast: how long until it arrives, what the colony will
 ## need to get through it, and whether it is on track.
 ##
@@ -15,11 +15,7 @@ extends CanvasLayer
 ## several times its volume because that is what it is worth.
 
 const UI = preload("res://scripts/ui.gd")
-const UiTheme = preload("res://scripts/ui_theme.gd")
 
-signal closed()
-
-var panel: PanelContainer
 var headline: Label
 var detail: Label
 var verdict: Label
@@ -28,21 +24,9 @@ var verdict: Label
 var corner_text: String = ""
 
 func _ready() -> void:
-	process_mode = PROCESS_MODE_ALWAYS
-	layer = 11
-	add_to_group("winter_panel")
-
-	panel = PanelContainer.new()
-	panel.theme = UiTheme.build_theme()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
+	setup_layer("winter", "winter_panel")
 	# top-right, under the button bar, since that's where it's opened from
-	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	panel.offset_top = 44
-	panel.offset_right = -12
-	panel.custom_minimum_size = Vector2(330, 0)
-	panel.visible = false
-	add_child(panel)
+	build_top_right_window(330, 44, -12)
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
@@ -83,22 +67,6 @@ func _make_label(column: VBoxContainer, variation: String) -> Label:
 	label.custom_minimum_size = Vector2(300, 0)
 	column.add_child(label)
 	return label
-
-func toggle() -> void:
-	if panel.visible:
-		close()
-	else:
-		panel.visible = true
-
-func open() -> void:
-	panel.visible = true
-
-func close() -> void:
-	panel.visible = false
-	closed.emit()
-
-func is_open() -> bool:
-	return panel.visible
 
 ## `needs` comes from main.gd's _winter_forecast.
 func refresh(needs: Dictionary) -> void:

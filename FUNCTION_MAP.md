@@ -351,7 +351,7 @@ behaviour.
 1376 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## scenario_actions.gd (1,343 lines)
+## scenario_actions.gd (1,338 lines)
 
 The headless verbs, `when` clauses and layout assertions.
 
@@ -386,30 +386,31 @@ The headless verbs, `when` clauses and layout assertions.
 702  static func _do_select_soil(main: Node2D, action: Dictionary) -> void
 728  static func _do_select_cell(main: Node2D, action: Dictionary) -> void
 751  static func _do_open_window(main: Node2D, action: Dictionary) -> void
-801  static func _do_close_window(main: Node2D, action: Dictionary) -> void
-814  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
-827  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
-843  static func _do_retreat_challenge_stage(main: Node2D, action: Dictionary) -> void
-862  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
-888  static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void
-920  static func _do_set_cell_contents(main: Node2D, action: Dictionary) -> void
-944  static func _do_empty_cell(main: Node2D, action: Dictionary) -> void
-958  static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void
-971  # --- assertion checks -------------------------------------------------
-981  static func _do_assert(main: Node2D, action: Dictionary) -> bool
-991  static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
-1008 static func _queen_summary(main: Node2D, condition: Dictionary) -> String
-1036 static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
-1127 static func _resolve_named_panel(main: Node2D, name: String) -> Control
-1160 static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
-1207 static func _label_leading(control: Control) -> Dictionary
-1221 static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
-1261 static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
-1278 static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
-1289 static func _collect_empty_labels(node: Node, out: Array) -> void
-1295 static func _collect_collapsed_controls(node: Node, out: Array) -> void
-1315 static func _resolve_scoped_path(main: Node2D, path: String) -> Node
-1342 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
+795  static func _do_close_window(main: Node2D, action: Dictionary) -> void
+808  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
+821  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
+837  static func _do_retreat_challenge_stage(main: Node2D, action: Dictionary) -> void
+856  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
+882  static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void
+914  static func _do_set_cell_contents(main: Node2D, action: Dictionary) -> void
+938  static func _do_empty_cell(main: Node2D, action: Dictionary) -> void
+952  static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void
+965  # --- assertion checks -------------------------------------------------
+975  static func _do_assert(main: Node2D, action: Dictionary) -> bool
+985  static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
+1002 static func _queen_summary(main: Node2D, condition: Dictionary) -> String
+1030 static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
+1121 static func _resolve_named_panel(main: Node2D, name: String) -> Control
+1135 static func _game_panel(main: Node2D, key: String) -> GamePanel
+1155 static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
+1202 static func _label_leading(control: Control) -> Dictionary
+1216 static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
+1256 static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
+1273 static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
+1284 static func _collect_empty_labels(node: Node, out: Array) -> void
+1290 static func _collect_collapsed_controls(node: Node, out: Array) -> void
+1310 static func _resolve_scoped_path(main: Node2D, path: String) -> Node
+1337 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
 ## challenge_runner.gd (1,234 lines)

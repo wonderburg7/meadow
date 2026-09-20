@@ -22,4 +22,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-58 -- the top-left readouts follow the text size](ready/C-58.md)
 - [C-59 -- One placement tool at a time](ready/C-59.md)
 - [C-60 -- panel texture: flat, honeycomb and grain in all three themes](ready/C-60.md)
+- [C-61 -- every HUD window still opens, closes and sits where it did](ready/C-61.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)
