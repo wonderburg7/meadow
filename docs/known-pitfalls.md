@@ -187,7 +187,7 @@ of these has bitten more than once:
   error and made the remainder look like a rounding problem. If a control
   sits between two unequal reserves, compute its left edge from the
   reserves; never centre it on the parent and never paper over the offset
-  with a scale factor. See `plans/now/ui.md` UI-R-1.
+  with a scale factor. See `plans/archive/ui_2026-09-20.md` UI-R-1.
 - **A `ScrollContainer` gives its child the child's minimum width, not its
   own, unless the child asks to expand.** Godot 4 stretches a
   `ScrollContainer`'s content to the container's size only when the content
