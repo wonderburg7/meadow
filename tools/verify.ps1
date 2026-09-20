@@ -108,7 +108,7 @@ function Get-FailureLine {
 function Test-LifecycleTouched {
     $paths = @("tools/slice.ps1", "tools/hook_log.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/check_docs.py", "tools/verify.ps1", "NEXTSTEPS.md", "tests/")
     try {
-        $changed = @(& git -C $PSScriptRoot diff --name-only "master...HEAD" 2>$null)
+        $changed = @(& git -C $PSScriptRoot diff --name-only "$(if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" })...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)
         if ($LASTEXITCODE -ne 0) { return $true }
     }
