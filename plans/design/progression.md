@@ -7,7 +7,7 @@ Canonical detailed plan for the in-run skill tree, campaign meta progression, an
 
 **Reconciled against `plans/design/product-scope.md` on 2026-09-03.** That plan settled two things this file previously left open or stated differently: Pollinator Points, not royal jelly, is the universal tier-4 gate (§4.2, §5.1, §5.2, §5.9, §6 below), and the closed alpha's build order skips the campaign meta tree (§11 below). Where the two plans differ on anything else, `product-scope.md` is the newer, higher-level authority.
 
-This file is the source of truth for skill-tree/adaptation design — `plans/now/ui.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
+This file is the source of truth for skill-tree/adaptation design — `plans/archive/ui_2026-09-20.md`, `DESIGN_BACKLOG.md` §1/§7.3 and `ROADMAP.md`'s "skill-tree framework" line point here rather than repeating the catalogue.
 
 Phase A of section 11 was scheduled on 4 Sep 2026 (`NEXTSTEPS.md`), when Dave paused the hands-on checks and asked for work that does not wait on him: Phase A steps 1-4 and Phase B step 5 change no gameplay and are proved by `tools/verify.ps1` alone. Everything from Phase B step 6 on puts something on screen. The design below is unchanged by that scheduling call.
 
@@ -18,7 +18,7 @@ Phase A of section 11 was scheduled on 4 Sep 2026 (`NEXTSTEPS.md`), when Dave pa
 - **Scenarios** (not "Starter Mode") stays the name for preset runs — already shipped, with Relaxed/Standard/Demanding/Custom presets.
 - **Sandbox** is a distinct, separate mode: post-campaign, no win conditions, toggle every mechanic unlocked across the campaign. This is `DESIGN_BACKLOG.md` §1's "open world mode," renamed and formalised here. It is a **different concept from Scenarios**, not a replacement for the name. Sandbox has no build plan yet (section 12).
 - Run kinds, for the rest of this document: **Challenge**, **Scenario**, **Sandbox**.
-- **Defence** is spelt the British way throughout, per `CLAUDE.md`'s British English rule. This changes the "Defense" spelling settled 21 Aug in `plans/now/ui.md`. Every ID below is `skill.defence.*`. Nothing in the game's own scripts spells it the American way today, so this costs no rename — only the earlier plan text used "Defense".
+- **Defence** is spelt the British way throughout, per `CLAUDE.md`'s British English rule. This changes the "Defense" spelling settled 21 Aug in `plans/archive/ui_2026-09-20.md`. Every ID below is `skill.defence.*`. Nothing in the game's own scripts spells it the American way today, so this costs no rename — only the earlier plan text used "Defense".
 - **Language setting.** Display text must stay separable from stable IDs so a future setting can switch between UK and US English, and later other languages. **Do not scope or build that setting now** — the only requirement on this plan is that no display string is ever a save key, a dependency, or a lookup key. Section 3's stable-ID convention already guarantees this; keep it.
 
 ## 1. Purpose
@@ -365,7 +365,7 @@ Five node states, drawn from `UiTheme` rather than hard-coded colours:
 
 **The panel asks the resolver once per open, not once per frame.** `Skills.entry()` is a linear scan of the catalogue and `purchase_blocker()` calls it seven or eight times, plus a `for_sector_tier()` filter that allocates an Array. That is nothing at all for one node on one click, and roughly 300 scans and 40 allocations per frame if a redraw recomputes every tile's state — on a full-screen overlay, which is exactly where a per-frame `_process` is easiest to add without noticing. Resolve every tile's state into a dictionary when the panel opens and after each purchase, draw from that, and leave `shapes.gd`'s geometry computed once per open too. If a later slice ever does need per-frame resolution, `.claude/rules/performance.md` applies: measure it first, and index `SKILLS` by id rather than making the panel poll faster.
 
-Panel behaviour: opens as a full-screen overlay with the simulation paused, following `plans/now/ui.md`'s existing pre-run menu precedent for not running the sim behind a full-screen menu (UI-L). The centre tile shows the colony's current spendable stores — nectar, pollen, honey, bee bread, royal jelly — so the player never has to close the tree to check whether they can afford something. Purchases are not refundable and there is no in-run respec.
+Panel behaviour: opens as a full-screen overlay with the simulation paused, following `plans/archive/ui_2026-09-20.md`'s existing pre-run menu precedent for not running the sim behind a full-screen menu (UI-L). The centre tile shows the colony's current spendable stores — nectar, pollen, honey, bee bread, royal jelly — so the player never has to close the tree to check whether they can afford something. Purchases are not refundable and there is no in-run respec.
 
 ### 8.5 The HUD Skills button
 
@@ -378,7 +378,7 @@ Added to the **second row of the top-right HUD bar** (`hud.gd::_build_top_right_
 - Visibility is a `stage_gate.gd` key, so a Challenge can hide it — Challenges 1 and 2 should hide it, the same way the Foraging button is hidden there (UI-K).
 - Regenerate `FUNCTION_MAP.md` after touching `hud.gd`.
 
-Full detail lives here rather than in `plans/now/ui.md` because this button is part of the progression build and is not itself a scheduled UI slice; `plans/now/ui.md`'s Deferred decisions section points here.
+Full detail lives here rather than in `plans/archive/ui_2026-09-20.md` because this button is part of the progression build and is not itself a scheduled UI slice; `plans/archive/ui_2026-09-20.md`'s Deferred decisions section points here.
 
 ## 9. Typed effects, modifiers and validation
 

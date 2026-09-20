@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, and E1 shipped 19 Sep 2026, leaving F1s, F2s and G3 | Owner: Dave / Claude Code | Next: F1s -- a shared window base class, once `scripts/scenario_actions.gd` is clear of the Claude lane; the Codex lane leads with SM-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, and E1 shipped 19 Sep 2026, leaving F1s, F2s and G3 | Owner: Dave / Claude Code | Next: F1s -- a shared window base class, now queued in the Claude lane; the Codex lane leads with SM-1 while G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -63,7 +63,7 @@ queue item's `Files:` line. Shipped the same day.
 
 **F. B1 is admitted early too, 12 Sep 2026.** D1 shipped in full and left the
 Claude lane with nothing else startable -- its own `Next after` (B1) is one of
-the slices Decision A holds, and nothing in `plans/now/ui.md`,
+the slices Decision A holds, and nothing in `plans/archive/ui_2026-09-20.md`,
 `plans/archive/CHALLENGE1_2026-09-15.md` or `plans/design/progression.md` was ready either.
 Asked in this session, Dave chose to lift the hold for B1 specifically rather
 than the whole A-G backlog: it touches only `scripts/resources.gd` and
@@ -592,7 +592,7 @@ three separate slices does not exist -- `tests/` reaches Challenge code only
 through static regex in `source_checks.py`.
 
 **Affected.** `plans/archive/CHALLENGE1_2026-09-15.md` Slices 21, 22, 24 and 26;
-`plans/now/ui.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
+`plans/archive/ui_2026-09-20.md` UI-U-1; and A4, C2, F2s and G3 below. Slices 24 and 26 are
 the acute pair: their acceptance is *only* headless assertions, so today they
 have no acceptance at all.
 

@@ -80,6 +80,8 @@ const MARKER_COLOUR := Color(1.0, 0.85, 0.3, 0.55)
 ## them; stage_gate itself deliberately remains string-keyed and unchanged.
 ## `goal_text` feeds the corner readout (hud.gd's set_challenge_goal).
 ## `prompts` feeds gallerin_panel.queue_prompts() straight through.
+## Challenge 1 records also carry `setup`, the world that stage starts from;
+## challenge_stage_setup.gd applies it when the debug arrows jump to the stage.
 ## `on_enter`/`on_exit` optionally name runner-owned presentation or one-shot
 ## stage effects. They keep stage-boundary behaviour in the data alongside the
 ## goal it belongs to instead of growing id-specific branches in the runner.
@@ -87,6 +89,7 @@ const UNLOCK_TRIGGER_TYPES := ["design", "skill", "stage", "event", "interaction
 
 const STAGES_1 := [
 	{
+		"setup": {"tunnel_open": false, "queen_at": "tunnel", "built_cells": 0, "selection": "none"},
 		"id": "1.1", "goal": "entrance_tunnel_cleared", "condition": {"custom": "_goal_check_entrance_tunnel_cleared"}, "unlocked_keys": [],
 		"instruction": "",
 		"goal_text": "Goal: watch the queen open the way into the hive.",
@@ -96,6 +99,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"tunnel_open": true, "queen_at": "tunnel", "built_cells": 0},
 		"id": "1.2", "goal": "queen_reached_cavity", "condition": {"custom": "_goal_check_queen_reached_cavity"},
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"instruction": "right-click the marked cavity to send her in",
@@ -106,6 +110,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "cavity", "selection": "none"},
 		"id": "1.3", "goal": "queen_selected", "condition": {"custom": "_goal_check_queen_selected"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"instruction": "left-click the queen to select her",
 		"goal_text": "Goal: select the queen.",
@@ -115,6 +120,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "cavity", "selection": "queen"},
 		"id": "1.4", "goal": "hive_points_visited", "condition": {"custom": "_goal_check_hive_points_visited"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"instruction": "right-click each marked place in the cavity",
 		"goal_text": "Goal: inspect the three marked places in the cavity.",
@@ -124,6 +130,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "cavity", "built_cells": 0},
 		"id": "1.5", "goal": "first_cell_built", "condition": {"built_cells_at_least": 1}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		"instruction": "use Build cell, then click the marked centre",
 		"goal_text": "Goal: build the colony's first comb cell.",
@@ -133,6 +140,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "hive_floor", "built_cells": 1},
 		"id": "1.6", "goal": "queen_reached_meadow", "condition": {"custom": "_goal_check_queen_reached_meadow"},
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}],
 		# The manual-forage arc: the player issues every move, collection and
@@ -148,6 +156,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "meadow_door", "built_cells": 1},
 		"id": "1.7", "goal": "meadow_points_visited", "condition": {"custom": "_goal_check_meadow_points_visited"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
 		"instruction": "right-click each marked place in the meadow",
@@ -158,6 +167,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "meadow_door", "queen_load": {"amount": 0.0}, "runner": {"c1_queen_collections": 0}},
 		"id": "1.8", "goal": "first_flower_collected", "condition": {"custom": "_goal_check_first_flower_collected"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
 		"instruction": "right-click a flower to gather from it",
@@ -168,6 +178,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "meadow_door", "runner": {"c1_queen_collections": 1}},
 		"id": "1.9", "goal": "second_flower_collected", "condition": {"custom": "_goal_check_second_flower_collected"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
 		"instruction": "right-click another flower to gather from it",
@@ -178,6 +189,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "meadow_door", "queen_load": {"type": "nectar", "amount": 5.0}, "built_cells": 1, "runner": {"c1_queen_collections": 2}},
 		"id": "1.10", "goal": "harvest_deposited", "condition": {"custom": "_goal_check_harvest_deposited"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}],
 		"player_driven": true,
 		"instruction": "right-click the hive, then right-click the wax cell",
@@ -188,6 +200,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"queen_at": "hive_floor", "queen_load": {"amount": 0.0}, "built_cells": 1, "cell_stores": [{"type": "nectar", "amount": 0.0}], "queen_role": "egg_layer"},
 		"id": "1.11", "goal": "nectar_target", "condition": {"custom": "_goal_check_nectar_target"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"instruction": "give her the Forager role with nectar focus",
 		"goal_text": "Goal: automate nectar gathering.",
@@ -199,6 +212,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"built_cells": 1, "cell_stores": [{"type": "nectar", "amount": 150.0}], "queen_role": "forager", "queen_focus": "nectar"},
 		"id": "1.12", "goal": "second_cell_built", "condition": {"built_cells_at_least": 2}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar"],
 		"instruction": "use Build cell to place a second cell",
 		"goal_text": "Goal: build a second comb cell.",
@@ -208,6 +222,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"built_cells": 2, "cell_stores": [{"type": "nectar", "amount": 150.0}], "pollen_cell": -1},
 		"id": "1.13", "goal": "pollen_cell_designated", "condition": {"cell_count": {"designated": "pollen", "explicit": true, "at_least": 1}}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "cell_designation"],
 		"instruction": "designate the second cell for pollen",
 		"goal_text": "Goal: set the new cell aside for pollen.",
@@ -218,6 +233,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"built_cells": 2, "pollen_cell": 1, "cell_stores": [{"type": "nectar", "amount": 150.0}], "queen_focus": "nectar"},
 		"id": "1.14", "goal": "pollen_target", "condition": {"custom": "_goal_check_pollen_target"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"instruction": "switch her focus to pollen",
 		"goal_text": "Goal: automate pollen gathering.",
@@ -228,6 +244,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"built_cells": 2, "cell_stores": [{"type": "nectar", "amount": 150.0}, {"type": "pollen", "amount": 75.0}]},
 		"id": "1.15", "goal": "third_cell_built", "condition": {"built_cells_at_least": 3}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen"],
 		"instruction": "use Build cell to place a third cell",
 		"goal_text": "Goal: build a third cell for the colony's next generation.",
@@ -237,6 +254,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"built_cells": 3, "cell_stores": [{"type": "nectar", "amount": 150.0}, {"type": "pollen", "amount": 75.0}], "brood_cells": 0, "queen_role": "forager"},
 		"id": "1.16", "goal": "first_egg_laid", "condition": {"brood_cells_at_least": 1}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: let the queen lay the colony's first egg.",
 		"prompts": [
@@ -245,6 +263,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"brood_cells": 1, "queen_role": "egg_layer", "new_worker": false},
 		"id": "1.17", "goal": "nectar_forager_hatched", "condition": {"role_count": {"role": "forager", "focus": "nectar", "at_least": 1}}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: care for the egg until the first worker hatches.",
 		"prompts": [
@@ -253,6 +272,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"new_worker": true, "selection": "none"},
 		"id": "1.18", "goal": "new_bee_selected", "condition": {"custom": "_goal_check_new_bee_selected"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: select the new worker.",
 		"prompts": [
@@ -261,6 +281,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {"new_worker": true, "selection": "new_worker"},
 		"id": "1.19", "goal": "new_bee_left_hive", "condition": {"custom": "_goal_check_new_bee_left_hive"}, "unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "Goal: send the new worker out into the meadow.",
 		"prompts": [
@@ -269,6 +290,7 @@ const STAGES_1 := [
 		],
 	},
 	{
+		"setup": {},
 		"id": "1.20", "goal": "complete", "condition": {"custom": "_goal_check_complete"},
 		"unlocked_keys": [{"key": "queen_commands", "trigger": "event"}, {"key": "meadow_view", "trigger": "interaction"}, "forager", "nectar", "pollen", "laying"],
 		"goal_text": "",

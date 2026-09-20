@@ -31,7 +31,7 @@ $script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 #   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
 #   --- environment ---         Get-GodotCapability, Get-DoctorEnvironmentFailures
-#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish
+#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish, Invoke-SliceArchiveAndRefill
 #   --- post-merge ---          Invoke-SlicePostMergeCleanup
 # A failing command prints one "slice <command> stopped" block naming the
 # step, cause, fix and how to retry. That block is the diagnosis.
@@ -186,7 +186,18 @@ function Invoke-WithLifecycleLock {
 # pushed) are shared with Invoke-SlicePostMergeCleanup, which resume already
 # reaches once Test-SliceBranchMerged is true -- ground truth, not the
 # journal, is what makes that leg resumable, so it is not re-litigated here.
-$script:ClosingPhaseOrder = @("verified", "branch-committed", "archived", "refilled", "merged")
+#
+# "actions-committed" (L-13) was inserted between "branch-committed" and
+# "archived". A journal only ever holds a phase *name*, and every name the
+# previous order used keeps its relative position, so a journal written by
+# the old order still means what it meant: "branch-committed" resumes into
+# the new action; "archived" or "refilled" skip it, which is safe because
+# the action only produces what those gates already proved present. Never
+# rename or reorder an existing phase -- that, not an insertion, is what
+# would change an in-flight journal's meaning. A name this order does not
+# know (a journal from a newer slice.ps1) resolves to "nothing done", which
+# redoes work rather than skipping it.
+$script:ClosingPhaseOrder = @("verified", "branch-committed", "actions-committed", "archived", "refilled", "merged")
 
 function Get-ClosingJournalPath {
     param([string]$Root)
@@ -1325,13 +1336,27 @@ function Test-SuccessorDeferred {
     # check_docs.py's check_queue_section_agreement uses, so the prose naming
     # other ids as reasons stays allowed.
     param([string]$Text, [string]$Id)
-    if (-not $Id) { return $false }
+    return ($null -ne (Get-SuccessorDeferralReason -Text $Text -Id $Id))
+}
+
+function Get-SuccessorDeferralReason {
+    # The rest of $Id's bullet under "## Not in the queue, and why" -- the
+    # part after its " -- ", which says what it waits for -- or $null when
+    # $Id is not deferred there. The end-of-slice report quotes it, so a
+    # deferred successor reads as deliberate rather than a failed refill.
+    param([string]$Text, [string]$Id)
+    if (-not $Id) { return $null }
     $section = [regex]::Match($Text, '(?ms)^## Not in the queue, and why\s*$(.*?)(?=^## |\Z)')
-    if (-not $section.Success) { return $false }
-    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*')) {
-        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") { return $true }
+    if (-not $section.Success) { return $null }
+    foreach ($bullet in [regex]::Matches($section.Groups[1].Value, '(?m)^-\s+\*\*(.+?)\*\*(.*?)\r?$')) {
+        if ($bullet.Groups[1].Value -match "\b$([regex]::Escape($Id))\b") {
+            $rest = $bullet.Groups[2].Value.Trim()
+            $parts = $rest -split '\s--\s', 2
+            if ($parts.Count -eq 2) { return $parts[1].Trim() }
+            return $rest
+        }
     }
-    return $false
+    return $null
 }
 
 function Get-CopyPastePromptLine {
@@ -1344,6 +1369,107 @@ function Get-CopyPastePromptLine {
     $match = [regex]::Match($Text, $pattern)
     if ($match.Success) { return $match.Groups[1].Value.Trim() }
     return $null
+}
+
+function Save-SliceBranchWork {
+    # Stage and commit everything outstanding in the slice worktree; a clean
+    # tree is left alone rather than given an empty commit.
+    param([string]$Root, [string]$Message)
+    git -C $Root add -A
+    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+    $staged = git -C $Root diff --cached --name-only
+    if ($staged) {
+        git -C $Root commit -m $Message | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+    }
+}
+
+function Invoke-SlicePythonTool {
+    # Run one of the repository's Python tools and hand back its exit code
+    # and every output line. Local "Continue": PowerShell 5.1 turns a
+    # redirected native stderr line into a terminating ErrorRecord under
+    # "Stop", which would replace the tool's own refusal with an exception.
+    param([string]$Root, [string]$PythonPath, [string[]]$Arguments)
+    $ErrorActionPreference = "Continue"
+    $python = if ($PythonPath) { $PythonPath } else { & (Join-Path $Root "tools\verify.ps1") -ResolvePythonOnly | Select-Object -Last 1 }
+    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
+        throw "could not resolve Python for $($Arguments[0]); pass -PythonPath"
+    }
+    $output = @(& $python @Arguments 2>&1 | ForEach-Object { $_.ToString() })
+    return [pscustomobject]@{ Exit = $LASTEXITCODE; Output = $output }
+}
+
+function Get-SliceArchiveState {
+    # What the "archived" gate reads, shared with the action that satisfies
+    # it. State is "done" once the heading has left its plan and a
+    # plans/archive/<id>_*.md record names that heading; "reused" when such
+    # files exist but none names it (an id shipped before under another
+    # heading); otherwise "missing" (no record) or "live" (heading still in
+    # the plan).
+    param([string]$Root, [object]$Item, [string]$Id)
+    $archiveMatches = @(Get-ChildItem -Path (Join-Path $Root "plans\archive") -Filter "$Id`_*.md" -File -ErrorAction SilentlyContinue)
+    $planPath = Join-Path $Root $Item.Plan
+    $headingLive = $false
+    if ($Item.Heading -and (Test-Path -LiteralPath $planPath -PathType Leaf)) {
+        $planText = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
+        $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($Item.Heading))
+        $headingLive = $headingRegex.IsMatch($planText)
+    }
+    # An id can be reused: plans/now/ui-w.md's UI-W-1..4 repeat four
+    # ids that shipped from the ui-windows plan in September, so a
+    # file named <id>_<date>.md is not on its own evidence that *this*
+    # slice was archived -- an old namesake would satisfy the gate
+    # while this slice's specification was simply deleted. Require a
+    # record that names this slice's own heading. Deliberately not a
+    # git range: `finish` is resumable after the merge, where every
+    # such range is empty (17 Sep 2026 plan review).
+    $namesThisSlice = -not $Item.Heading
+    foreach ($candidate in $archiveMatches) {
+        $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
+        if ($candidateText -like "*$($Item.Heading)*") { $namesThisSlice = $true; break }
+    }
+    $state = if ($archiveMatches -and -not $namesThisSlice -and -not $headingLive) { "reused" }
+        elseif (-not $archiveMatches) { "missing" }
+        elseif ($headingLive) { "live" }
+        else { "done" }
+    return [pscustomobject]@{ State = $state; HeadingLive = $headingLive; Count = $archiveMatches.Count }
+}
+
+function Invoke-SliceArchiveAndRefill {
+    # L-13: do the archive move (tools/archive_slice.py, L-10) and the lane
+    # deletion (tools/refill_lane.py, L-11) that the "archived" and
+    # "refilled" gates would otherwise demand by hand, and commit each.
+    # Each tool runs only when ground truth says its step is still owed, so
+    # a branch that did either by hand -- or a resume after this already ran
+    # -- passes straight through, and the gates stay as the proof that it
+    # worked. Adding the successor stays with the session until L-12.
+    param([string]$Root, [object]$Item, [string]$Id, [string]$Lane, [string]$Trailer, [string]$PythonPath)
+    if (-not $Item) { return }
+
+    $archiveTool = Join-Path $Root "tools\archive_slice.py"
+    $archive = Get-SliceArchiveState -Root $Root -Item $Item -Id $Id
+    if ($archive.HeadingLive -and (Test-Path -LiteralPath $archiveTool -PathType Leaf)) {
+        # archive_slice.py refuses a dirty tree (so `git checkout` can undo
+        # its move); anything a resume left uncommitted goes in first.
+        Save-SliceBranchWork -Root $Root -Message "$Id -- finish outstanding work`n`n$Trailer"
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($archiveTool, $Id, "--root", $Root)
+        $run.Output | ForEach-Object { Write-Output $_ }
+        if ($run.Exit -ne 0) {
+            Stop-Slice -Cause "$Id -- tools/archive_slice.py $Id refused (exit $($run.Exit)); its reason is printed above and nothing was moved" -Fix "fix what it names on this branch (or move the section under '$($Item.Heading)' into plans/archive/$Id`_$(Get-Date -Format yyyy-MM-dd).md by hand), commit, and retry"
+        }
+        Save-SliceBranchWork -Root $Root -Message "$Id -- archive its plan section`n`n$Trailer"
+    }
+
+    $refillTool = Join-Path $Root "tools\refill_lane.py"
+    $stillQueued = Get-NextUpItems -Root $Root | Where-Object { $_.Id -eq $Id }
+    if ($stillQueued -and (Test-Path -LiteralPath $refillTool -PathType Leaf)) {
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($refillTool, "--delete", $Id, "--root", $Root)
+        $run.Output | ForEach-Object { Write-Output $_ }
+        if ($run.Exit -ne 0) {
+            Stop-Slice -Cause "$Id -- tools/refill_lane.py --delete $Id refused (exit $($run.Exit)); its reason is printed above and NEXTSTEPS.md is unchanged" -Fix "on this branch add its successor ($($Item.NextAfter)) to ### $Lane lane with full Plan/Files/Check/Proof/Next after lines -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id and commits both"
+        }
+        Save-SliceBranchWork -Root $Root -Message "$Id -- remove it from the $Lane lane`n`n$Trailer"
+    }
 }
 
 function Invoke-SliceFinish {
@@ -1448,47 +1574,27 @@ function Invoke-SliceFinish {
 
     Set-SliceStep "committing outstanding work on the branch"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "branch-committed")) {
-        git add -A
-        if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-        $staged = git diff --cached --name-only
-        if ($staged) {
-            $commitMessage = "$id -- finish outstanding work`n`n$trailer"
-            git commit -m $commitMessage | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-        }
+        Save-SliceBranchWork -Root $worktreeRoot -Message "$id -- finish outstanding work`n`n$trailer"
         Invoke-InjectedLifecycleFailure -Phase "branch-committed"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "branch-committed"
+    }
+
+    Set-SliceStep "archiving the plan section and deleting the item from the $lane lane"
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "actions-committed")) {
+        Invoke-SliceArchiveAndRefill -Root $worktreeRoot -Item $item -Id $id -Lane $lane -Trailer $trailer -PythonPath $PythonPath
+        Invoke-InjectedLifecycleFailure -Phase "actions-committed"
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "actions-committed"
     }
 
     Set-SliceStep "archive gate (the slice's plan section must be in plans/archive/)"
     if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "archived")) {
         if ($item) {
-            $archiveMatches = @(Get-ChildItem -Path (Join-Path $worktreeRoot "plans\archive") -Filter "$id`_*.md" -File -ErrorAction SilentlyContinue)
-            $planPath = Join-Path $worktreeRoot $item.Plan
-            $headingStillLive = $false
-            if ($item.Heading -and (Test-Path -LiteralPath $planPath -PathType Leaf)) {
-                $planText = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
-                $headingRegex = [regex]::new('(?im)^#{1,6}\s+.*' + [regex]::Escape($item.Heading))
-                $headingStillLive = $headingRegex.IsMatch($planText)
+            $archive = Get-SliceArchiveState -Root $worktreeRoot -Item $item -Id $id
+            if ($archive.State -eq "reused") {
+                Stop-Slice -Cause "$id -- plans/archive/ has $($archive.Count) file(s) for this id, none naming '$($item.Heading)': the id is reused, so nothing there records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, including its heading text, commit it on this branch, and retry"
             }
-            # An id can be reused: plans/now/ui-w.md's UI-W-1..4 repeat four
-            # ids that shipped from the ui-windows plan in September, so a
-            # file named <id>_<date>.md is not on its own evidence that *this*
-            # slice was archived -- an old namesake would satisfy the gate
-            # while this slice's specification was simply deleted. Require a
-            # record that names this slice's own heading. Deliberately not a
-            # git range: `finish` is resumable after the merge, where every
-            # such range is empty (17 Sep 2026 plan review).
-            $archiveNamesThisSlice = -not $item.Heading
-            foreach ($candidate in $archiveMatches) {
-                $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
-                if ($candidateText -like "*$($item.Heading)*") { $archiveNamesThisSlice = $true; break }
-            }
-            if ($archiveMatches -and -not $archiveNamesThisSlice -and -not $headingStillLive) {
-                Stop-Slice -Cause "$id -- plans/archive/ has $($archiveMatches.Count) file(s) for this id, none naming '$($item.Heading)': the id is reused, so nothing there records this slice" -Fix "write this slice's own record to plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md, including its heading text, commit it on this branch, and retry"
-            }
-            if (-not $archiveMatches -or $headingStillLive) {
-                $archiveState = if (-not $archiveMatches) { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
+            if ($archive.State -ne "done") {
+                $archiveState = if ($archive.State -eq "missing") { "no plans/archive/$id`_*.md file exists" } else { "the heading '$($item.Heading)' is still in $($item.Plan)" }
                 Stop-Slice -Cause "$id -- $archiveState" -Fix "on this branch run python tools/archive_slice.py $id (it moves the section under '$($item.Heading)' out of $($item.Plan) into plans/archive/$id`_$(Get-Date -Format yyyy-MM-dd).md and leaves a one-line pointer; it needs a clean tree, so commit first), commit, and retry"
             }
         }
@@ -1608,16 +1714,29 @@ function Invoke-SliceFinish {
     $mergedNextSteps = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $root "NEXTSTEPS.md")
     $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
 
+    $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
+
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
     if ($item -and -not $successorId) {
         $nextSliceLine = $item.NextAfter
     }
     elseif ($successorId) {
         $successorItem = $mergedItems | Where-Object { $_.Id -eq $successorId -and $_.Lane -eq $lane } | Select-Object -First 1
-        $nextSliceLine = if ($successorItem) { "$($successorItem.Id) -- $($successorItem.Title)" } else { "$successorId -- (not found in NEXTSTEPS.md; check the refill)" }
+        $deferralReason = if ($successorItem) { $null } else { Get-SuccessorDeferralReason -Text $mergedNextSteps -Id $successorId }
+        if ($successorItem) {
+            $nextSliceLine = "$($successorItem.Id) -- $($successorItem.Title)"
+        }
+        elseif ($null -ne $deferralReason) {
+            # The refill gate accepted a deferred successor (L-13 -> L-12 on
+            # 19 Sep 2026), so the next slice is simply the lane's new lead.
+            $deferralNote = "$successorId is deferred"
+            if ($deferralReason) { $deferralNote += ": $deferralReason" }
+            $nextSliceLine = if ($laneLead) { "$($laneLead.Id) -- $($laneLead.Title)  ($deferralNote)" } else { "none -- the $lane lane is empty ($deferralNote)" }
+        }
+        else {
+            $nextSliceLine = "$successorId -- (not found in NEXTSTEPS.md; check the refill)"
+        }
     }
-
-    $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
     $queueLine = if ($laneLead) { "$lane lane now leads with $($laneLead.Id) -- $($laneLead.Title)" } else { "$lane lane is empty -- refill it from an owning plan" }
     $adviceLine = "none -- the $lane lane is empty"
     $connectorLine = "none needed"

@@ -205,6 +205,10 @@ var show_selection_trait: bool = true
 ## "high_contrast".
 var ui_theme: String = "dark"
 
+## Read by ui_theme.gd's PanelBox. "flat" (default), "comb" (pixel hexagon
+## tiling in panel_line) or "grain" (per-pixel jitter over panel_bg).
+var panel_texture: String = "flat"
+
 ## Read by ui_theme.gd's build_theme(). "sans" (default, no asset
 ## needed), "atkinson", "opensans", "opendyslexic", "munro" or
 ## "silkscreen" -- each of the non-default faces loads its font file

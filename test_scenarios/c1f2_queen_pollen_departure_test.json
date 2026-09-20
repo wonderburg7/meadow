@@ -1,0 +1,217 @@
+{
+  "challenge": 1,
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.14"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.14"
+      }
+    },
+    {
+      "do": "set_queen_load",
+      "resource": "nectar",
+      "amount": 5,
+      "state": "IN_HIVE_TO_CELL",
+      "target_cell": {
+        "built_index": 1
+      }
+    },
+    {
+      "do": "watch_queen_states",
+      "states": [
+        "SEEK_FLOWER",
+        "SEARCHING",
+        "TO_FLOWER",
+        "COLLECTING"
+      ]
+    },
+    {
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_pollen"
+    },
+    {
+      "do": "wait",
+      "seconds": 10
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "camera_following_queen": true
+      }
+    },
+    {
+      "do": "assert",
+      "within_seconds": 50,
+      "condition": {
+        "queen_inside_hive": false,
+        "queen_load_empty": true
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "queen_watch_hits_at_most": 0
+      }
+    },
+    {
+      "do": "watch_queen_states",
+      "states": []
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.13"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.14"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.14"
+      }
+    },
+    {
+      "do": "watch_queen_states",
+      "states": [
+        "SEEK_FLOWER",
+        "SEARCHING",
+        "TO_FLOWER",
+        "COLLECTING"
+      ]
+    },
+    {
+      "do": "set_queen_load",
+      "amount": 0,
+      "state": "SEEK_FLOWER"
+    },
+    {
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_nectar"
+    },
+    {
+      "do": "assert",
+      "within_seconds": 120,
+      "condition": {
+        "challenge_overflow_discards": {
+          "at_least": 1,
+          "at_most": 1
+        }
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "queen_watch_hits_at_most": 0
+      }
+    },
+    {
+      "do": "wait",
+      "seconds": 30
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "queen_inside_hive": true,
+        "challenge_overflow_discards": {
+          "at_least": 1,
+          "at_most": 1
+        }
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "1.13"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "1.14"
+    },
+    {
+      "do": "settle",
+      "ticks": 130
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "challenge_stage_id": "1.14"
+      }
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 1
+      },
+      "resource": "nectar",
+      "amount": 150
+    },
+    {
+      "do": "watch_queen_states",
+      "states": [
+        "SEEK_FLOWER",
+        "SEARCHING",
+        "TO_FLOWER",
+        "COLLECTING"
+      ]
+    },
+    {
+      "do": "empty_cell",
+      "cell": {
+        "built_index": 1
+      }
+    },
+    {
+      "do": "assert",
+      "within_seconds": 120,
+      "condition": {
+        "cell_empty": {
+          "built_index": 1
+        }
+      }
+    },
+    {
+      "do": "assert",
+      "within_seconds": 60,
+      "condition": {
+        "queen_inside_hive": false
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "queen_watch_hits_at_most": 0
+      }
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 3
+  }
+}
