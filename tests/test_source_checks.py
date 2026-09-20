@@ -434,6 +434,50 @@ class DiagnosticWritersTest(unittest.TestCase):
         self.assertFalse(events[0]["ok"])
         self.assertNotIn("path/to/file", json.dumps(events[0]))
 
+    def test_bash_hook_skips_a_directory_change_and_names_python_script(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1",
+            "tool_input": {"command": r"cd X && python tools\foo.py"},
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("python foo.py", self.events()[0]["cmd"])
+
+    def test_bash_hook_skips_leading_environment_assignments(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1",
+            "tool_input": {"command": "VAR=1 git status"},
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("git", self.events()[0]["cmd"])
+
+    def test_bash_hook_treats_a_pipe_as_a_segment_boundary(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1",
+            "tool_input": {"command": "cd X | VAR=1 git status"},
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("git", self.events()[0]["cmd"])
+
     def test_failure_hook_records_the_same_kind_with_ok_false(self):
         payload = json.dumps({
             "cwd": str(self.root), "session_id": "s1",

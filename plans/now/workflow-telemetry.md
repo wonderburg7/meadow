@@ -1,7 +1,7 @@
 # Workflow telemetry — make the instruments answer the questions they were built for
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: T-1 -- `tool_bash` records the command that ran, queued in the Codex lane behind L-14 | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Codex | Next: T-3 -- a headless run that did not compile fails as a compile failure | Dependency: none | Verified: 2026-09-20
 
 **Objective.** `plans/now/agent-lifecycle.md` sets a measured target -- raise
 the implementing share of a session's context above 40% -- and every decision
@@ -12,12 +12,10 @@ support are being taken blind. Fix the instruments, not the numbers.
 **State.** Measured on 20 Sep 2026 from `.git/meadow-diagnostics.jsonl`,
 1220 records, and `python tools/session_cost.py --events`:
 
-- **`tool_bash` records `cd`.** 519 of 551 `tool_bash` records have
-  `cmd` = `cd`. `tools/hook_log.py` stores `words[0]` of the command on the
-  stated assumption that "the first word answers no question the first word
-  does not"; in a worktree every Bash call is prefixed `cd <path> && ...`, so
-  the first word is the shell prelude 94% of the time. `--events`' one
-  derived line is `failing commands cd=10`.
+- **`tool_bash` recorded `cd`.** 519 of 551 records had `cmd` = `cd`, because
+  worktree commands begin `cd <path> && ...`. T-1 now skips leading `cd` and
+  `NAME=value` setup, records the first operative program (with the script
+  basename for Python and PowerShell), and leaves the event count unchanged.
 - **Level drift has never assessed a single slice.** `--events` prints
   `level drift none / not assessable: 12`. `slice_claimed.branch` is the
   slice's branch (`claude/UI-X-2`, `codex/SF-1`); `session_start.branch` is
@@ -40,7 +38,6 @@ while triaging it, and this plan is where all three are owned.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T-1 | `tool_bash` records the command that ran, not the `cd` in front of it | `tools/hook_log.py`, `tools/session_cost.py`, `tests/test_source_checks.py` | yes | medium |
 | T-3 | A headless run that did not compile fails as a compile failure | `tools/run_scenario.py`, `docs/headless-run-contract.md` | yes | medium |
 
 Dependencies, stated rather than implied. T-2 and T-1 both edit
@@ -57,41 +54,7 @@ files V-3 headers. Nothing here needs them.
 
 T-2 shipped 2026-09-20; its specification is `plans/archive/T-2_2026-09-20.md`.
 
-## T-1 — `tool_bash` records the command that ran
-
-`tools/hook_log.py` stores `words[0]` of each Bash command. Its comment says
-the first word "answers no question the first word does not". The data
-falsifies it: 519 of 551 records are `cd`, because CLAUDE.md's own convention
-is that every command states its directory, so every call begins
-`cd <worktree> && ...`.
-
-Record the first word of the first **operative** segment instead. Fixed now:
-
-- **Invariants.**
-  - Still one short token, not the command line. No paths, no arguments, no
-    commit messages, no URLs -- the reason the original stored one word is
-    sound and does not change.
-  - Still a PostToolUse hook with nil measurable cost; no extra process.
-  - `tool_bash_failed` keeps recording the same field, so the failing-command
-    tally improves with it.
-- **What "operative" means.** Skip leading `cd <path>` segments and leading
-  `NAME=value` assignments, then take the program. For `python`,
-  `python3`, `powershell` and `pwsh`, take the script's basename too
-  (`python tools/verify.ps1` -> `python verify.ps1`), because "which tool did
-  the session run" is the question the field exists to answer and `python`
-  alone does not answer it. Split on `&&`, `;` and `|` for the segment, and on
-  nothing else -- do not attempt a shell parse.
-- **Proof it worked.** Run a handful of ordinary worktree commands, then
-  `python tools/session_cost.py --events`: `bash tool calls` is unchanged in
-  count, and the failing-command tally names real programs. Re-reading the
-  ledger a week later should show `cd` at a few per cent, not 94%.
-- **Test.** Extend `tests/test_source_checks.py`'s existing `hook_log.py`
-  cases with a `cd X && python tools/foo.py` payload and a
-  `VAR=1 git status` payload.
-
-Level: medium -- one extraction function and its tests, but the field feeds
-every later cost query, so getting the token vocabulary right matters more
-than the code does.
+T-1 shipped 2026-09-20; its specification is `plans/archive/T-1_2026-09-20.md`.
 
 ## T-3 — a headless run that did not compile fails as a compile failure
 
