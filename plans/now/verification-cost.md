@@ -1,7 +1,7 @@
 # Verification cost — stop paying for checks that carry no information
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: V-1 -- verification regenerates its generated files instead of asserting them, queued in the Claude lane | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude Code | Next: V-3 -- the routing rule's section headers actually exist | Dependency: none | Verified: 2026-09-20
 
 **Objective.** `tools/verify.ps1` runs before every commit, so anything it
 spends is multiplied by every slice. Two of its costs are measured and neither
@@ -37,7 +37,6 @@ their promotion, and their disposition points here.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| V-2 | The lifecycle suite runs on branches that touch lifecycle tooling, and in full on the primary checkout | `tools/verify.ps1` | yes | medium |
 | V-3 | Every script over 700 lines carries the section headers the routing rule assumes | `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py` | yes | low |
 
 Dependencies, stated rather than implied. V-1 and V-2 both edit
@@ -55,48 +54,7 @@ them, stop and escalate rather than taking the file.
 
 V-1 shipped 2026-09-20; its specification is `plans/archive/V-1_2026-09-20.md`.
 
-## V-2 — the lifecycle suite runs where it can fail
-
-`tools/verify.ps1` starts `lifecycle tests` as a background job on every
-branch-scope run (line 196), except inside closeout, where SF-1 had to exclude
-it with `MEADOW_FINISH_VERIFY` because the suite drives `finish` in temporary
-repositories and recursed. So the stage that proves closeout is the one stage
-closeout does not run, and every other branch pays 230s for it.
-
-**Start by checking the failure history, and let it choose the shape.** Over
-the seven days to 20 Sep 2026 the suite ran 80 times and failed twice. Find
-those two failures (`python tools/session_cost.py --events`, then the branches
-they sit on) and answer one question: did they catch a defect in lifecycle
-tooling, or something else?
-
-- If both were lifecycle-tooling defects, scope the stage: run it on a branch
-  whose diff against `master` touches `tools/slice.ps1`, `tools/hook_log.py`,
-  `tools/archive_slice.py`, `tools/refill_lane.py`, `tools/check_docs.py`,
-  `NEXTSTEPS.md` or `tests/`, and skip it otherwise, printing `skipped --
-  branch touches no lifecycle tooling` so the skip is visible. Run it
-  unconditionally in the primary scope, which is where the post-merge run
-  happens.
-- If they caught something outside that set, the scoping rule is wrong and the
-  suite needs reshaping rather than rescheduling. Record what the two failures
-  were, leave the stage alone, and stop -- that is a finding, not a failure to
-  deliver.
-
-Fixed now either way:
-
-- **Invariants.** The suite still runs in full somewhere on every change that
-  can break it. A skip is printed and recorded in the `verify_stage` event
-  with `skipped` rather than `ok`, so the rate of skipping is measurable.
-  `-Scope primary` and `-Scope all` behaviour for the other stages is
-  unchanged.
-- **Out of scope.** Removing the `MEADOW_FINISH_VERIFY` guard needs
-  `tools/slice.ps1`, which is the Codex lane's. Leave the guard in place and
-  name the removal in the delivery note.
-- **Proof it worked.** On a branch touching only `scripts/*.gd`,
-  `.\tools\verify.ps1` completes without the 230s stage and says why; on a
-  branch touching `tools/slice.ps1` it runs it.
-
-Level: medium -- the decision is bounded and the evidence is named, but it
-changes when a check runs, so the reasoning must be written down.
+V-2 shipped 2026-09-20; its specification is `plans/archive/V-2_2026-09-20.md`.
 
 ## V-3 — the routing rule's section headers actually exist
 
@@ -139,3 +97,17 @@ right region.
 - **Completion.** Archive this plan with `Next: None — plan complete`.
 
 Level: low -- mechanical, comment-only, one acceptance check.
+
+**V-2 delivery note (20 Sep 2026).** The log held five failed `lifecycle tests`
+runs in seven days, not two (18 Sep 22:25, 19 Sep 11:14, 20 Sep 10:59, 11:04,
+15:45), and `verify_stage` events carried no branch or failure text, so none
+could be classified. Dave chose to record first and scope anyway: every stage
+event now carries `branch` and, on failure, `failure` (the first failing
+line); the lifecycle stage runs only when the diff against `master` touches
+`tools/slice.ps1`, `tools/hook_log.py`, `tools/archive_slice.py`,
+`tools/refill_lane.py`, `tools/check_docs.py`, `tools/verify.ps1`,
+`NEXTSTEPS.md` or `tests/`, otherwise prints `skipped -- branch touches no
+lifecycle tooling` and logs `skipped: true`. `-Scope primary` now runs it
+always. Re-check the failure classification once a week of new events exist.
+The `MEADOW_FINISH_VERIFY` guard stays; removing it needs `tools/slice.ps1`
+(Codex lane).
