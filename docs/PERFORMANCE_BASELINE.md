@@ -74,6 +74,27 @@ Every gameplay counter in the same runs' `report.json` summaries is identical
 between the two sides; the timing rows above are the only difference the
 comparison found.
 
+## PERF-1 measurement -- 20 Sep 2026 (`find_food_cell`)
+
+Same pinned fixture, seed, machine and fixed-step setting as above:
+`test_scenarios/recommendation_slice0_baseline.json` at `--fixed-fps 60`,
+with 15 cells and 109 bees (85 nectar foragers and 24 miners). Both 480-frame
+captures recorded `hive_find_food` at a total of 0.000 ms, or 0.00% of frame
+time: the section did not run because the fixture produced no hungry indoor
+bees in its measurement window. The two readings match exactly, so they meet
+the 10% repeatability check, but they do not establish that the query is
+trivial under its intended hungry-bee workload.
+
+| Run | `hive_find_food` total ms | Share of frame time |
+| --- | ---: | ---: |
+| 1 | 0.000 | 0.00% |
+| 2 | 0.000 | 0.00% |
+
+This is worth a follow-up measurement slice, `PERF-2`: give a pinned scenario
+a controlled hungry indoor population, then capture this same section before
+considering the content-index rewrite. No query rewrite is justified by the
+zero-call baseline.
+
 ## Recorded baseline -- 13 Sep 2026 (A3, C-50)
 
 Run by Claude Code on Dave's Windows 11 development machine, headless, with

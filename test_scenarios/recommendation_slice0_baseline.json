@@ -13,7 +13,7 @@
     "warmup_frames": 120,
     "measurement_frames": 480,
     "include_fog": true,
-    "sections": ["bee_state_miner", "fog_of_war_update", "fog_of_war_relight"]
+    "sections": ["bee_state_miner", "fog_of_war_update", "fog_of_war_relight", "hive_find_food"]
   },
   "stop": {"max_days": 2}
 }
