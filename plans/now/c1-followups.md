@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None -- plan complete; one known gap filed below (C1F-G1) | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude Code | Next: C1F-G1 -- plan a fixture that guards the target_cell revert (higher-reasoning session; see the section below) | Dependency: none | Verified: 2026-09-20
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
