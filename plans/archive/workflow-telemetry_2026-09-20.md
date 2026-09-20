@@ -1,7 +1,7 @@
 # Workflow telemetry — make the instruments answer the questions they were built for
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Codex | Next: None -- plan complete | Dependency: none | Verified: 2026-09-20
+Status: archived | Owner: Dave / Codex | Next: None -- plan complete | Dependency: none | Verified: 2026-09-20
 
 **Objective.** `plans/now/agent-lifecycle.md` sets a measured target -- raise
 the implementing share of a session's context above 40% -- and every decision

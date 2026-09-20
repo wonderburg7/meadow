@@ -45,11 +45,12 @@ V-1's outcome, only its file. V-3 shares `tools/update_function_map.py` with
 V-1 and so follows it. None of the three depends on the other lane.
 
 **Files this plan may not take.** `tools/slice.ps1` and
-`tools/session_cost.py` are the Codex lane's (L-14 and the telemetry plan
-`plans/now/workflow-telemetry.md`), and `tests/test_source_checks.py` is
-that lane's too. `scripts/hive.gd` is PERF-1's and `scripts/hive_cell.gd` is
-CB-2's. V-1 and V-2 must therefore leave `Invoke-SliceFinish` alone; V-3 must
-leave `hive.gd` and `hive_cell.gd` alone. If a fix turns out to need one of
+`tools/session_cost.py` are the Codex lane's (L-14 and the telemetry plan,
+archived at `plans/archive/workflow-telemetry_2026-09-20.md`), and
+`tests/test_source_checks.py` is that lane's too. `scripts/hive.gd` is
+PERF-1's and `scripts/hive_cell.gd` is CB-2's. V-1 and V-2 must therefore
+leave `Invoke-SliceFinish` alone; V-3 must leave `hive.gd` and
+`hive_cell.gd` alone. If a fix turns out to need one of
 them, stop and escalate rather than taking the file.
 
 V-1 shipped 2026-09-20; its specification is `plans/archive/V-1_2026-09-20.md`.
