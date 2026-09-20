@@ -26,6 +26,7 @@ const Settings = preload("res://scripts/settings_catalogue.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const Conditions = preload("res://scripts/conditions.gd")
+const StageSetup = preload("res://scripts/challenge_stage_setup.gd")
 
 ## Fixture-facing `when` names translated to Conditions' shared vocabulary.
 ## The two threshold directions intentionally share one event_count/disease
@@ -45,6 +46,7 @@ const LEGACY_WHEN_KEY_MAP := {
 ## resolved, and log_unresolved (below) records whatever never got there.
 static func run_pending(main: Node2D, actions: Array) -> void:
 	sample_comb_build_sites(main)
+	_sample_queen_watch(main)
 	for action in actions:
 		if action.get("_resolved", false):
 			continue
@@ -52,13 +54,22 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 			if not _do_settle(action):
 				return
 			continue
+		if action.get("do", "") == "wait":
+			if not _do_wait(action):
+				return
+			continue
 		if not _when_met(main, action.get("when", {})):
 			continue
-		action["_resolved"] = true
 		if action.get("do", "") == "assert":
+			# A polling assert is a sequence point, like "wait": what follows
+			# it in the file was written to run after it has passed.
+			if action.has("within_seconds") and not _assert_window_closed(main, action):
+				return
+			action["_resolved"] = true
 			if not _do_assert(main, action):
 				return
 		else:
+			action["_resolved"] = true
 			_execute(main, action)
 
 
@@ -140,6 +151,45 @@ static func _do_settle(action: Dictionary) -> bool:
 	_log("settle", str(action), "accepted", "")
 	return true
 
+## {"do": "wait", "seconds": n} -- a sequence point like "settle", but counted
+## in simulated seconds (Session.sim_time), which a Challenge stage's 4x speed
+## makes a different number of ticks. Everything after it in the file holds
+## until the time is up.
+static func _do_wait(action: Dictionary) -> bool:
+	if not action.has("_started"):
+		action["_started"] = Session.sim_time
+	if Session.sim_time - float(action["_started"]) < float(action.get("seconds", 0.0)):
+		return false
+	action["_resolved"] = true
+	_log("wait", str(action), "accepted", "")
+	return true
+
+
+## An assert with "within_seconds": n polls its condition, from the first tick
+## its own "when" is met, and passes the moment it holds. It fails only when
+## the window has run out, so "the queen has left the hive within 30 seconds"
+## is one line rather than a guess at how many ticks 30 seconds is.
+## Returns whether _do_assert should judge it now.
+static func _assert_window_closed(main: Node2D, action: Dictionary) -> bool:
+	if not action.has("_started"):
+		action["_started"] = Session.sim_time
+	if _evaluate_assert_condition(main, action.get("condition", {})).get("ok", false):
+		return true
+	return Session.sim_time - float(action["_started"]) >= float(action["within_seconds"])
+
+
+## C1F-2: bee states counted while the queen is indoors. Armed by
+## "watch_queen_states"; read by the queen_watch_hits_at_most condition.
+static var _queen_watch_states: Array = []
+static var _queen_watch_hits: int = 0
+
+static func _sample_queen_watch(main: Node2D) -> void:
+	if _queen_watch_states.is_empty() or not is_instance_valid(main.queen):
+		return
+	if main.queen._is_inside_hive() and main.queen.state in _queen_watch_states:
+		_queen_watch_hits += 1
+
+
 static func _execute(main: Node2D, action: Dictionary) -> void:
 	match action.get("do", ""):
 		"assign_role":
@@ -178,6 +228,14 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_advance_challenge_stage(main, action)
 		"retreat_challenge_stage":
 			_do_retreat_challenge_stage(main, action)
+		"set_queen_load":
+			_do_set_queen_load(main, action)
+		"set_cell_contents":
+			_do_set_cell_contents(main, action)
+		"empty_cell":
+			_do_empty_cell(main, action)
+		"watch_queen_states":
+			_do_watch_queen_states(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -200,6 +258,27 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		return false
 	if when.has("challenge_stage_id"):
 		if main.challenge_runner.current_stage_id() != str(when["challenge_stage_id"]):
+			return false
+	if when.has("queen_inside_hive"):
+		if not is_instance_valid(main.queen) or main.queen._is_inside_hive() != bool(when["queen_inside_hive"]):
+			return false
+	if when.has("queen_load_empty"):
+		if not is_instance_valid(main.queen) or (main.queen.current_load <= 0.0) != bool(when["queen_load_empty"]):
+			return false
+	if when.has("queen_watch_hits_at_most"):
+		if _queen_watch_hits > int(when["queen_watch_hits_at_most"]):
+			return false
+	if when.has("camera_following_queen"):
+		if (is_instance_valid(main.queen) and main.following_bee == main.queen) != bool(when["camera_following_queen"]):
+			return false
+	if when.has("challenge_overflow_discards"):
+		var discards: int = main.challenge_runner._c1_overflow_discard_count
+		var wanted: Dictionary = when["challenge_overflow_discards"]
+		if discards < int(wanted.get("at_least", 0)) or discards > int(wanted.get("at_most", 2147483647)):
+			return false
+	if when.has("cell_empty"):
+		var watched: Node2D = _resolve_cell_ref(main, when["cell_empty"])
+		if watched == null or watched.amount > 0.0:
 			return false
 	if when.has("selected_mine_queue_at_least"):
 		if main.selected_bees.is_empty() or not is_instance_valid(main.selected_bees[0]):
@@ -268,6 +347,8 @@ static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary:
 ## Bees matching {"bee_ids": [...]} or {"current_role": key, "count": N},
 ## in stable bee_id order so the same selector always picks the same bees.
 static func _resolve_bees(main: Node2D, target: Dictionary) -> Array:
+	if target.has("queen"):
+		return [main.queen] if is_instance_valid(main.queen) else []
 	var bees: Array = main.get_tree().get_nodes_in_group("bees").filter(
 		func(b): return is_instance_valid(b)
 	)
@@ -292,6 +373,17 @@ static func _resolve_bees(main: Node2D, target: Dictionary) -> Array:
 		return matches.slice(0, count)
 
 	return []
+
+## A cell named either by {"hex": [q, r]} or, for a Challenge stage whose
+## comb the stage setup laid out, {"built_index": n} -- the nth built cell in
+## the setup's own order (challenge_stage_setup.gd::_built_cells), so a
+## fixture need not hard-code where the setup put it.
+static func _resolve_cell_ref(main: Node2D, ref: Dictionary) -> Node2D:
+	if ref.has("built_index"):
+		var built: Array = StageSetup._built_cells(main)
+		var index: int = int(ref["built_index"])
+		return built[index] if index >= 0 and index < built.size() else null
+	return _resolve_cell(main, ref.get("hex", []))
 
 static func _resolve_cell(main: Node2D, hex: Array) -> Node2D:
 	if hex.size() != 2:
@@ -788,6 +880,94 @@ static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> voi
 		_log("advance_challenge_stage", target_id, "rejected", "Challenge completed before stage was reached")
 
 
+## C1F-2. Puts the queen mid-errand with a load: {"resource": "nectar",
+## "amount": 5, "state": "IN_HIVE_TO_CELL", "target_cell": {"built_index": 1}}.
+## Writes the same fields a real trip leaves her with (bee_foraging.gd sets
+## current_load, current_load_type, state and target_cell); state and
+## target_cell are optional. Rejected if a named state or cell does not exist.
+static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void:
+	var queen: Node2D = main.queen
+	if not is_instance_valid(queen):
+		_log("set_queen_load", str(action), "rejected", "no queen")
+		return
+	var new_state: int = -1
+	if action.has("state"):
+		new_state = queen.State.get(str(action["state"]), -1)
+		if new_state == -1:
+			_log("set_queen_load", str(action), "rejected", "unknown state")
+			return
+	var target: Node2D = null
+	if action.has("target_cell"):
+		target = _resolve_cell_ref(main, action["target_cell"])
+		if target == null:
+			_log("set_queen_load", str(action), "rejected", "no cell there")
+			return
+	var amount: float = float(action.get("amount", 0.0))
+	queen.current_load = amount
+	queen.current_load_type = str(action.get("resource", "")) if amount > 0.0 else ""
+	if new_state != -1:
+		queen.state = new_state
+	if target != null:
+		queen.target_cell = target
+	queen._update_label()
+	_log("set_queen_load", str(action), "accepted", "")
+
+## C1F-2. {"hex": [q, r] (or "cell": {"built_index": n}), "resource": "nectar",
+## "amount": n} -- through the cell's own add_resource, the function a
+## deposit calls. Checks the cell now holds that resource, since add_resource
+## returns 0 for a cell with no room. A cell designated for another resource
+## is stocked as a stray deposit would have been, then re-designated.
+static func _do_set_cell_contents(main: Node2D, action: Dictionary) -> void:
+	var cell: Node2D = _resolve_cell_ref(main, action.get("cell", {"hex": action.get("hex", [])}))
+	var resource: String = str(action.get("resource", ""))
+	if cell == null:
+		_log("set_cell_contents", str(action), "rejected", "no cell there")
+		return
+	# A cell designated for another resource refuses this one, which is how a
+	# real trip's nectar reaches a pollen cell: it landed before the
+	# designation. Lift the designation for the deposit and put it back.
+	var kept: String = cell.designated_type
+	var kept_explicit: bool = cell.designation_is_explicit
+	if kept != "" and kept != resource:
+		cell.set_designation("", false)
+	cell.add_resource(resource, float(action.get("amount", 0.0)))
+	if kept != "" and kept != resource:
+		cell.set_designation(kept, kept_explicit)
+	if cell.content_type != resource or cell.amount <= 0.0:
+		_log("set_cell_contents", str(action), "rejected", "cell ended up holding '%s'" % cell.content_type)
+		return
+	_log("set_cell_contents", str(action), "accepted", "")
+
+## C1F-2. Calls bee.gd::command_empty_cell on the queen -- the function the
+## "Empty this cell" button calls. It returns silently for a cell that has
+## nothing to empty, so the queen's own target_cell is the check.
+static func _do_empty_cell(main: Node2D, action: Dictionary) -> void:
+	var cell: Node2D = _resolve_cell_ref(main, action.get("cell", {"hex": action.get("hex", [])}))
+	if cell == null or not is_instance_valid(main.queen):
+		_log("empty_cell", str(action), "rejected", "no cell or no queen")
+		return
+	main.queen.command_empty_cell(cell)
+	if main.queen.target_cell != cell:
+		_log("empty_cell", str(action), "rejected", "the queen did not take the order")
+		return
+	_log("empty_cell", str(action), "accepted", "")
+
+## C1F-2. {"states": ["SEEK_FLOWER", ...]} arms a count of the ticks the queen
+## spends in any of those states while indoors; {"states": []} disarms it.
+## Read with the queen_watch_hits_at_most condition.
+static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void:
+	var ids: Array = []
+	for name in action.get("states", []):
+		var id: int = main.queen.State.get(str(name), -1) if is_instance_valid(main.queen) else -1
+		if id == -1:
+			_log("watch_queen_states", str(action), "rejected", "unknown state %s" % name)
+			return
+		ids.append(id)
+	_queen_watch_states = ids
+	_queen_watch_hits = 0
+	_log("watch_queen_states", str(action), "accepted", "")
+
+
 # --- assertion checks -------------------------------------------------
 
 ## Not gated -- checked once, the tick its own "when" (if any) is met.
@@ -821,7 +1001,21 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_no_empty_labels(main, condition)
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
-	return {"ok": false, "reason": "condition not met"}
+	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
+
+## What a failed queen condition needs to be diagnosed without a rerun: where
+## the queen is, what she is doing and what she carries.
+static func _queen_summary(main: Node2D, condition: Dictionary) -> String:
+	var involves_queen := false
+	for key in condition:
+		if str(key).begins_with("queen_") or str(key) == "camera_following_queen":
+			involves_queen = true
+	if not involves_queen or not is_instance_valid(main.queen):
+		return ""
+	var queen: Node2D = main.queen
+	return " (queen: state %s, %s, load %s %.1f, watch hits %d)" % [
+		queen.State.keys()[queen.state], "indoors" if queen._is_inside_hive() else "outdoors",
+		queen.current_load_type, queen.current_load, _queen_watch_hits]
 
 ## LAY-5's panel-level check: {"panel": name, "inside_viewport": true,
 ## "gap_below": px, "after_panel": name, "gap": px}. `name` is one of the
