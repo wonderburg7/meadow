@@ -15,6 +15,7 @@ extends Node
 ## future reset_run_state() call site is covered automatically, without
 ## needing to be found and wired up here.
 
+# --- preloads and constants ---------------------------------------
 const BeeEnums = preload("res://scripts/bee_enums.gd")
 const Flower = preload("res://scripts/flower.gd")
 const DiagnosticProfileScript = preload("res://scripts/headless/diagnostic_profile.gd")
@@ -23,6 +24,7 @@ const DiagnosticProbesScript = preload("res://scripts/headless/diagnostic_probes
 const LOG_DIR := "user://logs"
 const MAX_SESSION_FILES := 5
 
+# --- session state ------------------------------------------------
 var _file: FileAccess = null
 ## True whenever there is no open session to close -- starts true so the
 ## very first start_session() of a boot doesn't try to summarise a
@@ -72,6 +74,7 @@ var _diagnostic_last_snapshot: Dictionary = {}
 ## per-frame diagnostic stream.
 var _performance_capture_config: Dictionary = {}
 
+# --- the running counters -----------------------------------------
 var _total_deaths: int = 0
 var _deaths_by_cause: Dictionary = {}
 var _deaths_by_role: Dictionary = {}
@@ -122,6 +125,7 @@ var _honey_batches_deposited: int = 0
 var _cells_ripened: int = 0
 
 
+# --- _ready and the session lifecycle -----------------------------
 func _ready() -> void:
 	Session.run_reset.connect(start_session)
 
@@ -201,6 +205,7 @@ func start_session() -> void:
 	_write(config)
 
 
+# --- death and predation ------------------------------------------
 func log_death(bee: Node2D) -> void:
 	if _file == null:
 		return
@@ -249,6 +254,7 @@ func log_crab_spider_event(bee: Node2D, flower: Node2D, outcome: String) -> void
 	_crab_spider_events[outcome] = int(_crab_spider_events.get(outcome, 0)) + 1
 
 
+# --- recruitment and scouting -------------------------------------
 ## Called from bee_foraging.gd::wait_at_entrance() the moment a seeker is
 ## handed a mentor's patch -- direct evidence auto-recruitment is
 ## actually matching bees up, not just that the entrance-wait states are
@@ -354,6 +360,7 @@ func log_orientation_flight(bee: Node2D) -> void:
 	_orientation_flights += 1
 
 
+# --- flowers and foraging counters --------------------------------
 ## Bumped from bee_foraging.gd::start_collecting() -- a real feeding visit,
 ## whatever the toggles. Cheap counters only (no per-call _write, see the
 ## field comments above); rolled into the hourly snapshot and the summary.
@@ -411,6 +418,7 @@ func _experience_bucket(prior_experience: int) -> String:
 	return "10+"
 
 
+# --- tarsal marks -------------------------------------------------
 func count_tarsal_mark() -> void:
 	_tarsal_marks += 1
 
@@ -424,6 +432,7 @@ func count_tarsal_rejection() -> void:
 	_tarsal_rejections += 1
 
 
+# --- movement and stalls ------------------------------------------
 ## Called from bee_survival.gd::watch_for_stalls() the moment it judges a
 ## bee stuck (STALL_SECONDS of no real progress towards `goal`) and is
 ## about to take recovery action -- not gated to a toggle, since a stall
@@ -545,6 +554,7 @@ func log_scouting_settled(bee: Node2D) -> void:
 	_scouting_settled += 1
 
 
+# --- brood, comb and honey counters -------------------------------
 ## Called from bee_nursery.gd::feed_brood() -- one real meal delivered to
 ## a larva, whatever its type.
 func count_brood_feed() -> void:
@@ -618,6 +628,7 @@ func count_cell_ripened() -> void:
 	_cells_ripened += 1
 
 
+# --- player actions and commands ----------------------------------
 ## Called from scenario_actions.gd for every headless scenario action
 ## attempted -- see docs/headless-run-contract.md. One line per action,
 ## whatever the result, so a run states plainly what it tried to do and
@@ -679,6 +690,7 @@ func log_selection_panels_hidden(source: String, shown_count: int, selected_coun
 	})
 
 
+# --- reading events back ------------------------------------------
 ## Read-side counterpart to the counters this file already keeps for its
 ## own summary line -- lets a scenario's "when"/"assert" conditions ask
 ## "has this actually happened N times yet" without scenario_actions.gd
@@ -728,6 +740,7 @@ func event_count(type: String, subtype: String = "") -> int:
 			return 0
 
 
+# --- the per-frame tick and session end ---------------------------
 ## Called from main.gd's own per-frame block (only while unpaused, same
 ## as the rest of its housekeeping) -- see main.gd::_process. Only does
 ## real work once a full in-game hour has passed, same pattern as
@@ -823,6 +836,7 @@ func end_session(outcome: String) -> void:
 	_ended = true
 
 
+# --- configuration ------------------------------------------------
 func session_path() -> String:
 	return _session_path
 
@@ -881,6 +895,7 @@ func _config_snapshot() -> Dictionary:
 	return settings
 
 
+# --- the snapshot -------------------------------------------------
 func _snapshot(world: Node2D) -> Dictionary:
 	var bees: Array = world.get_tree().get_nodes_in_group("bees")
 
@@ -1106,6 +1121,7 @@ func _rate(world: Node2D, key: String) -> float:
 	return (newest[key] - oldest[key]) / span
 
 
+# --- writing to disk ----------------------------------------------
 ## Matches main.gd's own day formula (main.gd::_process) so a summary
 ## written from outside a per-frame context (a window close, an
 ## abandoned-run "quit") reports the same day main.gd would.

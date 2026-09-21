@@ -1,7 +1,7 @@
 # Verification cost — stop paying for checks that carry no information
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: V-3 -- the routing rule's section headers actually exist | Dependency: none | Verified: 2026-09-20
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none | Verified: 2026-09-21
 
 **Objective.** `tools/verify.ps1` runs before every commit, so anything it
 spends is multiplied by every slice. Two of its costs are measured and neither
@@ -121,3 +121,29 @@ lifecycle tooling` and logs `skipped: true`. `-Scope primary` now runs it
 always. Re-check the failure classification once a week of new events exist.
 The `MEADOW_FINISH_VERIFY` guard stays; removing it needs `tools/slice.ps1`
 (Codex lane).
+
+**V-3 delivery note (21 Sep 2026).** 88 comment-only headers went in across the
+six files -- bee.gd 15, bee_foraging.gd 18, debug_panel.gd 13,
+settings_catalogue.gd 7, challenge_runner.gd 19, diagnostic_log.gd 16 -- and
+`git diff --numstat` shows 91 insertions and 0 deletions, so not one code line
+moved. Every header sits between top-level declarations; none is inside a
+function, checked by asserting that the next non-comment line after each header
+starts at column 0.
+
+Two boundaries were left unheadered because the file does not have them.
+`settings_catalogue.gd`'s `TUNABLES` table was already signposted from the
+inside with tab-indented `# --- <category> ---` markers, which
+`update_function_map.py` does not index (it matches column 0 only); rather than
+duplicate them the table got one top-level header and its existing internal
+markers were left alone. In `bee.gd` the field block interleaves foraging
+memory, trip scoring and display state with `current_working_role()` sitting in
+the middle of it, so the headers there name contiguous runs rather than
+pretending the concerns are separated.
+
+`tools/update_function_map.py` now warns -- prints, does not fail -- for any
+scripts/*.gd file over 700 lines with no column-0 `# --- ` header, or whose
+first one falls past a tenth of the file. All six targets now pass it. It
+still names `scenario_actions.gd` (first header at 243 of 1,338) and
+`hive_cell.gd` (606 of 1,149): both are other plans' files -- `hive_cell.gd` is
+CB-2's and this plan is explicitly barred from it -- so they are left for their
+owners, which is what the warning is for.
