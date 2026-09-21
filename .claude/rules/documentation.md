@@ -22,6 +22,27 @@ below three (Dave, D-2, 8 Sep 2026). A `Next after:` line must name the slice
 that follows -- the only accepted alternative is `none -- <plan> is complete`
 -- which is what makes a lane refill itself by lookup.
 
+**The lookup is the backlog.** An open slice section in a live plan may carry
+one fenced `queue` block holding the exact item that slice would be queued as:
+the `**[Lane] <id> -- <title>**` line and its `Plan:`/`Files:`/`Check:`/
+`Proof:`/`Next after:` lines, byte for byte. `tools/backlog.py` reads them,
+`tools/refill_lane.py --add <id>` copies one into its lane and `--top-up`
+fills a lane towards five; `tools/slice.ps1 finish` runs the deletion and the
+top-up together. `tools/check_docs.py` proves a block and any live queue entry
+for that id agree, and warns when a lane is short while an admissible block
+waits. A block is where a `Proof:` line is first written and validated -- one
+improvised at closeout against code that has moved is how X3 got queued after
+it had shipped.
+
+A slice that is specified but not yet admissible is fenced `queue-gated`
+instead: it stays out of every lane and every count until whoever clears the
+gate changes the fence, and the reason it waits still goes under
+`## Not in the queue, and why` as one line. **Five is a ceiling, not a
+quota** (Dave, 21 Sep 2026). A top-up refuses a candidate whose `Proof:` no
+longer holds, whose `Files:` collide with the other lane, or that is already
+queued or deferred, and leaves the lane short rather than padding it -- the
+admission test below is unchanged.
+
 **Admission test:** an item belongs only if a model could start writing code
 on it today and the defect still exists, which its `Proof:` line asserts as
 `present:`/`absent: <path> :: <substring>`. Anything waiting on a hands-on

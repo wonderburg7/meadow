@@ -83,3 +83,12 @@ Next after: none -- stop-readout is complete once ST-1 ships. Whether the
 `lane already has an open worktree` count then justifies a lifecycle change
 is a separate question, recorded in
 `plans/observations/system-improvement-signals.md` and not owned here.
+
+```queue
+**[Codex] ST-1 -- preflight refusals stop crowding the step ranking**
+- Plan: `plans/now/stop-readout.md` -- "ST-1 — preflight refusals stop crowding the step ranking"
+- Files: `tools/session_cost.py`, `tests/test_session_cost_stops.py`
+- Check: `python tools/session_cost.py --stops` on the real ledger prints a "most expensive steps" list whose entries all carry a step, with the 19 preflight refusals reported separately and tallied by cause, and the two totals summing to `stops recorded`
+- Proof: `present: tools/session_cost.py :: (no step recorded)`
+- Next after: none -- stop-readout is complete once ST-1 ships.
+```

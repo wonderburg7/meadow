@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-12 -- a plan's slice section carries the queue lines it is refilled from (gated: not startable until `session_cost.py --stops` ranks the refill step in the top two) | Dependency: none -- L-13 landed 19 Sep 2026, L-14 landed 20 Sep 2026 | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude | Next: no open slice -- every slice has shipped and what remains is the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) | Dependency: none -- L-12 landed 21 Sep 2026 | Verified: 2026-09-21
 
 ## Objective
 
@@ -50,27 +50,22 @@ measurement-ran-once condition is met. The measured evidence is
 
 ## Open slices
 
-`finish` has gates, not actions. Its `archived` and `refilled` phases check
-that the two closeout edits were made -- since 18 Sep 2026 by
-`tools/archive_slice.py` and `tools/refill_lane.py`, which the stop blocks
-name -- print a stop block when they have not, and make the session retry.
-L-13 folds the two tools into `finish` itself, so the gates become proof
-rather than instruction; that is what the 41-47% closeout share is mostly
-made of.
+None. `finish`'s `archived` and `refilled` phases became actions with L-13
+(18-19 Sep 2026) and L-12 closed the last hand-written step on 21 Sep 2026: a
+lane now refills itself from the ```queue blocks in the plans, so the five
+lines a session used to write out of prose at closeout are a copy.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-12 | A plan's slice section carries the queue lines it is refilled from | `tools/check_docs.py`, `plans/now/*.md` | high |
 
-Dependencies, stated rather than implied: L-10, L-11 and L-13 have shipped.
-**L-12 is deliberately gated** -- do not start it until
-`python tools/session_cost.py --stops` shows the refill step among the two
-most frequent stops over at least ten recorded stops. It is the only slice
-here that touches every live plan, and the instrument that would justify it
-only started recording on 17 Sep 2026. Neither may be bought by removing a check.
-**L-14 comes first because that gate currently cannot be read at all**: the
-ledger has 39 records and `--stops` raises before it counts one of them.
-L-14 does not decide L-12; it makes the decision possible.
+**L-12 shipped ahead of its gate.** It was held until
+`python tools/session_cost.py --stops` ranked the refill step among the two
+most frequent stops, because the measurement was the only thing that could
+justify touching every live plan. Dave asked for the lane refill directly on
+21 Sep 2026, which settles the question the gate existed to answer; the gate
+is not weakened for anything else, and nothing here was bought by removing a
+check. What the ranking would have told us is still worth reading once ST-1
+makes `--stops` legible.
 
 L-10 shipped 2026-09-18; its specification is `plans/archive/L-10_2026-09-18.md`.
 
@@ -78,33 +73,7 @@ L-11 shipped 2026-09-18; its specification is `plans/archive/L-11_2026-09-18.md`
 
 L-14 shipped 2026-09-20; its specification is `plans/archive/L-14_2026-09-20.md`.
 
-### L-12 — a plan's slice section carries the queue lines it is refilled from
-
-*Gated: see the dependency note above.* Adding the successor means reading its
-plan section and hand-writing five queue lines from prose, which is where the
-refill gate usually stops a closeout. Give each open slice section in
-`plans/now/**` a fenced block holding the exact `Plan:`, `Files:`, `Check:`,
-`Proof:` and `Next after:` lines it would be queued with; teach
-`check_docs.py` to prove the block and any live queue entry for that id agree;
-teach `refill_lane.py --add <id>` to copy the block in. The second prize is
-larger than the refill saving: a `Proof:` line written and validated when the
-plan is written is one that cannot be improvised at closeout.
-**This does not change `NEXTSTEPS.md`'s item schema.** The block lives in plan
-files; the queue's own format, and the two regexes that parse it, are
-untouched. That is the distinction this plan's standing rule below draws --
-extend the parsers, never the formats.
-*Risk to design against:* a refill that copies a stale block queues work that
-no longer needs doing, which is the X3 failure again. `--add` must re-run the
-proof check and refuse an item whose `Proof:` no longer holds.
-*Acceptance:* `check_docs.py` fails a fixture whose block and queue entry
-disagree and passes when they match; `--add` reproduces an existing queue
-entry byte-for-byte from its plan's block; `--add` exits non-zero on a slice
-whose proof no longer holds.
-Level: high
-- Proof: `absent: tools/check_docs.py :: check_plan_queue_blocks`
-- Next after: L-13 -- closeout is one command.
-
-L-13 shipped 2026-09-19; its specification is `plans/archive/L-13_2026-09-19.md`.
+L-12 shipped 2026-09-21; its specification is `plans/archive/L-12_2026-09-21.md`.
 
 ## Standing rules
 

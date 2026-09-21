@@ -846,6 +846,15 @@ Level: medium. Depends on: F1s.
   selected — keep the second condition in the HUD and gate only the first. Do not
   put selection state in the table.
 
+```queue
+**[Claude] F2s -- a declarative UI gate table**
+- Plan: `plans/design/architecture-review.md` -- "F2s — a declarative UI gate table"
+- Files: `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/availability.gd`
+- Check: a source check fails if any `stage_gate.ACCESSIBILITY_KEYS` entry appears in the gate table and every gate key in `challenge_stages.gd`'s `unlocked_keys` has a table row or a documented reason for none; a Challenge fixture reaching a late stage shows the same controls as before
+- Proof: `absent: scripts/hud.gd :: func apply_gates`
+- Next after: G3 -- once the skill-gating decision in `plans/design/progression.md` section 11 is taken.
+```
+
 ### G1 — the action catalogue, data only
 
 Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
@@ -895,6 +904,19 @@ Level: medium. Depends on: G2, F2s.
   *effects* gate values and behaviour switches where the behaviour branches.
   So G3 and Phase B step 6 no longer block each other, and neither sets a
   pattern the other has to follow.
+
+```queue-gated
+**[Claude] G3 -- actions become gateable**
+- Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
+- Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
+- Check: with no Challenge active and no skills owned every action is still offered; both Challenge fixtures reach the same final stage as before; a source check fails if `challenge_stages.gd` names an action id that `actions.gd` does not define
+- Proof: `absent: scripts/availability.gd :: action_query`
+- Next after: none -- architecture-review is complete once G3 ships.
+```
+
+The fence is `queue-gated` because G3 follows F2s. When F2s lands, change it to
+`queue` and the next `tools/slice.ps1 finish` takes G3 into the Claude lane
+without anyone rewriting these five lines out of the prose above.
 
 ## Read on demand
 

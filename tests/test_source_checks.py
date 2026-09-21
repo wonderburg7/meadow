@@ -590,3 +590,157 @@ class DiagnosticWritersTest(unittest.TestCase):
 
         self.assertIn("level drift                  none", out.getvalue())
         self.assertIn("not assessable: 0", out.getvalue())
+
+
+class BacklogRefillTest(unittest.TestCase):
+    """tools/backlog.py and refill_lane.py's --add/--top-up over a fixture.
+
+    The contract under test is the one Dave set on 21 Sep 2026: a lane refills
+    itself to five from queue blocks written in the plans, and stops short --
+    saying why -- rather than queueing anything the admission test rejects."""
+
+    ITEM = (
+        "{n}. **[{lane}] {id} -- does a thing**\n"
+        "   - Plan: `plans/now/x.md` -- \"{id}\"\n"
+        "   - Files: `scripts/{id}.gd`\n"
+        "   - Check: something\n"
+        "   - Proof: `absent: scripts/sample.gd :: {id}_built`\n"
+        "   - Next after: none -- x is complete.\n\n"
+    )
+    BLOCK = (
+        "```{fence}\n"
+        "**[{lane}] {id} -- does a thing**\n"
+        "- Plan: `plans/now/x.md` -- \"{id}\"\n"
+        "- Files: `scripts/{files}.gd`\n"
+        "- Check: something\n"
+        "- Proof: `absent: scripts/sample.gd :: {needle}_built`\n"
+        "- Next after: none -- x is complete.\n"
+        "```\n\n"
+    )
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        (self.root / "scripts").mkdir()
+        (self.root / "scripts" / "sample.gd").write_text(
+            "func existing():\n\tpass\n", encoding="utf-8")
+        (self.root / "plans" / "now").mkdir(parents=True)
+        self.plan_path = self.root / "plans" / "now" / "x.md"
+        self.write_plan()
+        self.write_queue()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def block(self, slice_id, lane="Claude", fence="queue", files=None, needle=None):
+        return self.BLOCK.format(fence=fence, lane=lane, id=slice_id,
+                                 files=files or slice_id, needle=needle or slice_id)
+
+    def write_plan(self, *blocks):
+        body = "# x\n\n" + "".join(blocks or (self.block("A-9"),))
+        self.plan_path.write_text(body, encoding="utf-8")
+
+    def write_queue(self, claude=("A-1",), codex=("B-1", "B-2")):
+        self.claude = "### Claude lane\n\nPreamble.\n\n" + "".join(
+            self.ITEM.format(n=n, lane="Claude", id=slice_id)
+            for n, slice_id in enumerate(claude, start=1))
+        self.codex = "### Codex lane\n\nPreamble.\n\n" + "".join(
+            self.ITEM.format(n=n, lane="Codex", id=slice_id)
+            for n, slice_id in enumerate(codex, start=1))
+        self.tail = "## Not in the queue, and why\n\n- **C-1** -- waits on Dave.\n"
+        text = "# Next steps\n\n## Next up\n\n" + self.claude + self.codex + self.tail
+        (self.root / "NEXTSTEPS.md").write_text(text, encoding="utf-8")
+        return text
+
+    def run_tool(self, *arguments):
+        return subprocess.run(
+            [sys.executable, str(CHECK_DOCS_PATH.with_name("refill_lane.py")),
+             *arguments, "--root", str(self.root)],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            cwd=self.root,
+        )
+
+    def queue_text(self):
+        return (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+
+    def test_top_up_copies_the_block_in_as_a_numbered_item(self):
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        text = self.queue_text()
+        self.assertIn(self.ITEM.format(n=2, lane="Claude", id="A-9"), text)
+        self.assertIn("added:     A-9", result.stdout)
+        # The other lane is untouched, which is what keeps two closing
+        # branches merging cleanly.
+        self.assertIn(self.codex, text)
+
+    def test_top_up_stops_at_five_and_says_what_it_could_not_add(self):
+        self.write_plan(*(self.block(f"A-{n}") for n in range(5, 12)))
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        text = self.queue_text()
+        self.assertIn("5. **[Claude] A-8", text)
+        self.assertNotIn("A-10", text)
+        self.assertNotIn("has no further admissible block", result.stdout)
+
+    def test_a_gated_block_is_never_pulled_into_a_lane(self):
+        self.write_plan(self.block("A-9", fence="queue-gated"))
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("A-9", self.queue_text())
+        self.assertIn("gated: A-9", result.stdout)
+        self.assertIn("no bullet under", result.stdout)
+
+    def test_a_block_whose_proof_no_longer_holds_is_refused(self):
+        # The proof says the defect is still absent; put it in the file, so
+        # the block describes work that has already happened.
+        (self.root / "scripts" / "sample.gd").write_text(
+            "func A9_built():\n\tpass\n", encoding="utf-8")
+        self.write_plan(self.block("A-9", needle="A9"))
+
+        result = self.run_tool("--add", "A-9")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("proof no longer holds", result.stderr)
+        self.assertNotIn("A-9", self.queue_text())
+
+    def test_a_block_colliding_with_the_other_lane_is_refused(self):
+        self.write_plan(self.block("A-9", files="B-1"))
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("A-9", self.queue_text())
+        self.assertIn("Codex lane already owns scripts/B-1.gd", result.stdout)
+
+    def test_delete_then_top_up_does_not_requeue_the_slice_just_closed(self):
+        self.write_queue(claude=("A-1", "A-9"))
+        self.write_plan(self.block("A-9"))
+
+        result = self.run_tool("--delete", "A-9", "--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("A-9", self.queue_text())
+
+    def test_check_docs_fails_when_a_block_and_its_queue_entry_disagree(self):
+        self.write_plan(self.block("A-1", files="drifted"))
+        check_docs.ROOT = self.root
+        errors, warnings = [], []
+
+        check_docs.check_plan_queue_blocks(errors, warnings)
+
+        self.assertTrue(any("disagree" in error for error in errors), errors)
+
+    def test_check_docs_warns_when_a_lane_is_short_and_a_block_waits(self):
+        check_docs.ROOT = self.root
+        errors, warnings = [], []
+
+        check_docs.check_plan_queue_blocks(errors, warnings)
+
+        self.assertEqual([], errors)
+        self.assertTrue(any("the Claude lane holds 1 of 5" in w for w in warnings), warnings)
+        self.assertTrue(any("A-9" in w for w in warnings), warnings)

@@ -67,6 +67,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
         shutil.copy2(DIAGNOSTICS_PATH, self.root / "tools" / "diagnostics.ps1")
         shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
+        shutil.copy2(BACKLOG_PATH, self.root / "tools" / "backlog.py")
         (self.root / "plans" / "workstreams.md").write_text(
             "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"
         )
@@ -464,7 +465,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             ["git", "log", "--format=%s", "master"], cwd=self.root, capture_output=True, text=True, check=True
         ).stdout
         self.assertIn("A-1 -- archive its plan section", log)
-        self.assertIn("A-1 -- remove it from the Claude lane", log)
+        self.assertIn("A-1 -- refill the Claude lane", log)
 
     def test_failure_after_the_actions_resumes_to_a_clean_merge(self):
         self.use_real_closeout_tools()

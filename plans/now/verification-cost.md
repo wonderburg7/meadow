@@ -99,6 +99,15 @@ right region.
 
 Level: low -- mechanical, comment-only, one acceptance check.
 
+```queue
+**[Claude] V-3 -- the routing rule's section headers actually exist**
+- Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
+- Files: `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py`
+- Check: each of the six files has `# --- section ---` headers at its real boundaries with no header inside a function and no code line moved; `python tools/update_function_map.py` warns for any file over 700 lines whose first header falls after its first tenth; `.\tools\verify.ps1` green including the Godot boot
+- Proof: `absent: scripts/bee_foraging.gd :: # ---`
+- Next after: none -- verification-cost is complete.
+```
+
 **V-2 delivery note (20 Sep 2026).** The log held five failed `lifecycle tests`
 runs in seven days, not two (18 Sep 22:25, 19 Sep 11:14, 20 Sep 10:59, 11:04,
 15:45), and `verify_stage` events carried no branch or failure text, so none

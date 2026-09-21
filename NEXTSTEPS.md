@@ -8,11 +8,20 @@ This file holds the queue only -- detail lives in each item's `Plan:` section,
 and history in Git and `plans/archive/` (the old log is
 `plans/archive/NEXTSTEPS_LOG_2026-09-17.md`). Rules: `.claude/rules/documentation.md`.
 
+Neither lane is written by hand any more. A lane refills itself from the
+backlog: the fenced `queue` blocks in the plans, each holding the exact item
+its slice would be queued as (`tools/backlog.py`). `tools/slice.ps1 finish`
+deletes the closing item and tops its lane back up towards five in the same
+run. Five is a ceiling the backlog reaches when it has admissible work, not a
+number this file is padded out to -- a lane the backlog cannot fill stays
+short and says which candidate it refused and why.
+
 ## Next up
 
 ### Claude lane
 
-Up to five items, worked top to bottom. No file here may appear in the Codex lane.
+Up to five items, worked top to bottom. No file here may appear in the Codex
+lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] V-3 -- the routing rule's section headers actually exist**
    - Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
@@ -30,7 +39,8 @@ Up to five items, worked top to bottom. No file here may appear in the Codex lan
 
 ### Codex lane
 
-Up to five items, worked top to bottom. No file here may appear in the Claude lane.
+Up to five items, worked top to bottom. No file here may appear in the Claude
+lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] ST-1 -- preflight refusals stop crowding the step ranking**
    - Plan: `plans/now/stop-readout.md` -- "ST-1 — preflight refusals stop crowding the step ranking"
@@ -44,9 +54,8 @@ Up to five items, worked top to bottom. No file here may appear in the Claude la
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **G3** (`plans/design/architecture-review.md`) -- follows F2s and the skill-gating decision in `plans/design/progression.md` section 11.
+- **G3** (`plans/design/architecture-review.md`) -- follows F2s and the skill-gating decision in `plans/design/progression.md` section 11. Its queue block is written and proof-checked; open its fence from `queue-gated` to `queue` when F2s lands and the next refill takes it into the Claude lane.
 - **Progression Phase B step 6 onwards** (`plans/design/progression.md`) -- wants a clear run of the UI work above.
-- **L-12** (`plans/now/agent-lifecycle.md`) -- gated until `tools/session_cost.py --stops` shows the refill step among the two most frequent over ten or more stops. Measured 20 Sep 2026 over 53 stops: the two refill steps stand at 1 each against 8 for the archive gate, so the gate is not met; ST-1 must land first for the ranking to be readable at all.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

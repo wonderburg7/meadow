@@ -1452,7 +1452,11 @@ function Invoke-SliceArchiveAndRefill {
     # Each tool runs only when ground truth says its step is still owed, so
     # a branch that did either by hand -- or a resume after this already ran
     # -- passes straight through, and the gates stay as the proof that it
-    # worked. Adding the successor stays with the session until L-12.
+    # worked. Since L-12 (21 Sep 2026) the same refill call also tops the
+    # lane back up from the queue blocks in the plans, so the five lines a
+    # session used to rewrite out of plan prose are a copy. The archive runs
+    # first on purpose: it takes the closing slice's section, and with it the
+    # block, out of the plan before the top-up looks for candidates.
     param([string]$Root, [object]$Item, [string]$Id, [string]$Lane, [string]$Trailer, [string]$PythonPath)
     if (-not $Item) { return }
 
@@ -1472,13 +1476,20 @@ function Invoke-SliceArchiveAndRefill {
 
     $refillTool = Join-Path $Root "tools\refill_lane.py"
     $stillQueued = Get-NextUpItems -Root $Root | Where-Object { $_.Id -eq $Id }
-    if ($stillQueued -and (Test-Path -LiteralPath $refillTool -PathType Leaf)) {
-        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($refillTool, "--delete", $Id, "--root", $Root)
+    if (Test-Path -LiteralPath $refillTool -PathType Leaf) {
+        # One call: delete the closing item if it is still there, then fill the
+        # lane back towards five from the backlog. --top-up runs even when the
+        # deletion was done by hand, because a short lane is worth topping up
+        # whoever emptied it.
+        $refillArgs = @($refillTool)
+        if ($stillQueued) { $refillArgs += @("--delete", $Id) }
+        $refillArgs += @("--top-up", "--lane", $Lane, "--root", $Root)
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments $refillArgs
         $run.Output | ForEach-Object { Write-Output $_ }
         if ($run.Exit -ne 0) {
-            Stop-Slice -Cause "$Id -- tools/refill_lane.py --delete $Id refused (exit $($run.Exit)); its reason is printed above and NEXTSTEPS.md is unchanged" -Fix "on this branch add its successor ($($Item.NextAfter)) to ### $Lane lane with full Plan/Files/Check/Proof/Next after lines -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id and commits both"
+            Stop-Slice -Cause "$Id -- tools/refill_lane.py refused (exit $($run.Exit)); its reason is printed above and NEXTSTEPS.md is unchanged" -Fix "on this branch give its successor ($($Item.NextAfter)) a ``````queue block in its own plan section -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id, tops the $Lane lane up and commits both. If the successor is not startable yet, put it under '## Not in the queue, and why' with what it waits for instead"
         }
-        Save-SliceBranchWork -Root $Root -Message "$Id -- remove it from the $Lane lane`n`n$Trailer"
+        Save-SliceBranchWork -Root $Root -Message "$Id -- refill the $Lane lane`n`n$Trailer"
     }
 }
 
