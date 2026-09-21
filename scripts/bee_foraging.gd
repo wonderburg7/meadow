@@ -5,6 +5,7 @@ extends RefCounted
 ## Usage: const BeeForaging = preload("res://scripts/bee_foraging.gd")
 ##        BeeForaging.seek_flower(bee)
 
+# --- preloads and constants ---------------------------------------
 const BeeEnums = preload("res://scripts/bee_enums.gd")
 const Role = BeeEnums.Role
 const State = BeeEnums.State
@@ -20,6 +21,7 @@ const SCOUT_BOUTS := 3
 ## that out enough to tell a real effect from trip-to-trip variance.
 const RECRUIT_FOLLOWUP_TRIPS := 5
 
+# --- the autonomous-state choke point -----------------------------
 ## The single choke point for every autonomous state change in this file.
 ##
 ## A bee whose `player_driven` flag is set makes no state transition of her
@@ -39,6 +41,7 @@ static func autonomous_state(bee: Node2D, next: int) -> int:
 	return State.IDLING if bee.player_driven else next
 
 
+# --- capacity, rates and hive-side points -------------------------
 static func max_capacity(bee: Node2D) -> float:
 	return bee.nectar_stomach_capacity if bee.resource_type == "nectar" else bee.pollen_stomach_capacity
 
@@ -69,6 +72,7 @@ static func _jittered_point(base: Vector2, radius: float) -> Vector2:
 	return base + Vector2(cos(angle), sin(angle)) * dist
 
 
+# --- orientation flights ------------------------------------------
 ## Tier 0: a new forager's one semi-random flight before her first trip,
 ## kept as her start point from then on -- see SCOUTING_TOGGLE_PLAN.md.
 ## Outdoor-spawned bees fly there immediately; indoor-spawned (hatched)
@@ -85,6 +89,7 @@ static func take_orientation_flight(bee: Node2D) -> void:
 		bee.state = bee._default_state_for_role()
 
 
+# --- seeking a flower ---------------------------------------------
 ## Only ever an instant decision now -- a flower already in sight
 ## (forage_perception_radius) is taken immediately, exactly as before
 ## Slice 5. Anything further than that no longer falls straight through
@@ -171,6 +176,7 @@ static func _start_searching(bee: Node2D) -> void:
 	bee.state = State.SEARCHING
 
 
+# --- searching the meadow -----------------------------------------
 ## SEARCHING's per-frame step. Walks the expanding spiral via the normal
 ## steering (obstacle avoidance and indoor/outdoor handling come free),
 ## re-checking for a flower in perception range from wherever she's
@@ -257,6 +263,7 @@ static func _commit_to_flower(bee: Node2D, flower: Node2D) -> void:
 		bee.scout_species = flower.species_name
 
 
+# --- patch memory and the search spiral ---------------------------
 ## Slice 6 patch memory: append `position` to bee.known_patches (a small
 ## ring buffer, most-recent last) unless it's too close to something
 ## already remembered -- working one rich cluster shouldn't fill the
@@ -311,6 +318,7 @@ static func _spiral_point(bee: Node2D, anchor: Vector2, angle: float) -> Vector2
 	return point
 
 
+# --- choosing a flower --------------------------------------------
 ## `strict` applies the soft, social avoidance rule (another bee's tarsal
 ## mark); without it only the hard constraints (occupied, empty) and this
 ## bee's own memory -- her personal flower_cooldowns and, if predators are
@@ -478,6 +486,7 @@ const INSPECTION_TIME := 1.5
 const REJECTED_AVOID_SECONDS := 15.0
 
 
+# --- inspecting, drinking and sheltering --------------------------
 static func start_inspecting(bee: Node2D) -> void:
 	bee.timer = INSPECTION_TIME
 	bee.state = State.INSPECTING
@@ -552,6 +561,7 @@ static func shelter(bee: Node2D, _delta: float) -> void:
 		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER)
 
 
+# --- accepting or rejecting a flower ------------------------------
 static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
 	if f.get_available(bee.resource_type) < GameConfig.min_worthwhile_amount:
 		return false
@@ -583,6 +593,7 @@ static func reject_flower(bee: Node2D) -> void:
 	bee.state = autonomous_state(bee, State.SEEK_FLOWER)
 
 
+# --- collecting ---------------------------------------------------
 static func start_collecting(bee: Node2D) -> void:
 	DiagnosticLog.count_flower_visit(bee.current_flower)
 	# Only known now, on arrival -- accepted (worth_feeding passed) doesn't
@@ -753,6 +764,7 @@ static func finish_collecting(bee: Node2D) -> void:
 
 
 
+# --- entering the hive and depositing -----------------------------
 ## Foragers now physically walk into the hive view to deposit, rather
 ## than vanishing at the meadow marker. main.gd owns the reparenting
 ## because it owns both world roots and the entrance geometry.
@@ -929,6 +941,7 @@ static func finish_depositing(bee: Node2D) -> void:
 	bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
 
 
+# --- scoring a trip -----------------------------------------------
 ## The trip just finished (whether or not this bee is scouting): work
 ## out how much it collected per second and fold that into its running
 ## average (used by the entrance recruitment check). A scouting bee
@@ -1011,6 +1024,7 @@ static func _score_trip(bee: Node2D) -> void:
 		DiagnosticLog.log_scouting_settled(bee)
 
 
+# --- leaving the hive ---------------------------------------------
 static func go_to_exit(bee: Node2D, delta: float) -> void:
 	# No point walking out into weather that costs more to fly in than the
 	# trip would bring back. Wait inside, where the food is.
@@ -1104,6 +1118,7 @@ static func _send_to_scout_point(bee: Node2D) -> void:
 	bee.state = State.MOVE_TO_POINT
 
 
+# --- scouting -----------------------------------------------------
 ## Kicks off a brand-new forager's scouting phase (see setup() in
 ## bee.gd, the only caller). An outdoor-spawned bee is already out in
 ## the meadow, so it heads to its first bout immediately; an
@@ -1127,6 +1142,7 @@ static func start_scouting(bee: Node2D) -> void:
 		_send_to_scout_point(bee)
 
 
+# --- waiting at the entrance --------------------------------------
 ## A forager waiting at the entrance, either hoping to be told a
 ## better patch (seeker: scouting, or its own rate has fallen below
 ## the lower threshold) or offering to tell one (mentor: its rate is
@@ -1235,6 +1251,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 			_leave_hive_and_resume(bee)
 
 
+# --- the recruitment dance ----------------------------------------
 ## Slice 9 (proximity recruitment, GameConfig.proximity_recruitment_on):
 ## same eligibility test auto-recruitment's go_to_exit already uses (past
 ## the grace window, above/below the resource-specific threshold, not
@@ -1372,6 +1389,7 @@ static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void:
 	DiagnosticLog.log_recruitment_match(seeker, mentor, "dance")
 
 
+# --- remote deposit -----------------------------------------------
 ## Fallback only -- deposits without the walk-in animation.
 static func deposit_everything_remotely(bee: Node2D) -> void:
 	bee.hive.deposit(bee.current_load_type, bee.current_load)

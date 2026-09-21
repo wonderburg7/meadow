@@ -117,6 +117,37 @@ def build_file(discovered: list[tuple[str, int]]) -> str:
     return PREAMBLE + "\n---\n\n" + sections
 
 
+# A file this long wants a `# --- section ---` header early enough to route
+# to, not one buried near the end: CLAUDE.md sends a session to grep for them
+# instead of reading the file. A tenth of the way in is generous -- past that,
+# the whole head of the file is unsignposted. A warning rather than a failure,
+# so a new large file doesn't block a commit, but the gap is never invisible.
+HEADER_RE = re.compile(r"^# --- ")
+
+
+def header_warnings(discovered: list[tuple[str, int]]) -> list[str]:
+    warnings = []
+    for name, line_count in discovered:
+        lines = (SCRIPTS / name).read_text(encoding="utf-8").splitlines()
+        first = next(
+            (n for n, line in enumerate(lines, start=1) if HEADER_RE.match(line)),
+            None,
+        )
+        cutoff = max(1, line_count // 10)
+        if first is None:
+            warnings.append(
+                f"warning: {name} ({line_count:,} lines) has no "
+                "`# --- section ---` header at all -- nothing to grep for."
+            )
+        elif first > cutoff:
+            warnings.append(
+                f"warning: {name} ({line_count:,} lines) has no "
+                f"`# --- section ---` header until line {first} -- its first "
+                f"{cutoff} lines are unsignposted."
+            )
+    return warnings
+
+
 def main() -> int:
     check = "--check" in sys.argv
     discovered = discover_files()
@@ -130,6 +161,9 @@ def main() -> int:
                 "DESCRIPTIONS."
             )
         return 1
+
+    for warning in header_warnings(discovered):
+        print(warning)
 
     content = build_file(discovered)
 

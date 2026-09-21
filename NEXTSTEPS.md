@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] V-3 -- the routing rule's section headers actually exist**
-   - Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
-   - Files: `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py`
-   - Check: each of the six files has `# --- section ---` headers at its real boundaries with no header inside a function and no code line moved; `python tools/update_function_map.py` warns for any file over 700 lines whose first header falls after its first tenth; `.\tools\verify.ps1` green including the Godot boot
-   - Proof: `absent: scripts/bee_foraging.gd :: # ---`
-   - Next after: none -- verification-cost is complete.
-
-2. **[Claude] F2s -- a declarative UI gate table**
+1. **[Claude] F2s -- a declarative UI gate table**
    - Plan: `plans/design/architecture-review.md` -- "F2s — a declarative UI gate table"
    - Files: `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/availability.gd`
    - Check: a source check fails if any `stage_gate.ACCESSIBILITY_KEYS` entry appears in the gate table and every gate key in `challenge_stages.gd`'s `unlocked_keys` has a table row or a documented reason for none; a Challenge fixture reaching a late stage shows the same controls as before
    - Proof: `absent: scripts/hud.gd :: func apply_gates`
    - Next after: G3 -- once the skill-gating decision in `plans/design/progression.md` section 11 is taken.
+
+2. **[Claude] V-4 -- scenario_actions.gd gets the headers V-3's own check asked for**
+   - Plan: `plans/now/verification-cost.md` -- "V-4 — scenario_actions.gd gets the headers V-3's own check asked for"
+   - Files: `scripts/scenario_actions.gd`
+   - Check: `scripts/scenario_actions.gd` carries `# --- section ---` headers through the 242 lines above its existing `# --- triggers ---`, with no header inside a function and no code line moved (`git diff --numstat` shows 0 deletions); `python tools/update_function_map.py` no longer names it and still names `hive_cell.gd`; `.\tools\verify.ps1` green including the Godot boot
+   - Proof: `absent: scripts/scenario_actions.gd :: # --- preloads`
+   - Next after: none -- verification-cost is complete.
 
 ### Codex lane
 

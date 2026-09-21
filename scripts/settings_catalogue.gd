@@ -19,6 +19,7 @@ extends RefCounted
 ## keeps its own checkbox-syncing wrappers around the three cascade
 ## helpers below.
 
+# --- preloads and collection order --------------------------------
 const Prerequisites = preload("res://scripts/prerequisites.gd")
 
 ## Collection and section order here is the order they appear in the panel.
@@ -44,6 +45,7 @@ const COLLECTIONS := [
 	},
 ]
 
+# --- the tunables table -------------------------------------------
 const TUNABLES := [
 	# --- World & start ---
 	{
@@ -1298,6 +1300,7 @@ const TUNABLES := [
 	},
 ]
 
+# --- settings owned by Session ------------------------------------
 ## Settings that live in Session rather than GameConfig -- the player's
 ## own preferences, as opposed to numbers that change how the game plays.
 ## The panel edits both, so it needs to know which object to ask.
@@ -1311,6 +1314,7 @@ const SESSION_KEYS := [
 	"tooltip_delay", "show_speed_8x", "show_interface_labels",
 ]
 
+# --- reading and writing a setting --------------------------------
 static func setting_get(key: String):
 	return Session.get(key) if key in SESSION_KEYS else GameConfig.get(key)
 
@@ -1321,6 +1325,7 @@ static func setting_set(key: String, value) -> void:
 	else:
 		GameConfig.set(key, value)
 
+# --- resetting ----------------------------------------------------
 ## C3 (hands-on-fixes-2026-08-31.md): GameConfig is an autoload, so a
 ## debug-panel tweak from an earlier session survives reload_current_scene()
 ## and would otherwise leak into whatever the player picks next from the
@@ -1355,6 +1360,7 @@ static func reset_config_keys(keys: Array) -> void:
 		GameConfig.set(key, defaults.get(key))
 	defaults.free()
 
+# --- applying a setting with its cascades -------------------------
 ## Sets `key` to `value` and, if `key` takes part in the Prerequisites
 ## tree, cascades to keep dependencies consistent -- turning a toggle on
 ## also turns on everything it depends on; turning one off also turns
@@ -1374,6 +1380,7 @@ static func apply_setting(key: String, value) -> void:
 	else:
 		_cascade_dependents_off_static(key)
 
+# --- the cascade helpers ------------------------------------------
 ## Walks up Prerequisites from `key`, turning on everything it depends
 ## on -- e.g. switching on Floral constancy also switches on Auto
 ## scouting. Returns the keys it actually changed, so a UI caller can

@@ -1,7 +1,7 @@
 # Verification cost — stop paying for checks that carry no information
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: V-3 -- the routing rule's section headers actually exist | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: Dave / Claude Code | Next: V-4 -- scenario_actions.gd gets the headers V-3's own check asked for | Dependency: none | Verified: 2026-09-21
 
 **Objective.** `tools/verify.ps1` runs before every commit, so anything it
 spends is multiplied by every slice. Two of its costs are measured and neither
@@ -37,7 +37,7 @@ their promotion, and their disposition points here.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| V-3 | Every script over 700 lines carries the section headers the routing rule assumes | `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py` | yes | low |
+| V-4 | The last script the section-header warning still names is signposted | `scripts/scenario_actions.gd` | yes | low |
 
 Dependencies, stated rather than implied. V-1 and V-2 both edit
 `tools/verify.ps1`, so they run in that order in one lane; V-2 does not need
@@ -49,75 +49,53 @@ V-1 and so follows it. None of the three depends on the other lane.
 archived at `plans/archive/workflow-telemetry_2026-09-20.md`), and
 `tests/test_source_checks.py` is that lane's too. `scripts/hive.gd` is
 PERF-1's and `scripts/hive_cell.gd` is CB-2's. V-1 and V-2 must therefore
-leave `Invoke-SliceFinish` alone; V-3 must leave `hive.gd` and
+leave `Invoke-SliceFinish` alone; V-3 and V-4 must leave `hive.gd` and
 `hive_cell.gd` alone. If a fix turns out to need one of
 them, stop and escalate rather than taking the file.
+
+## V-4 — scenario_actions.gd gets the headers V-3's own check asked for
+
+V-3 built the warning this plan asked for and then ran it. It named two files
+the plan's own 70%-of-the-file survey had missed, because a tenth of the file
+is a stricter line than 70%: `scenario_actions.gd` (1,338 lines, first
+`# --- ` header at 243) and `hive_cell.gd` (1,149 lines, first at 606).
+`hive_cell.gd` is CB-2's and this plan may not take it, so it stays for its
+owner and the warning keeps naming it until CB-2 gets there.
+`scenario_actions.gd` belongs to no open slice, so this plan finishes what its
+own instrument started.
+
+Give it the same treatment the six files got: comment-only `# --- name ---`
+headers at the boundaries that already exist. The head of the file is what is
+unsignposted -- preloads and `LEGACY_WHEN_KEY_MAP`, `run_pending`, the comb
+build-site sampler, `log_unresolved`, the settle/wait/window helpers and
+`_execute` all sit above the existing `# --- triggers ---` at 243. The four
+headers already there (`triggers`, `selectors`, `verbs`, `assertion checks`)
+are correct and stay exactly as they are.
+
+- **Invariants.** Comments only; not one line of code moves and no function is
+  reordered. A header goes **between** functions, never inside one --
+  `tools/func.py` treats `# ---` as a function boundary, so one dropped
+  mid-function truncates what it prints. Prove it with
+  `git diff --numstat`: insertions only, 0 deletions.
+- **Acceptance.** `python tools/update_function_map.py` no longer names
+  `scenario_actions.gd`; it still names `hive_cell.gd`, which is correct.
+  `.\tools\verify.ps1` green including the Godot boot.
+- **Completion.** With V-4 the plan is done: archive it with
+  `Next: None — plan complete`.
+
+Level: low -- mechanical, comment-only, one acceptance check.
+
+```queue
+**[Claude] V-4 -- scenario_actions.gd gets the headers V-3's own check asked for**
+- Plan: `plans/now/verification-cost.md` -- "V-4 — scenario_actions.gd gets the headers V-3's own check asked for"
+- Files: `scripts/scenario_actions.gd`
+- Check: `scripts/scenario_actions.gd` carries `# --- section ---` headers through the 242 lines above its existing `# --- triggers ---`, with no header inside a function and no code line moved (`git diff --numstat` shows 0 deletions); `python tools/update_function_map.py` no longer names it and still names `hive_cell.gd`; `.\tools\verify.ps1` green including the Godot boot
+- Proof: `absent: scripts/scenario_actions.gd :: # --- preloads`
+- Next after: none -- verification-cost is complete.
+```
 
 V-1 shipped 2026-09-20; its specification is `plans/archive/V-1_2026-09-20.md`.
 
 V-2 shipped 2026-09-20; its specification is `plans/archive/V-2_2026-09-20.md`.
 
-## V-3 — the routing rule's section headers actually exist
-
-CLAUDE.md tells a session to read the routed section of a large script rather
-than the file, and says: "Every script over 700 lines is indexed in
-`FUNCTION_MAP.md`; for any other, search its `# --- section ---` headers."
-H2 gave `hud.gd` ten headers and `main.gd` six on 11 Sep 2026 and stopped
-there. Measured 20 Sep 2026:
-
-| Script | Lines | Headers | First at |
-| --- | --- | --- | --- |
-| `settings_catalogue.gd` | 1421 | 0 | -- |
-| `bee_foraging.gd` | 1381 | 0 | -- |
-| `debug_panel.gd` | 1000 | 0 | -- |
-| `challenge_runner.gd` | 1234 | 1 | 1183 |
-| `diagnostic_log.gd` | 1163 | 1 | 872 |
-| `bee.gd` | 2369 | 17 | 911 |
-
-Give each of those six the same treatment `hud.gd` got: comment-only
-`# --- name ---` headers at the boundaries that already exist in the file, so
-`python tools/heading.py`-style routing and a plain grep both land in the
-right region.
-
-- **Invariants.**
-  - Comments only. Not one line of code moves, and no function is reordered.
-  - A header goes **between** functions, never inside one:
-    `tools/func.py` treats `# ---` as a function boundary, so a header dropped
-    mid-function would truncate what it prints.
-  - `.\tools\verify.ps1` is green and the Godot boot passes -- a comment
-    cannot break either, which is what makes this low.
-- **Name the boundaries that are there.** Do not invent a structure the file
-  does not have. Where a region is interleaved rather than contiguous, record
-  that in the delivery note and leave it unheadered, as H2 did for "role
-  controls" and "speed controls".
-- **Keep it true afterwards.** Add a warning (not a failure) to
-  `tools/update_function_map.py`, which already scans exactly the files over
-  700 lines: name any of them whose first `# ---` header falls after the first
-  tenth of the file, or that has none. A warning, so a new large file does not
-  block a commit, but the gap is never invisible again.
-- **Completion.** Archive this plan with `Next: None — plan complete`.
-
-Level: low -- mechanical, comment-only, one acceptance check.
-
-```queue
-**[Claude] V-3 -- the routing rule's section headers actually exist**
-- Plan: `plans/now/verification-cost.md` -- "V-3 — the routing rule's section headers actually exist"
-- Files: `scripts/settings_catalogue.gd`, `scripts/bee_foraging.gd`, `scripts/debug_panel.gd`, `scripts/challenge_runner.gd`, `scripts/diagnostic_log.gd`, `scripts/bee.gd`, `tools/update_function_map.py`
-- Check: each of the six files has `# --- section ---` headers at its real boundaries with no header inside a function and no code line moved; `python tools/update_function_map.py` warns for any file over 700 lines whose first header falls after its first tenth; `.\tools\verify.ps1` green including the Godot boot
-- Proof: `absent: scripts/bee_foraging.gd :: # ---`
-- Next after: none -- verification-cost is complete.
-```
-
-**V-2 delivery note (20 Sep 2026).** The log held five failed `lifecycle tests`
-runs in seven days, not two (18 Sep 22:25, 19 Sep 11:14, 20 Sep 10:59, 11:04,
-15:45), and `verify_stage` events carried no branch or failure text, so none
-could be classified. Dave chose to record first and scope anyway: every stage
-event now carries `branch` and, on failure, `failure` (the first failing
-line); the lifecycle stage runs only when the diff against `master` touches
-`tools/slice.ps1`, `tools/hook_log.py`, `tools/archive_slice.py`,
-`tools/refill_lane.py`, `tools/check_docs.py`, `tools/verify.ps1`,
-`NEXTSTEPS.md` or `tests/`, otherwise prints `skipped -- branch touches no
-lifecycle tooling` and logs `skipped: true`. `-Scope primary` now runs it
-always. Re-check the failure classification once a week of new events exist.
-The `MEADOW_FINISH_VERIFY` guard stays; removing it needs `tools/slice.ps1`
-(Codex lane).
+V-3 shipped 2026-09-21; its specification is `plans/archive/V-3_2026-09-21.md`.
