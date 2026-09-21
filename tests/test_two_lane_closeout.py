@@ -67,6 +67,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
         shutil.copy2(DIAGNOSTICS_PATH, self.root / "tools" / "diagnostics.ps1")
         shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
+        shutil.copy2(BACKLOG_PATH, self.root / "tools" / "backlog.py")
         (self.root / "plans" / "workstreams.md").write_text(
             "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"
         )
@@ -398,7 +399,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         for each item, the real L-10/L-11 tools, and a mock verifier that
         resolves the running interpreter -- so `finish` itself has to archive
         and refill, with nothing prepared by hand."""
-        for name in ("archive_slice.py", "refill_lane.py", "backlog.py", "heading.py"):
+        for name in ("archive_slice.py", "refill_lane.py", "heading.py"):
             shutil.copy2(SLICE_PATH.with_name(name), self.root / "tools" / name)
         for source in ("second.gd", "filler.gd"):
             (self.root / "scripts" / source).write_text("func existing():\n\tpass\n", encoding="utf-8")
