@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -852,7 +852,7 @@ Level: medium. Depends on: F1s.
 - Files: `scripts/hud.gd`, `scripts/challenge_runner.gd`, `scripts/availability.gd`
 - Check: a source check fails if any `stage_gate.ACCESSIBILITY_KEYS` entry appears in the gate table and every gate key in `challenge_stages.gd`'s `unlocked_keys` has a table row or a documented reason for none; a Challenge fixture reaching a late stage shows the same controls as before
 - Proof: `absent: scripts/hud.gd :: func apply_gates`
-- Next after: G3 -- once the skill-gating decision in `plans/design/progression.md` section 11 is taken.
+- Next after: G3 -- actions become gateable.
 ```
 
 ### G1 — the action catalogue, data only
