@@ -83,8 +83,11 @@ which of five things is actually wrong before triage starts from scratch:
   `GODOT_PATH`, or in `.codex/config.toml`. This is the one state that
   already blocks `doctor` itself; install Godot or point one of those at it.
 - `import_cache_missing` -- the repository has no `.godot` directory, which
-  is normal for a fresh worktree. The next headless run recompiles and
-  passes; this is not a regression and not a reason to change anything.
+  is normal for a fresh worktree. `verify.ps1`'s boot stage and
+  `run_scenario.py` seed it from the primary checkout before booting, and
+  refresh it when it is older than the newest source change or a first boot
+  cannot resolve a script (`tools/godot_cache.py`, one retry). This is not a
+  regression and not a reason to change anything.
 - `environment_crash` -- the configured executable exists and the import
   cache is present, but a minimal `--headless --disable-crash-handler
   --quit-after 1` still exited non-zero or never returned. Something about

@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnostics import write_event  # noqa: E402
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
 from godot_compile_check import failing_lines  # noqa: E402
+import godot_cache  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
                                   compose_case_scenario, evaluate_aggregate_expectations,
@@ -458,6 +459,17 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     try:
         with _suppress_windows_crash_dialogs():
             process_outcome = run_headless_process(cmd, timeout)
+            # A worktree cache left stale by a merge cannot resolve a new
+            # script: refresh it from the primary and run once more.
+            if process_outcome.kind not in ("timed_out", "environment_failure"):
+                first_output = process_outcome.stdout + "\n" + process_outcome.stderr
+                if failing_lines(first_output):
+                    retry, line = godot_cache.refresh_after_failure(ROOT, godot_path, first_output)
+                    if line:
+                        print(line, file=sys.stderr)
+                    if retry:
+                        session_path.unlink(missing_ok=True)
+                        process_outcome = run_headless_process(cmd, timeout)
         returncode = process_outcome.returncode
         process_stdout = process_outcome.stdout
         process_output = "--- stdout ---\n%s\n--- stderr ---\n%s" % (
@@ -855,6 +867,15 @@ def main() -> int:
             print("error: --background owns its result root; do not combine it with --result-root", file=sys.stderr)
             return 1
         return submit_background_job(sys.argv[1:], args.job_root)
+
+    # A worktree's missing or stale .godot would otherwise fail every run
+    # below as a compile error or a fake collapse. Stderr keeps stdout's
+    # one-line verdict contract.
+    if Path(args.godot_path).is_file():
+        cache_ok, cache_line = godot_cache.ensure_cache(ROOT, args.godot_path)
+        print(cache_line, file=sys.stderr)
+        if not cache_ok:
+            return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
     if args.experiment is not None:
