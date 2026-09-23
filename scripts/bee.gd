@@ -20,6 +20,7 @@ extends Node2D
 ## and she alone can take the Egg layer role. She can be reassigned to
 ## forage or build like anyone else.
 
+# --- preloads and shared enums ------------------------------------
 ## Role and State (and ROLE_PERF_SECTIONS) live in bee_enums.gd, a leaf
 ## file with no dependencies, so every other bee_*.gd file can use them
 ## without a circular preload of bee.gd itself. Aliased straight back
@@ -51,6 +52,7 @@ const BeeHoney = preload("res://scripts/bee_honey.gd")
 const BeeEggLaying = preload("res://scripts/bee_egg_laying.gd")
 const Actions = preload("res://scripts/actions.gd")
 
+# --- the role action catalogue ------------------------------------
 ## The catalogue is grouped once when this script loads. `_try_role_work` runs
 ## on every idle bee's think tick, so filtering the full catalogue there would
 ## turn a data refactor into a hot-path regression.
@@ -64,6 +66,7 @@ const ROLE_ACTION_FINDERS := {
 	Roles.FORAGER: BeeForaging,
 }
 
+# --- stats copied from GameConfig ---------------------------------
 var speed: float = 110.0
 var flower_handling_time: float = 2.0
 var nectar_collection_rate: float = 5.0
@@ -74,6 +77,7 @@ var pollen_stomach_capacity: float = 25.0
 var arrive_distance: float = 4.0
 var click_radius: float = 14.0
 
+# --- role, state and identity -------------------------------------
 var role: int = Role.FORAGER
 var state: int = State.SEEK_FLOWER
 var timer: float = 0.0
@@ -256,6 +260,7 @@ var working_secondary: bool = false
 func current_working_role() -> int:
 	return secondary_role if working_secondary else role
 
+# --- floral constancy and the search pattern ----------------------
 ## Floral constancy (see GameConfig.floral_constancy_on): "" means no
 ## preference. Once set, this bee only ever selects flowers of this
 ## species, regardless of the toggle -- turning constancy off in tuning
@@ -327,6 +332,7 @@ var thin_visit_streak: int = 0
 ## toward "ahead of me" over "behind me" at similar distances.
 var heading: Vector2 = Vector2.RIGHT
 
+# --- patch memory and species experience --------------------------
 ## Slice 6 (probabilistic choice and memory): a small ring buffer of
 ## distinct locations she's actually fed from, most-recent last.
 ## Consulted only when a SEARCHING bout gives up and needs a fresh
@@ -353,6 +359,7 @@ var species_experience: Dictionary = {}
 ## known_patches above.
 var species_confidence: Dictionary = {}
 
+# --- scouting -----------------------------------------------------
 ## Scouting (see GameConfig.scouting_on) -- a brand-new forager's phase
 ## of trying a few different start points, timed, so it can settle on
 ## whichever paid off best rather than the player having to click "Pick
@@ -375,6 +382,8 @@ var scout_best_rate: float = -1.0
 ## same as the rest of the scouting block.
 var scout_current_start_point: Vector2 = Vector2(INF, INF)
 var scout_best_start_point: Vector2 = Vector2(INF, INF)
+
+# --- trip rates and scoring ---------------------------------------
 ## Recruitment: a rolling average of this forager's own resource
 ## collection rate, weighted towards recent trips rather than a lifetime
 ## average, so it reacts to a patch going bad rather than staying
@@ -437,6 +446,8 @@ var trip_first_flower_time: float = -1.0
 var trip_handling_seconds: float = 0.0
 var trip_flowers_visited: int = 0
 var flower_visit_started_at: float = -1.0
+
+# --- recruitment and dancing --------------------------------------
 ## Set on both bees the instant a recruitment match happens at the
 ## entrance (see BeeForaging.wait_at_entrance) so their next several
 ## scored trips can each be logged against the rate each had *before* the
@@ -476,6 +487,7 @@ var has_danced_this_visit: bool = false
 ## debug print re-added every time the thresholds need rechecking.
 var settled_rate_logged: bool = false
 
+# --- build and mine queues ----------------------------------------
 ## A player-placed manual cell site a builder should try first, before
 ## falling back to its usual pick-a-site logic. Consumed (cleared) the
 ## moment it's acted on, successfully or not, so a bad click can't loop.
@@ -499,6 +511,7 @@ var has_home_hex: bool = false
 var mine_home_hex: Vector2i = Vector2i.ZERO
 var has_mine_home: bool = false
 
+# --- flower cooldowns and predator memory -------------------------
 ## Flowers this bee has drained, mapped to the sim-time at which they
 ## should be back to full. Time-based rather than checking the flower's
 ## live amount, so a bee commits to staying away for the whole recharge
@@ -545,11 +558,13 @@ var alarm_flash_until: float = -999.0
 ## identical from the outside.
 var attack_flash_until: float = -999.0
 
+# --- pathfinding inside the hive ----------------------------------
 ## Cached route while walking inside the hive -- see _move_towards.
 var path_points: PackedVector2Array = PackedVector2Array()
 var path_index: int = 0
 var path_goal: Vector2 = Vector2(INF, INF)
 
+# --- the visual nodes ---------------------------------------------
 ## Every visual child (rings, body, label) hangs off this instead of the
 ## bee node itself, so bumble flight (see _update_wander_flight) can drift
 ## the whole visual stack a few pixels off the real position without
@@ -602,6 +617,7 @@ var search_ring: Polygon2D
 ## picked first. See _update_dance_ring.
 var dance_ring: Polygon2D
 
+# --- _ready and construction --------------------------------------
 func _ready() -> void:
 	add_to_group("bees")
 	# Newly built cells and freshly-mined floor tiles get added to
@@ -750,6 +766,7 @@ func _ready() -> void:
 
 	_update_role_marker()
 
+# --- setup, stats and appearance ----------------------------------
 func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void:
 	hive = hive_node
 	world = world_node

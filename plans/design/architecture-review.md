@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: G3 also waits on the skill-gating decision recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026, F1s shipped 20 Sep 2026 and F2s shipped 23 Sep 2026, leaving G3 | Owner: Dave / Claude Code | Next: G3 -- actions become gateable, its queue block now unfenced for the Claude lane | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-23
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -811,40 +811,7 @@ E1 shipped 2026-09-19; its specification is `plans/archive/E1_2026-09-19.md`.
 
 F1s shipped 2026-09-20; its specification is `plans/archive/F1s_2026-09-20.md`.
 
-### F2s — a declarative UI gate table
-
-Level: medium. Depends on: F1s.
-
-- **Required reading.** This heading. F10 above.
-  `scripts/challenge_runner.gd::_apply_stage_gate_to_ui`. `scripts/hud.gd`'s
-  `set_*_visible` block and `allowed_*_keys` fields. `scripts/stage_gate.gd`.
-- **Files to change.** `scripts/hud.gd`, `scripts/challenge_runner.gd`,
-  `scripts/availability.gd`.
-- **Files not to change.** `scripts/stage_gate.gd`; it stays string-keyed and
-  unchanged, including its accessibility refusal.
-- **Requirements.** A gate table mapping a stage-gate key to the controls it
-  governs. The HUD registers each gateable control as it builds it and exposes
-  one `apply_gates(stage_gate)`. The eight bespoke `set_*_visible` functions go.
-  The three allow-list setters stay, because they filter a rebuilt list rather
-  than toggling one control, which is a different job.
-- **Invariants.** No entry of `stage_gate.ACCESSIBILITY_KEYS` may appear in the
-  table, and the source check should fail if one does. A control not yet built
-  registers later and is a no-op until then, never an error. The
-  `designation_gates` map moves into the table, keeping honey and jelly behind
-  keys no Challenge 2 stage unlocks.
-- **Implementation guidance.** Register with a `Callable` that returns the
-  control rather than a stored reference, since `_rebuild_role_controls` replaces
-  nodes.
-- **Runtime policy.** Called on stage entry and on `unlocked_changed`, not per
-  frame.
-- **Automated acceptance.** A source check that no accessibility key appears in
-  the gate table, and that every gate key used in `challenge_stages.gd`'s
-  `unlocked_keys` has either a table row or a documented reason for having none.
-  A Challenge fixture reaching a late stage with the same controls visible.
-- **Escalation.** If a control's visibility depends on both a gate and something
-  else — the queen build button depends on the gate *and* on a single queen being
-  selected — keep the second condition in the HUD and gate only the first. Do not
-  put selection state in the table.
+F2s shipped 2026-09-23; its specification is `plans/archive/F2s_2026-09-23.md`.
 
 ### G1 — the action catalogue, data only
 
@@ -895,6 +862,18 @@ Level: medium. Depends on: G2, F2s.
   *effects* gate values and behaviour switches where the behaviour branches.
   So G3 and Phase B step 6 no longer block each other, and neither sets a
   pattern the other has to follow.
+
+```queue
+**[Claude] G3 -- actions become gateable**
+- Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
+- Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
+- Check: with no Challenge active and no skills owned every action is still offered; both Challenge fixtures reach the same final stage as before; a source check fails if `challenge_stages.gd` names an action id that `actions.gd` does not define
+- Proof: `absent: scripts/availability.gd :: action_query`
+- Next after: none -- architecture-review is complete once G3 ships.
+```
+
+The fence was `queue-gated` until F2s landed (23 Sep 2026); it is now `queue`,
+so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
 
 ## Read on demand
 

@@ -48,12 +48,22 @@ it, on the branch:**
    where it was filed. A finding from the plan's own checks becomes its next
    slice while the plan is open; one that surfaces after it is archived
    starts a new plan.
-2. Add the item's `Next after:` successor to the **same lane's** subsection
-   with full `Plan:`/`Files:`/`Check:`/`Proof:`/`Next after:` lines (or under
-   `## Not in the queue, and why` if it is not startable), and if the
-   deletion would leave the lane short, pull the next ready, file-disjoint
-   slice from an owning plan (at most five per lane). If `refill_lane.py`
-   refuses, `finish` stops naming this step; do it and retry.
+2. Make sure the item's `Next after:` successor has a fenced `queue` block in
+   its own plan section -- the `**[Lane] <id> -- <title>**` line and its five
+   fields, which is what the refill copies in. If it is not startable yet,
+   fence it `queue-gated` and put one line under `## Not in the queue, and
+   why` saying what it waits for. `finish` then deletes the closing item and
+   tops the lane back up towards five from every admissible block in the
+   backlog, successor first. If `refill_lane.py` refuses, `finish` stops
+   naming this step; do it and retry.
+
+   The top-up is best-effort: it never queues a slice whose `Proof:` no longer
+   holds or whose files the other lane owns, so a lane can land short of five.
+   That is not a closeout failure and is not a reason to hold the merge --
+   `finish` prints which candidate it refused and why, and which gated blocks
+   are waiting. A lane short with nothing in the backlog is a signal that the
+   owning plan needs its next slice specified, which is plan work, not
+   closeout work.
 
 Either edit may be left uncommitted: `finish` commits it first. A branch that
 did the archive or the deletion by hand passes straight through, because each

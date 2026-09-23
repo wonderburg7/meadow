@@ -17,6 +17,7 @@ extends CanvasLayer
 ## Those badges can be switched off once you know your way around -- see
 ## the Accessibility section.
 
+# --- preloads -----------------------------------------------------
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
@@ -29,6 +30,7 @@ const Stages = preload("res://scripts/challenge_stages.gd")
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 
+# --- fields -------------------------------------------------------
 var value_labels: Dictionary = {}
 ## setting key -> its CheckBox, so the cascade helpers below can refresh
 ## a row's display when they flip a toggle other than the one clicked.
@@ -63,6 +65,7 @@ var _challenge_stage_navigation_key: String = ""
 ## than inferring which step it should take from stores the rescue may refill.
 var _c2_collapse_presses: int = 0
 
+# --- _ready and construction --------------------------------------
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
 func _style_button(button: BaseButton) -> BaseButton:
@@ -194,6 +197,7 @@ func _report_settings_button_width() -> void:
 		if is_instance_valid(hud) and hud.has_method("set_settings_button_width"):
 			hud.set_settings_button_width(toggle_button.size.x)
 
+# --- collections and sections -------------------------------------
 func _rows_in(category: String) -> Array:
 	var found: Array = []
 	for entry in Settings.TUNABLES:
@@ -339,6 +343,7 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	sections[category] = body
 	return wrapper
 
+# --- the Challenge stage navigator --------------------------------
 ## Developer-only navigation for a live Challenge. The runner exposes only
 ## read methods and transition methods, so this view cannot mutate stage
 ## state directly. It stays in this section rather than the general Triggers
@@ -403,6 +408,7 @@ func _refresh_challenge_stage_navigation() -> void:
 	challenge_retreat_btn.disabled = not runner.can_debug_retreat_stage()
 	challenge_advance_btn.disabled = not runner.can_debug_advance_stage()
 
+# --- the controls help --------------------------------------------
 ## The controls used to be printed permanently in the top-left corner, and
 ## the text carried its own "Controls" heading and blank lines between
 ## groups. The section header above it already says Controls, and the blank
@@ -453,6 +459,7 @@ Right click the ground — move the selection there
 Click a warning in the corner to select what it is about."""
 	return help
 
+# --- the action buttons -------------------------------------------
 ## Restart, save/load and the main menu, kept at the top of the panel so
 ## they don't drift below a growing list of settings, with the developer
 ## Triggers group underneath them.
@@ -623,6 +630,8 @@ func _on_force_c2_collapse_pressed() -> void:
 	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0 if _c2_collapse_presses == 1 else Stages.C2_FAILURE_FLOOR - 1.0
 	if nectar > target:
 		hive.take("nectar", nectar - target)
+
+# --- save and load ------------------------------------------------
 ## Ordinary player save/load doesn't record Challenge stage/gate/prompt
 ## state (see challenge_runner.gd), so it's disabled for the length of an
 ## active Challenge -- tutorial_checkpoint.gd covers Challenge-internal
@@ -664,6 +673,7 @@ func _on_load_pressed() -> void:
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
 
+# --- showing and hiding the panel ---------------------------------
 func _toggle_panel() -> void:
 	_apply_layer_for_context()
 	panel.visible = not panel.visible
@@ -683,6 +693,7 @@ func _apply_layer_for_context() -> void:
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
 	layer = 21 if menu_visible else 10
 
+# --- building a settings row --------------------------------------
 func _make_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
@@ -884,6 +895,7 @@ func _cycle_option(entry: Dictionary, direction: int) -> void:
 	UiTheme.refresh_for_setting(entry.key)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _option_display(entry, new_value)]
 
+# --- prerequisite cascades ----------------------------------------
 ## UI-syncing wrapper over the catalogue's
 ## `_cascade_prerequisites_on_static` -- ticks the checkbox for every
 ## key the cascade actually changed.
@@ -914,6 +926,7 @@ func _cascade_mutual_exclusion(key: String) -> void:
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = false
 
+# --- star rows and value editing ----------------------------------
 ## A row whose control is the same ★ / ☆ toggle the colony window uses,
 ## pinning something into the corner readout rather than changing a
 ## number. Kept identical to that one on purpose: a star means the same
@@ -980,6 +993,7 @@ func _format_value(v) -> String:
 		return str(int(v))
 	return "%.2f" % v
 
+# --- restart and main menu ----------------------------------------
 func _on_restart_pressed() -> void:
 	_restart()
 

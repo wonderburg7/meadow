@@ -17,6 +17,9 @@ import unittest
 
 SOURCE_CHECKS_PATH = Path(__file__).with_name("source_checks.py")
 CHECK_DOCS_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "check_docs.py"
+# check_docs.py imports it to read the plans' queue blocks, so a fixture
+# repository with one and not the other cannot run its own checks.
+BACKLOG_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "backlog.py"
 SLICE_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "slice.ps1"
 VERIFY_PATH = SOURCE_CHECKS_PATH.parent.parent / "tools" / "verify.ps1"
 # slice.ps1 and verify.ps1 both dot-source this, so a fixture repository that

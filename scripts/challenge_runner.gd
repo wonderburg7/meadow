@@ -30,6 +30,7 @@ extends Node
 ## that ever calls TutorialCheckpoint.restore() for real -- see its
 ## comment for what a restore does and doesn't reset.
 
+# --- signals and preloads -----------------------------------------
 ## Slice 5 (persistence/event boundaries) -- fired once a stage's goal is
 ## met, naming the stage id just cleared. No listener is connected yet
 ## (checkpointing happens in _enter_stage(), which also runs for the very
@@ -61,6 +62,7 @@ const Conditions = preload("res://scripts/conditions.gd")
 ## challenge_feedback.gd's own header.
 const Feedback = preload("res://scripts/challenge_feedback.gd")
 
+# --- fields -------------------------------------------------------
 var main: Node2D
 var active: bool = false
 var _stage_index: int = 0
@@ -159,6 +161,7 @@ var _c1_pollen_cell_nectar_elapsed: float = 0.0
 ## Reset at a stage boundary with the other Challenge 1 prompt state.
 var _c1_overflow_discard_count: int = 0
 
+# --- _ready and the current stage ---------------------------------
 func _ready() -> void:
 	Session.run_reset.connect(_reset_c2_pollen_rescue)
 
@@ -196,6 +199,7 @@ func can_debug_retreat_stage() -> bool:
 func can_debug_advance_stage() -> bool:
 	return active and _stage_index < _stages().size() - 1
 
+# --- skill grants, bans and delays --------------------------------
 ## Section 11 Phase A step 3: this Challenge's explicit skill-policy
 ## overrides, straight out of levels.gd's run definition for
 ## Session.starting_level. Nothing calls this yet -- Phase B step 6 is
@@ -211,6 +215,7 @@ func run_skill_bans() -> Array:
 func run_skill_delays() -> Dictionary:
 	return main.Levels.get_level(Session.starting_level).get("skill_delays", {})
 
+# --- starting and the per-frame loop ------------------------------
 func start() -> void:
 	active = true
 	_stage_index = 0
@@ -219,6 +224,10 @@ func start() -> void:
 	_c2_rescue_suppressed_logged = false
 	_last_completed_goal_text = ""
 	main.stage_gate.start()
+	# F2s: a key unlocked mid-stage (an event or interaction trigger) shows
+	# its controls at once rather than at the next stage entry.
+	if not main.stage_gate.unlocked_changed.is_connected(_on_gate_unlocked):
+		main.stage_gate.unlocked_changed.connect(_on_gate_unlocked)
 	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
 	# so a load mid-Challenge would silently drop it -- disabled for the
 	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
@@ -323,6 +332,7 @@ func _process(delta: float) -> void:
 	if check_goal_now and _goal_met(goal_id):
 		_advance()
 
+# --- goal polling -------------------------------------------------
 ## GOAL_CADENCE's runtime half (Slice A4 -- see the const's own comment for
 ## the "frame"/"poll"/"event" meanings). `goal_tick_due` is true once every
 ## GOAL_POLL_INTERVAL seconds, shared with the epoch snapshot above so
@@ -347,6 +357,7 @@ func _should_check_goal(goal_id: String, goal_tick_due: bool) -> bool:
 			push_error("challenge_runner: goal '%s' has no GOAL_CADENCE entry" % goal_id)
 			return true
 
+# --- Challenge 2 failure and rescue -------------------------------
 ## Challenge 2's soft-failure/rescue, from 2.1 onward (TUTORIAL_PLAN.md's
 ## "Failure and rescue"). Runs every frame once active, but only actually
 ## checks anything from stage 2.1 onward -- indices below that never had
@@ -418,6 +429,7 @@ func _c2_index(stage_id: String) -> int:
 			return i
 	return 0
 
+# --- entering a stage ---------------------------------------------
 ## Keeps trigger metadata local to Challenge stage data. stage_gate.gd remains
 ## a general string-key store; the trigger explains *why* a Challenge unlocks
 ## something, but does not change the gate's behaviour yet. "skill" and
@@ -515,6 +527,7 @@ func _enter_stage() -> void:
 		_c2_soil_blocks_at_stage_entry = main.get_tree().get_nodes_in_group("soil_blocks").size()
 		_c2_nurses_at_stage_entry = main._role_counts().get(Roles.count_key(Roles.NURSE), 0)
 
+# --- counting cells -----------------------------------------------
 func _built_cell_count() -> int:
 	var count := 0
 	for cell in main.hive.cells:
@@ -531,6 +544,7 @@ func _brood_cell_count() -> int:
 			count += 1
 	return count
 
+# --- ordered visits -----------------------------------------------
 ## Three deliberately separated floor tiles, all safely inside the guaranteed
 ## open part of the chamber. Keeping them in axial space makes the tour follow
 ## the hive geometry if its pixel spacing changes later.
@@ -595,6 +609,7 @@ func _show_current_visit_point() -> void:
 	_marker.position = _visit_points[_visit_point_index].position
 	_set_marker_visible(true)
 
+# --- the stage marker ---------------------------------------------
 ## Places the shared marker for the current beat. The ordered-visit helper can
 ## reparent it to either world; Bundle C uses the hive root, and Bundle D can
 ## reuse the same path in the meadow without adding a second marker. Challenge
@@ -668,6 +683,7 @@ func _publish_marker_to_hud() -> void:
 		_marker.global_position, _marker.visible,
 		_marker.get_parent() == main.hive_root)
 
+# --- advancing, leaving and completing a stage --------------------
 ## Feeds the goal shelf (hud.gd's set_challenge_goal / UI_PLAN.md section
 ## 5): the stage's own goal text, the goal that was just completed
 ## (blank at the very first stage), and numeric progress for a goal with
@@ -828,6 +844,7 @@ func _complete() -> void:
 ## target_cell, while assigning BUILDER would make idle dispatch auto-start
 ## another build after this one.
 
+# --- the queen's build site ---------------------------------------
 func on_queen_build_site_chosen(hex: Vector2i) -> void:
 	if not is_instance_valid(main.queen) or not main.hive.can_build_on(hex):
 		return
@@ -840,17 +857,17 @@ func on_queen_build_site_chosen(hex: Vector2i) -> void:
 	main.queen.target_cell = site
 	main.queen.state = main.Bee.State.TO_BUILD_SITE
 
-## Pushes the current stage_gate state into hud.gd via its setters,
-## rather than hud.gd reading stage_gate directly -- hud.gd stays
-## decoupled from main.gd's internals, same as every other signal/setter
-## it already uses. Safe to call any time, active or not: is_unlocked()
-## already returns true for everything once stage_gate.stop() has been
-## called, so the "Challenge finished" case falls out for free.
+# --- gating the UI ------------------------------------------------
+## Pushes the current stage_gate state into hud.gd, rather than hud.gd
+## reading main.stage_gate itself -- hud.gd stays decoupled from main.gd's
+## internals, same as every other signal/setter it already uses. Whole
+## controls and the designation row go through hud.gd's apply_gates(),
+## which walks Availability.UI_GATES, so this function names no HUD widget.
+## Safe to call any time, active or not: is_unlocked() already returns true
+## for everything once stage_gate.stop() has been called, so the "Challenge
+## finished" case falls out for free.
 func _apply_stage_gate_to_ui() -> void:
-	main.hud.set_colony_button_visible(main.stage_gate.is_unlocked("colony_window"))
-	main.hud.set_nursery_button_visible(main.stage_gate.is_unlocked("nursery_window"))
-	main.hud.set_view_button_visible(main.stage_gate.is_unlocked("meadow_view"))
-	main.hud.set_foraging_button_visible(main.stage_gate.is_unlocked("foraging_window"))
+	main.hud.apply_gates(main.stage_gate)
 	var role_keys: Array = Roles.ROLES.map(func(r): return r.key)
 	main.hud.set_allowed_role_keys(role_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
 
@@ -866,22 +883,6 @@ func _apply_stage_gate_to_ui() -> void:
 			if Availability.mode_query(role.id, mode.key, main.stage_gate).available:
 				mode_keys.append(Availability.mode_gate_key(role.id, mode.key))
 	main.hud.set_allowed_mode_keys(mode_keys)
-
-	# Designation types: nectar/pollen/brood and Unreserve all become
-	# available together once "cell_designation" is taught (2.5) --
-	# honey/jelly stay hidden throughout Challenge 2 (those systems are
-	# deferred entirely, not just deferred until designation is taught),
-	# so they're gated behind keys no Challenge 2 stage ever unlocks.
-	var designation_gates: Dictionary = {
-		"nectar": "cell_designation", "pollen": "cell_designation",
-		"brood": "cell_designation", "any": "cell_designation",
-		"honey": "honey_designation", "jelly": "jelly_designation",
-	}
-	main.hud.set_allowed_designation_keys(designation_gates.keys().filter(
-		func(k): return main.stage_gate.is_unlocked(designation_gates[k])
-	))
-	main.hud.set_hatch_lock_visible(main.stage_gate.is_unlocked("hatch_lock"))
-	main.hud.set_soil_marking_visible(main.stage_gate.is_unlocked("miner"))
 	main.hud.set_command_locked_bees([main.queen] if queen_command_locked and is_instance_valid(main.queen) else [])
 	# UI-X-2, H1: update_selection([]) reads an empty bee list as "nothing
 	# is selected" and hides the command tray and cell popup to match
@@ -895,12 +896,19 @@ func _apply_stage_gate_to_ui() -> void:
 	if not main.selected_bees.is_empty() or main.selected_cells.is_empty():
 		main.hud.update_selection(main.selected_bees)
 
+## A single key unlocking outside a stage entry re-applies only the HUD's
+## gate table: the role/mode allow-lists and the selection reset above
+## belong to stage entry.
+func _on_gate_unlocked(_key: String) -> void:
+	main.hud.apply_gates(main.stage_gate)
+
 ## Whether player-issued commands should be rejected for this bee. Kept as
 ## a Challenge-runner query so input_selection.gd does not need to know what
 ## a stage id means or carry a second copy of the lock state.
 func is_bee_command_locked(bee: Node2D) -> bool:
 	return active and queen_command_locked and is_instance_valid(main.queen) and bee == main.queen
 
+# --- the opening tunnel -------------------------------------------
 ## world_building opens the whole entrance for ordinary runs. Challenge 1
 ## temporarily puts soil back into its inner third, computed from that same
 ## geometry, and positions the queen two-thirds of the way in from outside.
@@ -966,6 +974,7 @@ func _opening_tunnel_cleared() -> bool:
 			return false
 	return true
 
+# --- Challenge 1 forage effects and overflow ----------------------
 ## Slice 14: 1.11/1.14's camera-follow and 4x speed fire the moment the queen
 ## is actually seen setting off to forage, not at stage entry -- stage entry
 ## is while the player is still being asked to select her and assign the
@@ -1052,6 +1061,7 @@ func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void:
 			main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_1_pollen_cell_nectar"))
 			return
 
+# --- the new worker's greeting ------------------------------------
 ## Called by main.gd right after every brood hatch, for every hatch in the
 ## game -- a no-op unless Challenge 1 is actually waiting on this one
 ## (stage 1.17, the colony's first daughter). Keeps her from immediately
@@ -1093,6 +1103,7 @@ func _drive_greeting(delta: float) -> void:
 	var angle: float = _greeting_start_angle + t * TAU
 	_new_worker.position = centre + Vector2(cos(angle), sin(angle)) * Stages.GREETING_RADIUS
 
+# --- goal checks --------------------------------------------------
 ## Declared cadence per goal id (Slice 4, CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md;
 ## wired to _process by Slice A4, architecture-review.md):
 ## "frame" tracks a moving position/state every tick, "event" only ever
@@ -1207,6 +1218,7 @@ func _goal_check_miner_expansion() -> bool:
 	var built: bool = _built_cell_count() > _c2_cells_built_at_stage_entry
 	return has_miner and dug and built
 
+# --- goal progress readouts ---------------------------------------
 ## Numeric progress for a goal with a single countable target -- feeds
 ## the goal shelf's tertiary progress bar (UI_PLAN.md section 5). Most
 ## goals here have nothing to count ("select the queen" is a yes/no), so
