@@ -1862,7 +1862,7 @@ func _refresh_flower_summary() -> void:
 
 	var age: float = active_flower.marker_age()
 	if age >= 0.0 and age < GameConfig.tarsal_marker_seconds:
-		summary_lines.append("Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if GameConfig.tarsal_markers_on else ""])
+		summary_lines.append("Scent mark: %ds old%s" % [int(age), " (bees avoiding)" if GameConfig.tarsal_markers_on or (Session.progression != null and Session.progression.is_behaviour_enabled("tarsal_markers_on")) else ""])
 	# else: the marker remains a timestamp on the flower for simulation
 	# bookkeeping, but it is no longer useful player-facing information
 	# once bees have stopped reacting to it.

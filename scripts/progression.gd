@@ -106,6 +106,12 @@ var _mastered: Dictionary = {}      # skill id -> true
 var _temporary: Dictionary = {}     # skill id -> true
 var _discovered: Dictionary = {}    # skill id -> true
 var _adaptations: Dictionary = {}   # adaptation id -> true
+## is_behaviour_enabled's answers, behaviour key -> bool (AP-2). The
+## foraging reads ask per flower considered, and walking owned_ids() there
+## allocates and scans every time. Cleared by the three ownership writers
+## -- grant_temporary, set_mastered_ids and end_run -- so a purchase flips
+## the answer on the very next read.
+var _behaviour_cache: Dictionary = {}
 
 ## This run's explicit skill-policy overrides (section 4.5, set by
 ## set_skill_policy() below). A ban is absolute; a grant overrides the
@@ -158,6 +164,7 @@ func owned_ids() -> Array:
 ## as if bought, and a Challenge's own policy still overrides it.
 func set_mastered_ids(ids: Array) -> void:
 	_mastered.clear()
+	_behaviour_cache.clear()
 	for skill_id in ids:
 		if Skills.has(skill_id):
 			_mastered[skill_id] = true
@@ -168,6 +175,7 @@ func set_mastered_ids(ids: Array) -> void:
 func grant_temporary(skill_id: String) -> void:
 	if Skills.has(skill_id):
 		_temporary[skill_id] = true
+		_behaviour_cache.clear()
 
 
 ## Section 4.1: temporary ownership is lost when the run ends and nothing
@@ -175,6 +183,7 @@ func grant_temporary(skill_id: String) -> void:
 ## adaptations go with it, and the mastered set does not.
 func end_run() -> void:
 	_temporary.clear()
+	_behaviour_cache.clear()
 	_adaptations.clear()
 
 # --- the gates ----------------------------------------------------
@@ -343,11 +352,15 @@ func effective_value(key: String, base: float) -> float:
 ## the behaviour is off until something turns it on, matching
 ## tarsal_markers_on/orientation_flight_on's own default.
 func is_behaviour_enabled(key: String) -> bool:
+	if _behaviour_cache.has(key):
+		return _behaviour_cache[key]
+	var enabled := false
 	for skill_id in owned_ids():
 		for effect in Skills.entry(skill_id).get("effects", []):
 			if effect.get("type", "") == EFFECT_ENABLE_BEHAVIOUR and effect.get("key", "") == key:
-				return true
-	return false
+				enabled = true
+	_behaviour_cache[key] = enabled
+	return enabled
 
 # --- the chain ----------------------------------------------------
 

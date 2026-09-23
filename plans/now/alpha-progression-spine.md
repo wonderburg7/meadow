@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-2 -- the two foraging behaviours ask the resolver, queued in the Claude lane (AP-1 landed 23 Sep) | Dependency: AP-3 also waits on F2s (`plans/archive/architecture-review_2026-09-24.md`) | Verified: 2026-09-23
+Status: active | Owner: Dave / Claude Code | Next: AP-3 -- the skill tree panel, queued in the Claude lane (AP-2 landed 24 Sep) | Dependency: none -- AP-1 and F2s have both landed | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -39,12 +39,24 @@ Verified 22 September 2026 by grep over `scripts/`, not from the design plan.
 `Progression`; the two tier-1 foraging nodes are bought in a panel instead of
 switched on in settings; and a purchase survives save and load.
 
+**AP-2 landed 24 Sep 2026** (specification in `plans/archive/`). Both
+foraging behaviours are on when the setting is on or an owned skill enables
+them: `BeeForaging.tarsal_markers_on()`/`orientation_flight_on()` hold the
+rule for bee.gd and bee_foraging.gd, hud.gd's scent-mark line inlines it, and
+`progression.gd::_behaviour_cache` answers `is_behaviour_enabled`, cleared by
+the three ownership writers. `foraging_features_off_test.json` and
+`foraging_features_on_test.json` summarise identically to master at seed
+4242. No read is per frame: the busiest is `bee_foraging.gd`'s flower filter,
+once per candidate flower during a search. Decision taken without Dave: the
+rule lives in two BeeForaging helpers rather than being written out five
+times, so AP-4 and the post-alpha toggle removal each change it in one place.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | AP-2 | Nothing visible yet — the two foraging behaviours can now be switched on by owning a skill as well as by the setting. | `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd` | yes | medium |
-| AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | no — after AP-1 and F2s | medium |
+| AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | yes | medium |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | no — after AP-3 | high |
 
 **Dependencies, stated rather than implied by order.**
@@ -151,7 +163,7 @@ Level: medium.
 - **Hands-on check.** File one: the panel reads correctly in all three themes
   and at the largest text scale.
 
-```queue-gated
+```queue
 **[Claude] AP-3 -- the skill tree panel**
 - Plan: `plans/now/alpha-progression-spine.md` -- "AP-3 — the skill tree panel"
 - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`

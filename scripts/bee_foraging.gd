@@ -384,7 +384,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 			# social evidence (it might not even be this bee's own mark) --
 			# unlike the two checks above, worth relaxing once nothing else
 			# is in range rather than treating it as a hard no.
-			if GameConfig.tarsal_markers_on and f.is_marked(bee):
+			if tarsal_markers_on() and f.is_marked(bee):
 				DiagnosticLog.count_tarsal_rejection()
 				return false
 		return true
@@ -561,11 +561,23 @@ static func shelter(bee: Node2D, _delta: float) -> void:
 		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER)
 
 
+# --- skill-or-setting behaviour switches ---------------------------
+## AP-2: a behaviour is on when its setting is on OR an owned skill enables
+## it (plans/design/progression.md section 11). Session.progression is null
+## when main.gd never booted, so it is read null-safely. Neither is a
+## per-frame read: these run per flower considered or visited.
+static func tarsal_markers_on() -> bool:
+	return GameConfig.tarsal_markers_on or (Session.progression != null and Session.progression.is_behaviour_enabled("tarsal_markers_on"))
+
+static func orientation_flight_on() -> bool:
+	return GameConfig.orientation_flight_on or (Session.progression != null and Session.progression.is_behaviour_enabled("orientation_flight_on"))
+
+
 # --- accepting or rejecting a flower ------------------------------
 static func worth_feeding(bee: Node2D, f: Node2D) -> bool:
 	if f.get_available(bee.resource_type) < GameConfig.min_worthwhile_amount:
 		return false
-	if GameConfig.tarsal_markers_on and f.is_marked(bee):
+	if tarsal_markers_on() and f.is_marked(bee):
 		return false
 	if GameConfig.alarm_pheromone_on and CrabSpider.is_alarmed(f):
 		return false
@@ -626,7 +638,7 @@ static func start_collecting(bee: Node2D) -> void:
 			bee.trip_first_flower_time = Session.sim_time
 		bee.trip_flowers_visited += 1
 	bee.flower_visit_started_at = Session.sim_time
-	if GameConfig.tarsal_markers_on:
+	if tarsal_markers_on():
 		DiagnosticLog.count_tarsal_mark()
 	# Checked before this bee's own mark overwrites whatever was here --
 	# tarsal marking's marked_by/marked_at update unconditionally on every
