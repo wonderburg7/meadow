@@ -14,3 +14,6 @@ __pycache__/
 # Slice worktrees (tools/slice.ps1). They are git worktrees, not content:
 # `git add -A` from the primary checkout would otherwise embed one.
 .worktrees/
+
+# Packaged alpha builds are reproducible artifacts.
+build/

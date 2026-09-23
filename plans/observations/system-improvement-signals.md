@@ -152,7 +152,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — split the ledger on whether `step` is set,
   rank only the stepped records, and report the preflight ones separately by
   cause. Low risk: one function, no change to the writer or the ledger.
-- Disposition: promoted 2026-09-20 to a new plan, `plans/archive/stop-readout_2026-09-23.md`,
+- Disposition: promoted 2026-09-20 to the completed plan, `plans/archive/stop-readout_2026-09-23.md`,
   as ST-1. Queued in the Codex lane, which already owns
   `tools/session_cost.py`. `tools/slice.ps1` stays out of scope -- changing
   the writer would re-date the 53 existing records.
@@ -180,7 +180,8 @@ explicit request from Dave.
   just removed was the last one. Either keeps the cost in the session that
   created it. Needs checking against a plan that legitimately keeps a live
   section after its last queued slice.
-- Disposition: fixed 2026-09-23 after V-4 (`ca8f25f`) and ST-1 repeated it.
+- Disposition: fixed 2026-09-23 after V-4 (`ca8f25f`) and ST-1 (`aa3fa43`)
+  repeated it.
   `python tools/archive_slice.py --complete-plans` moves any live plan whose
   Status check_docs calls terminal -- so a plan that keeps live work is never
   touched -- and repoints its references; `finish` runs it on master after
