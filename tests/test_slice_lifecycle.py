@@ -387,7 +387,12 @@ class SliceDoctorTest(unittest.TestCase):
         (tests_dir / "__init__.py").write_text("", encoding="utf-8")
         (tests_dir / "source_checks.py").write_text(stub_exit_zero, encoding="utf-8")
         (tests_dir / "balance_tests.py").write_text(stub_exit_zero, encoding="utf-8")
-        for module in ("test_source_checks", "test_slice_lifecycle", "test_two_lane_closeout", "test_codex_environment", "test_verify_generated"):
+        # Every module verify.ps1's lifecycle stage names, read from verify
+        # itself: a hard-coded copy went stale when FB-1 added test_alpha_build.
+        import re
+        lifecycle_modules = sorted(set(re.findall(r"\btests\.(test_\w+)", VERIFY_PATH.read_text(encoding="utf-8"))))
+        self.assertIn("test_slice_lifecycle", lifecycle_modules)
+        for module in lifecycle_modules:
             (tests_dir / f"{module}.py").write_text(
                 "import unittest\n\n\n"
                 "class Placeholder(unittest.TestCase):\n"
