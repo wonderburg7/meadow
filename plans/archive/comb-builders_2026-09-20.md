@@ -20,7 +20,7 @@ than guessing at a fix (`CLAUDE.md`, "Working style").
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 
-CB-2 depended on CB-1 and on **G2** (`plans/design/architecture-review.md`),
+CB-2 depended on CB-1 and on **G2** (`plans/archive/architecture-review_2026-09-24.md`),
 which rewrote `bee.gd`'s dispatch and the `bee_*.gd` modules CB-2's fix
 edits. Both have shipped -- CB-1 on 19 Sep 2026, G2 on 17 Sep 2026 -- so CB-2
 is startable and is queued in the Claude lane. Neither slice changes balance

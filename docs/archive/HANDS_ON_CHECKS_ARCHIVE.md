@@ -1003,7 +1003,7 @@ PASS: the run produces a `summary.performance` block (mean/p95 wall-clock ms
 for total frame time and the three target sections), and that number is
 written into `docs/PERFORMANCE_BASELINE.md`.
 
-Owner: `plans/design/architecture-review.md` A3.
+Owner: `plans/archive/architecture-review_2026-09-24.md` A3.
 
 Filed instead of run in-session: four attempts in this session (default
 300s timeout, 900s, 1500s, and after priming Godot's `.import` cache with an

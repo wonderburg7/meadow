@@ -21,7 +21,7 @@ file and symbol; where a claim is an inference rather than a quotation it says
 so. Line numbers are hints, per `plans/README.md` guardrail 15.
 
 **What this review is not.** It does not re-propose anything
-`plans/design/architecture-review.md` already schedules (E1, F1s, F2s, G3) or
+`plans/archive/architecture-review_2026-09-24.md` already schedules (E1, F1s, F2s, G3) or
 lists under "Patterns deliberately not applied". Those were re-checked against
 the live code and still hold. This document adds what that review did not
 cover, and corrects two of its slices where the acceptance cannot be run.
@@ -144,7 +144,7 @@ Found by applying `plans/README.md` rule 10 to every live plan:
 
 #### A-3. Three acceptance sections name an instrument that does not exist
 
-*E1* (`plans/design/architecture-review.md`, "E1 -- one placement tool"):
+*E1* (`plans/archive/architecture-review_2026-09-24.md`, "E1 -- one placement tool"):
 "A scenario fixture that activates Build cell, then Mine target, then clicks,
 and asserts a mine target was set and no cell was placed." The scenario verbs
 today are `settle`, `assign_role`, `designate_cell`, `queue_build`,
@@ -248,7 +248,7 @@ the retry loop `docs/known-pitfalls.md`'s last section measures.
 | Rule | Homes today | Recommended single home |
 | --- | --- | --- |
 | One branch per lane, merge when green, never hold for a hands-on check | `plans/workstreams.md` "When to merge"; `plans/reference/closeout.md` "When to merge"; `CHATGPT.md` (two paragraphs); `plans/README.md` read order; `CLAUDE.md` session route; `.claude/rules/documentation.md` | `plans/reference/closeout.md`. `workstreams.md` keeps its ledger table and the five "Lanes" bullets only; `CHATGPT.md` keeps one sentence and the `heading.py` command |
-| Every persistent panel takes its rectangle from `ui_layout.gd` | `plans/README.md` guardrail 11; `plans/reference/check-loop.md` rule 6; `plans/archive/ui_2026-09-20.md` (twice); `plans/design/architecture-review.md` F9 | A plans/reference/ui-rules.md made from `ui.md`'s "Durable rules"; the other three become one-line pointers |
+| Every persistent panel takes its rectangle from `ui_layout.gd` | `plans/README.md` guardrail 11; `plans/reference/check-loop.md` rule 6; `plans/archive/ui_2026-09-20.md` (twice); `plans/archive/architecture-review_2026-09-24.md` F9 | A plans/reference/ui-rules.md made from `ui.md`'s "Durable rules"; the other three become one-line pointers |
 | Presentation may be skipped, simulation may not | `CLAUDE.md` rule 2; `.claude/rules/simulation.md`; `plans/archive/ui_2026-09-20.md`; `GAME_MODEL.md`; comments in `main.gd`, `hive_cell.gd` | `.claude/rules/simulation.md` (it loads itself on the files where it matters); `CLAUDE.md` rule 2 stays as the four-word version |
 | Read a function, not a file | `CLAUDE.md` rule 1; `.claude/rules/gdscript.md`; `.claude/rules/lifecycle-tooling.md`; `plans/README.md` guardrail 15 | `CLAUDE.md` rule 1 (always loaded); the rest cite it |
 | The `GameConfig` write allowlist | `.claude/rules/saving.md`; `.claude/rules/simulation.md`; `tests/source_checks.py` | `tests/source_checks.py` is the authority; both rule files say "the allowlist is `GAMECONFIG_WRITE_ALLOWLIST` in `tests/source_checks.py`" and name no files |
@@ -561,7 +561,7 @@ cheaper come first, then by dependency. Each states what it unblocks.
 | 3.1 | **DOC-1: fix the seven stale rule pointers** in B-1 (allowlist, §11, "Verifying without Godot", seven/six largest, §13, README layout) | quick | low | `.claude/rules/saving.md`, `.claude/rules/gdscript.md`, `CLAUDE.md`, `GAME_MODEL.md`, `README.md` | every coding session that opens a `.gd` file reads a true rule |
 | 3.2 | **Q-1: refill the Claude lane and make "lane is full" checkable.** Add WD-1 and WD-2 (both low, file-disjoint from both lanes) to the Claude lane at positions 4 and 5; reword the L-10/L-11 line to "wait for a free slot"; add `check_not_in_queue_reasons` to `tools/check_docs.py` (a bullet whose text contains "lane is full" fails unless that lane holds five items) | quick | low | `NEXTSTEPS.md`, `tools/check_docs.py`, `tests/test_source_checks.py` | two idle slots; the defect cannot recur |
 | 3.3 | **WD-3 amendment**: replace step 2's `LEVEL_MODELS` with a reader over `tools/slice.ps1` (text below) | quick | low | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` | WD-3 ships without a second copy of the rule |
-| 3.4 | **E1 amendment**: add two scenario verbs and `scenario_actions.gd` to E1's files (text below) | quick | low | `plans/design/architecture-review.md`, `NEXTSTEPS.md` item 1 | E1's acceptance can be run |
+| 3.4 | **E1 amendment**: add two scenario verbs and `scenario_actions.gd` to E1's files (text below) | quick | low | `plans/archive/architecture-review_2026-09-24.md`, `NEXTSTEPS.md` item 1 | E1's acceptance can be run |
 | 3.5 | **A-2 trims**: guardrail 14, C1F-1 table, README routing rows and rule numbering, C-18 stub, agent-lifecycle history, workflow-diagnostics State | quick | low | `plans/README.md`, `plans/now/c1-followups.md`, `plans/now/agent-lifecycle.md`, `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, `checks/blocked.md` | the planning model stops re-deriving four expired restrictions |
 | 3.6 | **IDLE-1: idle dispatch on the think tick** (plan 4.1) | quick code, measured | medium | `scripts/bee.gd`, `docs/PERFORMANCE_BASELINE.md` | PERF-1's numbers are read against a fixed idle cost; the biggest unmeasured per-frame scan is gone |
 | 3.7 | **GDT-1: a GDScript test boot** (plan 4.2) | moderate | medium | `scripts/main.gd`, new tools/godot_test_check.py, new `tests/gd/` folder, `tools/verify.ps1`, `docs/headless-run-contract.md` | executed tests for G3, F2s, CH-1, CH-2, C1F-1, SF-1, every migration |

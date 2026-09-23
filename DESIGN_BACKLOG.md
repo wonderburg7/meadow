@@ -18,7 +18,7 @@ home per fact: read the plan.
 | Area | Owning plan |
 | --- | --- |
 | Progression, colony adaptations and skills | `plans/design/progression.md` |
-| Catalogues, shared interfaces and update policy | `plans/design/architecture-review.md` |
+| Catalogues, shared interfaces and update policy | `plans/archive/architecture-review_2026-09-24.md` |
 | Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
 | UI and accessibility | `plans/archive/ui_2026-09-20.md` |
 | The check/slice loop itself | `plans/reference/check-loop.md` |

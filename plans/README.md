@@ -169,7 +169,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Progression/skills design | `plans/design/progression.md` |
-| E1, F1s, F2s, G3 -- one placement tool, a shared window base, the gate table, gateable actions | `plans/design/architecture-review.md` |
+| E1, F1s, F2s, G3 -- one placement tool, a shared window base, the gate table, gateable actions | `plans/archive/architecture-review_2026-09-24.md` |
 | Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | L-12, L-13 -- closeout as one command, queue lines carried by the plan (L-1..L-11 are archived) | `plans/now/agent-lifecycle.md` |
@@ -243,7 +243,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     places. One list, so nobody re-derives it, rewritten 17 Sep 2026 by the
     plan review because every slice the previous list named has shipped:
     **E1**
-    (`plans/design/architecture-review.md`, the two
+    (`plans/archive/architecture-review_2026-09-24.md`, the two
     `awaiting_queen_build_cell` writes), then **C1F-1**
     (`plans/now/c1-followups.md`, which adds the stage-setup call to both
     debug arrows), then the architecture review's **F2s** and **G3** in that

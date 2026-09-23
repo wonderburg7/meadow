@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-2 -- the two foraging behaviours ask the resolver, queued in the Claude lane (AP-1 landed 23 Sep) | Dependency: AP-3 also waits on F2s (`plans/design/architecture-review.md`) | Verified: 2026-09-23
+Status: active | Owner: Dave / Claude Code | Next: AP-2 -- the two foraging behaviours ask the resolver, queued in the Claude lane (AP-1 landed 23 Sep) | Dependency: AP-3 also waits on F2s (`plans/archive/architecture-review_2026-09-24.md`) | Verified: 2026-09-23
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -51,7 +51,7 @@ switched on in settings; and a purchase survives save and load.
 
 - AP-2, AP-3 and AP-4 each need AP-1's instance; none of them may construct
   their own.
-- AP-3 waits on **F2s** (`plans/design/architecture-review.md`) because both
+- AP-3 waits on **F2s** (`plans/archive/architecture-review_2026-09-24.md`) because both
   own `scripts/hud.gd` and F2s rewrites how HUD controls are gated. AP-2 also
   touches `hud.gd`, for one line; if F2s is still open when AP-2 starts, move
   that single line to AP-3 rather than waiting.
@@ -59,7 +59,7 @@ switched on in settings; and a purchase survives save and load.
   22 September 2026: SV-1 changes where a save is written, not what is in it --
   `save_game.gd::save(world, path)` already takes a path -- so SV-1 needs no
   format bump and the two cannot collide. Recorded in both plans.
-- **G3** (`plans/design/architecture-review.md`) is independent of all four:
+- **G3** (`plans/archive/architecture-review_2026-09-24.md`) is independent of all four:
   gating is split by kind, G3 gates *work* and this plan gates *values and
   behaviour switches*. Dave settled it on 17 September 2026 and the decision
   lives in `plans/design/progression.md` section 11; it is not re-argued here.
@@ -205,5 +205,5 @@ Level: high.
 
 - `plans/design/progression.md` section 11 only; its sections 4.1, 4.5, 8.1–8.5
   and 9.3 are named by the slices that need them, and nothing here needs the
-  catalogue. `plans/design/architecture-review.md` — F2s and G3 only.
+  catalogue. `plans/archive/architecture-review_2026-09-24.md` — F2s and G3 only.
   `FUNCTION_MAP.md` — line numbers for `hud.gd`, `bee.gd`, `main.gd`.

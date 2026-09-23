@@ -76,7 +76,7 @@ it, and both are reachable from the HUD without instruction.
 **Dependencies, stated rather than implied by order.**
 
 - SV-2 needs SV-1's catalogue to list anything, and waits on **F2s**
-  (`plans/design/architecture-review.md`) because both own `scripts/hud.gd`.
+  (`plans/archive/architecture-review_2026-09-24.md`) because both own `scripts/hud.gd`.
 - **Independent of `plans/now/alpha-progression-spine.md`.** AP-4 bumps
   `FORMAT_VERSION` and writes new fields; SV-1 and SV-2 change only *where* a
   save is written and never open the format. Whichever ships first, the other

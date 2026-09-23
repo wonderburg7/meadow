@@ -33,7 +33,7 @@ their records are in `plans/archive/`. Fourteen hands-on checks are waiting in
 
 **Dave took three decisions on 11 Sep 2026**, from that day's architecture and
 planning audit. They are recorded in full under "Decisions taken 11 Sep 2026" in
-`plans/design/architecture-review.md`; what they change here is the queue.
+`plans/archive/architecture-review_2026-09-24.md`; what they change here is the queue.
 Architecture work is admitted, but behind the open Challenge 1 items rather than
 in front of them, so H3 and H1 now fill slots 4 and 5 of the Claude lane and H2
 follows them. Every A-to-G slice in that plan stays out of the queue until
@@ -87,7 +87,7 @@ chosen git ref (from a throwaway detached worktree, never checked out over
 the working tree) and again in the working tree at the same seed, and
 prints only the `result.json` fields that differ -- the missing instrument
 F16 named, now available to every behaviour-preserving slice in
-`plans/design/architecture-review.md`. `docs/headless-run-contract.md`
+`plans/archive/architecture-review_2026-09-24.md`. `docs/headless-run-contract.md`
 documents it under "Behaviour-equivalence runs". Its `Next after` (H1) was
 already queued below, so the Claude lane simply drops to one item, which
 brings the combined queue to three -- `tools/check_docs.py`'s floor -- so no
@@ -196,7 +196,7 @@ that derivation byte-identical to the literal it replaced and fails on a
 `GameConfig` field with no row or a `persist` tag pointing at the wrong
 object. Nothing about what is saved changed, so no `FORMAT_VERSION` bump
 and no hands-on check -- nothing a player sees is different yet. Full
-record: `plans/design/architecture-review.md`'s D1 heading. Its second
+record: `plans/archive/architecture-review_2026-09-24.md`'s D1 heading. Its second
 half -- reclassifying per Dave's rule and bumping `FORMAT_VERSION` -- fills
 the Claude lane's slot below.
 

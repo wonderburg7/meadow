@@ -35,7 +35,7 @@ proves them at runtime.
 | --- | --- | --- | --- | --- |
 
 **Dependencies.** C1F-1 follows E1
-(`plans/design/architecture-review.md`), because requirement 5 clears the
+(`plans/archive/architecture-review_2026-09-24.md`), because requirement 5 clears the
 placement tool E1 replaces: taken in the other order, C1F-1 writes seven
 `awaiting_*` clears that E1 then deletes. C1F-2 starts its fixture at 1.14 through C1F-1's setup;
 without it a headless run cannot reach 1.14 with two built cells. C1F-2 also

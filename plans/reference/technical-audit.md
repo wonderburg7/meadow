@@ -39,7 +39,7 @@ the five is invisible until a player finds it.
 **Consolidating it is no longer this file's work.** Until 11 Sep 2026 this
 section prescribed two slices of its own -- an availability query, then a
 resource catalogue -- and said neither was startable without Dave's call.
-`plans/design/architecture-review.md` has since specified exactly that work,
+`plans/archive/architecture-review_2026-09-24.md` has since specified exactly that work,
 with the ownership decisions taken: B1 is the cell-content catalogue, C1 the
 conditions evaluator that replaces the three condition vocabularies, and F2s
 the declarative gate table that replaces the bespoke stage-gated UI setters.
@@ -80,7 +80,7 @@ No further forager-history work is planned; this closes the backlog item.
 
 ## Measurement-gated hot-path candidates (1 Sep 2026 review)
 
-Not to be confused with `plans/design/architecture-review.md`, which is the
+Not to be confused with `plans/archive/architecture-review_2026-09-24.md`, which is the
 10 Sep 2026 review and holds scheduled slices. These two are recorded here,
 not scheduled, and deliberately subject to the "profile before
 changing a hot path" contract above. Each names the instrumentation step that
@@ -135,7 +135,7 @@ PERF-1 shipped 2026-09-20; its specification is `plans/archive/PERF-1_2026-09-20
 
 ### B. The 1 Hz colony refresh walks the same sets more than once
 
-**Mostly owned elsewhere now.** `plans/design/architecture-review.md`'s A2
+**Mostly owned elsewhere now.** `plans/archive/architecture-review_2026-09-24.md`'s A2
 makes `ColonyDiagnostics.compute` take role counts as a parameter instead of
 walking the bee group itself, which removes the largest duplicate in this call
 tree. A2 shipped, so what follows is the residue it left behind: roughly a
