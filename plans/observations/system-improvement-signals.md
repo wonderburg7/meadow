@@ -152,7 +152,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — split the ledger on whether `step` is set,
   rank only the stepped records, and report the preflight ones separately by
   cause. Low risk: one function, no change to the writer or the ledger.
-- Disposition: promoted 2026-09-20 to a new plan, `plans/now/stop-readout.md`,
+- Disposition: promoted 2026-09-20 to a new plan, `plans/archive/stop-readout_2026-09-23.md`,
   as ST-1. Queued in the Codex lane, which already owns
   `tools/session_cost.py`. `tools/slice.ps1` stays out of scope -- changing
   the writer would re-date the 53 existing records.
