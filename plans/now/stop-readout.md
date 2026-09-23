@@ -41,7 +41,7 @@ reopened; this finding surfaced after it was archived, so it starts here.
 not edited here -- the records already carry everything needed, and changing
 the writer would re-date the 53 existing stops. `tools/verify.ps1`,
 `tools/update_function_map.py` and the six `scripts/*.gd` files V-3 headers
-are the Claude lane's (`plans/now/verification-cost.md`).
+are the Claude lane's (`plans/archive/verification-cost_2026-09-23.md`).
 
 **Required reading.** ST-1's section below, and `run_stops` in
 `tools/session_cost.py` (`python tools/func.py tools/session_cost.py run_stops`).
