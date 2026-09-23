@@ -284,6 +284,39 @@ traps, not Meadow ones. Full diagnosis in the S-1 commit on
   edit should ask `git diff --cached --quiet` first and treat "nothing
   staged" as benign, not fatal.
 
+## Environment quirk: exit 4294967295 is another session killing Godot
+
+A headless run that ends with exit code 4294967295 (−1), classification
+`environment_failure` and no SCRIPT ERROR is almost never a Godot crash.
+It is what `Stop-Process -Force` / .NET `Process.Kill` leaves: they call
+`TerminateProcess(…, -1)`. A real native crash exits with an NTSTATUS
+such as `0xC0000005`, prints the crash handler's backtrace when that is
+on, and writes an Application Error event (id 1000) to the Windows log. A
+killed process does none of these, and loses its buffered stderr too. It
+shows up either as `missing_summary` about a second into boot (usually
+just after `munro.ttf` loads, the last line `--verbose` flushed) or as
+`reason=crash` with `outcome=actions_resolved`. Which one you get depends
+only on when the kill landed, so it looks tied to whichever fixture was
+running.
+
+On 23–24 Sep 2026, c53, a5, uiw3 and the primary checkout's cache boot
+all "crashed" this way. Every one was a kill. `slice.ps1 finish` used to
+run `Get-Process Godot* | Stop-Process -Force`, which hit every Godot on
+the machine. That fired on each `finish` retry (one session looped
+`finish` 18 times), and on every `verify.ps1` anywhere, because
+`tests/test_slice_lifecycle.py` and `tests/test_two_lane_closeout.py`
+drive the real `finish`. A Codex session also ran
+`Stop-Process -Id <Godot PIDs> -Force` by hand. "No other Godot was
+running" does not rule this out, because the killer isn't a Godot process.
+`finish` now stops only Godot processes whose command line names the
+worktree it is deleting (`Stop-WorktreeGodot`).
+`tests/test_source_checks.py`'s `FinishGodotScopeTest` guards that.
+
+When you see one: rerun the fixture before debugging it, and check
+`Get-CimInstance Win32_Process` for `slice.ps1`/`verify.ps1` runs in
+other worktrees. Never kill Godot by name or by a PID list you didn't
+start yourself.
+
 ## Environment quirk: a stale git lock
 
 A stale `.git/index.lock` or `HEAD.lock` costs a retry, not a rebuild.
