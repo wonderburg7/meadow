@@ -775,7 +775,7 @@ function Get-GodotCapability {
     if (-not (Test-Path -LiteralPath (Join-Path $Root ".godot") -PathType Container)) {
         return [PSCustomObject]@{
             state  = "import_cache_missing"
-            reason = "no .godot directory in $Root; a fresh worktree's headless run fails to compile and misreports as a gameplay collapse"
+            reason = "no .godot directory in $Root; verify.ps1 and run_scenario.py seed it from the primary checkout (tools/godot_cache.py), or run python tools/godot_cache.py there"
         }
     }
 
@@ -1073,17 +1073,9 @@ function Invoke-SliceStart {
         git worktree add $worktreeRelative -b $branch | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git worktree add failed" }
 
-        # A fresh worktree has no .godot import cache, so its first headless
-        # Godot boot (tools/godot_compile_check.py, run from verify.ps1) has
-        # to reimport the whole project from scratch -- slow enough to blow
-        # past that check's 180s timeout and hang `finish`'s verify step
-        # before it ever writes a closeout journal (C1-7, 16 Sep 2026).
-        # Best-effort: a host with no Godot installed has no cache to copy.
-        $primaryGodotCache = Join-Path $root ".godot"
-        if (Test-Path -LiteralPath $primaryGodotCache) {
-            $worktreeGodotCache = Join-Path (Join-Path $root $worktreeRelative) ".godot"
-            Copy-Item -LiteralPath $primaryGodotCache -Destination $worktreeGodotCache -Recurse -Force -ErrorAction SilentlyContinue
-        }
+        # The new worktree has no .godot import cache yet. Its first boot
+        # through verify.ps1 or run_scenario.py seeds one from this primary
+        # checkout (tools/godot_cache.py), the one place that copies it.
 
         Invoke-InjectedLifecycleFailure -Phase "started"
     }
@@ -1632,7 +1624,7 @@ function Invoke-SliceFinish {
         }
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
-            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree lacks the .godot import cache -- copy .godot from the primary checkout into the worktree; it is not a code fault"
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"

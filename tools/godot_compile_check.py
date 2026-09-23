@@ -103,6 +103,69 @@ def engine_can_boot(godot: str) -> bool:
     return True
 
 
+def boot(godot: str, root: Path) -> subprocess.CompletedProcess:
+    """Boot root's main scene headlessly. Raises TimeoutExpired or OSError."""
+    command = [
+        godot, "--headless", "--disable-crash-handler",
+        "--quit-after", str(QUIT_AFTER_FRAMES),
+        "--path", str(root),
+    ]
+    return subprocess.run(
+        command, capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=TIMEOUT_SECONDS,
+    )
+
+
+def combined_output(finished: subprocess.CompletedProcess) -> str:
+    return (finished.stdout or "") + "\n" + (finished.stderr or "")
+
+
+def boot_failures(godot: str, root: Path) -> list[str]:
+    """Return why root does not boot cleanly, or [] when it does.
+
+    tools/godot_cache.py asks this of the primary checkout before copying
+    its cache: a cache from a checkout that cannot boot is no cure.
+    """
+    try:
+        finished = boot(godot, root)
+    except subprocess.TimeoutExpired:
+        return ["the boot did not finish within %d seconds" % TIMEOUT_SECONDS]
+    except OSError as exc:
+        return ["could not launch %r: %s" % (godot, exc)]
+    hits = failing_lines(combined_output(finished))
+    if finished.returncode != 0 and not hits:
+        return ["the boot exited with code %d" % finished.returncode]
+    return hits
+
+
+def _godot_cache():
+    # tools/ is on sys.path when run as a script; the package root in tests.
+    try:
+        import godot_cache
+    except ImportError:
+        from tools import godot_cache
+    return godot_cache
+
+
+def prepare_cache(godot: str) -> bool:
+    """Seed or refresh a worktree's .godot before booting; False means stop."""
+    ok, line = _godot_cache().ensure_cache(REPO_ROOT, godot)
+    print(line)
+    return ok
+
+
+def refresh_cache_after(godot: str, output: str) -> bool:
+    """Refresh once after an unresolved-script boot; True means boot again."""
+    retry, line = _godot_cache().refresh_after_failure(REPO_ROOT, godot, output)
+    if line:
+        print(line)
+    return retry
+
+
+def mark_cache_fresh() -> None:
+    _godot_cache().mark_fresh(REPO_ROOT)
+
+
 def main() -> int:
     godot = find_godot()
     if godot is None:
@@ -111,17 +174,17 @@ def main() -> int:
         return 0
     if not engine_can_boot(godot):
         return 0
+    if not prepare_cache(godot):
+        return 1
 
-    command = [
-        godot, "--headless", "--disable-crash-handler",
-        "--quit-after", str(QUIT_AFTER_FRAMES),
-        "--path", str(REPO_ROOT),
-    ]
     try:
-        finished = subprocess.run(
-            command, capture_output=True, text=True,
-            encoding="utf-8", errors="replace", timeout=TIMEOUT_SECONDS,
-        )
+        finished = boot(godot, REPO_ROOT)
+        combined = combined_output(finished)
+        # A worktree cache left behind by a merge fails the boot on a script
+        # it cannot resolve. Refresh it from the primary and try once more.
+        if failing_lines(combined) and refresh_cache_after(godot, combined):
+            finished = boot(godot, REPO_ROOT)
+            combined = combined_output(finished)
     except subprocess.TimeoutExpired:
         print("godot compile check: FAILED -- the boot did not finish within "
               "%d seconds" % TIMEOUT_SECONDS)
@@ -131,7 +194,6 @@ def main() -> int:
               % (godot, exc))
         return 0
 
-    combined = (finished.stdout or "") + "\n" + (finished.stderr or "")
     hits = failing_lines(combined)
 
     # A crash or non-zero exit is a failure even when no line matched: the
@@ -157,6 +219,7 @@ def main() -> int:
                 break
         return 1
 
+    mark_cache_fresh()
     print("godot compile check: the project boots with no script errors")
     return 0
 
