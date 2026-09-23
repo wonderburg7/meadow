@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-3 -- the skill tree panel, queued in the Claude lane (AP-2 landed 24 Sep) | Dependency: none -- AP-1 and F2s have both landed | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: AP-4 -- buying a skill, and the run remembering it, queued in the Claude lane (AP-3 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -51,12 +51,38 @@ once per candidate flower during a search. Decision taken without Dave: the
 rule lives in two BeeForaging helpers rather than being written out five
 times, so AP-4 and the post-alpha toggle removal each change it in one place.
 
+**AP-3 landed 24 Sep 2026.** `scripts/skill_tree_panel.gd` is a left
+`GamePanel` keyed `skills`, opened by a text **Skills** button just left of
+View. It draws the centre, the six sector title tiles, every non-baseline
+skill at its authored `axial` and the `Shapes.hex_line` connect tiles
+(title → tier 1 and every `all_of`/`any_of` edge). Each skill is owned,
+affordable or blocked with `purchase_blocker`'s reason, in a tooltip and in a
+list under the grid. Everything is resolved once per open, into
+`tiles`. Proven by `test_scenarios/ap3_skill_tree_window_test.json` and
+`tests/test_layout_regression.py`; hands-on check C-64. What AP-4 builds on:
+`_rebuild()` is the one refresh to call after a purchase, and `_stores()` is a
+display-only snapshot (`main.hive.total`/`total_honey`), not an answer to
+AP-4's stores-owner question. Decisions taken without Dave (each the cheapest
+to reverse):
+
+- **A left window, not progression.md 8.4's full-screen paused overlay.** The
+  slice asks for `build_left_window`, and it keeps C-61's window rules intact.
+- **Text button, no up-arrow icon, hidden in Challenges by the Saves rule**
+  rather than 8.5's `ui_icon.gd` shape and stage-gate key. Both files are
+  outside AP-3, so this is a follow-up for whoever next opens `ui_icon.gd`.
+- **`tests/source_checks.py` names `skill_tree_panel.gd` as a `skills.gd`
+  reader.** The plan has the panel read skills.gd for layout and text, which
+  the reader rule forbade. The panel defines none of the resolver's
+  functions, and that check still runs.
+- **Undiscovered skills are drawn blocked ("not discovered yet")**, not hidden
+  as 8.4 says. With campaign discovery off, every skill is known today.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | yes | medium |
-| AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | no — after AP-3 | high |
+| AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | yes | high |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -154,7 +180,7 @@ Level: high.
   new version. A scenario buys a node and a second run loads the save and still
   owns it.
 
-```queue-gated
+```queue
 **[Claude] AP-4 -- buying a skill, and the run remembering it**
 - Plan: `plans/now/alpha-progression-spine.md` -- "AP-4 — buying a skill, and the run remembering it"
 - Files: `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`
