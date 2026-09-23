@@ -97,7 +97,7 @@ explicit request from Dave.
   L-13 folded those in. A `.gitattributes` merge driver that regenerates on
   conflict would remove the merge cost separately. Any of these must keep a
   genuine staleness visible to a session that is not running closeout.
-- Disposition: promoted 2026-09-20 to `plans/now/verification-cost.md`
+- Disposition: promoted 2026-09-20 to `plans/archive/verification-cost_2026-09-23.md`
   as V-1 (regenerate rather than assert). The merge-driver half is
   recorded there as out of scope: a `.gitattributes` driver needs local
   git config a clone does not pick up. Queued in the Claude lane.
@@ -127,7 +127,7 @@ explicit request from Dave.
   checked first: `lifecycle tests=2` failures in seven days may be a case for
   running it less often, or evidence that it catches little and should be
   reshaped rather than rescheduled.
-- Disposition: promoted 2026-09-20 to `plans/now/verification-cost.md`
+- Disposition: promoted 2026-09-20 to `plans/archive/verification-cost_2026-09-23.md`
   as V-2, which classifies the two recorded failures first and scopes the
   stage only if they support it. Queued in the Claude lane. Removing the
   `MEADOW_FINISH_VERIFY` exclusion stays out of scope: `tools/slice.ps1`
@@ -226,4 +226,4 @@ explicit request from Dave.
   `Invoke-RegenerateStage`, or decides it is not wanted. Either way the branch
   is deleted in that pass.
 - Disposition: untriaged. Owner: whoever takes the next `tools/verify.ps1`
-  slice (the Claude lane, `plans/now/verification-cost.md`).
+  slice (the Claude lane, `plans/archive/verification-cost_2026-09-23.md`).

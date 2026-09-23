@@ -48,7 +48,7 @@ None of the three depends on the Claude lane.
 
 **Files this plan may not take.** `tools/verify.ps1`,
 `tools/update_function_map.py` and `tools/stage_reference.py` are the Claude
-lane's (`plans/now/verification-cost.md`), as are the six `scripts/*.gd`
+lane's (`plans/archive/verification-cost_2026-09-23.md`), as are the six `scripts/*.gd`
 files V-3 headers. Nothing here needs them.
 
 T-2 shipped 2026-09-20; its specification is `plans/archive/T-2_2026-09-20.md`.
