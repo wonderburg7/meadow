@@ -1243,6 +1243,28 @@ function Invoke-SlicePostMergeCleanup {
     $removed = Remove-SliceLedgerRow -Root $Root -Target $Target -SkipPush
     if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-deleted" }
 
+    # A closeout that archives a plan's last slice leaves the plan itself live
+    # and marked complete, which check_docs' terminal-plan rule then fails on
+    # every later branch (CB-2, T-3, V-4, ST-1). The plan can only move once
+    # nothing in flight cites it -- the queue item went with the merge, the
+    # ledger row just above -- so it moves here, on master, and travels in
+    # the same push. A plan the tool keeps live is reported, not fatal: the
+    # merge is already done, and check_docs still names what is left.
+    $archiveTool = Join-Path $Root "tools\archive_slice.py"
+    if (Test-Path -LiteralPath $archiveTool -PathType Leaf) {
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($archiveTool, "--complete-plans", "--root", $Root)
+        $run.Output | ForEach-Object { Write-Output $_ }
+        $touched = @($run.Output | Where-Object { $_ -like "touched: *" } | ForEach-Object { $_.Substring(9).Trim() })
+        if ($touched) {
+            $archived = @($run.Output | Where-Object { $_ -like "plan archived: *" } | ForEach-Object { ($_.Substring(15) -split " -> ")[0] })
+            git -C $Root commit -m "$($Target.Id) -- archive the finished plan $($archived -join ', ')`n`n$trailer" -- @touched | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed while archiving a finished plan" }
+        }
+        if ($run.Exit -ne 0) {
+            Write-Output "$($Target.Id) -- a finished plan was kept live (reason above); check_docs will name it until it is moved to plans/archive/"
+        }
+    }
+
     # The one push for the whole transaction: every commit the merge, the
     # ready-index refresh and the ledger removal made travels together.
     if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push) -ne 0) { throw "git push failed" }

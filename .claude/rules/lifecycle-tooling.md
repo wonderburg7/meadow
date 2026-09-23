@@ -23,6 +23,9 @@ tools/archive_slice.py <id>` moves the slice's plan section to
 --delete <id>` removes the queue item and renumbers its lane, refusing a
 queue that would fail `tools/check_docs.py`. `finish`'s archive and refill
 stop blocks name them. Neither commits, and neither adds the successor.
+`archive_slice.py --complete-plans` (23 Sep 2026) moves a plan left live
+with a terminal Status to `plans/archive/` and repoints its references;
+`finish` runs it on master after removing the ledger row.
 
 The workflow tests are split by subject (17 Sep 2026):
 `tests/test_source_checks.py` (source contracts and queue parsing),

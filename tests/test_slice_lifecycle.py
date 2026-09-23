@@ -917,6 +917,94 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertIn("[Codex] T-2", merged_queue)
         self.assertTrue((self.root / "plans" / "archive" / "T-1_2026-01-01.md").exists())
 
+    def test_finish_archives_the_plan_its_last_slice_completed(self):
+        """A closeout that archives its plan's last slice and marks the plan
+        complete used to leave the plan in plans/now/, failing check_docs on
+        every later branch (CB-2, T-3, V-4, ST-1). finish now moves it after
+        the merge, once the ledger row citing it is gone, in the same push."""
+        shutil.copy2(SLICE_PATH.with_name("archive_slice.py"), self.root / "tools" / "archive_slice.py")
+        shutil.copy2(SLICE_PATH.with_name("heading.py"), self.root / "tools" / "heading.py")
+        (self.root / "plans" / "now").mkdir()
+        (self.root / "plans" / "now" / "sample.md").write_text(
+            "# Sample plan\n\n"
+            "Status: active | Owner: t | Next: T-1 | Dependency: none | Verified: 2026-09-18\n\n"
+            "The one open slice is specified in the queue.\n",
+            encoding="utf-8",
+        )
+        (self.root / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            "1. **[Codex] T-1 -- fixture.**\n"
+            "   - Plan: `plans/now/sample.md` -- fixture\n"
+            "   - Files: `scripts/sample.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+            "   - Next after: none -- the sample plan is complete\n",
+            encoding="utf-8",
+        )
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "sample plan and mock verifier"], cwd=self.root, check=True)
+
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        self.assertIn("`plans/now/sample.md`", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        # The session's own closeout edits: the slice record, the emptied
+        # queue and the plan marked complete -- everything but the plan move.
+        (worktree / "plans" / "archive").mkdir(parents=True)
+        (worktree / "plans" / "archive" / "T-1_2026-01-01.md").write_text(
+            "Landed 2026-01-01 on `codex/T-1`. Live plan: `plans/now/sample.md`.\n\n# T-1 -- fixture\n",
+            encoding="utf-8",
+        )
+        (worktree / "NEXTSTEPS.md").write_text("## Next up\n\n", encoding="utf-8")
+        (worktree / "plans" / "now" / "sample.md").write_text(
+            "# Sample plan\n\n"
+            "Status: active | Owner: t | Next: None -- plan complete | Dependency: none | Verified: 2026-09-18\n\n"
+            "T-1 shipped 2026-01-01; its specification is `plans/archive/T-1_2026-01-01.md`.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "archive T-1 and complete the plan"], cwd=worktree, check=True)
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish -PythonPath '{}'".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''"),
+                sys.executable.replace("'", "''"),
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+
+        archived_rel = f"plans/archive/sample_{time.strftime('%Y-%m-%d')}.md"
+        self.assertFalse((self.root / "plans" / "now" / "sample.md").exists())
+        self.assertIn(
+            "Status: complete | Owner: t | Next: None -- plan complete",
+            (self.root / archived_rel).read_text(encoding="utf-8"),
+        )
+        self.assertTrue(
+            (self.root / "plans" / "archive" / "T-1_2026-01-01.md").read_text(encoding="utf-8").startswith(
+                f"Landed 2026-01-01 on `codex/T-1`. Live plan: `{archived_rel}` (archived)."
+            )
+        )
+        self.assertNotIn("sample.md", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+        self.assertEqual(
+            "",
+            subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],
+                           cwd=self.root, capture_output=True, text=True, check=True).stdout,
+        )
+        # The move rode the transaction's one push.
+        local = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True)
+        remote = subprocess.run(["git", "rev-parse", "origin/master"], cwd=self.root, capture_output=True, text=True, check=True)
+        self.assertEqual(local.stdout, remote.stdout)
+
     DEFERRED_SUCCESSOR_SECTION = (
         "## Not in the queue, and why\n\n"
         "- **T-2** (`plans/fixture.md`) -- follows T-1 but waits on T-9.\n"
@@ -1148,3 +1236,117 @@ class ArchiveSliceTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertTrue((self.root / "plans" / "archive" / "X-1_2026-09-18.md").exists())
+
+
+class ArchiveCompletePlansTest(unittest.TestCase):
+    """tools/archive_slice.py --complete-plans: the plan a closeout leaves live
+    with "Next: None -- plan complete" after archiving its last slice (CB-2,
+    T-3, V-4, ST-1) moves to plans/archive/ with every reference repointed."""
+
+    DONE_PLAN = (
+        "# Done plan\n\n"
+        "<!-- CONTEXT: plan | LAYER: immediate-task -->\n"
+        "Status: active | Owner: t | Next: None -- plan complete | Dependency: none | Verified: 2026-09-18\n\n"
+        "D-1 shipped 2026-09-18; its specification is `plans/archive/D-1_2026-09-18.md`.\n"
+    )
+    OPEN_PLAN = (
+        "# Open plan\n\n"
+        "Status: active | Owner: t | Next: O-2 | Dependency: none | Verified: 2026-09-18\n\n"
+        "## O-2 — still to do\n"
+    )
+    RECORD = "Landed 2026-09-18 on `claude/D-1`. Live plan: `plans/now/done.md`.\n\n## D-1 — the slice\n"
+    NOTE = "Promoted to a new plan, `plans/now/done.md`, on 18 Sep.\n"
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+        files = {
+            "plans/now/done.md": self.DONE_PLAN,
+            "plans/now/open.md": self.OPEN_PLAN,
+            "plans/archive/D-1_2026-09-18.md": self.RECORD,
+            "plans/observations/notes.md": self.NOTE,
+            "NEXTSTEPS.md": "# Next steps\n\n## Next up\n\n### Claude lane\n\n",
+            "plans/workstreams.md": "| Worktree path (branch) | Lane |\n| --- | --- |\n",
+        }
+        for rel, text in files.items():
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text, encoding="utf-8")
+        self.git("init", "-q", "-b", "master")
+        self.git("add", ".")
+        self.git("commit", "-q", "-m", "seed")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def git(self, *args):
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                              cwd=self.root, check=True, capture_output=True, text=True)
+
+    def run_tool(self):
+        return subprocess.run(
+            [sys.executable, str(SLICE_PATH.with_name("archive_slice.py")), "--complete-plans",
+             "--root", str(self.root), "--date", "2026-09-23"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=self.root,
+        )
+
+    def test_moves_a_finished_plan_and_repoints_every_reference(self):
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        new_rel = "plans/archive/done_2026-09-23.md"
+        self.assertFalse((self.root / "plans" / "now" / "done.md").exists())
+        archived = (self.root / new_rel).read_text(encoding="utf-8")
+        self.assertIn("Status: complete | Owner: t | Next: None -- plan complete", archived)
+        self.assertEqual(self.DONE_PLAN.split("Status:")[0], archived.split("Status:")[0])
+        record = (self.root / "plans" / "archive" / "D-1_2026-09-18.md").read_text(encoding="utf-8")
+        self.assertTrue(record.startswith(f"Landed 2026-09-18 on `claude/D-1`. Live plan: `{new_rel}` (archived)."))
+        note = (self.root / "plans" / "observations" / "notes.md").read_text(encoding="utf-8")
+        self.assertEqual(self.NOTE.replace("plans/now/done.md", new_rel), note)
+        self.assertEqual(self.OPEN_PLAN, (self.root / "plans" / "now" / "open.md").read_text(encoding="utf-8"))
+
+        touched = sorted(line[len("touched: "):] for line in result.stdout.splitlines()
+                         if line.startswith("touched: "))
+        self.assertEqual(sorted(["plans/now/done.md", new_rel, "plans/archive/D-1_2026-09-18.md",
+                                 "plans/observations/notes.md"]), touched)
+        # Everything is staged, so a caller commits exactly the touched paths.
+        self.assertEqual("", self.git("diff", "--name-only").stdout)
+        staged = self.git("diff", "--cached", "--name-status", "-M").stdout
+        self.assertIn("plans/now/done.md", staged)
+        self.assertIn(new_rel, staged)
+
+    def test_keeps_a_plan_live_while_the_queue_or_ledger_still_cites_it(self):
+        for citer in ("NEXTSTEPS.md", "plans/workstreams.md"):
+            with self.subTest(citer=citer):
+                path = self.root / citer
+                original = path.read_text(encoding="utf-8")
+                path.write_text(original + "`plans/now/done.md`\n", encoding="utf-8")
+                self.git("commit", "-q", "-am", f"cite from {citer}")
+
+                result = self.run_tool()
+
+                self.assertEqual(1, result.returncode, result.stdout + result.stderr)
+                self.assertIn(f"plan kept live: plans/now/done.md -- {citer} still cite", result.stderr)
+                self.assertTrue((self.root / "plans" / "now" / "done.md").exists())
+                self.assertFalse((self.root / "plans" / "archive" / "done_2026-09-23.md").exists())
+                self.assertEqual("", self.git("status", "--porcelain").stdout)
+                path.write_text(original, encoding="utf-8")
+                self.git("commit", "-q", "-am", f"uncite from {citer}")
+
+    def test_keeps_a_plan_live_when_a_file_it_would_touch_is_dirty(self):
+        (self.root / "plans" / "observations" / "notes.md").write_text(self.NOTE + "edit\n", encoding="utf-8")
+
+        result = self.run_tool()
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("uncommitted changes", result.stderr)
+        self.assertTrue((self.root / "plans" / "now" / "done.md").exists())
+
+    def test_does_nothing_when_no_live_plan_is_finished(self):
+        self.git("rm", "-q", "plans/now/done.md")
+        self.git("commit", "-q", "-m", "no finished plan")
+
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", self.git("status", "--porcelain").stdout)

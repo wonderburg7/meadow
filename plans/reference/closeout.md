@@ -45,7 +45,11 @@ it, on the branch:**
 
 1. Update the owning plan's Status line and `Next:` field. After a plan's
    last slice, set `Next: None — plan complete` and list every follow-up with
-   where it was filed. A finding from the plan's own checks becomes its next
+   where it was filed. Leave the plan where it is: after the merge, once its
+   queue item and ledger row are gone, `finish` runs `python
+   tools/archive_slice.py --complete-plans`, which moves every plan
+   check_docs calls terminal to plans/archive/(name)_(date).md and repoints
+   each reference to it, in the same push. A finding from the plan's own checks becomes its next
    slice while the plan is open; one that surfaces after it is archived
    starts a new plan.
 2. Make sure the item's `Next after:` successor has a fenced `queue` block in

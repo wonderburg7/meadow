@@ -20,14 +20,23 @@ TERMINAL_STATES = ("complete", "completed", "archived", "abandoned", "retired")
 MD_LINK_PATTERN = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 
 
-def current_plans() -> list[Path]:
+def current_plans(root: Path | None = None) -> list[Path]:
     """Return the small, routable plan layers; history is intentionally excluded."""
+    root = root or ROOT
     layers = ("now", "active", "design", "reference")
     return sorted(
         path
         for layer in layers
-        for path in (ROOT / "plans" / layer).glob("*.md")
+        for path in (root / "plans" / layer).glob("*.md")
     )
+
+
+def plan_is_terminal(text: str) -> bool:
+    """The terminal-plan rule: a Status line in the first 8 lines naming a
+    finished state. tools/archive_slice.py --complete-plans archives exactly
+    the plans this says belong in plans/archive/."""
+    match = PLAN_PATTERN.search("\n".join(text.splitlines()[:8]))
+    return bool(match) and any(state in match.group(1).lower() for state in TERMINAL_STATES)
 
 
 def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
@@ -39,9 +48,8 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
             errors.append(f"{plan.relative_to(ROOT)}: active plan has no Status line in its first 8 lines")
             continue
 
-        status = match.group(1).lower()
         metadata = first_lines.lower()
-        if any(state in status for state in TERMINAL_STATES):
+        if plan_is_terminal(text):
             errors.append(f"{plan.relative_to(ROOT)}: terminal plan belongs in plans/archive, not a live layer")
 
         missing = [field[:-1].title() for field in REQUIRED_STATUS_FIELDS if field not in metadata]
