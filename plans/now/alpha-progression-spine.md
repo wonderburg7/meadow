@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-1 -- the run owns a Progression instance, queued in the Claude lane | Dependency: AP-3 also waits on F2s (`plans/design/architecture-review.md`) | Verified: 2026-09-22
+Status: active | Owner: Dave / Claude Code | Next: AP-2 -- the two foraging behaviours ask the resolver, queued in the Claude lane (AP-1 landed 23 Sep) | Dependency: AP-3 also waits on F2s (`plans/design/architecture-review.md`) | Verified: 2026-09-23
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -44,7 +44,7 @@ switched on in settings; and a purchase survives save and load.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | AP-1 | Nothing visible. The run now has a skill resolver behind it. | `scripts/session.gd`, `scripts/main.gd` | yes | medium |
-| AP-2 | Nothing visible yet — the two foraging behaviours can now be switched on by owning a skill as well as by the setting. | `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd` | no — after AP-1 | medium |
+| AP-2 | Nothing visible yet — the two foraging behaviours can now be switched on by owning a skill as well as by the setting. | `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd` | yes | medium |
 | AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | no — after AP-1 and F2s | medium |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | no — after AP-3 | high |
 
@@ -165,7 +165,7 @@ Level: medium.
   bees, say so with the call count before caching — `CLAUDE.md` rule 3 wants the
   profile first, and even a `Dictionary` lookup there is a cost worth naming.
 
-```queue-gated
+```queue
 **[Claude] AP-2 -- the two foraging behaviours ask the resolver**
 - Plan: `plans/now/alpha-progression-spine.md` -- "AP-2 — the two foraging behaviours ask the resolver"
 - Files: `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd`
