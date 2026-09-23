@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-2 -- the two foraging behaviours ask the resolver**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-2 — the two foraging behaviours ask the resolver"
-   - Files: `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd`
-   - Check: all five `tarsal_markers_on`/`orientation_flight_on` reads become `GameConfig.<flag> or Session.progression.is_behaviour_enabled("<flag>")`, null-safe; `is_behaviour_enabled` answers from a dictionary cleared by `grant_temporary`, `set_mastered_ids` and `end_run` rather than walking `owned_ids()`; `foraging_features_off_test.json` and `foraging_features_on_test.json` summarise exactly as before
-   - Proof: `absent: scripts/progression.gd :: _behaviour_cache`
-   - Next after: AP-3 -- the skill tree panel.
-
-2. **[Claude] SV-2 -- the Saves window**
+1. **[Claude] SV-2 -- the Saves window**
    - Plan: `plans/now/named-saves.md` -- "SV-2 — the Saves window"
    - Files: `scripts/saves_panel.gd`, `scripts/hud.gd`
    - Check: a `GamePanel` subclass keyed `saves` lists every run and its three checkpoints with day and age, loads and deletes a row with deletion behind `Session.warn_on_discard`, and asks for a run name on first save; every other window still opens, closes and sits where it did
    - Proof: `absent: scripts/hud.gd :: saves_panel`
    - Next after: none -- named-saves is complete once SV-2 ships.
+
+2. **[Claude] AP-3 -- the skill tree panel**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-3 — the skill tree panel"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`
+   - Check: a `GamePanel` subclass keyed `skills` draws the six sectors at their authored axial coordinates with `Shapes.hex_line` connect tiles, shows each node as owned/affordable/blocked with `purchase_blocker`'s reason, opens from a HUD Skills button, and takes its rectangle from `ui_layout.gd`; every other window still opens, closes and sits where it did
+   - Proof: `absent: scripts/hud.gd :: skill_tree_panel`
+   - Next after: AP-4 -- buying a skill, and the run remembering it.
 
 ### Codex lane
 
