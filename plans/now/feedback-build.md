@@ -48,8 +48,7 @@ Verified 22 September 2026 against the repository.
 | --- | --- | --- | --- | --- |
 
 `.gitignore` is in FB-1's scope but deliberately not on its `Files:` line: `check_docs.py`'s queue validator requires every listed path to have a file suffix, and `.gitignore` has none. Do not re-add it there.
-| FB-2 | A scenario can assert *when* something happened, not just whether it did. | `tools/analyze_session.py`, `tools/headless/verdicts.py`, `tests/test_headless_verdicts.py` | yes | medium |
-| FB-3 | `python tools/pacing_gates.py` prints the five milestone timings against their targets, so a balance change is judged by a command. | `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1` | no — after FB-2 | medium |
+| FB-3 | `python tools/pacing_gates.py` prints the five milestone timings against their targets, so a balance change is judged by a command. | `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1` | yes | medium |
 
 **Dependencies, stated rather than implied by order.** FB-1 and FB-2 share no
 file and may run in either order. FB-3 needs FB-2's metrics and nothing else.
@@ -60,65 +59,7 @@ No slice here depends on anything in `plans/now/alpha-progression-spine.md` or
 
 FB-1 shipped 2026-09-23; its specification is `plans/archive/FB-1_2026-09-23.md`.
 
-## FB-2 — a scenario can assert when something happened
-
-Level: medium.
-
-- **Required reading.** This heading. `tools/headless/verdicts.py` whole (145
-  lines). `python tools/func.py tools/analyze_session.py analyze _honey_fill_vs_winter _last_snapshot_per_day`.
-  `tools/headless/profiles.py`'s `SNAPSHOT_FIELDS` and `_DEFAULTS`.
-- **Files to change.** `tools/analyze_session.py`, `tools/headless/verdicts.py`,
-  `tests/test_headless_verdicts.py`.
-- **The owner is the existing allowlist, not a new tool.** `verdicts.py`'s
-  `_METRICS` comment already says a later slice widens it. Add to it. Do not
-  build a second report path beside `analyze_session.py`; `_honey_fill_vs_winter`
-  is the shape to copy.
-- **Derive the milestones from snapshots that already exist.** Every milestone
-  below comes from the per-day series the `balance` profile already captures, so
-  **this slice writes no GDScript and touches no `scripts/` file**:
-  - `milestones.first_worker_day` — the first snapshot day where
-    `population.total` exceeds 1.
-  - `milestones.winter_entered_day` — the first day `environment.winter_here`
-    is true.
-  - `milestones.winter_survived_day` — the first day after that where it is
-    false again; absent if the run ended in winter.
-  - `milestones.food_secure_day` — the first day `resources.food_stores`
-    reaches `GameConfig`'s winter requirement, read from the run's own settings
-    rather than hardcoded.
-- **What is deliberately not here.** A gyne-release *time* needs an event the
-  simulation does not emit, so it needs a `scripts/` change and belongs to the
-  Claude lane. Say so at closeout rather than adding a fifth milestone that
-  guesses.
-- **Requirements.** `analyze(...)` gains a `milestones` section, absent-safe:
-  a run with no snapshots gets an empty dict, not a crash. `_METRICS` gains the
-  four keys above. A milestone that never happened evaluates as `None` and must
-  make an `lt`/`lte` expectation **fail**, not pass — "it never happened" is not
-  "it happened early", and this is the one subtle correctness question in the
-  slice. `tests/test_headless_verdicts.py` covers each milestone, the
-  never-happened case for every operator, and a run with no snapshots.
-- **Runtime policy.** Pure Python over an already-loaded entry list, computed
-  once per analysis in a single pass over the snapshot series. Do not re-walk
-  the series per milestone.
-- **Automated acceptance.** The new unit tests, plus one real run:
-  `python tools/run_scenario.py test_scenarios/colony_30_bees_test.json --full`
-  prints a `milestones` section with a plausible `first_worker_day`.
-- **Closeout decision (2026-09-23).** **Question:** should food security use a
-  fixed threshold or the current colony's winter requirement? **Options:** a
-  fixed food-store value, or calculate each snapshot's honey-store requirement
-  from that run's recorded GameConfig settings and population. **Choice:** the
-  per-snapshot calculation, converted from required energy to honey-store
-  units. It keeps config overrides causal and is the cheapest choice to revise
-  if the game later logs an explicit forecast threshold. No gyne-release-time
-  milestone was added: it still requires the Claude-lane simulation event.
-
-```queue
-**[Codex] FB-2 -- a scenario can assert when something happened**
-- Plan: `plans/now/feedback-build.md` -- "FB-2 — a scenario can assert when something happened"
-- Files: `tools/analyze_session.py`, `tools/headless/verdicts.py`, `tests/test_headless_verdicts.py`
-- Check: `analyze()` gains a `milestones` section computed in one pass over the existing per-day snapshots, `verdicts.py`'s `_METRICS` exposes `first_worker_day`, `winter_entered_day`, `winter_survived_day` and `food_secure_day`, a milestone that never happened fails an `lt`/`lte` expectation rather than passing it, a run with no snapshots yields an empty dict rather than a crash, and no `scripts/` file is touched
-- Proof: `absent: tools/headless/verdicts.py :: milestones.`
-- Next after: FB-3 -- the pacing gates become one command.
-```
+FB-2 shipped 2026-09-23; its specification is `plans/archive/FB-2_2026-09-23.md`.
 
 ## FB-3 — the pacing gates become one command
 
@@ -147,7 +88,7 @@ Level: medium.
   timeout — a harness that takes an hour is not an instrument anyone will use,
   and the answer may be a shorter scenario.
 
-```queue-gated
+```queue
 **[Codex] FB-3 -- the pacing gates become one command**
 - Plan: `plans/now/feedback-build.md` -- "FB-3 — the pacing gates become one command"
 - Files: `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1`
