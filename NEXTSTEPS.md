@@ -42,12 +42,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] FB-2 -- a scenario can assert when something happened**
-   - Plan: `plans/now/feedback-build.md` -- "FB-2 — a scenario can assert when something happened"
-   - Files: `tools/analyze_session.py`, `tools/headless/verdicts.py`, `tests/test_headless_verdicts.py`
-   - Check: `analyze()` gains a `milestones` section computed in one pass over the existing per-day snapshots, `verdicts.py`'s `_METRICS` exposes `first_worker_day`, `winter_entered_day`, `winter_survived_day` and `food_secure_day`, a milestone that never happened fails an `lt`/`lte` expectation rather than passing it, a run with no snapshots yields an empty dict rather than a crash, and no `scripts/` file is touched
-   - Proof: `absent: tools/headless/verdicts.py :: milestones.`
-   - Next after: FB-3 -- the pacing gates become one command.
+1. **[Codex] FB-3 -- the pacing gates become one command**
+   - Plan: `plans/now/feedback-build.md` -- "FB-3 — the pacing gates become one command"
+   - Files: `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1`
+   - Check: `python tools/pacing_gates.py` runs a fixed-seed arc scenario three times, prints one table of milestone, median day, the §3 target in days and whether it is inside band in under 40 lines, reports each run's wall clock, and `tests/test_pacing_gates.py` proves the band arithmetic without launching Godot
+   - Proof: `absent: tools/verify.ps1 :: pacing_gates`
+   - Next after: none -- feedback-build is complete once FB-3 ships.
 
 ## Not in the queue, and why
 
@@ -55,7 +55,6 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
 - **AP-4** (`plans/now/alpha-progression-spine.md`) -- needs AP-3's panel to put a Buy control on.
-- **FB-3** (`plans/now/feedback-build.md`) -- needs FB-2's milestone metrics before a pacing table has anything to read.
 - **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is now `plans/now/alpha-progression-spine.md`'s AP-1 to AP-4; step 7 waits for those four to prove tier 1 in a running game.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
