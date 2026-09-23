@@ -173,7 +173,10 @@ Level: high.
   `Progression.purchase`, spending the colony's real stores. The save gains
   temporary ownership and branch-tier progress only. `FORMAT_VERSION` rises by
   one and `save_migrations.gd` reads an older save as "no skills owned", which
-  is exactly what an older save means.
+  is exactly what an older save means. After a successful purchase, call
+  `Availability.invalidate()` so a bee's cached `action_query` answers are
+  asked again (G3; no action row is skill-gated yet, so forgetting it breaks
+  nothing today and the first skill-gated row silently).
 - **Invariants.** A save written before this slice loads and plays. Mastered
   ownership, chosen adaptations, milestone IDs and per-bee familiarity are
   **out of scope** — progression.md section 11 step 10 owns those and step 9's

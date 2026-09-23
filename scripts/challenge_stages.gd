@@ -10,6 +10,13 @@ extends RefCounted
 ## See challenge_runner.gd's own header comment for how STAGES_1/STAGES_2
 ## are chosen between and why Challenge 1 and 2 share one shape despite
 ## their differences.
+##
+## A stage's `unlocked_keys` may name an actions.gd row's `gate_key` (by
+## convention the action id) to offer that work from that stage on (G3,
+## plans/design/architecture-review.md). No stage needs one yet: the queen's
+## role limits still come from challenge_runner.gd's role_restricted_to.
+## tests/source_checks.py fails on a stage key that is neither a UI gate, a
+## role/mode key, an explained untabled key nor an action id.
 class_name ChallengeStages
 
 ## Challenge 1's wax cells hold this much nectar. The 1.11 lesson completes

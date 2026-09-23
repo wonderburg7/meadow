@@ -37,6 +37,8 @@ const ACCESSIBILITY_KEYS := [
 	"show_info_badges",
 ]
 
+const Availability = preload("res://scripts/availability.gd")
+
 var main: Node2D
 var active: bool = false
 var _unlocked: Dictionary = {}   # key -> true
@@ -47,6 +49,7 @@ var _unlocked: Dictionary = {}   # key -> true
 func start(initial_unlocks: Array = []) -> void:
 	active = true
 	_unlocked.clear()
+	Availability.invalidate()
 	for key in initial_unlocks:
 		unlock(key)
 
@@ -56,6 +59,7 @@ func start(initial_unlocks: Array = []) -> void:
 func stop() -> void:
 	active = false
 	_unlocked.clear()
+	Availability.invalidate()
 
 ## True whenever `key`'s UI should be shown. Always true outside a
 ## Challenge run, and always true for an accessibility key regardless.
@@ -71,10 +75,12 @@ func unlock(key: String) -> void:
 	if _unlocked.has(key):
 		return
 	_unlocked[key] = true
+	Availability.invalidate()
 	unlocked_changed.emit(key)
 
 func lock(key: String) -> void:
 	_unlocked.erase(key)
+	Availability.invalidate()
 
 ## The current unlocked set, for the checkpoint system to save alongside
 ## the rest of a sub-stage's state -- rolling a Challenge run back to an
@@ -87,5 +93,6 @@ func unlocked_keys() -> Array:
 ## an earlier sub-stage.
 func set_unlocked_keys(keys: Array) -> void:
 	_unlocked.clear()
+	Availability.invalidate()
 	for key in keys:
 		unlock(key)

@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026, F1s shipped 20 Sep 2026 and F2s shipped 23 Sep 2026, leaving G3 | Owner: Dave / Claude Code | Next: G3 -- actions become gateable, its queue block now unfenced for the Claude lane | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-23
+Status: complete -- decisions A, B and C taken by Dave 11 Sep 2026; every slice has shipped, the last being G3 on 23 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups, each filed in "Follow-ups after G3" at the end of this file: skill purchases call `Availability.invalidate()` (filed in `plans/now/alpha-progression-spine.md` AP-4); the queen's `role_restricted_to` becomes stage-named actions; `feature` and `season` gate fields get a query | Dependency: none | Verified: 2026-09-23
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -821,59 +821,7 @@ Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
 [archive](../archive/G2_2026-09-17.md). Its integration review corrected two
 behaviour differences, both recorded there.
 
-### G3 — actions become gateable
-
-Level: medium. Depends on: G2, F2s.
-
-- **Required reading.** This heading. G2's result. `scripts/availability.gd`.
-  `scripts/stage_gate.gd`. `scripts/progression.gd::is_permitted`.
-  `plans/design/progression.md` sections 3 and 4.5.
-- **Files to change.** `scripts/availability.gd`, `actions.gd`,
-  `scripts/bee.gd`, `scripts/challenge_stages.gd`.
-- **Files not to change.** `scripts/progression.gd`; it answers skill questions
-  and this slice asks it, it does not change it.
-- **Requirements.** `Availability.action_query(action_id, bee, stage_gate,
-  progression)` composes the same four facts `mode_query` already does —
-  existence, config flag, stage unlock, suppression — plus feature and skill
-  ownership. The dispatcher skips a row whose query is unavailable. Challenge
-  stages may name action ids in `unlocked_keys`.
-- **Invariants.** Outside a Challenge, with no skills owned, every action must
-  remain available exactly as today. That is what keeps ordinary play unchanged,
-  and it is the acceptance. `role_restricted_to` is removed only once the stages
-  that rely on it name actions instead; do both in this slice or neither.
-- **Implementation guidance.** Ship every catalogue gate field empty except the
-  ones a Challenge 1 or 2 stage actually needs, and prove each against that
-  stage. An empty gate field means "always available", never "check and pass".
-- **Runtime policy.** The query result is stable between stage transitions and
-  skill purchases. Cache it per bee against a gate epoch; do not call it per
-  action per think tick.
-- **Automated acceptance.** Both Challenge fixtures reach the same final stage. A
-  scenario fixture with no Challenge active confirms every action is offered. A
-  source check that every action id named in `challenge_stages.gd` exists in
-  `actions.gd`.
-- **Escalation.** If gating an action makes a bee with no available work behave
-  differently from an idle bee today, that is a gameplay outcome. Stop and
-  describe both behaviours.
-- **Cross-plan dependency, settled (Dave, 17 September 2026).** Skill gating
-  is **split by kind**, and the decision is recorded once, in
-  `plans/design/progression.md` section 11. In short: `progression.gd` is the
-  single store of what the colony owns; this slice's `action_query` gates the
-  *work* a bee may start (roles, modes, jobs) and asks that store; skill
-  *effects* gate values and behaviour switches where the behaviour branches.
-  So G3 and Phase B step 6 no longer block each other, and neither sets a
-  pattern the other has to follow.
-
-```queue
-**[Claude] G3 -- actions become gateable**
-- Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
-- Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
-- Check: with no Challenge active and no skills owned every action is still offered; both Challenge fixtures reach the same final stage as before; a source check fails if `challenge_stages.gd` names an action id that `actions.gd` does not define
-- Proof: `absent: scripts/availability.gd :: action_query`
-- Next after: none -- architecture-review is complete once G3 ships.
-```
-
-The fence was `queue-gated` until F2s landed (23 Sep 2026); it is now `queue`,
-so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
+G3 shipped 2026-09-24; its specification is `plans/archive/G3_2026-09-24.md`.
 
 ## Read on demand
 
@@ -887,3 +835,34 @@ so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
 - `.claude/rules/simulation.md` and `.claude/rules/performance.md` — before G2.
 - `.claude/rules/saving.md` — before D1.
 - `plans/design/progression.md` sections 3 and 4.5 — before G3.
+
+## Follow-ups after G3
+
+G3 landed 23 Sep 2026 (its specification is in `plans/archive/`).
+`Availability.action_query(action_id, bee, stage_gate, progression)` answers
+for an `actions.gd` row; `bee.gd::_try_role_work` asks it only for a row that
+fills a gate field, cached per bee against `Availability.gate_epoch`, which
+`stage_gate.gd` bumps on every unlock, lock, start and stop. Every row ships
+ungated, so ordinary play and both Challenges are unchanged
+(`test_scenarios/g3_actions_offered_test.json`,
+`h4_challenge1_stage_advance_test.json`,
+`f2s_challenge2_gate_table_test.json`). Decisions taken without Dave, each
+the cheapest to reverse:
+
+- **`role_restricted_to` stays.** The plan said to replace it with
+  stage-named actions in this slice or not at all. Replacing it means editing
+  `challenge_runner.gd`, outside G3's file list, and re-proving every queen
+  stage, so neither was done. To take it on later: give each queen action row a
+  `gate_key`, name those keys in the queen stages' `unlocked_keys`, and delete
+  `role_restricted_to` and `_queen_allowed_role_ids` in the same slice.
+- **`feature` is not queried.** A source check allows only
+  `progression.gd`'s resolver to read `features.gd`, and G3 may not change
+  `progression.gd`. `feature` and `season` must stay empty (source check)
+  until the resolver exposes a plain feature query.
+- **Skill purchases must call `Availability.invalidate()`.** `progression.gd`
+  knows nothing of the cache. No row is skill-gated yet, so nothing is stale
+  today. Filed as a requirement in AP-4.
+- **Files beyond the queue line:** `scripts/stage_gate.gd` (epoch bumps),
+  `scripts/scenario_actions.gd` (`all_actions_available` assertion) and
+  `tests/source_checks.py` (gate fields validated; an unknown stage key that is
+  not an action id fails).
