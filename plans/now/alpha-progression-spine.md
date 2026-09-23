@@ -43,7 +43,6 @@ switched on in settings; and a purchase survives save and load.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-1 | Nothing visible. The run now has a skill resolver behind it. | `scripts/session.gd`, `scripts/main.gd` | yes | medium |
 | AP-2 | Nothing visible yet — the two foraging behaviours can now be switched on by owning a skill as well as by the setting. | `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd` | yes | medium |
 | AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | no — after AP-1 and F2s | medium |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | no — after AP-3 | high |
@@ -69,61 +68,7 @@ switched on in settings; and a purchase survives save and load.
 `plans/design/progression.md` section 11's Phase B step 6 paragraph — not that
 file's catalogue, grid or cost sections, 400 lines this plan does not need.
 
-## AP-1 — the run owns a Progression instance
-
-Level: medium.
-
-- **Required reading.** This heading. `scripts/session.gd` (259 lines, read it
-  whole). `scripts/main.gd::_ready`'s stage-gate construction — find it with
-  `python tools/func.py scripts/main.gd _ready`.
-- **Files to change.** `scripts/session.gd`, `scripts/main.gd`.
-- **Files not to change.** `scripts/progression.gd` — this slice constructs it
-  and passes it its two arguments; it does not alter the resolver.
-  `tests/source_checks.py` belongs to the Codex lane this week; do not add a
-  check there.
-- **The owner is `Session`, and this is not an open question.** `CLAUDE.md`
-  rule 2 assigns run state to `Session`, skill ownership is run state, and
-  `Session` is an autoload surviving the scene reloads `main.gd` does between
-  runs. Add `var progression: Object = null` under a new
-  `# --- progression ---` section header.
-- **Requirements.**
-  1. `session.gd` gains `progression`, constructed lazily by a
-     `func ensure_progression(gate: Node) -> Object` that returns the existing
-     instance if one is already built for this run, and otherwise
-     `Progression.new(GameConfig, gate)`.
-  2. `main.gd` calls `Session.ensure_progression(stage_gate)` immediately after
-     `add_child(stage_gate)`, so the resolver never exists without its gate.
-  3. `session.gd::reset_run_state()` calls `progression.end_run()` and then
-     drops the reference, so the next run builds a fresh one. It must not call
-     `end_run()` on a null.
-  4. `main.gd` applies the level's policy once, right after construction:
-     `progression.set_skill_policy(level.skill_grants, level.skill_bans,
-     level.skill_delays)`, reading the three keys that `levels.gd` already
-     ships. Every level ships them empty, so this is wiring, not behaviour.
-- **Invariants.** No gameplay changes. No skill is owned after this slice, so
-  `is_behaviour_enabled` answers false for everything and nothing reads it yet.
-  A Challenge run and an ordinary run both reach the same end state as before.
-- **Runtime policy.** Construction happens once per run, in `_ready`. Nothing
-  here runs per frame or per bee. `set_skill_policy` is called once per run and
-  again only if the level changes.
-- **Automated acceptance.** `tools/godot_compile_check.py` passes — the first
-  time `progression.gd` has ever been compiled into a booting build, so a parse
-  error in it would have been invisible until now. Then confirm
-  `colony_30_bees_test.json` and `c1f1_stage_setup_test.json` summarise
-  unchanged under `python tools/run_scenario.py`.
-- **Escalation.** If `Progression.new(GameConfig, stage_gate)` cannot be built
-  at that point in `_ready` because the stage gate is not yet configured for the
-  level, stop and say so — moving the call later is an ordering change, and
-  ordering is what this slice exists to fix once.
-
-```queue
-**[Claude] AP-1 -- the run owns a Progression instance**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-1 — the run owns a Progression instance"
-- Files: `scripts/session.gd`, `scripts/main.gd`
-- Check: `Session.progression` is a live `Progression` built with `GameConfig` and `main.gd`'s stage gate, built once per run in `main.gd::_ready` and dropped by `reset_run_state()`; the level's `skill_grants`/`skill_bans`/`skill_delays` are passed to `set_skill_policy` once; `tools/godot_compile_check.py` passes and `colony_30_bees_test.json` and `c1f1_stage_setup_test.json` summarise exactly as before
-- Proof: `absent: scripts/session.gd :: progression`
-- Next after: AP-2 -- the two foraging behaviours ask the resolver.
-```
+AP-1 shipped 2026-09-23; its specification is `plans/archive/AP-1_2026-09-23.md`.
 
 ## AP-2 — the two foraging behaviours ask the resolver
 
