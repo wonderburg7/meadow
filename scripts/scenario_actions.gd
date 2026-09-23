@@ -1145,7 +1145,8 @@ static func _game_panel(main: Node2D, key: String) -> GamePanel:
 ## control would make every fixture a list of which columns happen to be
 ## shown this tick. UI-X-2: {"visible": true} opts a fixture out of that
 ## silent pass, for the cases where a control being hidden at all -- not
-## just its rect -- is the bug under test.
+## just its rect -- is the bug under test. F2s: {"visible": false} asserts
+## the opposite, that a stage-gated control is hidden.
 ##
 ## "same_height_as" (HC-13) is the one thing a per-control minimum cannot
 ## say: that two neighbouring controls are the same height as each other.
@@ -1162,6 +1163,8 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		if condition.get("visible", false):
 			return {"ok": false, "reason": "control '%s' is not visible" % path}
 		return {"ok": true, "reason": ""}
+	if condition.has("visible") and not condition["visible"]:
+		return {"ok": false, "reason": "control '%s' is visible but should be hidden" % path}
 	if condition.has("max_leading"):
 		var leading: Dictionary = _label_leading(control)
 		if leading.is_empty():

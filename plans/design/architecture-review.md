@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026 and F1s shipped 20 Sep 2026, leaving F2s and G3 | Owner: Dave / Claude Code | Next: F2s -- a declarative UI gate table, queued in the Claude lane; G3 waits on F2s | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-17
+Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026, F1s shipped 20 Sep 2026 and F2s shipped 23 Sep 2026, leaving G3 | Owner: Dave / Claude Code | Next: G3 -- actions become gateable, its queue block now unfenced for the Claude lane | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-23
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -815,6 +815,14 @@ F1s shipped 2026-09-20; its specification is `plans/archive/F1s_2026-09-20.md`.
 
 Level: medium. Depends on: F1s.
 
+**Delivered 23 Sep 2026.** The table is `Availability.UI_GATES`, with
+`UNTABLED_GATE_KEYS` for the one stage key that governs no control
+(`queen_commands`). Six of the eight setters went. `set_winter_button_visible`
+and `set_queen_build_button_visible` stay: neither follows a `stage_gate` key
+(Session.winter_coming, set from `saving.gd`/`year_winter.gd`, and the
+Challenge 1 run plus the selection), so a table row would have meant inventing
+a gate key. Fixture: `test_scenarios/f2s_challenge2_gate_table_test.json`.
+
 - **Required reading.** This heading. F10 above.
   `scripts/challenge_runner.gd::_apply_stage_gate_to_ui`. `scripts/hud.gd`'s
   `set_*_visible` block and `allowed_*_keys` fields. `scripts/stage_gate.gd`.
@@ -905,7 +913,7 @@ Level: medium. Depends on: G2, F2s.
   So G3 and Phase B step 6 no longer block each other, and neither sets a
   pattern the other has to follow.
 
-```queue-gated
+```queue
 **[Claude] G3 -- actions become gateable**
 - Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
 - Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
@@ -914,9 +922,8 @@ Level: medium. Depends on: G2, F2s.
 - Next after: none -- architecture-review is complete once G3 ships.
 ```
 
-The fence is `queue-gated` because G3 follows F2s. When F2s lands, change it to
-`queue` and the next `tools/slice.ps1 finish` takes G3 into the Claude lane
-without anyone rewriting these five lines out of the prose above.
+The fence was `queue-gated` until F2s landed (23 Sep 2026); it is now `queue`,
+so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
 
 ## Read on demand
 

@@ -317,11 +317,14 @@ var allowed_mode_keys: Array = []
 var allowed_designation_keys: Array = []
 ## Challenge 1 only -- see set_queen_build_button_visible.
 var show_queen_build_button: bool = false
-## Hides the cell popup's "Keep for every bee" row / the soil popup's
-## mark/clear buttons until a Challenge has taught them. Both default to
-## visible so starter modes/open world/Challenge 1 are unaffected.
-var hatch_lock_visible: bool = true
-var soil_marking_visible: bool = true
+## Stage-gated controls (F2s). `_gate_controls` maps an
+## Availability.UI_GATES control name to a Callable returning that control
+## -- a Callable, not the node, because some controls are rebuilt -- and
+## `_gate_open` holds the state apply_gates last computed for it. A name
+## absent from `_gate_open` reads as open, so starter modes, open world and
+## Challenge 1 are unaffected. See apply_gates and _is_gate_open.
+var _gate_controls: Dictionary = {}
+var _gate_open: Dictionary = {}
 ## The top-right corner: two rows (pause/speed controls, then
 ## colony/nursery/winter/view icons -- UI_PLAN.md section 2), kept
 ## anchored clear of whatever debug_panel.gd's settings cog currently
@@ -357,8 +360,8 @@ var active_summary_kind: String = ""
 ## -- kept live (unlike the other three kinds) because its nectar/pollen
 ## amounts tick up while the panel is open; see _refresh_flower_summary.
 var active_flower: Node2D = null
-## Only shown for a soil summary -- see show_object_summary and
-## set_soil_marking_visible.
+## Only shown for a soil summary -- see show_object_summary and the
+## "miner" row of Availability.UI_GATES.
 ## The selection panel's own content column -- kept as a member so
 ## _apply_selection_tray_width can re-cap its width without a fresh build.
 var selection_column: VBoxContainer
@@ -443,7 +446,7 @@ var empty_by_bee_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
-## The "Keep for every bee" row, so set_hatch_lock_visible can hide it as
+## The "Keep for every bee" row, so the "hatch_lock" gate can hide it as
 ## a whole rather than reaching into its children.
 var lock_row: HBoxContainer
 ## One entry per hatch_options() choice, so _refresh_cell_popup can hide
@@ -716,12 +719,16 @@ func _build_top_right_bar() -> void:
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
+	_register_gated_control("colony_button", func(): return colony_button)
+	_register_gated_control("colony_info", func(): return colony_info)
 
 	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Opens the Nursery window.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	row2.add_child(nursery_info)
+	_register_gated_control("nursery_button", func(): return nursery_button)
+	_register_gated_control("nursery_info", func(): return nursery_info)
 
 	# Icon-plus-label, same shape as colony/nursery/view now (UI-N) -- at
 	# TOP_BAR_BUTTON_WIDTH there isn't room for "Foraging" as full text, so
@@ -729,6 +736,7 @@ func _build_top_right_bar() -> void:
 	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Opens the Foraging window.")
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
 	row2.add_child(foraging_button)
+	_register_gated_control("foraging_button", func(): return foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
 
 	# Only appears once a winter has been scheduled -- until then there is
@@ -748,6 +756,8 @@ func _build_top_right_bar() -> void:
 	row2.add_child(view_button)
 	view_info = _info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at.")
 	row2.add_child(view_info)
+	_register_gated_control("view_button", func(): return view_button)
+	_register_gated_control("view_info", func(): return view_info)
 
 ## A small icon-plus-label button for the top-right bar's window/view
 ## row. The icon is a procedural UiIcon (UI_PLAN.md section 8's
@@ -992,6 +1002,7 @@ func _build_selection_panel() -> void:
 	soil_mark_wrapper = _with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer.")
 	soil_mark_wrapper.name = "soil_mark_wrapper"
 	soil_summary_row.add_child(soil_mark_wrapper)
+	_register_gated_control("soil_mark_btn", func(): return soil_mark_btn)
 
 	soil_clear_btn = Button.new()
 	soil_clear_btn.name = "soil_clear_btn"
@@ -1003,6 +1014,7 @@ func _build_selection_panel() -> void:
 	soil_clear_wrapper = _with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work.")
 	soil_clear_wrapper.name = "soil_clear_wrapper"
 	soil_summary_row.add_child(soil_clear_wrapper)
+	_register_gated_control("soil_clear_btn", func(): return soil_clear_btn)
 
 	_set_summary_cog_kind("")
 
@@ -1546,6 +1558,7 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
 	column.add_child(lock_row)
+	_register_gated_control("lock_row", func(): return lock_row)
 	hatch_lock_box = CheckBox.new()
 	_style_button(hatch_lock_box)
 	hatch_lock_box.text = "Keep for every bee"
@@ -1871,8 +1884,8 @@ func _show_soil_summary(count: int, reachable: int) -> void:
 	else:
 		activity_label.text = ""
 	trait_label.text = ""
-	soil_mark_btn.visible = soil_marking_visible
-	soil_clear_btn.visible = soil_marking_visible
+	soil_mark_btn.visible = _is_gate_open("soil_mark_btn")
+	soil_clear_btn.visible = _is_gate_open("soil_clear_btn")
 
 ## Clicking (or drag-selecting) a death mark shows what happened to the
 ## bee who died there. Built from death_marker.gd's death_info snapshot
@@ -2050,7 +2063,7 @@ func _apply_cell_popup_gating() -> void:
 	if gyne_row != null:
 		gyne_row.visible = allowed_role_keys.is_empty()
 	if lock_row != null:
-		lock_row.visible = hatch_lock_visible
+		lock_row.visible = _is_gate_open("lock_row")
 
 ## Lights up whichever popup buttons match the state of the cell being
 ## shown, so the current reservation, priority tier and seal state are
@@ -3226,6 +3239,8 @@ func _resettle_command_tray(generation: int, previous_content_min_y: float, stab
 	if pass_count < COMMAND_TRAY_SETTLE_PASS_LIMIT and streak < COMMAND_TRAY_SETTLE_STABLE_STREAK:
 		call_deferred("_resettle_command_tray", generation, content_min_y, streak, pass_count + 1)
 
+## Not a stage gate: Session.winter_coming decides it (saving.gd,
+## year_winter.gd), so it stays outside Availability.UI_GATES.
 func set_winter_button_visible(value: bool) -> void:
 	if winter_button != null:
 		winter_button.visible = value
@@ -3237,28 +3252,6 @@ func set_view_label(in_hive: bool) -> void:
 	view_icon.shape = "flower" if in_hive else "hive"
 	view_button.tooltip_text = "Switch to the Meadow view." if in_hive else "Switch to the Hive view."
 	view_icon.queue_redraw()
-
-func set_colony_button_visible(value: bool) -> void:
-	if colony_button != null:
-		colony_button.visible = value
-	if colony_info != null:
-		colony_info.visible = value
-
-func set_nursery_button_visible(value: bool) -> void:
-	if nursery_button != null:
-		nursery_button.visible = value
-	if nursery_info != null:
-		nursery_info.visible = value
-
-func set_view_button_visible(value: bool) -> void:
-	if view_button != null:
-		view_button.visible = value
-	if view_info != null:
-		view_info.visible = value
-
-func set_foraging_button_visible(value: bool) -> void:
-	if foraging_button != null:
-		foraging_button.visible = value
 
 ## See the `allowed_role_keys` field comment. Rebuilds the selection
 ## panel immediately so a stage unlocking a new role shows it without
@@ -3293,22 +3286,57 @@ func set_allowed_designation_keys(keys: Array) -> void:
 	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
 		_apply_cell_popup_gating()
 
-func set_hatch_lock_visible(value: bool) -> void:
-	hatch_lock_visible = value
-	if lock_row != null:
-		lock_row.visible = value
-
-func set_soil_marking_visible(value: bool) -> void:
-	soil_marking_visible = value
-	if soil_mark_btn != null:
-		soil_mark_btn.visible = value
-	if soil_clear_btn != null:
-		soil_clear_btn.visible = value
-
 ## Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
 ## spot" flow with one direct button in the queen's own panel -- see
 ## TUTORIAL_PLAN.md. Only ever shown for the queen, one bee selected.
+## Not a stage gate: it follows the Challenge 1 run and the selection, not
+## a stage_gate key, so it stays outside Availability.UI_GATES.
 func set_queen_build_button_visible(value: bool) -> void:
 	show_queen_build_button = value
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+
+# --- stage gates --------------------------------------------------
+
+## The one entry point for stage-gated HUD visibility (F2s). Walks
+## Availability.UI_GATES: each registered control is shown or hidden whole,
+## and the designation keys whose gate is open become the cell popup's
+## allow-list. A control not built yet is skipped and picks its state up
+## when it registers. Called on stage entry and on
+## stage_gate.unlocked_changed, never per frame.
+func apply_gates(stage_gate) -> void:
+	var designations: Array = []
+	for key in Availability.UI_GATES:
+		var row: Dictionary = Availability.UI_GATES[key]
+		var open: bool = stage_gate.is_unlocked(key)
+		for control_name in row.get("controls", []):
+			_gate_open[control_name] = open
+			_apply_gate_to_control(control_name)
+		if open:
+			designations.append_array(row.get("designations", []))
+	set_allowed_designation_keys(designations)
+
+## Called as each gated control is built. Only a closed gate is applied
+## here, so a control built after apply_gates starts hidden if it should be
+## and is otherwise left as its builder made it. The control also takes its
+## table name as its node name, so a scenario fixture can find it as
+## "hud/**/<name>" or "command_tray/**/<name>".
+func _register_gated_control(control_name: String, getter: Callable) -> void:
+	_gate_controls[control_name] = getter
+	var control = getter.call()
+	if control != null and is_instance_valid(control):
+		control.name = control_name
+	if not _is_gate_open(control_name):
+		_apply_gate_to_control(control_name)
+
+func _apply_gate_to_control(control_name: String) -> void:
+	var getter: Callable = _gate_controls.get(control_name, Callable())
+	if not getter.is_valid():
+		return
+	var control = getter.call()
+	if control != null and is_instance_valid(control):
+		control.visible = _is_gate_open(control_name)
+
+## For a refresh path that re-sets a gated control's visibility itself.
+func _is_gate_open(control_name: String) -> bool:
+	return _gate_open.get(control_name, true)

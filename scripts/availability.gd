@@ -11,7 +11,8 @@ extends RefCounted
 ## in hud.gd to check membership in it -- two copies of the same
 ## namespacing formula with a comment on each telling the reader to keep
 ## them in sync by hand (see hud.gd's `_build_doing_row` and
-## challenge_runner.gd's `_apply_stage_gate_to_ui`).
+## challenge_runner.gd's `_apply_stage_gate_to_ui`). UI_GATES below does
+## the same for whole HUD controls (F2s).
 ##
 ## This composes the facts that decide availability -- does the key
 ## exist at all, is it behind a GameConfig flag, is it unlocked for this
@@ -37,6 +38,46 @@ const REASON_SUPPRESSED := "suppressed"
 ## time-limited effect has one place to hide a key rather than inventing
 ## a parallel gate the rest of this service doesn't know about.
 static var _suppressed: Dictionary = {}
+
+# --- UI gate table ------------------------------------------------
+
+## F2s (plans/design/architecture-review.md): which stage-gate key governs
+## which HUD controls. hud.gd registers each named control as it builds it
+## and its apply_gates() walks this table, so a newly gated control is one
+## row here and one registration there -- the Challenge runner no longer
+## knows HUD widget names.
+##
+## "controls" are hud.gd member names, shown or hidden whole.
+## "designations" are the cell popup's "Reserve for" keys ("any" is
+## Unreserve); they filter that rebuilt row through
+## set_allowed_designation_keys instead. Honey and jelly sit behind keys no
+## Challenge 2 stage unlocks -- those systems are deferred entirely, not
+## just until designation is taught (2.5).
+##
+## No stage_gate.ACCESSIBILITY_KEYS entry may appear here: accessibility
+## toggles are outside the hide/reveal system altogether.
+## tests/source_checks.py enforces that, and that every key a stage in
+## challenge_stages.gd unlocks has a row here or a reason for none.
+const UI_GATES := {
+	"colony_window": {"controls": ["colony_button", "colony_info"]},
+	"nursery_window": {"controls": ["nursery_button", "nursery_info"]},
+	"meadow_view": {"controls": ["view_button", "view_info"]},
+	"foraging_window": {"controls": ["foraging_button"]},
+	"hatch_lock": {"controls": ["lock_row"]},
+	"miner": {"controls": ["soil_mark_btn", "soil_clear_btn"]},
+	"cell_designation": {"designations": ["nectar", "pollen", "brood", "any"]},
+	"honey_designation": {"designations": ["honey"]},
+	"jelly_designation": {"designations": ["jelly"]},
+}
+
+## Stage-gate keys that deliberately have no UI_GATES row, with the reason.
+## Every roles.gd role key and every mode_gate_key() has none either,
+## without needing a line here: those filter the Job and Doing rows through
+## hud.gd's set_allowed_role_keys/set_allowed_mode_keys, and the source
+## check derives them from roles.gd.
+const UNTABLED_GATE_KEYS := {
+	"queen_commands": "Challenge 1's event-trigger documentation hook. The queen's command lock follows stage 1.1 in challenge_runner.gd, not this key, so no control shows or hides with it.",
+}
 
 static func suppress(key: String) -> void:
 	_suppressed[key] = true

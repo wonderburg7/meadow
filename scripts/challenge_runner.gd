@@ -224,6 +224,10 @@ func start() -> void:
 	_c2_rescue_suppressed_logged = false
 	_last_completed_goal_text = ""
 	main.stage_gate.start()
+	# F2s: a key unlocked mid-stage (an event or interaction trigger) shows
+	# its controls at once rather than at the next stage entry.
+	if not main.stage_gate.unlocked_changed.is_connected(_on_gate_unlocked):
+		main.stage_gate.unlocked_changed.connect(_on_gate_unlocked)
 	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
 	# so a load mid-Challenge would silently drop it -- disabled for the
 	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
@@ -854,17 +858,16 @@ func on_queen_build_site_chosen(hex: Vector2i) -> void:
 	main.queen.state = main.Bee.State.TO_BUILD_SITE
 
 # --- gating the UI ------------------------------------------------
-## Pushes the current stage_gate state into hud.gd via its setters,
-## rather than hud.gd reading stage_gate directly -- hud.gd stays
-## decoupled from main.gd's internals, same as every other signal/setter
-## it already uses. Safe to call any time, active or not: is_unlocked()
-## already returns true for everything once stage_gate.stop() has been
-## called, so the "Challenge finished" case falls out for free.
+## Pushes the current stage_gate state into hud.gd, rather than hud.gd
+## reading main.stage_gate itself -- hud.gd stays decoupled from main.gd's
+## internals, same as every other signal/setter it already uses. Whole
+## controls and the designation row go through hud.gd's apply_gates(),
+## which walks Availability.UI_GATES, so this function names no HUD widget.
+## Safe to call any time, active or not: is_unlocked() already returns true
+## for everything once stage_gate.stop() has been called, so the "Challenge
+## finished" case falls out for free.
 func _apply_stage_gate_to_ui() -> void:
-	main.hud.set_colony_button_visible(main.stage_gate.is_unlocked("colony_window"))
-	main.hud.set_nursery_button_visible(main.stage_gate.is_unlocked("nursery_window"))
-	main.hud.set_view_button_visible(main.stage_gate.is_unlocked("meadow_view"))
-	main.hud.set_foraging_button_visible(main.stage_gate.is_unlocked("foraging_window"))
+	main.hud.apply_gates(main.stage_gate)
 	var role_keys: Array = Roles.ROLES.map(func(r): return r.key)
 	main.hud.set_allowed_role_keys(role_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
 
@@ -880,22 +883,6 @@ func _apply_stage_gate_to_ui() -> void:
 			if Availability.mode_query(role.id, mode.key, main.stage_gate).available:
 				mode_keys.append(Availability.mode_gate_key(role.id, mode.key))
 	main.hud.set_allowed_mode_keys(mode_keys)
-
-	# Designation types: nectar/pollen/brood and Unreserve all become
-	# available together once "cell_designation" is taught (2.5) --
-	# honey/jelly stay hidden throughout Challenge 2 (those systems are
-	# deferred entirely, not just deferred until designation is taught),
-	# so they're gated behind keys no Challenge 2 stage ever unlocks.
-	var designation_gates: Dictionary = {
-		"nectar": "cell_designation", "pollen": "cell_designation",
-		"brood": "cell_designation", "any": "cell_designation",
-		"honey": "honey_designation", "jelly": "jelly_designation",
-	}
-	main.hud.set_allowed_designation_keys(designation_gates.keys().filter(
-		func(k): return main.stage_gate.is_unlocked(designation_gates[k])
-	))
-	main.hud.set_hatch_lock_visible(main.stage_gate.is_unlocked("hatch_lock"))
-	main.hud.set_soil_marking_visible(main.stage_gate.is_unlocked("miner"))
 	main.hud.set_command_locked_bees([main.queen] if queen_command_locked and is_instance_valid(main.queen) else [])
 	# UI-X-2, H1: update_selection([]) reads an empty bee list as "nothing
 	# is selected" and hides the command tray and cell popup to match
@@ -908,6 +895,12 @@ func _apply_stage_gate_to_ui() -> void:
 	# in place; only a genuine bee selection needs the reset below.
 	if not main.selected_bees.is_empty() or main.selected_cells.is_empty():
 		main.hud.update_selection(main.selected_bees)
+
+## A single key unlocking outside a stage entry re-applies only the HUD's
+## gate table: the role/mode allow-lists and the selection reset above
+## belong to stage entry.
+func _on_gate_unlocked(_key: String) -> void:
+	main.hud.apply_gates(main.stage_gate)
 
 ## Whether player-issued commands should be rejected for this bee. Kept as
 ## a Challenge-runner query so input_selection.gd does not need to know what

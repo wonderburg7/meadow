@@ -82,7 +82,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **G3** (`plans/design/architecture-review.md`) -- follows F2s, which owns `scripts/availability.gd` before it. The skill-gating decision it also waited on was taken by Dave on 17 Sep 2026, so F2s is the only gate left. Its queue block is written and proof-checked.
 - **AP-2** (`plans/now/alpha-progression-spine.md`) -- needs AP-1's `Session.progression` to exist before any call site can ask it anything.
 - **AP-3** (`plans/now/alpha-progression-spine.md`) -- needs AP-1, and follows F2s because both rewrite parts of `scripts/hud.gd`.
 - **AP-4** (`plans/now/alpha-progression-spine.md`) -- needs AP-3's panel to put a Buy control on.
