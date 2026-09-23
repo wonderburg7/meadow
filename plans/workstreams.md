@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/FB-2` (`codex/FB-2`) | Codex | a scenario can assert when something happened | Codex | in progress | none | `plans/now/feedback-build.md` FB-2 — a scenario can assert when something happened |
