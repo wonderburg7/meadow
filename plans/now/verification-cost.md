@@ -1,7 +1,7 @@
 # Verification cost — stop paying for checks that carry no information
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: V-4 -- scenario_actions.gd gets the headers V-3's own check asked for | Dependency: none | Verified: 2026-09-21
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none | Verified: 2026-09-23
 
 **Objective.** `tools/verify.ps1` runs before every commit, so anything it
 spends is multiplied by every slice. Two of its costs are measured and neither
