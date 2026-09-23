@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/ST-1` (`codex/ST-1`) | Codex | preflight refusals stop crowding the step ranking | Codex | in progress | none | `plans/now/stop-readout.md` ST-1 — preflight refusals stop crowding the step ranking |
-| `.worktrees/F2s` (`claude/F2s`) | Claude | a declarative UI gate table | Claude | in progress | none | `plans/design/architecture-review.md` F2s — a declarative UI gate table |
