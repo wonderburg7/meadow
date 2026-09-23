@@ -2821,6 +2821,92 @@ def check_progression_grid(problems):
             )
 
 
+def check_ui_gate_table(problems):
+    """F2s (plans/design/architecture-review.md): availability.gd's UI_GATES
+    is the one table of stage-gated HUD controls. No stage_gate.gd
+    ACCESSIBILITY_KEYS entry may appear in it -- accessibility toggles are
+    outside the hide/reveal system altogether. Every gate key a stage in
+    challenge_stages.gd unlocks must have a UI_GATES row, be a roles.gd role
+    key or Availability.mode_gate_key() (those filter the Job/Doing rows
+    through the allow-list setters), or carry a reason in
+    UNTABLED_GATE_KEYS. Every control the table names must be registered by
+    hud.gd, and hud.gd must register nothing the table does not name."""
+    paths = {name: os.path.join(ROOT, name) for name in (
+        "availability.gd", "stage_gate.gd", "challenge_stages.gd", "roles.gd", "hud.gd")}
+    for name, path in paths.items():
+        if not os.path.exists(path):
+            problems.append("%s not found for UI gate table check" % name)
+            return
+    src = {name: open(path, encoding="utf-8").read() for name, path in paths.items()}
+
+    table = _dict_block(src["availability.gd"], "UI_GATES")
+    if table is None:
+        problems.append("availability.gd: could not find const UI_GATES")
+        return
+    untabled_block = _dict_block(src["availability.gd"], "UNTABLED_GATE_KEYS")
+    if untabled_block is None:
+        problems.append("availability.gd: could not find const UNTABLED_GATE_KEYS")
+        return
+    accessibility_block = catalogue_block(src["stage_gate.gd"], "ACCESSIBILITY_KEYS")
+    if accessibility_block is None:
+        problems.append("stage_gate.gd: could not find const ACCESSIBILITY_KEYS")
+        return
+
+    table_keys = set(re.findall(r'^\s*"(\w+)"\s*:\s*\{', table, re.M))
+    accessibility = set(re.findall(r'"(\w+)"', accessibility_block))
+    for key in sorted(accessibility & set(re.findall(r'"(\w+)"', table))):
+        problems.append(
+            "availability.gd: UI_GATES names accessibility key '%s' -- "
+            "stage_gate.ACCESSIBILITY_KEYS must never be gated" % key)
+
+    untabled = dict(re.findall(r'^\s*"(\w+)"\s*:\s*"([^"]*)"', untabled_block, re.M))
+    for key, reason in sorted(untabled.items()):
+        if not reason.strip():
+            problems.append("availability.gd: UNTABLED_GATE_KEYS['%s'] needs a reason" % key)
+        if key in table_keys:
+            problems.append(
+                "availability.gd: '%s' is in both UI_GATES and UNTABLED_GATE_KEYS" % key)
+
+    allow_list_keys = set()
+    roles_block = catalogue_block(src["roles.gd"], "ROLES")
+    for entry in _entry_blocks(roles_block or ""):
+        keys = re.findall(r'"key"\s*:\s*"(\w+)"', entry)
+        if not keys:
+            continue
+        allow_list_keys.add(keys[0])
+        forager = re.search(r'"id"\s*:\s*FORAGER\b', entry) is not None
+        for mode in keys[1:]:
+            allow_list_keys.add(mode if forager else "%s_%s" % (keys[0], mode))
+    if not allow_list_keys:
+        problems.append("roles.gd: could not read role/mode keys for UI gate table check")
+        return
+
+    stage_keys = set()
+    for block in re.findall(r'"unlocked_keys"\s*:\s*\[(.*?)\]', src["challenge_stages.gd"], re.S):
+        stage_keys.update(re.findall(r'"key"\s*:\s*"(\w+)"', block))
+        stage_keys.update(re.findall(r'"(\w+)"', re.sub(r"\{[^}]*\}", "", block)))
+    if not stage_keys:
+        problems.append("challenge_stages.gd: could not read any unlocked_keys for UI gate table check")
+        return
+    for key in sorted(stage_keys - table_keys - allow_list_keys - set(untabled)):
+        problems.append(
+            "challenge_stages.gd: gate key '%s' has no UI_GATES row in "
+            "availability.gd and no reason in UNTABLED_GATE_KEYS" % key)
+
+    controls = set()
+    for block in re.findall(r'"controls"\s*:\s*\[([^\]]*)\]', table):
+        controls.update(re.findall(r'"(\w+)"', block))
+    registered = set(re.findall(r'_register_gated_control\("(\w+)"', src["hud.gd"]))
+    for name in sorted(controls - registered):
+        problems.append(
+            "hud.gd: UI_GATES control '%s' is never registered with "
+            "_register_gated_control, so apply_gates cannot reach it" % name)
+    for name in sorted(registered - controls):
+        problems.append(
+            "hud.gd: _register_gated_control(\"%s\") names a control no "
+            "UI_GATES row governs" % name)
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -2858,6 +2944,7 @@ def main():
     check_goal_cadence_registry(problems)
     check_catalogue_alignment(problems)
     check_action_catalogue(problems)
+    check_ui_gate_table(problems)
     check_resource_content_catalogue(problems)
     check_hive_stock_epoch_cache(problems)
     check_challenge_1_nectar_capacity(problems)

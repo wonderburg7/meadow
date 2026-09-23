@@ -1,0 +1,30 @@
+{
+  "challenge": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "2.1"},
+    {"do": "viewport_size", "w": 1280, "h": 720},
+    {"do": "select_cell", "built_index": 0},
+    {"do": "settle", "ticks": 5},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/colony_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/colony_info", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/foraging_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/view_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/view_info", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/nursery_button", "visible": false}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "hud/**/nursery_info", "visible": false}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"control": "command_tray/**/lock_row", "visible": false}},
+    {"do": "advance_challenge_stage", "stage_id": "2.9"},
+    {"do": "select_cell", "built_index": 0},
+    {"do": "settle", "ticks": 5},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/colony_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/colony_info", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/foraging_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/view_button", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/view_info", "visible": true}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/nursery_button", "visible": false}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "hud/**/nursery_info", "visible": false}},
+    {"do": "assert", "when": {"challenge_stage_id": "2.9"}, "condition": {"control": "command_tray/**/lock_row", "visible": true}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}
