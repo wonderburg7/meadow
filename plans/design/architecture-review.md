@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: active -- decisions A, B and C taken by Dave 11 Sep 2026; the A, B, C, D, G1, G2 and H slices have all shipped, E1 shipped 19 Sep 2026, F1s shipped 20 Sep 2026 and F2s shipped 23 Sep 2026, leaving G3 | Owner: Dave / Claude Code | Next: G3 -- actions become gateable, its queue block now unfenced for the Claude lane | Dependency: none -- the skill-gating decision G3 also waited on was taken by Dave 17 Sep 2026 and is recorded in `plans/design/progression.md` section 11 | Verified: 2026-09-23
+Status: complete -- decisions A, B and C taken by Dave 11 Sep 2026; every slice has shipped, the last being G3 on 23 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups, each filed in "Follow-ups after G3" at the end of this file: skill purchases call `Availability.invalidate()` (filed in `plans/now/alpha-progression-spine.md` AP-4); the queen's `role_restricted_to` becomes stage-named actions; `feature` and `season` gate fields get a query | Dependency: none | Verified: 2026-09-23
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
@@ -887,3 +887,34 @@ so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
 - `.claude/rules/simulation.md` and `.claude/rules/performance.md` — before G2.
 - `.claude/rules/saving.md` — before D1.
 - `plans/design/progression.md` sections 3 and 4.5 — before G3.
+
+## Follow-ups after G3
+
+G3 landed 23 Sep 2026 (its specification is in `plans/archive/`).
+`Availability.action_query(action_id, bee, stage_gate, progression)` answers
+for an `actions.gd` row; `bee.gd::_try_role_work` asks it only for a row that
+fills a gate field, cached per bee against `Availability.gate_epoch`, which
+`stage_gate.gd` bumps on every unlock, lock, start and stop. Every row ships
+ungated, so ordinary play and both Challenges are unchanged
+(`test_scenarios/g3_actions_offered_test.json`,
+`h4_challenge1_stage_advance_test.json`,
+`f2s_challenge2_gate_table_test.json`). Decisions taken without Dave, each
+the cheapest to reverse:
+
+- **`role_restricted_to` stays.** The plan said to replace it with
+  stage-named actions in this slice or not at all. Replacing it means editing
+  `challenge_runner.gd`, outside G3's file list, and re-proving every queen
+  stage, so neither was done. To take it on later: give each queen action row a
+  `gate_key`, name those keys in the queen stages' `unlocked_keys`, and delete
+  `role_restricted_to` and `_queen_allowed_role_ids` in the same slice.
+- **`feature` is not queried.** A source check allows only
+  `progression.gd`'s resolver to read `features.gd`, and G3 may not change
+  `progression.gd`. `feature` and `season` must stay empty (source check)
+  until the resolver exposes a plain feature query.
+- **Skill purchases must call `Availability.invalidate()`.** `progression.gd`
+  knows nothing of the cache. No row is skill-gated yet, so nothing is stale
+  today. Filed as a requirement in AP-4.
+- **Files beyond the queue line:** `scripts/stage_gate.gd` (epoch bumps),
+  `scripts/scenario_actions.gd` (`all_actions_available` assertion) and
+  `tests/source_checks.py` (gate fields validated; an unknown stage key that is
+  not an action id fails).

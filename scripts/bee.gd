@@ -51,12 +51,18 @@ const BeeMining = preload("res://scripts/bee_mining.gd")
 const BeeHoney = preload("res://scripts/bee_honey.gd")
 const BeeEggLaying = preload("res://scripts/bee_egg_laying.gd")
 const Actions = preload("res://scripts/actions.gd")
+const Availability = preload("res://scripts/availability.gd")
 
 # --- the role action catalogue ------------------------------------
 ## The catalogue is grouped once when this script loads. `_try_role_work` runs
 ## on every idle bee's think tick, so filtering the full catalogue there would
 ## turn a data refactor into a hot-path regression.
 static var _actions_by_role: Dictionary = _build_actions_by_role()
+## G3: this bee's Availability.action_query answers for gated rows, valid
+## while _action_gate_epoch matches Availability.gate_epoch. Ungated rows --
+## every row today -- never reach it.
+var _action_gate_cache: Dictionary = {}
+var _action_gate_epoch: int = -1
 const ROLE_ACTION_FINDERS := {
 	Roles.NURSE: BeeNursery,
 	Roles.COMB_WORKER: BeeBuilding,
@@ -1348,6 +1354,8 @@ func _try_role_work(r: int) -> bool:
 		var modes: Array = action.modes
 		if not modes.is_empty() and not mode in modes:
 			continue
+		if action.gated and not _action_available(action.id):
+			continue
 		if finder.call(action.find, self):
 			return true
 	if r == Role.MINER:
@@ -1359,11 +1367,26 @@ func _try_role_work(r: int) -> bool:
 static func _build_actions_by_role() -> Dictionary:
 	var grouped: Dictionary = {}
 	for action in Actions.ACTIONS:
+		# The catalogue rows are const; the copy carries whether the row is
+		# gated, worked out once here rather than per think tick.
+		var row: Dictionary = action.duplicate()
+		row["gated"] = Actions.is_gated(action)
 		for action_role in action.roles:
 			if not grouped.has(action_role):
 				grouped[action_role] = []
-			grouped[action_role].append(action)
+			grouped[action_role].append(row)
 	return grouped
+
+## G3: Availability.action_query for one gated row, asked once per gate
+## epoch rather than on every think tick.
+func _action_available(action_id: String) -> bool:
+	if _action_gate_epoch != Availability.gate_epoch:
+		_action_gate_cache.clear()
+		_action_gate_epoch = Availability.gate_epoch
+	if not _action_gate_cache.has(action_id):
+		var stage_gate = world.stage_gate if world != null else null
+		_action_gate_cache[action_id] = Availability.action_query(action_id, self, stage_gate, Session.progression).available
+	return _action_gate_cache[action_id]
 
 
 func _action_mode_for_role(r: int) -> String:

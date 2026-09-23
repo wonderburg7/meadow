@@ -26,12 +26,22 @@ extends RefCounted
 
 const Roles = preload("res://scripts/roles.gd")
 const Resources = preload("res://scripts/resources.gd")
+const Actions = preload("res://scripts/actions.gd")
 
 const OK := "ok"
 const REASON_UNKNOWN_KEY := "unknown_key"
 const REASON_CONFIG_DISABLED := "config_disabled"
 const REASON_LOCKED := "locked"
 const REASON_SUPPRESSED := "suppressed"
+const REASON_SKILL_NOT_OWNED := "skill_not_owned"
+
+## G3: moves on whenever anything action_query reads may have changed, so a
+## bee can cache its answers between changes instead of asking every think
+## tick. stage_gate.gd bumps it on every unlock, lock, start and stop, and
+## suppress/unsuppress below do too. Whatever grants or sells a skill must
+## call invalidate() as well -- progression.gd does not know about this
+## cache, and no action row is skill-gated yet.
+static var gate_epoch: int = 0
 
 ## Developer/debug suppression, keyed the same as everything else here.
 ## Nothing sets this yet; it exists so a future debug toggle or
@@ -79,11 +89,16 @@ const UNTABLED_GATE_KEYS := {
 	"queen_commands": "Challenge 1's event-trigger documentation hook. The queen's command lock follows stage 1.1 in challenge_runner.gd, not this key, so no control shows or hides with it.",
 }
 
+static func invalidate() -> void:
+	gate_epoch += 1
+
 static func suppress(key: String) -> void:
 	_suppressed[key] = true
+	invalidate()
 
 static func unsuppress(key: String) -> void:
 	_suppressed.erase(key)
+	invalidate()
 
 static func is_suppressed(key: String) -> bool:
 	return _suppressed.has(key)
@@ -111,6 +126,34 @@ static func mode_query(role_id: int, mode_key: String, stage_gate = null) -> Dic
 		return {"available": false, "reason": REASON_SUPPRESSED}
 	if stage_gate != null and stage_gate.active and not stage_gate.is_unlocked(gate_key):
 		return {"available": false, "reason": REASON_LOCKED}
+	return {"available": true, "reason": OK}
+
+## G3: whether the actions.gd row `action_id` may be started right now.
+## Composes the same four facts mode_query does -- the row exists, its
+## config flag is on, its stage-gate key is unlocked (only while a Challenge
+## is active), it is not suppressed -- plus its skill being owned. Only the
+## gate fields the row fills are looked at. A row's `feature` is not asked
+## here: only progression.gd's resolver may read features.gd, and it has no
+## plain "is this feature on" query yet, so the source check keeps `feature`
+## empty until it does.
+## `bee` is part of the contract for a per-bee fact; nothing reads it yet.
+## Callers cache the answer against gate_epoch (bee.gd::_action_available)
+## rather than asking per action per think tick.
+static func action_query(action_id: String, _bee = null, stage_gate = null, progression = null) -> Dictionary:
+	var action: Dictionary = Actions.by_id(action_id)
+	if action.is_empty():
+		return {"available": false, "reason": REASON_UNKNOWN_KEY}
+	if _suppressed.has(action_id):
+		return {"available": false, "reason": REASON_SUPPRESSED}
+	var flag: String = action.get("config_flag", "")
+	if flag != "" and not GameConfig.get(flag):
+		return {"available": false, "reason": REASON_CONFIG_DISABLED}
+	var gate_key: String = action.get("gate_key", "")
+	if gate_key != "" and stage_gate != null and stage_gate.active and not stage_gate.is_unlocked(gate_key):
+		return {"available": false, "reason": REASON_LOCKED}
+	var skill: String = action.get("skill", "")
+	if skill != "" and (progression == null or not progression.is_owned(skill)):
+		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
 
 ## Whether `resource_key` is a known, currently-enabled resource. Composes

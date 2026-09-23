@@ -615,6 +615,8 @@ def check_action_catalogue(problems):
         return
 
     roles_src = open(roles_path, encoding="utf-8").read()
+    gameconfig_src = open(os.path.join(ROOT, "game_config.gd"), encoding="utf-8").read()
+    stages_src = open(os.path.join(ROOT, "challenge_stages.gd"), encoding="utf-8").read()
     role_names = set(re.findall(r"^const\s+(\w+)\s*:=\s*\d+\s*$", roles_src, re.M))
     role_values = {
         name: int(value)
@@ -675,12 +677,25 @@ def check_action_catalogue(problems):
                     % (action_id, find_name, role_modules[role_name])
                 )
 
-        for field in ("feature", "skill", "gate_key", "config_flag", "season"):
-            if _quoted(_field(entry, field)) != "":
+        # G3: a filled gate field must name something that exists, and a
+        # gate_key must be one some Challenge stage actually unlocks --
+        # otherwise the action is locked for the whole Challenge.
+        gates = {field: _quoted(_field(entry, field)) for field in
+                 ("feature", "skill", "gate_key", "config_flag", "season")}
+        for unqueried in ("season", "feature"):
+            if gates[unqueried] != "":
                 problems.append(
-                    "actions.gd: %s.%s must stay empty until G3 enables action gates"
-                    % (action_id, field)
-                )
+                    "actions.gd: %s.%s is not queried by Availability.action_query yet "
+                    "and must stay empty" % (action_id, unqueried))
+        if gates["config_flag"] and not re.search(
+                r"^var\s+%s\s*:" % re.escape(gates["config_flag"]), gameconfig_src, re.M):
+            problems.append(
+                "actions.gd: %s.config_flag %r is not a GameConfig var"
+                % (action_id, gates["config_flag"]))
+        if gates["gate_key"] and ('"%s"' % gates["gate_key"]) not in stages_src:
+            problems.append(
+                "actions.gd: %s.gate_key %r is not unlocked by any challenge_stages.gd stage"
+                % (action_id, gates["gate_key"]))
 
     for role_id, bands in bands_by_role.items():
         expected = list(range(len(bands)))
@@ -695,6 +710,7 @@ def check_action_catalogue(problems):
         "static var _actions_by_role: Dictionary = _build_actions_by_role()",
         "for action in _actions_by_role.get(r, []):",
         "finder.call(action.find, self)",
+        "if action.gated and not _action_available(action.id):",
     )
     for statement in required_dispatch:
         if statement not in bee_src:
@@ -2832,7 +2848,8 @@ def check_ui_gate_table(problems):
     UNTABLED_GATE_KEYS. Every control the table names must be registered by
     hud.gd, and hud.gd must register nothing the table does not name."""
     paths = {name: os.path.join(ROOT, name) for name in (
-        "availability.gd", "stage_gate.gd", "challenge_stages.gd", "roles.gd", "hud.gd")}
+        "availability.gd", "stage_gate.gd", "challenge_stages.gd", "roles.gd", "hud.gd",
+        "actions.gd")}
     for name, path in paths.items():
         if not os.path.exists(path):
             problems.append("%s not found for UI gate table check" % name)
@@ -2888,10 +2905,14 @@ def check_ui_gate_table(problems):
     if not stage_keys:
         problems.append("challenge_stages.gd: could not read any unlocked_keys for UI gate table check")
         return
-    for key in sorted(stage_keys - table_keys - allow_list_keys - set(untabled)):
+    # G3: a stage may also name an actions.gd action id. One that names an
+    # id actions.gd does not define lands here and fails.
+    action_ids = set(re.findall(r'"id"\s*:\s*"(\w+)"', src["actions.gd"]))
+    for key in sorted(stage_keys - table_keys - allow_list_keys - set(untabled) - action_ids):
         problems.append(
             "challenge_stages.gd: gate key '%s' has no UI_GATES row in "
-            "availability.gd and no reason in UNTABLED_GATE_KEYS" % key)
+            "availability.gd, no reason in UNTABLED_GATE_KEYS and is not an "
+            "actions.gd action id" % key)
 
     controls = set()
     for block in re.findall(r'"controls"\s*:\s*\[([^\]]*)\]', table):

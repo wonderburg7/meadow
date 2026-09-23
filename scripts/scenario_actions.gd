@@ -30,6 +30,8 @@ const UiLayout = preload("res://scripts/ui_layout.gd")
 const Conditions = preload("res://scripts/conditions.gd")
 const StageSetup = preload("res://scripts/challenge_stage_setup.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
+const Actions = preload("res://scripts/actions.gd")
+const Availability = preload("res://scripts/availability.gd")
 
 ## Fixture-facing `when` names translated to Conditions' shared vocabulary.
 ## The two threshold directions intentionally share one event_count/disease
@@ -1032,6 +1034,8 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_no_empty_labels(main, condition)
 	if condition.has("save_slot"):
 		return _check_save_slot(main, condition)
+	if condition.has("all_actions_available"):
+		return _check_all_actions_available(main)
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
@@ -1063,6 +1067,20 @@ static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
 	if bool(condition.get("day_matches_saved", false)) and main.day != int(entry.get("day", -1)):
 		return {"ok": false, "reason": "day %d, the named save is day %d" % [main.day, int(entry.get("day", -1))]}
 	return {"ok": true, "reason": ""}
+
+## G3: {"all_actions_available": true} -- every actions.gd row answers
+## available from Availability.action_query against this run's stage gate
+## and progression, which outside a Challenge with no skills owned is the
+## "ordinary play is unchanged" invariant.
+static func _check_all_actions_available(main: Node2D) -> Dictionary:
+	var refused: Array = []
+	for action in Actions.ACTIONS:
+		var answer: Dictionary = Availability.action_query(action.id, null, main.stage_gate, Session.progression)
+		if not answer.available:
+			refused.append("%s (%s)" % [action.id, answer.reason])
+	if refused.is_empty():
+		return {"ok": true, "reason": ""}
+	return {"ok": false, "reason": "not offered: " + ", ".join(refused)}
 
 ## What a failed queen condition needs to be diagnosed without a rerun: where
 ## the queen is, what she is doing and what she carries.

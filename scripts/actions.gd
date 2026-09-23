@@ -3,16 +3,39 @@ extends RefCounted
 ##
 ## Usage: const Actions = preload("res://scripts/actions.gd")
 ##
-## G1 is deliberately data only: `_try_role_work` still owns dispatch until
-## G2. The rows below transcribe its current priority order and must not add a
-## gate yet. Empty `modes` means every sub-mode of the role offers the action;
-## an empty feature, skill, gate_key, config_flag or season means it is always
-## available. G3 owns filling those gate fields.
+## bee.gd::_try_role_work walks these rows in band order (G2). Empty `modes`
+## means every sub-mode of the role offers the action. The gate fields (G3):
+## `config_flag` is a GameConfig bool, `skill` a progression skill the colony
+## must own, and `gate_key` the stage-gate key a Challenge stage names in its
+## `unlocked_keys` to offer the action -- by convention the action's own id.
+## `feature` and `season` are not queried yet and stay empty. An empty gate field means "always available", never "check and
+## pass": Availability.action_query only looks at the fields a row fills, and
+## bee.gd never queries a row with none filled. Every field ships empty until
+## a Challenge 1 or 2 stage needs one (tests/source_checks.py).
 ##
 ## Dispatcher exception: the queen's brood-before-laying choice remains in
 ## bee.gd::_idle_dispatch. It is a dispatch rule, not an action row.
 
 const Roles = preload("res://scripts/roles.gd")
+
+const GATE_FIELDS := ["feature", "skill", "gate_key", "config_flag", "season"]
+
+static var _by_id: Dictionary = {}
+
+## The catalogue row for `action_id`, or {} if there is none.
+static func by_id(action_id: String) -> Dictionary:
+	if _by_id.is_empty():
+		for action in ACTIONS:
+			_by_id[action.id] = action
+	return _by_id.get(action_id, {})
+
+## Whether `action` fills any gate field -- a row that fills none is always
+## available and is never queried.
+static func is_gated(action: Dictionary) -> bool:
+	for field in GATE_FIELDS:
+		if str(action.get(field, "")) != "":
+			return true
+	return false
 
 const ACTIONS := [
 	# A jelly-only nurse skips feeding; an Anything nurse feeds before either
