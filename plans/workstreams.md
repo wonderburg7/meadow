@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AP-1` (`claude/AP-1`) | Claude | the run owns a Progression instance | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-1 — the run owns a Progression instance |
