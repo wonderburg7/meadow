@@ -821,59 +821,7 @@ Shipped 17 September 2026 — [archive](../archive/G1_2026-09-17.md).
 [archive](../archive/G2_2026-09-17.md). Its integration review corrected two
 behaviour differences, both recorded there.
 
-### G3 — actions become gateable
-
-Level: medium. Depends on: G2, F2s.
-
-- **Required reading.** This heading. G2's result. `scripts/availability.gd`.
-  `scripts/stage_gate.gd`. `scripts/progression.gd::is_permitted`.
-  `plans/design/progression.md` sections 3 and 4.5.
-- **Files to change.** `scripts/availability.gd`, `actions.gd`,
-  `scripts/bee.gd`, `scripts/challenge_stages.gd`.
-- **Files not to change.** `scripts/progression.gd`; it answers skill questions
-  and this slice asks it, it does not change it.
-- **Requirements.** `Availability.action_query(action_id, bee, stage_gate,
-  progression)` composes the same four facts `mode_query` already does —
-  existence, config flag, stage unlock, suppression — plus feature and skill
-  ownership. The dispatcher skips a row whose query is unavailable. Challenge
-  stages may name action ids in `unlocked_keys`.
-- **Invariants.** Outside a Challenge, with no skills owned, every action must
-  remain available exactly as today. That is what keeps ordinary play unchanged,
-  and it is the acceptance. `role_restricted_to` is removed only once the stages
-  that rely on it name actions instead; do both in this slice or neither.
-- **Implementation guidance.** Ship every catalogue gate field empty except the
-  ones a Challenge 1 or 2 stage actually needs, and prove each against that
-  stage. An empty gate field means "always available", never "check and pass".
-- **Runtime policy.** The query result is stable between stage transitions and
-  skill purchases. Cache it per bee against a gate epoch; do not call it per
-  action per think tick.
-- **Automated acceptance.** Both Challenge fixtures reach the same final stage. A
-  scenario fixture with no Challenge active confirms every action is offered. A
-  source check that every action id named in `challenge_stages.gd` exists in
-  `actions.gd`.
-- **Escalation.** If gating an action makes a bee with no available work behave
-  differently from an idle bee today, that is a gameplay outcome. Stop and
-  describe both behaviours.
-- **Cross-plan dependency, settled (Dave, 17 September 2026).** Skill gating
-  is **split by kind**, and the decision is recorded once, in
-  `plans/design/progression.md` section 11. In short: `progression.gd` is the
-  single store of what the colony owns; this slice's `action_query` gates the
-  *work* a bee may start (roles, modes, jobs) and asks that store; skill
-  *effects* gate values and behaviour switches where the behaviour branches.
-  So G3 and Phase B step 6 no longer block each other, and neither sets a
-  pattern the other has to follow.
-
-```queue
-**[Claude] G3 -- actions become gateable**
-- Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
-- Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
-- Check: with no Challenge active and no skills owned every action is still offered; both Challenge fixtures reach the same final stage as before; a source check fails if `challenge_stages.gd` names an action id that `actions.gd` does not define
-- Proof: `absent: scripts/availability.gd :: action_query`
-- Next after: none -- architecture-review is complete once G3 ships.
-```
-
-The fence was `queue-gated` until F2s landed (23 Sep 2026); it is now `queue`,
-so the next `tools/slice.ps1 finish` takes G3 into the Claude lane.
+G3 shipped 2026-09-24; its specification is `plans/archive/G3_2026-09-24.md`.
 
 ## Read on demand
 
