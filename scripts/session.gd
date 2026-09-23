@@ -32,6 +32,7 @@ extends Node
 signal run_reset()
 
 const PlayerProfile = preload("res://scripts/player_profile.gd")
+const Progression = preload("res://scripts/progression.gd")
 
 func _ready() -> void:
 	PlayerProfile.apply_to_session(PlayerProfile.read())
@@ -239,6 +240,27 @@ var screen_shake: String = "full"
 ## matches Godot's own default (gui/timers/tooltip_delay_sec).
 var tooltip_delay: float = 0.5
 
+# --- progression --------------------------------------------------
+## This run's skill resolver (progression.gd). Run state, so it lives here
+## rather than on main.gd: skill ownership is "what this run has", and
+## Session survives the scene reloads between runs. Built by main.gd's
+## _ready through ensure_progression() once the stage gate exists, and
+## dropped by reset_run_state() so the next run starts with a fresh one.
+var progression: Object = null
+
+## Returns this run's resolver, building it on first call. `gate` is the
+## run's stage_gate.gd node, which the resolver reads for is_permitted().
+## A resolver holding a different gate belongs to an earlier scene -- the
+## save-file Load path reloads the scene without reset_run_state() -- so
+## it is replaced rather than left pointing at a freed node.
+func ensure_progression(gate: Node) -> Object:
+	if progression != null and progression.stage_gate == gate:
+		return progression
+	if progression != null:
+		progression.end_run()
+	progression = Progression.new(GameConfig, gate)
+	return progression
+
 # --- live weather state -------------------------------------------
 ## Advanced by main.gd. Not a setting: how likely rain is, is.
 var rain_intensity: float = 0.0
@@ -256,4 +278,7 @@ func reset_run_state() -> void:
 	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()
+	if progression != null:
+		progression.end_run()
+		progression = null
 	run_reset.emit()

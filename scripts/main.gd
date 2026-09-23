@@ -404,6 +404,12 @@ func _ready() -> void:
 	stage_gate = StageGate.new()
 	stage_gate.main = self
 	add_child(stage_gate)
+	# The run's skill resolver, built straight after its stage gate so it
+	# never exists without one. The level's skill policy is applied once
+	# here; every level currently ships all three keys empty.
+	var level: Dictionary = Levels.get_level(Session.starting_level)
+	Session.ensure_progression(stage_gate).set_skill_policy(
+		level.get("skill_grants", []), level.get("skill_bans", []), level.get("skill_delays", {}))
 	challenge_runner = ChallengeRunner.new()
 	challenge_runner.main = self
 	add_child(challenge_runner)

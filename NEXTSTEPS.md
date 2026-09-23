@@ -23,26 +23,26 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-1 -- the run owns a Progression instance**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-1 — the run owns a Progression instance"
-   - Files: `scripts/session.gd`, `scripts/main.gd`
-   - Check: `Session.progression` is a live `Progression` built with `GameConfig` and `main.gd`'s stage gate, built once per run in `main.gd::_ready` and dropped by `reset_run_state()`; the level's `skill_grants`/`skill_bans`/`skill_delays` are passed to `set_skill_policy` once; `tools/godot_compile_check.py` passes and `colony_30_bees_test.json` and `c1f1_stage_setup_test.json` summarise exactly as before
-   - Proof: `absent: scripts/session.gd :: progression`
-   - Next after: AP-2 -- the two foraging behaviours ask the resolver.
-
-2. **[Claude] SV-1 -- a save is a named slot, and the run keeps three**
+1. **[Claude] SV-1 -- a save is a named slot, and the run keeps three**
    - Plan: `plans/now/named-saves.md` -- "SV-1 — a save is a named slot, and the run keeps three"
    - Files: `scripts/save_slots.gd`, `scripts/saving.gd`, `scripts/main.gd`
    - Check: saves live in `user://saves/` under a slug, a rotating three-deep checkpoint is written on `day_changed` every fifth day and never over the player's own save, an index file survives being missing or corrupt by reporting no saves, an existing `user://meadow_save.json` is adopted as a named slot rather than lost, and `save_game.gd`'s `FORMAT_VERSION` is unchanged
    - Proof: `absent: scripts/saving.gd :: checkpoint`
    - Next after: SV-2 -- the Saves window.
 
-3. **[Claude] G3 -- actions become gateable**
+2. **[Claude] G3 -- actions become gateable**
    - Plan: `plans/design/architecture-review.md` -- "G3 — actions become gateable"
    - Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee.gd`, `scripts/challenge_stages.gd`
    - Check: with no Challenge active and no skills owned every action is still offered; both Challenge fixtures reach the same final stage as before; a source check fails if `challenge_stages.gd` names an action id that `actions.gd` does not define
    - Proof: `absent: scripts/availability.gd :: action_query`
    - Next after: none -- architecture-review is complete once G3 ships.
+
+3. **[Claude] AP-2 -- the two foraging behaviours ask the resolver**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-2 — the two foraging behaviours ask the resolver"
+   - Files: `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd`
+   - Check: all five `tarsal_markers_on`/`orientation_flight_on` reads become `GameConfig.<flag> or Session.progression.is_behaviour_enabled("<flag>")`, null-safe; `is_behaviour_enabled` answers from a dictionary cleared by `grant_temporary`, `set_mastered_ids` and `end_run` rather than walking `owned_ids()`; `foraging_features_off_test.json` and `foraging_features_on_test.json` summarise exactly as before
+   - Proof: `absent: scripts/progression.gd :: _behaviour_cache`
+   - Next after: AP-3 -- the skill tree panel.
 
 ### Codex lane
 
@@ -61,7 +61,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **AP-2** (`plans/now/alpha-progression-spine.md`) -- needs AP-1's `Session.progression` to exist before any call site can ask it anything.
 - **AP-3** (`plans/now/alpha-progression-spine.md`) -- needs AP-1, and follows F2s because both rewrite parts of `scripts/hud.gd`.
 - **AP-4** (`plans/now/alpha-progression-spine.md`) -- needs AP-3's panel to put a Buy control on.
 - **SV-2** (`plans/now/named-saves.md`) -- needs SV-1's slot catalogue to list, and follows F2s in `scripts/hud.gd`.
