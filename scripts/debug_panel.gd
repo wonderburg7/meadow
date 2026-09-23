@@ -21,6 +21,7 @@ extends CanvasLayer
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
+const SaveSlots = preload("res://scripts/save_slots.gd")
 const Prerequisites = preload("res://scripts/prerequisites.gd")
 ## The table this window is a view of -- every row's key, label,
 ## range and tip, plus the read/write and cascade functions.
@@ -662,11 +663,17 @@ func _on_save_pressed() -> void:
 ## the hive, so the world has to be built with them from the start. The
 ## flag tells the fresh scene to replay the save over itself.
 func _on_load_pressed() -> void:
-	var data := SaveGame.read()
+	# Until the Saves window (SV-2) lets the player choose, Load reads the
+	# most recently saved named slot.
+	var slot := SaveSlots.latest_named()
+	var path := SaveSlots.slot_path(slot["slug"]) if not slot.is_empty() else ""
+	var data := SaveGame.read(path) if path != "" else {}
 	if data.is_empty():
 		push_warning("There is no save to load")
 		return
 	SaveGame.apply_settings(data)
+	Session.run_name = str(slot["name"])
+	Session.load_path = path
 	Session.load_pending = true
 	Session.menu_pending = false
 	get_tree().paused = false

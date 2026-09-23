@@ -57,6 +57,12 @@ var sim_time: float = 0.0
 var menu_pending: bool = true
 ## Replay a saved run over the newly built world. See save_game.gd.
 var load_pending: bool = false
+## Which save file that replay reads (SV-1: saves are named slots now, so
+## "the save" is no longer one fixed path).
+var load_path: String = ""
+## The run's display name; its slug names the save slot and checkpoints
+## (save_slots.gd). Kept across a restart, like a player's own save was.
+var run_name: String = "My colony"
 ## Which starting stage the next run builds. 0 means "use the tuning
 ## numbers as they are"; the positive ids are fixed run definitions offered
 ## by the main menu (Challenges and Scenarios, currently 1-7 with stable ids).

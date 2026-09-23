@@ -86,6 +86,12 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
+		"key": "checkpoint_every_days", "label": "Checkpoint every (days)", "step": 1.0, "min": 1.0,
+		"category": "World & start",
+		"tip": "How often the run quietly writes one of its three rotating checkpoints. Your own save is never overwritten by one.",
+	},
+	{
+		"persist": "none",
 		"key": "pollen_warning_first_day", "label": "Pollen warning from day", "step": 1.0, "min": 1.0,
 		"category": "World & start",
 		"tip": "The \"almost no pollen\" line is kept off the problem strip until this day. A colony this young genuinely has no pollen and there is nothing useful to do about it, so warning from the first minute only teaches you to ignore the strip.",

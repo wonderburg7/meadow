@@ -291,26 +291,97 @@ A bee's dispatch loop, player commands, display text, vars.
 2385 func clear_navigation_state() -> void
 ```
 
-## settings_catalogue.gd (1,428 lines)
+## settings_catalogue.gd (1,434 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1303 # --- settings owned by Session ------------------------------------
-1317 # --- reading and writing a setting --------------------------------
-1318 static func setting_get(key: String)
-1321 static func setting_set(key: String, value) -> void
-1328 # --- resetting ----------------------------------------------------
-1345 static func reset_config_to_defaults() -> void
-1357 static func reset_config_keys(keys: Array) -> void
-1363 # --- applying a setting with its cascades -------------------------
-1372 static func apply_setting(key: String, value) -> void
-1383 # --- the cascade helpers ------------------------------------------
-1388 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1406 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1420 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1309 # --- settings owned by Session ------------------------------------
+1323 # --- reading and writing a setting --------------------------------
+1324 static func setting_get(key: String)
+1327 static func setting_set(key: String, value) -> void
+1334 # --- resetting ----------------------------------------------------
+1351 static func reset_config_to_defaults() -> void
+1363 static func reset_config_keys(keys: Array) -> void
+1369 # --- applying a setting with its cascades -------------------------
+1378 static func apply_setting(key: String, value) -> void
+1389 # --- the cascade helpers ------------------------------------------
+1394 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1412 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1426 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+```
+
+## scenario_actions.gd (1,408 lines)
+
+The headless verbs, `when` clauses and layout assertions.
+
+```
+25   # --- preloads -----------------------------------------------------
+46   # --- run_pending --------------------------------------------------
+52   static func run_pending(main: Node2D, actions: Array) -> void
+81   # --- the comb build-site sampler ----------------------------------
+91   static func sample_comb_build_sites(main: Node2D) -> void
+130  # --- log_unresolved -----------------------------------------------
+137  static func log_unresolved(actions: Array) -> void
+144  # --- the settle, wait and window helpers --------------------------
+156  static func _do_settle(action: Dictionary) -> bool
+169  static func _do_wait(action: Dictionary) -> bool
+184  static func _assert_window_closed(main: Node2D, action: Dictionary) -> bool
+197  static func _sample_queen_watch(main: Node2D) -> void
+204  # --- _execute -----------------------------------------------------
+206  static func _execute(main: Node2D, action: Dictionary) -> void
+260  # --- triggers -----------------------------------------------------
+270  static func _when_met(main: Node2D, when: Dictionary) -> bool
+311  static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary
+362  # --- selectors ------------------------------------------------------
+366  static func _resolve_bees(main: Node2D, target: Dictionary) -> Array
+398  static func _resolve_cell_ref(main: Node2D, ref: Dictionary) -> Node2D
+405  static func _resolve_cell(main: Node2D, hex: Array) -> Node2D
+415  static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D
+425  # --- verbs ------------------------------------------------------------
+442  static func _do_assign_role(main: Node2D, action: Dictionary) -> void
+498  static func _do_designate_cell(main: Node2D, action: Dictionary) -> void
+522  static func _do_queue_build(main: Node2D, action: Dictionary) -> void
+548  static func _do_queue_mine(main: Node2D, action: Dictionary) -> void
+573  static func _do_request_placement_tool(main: Node2D, action: Dictionary) -> void
+585  static func _do_click_world(main: Node2D, action: Dictionary) -> void
+611  static func _do_set_config(_main: Node2D, action: Dictionary) -> void
+625  static func _do_hatch_role(main: Node2D, action: Dictionary) -> void
+642  static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void
+688  static func _do_select_bees(main: Node2D, action: Dictionary) -> void
+719  static func _do_select_soil(main: Node2D, action: Dictionary) -> void
+745  static func _do_select_cell(main: Node2D, action: Dictionary) -> void
+768  static func _do_open_window(main: Node2D, action: Dictionary) -> void
+812  static func _do_close_window(main: Node2D, action: Dictionary) -> void
+825  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
+838  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
+854  static func _do_retreat_challenge_stage(main: Node2D, action: Dictionary) -> void
+873  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
+899  static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void
+931  static func _do_set_cell_contents(main: Node2D, action: Dictionary) -> void
+955  static func _do_empty_cell(main: Node2D, action: Dictionary) -> void
+969  static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void
+984  static func _do_save_run(main: Node2D, action: Dictionary) -> void
+991  static func _do_restore_slot(main: Node2D, action: Dictionary) -> void
+1002 # --- assertion checks -------------------------------------------------
+1012 static func _do_assert(main: Node2D, action: Dictionary) -> bool
+1022 static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
+1043 static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary
+1069 static func _queen_summary(main: Node2D, condition: Dictionary) -> String
+1097 static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
+1188 static func _resolve_named_panel(main: Node2D, name: String) -> Control
+1202 static func _game_panel(main: Node2D, key: String) -> GamePanel
+1223 static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
+1272 static func _label_leading(control: Control) -> Dictionary
+1286 static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
+1326 static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
+1343 static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
+1354 static func _collect_empty_labels(node: Node, out: Array) -> void
+1360 static func _collect_collapsed_controls(node: Node, out: Array) -> void
+1380 static func _resolve_scoped_path(main: Node2D, path: String) -> Node
+1407 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
 ## bee_foraging.gd (1,399 lines)
@@ -388,74 +459,6 @@ behaviour.
 1365 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
 1392 # --- remote deposit -----------------------------------------------
 1394 static func deposit_everything_remotely(bee: Node2D) -> void
-```
-
-## scenario_actions.gd (1,353 lines)
-
-The headless verbs, `when` clauses and layout assertions.
-
-```
-25   # --- preloads -----------------------------------------------------
-45   # --- run_pending --------------------------------------------------
-51   static func run_pending(main: Node2D, actions: Array) -> void
-80   # --- the comb build-site sampler ----------------------------------
-90   static func sample_comb_build_sites(main: Node2D) -> void
-129  # --- log_unresolved -----------------------------------------------
-136  static func log_unresolved(actions: Array) -> void
-143  # --- the settle, wait and window helpers --------------------------
-155  static func _do_settle(action: Dictionary) -> bool
-168  static func _do_wait(action: Dictionary) -> bool
-183  static func _assert_window_closed(main: Node2D, action: Dictionary) -> bool
-196  static func _sample_queen_watch(main: Node2D) -> void
-203  # --- _execute -----------------------------------------------------
-205  static func _execute(main: Node2D, action: Dictionary) -> void
-255  # --- triggers -----------------------------------------------------
-265  static func _when_met(main: Node2D, when: Dictionary) -> bool
-306  static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary
-357  # --- selectors ------------------------------------------------------
-361  static func _resolve_bees(main: Node2D, target: Dictionary) -> Array
-393  static func _resolve_cell_ref(main: Node2D, ref: Dictionary) -> Node2D
-400  static func _resolve_cell(main: Node2D, hex: Array) -> Node2D
-410  static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D
-420  # --- verbs ------------------------------------------------------------
-437  static func _do_assign_role(main: Node2D, action: Dictionary) -> void
-493  static func _do_designate_cell(main: Node2D, action: Dictionary) -> void
-517  static func _do_queue_build(main: Node2D, action: Dictionary) -> void
-543  static func _do_queue_mine(main: Node2D, action: Dictionary) -> void
-568  static func _do_request_placement_tool(main: Node2D, action: Dictionary) -> void
-580  static func _do_click_world(main: Node2D, action: Dictionary) -> void
-606  static func _do_set_config(_main: Node2D, action: Dictionary) -> void
-620  static func _do_hatch_role(main: Node2D, action: Dictionary) -> void
-637  static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void
-683  static func _do_select_bees(main: Node2D, action: Dictionary) -> void
-714  static func _do_select_soil(main: Node2D, action: Dictionary) -> void
-740  static func _do_select_cell(main: Node2D, action: Dictionary) -> void
-763  static func _do_open_window(main: Node2D, action: Dictionary) -> void
-807  static func _do_close_window(main: Node2D, action: Dictionary) -> void
-820  static func _do_viewport_size(main: Node2D, action: Dictionary) -> void
-833  static func _do_show_gallerin_prompt(main: Node2D, action: Dictionary) -> void
-849  static func _do_retreat_challenge_stage(main: Node2D, action: Dictionary) -> void
-868  static func _do_advance_challenge_stage(main: Node2D, action: Dictionary) -> void
-894  static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void
-926  static func _do_set_cell_contents(main: Node2D, action: Dictionary) -> void
-950  static func _do_empty_cell(main: Node2D, action: Dictionary) -> void
-964  static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void
-977  # --- assertion checks -------------------------------------------------
-987  static func _do_assert(main: Node2D, action: Dictionary) -> bool
-997  static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary
-1014 static func _queen_summary(main: Node2D, condition: Dictionary) -> String
-1042 static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
-1133 static func _resolve_named_panel(main: Node2D, name: String) -> Control
-1147 static func _game_panel(main: Node2D, key: String) -> GamePanel
-1168 static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictionary
-1217 static func _label_leading(control: Control) -> Dictionary
-1231 static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictionary
-1271 static func _check_no_collapsed_controls(main: Node2D, condition: Dictionary) -> Dictionary
-1288 static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dictionary
-1299 static func _collect_empty_labels(node: Node, out: Array) -> void
-1305 static func _collect_collapsed_controls(node: Node, out: Array) -> void
-1325 static func _resolve_scoped_path(main: Node2D, path: String) -> Node
-1352 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
 ## challenge_runner.gd (1,246 lines)
@@ -556,7 +559,7 @@ The stage machine, goal checks and stage effects.
 1236 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
-## main.gd (1,187 lines)
+## main.gd (1,191 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -564,43 +567,43 @@ Per-frame entry point, everything not yet split out of main.
 37   # --- signals ------------------------------------------------------
 51   # --- preloads and boot constants ----------------------------------
 93   # --- delegate systems ---------------------------------------------
-122  # --- world and meadow constants -----------------------------------
-183  # --- state --------------------------------------------------------
-326  # --- _ready and construction --------------------------------------
-327  func _ready() -> void
-581  # --- public surface other scripts call directly -------------------
-588  func is_on_screen(node: Node2D) -> bool
-591  func hive_entrance_inside() -> Vector2
-594  func entrance_wait_point(side: int) -> Vector2
-597  func move_bee_into_hive(bee: Node2D) -> void
-600  func move_bee_out_of_hive(bee: Node2D) -> void
-603  func mark_death(bee: Node2D) -> void
-611  func _on_bee_died(bee: Node2D) -> void
-615  func finish_mining(block: Node2D) -> void
-618  func save_run() -> void
-621  func begin_winter_countdown() -> void
-624  # --- per-frame ----------------------------------------------------
-634  func _process(delta: float) -> void
-716  # --- the frame rate readout ----------------------------------------
-735  func _sample_fps() -> void
-758  func _reseed_meadow(delta: float) -> void
-773  func _hatch_ready_brood() -> void
-805  func _advance_weather(delta: float) -> void
-835  func _apply_rain_overlay() -> void
-850  func _check_for_loss() -> void
-872  func _check_colony_energy(delta: float) -> void
-903  func invalidate_population() -> void
-914  func _role_counts(bees = null) -> Dictionary
-931  func _update_population_readout(bees = null) -> void
-943  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-949  func _prune_selection() -> void
-962  func _on_restart_after_loss() -> void
-968  func _on_level_chosen(level: int) -> void
-981  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-999  func _apply_scenario_boot_arg() -> void
-1120 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1160 func _is_whole_number(value: Variant) -> bool
-1174 func _end_scenario_run(outcome: String) -> void
+123  # --- world and meadow constants -----------------------------------
+184  # --- state --------------------------------------------------------
+327  # --- _ready and construction --------------------------------------
+328  func _ready() -> void
+584  # --- public surface other scripts call directly -------------------
+591  func is_on_screen(node: Node2D) -> bool
+594  func hive_entrance_inside() -> Vector2
+597  func entrance_wait_point(side: int) -> Vector2
+600  func move_bee_into_hive(bee: Node2D) -> void
+603  func move_bee_out_of_hive(bee: Node2D) -> void
+606  func mark_death(bee: Node2D) -> void
+614  func _on_bee_died(bee: Node2D) -> void
+618  func finish_mining(block: Node2D) -> void
+621  func save_run() -> void
+624  func begin_winter_countdown() -> void
+627  # --- per-frame ----------------------------------------------------
+637  func _process(delta: float) -> void
+719  # --- the frame rate readout ----------------------------------------
+738  func _sample_fps() -> void
+761  func _reseed_meadow(delta: float) -> void
+776  func _hatch_ready_brood() -> void
+808  func _advance_weather(delta: float) -> void
+838  func _apply_rain_overlay() -> void
+853  func _check_for_loss() -> void
+875  func _check_colony_energy(delta: float) -> void
+906  func invalidate_population() -> void
+917  func _role_counts(bees = null) -> Dictionary
+934  func _update_population_readout(bees = null) -> void
+946  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+952  func _prune_selection() -> void
+965  func _on_restart_after_loss() -> void
+971  func _on_level_chosen(level: int) -> void
+984  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1002 func _apply_scenario_boot_arg() -> void
+1124 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1164 func _is_whole_number(value: Variant) -> bool
+1178 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,179 lines)
@@ -839,95 +842,95 @@ The comb as a whole: cells, navigation, finding a cell.
 1048 func announce() -> void
 ```
 
-## debug_panel.gd (1,014 lines)
+## debug_panel.gd (1,021 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
 20   # --- preloads -----------------------------------------------------
-33   # --- fields -------------------------------------------------------
-68   # --- _ready and construction --------------------------------------
-71   func _style_button(button: BaseButton) -> BaseButton
-76   func _ready() -> void
-190  func _apply_panel_width() -> void
-195  func _report_settings_button_width() -> void
-200  # --- collections and sections -------------------------------------
-201  func _rows_in(category: String) -> Array
-223  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-254  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-262  func open_to_categories(categories: Array) -> void
-282  func collapse_all() -> void
-290  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-346  # --- the Challenge stage navigator --------------------------------
-351  func _make_challenge_stage_navigation() -> Control
-389  func _process(_delta: float) -> void
-392  func _refresh_challenge_stage_navigation() -> void
-411  # --- the controls help --------------------------------------------
-417  func _make_controls_help() -> Control
-462  # --- the action buttons -------------------------------------------
-474  func _build_actions(column: VBoxContainer) -> void
-542  func _add_action_row(parent: Control, button: Button, tip: String) -> void
-548  func _make_winter_action() -> Control
-560  func _on_winter_pressed() -> void
-566  func _on_challenge_advance_pressed() -> void
-573  func _on_challenge_retreat_pressed() -> void
-587  func _on_fire_test_warnings_pressed() -> void
-620  func _on_force_c2_collapse_pressed() -> void
-634  # --- save and load ------------------------------------------------
-640  func set_save_load_enabled(enabled: bool) -> void
-648  func set_toggle(key: String, value: bool) -> void
-653  func _on_save_pressed() -> void
-664  func _on_load_pressed() -> void
-676  # --- showing and hiding the panel ---------------------------------
-677  func _toggle_panel() -> void
-691  func _apply_layer_for_context() -> void
-696  # --- building a settings row --------------------------------------
-697  func _make_row(entry: Dictionary) -> Control
-740  func _make_control_slot() -> HBoxContainer
-749  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-779  func _make_toggle_row(entry: Dictionary) -> Control
-850  func _make_options_row(entry: Dictionary) -> Control
-883  func _option_display(entry: Dictionary, value) -> String
-887  func _cycle_option(entry: Dictionary, direction: int) -> void
-898  # --- prerequisite cascades ----------------------------------------
-902  func _cascade_prerequisites_on(key: String) -> void
-916  func _cascade_dependents_off(key: String) -> void
-924  func _cascade_mutual_exclusion(key: String) -> void
-929  # --- star rows and value editing ----------------------------------
-934  func _make_star_row(entry: Dictionary) -> Control
-975  func _adjust(entry: Dictionary, delta: float) -> void
-989  func _format_value(v) -> String
-996  # --- restart and main menu ----------------------------------------
-997  func _on_restart_pressed() -> void
-1002 func _on_main_menu_pressed() -> void
-1010 func _restart() -> void
+34   # --- fields -------------------------------------------------------
+69   # --- _ready and construction --------------------------------------
+72   func _style_button(button: BaseButton) -> BaseButton
+77   func _ready() -> void
+191  func _apply_panel_width() -> void
+196  func _report_settings_button_width() -> void
+201  # --- collections and sections -------------------------------------
+202  func _rows_in(category: String) -> Array
+224  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+255  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+263  func open_to_categories(categories: Array) -> void
+283  func collapse_all() -> void
+291  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+347  # --- the Challenge stage navigator --------------------------------
+352  func _make_challenge_stage_navigation() -> Control
+390  func _process(_delta: float) -> void
+393  func _refresh_challenge_stage_navigation() -> void
+412  # --- the controls help --------------------------------------------
+418  func _make_controls_help() -> Control
+463  # --- the action buttons -------------------------------------------
+475  func _build_actions(column: VBoxContainer) -> void
+543  func _add_action_row(parent: Control, button: Button, tip: String) -> void
+549  func _make_winter_action() -> Control
+561  func _on_winter_pressed() -> void
+567  func _on_challenge_advance_pressed() -> void
+574  func _on_challenge_retreat_pressed() -> void
+588  func _on_fire_test_warnings_pressed() -> void
+621  func _on_force_c2_collapse_pressed() -> void
+635  # --- save and load ------------------------------------------------
+641  func set_save_load_enabled(enabled: bool) -> void
+649  func set_toggle(key: String, value: bool) -> void
+654  func _on_save_pressed() -> void
+665  func _on_load_pressed() -> void
+683  # --- showing and hiding the panel ---------------------------------
+684  func _toggle_panel() -> void
+698  func _apply_layer_for_context() -> void
+703  # --- building a settings row --------------------------------------
+704  func _make_row(entry: Dictionary) -> Control
+747  func _make_control_slot() -> HBoxContainer
+756  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+786  func _make_toggle_row(entry: Dictionary) -> Control
+857  func _make_options_row(entry: Dictionary) -> Control
+890  func _option_display(entry: Dictionary, value) -> String
+894  func _cycle_option(entry: Dictionary, direction: int) -> void
+905  # --- prerequisite cascades ----------------------------------------
+909  func _cascade_prerequisites_on(key: String) -> void
+923  func _cascade_dependents_off(key: String) -> void
+931  func _cascade_mutual_exclusion(key: String) -> void
+936  # --- star rows and value editing ----------------------------------
+941  func _make_star_row(entry: Dictionary) -> Control
+982  func _adjust(entry: Dictionary, delta: float) -> void
+996  func _format_value(v) -> String
+1003 # --- restart and main menu ----------------------------------------
+1004 func _on_restart_pressed() -> void
+1009 func _on_main_menu_pressed() -> void
+1017 func _restart() -> void
 ```
 
-## game_config.gd (886 lines)
+## game_config.gd (891 lines)
 
 The balance fields.
 
 ```
 8    # --- world ---
-25   # --- flowers (per-species values are in flower.gd; these scale them) ---
-407  # --- foraging ---
-416  # --- hive ---
-443  # --- the nursery zone ---
-504  # --- eating ---
-512  # --- flight ---
-543  # --- gynes ---
-558  # --- royal jelly ---
-568  # --- weather ---
-586  # --- warnings ---
-595  # --- honey ---
-611  # --- comb building ---
-631  # --- hive geometry ---
-660  # --- bee life ---
-665  # --- bee individuality ---
-744  # --- the rival colony ---
-793  # --- seasons ---
-825  # --- disease ---
-853  # --- gynes leaving ---
-860  # --- winter ---
+30   # --- flowers (per-species values are in flower.gd; these scale them) ---
+412  # --- foraging ---
+421  # --- hive ---
+448  # --- the nursery zone ---
+509  # --- eating ---
+517  # --- flight ---
+548  # --- gynes ---
+563  # --- royal jelly ---
+573  # --- weather ---
+591  # --- warnings ---
+600  # --- honey ---
+616  # --- comb building ---
+636  # --- hive geometry ---
+665  # --- bee life ---
+670  # --- bee individuality ---
+749  # --- the rival colony ---
+798  # --- seasons ---
+830  # --- disease ---
+858  # --- gynes leaving ---
+865  # --- winter ---
 ```

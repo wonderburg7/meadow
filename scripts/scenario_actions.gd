@@ -29,6 +29,7 @@ const UiTheme = preload("res://scripts/ui_theme.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const Conditions = preload("res://scripts/conditions.gd")
 const StageSetup = preload("res://scripts/challenge_stage_setup.gd")
+const SaveSlots = preload("res://scripts/save_slots.gd")
 
 ## Fixture-facing `when` names translated to Conditions' shared vocabulary.
 ## The two threshold directions intentionally share one event_count/disease
@@ -248,6 +249,10 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_empty_cell(main, action)
 		"watch_queen_states":
 			_do_watch_queen_states(main, action)
+		"save_run":
+			_do_save_run(main, action)
+		"restore_slot":
+			_do_restore_slot(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -973,6 +978,26 @@ static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void:
 	_queen_watch_hits = 0
 	_log("watch_queen_states", str(action), "accepted", "")
 
+## SV-1: {"do": "save_run", "name": "Run name"} -- the HUD's Save, through
+## saving.gd::save_run, under the given run name. Scenario runs write to
+## save_slots.gd's scratch root, never the player's saves.
+static func _do_save_run(main: Node2D, action: Dictionary) -> void:
+	main.saving.save_run(str(action.get("name", "")))
+	_log("save_run", str(action), "accepted", "")
+
+## SV-1: {"do": "restore_slot", "name": "Run name"} -- replays that run's
+## named save over the live world in place, the way tutorial_checkpoint.gd
+## restores, since a scene reload would end the scenario.
+static func _do_restore_slot(main: Node2D, action: Dictionary) -> void:
+	var display_name := str(action.get("name", ""))
+	var data: Dictionary = main.SaveGame.read(SaveSlots.slot_path(SaveSlots.slugify(display_name)))
+	if data.is_empty():
+		_log("restore_slot", str(action), "rejected", "no readable save for that name")
+		return
+	main.saving._restore(data)
+	Session.run_name = display_name
+	_log("restore_slot", str(action), "accepted", "")
+
 
 # --- assertion checks -------------------------------------------------
 
@@ -1005,9 +1030,39 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_no_collapsed_controls(main, condition)
 	if condition.has("no_empty_labels"):
 		return _check_no_empty_labels(main, condition)
+	if condition.has("save_slot"):
+		return _check_save_slot(main, condition)
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
+
+## SV-1: {"save_slot": "Run name", "named": true, "checkpoint_files": n,
+## "next_checkpoint": n, "day_matches_saved": true} -- every key but
+## save_slot is optional. Reads the index and checks files exist; never
+## opens a save.
+static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
+	var slug := SaveSlots.slugify(str(condition["save_slot"]))
+	var entry: Dictionary = {}
+	for slot in SaveSlots.list_slots():
+		if slot["slug"] == slug:
+			entry = slot
+	if entry.is_empty():
+		return {"ok": false, "reason": "no slot '%s' in the index" % slug}
+	var named := FileAccess.file_exists(SaveSlots.slot_path(slug))
+	if condition.has("named") and named != bool(condition["named"]):
+		return {"ok": false, "reason": "named save present: %s" % named}
+	var files: int = 0
+	for number in range(1, SaveSlots.CHECKPOINTS + 1):
+		if FileAccess.file_exists(SaveSlots.checkpoint_path(slug, number)):
+			files += 1
+	if condition.has("checkpoint_files") and files != int(condition["checkpoint_files"]):
+		return {"ok": false, "reason": "%d checkpoint files, expected %d" % [files, int(condition["checkpoint_files"])]}
+	var next_number := int(entry.get("next_checkpoint", 1))
+	if condition.has("next_checkpoint") and next_number != int(condition["next_checkpoint"]):
+		return {"ok": false, "reason": "next checkpoint %d, expected %d" % [next_number, int(condition["next_checkpoint"])]}
+	if bool(condition.get("day_matches_saved", false)) and main.day != int(entry.get("day", -1)):
+		return {"ok": false, "reason": "day %d, the named save is day %d" % [main.day, int(entry.get("day", -1))]}
+	return {"ok": true, "reason": ""}
 
 ## What a failed queen condition needs to be diagnosed without a rerun: where
 ## the queen is, what she is doing and what she carries.
