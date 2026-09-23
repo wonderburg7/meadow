@@ -1,7 +1,7 @@
 # Feedback build — something a tester can install, and evidence they never have to give us
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: FB-1 -- a Windows build anyone can run, queued in the Codex lane | Dependency: none -- FB-1 and FB-2 are independent of each other and of every Claude-lane slice | Verified: 2026-09-22
+Status: active | Owner: Dave / Codex | Next: FB-2 -- a scenario can assert when something happened, queued in the Codex lane | Dependency: none -- FB-2 remains independent of every Claude-lane slice; FB-3 waits for FB-2's milestone metrics | Verified: 2026-09-23
 
 **Objective.** `plans/design/product-scope.md` §15 defines the closed alpha as
 friends and family being able to *install*, save, resume and give useful
