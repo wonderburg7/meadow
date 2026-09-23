@@ -98,7 +98,6 @@ it, and both are reachable from the HUD without instruction.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SV-2 | A Saves window lists every run and recovery point with its day and time, and loads or deletes one. | `scripts/saves_panel.gd`, `scripts/hud.gd` | yes | medium |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -119,36 +118,7 @@ that file, and no part of `saving.gd`'s 250 lines of `_restore_*` helpers.
 
 SV-1 shipped 2026-09-23; its specification is `plans/archive/SV-1_2026-09-23.md`.
 
-## SV-2 — the Saves window
-
-Level: medium.
-
-- **Required reading.** This heading. SV-1's result. `scripts/game_panel.gd`
-  whole. One existing subclass, `scripts/winter_panel.gd`, for the pattern.
-- **Files to change.** New `scripts/saves_panel.gd`, `scripts/hud.gd`.
-- **Requirements.** A `GamePanel` subclass keyed `saves`, listing what
-  `list_slots()` returns: display name, day, and how long ago it was saved, with
-  each run's three checkpoints under it. Load and Delete per row, with Delete
-  behind the existing `Session.warn_on_discard` confirmation rather than a new
-  one. Saving asks for a name the first time a run is saved and reuses it after.
-- **Invariants.** Every other window still opens, closes and sits where it did
-  (`C-61`). The panel takes its rectangle from `ui_layout.gd` through the base
-  class (HC-14).
-- **Runtime policy.** The list is built on open and after a save or delete.
-  Nothing polls the filesystem.
-- **Hands-on check.** File one: name a run, play past two checkpoints, quit,
-  reopen, load the middle checkpoint and confirm the colony is where it was.
-  This is the alpha's single most important reliability claim and a static check
-  cannot make it.
-
-```queue
-**[Claude] SV-2 -- the Saves window**
-- Plan: `plans/now/named-saves.md` -- "SV-2 — the Saves window"
-- Files: `scripts/saves_panel.gd`, `scripts/hud.gd`
-- Check: a `GamePanel` subclass keyed `saves` lists every run and its three checkpoints with day and age, loads and deletes a row with deletion behind `Session.warn_on_discard`, and asks for a run name on first save; every other window still opens, closes and sits where it did
-- Proof: `absent: scripts/hud.gd :: saves_panel`
-- Next after: none -- named-saves is complete once SV-2 ships.
-```
+SV-2 shipped 2026-09-24; its specification is `plans/archive/SV-2_2026-09-24.md`.
 
 ## Read on demand
 
