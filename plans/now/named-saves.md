@@ -1,7 +1,7 @@
 # Named saves and rolling checkpoints
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SV-2 -- the Saves window, queued in the Claude lane (SV-1 landed 23 Sep) | Dependency: none -- F2s has merged | Verified: 2026-09-23
+Status: complete -- SV-1 landed 23 Sep and SV-2 24 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups, listed under "SV-2 landed" below: the cog's Load run could open the Saves window instead of loading the newest save; game hotkeys while typing a run name are unchecked (C-63 covers it) | Dependency: none | Verified: 2026-09-24
 
 **Objective.** `plans/design/product-scope.md` §6.1 makes "named run saves,
 three rolling recovery checkpoints and reliable restore" a closed-alpha
@@ -62,6 +62,33 @@ a name; the run's name is `Session.run_name` (default "My colony"), and
   (`save_run`/`restore_slot` actions and a `save_slot` assertion) and
   `test_scenarios/sv1_named_saves_test.json`, the acceptance run.
 - Hands-on check filed: C-62.
+
+**SV-2 landed 24 Sep 2026.** `scripts/saves_panel.gd` is a left `GamePanel`
+keyed `saves`, opened by a text **Saves** button that `hud.gd` adds to the top
+bar (hidden during Challenges) and creates the panel for. It lists every run
+newest first with its checkpoints, each showing its day and age. Every row
+with a file has Load, and each run has Delete. The first save of a run asks
+for a name, prefilled with the current one. Deleting, or saving over another
+run's name, goes through `hud.gd`'s existing discard dialog via
+`confirm_discard` when `Session.warn_on_discard` is on. Proven by
+`test_scenarios/sv2_saves_window_test.json` and the unchanged
+`tests/test_layout_regression.py`. Hands-on check filed: C-63. Decisions taken
+without Dave (each the cheapest to reverse):
+
+- **Delete is per run, not per checkpoint.** A checkpoint row has Load only;
+  the checkpoints rotate out on their own.
+- **A plain text button, not an icon.** `ui_icon.gd` has no save glyph and is
+  outside SV-2's files.
+- **No Saves button in Challenges.** A Challenge reveals controls stage by
+  stage and has its own rollback.
+- **"Asked for a name" lasts until a new run starts.** It is a static flag on
+  the panel, set by a save or a load and cleared by `Session.run_reset`.
+  Restarting asks again, prefilled with the old name, and saving over an
+  existing run's name asks first.
+
+Follow-ups, not filed as slices: the cog's **Load run** still loads the newest
+named save rather than opening this window. Whether game hotkeys fire while
+the name box has focus is unchecked; C-63's typing step would show it.
 
 **What is intended when this plan is done.** A run is saved under a name the
 player chose, the game keeps the last three automatic recovery points behind
