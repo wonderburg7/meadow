@@ -22,6 +22,11 @@ session needs; everything else is fetched when its moment comes.
    merge timing, archive + refill order, filing checks), then run
    `tools/slice.ps1 finish`.
 
+**Ad-hoc work** (anything not claimed with `start`) runs
+`tools/slice.ps1 owner <each path it will edit>` before editing. `owned`
+means a queued slice or an unmerged branch already covers that file: stop
+and ask Dave rather than build the same change twice.
+
 `NEXTSTEPS.md` has two independent lanes, `### Claude lane` and
 `### Codex lane`, up to five items each, sharing no file. Edit only your own
 lane. Queue rules: `.claude/rules/documentation.md`.

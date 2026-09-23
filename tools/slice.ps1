@@ -1,13 +1,17 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("start", "finish", "doctor", "status", "resume", "abort")]
+    [ValidateSet("start", "finish", "doctor", "status", "resume", "abort", "owner")]
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
     [string]$Lane,
 
-    [string]$PythonPath
+    [string]$PythonPath,
+
+    # `owner` only: the repository-relative paths an ad-hoc session means to edit.
+    [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
+    [string[]]$Path
 )
 
 $ErrorActionPreference = "Stop"
@@ -1296,6 +1300,53 @@ function Invoke-GitQuiet {
     return $LASTEXITCODE
 }
 
+function Test-OwnedPath {
+    # A queue `Files:` entry or a changed file owns a path when they are the
+    # same file, or when one is a folder (trailing slash) containing the other.
+    param([string]$Owned, [string]$Wanted)
+    $a = ($Owned -replace '\\', '/').Trim()
+    $b = ($Wanted -replace '\\', '/').Trim()
+    if ($a -eq $b) { return $true }
+    if ($a.EndsWith("/") -and $b.StartsWith($a)) { return $true }
+    if ($b.EndsWith("/") -and $a.StartsWith($b)) { return $true }
+    return $false
+}
+
+function Invoke-SliceOwner {
+    # Ad-hoc work (anything not claimed with `start`) runs this before editing.
+    # On 20 Sep an ad-hoc session rebuilt verify.ps1's regeneration while the
+    # queued V-1 slice was building the same thing; the branch was never merged.
+    # A path is owned by any queue item that lists it, in either lane, and by
+    # any unmerged local branch other than this one that already changes it.
+    param([string[]]$Wanted)
+    if (-not $Wanted) {
+        Write-Error "owner needs at least one repository-relative path, e.g. tools/slice.ps1 owner tools/verify.ps1"
+        exit 1
+    }
+    $root = Get-PrimaryRoot
+    $here = (git rev-parse --abbrev-ref HEAD 2>$null)
+    $owners = @()
+    foreach ($item in Get-NextUpItems -Root $root) {
+        $hits = @($Wanted | Where-Object { $w = $_; @($item.Files | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
+        if ($hits) {
+            $owners += [PSCustomObject]@{ kind="queue"; id=$item.Id; lane=$item.Lane; title=$item.Title; paths=$hits }
+        }
+    }
+    $branches = @(git -C $root branch --no-merged master --format="%(refname:short)" 2>$null | Where-Object { $_ -and $_ -ne $here })
+    foreach ($branch in $branches) {
+        $changed = @(git -C $root diff --name-only "master...$branch" 2>$null)
+        $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
+        if ($hits) {
+            $last = (git -C $root log -1 --format="%cs %s" $branch 2>$null)
+            $owners += [PSCustomObject]@{ kind="branch"; branch=$branch; last_commit=$last; paths=$hits }
+        }
+    }
+    $status = if ($owners) { "owned" } else { "clear" }
+    $next = if ($owners) { "stop: ask Dave whether to take the owning slice, wait for it, or finish/delete the branch -- do not build the same change twice" } else { "go ahead" }
+    [PSCustomObject]@{ status=$status; owners=$owners; next=$next } | ConvertTo-Json -Depth 4 -Compress
+    if ($owners) { exit 1 }
+}
+
 function Invoke-SliceStatus {
     param([string]$Lane)
     $root = Get-PrimaryRoot
@@ -1828,6 +1879,7 @@ switch ($Command) {
     "status" { Invoke-SliceStatus -Lane $Lane }
     "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
     "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
+    "owner"  { Invoke-SliceOwner -Wanted $Path }
 }
 }
 catch {

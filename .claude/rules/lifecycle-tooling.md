@@ -29,7 +29,7 @@ with a terminal Status to `plans/archive/` and repoints its references;
 
 The workflow tests are split by subject (17 Sep 2026):
 `tests/test_source_checks.py` (source contracts and queue parsing),
-`tests/test_slice_lifecycle.py` (doctor/start/finish/resume),
+`tests/test_slice_lifecycle.py` (doctor/start/finish/resume/owner),
 `tests/test_two_lane_closeout.py` (both lanes at once) and
 `tests/test_codex_environment.py` (Codex profile, verify's Python). Shared
 paths live in `tests/workflow_test_support.py`. When one fails, rerun only it

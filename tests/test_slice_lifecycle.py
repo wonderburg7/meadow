@@ -191,6 +191,48 @@ class SliceDoctorTest(unittest.TestCase):
         ).stdout
         self.assertEqual("", refs)
 
+    def run_owner(self, *paths: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                self.powershell,
+                "-NoProfile",
+                "-File",
+                str(self.root / "tools" / "slice.ps1"),
+                "owner",
+                *paths,
+            ],
+            cwd=self.root,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_owner_names_the_queue_item_and_unmerged_branch_that_own_a_path(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
+        subprocess.run(
+            ["git", "commit", "-m", "queue"], cwd=self.root, capture_output=True, check=True
+        )
+        subprocess.run(
+            ["git", "switch", "-c", "claude/ad-hoc"], cwd=self.root, capture_output=True, check=True
+        )
+        (self.root / "tools" / "backlog.py").write_text("# changed\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "commit", "-am", "ad-hoc edit"], cwd=self.root, capture_output=True, check=True
+        )
+        subprocess.run(["git", "switch", "master"], cwd=self.root, capture_output=True, check=True)
+
+        owned = self.run_owner("scripts/sample.gd", "tools/backlog.py")
+        clear = self.run_owner("scripts/other.gd")
+
+        self.assertEqual(1, owned.returncode, owned.stderr)
+        report = json.loads(owned.stdout)
+        self.assertEqual("owned", report["status"])
+        kinds = {o["kind"]: o for o in report["owners"]}
+        self.assertEqual("T-1", kinds["queue"]["id"])
+        self.assertEqual("claude/ad-hoc", kinds["branch"]["branch"])
+        self.assertEqual(0, clear.returncode, clear.stderr)
+        self.assertEqual("clear", json.loads(clear.stdout)["status"])
+
     def test_doctor_names_the_bounded_plan_read_and_the_successor(self):
         """A claimed slice must arrive with its own reading command attached.
 
