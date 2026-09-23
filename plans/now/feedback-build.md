@@ -1,7 +1,7 @@
 # Feedback build — something a tester can install, and evidence they never have to give us
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: FB-2 -- a scenario can assert when something happened, queued in the Codex lane | Dependency: none -- FB-2 remains independent of every Claude-lane slice; FB-3 waits for FB-2's milestone metrics | Verified: 2026-09-23
+Status: active | Owner: Dave / Codex | Next: FB-3 -- the pacing gates become one command, now startable in the Codex lane | Dependency: none -- FB-2 remains independent of every Claude-lane slice; FB-3 consumes its milestone metrics | Verified: 2026-09-23
 
 **Objective.** `plans/design/product-scope.md` §15 defines the closed alpha as
 friends and family being able to *install*, save, resume and give useful
@@ -102,6 +102,14 @@ Level: medium.
 - **Automated acceptance.** The new unit tests, plus one real run:
   `python tools/run_scenario.py test_scenarios/colony_30_bees_test.json --full`
   prints a `milestones` section with a plausible `first_worker_day`.
+- **Closeout decision (2026-09-23).** **Question:** should food security use a
+  fixed threshold or the current colony's winter requirement? **Options:** a
+  fixed food-store value, or calculate each snapshot's honey-store requirement
+  from that run's recorded GameConfig settings and population. **Choice:** the
+  per-snapshot calculation, converted from required energy to honey-store
+  units. It keeps config overrides causal and is the cheapest choice to revise
+  if the game later logs an explicit forecast threshold. No gyne-release-time
+  milestone was added: it still requires the Claude-lane simulation event.
 
 ```queue
 **[Codex] FB-2 -- a scenario can assert when something happened**
