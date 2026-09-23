@@ -33,5 +33,3 @@ class AlphaBuildTest(unittest.TestCase):
         helper = (ROOT / "tools" / "build_alpha.ps1").read_text(encoding="utf-8")
         self.assertIn('--export-release "Windows Desktop"', helper)
         self.assertIn("Compress-Archive", helper)
-
-
