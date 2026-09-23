@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/ST-1` (`codex/ST-1`) | Codex | preflight refusals stop crowding the step ranking | Codex | in progress | none | `plans/now/stop-readout.md` ST-1 — preflight refusals stop crowding the step ranking |
-| `.worktrees/V-4` (`claude/V-4`) | Claude | scenario_actions.gd gets the headers V-3's own check asked for | Claude | in progress | none | `plans/now/verification-cost.md` V-4 — scenario_actions.gd gets the headers V-3's own check asked for |
