@@ -46,7 +46,6 @@ Verified 22 September 2026 against the repository.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FB-1 | Dave can produce a zipped Windows build and hand it to someone, and a bug report can name the build it came from. | `export_presets.cfg`, `project.godot`, `.gitignore`, `tools/build_alpha.ps1`, `tests/test_alpha_build.py`, `tools/verify.ps1` | yes | low |
 
 `.gitignore` is in FB-1's scope but deliberately not on its `Files:` line: `check_docs.py`'s queue validator requires every listed path to have a file suffix, and `.gitignore` has none. Do not re-add it there.
 | FB-2 | A scenario can assert *when* something happened, not just whether it did. | `tools/analyze_session.py`, `tools/headless/verdicts.py`, `tests/test_headless_verdicts.py` | yes | medium |
@@ -59,69 +58,7 @@ No slice here depends on anything in `plans/now/alpha-progression-spine.md` or
 
 **Required reading for any slice.** Its own section below.
 
-## FB-1 — a Windows build anyone can run
-
-Level: low.
-
-**Decided by Dave, 22 September 2026:** the first distributable is **Windows
-desktop only**. Web, Linux and macOS are not in this slice and are not to be
-added to the preset "while we are here".
-
-- **Required reading.** This heading. `project.godot`'s `[application]` section
-  (the first 20 lines). `tools/verify.ps1`'s unittest module list — find it with
-  `grep -n 'm unittest' tools/verify.ps1`.
-- **Files to change.** `export_presets.cfg` (new), `project.godot`,
-  `.gitignore`, `tools/build_alpha.ps1` (new), `tests/test_alpha_build.py`
-  (new), `tools/verify.ps1`.
-- **Files not to change.** Anything in `scripts/`. If the export reveals a
-  runtime problem in a script, report it; do not fix it here.
-- **Start by checking the templates, because the slice's shape depends on it.**
-  Godot cannot export without matching export templates installed. Run
-  `godot --headless --export-release "Windows Desktop" <path>` once and read the
-  error. If templates are missing, **still deliver every file below** and finish
-  the slice, reporting at closeout that Dave must install them once via the
-  Godot editor's *Editor → Manage Export Templates… → Download and Install*, and
-  that the build has therefore not been produced yet. Do not block on it.
-- **Requirements.**
-  1. `export_presets.cfg` holds exactly one preset, named `Windows Desktop`,
-     `platform="Windows Desktop"`, `runnable=true`, export path
-     `build/windows/Meadow.exe`, architecture `x86_64`, and
-     `export_filter="all_resources"`. Set `application/product_name` and
-     `application/file_description` to `Meadow` so the shipped executable is not
-     called "Meadow - Claude". **Leave `config/name` in `project.godot`
-     untouched** — it is what tells Dave's two worktree windows apart, and
-     renaming the product is a separate decision.
-  2. `project.godot` gains `config/version="0.1.0-alpha"` in `[application]`.
-  3. `.gitignore` gains `build/` (in scope, but off the `Files:` line -- see the note under the table).
-  4. `tools/build_alpha.ps1` runs the export into `build/windows/`, then zips it
-     to `build/Meadow-<version>-windows.zip`, and prints the zip's path and size
-     and nothing else. It states its own shell and directory in its header
-     comment, per `CLAUDE.md`'s working style. It must fail loudly, with the
-     Godot error, rather than producing a zip of a failed export.
-  5. `tests/test_alpha_build.py` is pure Python and runs in under a second: it
-     asserts `export_presets.cfg` parses as an INI with exactly one preset, that
-     the preset's platform and export path are the two strings above, that
-     `project.godot` carries a `config/version`, and that `.gitignore` ignores
-     `build/`. **It must not run an export** — `verify.ps1` runs before every
-     commit and a build is minutes.
-  6. `tools/verify.ps1` gains `tests.test_alpha_build` to its existing
-     `-m unittest` module list.
-- **Invariants.** `verify.ps1` stays as fast as it is now, to within noise. No
-  `scripts/` file changes, so no game behaviour changes.
-- **Escalation.** If a release export fails for a reason other than missing
-  templates — a missing resource, an addon that cannot be exported
-  (`addons/godot_ai` and `addons/copy_all_errors` are editor plugins and should
-  be excluded from the export, not shipped) — stop and describe it. A build that
-  ships an editor addon to a tester is worth one escalation.
-
-```queue
-**[Codex] FB-1 -- a Windows build anyone can run**
-- Plan: `plans/now/feedback-build.md` -- "FB-1 — a Windows build anyone can run"
-- Files: `export_presets.cfg`, `project.godot`, `tools/build_alpha.ps1`, `tests/test_alpha_build.py`, `tools/verify.ps1`
-- Check: one `Windows Desktop` x86_64 preset exporting to `build/windows/Meadow.exe` with product name `Meadow`, `project.godot` carrying `config/version`, `build/` gitignored, `tools/build_alpha.ps1` producing a zip or failing loudly with Godot's error, and `tests/test_alpha_build.py` asserting all of that in under a second without running an export
-- Proof: `absent: project.godot :: config/version=`
-- Next after: FB-2 -- a scenario can assert when something happened.
-```
+FB-1 shipped 2026-09-23; its specification is `plans/archive/FB-1_2026-09-23.md`.
 
 ## FB-2 — a scenario can assert when something happened
 
