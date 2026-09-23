@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FB-1` (`codex/FB-1`) | Codex | a Windows build anyone can run | Codex | in progress | none | `plans/now/feedback-build.md` FB-1 — a Windows build anyone can run |
