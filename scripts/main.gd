@@ -98,6 +98,7 @@ const DEFAULT_RANDOM_SEED := 12345
 ## or the camera.
 const WorldBuilding = preload("res://scripts/world_building.gd")
 const Saving = preload("res://scripts/saving.gd")
+const SaveSlots = preload("res://scripts/save_slots.gd")
 const InputSelection = preload("res://scripts/input_selection.gd")
 const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
@@ -559,6 +560,7 @@ func _ready() -> void:
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
 	bee_died.connect(_on_bee_died)
 	day_changed.connect(func(d): hud.update_day(d, year_winter._season_text()))
+	day_changed.connect(func(_d): saving.checkpoint())
 	hud.update_day(day, year_winter._season_text())
 	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
@@ -571,7 +573,8 @@ func _ready() -> void:
 	# it replays state rather than restoring a scene tree.
 	if Session.load_pending:
 		Session.load_pending = false
-		saving._restore(SaveGame.read())
+		saving._restore(SaveGame.read(Session.load_path))
+		Session.load_path = ""
 	elif Session.starting_level in [1, 2]:
 		# Both Challenges now have stage data (challenge_runner.gd's
 		# STAGES_1/STAGES_2) -- levels.gd's own presets only cover the
@@ -1094,6 +1097,7 @@ func _apply_scenario_boot_arg() -> void:
 	Session.starting_level = challenge_id if challenge_id in [1, 2] else Levels.SCENARIO_LEVEL_ID
 	Session.menu_pending = false
 	scenario_active = true
+	SaveSlots.use_scratch_root()
 	scenario_actions = actions
 	scenario_stop_max_days = int(stop.get("max_days", -1))
 	scenario_stop_when = stop.get("when", {})

@@ -21,6 +21,11 @@ var starter_age_spread: float = 0.5
 var starting_nurses: float = 1.0        # without at least one nurse, laid eggs never reach a cell
 var starting_builders: float = 0.0
 var seconds_per_day: float = 200.0      # real seconds in one in-game day
+## How often the run writes one of its three rotating checkpoints, in days
+## (plans/now/named-saves.md SV-1; product scope 6.1's "every five days").
+## A float like the other whole-number counts here, so the settings stepper
+## can set it; saving.gd reads it as an int.
+var checkpoint_every_days: float = 5.0
 
 # --- flowers (per-species values are in flower.gd; these scale them) ---
 var nectar_recharge_rate: float = 0.5   # per second

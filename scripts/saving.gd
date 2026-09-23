@@ -7,13 +7,38 @@ extends Node
 ## main via the "world" group and calls `worlds[0].save_run()` directly,
 ## so main.gd keeps a one-line wrapper for it.
 
+const SaveSlots = preload("res://scripts/save_slots.gd")
+
 var main: Node2D
 
-func save_run() -> void:
-	if main.SaveGame.save(main):
+## Writes the player's own save to the run's named slot (SV-1). `run_name`
+## renames the run first; left empty, the current run's name is used.
+func save_run(run_name: String = "") -> void:
+	if run_name != "":
+		Session.run_name = run_name
+	var slug := SaveSlots.slugify(Session.run_name)
+	if main.SaveGame.save(main, SaveSlots.slot_path(slug)):
+		SaveSlots.record_save(slug, Session.run_name, main.day)
 		main.hud.show_warning("Run saved.")
 	else:
 		main.hud.show_warning("The run could not be saved — check the log for why.")
+
+## Connected to main.gd's day_changed: every
+## GameConfig.checkpoint_every_days days, writes the next of the run's three
+## rotating checkpoints, never its named save. Runs on the day boundary only
+## -- a save walks the whole world, so it must never hang off anything that
+## fires more often. Challenges are skipped: tutorial_checkpoint.gd already
+## gives them their own rollback, and a Challenge's checkpoints would push
+## the player's own run's out of the rotation.
+func checkpoint() -> void:
+	if Session.starting_level in [1, 2]:
+		return
+	var every: int = maxi(1, int(GameConfig.checkpoint_every_days))
+	if main.day % every != 0:
+		return
+	var slug := SaveSlots.slugify(Session.run_name)
+	if main.SaveGame.save(main, SaveSlots.checkpoint(slug)):
+		SaveSlots.record_checkpoint(slug, Session.run_name, main.day)
 
 ## Replays a saved run over the freshly built world. Order matters: the
 ## comb has to exist before bees can be pointed at it, and mined-out soil
