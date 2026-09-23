@@ -232,5 +232,6 @@ explicit request from Dave.
   either ports `-RegenerateOnly` as a few lines on top of the current
   `Invoke-RegenerateStage`, or decides it is not wanted. Either way the branch
   is deleted in that pass.
-- Disposition: untriaged. Owner: whoever takes the next `tools/verify.ps1`
-  slice (the Claude lane, `plans/archive/verification-cost_2026-09-23.md`).
+- Disposition: rejected (23 Sep 2026) -- Dave deleted the branch without
+  porting `-RegenerateOnly`. The duplicated work it records is now guarded by
+  `tools/slice.ps1 owner`, which ad-hoc sessions run before editing.
