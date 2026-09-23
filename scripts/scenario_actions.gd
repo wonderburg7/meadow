@@ -22,6 +22,8 @@ extends RefCounted
 ## barrier, and nothing after it in the file runs until it has counted out
 ## its ticks.
 
+# --- preloads -----------------------------------------------------
+
 const Settings = preload("res://scripts/settings_catalogue.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
@@ -39,6 +41,8 @@ const LEGACY_WHEN_KEY_MAP := {
 	"queen_alive": "queen_alive",
 	"disease_at_least": "disease", "disease_at_most": "disease",
 }
+
+# --- run_pending --------------------------------------------------
 
 ## Called once per _process() tick while main.scenario_active. An "assert"
 ## that fails ends the run (main._end_scenario_run) and stops evaluating
@@ -72,6 +76,8 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 			action["_resolved"] = true
 			_execute(main, action)
 
+
+# --- the comb build-site sampler ----------------------------------
 
 ## CB-1: Session.sim_time of the last comb-builder sample.
 static var _last_build_sample: float = -1.0e9
@@ -120,6 +126,8 @@ static func sample_comb_build_sites(main: Node2D) -> void:
 		stats["building_without_slot"] = maxi(int(stats["building_without_slot"]), without_slot)
 
 
+# --- log_unresolved -----------------------------------------------
+
 ## Called from main.gd::_end_scenario_run, before DiagnosticLog closes the
 ## session file. An action whose "when" never became true is exactly as
 ## diagnostically interesting as one that fired and was rejected: a run
@@ -131,6 +139,8 @@ static func log_unresolved(actions: Array) -> void:
 			continue
 		_log(action.get("do", ""), str(action), "never_fired", "run ended before its 'when' was met")
 
+
+# --- the settle, wait and window helpers --------------------------
 
 ## {"do": "settle", "ticks": n} -- the one action that is a sequence point,
 ## and the only one that holds up the actions after it. Godot lays a
@@ -189,6 +199,8 @@ static func _sample_queen_watch(main: Node2D) -> void:
 	if main.queen._is_inside_hive() and main.queen.state in _queen_watch_states:
 		_queen_watch_hits += 1
 
+
+# --- _execute -----------------------------------------------------
 
 static func _execute(main: Node2D, action: Dictionary) -> void:
 	match action.get("do", ""):
