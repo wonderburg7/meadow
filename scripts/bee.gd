@@ -803,7 +803,7 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	# preference it already had.
 	if GameConfig.scouting_on and bee_role == Role.FORAGER:
 		BeeForaging.start_scouting(self)
-	elif GameConfig.orientation_flight_on and bee_role == Role.FORAGER:
+	elif BeeForaging.orientation_flight_on() and bee_role == Role.FORAGER:
 		BeeForaging.take_orientation_flight(self)
 	else:
 		state = _default_state_for_role()

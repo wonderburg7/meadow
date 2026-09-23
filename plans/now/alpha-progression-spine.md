@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-2 -- the two foraging behaviours ask the resolver, queued in the Claude lane (AP-1 landed 23 Sep) | Dependency: AP-3 also waits on F2s (`plans/archive/architecture-review_2026-09-24.md`) | Verified: 2026-09-23
+Status: active | Owner: Dave / Claude Code | Next: AP-3 -- the skill tree panel, queued in the Claude lane (AP-2 landed 24 Sep) | Dependency: none -- AP-1 and F2s have both landed | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -39,12 +39,23 @@ Verified 22 September 2026 by grep over `scripts/`, not from the design plan.
 `Progression`; the two tier-1 foraging nodes are bought in a panel instead of
 switched on in settings; and a purchase survives save and load.
 
+**AP-2 landed 24 Sep 2026** (specification in `plans/archive/`). Both
+foraging behaviours are on when the setting is on or an owned skill enables
+them: `BeeForaging.tarsal_markers_on()`/`orientation_flight_on()` hold the
+rule for bee.gd and bee_foraging.gd, hud.gd's scent-mark line inlines it, and
+`progression.gd::_behaviour_cache` answers `is_behaviour_enabled`, cleared by
+the three ownership writers. `foraging_features_off_test.json` and
+`foraging_features_on_test.json` summarise identically to master at seed
+4242. No read is per frame: the busiest is `bee_foraging.gd`'s flower filter,
+once per candidate flower during a search. Decision taken without Dave: the
+rule lives in two BeeForaging helpers rather than being written out five
+times, so AP-4 and the post-alpha toggle removal each change it in one place.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-2 | Nothing visible yet — the two foraging behaviours can now be switched on by owning a skill as well as by the setting. | `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd` | yes | medium |
-| AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | no — after AP-1 and F2s | medium |
+| AP-3 | A Skills button opens a panel showing the six sectors and every node's state. Read-only. | `scripts/skill_tree_panel.gd`, `scripts/hud.gd` | yes | medium |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | no — after AP-3 | high |
 
 **Dependencies, stated rather than implied by order.**
@@ -70,54 +81,7 @@ file's catalogue, grid or cost sections, 400 lines this plan does not need.
 
 AP-1 shipped 2026-09-23; its specification is `plans/archive/AP-1_2026-09-23.md`.
 
-## AP-2 — the two foraging behaviours ask the resolver
-
-Level: medium.
-
-- **Required reading.** This heading. `python tools/func.py scripts/progression.gd is_behaviour_enabled owned_ids`.
-  The five reader lines: `grep -n 'tarsal_markers_on\|orientation_flight_on' scripts/bee.gd scripts/bee_foraging.gd scripts/hud.gd`.
-- **Files to change.** `scripts/progression.gd`, `scripts/bee.gd`,
-  `scripts/bee_foraging.gd`, `scripts/hud.gd`.
-- **The rule is OR, and it is the design's own.** A behaviour is on when the
-  setting is on **or** the skill is owned. Both toggles default `false`, so
-  every existing run and fixture behaves identically, and the settings entries
-  in `settings_catalogue.gd` keep working. This is not a compromise:
-  progression.md section 11 step 11 already schedules deleting the legacy
-  toggles post-alpha, deliberately last, "so a working fallback exists until
-  the new path is proven end to end". Do not delete them here.
-- **Requirements.**
-  1. `progression.gd` gains a cached answer. `is_behaviour_enabled` as shipped
-     walks `owned_ids()`, which allocates an `Array` and does a linear `has()`
-     per entry — O(n²) in owned skills, per call. `bee_foraging.gd`'s reads are
-     on a per-forager path. Add `var _behaviour_cache: Dictionary = {}`, have
-     `is_behaviour_enabled` read it, and clear it in `grant_temporary`,
-     `set_mastered_ids` and `end_run` — the only three writers of ownership.
-  2. Each of the five call sites becomes
-     `GameConfig.<flag> or Session.progression.is_behaviour_enabled("<flag>")`,
-     with a null-safe read: `Session.progression` is null in a unit fixture that
-     never boots `main.gd`.
-- **Invariants.** With no skill owned, all five sites behave exactly as today.
-  The cache must never be stale: a purchase during a run flips the answer on the
-  next read, not the next day.
-- **Runtime policy.** A `Dictionary` lookup per read, not a catalogue walk.
-  Ownership changes at most a handful of times in a run, so the cache is cleared
-  on write rather than rebuilt on a tick. Do not add a per-frame refresh.
-- **Automated acceptance.** `python tools/run_scenario.py test_scenarios/foraging_features_off_test.json`
-  and `foraging_features_on_test.json` both summarise exactly as before — those
-  two fixtures exist precisely to pin these toggles' effect, so an unchanged
-  pair is the acceptance. Plus `tools/godot_compile_check.py`.
-- **Escalation.** If any of the five sites is read inside a per-frame loop over
-  bees, say so with the call count before caching — `CLAUDE.md` rule 3 wants the
-  profile first, and even a `Dictionary` lookup there is a cost worth naming.
-
-```queue
-**[Claude] AP-2 -- the two foraging behaviours ask the resolver**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-2 — the two foraging behaviours ask the resolver"
-- Files: `scripts/progression.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/hud.gd`
-- Check: all five `tarsal_markers_on`/`orientation_flight_on` reads become `GameConfig.<flag> or Session.progression.is_behaviour_enabled("<flag>")`, null-safe; `is_behaviour_enabled` answers from a dictionary cleared by `grant_temporary`, `set_mastered_ids` and `end_run` rather than walking `owned_ids()`; `foraging_features_off_test.json` and `foraging_features_on_test.json` summarise exactly as before
-- Proof: `absent: scripts/progression.gd :: _behaviour_cache`
-- Next after: AP-3 -- the skill tree panel.
-```
+AP-2 shipped 2026-09-24; its specification is `plans/archive/AP-2_2026-09-24.md`.
 
 ## AP-3 — the skill tree panel
 
@@ -151,7 +115,7 @@ Level: medium.
 - **Hands-on check.** File one: the panel reads correctly in all three themes
   and at the largest text scale.
 
-```queue-gated
+```queue
 **[Claude] AP-3 -- the skill tree panel**
 - Plan: `plans/now/alpha-progression-spine.md` -- "AP-3 — the skill tree panel"
 - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`
