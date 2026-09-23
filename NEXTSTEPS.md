@@ -49,21 +49,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] ST-1 -- preflight refusals stop crowding the step ranking**
-   - Plan: `plans/now/stop-readout.md` -- "ST-1 — preflight refusals stop crowding the step ranking"
-   - Files: `tools/session_cost.py`, `tests/test_session_cost_stops.py`
-   - Check: `python tools/session_cost.py --stops` on the real ledger prints a "most expensive steps" list whose entries all carry a step, with the 19 preflight refusals reported separately and tallied by cause, and the two totals summing to `stops recorded`
-   - Proof: `present: tools/session_cost.py :: (no step recorded)`
-   - Next after: none -- stop-readout is complete once ST-1 ships.
-
-2. **[Codex] FB-1 -- a Windows build anyone can run**
+1. **[Codex] FB-1 -- a Windows build anyone can run**
    - Plan: `plans/now/feedback-build.md` -- "FB-1 — a Windows build anyone can run"
    - Files: `export_presets.cfg`, `project.godot`, `tools/build_alpha.ps1`, `tests/test_alpha_build.py`, `tools/verify.ps1`
    - Check: one `Windows Desktop` x86_64 preset exporting to `build/windows/Meadow.exe` with product name `Meadow`, `project.godot` carrying `config/version`, `build/` gitignored, `tools/build_alpha.ps1` producing a zip or failing loudly with Godot's error, and `tests/test_alpha_build.py` asserting all of that in under a second without running an export
    - Proof: `absent: project.godot :: config/version=`
    - Next after: FB-2 -- a scenario can assert when something happened.
 
-3. **[Codex] FB-2 -- a scenario can assert when something happened**
+2. **[Codex] FB-2 -- a scenario can assert when something happened**
    - Plan: `plans/now/feedback-build.md` -- "FB-2 — a scenario can assert when something happened"
    - Files: `tools/analyze_session.py`, `tools/headless/verdicts.py`, `tests/test_headless_verdicts.py`
    - Check: `analyze()` gains a `milestones` section computed in one pass over the existing per-day snapshots, `verdicts.py`'s `_METRICS` exposes `first_worker_day`, `winter_entered_day`, `winter_survived_day` and `food_secure_day`, a milestone that never happened fails an `lt`/`lte` expectation rather than passing it, a run with no snapshots yields an empty dict rather than a crash, and no `scripts/` file is touched
