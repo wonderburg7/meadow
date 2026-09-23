@@ -63,7 +63,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
 - **AP-3** (`plans/now/alpha-progression-spine.md`) -- needs AP-1, and follows F2s because both rewrite parts of `scripts/hud.gd`.
 - **AP-4** (`plans/now/alpha-progression-spine.md`) -- needs AP-3's panel to put a Buy control on.
-- **SV-2** (`plans/now/named-saves.md`) -- needs SV-1's slot catalogue to list, and follows F2s in `scripts/hud.gd`.
 - **FB-3** (`plans/now/feedback-build.md`) -- needs FB-2's milestone metrics before a pacing table has anything to read.
 - **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is now `plans/now/alpha-progression-spine.md`'s AP-1 to AP-4; step 7 waits for those four to prove tier 1 in a running game.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.

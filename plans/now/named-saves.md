@@ -1,7 +1,7 @@
 # Named saves and rolling checkpoints
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SV-1 -- a save is a named slot, and the run keeps three, queued in the Claude lane | Dependency: SV-2 also waits on F2s (`plans/design/architecture-review.md`) | Verified: 2026-09-22
+Status: active | Owner: Dave / Claude Code | Next: SV-2 -- the Saves window, queued in the Claude lane (SV-1 landed 23 Sep) | Dependency: none -- F2s has merged | Verified: 2026-09-23
 
 **Objective.** `plans/design/product-scope.md` §6.1 makes "named run saves,
 three rolling recovery checkpoints and reliable restore" a closed-alpha
@@ -31,6 +31,38 @@ Verified 22 September 2026 by reading `scripts/save_game.gd`,
 - **`main.gd` already emits `day_changed(day)`**, so a periodic checkpoint has a
   trigger to hang on without inventing a timer.
 
+**SV-1 landed 23 Sep 2026** (`plans/archive/` has its specification). What
+SV-2 builds on: `scripts/save_slots.gd` owns `user://saves/` --
+`list_slots()` (newest first, each entry the index record plus `slug` and
+`last_saved`, with `checkpoints` keyed "1".."3" each holding `day` and
+`saved_at`), `slot_path(slug)`, `checkpoint_path(slug, n)`, `latest_named()`
+and `delete(slug)`. `saving.gd::save_run(run_name)` renames the run when given
+a name; the run's name is `Session.run_name` (default "My colony"), and
+`Session.load_path` is the file a pending load replays. The cog's Load run reads
+`latest_named()` until SV-2 replaces it. Decisions SV-1 took without Dave
+(each the cheapest to reverse):
+
+- **Legacy save is copied, not moved.** `meadow_save.json` is copied byte for
+  byte to `my-colony.json` once, with day unknown (-1) because reading it would
+  mean opening a save; the original stays where it was.
+- **`checkpoint_every_days` is `persist: "none"`, not `"run"`.** `"run"` adds
+  the key to every save's `settings` block, which `verify.ps1`'s D1 source
+  check forbids and which would change save contents -- the one thing this
+  plan promised not to do. It is a float like the other counts in
+  `game_config.gd`, read as an int.
+- **Challenges write no checkpoints.** `tutorial_checkpoint.gd` already rolls
+  them back, and a Challenge's checkpoints would push the player's own run's out
+  of the rotation.
+- **Headless scenario runs use `user://scenario_saves/`**, emptied at boot, so
+  a test run never touches the player's catalogue.
+- **Files beyond the queue line**, all clear of the Codex lane:
+  `scripts/debug_panel.gd` (Load reads the named slot), `scripts/session.gd`
+  (`run_name`, `load_path`), `scripts/game_config.gd` and
+  `scripts/settings_catalogue.gd` (the setting), `scripts/scenario_actions.gd`
+  (`save_run`/`restore_slot` actions and a `save_slot` assertion) and
+  `test_scenarios/sv1_named_saves_test.json`, the acceptance run.
+- Hands-on check filed: C-62.
+
 **What is intended when this plan is done.** A run is saved under a name the
 player chose, the game keeps the last three automatic recovery points behind
 it, and both are reachable from the HUD without instruction.
@@ -40,7 +72,7 @@ it, and both are reachable from the HUD without instruction.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SV-1 | Saving still looks the same, but the run now also keeps three automatic recovery points, and a save carries the name of the run it belongs to. | `scripts/save_slots.gd`, `scripts/saving.gd`, `scripts/main.gd` | yes | medium |
-| SV-2 | A Saves window lists every run and recovery point with its day and time, and loads or deletes one. | `scripts/saves_panel.gd`, `scripts/hud.gd` | no — after SV-1 and F2s | medium |
+| SV-2 | A Saves window lists every run and recovery point with its day and time, and loads or deletes one. | `scripts/saves_panel.gd`, `scripts/hud.gd` | yes | medium |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -163,7 +195,7 @@ Level: medium.
   This is the alpha's single most important reliability claim and a static check
   cannot make it.
 
-```queue-gated
+```queue
 **[Claude] SV-2 -- the Saves window**
 - Plan: `plans/now/named-saves.md` -- "SV-2 — the Saves window"
 - Files: `scripts/saves_panel.gd`, `scripts/hud.gd`
