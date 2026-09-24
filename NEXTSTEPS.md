@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-5 -- the Skills and Saves buttons get icons**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-5 — the Skills and Saves buttons get icons"
-   - Files: `scripts/ui_icon.gd`, `scripts/hud.gd`
-   - Check: `ui_icon.gd` draws `arrow_up` and `save`, the Skills and Saves buttons are built with `_icon_button()` and shrink with the rest of the top bar, and every other window still opens, closes and sits where it did
-   - Proof: `absent: scripts/ui_icon.gd :: arrow_up`
-   - Next after: none -- alpha-progression-spine is complete once AP-4 and AP-5 ship.
-
-2. **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
+1. **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
    - Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
    - Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
    - Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
    - Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
    - Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
+
+2. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
+   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
+   - Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
+   - Proof: `absent: scripts/availability.gd :: skills_window`
+   - Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
 
 ### Codex lane
 
