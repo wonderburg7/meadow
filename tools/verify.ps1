@@ -126,7 +126,7 @@ function Start-LifecycleJob {
     Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root -ScriptBlock {
         param($interpreter, $root)
         Set-Location $root
-        & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated tests.test_alpha_build tests.test_godot_cache tests.test_godot_compile_check
+        & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated tests.test_alpha_build tests.test_godot_cache tests.test_godot_compile_check tests.test_pacing_gates
         if ($LASTEXITCODE -ne 0) {
             throw "workflow unittest modules exited with code $LASTEXITCODE"
         }
