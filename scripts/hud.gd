@@ -764,26 +764,18 @@ func _build_top_right_bar() -> void:
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
 
-	# SV-2. Plain text: ui_icon.gd has no save glyph. Not offered in a
-	# Challenge, which reveals its controls stage by stage and keeps its own
-	# checkpoints (tutorial_checkpoint.gd).
-	saves_button = _style_button(Button.new())
-	saves_button.text = "Saves"
-	saves_button.custom_minimum_size = Vector2(TOP_BAR_BUTTON_WIDTH, TOP_BAR_CONTROL_HEIGHT)
-	saves_button.tooltip_text = "Opens the Saves window."
-	saves_button.focus_mode = Control.FOCUS_NONE
+	# SV-2 (icon AP-5). Not offered in a Challenge, which reveals its
+	# controls stage by stage and keeps its own checkpoints
+	# (tutorial_checkpoint.gd).
+	saves_button = _icon_button("save", "Saves", TOP_BAR_BUTTON_WIDTH, "Opens the Saves window.")
 	saves_button.visible = not (Session.starting_level in [1, 2])
 	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
 	row2.add_child(saves_button)
 
-	# AP-3, just left of View (progression.md 8.5). Plain text for now:
-	# ui_icon.gd has no up-arrow yet. Hidden in Challenges, where 8.5 wants it
-	# hidden, by the same rule as Saves rather than a stage-gate key.
-	skills_button = _style_button(Button.new())
-	skills_button.text = "Skills"
-	skills_button.custom_minimum_size = Vector2(TOP_BAR_BUTTON_WIDTH, TOP_BAR_CONTROL_HEIGHT)
-	skills_button.tooltip_text = "Opens the skill tree."
-	skills_button.focus_mode = Control.FOCUS_NONE
+	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in
+	# Challenges, where 8.5 wants it hidden, by the same rule as Saves rather
+	# than a stage-gate key.
+	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
 	skills_button.visible = not (Session.starting_level in [1, 2])
 	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
 	row2.add_child(skills_button)
