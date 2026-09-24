@@ -1,0 +1,25 @@
+{
+  "cells": 15, "nectar_foragers": 4, "pollen_foragers": 2,
+  "nurses": 2, "builders": 1, "miners": 0,
+  "random_seed": 404,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 3}, "resource": "pollen", "amount": 50},
+    {"do": "settle", "ticks": 2},
+    {"do": "assert", "condition": {"skill_owned": "skill.foraging.tarsal_secretions", "owned": false}},
+    {"do": "save_run", "name": "AP4 before"},
+    {"do": "buy_skill", "skill": "skill.foraging.tarsal_secretions"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.foraging.tarsal_secretions", "owned": true}},
+    {"do": "save_run", "name": "AP4 after"},
+    {"do": "restore_slot", "name": "AP4 before"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.foraging.tarsal_secretions", "owned": false}},
+    {"do": "restore_slot", "name": "AP4 after"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.foraging.tarsal_secretions", "owned": true}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 2}
+}

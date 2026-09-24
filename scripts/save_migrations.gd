@@ -5,8 +5,9 @@ extends RefCounted
 ## Four real FORMAT_VERSION bumps have happened so far (see save_game.gd's
 ## own history comment above FORMAT_VERSION): 1->2 for the hex/entrance
 ## geometry change, 2->3 for fog of war's explored-cells map, 3->4 for
-## explicit-versus-automatic cell designations, and 4->5 for the eight
-## balance fields D1 moved into the save. The first two are
+## explicit-versus-automatic cell designations, 4->5 for the eight
+## balance fields D1 moved into the save, and 5->6 for the skills a run
+## has bought (AP-4). The first two are
 ## already handled defensively at restore time -- saving.gd::_restore_cells
 ## evicts whatever a fresh dig placed on a saved cell's tile (the 1->2
 ## case), and a missing "fog" key already means "nothing explored yet" via
@@ -52,6 +53,9 @@ static func upgrade(data: Dictionary, target_version: int) -> Dictionary:
 			4:
 				out = _migrate_4_to_5(out)
 				version = 5
+			5:
+				out = _migrate_5_to_6(out)
+				version = 6
 			_:
 				return out
 		out["version"] = version
@@ -94,4 +98,16 @@ static func _migrate_4_to_5(data: Dictionary) -> Dictionary:
 		if not settings.has(key):
 			settings[key] = GameConfig.get(key)
 	data["settings"] = settings
+	return data
+
+## 5->6: a save records the skills bought this run (AP-4). An older save
+## was written before skills could be bought, so it owns none -- make that
+## explicit rather than leaving it to a missing-key default at restore.
+static func _migrate_5_to_6(data: Dictionary) -> Dictionary:
+	var skills = data.get("skills", {})
+	if typeof(skills) != TYPE_DICTIONARY:
+		skills = {}
+	if typeof(skills.get("temporary")) != TYPE_ARRAY:
+		skills["temporary"] = []
+	data["skills"] = skills
 	return data
