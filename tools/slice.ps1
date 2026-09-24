@@ -1558,6 +1558,19 @@ function Invoke-SliceArchiveAndRefill {
     }
 }
 
+# Releases the file locks a Godot run holds on the worktree about to be
+# deleted. Only processes whose command line names that worktree are
+# stopped: killing every Godot.exe on the machine ended other sessions'
+# scenario runs mid-flight with exit code 4294967295 and no output, which
+# looked exactly like a native crash (docs/known-pitfalls.md, 24 Sep 2026).
+function Stop-WorktreeGodot {
+    param([string]$Root)
+    $needle = ([System.IO.Path]::GetFullPath($Root)).TrimEnd('\').Replace('\', '/').ToLowerInvariant()
+    Get-CimInstance Win32_Process -Filter "Name LIKE 'Godot%'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -and $_.CommandLine.Replace('\', '/').ToLowerInvariant().Contains($needle) } |
+        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+}
+
 function Invoke-SliceFinish {
     param([string]$PythonPath)
 
@@ -1707,7 +1720,7 @@ function Invoke-SliceFinish {
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "refilled"
     }
 
-    Get-Process -Name "Godot*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Stop-WorktreeGodot -Root $worktreeRoot
 
     # `finish` deletes the worktree it is run from, so it must not depend
     # on returning to it. Push-Location left that path on the location
