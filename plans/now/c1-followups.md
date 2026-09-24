@@ -77,7 +77,7 @@ Same shape as V-4 (21 Sep), which did this for `scenario_actions.gd`.
 - Files: `scripts/hive_cell.gd`
 - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
 - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
-- Next after: none -- C1F-G1 still needs a higher-reasoning session to plan it.
+- Next after: C1F-G1 -- a fixture that guards the target_cell revert, still to be planned by a higher-reasoning session
 ```
 
 ## Known gap C1F-G1 -- the `target_cell = null` revert does not fail fixture A

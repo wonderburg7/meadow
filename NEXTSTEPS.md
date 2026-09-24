@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
    - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
 
+3. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
+   - Plan: `plans/now/c1-followups.md` -- "C1F-3 — hive_cell.gd's first 605 lines get section headers"
+   - Files: `scripts/hive_cell.gd`
+   - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
+   - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
+   - Next after: C1F-G1 -- a fixture that guards the target_cell revert, still to be planned by a higher-reasoning session
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
