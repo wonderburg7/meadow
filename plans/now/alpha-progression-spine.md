@@ -121,7 +121,6 @@ flight, the other tier-1 skill, gets the same proof in AP-8.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-6 | Nothing new on screen: a headless run proves that buying Tarsal secretions mid-run changes how foragers choose flowers. | `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md` | yes | low |
 | AP-7 | No visible change outside Challenges: the Skills and Saves buttons are hidden in a Challenge by the UI gate table, as progression.md 8.5 specifies, not by a hard-coded level check. | `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json` | yes | low |
 | AP-8 | Nothing new on screen: a headless run proves that buying Orientation flight mid-run sends newly hatched foragers on orientation flights. | `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md` | yes | low |
 
@@ -156,39 +155,7 @@ AP-4 shipped 2026-09-24; its specification is `plans/archive/AP-4_2026-09-24.md`
 
 AP-5 shipped 2026-09-24; its specification is `plans/archive/AP-5_2026-09-24.md`.
 
-## AP-6 — a bought skill changes foraging in a headless run
-
-Level: low.
-
-- **Required reading.** This heading. AP-4's result above.
-  `test_scenarios/foraging_features_on_test.json` and
-  `test_scenarios/ap4_buy_skill_save_test.json` for the two shapes this
-  combines.
-- **Files to change.** New `test_scenarios/ap6_bought_tarsal_test.json`, and
-  `plans/design/progression.md` section 11 step 7, which gains one line naming
-  the fixture and its two numbers as the proof that tier 1 works in a run.
-- **Why.** `plans/design/progression.md` section 11 step 7 waits for tier 1 to
-  be *proven in a running game*. AP-2 showed the setting and the skill share
-  one switch, and AP-4 showed a purchase is owned and saved. No run yet shows
-  a purchase changing what bees do.
-- **Requirements.** A fixture with `tarsal_markers_on` left off stocks the
-  comb (`set_cell_contents`), buys Tarsal secretions (`buy_skill`) on day 1,
-  then runs long enough for foragers to revisit flowers. Run it and a copy
-  without the `buy_skill` action at the same seed through
-  `python tools/run_scenario.py ... --seeds 4242 --report brief`. The bought run
-  shows non-zero tarsal marks/rejections and the unbought run shows none.
-  Record both numbers in this plan's closeout note.
-- **Automated acceptance.** The fixture passes, and the two summaries differ
-  as above.
-
-```queue
-**[Claude] AP-6 -- a bought skill changes foraging in a headless run**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
-- Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
-- Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
-- Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
-- Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
-```
+AP-6 shipped 2026-09-24; its specification is `plans/archive/AP-6_2026-09-24.md`.
 
 ## AP-7 — the Skills and Saves buttons are gated through the UI gate table
 
