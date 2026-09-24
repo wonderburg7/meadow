@@ -109,7 +109,7 @@ C-65. Decisions taken without Dave (each the cheapest to reverse):
 | --- | --- | --- | --- | --- |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | yes | high |
 | AP-5 | The Skills and Saves buttons carry icons like the rest of the top bar and shrink with it. | `scripts/ui_icon.gd`, `scripts/hud.gd` | yes | low |
-| AP-6 | Nothing new on screen: a headless run proves that buying Tarsal secretions mid-run changes how foragers choose flowers. | `test_scenarios/ap6_bought_tarsal_test.json` | yes | low |
+| AP-6 | Nothing new on screen: a headless run proves that buying Tarsal secretions mid-run changes how foragers choose flowers. | `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -218,7 +218,9 @@ Level: low.
   `test_scenarios/foraging_features_on_test.json` and
   `test_scenarios/ap4_buy_skill_save_test.json` for the two shapes this
   combines.
-- **Files to change.** New `test_scenarios/ap6_bought_tarsal_test.json` only.
+- **Files to change.** New `test_scenarios/ap6_bought_tarsal_test.json`, and
+  `plans/design/progression.md` section 11 step 7, which gains one line naming
+  the fixture and its two numbers as the proof that tier 1 works in a run.
 - **Why.** `plans/design/progression.md` section 11 step 7 waits for tier 1 to
   be *proven in a running game*. AP-2 showed the setting and the skill share
   one switch, and AP-4 showed a purchase is owned and saved. No run yet shows
@@ -236,9 +238,9 @@ Level: low.
 ```queue
 **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
 - Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
-- Files: `test_scenarios/ap6_bought_tarsal_test.json`
+- Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
 - Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
-- Proof: `absent: plans/now/alpha-progression-spine.md :: AP-6 landed`
+- Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
 - Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
 ```
 
