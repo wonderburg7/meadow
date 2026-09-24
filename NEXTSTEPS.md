@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
-   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
-   - Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
-   - Proof: `absent: scripts/availability.gd :: skills_window`
-   - Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
-
-2. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
+1. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
    - Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
    - Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
    - Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
    - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
    - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
 
-3. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
+2. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
    - Plan: `plans/now/c1-followups.md` -- "C1F-3 — hive_cell.gd's first 605 lines get section headers"
    - Files: `scripts/hive_cell.gd`
    - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
