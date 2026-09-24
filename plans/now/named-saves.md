@@ -1,7 +1,7 @@
 # Named saves and rolling checkpoints
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active -- SV-1 landed 23 Sep and SV-2 24 Sep 2026 | Owner: Dave / Claude Code | Next: SV-3 -- the cog's Load run opens the Saves window, queued in the Claude lane | Dependency: none | Verified: 2026-09-24
+Status: complete -- SV-1 landed 23 Sep, SV-2 and SV-3 24 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups: the Saves button's icon is filed as `plans/now/alpha-progression-spine.md` AP-5; whether game hotkeys fire while typing a run name is covered by C-63 | Dependency: none | Verified: 2026-09-24
 
 **Objective.** `plans/design/product-scope.md` §6.1 makes "named run saves,
 three rolling recovery checkpoints and reliable restore" a closed-alpha
@@ -90,6 +90,12 @@ Follow-ups: the cog's **Load run** still loads the newest named save rather
 than opening this window -- now SV-3. Whether game hotkeys fire while the name
 box has focus is unchecked; C-63's typing step would show it.
 
+**SV-3 landed 24 Sep 2026.** In a sandbox run the cog's **Load run** closes
+the settings window and opens the Saves window. In a Challenge, or with the
+main menu showing (it would sit on top of the Saves window), it still loads the
+newest named save. `test_scenarios/sv2_saves_window_test.json` still passes.
+C-63 now includes the Load run step.
+
 **What is intended when this plan is done.** A run is saved under a name the
 player chose, the game keeps the last three automatic recovery points behind
 it, and both are reachable from the HUD without instruction.
@@ -98,7 +104,6 @@ it, and both are reachable from the HUD without instruction.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SV-3 | The settings cog's **Load run** opens the Saves window, so there is one way to choose what to load. | `scripts/debug_panel.gd` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -121,35 +126,7 @@ SV-1 shipped 2026-09-23; its specification is `plans/archive/SV-1_2026-09-23.md`
 
 SV-2 shipped 2026-09-24; its specification is `plans/archive/SV-2_2026-09-24.md`.
 
-## SV-3 — the cog's Load run opens the Saves window
-
-Level: low.
-
-- **Required reading.** This heading. `python tools/func.py scripts/debug_panel.gd _on_load_pressed _on_save_pressed`.
-- **Files to change.** `scripts/debug_panel.gd`.
-- **Why.** Since SV-1 the cog's **Load run** loads whichever named save was
-  written last (`SaveSlots.latest_named()`), a stopgap its own comment names.
-  Now that SV-2's Saves window lists every run and checkpoint, two Load
-  buttons that choose differently would confuse a tester.
-- **Requirements.** `_on_load_pressed` closes the settings panel and opens
-  `main.hud.saves_panel` through `main.year_winter._toggle_panel`, the same
-  way the top-bar **Saves** button does, instead of reloading. **Save run**
-  keeps saving under the run's current name. The `SaveSlots` preload goes if
-  nothing else in the file uses it.
-- **Invariants.** Outside a Challenge the window opens where the top-bar button
-  opens it. In a Challenge, where the Saves button is hidden, **Load run**
-  behaves as it does today rather than revealing the window early.
-- **Automated acceptance.** `tools/godot_compile_check.py`, and
-  `test_scenarios/sv2_saves_window_test.json` still passes.
-
-```queue
-**[Claude] SV-3 -- the cog's Load run opens the Saves window**
-- Plan: `plans/now/named-saves.md` -- "SV-3 — the cog's Load run opens the Saves window"
-- Files: `scripts/debug_panel.gd`
-- Check: outside a Challenge the cog's Load run opens the Saves window instead of reloading the newest save, inside a Challenge it behaves as before, and Save run is unchanged
-- Proof: `absent: scripts/debug_panel.gd :: saves_panel`
-- Next after: none -- named-saves is complete once SV-3 ships.
-```
+SV-3 shipped 2026-09-24; its specification is `plans/archive/SV-3_2026-09-24.md`.
 
 ## Read on demand
 

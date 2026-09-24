@@ -848,7 +848,7 @@ The comb as a whole: cells, navigation, finding a cell.
 1048 func announce() -> void
 ```
 
-## debug_panel.gd (1,021 lines)
+## debug_panel.gd (1,033 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -888,29 +888,29 @@ restart.
 649  func set_toggle(key: String, value: bool) -> void
 654  func _on_save_pressed() -> void
 665  func _on_load_pressed() -> void
-683  # --- showing and hiding the panel ---------------------------------
-684  func _toggle_panel() -> void
-698  func _apply_layer_for_context() -> void
-703  # --- building a settings row --------------------------------------
-704  func _make_row(entry: Dictionary) -> Control
-747  func _make_control_slot() -> HBoxContainer
-756  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-786  func _make_toggle_row(entry: Dictionary) -> Control
-857  func _make_options_row(entry: Dictionary) -> Control
-890  func _option_display(entry: Dictionary, value) -> String
-894  func _cycle_option(entry: Dictionary, direction: int) -> void
-905  # --- prerequisite cascades ----------------------------------------
-909  func _cascade_prerequisites_on(key: String) -> void
-923  func _cascade_dependents_off(key: String) -> void
-931  func _cascade_mutual_exclusion(key: String) -> void
-936  # --- star rows and value editing ----------------------------------
-941  func _make_star_row(entry: Dictionary) -> Control
-982  func _adjust(entry: Dictionary, delta: float) -> void
-996  func _format_value(v) -> String
-1003 # --- restart and main menu ----------------------------------------
-1004 func _on_restart_pressed() -> void
-1009 func _on_main_menu_pressed() -> void
-1017 func _restart() -> void
+695  # --- showing and hiding the panel ---------------------------------
+696  func _toggle_panel() -> void
+710  func _apply_layer_for_context() -> void
+715  # --- building a settings row --------------------------------------
+716  func _make_row(entry: Dictionary) -> Control
+759  func _make_control_slot() -> HBoxContainer
+768  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+798  func _make_toggle_row(entry: Dictionary) -> Control
+869  func _make_options_row(entry: Dictionary) -> Control
+902  func _option_display(entry: Dictionary, value) -> String
+906  func _cycle_option(entry: Dictionary, direction: int) -> void
+917  # --- prerequisite cascades ----------------------------------------
+921  func _cascade_prerequisites_on(key: String) -> void
+935  func _cascade_dependents_off(key: String) -> void
+943  func _cascade_mutual_exclusion(key: String) -> void
+948  # --- star rows and value editing ----------------------------------
+953  func _make_star_row(entry: Dictionary) -> Control
+994  func _adjust(entry: Dictionary, delta: float) -> void
+1008 func _format_value(v) -> String
+1015 # --- restart and main menu ----------------------------------------
+1016 func _on_restart_pressed() -> void
+1021 func _on_main_menu_pressed() -> void
+1029 func _restart() -> void
 ```
 
 ## game_config.gd (891 lines)

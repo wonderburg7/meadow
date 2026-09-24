@@ -82,6 +82,7 @@ to reverse):
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | yes | high |
+| AP-5 | The Skills and Saves buttons carry icons like the rest of the top bar and shrink with it. | `scripts/ui_icon.gd`, `scripts/hud.gd` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -147,6 +148,39 @@ Level: high.
 - Check: an affordable node's Buy control spends real colony stores through `Progression.purchase`, the forager behaviour changes on the next read, `FORMAT_VERSION` rises by one with a migration that reads an older save as owning nothing, and a save written before the slice still loads and plays
 - Proof: `absent: scripts/save_game.gd :: skills`
 - Next after: none -- alpha-progression-spine is complete once AP-4 ships.
+```
+
+## AP-5 — the Skills and Saves buttons get icons
+
+Level: low.
+
+- **Required reading.** This heading. `scripts/ui_icon.gd` whole (it is
+  short). `python tools/func.py scripts/hud.gd _icon_button`, and the `saves_button`
+  and `skills_button` blocks in `hud.gd`'s top bar (grep for them).
+- **Files to change.** `scripts/ui_icon.gd`, `scripts/hud.gd`.
+- **Why.** `plans/design/progression.md` 8.5 asks for the Skills button to be
+  built with `_icon_button()` and a new up-arrow shape, like every other button
+  in that row. AP-3 shipped it as plain text because `ui_icon.gd` was outside
+  its files. SV-2's Saves button is the same case, with no save glyph.
+- **Requirements.** `ui_icon.gd` gains `"arrow_up"` and `"save"` shapes in the
+  same procedural style as its existing five, drawn in `text_primary`. Both
+  buttons are rebuilt with `_icon_button()`, keeping their labels, tooltips,
+  Challenge hiding and handlers, so they join `_labeled_buttons` and shrink to
+  icon-only width with the rest of the row.
+- **Invariants.** Every other window opens, closes and sits where it did (C-61),
+  and `tests/test_layout_regression.py` stays green.
+- **Automated acceptance.** `tools/godot_compile_check.py`,
+  `tests/test_layout_regression.py`, and
+  `test_scenarios/ap3_skill_tree_window_test.json` and
+  `sv2_saves_window_test.json` still pass.
+
+```queue
+**[Claude] AP-5 -- the Skills and Saves buttons get icons**
+- Plan: `plans/now/alpha-progression-spine.md` -- "AP-5 — the Skills and Saves buttons get icons"
+- Files: `scripts/ui_icon.gd`, `scripts/hud.gd`
+- Check: `ui_icon.gd` draws `arrow_up` and `save`, the Skills and Saves buttons are built with `_icon_button()` and shrink with the rest of the top bar, and every other window still opens, closes and sits where it did
+- Proof: `absent: scripts/ui_icon.gd :: arrow_up`
+- Next after: none -- alpha-progression-spine is complete once AP-4 and AP-5 ship.
 ```
 
 ## Read on demand
