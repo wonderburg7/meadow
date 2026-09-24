@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-4 -- buying a skill, and the run remembering it**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-4 — buying a skill, and the run remembering it"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`
-   - Check: an affordable node's Buy control spends real colony stores through `Progression.purchase`, the forager behaviour changes on the next read, `FORMAT_VERSION` rises by one with a migration that reads an older save as owning nothing, and a save written before the slice still loads and plays
-   - Proof: `absent: scripts/save_game.gd :: skills`
-   - Next after: none -- alpha-progression-spine is complete once AP-4 ships.
-
-2. **[Claude] AP-5 -- the Skills and Saves buttons get icons**
+1. **[Claude] AP-5 -- the Skills and Saves buttons get icons**
    - Plan: `plans/now/alpha-progression-spine.md` -- "AP-5 — the Skills and Saves buttons get icons"
    - Files: `scripts/ui_icon.gd`, `scripts/hud.gd`
    - Check: `ui_icon.gd` draws `arrow_up` and `save`, the Skills and Saves buttons are built with `_icon_button()` and shrink with the rest of the top bar, and every other window still opens, closes and sits where it did
    - Proof: `absent: scripts/ui_icon.gd :: arrow_up`
    - Next after: none -- alpha-progression-spine is complete once AP-4 and AP-5 ship.
+
+2. **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
+   - Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
+   - Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
+   - Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
+   - Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
 
 ### Codex lane
 
