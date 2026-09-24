@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AP-4` (`claude/AP-4`) | Claude | buying a skill, and the run remembering it | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-4 — buying a skill, and the run remembering it |
