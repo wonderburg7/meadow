@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-4 -- buying a skill, and the run remembering it, queued in the Claude lane (AP-3 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: AP-5 -- the Skills and Saves buttons get icons, then AP-6 -- a bought skill changes foraging in a headless run, both queued in the Claude lane (AP-4 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -77,12 +77,39 @@ to reverse):
 - **Undiscovered skills are drawn blocked ("not discovered yet")**, not hidden
   as 8.4 says. With campaign discovery off, every skill is known today.
 
+**AP-4 landed 24 Sep 2026.** An affordable skill in the Skills window has a
+**Buy** button (`skill_tree_panel.gd::buy_skill`). The save records the run's
+bought skills as `"skills": {"temporary": [...]}` at `FORMAT_VERSION` 6.
+`save_migrations.gd::_migrate_5_to_6` reads an older save as owning none,
+and `saving.gd::_restore` calls `SaveGame.restore_skills`, which makes the run
+own exactly what the save bought. A purchase and a restore both call
+`Availability.invalidate()`. Proven by
+`test_scenarios/ap4_buy_skill_save_test.json` (buy, save, reload the
+pre-purchase save and it is not owned, reload the post-purchase save and it
+is) and `tests/test_save_migrations.py`'s new v5→v6 cases. Hands-on check:
+C-65. Decisions taken without Dave (each the cheapest to reverse):
+
+- **Who owns the stores (the escalation): `hive.gd`, as before.** Nothing new
+  owns a stores collection. `buy_skill` snapshots what `hive.take()` can reach
+  (withdrawable cells, ripe honey only), lets `Progression.purchase` check and
+  deduct against that snapshot, then takes exactly the deducted amounts from
+  the comb. The dictionary lives for one purchase. If a later slice wants a
+  standing collection, it belongs on `hive.gd`.
+- **Restoring replaces ownership, not adds to it.** `restore_skills` calls
+  `end_run()` first, so a Challenge rollback (`tutorial_checkpoint.gd`) also
+  drops skills bought after its checkpoint. That clears adaptations too; none
+  can be chosen in play yet.
+- **Files beyond the queue line:** `scripts/saving.gd` (one call in
+  `_restore`), `scripts/scenario_actions.gd` (`buy_skill` action and
+  `skill_owned` assertion), `tests/test_save_migrations.py` and the fixture.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | yes | high |
 | AP-5 | The Skills and Saves buttons carry icons like the rest of the top bar and shrink with it. | `scripts/ui_icon.gd`, `scripts/hud.gd` | yes | low |
+| AP-6 | Nothing new on screen: a headless run proves that buying Tarsal secretions mid-run changes how foragers choose flowers. | `test_scenarios/ap6_bought_tarsal_test.json` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -181,6 +208,38 @@ Level: low.
 - Check: `ui_icon.gd` draws `arrow_up` and `save`, the Skills and Saves buttons are built with `_icon_button()` and shrink with the rest of the top bar, and every other window still opens, closes and sits where it did
 - Proof: `absent: scripts/ui_icon.gd :: arrow_up`
 - Next after: none -- alpha-progression-spine is complete once AP-4 and AP-5 ship.
+```
+
+## AP-6 — a bought skill changes foraging in a headless run
+
+Level: low.
+
+- **Required reading.** This heading. AP-4's result above.
+  `test_scenarios/foraging_features_on_test.json` and
+  `test_scenarios/ap4_buy_skill_save_test.json` for the two shapes this
+  combines.
+- **Files to change.** New `test_scenarios/ap6_bought_tarsal_test.json` only.
+- **Why.** `plans/design/progression.md` section 11 step 7 waits for tier 1 to
+  be *proven in a running game*. AP-2 showed the setting and the skill share
+  one switch, and AP-4 showed a purchase is owned and saved. No run yet shows
+  a purchase changing what bees do.
+- **Requirements.** A fixture with `tarsal_markers_on` left off stocks the
+  comb (`set_cell_contents`), buys Tarsal secretions (`buy_skill`) on day 1,
+  then runs long enough for foragers to revisit flowers. Run it and a copy
+  without the `buy_skill` action at the same seed through
+  `python tools/run_scenario.py ... --seeds 4242 --report brief`. The bought run
+  shows non-zero tarsal marks/rejections and the unbought run shows none.
+  Record both numbers in this plan's closeout note.
+- **Automated acceptance.** The fixture passes, and the two summaries differ
+  as above.
+
+```queue
+**[Claude] AP-6 -- a bought skill changes foraging in a headless run**
+- Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
+- Files: `test_scenarios/ap6_bought_tarsal_test.json`
+- Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
+- Proof: `absent: plans/now/alpha-progression-spine.md :: AP-6 landed`
+- Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
 ```
 
 ## Read on demand

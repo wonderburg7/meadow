@@ -5,7 +5,8 @@ extends GamePanel
 ## from skills.gd, and the connect tiles between them come from
 ## Shapes.hex_line. Each skill is drawn owned, affordable or blocked, from
 ## Session.progression; a blocked skill names the reason
-## Progression.purchase_blocker gives. Buying comes in AP-4.
+## Progression.purchase_blocker gives. An affordable skill's Buy button
+## (AP-4) spends the colony's real stores -- see _buy for who owns them.
 ##
 ## Every tile's state is resolved once when the window opens, into `tiles`,
 ## and the grid draws from that. Nothing here runs per frame, and a closed
@@ -17,6 +18,17 @@ const Skills = preload("res://scripts/skills.gd")
 const Progression = preload("res://scripts/progression.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Resources = preload("res://scripts/resources.gd")
+const Availability = preload("res://scripts/availability.gd")
+
+## skills.gd prices in these keys; the comb holds them under these content
+## types. Bee bread and pollinator points are not held anywhere yet, so a
+## skill costing either cannot be afforded.
+const STORE_CONTENT := {
+	Skills.NECTAR: Resources.NECTAR,
+	Skills.POLLEN: Resources.POLLEN,
+	Skills.HONEY: Resources.HONEY,
+	Skills.ROYAL_JELLY: Resources.JELLY,
+}
 
 ## shapes.gd's axial direction order, which is also skills.gd's SECTORS
 ## order (progression.md 8.2).
@@ -152,20 +164,70 @@ func _rebuild_list(tiles: Dictionary) -> void:
 			var line := "    %s (tier %d) — %s" % [skill.name, int(skill.tier), _state_text(tile.get("state", STATE_BLOCKED), tile.get("reason", ""))]
 			var label := _label(line, "Small")
 			label.add_theme_color_override("font_color", _state_colour(tile.get("state", STATE_BLOCKED)))
-			list_box.add_child(label)
+			if tile.get("state", "") != STATE_AFFORDABLE:
+				list_box.add_child(label)
+				continue
+			var row := HBoxContainer.new()
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(label)
+			var buy := Button.new()
+			buy.text = "Buy"
+			buy.focus_mode = Control.FOCUS_NONE
+			for button_state in ["normal", "hover", "pressed", "focus", "disabled"]:
+				buy.add_theme_stylebox_override(button_state, UiTheme.button_stylebox(button_state))
+			var skill_id: String = skill.id
+			buy.pressed.connect(func(): buy_skill(skill_id))
+			row.add_child(buy)
+			list_box.add_child(row)
 
-## The colony's spendable stores, keyed the way skills.gd prices things.
-## A snapshot for this window only: who owns a spendable-stores collection
-## is AP-4's question (see its Escalation), and this answers nothing for it.
+## What the colony could spend right now, keyed the way skills.gd prices
+## things: every cell's contents that hive.take() would actually hand over
+## -- not sealed or filling towards a seal, and honey only once ripe. A
+## snapshot, taken on open and per purchase; the comb stays the owner.
 func _stores() -> Dictionary:
+	var stores: Dictionary = {}
 	if main == null or main.hive == null:
-		return {}
-	return {
-		Skills.NECTAR: main.hive.total(Resources.NECTAR),
-		Skills.POLLEN: main.hive.total(Resources.POLLEN),
-		Skills.HONEY: main.hive.total_honey(),
-		Skills.ROYAL_JELLY: main.hive.total(Resources.JELLY),
-	}
+		return stores
+	for cell in main.hive.cells:
+		if not is_instance_valid(cell) or not cell.can_withdraw():
+			continue
+		for key in STORE_CONTENT:
+			if cell.content_type != STORE_CONTENT[key]:
+				continue
+			if key == Skills.HONEY and not cell.is_ripe_honey():
+				continue
+			stores[key] = float(stores.get(key, 0.0)) + cell.amount
+	return stores
+
+## AP-4: buys one skill. Who owns the stores (the plan's escalation): the
+## comb does, as it always has -- hive.gd's cells hold them and hive.take()
+## is how anything removes them. No second owner is invented here.
+## Progression.purchase checks and deducts against a snapshot of what is
+## withdrawable, and exactly what it deducted is then taken from the comb.
+## Because the snapshot counts only what take() can reach, the take cannot
+## fall short; if it ever did, the shortfall is reported rather than hidden.
+func buy_skill(skill_id: String) -> bool:
+	var progression = Session.progression
+	if progression == null:
+		return false
+	var before := _stores()
+	var stores := before.duplicate()
+	if not progression.purchase(skill_id, stores):
+		main.hud.show_warning("The colony cannot buy that right now.")
+		_rebuild()
+		return false
+	for key in before:
+		var spent: float = float(before[key]) - float(stores.get(key, 0.0))
+		if spent <= 0.0:
+			continue
+		var taken: float = main.hive.take(STORE_CONTENT[key], spent)
+		if taken + 0.001 < spent:
+			push_warning("Skill %s: took %.1f of %.1f %s from the comb." % [skill_id, taken, spent, key])
+	# A skill can gate work (G3): bees ask again rather than keep a stale answer.
+	Availability.invalidate()
+	main.hud.show_warning("%s bought." % Skills.label_for(skill_id))
+	_rebuild()
+	return true
 
 # --- text -----------------------------------------------------------
 

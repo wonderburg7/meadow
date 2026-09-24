@@ -18,9 +18,16 @@ extends RefCounted
 
 const SaveMigrations = preload("res://scripts/save_migrations.gd")
 const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
+const Availability = preload("res://scripts/availability.gd")
 
 const SAVE_PATH := "user://meadow_save.json"
-## Bumped 1 Sep 2026: distinguish explicit cell designations from automatic
+## Bumped 24 Sep 2026 (AP-4, plans/now/alpha-progression-spine.md): a save
+## records the skills bought this run, under "skills". An older save has no
+## such block; save_migrations.gd's _migrate_5_to_6 reads it as owning
+## nothing, which is exactly what a save from before skills could be bought
+## means.
+##
+## Previously bumped 1 Sep 2026: distinguish explicit cell designations from automatic
 ## first-use assignments, so an automatically assigned cell returns to the
 ## neutral pool when fully emptied.
 ##
@@ -41,7 +48,7 @@ const SAVE_PATH := "user://meadow_save.json"
 ## save simply has none of them in its "settings" dict; the migration
 ## defaults each to GameConfig's own value rather than leaving that to be
 ## discovered as a missing-key default at restore time.
-const FORMAT_VERSION := 5
+const FORMAT_VERSION := 6
 
 ## Every GameConfig field worth carrying across, derived from
 ## settings_catalogue.gd's TUNABLES rather than hand-maintained here --
@@ -112,6 +119,7 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		"bees": _bees_data(world),
 		"flowers": _flowers_data(world),
 		"fog": world.fog_of_war.explored_list(),
+		"skills": _skills_data(),
 	}
 
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -330,6 +338,31 @@ static func read(path: String = SAVE_PATH) -> Dictionary:
 	# ever sees it -- a no-op for a save that's already current (Slice 5,
 	# CHATGPT_EFFICIENCY_IMPLEMENTATION_PLAN.md).
 	return SaveMigrations.upgrade(parsed, FORMAT_VERSION)
+
+## AP-4: the skills bought this run. Only temporary ownership is saved --
+## branch-tier progress is worked out from what is owned, and mastered
+## ownership, adaptations, milestones and familiarity are later steps'
+## (progression.md section 11), so nothing is written for them.
+static func _skills_data() -> Dictionary:
+	var bought: Array = []
+	var progression = Session.progression
+	if progression != null:
+		for skill_id in progression.owned_ids():
+			if progression.is_temporary(skill_id):
+				bought.append(skill_id)
+	return {"temporary": bought}
+
+## Called by saving.gd::_restore once the world is rebuilt: the run owns
+## exactly what the save says it bought, no more. end_run() drops whatever
+## this run held before the replay, which is what a Challenge rollback
+## wants too. Availability's cached action answers are asked again after.
+static func restore_skills(data: Dictionary, progression) -> void:
+	if progression == null:
+		return
+	progression.end_run()
+	for skill_id in data.get("skills", {}).get("temporary", []):
+		progression.grant_temporary(str(skill_id))
+	Availability.invalidate()
 
 ## Puts the saved tuning values back before anything is built, so the
 ## world comes out the same shape it was saved in.
