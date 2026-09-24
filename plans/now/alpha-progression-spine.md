@@ -107,7 +107,6 @@ C-65. Decisions taken without Dave (each the cheapest to reverse):
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-4 | The player buys Tarsal secretions or Orientation flight, the forager behaviour changes, and the purchase survives a reload. | `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd` | yes | high |
 | AP-5 | The Skills and Saves buttons carry icons like the rest of the top bar and shrink with it. | `scripts/ui_icon.gd`, `scripts/hud.gd` | yes | low |
 | AP-6 | Nothing new on screen: a headless run proves that buying Tarsal secretions mid-run changes how foragers choose flowers. | `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md` | yes | low |
 
@@ -138,44 +137,7 @@ AP-2 shipped 2026-09-24; its specification is `plans/archive/AP-2_2026-09-24.md`
 
 AP-3 shipped 2026-09-24; its specification is `plans/archive/AP-3_2026-09-24.md`.
 
-## AP-4 — buying a skill, and the run remembering it
-
-Level: high.
-
-- **Required reading.** This heading. AP-3's result.
-  `python tools/func.py scripts/progression.gd purchase purchase_blocker can_afford`.
-  `scripts/save_migrations.gd` whole. `plans/design/progression.md` section 9.3.
-- **Files to change.** `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`,
-  `scripts/save_migrations.gd`.
-- **Requirements.** A Buy control on an affordable node calls
-  `Progression.purchase`, spending the colony's real stores. The save gains
-  temporary ownership and branch-tier progress only. `FORMAT_VERSION` rises by
-  one and `save_migrations.gd` reads an older save as "no skills owned", which
-  is exactly what an older save means. After a successful purchase, call
-  `Availability.invalidate()` so a bee's cached `action_query` answers are
-  asked again (G3; no action row is skill-gated yet, so forgetting it breaks
-  nothing today and the first skill-gated row silently).
-- **Invariants.** A save written before this slice loads and plays. Mastered
-  ownership, chosen adaptations, milestone IDs and per-bee familiarity are
-  **out of scope** — progression.md section 11 step 10 owns those and step 9's
-  meta tree is post-alpha. Do not write fields nothing reads.
-- **Escalation.** The stores dictionary `purchase` wants does not exist as an
-  owned collection anywhere yet — section 11 says inventing an owner for it
-  before this step would have pre-empted it. Name what you make the owner and
-  why before writing it; if the honest answer is that it belongs to `hive.gd`
-  rather than the panel, stop and say so.
-- **Automated acceptance.** `tests/test_save_migrations.py` gains a case for the
-  new version. A scenario buys a node and a second run loads the save and still
-  owns it.
-
-```queue
-**[Claude] AP-4 -- buying a skill, and the run remembering it**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-4 — buying a skill, and the run remembering it"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`
-- Check: an affordable node's Buy control spends real colony stores through `Progression.purchase`, the forager behaviour changes on the next read, `FORMAT_VERSION` rises by one with a migration that reads an older save as owning nothing, and a save written before the slice still loads and plays
-- Proof: `absent: scripts/save_game.gd :: skills`
-- Next after: none -- alpha-progression-spine is complete once AP-4 ships.
-```
+AP-4 shipped 2026-09-24; its specification is `plans/archive/AP-4_2026-09-24.md`.
 
 ## AP-5 — the Skills and Saves buttons get icons
 
