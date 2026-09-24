@@ -6,7 +6,8 @@ extends Control
 ## gallerin_panel.gd uses for Dr Gallerin's body.
 ##
 ## Usage: var icon := UiIcon.new()
-##        icon.shape = "bee"   # "bee", "hex", "flower", "hive" or "snow"
+##        icon.shape = "bee"   # "bee", "hex", "flower", "hive", "snow",
+##                             # "arrow_up" or "save"
 ##        icon.custom_minimum_size = Vector2(16, 16)
 
 const Shapes = preload("res://scripts/shapes.gd")
@@ -49,3 +50,18 @@ func _draw() -> void:
 				var angle: float = PI / 3.0 * i
 				var dir: Vector2 = Vector2(cos(angle), sin(angle)) * size.x * 0.38
 				draw_line(c - dir, c + dir, col, 2.0)
+		"arrow_up":
+			# The Skills button (progression.md 8.5): a head over a stem.
+			draw_colored_polygon(PackedVector2Array([
+				c + Vector2(0.0, -size.y * 0.40),
+				c + Vector2(size.x * 0.34, 0.0),
+				c + Vector2(-size.x * 0.34, 0.0),
+			]), col)
+			draw_rect(Rect2(c + Vector2(-size.x * 0.12, -size.y * 0.02), Vector2(size.x * 0.24, size.y * 0.40)), col)
+		"save":
+			# The Saves button: a floppy disk -- body, label slot, shutter.
+			var body := Rect2(c - size * 0.38, size * 0.76)
+			draw_rect(body, col)
+			var hole := UiTheme.color("panel_bg")
+			draw_rect(Rect2(body.position + Vector2(size.x * 0.14, size.y * 0.06), Vector2(size.x * 0.40, size.y * 0.22)), hole)
+			draw_rect(Rect2(body.position + Vector2(size.x * 0.12, size.y * 0.44), Vector2(size.x * 0.52, size.y * 0.26)), hole)
