@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FB-3` (`codex/FB-3`) | Codex | the pacing gates become one command | Codex | in progress | none | `plans/now/feedback-build.md` FB-3 — the pacing gates become one command |
+| `.worktrees/AP-8` (`claude/AP-8`) | Claude | a bought Orientation flight changes new foragers in a headless run | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-8 — a bought Orientation flight changes new foragers in a headless run |
