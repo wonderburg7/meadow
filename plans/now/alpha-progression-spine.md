@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-7 -- the Skills and Saves buttons are gated through the UI gate table, then AP-8 -- a bought Orientation flight changes new foragers in a headless run, both queued in the Claude lane (AP-6 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: AP-8 -- a bought Orientation flight changes new foragers in a headless run, queued in the Claude lane (AP-7 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -116,6 +116,14 @@ rejections; the same fixture without `buy_skill` records 0 and 0. So a bought
 tier-1 skill changes what bees do in a running game, and
 `plans/design/progression.md` section 11 step 6 now says so. Orientation
 flight, the other tier-1 skill, gets the same proof in AP-8.
+
+**AP-7 landed 24 Sep 2026.** `UI_GATES` has `skills_window` and
+`saves_window` rows, and `hud.gd` registers both buttons with
+`_register_gated_control` instead of checking `Session.starting_level`. No
+stage unlocks either key, so both buttons are hidden throughout a Challenge and
+shown elsewhere. `f2s_challenge2_gate_table_test.json` now asserts both are
+hidden at 2.1 and 2.9. The Challenge 1 and window fixtures and
+`tests/test_layout_regression.py` pass unchanged.
 
 ## Open slices at a glance
 
