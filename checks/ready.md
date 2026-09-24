@@ -26,4 +26,5 @@ that cannot run to `checks/blocked.md`, naming its unblocker.
 - [C-61 -- every HUD window still opens, closes and sits where it did](ready/C-61.md)
 - [C-62 -- named saves keep your colony](ready/C-62.md)
 - [C-63 -- a loaded checkpoint puts the colony back where it was](ready/C-63.md)
+- [C-64 -- the skill tree reads in every theme and at the largest text](ready/C-64.md)
 - [C-7 -- the queen forages unattended once she is given the job](ready/C-7.md)

@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-3 -- the skill tree panel**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-3 — the skill tree panel"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`
-   - Check: a `GamePanel` subclass keyed `skills` draws the six sectors at their authored axial coordinates with `Shapes.hex_line` connect tiles, shows each node as owned/affordable/blocked with `purchase_blocker`'s reason, opens from a HUD Skills button, and takes its rectangle from `ui_layout.gd`; every other window still opens, closes and sits where it did
-   - Proof: `absent: scripts/hud.gd :: skill_tree_panel`
-   - Next after: AP-4 -- buying a skill, and the run remembering it.
-
-2. **[Claude] SV-3 -- the cog's Load run opens the Saves window**
+1. **[Claude] SV-3 -- the cog's Load run opens the Saves window**
    - Plan: `plans/now/named-saves.md` -- "SV-3 — the cog's Load run opens the Saves window"
    - Files: `scripts/debug_panel.gd`
    - Check: outside a Challenge the cog's Load run opens the Saves window instead of reloading the newest save, inside a Challenge it behaves as before, and Save run is unchanged
    - Proof: `absent: scripts/debug_panel.gd :: saves_panel`
    - Next after: none -- named-saves is complete once SV-3 ships.
+
+2. **[Claude] AP-4 -- buying a skill, and the run remembering it**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-4 — buying a skill, and the run remembering it"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`
+   - Check: an affordable node's Buy control spends real colony stores through `Progression.purchase`, the forager behaviour changes on the next read, `FORMAT_VERSION` rises by one with a migration that reads an older save as owning nothing, and a save written before the slice still loads and plays
+   - Proof: `absent: scripts/save_game.gd :: skills`
+   - Next after: none -- alpha-progression-spine is complete once AP-4 ships.
 
 ### Codex lane
 
@@ -54,7 +54,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **AP-4** (`plans/now/alpha-progression-spine.md`) -- needs AP-3's panel to put a Buy control on.
 - **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is now `plans/now/alpha-progression-spine.md`'s AP-1 to AP-4; step 7 waits for those four to prove tier 1 in a running game.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.

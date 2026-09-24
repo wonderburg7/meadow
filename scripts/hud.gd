@@ -17,6 +17,7 @@ const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const SavesPanel = preload("res://scripts/saves_panel.gd")
+const SkillTreePanel = preload("res://scripts/skill_tree_panel.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -529,6 +530,9 @@ var _pending_discard_action: Callable = Callable()
 ## that opens it; parented to main like every other GamePanel.
 var saves_panel: CanvasLayer
 var saves_button: Button
+## The read-only skill tree (AP-3), created and opened from here the same way.
+var skill_tree_panel: CanvasLayer
+var skills_button: Button
 var pending_type: String = ""
 
 func _ready() -> void:
@@ -537,6 +541,8 @@ func _ready() -> void:
 	# Deferred: main is still adding its own children while this runs.
 	saves_panel = SavesPanel.new()
 	main.add_child.call_deferred(saves_panel)
+	skill_tree_panel = SkillTreePanel.new()
+	main.add_child.call_deferred(skill_tree_panel)
 	# So the settings window can find the corner readout to refresh it when
 	# a star is toggled, without either script holding a reference to the
 	# other.
@@ -769,6 +775,18 @@ func _build_top_right_bar() -> void:
 	saves_button.visible = not (Session.starting_level in [1, 2])
 	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
 	row2.add_child(saves_button)
+
+	# AP-3, just left of View (progression.md 8.5). Plain text for now:
+	# ui_icon.gd has no up-arrow yet. Hidden in Challenges, where 8.5 wants it
+	# hidden, by the same rule as Saves rather than a stage-gate key.
+	skills_button = _style_button(Button.new())
+	skills_button.text = "Skills"
+	skills_button.custom_minimum_size = Vector2(TOP_BAR_BUTTON_WIDTH, TOP_BAR_CONTROL_HEIGHT)
+	skills_button.tooltip_text = "Opens the skill tree."
+	skills_button.focus_mode = Control.FOCUS_NONE
+	skills_button.visible = not (Session.starting_level in [1, 2])
+	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
+	row2.add_child(skills_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
