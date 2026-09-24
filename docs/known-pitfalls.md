@@ -325,9 +325,39 @@ an access violation reading address `0x58`, at the same instruction every
 time. Windows logs it as a System-log event 26 popup
 ("Godot.exe - Application Error"), not as an Application event 1000. It
 belongs to `C:\Program Files\Godot\Godot.exe`, the copy that headless runs
-and the godot MCP server use, and it has recurred since 14 Sep 2026. It
-has not been diagnosed yet. Don't mistake it for the kill above, or the
-kill for it.
+and the godot MCP server use. It is not yet diagnosed, but on 24 Sep 2026
+this was established:
+
+- That exe is byte-identical to Dave's editor copy (official 4.7.1,
+  `a13da4feb`). A different binary is not the cure.
+- It has recurred since 21 Aug 2026, well over 200 times. The worst burst
+  was 28 Aug 23:47–23:52, when every case of a parallel
+  `run_headless.ps1 --experiment` crashed.
+- It bypasses WER, which does log other apps' crashes here. That points to
+  a fault during process exit, and output can be lost with it.
+- `run_scenario.py` sets `SEM_NOGPFAULTERRORBOX` around its runs, so there
+  the same fault shows up only as exit `0xC0000005`, with no popup. The
+  popups come from launchers that don't set it:
+  `godot_compile_check.py` (the verify boot and its `--quit-after 1`
+  probe), `godot_cache.py`'s import and primary-checkout boot,
+  `slice.ps1`'s boot probe, and the godot MCP server.
+- It did not reproduce in about 70 launches of those command shapes, run
+  serially or four at a time.
+- Scanning `.text` for the offset `…5854` narrows the faulting
+  instruction to one of three reads: RVA `0x6c5854`
+  (`cmp byte [rcx+0x58]`), `0x3e15854` (`cmp qword [rcx+0x58]`) or
+  `0x61b5854` (`mov eax,[rax+0x58]`).
+
+To catch the next one, run `tools/godot_crash_watch.ps1`. While the popup
+is still open, it records the crashed process's command line, its parent
+and the exact RVA.
+
+Separately, a project-less `--headless --quit-after 1`, as `slice.ps1`'s
+probe runs when its working directory holds no `project.godot`, opens the
+Project Manager. About one run in four then hangs idle at
+`EditorTheme: Generating new styles.` That is a hang, not this crash.
+
+Don't mistake this crash for the kill above, or the kill for it.
 
 When you see one: rerun the fixture before debugging it, and check
 `Get-CimInstance Win32_Process` for `slice.ps1`/`verify.ps1` runs in
