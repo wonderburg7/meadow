@@ -312,6 +312,23 @@ running" does not rule this out, because the killer isn't a Godot process.
 worktree it is deleting (`Stop-WorktreeGodot`).
 `tests/test_source_checks.py`'s `FinishGodotScopeTest` guards that.
 
+The same kill closed Dave's interactive editor. The Project Manager
+vanished a few seconds after launch, and the last `--verbose` line was
+`EditorTheme: Generating new styles.` There was no crash message. It
+looked like a GPU fault, but it wasn't one: the
+`NVAPI: Error saving settings` warning and the choice of renderer made no
+difference, and the last line shifted between renderers only because of
+output buffering.
+
+A separate, genuine native crash also shows up in the same logs. It is
+an access violation reading address `0x58`, at the same instruction every
+time. Windows logs it as a System-log event 26 popup
+("Godot.exe - Application Error"), not as an Application event 1000. It
+belongs to `C:\Program Files\Godot\Godot.exe`, the copy that headless runs
+and the godot MCP server use, and it has recurred since 14 Sep 2026. It
+has not been diagnosed yet. Don't mistake it for the kill above, or the
+kill for it.
+
 When you see one: rerun the fixture before debugging it, and check
 `Get-CimInstance Win32_Process` for `slice.ps1`/`verify.ps1` runs in
 other worktrees. Never kill Godot by name or by a PID list you didn't
