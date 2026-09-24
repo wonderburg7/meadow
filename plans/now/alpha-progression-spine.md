@@ -92,7 +92,7 @@ to reverse):
   own `scripts/hud.gd` and F2s rewrites how HUD controls are gated. AP-2 also
   touches `hud.gd`, for one line; if F2s is still open when AP-2 starts, move
   that single line to AP-3 rather than waiting.
-- AP-4 is **independent of SV-1** (`plans/now/named-saves.md`), checked on
+- AP-4 is **independent of SV-1** (`plans/archive/named-saves_2026-09-24.md`), checked on
   22 September 2026: SV-1 changes where a save is written, not what is in it --
   `save_game.gd::save(world, path)` already takes a path -- so SV-1 needs no
   format bump and the two cannot collide. Recorded in both plans.
