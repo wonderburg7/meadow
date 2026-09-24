@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
-   - Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
-   - Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
-   - Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
-   - Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
-
-2. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
+1. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
    - Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
    - Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
    - Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
    - Proof: `absent: scripts/availability.gd :: skills_window`
    - Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
+
+2. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
+   - Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
+   - Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
+   - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
+   - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
 
 ### Codex lane
 
@@ -54,7 +54,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
-- **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is now `plans/now/alpha-progression-spine.md`'s AP-1 to AP-4; step 7 waits for those four to prove tier 1 in a running game.
+- **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is `plans/now/alpha-progression-spine.md`'s AP slices; step 7 waits for AP-8 to prove Orientation flight in a run, as AP-6 did Tarsal secretions (24 Sep), and then needs its slices specified.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
