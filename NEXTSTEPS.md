@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-6 -- a bought skill changes foraging in a headless run**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-6 — a bought skill changes foraging in a headless run"
-   - Files: `test_scenarios/ap6_bought_tarsal_test.json`, `plans/design/progression.md`
-   - Check: with the tarsal setting off, a run that buys Tarsal secretions on day 1 records tarsal marks or rejections and the same seed without the purchase records none
-   - Proof: `absent: plans/design/progression.md :: ap6_bought_tarsal_test`
-   - Next after: none -- alpha-progression-spine is complete once AP-5 and AP-6 ship.
-
-2. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
+1. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
    - Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
    - Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
    - Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
    - Proof: `absent: scripts/availability.gd :: skills_window`
    - Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
+
+2. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
+   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
+   - Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
+   - Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
+   - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
+   - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
 
 ### Codex lane
 
