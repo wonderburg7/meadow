@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SV-3` (`claude/SV-3`) | Claude | the cog's Load run opens the Saves window | Claude | in progress | none | `plans/now/named-saves.md` SV-3 — the cog's Load run opens the Saves window |
