@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-8 -- a bought Orientation flight changes new foragers in a headless run, queued in the Claude lane (AP-7 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete (AP-8 landed 24 Sep); the next progression work is step 7 of `plans/design/progression.md` section 11, which needs its own plan | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -125,11 +125,21 @@ shown elsewhere. `f2s_challenge2_gate_table_test.json` now asserts both are
 hidden at 2.1 and 2.9. The Challenge 1 and window fixtures and
 `tests/test_layout_regression.py` pass unchanged.
 
+**AP-8 landed 24 Sep 2026.** `test_scenarios/ap8_bought_orientation_test.json`
+leaves `orientation_flight_on` and `scouting_on` off, stocks the comb with
+enough pollen for the queen to lay (three cells of 150; AP-6's 50 is less than
+one egg's 60), buys Orientation flight on day 1 and runs to day 8. At seed 4242
+one forager hatches and takes 1 orientation flight; the same fixture without
+`buy_skill` also hatches one and records 0. The fixture asserts that the first
+hatch is followed by an orientation flight, so the unbought copy fails it.
+Raising the nurses from 2 to 5 made no difference; pollen was the limit. Both
+tier-1 skills are now proven in a running game, and progression.md section 11
+step 6 says so. The plan is complete.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-8 | Nothing new on screen: a headless run proves that buying Orientation flight mid-run sends newly hatched foragers on orientation flights. | `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
