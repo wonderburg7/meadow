@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AP-6` (`claude/AP-6`) | Claude | a bought skill changes foraging in a headless run | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-6 — a bought skill changes foraging in a headless run |
