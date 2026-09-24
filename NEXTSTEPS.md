@@ -35,7 +35,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Files: `scripts/hive_cell.gd`
    - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
    - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
-   - Next after: C1F-G1 -- a fixture that guards the target_cell revert, still to be planned by a higher-reasoning session
+   - Next after: C1F-4 -- a contract test guards the target_cell reset
+
+3. **[Claude] C1F-4 -- a contract test guards the target_cell reset**
+   - Plan: `plans/now/c1-followups.md` -- "C1F-4 — a contract test guards the target_cell reset"
+   - Files: `tests/test_source_checks.py`
+   - Check: `python -m unittest tests.test_source_checks` passes, and deleting `bee.target_cell = null` from `go_to_deposit_cell` makes `DepositTargetResetContractTest` fail
+   - Proof: `absent: tests/test_source_checks.py :: DepositTargetResetContractTest`
+   - Next after: none -- c1-followups is complete once C1F-3 and C1F-4 ship.
 
 ### Codex lane
 
