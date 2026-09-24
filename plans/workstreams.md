@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/AP-5` (`claude/AP-5`) | Claude | the Skills and Saves buttons get icons | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-5 — the Skills and Saves buttons get icons |
