@@ -9,6 +9,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_test_support import *  # noqa: E402,F401,F403
 
 
+class FinishGodotScopeTest(unittest.TestCase):
+    """finish (and the lifecycle tests that run it) must not kill every
+    Godot on the machine: that ended other sessions' scenario runs with
+    exit 4294967295, indistinguishable from a native crash."""
+
+    def test_finish_stops_only_the_worktrees_own_godot(self):
+        text = SLICE_PATH.read_text(encoding="utf-8")
+        self.assertNotRegex(text, r'Get-Process\s+-Name\s+"Godot\*"[^\n]*Stop-Process')
+        self.assertIn("Stop-WorktreeGodot -Root $worktreeRoot", text)
+
+
 class BracketChecksTest(unittest.TestCase):
     def test_premature_closer_cannot_cancel_with_later_opener(self):
         problems = []
