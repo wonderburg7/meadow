@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
-   - Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
-   - Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
-   - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
-   - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
-
-2. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
+1. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
    - Plan: `plans/now/c1-followups.md` -- "C1F-3 — hive_cell.gd's first 605 lines get section headers"
    - Files: `scripts/hive_cell.gd`
    - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
    - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
-   - Next after: C1F-G1 -- a fixture that guards the target_cell revert, still to be planned by a higher-reasoning session
+   - Next after: C1F-4 -- a contract test guards the target_cell reset
+
+2. **[Claude] C1F-4 -- a contract test guards the target_cell reset**
+   - Plan: `plans/now/c1-followups.md` -- "C1F-4 — a contract test guards the target_cell reset"
+   - Files: `tests/test_source_checks.py`
+   - Check: `python -m unittest tests.test_source_checks` passes, and deleting `bee.target_cell = null` from `go_to_deposit_cell` makes `DepositTargetResetContractTest` fail
+   - Proof: `absent: tests/test_source_checks.py :: DepositTargetResetContractTest`
+   - Next after: none -- c1-followups is complete once C1F-3 and C1F-4 ship.
 
 ### Codex lane
 

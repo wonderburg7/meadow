@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: C1F-3 -- hive_cell.gd's first 605 lines get section headers, queued in the Claude lane; C1F-G1 still waits for a higher-reasoning session to plan it | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: C1F-3 -- hive_cell.gd's first 605 lines get section headers, then C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), both queued in the Claude lane | Dependency: none | Verified: 2026-09-24
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
@@ -34,6 +34,7 @@ proves them at runtime.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | C1F-3 | none -- a code-reading change: `hive_cell.gd`'s head is signposted like the rest of the file | `scripts/hive_cell.gd` | yes | low |
+| C1F-4 | none -- a regression guard: reverting the queen's `target_cell` reset now fails `tests/test_source_checks.py` | `tests/test_source_checks.py` | yes | low |
 
 **Dependencies.** C1F-1 follows E1
 (`plans/archive/architecture-review_2026-09-24.md`), because requirement 5 clears the
@@ -77,7 +78,39 @@ Same shape as V-4 (21 Sep), which did this for `scenario_actions.gd`.
 - Files: `scripts/hive_cell.gd`
 - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
 - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
-- Next after: C1F-G1 -- a fixture that guards the target_cell revert, still to be planned by a higher-reasoning session
+- Next after: C1F-4 -- a contract test guards the target_cell reset
+```
+
+## C1F-4 — a contract test guards the target_cell reset
+
+Closes C1F-G1 (below). Dave chose the unit-level route on 24 Sep 2026, at
+AP-8's closeout, over a stage-setup key that skips `_release_queen` or a
+scenario action that sets the queen's state after the jump. Meadow has no
+GDScript unit harness, so "unit-level" means a static contract test beside
+`IndoorForagingContractTest`, the way C-7's sibling fixes are already pinned.
+
+- **Level.** low -- one test file, no game code.
+- **Requirements.** Add a `unittest.TestCase` class,
+  `DepositTargetResetContractTest`, to `tests/test_source_checks.py`. Using
+  the same `_body` split as `IndoorForagingContractTest`, take
+  `bee_foraging.gd::go_to_deposit_cell` and assert that, inside the branch that
+  opens `if bee.target_cell == null or not is_instance_valid(bee.target_cell)`,
+  the line `bee.target_cell = null` appears before the epoch-gate
+  `if bee.deposit_blocked_epoch == bee.hive.index_epoch` return. The docstring
+  names C-7 and says why a runtime fixture was not used (C1F-G1: stage jumps
+  release the queen, so no fixture reaches the pre-1.14 early return).
+- **Automated acceptance.** `python -m unittest tests.test_source_checks` passes;
+  deleting the `bee.target_cell = null` line from `go_to_deposit_cell` makes the
+  new test fail (try it, then restore the line; record that in the closeout
+  note). Then mark C1F-G1 below as closed by C1F-4.
+
+```queue
+**[Claude] C1F-4 -- a contract test guards the target_cell reset**
+- Plan: `plans/now/c1-followups.md` -- "C1F-4 — a contract test guards the target_cell reset"
+- Files: `tests/test_source_checks.py`
+- Check: `python -m unittest tests.test_source_checks` passes, and deleting `bee.target_cell = null` from `go_to_deposit_cell` makes `DepositTargetResetContractTest` fail
+- Proof: `absent: tests/test_source_checks.py :: DepositTargetResetContractTest`
+- Next after: none -- c1-followups is complete once C1F-3 and C1F-4 ship.
 ```
 
 ## Known gap C1F-G1 -- the `target_cell = null` revert does not fail fixture A

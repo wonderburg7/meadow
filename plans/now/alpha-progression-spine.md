@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AP-8 -- a bought Orientation flight changes new foragers in a headless run, queued in the Claude lane (AP-7 landed 24 Sep) | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete (AP-8 landed 24 Sep); the next progression work is step 7 of `plans/design/progression.md` section 11, which needs its own plan | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to
@@ -125,11 +125,21 @@ shown elsewhere. `f2s_challenge2_gate_table_test.json` now asserts both are
 hidden at 2.1 and 2.9. The Challenge 1 and window fixtures and
 `tests/test_layout_regression.py` pass unchanged.
 
+**AP-8 landed 24 Sep 2026.** `test_scenarios/ap8_bought_orientation_test.json`
+leaves `orientation_flight_on` and `scouting_on` off, stocks the comb with
+enough pollen for the queen to lay (three cells of 150; AP-6's 50 is less than
+one egg's 60), buys Orientation flight on day 1 and runs to day 8. At seed 4242
+one forager hatches and takes 1 orientation flight; the same fixture without
+`buy_skill` also hatches one and records 0. The fixture asserts that the first
+hatch is followed by an orientation flight, so the unbought copy fails it.
+Raising the nurses from 2 to 5 made no difference; pollen was the limit. Both
+tier-1 skills are now proven in a running game, and progression.md section 11
+step 6 says so. The plan is complete.
+
 ## Open slices at a glance
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-8 | Nothing new on screen: a headless run proves that buying Orientation flight mid-run sends newly hatched foragers on orientation flights. | `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
 
@@ -166,39 +176,7 @@ AP-6 shipped 2026-09-24; its specification is `plans/archive/AP-6_2026-09-24.md`
 
 AP-7 shipped 2026-09-24; its specification is `plans/archive/AP-7_2026-09-24.md`.
 
-## AP-8 — a bought Orientation flight changes new foragers in a headless run
-
-Level: low.
-
-- **Required reading.** This heading. AP-6's result above and its fixture,
-  `test_scenarios/ap6_bought_tarsal_test.json`, which this mirrors.
-- **Files to change.** New `test_scenarios/ap8_bought_orientation_test.json`,
-  and the step 6 line in `plans/design/progression.md` section 11, which AP-6
-  left saying Orientation flight's run is still to come.
-- **Why.** AP-6 proved one of the two tier-1 skills in a running game. An
-  orientation flight happens only when a bee *becomes* a forager
-  (`bee.gd` at creation), so its proof needs foragers to hatch after the
-  purchase, which Tarsal secretions' did not.
-- **Requirements.** Like AP-6, with `orientation_flight_on` and
-  `scouting_on` off (scouting takes precedence at creation): stock the comb,
-  buy Orientation flight on day 1, and run long enough for foragers to hatch.
-  Compare against the same seed without `buy_skill` through
-  `python tools/run_scenario.py ... --seeds 4242 --report brief`. The bought run
-  shows non-zero `orientation_flights` and the unbought run shows none. If
-  nothing hatches in a reasonable run, raise the nurses or starting brood in the
-  fixture rather than the run length. Record both numbers in progression.md's
-  step 6 line and this plan's closeout note.
-- **Automated acceptance.** The fixture passes, and the two summaries differ
-  as above.
-
-```queue
-**[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
-- Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
-- Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
-- Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
-- Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
-```
+AP-8 shipped 2026-09-24; its specification is `plans/archive/AP-8_2026-09-24.md`.
 
 ## Read on demand
 
