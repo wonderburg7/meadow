@@ -180,7 +180,7 @@ Level: low.
 - Files: `scripts/ui_icon.gd`, `scripts/hud.gd`
 - Check: `ui_icon.gd` draws `arrow_up` and `save`, the Skills and Saves buttons are built with `_icon_button()` and shrink with the rest of the top bar, and every other window still opens, closes and sits where it did
 - Proof: `absent: scripts/ui_icon.gd :: arrow_up`
-- Next after: none -- AP-5 is independent of AP-4.
+- Next after: none -- alpha-progression-spine is complete once AP-4 and AP-5 ship.
 ```
 
 ## Read on demand
