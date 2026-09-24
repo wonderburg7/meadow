@@ -41,6 +41,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "population_curve": _population_curve(snapshots),
         "deaths_over_time": _deaths_over_time(deaths),
         "honey_fill_vs_winter": _honey_fill_vs_winter(snapshots),
+        "milestones": _milestones(snapshots, settings),
         "mechanic_firing": _mechanic_firing(settings, summary, actions),
         "actions": _action_summary(actions),
         "summary": summary,
@@ -119,6 +120,71 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
             "winter_here": s["environment"]["winter_here"],
         })
     return out
+
+
+def _milestones(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, int]:
+    """The first day each pacing milestone became true.
+
+    Snapshots are deliberately walked once: these are related facts about one
+    run, not four independent report passes.  Food stores are measured in
+    honey units, so the winter requirement calculated from the run's own
+    GameConfig snapshot is converted from energy to honey before comparison.
+    """
+    milestones: dict[str, int] = {}
+    winter_seen = False
+    for snapshot in _last_snapshot_per_day(snapshots):
+        day = snapshot.get("day")
+        if not isinstance(day, int):
+            continue
+        population = snapshot.get("population")
+        resources = snapshot.get("resources")
+        environment = snapshot.get("environment")
+
+        total = population.get("total") if isinstance(population, dict) else None
+        if (
+            "first_worker_day" not in milestones
+            and not isinstance(total, bool)
+            and isinstance(total, (int, float))
+            and total > 1
+        ):
+            milestones["first_worker_day"] = day
+
+        winter_here = environment.get("winter_here") if isinstance(environment, dict) else None
+        if winter_here is True:
+            winter_seen = True
+            milestones.setdefault("winter_entered_day", day)
+        elif winter_here is False and winter_seen and "winter_survived_day" not in milestones:
+            milestones["winter_survived_day"] = day
+
+        food_stores = resources.get("food_stores") if isinstance(resources, dict) else None
+        required_food = _winter_food_requirement(settings, total)
+        if (
+            "food_secure_day" not in milestones
+            and not isinstance(food_stores, bool)
+            and isinstance(food_stores, (int, float))
+            and required_food is not None
+            and food_stores >= required_food
+        ):
+            milestones["food_secure_day"] = day
+    return milestones
+
+
+def _winter_food_requirement(settings: dict[str, Any], population: Any) -> float | None:
+    """Return one population's winter requirement in honey-store units."""
+    if isinstance(population, bool) or not isinstance(population, (int, float)):
+        return None
+    keys = ("energy_burn_rate", "winter_burn_factor", "winter_length_days",
+            "seconds_per_day", "honey_energy_factor")
+    values = [settings.get(key) for key in keys]
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in values):
+        return None
+    energy_burn_rate, winter_burn_factor, winter_length_days, seconds_per_day, honey_energy_factor = values
+    if honey_energy_factor <= 0:
+        return None
+    return (
+        population * energy_burn_rate * winter_burn_factor
+        * winter_length_days * seconds_per_day / honey_energy_factor
+    )
 
 
 def _action_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
@@ -231,9 +297,9 @@ def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None,
 # skimming a chart would want instead.
 REPORT_PROFILES = {
     "brief": ["summary", "actions"],
-    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter"],
+    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter", "milestones"],
     "behaviour": ["summary", "mechanic_firing", "actions"],
-    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter",
+    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter", "milestones",
              "mechanic_firing", "actions", "summary"],
 }
 

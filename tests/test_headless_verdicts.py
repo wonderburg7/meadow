@@ -18,6 +18,7 @@ sys.path.insert(0, str(TOOLS))
 
 from headless.verdicts import ContractError, evaluate_expectations, validate_expectations  # noqa: E402
 from headless.jobs import HeadlessRunOutcome  # noqa: E402
+from analyze_session import analyze  # noqa: E402
 from run_scenario import _suppress_windows_crash_dialogs, run_once, run_verdict_scenario  # noqa: E402
 
 
@@ -31,6 +32,57 @@ ANALYSIS = {
 
 
 class HeadlessVerdictTest(unittest.TestCase):
+    def test_analysis_derives_each_milestone_in_one_day_series(self):
+        settings = {
+            "energy_burn_rate": 1.0,
+            "winter_burn_factor": 1.0,
+            "winter_length_days": 1.5,
+            "seconds_per_day": 2.0,
+            "honey_energy_factor": 2.0,
+        }
+        entries = [
+            {"type": "config", "settings": settings},
+            {"type": "snapshot", "day": 1, "population": {"total": 1},
+             "resources": {"food_stores": 1}, "environment": {"winter_here": False}},
+            {"type": "snapshot", "day": 2, "population": {"total": 2},
+             "resources": {"food_stores": 3}, "environment": {"winter_here": True}},
+            {"type": "snapshot", "day": 3, "population": {"total": 2},
+             "resources": {"food_stores": 4}, "environment": {"winter_here": False}},
+        ]
+
+        self.assertEqual({
+            "first_worker_day": 2,
+            "winter_entered_day": 2,
+            "winter_survived_day": 3,
+            "food_secure_day": 2,
+        }, analyze(entries)["milestones"])
+
+    def test_analysis_without_snapshots_has_no_milestones(self):
+        self.assertEqual({}, analyze([{"type": "config", "settings": {}}])["milestones"])
+
+    def test_missing_milestone_has_consistent_expectation_results(self):
+        analysis = dict(ANALYSIS, milestones={})
+        expectations = validate_expectations([
+            {"id": "eq", "metric": "milestones.winter_survived_day", "op": "eq", "value": 4},
+            {"id": "ne", "metric": "milestones.winter_survived_day", "op": "ne", "value": 4},
+            {"id": "lt", "metric": "milestones.winter_survived_day", "op": "lt", "value": 4},
+            {"id": "lte", "metric": "milestones.winter_survived_day", "op": "lte", "value": 4},
+            {"id": "gt", "metric": "milestones.winter_survived_day", "op": "gt", "value": 4},
+            {"id": "gte", "metric": "milestones.winter_survived_day", "op": "gte", "value": 4},
+            {"id": "between", "metric": "milestones.winter_survived_day", "op": "between", "min": 1, "max": 4},
+            {"id": "exists", "metric": "milestones.winter_survived_day", "op": "exists"},
+            {"id": "empty", "metric": "milestones.winter_survived_day", "op": "empty"},
+            {"id": "not_empty", "metric": "milestones.winter_survived_day", "op": "not_empty"},
+        ])
+
+        results = {result.identifier: result for result in evaluate_expectations(analysis, expectations)}
+        self.assertIsNone(results["eq"].actual)
+        self.assertFalse(results["eq"].passed)
+        self.assertTrue(results["ne"].passed)
+        for identifier in ("lt", "lte", "gt", "gte", "between", "exists", "not_empty"):
+            self.assertFalse(results[identifier].passed)
+        self.assertTrue(results["empty"].passed)
+
     def test_legacy_runner_disables_godot_crash_handler(self):
         scenario = Path("scenario.json")
         session = Path("session.jsonl")

@@ -16,6 +16,8 @@ const Availability = preload("res://scripts/availability.gd")
 const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
+const SavesPanel = preload("res://scripts/saves_panel.gd")
+const SkillTreePanel = preload("res://scripts/skill_tree_panel.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -521,11 +523,26 @@ func _signal_color(severity: int) -> Color:
 # --- _ready and construction --------------------------------------
 var discard_dialog: ConfirmationDialog
 var pending_cell: Node2D = null
+## What confirm_discard runs if the player agrees; empty while the dialog
+## is asking about a cell.
+var _pending_discard_action: Callable = Callable()
+## The Saves window (SV-2), created here because this file owns the button
+## that opens it; parented to main like every other GamePanel.
+var saves_panel: CanvasLayer
+var saves_button: Button
+## The read-only skill tree (AP-3), created and opened from here the same way.
+var skill_tree_panel: CanvasLayer
+var skills_button: Button
 var pending_type: String = ""
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
+	# Deferred: main is still adding its own children while this runs.
+	saves_panel = SavesPanel.new()
+	main.add_child.call_deferred(saves_panel)
+	skill_tree_panel = SkillTreePanel.new()
+	main.add_child.call_deferred(skill_tree_panel)
 	# So the settings window can find the corner readout to refresh it when
 	# a star is toggled, without either script holding a reference to the
 	# other.
@@ -746,6 +763,22 @@ func _build_top_right_bar() -> void:
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
+
+	# SV-2 (icon AP-5). Not offered in a Challenge, which reveals its
+	# controls stage by stage and keeps its own checkpoints
+	# (tutorial_checkpoint.gd).
+	saves_button = _icon_button("save", "Saves", TOP_BAR_BUTTON_WIDTH, "Opens the Saves window.")
+	saves_button.visible = not (Session.starting_level in [1, 2])
+	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
+	row2.add_child(saves_button)
+
+	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in
+	# Challenges, where 8.5 wants it hidden, by the same rule as Saves rather
+	# than a stage-gate key.
+	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
+	skills_button.visible = not (Session.starting_level in [1, 2])
+	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
+	row2.add_child(skills_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
@@ -2257,12 +2290,29 @@ func _build_discard_dialog() -> void:
 ## Called by main.gd when re-designating a cell would destroy whatever
 ## is already in it, because no other cell has room.
 func show_discard_warning(cell: Node2D, new_type: String, existing_type: String, existing_amount: float) -> void:
+	_pending_discard_action = Callable()
+	discard_dialog.title = "Nothing else can hold this"
+	discard_dialog.ok_button_text = "Discard it"
+	discard_dialog.cancel_button_text = "Leave the cell as it is"
 	pending_cell = cell
 	pending_type = new_type
 	discard_dialog.dialog_text = (
 		"This cell holds %d %s, and there is no other cell with room for it.\n\n"
 		+ "Reserving it for %s will throw that away."
 	) % [int(round(existing_amount)), existing_type, new_type]
+	discard_dialog.popup_centered()
+
+## The same Session.warn_on_discard confirmation, for anything else that
+## throws something away (SV-2's Saves window). Callers check
+## warn_on_discard first; "Discard, and stop warning me" turns it off for
+## every use alike.
+func confirm_discard(title: String, text: String, ok_text: String, cancel_text: String, action: Callable) -> void:
+	pending_cell = null
+	_pending_discard_action = action
+	discard_dialog.title = title
+	discard_dialog.ok_button_text = ok_text
+	discard_dialog.cancel_button_text = cancel_text
+	discard_dialog.dialog_text = text
 	discard_dialog.popup_centered()
 
 func _on_discard_confirmed() -> void:
@@ -2276,6 +2326,11 @@ func _on_discard_custom_action(action: StringName) -> void:
 		_apply_discard()
 
 func _apply_discard() -> void:
+	if _pending_discard_action.is_valid():
+		var action := _pending_discard_action
+		_pending_discard_action = Callable()
+		action.call()
+		return
 	if pending_cell and is_instance_valid(pending_cell):
 		pending_cell.clear_cell()
 		pending_cell.set_designation(pending_type)

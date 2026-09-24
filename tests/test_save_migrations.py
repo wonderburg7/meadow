@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 FIXTURES = ROOT / "tests" / "fixtures"
 
-FORMAT_VERSION = 5  # must match scripts/save_game.gd's FORMAT_VERSION
+FORMAT_VERSION = 6  # must match scripts/save_game.gd's FORMAT_VERSION
 
 # Mirrors scripts/game_config.gd's defaults for the eight fields
 # save_migrations.gd::_migrate_4_to_5 backfills into an older save's
@@ -60,6 +60,16 @@ def migrate_4_to_5(data):
     return data
 
 
+def migrate_5_to_6(data):
+    skills = data.get("skills")
+    if not isinstance(skills, dict):
+        skills = {}
+    if not isinstance(skills.get("temporary"), list):
+        skills["temporary"] = []
+    data["skills"] = skills
+    return data
+
+
 def upgrade(data, target_version=FORMAT_VERSION):
     version = int(data.get("version", 0))
     out = data
@@ -76,6 +86,9 @@ def upgrade(data, target_version=FORMAT_VERSION):
         elif version == 4:
             out = migrate_4_to_5(out)
             version = 5
+        elif version == 5:
+            out = migrate_5_to_6(out)
+            version = 6
         else:
             return out
         out["version"] = version
@@ -101,7 +114,7 @@ class SaveMigrationsSourceTest(unittest.TestCase):
     def test_migration_ladder_is_contiguous_up_to_format_version(self):
         steps = re.findall(r"_migrate_(\d+)_to_(\d+)", self.source)
         pairs = sorted({(int(a), int(b)) for a, b in steps})
-        self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5)], pairs)
+        self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)], pairs)
         self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
 
     def test_read_never_weakens_the_newer_than_current_rejection(self):
@@ -128,7 +141,7 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
 
     def test_v4_fixture_backfills_the_eight_reclassified_settings(self):
         data = upgrade({"version": 4, "settings": {"queen_eat_rate": 2.0}})
-        self.assertEqual(5, data["version"])
+        self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertEqual(2.0, data["settings"]["queen_eat_rate"])
         for key, default in GAME_CONFIG_DEFAULTS.items():
             self.assertEqual(default, data["settings"][key])
@@ -149,6 +162,22 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         once = upgrade(load_fixture("save_v1.json"))
         twice = upgrade(dict(once))
         self.assertEqual(once, twice)
+
+    def test_v5_save_owns_no_skills(self):
+        data = upgrade({"version": 5, "settings": {}})
+        self.assertEqual(6, data["version"])
+        self.assertEqual({"temporary": []}, data["skills"])
+
+    def test_v5_to_6_keeps_skills_already_recorded(self):
+        data = upgrade({"version": 5, "skills": {"temporary": ["skill.foraging.tarsal_secretions"]}})
+        self.assertEqual(["skill.foraging.tarsal_secretions"], data["skills"]["temporary"])
+
+    def test_gdscript_writes_and_migrates_the_skills_block(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        self.assertIn('"skills": _skills_data()', save_game)
+        self.assertIn("static func _migrate_5_to_6", migrations)
+        self.assertIn('skills["temporary"] = []', migrations)
 
     def test_unknown_future_version_is_left_untouched(self):
         data = upgrade({"version": 99, "marker": "future"})

@@ -1900,8 +1900,12 @@ RESOLVER_GATES = (
 
 # Who may preload a catalogue at all. Anything else reading one directly
 # is on its way to answering a resolver question of its own.
+# skill_tree_panel.gd (AP-3) reads skills.gd for layout and text only --
+# axial coordinates, names, descriptions, costs, prerequisite edges -- and
+# asks progression.gd for every owned/affordable/blocked answer. The
+# RESOLVER_FUNCS check above still stops it answering any of them itself.
 CATALOGUE_READERS = {
-    "skills.gd": {"adaptations.gd", RESOLVER_FILE},
+    "skills.gd": {"adaptations.gd", RESOLVER_FILE, "skill_tree_panel.gd"},
     "adaptations.gd": {RESOLVER_FILE},
     "features.gd": {"skills.gd", "adaptations.gd", RESOLVER_FILE},
 }

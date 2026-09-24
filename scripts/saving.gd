@@ -79,6 +79,7 @@ func _restore(data: Dictionary) -> void:
 	main.flower_grid.rebuild(_restore_flowers(data.get("flowers", [])))
 	var new_bees := _restore_bees(data.get("bees", []))
 	main.fog_of_war.restore(data.get("fog", []))
+	main.SaveGame.restore_skills(data, Session.progression)
 
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()

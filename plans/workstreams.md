@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FB-2` (`codex/FB-2`) | Codex | a scenario can assert when something happened | Codex | in progress | none | `plans/now/feedback-build.md` FB-2 — a scenario can assert when something happened |
-| `.worktrees/SV-2` (`claude/SV-2`) | Claude | the Saves window | Claude | in progress | none | `plans/now/named-saves.md` SV-2 — the Saves window |
+| `.worktrees/AP-7` (`claude/AP-7`) | Claude | the Skills and Saves buttons are gated through the UI gate table | Claude | in progress | none | `plans/now/alpha-progression-spine.md` AP-7 — the Skills and Saves buttons are gated through the UI gate table |

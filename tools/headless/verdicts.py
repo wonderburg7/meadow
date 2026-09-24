@@ -20,8 +20,8 @@ class ExpectationResult:
     actual: Any
 
 
-# Slice 1 intentionally exposes only cheap final-run facts already present in
-# analyze_session.py. Slice 3's probe registry will widen this allowlist.
+# The allowlist stays intentionally narrow: only analysis facts the scenario
+# contract explicitly promises may become verdict metrics.
 _METRICS = {
     "summary.outcome": lambda analysis: analysis["summary"]["outcome"],
     "summary.game_time": lambda analysis: analysis["summary"]["game_time"],
@@ -31,6 +31,10 @@ _METRICS = {
     "summary.gynes_released": lambda analysis: analysis["summary"]["gynes_released"],
     "actions.total": lambda analysis: analysis["actions"]["total"],
     "actions.problems": lambda analysis: analysis["actions"]["problems"],
+    "milestones.first_worker_day": lambda analysis: analysis["milestones"].get("first_worker_day"),
+    "milestones.winter_entered_day": lambda analysis: analysis["milestones"].get("winter_entered_day"),
+    "milestones.winter_survived_day": lambda analysis: analysis["milestones"].get("winter_survived_day"),
+    "milestones.food_secure_day": lambda analysis: analysis["milestones"].get("food_secure_day"),
 }
 
 
@@ -117,9 +121,15 @@ def _compare(actual: Any, operator: str, expectation: dict[str, Any]) -> bool:
 
     value = expectation.get("value")
     if operator == "between":
+        if actual is None:
+            return False
         _require_number(actual, expectation["id"])
         return expectation["min"] <= actual <= expectation["max"]
     if operator in {"lt", "lte", "gt", "gte"}:
+        # An absent milestone means it never happened, not that it happened
+        # before any requested deadline.
+        if actual is None:
+            return False
         _require_number(actual, expectation["id"])
         _require_number(value, expectation["id"])
     if operator == "eq":

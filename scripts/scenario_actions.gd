@@ -255,6 +255,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_save_run(main, action)
 		"restore_slot":
 			_do_restore_slot(main, action)
+		"buy_skill":
+			_do_buy_skill(main, action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -987,6 +989,17 @@ static func _do_save_run(main: Node2D, action: Dictionary) -> void:
 	main.saving.save_run(str(action.get("name", "")))
 	_log("save_run", str(action), "accepted", "")
 
+## AP-4: {"do": "buy_skill", "skill": "skill.foraging.tarsal_secretions"} --
+## the skill tree's Buy button, through skill_tree_panel.gd::buy_skill, so it
+## spends the colony's real stores the way a click does.
+static func _do_buy_skill(main: Node2D, action: Dictionary) -> void:
+	var skill_id := str(action.get("skill", ""))
+	if main.hud.skill_tree_panel.buy_skill(skill_id):
+		_log("buy_skill", str(action), "accepted", "")
+	else:
+		var reason: String = Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores()) if Session.progression != null else "no progression"
+		_log("buy_skill", str(action), "rejected", reason)
+
 ## SV-1: {"do": "restore_slot", "name": "Run name"} -- replays that run's
 ## named save over the live world in place, the way tutorial_checkpoint.gd
 ## restores, since a scene reload would end the scenario.
@@ -1036,6 +1049,11 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_save_slot(main, condition)
 	if condition.has("all_actions_available"):
 		return _check_all_actions_available(main)
+	if condition.has("skill_owned"):
+		var owned: bool = Session.progression != null and Session.progression.is_owned(str(condition["skill_owned"]))
+		if owned == bool(condition.get("owned", true)):
+			return {"ok": true, "reason": ""}
+		return {"ok": false, "reason": "%s owned: %s" % [condition["skill_owned"], owned]}
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
