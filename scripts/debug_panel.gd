@@ -663,8 +663,20 @@ func _on_save_pressed() -> void:
 ## the hive, so the world has to be built with them from the start. The
 ## flag tells the fresh scene to replay the save over itself.
 func _on_load_pressed() -> void:
-	# Until the Saves window (SV-2) lets the player choose, Load reads the
-	# most recently saved named slot.
+	# SV-3: in a sandbox run the Saves window (SV-2) is where a save is
+	# chosen, so Load run opens it rather than guessing. A Challenge hides
+	# that window, and the main menu would sit on top of it, so both keep
+	# the older behaviour below: load the most recently saved named slot.
+	var worlds := get_tree().get_nodes_in_group("world")
+	var menus := get_tree().get_nodes_in_group("main_menu")
+	var menu_visible: bool = not menus.is_empty() and menus[0].visible
+	if not worlds.is_empty() and not menu_visible and not (Session.starting_level in [1, 2]):
+		var saves_panel = worlds[0].hud.saves_panel
+		if saves_panel != null:
+			panel.visible = false
+			if not saves_panel.is_open():
+				worlds[0].year_winter._toggle_panel(saves_panel)
+			return
 	var slot := SaveSlots.latest_named()
 	var path := SaveSlots.slot_path(slot["slug"]) if not slot.is_empty() else ""
 	var data := SaveGame.read(path) if path != "" else {}

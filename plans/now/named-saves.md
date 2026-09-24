@@ -1,7 +1,7 @@
 # Named saves and rolling checkpoints
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active -- SV-1 landed 23 Sep and SV-2 24 Sep 2026 | Owner: Dave / Claude Code | Next: SV-3 -- the cog's Load run opens the Saves window, queued in the Claude lane | Dependency: none | Verified: 2026-09-24
+Status: complete -- SV-1 landed 23 Sep, SV-2 and SV-3 24 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups: the Saves button's icon is filed as `plans/now/alpha-progression-spine.md` AP-5; whether game hotkeys fire while typing a run name is covered by C-63 | Dependency: none | Verified: 2026-09-24
 
 **Objective.** `plans/design/product-scope.md` §6.1 makes "named run saves,
 three rolling recovery checkpoints and reliable restore" a closed-alpha
@@ -89,6 +89,12 @@ without Dave (each the cheapest to reverse):
 Follow-ups: the cog's **Load run** still loads the newest named save rather
 than opening this window -- now SV-3. Whether game hotkeys fire while the name
 box has focus is unchecked; C-63's typing step would show it.
+
+**SV-3 landed 24 Sep 2026.** In a sandbox run the cog's **Load run** closes
+the settings window and opens the Saves window. In a Challenge, or with the
+main menu showing (it would sit on top of the Saves window), it still loads the
+newest named save. `test_scenarios/sv2_saves_window_test.json` still passes.
+C-63 now includes the Load run step.
 
 **What is intended when this plan is done.** A run is saved under a name the
 player chose, the game keeps the last three automatic recovery points behind
