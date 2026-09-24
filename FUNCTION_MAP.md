@@ -566,7 +566,7 @@ The stage machine, goal checks and stage effects.
 1236 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
-## main.gd (1,191 lines)
+## main.gd (1,196 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -608,9 +608,9 @@ Per-frame entry point, everything not yet split out of main.
 971  func _on_level_chosen(level: int) -> void
 984  func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
 1002 func _apply_scenario_boot_arg() -> void
-1124 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1164 func _is_whole_number(value: Variant) -> bool
-1178 func _end_scenario_run(outcome: String) -> void
+1129 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1169 func _is_whole_number(value: Variant) -> bool
+1183 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,179 lines)

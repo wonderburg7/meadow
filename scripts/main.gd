@@ -1091,6 +1091,11 @@ func _apply_scenario_boot_arg() -> void:
 	level.erase("random_seed")
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
+	# A UI-only scenario (layout/text assertions) has no colony to describe;
+	# absent starting counts mean "none", as honey_makers already does, so
+	# world_building's strict level.<count> reads don't abort the boot.
+	for count_key in ["cells", "nectar_foragers", "pollen_foragers", "nurses", "builders", "miners"]:
+		level[count_key] = level.get(count_key, 0)
 
 	Levels.scenario_override = level
 	Levels.apply_config_overrides(config_overrides)
