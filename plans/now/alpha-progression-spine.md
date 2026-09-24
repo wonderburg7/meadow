@@ -129,7 +129,6 @@ hidden at 2.1 and 2.9. The Challenge 1 and window fixtures and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AP-7 | No visible change outside Challenges: the Skills and Saves buttons are hidden in a Challenge by the UI gate table, as progression.md 8.5 specifies, not by a hard-coded level check. | `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json` | yes | low |
 | AP-8 | Nothing new on screen: a headless run proves that buying Orientation flight mid-run sends newly hatched foragers on orientation flights. | `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md` | yes | low |
 
 **Dependencies, stated rather than implied by order.**
@@ -165,40 +164,7 @@ AP-5 shipped 2026-09-24; its specification is `plans/archive/AP-5_2026-09-24.md`
 
 AP-6 shipped 2026-09-24; its specification is `plans/archive/AP-6_2026-09-24.md`.
 
-## AP-7 — the Skills and Saves buttons are gated through the UI gate table
-
-Level: low.
-
-- **Required reading.** This heading. `scripts/availability.gd`'s `UI_GATES`
-  and `UNTABLED_GATE_KEYS` block. The `saves_button` and `skills_button` blocks
-  in `hud.gd`, and one existing `_register_gated_control` call beside them.
-- **Files to change.** `scripts/availability.gd`, `scripts/hud.gd`,
-  `test_scenarios/f2s_challenge2_gate_table_test.json`.
-- **Why.** `plans/design/progression.md` 8.5 says the Skills button's
-  visibility is a stage-gate key so a Challenge can hide it. AP-3 and SV-2
-  hid both buttons with `not (Session.starting_level in [1, 2])` because
-  `availability.gd` was outside their files. That check is a second gating
-  rule next to the F2s table, which is the kind of drift F2s removed.
-- **Requirements.** `UI_GATES` gains `"skills_window": {"controls":
-  ["skills_button"]}` and `"saves_window": {"controls": ["saves_button"]}`.
-  `hud.gd` registers both with `_register_gated_control` and drops the two
-  `starting_level` lines. No Challenge stage unlocks either key, so both stay
-  hidden throughout Challenges 1 and 2 and show in every other run, where
-  `stage_gate` is inactive.
-- **Invariants.** Outside a Challenge both buttons show as they do now.
-  `tests/source_checks.py`'s UI gate check stays green.
-- **Automated acceptance.** `test_scenarios/f2s_challenge2_gate_table_test.json`
-  gains two asserts that both buttons are hidden at 2.1 and 2.9, and
-  `ap3_skill_tree_window_test.json` still opens the window outside a Challenge.
-
-```queue
-**[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
-- Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
-- Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
-- Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
-- Proof: `absent: scripts/availability.gd :: skills_window`
-- Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
-```
+AP-7 shipped 2026-09-24; its specification is `plans/archive/AP-7_2026-09-24.md`.
 
 ## AP-8 — a bought Orientation flight changes new foragers in a headless run
 
