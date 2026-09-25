@@ -764,21 +764,19 @@ func _build_top_right_bar() -> void:
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	row2.add_child(winter_button)
 
-	# SV-2 (icon AP-5). Not offered in a Challenge, which reveals its
-	# controls stage by stage and keeps its own checkpoints
-	# (tutorial_checkpoint.gd).
+	# SV-2 (icon AP-5). Hidden in a Challenge by its UI_GATES row (AP-7):
+	# a Challenge keeps its own checkpoints (tutorial_checkpoint.gd).
 	saves_button = _icon_button("save", "Saves", TOP_BAR_BUTTON_WIDTH, "Opens the Saves window.")
-	saves_button.visible = not (Session.starting_level in [1, 2])
 	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
 	row2.add_child(saves_button)
+	_register_gated_control("saves_button", func(): return saves_button)
 
-	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in
-	# Challenges, where 8.5 wants it hidden, by the same rule as Saves rather
-	# than a stage-gate key.
+	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in a
+	# Challenge by its UI_GATES row (AP-7), as 8.5 asks.
 	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
-	skills_button.visible = not (Session.starting_level in [1, 2])
 	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
 	row2.add_child(skills_button)
+	_register_gated_control("skills_button", func(): return skills_button)
 
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.

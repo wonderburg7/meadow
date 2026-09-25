@@ -1,7 +1,7 @@
 # Technical audit — current contracts
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
-Status: reference | Owner: Dave / Claude Code | Next: PERF-2 (if admitted) -- measure `find_food_cell` with a pinned hungry indoor population | Dependency: none -- A2, A3 and B2 have shipped | Verified: 2026-09-20
+Status: reference | Owner: Dave / Claude Code | Next: PERF-2 -- specified in `plans/now/hot-path-queries.md` and queued in the Codex lane | Dependency: none -- A2, A3 and B2 have shipped | Verified: 2026-09-24
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at

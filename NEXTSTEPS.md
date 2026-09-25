@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AP-7 -- the Skills and Saves buttons are gated through the UI gate table**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-7 — the Skills and Saves buttons are gated through the UI gate table"
-   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
-   - Check: `UI_GATES` rows `skills_window` and `saves_window` hide both buttons throughout a Challenge and show them in every other run, and hud.gd has no `starting_level` check for either
-   - Proof: `absent: scripts/availability.gd :: skills_window`
-   - Next after: none -- alpha-progression-spine is complete once AP-6 and AP-7 ship.
+1. **[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
+   - Plan: `plans/now/c1-followups.md` -- "C1F-3 — hive_cell.gd's first 605 lines get section headers"
+   - Files: `scripts/hive_cell.gd`
+   - Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
+   - Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
+   - Next after: C1F-4 -- a contract test guards the target_cell reset
 
-2. **[Claude] AP-8 -- a bought Orientation flight changes new foragers in a headless run**
-   - Plan: `plans/now/alpha-progression-spine.md` -- "AP-8 — a bought Orientation flight changes new foragers in a headless run"
-   - Files: `test_scenarios/ap8_bought_orientation_test.json`, `plans/design/progression.md`
-   - Check: with the orientation setting off, a run that buys Orientation flight on day 1 records orientation flights once foragers hatch and the same seed without the purchase records none
-   - Proof: `absent: plans/design/progression.md :: ap8_bought_orientation_test`
-   - Next after: none -- alpha-progression-spine is complete once AP-7 and AP-8 ship.
+2. **[Claude] C1F-4 -- a contract test guards the target_cell reset**
+   - Plan: `plans/now/c1-followups.md` -- "C1F-4 — a contract test guards the target_cell reset"
+   - Files: `tests/test_source_checks.py`
+   - Check: `python -m unittest tests.test_source_checks` passes, and deleting `bee.target_cell = null` from `go_to_deposit_cell` makes `DepositTargetResetContractTest` fail
+   - Proof: `absent: tests/test_source_checks.py :: DepositTargetResetContractTest`
+   - Next after: none -- c1-followups is complete once C1F-3 and C1F-4 ship.
 
 ### Codex lane
 
@@ -49,11 +49,17 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: tools/verify.ps1 :: pacing_gates`
    - Next after: none -- feedback-build is complete once FB-3 ships.
 
+2. **[Codex] PERF-2 -- a pinned hungry-indoor scenario measures find_food_cell**
+   - Plan: `plans/now/hot-path-queries.md` -- "PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell`"
+   - Files: `test_scenarios/perf2_hungry_indoor.json`, `docs/PERFORMANCE_BASELINE.md`
+   - Check: two runs of `python tools/run_scenario.py test_scenarios/perf2_hungry_indoor.json` both record a non-zero `hive_find_food` mean within 10% of each other, and `docs/PERFORMANCE_BASELINE.md` records both readings, their share of frame time and whether PERF-3 is worth specifying
+   - Proof: `absent: docs/PERFORMANCE_BASELINE.md :: PERF-2 measurement`
+   - Next after: PERF-3 -- `find_food_cell` reads the content index, specified only if PERF-2 finds the section non-trivial
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **PERF-2** (`plans/reference/technical-audit.md`) -- needs a pinned hungry-indoor scenario specification before it can be admitted to measure `find_food_cell` causally.
 - **Progression Phase B steps 7 onwards, and Phase C** (`plans/design/progression.md`) -- step 6 is `plans/now/alpha-progression-spine.md`'s AP slices; step 7 waits for AP-8 to prove Orientation flight in a run, as AP-6 did Tarsal secretions (24 Sep), and then needs its slices specified.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **C1F-G1** (`plans/now/c1-followups.md`) -- a fixture that fails when `go_to_deposit_cell`'s `bee.target_cell = null` is reverted needs a higher-reasoning session to plan how to get the queen waiting at a full comb before 1.14 past the stage setup's `_release_queen`.
