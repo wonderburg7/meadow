@@ -1,7 +1,7 @@
 # Alpha progression spine — the skill tree runs inside a run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None — plan complete (AP-8 landed 24 Sep); the next progression work is step 7 of `plans/design/progression.md` section 11, which needs its own plan | Dependency: none | Verified: 2026-09-24
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (AP-8 landed 24 Sep); the next progression work is step 7 of `plans/design/progression.md` section 11, which needs its own plan | Dependency: none | Verified: 2026-09-24
 
 **Objective.** Execute Phase B step 6 of `plans/design/progression.md`: move
 Tarsal secretions and Orientation flight from always-on `GameConfig` toggles to

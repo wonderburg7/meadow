@@ -52,7 +52,7 @@ Verified 22 September 2026 against the repository.
 
 **Dependencies, stated rather than implied by order.** FB-1 and FB-2 share no
 file and may run in either order. FB-3 needs FB-2's metrics and nothing else.
-No slice here depends on anything in `plans/now/alpha-progression-spine.md` or
+No slice here depends on anything in `plans/archive/alpha-progression-spine_2026-09-25.md` or
 `plans/archive/named-saves_2026-09-24.md`, and none of them depends on this plan.
 
 **Required reading for any slice.** Its own section below.

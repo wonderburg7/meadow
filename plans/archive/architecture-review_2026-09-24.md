@@ -1,7 +1,7 @@
 # Meadow — architecture review: catalogues, shared interfaces and update policy
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only when an architecture slice below is selected -->
-Status: complete -- decisions A, B and C taken by Dave 11 Sep 2026; every slice has shipped, the last being G3 on 23 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups, each filed in "Follow-ups after G3" at the end of this file: skill purchases call `Availability.invalidate()` (filed in `plans/now/alpha-progression-spine.md` AP-4); the queen's `role_restricted_to` becomes stage-named actions; `feature` and `season` gate fields get a query | Dependency: none | Verified: 2026-09-23
+Status: complete -- decisions A, B and C taken by Dave 11 Sep 2026; every slice has shipped, the last being G3 on 23 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups, each filed in "Follow-ups after G3" at the end of this file: skill purchases call `Availability.invalidate()` (filed in `plans/archive/alpha-progression-spine_2026-09-25.md` AP-4); the queen's `role_restricted_to` becomes stage-named actions; `feature` and `season` gate fields get a query | Dependency: none | Verified: 2026-09-23
 
 **Objective.** Cut the number of files a future session must open to add a
 resource, a role, a job, a Challenge stage, a window or a setting, by moving
