@@ -1,7 +1,7 @@
 # Named saves and rolling checkpoints
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete -- SV-1 landed 23 Sep, SV-2 and SV-3 24 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups: the Saves button's icon is filed as `plans/now/alpha-progression-spine.md` AP-5; whether game hotkeys fire while typing a run name is covered by C-63 | Dependency: none | Verified: 2026-09-24
+Status: complete -- SV-1 landed 23 Sep, SV-2 and SV-3 24 Sep 2026 | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups: the Saves button's icon is filed as `plans/archive/alpha-progression-spine_2026-09-25.md` AP-5; whether game hotkeys fire while typing a run name is covered by C-63 | Dependency: none | Verified: 2026-09-24
 
 **Objective.** `plans/design/product-scope.md` §6.1 makes "named run saves,
 three rolling recovery checkpoints and reliable restore" a closed-alpha
@@ -109,7 +109,7 @@ it, and both are reachable from the HUD without instruction.
 
 - SV-2 needs SV-1's catalogue to list anything, and waits on **F2s**
   (`plans/archive/architecture-review_2026-09-24.md`) because both own `scripts/hud.gd`.
-- **Independent of `plans/now/alpha-progression-spine.md`.** AP-4 bumps
+- **Independent of `plans/archive/alpha-progression-spine_2026-09-25.md`.** AP-4 bumps
   `FORMAT_VERSION` and writes new fields; SV-1 and SV-2 change only *where* a
   save is written and never open the format. Whichever ships first, the other
   fits beside it. Recorded in both plans.
