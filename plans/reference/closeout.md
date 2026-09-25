@@ -1,7 +1,7 @@
 # Closing a slice — branches, merges, checks and the queue
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: at closeout only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-09-19
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-09-25
 
 Read this when a slice's code is done, or when integrating a Codex branch.
 `tools/slice.ps1 finish` enforces the phases below; this file says why.
@@ -113,3 +113,14 @@ rules (evidence in `plans/reference/check-loop.md`):
 
 Decisions never go in `checks/ready.md`; ask Dave in the session that needs
 the answer.
+
+## Recording a system-improvement signal
+
+Before `finish`, take one short decision: did this slice hit friction in the
+workflow itself -- a lifecycle stop, a check that failed for a reason
+unrelated to the slice, an instruction that misled, a tool that had to be
+worked around -- that is likely to recur? If so, append one entry to
+`plans/observations/system-improvement-signals.md` in its entry format;
+otherwise record nothing. Most slices record nothing. Do not act on the
+signal in the slice. Until 25 Sep 2026 nothing on the slice route pointed
+here, and every entry came from maintenance passes.

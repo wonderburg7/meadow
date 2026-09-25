@@ -452,6 +452,10 @@ def _print_bash_calls(events):
     failed = [e for e in calls if not e.get("ok", True)]
     print()
     print(f"bash tool calls              {len(calls)} run, {len(failed)} failed")
+    powershell = [e for e in calls if e.get("shell") == "powershell"]
+    if powershell:
+        ps_failed = sum(1 for e in powershell if not e.get("ok", True))
+        print(f"  of which PowerShell tool   {len(powershell)} run, {ps_failed} failed")
     if failed:
         top = Counter(e.get("cmd") or "?" for e in failed).most_common(6)
         print(f"  failing commands           {', '.join(f'{c}={n}' for c, n in top)}")

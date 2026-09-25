@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: no open slice -- every slice has shipped and what remains is the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) | Dependency: none -- L-12 landed 21 Sep 2026 | Verified: 2026-09-21
+Status: active | Owner: Dave / Claude | Next: L-15 -- a busy lifecycle lock is waited for, not refused, in the backlog for the Claude lane; after it, the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) | Dependency: none -- L-12 landed 21 Sep 2026 | Verified: 2026-09-25
 
 ## Objective
 
@@ -50,13 +50,75 @@ measurement-ran-once condition is met. The measured evidence is
 
 ## Open slices
 
-None. `finish`'s `archived` and `refilled` phases became actions with L-13
+`finish`'s `archived` and `refilled` phases became actions with L-13
 (18-19 Sep 2026) and L-12 closed the last hand-written step on 21 Sep 2026: a
 lane now refills itself from the ```queue blocks in the plans, so the five
-lines a session used to write out of prose at closeout are a copy.
+lines a session used to write out of prose at closeout are a copy. L-15 was
+added 25 Sep 2026 from two triaged system-improvement signals, both about
+the two lanes blocking each other.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
+| L-15 | A busy lifecycle lock is waited for, not refused; an open-worktree stop says whether that branch is finished | `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py` | high |
+
+### L-15 — the other lane's lifecycle command waits for the lock, and an open-worktree stop says what to do
+
+**Why.** Promoted from `plans/observations/system-improvement-signals.md`
+(25 Sep "a finish holds the lifecycle lock through verification" and 20 Sep
+"a finished-but-unmerged worktree blocks its lane's next claim"). 49 of 118
+recorded stops are `slice lifecycle is busy`, 39 of them `finish` retried
+roughly once a minute over three hours on 23 Sep; 14 are `<lane> lane
+already has an open worktree`, 5 of them since the 20 Sep signal.
+
+**True now.** `Invoke-WithLifecycleLock` opens
+`meadow-slice-lifecycle.lock` with `FileShare.None` and, if that fails,
+throws `slice lifecycle is busy` at once. It wraps the whole of `start`,
+`finish`, `resume` and `abort`, so a `finish` holds it through branch and
+primary `tools/verify.ps1` (lifecycle tests: median 231 s). The refusal
+names neither the holder nor the slice. L-6's `TwoLaneCloseoutTest`
+asserts that the loser of a race sees this refusal
+(`tests/test_two_lane_closeout.py`, "slice lifecycle is busy"). Separately,
+`Invoke-SliceStart` throws `<lane> lane already has an open worktree (...)
+-- finish or abandon it first` with no word on which of the two applies.
+
+**True when done.**
+
+1. A lifecycle command that finds the lock held waits for it, re-trying
+   about every 5 s, for at most 10 minutes (a script parameter, so tests can
+   set it to seconds). It prints one line when it starts waiting, naming
+   the holder's command and slice id and when it took the lock, and stays
+   silent while it waits. The holder writes that line into the lock file,
+   which is opened for others to read but not write. Past the bound, the
+   existing refusal is thrown, now naming the holder, and the stop ledger
+   row records it. Runtime policy: the polling runs only while a lifecycle
+   command is blocked, never otherwise.
+2. The open-worktree stop adds whether the blocking branch has commits
+   ahead of master and whether its worktree has uncommitted changes, and
+   says which applies: "finish it (`tools/slice.ps1 finish` from inside
+   `<worktree>`)" if it is ahead and clean, otherwise "abandon it or finish
+   the work in it". It does not run verification to decide.
+3. `TwoLaneCloseoutTest`'s race is changed on purpose: the loser now waits
+   and then completes. A new case with a near-zero bound keeps the refusal
+   covered. `tests/test_slice_lifecycle.py` covers the new open-worktree
+   wording for an ahead-and-clean and for a dirty worktree.
+
+**Not in scope.** Narrowing the lock to the shared-state phases (merge,
+archive, refill, ledger) so verification runs outside it. That is the larger
+fix and changes L-5's transaction ordering; take it only if, after L-15,
+`--stops` still shows waits long enough to matter.
+
+**Read:** this section and `Invoke-WithLifecycleLock`, `Invoke-SliceStart`
+in `tools/slice.ps1` (by `grep -n "^function"`), and the race test in
+`tests/test_two_lane_closeout.py`.
+
+```queue
+**[Claude] L-15 -- a busy lifecycle lock is waited for, not refused, and an open-worktree stop says what to do**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-15 — the other lane's lifecycle command waits for the lock, and an open-worktree stop says what to do"
+- Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
+- Check: a second `finish` started while another holds the lock prints one waiting line naming the holder and completes after it, `start` against an open worktree says whether to finish or abandon it, and `tools/verify.ps1` is green
+- Proof: `present: tools/slice.ps1 :: slice lifecycle is busy; retry this command`
+- Next after: none -- agent-lifecycle is complete once L-15 ships and the Objective's completion gate is met
+```
 
 **L-12 shipped ahead of its gate.** It was held until
 `python tools/session_cost.py --stops` ranked the refill step among the two
