@@ -518,6 +518,46 @@ class DiagnosticWritersTest(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertEqual("", result.stdout)
 
+    def test_powershell_hook_marks_the_shell_and_names_a_script_without_its_path(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1", "tool_name": "PowerShell",
+            "tool_input": {"command": r"& .\tools\slice.ps1 owner tools/secret.gd"},
+        })
+
+        result = subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        event = self.events()[0]
+        self.assertEqual("tool_bash", event["kind"])
+        self.assertEqual("slice.ps1", event["cmd"])
+        self.assertEqual("powershell", event["shell"])
+        self.assertNotIn("secret", json.dumps(event))
+
+    def test_bash_hook_event_carries_no_shell_field(self):
+        payload = json.dumps({
+            "cwd": str(self.root), "session_id": "s1", "tool_name": "Bash",
+            "tool_input": {"command": "git status"},
+        })
+
+        subprocess.run(
+            [sys.executable, str(self.tools / "hook_log.py"), "tool_bash"],
+            input=payload, capture_output=True, text=True, cwd=self.root,
+        )
+
+        self.assertNotIn("shell", self.events()[0])
+
+    def test_slice_claim_records_the_session_id_claude_code_exports(self):
+        # The level-drift join is dead without this: until 25 Sep 2026 the
+        # claim read CLAUDE_SESSION_ID, which Claude Code never sets.
+        source = (self.tools / "slice.ps1").read_text(encoding="utf-8")
+
+        self.assertIn("session = $env:CLAUDE_CODE_SESSION_ID", source)
+        self.assertNotIn("$env:CLAUDE_SESSION_ID", source)
+
     def test_level_drift_reports_a_model_outside_the_plan_level(self):
         spec = importlib.util.spec_from_file_location("session_cost", self.tools / "session_cost.py")
         session_cost = importlib.util.module_from_spec(spec)
@@ -577,7 +617,7 @@ class DiagnosticWritersTest(unittest.TestCase):
         events = [
             {"kind": "tool_bash", "cmd": "git", "ok": True},
             {"kind": "tool_bash", "cmd": "git", "ok": False},
-            {"kind": "tool_bash", "cmd": "python", "ok": False},
+            {"kind": "tool_bash", "cmd": "python", "ok": False, "shell": "powershell"},
             {"kind": "session_start"},
         ]
 
@@ -586,6 +626,7 @@ class DiagnosticWritersTest(unittest.TestCase):
             session_cost._print_bash_calls(events)
 
         self.assertIn("bash tool calls              3 run, 2 failed", out.getvalue())
+        self.assertIn("of which PowerShell tool   1 run, 1 failed", out.getvalue())
         self.assertIn("git=1", out.getvalue())
         self.assertIn("python=1", out.getvalue())
 

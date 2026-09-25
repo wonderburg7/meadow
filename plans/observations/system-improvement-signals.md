@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: observation-intake | LAYER: active -->
 
-Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-20
+Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-25
 
 ## Purpose and boundary
 
@@ -69,6 +69,36 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — <possible improvement>
 - Disposition: untriaged
 -->
+
+### 2026-09-25 — a finish holds the lifecycle lock through verification, so the other lane polls it
+
+- Source: ad hoc (diagnosis-systems check)
+- Area: tooling / process
+- Signal: 49 of 118 recorded stops are `slice lifecycle is busy`, 39 of them
+  `finish` between 21:09 on 23 Sep and 00:18 on 24 Sep, in clusters of one
+  to four a minute while both lanes closed slices (SV-2, SV-3, AP-3 to AP-6).
+  `Invoke-WithLifecycleLock` wraps the whole of `finish`, including branch
+  and primary `tools/verify.ps1` runs (lifecycle tests alone take a median
+  231 s), and a second caller is refused at once rather than made to wait.
+  The blocked session's only remedy is to retry, which it did every minute
+  or so.
+- Evidence: `.git/meadow-slice-stops.jsonl` (cause `slice lifecycle is
+  busy`, by `at`); `python tools/session_cost.py --stops` ("preflight
+  refusals by cause"); `tools/slice.ps1` `Invoke-WithLifecycleLock` and the
+  dispatch lines at the end of the file.
+- Consequence: each refusal is a model request spent to learn nothing, and
+  39 in three hours is a visible share of that evening's context cost. It
+  also buries real stops in `--stops`. The refusals carry no slice id, so
+  the ledger cannot say which finish was waiting on which.
+- Candidate direction: Hypothesis — make the lock wait, bounded (for
+  example up to ten minutes, printing one "waiting for <command> <id>"
+  line), instead of refusing; or take the lock only for the phases that
+  touch shared state (merge, archive, refill, ledger) and run verification
+  outside it. Related to the 20 Sep open-worktree signal below: both are
+  lifecycle contention between lanes.
+- Disposition: promoted 25 Sep 2026, with the 20 Sep open-worktree signal,
+  to L-15 in `plans/now/agent-lifecycle.md` (the bounded wait; narrowing the
+  lock is recorded there as out of scope).
 
 ### 2026-09-20 — FUNCTION_MAP.md staleness is the most frequent verification failure, and the file is generated
 
@@ -209,7 +239,12 @@ explicit request from Dave.
   between "finish it" and "abandon it". Related to ST-1, which is what makes
   this count visible in `--stops` at all; hold until ST-1 lands and the count
   can be tracked.
-- Disposition: untriaged.
+- Disposition: promoted 25 Sep 2026 to L-15 in
+  `plans/now/agent-lifecycle.md`, clustered with the 25 Sep lifecycle-lock
+  signal. Re-verified first: ST-1 landed and 5 more refusals followed
+  (`ST-1` three times over 21-23 Sep, `FB-3`, `AP-7`), and the stop text is
+  unchanged. L-15 names whether the branch is ahead and clean rather than
+  whether it is green, so it runs no verification.
 
 ### 2026-09-20 — verify.ps1's `-RegenerateOnly` switch was lost when V-1 superseded it
 

@@ -3,10 +3,10 @@
 Wired to SessionStart and Stop in .claude/settings.json. It is what gives
 tools/session_cost.py a session-to-branch join, and so a per-slice cost --
 a transcript records neither its branch nor the slice it was claimed for.
-Also wired to PostToolUse and PostToolUseFailure for Bash (WD-4): every
-shell call records a short token for the command that ran and whether it
-failed, which is the one count of retried commands that costs no tokens to
-collect. PostToolUse runs
+Also wired to PostToolUse and PostToolUseFailure for Bash (WD-4) and, since
+25 Sep 2026, PowerShell: every shell call records a short token for the
+command that ran and whether it failed, which is the one count of retried
+commands that costs no tokens to collect. PostToolUse runs
 only after a tool call succeeds, so a failed command reaches this script
 through PostToolUseFailure as `tool_bash_failed`; both write one `tool_bash`
 event and differ only in `ok`.
@@ -69,7 +69,14 @@ def _bash_command_token(command: str) -> str:
         if index == len(words):
             continue
 
-        program = words[index]
+        # PowerShell's call operator introduces the program rather than being one.
+        if words[index] == "&" and index + 1 < len(words):
+            index += 1
+        program = words[index].strip("'\"")
+        # A script run directly (`.\tools\slice.ps1 owner`) is named by its
+        # file, never by the path that reached it.
+        if program.lower().endswith((".ps1", ".py")):
+            return program.rsplit('/', 1)[-1].rsplit('\\', 1)[-1]
         if program in ("python", "python3", "powershell", "pwsh"):
             script_suffix = ".py" if program in ("python", "python3") else ".ps1"
             script = next(
@@ -109,6 +116,9 @@ def main() -> int:
             session=payload.get("session_id", ""),
             cmd=_bash_command_token(command),
             ok=not failed,
+            # The kind stays `tool_bash` so history keeps one series; a
+            # PowerShell tool call is marked, a Bash one carries no field.
+            shell="powershell" if payload.get("tool_name") == "PowerShell" else "",
         )
         return 0
 
