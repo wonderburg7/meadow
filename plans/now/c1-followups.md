@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: C1F-3 -- hive_cell.gd's first 605 lines get section headers, then C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), both queued in the Claude lane | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), queued in the Claude lane; C1F-3 shipped 27 Sep | Dependency: none | Verified: 2026-09-27
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
@@ -33,7 +33,6 @@ proves them at runtime.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| C1F-3 | none -- a code-reading change: `hive_cell.gd`'s head is signposted like the rest of the file | `scripts/hive_cell.gd` | yes | low |
 | C1F-4 | none -- a regression guard: reverting the queen's `target_cell` reset now fails `tests/test_source_checks.py` | `tests/test_source_checks.py` | yes | low |
 
 **Dependencies.** C1F-1 follows E1
@@ -50,36 +49,7 @@ C1F-1 shipped 2026-09-19; its specification is `plans/archive/C1F-1_2026-09-19.m
 
 C1F-2 shipped 2026-09-20; its specification is `plans/archive/C1F-2_2026-09-20.md`.
 
-## C1F-3 — hive_cell.gd's first 605 lines get section headers
-
-Filed 24 Sep 2026 at AP-7's closeout, from a warning `tools/verify.ps1`
-prints on every run: `tools/update_function_map.py` reports that
-`hive_cell.gd` (1,149 lines) has no `# --- section ---` header until line
-606, so its first 114 indexed lines are unsignposted in `FUNCTION_MAP.md`.
-Same shape as V-4 (21 Sep), which did this for `scenario_actions.gd`.
-
-- **Level.** low -- one file, comments only.
-- **Requirements.** Add `# --- <name> ---` headers, in the file's existing
-  style (dashes padded to the same width as `# --- working positions ---`),
-  above the natural groups before line 606: constants, colours and textures
-  (from line 25); cell state (from `var content_type`, line 97); build and
-  designation state; hatch settings; display nodes; slots; `_ready`; overlay
-  and selection. Group names follow what the code does; the list above is a
-  guide, except that `# --- cell state` must exist (the queue proof reads
-  it). No line of code moves or changes. Then run
-  `python tools/update_function_map.py` so the index picks them up.
-- **Automated acceptance.** `tools/verify.ps1` is green and no longer prints
-  the `hive_cell.gd ... unsignposted` warning; `git diff` on
-  `scripts/hive_cell.gd` adds comment lines only.
-
-```queue
-**[Claude] C1F-3 -- hive_cell.gd's first 605 lines get section headers**
-- Plan: `plans/now/c1-followups.md` -- "C1F-3 — hive_cell.gd's first 605 lines get section headers"
-- Files: `scripts/hive_cell.gd`
-- Check: `tools/verify.ps1` no longer warns that hive_cell.gd is unsignposted, and the diff to hive_cell.gd adds comment lines only
-- Proof: `absent: scripts/hive_cell.gd :: # --- cell state`
-- Next after: C1F-4 -- a contract test guards the target_cell reset
-```
+C1F-3 shipped 2026-09-27; its specification is `plans/archive/C1F-3_2026-09-27.md`.
 
 ## C1F-4 — a contract test guards the target_cell reset
 

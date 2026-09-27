@@ -22,6 +22,8 @@ extends Polygon2D
 ## middle, so no more than six can work a cell at once -- see
 ## `claim_slot`.
 
+# --- constants and colours ----------------------------------------
+
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Resources = preload("res://scripts/resources.gd")
@@ -94,6 +96,8 @@ const JELLY_COLOR := Color(0.97, 0.94, 0.82)
 const GYNE_BROOD_COLOR := Color(0.98, 0.80, 0.35)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
+# --- cell state ---------------------------------------------------
+
 var content_type: String = ""
 var amount: float = 0.0
 var capacity: float = 200.0
@@ -126,6 +130,8 @@ var brood_is_gyne: bool = false
 ## contents only count as real honey once it reaches honey_ripen_time.
 var ripen_progress: float = 0.0
 
+# --- building state -----------------------------------------------
+
 ## Building state. Cells the hive starts with are already finished.
 var is_built: bool = true
 var build_progress: float = 0.0
@@ -150,6 +156,8 @@ var main: Node2D = null
 
 func effective_build_time() -> float:
 	return build_time_override if build_time_override > 0.0 else GameConfig.cell_build_time
+
+# --- designation and orders ---------------------------------------
 
 ## "" means the cell takes whatever is going. Otherwise it only accepts
 ## the named thing: "nectar", "pollen", "honey", or "brood" for a nursery
@@ -191,6 +199,8 @@ var keep_empty: bool = false
 var evict_requested: bool = false
 var evict_mode: String = "move"
 
+# --- hatch settings -----------------------------------------------
+
 ## Which role a bee raised in this cell takes when it emerges.
 ## -1 means "whatever the colony default is". Set from the cell popup,
 ## along with the sub-mode that role needs (a forager's focus, whether a
@@ -206,6 +216,8 @@ var hatch_gyne: bool = false
 ## one-off choice doesn't quietly govern the cell forever. The popup's
 ## "Keep for every bee" button pins it.
 var hatch_role_locked: bool = false
+
+# --- layout and display nodes -------------------------------------
 
 var axial: Vector2i = Vector2i.ZERO
 
@@ -243,6 +255,8 @@ var closed_mark: Line2D
 ## cell holds nothing and `Session.use_cell_sprites` is on.
 var empty_sprite: Sprite2D
 
+# --- slots --------------------------------------------------------
+
 ## One working position per wall. A bee claims a slot before it walks
 ## over, and gives it up when it leaves, so bees never stand on top of
 ## each other while loading, unloading, or building. An unfinished cell
@@ -254,6 +268,8 @@ const SLOT_REACH := 1.35
 const SQUASHED_SLOT_Y_REACH := 1.65
 
 var slot_users: Array = [null, null, null, null, null, null]
+
+# --- setup --------------------------------------------------------
 
 func _ready() -> void:
 	add_to_group("hive_cells")
@@ -368,6 +384,8 @@ func _ready() -> void:
 	info_label.position = Vector2(-cell_size, -8)
 	info_label.add_theme_font_size_override("font_size", 9)
 	add_child(info_label)
+
+# --- overlay, selection and rings ---------------------------------
 
 ## Which overlay this cell is drawing under, if any. Applied on top of
 ## its ordinary colour in _refresh, so switching overlays off restores
@@ -491,6 +509,8 @@ func _apply_outline_points(line: Line2D, size: float) -> void:
 func _set_selection_ring_points() -> void:
 	_apply_outline_points(selection_ring, cell_size + 2.0)
 
+# --- per-frame update ---------------------------------------------
+
 ## How often a cell redraws itself. Six times a second, not sixty.
 ##
 ## _refresh rebuilds this cell's hexagon polygon, its outline points and
@@ -527,6 +547,8 @@ func _process(delta: float) -> void:
 	refresh_timer = (1.0 / REFRESHES_PER_SECOND) * randf_range(0.85, 1.15)
 	_refresh()
 	Perf.end("cells")
+
+# --- brood development --------------------------------------------
 
 ## A larva burns through whatever its last feed bought it and then simply
 ## stops. A nurse standing over it still speeds up the time it does have
@@ -571,6 +593,8 @@ func _larva_dies() -> void:
 	DiagnosticLog.count_larval_death()
 	_invalidate_hive_index()
 	_invalidate_stock()
+
+# --- index and display epochs -------------------------------------
 
 ## The single call-through every content_type/is_built mutator below uses
 ## to tell the hive's cell-content buckets (hive.gd's `_content_index`)
