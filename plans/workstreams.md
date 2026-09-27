@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-2` (`codex/PERF-2`) | Codex | a pinned hungry-indoor scenario measures find_food_cell | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell` |
+| `.worktrees/C1F-3` (`claude/C1F-3`) | Claude | hive_cell.gd's first 605 lines get section headers | Claude | in progress | none | `plans/now/c1-followups.md` C1F-3 — hive_cell.gd's first 605 lines get section headers |
