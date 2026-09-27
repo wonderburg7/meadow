@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-2` (`codex/PERF-2`) | Codex | a pinned hungry-indoor scenario measures find_food_cell | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell` |
-| `.claude/worktrees/next-slice-19befe` (`claude/perf-2-godot-crash-972044`) | ad-hoc | Godot launchers survive an unwritable user:// (the Codex-sandbox 0x58 crash blocking PERF-2) | Claude | in progress | none | none |
