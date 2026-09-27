@@ -230,6 +230,9 @@ def main() -> int:
     if godot is None:
         print("godot cache: skipped -- no Godot binary found")
         return 0
+    redirected = _compile_check().ensure_writable_user_dir()
+    if redirected:
+        print(redirected)
     ok, line = ensure_cache(args.root, godot, force=args.force)
     print(line)
     return 0 if ok else 1
