@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: C1F-3 -- hive_cell.gd's first 605 lines get section headers, then C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), both queued in the Claude lane | Dependency: none | Verified: 2026-09-24
+Status: active | Owner: Dave / Claude Code | Next: C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), queued in the Claude lane; C1F-3 shipped 27 Sep | Dependency: none | Verified: 2026-09-27
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
