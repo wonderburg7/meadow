@@ -1,7 +1,7 @@
 # Feedback build — something a tester can install, and evidence they never have to give us
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: FB-3 -- the pacing gates become one command, now startable in the Codex lane | Dependency: none -- FB-2 remains independent of every Claude-lane slice; FB-3 consumes its milestone metrics | Verified: 2026-09-23
+Status: complete | Owner: Dave / Codex | Next: none -- FB-3 shipped; finish archives this completed plan | Dependency: none | Verified: 2026-09-24
 
 **Objective.** `plans/design/product-scope.md` §15 defines the closed alpha as
 friends and family being able to *install*, save, resume and give useful
@@ -48,7 +48,6 @@ Verified 22 September 2026 against the repository.
 | --- | --- | --- | --- | --- |
 
 `.gitignore` is in FB-1's scope but deliberately not on its `Files:` line: `check_docs.py`'s queue validator requires every listed path to have a file suffix, and `.gitignore` has none. Do not re-add it there.
-| FB-3 | `python tools/pacing_gates.py` prints the five milestone timings against their targets, so a balance change is judged by a command. | `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1` | yes | medium |
 
 **Dependencies, stated rather than implied by order.** FB-1 and FB-2 share no
 file and may run in either order. FB-3 needs FB-2's metrics and nothing else.
@@ -61,41 +60,7 @@ FB-1 shipped 2026-09-23; its specification is `plans/archive/FB-1_2026-09-23.md`
 
 FB-2 shipped 2026-09-23; its specification is `plans/archive/FB-2_2026-09-23.md`.
 
-## FB-3 — the pacing gates become one command
-
-Level: medium.
-
-- **Required reading.** This heading. FB-2's result. `tools/run_scenario.py`'s
-  `--repeat` and `--full` handling, and `plans/design/product-scope.md` §3's
-  timing table only.
-- **Files to change.** `tools/pacing_gates.py` (new),
-  `test_scenarios/alpha_arc_test.json` (new), `tests/test_pacing_gates.py`
-  (new), `tools/verify.ps1`.
-- **Requirements.** One scenario that starts from the standard difficulty
-  baseline and runs to the day winter ends, with the `balance` profile and a
-  fixed seed. `pacing_gates.py` runs it a small number of times — **default
-  three, never more without `--repeat`** — reads each run's `milestones`
-  section, and prints one table: milestone, median day, the target from §3's
-  table converted to days at the run's own `day_length_seconds`, and whether it
-  is inside band. Under 40 lines of output. `tests/test_pacing_gates.py` tests
-  the band arithmetic and the table rendering against fixture analyses; it never
-  launches Godot, and it is what `verify.ps1` runs.
-- **Runtime policy.** Three runs by default, and the script prints the wall
-  clock each run took so the cost is visible. It is run deliberately before a
-  balance decision, never from `verify.ps1`.
-- **Escalation.** If a single arc run cannot finish inside `run_scenario.py`'s
-  timeout, stop and report the wall-clock figure rather than raising the
-  timeout — a harness that takes an hour is not an instrument anyone will use,
-  and the answer may be a shorter scenario.
-
-```queue
-**[Codex] FB-3 -- the pacing gates become one command**
-- Plan: `plans/now/feedback-build.md` -- "FB-3 — the pacing gates become one command"
-- Files: `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1`
-- Check: `python tools/pacing_gates.py` runs a fixed-seed arc scenario three times, prints one table of milestone, median day, the §3 target in days and whether it is inside band in under 40 lines, reports each run's wall clock, and `tests/test_pacing_gates.py` proves the band arithmetic without launching Godot
-- Proof: `absent: tools/verify.ps1 :: pacing_gates`
-- Next after: none -- feedback-build is complete once FB-3 ships.
-```
+FB-3 shipped 2026-09-24; its specification is `plans/archive/FB-3_2026-09-24.md`.
 
 ## Read on demand
 

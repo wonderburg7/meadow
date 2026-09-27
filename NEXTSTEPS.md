@@ -56,14 +56,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] FB-3 -- the pacing gates become one command**
-   - Plan: `plans/now/feedback-build.md` -- "FB-3 — the pacing gates become one command"
-   - Files: `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pacing_gates.py`, `tools/verify.ps1`
-   - Check: `python tools/pacing_gates.py` runs a fixed-seed arc scenario three times, prints one table of milestone, median day, the §3 target in days and whether it is inside band in under 40 lines, reports each run's wall clock, and `tests/test_pacing_gates.py` proves the band arithmetic without launching Godot
-   - Proof: `absent: tools/verify.ps1 :: pacing_gates`
-   - Next after: none -- feedback-build is complete once FB-3 ships.
-
-2. **[Codex] PERF-2 -- a pinned hungry-indoor scenario measures find_food_cell**
+1. **[Codex] PERF-2 -- a pinned hungry-indoor scenario measures find_food_cell**
    - Plan: `plans/now/hot-path-queries.md` -- "PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell`"
    - Files: `test_scenarios/perf2_hungry_indoor.json`, `docs/PERFORMANCE_BASELINE.md`
    - Check: two runs of `python tools/run_scenario.py test_scenarios/perf2_hungry_indoor.json` both record a non-zero `hive_find_food` mean within 10% of each other, and `docs/PERFORMANCE_BASELINE.md` records both readings, their share of frame time and whether PERF-3 is worth specifying
