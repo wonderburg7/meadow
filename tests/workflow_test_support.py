@@ -45,3 +45,15 @@ check_docs = importlib.util.module_from_spec(CHECK_DOCS_SPEC)
 CHECK_DOCS_SPEC.loader.exec_module(check_docs)
 
 
+def windows_powershell():
+    """The shell slice.ps1 and verify.ps1 run under in use: Windows
+    PowerShell 5.1, whatever else is on PATH. Codex puts its own pwsh 7
+    first on PATH, so `which("pwsh") or which("powershell")` drove the
+    lifecycle suite under pwsh 7 for Codex and 5.1 for Claude: a pass in one
+    lane said nothing about the other (ruled out, but only after a rerun,
+    while diagnosing FB-3 on 27 Sep 2026). test_codex_environment already
+    chose 5.1 this way. pwsh is the fallback only where 5.1 does not exist."""
+    system = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    if system.is_file():
+        return str(system)
+    return shutil.which("powershell") or shutil.which("pwsh")

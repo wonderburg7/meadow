@@ -73,6 +73,18 @@ Either edit may be left uncommitted: `finish` commits it first. A branch that
 did the archive or the deletion by hand passes straight through, because each
 tool runs only when its step is still owed.
 
+**`finish` runs for 8-12 minutes** -- its primary verify runs the whole
+lifecycle suite -- which is past the 10-minute cap on a foreground Bash call.
+Run it with `run_in_background` and wait for the notification. It has ended
+only when it prints `Slice landed:` or a `slice finish stopped` block; a
+shell that returns without either left it running, so never start a second
+lifecycle command on top of it (27 Sep 2026: a Codex session did, twice, and
+was told only "busy" by its own run). `tools/slice.ps1 status` shows
+`running` (the command holding the lifecycle lock, with its PID) and
+`last_run` (how the last one ended: `outcome`, `step`, `cause`). A failed
+verify's full output is also saved to `meadow-slice-verify.log` in the
+primary checkout's `.git` directory; the stop block names the path.
+
 Edit only your own lane's subsection of `NEXTSTEPS.md`; the other lane's
 branch is editing the other one, and separate subsections keep the two merges
 clean. A worktree is never kept open because a hands-on check is outstanding.

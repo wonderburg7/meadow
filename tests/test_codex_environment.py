@@ -142,18 +142,7 @@ class CodexPermissionProfileTest(unittest.TestCase):
 class VerifyPythonResolutionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        system_powershell = (
-            Path(os.environ.get("SystemRoot", r"C:\Windows"))
-            / "System32"
-            / "WindowsPowerShell"
-            / "v1.0"
-            / "powershell.exe"
-        )
-        cls.powershell = (
-            str(system_powershell)
-            if system_powershell.is_file()
-            else shutil.which("pwsh") or shutil.which("powershell")
-        )
+        cls.powershell = windows_powershell()
         if not cls.powershell:
             raise unittest.SkipTest("PowerShell is required for verify.ps1 tests")
 
