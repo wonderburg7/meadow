@@ -301,6 +301,13 @@ never said why, and its session twice retried into its own running `finish`.
   (`icacls <dir> /deny "%USERNAME%:(RD,RA,REA,X)"`) reproduces this
   particular one, as `test_doctor_survives_an_excludes_folder_it_may_not_list`
   does.
+- **Codex's sandbox denies `%APPDATA%`, and Godot crashes without it.** It
+  is the `0x58` crash under "exit 4294967295" below. The Python launchers
+  redirect it first (`ensure_writable_user_dir`); a new launcher must too.
+- **`tempfile` hangs in a folder the sandbox denies.** On Windows it retries
+  a denied create whenever `os.access` reports the folder writable, and
+  `os.access` ignores ACLs, so it loops up to `TMP_MAX` (2**31) times. Probe
+  writability with one plain write (27 Sep 2026).
 - **`Receive-Job -ErrorAction SilentlyContinue 2>&1` keeps nothing from
   stderr.** SilentlyContinue discards each error record before `2>&1` can
   redirect it, and unittest writes its whole report -- dots, `FAIL:` blocks,
@@ -353,36 +360,38 @@ difference, and the last line shifted between renderers only because of
 output buffering.
 
 A separate, genuine native crash also shows up in the same logs. It is
-an access violation reading address `0x58`, at the same instruction every
-time. Windows logs it as a System-log event 26 popup
-("Godot.exe - Application Error"), not as an Application event 1000. It
-belongs to `C:\Program Files\Godot\Godot.exe`, the copy that headless runs
-and the godot MCP server use. It is not yet diagnosed, but on 24 Sep 2026
-this was established:
+an access violation reading address `0x58` (RVA `0x6c5854`,
+`cmp byte [rcx+0x58]`), logged as a System-log event 26 popup
+("Godot.exe - Application Error") rather than an Application event 1000,
+or as a bare exit `0xC0000005` where `run_scenario.py` sets
+`SEM_NOGPFAULTERRORBOX`.
 
-- That exe is byte-identical to Dave's editor copy (official 4.7.1,
-  `a13da4feb`). A different binary is not the cure.
-- It has recurred since 21 Aug 2026, well over 200 times. The worst burst
-  was 28 Aug 23:47–23:52, when every case of a parallel
-  `run_headless.ps1 --experiment` crashed.
-- It bypasses WER, which does log other apps' crashes here. That points to
-  a fault during process exit, and output can be lost with it.
-- `run_scenario.py` sets `SEM_NOGPFAULTERRORBOX` around its runs, so there
-  the same fault shows up only as exit `0xC0000005`, with no popup. The
-  popups come from launchers that don't set it:
-  `godot_compile_check.py` (the verify boot and its `--quit-after 1`
-  probe), `godot_cache.py`'s import and primary-checkout boot,
-  `slice.ps1`'s boot probe, and the godot MCP server.
-- It did not reproduce in about 70 launches of those command shapes, run
-  serially or four at a time.
-- Scanning `.text` for the offset `…5854` narrows the faulting
-  instruction to one of three reads: RVA `0x6c5854`
-  (`cmp byte [rcx+0x58]`), `0x3e15854` (`cmp qword [rcx+0x58]`) or
-  `0x61b5854` (`mov eax,[rax+0x58]`).
+**It is Godot failing to open its own log (diagnosed 27 Sep 2026).**
+Before the project loads, Godot 4.7.1's file logger opens
+`user://logs/godot.log`, which is
+`%APPDATA%\Godot\app_userdata\<config/name>\logs`. It then uses the file
+without checking the open succeeded. Codex's sandbox denies writes under
+`%APPDATA%`, so every Godot a Codex session launched crashed there. That
+happened about 4 seconds in, straight after `WorkerThreadPool:`, the only
+line `--verbose` prints. From 21 Aug to 27 Sep, 228 of the 230 such events
+fell within 12 minutes of a Codex Godot or verify command, although those
+windows cover only 13% of that time. The 28 Aug burst, when every parallel
+`--experiment` case crashed, was a Codex run. It never reproduced outside
+Codex, because nothing else is denied that folder. Under Codex,
+`godot_compile_check.py` reported it as "the installed Godot engine crashed
+before opening the project" and exited 0, so Codex's verify never booted
+Godot.
 
-To catch the next one, run `tools/godot_crash_watch.ps1`. While the popup
-is still open, it records the crashed process's command line, its parent
-and the exact RVA.
+The Python launchers (`godot_compile_check.py`, `godot_cache.py` and
+`run_scenario.py`) now call `ensure_writable_user_dir()` before launching
+anything. When `%APPDATA%\Godot` is not writable, it points `APPDATA` at
+`%TEMP%\meadow-godot-appdata` for that process. Godot and
+`run_scenario.log_dir()` both follow it. `slice.ps1`'s doctor probe
+(`Get-GodotCapability`) still launches Godot without it, so under Codex it
+still records `environment_crash`. To reproduce, run
+`codex sandbox -P meadow -C <dir> -- "C:\Program Files\Godot\Godot.exe"
+--headless --quit-after 1`. Adding `--log-file <writable path>` avoids the
+crash, but scenario runs also need `user://logs` for their session files.
 
 Separately, a project-less `--headless --quit-after 1`, as `slice.ps1`'s
 probe runs when its working directory holds no `project.godot`, opens the

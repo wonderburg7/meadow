@@ -18,11 +18,12 @@ build that a player cannot run.
 
 Skipping
 --------
-Godot is not installed in every environment that runs verification (the
-Codex runtime has no Godot). A binary can also be installed but unable to
-initialise headlessly on that host. In either case this prints a skip line and
-exits 0 rather than attributing an engine crash to the project. Set
-`MEADOW_GODOT_PATH` to point at a working non-default install.
+Godot is not installed in every environment that runs verification. A binary
+can also be installed but unable to initialise headlessly on that host. In
+either case this prints a skip line and exits 0 rather than attributing an
+engine crash to the project. Set `MEADOW_GODOT_PATH` to point at a working
+non-default install. A sandbox that denies Godot's user:// folder (Codex's
+does) is not a skip: `ensure_writable_user_dir` redirects it first.
 """
 
 import os
@@ -30,6 +31,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -65,6 +67,42 @@ def find_godot() -> str | None:
         if found:
             return found
     return None
+
+
+def ensure_writable_user_dir() -> str | None:
+    """Point APPDATA at a temp folder when Godot could not write its own.
+
+    Godot keeps user:// under %APPDATA%\\Godot\\app_userdata\\<config/name>.
+    When it cannot open its log there, 4.7.1 dereferences the null file: an
+    access violation reading 0x58, exit 0xC0000005, before the project
+    loads. Codex's sandbox denies that folder, and that crash was every
+    "engine crashed before opening the project" skip. Godot reads the folder
+    from APPDATA, so redirecting it for this process gives every Godot child
+    a writable user://, and run_scenario.log_dir() follows. Returns the line
+    to print when it redirects, else None.
+    """
+    appdata = os.environ.get("APPDATA", "")
+    if appdata and _can_write(Path(appdata) / "Godot"):
+        return None
+    fallback = Path(tempfile.gettempdir()) / "meadow-godot-appdata"
+    fallback.mkdir(parents=True, exist_ok=True)
+    os.environ["APPDATA"] = str(fallback)
+    return ("godot user dir: %s\\Godot is not writable here; using %s"
+            % (appdata or "%APPDATA%", fallback))
+
+
+def _can_write(folder: Path) -> bool:
+    # One plain write, not tempfile: on Windows tempfile retries a denied
+    # create whenever os.access says writable, which ignores ACLs, so in a
+    # denied folder it loops up to TMP_MAX (2**31) times.
+    probe = folder / (".meadow-write-probe-%d" % os.getpid())
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        probe.write_bytes(b"")
+        probe.unlink()
+    except OSError:
+        return False
+    return True
 
 
 def failing_lines(output: str) -> list[str]:
@@ -172,6 +210,9 @@ def main() -> int:
         print("godot compile check: skipped -- no Godot binary found "
               "(set MEADOW_GODOT_PATH to run it here)")
         return 0
+    redirected = ensure_writable_user_dir()
+    if redirected:
+        print(redirected)
     if not engine_can_boot(godot):
         return 0
     if not prepare_cache(godot):

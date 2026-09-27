@@ -42,7 +42,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnostics import write_event  # noqa: E402
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
-from godot_compile_check import failing_lines  # noqa: E402
+from godot_compile_check import ensure_writable_user_dir, failing_lines  # noqa: E402
 import godot_cache  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
@@ -868,9 +868,14 @@ def main() -> int:
             return 1
         return submit_background_job(sys.argv[1:], args.job_root)
 
+    # Godot crashes before boot when it cannot write user:// (Codex's
+    # sandbox denies it), so that is redirected before any launch below.
     # A worktree's missing or stale .godot would otherwise fail every run
     # below as a compile error or a fake collapse. Stderr keeps stdout's
     # one-line verdict contract.
+    redirected = ensure_writable_user_dir()
+    if redirected:
+        print(redirected, file=sys.stderr)
     if Path(args.godot_path).is_file():
         cache_ok, cache_line = godot_cache.ensure_cache(ROOT, args.godot_path)
         print(cache_line, file=sys.stderr)

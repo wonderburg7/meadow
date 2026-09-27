@@ -2,7 +2,10 @@
 
 from contextlib import redirect_stdout
 from io import StringIO
+import os
+from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -51,6 +54,29 @@ class GodotCompileCheckTest(unittest.TestCase):
 
         self.assertEqual(result, 0)
         self.assertIn("boots with no script errors", output)
+
+
+class WritableUserDirTest(unittest.TestCase):
+    """Codex's sandbox denies %APPDATA%, and Godot 4.7.1 crashes at 0x58
+    before boot when it cannot open user://logs/godot.log there."""
+
+    def test_leaves_a_writable_appdata_alone(self):
+        with tempfile.TemporaryDirectory() as appdata,              patch.dict(os.environ, {"APPDATA": appdata}):
+            self.assertIsNone(godot_compile_check.ensure_writable_user_dir())
+            self.assertEqual(os.environ["APPDATA"], appdata)
+
+    def test_redirects_an_appdata_godot_cannot_write(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            blocked = Path(scratch) / "a-file"
+            blocked.write_text("", encoding="utf-8")
+            temp = Path(scratch) / "temp"
+            with patch.dict(os.environ, {"APPDATA": str(blocked)}),                  patch.object(godot_compile_check.tempfile, "gettempdir", return_value=str(temp)):
+                line = godot_compile_check.ensure_writable_user_dir()
+                redirected = os.environ["APPDATA"]
+
+            self.assertIn("not writable", line)
+            self.assertEqual(Path(redirected), temp / "meadow-godot-appdata")
+            self.assertTrue(Path(redirected).is_dir())
 
 
 if __name__ == "__main__":
