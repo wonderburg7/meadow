@@ -73,10 +73,13 @@ Either edit may be left uncommitted: `finish` commits it first. A branch that
 did the archive or the deletion by hand passes straight through, because each
 tool runs only when its step is still owed.
 
-**`finish` runs for 8-12 minutes** -- its primary verify runs the whole
-lifecycle suite -- which is past the 10-minute cap on a foreground Bash call.
-Run it with `run_in_background` and wait for the notification. It has ended
-only when it prints `Slice landed:` or a `slice finish stopped` block; a
+**`finish` takes about a minute, or 4-10 minutes when the branch touches
+workflow tooling** (`tools/`, `.codex/` or a lifecycle test module): its
+branch verify then runs the lifecycle suite, and waits if another worktree's
+suite is already running, since only one runs at a time. Do not run
+`verify.ps1` yourself before it -- `finish` is the verify. The long case is
+past the 10-minute cap on a foreground Bash call, so always run it with
+`run_in_background` and wait for the notification. It has ended only when it prints `Slice landed:` or a `slice finish stopped` block; a
 shell that returns without either left it running, so never start a second
 lifecycle command on top of it (27 Sep 2026: a Codex session did, twice, and
 was told only "busy" by its own run). `tools/slice.ps1 status` shows
