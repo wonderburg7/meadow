@@ -106,7 +106,7 @@ function Add-SliceStopRecord {
 function Get-DefaultSliceFix {
     param([string]$Cause)
     if ($Cause -match 'lifecycle is busy') {
-        return "another session is mid start/finish/resume; wait for it to end, then retry"
+        return "the command named in the cause is still running -- often your own earlier call, whose shell returned before it finished. Wait for it to end rather than retrying, then read its outcome with tools/slice.ps1 status (last_run)"
     }
     if ($Cause -match 'git (merge|pull)') {
         return "git's own message is printed above. Resolve the conflict in the primary checkout (edit, git add, git commit); a conflict between lanes means a Files: line in NEXTSTEPS.md was wrong -- fix it in the same pass"
@@ -164,12 +164,95 @@ function Invoke-InjectedLifecycleFailure {
     }
 }
 
+function Get-LifecycleFilePath {
+    param([string]$Root, [string]$Name)
+    $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($commonDir)) { $commonDir = Join-Path $Root $commonDir }
+    return Join-Path $commonDir $Name
+}
+
+# A finish takes 8-11 minutes since the primary verify began running the
+# lifecycle suite. On 27 Sep 2026 a Codex shell call returned while FB-3's
+# finish was still verifying; the session read that as "stopped without a
+# diagnosis", retried twice into its own lock, and was told only "busy". The
+# lock now says who holds it, and every locked command leaves its outcome in
+# meadow-slice-last-run.json for `status` to show, so a caller that lost the
+# console still learns what happened.
+function Get-LifecycleHolder {
+    # The holder's record, or $null if the lock is free or unreadable. A
+    # record whose process is gone -- or whose PID now belongs to a process
+    # started after the record -- is a stale file, not a holder.
+    param([string]$LockPath)
+    try {
+        if (-not (Test-Path -LiteralPath $LockPath)) { return $null }
+        $reader = [System.IO.File]::Open($LockPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        try { $text = (New-Object System.IO.StreamReader($reader)).ReadToEnd() } finally { $reader.Dispose() }
+        if (-not $text.Trim()) { return $null }
+        $holder = $text | ConvertFrom-Json
+        $process = Get-Process -Id ([int]$holder.pid) -ErrorAction SilentlyContinue
+        if (-not $process) { return $null }
+        if ($process.StartTime -gt ([datetime]$holder.started).AddSeconds(5)) { return $null }
+        return $holder
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-LifecycleBusyCause {
+    param([string]$LockPath)
+    $holder = Get-LifecycleHolder -LockPath $LockPath
+    if (-not $holder) {
+        return "slice lifecycle is busy; retry this command after the other lifecycle command completes"
+    }
+    $minutes = [int]((Get-Date) - [datetime]$holder.started).TotalMinutes
+    return "slice lifecycle is busy: ``slice.ps1 $($holder.command)`` (PID $($holder.pid), run from $($holder.cwd)) has held it since $($holder.started), $minutes min ago. If that is your own earlier call, it has not stopped -- wait for it (PowerShell: Wait-Process -Id $($holder.pid)) instead of starting another"
+}
+
+function Write-LifecycleOutcome {
+    # Never throws: like Add-SliceStopRecord, a record must not replace the
+    # failure it describes.
+    param([string]$Root, [datetime]$Started, [string]$Outcome, [string]$Cause)
+    try {
+        $context = $script:SliceContext
+        $record = [ordered]@{
+            command = $context.Command
+            id      = $context.Id
+            lane    = $context.Lane
+            pid     = $PID
+            cwd     = (Get-Location).Path
+            started = $Started.ToString("s")
+            ended   = (Get-Date).ToString("s")
+            outcome = $Outcome
+            step    = $context.Step
+            cause   = $Cause
+        }
+        $path = Get-LifecycleFilePath -Root $Root -Name "meadow-slice-last-run.json"
+        [System.IO.File]::WriteAllText($path, ($record | ConvertTo-Json -Compress), (New-Object System.Text.UTF8Encoding $false))
+    }
+    catch {
+    }
+}
+
+function Save-VerifyLog {
+    # A failed verify's output, kept where a session that lost the console
+    # can still read it. Returns the path, or a note if it could not write.
+    param([string]$Root, [object[]]$Output)
+    try {
+        $path = Get-LifecycleFilePath -Root $Root -Name "meadow-slice-verify.log"
+        $text = (@($Output) | ForEach-Object { "$_" }) -join [Environment]::NewLine
+        [System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding $false))
+        return $path
+    }
+    catch {
+        return "(nowhere: the log could not be written)"
+    }
+}
+
 function Invoke-WithLifecycleLock {
     param([string]$Root, [scriptblock]$Action)
 
-    $commonDir = (git -C $Root rev-parse --git-common-dir).Trim()
-    if (-not [System.IO.Path]::IsPathRooted($commonDir)) { $commonDir = Join-Path $Root $commonDir }
-    $lockPath = Join-Path $commonDir "meadow-slice-lifecycle.lock"
+    $lockPath = Get-LifecycleFilePath -Root $Root -Name "meadow-slice-lifecycle.lock"
     $stream = $null
     try {
         try {
@@ -177,13 +260,40 @@ function Invoke-WithLifecycleLock {
             # process recoverable: the OS releases its exclusive handle, so a
             # later lifecycle command can take that same file. CreateNew
             # instead made the stale name itself a permanent manual-repair
-            # problem.
-            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            # problem. FileShare.Read lets a command that finds the lock busy
+            # read who holds it; every writer stays excluded.
+            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
         }
         catch [System.IO.IOException] {
-            throw "slice lifecycle is busy; retry this command after the other lifecycle command completes"
+            throw (Get-LifecycleBusyCause -LockPath $lockPath)
         }
-        & $Action
+        $started = Get-Date
+        try {
+            $holder = [ordered]@{ command = $script:SliceContext.Command; pid = $PID; cwd = (Get-Location).Path; started = $started.ToString("s") }
+            $bytes = (New-Object System.Text.UTF8Encoding $false).GetBytes(($holder | ConvertTo-Json -Compress))
+            $stream.SetLength(0)
+            $stream.Write($bytes, 0, $bytes.Length)
+            $stream.Flush()
+        }
+        catch {
+            # The holder note only improves a busy message; the lock is held.
+        }
+        # The finally, not the catch, records it: start's preflight leaves
+        # through `exit`, which skips a catch.
+        $outcome = "stopped"
+        $cause = "exited early; its own message is on the console"
+        try {
+            & $Action
+            $outcome = "done"
+            $cause = ""
+        }
+        catch {
+            $cause = $_.Exception.Message
+            throw
+        }
+        finally {
+            Write-LifecycleOutcome -Root $Root -Started $started -Outcome $outcome -Cause $cause
+        }
     }
     finally {
         if ($stream) { $stream.Dispose(); Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue }
@@ -848,10 +958,15 @@ function Get-GlobalExcludesDiagnostic {
         $base = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $env:USERPROFILE ".config" }
         $path = Join-Path (Join-Path $base "git") "ignore"
     }
-    if (-not (Test-Path -LiteralPath $path)) {
-        return "absent ($source): $path -- nothing to read; no action needed unless you want a personal ignore file there"
-    }
+    # Test-Path belongs inside the try: in Codex's sandbox it throws
+    # UnauthorizedAccessException for this very file rather than answering,
+    # and outside the try that took doctor -- and the five lifecycle tests
+    # that run it -- down with it, so every Codex closeout failed its primary
+    # verify (FB-3, 25-27 Sep 2026). A probe that reports must never throw.
     try {
+        if (-not (Test-Path -LiteralPath $path)) {
+            return "absent ($source): $path -- nothing to read; no action needed unless you want a personal ignore file there"
+        }
         [void][System.IO.File]::ReadAllBytes($path)
         return "readable ($source): $path"
     }
@@ -1358,7 +1473,20 @@ function Invoke-SliceStatus {
         [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase }
     }
     if (-not $states) { $states = @([PSCustomObject]@{ state="idle" }) }
-    $states | ConvertTo-Json -Compress
+    # `running` is the lifecycle command holding the lock now; `last_run` is
+    # how the most recent one ended. Together they answer "did my finish
+    # land?" for a caller whose shell returned before finish did.
+    $running = Get-LifecycleHolder -LockPath (Get-LifecycleFilePath -Root $root -Name "meadow-slice-lifecycle.lock")
+    $lastRun = $null
+    $lastRunPath = Get-LifecycleFilePath -Root $root -Name "meadow-slice-last-run.json"
+    if (Test-Path -LiteralPath $lastRunPath) {
+        try { $lastRun = Get-Content -Raw -LiteralPath $lastRunPath | ConvertFrom-Json } catch { $lastRun = $null }
+    }
+    foreach ($state in $states) {
+        $state | Add-Member -NotePropertyName running -NotePropertyValue $running
+        $state | Add-Member -NotePropertyName last_run -NotePropertyValue $lastRun
+    }
+    $states | ConvertTo-Json -Compress -Depth 4
 }
 
 function Invoke-SliceResume {
@@ -1639,7 +1767,8 @@ function Invoke-SliceFinish {
         }
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
-            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
+            $verifyLog = Save-VerifyLog -Root $worktreeRoot -Output $verifyOutput
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
@@ -1768,7 +1897,8 @@ function Invoke-SliceFinish {
     }
     $primaryVerifyOutput | ForEach-Object { Write-Output $_ }
     if ($primaryVerifyExit -ne 0) {
-        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched" -Fix "the failing check is printed above; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
+        $verifyLog = Save-VerifyLog -Root $root -Output $primaryVerifyOutput
+        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched" -Fix "the failing check is printed above and saved to $verifyLog; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
     }
 
     Set-SliceStep "merging into master"

@@ -281,7 +281,7 @@ if ($runBranchScope -and -not $Docs) {
             $jobMs = [int](($job.PSEndTime - $job.PSBeginTime).TotalMilliseconds)
         }
         if ($Quiet) {
-            $captured = @(Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
+            $captured = @(Receive-Job -Job $job -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
             $ok = ($job.State -eq "Completed")
             Write-StageResult -Name $job.Name -Ok $ok -Output $captured -Ms $jobMs
             if (-not $ok) {
@@ -293,8 +293,12 @@ if ($runBranchScope -and -not $Docs) {
             # PowerShell 5.1 with ErrorActionPreference Stop, Receive-Job
             # re-emits that as a NativeCommandError and aborts a passing run,
             # so print stderr as text and judge the job by its State: the job
-            # throws on a non-zero exit code.
-            $plainOutput = @(Receive-Job -Job $job -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
+            # throws on a non-zero exit code. -ErrorAction Continue, not
+            # SilentlyContinue: SilentlyContinue discarded every stderr line
+            # before 2>&1 could keep it -- unittest's whole failure report --
+            # so five failed closeouts (25-27 Sep 2026) printed only
+            # "lifecycle tests: FAILED" and logged no failure line.
+            $plainOutput = @(Receive-Job -Job $job -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
             $plainOutput | ForEach-Object { Write-Output $_ }
             $ok = ($job.State -eq "Completed")
             # The -Quiet branch above records its stages through
@@ -346,7 +350,7 @@ if ($Scope -eq "primary" -and $env:MEADOW_FINISH_VERIFY -ne "1") {
     $lifecycleTimer = [System.Diagnostics.Stopwatch]::StartNew()
     $lifecycleJob = Start-LifecycleJob -Interpreter $python -Root $repoRoot
     Wait-Job -Job $lifecycleJob | Out-Null
-    $lifecycleOutput = @(Receive-Job -Job $lifecycleJob -ErrorAction SilentlyContinue 2>&1 | ForEach-Object { $_.ToString() })
+    $lifecycleOutput = @(Receive-Job -Job $lifecycleJob -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
     $lifecycleOk = ($lifecycleJob.State -eq "Completed")
     Remove-Job -Job $lifecycleJob -Force
     Write-StageResult -Name "lifecycle tests" -Ok $lifecycleOk -Output $lifecycleOutput -Ms ([int]$lifecycleTimer.ElapsedMilliseconds)

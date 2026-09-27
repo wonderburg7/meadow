@@ -12,7 +12,7 @@ from workflow_test_support import *  # noqa: E402,F401,F403
 class SliceDoctorTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.powershell = shutil.which("pwsh") or shutil.which("powershell")
+        cls.powershell = windows_powershell()
         if not cls.powershell:
             raise unittest.SkipTest("PowerShell is required for slice.ps1 doctor tests")
 
@@ -296,6 +296,34 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertRegex(diagnostic, r"^(readable|absent|unreadable) \(")
         if diagnostic.startswith("unreadable"):
             self.assertIn("icacls", diagnostic)
+
+    def test_doctor_survives_an_excludes_folder_it_may_not_list(self):
+        """Codex's sandbox denies ~/.config/git, and there Test-Path throws
+        instead of answering. The probe did that outside its try, so doctor
+        -- and five tests that run it -- failed only under Codex, and every
+        Codex closeout stopped at its primary verify (FB-3, 25-27 Sep 2026).
+        A deny ACE on a throwaway folder reproduces it without a sandbox."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        config_home = Path(tempfile.mkdtemp(prefix="meadow-denied-xdg-"))
+        git_dir = config_home / "git"
+        git_dir.mkdir()
+        (git_dir / "ignore").write_text("*.tmp\n", encoding="utf-8")
+        user = os.environ["USERNAME"]
+        subprocess.run(["icacls", str(git_dir / "ignore"), "/deny", f"{user}:(R)"], capture_output=True, check=True)
+        subprocess.run(["icacls", str(git_dir), "/deny", f"{user}:(RD,RA,REA,X)"], capture_output=True, check=True)
+        try:
+            result = subprocess.run(
+                [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "doctor", "-Lane", "Codex"],
+                cwd=self.root, capture_output=True, text=True,
+                env={**os.environ, "XDG_CONFIG_HOME": str(config_home)},
+            )
+        finally:
+            subprocess.run(["icacls", str(git_dir), "/remove:d", user], capture_output=True)
+            subprocess.run(["icacls", str(git_dir / "ignore"), "/remove:d", user], capture_output=True)
+            shutil.rmtree(config_home, ignore_errors=True)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertTrue(json.loads(result.stdout)["git_excludes"].startswith("unreadable ("), result.stdout)
 
     def test_doctor_and_doc_check_share_unbackticked_proof_error(self):
         self.write_queue("absent: scripts/sample.gd :: new_function")
@@ -1182,6 +1210,71 @@ class SliceDoctorTest(unittest.TestCase):
             cwd=self.root, capture_output=True, text=True,
         )
         self.assertEqual(0, aborted.returncode, aborted.stderr)
+
+    def test_busy_lock_names_its_holder_and_status_reports_the_outcome(self):
+        # 27 Sep 2026: a Codex shell returned while its own finish was still
+        # verifying, and its retries met "busy" with no way to tell that the
+        # holder was itself. The busy message must name the holder, and
+        # status must say how the last locked command ended.
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        lock_path = self.root / ".git" / "meadow-slice-lifecycle.lock"
+        holder_script = (
+            "$stream = [System.IO.File]::Open('{}', [System.IO.FileMode]::OpenOrCreate, "
+            "[System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)\n"
+            "$json = @{{ command = 'finish'; pid = $PID; cwd = 'C:\\held'; started = (Get-Date).ToString('s') }} | ConvertTo-Json -Compress\n"
+            "$bytes = [System.Text.Encoding]::UTF8.GetBytes($json)\n"
+            "$stream.Write($bytes, 0, $bytes.Length); $stream.Flush()\n"
+            "Start-Sleep -Seconds 8\n"
+            "$stream.Dispose()\n"
+        ).format(str(lock_path).replace("'", "''"))
+        holder = subprocess.Popen(
+            [self.powershell, "-NoProfile", "-Command", holder_script],
+            cwd=self.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        try:
+            deadline = time.time() + 6
+            while time.time() < deadline:
+                try:
+                    if lock_path.read_bytes():
+                        break
+                except OSError:
+                    pass
+                time.sleep(0.2)
+            slice_script = str(self.root / "tools" / "slice.ps1")
+            busy = subprocess.run(
+                [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
+                cwd=self.root, capture_output=True, text=True,
+            )
+            self.assertNotEqual(0, busy.returncode)
+            self.assertIn("slice lifecycle is busy", busy.stderr)
+            self.assertIn(f"PID {holder.pid}", busy.stderr)
+            self.assertIn("Wait-Process", busy.stderr)
+            running = subprocess.run(
+                [self.powershell, "-NoProfile", "-File", slice_script, "status", "-Lane", "Codex"],
+                cwd=self.root, capture_output=True, text=True,
+            )
+            self.assertEqual(0, running.returncode, running.stderr)
+            self.assertEqual(holder.pid, json.loads(running.stdout)["running"]["pid"])
+        finally:
+            holder.wait(timeout=30)
+
+        started = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, started.returncode, started.stderr)
+        status = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", slice_script, "status", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        state = json.loads(status.stdout)
+        self.assertIsNone(state["running"])
+        self.assertEqual("start", state["last_run"]["command"])
+        self.assertEqual("done", state["last_run"]["outcome"])
+        subprocess.run(
+            [self.powershell, "-NoProfile", "-File", slice_script, "abort", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
 
 
 if __name__ == "__main__":

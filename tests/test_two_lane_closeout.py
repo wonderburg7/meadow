@@ -50,7 +50,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.powershell = shutil.which("pwsh") or shutil.which("powershell")
+        cls.powershell = windows_powershell()
         if not cls.powershell:
             raise unittest.SkipTest("PowerShell is required for slice.ps1 lifecycle tests")
 

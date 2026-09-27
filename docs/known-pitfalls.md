@@ -284,6 +284,38 @@ traps, not Meadow ones. Full diagnosis in the S-1 commit on
   edit should ask `git diff --cached --quiet` first and treat "nothing
   staged" as benign, not fatal.
 
+## PowerShell tooling: a `finish` that looked stopped but was not
+
+FB-3's closeout (25-27 Sep 2026) failed its primary verify five times and
+never said why, and its session twice retried into its own running `finish`.
+
+- **Codex's sandbox makes `Test-Path` throw.** It denies
+  `~/.config/git` (Git's default global excludes folder), and there
+  `Test-Path` raises `UnauthorizedAccessException` instead of returning.
+  doctor's excludes probe called it outside its `try`, so five doctor tests
+  failed only under Codex -- and the lifecycle suite runs in every primary
+  verify. A probe that reports must wrap every statement touching the path.
+  To reproduce a sandbox-only failure without Codex, run the command under
+  `codex sandbox -P meadow -C <dir> -- <command>` (the CLI is in
+  `%LOCALAPPDATA%\OpenAI\Codex\bin\<hash>\codex.exe`); a deny ACE
+  (`icacls <dir> /deny "%USERNAME%:(RD,RA,REA,X)"`) reproduces this
+  particular one, as `test_doctor_survives_an_excludes_folder_it_may_not_list`
+  does.
+- **`Receive-Job -ErrorAction SilentlyContinue 2>&1` keeps nothing from
+  stderr.** SilentlyContinue discards each error record before `2>&1` can
+  redirect it, and unittest writes its whole report -- dots, `FAIL:` blocks,
+  tracebacks -- to stderr. verify.ps1 printed only "lifecycle tests: FAILED"
+  and the diagnostics log recorded no failure line. Use
+  `-ErrorAction Continue 2>&1`: the records are kept as text and a passing
+  run is not aborted under `$ErrorActionPreference = "Stop"`.
+- **A shell call that returns early does not stop the command.** A Codex
+  shell call came back after ~4 minutes while `finish` ran for eight more,
+  holding the lifecycle lock. `finish` has ended only when it prints
+  `Slice landed:` or `slice finish stopped`; otherwise run
+  `tools/slice.ps1 status` -- `running` names the lock's holder and PID,
+  `last_run` how the last command ended -- and a busy message now names the
+  holder too. Closeout's timing rule is in `plans/reference/closeout.md`.
+
 ## Environment quirk: exit 4294967295 is another session killing Godot
 
 A headless run that ends with exit code 4294967295 (−1), classification

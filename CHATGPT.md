@@ -111,6 +111,22 @@ were wrong, so fix them in the same pass. Claude may raise a tier when
 reviewing, but should state the specific trigger rather than repeat Codex's
 work by default.
 
+**`finish` runs for 8-12 minutes** (its primary verify runs the whole
+lifecycle suite). Give the shell call a timeout of at least 20 minutes
+(`timeout_ms: 1200000` where the shell tool takes one), and keep polling the
+same process until it prints one of its two closing blocks: `Slice landed:`
+or `slice finish stopped`. A call that returns with neither has **not**
+stopped -- `finish` is still running. Do not rerun it, and do not report it
+as stopped without a diagnosis. Instead run
+`tools/slice.ps1 status -Lane Codex`: `running` names the lifecycle command
+in progress and its PID (wait for it with `Wait-Process -Id <pid>`), and
+`last_run` says how the last one ended (`outcome`, `step`, `cause`). A failed
+verify's full output is saved to `.git/meadow-slice-verify.log` in the
+primary checkout, and the stop block names that path. A
+`slice lifecycle is busy` message that names a `finish` run from your own
+worktree is your own earlier call (27 Sep 2026: FB-3's closeout was retried
+twice into its own still-running `finish`).
+
 **A slice Codex closed out itself ends with the end-of-slice report** in
 `CLAUDE.md`, "End-of-slice report" -- `finish` prints it, including the
 `Next model` and `Toggle` lines; fill in `Connectors: active now` with the
