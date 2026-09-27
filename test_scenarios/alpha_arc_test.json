@@ -1,0 +1,11 @@
+{
+  "random_seed": 20260923,
+  "config_overrides": {
+    "energy_burn_rate": 0.17,
+    "nectar_recharge_rate": 0.5,
+    "pollen_recharge_rate": 0.1,
+    "winter_burn_factor": 0.15
+  },
+  "diagnostics": {"profile": "balance"},
+  "stop": {"max_days": 36}
+}
