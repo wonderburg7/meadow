@@ -111,8 +111,10 @@ were wrong, so fix them in the same pass. Claude may raise a tier when
 reviewing, but should state the specific trigger rather than repeat Codex's
 work by default.
 
-**`finish` runs for 8-12 minutes** (its primary verify runs the whole
-lifecycle suite). Give the shell call a timeout of at least 20 minutes
+**`finish` takes about a minute, or 4-10 minutes when the branch touches
+workflow tooling** (its branch verify then runs the lifecycle suite, one
+worktree at a time; `finish` is the verify, so do not run `verify.ps1`
+first). Give the shell call a timeout of at least 20 minutes
 (`timeout_ms: 1200000` where the shell tool takes one), and keep polling the
 same process until it prints one of its two closing blocks: `Slice landed:`
 or `slice finish stopped`. A call that returns with neither has **not**

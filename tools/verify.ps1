@@ -102,11 +102,19 @@ function Get-FailureLine {
     return ""
 }
 
-# The lifecycle suite runs on a branch only when its diff against master can
-# reach it, and always in the primary scope (V-2). The list is the tooling the
-# suite drives.
+# The workflow ("lifecycle") suite: every module Start-LifecycleJob runs.
+$lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", "tests.test_two_lane_closeout", "tests.test_codex_environment", "tests.test_verify_generated", "tests.test_alpha_build", "tests.test_godot_cache", "tests.test_godot_compile_check", "tests.test_pacing_gates")
+
+# The lifecycle suite runs only when the branch's diff against master can
+# reach it -- in the branch scope, finish's included. It used to run in the
+# primary scope on every finish too (V-2), but that run tested master before
+# the merge, which the branch that last changed this tooling had already
+# tested: 3-10 minutes of every closeout for no new coverage (27 Sep 2026).
+# The list is everything the suite reads from the repository; every test
+# builds its queue and ledger in a temporary fixture, so NEXTSTEPS.md is not
+# on it.
 function Test-LifecycleTouched {
-    $paths = @("tools/slice.ps1", "tools/hook_log.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/check_docs.py", "tools/verify.ps1", "NEXTSTEPS.md", "tests/")
+    $paths = @("tools/", ".codex/", "tests/workflow_test_support.py", "tests/source_checks.py", "export_presets.cfg", "project.godot", ".gitignore") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
     try {
         $changed = @(& git -C $PSScriptRoot diff --name-only "$(if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" })...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)
@@ -123,13 +131,53 @@ function Test-LifecycleTouched {
 
 function Start-LifecycleJob {
     param($Interpreter, $Root)
-    Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root -ScriptBlock {
-        param($interpreter, $root)
+    Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root, $lifecycleModules -ScriptBlock {
+        param($interpreter, $root, $modules)
         Set-Location $root
-        & $interpreter -m unittest tests.test_source_checks tests.test_slice_lifecycle tests.test_two_lane_closeout tests.test_codex_environment tests.test_verify_generated tests.test_alpha_build tests.test_godot_cache tests.test_godot_compile_check tests.test_pacing_gates
+        # The suite drives finish in temporary repositories, and that finish
+        # runs verify.ps1 again. Every process under this job inherits the
+        # marker, so a nested verify never starts the suite a second time --
+        # the recursion that once kept an outer closeout from returning.
+        $env:MEADOW_LIFECYCLE_SUITE = "1"
+        & $interpreter -m unittest @modules
         if ($LASTEXITCODE -ne 0) {
             throw "workflow unittest modules exited with code $LASTEXITCODE"
         }
+    }
+}
+
+# Two lanes finishing together each ran the suite at once and both took
+# 400-650 s instead of ~180 s. One suite runs at a time per repository: the
+# lock file sits in the git common dir every worktree shares, and the OS
+# drops it with the process, so a killed run never leaves it stuck. Returns
+# the open handle, or $null (run unlocked) when the lock cannot be made or
+# another run has held it for 20 minutes -- waiting must never fail verify.
+function Enter-LifecycleSuiteLock {
+    try {
+        $commonDir = (& git -C $PSScriptRoot rev-parse --path-format=absolute --git-common-dir 2>$null)
+        if ($LASTEXITCODE -ne 0 -or -not $commonDir) { return $null }
+        $lockPath = Join-Path $commonDir.Trim() "meadow-lifecycle-suite.lock"
+        $deadline = (Get-Date).AddMinutes(20)
+        $announced = $false
+        while ($true) {
+            try {
+                return [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+            }
+            catch [System.IO.IOException] {
+                if ((Get-Date) -gt $deadline) {
+                    Write-Host "lifecycle tests: another worktree's run has held the suite for 20 minutes; running alongside it"
+                    return $null
+                }
+                if (-not $announced) {
+                    Write-Host "lifecycle tests: waiting for another worktree's lifecycle tests to finish"
+                    $announced = $true
+                }
+                Start-Sleep -Seconds 5
+            }
+        }
+    }
+    catch {
+        return $null
     }
 }
 
@@ -256,13 +304,14 @@ if ($runBranchScope -and -not $Docs) {
             }
         })
     )
-    # The lifecycle suite itself drives finish/resume in temporary
-    # repositories. Running it from the finish verifier recursively starts
-    # another finish verifier, so the outer closeout can never return. It
-    # remains part of ordinary verification; closeout runs the non-recursive
-    # branch checks here instead.
-    if ($env:MEADOW_FINISH_VERIFY -ne "1") {
+    # finish's own branch verify runs the suite too when the branch touches
+    # it, since that is now the suite's only run in a closeout. A verify
+    # started from inside the suite (its temporary-repository finishes)
+    # never does: see Start-LifecycleJob.
+    $suiteLock = $null
+    if ($env:MEADOW_LIFECYCLE_SUITE -ne "1") {
         if (Test-LifecycleTouched) {
+            $suiteLock = Enter-LifecycleSuiteLock
             $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot)
         }
         else {
@@ -314,6 +363,7 @@ if ($runBranchScope -and -not $Docs) {
         }
     }
     Remove-Job -Job $jobs -Force
+    if ($suiteLock) { $suiteLock.Dispose() }
 
     if ($failed) {
         exit 1
@@ -342,22 +392,6 @@ if ($runBranchScope) {
     Invoke-RegenerateStage -Name "stage reference" -ScriptPath (Join-Path $repoRoot "tools/stage_reference.py")
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
-    }
-}
-
-if ($Scope -eq "primary" -and $env:MEADOW_FINISH_VERIFY -ne "1") {
-    # The post-merge run: the suite runs here whatever the diff was.
-    $lifecycleTimer = [System.Diagnostics.Stopwatch]::StartNew()
-    $lifecycleJob = Start-LifecycleJob -Interpreter $python -Root $repoRoot
-    Wait-Job -Job $lifecycleJob | Out-Null
-    $lifecycleOutput = @(Receive-Job -Job $lifecycleJob -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
-    $lifecycleOk = ($lifecycleJob.State -eq "Completed")
-    Remove-Job -Job $lifecycleJob -Force
-    Write-StageResult -Name "lifecycle tests" -Ok $lifecycleOk -Output $lifecycleOutput -Ms ([int]$lifecycleTimer.ElapsedMilliseconds)
-    if (-not $lifecycleOk) {
-        if (-not $Quiet) { $lifecycleOutput | ForEach-Object { Write-Output $_ } }
-        Write-Output "lifecycle tests: FAILED"
-        exit 1
     }
 }
 

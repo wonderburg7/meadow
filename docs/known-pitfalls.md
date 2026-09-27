@@ -293,8 +293,8 @@ never said why, and its session twice retried into its own running `finish`.
   `~/.config/git` (Git's default global excludes folder), and there
   `Test-Path` raises `UnauthorizedAccessException` instead of returning.
   doctor's excludes probe called it outside its `try`, so five doctor tests
-  failed only under Codex -- and the lifecycle suite runs in every primary
-  verify. A probe that reports must wrap every statement touching the path.
+  failed only under Codex -- and the lifecycle suite then ran in every
+  primary verify. A probe that reports must wrap every statement touching the path.
   To reproduce a sandbox-only failure without Codex, run the command under
   `codex sandbox -P meadow -C <dir> -- <command>` (the CLI is in
   `%LOCALAPPDATA%\OpenAI\Codex\bin\<hash>\codex.exe`); a deny ACE
