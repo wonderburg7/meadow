@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-2` (`codex/PERF-2`) | Codex | a pinned hungry-indoor scenario measures find_food_cell | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell` |
-| `.claude/worktrees/meadow-review-prompts-deccf4` (`claude/meadow-review-prompts-deccf4`) | ad-hoc | review-library follow-ups: the shared review contract, a confirm mode for hands-on checks, a doc check for review-record dispositions | Claude | in progress | none | none |
