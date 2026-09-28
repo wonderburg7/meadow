@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-2` (`codex/PERF-2`) | Codex | a pinned hungry-indoor scenario measures find_food_cell | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell` |
-| `.claude/worktrees/hands-on-check-batch-4a68bb` (`claude/hands-on-check-batch-4a68bb`) | ad-hoc | Dave's 28 Sep hands-on batch: archive the passes, diagnose C-57/C-60 and file the follow-up slices and checks | Claude | in progress | none | none |
