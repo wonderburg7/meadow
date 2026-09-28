@@ -302,16 +302,24 @@ class SliceDoctorTest(unittest.TestCase):
         instead of answering. The probe did that outside its try, so doctor
         -- and five tests that run it -- failed only under Codex, and every
         Codex closeout stopped at its primary verify (FB-3, 25-27 Sep 2026).
-        A deny ACE on a throwaway folder reproduces it without a sandbox."""
+        A deny ACE on a throwaway folder reproduces it without a sandbox.
+
+        The ACE names the running process by SID, not %USERNAME%: Codex runs
+        as a local sandbox account while USERNAME still says dl13860, and
+        icacls could not resolve that name (exit 1332), so the setup itself
+        stopped every Codex closeout (PERF-2, 28 Sep 2026)."""
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         config_home = Path(tempfile.mkdtemp(prefix="meadow-denied-xdg-"))
         git_dir = config_home / "git"
-        git_dir.mkdir()
-        (git_dir / "ignore").write_text("*.tmp\n", encoding="utf-8")
-        user = os.environ["USERNAME"]
-        subprocess.run(["icacls", str(git_dir / "ignore"), "/deny", f"{user}:(R)"], capture_output=True, check=True)
-        subprocess.run(["icacls", str(git_dir), "/deny", f"{user}:(RD,RA,REA,X)"], capture_output=True, check=True)
+        # System32's whoami, not Git's coreutils one that may sit earlier on PATH.
+        whoami = Path(os.environ["SYSTEMROOT"]) / "System32" / "whoami.exe"
+        sid_csv = subprocess.run([str(whoami), "/user", "/fo", "csv", "/nh"], capture_output=True, text=True, check=True).stdout
+        user = "*" + sid_csv.strip().split(",")[-1].strip('"')
         try:
+            git_dir.mkdir()
+            (git_dir / "ignore").write_text("*.tmp\n", encoding="utf-8")
+            subprocess.run(["icacls", str(git_dir / "ignore"), "/deny", f"{user}:(R)"], capture_output=True, check=True)
+            subprocess.run(["icacls", str(git_dir), "/deny", f"{user}:(RD,RA,REA,X)"], capture_output=True, check=True)
             result = subprocess.run(
                 [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "doctor", "-Lane", "Codex"],
                 cwd=self.root, capture_output=True, text=True,
