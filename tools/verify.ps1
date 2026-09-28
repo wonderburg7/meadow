@@ -103,7 +103,7 @@ function Get-FailureLine {
 }
 
 # The workflow ("lifecycle") suite: every module Start-LifecycleJob runs.
-$lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", "tests.test_two_lane_closeout", "tests.test_codex_environment", "tests.test_verify_generated", "tests.test_alpha_build", "tests.test_godot_cache", "tests.test_godot_compile_check", "tests.test_pacing_gates")
+$lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", "tests.test_two_lane_closeout", "tests.test_codex_environment", "tests.test_verify_generated", "tests.test_alpha_build", "tests.test_godot_cache", "tests.test_godot_compile_check", "tests.test_pacing_gates", "tests.test_review_tools")
 
 # The lifecycle suite runs only when the branch's diff against master can
 # reach it -- in the branch scope, finish's included. It used to run in the

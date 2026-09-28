@@ -114,8 +114,11 @@ evidence supports:
 Every needed hands-on check is one `C-<n>.md` record in `checks/ready/`, surfaced in
 `checks/ready.md`, in that format: `### C-<n> -- <name>`, the action in a
 sentence or two, one `PASS:` line stating the single condition, one `Owner:`
-line naming the plan. Dave replies by id. Move blocked checks to
-`checks/blocked.md` and confirmed entries to the archive. Three admission
+line naming the plan; `python tools/new_check.py --name "<name>" --owner <plan>`
+writes the skeleton with the next free id. Dave replies by id. Move blocked
+checks to `checks/blocked.md`; archive confirmed ones with
+`python tools/new_check.py --confirm C-<n>`, which also regenerates the
+index and lists the live lines that still name the id. Three admission
 rules (evidence in `plans/reference/check-loop.md`):
 
 - **Write the acceptance from the player's seat, once.** A slice's
