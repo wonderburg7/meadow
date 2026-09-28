@@ -1,6 +1,6 @@
 Landed 2026-09-28 on `codex/PERF-2`. Live plan: `plans/now/hot-path-queries.md`.
 
-## PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell`
+## PERF-2 -- a pinned hungry-indoor scenario measures `find_food_cell`
 
 Level: medium.
 
