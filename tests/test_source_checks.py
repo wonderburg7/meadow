@@ -94,6 +94,27 @@ class IndoorForagingContractTest(unittest.TestCase):
         self.assertLess(gate, drive.index("_c1_forage_effects_done = true"))
 
 
+class DepositTargetResetContractTest(unittest.TestCase):
+    """C-7: a forager whose deposit target could no longer take her load kept
+    that target while she waited out the epoch gate, so she looked
+    mid-delivery to set_focus() and a Challenge 1 queen switched to pollen at
+    1.14 never set off. The fix forgets the target before the gate returns.
+    A static check, not a runtime fixture (C1F-G1): every stage jump releases
+    the queen, so no fixture reaches the pre-1.14 early return."""
+
+    def _body(self, source: str, func: str) -> str:
+        return source.split("static func %s(" % func, 1)[1].split("\nstatic func ", 1)[0]
+
+    def test_target_is_forgotten_before_the_epoch_gate_returns(self):
+        foraging = BEE_FORAGING_PATH.read_text(encoding="utf-8")
+        body = self._body(foraging, "go_to_deposit_cell")
+        branch = body.split(
+            "if bee.target_cell == null or not is_instance_valid(bee.target_cell)", 1
+        )[1]
+        gate = branch.index("if bee.deposit_blocked_epoch == bee.hive.index_epoch")
+        self.assertIn("bee.target_cell = null", branch[:gate])
+
+
 class ChallengeOneOverflowContractTest(unittest.TestCase):
     def test_only_the_pollen_automation_stage_can_discard_queen_nectar(self):
         stages = CHALLENGE_STAGES_PATH.read_text(encoding="utf-8")

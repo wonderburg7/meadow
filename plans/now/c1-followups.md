@@ -1,7 +1,7 @@
 # C1F — Dave's 17 Sep 2026 pass: Challenge 1 follow-ups
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: C1F-4 -- a contract test guards the target_cell reset (closes C1F-G1), queued in the Claude lane; C1F-3 shipped 27 Sep | Dependency: none | Verified: 2026-09-27
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; C1F-3 shipped 27 Sep, C1F-4 shipped 28 Sep (closes C1F-G1); no follow-ups filed | Dependency: none | Verified: 2026-09-28
 
 **Objective.** The Challenge 1 findings from Dave's 17 Sep 2026 hands-on pass
 that could not be fixed in the session, each owned here because
@@ -84,6 +84,10 @@ GDScript unit harness, so "unit-level" means a static contract test beside
 ```
 
 ## Known gap C1F-G1 -- the `target_cell = null` revert does not fail fixture A
+
+**Closed by C1F-4 (28 Sep 2026).** `tests/test_source_checks.py ::
+DepositTargetResetContractTest` pins the line statically; deleting it from
+`go_to_deposit_cell` makes the test fail (tried, then restored).
 
 Filed 20 Sep 2026 at C1F-2's closeout, for a higher-reasoning session to plan.
 C1F-2's fixtures A, B and C pass, and removing `builder_dump_waste`'s
