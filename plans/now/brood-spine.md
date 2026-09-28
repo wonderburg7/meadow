@@ -63,7 +63,6 @@ available -- that the run start reads and a developer table shows and edits.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-D | a developer mode setting, switched on from the main menu's settings | `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd` | yes | medium |
 | BS-2 | Challenge 2 offers Nurses free at 2.5 | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md` | yes | medium |
 | BS-3 | the gate goes live: an unowned role cannot be assigned or worked | `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd` | after BS-1, BS-2 | high |
 | BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | a new scenario, `plans/design/progression.md` | after BS-3 | medium |
@@ -129,33 +128,7 @@ fixture; the ownership boundary was settled in BS-1).
 - Next after: BS-3 -- the gate goes live: an unowned role cannot be assigned or worked
 ```
 
-## BS-D — a developer mode setting, switched on from the main menu's settings
-
-Level: medium.
-
-- **Required reading.** This heading. `scripts/settings_catalogue.gd`'s header
-  and the `show_crab_spiders` entry (the nearest existing dev-only setting),
-  and how `scripts/main_menu.gd` opens the settings window.
-- **Files to change.** `scripts/settings_catalogue.gd`,
-  `scripts/game_config.gd`, `scripts/main_menu.gd`.
-- **Requirements.** A `developer_mode` setting, off by default, owned by
-  `GameConfig` and catalogued in `settings_catalogue.gd` like any other
-  toggle, reachable from the settings window the main menu opens. It is a
-  preference, not run state, so it survives a restart. Nothing reads it yet
-  except a source check that it exists; BS-5 is its first consumer. Do not
-  build a separate settings screen for it.
-- **Escalation.** If the main menu's settings window cannot show a toggle
-  without the in-run settings window showing it too, report which it is and
-  let Dave choose; either is acceptable for a developer setting.
-
-```queue
-**[Claude] BS-D -- a developer mode setting, switched on from the main menu's settings**
-- Plan: `plans/now/brood-spine.md` -- "BS-D — a developer mode setting, switched on from the main menu's settings"
-- Files: `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd`
-- Check: the settings window opened from the main menu lists a Developer mode toggle, off by default, that survives a restart, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/settings_catalogue.gd :: developer_mode`
-- Next after: BS-5 -- the developer table shows a run's sheet, read-only
-```
+BS-D shipped 2026-09-28; its specification is `plans/archive/BS-D_2026-09-28.md`.
 
 ## BS-5 — the developer table shows a run's sheet, read-only
 
