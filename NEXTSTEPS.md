@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-1 -- a run's availability sheet decides its starting skills**
-   - Plan: `plans/now/brood-spine.md` -- "BS-1 — a run's availability sheet decides its starting skills"
-   - Files: `scripts/run_availability.gd`, `scripts/roles.gd`, `scripts/progression.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `test_scenarios/bs1_seeded_skills_test.json`
-   - Check: `test_scenarios/bs1_seeded_skills_test.json` passes: a run seeding nurses and honey makers owns Nurses and Honey worker on day 0 and a run seeding neither owns neither, `main.gd` no longer calls `set_skill_policy` directly, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/roles.gd :: "skill":`
-   - Next after: BS-2 -- Challenge 2 offers Nurses free at 2.5
-
-2. **[Claude] BS-D -- a developer mode setting, switched on from the main menu's settings**
+1. **[Claude] BS-D -- a developer mode setting, switched on from the main menu's settings**
    - Plan: `plans/now/brood-spine.md` -- "BS-D — a developer mode setting, switched on from the main menu's settings"
    - Files: `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd`
    - Check: the settings window opened from the main menu lists a Developer mode toggle, off by default, that survives a restart, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/settings_catalogue.gd :: developer_mode`
    - Next after: BS-5 -- the developer table shows a run's sheet, read-only
 
-3. **[Claude] L-15 -- a busy lifecycle lock is waited for, not refused, and an open-worktree stop says what to do**
+2. **[Claude] L-15 -- a busy lifecycle lock is waited for, not refused, and an open-worktree stop says what to do**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-15 — the other lane's lifecycle command waits for the lock, and an open-worktree stop says what to do"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
    - Check: a second `finish` started while another holds the lock prints one waiting line naming the holder and completes after it, `start` against an open worktree says whether to finish or abandon it, and `tools/verify.ps1` is green

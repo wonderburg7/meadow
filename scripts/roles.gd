@@ -31,9 +31,18 @@ const HONEY := 6
 ## Colours are shared between the bee bodies, the nursery ring plot, the
 ## zone glow on the comb and the comb overlays, so a role looks the same
 ## everywhere it appears.
+##
+## `skill` is the skill that unlocks the role, empty for a role anyone
+## may take (BS-1, plans/now/brood-spine.md). It is the skill id string
+## rather than a skills.gd constant because only the resolver and the
+## skill tree may preload that catalogue (tests/source_checks.py's
+## CATALOGUE_READERS); check_run_skill_policy there checks every value is
+## a real skills.gd id instead. actions.gd's own `skill` field is work a
+## skill unlocks *inside* a role, not the role itself.
 const ROLES := [
 	{
 		"id": FORAGER, "key": "forager", "label": "Forager", "letter": "F",
+		"skill": "",
 		"colour": Color(0.95, 0.72, 0.20),
 		"tip": "Sends bees out to the meadow to gather nectar or pollen and carry it back into the comb.\n\nNectar is the colony's energy -- bees eat it, and building comb burns it. Pollen is what the queen eats to lay eggs, so no pollen means no new bees.",
 		"modes": [
@@ -43,6 +52,7 @@ const ROLES := [
 	},
 	{
 		"id": NURSE, "key": "nurse", "label": "Nurse", "letter": "U",
+		"skill": "skill.brood.nurses",
 		"colour": Color(0.40, 0.80, 0.95),
 		"tip": "Keeps bees indoors feeding the brood.\n\nLarvae do not develop on their own: a nurse collects pollen and either nectar or honey from the comb, carries it to the cell, and each feed buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. With no nurse, the colony cannot grow.",
 		"modes": [
@@ -53,6 +63,7 @@ const ROLES := [
 	},
 	{
 		"id": COMB_WORKER, "key": "comb_worker", "label": "Comb worker", "letter": "C",
+		"skill": "",
 		"colour": Color(0.55, 0.85, 0.45),
 		"tip": "Looks after the comb itself: drawing new cells, clearing blocked ones, and moving stores between them.\n\nBuilding burns extra energy, because bees make wax from the sugar they have eaten.",
 		"modes": [
@@ -64,18 +75,21 @@ const ROLES := [
 	},
 	{
 		"id": QUEEN, "key": "laying", "label": "Laying", "letter": "Q",
+		"skill": "",
 		"colour": Color(1.0, 0.85, 0.55),
 		"tip": "Queen only. She eats pollen from the comb until she has enough for an egg, then walks to a free cell and lays into it.\n\nWhenever laying is blocked -- no pollen, or no free cell -- she falls back to her second job, which is nursing unless you change it. Other bees ignore this.",
 		"modes": [],
 	},
 	{
 		"id": IDLE, "key": "idle", "label": "Idle", "letter": "-",
+		"skill": "",
 		"colour": Color(0.60, 0.60, 0.62),
 		"tip": "Stops bees doing anything on their own.\n\nThey stay where they are and keep burning energy, but you can still move them with right-click. Useful for holding bees back or parking one somewhere.",
 		"modes": [],
 	},
 	{
 		"id": MINER, "key": "miner", "label": "Miner", "letter": "M",
+		"skill": "",
 		"colour": Color(0.80, 0.55, 0.35),
 		"tip": "Digs out soil blocks to make room for more comb.\n\nOne miner takes about two minutes per block; several digging the same block share the work. A miner fills up with spoil as it digs and has to carry it outside before it can carry on.",
 		"modes": [
@@ -84,6 +98,7 @@ const ROLES := [
 	},
 	{
 		"id": HONEY, "key": "honey", "label": "Honey", "letter": "H",
+		"skill": "skill.brood.honey_worker",
 		"colour": Color(0.95, 0.45, 0.25),
 		"tip": "Turns stored nectar into honey.\n\nA honey bee takes nectar back out of the comb, chews enzymes into it, spits the mix into a cell of its own and then fans its wings over that cell until the water has evaporated off. Only then is it honey -- which is four times as energy-dense as the nectar it came from, keeps far better, and lets nurses raise larvae faster.",
 		"modes": [],
@@ -121,6 +136,10 @@ static func colour_for(role_id: int, focus: String = "") -> Color:
 
 static func modes_for(role_id: int) -> Array:
 	return entry(role_id).modes
+
+## The skill that unlocks this role, or "" when none does.
+static func skill_for(role_id: int) -> String:
+	return entry(role_id).skill
 
 ## The label of one sub-mode, for readouts.
 static func mode_label(role_id: int, mode_key: String) -> String:

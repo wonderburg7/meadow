@@ -44,6 +44,8 @@ static func _met_key(main, key: String, value) -> bool:
 		"queen_alive":
 			var alive: bool = main.queen != null and is_instance_valid(main.queen) and not main.colony_lost
 			return alive == bool(value)
+		"skill_owned":
+			return _skill_owned(str(value))
 		"event_count":
 			var event_spec: Dictionary = value
 			var count := DiagnosticLog.event_count(str(event_spec.get("type", "")), str(event_spec.get("subtype", "")))
@@ -90,6 +92,8 @@ static func _progress_key(main, key: String, value) -> Dictionary:
 			return {"current": _built_cell_count(main), "target": int(value)}
 		"brood_cells_at_least":
 			return {"current": main.hive.cells_holding("brood").size(), "target": int(value)}
+		"skill_owned":
+			return {"current": 1 if _skill_owned(str(value)) else 0, "target": 1}
 		"event_count":
 			var event_spec: Dictionary = value
 			if event_spec.has("at_least"):
@@ -144,6 +148,13 @@ static func _cell_count(main, spec: Dictionary) -> int:
 
 static func _built_cell_count(main) -> int:
 	return _cached_cells(main).size()
+
+
+## BS-1: `{"skill_owned": "<skill id>"}`, for a stage goal that asks the
+## player to buy a skill. The run's resolver is the only answer to "is this
+## owned"; no resolver means nothing is.
+static func _skill_owned(skill_id: String) -> bool:
+	return Session.progression != null and Session.progression.is_owned(skill_id)
 
 
 static func _disease(main) -> float:
