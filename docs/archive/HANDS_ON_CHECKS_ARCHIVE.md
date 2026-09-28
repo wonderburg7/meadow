@@ -103,7 +103,7 @@ If it fails, the founders still share one death day, and `starter_age_spread`
 in `scripts/game_config.gd` (Game Settings > Bee life > Starting age spread)
 is not reaching the spawn in `scripts/world_building.gd`.
 
-Owner: `plans/now/c1-followups.md` (17 Sep fixes, `claude/pass-0917`).
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes, `claude/pass-0917`).
 
 Passed (Dave, 19 Sep 2026).
 
@@ -119,7 +119,7 @@ PASS: her backup already reads Nursing, and neither of Dr Gallerin's lines asks 
 If it fails, the first hatch can starve with nobody feeding it, and
 `queen_laying_backup` in `scripts/levels.gd` is not being applied.
 
-Owner: `plans/now/c1-followups.md` (17 Sep fixes, `claude/pass-0917`).
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes, `claude/pass-0917`).
 
 Passed (Dave, 19 Sep 2026).
 
@@ -145,7 +145,7 @@ Eight checks run. C-48 passed and is recorded here. C-24 failed and was
 refiled against Dave's new season range; C-7, C-29, C-31 and C-42 were fixed
 in session on `claude/pass-0917` and refiled for re-run; C-25 and C-49 moved
 to `checks/blocked.md` behind SF-1 (`plans/now/season-feel.md`) and C1F-1
-(`plans/now/c1-followups.md`). Dave's extra asks: staggered starter ages
+(`plans/archive/c1-followups_2026-09-28.md`). Dave's extra asks: staggered starter ages
 (shipped, C-54), automatic Nursing backup in Challenge 1 (shipped, C-55), the
 settings stage row (shipped with a headless check), and Dr Gallerin's bubble
 height with room for the settings window (UI-W-4, `plans/now/ui-w.md`).
