@@ -169,7 +169,7 @@ already exists).
 - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
 - Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
 - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/run_availability_panel.gd :: reason.run_grant`
+- Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
 - Next after: BS-6 -- developer edits to the table change what a run starts with
 ```
 
