@@ -1071,6 +1071,12 @@ const TUNABLES := [
 		"tip": "Shows the word alongside the icon on the Colony/Nursery/Meadow-Hive buttons in the top-right bar. Off by default -- the icons alone carry the meaning once you know them. Takes effect immediately.",
 	},
 	{
+		"persist": "player",
+		"key": "developer_mode", "label": "Developer mode", "toggle": true,
+		"category": "Interface",
+		"tip": "Unlocks the developer-only tables and readouts as they are added. Off by default and kept between sessions. Changes nothing about how a run plays.",
+	},
+	{
 		"persist": "none",
 		"key": "scenery_on", "label": "Trees & raised ground", "toggle": true,
 		"category": "World & start",
@@ -1317,7 +1323,7 @@ const SESSION_KEYS := [
 	"show_recruitment_highlight",
 	"gallerin_enabled", "show_crab_spiders",
 	"ui_theme", "panel_texture", "ui_typeface", "text_scale", "reduced_motion", "screen_shake",
-	"tooltip_delay", "show_speed_8x", "show_interface_labels",
+	"tooltip_delay", "show_speed_8x", "show_interface_labels", "developer_mode",
 ]
 
 # --- reading and writing a setting --------------------------------
