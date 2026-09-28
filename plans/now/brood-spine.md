@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-2 -- Challenge 2 offers Nurses free at 2.5 (startable, BS-1 landed 28 Sep 2026), and BS-D -- a developer mode setting, both in the Claude lane | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: BS-2 -- Challenge 2 offers Nurses free at 2.5 (startable, BS-1 landed 28 Sep 2026), and BS-5 -- the developer table shows a run's sheet (startable, BS-D landed 28 Sep 2026), both in the Claude lane | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-28
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -63,11 +63,10 @@ available -- that the run start reads and a developer table shows and edits.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-D | a developer mode setting, switched on from the main menu's settings | `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd` | yes | medium |
 | BS-2 | Challenge 2 offers Nurses free at 2.5 | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md` | yes | medium |
 | BS-3 | the gate goes live: an unowned role cannot be assigned or worked | `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd` | after BS-1, BS-2 | high |
 | BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | a new scenario, `plans/design/progression.md` | after BS-3 | medium |
-| BS-5 | the developer table shows a run's sheet, read-only | a new panel script, `scripts/run_availability.gd` | after BS-1, BS-D | medium |
+| BS-5 | the developer table shows a run's sheet, read-only | `scripts/run_availability_panel.gd` (new), `scripts/run_availability.gd`, `scripts/debug_panel.gd` | yes | medium |
 | BS-6 | developer edits to the table change what a run starts with | decided in BS-5's closeout | after BS-5 and a persistence decision | high |
 
 BS-1 and BS-D share no file and are independent. Every later slice names
@@ -129,32 +128,49 @@ fixture; the ownership boundary was settled in BS-1).
 - Next after: BS-3 -- the gate goes live: an unowned role cannot be assigned or worked
 ```
 
-## BS-D — a developer mode setting, switched on from the main menu's settings
+BS-D shipped 2026-09-28; its specification is `plans/archive/BS-D_2026-09-28.md`.
 
-Level: medium.
+## BS-5 — the developer table shows a run's sheet, read-only
 
-- **Required reading.** This heading. `scripts/settings_catalogue.gd`'s header
-  and the `show_crab_spiders` entry (the nearest existing dev-only setting),
-  and how `scripts/main_menu.gd` opens the settings window.
-- **Files to change.** `scripts/settings_catalogue.gd`,
-  `scripts/game_config.gd`, `scripts/main_menu.gd`.
-- **Requirements.** A `developer_mode` setting, off by default, owned by
-  `GameConfig` and catalogued in `settings_catalogue.gd` like any other
-  toggle, reachable from the settings window the main menu opens. It is a
-  preference, not run state, so it survives a restart. Nothing reads it yet
-  except a source check that it exists; BS-5 is its first consumer. Do not
-  build a separate settings screen for it.
-- **Escalation.** If the main menu's settings window cannot show a toggle
-  without the in-run settings window showing it too, report which it is and
-  let Dave choose; either is acceptable for a developer setting.
+Level: medium (one new panel, one button, one source check; the sheet it reads
+already exists).
+
+- **Required reading.** Decision 3 above. `scripts/run_availability.gd` (its
+  header and `sheet_for`); how `scripts/debug_panel.gd` builds its footer or
+  category buttons, to place one more; `Session.developer_mode`
+  (`scripts/session.gd`, landed in BS-D).
+- **Files to change.** `scripts/run_availability_panel.gd` (new),
+  `scripts/run_availability.gd`, `scripts/debug_panel.gd`.
+- **Requirements.**
+  - With `Session.developer_mode` on, the settings window shows a "Run
+    availability" button; with it off the button is absent, not disabled. The
+    button opens a read-only window listing the current run's sheet: one row
+    per skill, with its source (start / tree / unavailable) and the reason
+    turned from `run_availability.gd`'s `reason.*` key into a sentence.
+  - The reason-to-text table lives in the panel; the sheet stays keys only.
+    The window recomputes the sheet when opened, never per frame, and reads
+    it through `RunAvailability.sheet_for(Levels.get_level(...))` exactly as
+    `main.gd` does; it does not read `progression.gd`'s ownership as a second
+    answer.
+  - Feature rows and gated-role rows: add them to `run_availability.gd` only
+    as far as its header already promises (features through
+    `progression.gd::feature_valid()`); the "introduced at stage" and "free
+    at stage" columns wait for BS-2 and are named in the window as "not yet
+    available" rather than left blank.
+  - Nothing here edits the sheet. Editing is BS-6.
+- **Source check.** A test that fails if the button can be built while
+  `developer_mode` is off, and one that fails if every `reason.*` key in
+  `run_availability.gd` lacks a sentence in the panel.
+- **Escalation.** If the settings window cannot host the button without
+  reaching into `main.gd`, report which and let Dave choose the entry point.
 
 ```queue
-**[Claude] BS-D -- a developer mode setting, switched on from the main menu's settings**
-- Plan: `plans/now/brood-spine.md` -- "BS-D — a developer mode setting, switched on from the main menu's settings"
-- Files: `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd`
-- Check: the settings window opened from the main menu lists a Developer mode toggle, off by default, that survives a restart, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/settings_catalogue.gd :: developer_mode`
-- Next after: BS-5 -- the developer table shows a run's sheet, read-only
+**[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
+- Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
+- Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
+- Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
+- Next after: BS-6 -- developer edits to the table change what a run starts with
 ```
 
 ## Later slices, in outline
@@ -179,9 +195,6 @@ has shipped. These notes fix only what the earlier slices must not preclude.
   worker, makes honey and affords a tier-2 skill before it runs short of
   comb: section 6's constraint 2, proved with a scenario rather than asserted.
   Records the result in `plans/design/progression.md` step 7.
-- **BS-5 — the developer table, read-only.** With developer mode on, a window
-  lists the current run's sheet: every feature, skill and gated role, and the
-  columns from decision 3. It reads `run_availability.gd` only.
 - **BS-6 — developer edits.** Needs a decision before it can be specified:
   whether an edit is a local override stored under `user://` and applied at
   run start, or is written back to the run definition (`levels.gd` or the

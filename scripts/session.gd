@@ -191,6 +191,12 @@ var show_crab_spiders: bool = false
 ## show_crab_spiders.
 var show_speed_8x: bool = false
 
+## Developer mode: unlocks the developer-only tables and readouts. Off by
+## default and a player preference, not run state, so it survives a
+## restart (PlayerProfile.PREFERENCE_KEYS). Switched on from the settings
+## window; BS-5 (plans/now/brood-spine.md) is its first consumer.
+var developer_mode: bool = false
+
 ## Saved selections, 1-9. Each is a list of bee ids rather than node
 ## references, so the group survives bees dying and the scene reloading.
 var control_groups: Dictionary = {}

@@ -38,7 +38,7 @@ const PREFERENCE_KEYS := [
 	"show_selection_identity", "show_selection_energy",
 	"show_selection_activity", "show_selection_trait",
 	"ui_theme", "panel_texture", "ui_typeface", "text_scale", "reduced_motion",
-	"screen_shake", "tooltip_delay", "show_interface_labels",
+	"screen_shake", "tooltip_delay", "show_interface_labels", "developer_mode",
 ]
 
 static func has_profile(path: String = PROFILE_PATH) -> bool:
