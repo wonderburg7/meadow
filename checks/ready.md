@@ -6,9 +6,11 @@ Shipped behaviours that static checks cannot prove. Each ready check has its own
 record, so parallel feature slices do not edit a shared page. Reply by id, for
 example: "C-1 pass" or "C-1 fails: <what I saw>".
 
-This index is generated during slice closeout. Move a confirmed or superseded
-entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; move an on-demand check
-that cannot run to `checks/blocked.md`, naming its unblocker.
+This index is generated during slice closeout. Archive a confirmed check with
+`python tools/new_check.py --confirm C-<n>`, which also regenerates this page;
+move a superseded entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` by hand,
+and an on-demand check that cannot run to `checks/blocked.md`, naming its
+unblocker.
 
 ## Ready to run
 

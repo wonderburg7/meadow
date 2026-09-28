@@ -11,13 +11,22 @@ tools (`.claude/settings.json` denies `Read(./docs/archive/**)`), so a
 session allocating an id by hand sees only the live records and can reuse an
 id that a confirmed check already spent. A script has no such restriction,
 which is the whole reason this is a script.
+
+`--confirm C-<n> [C-<n> ...]` is the other half: when Dave reports a pass,
+it moves each ready record into that archive under today's hands-on-pass
+heading, deletes the record, regenerates `checks/ready.md`, and lists the
+live plans and queue lines that still mention the id -- the work a pass may
+have unblocked. The same denial made this a shell edit to a file the agent
+could not read, paid on every processed batch.
 """
 
 from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -73,18 +82,155 @@ def record_text(check_id: int, name: str, owner: str) -> str:
     )
 
 
+ARCHIVE_REL = "docs/archive/HANDS_ON_CHECKS_ARCHIVE.md"
+
+
+def parse_check_id(raw: str) -> int:
+    """'C-42', 'c-42' or '42' -> 42."""
+    match = re.fullmatch(r"(?:[Cc]-)?(\d+)", raw.strip().rstrip(","))
+    if not match:
+        raise ValueError(f"not a check id: {raw} -- use C-<n>")
+    return int(match.group(1))
+
+
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def day_label(today: date) -> str:
+    """'9 Sep 2026' -- the archive's date style, whatever the machine's locale."""
+    return f"{today.day} {MONTHS[today.month - 1]} {today.year}"
+
+
+def pass_heading(today: date) -> str:
+    """The archive's heading for one day's pass, in the form its older sections use."""
+    return f"## {day_label(today)} -- Dave's hands-on pass"
+
+
+def insert_entries(archive_text: str, heading: str, block: str) -> str:
+    """Put `block` under `heading`, newest pass first.
+
+    If today's pass is already the top section (a second batch the same day),
+    the entries join its end; otherwise a new section goes above the first."""
+    sections = re.split(r"(?m)^(?=## )", archive_text)
+    preamble, passes = sections[0], sections[1:]
+    if passes and passes[0].split("\n", 1)[0].strip() == heading:
+        passes[0] = passes[0].rstrip("\n") + "\n\n" + block + "\n\n"
+    else:
+        passes.insert(0, heading + "\n\n" + block + "\n\n")
+    return (preamble.rstrip("\n") + "\n\n" + "".join(passes)).rstrip("\n") + "\n"
+
+
+def confirm_checks(
+    root: Path, check_ids: list[int], today: date, note: str | None = None
+) -> list[Path]:
+    """Archive each ready record under today's pass heading, then delete it.
+
+    All-or-nothing: every id is validated before anything is written, and the
+    archive is written before any record is deleted. Returns the deleted paths."""
+    archive = root / ARCHIVE_REL
+    if not archive.is_file():
+        raise ValueError(f"{ARCHIVE_REL} is missing")
+    records = []
+    for check_id in dict.fromkeys(check_ids):
+        path = root / "checks" / "ready" / f"C-{check_id}.md"
+        if not path.is_file():
+            raise ValueError(
+                f"C-{check_id} has no record in checks/ready/ -- only a ready check can be "
+                "confirmed; a blocked one moves back to checks/ready/ first"
+            )
+        records.append(path)
+
+    entries = []
+    for path in records:
+        text = path.read_text(encoding="utf-8").strip()
+        # A ready record is headed '# C-<n> -- ...'; in the archive it sits
+        # one level under the pass heading, as '### C-<n> -- ...'.
+        entry = "##" + text if text.startswith("# ") else text
+        if note:
+            entry += f"\n\nConfirmed {day_label(today)}: {note.strip()}"
+        entries.append(entry)
+
+    text = archive.read_text(encoding="utf-8")
+    archive.write_text(
+        insert_entries(text, pass_heading(today), "\n\n".join(entries)), encoding="utf-8"
+    )
+    for path in records:
+        path.unlink()
+    return records
+
+
+def still_mentioned(root: Path, check_ids: list[int]) -> list[str]:
+    """Live lines that still name a confirmed id: work the pass may have released."""
+    pattern = re.compile(r"\bC-(?:" + "|".join(str(n) for n in check_ids) + r")\b")
+    files = [root / "NEXTSTEPS.md", root / "checks" / "blocked.md"]
+    for layer in ("now", "active", "design", "reference"):
+        files.extend(sorted((root / "plans" / layer).glob("*.md")))
+    hits = []
+    for path in files:
+        if not path.is_file():
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if pattern.search(line):
+                hits.append(f"{path.relative_to(root).as_posix()}:{number}: {line.strip()[:160]}")
+    return hits
+
+
+def confirm_main(raw_ids: list[str], note: str | None) -> int:
+    try:
+        check_ids = [parse_check_id(raw) for raw in raw_ids]
+        removed = confirm_checks(ROOT, check_ids, date.today(), note)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 1
+    for path in removed:
+        print(f"{path.stem} archived to {ARCHIVE_REL}")
+    # check_docs.py owns the index's format, so regenerate it rather than edit it.
+    index = subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "check_docs.py"), "--write-ready-index"], cwd=ROOT
+    )
+    if index.returncode != 0:
+        print(
+            "checks/ready.md was not regenerated -- run python tools/check_docs.py --write-ready-index",
+            file=sys.stderr,
+        )
+        return 1
+    hits = still_mentioned(ROOT, check_ids)
+    if hits:
+        print("Still named here -- release any work these checks were holding back:")
+        for hit in hits:
+            print(f"  {hit}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--name", required=True, help="short name after the id in the heading")
+    parser.add_argument("--name", help="short name after the id in the heading")
     parser.add_argument(
         "--owner",
-        required=True,
         help="repository-relative path of the plan that owns the check, e.g. plans/now/ui.md",
     )
     parser.add_argument(
         "--id", type=int, default=None, help="force a specific number instead of the next free one"
     )
+    parser.add_argument(
+        "--confirm",
+        nargs="+",
+        metavar="C-<n>",
+        help="archive these ready checks as passed, instead of filing a new one",
+    )
+    parser.add_argument(
+        "--note", help="with --confirm: one line recorded under each archived entry"
+    )
     args = parser.parse_args()
+
+    if args.confirm:
+        if args.name or args.owner or args.id is not None:
+            parser.error("--confirm cannot be combined with --name, --owner or --id")
+        return confirm_main(args.confirm, args.note)
+    if args.note:
+        parser.error("--note only goes with --confirm")
+    if not args.name or not args.owner:
+        parser.error("--name and --owner are required to file a check")
 
     owner = args.owner.replace("\\", "/").strip().strip("`")
     if not (ROOT / owner).is_file():

@@ -862,9 +862,11 @@ def ready_index_text() -> str:
         "record, so parallel feature slices do not edit a shared page. Reply by id, for",
         'example: "C-1 pass" or "C-1 fails: <what I saw>".',
         "",
-        "This index is generated during slice closeout. Move a confirmed or superseded",
-        "entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`; move an on-demand check",
-        "that cannot run to `checks/blocked.md`, naming its unblocker.",
+        "This index is generated during slice closeout. Archive a confirmed check with",
+        "`python tools/new_check.py --confirm C-<n>`, which also regenerates this page;",
+        "move a superseded entry to `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md` by hand,",
+        "and an on-demand check that cannot run to `checks/blocked.md`, naming its",
+        "unblocker.",
         "",
         "## Ready to run",
         "",
@@ -956,6 +958,103 @@ def check_checks(errors: list[str]) -> None:
                 errors.append(f"{rel}: {check_id}'s Owner: line names no plan file -- {owner}")
             elif not (ROOT / target).is_file():
                 errors.append(f"{rel}: {check_id}'s Owner: names a plan that does not exist: {target}")
+
+
+# A review record opts in with this header; the older free-form reviews in
+# docs/ (which use `CONTEXT: review` or `CONTEXT: workflow-audit`) are not held to it.
+REVIEW_RECORD_MARKER = re.compile(r"<!--\s*CONTEXT:\s*review-record\b")
+REVIEW_CONTRACT = "plans/reference/review-contract.md"
+FINDING_DISPOSITIONS = ("fixed", "queued", "gated", "decided", "rejected")
+# A finding from the previous run may also have shipped since.
+FOLLOW_THROUGH_DISPOSITIONS = FINDING_DISPOSITIONS + ("shipped",)
+REVIEW_SECTION = re.compile(r"^## +(.+?)\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE)
+TABLE_SEPARATOR = re.compile(r"^\|?\s*:?-{3,}")
+SLICE_ID = re.compile(r"\b[A-Z][A-Z0-9]*-?\d+[a-z]?\b")
+
+
+def _table_cells(row: str) -> list[str]:
+    return [cell.strip() for cell in row.strip().strip("|").replace("\\|", "/").split("|")]
+
+
+def _disposition_errors(rel: str, section: str, body: str, allowed: tuple[str, ...]) -> list[str]:
+    """Every row of the section's table ends in one allowed disposition, with its detail."""
+    rows = [line for line in body.splitlines() if line.lstrip().startswith("|")]
+    if not rows:
+        if "none" in body.lower():
+            return []
+        return [
+            f"{rel}: '## {section}' has no table -- give one with a Disposition column, "
+            f"or say 'None' ({REVIEW_CONTRACT})"
+        ]
+    header = [cell.strip("*").strip().lower() for cell in _table_cells(rows[0])]
+    if "disposition" not in header:
+        return [f"{rel}: '## {section}' table has no Disposition column ({REVIEW_CONTRACT})"]
+    column = header.index("disposition")
+    errors = []
+    for row in rows[1:]:
+        if TABLE_SEPARATOR.match(row.strip()):
+            continue
+        cells = _table_cells(row)
+        label = cells[0] if cells else row.strip()
+        cell = cells[column] if column < len(cells) else ""
+        plain = cell.replace("**", "").replace("`", " ").strip()
+        word, _, detail = plain.partition(" ")
+        word = word.rstrip(":,;.").lower()
+        detail = detail.strip(" -:–—")
+        if word not in allowed:
+            errors.append(
+                f"{rel}: '## {section}' row '{label}' has no disposition -- its cell must start "
+                f"with one of {', '.join(w.title() for w in allowed)} ({REVIEW_CONTRACT} rule 5): {cell}"
+            )
+        elif not re.search(r"[A-Za-z0-9]{2}", detail):
+            errors.append(
+                f"{rel}: '## {section}' row '{label}' says {word.title()} but not how, where or why "
+                f"({REVIEW_CONTRACT} rule 5)"
+            )
+        elif word in ("queued", "gated") and "plans/" not in detail and not SLICE_ID.search(detail):
+            errors.append(
+                f"{rel}: '## {section}' row '{label}' is {word.title()} without naming the slice id "
+                f"or plan that holds it ({REVIEW_CONTRACT} rule 5)"
+            )
+    return errors
+
+
+def review_record_errors(rel: str, text: str) -> list[str]:
+    sections = {
+        heading.strip().lower(): (heading.strip(), body)
+        for heading, body in REVIEW_SECTION.findall(text)
+    }
+    errors = []
+    for name, allowed in (
+        ("Follow-through", FOLLOW_THROUGH_DISPOSITIONS),
+        ("Findings", FINDING_DISPOSITIONS),
+    ):
+        match = next(
+            (value for key, value in sections.items() if key.startswith(name.lower())), None
+        )
+        if match is None:
+            errors.append(
+                f"{rel}: review record has no '## {name}' section ({REVIEW_CONTRACT} rule 8)"
+            )
+            continue
+        errors.extend(_disposition_errors(rel, match[0], match[1], allowed))
+    return errors
+
+
+def check_review_records(errors: list[str]) -> None:
+    """A review record leaves no finding as prose.
+
+    Every review run from Dave's prompt library ends each finding in exactly
+    one of fixed, queued, gated, decided or rejected, and audits the previous
+    run's findings the same way (`plans/reference/review-contract.md`). The
+    18 Sep 2026 codebase review ended instead with "Next: route the items ...
+    into their owning plans" -- a second step that nothing checked, so a
+    finding could be written down and never reach a plan. This makes the
+    routing part of writing the record."""
+    for path in sorted((ROOT / "docs").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if REVIEW_RECORD_MARKER.search("\n".join(text.splitlines()[:6])):
+            errors.extend(review_record_errors(path.relative_to(ROOT).as_posix(), text))
 
 def git_worktree_paths() -> set[Path] | None:
     """Resolved paths of every worktree Git currently knows about, or None if git is unavailable."""
@@ -1106,6 +1205,7 @@ def main() -> int:
     check_backticked_paths(errors)
     check_no_landed_records_in_live_plans(errors)
     check_checks(errors)
+    check_review_records(errors)
     check_workstreams(errors, warnings)
 
     for warning in warnings:
