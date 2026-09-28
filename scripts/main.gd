@@ -79,6 +79,8 @@ const ClickMarker = preload("res://scripts/click_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Levels = preload("res://scripts/levels.gd")
+const RunAvailability = preload("res://scripts/run_availability.gd")
+const Availability = preload("res://scripts/availability.gd")
 const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
 const ScenarioActions = preload("res://scripts/scenario_actions.gd")
 const ScenarioPresets = preload("res://scripts/scenario_presets.gd")
@@ -406,11 +408,14 @@ func _ready() -> void:
 	stage_gate.main = self
 	add_child(stage_gate)
 	# The run's skill resolver, built straight after its stage gate so it
-	# never exists without one. The level's skill policy is applied once
-	# here; every level currently ships all three keys empty.
+	# never exists without one. BS-1: the run's availability sheet is
+	# derived once, here, from the level or scenario definition, and the
+	# resolver takes its skill policy and starting skills from it. A loaded
+	# save replaces the starting skills with the ones it recorded
+	# (saving.gd::_restore, after this).
 	var level: Dictionary = Levels.get_level(Session.starting_level)
-	Session.ensure_progression(stage_gate).set_skill_policy(
-		level.get("skill_grants", []), level.get("skill_bans", []), level.get("skill_delays", {}))
+	Session.ensure_progression(stage_gate).begin_run(RunAvailability.sheet_for(level))
+	Availability.invalidate()
 	challenge_runner = ChallengeRunner.new()
 	challenge_runner.main = self
 	add_child(challenge_runner)

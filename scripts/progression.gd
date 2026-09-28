@@ -41,10 +41,8 @@ extends RefCounted
 ## `skill_grants`/`skill_bans`/`skill_delays` (Phase A step 3, set via
 ## set_skill_policy() from levels.gd's/challenge_runner.gd's run
 ## definition), which is why the gate is a function of its own rather
-## than an inline stage_gate call. Nothing constructs a resolver in a
-## running game yet (Phase B step 6 does), and every level ships these
-## three empty today, so is_permitted() answers exactly as before until
-## then.
+## than an inline stage_gate call. main.gd hands both in once per run
+## start through begin_run(), from run_availability.gd's sheet.
 ##
 ## **Ranks.** Section 4.4 holds every skill at `max_rank` 1 for this
 ## pass, so ownership is yes/no and there is no rank arithmetic. The
@@ -223,6 +221,20 @@ func set_skill_policy(grants: Array, bans: Array, delays: Dictionary) -> void:
 	for skill_id in bans:
 		_skill_bans[skill_id] = true
 	_skill_delays = delays.duplicate()
+
+
+## BS-1: the run start. Applies the run's skill policy and grants the
+## skills it starts owning, both taken from run_availability.gd's sheet --
+## the one place starting ownership is derived (plans/now/brood-spine.md),
+## so this reads the sheet's `grants`/`bans`/`delays`/`starting` and
+## decides nothing itself. Starting skills are temporary ownership: a save
+## records them with the run's purchases and end_run() drops them. The
+## caller invalidates availability.gd's cache, which this file does not
+## know about.
+func begin_run(sheet: Dictionary) -> void:
+	set_skill_policy(sheet.get("grants", []), sheet.get("bans", []), sheet.get("delays", {}))
+	for skill_id in sheet.get("starting", []):
+		grant_temporary(str(skill_id))
 
 
 ## Permitted by the run or Challenge stage. A skill's stage-gate key is

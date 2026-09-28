@@ -1,0 +1,11 @@
+{
+  "cells": 10, "nectar_foragers": 2, "pollen_foragers": 1,
+  "nurses": 0, "builders": 1, "miners": 0, "honey_makers": 0,
+  "random_seed": 501,
+  "actions": [
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.nurses", "owned": false}},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.honey_worker", "owned": false}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

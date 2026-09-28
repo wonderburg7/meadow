@@ -1904,8 +1904,10 @@ RESOLVER_GATES = (
 # axial coordinates, names, descriptions, costs, prerequisite edges -- and
 # asks progression.gd for every owned/affordable/blocked answer. The
 # RESOLVER_FUNCS check above still stops it answering any of them itself.
+# run_availability.gd (BS-1) reads skills.gd for the list of skill ids its
+# sheet covers and which are baseline; ownership stays progression.gd's.
 CATALOGUE_READERS = {
-    "skills.gd": {"adaptations.gd", RESOLVER_FILE, "skill_tree_panel.gd"},
+    "skills.gd": {"adaptations.gd", RESOLVER_FILE, "skill_tree_panel.gd", "run_availability.gd"},
     "adaptations.gd": {RESOLVER_FILE},
     "features.gd": {"skills.gd", "adaptations.gd", RESOLVER_FILE},
 }
@@ -2423,6 +2425,40 @@ def check_run_skill_policy(problems):
                     "%s: a level's skill_delays names %r, which is not a "
                     "skill in skills.gd" % (LEVELS_FILE, skill_id)
                 )
+
+    # BS-1: roles.gd names the skill that unlocks each role as a plain
+    # string (it may not preload skills.gd), so every row must carry one
+    # and every non-empty one must be a real skill id.
+    roles_path = os.path.join(ROOT, "roles.gd")
+    roles_source = _strip_gd_comments(open(roles_path, encoding="utf-8").read())
+    roles_block = roles_source.split("const ROLES := [", 1)[-1].split("\n]", 1)[0]
+    role_rows = len(re.findall(r'^\t\t"id":', roles_block, re.M))
+    role_skills = re.findall(r'^\t\t"skill": "([^"]*)"', roles_block, re.M)
+    if len(role_skills) != role_rows:
+        problems.append(
+            "roles.gd: %d role rows but %d `skill` fields -- every role "
+            "names its unlocking skill, \"\" for none" % (role_rows, len(role_skills))
+        )
+    for skill_id in role_skills:
+        if skill_id and skill_id not in skill_ids:
+            problems.append(
+                "roles.gd: a role's skill %r is not a skill in skills.gd" % skill_id
+            )
+
+    # BS-1: the run start hands the sheet to progression.gd::begin_run();
+    # a second direct set_skill_policy() caller is a second place a run's
+    # policy is decided.
+    for other_path in sorted(glob.glob(os.path.join(ROOT, "*.gd"))):
+        name = os.path.basename(other_path)
+        if name == RESOLVER_FILE:
+            continue
+        other = _strip_gd_comments(open(other_path, encoding="utf-8").read())
+        if "set_skill_policy(" in other:
+            problems.append(
+                "%s: calls set_skill_policy() directly. A run's policy comes "
+                "from run_availability.gd's sheet through "
+                "progression.gd::begin_run()" % name
+            )
 
 
 def check_progression_tier_and_cost(problems):
