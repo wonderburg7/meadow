@@ -31,7 +31,7 @@ intended hungry-indoor workload, so PERF-3 is warranted. Do not change
 `find_cell_for` or `find_empty_cell`: the audit records why a bucket walk would
 change which cell they choose.
 
-PERF-2 shipped 2026-09-28; its specification is `plans/archive/PERF-2_2026-09-28.md`.
+PERF-2 shipped 2026-09-28; its specification is `plans/archive/PERF-2_2026-09-28-closeout.md`.
 
 ## PERF-3 -- `find_food_cell` reads the content index
 
