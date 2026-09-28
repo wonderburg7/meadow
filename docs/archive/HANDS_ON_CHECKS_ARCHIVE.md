@@ -6,6 +6,381 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 28 Sep 2026 -- Dave's hands-on pass
+
+### C-7 -- the queen forages unattended once she is given the job
+
+Play Challenge 1 to stage 1.11, "automate nectar gathering", where the player
+gives the queen the Forager role with nectar focus. Give her that, then leave
+her alone. Do the same at the pollen stage that follows the second cell
+(`docs/challenge-stages.md` lists every stage id and what it asks).
+
+PASS: at each stage she works a flower, flies home, deposits, and goes out to
+a *different* flower, repeating unaided until that stage's cell is full --
+with no right-click from you at any point, and nothing left in her hands at
+the hive entrance.
+
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes); built in `plans/archive/CHALLENGE1_2026-09-15.md` Slice 18.
+
+Re-run note (Dave, 10 Sep 2026). The nectar half passes. The pollen half
+fails, and Dave located it more precisely than the first run did: "the queen
+doesn't automatically start moving when assigned the forager/pollen role (she
+does for the forager/nectar role); she only starts automatically moving once
+she's in the meadow. But this should start when initially assigned the role
+in the hive." Challenge 1 Slice 21 owns it, and Slice 20 has to land first --
+until stage 1.13 runs, no cell in the hive accepts pollen, which is a
+sufficient cause on its own.
+
+Re-run note (Claude Code, 11 Sep 2026). Slice 20 and Slice 25 have both since
+landed, and Slice 21 is now in too: the queen entered the pollen stage still
+holding leftover nectar from the freeze at stage 1.11's exit, which Slice 25's
+1.14 discard rule couldn't clear because it only ever ran from a bee actively
+mid-deposit, never from one parked by the freeze. A new stage effect now
+clears that stale load on 1.13's exit, and `bee.gd::set_focus()` was widened
+to also wake a bee genuinely stuck without a deposit target, not just a
+frozen one. No headless Challenge run exists yet to prove this in an
+automated way (`plans/archive/architecture-review_2026-09-24.md`'s H4 is still open), so
+this re-run is the confirmation: PASS as written above at the pollen stage
+specifically -- she should set off the moment her focus is switched to
+Pollen at stage 1.14, with no right-click needed.
+
+Re-run note (Dave, 12 Sep 2026). The nectar half passes again. The pollen
+half was not reached, and is not a fault: the Nectar/Pollen focus buttons only
+appear at 1.14, after 1.13 asks you to set the second cell aside for pollen,
+and they appeared as soon as Dave did that (13 Sep 2026, in session). Re-run
+the pollen half, doing 1.13's designation first.
+
+Re-run note (Dave, 17 Sep 2026). The nectar half passes again (camera, speed
+and stopping too). The pollen half fails: switched to pollen she "jolts" but
+stays in the hive, reading "Now: returning nectar to the hive (5 carried)".
+Cause, from the code: waiting at a full comb she kept a deposit target that
+could no longer take nectar, so the focus change read her as mid-delivery and
+did not wake her. Fixed on `claude/pass-0917` (the stale target is dropped,
+and the nectar aboard is discarded with Dr Gallerin's warning). Re-run the
+pollen half; C1F-2 in `plans/archive/c1-followups_2026-09-28.md` adds the headless proof.
+
+Re-run note (Dave, 19 Sep 2026). The pollen half fails again: at the pollen
+stage "she thinks she's foraging, but she's not" -- the status line says she
+is fetching pollen while she drifts about inside the hive "as if visiting
+invisible flowers", sometimes even gaining resources. Cause, confirmed from
+the code: an idle Forager inside the hive (for example after building the
+second cell at 1.12, or after an "Empty this cell" trip) was dispatched to
+flower-seeking where she stood. Inside the hive her position is measured
+from the hive, a flower's from the meadow, so she found, flew to and drank
+from points that were not flowers. The focus switch then left her alone,
+because she already looked like a forager at work. Fixed: flower-seeking now
+walks an indoor bee out through the entrance first
+(`bee_foraging.gd::_walk_out_if_indoors`), with a static test. Re-run the
+pollen half: at 1.14 switch her focus to Pollen and do not click her again.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-25 -- founders reflect their birth seasons
+
+With Season days 5, start a new run and inspect flowers straight away, then
+again after a full five-day cycle at the same seasonal point.
+
+PASS: the founding meadow reflects flowers' wrapped birth seasons, so its mix
+at the start resembles the mix at the same point one year later rather than a
+cohort selected entirely for the restart instant.
+
+Owner: `plans/now/season-feel.md` SF-1.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-29 -- the stage's camera and speed switch off when the stage ends
+
+At stage 1.11 and again at the pollen stage, watch the speed readout and the
+camera as the queen sets off and again as the stage ends.
+
+PASS: camera-follow and 4x speed start the moment she sets off, not when the
+role is assigned, and both return to normal when the stage ends.
+
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes); built in `plans/archive/CHALLENGE1_2026-09-15.md` Slice 19.
+
+Re-run note (Dave, 10 Sep 2026). The nectar half passes: camera and speed
+both start when the queen sets off and both return to normal when the stage
+ends. The pollen half fails on the camera alone -- "speed stops and starts
+for the pollen foraging, but the camera following doesn't start". That is
+Challenge 1 Slice 22, which was written for this exact symptom after the
+9 Sep pass and is unchanged by the second sighting.
+
+Re-run note (Dave, 12 Sep 2026). The nectar half passes again. The pollen
+half was not reached for the same reason as C-7's: the Pollen focus only
+appears once 1.13's cell has been set aside for pollen. Re-run the pollen
+half after doing that.
+
+Re-run note (Dave, 17 Sep 2026). Speed passes at both stages; the nectar
+camera passes. The pollen camera could not be judged: the queen did not set
+off on her own when switched to pollen (C-7), so Dave sent her out by hand,
+and a player command turns camera-follow off. That departure is fixed on
+`claude/pass-0917`. Re-run the pollen half only: at 1.14 (automate pollen
+gathering), switch her focus to Pollen and do not click her again.
+
+Re-run note (Dave, 19 Sep 2026). The nectar stage passes. At the pollen
+stage the camera did not follow. Two causes, both confirmed from the code:
+she never left the hive (C-7's indoor fault, now fixed), and the 1.14
+effects fired as soon as the stage began, because she was already in a
+"foraging" state, so selecting her to press Pollen turned the camera off
+again (every selection change does). The 1.14 effects now wait for her
+Pollen focus. Re-run the pollen half only: at 1.14 select her, press Pollen,
+and do not click her again.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-31 -- nectar caught in the pollen cell is called out, and the queen can clear it herself
+
+Play Challenge 1 slowly through 1.12 (build a second comb cell) and 1.13 (set
+the new cell aside for pollen) -- `docs/challenge-stages.md` lists every
+stage. Once the second cell is built and the first is completely full, let
+the queen bring home one more nectar trip, so it lands in the second cell,
+before you set that cell to Pollen. When 1.14 (switch her focus to pollen)
+begins with nectar still in that cell, watch for Dr Gallerin, then select the
+queen, select the cell and press "Empty this cell".
+
+PASS: Dr Gallerin says the pollen cell has nectar in it and to empty it or build another cell; pressing "Empty this cell" sends the queen to carry the nectar out herself, with no role change and no second bee needed.
+
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes); built in `plans/archive/CHALLENGE1_2026-09-15.md` Slice 27.
+
+Re-run note (Dave, 17 Sep 2026). Failed: the Pollen focus only appears after
+the cell is set to Pollen, and setting it to Pollen made its nectar vanish,
+so Dr Gallerin had nothing to warn about. "Empty this cell" does work. Cause:
+reserving a cell with no room elsewhere for its contents discarded them
+(`orders_zones.gd::_designate_one`). Dave chose, in session, that Challenge 1
+keeps the nectar; now a level rule (`designation_keeps_stores` in
+`scripts/levels.gd`) on `claude/pass-0917`. Re-run as written above.
+
+Re-run note (Dave, 19 Sep 2026). Failed: "Empty this cell" made one trip
+out, then she stuck at the inside of the entrance reading "flying to flower
+for pollen". Causes, confirmed from the code: the emptying trip always ended
+as if she were a builder looking for work, so she dropped the order after one
+stomachful, and her own Forager job then sent her flower-seeking while still
+indoors (C-7). Fixed: the order now continues until the cell is empty
+(`bee_building.gd::builder_dump_waste`), and she then walks out to forage as
+usual. Re-run as written above, and watch that she makes as many trips as
+the cell needs.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-42 -- the queen keeps her nectar when the comb has no room
+
+What this checks: the queen never loses nectar she gathered just because
+there is nowhere to put it. In Challenge 1 at stage 1.12 (build a second comb
+cell), before building it, make sure the first cell is completely full. Send
+the queen to a flower, bring her home, and watch her at the hive. Then build
+the second cell. Later, at 1.14 (switch her focus to pollen), fill every
+nectar cell and let her bring nectar home again.
+
+PASS: at 1.12 she waits at the hive still carrying her nectar and the cell's total does not change, and once the second cell exists she puts that same load into it; at 1.14 Dr Gallerin warns there is no room for nectar before that trip is thrown away, and the queen then waits in the hive rather than going straight back out for more nectar.
+
+Owner: `plans/archive/c1-followups_2026-09-28.md` (17 Sep fixes); built in `plans/archive/CHALLENGE1_2026-09-15.md` Slice 27.
+
+Re-run note (Dave, 17 Sep 2026). Partial pass: she keeps her nectar at 1.12
+and Dr Gallerin warns at 1.14. Two faults: switched to pollen and leaving the
+hive, her 5 nectar vanished without a word; and on nectar at 1.14 she looped
+forever, each trip thrown away at the door. Both fixed on `claude/pass-0917`:
+the switch now gives the same warning, and after a discard she waits in the
+hive until her focus or role changes. The PASS above now says so; re-run it.
+
+Re-run note (Dave, 19 Sep 2026). Partial pass. She keeps her nectar at 1.12
+and puts it in the second cell once built; at 1.14 she waits in the hive
+after the warning. What read wrong: Dr Gallerin said there was no room for
+nectar while an empty cell stood there. That cell is set aside for pollen,
+which only takes pollen; Dave confirmed in session that it stays pollen-only.
+The warning now says so, and says to switch her focus to Pollen or build
+another nectar cell; switching focus while carrying nectar has its own line.
+Re-run the 1.14 half and read the warning.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-46 -- comb builders spread across six walls before opening another site
+
+What this checks: idle comb workers building on their own ring one cell's six walls, then start a second site. Give at least seven idle bees the Comb worker job with the Building focus, with open floor in the hive and no cells marked, and watch them start building on their own. Watch the first unfinished cell and the next one that begins while it is still unfinished.
+
+PASS: no more than six workers stand at the first cell, each at a different wall, and the seventh starts a second site rather than joining the first.
+
+Owner: `plans/archive/comb-builders_2026-09-20.md` CB-2 (fix: wall stand points spaced apart, builders now stand on them; headless spacing 14.0px against 13.6 needed). Dave's 12 Sep 2026 run showed builders bunching and more than six on one cell.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-49 -- Challenge stages can be replayed from settings
+
+In Challenge 1, open Game Settings > World & start and step forward and back
+across every stage with the stage arrows.
+
+PASS: after each arrow the queen, the tunnel, the comb cells and their stores match the stage shown, and the stage shown stays put until you act.
+
+If it fails: the stage advances again by itself or the world does not match, and the C1F-1 setup for that stage (`scripts/challenge_stages.gd`) is wrong.
+
+Owner: `plans/archive/c1-followups_2026-09-28.md` C1F-1.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-53 -- the Controls list reads as one list, with no gaps
+
+Open the settings cog, expand Interface (or whichever collection holds it)
+and open the Controls section.
+
+PASS: the control lines sit close together like one list, with no visible gap between one line and the next, there is no second "Controls" heading, and every line is readable at the window's width.
+
+Owner: `plans/archive/UI-X-1_2026-09-18.md`.
+
+Unblocked 18 Sep 2026. UI-X-1 measured the Controls label's line pitch
+(24px against a 20px font at this profile's saved text scale) and pulled it
+tight with a `line_spacing` override on that label only, so consecutive
+lines now sit at most 2px apart rather than at the font's own ~1.2x leading.
+
+Re-run note (Dave, 19 Sep 2026). Failed: still a gap between each line.
+Cause, measured headlessly: the tighter spacing was worked out once, when
+the label first appeared, and never updated when the text size changed; at
+text scale 1.5 the lines sat 23px apart for 20px text, not the intended 22.
+It is now recomputed on every theme change, and
+`test_scenarios/c53_controls_list_leading_test.json` asserts at most 2px of
+leading at text scale 1.5, 2.0 and 1.0 (it fails on the old code). Re-run
+at your usual text size. If a gap still shows, send the screenshot and your
+text scale: the instrument then needs a tighter limit, not another guess.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-58 -- the top-left readouts follow the text size
+
+What this checks: star a couple of readouts so they show in the top-left
+corner, then open the settings cog, Accessibility, and change Text scale up
+and down a few steps.
+
+PASS: the top-left readouts grow and shrink with each Text scale step, within a second, without reopening anything.
+
+If it fails, the corner still has another path that ignores text scale, and
+`hud.gd::_refresh_corner` needs a rebuild triggered by the setting itself
+rather than by the next readout update.
+
+Owner: `plans/archive/ui_2026-09-20.md`
+
+Dave's note (19 Sep 2026): "when changing the text size, the top left
+corner text doesn't change size." Cause: the corner's labels carry
+font-size overrides set when they are built, which the theme refresh cannot
+reach, and the corner only rebuilt when a readout's text changed. Text
+scale is now part of that check, so the next readout update rebuilds them.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-59 -- One placement tool at a time
+
+What this checks: in the game, select a comb worker, click "Build here" in its panel, then click "Keep clear" (or "Work from here"), then click a tile in the hive view.
+
+PASS: only the last button pressed acts -- the tile is marked keep-clear, and no cell is queued to be built there.
+
+If it fails, E1's single active_placement_tool is not replacing the old per-button flags, and the placement buttons in `scripts/hud.gd` need reopening under `plans/archive/architecture-review_2026-09-24.md`.
+
+Owner: `plans/archive/architecture-review_2026-09-24.md`
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-61 -- every HUD window still opens, closes and sits where it did
+
+Run the game and open, then close, each window from its button: Colony,
+Foraging, Nursery (hive view), the winter forecast (top right) and, if
+Dr Gallerin is on, a Gallerin bubble. Do this once at the default text size and
+once at the largest (Settings, text size). Open two left-hand windows in turn.
+
+PASS: each window appears in the same place and size as before, at both text
+sizes; opening a second left-hand window closes the first; the winter forecast
+and the Gallerin bubble open and close without closing the left-hand windows.
+
+Owner: `plans/archive/architecture-review_2026-09-24.md` (F1s). A failure means a window
+moved, or the base class `scripts/game_panel.gd` changed which windows close
+each other.
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-62 -- named saves keep your colony
+
+Start Meadow from the primary checkout after SV-1 has merged. Before doing
+anything else, open the cog (the settings/tuning panel) and press **Load run**:
+the colony you last saved before this change should load. Then play on, press
+**Save run**, keep playing to at least day 10, press **Load run** again, and
+look in `%APPDATA%\Godot\app_userdata\Meadow - Claude\saves` in File
+Explorer.
+
+PASS: the first Load brings back your old colony, the second brings back the
+day you saved on, and the `saves` folder holds `my-colony.json` plus at least
+`my-colony.checkpoint1.json` and `my-colony.checkpoint2.json`.
+
+If it fails, SV-1's adoption of the old `meadow_save.json` or its load path is
+wrong, and SV-2's Saves window would be listing the wrong files -- SV-1 reopens
+before SV-2 starts. Your original `meadow_save.json` is copied, never moved,
+so nothing is lost either way.
+
+Owner: `plans/archive/named-saves_2026-09-24.md`
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-63 -- a loaded checkpoint puts the colony back where it was
+
+Start a new sandbox run (not a Challenge). Click **Saves** at the right of the
+top bar, press **Save this run**, type a name such as `Test colony` and press
+Enter. Play on past day 10 so two checkpoints appear under it (one every five
+days), note roughly what the colony looks like at the first one, then quit
+the game. Reopen it, click **Saves**, and press **Load** on the *older* of the
+two checkpoints. Then open the settings cog and press **Load run**. Finally
+press **Delete** on the run in the Saves window and confirm.
+
+PASS: the checkpoint loads on the day it lists with the colony as it was
+then, the cog's Load run opens the Saves window rather than loading anything,
+every other window still opens, closes and sits where it did, and after
+Delete the run is gone from the list.
+
+If it fails, `scripts/saves_panel.gd` (the list, Load or Delete) or SV-1's
+checkpoint writing reopens -- this is the closed alpha's main reliability
+claim (`plans/design/product-scope.md` section 6.1), and no automated check can
+cover a quit and restart.
+
+Owner: `plans/archive/named-saves_2026-09-24.md`
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-64 -- the skill tree reads in every theme and at the largest text
+
+In a sandbox run (not a Challenge), click **Skills** at the right of the top
+bar, just left of the Hive/Meadow view button. Look over the hex grid and the
+list under it, and hover a few tiles. Look at the **Skills** and **Saves**
+buttons' icons too (an up arrow and a disk). Then open the settings cog, switch the
+theme through all three choices (Appearance) and set the text size to its
+largest (Accessibility), reopening Skills each time.
+
+PASS: in every theme and at the largest text, the six coloured sector tiles,
+the skill tiles and the faint connecting lines are all distinguishable, both
+button icons are visible, every
+list line is readable without clipping, and each tile's tooltip names the
+skill, its cost and why it is blocked.
+
+If it fails, `scripts/skill_tree_panel.gd`'s colours (`_fill`, `_state_colour`)
+or tile size change before AP-4 puts a Buy button on the same panel.
+
+Owner: `plans/archive/alpha-progression-spine_2026-09-25.md`
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
+### C-65 -- buying Tarsal secretions spends stores and survives a reload
+
+In a sandbox run with Tarsal markers left off in the settings cog, play until
+the comb holds at least 120 nectar and 40 pollen. Open **Skills** from the top
+bar, note the stores on the centre tile's tooltip, and press **Buy** beside
+Tarsal secretions. Then click a flower a bee has just visited. Finally open
+**Saves**, save the run, load it again, and reopen **Skills**.
+
+PASS: the purchase takes 120 nectar and 40 pollen out of the comb, the
+flower's scent-mark line now reads "(bees avoiding)", and after the reload
+Tarsal secretions still shows as owned.
+
+If it fails, AP-4's purchase path (`skill_tree_panel.gd::buy_skill`) or the
+save's new `skills` block (`save_game.gd`, `saving.gd::_restore`) reopens
+before any further skill is made buyable.
+
+Owner: `plans/archive/alpha-progression-spine_2026-09-25.md`
+
+Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
+
 ## 19 Sep 2026 -- Dave's hands-on pass
 
 Thirteen checks run. Seven passed and are recorded here: C-18, C-24, C-34,

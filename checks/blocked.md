@@ -44,3 +44,38 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
+### C-57 -- at Challenge 2's 2.2 the Raises menu offers a pollen Forager
+
+Start Challenge 2 and play (or step with Game Settings -> World & start's
+arrows) to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click
+a comb cell and open its Raises row's "Forager..." menu.
+
+PASS: the menu lists "Forager -- Pollen" as well as "Forager -- Nectar".
+
+If it fails, HF-6's fixture missed the path you took; say how you reached 2.2.
+Passed on 28 Sep 2026 and not re-checked: at 2.1 the menu offers only
+"Forager -- Nectar", and no stage shows "Raises:" with nothing to choose.
+
+Owner: `plans/now/hud-followups.md` HF-6
+
+Blocked by: HF-6 -- why Raises lacks Pollen at 2.2. It moves back to
+`checks/ready/` once HF-6 has found and fixed the step that drops Pollen.
+
+### C-60 -- a chosen panel texture appears
+
+With the Colony window open, go to cog -> Appearance -> Panel texture and set
+it to Honeycomb, then Grain, then Flat, in each of Dark, Light and High
+contrast.
+
+PASS: Honeycomb and Grain each visibly texture the Colony window's background
+the moment they are chosen, in all three themes.
+
+If it fails, `ui_theme.gd::PanelBox` is still not drawing its texture.
+Failed on 28 Sep 2026: nothing changed, because Godot never calls a script
+`_draw` on a `StyleBoxFlat` subclass (HF-1's root cause). The edge-stays-put
+and legibility conditions it used to bundle become their own checks at
+HF-1's closeout.
+
+Owner: `plans/now/hud-followups.md` HF-1
+
+Blocked by: HF-1 -- panel textures actually draw.
