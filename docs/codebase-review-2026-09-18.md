@@ -121,7 +121,7 @@ Found by applying `plans/README.md` rule 10 to every live plan:
 
 - `plans/README.md` guardrail 14 still opens its `challenge_runner.gd` order
   with "**UI-X-2** ... shipped". A shipped slice heads an ordering list.
-- `plans/now/c1-followups.md`, open-slices table: C1F-1 "Startable: after
+- `plans/archive/c1-followups_2026-09-28.md`, open-slices table: C1F-1 "Startable: after
   UI-X-2 and E1". UI-X-2 shipped 18 Sep.
 - `plans/README.md`, "Current routing": rows "UI-R, UI-Q, UI-P, UI-D" (all
   closed), "L-1..L-9" (open slices are L-10 to L-13), and "A1-A4, B1-B3,
@@ -562,7 +562,7 @@ cheaper come first, then by dependency. Each states what it unblocks.
 | 3.2 | **Q-1: refill the Claude lane and make "lane is full" checkable.** Add WD-1 and WD-2 (both low, file-disjoint from both lanes) to the Claude lane at positions 4 and 5; reword the L-10/L-11 line to "wait for a free slot"; add `check_not_in_queue_reasons` to `tools/check_docs.py` (a bullet whose text contains "lane is full" fails unless that lane holds five items) | quick | low | `NEXTSTEPS.md`, `tools/check_docs.py`, `tests/test_source_checks.py` | two idle slots; the defect cannot recur |
 | 3.3 | **WD-3 amendment**: replace step 2's `LEVEL_MODELS` with a reader over `tools/slice.ps1` (text below) | quick | low | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` | WD-3 ships without a second copy of the rule |
 | 3.4 | **E1 amendment**: add two scenario verbs and `scenario_actions.gd` to E1's files (text below) | quick | low | `plans/archive/architecture-review_2026-09-24.md`, `NEXTSTEPS.md` item 1 | E1's acceptance can be run |
-| 3.5 | **A-2 trims**: guardrail 14, C1F-1 table, README routing rows and rule numbering, C-18 stub, agent-lifecycle history, workflow-diagnostics State | quick | low | `plans/README.md`, `plans/now/c1-followups.md`, `plans/now/agent-lifecycle.md`, `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, `checks/blocked.md` | the planning model stops re-deriving four expired restrictions |
+| 3.5 | **A-2 trims**: guardrail 14, C1F-1 table, README routing rows and rule numbering, C-18 stub, agent-lifecycle history, workflow-diagnostics State | quick | low | `plans/README.md`, `plans/archive/c1-followups_2026-09-28.md`, `plans/now/agent-lifecycle.md`, `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, `checks/blocked.md` | the planning model stops re-deriving four expired restrictions |
 | 3.6 | **IDLE-1: idle dispatch on the think tick** (plan 4.1) | quick code, measured | medium | `scripts/bee.gd`, `docs/PERFORMANCE_BASELINE.md` | PERF-1's numbers are read against a fixed idle cost; the biggest unmeasured per-frame scan is gone |
 | 3.7 | **GDT-1: a GDScript test boot** (plan 4.2) | moderate | medium | `scripts/main.gd`, new tools/godot_test_check.py, new `tests/gd/` folder, `tools/verify.ps1`, `docs/headless-run-contract.md` | executed tests for G3, F2s, CH-1, CH-2, C1F-1, SF-1, every migration |
 | 3.8 | **CH-1: a Challenge is a level-record field** (plan 4.3) | moderate | medium | `scripts/levels.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/main.gd`, `scripts/world_building.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/scenario_actions.gd`, `tests/source_checks.py` | a third Challenge; G3's stage-named actions built on the right shape. Queue after C1F-1 per guardrail 14 |
@@ -570,7 +570,7 @@ cheaper come first, then by dependency. Each states what it unblocks.
 | 3.10 | **CH-2: the five id-literal branches become stage keys** (plan 4.4) | moderate | medium | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `tests/source_checks.py` | a third Challenge needs no runner edit for entry behaviour |
 | 3.11 | **DOC-2: one home for the merge rules; `ui.md` to reference** (plan 4.5) | moderate, doc only | low | `plans/reference/closeout.md`, `plans/workstreams.md`, `CHATGPT.md`, `plans/archive/ui_2026-09-20.md` → plans/reference/ui-rules.md, `plans/README.md`, `plans/reference/check-loop.md`, `DESIGN_BACKLOG.md` | the planning model reads one statement per rule |
 | 3.12 | **PF-1: per-frame housekeeping** (C-2's first three bullets) | quick | low | `scripts/debug_panel.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd` | nothing; three allocations a frame gone. Lowest priority |
-| 3.13 | **C1F-1 fixture addition** (A-4): assert one world fact per retreat | quick | low | `plans/now/c1-followups.md` | a wrong setup row fails on its own row |
+| 3.13 | **C1F-1 fixture addition** (A-4): assert one world fact per retreat | quick | low | `plans/archive/c1-followups_2026-09-28.md` | a wrong setup row fails on its own row |
 
 Text for 3.3, to replace WD-3 step 2 verbatim:
 

@@ -423,6 +423,24 @@ mv .git/HEAD.lock .git/stale_locks/HEAD.lock.$(date +%s)   # if present
 Nothing is actually wrong with the repo when this happens. Don't spend
 a turn investigating it — move the lock and retry.
 
+## Environment quirk: `%USERNAME%` is not who Codex runs as
+
+Codex runs its commands as a local sandbox account
+(`<machine>\CodexSandboxOffline`), but it inherits Dave's environment, so
+`USERNAME` still reads `dl13860`. From inside that sandbox, a Windows call
+that has to resolve the name — `icacls … /deny dl13860:(R)`, a
+`NTAccount` lookup — fails with error 1332 ("No mapping between account
+names and security IDs"). On 28 Sep 2026 this stopped PERF-2's closeout at
+`test_doctor_survives_an_excludes_folder_it_may_not_list`, before `doctor`
+had even run. It had nothing to do with PERF-2.
+
+A test or tool that needs "the current user" as a Windows principal
+should name the running process by SID. Get it from System32's
+`whoami.exe /user /fo csv /nh`, not Git's `whoami`, which can come first
+on PATH. Pass it to icacls as `*S-1-…`. Keep any setup that can fail
+inside the `try` whose `finally` cleans up; otherwise a failed setup
+leaves an ACL-locked folder in `%TEMP%`.
+
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 
 The Bash tool already runs in the right working directory, so prefixing a

@@ -419,7 +419,7 @@ lane's slot below.
 archived; the rest were fixed in session on `claude/pass-0917` and refiled
 (C-7, C-24, C-29, C-31, C-42, with new C-54 and C-55) or moved to
 `checks/blocked.md` behind a new slice (C-25 behind SF-1 in
-`plans/now/season-feel.md`, C-49 behind C1F-1 in `plans/now/c1-followups.md`).
+`plans/now/season-feel.md`, C-49 behind C1F-1 in `plans/archive/c1-followups_2026-09-28.md`).
 The settings stage row is fixed with a headless check, so UI-W-1 no longer
 touches `scripts/scenario_actions.gd`.
 

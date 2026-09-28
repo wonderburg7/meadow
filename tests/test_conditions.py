@@ -22,6 +22,7 @@ class ConditionsVocabularyTest(unittest.TestCase):
             "built_cells_at_least": 1,
             "brood_cells_at_least": 1,
             "queen_alive": True,
+            "skill_owned": "skill.brood.nurses",
             "event_count": {"type": "brood_feed", "at_least": 1},
             "disease": {"at_most": 0.5},
             "all_of": [{"day_at_least": 1}],
