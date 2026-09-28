@@ -162,7 +162,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
-| C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/now/c1-followups.md` |
+| C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/archive/c1-followups_2026-09-28.md` |
 | SF-1 -- a new run's founding flower mix; the season recharge range | `plans/now/season-feel.md` |
 | UI-X-1..UI-X-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/archive/UI-X_2026-09-18.md` (complete) |
 | CB-1, CB-2 -- comb builders per site and per wall | `plans/archive/comb-builders_2026-09-20.md` |
@@ -245,7 +245,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     **E1**
     (`plans/archive/architecture-review_2026-09-24.md`, the two
     `awaiting_queen_build_cell` writes), then **C1F-1**
-    (`plans/now/c1-followups.md`, which adds the stage-setup call to both
+    (`plans/archive/c1-followups_2026-09-28.md`, which adds the stage-setup call to both
     debug arrows), then the architecture review's **F2s** and **G3** in that
     order. A slice naming this file that is not next in that order is not
     startable, whatever its own plan says. Added 11 Sep 2026 by the plan
