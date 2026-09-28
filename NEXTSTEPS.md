@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: tools/slice.ps1 :: slice lifecycle is busy; retry this command`
    - Next after: none -- agent-lifecycle is complete once L-15 ships and the Objective's completion gate is met
 
+3. **[Claude] BS-2 -- Challenge 2 offers Nurses free at 2.5**
+   - Plan: `plans/now/brood-spine.md` -- "BS-2 — Challenge 2 offers Nurses free at 2.5"
+   - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md`
+   - Check: `test_scenarios/f2s_challenge2_gate_table_test.json` passes: Challenge 2 buys Nurses at 2.5 for nothing and still completes, `docs/challenge-stages.md` shows 2.5's new goal, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/challenge_stages.gd :: "free_skills"`
+   - Next after: BS-3 -- the gate goes live: an unowned role cannot be assigned or worked
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -53,7 +60,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-2 to BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
+- **BS-3 to BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for BS-4 to prove a tier-2 purchase in a run.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
