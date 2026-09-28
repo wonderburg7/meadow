@@ -1631,7 +1631,7 @@ function Get-SliceArchiveState {
     $namesThisSlice = -not $Item.Heading
     foreach ($candidate in $archiveMatches) {
         $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
-        if ($candidateText -like "*$($Item.Heading)*") { $namesThisSlice = $true; break }
+        if ($candidateText.IndexOf($Item.Heading, [System.StringComparison]::Ordinal) -ge 0) { $namesThisSlice = $true; break }
     }
     $state = if ($archiveMatches -and -not $namesThisSlice -and -not $headingLive) { "reused" }
         elseif (-not $archiveMatches) { "missing" }
