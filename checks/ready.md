@@ -14,3 +14,4 @@ unblocker.
 
 ## Ready to run
 
+- [C-66 -- Developer mode toggle in the main menu settings](ready/C-66.md)
