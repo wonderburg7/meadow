@@ -63,7 +63,6 @@ available -- that the run start reads and a developer table shows and edits.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-1 | the run start derives starting skills from one sheet | `scripts/run_availability.gd`, `scripts/roles.gd`, `scripts/progression.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `test_scenarios/bs1_seeded_skills_test.json` | yes | high |
 | BS-D | a developer mode setting, switched on from the main menu's settings | `scripts/settings_catalogue.gd`, `scripts/game_config.gd`, `scripts/main_menu.gd` | yes | medium |
 | BS-2 | Challenge 2 offers Nurses free at 2.5 | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md` | yes | medium |
 | BS-3 | the gate goes live: an unowned role cannot be assigned or worked | `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd` | after BS-1, BS-2 | high |
@@ -74,55 +73,7 @@ available -- that the run start reads and a developer table shows and edits.
 BS-1 and BS-D share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
 
-## BS-1 — a run's availability sheet decides its starting skills
-
-Level: high (an ownership boundary and the run-start order).
-
-- **Required reading.** This plan's "Decisions" and "Ownership taken"
-  sections. `scripts/main.gd` around the `set_skill_policy` call (search for
-  `ensure_progression`), `scripts/progression.gd`'s `set_skill_policy`,
-  `is_permitted` and `grant_temporary`, `scripts/levels.gd`'s header comment
-  and one level entry, and `scripts/conditions.gd`'s `_met_key` and
-  `_progress_key`.
-- **Files to change.** `scripts/run_availability.gd` (new),
-  `scripts/roles.gd`, `scripts/progression.gd`, `scripts/main.gd`,
-  `scripts/conditions.gd`, `test_scenarios/bs1_seeded_skills_test.json` (new).
-- **Requirements.**
-  - `roles.gd`: a `skill` field on every role row -- `Skills.NURSES` on
-    Nurse, `Skills.HONEY_WORKER` on Honey, empty elsewhere -- and a
-    `skill_for(role_id)` lookup. Guard against a preload cycle with
-    `skills.gd`; if one appears, use the skill id strings and a source check
-    that they match `skills.gd`'s constants.
-  - `run_availability.gd`: a static `sheet_for(run_definition)` returning, per
-    skill id, `{"source": "start"|"tree"|"unavailable", "reason": ...}`, and
-    `starting_skills(run_definition)`: the run's `skill_grants` plus the skill
-    of every role the definition seeds (a non-zero `nurses`/`honey_makers`
-    count, or the role `queen_laying_backup` names). Stage and feature columns
-    are BS-2's and BS-5's; leave a comment naming them, not empty code.
-  - `progression.gd`: one `begin_run(sheet)` (or equivalently named) entry
-    that applies the policy and grants the starting skills as temporary
-    ownership; `main.gd` calls it in place of today's direct
-    `set_skill_policy` call. Call `Availability.invalidate()` after
-    ownership changes, as that file's comment requires.
-  - `conditions.gd`: a `skill_owned` condition (met and progress), for BS-2's
-    stage goal and this slice's fixture.
-  - **No behaviour changes in this slice**: no action or role is gated yet, so
-    the only observable difference is which skills are owned at the start.
-- **Fixture.** `bs1_seeded_skills_test.json` asserts, from a scenario that
-  seeds nurses and honey makers, that both skills are owned on day 0, and a
-  second case with neither seeded that neither is owned.
-- **Escalation.** If the scenario level path (`Levels.SCENARIO_LEVEL_ID`)
-  does not carry `queen_laying_backup` or the seeded counts through to the
-  run definition, stop and report rather than adding a second reader.
-
-```queue
-**[Claude] BS-1 -- a run's availability sheet decides its starting skills**
-- Plan: `plans/now/brood-spine.md` -- "BS-1 — a run's availability sheet decides its starting skills"
-- Files: `scripts/run_availability.gd`, `scripts/roles.gd`, `scripts/progression.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `test_scenarios/bs1_seeded_skills_test.json`
-- Check: `test_scenarios/bs1_seeded_skills_test.json` passes: a run seeding nurses and honey makers owns Nurses and Honey worker on day 0 and a run seeding neither owns neither, `main.gd` no longer calls `set_skill_policy` directly, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/roles.gd :: "skill":`
-- Next after: BS-2 -- Challenge 2 offers Nurses free at 2.5
-```
+BS-1 shipped 2026-09-28; its specification is `plans/archive/BS-1_2026-09-28.md`.
 
 ## BS-2 — Challenge 2 offers Nurses free at 2.5
 
