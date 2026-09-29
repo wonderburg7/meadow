@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/BS-2` (`claude/BS-2`) | Claude | Challenge 2 offers Nurses free at 2.5 | Claude | in progress | none | `plans/now/brood-spine.md` BS-2 — Challenge 2 offers Nurses free at 2.5 |
