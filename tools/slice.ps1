@@ -9,6 +9,10 @@ param(
 
     [string]$PythonPath,
 
+    # How long a lifecycle command waits for another to release the lock
+    # before refusing. Tests set it to seconds, or 0 to refuse at once.
+    [int]$LockWaitSeconds = 600,
+
     # `owner` only: the repository-relative paths an ad-hoc session means to edit.
     [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
     [string[]]$Path
@@ -106,7 +110,7 @@ function Add-SliceStopRecord {
 function Get-DefaultSliceFix {
     param([string]$Cause)
     if ($Cause -match 'lifecycle is busy') {
-        return "the command named in the cause is still running -- often your own earlier call, whose shell returned before it finished. Wait for it to end rather than retrying, then read its outcome with tools/slice.ps1 status (last_run)"
+        return "the command named in the cause is still running -- often your own earlier call, whose shell returned before it finished. Wait for it to end (or rerun with a larger -LockWaitSeconds) rather than retrying at once, then read its outcome with tools/slice.ps1 status (last_run)"
     }
     if ($Cause -match 'git (merge|pull)') {
         return "git's own message is printed above. Resolve the conflict in the primary checkout (edit, git add, git commit); a conflict between lanes means a Files: line in NEXTSTEPS.md was wrong -- fix it in the same pass"
@@ -199,14 +203,58 @@ function Get-LifecycleHolder {
     }
 }
 
+function Get-LifecycleHolderLabel {
+    # "`slice.ps1 finish` on L-15 (PID 1234, run from C:\...)": the holder's
+    # command, and its slice once that command has resolved one.
+    param($Holder)
+    $slice = if ($Holder.id) { " on $($Holder.id)" } elseif ($Holder.lane) { " ($($Holder.lane) lane)" } else { "" }
+    return "``slice.ps1 $($Holder.command)``$slice (PID $($Holder.pid), run from $($Holder.cwd))"
+}
+
 function Get-LifecycleBusyCause {
-    param([string]$LockPath)
+    param([string]$LockPath, [int]$WaitedSeconds = 0)
+    $waited = if ($WaitedSeconds -gt 0) { " after waiting $WaitedSeconds s (-LockWaitSeconds)" } else { "" }
     $holder = Get-LifecycleHolder -LockPath $LockPath
     if (-not $holder) {
-        return "slice lifecycle is busy; retry this command after the other lifecycle command completes"
+        return "slice lifecycle is busy; retry this command after the other lifecycle command completes (still held$waited)"
     }
     $minutes = [int]((Get-Date) - [datetime]$holder.started).TotalMinutes
-    return "slice lifecycle is busy: ``slice.ps1 $($holder.command)`` (PID $($holder.pid), run from $($holder.cwd)) has held it since $($holder.started), $minutes min ago. If that is your own earlier call, it has not stopped -- wait for it (PowerShell: Wait-Process -Id $($holder.pid)) instead of starting another"
+    return "slice lifecycle is busy$($waited): $(Get-LifecycleHolderLabel -Holder $holder) has held it since $($holder.started), $minutes min ago. If that is your own earlier call, it has not stopped -- wait for it (PowerShell: Wait-Process -Id $($holder.pid)) instead of starting another"
+}
+
+function Get-LifecycleWaitLine {
+    # The one line a blocked command prints before it waits in silence.
+    param([string]$LockPath, [int]$WaitSeconds)
+    $bound = if ($WaitSeconds -ge 120) { "$([int]($WaitSeconds / 60)) min" } else { "$WaitSeconds s" }
+    $holder = Get-LifecycleHolder -LockPath $LockPath
+    $who = if ($holder) { "$(Get-LifecycleHolderLabel -Holder $holder), which took it at $($holder.started)" } else { "another lifecycle command (its holder note is not readable)" }
+    return "slice lifecycle is busy: waiting for $who -- this command continues when it ends (checking every 5 s, for up to $bound)"
+}
+
+function Write-LifecycleHolderNote {
+    # The holder writes who it is into the lock file it holds; others may
+    # read it but not write it. Rewritten when the command resolves its
+    # slice id, so a waiter's line can name the slice. Never throws: the note
+    # only improves a busy message; the lock is held either way.
+    try {
+        $stream = $script:LifecycleLockStream
+        if (-not $stream) { return }
+        $context = $script:SliceContext
+        $holder = [ordered]@{
+            command = $context.Command
+            id      = $context.Id
+            lane    = $context.Lane
+            pid     = $PID
+            cwd     = $script:LifecycleLockCwd
+            started = $script:LifecycleLockStarted.ToString("s")
+        }
+        $bytes = (New-Object System.Text.UTF8Encoding $false).GetBytes(($holder | ConvertTo-Json -Compress))
+        $stream.SetLength(0)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush()
+    }
+    catch {
+    }
 }
 
 function Write-LifecycleOutcome {
@@ -255,29 +303,39 @@ function Invoke-WithLifecycleLock {
     $lockPath = Get-LifecycleFilePath -Root $Root -Name "meadow-slice-lifecycle.lock"
     $stream = $null
     try {
-        try {
-            # OpenOrCreate makes a lock left behind by a killed PowerShell
-            # process recoverable: the OS releases its exclusive handle, so a
-            # later lifecycle command can take that same file. CreateNew
-            # instead made the stale name itself a permanent manual-repair
-            # problem. FileShare.Read lets a command that finds the lock busy
-            # read who holds it; every writer stays excluded.
-            $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
-        }
-        catch [System.IO.IOException] {
-            throw (Get-LifecycleBusyCause -LockPath $lockPath)
+        # L-15: a busy lock is waited for, not refused. 49 of 118 recorded
+        # stops were "busy", most of them a finish retried once a minute for
+        # hours while the other lane's finish verified. The polling runs only
+        # while this command is blocked; past the bound it refuses as before.
+        $waitStarted = Get-Date
+        $announced = $false
+        while (-not $stream) {
+            try {
+                # OpenOrCreate makes a lock left behind by a killed PowerShell
+                # process recoverable: the OS releases its exclusive handle, so
+                # a later lifecycle command can take that same file. CreateNew
+                # instead made the stale name itself a permanent manual-repair
+                # problem. FileShare.Read lets a command that finds the lock
+                # busy read who holds it; every writer stays excluded.
+                $stream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+            }
+            catch [System.IO.IOException] {
+                $remaining = $LockWaitSeconds - ((Get-Date) - $waitStarted).TotalSeconds
+                if ($remaining -le 0) {
+                    throw (Get-LifecycleBusyCause -LockPath $lockPath -WaitedSeconds $LockWaitSeconds)
+                }
+                if (-not $announced) {
+                    [Console]::Error.WriteLine((Get-LifecycleWaitLine -LockPath $lockPath -WaitSeconds $LockWaitSeconds))
+                    $announced = $true
+                }
+                Start-Sleep -Milliseconds ([int]([Math]::Min(5, $remaining) * 1000))
+            }
         }
         $started = Get-Date
-        try {
-            $holder = [ordered]@{ command = $script:SliceContext.Command; pid = $PID; cwd = (Get-Location).Path; started = $started.ToString("s") }
-            $bytes = (New-Object System.Text.UTF8Encoding $false).GetBytes(($holder | ConvertTo-Json -Compress))
-            $stream.SetLength(0)
-            $stream.Write($bytes, 0, $bytes.Length)
-            $stream.Flush()
-        }
-        catch {
-            # The holder note only improves a busy message; the lock is held.
-        }
+        $script:LifecycleLockStream = $stream
+        $script:LifecycleLockStarted = $started
+        $script:LifecycleLockCwd = (Get-Location).Path
+        Write-LifecycleHolderNote
         # The finally, not the catch, records it: start's preflight leaves
         # through `exit`, which skips a catch.
         $outcome = "stopped"
@@ -296,6 +354,7 @@ function Invoke-WithLifecycleLock {
         }
     }
     finally {
+        $script:LifecycleLockStream = $null
         if ($stream) { $stream.Dispose(); Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue }
     }
 }
@@ -764,6 +823,33 @@ function Get-SliceAdvice {
     }
 }
 
+function Get-OpenWorktreeAdvice {
+    # L-15: which of "finish" or "abandon" applies to the lane's open
+    # worktree, from Git alone -- commits ahead of master and uncommitted
+    # changes. It never runs verification to decide. Git's stderr (a missing
+    # branch) must not turn into a terminating error here, hence Continue.
+    param([string]$Root, [string]$Lane)
+    $ErrorActionPreference = "Continue"
+    $target = Get-SliceTarget -Root $Root -Lane $Lane
+    $ahead = 0
+    $count = git -C $Root rev-list --count "master..refs/heads/$($target.Branch)" 2>$null
+    if ($LASTEXITCODE -eq 0 -and "$count".Trim() -match '^\d+$') { $ahead = [int]"$count".Trim() }
+    $present = Test-Path -LiteralPath $target.WorktreePath
+    $dirty = $false
+    if ($present) {
+        $changes = @(git -C $target.WorktreePath status --porcelain 2>$null)
+        $dirty = ($LASTEXITCODE -ne 0) -or (@($changes | Where-Object { "$_".Trim() }).Count -gt 0)
+    }
+    $facts = @()
+    $facts += if ($ahead -gt 0) { "branch $($target.Branch) is $ahead commit(s) ahead of master" } else { "branch $($target.Branch) has no commits ahead of master" }
+    $facts += if (-not $present) { "its worktree directory is missing" } elseif ($dirty) { "its worktree has uncommitted changes" } else { "its worktree is clean" }
+    $state = $facts -join " and "
+    if ($ahead -gt 0 -and $present -and -not $dirty) {
+        return "$state, so finish it (``tools/slice.ps1 finish`` from inside ``$($target.WorktreeRelative)``)"
+    }
+    return "$state, so abandon it (``tools/slice.ps1 abort -Lane $Lane``) or finish the work in it"
+}
+
 function Get-SlicePreflight {
     param([string]$Lane)
 
@@ -787,7 +873,7 @@ function Get-SlicePreflight {
     $ledgerRows = Get-LedgerLaneRows -Root $root
     $existingLaneRow = $ledgerRows | Where-Object { $_.Lane -eq $Lane }
     if ($existingLaneRow) {
-        throw "$Lane lane already has an open worktree ($($existingLaneRow.Worktree)) -- finish or abandon it first"
+        throw "$Lane lane already has an open worktree ($($existingLaneRow.Worktree)) -- $(Get-OpenWorktreeAdvice -Root $root -Lane $Lane)"
     }
 
     $id = $candidate.Id
@@ -1166,6 +1252,8 @@ function Invoke-SliceStart {
     $root = $preflight.Root
     $candidate = $preflight.Candidate
     $id = $preflight.Id
+    $script:SliceContext.Id = $id
+    Write-LifecycleHolderNote
     $branch = $preflight.Branch
     $worktreeRelative = $preflight.WorktreeRelative
 
@@ -1724,6 +1812,7 @@ function Invoke-SliceFinish {
     $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
     $script:SliceContext.Id = $id
     $script:SliceContext.Lane = $lane
+    Write-LifecycleHolderNote
     $otherLane = if ($lane -eq "Claude") { "Codex" } else { "Claude" }
     $trailer = Get-LaneTrailer -Lane $lane
     $worktreeRelative = ".worktrees/$id"

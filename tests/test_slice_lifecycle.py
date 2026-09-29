@@ -1249,8 +1249,9 @@ class SliceDoctorTest(unittest.TestCase):
                     pass
                 time.sleep(0.2)
             slice_script = str(self.root / "tools" / "slice.ps1")
+            # L-15 made a busy lock a wait; a zero bound keeps the refusal.
             busy = subprocess.run(
-                [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
+                [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex", "-LockWaitSeconds", "0"],
                 cwd=self.root, capture_output=True, text=True,
             )
             self.assertNotEqual(0, busy.returncode)
@@ -1283,6 +1284,52 @@ class SliceDoctorTest(unittest.TestCase):
             [self.powershell, "-NoProfile", "-File", slice_script, "abort", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
         )
+
+    def start_against_open_worktree(self, prepare) -> str:
+        """Claim T-1, let `prepare` shape its worktree, then claim again and
+        return the refusal with all whitespace removed -- PowerShell may wrap
+        Write-Error's text anywhere, even mid-word."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        slice_script = str(self.root / "tools" / "slice.ps1")
+        started = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, started.returncode, started.stderr)
+        prepare(self.root / ".worktrees" / "T-1")
+        again = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertNotEqual(0, again.returncode)
+        return "".join(again.stderr.split())
+
+    @staticmethod
+    def squeeze(text: str) -> str:
+        return "".join(text.split())
+
+    def test_open_worktree_ahead_and_clean_says_finish_it(self):
+        # L-15: 14 recorded stops were this refusal, which named both remedies
+        # and said nothing about which one applied.
+        def commit_work(worktree: Path) -> None:
+            (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+            subprocess.run(["git", "commit", "-m", "work"], cwd=worktree, capture_output=True, check=True)
+
+        refusal = self.start_against_open_worktree(commit_work)
+        self.assertIn(self.squeeze("Codex lane already has an open worktree"), refusal)
+        self.assertIn(self.squeeze("codex/T-1 is 1 commit(s) ahead of master and its worktree is clean"), refusal)
+        self.assertIn(self.squeeze("so finish it (`tools/slice.ps1 finish` from inside `.worktrees/T-1`)"), refusal)
+        self.assertNotIn(self.squeeze("abandon it"), refusal)
+
+    def test_open_worktree_with_uncommitted_changes_says_abandon_or_finish_the_work(self):
+        def leave_changes(worktree: Path) -> None:
+            (worktree / "scripts" / "sample.gd").write_text("func half_done():\n\tpass\n", encoding="utf-8")
+
+        refusal = self.start_against_open_worktree(leave_changes)
+        self.assertIn(self.squeeze("codex/T-1 has no commits ahead of master and its worktree has uncommitted changes"), refusal)
+        self.assertIn(self.squeeze("so abandon it (`tools/slice.ps1 abort -Lane Codex`) or finish the work in it"), refusal)
+        self.assertNotIn(self.squeeze("so finish it"), refusal)
 
 
 if __name__ == "__main__":
