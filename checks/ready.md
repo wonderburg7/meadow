@@ -17,3 +17,4 @@ unblocker.
 - [C-66 -- Developer mode toggle in the main menu settings](ready/C-66.md)
 - [C-67 -- Challenge 2 gives Nurses free at stage 2.5](ready/C-67.md)
 - [C-68 -- Clicking the hive or its exit switches view](ready/C-68.md)
+- [C-69 -- A bee waiting for room says so](ready/C-69.md)
