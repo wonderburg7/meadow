@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SF-2` (`codex/SF-2`) | Codex | headless runs count each flower species | Codex | in progress | none | `plans/now/season-feel.md` SF-2 — headless runs count each flower species |
