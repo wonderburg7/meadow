@@ -12,9 +12,9 @@
     "events": [],
     "snapshots": {
       "every_sim_seconds": 0.1,
-      "fields": ["environment.flowers_in_season", "environment.flowers_out_of_season"],
+      "fields": ["environment.flowers_in_season", "environment.flowers_out_of_season", "environment.flowers_by_species"],
       "only_when_changed": true
     }
   },
-  "stop": {"max_days": 6}
+  "stop": {"max_days": 7}
 }
