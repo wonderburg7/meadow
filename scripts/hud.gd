@@ -82,6 +82,8 @@ signal winter_window_requested()
 signal signal_clicked(action: String)
 ## Marks or clears the digging flag on every selected soil block.
 signal soil_mark_requested(mark: bool)
+## The "Clear the mark" button on a kept-clear tile summary (HR-1).
+signal keep_clear_clear_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
 signal secondary_role_requested(role_key: String)
@@ -368,6 +370,7 @@ var active_flower: Node2D = null
 ## _apply_selection_tray_width can re-cap its width without a fresh build.
 var selection_column: VBoxContainer
 var soil_summary_row: BoxContainer
+var keep_clear_summary_row: BoxContainer
 var soil_mark_btn: Button
 var soil_clear_btn: Button
 ## The _with_info() rows soil_mark_btn/soil_clear_btn sit in. A
@@ -1019,6 +1022,7 @@ func _build_selection_panel() -> void:
 	soil_summary_row = VBoxContainer.new()
 	soil_summary_row.name = "soil_summary_row"
 	soil_summary_row.visible = false
+	keep_clear_summary_row.visible = false
 	column.add_child(soil_summary_row)
 
 	soil_mark_btn = Button.new()
@@ -1046,6 +1050,21 @@ func _build_selection_panel() -> void:
 	soil_clear_wrapper.name = "soil_clear_wrapper"
 	soil_summary_row.add_child(soil_clear_wrapper)
 	_register_gated_control("soil_clear_btn", func(): return soil_clear_btn)
+
+	# Only shown for a kept-clear tile summary (HR-1); same stacking as above.
+	keep_clear_summary_row = VBoxContainer.new()
+	keep_clear_summary_row.name = "keep_clear_summary_row"
+	keep_clear_summary_row.visible = false
+	column.add_child(keep_clear_summary_row)
+
+	var keep_clear_btn := Button.new()
+	keep_clear_btn.name = "keep_clear_btn"
+	_style_button(keep_clear_btn)
+	keep_clear_btn.text = "Clear the mark"
+	keep_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	keep_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	keep_clear_btn.pressed.connect(func(): keep_clear_clear_requested.emit())
+	keep_clear_summary_row.add_child(keep_clear_btn)
 
 	_set_summary_cog_kind("")
 
@@ -1845,6 +1864,7 @@ func show_object_summary(kind: String, data) -> void:
 	active_summary_kind = kind
 	active_flower = data if kind == "flower" else null
 	soil_summary_row.visible = kind == "soil"
+	keep_clear_summary_row.visible = kind == "keep_clear"
 	_set_favourite_star(null)
 	_set_summary_cog_kind(kind)
 	match kind:
@@ -1856,6 +1876,8 @@ func show_object_summary(kind: String, data) -> void:
 			_show_soil_summary(data.count, data.reachable)
 		"death":
 			_show_death_summary(data.death_info)
+		"keep_clear":
+			_show_keep_clear_summary()
 	# _set_summary_cog_kind above ran before these four wrote their text, so
 	# the empty-label test has to be re-run now that there is text to test
 	# (HC-13). Selection-driven, not per-frame.
@@ -1918,6 +1940,14 @@ func _show_soil_summary(count: int, reachable: int) -> void:
 	soil_mark_btn.visible = _is_gate_open("soil_mark_btn")
 	soil_clear_btn.visible = _is_gate_open("soil_clear_btn")
 
+## Clicking a tile the player has marked "keep clear" says so, and offers
+## the way to undo it (HR-1).
+func _show_keep_clear_summary() -> void:
+	identity_label.text = "Kept clear"
+	energy_label.text = ""
+	activity_label.text = "No cell will be built on this tile; comb workers leave it empty."
+	trait_label.text = ""
+
 ## Clicking (or drag-selecting) a death mark shows what happened to the
 ## bee who died there. Built from death_marker.gd's death_info snapshot
 ## rather than a live bee -- see that file's header comment -- so this
@@ -1951,6 +1981,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_summary_kind = "cell"
 	active_flower = null
 	soil_summary_row.visible = false
+	keep_clear_summary_row.visible = false
 	_set_favourite_star(null)
 	_set_summary_cog_kind("cell")
 	selection_panel.visible = true
@@ -2542,6 +2573,7 @@ func update_selection(bees: Array) -> void:
 	# might currently be showing -- see show_object_summary.
 	active_summary_kind = ""
 	soil_summary_row.visible = false
+	keep_clear_summary_row.visible = false
 	var panel_was_visible := selection_panel.visible
 	var tray_was_visible := command_tray.visible
 	selection_panel.visible = not bees.is_empty()
