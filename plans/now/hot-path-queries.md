@@ -24,7 +24,6 @@ per-frame mean and p95 in ms; it does not count calls.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PERF-3 | `find_food_cell` reads the existing content buckets without changing its chosen cell | `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md` | yes | high |
 
 PERF-2 measured `hive_find_food` at 11.65--14.73% of frame time in the
 intended hungry-indoor workload, so PERF-3 is warranted. Do not change
@@ -33,35 +32,7 @@ change which cell they choose.
 
 PERF-2 shipped 2026-09-28; its specification is `plans/archive/PERF-2_2026-09-28.md`.
 
-## PERF-3 -- `find_food_cell` reads the content index
-
-Level: high -- changes a measured hot-path query.
-
-- **Required reading.** This heading, `.claude/rules/performance.md`, and
-  `plans/reference/technical-audit.md`, "A. `hive.gd`'s `find_*` functions
-  bypass the content index that already exists".
-- **Files to change.** `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`.
-- **Requirements.** Replace the two full `cells` walks in `find_food_cell`
-  with the existing `ripe_honey` then `nectar` buckets from `cells_holding`.
-  Keep the current first-match ordering, `except`, validity, withdrawability,
-  amount checks, return values, and the balanced `hive_find_food` Perf span.
-  Do not alter index invalidation or any other `find_*` helper.
-- **Validation.** Run the existing focused Godot compile check and the pinned
-  hungry-indoor scenario twice at the default fixed FPS. Record both post-change
-  `hive_find_food` mean/p95 readings and frame-time share beside PERF-2's table;
-  the query must remain non-zero and materially below the pre-change readings.
-  Review the diff against the audit's equivalence argument before hand-off.
-- **Closeout.** This is high risk: commit and push, then hand the branch to
-  Claude for full review and `finish`; do not merge it directly.
-
-```queue
-**[Codex] PERF-3 -- `find_food_cell` reads the content index**
-- Plan: `plans/now/hot-path-queries.md` -- "PERF-3 -- `find_food_cell` reads the content index"
-- Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
-- Check: the focused Godot compile check is green; two `perf2_hungry_indoor.json` captures keep `hive_find_food` non-zero and materially below PERF-2's recorded mean
-- Proof: `absent: docs/PERFORMANCE_BASELINE.md :: PERF-3 measurement`
-- Next after: close candidate A in `plans/reference/technical-audit.md` if the index-backed runs preserve the fixture's outcome
-```
+PERF-3 shipped 2026-09-29; its specification is `plans/archive/PERF-3_2026-09-29.md`.
 
 ## Read on demand
 
