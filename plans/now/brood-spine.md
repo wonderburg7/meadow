@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-2 -- Challenge 2 offers Nurses free at 2.5 (startable, BS-1 landed 28 Sep 2026), and BS-5 -- the developer table shows a run's sheet (startable, BS-D landed 28 Sep 2026), both in the Claude lane | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: BS-3 -- the gate goes live (startable, BS-2 landed 29 Sep 2026), and BS-5 -- the developer table shows a run's sheet (startable, BS-D landed 28 Sep 2026), both in the Claude lane | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-29
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -63,8 +63,7 @@ available -- that the run start reads and a developer table shows and edits.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-2 | Challenge 2 offers Nurses free at 2.5 | `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md` | yes | medium |
-| BS-3 | the gate goes live: an unowned role cannot be assigned or worked | `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd` | after BS-1, BS-2 | high |
+| BS-3 | the gate goes live: an unowned role cannot be assigned or worked | `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd` | yes | high |
 | BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | a new scenario, `plans/design/progression.md` | after BS-3 | medium |
 | BS-5 | the developer table shows a run's sheet, read-only | `scripts/run_availability_panel.gd` (new), `scripts/run_availability.gd`, `scripts/debug_panel.gd` | yes | medium |
 | BS-6 | developer edits to the table change what a run starts with | decided in BS-5's closeout | after BS-5 and a persistence decision | high |
@@ -128,6 +127,33 @@ fixture; the ownership boundary was settled in BS-1).
 - Next after: BS-3 -- the gate goes live: an unowned role cannot be assigned or worked
 ```
 
+## BS-3 — the gate goes live
+
+Level: high (ownership boundary and a save-compatibility decision).
+
+`Availability.role_query` composes the stage
+  key and the role's skill; the HUD's Job row and brood role designation read
+  it, and `action_query` refuses a row whose role's skill is unowned. Proof: a
+  level 7 run cannot assign or raise a nurse before buying Nurses, and can
+  after; Challenge 2's fixture still completes. Also carried from BS-2's
+  outline: a source check that fails a stage unlocking a skill-gated role key
+  before that role's skill is owned or free -- what makes a future Honey
+  stage safe. **Save compatibility (found in BS-1):** starting skills are
+  saved as temporary ownership and `save_game.gd::restore_skills` replaces
+  ownership wholesale, so a save written before BS-1 (level 4-6, Challenge 1)
+  restores without Nurses/Honey worker. Harmless until this gate; before it
+  goes live, decide whether restore re-applies the run's `starting` skills
+  (one line in `saving.gd`) or the save version bumps.
+
+```queue
+**[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
+- Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
+- Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+- Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/availability.gd :: "role_query"`
+- Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill
+```
+
 BS-D shipped 2026-09-28; its specification is `plans/archive/BS-D_2026-09-28.md`.
 
 ## BS-5 — the developer table shows a run's sheet, read-only
@@ -178,19 +204,6 @@ already exists).
 Each is specified in full, with its own `queue` block, when what it waits for
 has shipped. These notes fix only what the earlier slices must not preclude.
 
-- **BS-3 — the gate goes live.** `Availability.role_query` composes the stage
-  key and the role's skill; the HUD's Job row and brood role designation read
-  it, and `action_query` refuses a row whose role's skill is unowned. Proof: a
-  level 7 run cannot assign or raise a nurse before buying Nurses, and can
-  after; Challenge 2's fixture still completes. Also carried from BS-2's
-  outline: a source check that fails a stage unlocking a skill-gated role key
-  before that role's skill is owned or free -- what makes a future Honey
-  stage safe. **Save compatibility (found in BS-1):** starting skills are
-  saved as temporary ownership and `save_game.gd::restore_skills` replaces
-  ownership wholesale, so a save written before BS-1 (level 4-6, Challenge 1)
-  restores without Nurses/Honey worker. Harmless until this gate; before it
-  goes live, decide whether restore re-applies the run's `starting` skills
-  (one line in `saving.gd`) or the save version bumps.
 - **BS-4 — the honey gate.** A run with no seeded honey makers buys Honey
   worker, makes honey and affords a tier-2 skill before it runs short of
   comb: section 6's constraint 2, proved with a scenario rather than asserted.

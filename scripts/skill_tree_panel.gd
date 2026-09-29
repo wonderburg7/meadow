@@ -249,11 +249,14 @@ func _state_colour(state: String) -> Color:
 
 func _skill_tip(skill: Dictionary, state: String, reason: String) -> String:
 	var cost: Dictionary = skill.get("cost", {})
+	var free: bool = Session.progression != null and Session.progression.is_free(str(skill.get("id", "")))
+	if free:
+		cost = {}
 	var parts: Array = []
 	for resource in cost:
 		parts.append("%d %s" % [int(cost[resource]), str(resource).replace("_", " ")])
 	return "%s\n%s\nCost: %s\n%s" % [skill.name, skill.get("description", ""),
-		", ".join(parts) if not parts.is_empty() else "nothing", _sentence(_state_text(state, reason))]
+		"Free" if free else (", ".join(parts) if not parts.is_empty() else "nothing"), _sentence(_state_text(state, reason))]
 
 func _sentence(text: String) -> String:
 	return text.substr(0, 1).to_upper() + text.substr(1) + "."

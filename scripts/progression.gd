@@ -119,6 +119,9 @@ var _behaviour_cache: Dictionary = {}
 var _skill_grants: Dictionary = {}  # skill id -> true
 var _skill_bans: Dictionary = {}    # skill id -> true
 var _skill_delays: Dictionary = {}  # skill id -> stage-gate key
+## BS-2: skills a Challenge stage hands out free, set by the runner on entering
+## the stage. Run state: end_run() clears it and a save does not hold it.
+var _waived: Dictionary = {}        # skill id -> true
 
 
 func _init(game_config: Object = null, gate: Node = null) -> void:
@@ -181,6 +184,7 @@ func grant_temporary(skill_id: String) -> void:
 ## adaptations go with it, and the mastered set does not.
 func end_run() -> void:
 	_temporary.clear()
+	_waived.clear()
 	_behaviour_cache.clear()
 	_adaptations.clear()
 
@@ -312,8 +316,28 @@ func branch_tier_open(skill_id: String) -> bool:
 ## to be affordable in full. `stores` maps a resource key (skills.gd's
 ## NECTAR, POLLEN, HONEY and the rest) to an amount; a resource the
 ## colony has never held is simply absent, which reads as none.
+## BS-2: replaces the waived set wholesale, so each stage names exactly what
+## it gives away and a later stage never inherits an earlier one's.
+func waive_cost(skill_ids: Array) -> void:
+	_waived.clear()
+	for skill_id in skill_ids:
+		_waived[str(skill_id)] = true
+
+
+func is_free(skill_id: String) -> bool:
+	return _waived.has(skill_id)
+
+
+## What buying the skill costs in this run: nothing when a stage waives it.
+## The one resolver purchase(), can_afford() and the skill tree read.
+func cost_for(skill_id: String) -> Dictionary:
+	if _waived.has(skill_id):
+		return {}
+	return Skills.cost_for(skill_id)
+
+
 func can_afford(skill_id: String, stores: Dictionary) -> bool:
-	var cost: Dictionary = Skills.cost_for(skill_id)
+	var cost: Dictionary = cost_for(skill_id)
 	for resource in cost:
 		if float(stores.get(resource, 0)) < float(cost[resource]):
 			return false
@@ -413,7 +437,7 @@ func can_purchase(skill_id: String, stores: Dictionary) -> bool:
 func purchase(skill_id: String, stores: Dictionary) -> bool:
 	if not can_purchase(skill_id, stores):
 		return false
-	var cost: Dictionary = Skills.cost_for(skill_id)
+	var cost: Dictionary = cost_for(skill_id)
 	for resource in cost:
 		stores[resource] = float(stores.get(resource, 0)) - float(cost[resource])
 	grant_temporary(skill_id)

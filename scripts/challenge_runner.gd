@@ -498,6 +498,9 @@ func _enter_stage() -> void:
 	if Session.starting_level == 1:
 		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
+	if Session.progression != null:
+		Session.progression.waive_cost(stage.get("free_skills", []))
+		Availability.invalidate()
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
 	main.hud.set_queen_build_button_visible(Session.starting_level == 1)
@@ -1122,7 +1125,7 @@ const GOAL_CADENCE := {
 	"complete": "event", "nectar_forager_hatched": "event",
 	"nectar_stabilized": "poll", "pollen_foragers_raised": "event", "cell_designated": "poll",
 	"pollen_cell_designated": "poll",
-	"interim_reserve": "poll", "nurse_raised": "event", "persistent_designation_used": "poll",
+	"interim_reserve": "poll", "nurse_raised": "poll", "persistent_designation_used": "poll",
 	"comb_worker_building": "poll", "miner_expansion": "poll", "c2_complete": "poll",
 }
 
