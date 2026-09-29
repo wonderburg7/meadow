@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-15 -- a busy lifecycle lock is waited for, not refused, and an open-worktree stop says what to do**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-15 — the other lane's lifecycle command waits for the lock, and an open-worktree stop says what to do"
-   - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
-   - Check: a second `finish` started while another holds the lock prints one waiting line naming the holder and completes after it, `start` against an open worktree says whether to finish or abandon it, and `tools/verify.ps1` is green
-   - Proof: `present: tools/slice.ps1 :: slice lifecycle is busy; retry this command`
-   - Next after: none -- agent-lifecycle is complete once L-15 ships and the Objective's completion gate is met
-
-2. **[Claude] BS-2 -- Challenge 2 offers Nurses free at 2.5**
+1. **[Claude] BS-2 -- Challenge 2 offers Nurses free at 2.5**
    - Plan: `plans/now/brood-spine.md` -- "BS-2 — Challenge 2 offers Nurses free at 2.5"
    - Files: `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`, `docs/challenge-stages.md`
    - Check: `test_scenarios/f2s_challenge2_gate_table_test.json` passes: Challenge 2 buys Nurses at 2.5 for nothing and still completes, `docs/challenge-stages.md` shows 2.5's new goal, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/challenge_stages.gd :: "free_skills"`
    - Next after: BS-3 -- the gate goes live: an unowned role cannot be assigned or worked
 
-3. **[Claude] HR-1 -- a kept-clear tile says so when clicked**
+2. **[Claude] HR-1 -- a kept-clear tile says so when clicked**
    - Plan: `plans/now/hive-readouts.md` -- "HR-1 — a kept-clear tile says so when clicked"
    - Files: `scripts/input_selection.gd`, `scripts/hud.gd`, `scripts/main.gd`
    - Check: `tools/verify.ps1` is green, and `show_object_summary("keep_clear", ...)` shows `keep_clear_summary_row` and hides `soil_summary_row`
    - Proof: `absent: scripts/hud.gd :: _show_keep_clear_summary`
    - Next after: HR-2 -- clicking the hive or the exit switches view
 
-4. **[Claude] HR-2 -- clicking the hive or the exit switches view**
+3. **[Claude] HR-2 -- clicking the hive or the exit switches view**
    - Plan: `plans/now/hive-readouts.md` -- "HR-2 — clicking the hive or the exit switches view"
    - Files: `scripts/input_selection.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hr2_click_view_switch_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/hr2_click_view_switch_test.json` passes, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/input_selection.gd :: _click_switches_view`
    - Next after: HR-3 -- a bee waiting for room says it is waiting
 
-5. **[Claude] HR-3 -- a bee waiting for room says it is waiting**
+4. **[Claude] HR-3 -- a bee waiting for room says it is waiting**
    - Plan: `plans/now/hive-readouts.md` -- "HR-3 — a bee waiting for room says it is waiting"
    - Files: `scripts/bee.gd`
    - Check: `tools/verify.ps1` is green, and `task_description` returns the waiting text when `state == IN_HIVE_TO_CELL` and `target_cell == null`
    - Proof: `absent: scripts/bee.gd :: no cell has room for it`
    - Next after: none -- plans/now/hive-readouts.md is complete
+
+5. **[Claude] HF-1 -- panel textures actually draw (C-60)**
+   - Plan: `plans/now/hud-followups.md` -- "HF-1 — panel textures actually draw (C-60)"
+   - Files: `scripts/ui_theme.gd`, `scripts/ui_layout.gd`, `tests/source_checks.py`, `docs/known-pitfalls.md`
+   - Check: `tools/verify.ps1` is green with the new source check in it, and `UiLayout.panel_chrome()` still returns `Vector2(24, 20)`
+   - Proof: `present: scripts/ui_theme.gd :: var _base := StyleBoxFlat.new()`
+   - Next after: HF-2 -- text scale waits until you stop clicking
 
 ### Codex lane
 

@@ -186,28 +186,70 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
         self.assertIn("func new_function():", (self.root / "scripts" / "other.gd").read_text(encoding="utf-8"))
 
-    def test_simultaneous_claims_one_wins_the_lock(self):
-        self.write_two_lane_queue()
+    def hold_lifecycle_lock(self, seconds):
+        """Hold the lifecycle lock from another process, as the other lane's
+        `finish` of B-1 would, with the holder note a real holder writes.
+        Returns once the note is readable."""
         common_dir = subprocess.run(
             ["git", "rev-parse", "--git-common-dir"], cwd=self.root, capture_output=True, text=True, check=True
         ).stdout.strip()
         lock_path = (self.root / common_dir).resolve() / "meadow-slice-lifecycle.lock"
-
         holder_script = (
             "$stream = [System.IO.File]::Open('{}', [System.IO.FileMode]::OpenOrCreate, "
-            "[System.IO.FileAccess]::Write, [System.IO.FileShare]::None)\n"
-            "Start-Sleep -Seconds 4\n"
+            "[System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)\n"
+            "$json = @{{ command = 'finish'; id = 'B-1'; lane = 'Codex'; pid = $PID; cwd = 'C:\\held'; "
+            "started = (Get-Date).ToString('s') }} | ConvertTo-Json -Compress\n"
+            "$bytes = [System.Text.Encoding]::UTF8.GetBytes($json)\n"
+            "$stream.Write($bytes, 0, $bytes.Length); $stream.Flush()\n"
+            "Start-Sleep -Seconds {}\n"
             "$stream.Dispose()\n"
-        ).format(str(lock_path).replace("'", "''"))
+        ).format(str(lock_path).replace("'", "''"), seconds)
         holder = subprocess.Popen(
             [self.powershell, "-NoProfile", "-Command", holder_script],
             cwd=self.root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                if lock_path.read_bytes():
+                    break
+            except OSError:
+                pass
+            time.sleep(0.2)
+        return holder
+
+    def test_a_second_finish_waits_for_the_lock_and_completes(self):
+        # L-15 changed this race on purpose: until then the loser was refused,
+        # and 39 recorded stops were a finish retried once a minute for hours
+        # while the other lane's finish held the lock through verification.
+        self.write_two_lane_queue()
+        start_a = self.run_slice("start", "-Lane", "Claude")
+        self.assertEqual(0, start_a.returncode, start_a.stderr)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+
+        holder = self.hold_lifecycle_lock(seconds=4)
         try:
-            time.sleep(1.5)
-            loser = self.run_slice("start", "-Lane", "Claude")
+            waiter = self.run_finish(worktree_a)
+        finally:
+            holder.wait(timeout=30)
+
+        self.assertEqual(0, waiter.returncode, waiter.stderr)
+        self.assertEqual(1, waiter.stderr.count("slice lifecycle is busy: waiting for"), waiter.stderr)
+        self.assertIn(f"`slice.ps1 finish` on B-1 (PID {holder.pid}", waiter.stderr)
+        self.assertIn("which took it at", waiter.stderr)
+        self.assertFalse(worktree_a.exists())
+        self.assertFalse(self.branch_exists("claude/A-1"))
+
+    def test_a_blocked_command_refuses_past_its_wait_bound(self):
+        self.write_two_lane_queue()
+        holder = self.hold_lifecycle_lock(seconds=8)
+        try:
+            loser = self.run_slice("start", "-Lane", "Claude", "-LockWaitSeconds", "1")
             self.assertNotEqual(0, loser.returncode)
-            self.assertIn("slice lifecycle is busy", loser.stderr)
+            self.assertIn("slice lifecycle is busy after waiting 1 s", loser.stderr)
+            self.assertIn(f"PID {holder.pid}", loser.stderr)
+            self.assertFalse((self.root / ".worktrees" / "A-1").exists())
         finally:
             holder.wait(timeout=30)
 
