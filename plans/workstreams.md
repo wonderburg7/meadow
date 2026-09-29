@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-2` (`codex/PERF-2`) | Codex | a pinned hungry-indoor scenario measures find_food_cell | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell` |
+| `.worktrees/L-15` (`claude/L-15`) | Claude | a busy lifecycle lock is waited for, not refused, and an open-worktree stop says what to do | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-15 — the other lane's lifecycle command waits for the lock, and an open-worktree stop says what to do |
