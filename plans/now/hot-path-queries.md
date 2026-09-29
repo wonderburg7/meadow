@@ -1,7 +1,7 @@
 # Hot-path queries — measure `find_food_cell` under the load it was written for
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PERF-3 -- `find_food_cell` reads the content index, queued in the Codex lane | Dependency: PERF-2 measurement (28 Sep 2026) | Verified: 2026-09-28
+Status: complete | Owner: Dave / Codex | Next: None — plan complete; follow-up: the other `find_*` rows of candidate A are closed unmeasured in `plans/reference/technical-audit.md` and reopen only as a new measurement slice | Dependency: none | Verified: 2026-09-29
 
 **Objective.** Decide, from a measurement rather than a reading of the code,
 whether `hive.gd::find_food_cell` should read the content index
