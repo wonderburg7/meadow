@@ -106,7 +106,7 @@ Reviewed: <commit> | Since: <commit or "first run"> | Scope: <what was covered> 
 
 | Id | Finding | Evidence | Severity | Disposition |
 | --- | --- | --- | --- | --- |
-| F1 | ... | bee.gd::_idle_dispatch, grep ... | high | Queued -- PERF-3 in plans/now/hot-path-queries.md |
+| F1 | ... | bee.gd::_idle_dispatch, grep ... | high | Queued -- PERF-3 in plans/archive/hot-path-queries_2026-09-29.md |
 | F2 | ... | ... | low | Rejected -- costs more than the one scan it saves |
 
 ## Hand-offs
