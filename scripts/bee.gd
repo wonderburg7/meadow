@@ -1994,6 +1994,10 @@ func task_description() -> String:
 		State.TO_HIVE:
 			return "returning %s to the hive (%d carried)" % [current_load_type, int(current_load)]
 		State.IN_HIVE_TO_CELL:
+			if target_cell == null or not is_instance_valid(target_cell):
+				if hive.cells.is_empty():
+					return "waiting with %s until the first cell is built" % current_load_type
+				return "waiting with %s: no cell has room for it" % current_load_type
 			return "carrying %s to a cell" % current_load_type
 		State.DEPOSITING:
 			return "unloading %s into a cell" % current_load_type

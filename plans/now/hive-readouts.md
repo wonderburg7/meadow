@@ -1,7 +1,7 @@
 # Hive readouts — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HR-3 -- a bee waiting for room says it is waiting, startable, its block below | Dependency: none | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none | Verified: 2026-09-28
 
 **Objective.** Make the hive view say what it shows and answer the clicks a
 player naturally tries, from Dave's 28 Sep 2026 hands-on batch. Decisions

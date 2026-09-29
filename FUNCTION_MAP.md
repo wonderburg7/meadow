@@ -174,7 +174,7 @@ Challenge goal readout.
 3425 func _is_gate_open(control_name: String) -> bool
 ```
 
-## bee.gd (2,409 lines)
+## bee.gd (2,413 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -273,25 +273,25 @@ A bee's dispatch loop, player commands, display text, vars.
 1912 func challenge_vocabulary_limited() -> bool
 1925 func idle_reason() -> String
 1978 func task_description() -> String
-2125 func _idle_backup_note() -> String
-2135 func role_name_text() -> String
-2161 func nurse_mode_name() -> String
-2170 func architect_mode_name() -> String
-2176 func carrying_text() -> String
-2197 func age_days() -> float
-2205 func leave_to_found_colony() -> void
-2218 func days_remaining() -> float
-2230 func _update_label() -> void
-2250 func _update_alarm_ring() -> void
-2261 func _update_heading_marker() -> void
-2275 func _update_search_ring() -> void
-2298 func _update_dance_ring() -> void
-2331 func _update_wander_flight(delta: float) -> void
-2362 func _update_dance_circle(delta: float) -> void
-2376 func _terrain_speed_factor() -> float
-2385 func _is_inside_hive() -> bool
-2388 # --- getting round things in the meadow ---------------------------
-2408 func clear_navigation_state() -> void
+2129 func _idle_backup_note() -> String
+2139 func role_name_text() -> String
+2165 func nurse_mode_name() -> String
+2174 func architect_mode_name() -> String
+2180 func carrying_text() -> String
+2201 func age_days() -> float
+2209 func leave_to_found_colony() -> void
+2222 func days_remaining() -> float
+2234 func _update_label() -> void
+2254 func _update_alarm_ring() -> void
+2265 func _update_heading_marker() -> void
+2279 func _update_search_ring() -> void
+2302 func _update_dance_ring() -> void
+2335 func _update_wander_flight(delta: float) -> void
+2366 func _update_dance_circle(delta: float) -> void
+2380 func _terrain_speed_factor() -> float
+2389 func _is_inside_hive() -> bool
+2392 # --- getting round things in the meadow ---------------------------
+2412 func clear_navigation_state() -> void
 ```
 
 ## scenario_actions.gd (1,451 lines)
