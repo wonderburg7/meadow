@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-15 -- a busy lifecycle lock is waited for, not refused, in the backlog for the Claude lane; after it, the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) | Dependency: none -- L-12 landed 21 Sep 2026 | Verified: 2026-09-25
+Status: active | Owner: Dave / Claude | Next: no open slice -- L-15 shipped 29 Sep 2026; what remains is the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%), measured with `python tools/session_cost.py --stops` and `--phases` from 6 Oct 2026; if `--stops` still shows lock waits long enough to matter, narrowing the lock to the shared-state phases (the "Not in scope" note in L-15's archive record) is the next slice | Dependency: none | Verified: 2026-09-29
 
 ## Objective
 
