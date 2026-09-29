@@ -15,3 +15,4 @@ unblocker.
 ## Ready to run
 
 - [C-66 -- Developer mode toggle in the main menu settings](ready/C-66.md)
+- [C-67 -- Challenge 2 gives Nurses free at stage 2.5](ready/C-67.md)
