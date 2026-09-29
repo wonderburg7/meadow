@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PERF-3` (`codex/PERF-3`) | Codex | `find_food_cell` reads the content index | Codex | in progress | none | `plans/now/hot-path-queries.md` PERF-3 -- `find_food_cell` reads the content index |
-| `.worktrees/HR-2` (`claude/HR-2`) | Claude | clicking the hive or the exit switches view | Claude | in progress | none | `plans/now/hive-readouts.md` HR-2 — clicking the hive or the exit switches view |
