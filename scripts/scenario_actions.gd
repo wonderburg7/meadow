@@ -289,6 +289,9 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 	if when.has("queen_watch_hits_at_most"):
 		if _queen_watch_hits > int(when["queen_watch_hits_at_most"]):
 			return false
+	if when.has("in_hive_view"):
+		if main.in_hive_view != bool(when["in_hive_view"]):
+			return false
 	if when.has("camera_following_queen"):
 		if (is_instance_valid(main.queen) and main.following_bee == main.queen) != bool(when["camera_following_queen"]):
 			return false
@@ -588,7 +591,11 @@ static func _do_request_placement_tool(main: Node2D, action: Dictionary) -> void
 ## "meadow"); `soil_hex` [q, r] instead clicks the centre of that soil block.
 static func _do_click_world(main: Node2D, action: Dictionary) -> void:
 	var point: Vector2
-	if action.has("soil_hex"):
+	if str(action.get("target", "")) == "hive":
+		point = main.hive.global_position
+	elif str(action.get("target", "")) == "hive_exit":
+		point = main.hive_root.to_global(main.hive_entrance_inside())
+	elif action.has("soil_hex"):
 		var block: Node2D = _resolve_soil_block(main, action["soil_hex"])
 		if block == null:
 			_log("click_world", str(action), "rejected", "no soil block at that hex")

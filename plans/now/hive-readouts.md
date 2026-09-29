@@ -1,7 +1,7 @@
 # Hive readouts — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HR-1 -- a kept-clear tile says so when clicked, startable, its block below | Dependency: none | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: HR-3 -- a bee waiting for room says it is waiting, startable, its block below | Dependency: none | Verified: 2026-09-28
 
 **Objective.** Make the hive view say what it shows and answer the clicks a
 player naturally tries, from Dave's 28 Sep 2026 hands-on batch. Decisions
@@ -14,7 +14,6 @@ in `plans/now/hud-followups.md`.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HR-2 | Clicking the hive or the exit switches view | `scripts/input_selection.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hr2_click_view_switch_test.json` | yes | medium |
 | HR-3 | A bee waiting for room says it is waiting | `scripts/bee.gd` | yes | low |
 
 **Dependencies.** None; HR-1 and HR-2 share `input_selection.gd`, so they
@@ -24,35 +23,7 @@ words only.
 
 HR-1 shipped 2026-09-29; its specification is `plans/archive/HR-1_2026-09-29.md`.
 
-## HR-2 — clicking the hive or the exit switches view
-
-Level: medium. Dave (28 Sep 2026): left-clicking the hive in the meadow opens
-the hive view; left-clicking the exit in the hive opens the meadow.
-
-**Change.** Add `input_selection.gd::_click_switches_view(point) -> bool`,
-called in `_finish_drag`'s short-click branch after `_bee_at` finds no bee
-(a bee under the pointer still wins). In the meadow, a click within
-`HIVE_CLICK_RADIUS` of `main.hive.global_position` calls
-`main.camera_view._toggle_view()`. In the hive, a click within
-`EXIT_CLICK_RADIUS` of `main.hive_root.to_global(main.hive_entrance_inside())`
-does the same, only if `main.stage_gate.is_unlocked("meadow_view")` (the
-View button's own gate). Right-click commands are untouched. In
-`scenario_actions.gd`, let `click_world` take `"target": "hive"` or
-`"hive_exit"` for those two points, and add an assert condition
-`{"in_hive_view": bool}`. Fixture: meadow → click hive → assert true →
-click exit → assert false.
-
-**Acceptance (check filed at closeout).** Clicking the hive in the meadow
-shows the hive; clicking the exit inside shows the meadow.
-
-```queue
-**[Claude] HR-2 -- clicking the hive or the exit switches view**
-- Plan: `plans/now/hive-readouts.md` -- "HR-2 — clicking the hive or the exit switches view"
-- Files: `scripts/input_selection.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hr2_click_view_switch_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/hr2_click_view_switch_test.json` passes, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/input_selection.gd :: _click_switches_view`
-- Next after: HR-3 -- a bee waiting for room says it is waiting
-```
+HR-2 shipped 2026-09-29; its specification is `plans/archive/HR-2_2026-09-29.md`.
 
 ## HR-3 — a bee waiting for room says it is waiting
 

@@ -1,0 +1,14 @@
+{
+  "cells": 15, "nurses": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "assert", "condition": {"in_hive_view": false}},
+    {"do": "click_world", "target": "hive"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"in_hive_view": true}},
+    {"do": "click_world", "target": "hive_exit"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"in_hive_view": false}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}
