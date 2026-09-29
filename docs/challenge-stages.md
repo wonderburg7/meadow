@@ -45,7 +45,7 @@ nothing; "past 2.1, where the nectar stores fall and recover" does.
 | `2.2` | raise a pollen Forager. | `pollen_foragers_raised` | -- |
 | `2.3` | designate a cell. | `cell_designated` | -- |
 | `2.4` | build a reserve of ~175 nectar and ~90 pollen. | `interim_reserve` | -- |
-| `2.5` | raise a nurse. | `nurse_raised` | -- |
+| `2.5` | buy Nurses in the skill tree, then raise a nurse. | `nurse_raised` | -- |
 | `2.6` | keep two cells raising foragers, and raise one more nurse as a one-off. | `persistent_designation_used` | -- |
 | `2.7` | raise a Comb worker and build more comb. | `comb_worker_building` | -- |
 | `2.8` | raise a miner, dig new space, and build a cell in it. | `miner_expansion` | -- |
