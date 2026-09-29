@@ -13,7 +13,7 @@ outright and C-57 half-failed; both corrected checks wait in
 `checks/blocked.md` for HF-1 and HF-6. The rest are Dave's requests from the
 same run. `plans/now/saves-access.md` (SA-1) and
 `plans/now/skill-screen.md` (SK-1) hold the two larger requests, and
-`plans/now/hive-readouts.md` (HR-1 to HR-3) the hive-view clicks and readouts.
+`plans/archive/hive-readouts_2026-09-29.md` (HR-1 to HR-3) the hive-view clicks and readouts.
 
 ## Open slices at a glance
 
@@ -28,7 +28,7 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 **Dependencies.** None between slices; several share `hud.gd`,
 `scenario_actions.gd` or `year_winter.gd` (as do HR-1 and HR-2 in
-`plans/now/hive-readouts.md`), so they run one at a time in the Claude lane. **Required reading:** the slice's own section below, then only
+`plans/archive/hive-readouts_2026-09-29.md`), so they run one at a time in the Claude lane. **Required reading:** the slice's own section below, then only
 the functions it names. **Do not change** `UiLayout.panel_chrome()`'s
 result (HF-1) or any left window's rectangle (HF-4 adds one, moves none).
 

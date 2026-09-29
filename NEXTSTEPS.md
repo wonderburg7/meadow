@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/winter_panel.gd :: build_top_right_window(`
    - Next after: HF-5 -- opening Nursery keeps the view you are in
 
+5. **[Claude] HF-5 -- opening Nursery keeps the view you are in**
+   - Plan: `plans/now/hud-followups.md` -- "HF-5 — opening Nursery keeps the view you are in"
+   - Files: `scripts/year_winter.gd`
+   - Check: `tools/verify.ps1` is green, and `_on_nursery_window_requested` no longer writes `main.in_hive_view`
+   - Proof: `present: scripts/year_winter.gd :: _close_other_left_windows(main.nursery_panel)`
+   - Next after: HF-6 -- why Raises lacks Pollen at 2.2 (C-57)
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
