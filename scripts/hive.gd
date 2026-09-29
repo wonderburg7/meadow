@@ -527,16 +527,16 @@ func brood_stage_counts() -> Dictionary:
 ## time at the cell and the same comb feeds far more of them.
 func find_food_cell(except: Node2D = null) -> Node2D:
 	Perf.begin("hive_find_food")
-	for cell in cells:
+	for cell in cells_holding("ripe_honey"):
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
-		if cell.is_ripe_honey() and cell.amount > 0.0:
+		if cell.amount > 0.0:
 			Perf.end("hive_find_food")
 			return cell
-	for cell in cells:
+	for cell in cells_holding("nectar"):
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
-		if cell.content_type == "nectar" and cell.amount > 0.0:
+		if cell.amount > 0.0:
 			Perf.end("hive_find_food")
 			return cell
 	Perf.end("hive_find_food")

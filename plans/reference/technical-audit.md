@@ -1,7 +1,7 @@
 # Technical audit — current contracts
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only for measured hot-path or restore work -->
-Status: reference | Owner: Dave / Claude Code | Next: PERF-2 -- specified in `plans/now/hot-path-queries.md` and queued in the Codex lane | Dependency: none -- A2, A3 and B2 have shipped | Verified: 2026-09-24
+Status: reference | Owner: Dave / Claude Code | Next: nothing scheduled -- candidate A closed by PERF-3 (29 Sep 2026); candidate B stays measurement-gated | Dependency: none -- A2, A3 and B2 have shipped | Verified: 2026-09-29
 
 The Aug 2026 audit bundles are complete or deliberately measurement-gated. The
 full implementation record is archived at
@@ -88,6 +88,20 @@ would turn it from a plausible improvement into a measured one. Neither is a
 reason to open a slice on its own.
 
 ### A. `hive.gd`'s `find_*` functions bypass the content index that already exists
+
+**Closed, 29 Sep 2026 (PERF-3).** PERF-2 measured `find_food_cell` at
+11.65--14.73% of frame time in the hungry-indoor fixture; PERF-3 moved it onto
+the `ripe_honey` then `nectar` buckets, and the same fixture now reads 0.73%
+with unchanged gameplay counters (`docs/PERFORMANCE_BASELINE.md`, "PERF-3
+measurement -- 29 Sep 2026"). The fixture's comb is empty, so the preserved
+choice of cell rests on the equivalence argument below, which the review
+re-checked against the code. The other rows of the table are closed
+unmeasured: none has a capture showing it matters, and each reopens only as a
+new measurement slice under the "profile before changing a hot path"
+contract. One known limit of every bucket reader, `find_food_cell` included:
+changing `honey_ripen_time` from the settings panel mid-run does not
+invalidate the index, so `ripe_honey` membership lags the new threshold until
+the next content change.
 
 **Not covered by the architecture review, deliberately.** That review's A3
 caches the `total()` family and B2 builds the bucket dictionary from the

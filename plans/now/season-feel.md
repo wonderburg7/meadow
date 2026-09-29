@@ -1,7 +1,7 @@
 # Season feel — Dave's 17 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SF-2 -- headless runs count each flower species, startable, its block below | Dependency: none | Verified: 2026-09-28
+Status: active | Owner: Dave / Codex | Next: SF-2 -- headless runs count each flower species, startable, its block below (moved to the Codex lane 29 Sep 2026 so PERF-3 could close) | Dependency: none | Verified: 2026-09-29
 
 **Objective.** A meadow's seasonal mix looks natural from the first minute of
 a run, not only once the founding flowers have died off -- and can be
@@ -53,7 +53,7 @@ cadence.
 hands-on check is filed.
 
 ```queue
-**[Claude] SF-2 -- headless runs count each flower species**
+**[Codex] SF-2 -- headless runs count each flower species**
 - Plan: `plans/now/season-feel.md` -- "SF-2 — headless runs count each flower species"
 - Files: `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `test_scenarios/sf1_founding_flower_mix_test.json`, `docs/headless-run-contract.md`
 - Check: `python tools/run_scenario.py test_scenarios/sf1_founding_flower_mix_test.json --report balance` passes and prints `flower_mix_by_day` with day 0 and day 5 each listing at least two species, and `tools/verify.ps1` is green

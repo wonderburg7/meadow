@@ -116,6 +116,24 @@ in every run and consumes well above the 2% decision threshold. **PERF-3 is
 worth specifying:** preserve `find_food_cell`'s preference order while making
 it read the existing ripe-honey and nectar content buckets.
 
+## PERF-3 measurement -- 29 Sep 2026 (`find_food_cell` content index)
+
+The same pinned hungry-indoor fixture, seed, default fixed 30 FPS setting,
+warm-up and 480-frame window as PERF-2 ran twice after `find_food_cell` began
+reading the existing `ripe_honey` then `nectar` content buckets. Both captures
+completed the fixture with the same gameplay counters as PERF-2 (including no
+deliveries, brood feeds, deaths, or cell changes). `hive_find_food` remains
+non-zero while falling about 94% below PERF-2's comparable runs 1 and 3.
+
+| Run | `hive_find_food` mean ms | `hive_find_food` p95 ms | `frame_time_ms` mean ms | Share of frame time |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 0.118 | 0.200 | 16.310 | 0.73% |
+| 2 | 0.118 | 0.201 | 16.142 | 0.73% |
+
+The readings agree within 1%; the rewrite therefore preserves the fixture's
+outcome and removes a measured hot-path cost without changing the selected
+cell's ordering.
+
 ## Recorded baseline -- 13 Sep 2026 (A3, C-50)
 
 Run by Claude Code on Dave's Windows 11 development machine, headless, with
