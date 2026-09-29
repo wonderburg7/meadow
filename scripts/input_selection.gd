@@ -92,6 +92,8 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		var bee = _bee_at(main.drag_start)
 		if bee:
 			picked.append(bee)
+		elif _click_switches_view(main.drag_start):
+			return
 		elif main.in_hive_view:
 			var cell = _cell_at(main.drag_start)
 			if cell:
@@ -265,6 +267,25 @@ func _bees_in_current_view() -> Array:
 func _death_markers_in_current_view() -> Array:
 	var root = main.hive_root if main.in_hive_view else main.meadow_root
 	return get_tree().get_nodes_in_group("death_markers").filter(func(m): return m.get_parent() == root)
+
+## A plain left click on the meadow-side hive, or on the hive's exit inside,
+## switches view (the View button's own gate applies). A bee under the pointer
+## is checked first by the caller, so it still wins.
+func _click_switches_view(point: Vector2) -> bool:
+	var target: Vector2
+	var radius: float
+	if main.in_hive_view:
+		target = main.hive_root.to_global(main.hive_entrance_inside())
+		radius = EXIT_CLICK_RADIUS
+	else:
+		target = main.hive.global_position
+		radius = HIVE_CLICK_RADIUS
+	if point.distance_to(target) > radius:
+		return false
+	if not main.stage_gate.is_unlocked("meadow_view"):
+		return false
+	main.camera_view._toggle_view()
+	return true
 
 func _bee_at(point: Vector2) -> Node2D:
 	for b in _bees_in_current_view():

@@ -1022,7 +1022,6 @@ func _build_selection_panel() -> void:
 	soil_summary_row = VBoxContainer.new()
 	soil_summary_row.name = "soil_summary_row"
 	soil_summary_row.visible = false
-	keep_clear_summary_row.visible = false
 	column.add_child(soil_summary_row)
 
 	soil_mark_btn = Button.new()
