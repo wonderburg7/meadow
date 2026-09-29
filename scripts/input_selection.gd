@@ -9,6 +9,8 @@ var main: Node2D
 ## as bees/cells/soil, without joining the simulation's persistent selection
 ## arrays. Object summaries and this glow always move together.
 var selected_world_object: Node2D = null
+## The kept-clear tile whose summary is showing (HR-1).
+var selected_keep_clear_hex: Vector2i = Vector2i.ZERO
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -102,6 +104,14 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 			var marker = _death_marker_at(main.drag_start)
 			if marker:
 				_select_world_object("death", marker)
+				return
+			var clear_hex := _hex_at(main.drag_start)
+			if main.hive.is_keep_clear(clear_hex):
+				_clear_world_object_selection()
+				_clear_cell_selection()
+				_clear_block_selection()
+				selected_keep_clear_hex = clear_hex
+				main.hud.show_object_summary("keep_clear", {"hex": clear_hex})
 				return
 			_clear_cell_selection()
 			_clear_block_selection()
@@ -243,6 +253,10 @@ func _on_soil_mark_requested(mark: bool) -> void:
 	for block in main.selected_blocks:
 		if is_instance_valid(block):
 			block.set_marked(mark)
+
+func _on_keep_clear_clear_requested() -> void:
+	main.hive.set_keep_clear(selected_keep_clear_hex, false)
+	main.hud.update_selection(main.selected_bees)
 
 func _bees_in_current_view() -> Array:
 	var root = main.hive_root if main.in_hive_view else main.meadow_root

@@ -489,6 +489,7 @@ func _ready() -> void:
 	hud.restock_sources_requested.connect(orders_zones._on_restock_sources_requested)
 	hud.restock_clear_requested.connect(orders_zones._on_restock_clear_requested)
 	hud.soil_mark_requested.connect(input_selection._on_soil_mark_requested)
+	hud.keep_clear_clear_requested.connect(input_selection._on_keep_clear_clear_requested)
 	hud.cell_priority_requested.connect(orders_zones._on_cell_priority_requested)
 	hud.cell_close_requested.connect(orders_zones._on_cell_close_requested)
 	hud.cell_fill_close_requested.connect(orders_zones._on_cell_fill_close_requested)
