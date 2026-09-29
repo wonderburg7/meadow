@@ -1719,7 +1719,7 @@ function Get-SliceArchiveState {
     $namesThisSlice = -not $Item.Heading
     foreach ($candidate in $archiveMatches) {
         $candidateText = Get-Content -Raw -Encoding UTF8 -LiteralPath $candidate.FullName
-        if ($candidateText -like "*$($Item.Heading)*") { $namesThisSlice = $true; break }
+        if ($candidateText.IndexOf($Item.Heading, [System.StringComparison]::Ordinal) -ge 0) { $namesThisSlice = $true; break }
     }
     $state = if ($archiveMatches -and -not $namesThisSlice -and -not $headingLive) { "reused" }
         elseif (-not $archiveMatches) { "missing" }
@@ -1872,7 +1872,18 @@ function Invoke-SliceFinish {
     # branch, and by the time finish reaches it the branch's own copy may no
     # longer list this id at all.
     Set-SliceStep "hands-on check gate"
-    $masterNextSteps = (git show "master:NEXTSTEPS.md" | Out-String)
+    $previousOutputEncoding = $OutputEncoding
+    $previousConsoleOutputEncoding = [Console]::OutputEncoding
+    try {
+        $utf8 = [System.Text.UTF8Encoding]::new($false)
+        $OutputEncoding = $utf8
+        [Console]::OutputEncoding = $utf8
+        $masterNextSteps = (git show "master:NEXTSTEPS.md" | Out-String)
+    }
+    finally {
+        $OutputEncoding = $previousOutputEncoding
+        [Console]::OutputEncoding = $previousConsoleOutputEncoding
+    }
     if ($LASTEXITCODE -ne 0) { throw "could not read NEXTSTEPS.md from master" }
     $masterItems = Get-NextUpItemsFromText -Text $masterNextSteps
     $item = $masterItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1

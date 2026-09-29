@@ -95,6 +95,27 @@ a controlled hungry indoor population, then capture this same section before
 considering the content-index rewrite. No query rewrite is justified by the
 zero-call baseline.
 
+## PERF-2 measurement -- 28 Sep 2026 (`find_food_cell`)
+
+`test_scenarios/perf2_hungry_indoor.json`, seed `20260927`, uses 100 indoor
+nurses and 60 built, empty cells. It sets `hunger_threshold` to `1.0`, so the
+full hungry population tries the query on its think ticks, while the empty
+comb makes every call complete both passes and return `null`. Fog is excluded.
+Each run used the runner's default fixed 30 FPS setting, after 120 warm-up
+frames and across 480 measured frames.
+
+| Run | `hive_find_food` mean ms | `hive_find_food` p95 ms | `frame_time_ms` mean ms | Share of frame time |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 2.175 | 3.604 | 18.103 | 12.01% |
+| 2 | 0.821 | 1.076 | 5.575 | 14.73% |
+| 3 | 2.083 | 3.621 | 17.884 | 11.65% |
+
+The first two captures differed by more than 10%, so the third is recorded
+rather than discarded; runs 1 and 3 agree within 5%. The section is non-zero
+in every run and consumes well above the 2% decision threshold. **PERF-3 is
+worth specifying:** preserve `find_food_cell`'s preference order while making
+it read the existing ripe-honey and nectar content buckets.
+
 ## Recorded baseline -- 13 Sep 2026 (A3, C-50)
 
 Run by Claude Code on Dave's Windows 11 development machine, headless, with

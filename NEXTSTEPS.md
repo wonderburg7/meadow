@@ -63,12 +63,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PERF-2 -- a pinned hungry-indoor scenario measures find_food_cell**
-   - Plan: `plans/now/hot-path-queries.md` -- "PERF-2 — a pinned hungry-indoor scenario measures `find_food_cell`"
-   - Files: `test_scenarios/perf2_hungry_indoor.json`, `docs/PERFORMANCE_BASELINE.md`
-   - Check: two runs of `python tools/run_scenario.py test_scenarios/perf2_hungry_indoor.json` both record a non-zero `hive_find_food` mean within 10% of each other, and `docs/PERFORMANCE_BASELINE.md` records both readings, their share of frame time and whether PERF-3 is worth specifying
-   - Proof: `absent: docs/PERFORMANCE_BASELINE.md :: PERF-2 measurement`
-   - Next after: PERF-3 -- `find_food_cell` reads the content index, specified only if PERF-2 finds the section non-trivial
+1. **[Codex] PERF-3 -- `find_food_cell` reads the content index**
+   - Plan: `plans/now/hot-path-queries.md` -- "PERF-3 -- `find_food_cell` reads the content index"
+   - Files: `scripts/hive.gd`, `docs/PERFORMANCE_BASELINE.md`
+   - Check: the focused Godot compile check is green; two `perf2_hungry_indoor.json` captures keep `hive_find_food` non-zero and materially below PERF-2's recorded mean
+   - Proof: `absent: docs/PERFORMANCE_BASELINE.md :: PERF-3 measurement`
+   - Next after: close candidate A in `plans/reference/technical-audit.md` if the index-backed runs preserve the fixture's outcome
 
 ## Not in the queue, and why
 
