@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-1 | Panel textures appear when chosen | `scripts/ui_theme.gd`, `scripts/ui_layout.gd`, `tests/source_checks.py`, `docs/known-pitfalls.md` | yes | medium |
 | HF-2 | Text scale waits until you stop clicking | `scripts/debug_panel.gd` | yes | low |
 | HF-3 | The top bar's second row spans the first | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf3_top_bar_rows_test.json` | yes | medium |
 | HF-4 | The Winter forecast is a left-hand window | `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json` | yes | medium |
@@ -32,44 +31,7 @@ same run. `plans/now/saves-access.md` (SA-1) and
 the functions it names. **Do not change** `UiLayout.panel_chrome()`'s
 result (HF-1) or any left window's rectangle (HF-4 adds one, moves none).
 
-## HF-1 — panel textures actually draw (C-60)
-
-Level: medium. **Root cause, confirmed.** `ui_theme.gd`'s `PanelBox extends
-StyleBoxFlat` and overrides `_draw`, but Godot 4.7.2's `StyleBoxFlat` draws
-in C++ and never calls a script `_draw`; a headless probe on 28 Sep 2026
-printed from a `StyleBox` subclass's `_draw` and not from a `StyleBoxFlat`
-one. So every texture choice draws plain flat panels.
-
-**Change.** Make `PanelBox` extend `StyleBox`. It keeps `texture_source` and
-gains `var flat := StyleBoxFlat.new()` (replacing `_base`). Its `_draw`
-calls `flat.draw(to_canvas_item, rect)`, then lays the texture exactly as
-today. `_refresh_panel_stylebox` sets colours, corners and border on
-`box.flat`, and the four `content_margin_*` on the `PanelBox` itself (same
-10/8 values). `panel_stylebox()` returns `StyleBox`. Add
-`const PANEL_BORDER_WIDTH := 2` and use it in both `_refresh_panel_stylebox`
-and `ui_layout.gd::panel_chrome()`, which today reads `border_width_*` off the
-box: its result must stay `Vector2(24, 20)`. Add a `tests/source_checks.py`
-rule: a GDScript class that `extends StyleBoxFlat`, `StyleBoxTexture` or
-`StyleBoxLine` may not define `_draw`. Add the pitfall to
-`docs/known-pitfalls.md`. Layout cannot move: the margins, and so every
-container's minimum size, are the same numbers as before.
-
-**Acceptance.** At closeout move the re-filed C-60 from `checks/blocked.md`
-back to `checks/ready/` (same id): with the Colony window open, choosing
-Honeycomb or Grain visibly textures its background at once, in Dark, Light
-and High contrast. File two more checks, one condition each: no panel edge
-or line of text moves when the texture changes; High contrast text stays
-comfortably legible over Grain and Honeycomb. **Escalate** if a `StyleBox`
-subclass cannot reproduce the flat panel pixel-for-pixel.
-
-```queue
-**[Claude] HF-1 -- panel textures actually draw (C-60)**
-- Plan: `plans/now/hud-followups.md` -- "HF-1 — panel textures actually draw (C-60)"
-- Files: `scripts/ui_theme.gd`, `scripts/ui_layout.gd`, `tests/source_checks.py`, `docs/known-pitfalls.md`
-- Check: `tools/verify.ps1` is green with the new source check in it, and `UiLayout.panel_chrome()` still returns `Vector2(24, 20)`
-- Proof: `present: scripts/ui_theme.gd :: var _base := StyleBoxFlat.new()`
-- Next after: HF-2 -- text scale waits until you stop clicking
-```
+HF-1 shipped 2026-09-30; its specification is `plans/archive/HF-1_2026-09-30.md`.
 
 ## HF-2 — text scale waits until you stop clicking
 
