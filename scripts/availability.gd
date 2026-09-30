@@ -75,10 +75,9 @@ const UI_GATES := {
 	"foraging_window": {"controls": ["foraging_button"]},
 	"hatch_lock": {"controls": ["lock_row"]},
 	"miner": {"controls": ["soil_mark_btn", "soil_clear_btn"]},
-	# AP-7: no Challenge stage unlocks either key, so both buttons stay hidden
-	# throughout a Challenge and show in every other run (progression.md 8.5).
+	# AP-7: no Challenge stage unlocks this key, so the button stays hidden
+	# throughout a Challenge and shows in every other run (progression.md 8.5).
 	"skills_window": {"controls": ["skills_button"]},
-	"saves_window": {"controls": ["saves_button"]},
 	"cell_designation": {"designations": ["nectar", "pollen", "brood", "any"]},
 	"honey_designation": {"designations": ["honey"]},
 	"jelly_designation": {"designations": ["jelly"]},

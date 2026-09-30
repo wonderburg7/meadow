@@ -7,7 +7,8 @@ extends GamePanel
 ##
 ## The list is built when the window opens and after a save or delete.
 ## Nothing polls the filesystem: save_slots.gd answers from its index file.
-## Created by hud.gd, which owns the button that opens it.
+## Created by hud.gd; opened only from the settings window's "Saves…"
+## (debug_panel.gd::_on_load_pressed), in a run or on the main menu (SA-1).
 
 const UI = preload("res://scripts/ui.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
@@ -21,6 +22,8 @@ static var _run_named: bool = false
 var list_box: VBoxContainer
 var name_row: HBoxContainer
 var name_edit: LineEdit
+## Hidden on the main menu, where there is no run of the player's to save.
+var save_run_btn: Button
 
 func _ready() -> void:
 	setup_layer("saves", "saves_panel")
@@ -47,9 +50,9 @@ func _ready() -> void:
 	close_btn.pressed.connect(func(): close())
 	header.add_child(close_btn)
 
-	var save_btn := _button("Save this run")
-	save_btn.pressed.connect(_on_save_pressed)
-	column.add_child(save_btn)
+	save_run_btn = _button("Save this run")
+	save_run_btn.pressed.connect(_on_save_pressed)
+	column.add_child(save_run_btn)
 
 	name_row = HBoxContainer.new()
 	name_row.visible = false
@@ -75,7 +78,15 @@ func _ready() -> void:
 	Session.run_reset.connect(_on_run_reset)
 	connect_left_window_reflow()
 
+## Over the main menu the window takes the settings window's own
+## over-the-menu layer (debug_panel.gd::_apply_layer_for_context), since the
+## menu's CanvasLayer (20) would otherwise hide it; in a run it sits at the
+## ordinary GamePanel layer.
 func open() -> void:
+	var menus := get_tree().get_nodes_in_group("main_menu")
+	var menu_visible: bool = not menus.is_empty() and menus[0].visible
+	layer = 21 if menu_visible else 11
+	save_run_btn.visible = not menu_visible
 	name_row.visible = false
 	_rebuild()
 	super.open()
@@ -186,14 +197,13 @@ func _load(path: String, display_name: String) -> void:
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
 
+## Always asks, whatever warn_on_discard says (SA-1): a deleted run cannot
+## be recovered, so the confirmation offers no "stop warning me".
 func _on_delete_pressed(slug: String, display_name: String) -> void:
-	if not Session.warn_on_discard:
-		_delete(slug)
-		return
 	main.hud.confirm_discard(
 		"Delete this run",
 		"Delete \"%s\" and its checkpoints? This cannot be undone." % display_name,
-		"Delete it", "Keep it", func(): _delete(slug))
+		"Delete it", "Keep it", func(): _delete(slug), false)
 
 func _delete(slug: String) -> void:
 	SaveSlots.delete(slug)

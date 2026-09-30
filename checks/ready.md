@@ -26,3 +26,6 @@ unblocker.
 - [C-73 -- Top bar second row spans the first](ready/C-73.md)
 - [C-74 -- Winter forecast replaces Colony on the left](ready/C-74.md)
 - [C-75 -- Nursery keeps the meadow view](ready/C-75.md)
+- [C-76 -- the top bar has no Saves button](ready/C-76.md)
+- [C-77 -- Saves opens over the main menu and loads a run](ready/C-77.md)
+- [C-78 -- deleting a saved run always asks](ready/C-78.md)
