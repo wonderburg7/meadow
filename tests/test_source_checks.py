@@ -185,6 +185,35 @@ class QueueSchemaChecksTest(unittest.TestCase):
         check_docs.validate_queue_proof(line, 1, self.root, errors)
         return errors
 
+    def successor_errors(self, next_after: str) -> list[str]:
+        errors = []
+        check_docs.check_queue_successors(
+            errors,
+            "## Next up\n\n### Codex lane\n\n"
+            "1. **[Codex] T-1 -- fixture**\n"
+            "   - Plan: `plans/fixture.md` -- fixture\n"
+            "   - Files: `scripts/sample.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+            f"   - Next after: {next_after}\n",
+        )
+        return errors
+
+    def test_next_after_accepts_an_id_or_a_complete_plan(self):
+        for value in ("T-2 -- the successor", "UI-X-2 -- a dashed id", "G3 -- a bare id",
+                      "none -- plans/fixture.md is complete; then close candidate A"):
+            self.assertEqual([], self.successor_errors(value), value)
+
+    def test_next_after_rejects_a_prose_lead(self):
+        """PERF-3's `Next after:` was an action, which finish's refill gate
+        read as a successor id and stopped on (29 Sep 2026)."""
+        errors = self.successor_errors(
+            "close candidate A in `plans/reference/technical-audit.md` if the runs agree"
+        )
+
+        self.assertEqual(1, len(errors), errors)
+        self.assertIn("does not lead with a slice id", errors[0])
+
     def test_missing_proof_is_rejected(self):
         errors = self.proof_errors("- Files: `scripts/sample.gd`")
 

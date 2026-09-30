@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HF-1 -- panel textures actually draw (C-60)**
-   - Plan: `plans/now/hud-followups.md` -- "HF-1 — panel textures actually draw (C-60)"
-   - Files: `scripts/ui_theme.gd`, `scripts/ui_layout.gd`, `tests/source_checks.py`, `docs/known-pitfalls.md`
-   - Check: `tools/verify.ps1` is green with the new source check in it, and `UiLayout.panel_chrome()` still returns `Vector2(24, 20)`
-   - Proof: `present: scripts/ui_theme.gd :: var _base := StyleBoxFlat.new()`
-   - Next after: HF-2 -- text scale waits until you stop clicking
+1. **[Claude] HF-6 -- why Raises lacks Pollen at 2.2 (C-57)**
+   - Plan: `plans/now/hud-followups.md` -- "HF-6 — why Raises lacks Pollen at 2.2 (C-57)"
+   - Files: `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/hf6_challenge2_raises_test.json` passes with the fix, or its failure names the step that drops Pollen, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/scenario_actions.gd :: "menu_items"`
+   - Next after: none -- plans/now/hud-followups.md is complete
 
-2. **[Claude] HF-2 -- text scale waits until you stop clicking**
-   - Plan: `plans/now/hud-followups.md` -- "HF-2 — text scale waits until you stop clicking"
-   - Files: `scripts/debug_panel.gd`
-   - Check: `tools/verify.ps1` is green, and `_adjust` on `text_scale` restarts the timer instead of calling `UiTheme.refresh_for_setting`
-   - Proof: `absent: scripts/debug_panel.gd :: TEXT_SCALE_APPLY_DELAY`
-   - Next after: HF-3 -- the top bar's second row spans the first
+2. **[Claude] SA-1 -- the Saves window is reached from the cog only, everywhere**
+   - Plan: `plans/now/saves-access.md` -- "SA-1 — the Saves window is reached from the cog only, everywhere"
+   - Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/saves_panel.gd`, `scripts/availability.gd`, `test_scenarios/f2s_challenge2_gate_table_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/sv2_saves_window_test.json` and `test_scenarios/f2s_challenge2_gate_table_test.json` pass, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/hud.gd :: saves_button = _icon_button(`
+   - Next after: none -- plans/now/saves-access.md is complete
 
-3. **[Claude] HF-3 -- the top bar's second row spans the first**
-   - Plan: `plans/now/hud-followups.md` -- "HF-3 — the top bar's second row spans the first"
-   - Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf3_top_bar_rows_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/hf3_top_bar_rows_test.json` passes, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/hud.gd :: top_bar_row2`
-   - Next after: HF-4 -- the Winter forecast is a left-hand window
+3. **[Claude] SK-1 -- the skill tree opens full-screen and pauses the game**
+   - Plan: `plans/now/skill-screen.md` -- "SK-1 — the skill tree opens full-screen and pauses the game"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ap3_skill_tree_window_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes (skills full-screen, tree paused), `test_scenarios/ap6_bought_tarsal_test.json` still passes, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/skill_tree_panel.gd :: build_left_window(400)`
+   - Next after: SK-2 -- skill names in big hexes, with drag and zoom
 
-4. **[Claude] HF-4 -- the Winter forecast is a left-hand window**
-   - Plan: `plans/now/hud-followups.md` -- "HF-4 — the Winter forecast is a left-hand window"
-   - Files: `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/hf4_winter_left_window_test.json` passes, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/winter_panel.gd :: build_top_right_window(`
-   - Next after: HF-5 -- opening Nursery keeps the view you are in
+4. **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
+   - Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
+   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+   - Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/availability.gd :: "role_query"`
+   - Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill
 
-5. **[Claude] HF-5 -- opening Nursery keeps the view you are in**
-   - Plan: `plans/now/hud-followups.md` -- "HF-5 — opening Nursery keeps the view you are in"
-   - Files: `scripts/year_winter.gd`
-   - Check: `tools/verify.ps1` is green, and `_on_nursery_window_requested` no longer writes `main.in_hive_view`
-   - Proof: `present: scripts/year_winter.gd :: _close_other_left_windows(main.nursery_panel)`
-   - Next after: HF-6 -- why Raises lacks Pollen at 2.2 (C-57)
+5. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
+   - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
+   - Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
+   - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
+   - Next after: BS-6 -- developer edits to the table change what a run starts with
 
 ### Codex lane
 
@@ -70,12 +70,18 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/diagnostic_log.gd :: flowers_by_species`
    - Next after: none -- plans/now/season-feel.md is complete
 
+2. **[Codex] PE-1 -- pacing milestones are timed to the hour**
+   - Plan: `plans/now/pacing-evidence.md` -- "PE-1 — pacing milestones are timed to the hour"
+   - Files: `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md`
+   - Check: `python -m unittest tests.test_pacing_gates tests.test_headless_verdicts` passes, including a first worker at day 1.5 reading in band at 200 s/day, `python tools/pacing_gates.py --repeat 1` prints a table with two-decimal median days, and `tools/verify.ps1` is green
+   - Proof: `absent: tools/analyze_session.py :: milestone_times`
+   - Next after: none -- plans/now/pacing-evidence.md is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-5** (`plans/now/brood-spine.md`) -- startable now (BS-1 and BS-D have landed); waits only for a free slot in the Claude lane, which is full at five.
-- **BS-3, BS-4 and BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
+- **BS-4 and BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for BS-4 to prove a tier-2 purchase in a run.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **SK-2** (`plans/now/skill-screen.md`) -- waits for SK-1's full-screen skill view to merge.

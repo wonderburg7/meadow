@@ -494,7 +494,7 @@ func _ready() -> void:
 	hud.cell_close_requested.connect(orders_zones._on_cell_close_requested)
 	hud.cell_fill_close_requested.connect(orders_zones._on_cell_fill_close_requested)
 	hud.nursery_window_requested.connect(year_winter._on_nursery_window_requested)
-	hud.winter_window_requested.connect(func(): winter_panel.toggle())
+	hud.winter_window_requested.connect(func(): year_winter._toggle_panel(winter_panel))
 	hud.signal_clicked.connect(year_winter._on_signal_clicked)
 	hud.secondary_role_requested.connect(orders_zones._on_secondary_role_requested)
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)

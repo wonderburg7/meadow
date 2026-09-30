@@ -682,6 +682,7 @@ func _build_top_right_bar() -> void:
 	add_child(bar)
 
 	var row1 := HBoxContainer.new()
+	row1.name = "top_bar_row1"
 	row1.alignment = BoxContainer.ALIGNMENT_END
 	row1.add_theme_constant_override("separation", TOP_BAR_BUTTON_GAP)
 	bar.add_child(row1)
@@ -727,6 +728,7 @@ func _build_top_right_bar() -> void:
 	row1.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
 	var row2 := HBoxContainer.new()
+	row2.name = "top_bar_row2"
 	row2.alignment = BoxContainer.ALIGNMENT_END
 	row2.add_theme_constant_override("separation", TOP_BAR_BUTTON_GAP)
 	bar.add_child(row2)
@@ -736,6 +738,7 @@ func _build_top_right_bar() -> void:
 	# full explanation stays on each button's own "i" info badge, unchanged.
 	colony_button = _icon_button("bee", "Colony", TOP_BAR_BUTTON_WIDTH, "Opens the Colony window.")
 	colony_button.pressed.connect(func(): colony_panel_requested.emit())
+	colony_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
@@ -744,6 +747,7 @@ func _build_top_right_bar() -> void:
 
 	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Opens the Nursery window.")
 	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
+	nursery_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	row2.add_child(nursery_info)
@@ -755,6 +759,7 @@ func _build_top_right_bar() -> void:
 	# it gets the icon+tooltip treatment instead of truncating ad hoc.
 	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Opens the Foraging window.")
 	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
+	foraging_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(foraging_button)
 	_register_gated_control("foraging_button", func(): return foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
@@ -765,12 +770,14 @@ func _build_top_right_bar() -> void:
 	winter_button = _icon_button("snow", "Winter", TOP_BAR_BUTTON_WIDTH, "Opens the Winter forecast.")
 	winter_button.visible = Session.winter_coming
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
+	winter_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(winter_button)
 
 	# SV-2 (icon AP-5). Hidden in a Challenge by its UI_GATES row (AP-7):
 	# a Challenge keeps its own checkpoints (tutorial_checkpoint.gd).
 	saves_button = _icon_button("save", "Saves", TOP_BAR_BUTTON_WIDTH, "Opens the Saves window.")
 	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
+	saves_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(saves_button)
 	_register_gated_control("saves_button", func(): return saves_button)
 
@@ -778,6 +785,7 @@ func _build_top_right_bar() -> void:
 	# Challenge by its UI_GATES row (AP-7), as 8.5 asks.
 	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
 	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
+	skills_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(skills_button)
 	_register_gated_control("skills_button", func(): return skills_button)
 
@@ -787,6 +795,7 @@ func _build_top_right_bar() -> void:
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
 	view_button.pressed.connect(func(): view_toggle_requested.emit())
+	view_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(view_button)
 	view_info = _info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at.")
 	row2.add_child(view_info)

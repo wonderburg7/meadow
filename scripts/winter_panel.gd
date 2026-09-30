@@ -25,8 +25,8 @@ var corner_text: String = ""
 
 func _ready() -> void:
 	setup_layer("winter", "winter_panel")
-	# top-right, under the button bar, since that's where it's opened from
-	build_top_right_window(330, 44, -12)
+	# A left-hand window like Colony/Foraging, so it never covers the top-right bar.
+	build_left_window(330)
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
@@ -59,6 +59,7 @@ func _ready() -> void:
 	headline = _make_label(column, "Body")
 	detail = _make_label(column, "Small")
 	verdict = _make_label(column, "Body")
+	connect_left_window_reflow()
 
 func _make_label(column: VBoxContainer, variation: String) -> Label:
 	var label := Label.new()

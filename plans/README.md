@@ -176,6 +176,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | WD-0..WD-4 -- the workflow event log, its writers and `--events` | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` (complete) |
 | System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
 | SM-1 -- the headless smoke scenario routes builders from walkable spawn tiles | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` (complete) |
+| PE-1 -- the headless pacing gates time each milestone to the hour | `plans/now/pacing-evidence.md` |
 | PERF-1 -- measure `find_food_cell` before changing it | `plans/reference/technical-audit.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |

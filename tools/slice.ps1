@@ -1613,10 +1613,17 @@ function Get-SuccessorId {
     # A `Next after:` value is prose ("L-6 -- two lanes closing out at once is
     # a test, not a hope."), not a queue item -- only its leading token is an
     # id. `none -- <plan> is complete` is the one value that names no
-    # successor at all.
+    # successor at all. A lead that is not id-shaped is not a successor
+    # either: PERF-3's (29 Sep 2026) was the action "close candidate A in
+    # ...", and the refill gate stopped finish demanding that sentence be
+    # queued. check_docs.py's check_queue_successors rejects such a line at
+    # queue time with the same pattern; this is the backstop for one already
+    # on master.
     param([string]$NextAfter)
     if (-not $NextAfter -or $NextAfter -match '^\s*none\b') { return $null }
-    return ($NextAfter -split '--', 2)[0].Trim()
+    $lead = ($NextAfter -split '--', 2)[0].Trim()
+    if ($lead -cnotmatch '^[A-Z][A-Za-z0-9]*(-[A-Za-z0-9]+)*$') { return $null }
+    return $lead
 }
 
 function Test-SuccessorDeferred {
@@ -2050,6 +2057,11 @@ function Invoke-SliceFinish {
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
     if ($item -and -not $successorId) {
         $nextSliceLine = $item.NextAfter
+        # A prose `Next after:` (see Get-SuccessorId) is a note, not the next
+        # slice; the lane's new lead is.
+        if ($laneLead -and $item.NextAfter -notmatch '^\s*none\b') {
+            $nextSliceLine = "$($laneLead.Id) -- $($laneLead.Title)  (Next after was not a slice: $($item.NextAfter))"
+        }
     }
     elseif ($successorId) {
         $successorItem = $mergedItems | Where-Object { $_.Id -eq $successorId -and $_.Lane -eq $lane } | Select-Object -First 1
