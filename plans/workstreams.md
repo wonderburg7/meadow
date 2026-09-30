@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SA-1` (`claude/SA-1`) | Claude | the Saves window is reached from the cog only, everywhere | Claude | in progress | none | `plans/now/saves-access.md` SA-1 — the Saves window is reached from the cog only, everywhere |
