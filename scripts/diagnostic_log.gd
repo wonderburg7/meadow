@@ -1006,6 +1006,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"winter_here": Session.winter_here,
 			"flowers_in_season": flower_season_counts.in_season,
 			"flowers_out_of_season": flower_season_counts.out_of_season,
+			"flowers_by_species": flower_season_counts.by_species,
 		},
 		"foraging_behaviour": {
 			"orientation_flight_on": GameConfig.orientation_flight_on,
@@ -1066,14 +1067,16 @@ func _snapshot(world: Node2D) -> Dictionary:
 func _flower_season_counts(world: Node2D) -> Dictionary:
 	var in_season := 0
 	var out_of_season := 0
+	var by_species: Dictionary = {}
 	for flower in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(flower):
 			continue
+		by_species[flower.species_name] = int(by_species.get(flower.species_name, 0)) + 1
 		if flower.in_season():
 			in_season += 1
 		else:
 			out_of_season += 1
-	return {"in_season": in_season, "out_of_season": out_of_season}
+	return {"in_season": in_season, "out_of_season": out_of_season, "by_species": by_species}
 
 
 ## fps and game_speed are free reads (Engine.get_frames_per_second(),

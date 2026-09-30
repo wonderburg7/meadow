@@ -614,7 +614,7 @@ Per-frame entry point, everything not yet split out of main.
 1189 func _end_scenario_run(outcome: String) -> void
 ```
 
-## diagnostic_log.gd (1,179 lines)
+## diagnostic_log.gd (1,182 lines)
 
 The session JSONL writer, counters and capture profiles.
 
@@ -686,14 +686,14 @@ The session JSONL writer, counters and capture profiles.
 890  func _config_snapshot() -> Dictionary
 898  # --- the snapshot -------------------------------------------------
 899  func _snapshot(world: Node2D) -> Dictionary
-1066 func _flower_season_counts(world: Node2D) -> Dictionary
-1092 func _performance_snapshot(world: Node2D) -> Dictionary
-1112 func _rate(world: Node2D, key: String) -> float
-1124 # --- writing to disk ----------------------------------------------
-1128 func _current_day() -> int
-1132 func _prune_old_sessions() -> void
-1150 func _write(entry: Dictionary) -> void
-1159 func _capture_entry(entry: Dictionary) -> bool
+1067 func _flower_season_counts(world: Node2D) -> Dictionary
+1095 func _performance_snapshot(world: Node2D) -> Dictionary
+1115 func _rate(world: Node2D, key: String) -> float
+1127 # --- writing to disk ----------------------------------------------
+1131 func _current_day() -> int
+1135 func _prune_old_sessions() -> void
+1153 func _write(entry: Dictionary) -> void
+1162 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## hive_cell.gd (1,173 lines)

@@ -41,6 +41,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "population_curve": _population_curve(snapshots),
         "deaths_over_time": _deaths_over_time(deaths),
         "honey_fill_vs_winter": _honey_fill_vs_winter(snapshots),
+        "flower_mix_by_day": _flower_mix_by_day(snapshots),
         "milestones": _milestones(snapshots, settings),
         "mechanic_firing": _mechanic_firing(settings, summary, actions),
         "actions": _action_summary(actions),
@@ -120,6 +121,25 @@ def _honey_fill_vs_winter(snapshots: list[dict[str, Any]]) -> list[dict[str, Any
             "winter_here": s["environment"]["winter_here"],
         })
     return out
+
+
+def _flower_mix_by_day(snapshots: list[dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    """First flower mix for each elapsed day, beginning with founding day 0."""
+    mixes: dict[int, dict[str, Any]] = {}
+    first_day: int | None = None
+    for snapshot in snapshots:
+        day = snapshot.get("day")
+        environment = snapshot.get("environment")
+        if (
+            isinstance(day, int)
+            and not isinstance(day, bool)
+            and isinstance(environment, dict)
+            and isinstance(environment.get("flowers_by_species"), dict)
+        ):
+            if first_day is None:
+                first_day = day
+            mixes.setdefault(day - first_day, environment["flowers_by_species"])
+    return mixes
 
 
 def _milestones(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, int]:
@@ -297,9 +317,9 @@ def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None,
 # skimming a chart would want instead.
 REPORT_PROFILES = {
     "brief": ["summary", "actions"],
-    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter", "milestones"],
+    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones"],
     "behaviour": ["summary", "mechanic_firing", "actions"],
-    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter", "milestones",
+    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones",
              "mechanic_firing", "actions", "summary"],
 }
 
