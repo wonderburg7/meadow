@@ -411,7 +411,7 @@ const STAGES_2 := [
 		"goal_text": "Goal: keep two cells raising foragers, and raise one more nurse as a one-off.",
 		"prompts": [
 			{"id": "2.6_welcome", "trigger": "welcome", "delay": 0.0, "text": "Some cells can remember what they are for. Useful, if one prefers planning to mild panic."},
-			{"id": "2.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Set a cell to keep producing foragers, then make a nurse as a one-off. Repeating some jobs and choosing others is the trick."},
+			{"id": "2.6_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Set two cells to keep producing foragers, then make a nurse as a one-off. Repeating some jobs and choosing others is the trick."},
 		],
 	},
 	{

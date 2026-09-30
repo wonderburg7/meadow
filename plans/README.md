@@ -177,6 +177,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
 | SM-1 -- the headless smoke scenario routes builders from walkable spawn tiles | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` (complete) |
 | PE-1 -- the headless pacing gates time each milestone to the hour | `plans/now/pacing-evidence.md` |
+| WO-1 -- winter's countdown opens by itself on a set day | `plans/now/winter-onset.md` |
 | PERF-1 -- measure `find_food_cell` before changing it | `plans/reference/technical-audit.md` |
 | W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` |

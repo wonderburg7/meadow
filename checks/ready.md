@@ -33,3 +33,5 @@ unblocker.
 - [C-80 -- clicking a skill and pressing Buy buys it](ready/C-80.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-82 -- Developer mode shows the Run availability table](ready/C-82.md)
+- [C-83 -- at Challenge 2's 2.2 a raised pollen Forager hatches](ready/C-83.md)
+- [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)

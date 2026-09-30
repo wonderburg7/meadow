@@ -1,7 +1,7 @@
 # Pacing evidence — the headless gates can read in band
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PE-1 -- pacing milestones are timed to the hour, startable, its block below | Dependency: none | Verified: 2026-09-30
+Status: active | Owner: Dave / Codex | Next: PE-1 -- pacing milestones are timed to the hour, startable, its block below; PE-2 (outline under "Later") waits for the Colony Run definition, BS-7 and WO-1 | Dependency: none | Verified: 2026-09-30
 
 **Objective.** `python tools/pacing_gates.py` can say truthfully whether the
 headless alpha arc meets each timing budget in `plans/design/product-scope.md`
@@ -19,11 +19,21 @@ already written -- the default cadence is one an in-game hour
 (`diagnostic_log.gd::_snapshot_interval`, `seconds_per_day / 24`) and each
 carries `game_time` -- the analysis throws the precision away.
 
+**Measured 30 Sep 2026** (product review, `docs/product-review-2026-09-30.md`):
+first worker missing (target day 1.5), food secure day 4.0 (target 3.0),
+winter entered missing (18.0), winter survived missing (27.0). Precision is
+the smaller problem. `alpha_arc_test.json` sets no starting colony and no
+actions, so the run is a lone, unplayed queen who starves at game time 589 s
+and the log idles to day 36; nothing but the debug panel starts winter (WO-1,
+`plans/now/winter-onset.md`); and a colony with no bees reads food secure,
+because its winter requirement is 0 (PE-1 fixes that below). PE-2, outlined
+under "Later", makes the arc a played colony.
+
 ## Open slices at a glance
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PE-1 | The pacing gates use each milestone's first hour, not its whole day | `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md` | yes, after SF-2 merges (same lane, shares `analyze_session.py`) | medium |
+| PE-1 | The pacing gates use each milestone's first hour, not its whole day | `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md` | yes (SF-2, which shared `analyze_session.py`, merged 30 Sep 2026) | medium |
 
 **Required reading.** PE-1's section below only.
 
@@ -45,13 +55,25 @@ its whole-day values.
   one helper that `_milestones` and the new walk both call, so the two cannot
   disagree about what a milestone means. Add the key to the `"balance"` and
   `"full"` entries of `REPORT_PROFILES`.
+- That helper counts **food secure** and **winter survived** only when the
+  snapshot's `population.total` is at least 1. Today a colony with no bees
+  has a winter requirement of 0 (`_winter_food_requirement`), so the 30 Sep
+  2026 run read food secure on day 4, after its queen had starved, and would
+  read winter survived the same way. `milestones` changes only for a snapshot
+  with no bees.
+- Expect `milestone_times` to read up to a day earlier than `milestones`:
+  `day` counts from 1 (the first day is day 1), `game_time / seconds_per_day`
+  counts elapsed days from 0, and §3's budgets are elapsed time.
 - `pacing_gates.py`: `build_rows` reads `milestone_times` instead of
-  `milestones`; `render_table` prints the median day to two decimals.
+  `milestones`; `render_table` prints the median day to two decimals. Its
+  module docstring calls the forage/weather crisis "five-minute"; §3 puts it
+  at twenty minutes, as `render_table`'s last line already says.
 - `tests/test_pacing_gates.py`: a case where every run's first worker arrives
   at day 1.5 at 200 s/day reads in band, and one at day 2.0 reads out of band.
 - `tests/test_headless_verdicts.py`: a case proving `milestone_times` takes
   the first qualifying snapshot inside a day, and that `milestones` is
-  unchanged for the existing fixture.
+  unchanged for the existing fixture; and a case where snapshots with
+  `population.total` 0 set neither food secure nor winter survived.
 - `docs/headless-run-contract.md`: one line naming `milestone_times`.
 
 **Acceptance.** The unit tests above pass. Run
@@ -79,3 +101,7 @@ check is filed.
   (`render_table`'s last line). Each waits for its feature: a readiness-aware
   forage/weather crisis, and Gyne rearing (`plans/design/progression.md`
   Phase C step 15).
+- **PE-2 -- the arc is a played colony.** Specified by the Colony Run
+  definition pass, because the arc's start is the Colony Run's start
+  (`plans/design/product-scope.md` §6.2, "Next design pass"). What it must
+  settle is listed there, so it survives this plan being archived after PE-1.
