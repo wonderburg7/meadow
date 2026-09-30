@@ -70,6 +70,25 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-09-30 — `tests/source_checks.py` misses an inner class's own signal and engine calls
+
+- Source: SK-1 (Claude)
+- Area: tooling / source checks
+- Signal: `finish`'s branch verify failed on `skill_tree_panel.gd`'s inner
+  `SkillGrid` class: `tile_selected()` (a signal declared inside the class),
+  `draw_polyline()` and `accept_event()` were reported as undefined calls.
+  `collect_names` only matches `^signal` at column 0, and `KNOWN` lacks the
+  two Control/CanvasItem methods. Godot ran the code; only the static check
+  objected.
+- Evidence: the SK-1 `slice finish stopped` block, 30 Sep 2026; the slice
+  swapped to a Callable, `draw_line` and `set_input_as_handled` to pass.
+- Consequence: code is bent around the checker rather than using the natural
+  engine call, and each case costs a full `finish` round trip to find out.
+- Candidate direction: Hypothesis -- let `collect_names` accept an indented
+  `signal`, add `draw_polyline`/`accept_event`, and have slices run
+  `python tests/source_checks.py` mid-slice when they add engine calls.
+- Disposition: untriaged
+
 ### 2026-09-30 — `tools/func.py` crashes on a non-ASCII character in the routed function
 
 - Source: HF-6 (Claude)

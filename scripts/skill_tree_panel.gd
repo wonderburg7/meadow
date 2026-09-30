@@ -12,6 +12,12 @@ extends GamePanel
 ## and the grid draws from that. Nothing here runs per frame, and a closed
 ## window does nothing (progression.md 8.4 on why that matters).
 ##
+## SK-1: a full-screen view that pauses the game while it is open. Clicking a
+## skill tile shows it in the detail strip along the bottom, whose Buy button
+## is the one way to buy it. Drawn on layer 14: above the HUD (9), the
+## settings window (10) and the left windows (11), below Gallerin (15) so its
+## prompts stay readable, and below the main menu (20).
+##
 ## Created by hud.gd, which owns the Skills button that opens it.
 
 const Skills = preload("res://scripts/skills.gd")
@@ -56,17 +62,30 @@ const BLOCK_TEXT := {
 	Progression.BLOCK_COST: "the colony cannot pay for it yet",
 }
 
+const LAYER := 14
+
 var grid: SkillGrid
-var list_box: VBoxContainer
+## The detail strip: the selected skill's name, tier, state and cost, and Buy.
+var detail_label: Label
+var buy_button: Button
+## The skill tile the strip shows; null until one is clicked.
+var _selected_hex = null
+## Whether the game was already paused when the view opened, so closing it
+## leaves a player's own pause in place.
+var _was_paused: bool = false
 
 func _ready() -> void:
-	setup_layer("skills", "skill_tree_panel")
-	build_left_window(400)
+	setup_layer("skills", "skill_tree_panel", LAYER)
+	_build_panel(0)
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# The grid fills whatever height is left; the scroll body only scrolls
+	# when a large text scale makes the column taller than the window.
 	build_scroll_body()
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 6)
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll_container.add_child(column)
 
 	var header := HBoxContainer.new()
@@ -85,7 +104,7 @@ func _ready() -> void:
 	close_btn.pressed.connect(func(): close())
 	header.add_child(close_btn)
 
-	var intro := _label("What the colony can learn. Each sector grows outwards from the centre, one tier per ring; the lines show which skill leads to which. Hover a tile for details.", "Small")
+	var intro := _label("What the colony can learn. Each sector grows outwards from the centre, one tier per ring; the lines show which skill leads to which. Hover a tile for details, or click a skill to see it below. The colony is paused while this is open.", "Small")
 	column.add_child(intro)
 
 	grid = SkillGrid.new()
@@ -94,18 +113,53 @@ func _ready() -> void:
 	grid.tooltip_text = "The skill tree"
 	var extent := Shapes.hex_to_pixel(GRID_RINGS, 0, TILE_SIZE).x + TILE_SIZE
 	grid.custom_minimum_size = Vector2(extent * 2.0, sqrt(3.0) * TILE_SIZE * (GRID_RINGS * 2 + 1))
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.on_select = _on_tile_selected
 	column.add_child(grid)
 
 	column.add_child(HSeparator.new())
-	list_box = VBoxContainer.new()
-	list_box.add_theme_constant_override("separation", 2)
-	column.add_child(list_box)
-
-	connect_left_window_reflow()
+	var strip := HBoxContainer.new()
+	strip.add_theme_constant_override("separation", 8)
+	column.add_child(strip)
+	detail_label = _label("", "Body")
+	detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.add_child(detail_label)
+	buy_button = Button.new()
+	buy_button.text = "Buy"
+	buy_button.focus_mode = Control.FOCUS_NONE
+	for button_state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		buy_button.add_theme_stylebox_override(button_state, UiTheme.button_stylebox(button_state))
+	buy_button.pressed.connect(_on_buy_pressed)
+	strip.add_child(buy_button)
+	_refresh_detail()
 
 func open() -> void:
+	if is_open():
+		return
+	_was_paused = get_tree().paused
+	get_tree().paused = true
 	_rebuild()
+	# A hidden control keeps the size it had when the window last changed;
+	# re-anchoring measures the viewport as it is now.
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	super.open()
+	main.camera_view._refresh_speed_display()
+
+func close() -> void:
+	if not is_open():
+		return
+	super.close()
+	get_tree().paused = _was_paused
+	main.camera_view._refresh_speed_display()
+
+## While the view is open it owns the keyboard: Escape closes it, and every
+## other key stops here so Space or Tab cannot act on the paused game behind.
+func _input(event: InputEvent) -> void:
+	if not is_open() or not (event is InputEventKey):
+		return
+	if event.pressed and (event as InputEventKey).keycode == KEY_ESCAPE:
+		close()
+	get_viewport().set_input_as_handled()
 
 # --- resolving every tile once --------------------------------------
 
@@ -152,33 +206,35 @@ func _rebuild() -> void:
 
 	grid.tiles = tiles
 	grid.queue_redraw()
-	_rebuild_list(tiles)
+	_refresh_detail()
 
-func _rebuild_list(tiles: Dictionary) -> void:
-	for child in list_box.get_children():
-		child.queue_free()
-	for sector in Skills.SECTORS:
-		list_box.add_child(_label(sector.label, "Body"))
-		for skill in Skills.for_sector(sector.key):
-			var tile: Dictionary = tiles.get(skill.axial, {})
-			var line := "    %s (tier %d) — %s" % [skill.name, int(skill.tier), _state_text(tile.get("state", STATE_BLOCKED), tile.get("reason", ""))]
-			var label := _label(line, "Small")
-			label.add_theme_color_override("font_color", _state_colour(tile.get("state", STATE_BLOCKED)))
-			if tile.get("state", "") != STATE_AFFORDABLE:
-				list_box.add_child(label)
-				continue
-			var row := HBoxContainer.new()
-			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			row.add_child(label)
-			var buy := Button.new()
-			buy.text = "Buy"
-			buy.focus_mode = Control.FOCUS_NONE
-			for button_state in ["normal", "hover", "pressed", "focus", "disabled"]:
-				buy.add_theme_stylebox_override(button_state, UiTheme.button_stylebox(button_state))
-			var skill_id: String = skill.id
-			buy.pressed.connect(func(): buy_skill(skill_id))
-			row.add_child(buy)
-			list_box.add_child(row)
+# --- the detail strip ------------------------------------------------
+
+func _on_tile_selected(hex: Vector2i) -> void:
+	_selected_hex = hex
+	grid.selected = hex
+	grid.queue_redraw()
+	_refresh_detail()
+
+## Re-reads the selected tile from `tiles`, so after a purchase the strip
+## shows the state _rebuild just resolved.
+func _refresh_detail() -> void:
+	var tile: Dictionary = grid.tiles.get(_selected_hex, {}) if _selected_hex != null else {}
+	if tile.get("kind", "") != "skill":
+		detail_label.text = "Click a skill to see what it costs and whether the colony can buy it."
+		detail_label.remove_theme_color_override("font_color")
+		buy_button.disabled = true
+		return
+	var skill: Dictionary = Skills.entry(tile.id)
+	detail_label.text = "%s (tier %d) — %s. Cost: %s." % [tile.name, int(tile.tier),
+		_state_text(tile.state, tile.reason), _cost_text(skill)]
+	detail_label.add_theme_color_override("font_color", _state_colour(tile.state))
+	buy_button.disabled = tile.state != STATE_AFFORDABLE
+
+func _on_buy_pressed() -> void:
+	var tile: Dictionary = grid.tiles.get(_selected_hex, {}) if _selected_hex != null else {}
+	if tile.get("state", "") == STATE_AFFORDABLE:
+		buy_skill(tile.id)
 
 ## What the colony could spend right now, keyed the way skills.gd prices
 ## things: every cell's contents that hive.take() would actually hand over
@@ -248,15 +304,17 @@ func _state_colour(state: String) -> Color:
 	return UiTheme.color("locked")
 
 func _skill_tip(skill: Dictionary, state: String, reason: String) -> String:
+	return "%s\n%s\nCost: %s\n%s" % [skill.name, skill.get("description", ""),
+		_cost_text(skill), _sentence(_state_text(state, reason))]
+
+func _cost_text(skill: Dictionary) -> String:
+	if Session.progression != null and Session.progression.is_free(str(skill.get("id", ""))):
+		return "Free"
 	var cost: Dictionary = skill.get("cost", {})
-	var free: bool = Session.progression != null and Session.progression.is_free(str(skill.get("id", "")))
-	if free:
-		cost = {}
 	var parts: Array = []
 	for resource in cost:
 		parts.append("%d %s" % [int(cost[resource]), str(resource).replace("_", " ")])
-	return "%s\n%s\nCost: %s\n%s" % [skill.name, skill.get("description", ""),
-		"Free" if free else (", ".join(parts) if not parts.is_empty() else "nothing"), _sentence(_state_text(state, reason))]
+	return ", ".join(parts) if not parts.is_empty() else "nothing"
 
 func _sentence(text: String) -> String:
 	return text.substr(0, 1).to_upper() + text.substr(1) + "."
@@ -279,15 +337,22 @@ func _label(text: String, variation: String) -> Label:
 
 
 ## The hex grid itself. Draws from `tiles`, which the panel fills on open;
-## the tooltip finds the tile under the pointer with Shapes.pixel_to_hex.
+## the tooltip and a click both find the tile under the pointer with
+## Shapes.pixel_to_hex. It redraws only when told to: on open, on a click
+## and after a purchase.
 class SkillGrid:
 	extends Control
 
 	const Shapes = preload("res://scripts/shapes.gd")
 	const UiTheme = preload("res://scripts/ui_theme.gd")
 
+	## Called with the hex of a clicked skill tile.
+	var on_select: Callable = Callable()
+
 	var tiles: Dictionary = {}
 	var tile_size: float = 11.0
+	## The clicked skill tile, outlined; null when none is.
+	var selected = null
 
 	func _centre() -> Vector2:
 		return size / 2.0
@@ -301,6 +366,20 @@ class SkillGrid:
 			for point in outline:
 				points.append(at + point)
 			draw_colored_polygon(points, _fill(tile))
+		if selected != null and tiles.has(selected):
+			var centre: Vector2 = _centre() + Shapes.hex_to_pixel(selected.x, selected.y, tile_size)
+			var ring := Shapes.hexagon_points(tile_size * 1.05)
+			for i in range(ring.size()):
+				draw_line(centre + ring[i], centre + ring[(i + 1) % ring.size()], UiTheme.color("text_primary"), 2.0)
+
+	func _gui_input(event: InputEvent) -> void:
+		var click := event as InputEventMouseButton
+		if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
+			return
+		var hex := Shapes.pixel_to_hex(click.position - _centre(), tile_size)
+		if tiles.get(hex, {}).get("kind", "") == "skill" and on_select.is_valid():
+			on_select.call(hex)
+			get_viewport().set_input_as_handled()
 
 	func _fill(tile: Dictionary) -> Color:
 		match tile.get("kind", ""):

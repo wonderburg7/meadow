@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SK-1 -- the skill tree opens full-screen and pauses the game**
-   - Plan: `plans/now/skill-screen.md` -- "SK-1 — the skill tree opens full-screen and pauses the game"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ap3_skill_tree_window_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes (skills full-screen, tree paused), `test_scenarios/ap6_bought_tarsal_test.json` still passes, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/skill_tree_panel.gd :: build_left_window(400)`
-   - Next after: SK-2 -- skill names in big hexes, with drag and zoom
-
-2. **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
+1. **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
    - Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
    - Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
    - Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/availability.gd :: "role_query"`
    - Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill
 
-3. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
+2. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
    - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
    - Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
    - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green

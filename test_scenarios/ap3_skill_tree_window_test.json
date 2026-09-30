@@ -6,8 +6,11 @@
     {"do": "viewport_size", "w": 1280, "h": 720},
     {"do": "settle", "ticks": 2},
     {"do": "open_window", "window": "skills"},
-    {"do": "settle", "ticks": 3},
     {"do": "assert", "condition": {"panel": "skills", "inside_viewport": true}},
+    {"do": "assert", "condition": {"tree_paused": true}},
+    {"do": "close_window", "window": "skills"},
+    {"do": "assert", "condition": {"tree_paused": false}},
+    {"do": "settle", "ticks": 2},
     {"do": "open_window", "window": "colony"},
     {"do": "settle", "ticks": 3},
     {"do": "assert", "condition": {"panel": "colony", "inside_viewport": true}}

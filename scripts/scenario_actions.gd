@@ -801,6 +801,16 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 			_log("open_window", window_key, "rejected", "settings window did not open")
 		return
 
+	if window_key == "skills":
+		# SK-1: full-screen and pausing, not a left window -- the Skills
+		# button's own toggle.
+		main.hud.skill_tree_panel.open()
+		if main.hud.skill_tree_panel.is_open():
+			_log("open_window", window_key, "accepted", "")
+		else:
+			_log("open_window", window_key, "rejected", "skill tree did not open")
+		return
+
 	var panel: GamePanel = _game_panel(main, window_key)
 	# Only left-window panels open here.
 	if panel != null and not panel.is_in_group("left_window"):
@@ -824,6 +834,12 @@ static func _do_close_window(main: Node2D, action: Dictionary) -> void:
 	var window_key: String = action.get("window", "")
 	if window_key == "settings":
 		main.debug_panel.panel.visible = false
+		_log("close_window", window_key, "accepted", "")
+		return
+	# SK-1: closing the skill tree unpauses the game, which is what lets the
+	# scenario's actions run again (main.gd skips them while paused).
+	if window_key == "skills":
+		main.hud.skill_tree_panel.close()
 		_log("close_window", window_key, "accepted", "")
 		return
 	_log("close_window", str(action), "rejected", "unknown window")
@@ -1058,6 +1074,11 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		return _check_save_slot(main, condition)
 	if condition.has("all_actions_available"):
 		return _check_all_actions_available(main)
+	if condition.has("tree_paused"):
+		var paused: bool = main.get_tree().paused
+		if paused == bool(condition["tree_paused"]):
+			return {"ok": true, "reason": ""}
+		return {"ok": false, "reason": "tree paused: %s" % paused}
 	if condition.has("skill_owned"):
 		var owned: bool = Session.progression != null and Session.progression.is_owned(str(condition["skill_owned"]))
 		if owned == bool(condition.get("owned", true)):
