@@ -70,6 +70,13 @@ def main() -> int:
     parser.add_argument("names", nargs="+", help="one or more function names")
     args = parser.parse_args()
 
+    # Same reason as tools/heading.py: a Windows console defaults to cp1252,
+    # and hud.gd's em dashes and arrows raised UnicodeEncodeError after the
+    # first header line (HF-6, 30 Sep 2026), so the routed read failed on
+    # exactly the UI files that carry typographic characters.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
+
     path = pathlib.Path(args.path)
     if not path.is_file():
         print("error: no such file: %s" % path, file=sys.stderr)

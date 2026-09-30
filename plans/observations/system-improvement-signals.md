@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: observation-intake | LAYER: active -->
 
-Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-25
+Status: active | Owner: every implementation session; triage owner: Dave / designated planning reviewer | Next: record material, evidence-backed signals; triage them when a deliberate systems review is selected | Dependency: none | Verified: 2026-09-30
 
 ## Purpose and boundary
 
@@ -87,7 +87,12 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- let `collect_names` accept an indented
   `signal`, add `draw_polyline`/`accept_event`, and have slices run
   `python tests/source_checks.py` mid-slice when they add engine calls.
-- Disposition: untriaged
+- Disposition: promoted and fixed 30 Sep 2026 by the agent-workflow review
+  (`docs/agent-workflow-review-2026-09-30.md` F6): `collect_names` accepts an
+  indented `signal`, `KNOWN` gains the two calls, and
+  `tests/test_source_checks.py::InnerClassCallChecksTest` holds the case.
+  `python tests/source_checks.py` is now allow-listed, so a slice can run it
+  mid-slice without a prompt.
 
 ### 2026-09-30 — `tools/func.py` crashes on a non-ASCII character in the routed function
 
@@ -104,7 +109,10 @@ explicit request from Dave.
   towards reading whole files instead.
 - Candidate direction: Hypothesis -- `sys.stdout.reconfigure(encoding="utf-8")`
   at the top of `tools/func.py` and `tools/heading.py`.
-- Disposition: untriaged
+- Disposition: promoted and fixed 30 Sep 2026 by the agent-workflow review
+  (`docs/agent-workflow-review-2026-09-30.md` F7): `tools/func.py` now
+  reconfigures stdout and stderr exactly as `tools/heading.py` already did;
+  verified with `PYTHONIOENCODING=cp1252`.
 
 ### 2026-09-25 — a finish holds the lifecycle lock through verification, so the other lane polls it
 

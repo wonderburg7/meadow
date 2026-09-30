@@ -23,6 +23,7 @@
       "Bash(git rev-parse*)",
       "Bash(git branch --list*)",
       "Bash(git worktree list*)",
+      "Bash(git ls-files*)",
       "Bash(python tools/check_docs.py*)",
       "Bash(python tools/heading.py*)",
       "Bash(python tools/func.py*)",
@@ -32,6 +33,9 @@
       "Bash(python tools/session_cost.py*)",
       "Bash(python tools/stage_reference.py*)",
       "Bash(python tools/update_function_map.py*)",
+      "Bash(python tools/backlog.py*)",
+      "Bash(python tools/run_scenario.py*)",
+      "Bash(python tests/source_checks.py*)",
       "Bash(python -m unittest tests.*)"
     ]
   },
