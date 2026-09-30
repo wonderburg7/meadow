@@ -70,6 +70,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/diagnostic_log.gd :: flowers_by_species`
    - Next after: none -- plans/now/season-feel.md is complete
 
+2. **[Codex] PE-1 -- pacing milestones are timed to the hour**
+   - Plan: `plans/now/pacing-evidence.md` -- "PE-1 — pacing milestones are timed to the hour"
+   - Files: `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md`
+   - Check: `python -m unittest tests.test_pacing_gates tests.test_headless_verdicts` passes, including a first worker at day 1.5 reading in band at 200 s/day, `python tools/pacing_gates.py --repeat 1` prints a table with two-decimal median days, and `tools/verify.ps1` is green
+   - Proof: `absent: tools/analyze_session.py :: milestone_times`
+   - Next after: none -- plans/now/pacing-evidence.md is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
