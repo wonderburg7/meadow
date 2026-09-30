@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/BS-3` (`claude/BS-3`) | Claude | the gate goes live: an unowned role cannot be assigned or worked | Claude | in progress | none | `plans/now/brood-spine.md` BS-3 — the gate goes live |
