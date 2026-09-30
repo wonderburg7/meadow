@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SK-1` (`claude/SK-1`) | Claude | the skill tree opens full-screen and pauses the game | Claude | in progress | none | `plans/now/skill-screen.md` SK-1 — the skill tree opens full-screen and pauses the game |
