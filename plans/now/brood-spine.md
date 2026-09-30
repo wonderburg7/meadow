@@ -64,7 +64,6 @@ available -- that the run start reads and a developer table shows and edits.
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | a new scenario, `plans/design/progression.md` | after BS-3 | medium |
-| BS-5 | the developer table shows a run's sheet, read-only | `scripts/run_availability_panel.gd` (new), `scripts/run_availability.gd`, `scripts/debug_panel.gd` | yes | medium |
 | BS-6 | developer edits to the table change what a run starts with | decided in BS-5's closeout | after BS-5 and a persistence decision | high |
 
 BS-1 and BS-D share no file and are independent. Every later slice names
@@ -76,60 +75,7 @@ BS-2 shipped 2026-09-29; its specification is `plans/archive/BS-2_2026-09-29.md`
 
 BS-3 shipped 2026-09-30; its specification is `plans/archive/BS-3_2026-09-30.md`.
 
-## BS-5 — the developer table shows a run's sheet, read-only
-
-Level: medium (one new panel, one button, one source check; the sheet it reads
-already exists).
-
-- **Required reading.** Decision 3 above. `scripts/run_availability.gd` (its
-  header and `sheet_for`); how `scripts/debug_panel.gd` builds its footer or
-  category buttons, to place one more; `Session.developer_mode`
-  (`scripts/session.gd`, landed in BS-D).
-- **Files to change.** `scripts/run_availability_panel.gd` (new),
-  `scripts/run_availability.gd`, `scripts/debug_panel.gd`.
-- **Requirements.**
-  - With `Session.developer_mode` on, the settings window shows a "Run
-    availability" button; with it off the button is absent, not disabled. The
-    button opens a read-only window listing the current run's sheet: one row
-    per skill, with its source (start / tree / unavailable) and the reason
-    turned from `run_availability.gd`'s `reason.*` key into a sentence.
-  - The reason-to-text table lives in the panel; the sheet stays keys only.
-    The window recomputes the sheet when opened, never per frame, and reads
-    it through `RunAvailability.sheet_for(Levels.get_level(...))` exactly as
-    `main.gd` does; it does not read `progression.gd`'s ownership as a second
-    answer.
-  - Feature rows and gated-role rows: add them to `run_availability.gd` only
-    as far as its header already promises (features through
-    `progression.gd::feature_valid()`); the "introduced at stage" and "free
-    at stage" columns wait for BS-2 and are named in the window as "not yet
-    available" rather than left blank.
-  - Nothing here edits the sheet. Editing is BS-6.
-- **Source check.** A test that fails if the button can be built while
-  `developer_mode` is off, and one that fails if every `reason.*` key in
-  `run_availability.gd` lacks a sentence in the panel.
-- **Escalation.** If the settings window cannot host the button without
-  reaching into `main.gd`, report which and let Dave choose the entry point.
-
-**Result (30 Sep 2026).** `scripts/run_availability_panel.gd` is the
-read-only table, drawn over the settings window inside its own CanvasLayer;
-`debug_panel.gd::_make_run_availability_button` builds its button only while
-`Session.developer_mode` is on, and the Developer mode toggle rebuilds the row
-(and closes an open table). `RunAvailability.sheet_for(run_definition,
-progression = null)` gained `roles` and `features` rows and a feature-driven
-"unavailable" for tree skills, all only when handed a progression -- main.gd's
-run start passes none, so what a run starts owning is unchanged. Two new
-reason keys, `reason.feature_off`/`reason.feature_on`.
-`tests/source_checks.py::check_developer_table` fails an unguarded builder or
-a reason key with no sentence. The stage columns read "not yet available".
-
-```queue
-**[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
-- Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
-- Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`, `tests/source_checks.py`
-- Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-5 shipped 2026-09-30; its specification is `plans/archive/BS-5_2026-09-30.md`.
 
 ## Later slices, in outline
 
