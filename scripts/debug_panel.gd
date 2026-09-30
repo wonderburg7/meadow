@@ -30,6 +30,7 @@ const Hud = preload("res://scripts/hud.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const RunAvailabilityPanel = preload("res://scripts/run_availability_panel.gd")
 
 ## Text scale re-lays every window, so its -/+ buttons would jump from under
 ## the pointer on each click; the change applies this long after the last one.
@@ -42,6 +43,10 @@ var value_labels: Dictionary = {}
 ## a row's display when they flip a toggle other than the one clicked.
 var toggle_boxes: Dictionary = {}
 var panel: PanelContainer
+## BS-5: the developer-only rows, rebuilt whenever Developer mode changes,
+## and the read-only Run availability table they open (built on first use).
+var developer_row: VBoxContainer
+var run_availability_panel: PanelContainer
 ## Kept so _apply_panel_width() can resize it alongside the panel on
 ## get_viewport().size_changed, the same pattern gallerin_panel.gd uses.
 var panel_scroll: ScrollContainer
@@ -513,6 +518,11 @@ func _build_actions(column: VBoxContainer) -> void:
 	load_btn.pressed.connect(_on_load_pressed)
 	save_row.add_child(UI.with_info(load_btn, "Open the Saves window: save this run by name, load a save or one of its checkpoints, or delete one."))
 
+	developer_row = VBoxContainer.new()
+	developer_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(developer_row)
+	_refresh_developer_row()
+
 	# One labelled home for buttons that force a state the simulation
 	# reaches only rarely on its own, built before anything needs it so the
 	# triggers still to come (plans/now/ui.md UI-R-3, plans/now/challenge-2.md
@@ -550,6 +560,39 @@ func _build_actions(column: VBoxContainer) -> void:
 ## One action button on its own row, filling the window's width with its
 ## info badge pinned to the right. The button expands rather than sitting at
 ## its text width so a row of one does not read as a stray short button.
+## BS-5: the Developer mode rows. With it off the row is empty -- the
+## button is absent, not disabled -- and an open table closes.
+func _refresh_developer_row() -> void:
+	for child in developer_row.get_children():
+		developer_row.remove_child(child)
+		child.queue_free()
+	var button := _make_run_availability_button()
+	if button != null:
+		_add_action_row(developer_row, button, "Developer mode: a read-only table of this run's skills, the roles they unlock and the features they need -- which the run starts owning, leaves to the skill tree or does not offer, and why.")
+	elif run_availability_panel != null:
+		run_availability_panel.hide()
+
+## Null unless Developer mode is on; tests/source_checks.py fails this if
+## the guard goes.
+func _make_run_availability_button() -> Button:
+	if not Session.developer_mode:
+		return null
+	var button := Button.new()
+	_style_button(button)
+	button.text = "Run availability"
+	button.pressed.connect(_on_run_availability_pressed)
+	return button
+
+func _on_run_availability_pressed() -> void:
+	if run_availability_panel == null:
+		run_availability_panel = RunAvailabilityPanel.new()
+		add_child(run_availability_panel)
+		# It belongs to the settings window: closing that closes it too.
+		panel.visibility_changed.connect(func():
+			if not panel.visible:
+				run_availability_panel.hide())
+	run_availability_panel.open()
+
 func _add_action_row(parent: Control, button: Button, tip: String) -> void:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var row := UI.with_info(button, tip)
@@ -831,6 +874,8 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 		if key == "show_info_badges":
 			# applies to every badge already on screen, not just new ones
 			UI.refresh_badge_visibility(self)
+		elif key == "developer_mode":
+			_refresh_developer_row()
 		elif key == "colour_blind_mode":
 			# every cell relabels itself on its next frame; the panels are
 			# told so they can redraw their keys straight away
