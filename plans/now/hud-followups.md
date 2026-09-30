@@ -1,7 +1,7 @@
 # HUD follow-ups — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HF-6 -- why Raises lacks Pollen at 2.2 (C-57) | Dependency: none | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete; follow-up: C-57 (checks/ready/C-57.md) -- HF-6's fixture found Pollen at 2.2 on every headless route, so Dave's re-check names the route it missed | Dependency: none | Verified: 2026-09-30
 
 **Objective.** Fix what Dave's 28 Sep 2026 hands-on batch found wrong or
 awkward in the HUD, each as a small slice a low- or medium-level model can
@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-6 | Why Raises lacks Pollen at 2.2 (C-57) | `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json` | yes | high |
 
 **Dependencies.** None between slices; several share `hud.gd`,
 `scenario_actions.gd` or `year_winter.gd` (as do HR-1 and HR-2 in
@@ -37,35 +36,4 @@ HF-4 shipped 2026-09-30; its specification is `plans/archive/HF-4_2026-09-30.md`
 
 HF-5 shipped 2026-09-30; its specification is `plans/archive/HF-5_2026-09-30.md`.
 
-## HF-6 — why Raises lacks Pollen at 2.2 (C-57)
-
-Level: high (investigation). Dave (28 Sep 2026): at Challenge 2's 2.2 (raise
-a pollen Forager, `docs/challenge-stages.md`) the cell's Raises menu offered
-no Pollen. Traced statically without finding the fault: 2.2's
-`unlocked_keys` include `"pollen"`; `challenge_runner.gd::_apply_stage_gate_to_ui`
-pushes it through `hud.set_allowed_mode_keys`; `show_cell_popup` always
-reaches `_apply_cell_popup_gating`, which refills the menu via
-`_fill_hatch_menu`. **Bounded question:** does the Forager Raises menu hold
-"Forager — Pollen" once 2.2 is entered, and if not, which step drops it?
-
-**Steps.** Add a `"menu_items"` assert condition to `scenario_actions.gd`
-(`{"control": path, "menu_items": [labels]}`, comparing a `MenuButton`'s
-popup item texts). Fixture: Challenge 2, `select_cell`, assert
-`hud/**/hatch_forager_menu` offers only nectar at 2.1;
-`advance_challenge_stage`; `select_cell`; assert both. If it fails, fix that
-step, keep the fixture and move C-57 back to `checks/ready/`. If it passes,
-repeat via the settings stage arrows (`retreat_challenge_stage`) and after a
-save/restore; if still passing, report to Dave: the fault is on a path not
-yet exercised. Do not change gating rules. A fix belongs in
-`hud.gd::_fill_hatch_menu`/`_apply_cell_popup_gating` or
-`challenge_runner.gd::_apply_stage_gate_to_ui`; if it needs anything else,
-escalate with the options.
-
-```queue
-**[Claude] HF-6 -- why Raises lacks Pollen at 2.2 (C-57)**
-- Plan: `plans/now/hud-followups.md` -- "HF-6 — why Raises lacks Pollen at 2.2 (C-57)"
-- Files: `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/hf6_challenge2_raises_test.json` passes with the fix, or its failure names the step that drops Pollen, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/scenario_actions.gd :: "menu_items"`
-- Next after: none -- plans/now/hud-followups.md is complete
-```
+HF-6 shipped 2026-09-30; its specification is `plans/archive/HF-6_2026-09-30.md`.

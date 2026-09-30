@@ -1,0 +1,179 @@
+{
+  "challenge": 2,
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "2.1"
+    },
+    {
+      "do": "select_cell",
+      "built_index": 0
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.1"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar"
+        ]
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "2.2"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.2"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar",
+          "Forager — Pollen"
+        ]
+      }
+    },
+    {
+      "do": "select_cell",
+      "built_index": 0
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.2"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar",
+          "Forager — Pollen"
+        ]
+      }
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "2.3"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "2.2"
+    },
+    {
+      "do": "select_cell",
+      "built_index": 0
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.2"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar",
+          "Forager — Pollen"
+        ]
+      }
+    },
+    {
+      "do": "retreat_challenge_stage",
+      "stage_id": "2.1"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "advance_challenge_stage",
+      "stage_id": "2.2"
+    },
+    {
+      "do": "select_cell",
+      "built_index": 0
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.2"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar",
+          "Forager — Pollen"
+        ]
+      }
+    },
+    {
+      "do": "save_run",
+      "name": "HF6 raises"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "restore_slot",
+      "name": "HF6 raises"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "select_cell",
+      "built_index": 0
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "assert",
+      "when": {
+        "challenge_stage_id": "2.2"
+      },
+      "condition": {
+        "control": "command_tray/**/hatch_forager_menu",
+        "menu_items": [
+          "Forager — Nectar",
+          "Forager — Pollen"
+        ]
+      }
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  }
+}
