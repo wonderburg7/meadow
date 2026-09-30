@@ -105,3 +105,5 @@ check is filed.
   definition pass, because the arc's start is the Colony Run's start
   (`plans/design/product-scope.md` §6.2, "Next design pass"). What it must
   settle is listed there, so it survives this plan being archived after PE-1.
+  `plans/now/gameplay-consistency.md` GC-3 (honey stops creating energy)
+  waits for this arc as its before-and-after evidence.
