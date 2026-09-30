@@ -15,18 +15,11 @@ The second objective is cost, and it is the larger one. Writing code was
 25.6% of a session's context spend at F13's measurement; 47.1% fell after
 the last product edit, in closeout and document curation, and a further
 17.4% went to sessions that made no product edit at all. **Target: raise the
-implementing share above 40%.** L-9 built the re-measurement
-(`session_cost.py --phases`); over the seven sessions since L-5 merged the
-share is 40.0% -- the threshold itself, not yet above it, on too small a
-sample to call moved. Nothing in this plan may buy that by removing a check.
-
-Re-measured 17 Sep 2026 over calendar windows rather than a session count,
-which counts every session including the ones that write no code: over 21
-days implementing is 23.0% against 41.3% after the last product edit, and
-over 7 days it is 19.0% against 47.4%. The two framings are not comparable
-figures, but neither shows the target met, and the calendar one is moving
-the wrong way. L-10 to L-13 below are the response: they attack the closeout
-share directly, by making `finish`'s hand-authored gates into actions.
+implementing share above 40%** (`session_cost.py --phases`, built by L-9).
+Re-measured 17 Sep 2026 over calendar windows: 23.0% implementing over 21
+days and 19.0% over 7, against 41.3% and 47.4% after the last product edit.
+L-10 to L-13 were the response: they made `finish`'s hand-authored gates
+into actions. Nothing in this plan may buy the target by removing a check.
 
 The evidence is in `docs/agent-workflow-review-2026-09-12.md`; findings are
 cited as F1 to F12 and are not restated here. The 3 September plan is
@@ -35,17 +28,11 @@ not reopened: this is a new plan for defects that surfaced after it shipped.
 
 ## Current state
 
-L-1 to L-11 have shipped (one pointer each under "Standing rules" below);
-closeout is a journaled transaction whose `archived` and `refilled` phases
-are performed by `tools/archive_slice.py` and `tools/refill_lane.py`
-(L-10, L-11); L-12 and L-13 turn what is still typed by hand into actions. The
-instruments those slices aim at landed on 17 Sep 2026: the stops ledger
-(`session_cost.py --stops`), `--no-edit-reasons`, `tools/new_check.py` and
-the allow-listed read-only commands in `.claude/settings.json`. The
-completion gate stands at 39 `lifecycle_failure` outcomes in the seven days
-to 17 Sep against a required zero, no canary slice named per lane, and the
-implementing share below 40% on every window measured; only the
-measurement-ran-once condition is met. The measured evidence is
+L-1 to L-15 have shipped (one archive record each, under "Standing rules"
+below): closeout is a journaled transaction whose `archived` and `refilled`
+phases are actions (`tools/archive_slice.py`, `tools/refill_lane.py`), and a
+lane refills itself from the plans' `queue` blocks. The completion gate in
+"Objective" has not been met on any window measured; the evidence is
 `docs/agent-workflow-review-2026-09-12.md`, not this section.
 
 Re-read 30 Sep 2026 from Git alone, because the review ran in a cloud
@@ -61,13 +48,6 @@ slice until the next measurement says what those sessions were doing.
 
 ## Open slices
 
-`finish`'s `archived` and `refilled` phases became actions with L-13
-(18-19 Sep 2026) and L-12 closed the last hand-written step on 21 Sep 2026: a
-lane now refills itself from the ```queue blocks in the plans, so the five
-lines a session used to write out of prose at closeout are a copy. L-15 was
-added 25 Sep 2026 from two triaged system-improvement signals, both about
-the two lanes blocking each other.
-
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-16 | master is synchronised with origin before a claim and before a merge | `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py` | medium |
@@ -77,7 +57,11 @@ L-15 shipped 2026-09-29; its specification is `plans/archive/L-15_2026-09-29.md`
 
 Both slices change `tools/slice.ps1`, whose suite skips off Windows
 (`workflow_test_support.windows_powershell`), so **each is implemented in a
-local Windows session**, never a cloud one.
+local Windows session**, never a cloud one. Their blocks are fenced
+`queue-gated` until such a session opens them (plan review, 30 Sep 2026:
+a cloud claim could not run either slice's check, and `verify.ps1` would
+pass with the tests skipped). `NEXTSTEPS.md` "Not in the queue, and why"
+carries the two commands.
 
 ### L-16 — master is synchronised with origin before a claim and before a merge
 
@@ -167,7 +151,7 @@ tools/session_cost.py --stops` showing no `git push failed` stop for it.
 `grep -n "^function"`); the remote-ahead test in
 `tests/test_two_lane_closeout.py`.
 
-```queue
+```queue-gated
 **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
 - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
@@ -236,7 +220,7 @@ block of `Invoke-SliceFinish` in `tools/slice.ps1`; the `Invoke-GitQuiet`
 function; the fixture helpers at the top of `SliceLifecycleTest` in
 `tests/test_slice_lifecycle.py`.
 
-```queue
+```queue-gated
 **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
 - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`
@@ -264,34 +248,11 @@ twice; a format change turns into a silent parse failure. Extend the parsers,
 never the formats.
 
 **Read for any slice here:** this plan's own section and nothing else. F1 to
-F12 in the review are the evidence and do not need rereading to implement.
+F12 in the 12 Sep review and F1, F2 in the 30 Sep review are the evidence and
+do not need rereading to implement.
 
-Shipped, one pointer each -- the full specification and outcome of every one
-is in its archive record, and none of them needs rereading to work on L-12 or
-L-13:
-
-- L-1, the lifecycle suite is green and runs in verification (12 Sep) --
-  `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`.
-- L-2, every outcome classified and every closeout phase injectable (12 Sep);
-  its classify baseline does not agree with the review's Part 1 figures
-  within 10%, left as a follow-up -- `plans/archive/L-2_2026-09-12.md`.
-- L-3, branch and primary verification are separate scopes (13 Sep) --
-  `plans/archive/L-3_2026-09-13.md`.
-- L-4, the worktree is deleted outside the lock, survivors queued (14 Sep) --
-  `plans/archive/L-4_2026-09-14.md`.
-- L-5, closeout is one transaction: phase journal, one push, archive and
-  refill committed on the branch before merge (14 Sep) --
-  `plans/archive/L-5_2026-09-14.md`.
-- L-6, the concurrency contract as `TwoLaneCloseoutTest` (14 Sep); it found
-  that nothing refused an uncommitted edit to a coordination file in the
-  primary checkout before merging -- `plans/archive/L-6_2026-09-14.md`.
-- L-7, the queue cannot contradict itself (14 Sep) --
-  `plans/archive/L-7_2026-09-14.md`.
-- L-8, a Godot failure names which of five things broke (17 Sep) --
-  `plans/archive/L-8_2026-09-17.md`.
-- L-9, the floor is measured and split, and this plan is gated (17 Sep) --
-  `plans/archive/L-9_2026-09-17.md`.
-- L-10, `tools/archive_slice.py` moves a closing slice's plan section to the
-  archive (18 Sep) -- `plans/archive/L-10_2026-09-18.md`.
-- L-11, `tools/refill_lane.py --delete` removes a queue item and renumbers
-  its lane (18 Sep) -- `plans/archive/L-11_2026-09-18.md`.
+Shipped: L-1 to L-15, one archive record each in `plans/archive/`, named
+by id and date (L-1's is `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`).
+None needs rereading to
+work on L-16 or L-17; L-2's classify baseline still disagrees with the 12 Sep
+review's Part 1 figures by more than 10%, an open follow-up recorded there.

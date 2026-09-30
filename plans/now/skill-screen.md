@@ -25,12 +25,11 @@ read, and the player drags to pan and scrolls to zoom out to the whole tree.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SK-2 | Names sit in big hexes; drag to pan, wheel to zoom | `scripts/skill_tree_panel.gd` | after SK-1 | medium |
+| SK-2 | Names sit in big hexes; drag to pan, wheel to zoom | `scripts/skill_tree_panel.gd` | yes (SK-1 shipped 30 Sep 2026) | medium |
 
-**Dependencies.** BS-2 (`plans/now/brood-spine.md`) edits
-`skill_tree_panel.gd` (a waived skill shows "Free" for its cost) and is ahead
-of SK-1 in the Claude lane; SK-1 keeps that "Free" wording in the tile
-tooltip and the detail strip. SK-2 needs SK-1's full-screen view.
+**Dependencies.** None open: BS-2 and SK-1 both shipped by 30 Sep 2026. The
+"Free" wording BS-2 gave a waived skill stays in the tile tooltip and the
+detail strip.
 **Required reading:** the slice's own section, `progression.md` section 8.4,
 and the functions named. **Do not change** `buy_skill`'s signature (the
 `buy_skill` scenario verb calls it) or the once-per-open tile resolution in
