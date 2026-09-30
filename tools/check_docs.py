@@ -392,6 +392,11 @@ def check_next_steps(errors: list[str], warnings: list[str], text: str | None = 
 # finished. Those are the only two endings.
 NO_SUCCESSOR = re.compile(r"^\s*-\s*Next after:\s*(.+?)\s*$", re.MULTILINE)
 PLAN_COMPLETE = re.compile("none.*(complete|finished|last slice)", re.IGNORECASE)
+# The text before the first " -- " is what tools/slice.ps1's Get-SuccessorId
+# looks up as the successor, so it must be a slice id (PERF-3, BS-D, G3,
+# UI-X-2). PERF-3's "close candidate A in ..." (29 Sep 2026) was an action,
+# and it stopped finish at the refill gate.
+SUCCESSOR_ID = re.compile(r"[A-Z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*")
 
 
 def check_queue_successors(errors: list[str], text: str | None = None) -> None:
@@ -407,6 +412,13 @@ def check_queue_successors(errors: list[str], text: str | None = None) -> None:
             continue   # check_next_steps already reports the missing field
         value = line.group(1)
         if not value.lower().startswith("none"):
+            lead = value.split("--", 1)[0].strip()
+            if not SUCCESSOR_ID.fullmatch(lead):
+                errors.append(
+                    f"NEXTSTEPS.md item {index}: 'Next after: {value}' does not lead with a slice id. "
+                    "Write '<id> -- <title>' for the slice that follows it, or "
+                    "'none -- <plan> is complete' and put any follow-up action after that"
+                )
             continue
         if PLAN_COMPLETE.search(value):
             continue

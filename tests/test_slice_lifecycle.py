@@ -1094,7 +1094,8 @@ class SliceDoctorTest(unittest.TestCase):
         "- **T-9** (`plans/fixture.md`) -- waits on something else.\n"
     )
 
-    def finish_with_a_deferred_successor(self, lane_after_refill=""):
+    def finish_with_a_deferred_successor(self, lane_after_refill="",
+                                         next_after="T-2 -- the fixture's own successor."):
         """Close T-1, whose `Next after:` names T-2, with T-2 deferred under
         '## Not in the queue, and why' and $lane_after_refill as the Codex
         lane the refill leaves. Returns the finish process."""
@@ -1105,7 +1106,7 @@ class SliceDoctorTest(unittest.TestCase):
             "   - Files: `scripts/sample.gd`\n"
             "   - Check: deterministic\n"
             "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
-            "   - Next after: T-2 -- the fixture's own successor.\n"
+            f"   - Next after: {next_after}\n"
             "\n## Not in the queue, and why\n\n"
             "- **T-9** (`plans/fixture.md`) -- waits on something else.\n",
             encoding="utf-8",
@@ -1184,6 +1185,27 @@ class SliceDoctorTest(unittest.TestCase):
             finish.stdout,
         )
         self.assertNotIn("not found in NEXTSTEPS.md", finish.stdout)
+
+    def test_refill_gate_ignores_a_next_after_that_is_not_a_slice_id(self):
+        """PERF-3's `Next after:` was the action 'close candidate A in ...'
+        (29 Sep 2026). The gate took that sentence as a successor id and
+        stopped finish; a lead that is not id-shaped names no successor, and
+        the report shows the lane's new lead instead."""
+        finish = self.finish_with_a_deferred_successor(
+            "1. **[Codex] T-3 -- fixture lead.**\n"
+            "   - Plan: `plans/fixture.md` -- fixture lead\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- fixture plan is complete\n\n",
+            next_after="close candidate A in the audit if the runs agree",
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn(
+            "Next slice:   T-3 -- fixture lead.  (Next after was not a slice: "
+            "close candidate A in the audit if the runs agree)",
+            finish.stdout,
+        )
 
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

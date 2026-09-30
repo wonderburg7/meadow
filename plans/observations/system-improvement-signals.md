@@ -270,3 +270,25 @@ explicit request from Dave.
 - Disposition: rejected (23 Sep 2026) -- Dave deleted the branch without
   porting `-RegenerateOnly`. The duplicated work it records is now guarded by
   `tools/slice.ps1 owner`, which ad-hoc sessions run before editing.
+
+### 2026-09-29 — `finish`'s refill gate read a prose `Next after:` as a slice id
+
+- Source: PERF-3 closeout (Claude, reviewing a Codex hand-off)
+- Area: process / lifecycle tooling
+- Signal: PERF-3's `Next after:` was an action, "close candidate A in
+  `plans/reference/technical-audit.md` ...", not a slice. `Get-SuccessorId`
+  in `tools/slice.ps1` took everything before `--` as the successor id, so
+  the refill gate stopped `finish` demanding that sentence be queued or
+  deferred, although the action had been done on the branch.
+- Evidence: the PERF-3 `slice finish stopped` block at the refill gate, 29 Sep
+  2026, cleared only by a placeholder bullet under `## Not in the queue, and
+  why`. The same closeout first hit the dry-backlog floor stop (no `[Codex]`
+  block in any plan), cleared by moving SF-2 to the Codex lane with Dave's
+  agreement.
+- Consequence: any plan whose last slice ends in a follow-up action rather
+  than a successor slice stopped `finish` or left a junk queue line.
+- Candidate direction: Hypothesis -- treat `Next after:` as a successor only
+  when its lead is id-shaped, and reject a prose lead at queue time.
+- Disposition: promoted and fixed ad hoc 29 Sep 2026 at Dave's request --
+  `Get-SuccessorId` ignores a lead that is not id-shaped, and
+  `check_docs.py`'s `check_queue_successors` rejects one at queue time.
