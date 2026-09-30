@@ -315,6 +315,10 @@ var goal_progress_label: Label
 ## role's unlock leak into the other's. See _build_doing_row.
 var allowed_role_keys: Array = []
 var allowed_mode_keys: Array = []
+## The stage gate apply_gates was last handed, so _role_offered can ask
+## Availability.role_query without reaching into main.gd. Null until then,
+## which role_query reads as "no stage restriction".
+var _stage_gate = null
 ## Restricts the cell popup's "Reserve for" row to just these designation
 ## keys ("nectar", "pollen", "honey", "jelly", "brood", "any" for
 ## Unreserve). Empty means no restriction. See set_allowed_designation_keys.
@@ -2116,7 +2120,7 @@ func _apply_cell_popup_gating() -> void:
 	var any_raise_option := false
 	for entry in hatch_option_controls:
 		var role: int = entry.role
-		entry.control.visible = allowed_role_keys.is_empty() or (role != -1 and allowed_role_keys.has(Roles.key_for(role)))
+		entry.control.visible = (role == -1 and allowed_role_keys.is_empty()) or (role != -1 and _role_offered(role))
 		if entry.control is MenuButton:
 			var offered: int = _fill_hatch_menu((entry.control as MenuButton).get_popup(), role, entry.options)
 			entry.control.visible = entry.control.visible and offered > 0
@@ -2737,8 +2741,8 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		if role.id == Roles.QUEEN and not any_queen:
 			continue                       # queen only
 		var key: String = role.key
-		if not allowed_role_keys.is_empty() and not allowed_role_keys.has(key):
-			continue                       # a Challenge hasn't taught this role yet
+		if not _role_offered(role.id):
+			continue                       # not taught yet, or its skill not bought
 		items.append({
 			"text": role.label,
 			"action": func(): role_requested.emit(key),
@@ -2926,8 +2930,8 @@ func _secondary_items() -> Array:
 		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
 			continue   # neither is a sensible thing to fall back to
 		var key: String = role.key
-		if not allowed_role_keys.is_empty() and not allowed_role_keys.has(key):
-			continue   # a Challenge hasn't taught this role yet
+		if not _role_offered(role.id):
+			continue   # not taught yet, or its skill not bought
 		items.append({"text": role.label, "action": func(): secondary_role_requested.emit(key)})
 	return items
 
@@ -3348,6 +3352,19 @@ func set_view_label(in_hive: bool) -> void:
 ## waiting for the next unrelated selection change.
 func set_allowed_role_keys(keys: Array) -> void:
 	allowed_role_keys = keys
+	refresh_role_gating()
+
+## BS-3: whether the Job row, the "when idle" menu and the Raises row may
+## offer `role_id`: Availability.role_query over the stage gate and the run's
+## skills. A role the stage has taught but whose skill is not bought yet
+## stays hidden until it is.
+func _role_offered(role_id: int) -> bool:
+	return Availability.role_query(role_id, _stage_gate, Session.progression).available
+
+## Re-applies role availability to whatever is open: the selection's role
+## rows and the cell popup's Raises row. Called on a stage change and by the
+## skill tree after a purchase, never per frame.
+func refresh_role_gating() -> void:
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
 	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
@@ -3395,6 +3412,7 @@ func set_queen_build_button_visible(value: bool) -> void:
 ## when it registers. Called on stage entry and on
 ## stage_gate.unlocked_changed, never per frame.
 func apply_gates(stage_gate) -> void:
+	_stage_gate = stage_gate
 	var designations: Array = []
 	for key in Availability.UI_GATES:
 		var row: Dictionary = Availability.UI_GATES[key]

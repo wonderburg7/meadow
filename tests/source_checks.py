@@ -2954,6 +2954,74 @@ def check_progression_grid(problems):
             )
 
 
+
+def check_stage_role_skills(problems):
+    """BS-3: a Challenge stage must not unlock a skill-gated role's key
+    before the player can own that role's skill -- the stage, or one before
+    it in the same Challenge, makes the skill a free purchase, or the
+    Challenge's level definition starts with it (skill_grants, a seeded
+    count of that role, or its queen_laying_backup). Otherwise the stage
+    would teach a role the HUD can never offer. What makes a future Honey
+    stage safe."""
+    roles_src = open(os.path.join(ROOT, "roles.gd"), encoding="utf-8").read()
+    stages_src = open(os.path.join(ROOT, "challenge_stages.gd"), encoding="utf-8").read()
+    levels_src = open(os.path.join(ROOT, "levels.gd"), encoding="utf-8").read()
+    avail_src = open(os.path.join(ROOT, "run_availability.gd"), encoding="utf-8").read()
+
+    role_skill = {}      # role key -> skill id
+    role_const = {}      # role const name -> role key
+    for const, key, skill in re.findall(
+            r'"id":\s*(\w+),\s*"key":\s*"(\w+)"[^\n]*\n\s*"skill":\s*"([^"]*)"', roles_src):
+        role_const[const] = key
+        if skill:
+            role_skill[key] = skill
+    if not role_skill:
+        problems.append("roles.gd: found no skill-gated role for the stage role-skill check")
+        return
+    seed_keys = {role_const.get(const, ""): count_key
+                 for const, count_key in re.findall(r'Roles\.(\w+):\s*"(\w+)"', avail_src)}
+
+    consts = dict(re.findall(r'^const\s+(\w+)\s*:?=\s*"([^"]*)"', stages_src, re.M))
+
+    def names(list_text):
+        found = [consts.get(n, n) for n in re.findall(r"\b([A-Z][A-Z0-9_]+)\b", list_text)]
+        found += re.findall(r'"([^"]+)"', list_text)
+        return set(found)
+
+    def level_starts_with(level_id, role_key, skill):
+        m = re.search(r"^\t%d:\s*\{(.*?)^\t\}," % level_id, levels_src, re.M | re.S)
+        if not m:
+            return False
+        body = m.group(1)
+        grants = re.search(r'"skill_grants":\s*\[([^\]]*)\]', body)
+        if grants and ('"%s"' % skill) in grants.group(1):
+            return True
+        count = re.search(r'"%s":\s*(\d+)' % re.escape(seed_keys.get(role_key, "~")), body)
+        if count and int(count.group(1)) > 0:
+            return True
+        return re.search(r'"queen_laying_backup":\s*"%s"' % re.escape(role_key), body) is not None
+
+    free_so_far = {}     # challenge number -> skills made free by a stage so far
+    ids = list(re.finditer(r'"id":\s*"(\d+)\.(\d+)"', stages_src))
+    for i, m in enumerate(ids):
+        challenge = int(m.group(1))
+        record = stages_src[m.start():ids[i + 1].start() if i + 1 < len(ids) else len(stages_src)]
+        free = re.search(r'"free_skills":\s*\[([^\]]*)\]', record)
+        if free:
+            free_so_far.setdefault(challenge, set()).update(names(free.group(1)))
+        unlocked = re.search(r'"unlocked_keys":\s*\[(.*?)\],\s*$', record, re.M | re.S)
+        if not unlocked:
+            continue
+        keys = set(re.findall(r'"key":\s*"(\w+)"', unlocked.group(1))) | names(unlocked.group(1))
+        for role_key, skill in role_skill.items():
+            if role_key not in keys:
+                continue
+            if skill in free_so_far.get(challenge, set()) or level_starts_with(challenge, role_key, skill):
+                continue
+            problems.append(
+                "challenge_stages.gd: stage %s.%s unlocks role %r before %s is free or owned "
+                "-- make it a free_skills entry at or before this stage" % (m.group(1), m.group(2), role_key, skill))
+
 def check_ui_gate_table(problems):
     """F2s (plans/design/architecture-review.md): availability.gd's UI_GATES
     is the one table of stage-gated HUD controls. No stage_gate.gd
@@ -3096,6 +3164,7 @@ def main():
     check_progression_resolver(problems)
     check_progression_foraging_rules(problems)
     check_run_skill_policy(problems)
+    check_stage_role_skills(problems)
     check_progression_tier_and_cost(problems)
     check_progression_transcribed_effects(problems)
     check_progression_reachability(problems)

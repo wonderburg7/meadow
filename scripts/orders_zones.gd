@@ -137,7 +137,16 @@ func _on_role_requested(role_name: String) -> void:
 		_apply_mode(role.id, role_name.substr(prefix.length()))
 		return
 
+## BS-3: a role, a backup role or a cell's Raises choice is set only while
+## Availability.role_query allows it. The stage part is left out here: which
+## controls a Challenge shows is the HUD's lesson plan, while owning a role's
+## skill is a rule of the run that holds for every caller.
+func _role_permitted(role_id: int) -> bool:
+	return main.Availability.role_query(role_id, null, Session.progression).available
+
 func _assign_role(role_id: int) -> void:
+	if not _role_permitted(role_id):
+		return
 	for b in main.selected_bees:
 		if is_instance_valid(b):
 			b.set_role(role_id)
@@ -175,6 +184,8 @@ func _on_favourite_requested(value: bool) -> void:
 
 func _on_secondary_role_requested(role_name: String) -> void:
 	var target_role: int = main.Roles.id_for_key(role_name)
+	if target_role >= 0 and not _role_permitted(target_role):
+		return
 	for b in main.selected_bees:
 		if is_instance_valid(b):
 			b.set_secondary_role(target_role)
@@ -216,6 +227,8 @@ func _designate_one(cell: Node2D, type: String) -> void:
 		cell.set_designation(type)
 
 func _on_cell_hatch_role_requested(anchor: Node2D, role: int, focus: String, use_automine: bool) -> void:
+	if role >= 0 and not _role_permitted(role):
+		return
 	for cell in _cells_to_act_on(anchor):
 		cell.hatch_role = role
 		cell.hatch_focus = focus

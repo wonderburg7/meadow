@@ -484,6 +484,17 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 		main.orders_zones._on_role_requested(role)
 	main.selected_bees = previous
 
+	# BS-3: {"expect_refused": true} proves a role the run has not unlocked
+	# cannot be assigned -- accepted only when no bee ended up on it.
+	if action.get("expect_refused", false):
+		var moved: Array = bees.filter(func(b): return is_instance_valid(b) and b.role == role_id)
+		if moved.is_empty():
+			_log("assign_role", "%d bees -> %s" % [bees.size(), role], "accepted", "refused as expected")
+		else:
+			_log("assign_role", "%d bees -> %s" % [bees.size(), role], "rejected",
+				"%d bee(s) took role %s, which should have been refused" % [moved.size(), role])
+		return
+
 	var bad: Array = bees.filter(func(b):
 		if not is_instance_valid(b) or b.role != role_id:
 			return true
@@ -633,9 +644,13 @@ static func _do_set_config(_main: Node2D, action: Dictionary) -> void:
 ## CHATGPT_INSIGHTS_PLAN.md's C4 hatch test (no way to configure a hatch
 ## role headlessly before this), same "call the real command function"
 ## pattern as every other verb here.
+## BS-3: the cell may be named by "cell" ({"built_index": n} or {"hex": ...},
+## _resolve_cell_ref) instead of "hex". {"expect_refused": bool} checks the
+## cell's own hatch_role afterwards: true accepts only a refused request,
+## false only a cell that now raises the role.
 static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
 	var hex: Array = action.get("hex", [])
-	var cell: Node2D = _resolve_cell(main, hex)
+	var cell: Node2D = _resolve_cell_ref(main, action["cell"]) if action.has("cell") else _resolve_cell(main, hex)
 	var role_key: String = action.get("role", "")
 	if cell == null or role_key == "":
 		_log("hatch_role", str(action), "rejected", "no cell at that hex or no role given")
@@ -644,6 +659,12 @@ static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
 	var focus: String = action.get("focus", "")
 	var automine: bool = action.get("automine", false)
 	main.orders_zones._on_cell_hatch_role_requested(cell, role_id, focus, automine)
+	if action.has("expect_refused"):
+		var refused: bool = cell.hatch_role != role_id
+		if refused != bool(action["expect_refused"]):
+			_log("hatch_role", "%s -> %s" % [cell.axial, role_key], "rejected",
+				"cell raises %d, expected the request %s" % [cell.hatch_role, "refused" if action["expect_refused"] else "taken"])
+			return
 	_log("hatch_role", "%s -> %s/%s" % [hex, role_key, focus], "accepted", "")
 
 ## Calls the same two restock command functions as the comb-worker panel:

@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
-   - Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
-   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
-   - Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/availability.gd :: "role_query"`
-   - Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill
-
-2. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
+1. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
    - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
    - Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
    - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
+
+2. **[Claude] SK-2 -- skill names in big hexes, with drag and zoom**
+   - Plan: `plans/now/skill-screen.md` -- "SK-2 — skill names in big hexes, with drag and zoom"
+   - Files: `scripts/skill_tree_panel.gd`
+   - Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/skill_tree_panel.gd :: const TILE_SIZE := 11.0`
+   - Next after: none -- plans/now/skill-screen.md is complete
 
 ### Codex lane
 
@@ -53,10 +53,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-4 and BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
+- **BS-4** (`plans/now/brood-spine.md`) -- waits for its specification: the plan's "Later slices" outline names the proof, but not the colony, the tier-2 skill or the run length its scenario uses.
+- **BS-6** (`plans/now/brood-spine.md`) -- waits for BS-5 and for Dave's decision on where developer edits persist.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for BS-4 to prove a tier-2 purchase in a run.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
-- **SK-2** (`plans/now/skill-screen.md`) -- waits for SK-1's full-screen skill view to merge.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

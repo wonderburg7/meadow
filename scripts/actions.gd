@@ -29,11 +29,15 @@ static func by_id(action_id: String) -> Dictionary:
 			_by_id[action.id] = action
 	return _by_id.get(action_id, {})
 
-## Whether `action` fills any gate field -- a row that fills none is always
-## available and is never queried.
+## Whether `action` fills any gate field, or serves a role a skill unlocks
+## (BS-3: Availability.action_query refuses that row until the skill is
+## owned) -- a row that is neither is always available and is never queried.
 static func is_gated(action: Dictionary) -> bool:
 	for field in GATE_FIELDS:
 		if str(action.get(field, "")) != "":
+			return true
+	for role_id in action.get("roles", []):
+		if Roles.skill_for(role_id) != "":
 			return true
 	return false
 

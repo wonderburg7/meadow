@@ -281,6 +281,8 @@ func buy_skill(skill_id: String) -> bool:
 			push_warning("Skill %s: took %.1f of %.1f %s from the comb." % [skill_id, taken, spent, key])
 	# A skill can gate work (G3): bees ask again rather than keep a stale answer.
 	Availability.invalidate()
+	# ...and a role (BS-3): the HUD re-offers one this purchase unlocked.
+	main.hud.refresh_role_gating()
 	main.hud.show_warning("%s bought." % Skills.label_for(skill_id))
 	_rebuild()
 	return true
