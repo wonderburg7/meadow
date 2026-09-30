@@ -1,7 +1,7 @@
 # HUD follow-ups — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HF-5 -- opening Nursery keeps the view you are in | Dependency: none | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: HF-6 -- why Raises lacks Pollen at 2.2 (C-57) | Dependency: none | Verified: 2026-09-30
 
 **Objective.** Fix what Dave's 28 Sep 2026 hands-on batch found wrong or
 awkward in the HUD, each as a small slice a low- or medium-level model can
@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-5 | Opening Nursery keeps the view you are in | `scripts/year_winter.gd` | yes | low |
 | HF-6 | Why Raises lacks Pollen at 2.2 (C-57) | `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json` | yes | high |
 
 **Dependencies.** None between slices; several share `hud.gd`,
@@ -36,26 +35,7 @@ HF-3 shipped 2026-09-30; its specification is `plans/archive/HF-3_2026-09-30.md`
 
 HF-4 shipped 2026-09-30; its specification is `plans/archive/HF-4_2026-09-30.md`.
 
-## HF-5 — opening Nursery keeps the view you are in
-
-Level: low. Dave (28 Sep 2026): the Nursery window should not take you to
-the hive view. `year_winter.gd::_on_nursery_window_requested` sets
-`main.in_hive_view = true` and calls `camera_view._apply_view()`. Replace
-those three lines with `main.orders_zones._apply_zone_glow()`, which already
-shows the glow only when the Nursery is open *and* the hive view is showing,
-and which `_apply_view` re-runs on every later view switch.
-
-**Acceptance (check filed at closeout).** In the meadow view, pressing
-Nursery opens the window and the meadow stays on screen.
-
-```queue
-**[Claude] HF-5 -- opening Nursery keeps the view you are in**
-- Plan: `plans/now/hud-followups.md` -- "HF-5 — opening Nursery keeps the view you are in"
-- Files: `scripts/year_winter.gd`
-- Check: `tools/verify.ps1` is green, and `_on_nursery_window_requested` no longer writes `main.in_hive_view`
-- Proof: `present: scripts/year_winter.gd :: _close_other_left_windows(main.nursery_panel)`
-- Next after: HF-6 -- why Raises lacks Pollen at 2.2 (C-57)
-```
+HF-5 shipped 2026-09-30; its specification is `plans/archive/HF-5_2026-09-30.md`.
 
 ## HF-6 — why Raises lacks Pollen at 2.2 (C-57)
 
