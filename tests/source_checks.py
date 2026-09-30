@@ -52,7 +52,8 @@ add_to_group remove_from_group is_in_group get_tree get_viewport get_viewport_re
 get_global_mouse_position get_local_mouse_position is_inside_tree queue_free set_process
 is_visible_in_tree show hide
 set_physics_process set_process_input set_process_unhandled_input queue_redraw
-draw_line draw_circle draw_rect draw_polygon draw_colored_polygon draw_string draw_arc
+draw_line draw_polyline draw_circle draw_rect draw_polygon draw_colored_polygon draw_string draw_arc
+accept_event
 draw_set_transform draw_texture create_tween get_index move_child notification
 add_theme_font_size_override add_theme_color_override add_theme_stylebox_override
 add_theme_constant_override has_theme_stylebox get_theme_font set_anchors_preset
@@ -131,7 +132,9 @@ def collect_names(code, source):
         m = re.match(r"^const\s+(\w+)", line)
         if m:
             members.add(m.group(1))
-        m = re.match(r"^signal\s+(\w+)", line)
+        # An inner class's signal is indented; its `.emit` is still a bare
+        # call in this file (skill_tree_panel.gd's SkillGrid, 30 Sep 2026).
+        m = re.match(r"^\s*signal\s+(\w+)", line)
         if m:
             funcs.add(m.group(1))  # signals are callable via .emit
     for m in re.finditer(r"enum\s+(\w*)\s*\{([^}]*)\}", source, re.S):

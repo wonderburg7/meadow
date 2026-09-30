@@ -50,6 +50,34 @@ class BracketChecksTest(unittest.TestCase):
         self.assertEqual([], problems)
 
 
+class InnerClassCallChecksTest(unittest.TestCase):
+    """A signal declared inside an inner class, and the Control/CanvasItem
+    calls an inner drawing class makes, are not undefined calls.
+
+    SK-1 (30 Sep 2026) had to swap `tile_selected.emit()`, `draw_polyline()`
+    and `accept_event()` for other calls to get past this checker, and paid
+    a full `finish` round trip to learn that."""
+
+    def test_indented_signal_and_engine_draw_calls_are_known(self):
+        code = [
+            "class SkillGrid:",
+            "\tsignal tile_selected(index)",
+            "\tfunc _draw():",
+            "\t\tdraw_polyline(points, colour, 2.0)",
+            "\t\taccept_event()",
+            "\t\ttile_selected.emit(1)",
+            "\t\tnot_a_function()",
+        ]
+        funcs, _members = source_checks.collect_names(code, "\n".join(code))
+        problems = []
+
+        source_checks.check_calls("sample.gd", code, funcs, problems)
+
+        self.assertIn("tile_selected", funcs)
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("not_a_function()", problems[0])
+
+
 class ScriptUidChecksTest(unittest.TestCase):
     """An untracked .gd.uid gets a fresh random uid on every worktree boot."""
 
