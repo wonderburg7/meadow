@@ -509,9 +509,9 @@ func _build_actions(column: VBoxContainer) -> void:
 
 	load_btn = Button.new()
 	_style_button(load_btn)
-	load_btn.text = "Load run"
+	load_btn.text = "Saves…"
 	load_btn.pressed.connect(_on_load_pressed)
-	save_row.add_child(UI.with_info(load_btn, "Rebuild the world from the saved run. Whatever is happening now is lost."))
+	save_row.add_child(UI.with_info(load_btn, "Open the Saves window: save this run by name, load a save or one of its checkpoints, or delete one."))
 
 	# One labelled home for buttons that force a state the simulation
 	# reaches only rarely on its own, built before anything needs it so the
@@ -673,14 +673,15 @@ func _on_save_pressed() -> void:
 ## the hive, so the world has to be built with them from the start. The
 ## flag tells the fresh scene to replay the save over itself.
 func _on_load_pressed() -> void:
-	# SV-3: in a sandbox run the Saves window (SV-2) is where a save is
-	# chosen, so Load run opens it rather than guessing. A Challenge hides
-	# that window, and the main menu would sit on top of it, so both keep
-	# the older behaviour below: load the most recently saved named slot.
+	# SV-3, SA-1: the Saves window (SV-2) is where a save is chosen, so
+	# "Saves…" opens it -- in a sandbox run and on the main menu, where the
+	# window raises itself above the menu (saves_panel.gd::open). Only a
+	# Challenge in progress keeps the older behaviour below, loading the
+	# most recently saved named slot: a Challenge keeps its own checkpoints.
 	var worlds := get_tree().get_nodes_in_group("world")
 	var menus := get_tree().get_nodes_in_group("main_menu")
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
-	if not worlds.is_empty() and not menu_visible and not (Session.starting_level in [1, 2]):
+	if not worlds.is_empty() and (menu_visible or not (Session.starting_level in [1, 2])):
 		var saves_panel = worlds[0].hud.saves_panel
 		if saves_panel != null:
 			panel.visible = false

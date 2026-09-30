@@ -525,14 +525,14 @@ func _signal_color(severity: int) -> Color:
 
 # --- _ready and construction --------------------------------------
 var discard_dialog: ConfirmationDialog
+var discard_always_button: Button
 var pending_cell: Node2D = null
 ## What confirm_discard runs if the player agrees; empty while the dialog
 ## is asking about a cell.
 var _pending_discard_action: Callable = Callable()
-## The Saves window (SV-2), created here because this file owns the button
-## that opens it; parented to main like every other GamePanel.
+## The Saves window (SV-2), created here and parented to main like every
+## other GamePanel. Only the settings window's "Saves…" opens it (SA-1).
 var saves_panel: CanvasLayer
-var saves_button: Button
 ## The read-only skill tree (AP-3), created and opened from here the same way.
 var skill_tree_panel: CanvasLayer
 var skills_button: Button
@@ -772,14 +772,6 @@ func _build_top_right_bar() -> void:
 	winter_button.pressed.connect(func(): winter_window_requested.emit())
 	winter_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(winter_button)
-
-	# SV-2 (icon AP-5). Hidden in a Challenge by its UI_GATES row (AP-7):
-	# a Challenge keeps its own checkpoints (tutorial_checkpoint.gd).
-	saves_button = _icon_button("save", "Saves", TOP_BAR_BUTTON_WIDTH, "Opens the Saves window.")
-	saves_button.pressed.connect(func(): main.year_winter._toggle_panel(saves_panel))
-	saves_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row2.add_child(saves_button)
-	_register_gated_control("saves_button", func(): return saves_button)
 
 	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in a
 	# Challenge by its UI_GATES row (AP-7), as 8.5 asks.
@@ -2310,7 +2302,8 @@ func _request_fill_close() -> void:
 ## "Don't warn me again" is a third button rather than a checkbox.
 ## AcceptDialog lays out its own message label and doesn't reliably
 ## position arbitrary child controls beneath it, so an extra button is
-## the sturdier choice here.
+## the sturdier choice here. Kept as discard_always_button so a
+## confirmation that always asks (a Saves-window Delete) can hide it.
 func _build_discard_dialog() -> void:
 	discard_dialog = ConfirmationDialog.new()
 	discard_dialog.theme = UiTheme.build_theme()
@@ -2320,7 +2313,7 @@ func _build_discard_dialog() -> void:
 	discard_dialog.cancel_button_text = "Leave the cell as it is"
 	add_child(discard_dialog)
 
-	discard_dialog.add_button("Discard, and stop warning me", true, "discard_always")
+	discard_always_button = discard_dialog.add_button("Discard, and stop warning me", true, "discard_always")
 	discard_dialog.confirmed.connect(_on_discard_confirmed)
 	discard_dialog.custom_action.connect(_on_discard_custom_action)
 
@@ -2333,6 +2326,7 @@ func show_discard_warning(cell: Node2D, new_type: String, existing_type: String,
 	discard_dialog.cancel_button_text = "Leave the cell as it is"
 	pending_cell = cell
 	pending_type = new_type
+	discard_always_button.visible = true
 	discard_dialog.dialog_text = (
 		"This cell holds %d %s, and there is no other cell with room for it.\n\n"
 		+ "Reserving it for %s will throw that away."
@@ -2340,11 +2334,13 @@ func show_discard_warning(cell: Node2D, new_type: String, existing_type: String,
 	discard_dialog.popup_centered()
 
 ## The same Session.warn_on_discard confirmation, for anything else that
-## throws something away (SV-2's Saves window). Callers check
-## warn_on_discard first; "Discard, and stop warning me" turns it off for
-## every use alike.
-func confirm_discard(title: String, text: String, ok_text: String, cancel_text: String, action: Callable) -> void:
+## throws something away (SV-2's Saves window). Callers that honour
+## warn_on_discard check it first; "Discard, and stop warning me" turns it
+## off for every use alike. A caller that asks every time (SA-1: deleting a
+## saved run) passes offer_stop_warning = false, which hides that button.
+func confirm_discard(title: String, text: String, ok_text: String, cancel_text: String, action: Callable, offer_stop_warning: bool = true) -> void:
 	pending_cell = null
+	discard_always_button.visible = offer_stop_warning
 	_pending_discard_action = action
 	discard_dialog.title = title
 	discard_dialog.ok_button_text = ok_text

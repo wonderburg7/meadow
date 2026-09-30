@@ -1,7 +1,7 @@
 # Saves access — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SA-1 -- the Saves window is reached from the cog only, everywhere, startable after BS-2 (see Dependencies) | Dependency: BS-2 in `plans/now/brood-spine.md` edits the same fixture | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete; follow-ups: hands-on checks C-76, C-77 and C-78 in checks/ready.md | Dependency: BS-2 in `plans/now/brood-spine.md` edits the same fixture | Verified: 2026-09-28
 
 **Objective.** One way into the Saves window -- the settings cog -- that works
 the same in a run and on the main menu, and a Delete that always asks.
