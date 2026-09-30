@@ -460,6 +460,7 @@ Tab — switch between meadow and hive
 Space — pause
 C — colony window
 N — nursery window
+G — foraging window
 O — cycle the comb overlay
 F — frame everything in view
 Ctrl+1..9 — save the selection as a group
@@ -472,7 +473,8 @@ Left click a comb cell — inspect and set it
 Left click exposed soil — mark it for digging
 Right click a flower — send the selection to collect there
 Right click the ground — move the selection there
-Click a warning in the corner to select what it is about."""
+Click a warning in the corner to select what it is about.
+Escape — close the skill tree"""
 	return help
 
 # --- the action buttons -------------------------------------------
