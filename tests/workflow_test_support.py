@@ -56,4 +56,9 @@ def windows_powershell():
     system = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
     if system.is_file():
         return str(system)
+    if os.name != "nt":
+        # slice.ps1 calls Get-CimInstance, which only exists on Windows, so
+        # the lifecycle suite cannot pass under Linux pwsh: 38 false reds in
+        # a cloud session (30 Sep 2026). None makes its modules skip.
+        return None
     return shutil.which("powershell") or shutil.which("pwsh")

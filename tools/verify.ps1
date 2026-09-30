@@ -105,6 +105,14 @@ function Get-FailureLine {
 # The workflow ("lifecycle") suite: every module Start-LifecycleJob runs.
 $lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", "tests.test_two_lane_closeout", "tests.test_codex_environment", "tests.test_verify_generated", "tests.test_alpha_build", "tests.test_godot_cache", "tests.test_godot_compile_check", "tests.test_pacing_gates", "tests.test_review_tools")
 
+# The fast Python suites. They need no PowerShell or repository state, so they
+# run on every branch verify (about 2 s together). The last three boot Godot:
+# they add about 35 s where it is installed and skip themselves where it is
+# not. Before 30 Sep 2026 none of these ran anywhere and two had gone red
+# unseen. A module that belongs in neither list must be exempted, with its
+# reason, in tests/source_checks.py::TESTS_NOT_IN_VERIFY.
+$unitModules = @("tests.test_conditions", "tests.test_equivalence", "tests.test_headless_efficiency_baseline", "tests.test_headless_experiments", "tests.test_headless_jobs", "tests.test_headless_profiles", "tests.test_headless_route", "tests.test_headless_verdicts", "tests.test_save_migrations", "tests.test_session_cost_stops", "tests.test_signal_catalogue", "tests.test_layout_regression", "tests.test_hc8_tray_first_open", "tests.test_hc16_tray_reselect")
+
 # The lifecycle suite runs only when the branch's diff against master can
 # reach it -- in the branch scope, finish's included. It used to run in the
 # primary scope on every finish too (V-2), but that run tested master before
@@ -301,6 +309,14 @@ if ($runBranchScope -and -not $Docs) {
             & $interpreter tests/balance_tests.py
             if ($LASTEXITCODE -ne 0) {
                 throw "balance_tests.py exited with code $LASTEXITCODE"
+            }
+        })
+        (Start-Job -Name "unit tests" -ArgumentList $python, $repoRoot, $unitModules -ScriptBlock {
+            param($interpreter, $root, $modules)
+            Set-Location $root
+            & $interpreter -m unittest @modules
+            if ($LASTEXITCODE -ne 0) {
+                throw "unit test modules exited with code $LASTEXITCODE"
             }
         })
     )

@@ -30,6 +30,7 @@ TOOLS = ROOT / "tools"
 sys.path.insert(0, str(TOOLS))
 
 from analyze_session import load_entries  # noqa: E402
+from godot_compile_check import find_godot  # noqa: E402
 from run_scenario import DEFAULT_GODOT_PATH, run_once  # noqa: E402
 
 FIXTURES = [
@@ -39,13 +40,7 @@ FIXTURES = [
 
 
 def _resolve_godot_path() -> str | None:
-    candidate = os.environ.get("GODOT_PATH")
-    if candidate and Path(candidate).is_file():
-        return candidate
-    if Path(DEFAULT_GODOT_PATH).is_file():
-        return DEFAULT_GODOT_PATH
-    found = shutil.which("godot") or shutil.which("godot4")
-    return found
+    return find_godot()
 
 
 class HC8TrayFirstOpenTest(unittest.TestCase):

@@ -57,7 +57,9 @@ FAILURE_PATTERNS = [
 
 
 def find_godot() -> str | None:
-    override = os.environ.get("MEADOW_GODOT_PATH", "").strip()
+    # GODOT_PATH is the older name the layout tests read; accept both so no
+    # tool silently skips on a host that set only one.
+    override = (os.environ.get("MEADOW_GODOT_PATH") or os.environ.get("GODOT_PATH") or "").strip()
     if override:
         return override if Path(override).is_file() else None
     if Path(DEFAULT_GODOT_PATH).is_file():
