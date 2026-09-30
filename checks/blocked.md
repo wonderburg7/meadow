@@ -44,19 +44,3 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
-### C-57 -- at Challenge 2's 2.2 the Raises menu offers a pollen Forager
-
-Start Challenge 2 and play (or step with Game Settings -> World & start's
-arrows) to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click
-a comb cell and open its Raises row's "Forager..." menu.
-
-PASS: the menu lists "Forager -- Pollen" as well as "Forager -- Nectar".
-
-If it fails, HF-6's fixture missed the path you took; say how you reached 2.2.
-Passed on 28 Sep 2026 and not re-checked: at 2.1 the menu offers only
-"Forager -- Nectar", and no stage shows "Raises:" with nothing to choose.
-
-Owner: `plans/now/hud-followups.md` HF-6
-
-Blocked by: HF-6 -- why Raises lacks Pollen at 2.2. It moves back to
-`checks/ready/` once HF-6 has found and fixed the step that drops Pollen.

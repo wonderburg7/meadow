@@ -70,6 +70,23 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-09-30 — `tools/func.py` crashes on a non-ASCII character in the routed function
+
+- Source: HF-6 (Claude)
+- Area: tooling / context-efficient reading
+- Signal: `python tools/func.py scripts/hud.gd hatch_options _make_hatch_menu`
+  raised `UnicodeEncodeError: 'charmap' codec can't encode characters` from
+  `print` after writing only the first header line; the functions contain
+  em dashes and an ellipsis. Setting `PYTHONIOENCODING=utf-8` made it work.
+- Evidence: reproducible from Git Bash on Windows, whose Python stdout
+  defaults to cp1252; `hud.gd` alone has many such characters.
+- Consequence: the tool CLAUDE.md routes every code read through fails on
+  exactly the UI files that carry typographic characters, pushing sessions
+  towards reading whole files instead.
+- Candidate direction: Hypothesis -- `sys.stdout.reconfigure(encoding="utf-8")`
+  at the top of `tools/func.py` and `tools/heading.py`.
+- Disposition: untriaged
+
 ### 2026-09-25 — a finish holds the lifecycle lock through verification, so the other lane polls it
 
 - Source: ad hoc (diagnosis-systems check)

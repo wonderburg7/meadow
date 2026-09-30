@@ -14,6 +14,7 @@ unblocker.
 
 ## Ready to run
 
+- [C-57 -- at Challenge 2's 2.2 the Raises menu offers a pollen Forager](ready/C-57.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-66 -- Developer mode toggle in the main menu settings](ready/C-66.md)
 - [C-67 -- Challenge 2 gives Nurses free at stage 2.5](ready/C-67.md)

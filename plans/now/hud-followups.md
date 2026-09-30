@@ -1,7 +1,7 @@
 # HUD follow-ups — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HF-6 -- why Raises lacks Pollen at 2.2 (C-57) | Dependency: none | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: None — plan complete; follow-up: C-57 (checks/ready/C-57.md) -- HF-6's fixture found Pollen at 2.2 on every headless route, so Dave's re-check names the route it missed | Dependency: none | Verified: 2026-09-30
 
 **Objective.** Fix what Dave's 28 Sep 2026 hands-on batch found wrong or
 awkward in the HUD, each as a small slice a low- or medium-level model can

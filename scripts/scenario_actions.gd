@@ -1044,6 +1044,8 @@ static func _do_assert(main: Node2D, action: Dictionary) -> bool:
 static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary:
 	if condition.has("panel"):
 		return _check_panel_rect(main, condition)
+	if condition.has("control") and condition.has("menu_items"):
+		return _check_menu_items(main, condition)
 	if condition.has("control"):
 		return _check_control_rect(main, condition)
 	if condition.has("container"):
@@ -1320,6 +1322,24 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		var peer_width: float = peer.get_global_rect().size.x
 		if absf(rect.size.x - peer_width) > 1.0:
 			return {"ok": false, "reason": "control '%s' is %.1fpx wide but '%s' is %.1fpx" % [path, rect.size.x, peer_path, peer_width]}
+	return {"ok": true, "reason": ""}
+
+## HF-6: {"control": "<path>", "menu_items": ["label", ...]} -- the item
+## texts a MenuButton's popup offers right now, in order, exactly. A Raises
+## menu that hides a stage-locked mode drops the item from the popup rather
+## than hiding the button, so a rect or visibility check cannot see it.
+static func _check_menu_items(main: Node2D, condition: Dictionary) -> Dictionary:
+	var path: String = condition.get("control", "")
+	var node: Node = _resolve_scoped_path(main, path)
+	if node == null or not (node is MenuButton):
+		return {"ok": false, "reason": "menu '%s' not found" % path}
+	var popup: PopupMenu = (node as MenuButton).get_popup()
+	var offered: Array = []
+	for i in range(popup.item_count):
+		offered.append(popup.get_item_text(i))
+	var expected: Array = condition["menu_items"]
+	if offered != expected:
+		return {"ok": false, "reason": "menu '%s' offers %s, expected %s" % [path, offered, expected]}
 	return {"ok": true, "reason": ""}
 
 ## "max_leading" (C-53): how far apart a Label draws consecutive list items,
