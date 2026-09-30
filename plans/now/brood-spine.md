@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits, waiting for Dave's persistence decision; BS-4 -- the honey gate needs its specification first (see Later slices) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: BS-4 -- the honey gate (startable, specified 30 Sep 2026); BS-6 -- developer edits, waiting for Dave's persistence decision | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -63,7 +63,7 @@ available -- that the run start reads and a developer table shows and edits.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | a new scenario, `plans/design/progression.md` | after BS-3 | medium |
+| BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md` | startable | medium |
 | BS-6 | developer edits to the table change what a run starts with | decided in BS-5's closeout | after BS-5 and a persistence decision | high |
 
 BS-1 and BS-D share no file and are independent. Every later slice names
@@ -77,15 +77,50 @@ BS-3 shipped 2026-09-30; its specification is `plans/archive/BS-3_2026-09-30.md`
 
 BS-5 shipped 2026-09-30; its specification is `plans/archive/BS-5_2026-09-30.md`.
 
+## BS-4 — the honey gate
+
+Level: medium (one scenario and a recorded result; a stall is escalated,
+never rebalanced here). Specified 30 Sep 2026 in BS-5's closeout.
+
+`plans/design/progression.md` section 6, constraint 2: a run must start with
+enough empty comb for a Honey worker to make the honey its first tier-2
+purchase costs, "checked by a scenario run, not an assertion in code". BS-3
+made that real: no run owns Honey worker unless it seeds honey makers.
+
+- **Scenario.** `test_scenarios/bs4_honey_gate_test.json`, the starting
+  colony of level 5 copied from `levels.gd` (its counts, `stock` and
+  `automine`; it seeds nurses but no honey makers, so it starts owning
+  Nurses and not Honey worker). Actions, each purchase timed with a `when`
+  on `hive_total` so it fires only once affordable: `buy_skill`
+  `skill.brood.honey_worker` when nectar is at least 150 and pollen 60;
+  then `assign_role` two nectar foragers to `honey`; then `buy_skill`
+  `skill.colony.comb_worker` (20 honey, 200 nectar) when honey is at least
+  20 and nectar 200; then `assert` `skill_owned` for Comb worker. Stop when
+  the actions resolve, `max_days` 30. If a purchase is refused for a reason
+  other than cost (the tree's tier rule, say), say which in the result
+  rather than working round it.
+- **Result.** Add one line to `plans/design/progression.md` section 11,
+  step 7: the day Comb worker was bought, or the step the run stalled at,
+  naming the fixture.
+- **Escalate** if the run stalls on honey or comb: that is the constraint
+  failing, and the fix is a balance decision for Dave -- more pre-built
+  empty comb in `levels.gd`, or a cheaper first tier-2 skill -- not this
+  slice's to make.
+
+```queue
+**[Claude] BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill**
+- Plan: `plans/now/brood-spine.md` -- "BS-4 — the honey gate"
+- Files: `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md`
+- Check: `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json` passes with Comb worker bought within 30 days, or its failure names the stalled step and the options go to Dave; `plans/design/progression.md` section 11 step 7 records the result; and `tools/verify.ps1` is green
+- Proof: `absent: plans/design/progression.md :: bs4_honey_gate_test`
+- Next after: BS-6 -- developer edits to the table change what a run starts with
+```
+
 ## Later slices, in outline
 
 Each is specified in full, with its own `queue` block, when what it waits for
 has shipped. These notes fix only what the earlier slices must not preclude.
 
-- **BS-4 — the honey gate.** A run with no seeded honey makers buys Honey
-  worker, makes honey and affords a tier-2 skill before it runs short of
-  comb: section 6's constraint 2, proved with a scenario rather than asserted.
-  Records the result in `plans/design/progression.md` step 7.
 - **BS-6 — developer edits.** Needs a decision before it can be specified:
   whether an edit is a local override stored under `user://` and applied at
   run start, or is written back to the run definition (`levels.gd` or the
