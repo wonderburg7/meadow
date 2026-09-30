@@ -25,7 +25,6 @@ read, and the player drags to pan and scrolls to zoom out to the whole tree.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SK-1 | Skills opens a full-screen, paused view; click a tile to see and buy it | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ap3_skill_tree_window_test.json` | after BS-2 | medium |
 | SK-2 | Names sit in big hexes; drag to pan, wheel to zoom | `scripts/skill_tree_panel.gd` | after SK-1 | medium |
 
 **Dependencies.** BS-2 (`plans/now/brood-spine.md`) edits
@@ -37,55 +36,7 @@ and the functions named. **Do not change** `buy_skill`'s signature (the
 `buy_skill` scenario verb calls it) or the once-per-open tile resolution in
 `_rebuild` (section 8.4's performance rule).
 
-## SK-1 — the skill tree opens full-screen and pauses the game
-
-Level: medium.
-
-**Change.**
-
-- `skill_tree_panel.gd::_ready`: `setup_layer("skills", "skill_tree_panel", 15)`
-  (first confirm with `grep -n "layer = \|setup_layer(" scripts/*.gd` that
-  nothing else uses 15), then `_build_panel(0)` and
-  `panel.set_anchors_preset(Control.PRESET_FULL_RECT)` in place of
-  `build_left_window(400)`, `build_scroll_body()` and
-  `connect_left_window_reflow()`. The column: header (title, close ×), the
-  intro line, the grid (`size_flags_vertical = SIZE_EXPAND_FILL`), and a
-  detail strip at the bottom. Delete `list_box` and `_rebuild_list`.
-- Pause: `open()` stores `get_tree().paused` in `_was_paused`, sets it true
-  and calls `main.camera_view._refresh_speed_display()`; `close()` restores
-  it and refreshes again. Add `_input(event)`: while open, Escape closes, and
-  every key event is marked handled (`get_viewport().set_input_as_handled()`)
-  so Space or Tab cannot act on the paused game behind it.
-- Selecting: `SkillGrid` handles a left click with
-  `Shapes.pixel_to_hex`, and for a `"skill"` tile emits `tile_selected(hex)`.
-  The strip then shows that skill's name, tier, state text
-  (`_state_text`), cost and reason, and a Buy button enabled only when the
-  state is affordable, which calls `buy_skill(id)`. After a purchase
-  `_rebuild` re-resolves and the strip re-reads the same tile.
-- `hud.gd`: the Skills button calls `skill_tree_panel.toggle()`, not
-  `year_winter._toggle_panel`, so it no longer touches the left windows.
-- `scenario_actions.gd`: `_do_open_window` opens `"skills"` directly (as it
-  does `"settings"`), and `_do_assert` gains `{"tree_paused": bool}`. Update
-  `ap3_skill_tree_window_test.json`: after opening skills assert
-  `inside_viewport` and `tree_paused: true`; close it before opening Colony.
-- Regenerate `FUNCTION_MAP.md` (`python tools/update_function_map.py`).
-
-Runtime policy: nothing per frame; the grid redraws on open, on a click and
-after a purchase.
-
-**Acceptance (checks filed at closeout, one condition each).** Pressing
-Skills fills the screen with the tree and the game stops; closing it resumes
-at the speed it had. Clicking an affordable skill and pressing Buy spends the
-stores and marks it owned.
-
-```queue
-**[Claude] SK-1 -- the skill tree opens full-screen and pauses the game**
-- Plan: `plans/now/skill-screen.md` -- "SK-1 — the skill tree opens full-screen and pauses the game"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ap3_skill_tree_window_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes (skills full-screen, tree paused), `test_scenarios/ap6_bought_tarsal_test.json` still passes, and `tools/verify.ps1` is green
-- Proof: `present: scripts/skill_tree_panel.gd :: build_left_window(400)`
-- Next after: SK-2 -- skill names in big hexes, with drag and zoom
-```
+SK-1 shipped 2026-09-30; its specification is `plans/archive/SK-1_2026-09-30.md`.
 
 ## SK-2 — skill names in big hexes, with drag and zoom
 
