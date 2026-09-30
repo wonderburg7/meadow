@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: run policy and the event director are the only §6.2 foundations still needing a design pass; the goal model, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-04
+Status: selected design, not scheduled | Owner: Dave | Next: the Colony Run definition is the next design pass, after BS-4 (Dave, 30 Sep 2026; §6.2 "Next design pass"); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-30
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -194,6 +194,34 @@ and remain this section's own open design work. They are product decisions --
 what a run type does about discovery, difficulty, victory and continuation, and
 how pressure is scheduled -- and the architecture review deliberately proposes
 no gameplay change.
+
+**Next design pass: the Colony Run definition (Dave, 30 Sep 2026).** Run
+policy for the flagship run comes next, after BS-4 lands and ahead of
+progression step 8. It is a high-reasoning pass whose output is a design
+plan and its first slices (`plans/reference/colony-diagnostics.md` is the
+model). Found missing by `docs/product-review-2026-09-30.md`: no run type
+matches §2's Colony Run, and the pacing arc stands in for it with an
+unplayed queen. It settles:
+
+- the start state: a lone queen who backs up as a Nurse
+  (`plans/now/brood-spine.md` decision 5), with or without starting comb;
+- winter: onset is decided (a fixed day, `plans/now/winter-onset.md` WO-1);
+  how many winters a run holds is not;
+- victory, failure and continue (§7's long-term goal, §11's doomed state);
+- skill discovery for the early feedback run (§2);
+- **the four goal layers of §7.** The architecture review's C2 (Challenge
+  goals as data) and C4 (the signal catalogue) built the parts; once that
+  plan was archived nothing owned the Colony Run's layers. This pass does,
+  which settles the 11 Sep note above against `NEXTSTEPS.md`'s claim that
+  the goal model needed a pass of its own;
+- **PE-2, the played pacing arc** (`plans/now/pacing-evidence.md`):
+  `test_scenarios/alpha_arc_test.json` starts from the Colony Run's start
+  and is played by a scripted reference player using only the `when` keys
+  the harness honours (`scenario_actions.gd::_legacy_when_spec`); it stops
+  after winter ends; repeats use different seeds (today's three replay one
+  pinned seed); and the winter rows are judged against WO-1's schedule and
+  a live colony, not 1x minutes, because §3's 3 Sep note assumes
+  fast-forward through winter.
 
 ### 6.3 Core expansion after feedback validates the base
 
@@ -620,6 +648,14 @@ the procedural fallback means it must not block playability.
 - balance changes backed by repeatable scenario evidence where possible.
 
 ### Release stream
+
+Before the first feedback build: the nine §6.4 cut skills (Guard bee,
+Combat, Auto-defence, Nectar robbing, Drones, Medicine, Adjustment panel,
+Extended backup roles, Chemical cascade) are unavailable and hidden, and
+every other tree node either does what it says or is marked not built. On
+30 Sep 2026 only four of the 34 non-baseline nodes changed anything when
+bought: Tarsal secretions, Orientation flight, Nurses and Honey worker
+(`docs/product-review-2026-09-30.md`).
 
 Before Early Access: named saves and migrations, stable distributable builds,
 crash/feedback collection, accessibility review, performance budgets, asset
