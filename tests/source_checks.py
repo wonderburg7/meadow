@@ -2453,9 +2453,9 @@ def check_progression_foraging_rules(problems):
 def check_run_skill_policy(problems):
     """Section 11 Phase A step 3: every level's skill_grants, skill_bans
     and skill_delays must name real skills. levels.gd is the one place
-    they are authored -- challenge_runner.gd only reads them at runtime
+    they are authored -- run_availability.gd only reads them at run start
     -- so a renamed or mistyped skill id here would otherwise sit silent
-    until a Challenge tried to apply it."""
+    until a run tried to apply it."""
     data = _progression_catalogue_data(problems)
     if data is None:
         return

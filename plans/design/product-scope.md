@@ -221,7 +221,22 @@ unplayed queen. It settles:
   after winter ends; repeats use different seeds (today's three replay one
   pinned seed); and the winter rows are judged against WO-1's schedule and
   a live colony, not 1x minutes, because §3's 3 Sep note assumes
-  fast-forward through winter.
+  fast-forward through winter;
+- **the run's identity** (Dave, 30 Sep 2026, from
+  `docs/architecture-review-2026-09-30.md` F1 and F2). A run is
+  `Session.starting_level`: compared as an integer 24 times (17 in
+  `challenge_runner.gd`), resolved through `Levels.get_level()` 12 times,
+  and absent from the save, so a load rebuilds whichever level is current
+  (level 0 after a fresh boot) before replaying it. The pass decides where
+  the Colony Run's type and policy live and how a save records them, and
+  with them: level 0 and the six "World & start" starting settings, which
+  shape only that throwaway world (if revived, `run_availability.gd` would
+  not seed its nurse); the `win_conditions` and `unlocks` keys every
+  `levels.gd` row carries and nothing reads; and whether milestones reuse
+  the Challenge stage runner, which runs one stage at a time and starts only
+  for levels 1 and 2 (the 18 Sep codebase review's CH-1 would come first),
+  or a separate evaluator over `conditions.gd`, which has no rate key for
+  "stable resource income".
 
 ### 6.3 Core expansion after feedback validates the base
 

@@ -10,12 +10,18 @@ extends RefCounted
 ## `roles.gd::count_keys` iterates it to build forager tally keys, and a
 ## third entry there would invent a tally key no bee can have. `RESOURCES`
 ## itself, and `content_keys()`, now cover every cell-content kind (honey,
-## jelly, brood, corpse and the empty kind too), matching the buckets
-## `hive.gd::_content_index` builds. Nothing outside this file reads those
-## added rows yet -- see B1's own slice heading -- and the existing per-
-## kind logic in `hive_cell.gd`/`hive.gd`/`flower.gd` still owns its own
-## typed fields and, in a couple of places, its own colour; consolidating
-## those onto this catalogue is a later slice (B2 onwards), not this one.
+## jelly, brood, corpse and the empty kind too). Read since B2/B3:
+## hive.gd builds its content index and energy draw from these rows,
+## hive_cell.gd takes capacity_config, storable and evictable from them,
+## and conditions.gd counts cells by content_keys().
+##
+## Not read by anything yet: `designatable` and `save_policy`. A new kind
+## therefore still joins these hand lists (architecture review, 30 Sep
+## 2026): hud.gd's Reserve-for buttons (_build_cell_group),
+## _apply_cell_popup_gating and _light_current_options, and _build_restock_row;
+## availability.gd's UI_GATES designation lists; diagnostic_log.gd's
+## cells-by-content loop; world_building.gd::_stock_starting_comb; and
+## hive_cell.gd's own colour constants and content_type branches.
 
 const NECTAR := "nectar"
 const POLLEN := "pollen"

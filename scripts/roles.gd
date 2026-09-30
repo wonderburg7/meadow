@@ -11,8 +11,23 @@ extends RefCounted
 ## nothing to catch you if you forgot one -- the colony window would
 ## simply not count the new bees, silently.
 ##
-## Everything about a role now lives here and every other file reads it.
-## Adding a role means adding one entry below.
+## A role's description lives here and every other file reads it. Adding a
+## role still touches more than this file (architecture review, 30 Sep
+## 2026); the checks named catch only the first:
+## - bee_enums.gd: append to `enum Role` and ROLE_PERF_SECTIONS, and add its
+##   idle State (tests/source_checks.py::check_catalogue_alignment keeps the
+##   ids below in the enum's order);
+## - bee.gd: ROLE_ACTION_FINDERS and _default_state_for_role; its work is
+##   actions.gd rows found by a bee_<role>.gd module;
+## - a skill unlocks it: its `skill` below, plus run_availability.gd's
+##   SEED_COUNT_KEYS (BS-8 in plans/now/brood-spine.md moves that here);
+## - a level can seed it: its count key on levels.gd rows, in
+##   world_building.gd::_spawn_hive_occupants and in main.gd::
+##   _apply_scenario_boot_arg's defaults (BS-8 makes that one field too);
+## - it has sub-modes: a bee field, bee.gd::_action_mode_for_role and
+##   role_name_text, hud.gd::_mode_is_active, orders_zones.gd::_apply_mode
+##   and the field's line in save_game.gd and saving.gd;
+## - presentation: bee.gd::_update_role_marker, hud.gd::update_population.
 
 const Resources = preload("res://scripts/resources.gd")
 
