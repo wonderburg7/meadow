@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-4 | The Winter forecast is a left-hand window | `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json` | yes | medium |
 | HF-5 | Opening Nursery keeps the view you are in | `scripts/year_winter.gd` | yes | low |
 | HF-6 | Why Raises lacks Pollen at 2.2 (C-57) | `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json` | yes | high |
 
@@ -35,38 +34,7 @@ HF-2 shipped 2026-09-30; its specification is `plans/archive/HF-2_2026-09-30.md`
 
 HF-3 shipped 2026-09-30; its specification is `plans/archive/HF-3_2026-09-30.md`.
 
-## HF-4 — the Winter forecast is a left-hand window
-
-Level: medium. Dave (28 Sep 2026): the forecast should use the left side
-"like the other windows use (with the same rules)"; today it sits top right
-over the bar.
-
-**Change.** `winter_panel.gd::_ready`: `build_left_window(330)` in place of
-`build_top_right_window(330, 44, -12)`, then `connect_left_window_reflow()`
-as `skill_tree_panel.gd` does. `main.gd`: the `winter_window_requested`
-handler calls `year_winter._toggle_panel(winter_panel)`, not
-`winter_panel.toggle()`. `year_winter.gd::begin_winter_countdown`: call
-`_close_other_left_windows(main.winter_panel)` before `open()` (same rule
-for the automatic open), and change the warning's "The forecast in the top
-right" to "The Winter window on the left". `game_panel.gd`'s header: the
-winter window now joins "left_window". `scenario_actions.gd`: delete the
-"winter window has no left-window toggle" comment (the filter now admits
-it), and in `_check_panel_rect` accept `"open": false`, passing when the
-panel is hidden. Fixture: open `colony`, then `winter`; assert `winter`
-`inside_viewport` and `colony` `open: false`.
-
-**Acceptance (check filed at closeout).** With Colony open, pressing Winter
-opens the forecast where Colony was and closes Colony; nothing covers the
-top-right bar.
-
-```queue
-**[Claude] HF-4 -- the Winter forecast is a left-hand window**
-- Plan: `plans/now/hud-followups.md` -- "HF-4 — the Winter forecast is a left-hand window"
-- Files: `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/hf4_winter_left_window_test.json` passes, and `tools/verify.ps1` is green
-- Proof: `present: scripts/winter_panel.gd :: build_top_right_window(`
-- Next after: HF-5 -- opening Nursery keeps the view you are in
-```
+HF-4 shipped 2026-09-30; its specification is `plans/archive/HF-4_2026-09-30.md`.
 
 ## HF-5 — opening Nursery keeps the view you are in
 
