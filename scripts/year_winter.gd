@@ -325,9 +325,7 @@ func _on_nursery_window_requested() -> void:
 		return
 	_close_other_left_windows(main.nursery_panel)
 	main.nursery_panel.open()
-	if not main.in_hive_view:
-		main.in_hive_view = true
-	main.camera_view._apply_view()
+	main.orders_zones._apply_zone_glow()
 	main.nursery_panel.refresh(
 		main.hive.zone_summary(),
 		main._role_counts(),
