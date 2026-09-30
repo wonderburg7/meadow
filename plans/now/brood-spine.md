@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-3 -- the gate goes live (startable, BS-2 landed 29 Sep 2026), and BS-5 -- the developer table shows a run's sheet (startable, BS-D landed 28 Sep 2026), both in the Claude lane | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-29
+Status: active | Owner: Dave / Claude Code | Next: BS-5 -- the developer table shows a run's sheet (startable, in the Claude lane); BS-4 -- the honey gate needs its specification first (see Later slices) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -93,10 +93,30 @@ Level: high (ownership boundary and a save-compatibility decision).
   goes live, decide whether restore re-applies the run's `starting` skills
   (one line in `saving.gd`) or the save version bumps.
 
+**Result (30 Sep 2026).** `Availability.role_query(role_id, stage_gate,
+progression)` is the one rule: the role's stage key while a Challenge is
+active, and its roles.gd `skill` owned. The HUD's Job row, "when idle" menu
+and Raises row ask it (`hud.gd::_role_offered`, over the gate `apply_gates`
+last received), and the skill tree's Buy re-applies it
+(`hud.gd::refresh_role_gating`). `orders_zones.gd`'s role, backup-role and
+Raises commands refuse a role whose skill is unowned -- the skill part only,
+since what a Challenge shows is the HUD's lesson plan. `Actions.is_gated`
+counts a role's skill, so `action_query` now refuses every Nurse and Honey
+worker row until it is owned. **Save compatibility, option A (Dave, 30 Sep
+2026):** `saving.gd::_restore` grants the run's starting skills again after
+`restore_skills`, so a pre-BS-1 save keeps its seeded roles; no version bump.
+`tests/source_checks.py::check_stage_role_skills` fails a stage that unlocks
+a skill-gated role before that skill is free at or before it, or owned from
+the Challenge's level definition. Proof: `test_scenarios/bs3_nurse_gate_test.json`
+(no seeded nurses: assigning and raising a nurse are refused, then allowed
+after buying Nurses). The three `c6_fanners` fixtures assign Honey workers
+without seeding any, so they now start with `skill_grants` for Honey worker.
+`challenge_runner.gd` needed no change.
+
 ```queue
 **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
 - Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
-- Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+- Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/saving.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `tests/source_checks.py`, `test_scenarios/bs3_nurse_gate_test.json`, `test_scenarios/c6_fanners_1_test.json`, `test_scenarios/c6_fanners_2_test.json`, `test_scenarios/c6_fanners_4_test.json`
 - Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
 - Proof: `absent: scripts/availability.gd :: "role_query"`
 - Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill

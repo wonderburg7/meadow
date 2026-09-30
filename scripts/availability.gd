@@ -40,7 +40,8 @@ const REASON_SKILL_NOT_OWNED := "skill_not_owned"
 ## tick. stage_gate.gd bumps it on every unlock, lock, start and stop, and
 ## suppress/unsuppress below do too. Whatever grants or sells a skill must
 ## call invalidate() as well -- progression.gd does not know about this
-## cache, and no action row is skill-gated yet.
+## cache, and every Nurse and Honey worker row is gated by its role's skill
+## (BS-3, role_query).
 static var gate_epoch: int = 0
 
 ## Developer/debug suppression, keyed the same as everything else here.
@@ -131,11 +132,37 @@ static func mode_query(role_id: int, mode_key: String, stage_gate = null) -> Dic
 		return {"available": false, "reason": REASON_LOCKED}
 	return {"available": true, "reason": OK}
 
+## BS-3: whether a bee may be put in `role_id`, or a cell set to raise one,
+## right now. Composes: the role exists, its key is not suppressed, its
+## stage-gate key is unlocked (only while a Challenge is active; pass a null
+## `stage_gate` to leave the stage out), and the skill that unlocks it
+## (roles.gd `skill`) is owned. A skill-gated role with no `progression` is
+## not available, the same convention action_query keeps for a row's skill.
+## The one rule the HUD's Job and Raises rows, orders_zones.gd's role and
+## hatch commands and action_query all read.
+static func role_query(role_id: int, stage_gate = null, progression = null) -> Dictionary:
+	var role: Dictionary = Roles.entry(role_id)
+	if role.id != role_id:
+		return {"available": false, "reason": REASON_UNKNOWN_KEY}
+	if _suppressed.has(role.key):
+		return {"available": false, "reason": REASON_SUPPRESSED}
+	if stage_gate != null and stage_gate.active and not stage_gate.is_unlocked(role.key):
+		return {"available": false, "reason": REASON_LOCKED}
+	if not _role_skill_owned(role_id, progression):
+		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
+	return {"available": true, "reason": OK}
+
+static func _role_skill_owned(role_id: int, progression) -> bool:
+	var skill: String = Roles.skill_for(role_id)
+	return skill == "" or (progression != null and progression.is_owned(skill))
+
 ## G3: whether the actions.gd row `action_id` may be started right now.
 ## Composes the same four facts mode_query does -- the row exists, its
 ## config flag is on, its stage-gate key is unlocked (only while a Challenge
-## is active), it is not suppressed -- plus its skill being owned. Only the
-## gate fields the row fills are looked at. A row's `feature` is not asked
+## is active), it is not suppressed -- plus its skill being owned, and
+## (BS-3) the skill of every role it serves: a row of a role the colony has
+## not bought is never worked. Only the gate fields the row fills are looked
+## at, besides that role skill. A row's `feature` is not asked
 ## here: only progression.gd's resolver may read features.gd, and it has no
 ## plain "is this feature on" query yet, so the source check keeps `feature`
 ## empty until it does.
@@ -157,6 +184,9 @@ static func action_query(action_id: String, _bee = null, stage_gate = null, prog
 	var skill: String = action.get("skill", "")
 	if skill != "" and (progression == null or not progression.is_owned(skill)):
 		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
+	for role_id in action.get("roles", []):
+		if not _role_skill_owned(role_id, progression):
+			return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
 
 ## Whether `resource_key` is a known, currently-enabled resource. Composes

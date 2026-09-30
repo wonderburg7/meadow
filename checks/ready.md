@@ -31,3 +31,4 @@ unblocker.
 - [C-78 -- deleting a saved run always asks](ready/C-78.md)
 - [C-79 -- Skills fills the screen and pauses the game](ready/C-79.md)
 - [C-80 -- clicking a skill and pressing Buy buys it](ready/C-80.md)
+- [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)

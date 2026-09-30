@@ -25,7 +25,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] BS-3 -- the gate goes live: an unowned role cannot be assigned or worked**
    - Plan: `plans/now/brood-spine.md` -- "BS-3 — the gate goes live"
-   - Files: `scripts/availability.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`
+   - Files: `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/saving.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `tests/source_checks.py`, `test_scenarios/bs3_nurse_gate_test.json`, `test_scenarios/c6_fanners_1_test.json`, `test_scenarios/c6_fanners_2_test.json`, `test_scenarios/c6_fanners_4_test.json`
    - Check: a level 7 run cannot assign or raise a nurse before buying Nurses and can after, Challenge 2's fixture `test_scenarios/f2s_challenge2_gate_table_test.json` still passes, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/availability.gd :: "role_query"`
    - Next after: BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill
@@ -53,10 +53,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-4 and BS-6** (`plans/now/brood-spine.md`) -- each waits for the earlier slice its plan's table names; BS-6 also waits for Dave's decision on where developer edits persist.
+- **BS-4** (`plans/now/brood-spine.md`) -- waits for its specification: the plan's "Later slices" outline names the proof, but not the colony, the tier-2 skill or the run length its scenario uses.
+- **BS-6** (`plans/now/brood-spine.md`) -- waits for BS-5 and for Dave's decision on where developer edits persist.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for BS-4 to prove a tier-2 purchase in a run.
 - **Dr Gallerin guidance, the four-layer goal model and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
-- **SK-2** (`plans/now/skill-screen.md`) -- waits for SK-1's full-screen skill view to merge.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

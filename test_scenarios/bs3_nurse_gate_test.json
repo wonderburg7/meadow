@@ -1,0 +1,24 @@
+{
+  "cells": 15, "nectar_foragers": 4, "pollen_foragers": 2,
+  "nurses": 0, "builders": 1, "miners": 0,
+  "random_seed": 707,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 3}, "resource": "pollen", "amount": 50},
+    {"do": "set_cell_contents", "cell": {"built_index": 4}, "resource": "pollen", "amount": 50},
+    {"do": "settle", "ticks": 2},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.nurses", "owned": false}},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "nurse", "expect_refused": true},
+    {"do": "hatch_role", "cell": {"built_index": 6}, "role": "nurse", "focus": "feed", "expect_refused": true},
+    {"do": "buy_skill", "skill": "skill.brood.nurses"},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.nurses", "owned": true}},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "nurse"},
+    {"do": "hatch_role", "cell": {"built_index": 6}, "role": "nurse", "focus": "feed", "expect_refused": false},
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"role_count": {"role": "nurse", "at_least": 1}}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

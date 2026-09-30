@@ -80,6 +80,15 @@ func _restore(data: Dictionary) -> void:
 	var new_bees := _restore_bees(data.get("bees", []))
 	main.fog_of_war.restore(data.get("fog", []))
 	main.SaveGame.restore_skills(data, Session.progression)
+	# BS-3 (Dave, 30 Sep 2026): a save holds only the skills it recorded, and
+	# one written before BS-1 has none of the run's seeded-role skills. What a
+	# run starts owning comes from its definition, not the save, so those are
+	# granted again on top -- an old level 4-6 or Challenge 1 save keeps its
+	# nurses working without a save-version bump.
+	if Session.progression != null:
+		for skill_id in main.RunAvailability.starting_skills(main.Levels.get_level(Session.starting_level)):
+			Session.progression.grant_temporary(str(skill_id))
+		main.Availability.invalidate()
 
 	main.hive.build_navigation()
 	main.hive.refresh_edge_flags()
