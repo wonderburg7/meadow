@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
-   - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
-   - Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`, `tests/source_checks.py`
-   - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
-   - Next after: BS-6 -- developer edits to the table change what a run starts with
-
-2. **[Claude] SK-2 -- skill names in big hexes, with drag and zoom**
+1. **[Claude] SK-2 -- skill names in big hexes, with drag and zoom**
    - Plan: `plans/now/skill-screen.md` -- "SK-2 — skill names in big hexes, with drag and zoom"
    - Files: `scripts/skill_tree_panel.gd`
    - Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes, and `tools/verify.ps1` is green
    - Proof: `present: scripts/skill_tree_panel.gd :: const TILE_SIZE := 11.0`
    - Next after: none -- plans/now/skill-screen.md is complete
 
-3. **[Claude] BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill**
+2. **[Claude] BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill**
    - Plan: `plans/now/brood-spine.md` -- "BS-4 — the honey gate"
    - Files: `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md`
    - Check: `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json` passes with Comb worker bought within 30 days, or its failure names the stalled step and the options go to Dave; `plans/design/progression.md` section 11 step 7 records the result; and `tools/verify.ps1` is green
