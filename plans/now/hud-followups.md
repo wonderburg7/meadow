@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-2 | Text scale waits until you stop clicking | `scripts/debug_panel.gd` | yes | low |
 | HF-3 | The top bar's second row spans the first | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf3_top_bar_rows_test.json` | yes | medium |
 | HF-4 | The Winter forecast is a left-hand window | `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json` | yes | medium |
 | HF-5 | Opening Nursery keeps the view you are in | `scripts/year_winter.gd` | yes | low |
@@ -33,31 +32,7 @@ result (HF-1) or any left window's rectangle (HF-4 adds one, moves none).
 
 HF-1 shipped 2026-09-30; its specification is `plans/archive/HF-1_2026-09-30.md`.
 
-## HF-2 — text scale waits until you stop clicking
-
-Level: low. Dave chose (28 Sep 2026) "apply after a pause": each Text scale
-click re-lays the settings window, so its -/+ jump from under the cursor.
-
-**Change, `debug_panel.gd` only.** Add `const TEXT_SCALE_APPLY_DELAY := 0.8`
-and a one-shot `Timer` built in `_ready`. In `_adjust`, when
-`entry.key == "text_scale"`, still call `Settings.setting_set` and update the
-value label at once, but instead of `UiTheme.refresh_for_setting` restart
-the timer; its `timeout` calls `UiTheme.refresh_for_setting("text_scale")`.
-Every other key is unchanged, and so is `scenario_actions.gd::_do_set_config`
-(headless runs still apply at once, so C-53/C-58 fixtures are unaffected).
-
-**Acceptance (check filed at closeout).** Clicking + on Text scale four
-times quickly leaves + under the pointer for every click; the whole
-interface resizes about a second after the last one.
-
-```queue
-**[Claude] HF-2 -- text scale waits until you stop clicking**
-- Plan: `plans/now/hud-followups.md` -- "HF-2 — text scale waits until you stop clicking"
-- Files: `scripts/debug_panel.gd`
-- Check: `tools/verify.ps1` is green, and `_adjust` on `text_scale` restarts the timer instead of calling `UiTheme.refresh_for_setting`
-- Proof: `absent: scripts/debug_panel.gd :: TEXT_SCALE_APPLY_DELAY`
-- Next after: HF-3 -- the top bar's second row spans the first
-```
+HF-2 shipped 2026-09-30; its specification is `plans/archive/HF-2_2026-09-30.md`.
 
 ## HF-3 — the top bar's second row spans the first
 
