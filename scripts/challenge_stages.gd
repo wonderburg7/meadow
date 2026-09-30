@@ -375,7 +375,7 @@ const STAGES_2 := [
 		],
 	},
 	{
-		"id": "2.3", "goal": "cell_designated", "condition": {"any_of": [{"cell_count": {"designated": "nectar", "at_least": 1}}, {"cell_count": {"designated": "pollen", "at_least": 1}}, {"cell_count": {"designated": "brood", "at_least": 1}}]},
+		"id": "2.3", "goal": "cell_designated", "condition": {"any_of": [{"cell_count": {"designated": "nectar", "explicit": true, "at_least": 1}}, {"cell_count": {"designated": "pollen", "explicit": true, "at_least": 1}}, {"cell_count": {"designated": "brood", "explicit": true, "at_least": 1}}]},
 		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation"],
 		"goal_text": "Goal: designate a cell.",
 		# Reworded from Slice 18's Challenge 1 1.13, which now teaches

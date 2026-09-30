@@ -1036,6 +1036,32 @@ def check_challenge_1_stage_setup(problems):
                 problems.append("stage %s setup uses unknown key '%s'" % (rid, key))
 
 
+def check_designation_goals_explicit(problems):
+    """A stage goal about a player's designation must not pass on the automatic
+    one. HiveCell.add_resource designates an empty cell on its first deposit,
+    and stocking a starting comb is a deposit, so a cell_count clause naming
+    "designated" without "explicit": true is met before the player acts:
+    Challenge 1's 1.13 (Slice 20) and Challenge 2's 2.3 (gameplay review,
+    30 Sep 2026) each cleared the moment it opened. docs/known-pitfalls.md,
+    "A goal that asks 'is any of them X'"."""
+    stages_path = os.path.join(ROOT, "challenge_stages.gd")
+    if not os.path.exists(stages_path):
+        problems.append("challenge_stages.gd not found for designation goal check")
+        return
+    source = open(stages_path, encoding="utf-8").read()
+    for clause in re.finditer(r'"cell_count":\s*\{([^{}]*)\}', source):
+        body = clause.group(1)
+        if '"designated"' in body and not re.search(r'"explicit":\s*true', body):
+            # The stage is the last "id" before the clause, wherever the record
+            # breaks its lines.
+            ids = re.findall(r'"id":\s*"(\d+\.\d+)"', source[:clause.start()])
+            problems.append(
+                "challenge_stages.gd:%d: stage %s counts designated cells without "
+                "\"explicit\": true, so a first deposit meets it"
+                % (source.count("\n", 0, clause.start()) + 1, ids[-1] if ids else "?")
+            )
+
+
 def check_challenge_1_nectar_capacity(problems):
     """C1-27: Challenge 1's nectar goal and per-cell cap share one owner."""
     stages_path = os.path.join(ROOT, "challenge_stages.gd")
@@ -3184,6 +3210,7 @@ def main():
     check_hive_stock_epoch_cache(problems)
     check_challenge_1_nectar_capacity(problems)
     check_challenge_1_stage_setup(problems)
+    check_designation_goals_explicit(problems)
     check_role_count_key_ownership(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)

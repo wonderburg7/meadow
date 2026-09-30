@@ -208,6 +208,20 @@ unplayed queen. It settles:
 - winter: onset is decided (a fixed day, `plans/now/winter-onset.md` WO-1);
   how many winters a run holds is not;
 - victory, failure and continue (§7's long-term goal, §11's doomed state);
+- **the year** (Dave, 30 Sep 2026, from `docs/gameplay-review-2026-09-30.md`
+  F5). One seasonal calendar controls flowers and gyne timing, and it counts
+  from the end of the last winter. Today there are two: flowers and
+  `season.gd::_gyne_season` follow a fixed 60-day flower year
+  (`flower.gd::season_fraction`) that never hears about winter, so WO-1's
+  winter (days 21 to 41) falls in the flowers' midsummer. In winter flowers
+  sit at their out-of-season floor, then die off, so the meadow empties
+  unless a real winter-flowering species is added. Gynes may leave at any
+  time, but mate successfully only at the right time of year; drones and
+  gynes released then earn genetic points, whose use is open. The pass
+  decides how long flowers hold the floor, how the meadow regrows after
+  winter, any winter-flowering species, the mating window (Dave's working
+  assumption: mid to late summer), drones and what genetic points buy. Until its slices land, `_gyne_season` and the comments
+  on it and on `season_fraction` are superseded but unchanged;
 - skill discovery for the early feedback run (§2);
 - **the four goal layers of §7.** The architecture review's C2 (Challenge
   goals as data) and C4 (the signal catalogue) built the parts; once that

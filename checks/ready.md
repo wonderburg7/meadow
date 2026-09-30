@@ -35,3 +35,4 @@ unblocker.
 - [C-82 -- Developer mode shows the Run availability table](ready/C-82.md)
 - [C-83 -- at Challenge 2's 2.2 a raised pollen Forager hatches](ready/C-83.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
+- [C-85 -- Challenge 2's 2.3 waits for you to designate a cell](ready/C-85.md)

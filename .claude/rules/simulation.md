@@ -75,3 +75,7 @@ energy.** Nectar spoilage is a separate future feature, not part of this
 conversion. Before changing the conversion values, model the whole
 colony/winter economy and validate it over several seasons -- a
 single-season figure is not evidence. See `docs/headless-run-contract.md`.
+Today's values break it (`nectar_per_honey` 2.0 against
+`honey_energy_factor` 4.0 turns 2 energy of nectar into 4 of honey). Dave
+decided on 30 Sep 2026 to raise `nectar_per_honey` to 4.0 once that evidence
+exists: `plans/now/gameplay-consistency.md` GC-3.
