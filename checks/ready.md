@@ -22,3 +22,4 @@ unblocker.
 - [C-70 -- Changing panel texture moves nothing](ready/C-70.md)
 - [C-71 -- High contrast text legible over textures](ready/C-71.md)
 - [C-72 -- Text scale applies after a pause](ready/C-72.md)
+- [C-73 -- Top bar second row spans the first](ready/C-73.md)

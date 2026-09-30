@@ -1249,7 +1249,7 @@ static func _game_panel(main: Node2D, key: String) -> GamePanel:
 	return null
 
 ## LAY-6 change 1: {"control": "<path>", "min_size": [w, h], "inside":
-## "<path>", "same_height_as": "<path>"}. An invisible control passes
+## "<path>", "same_height_as": "<path>", "same_width_as": "<path>"}. An invisible control passes
 ## silently -- see the plan's own reasoning: visibility is what
 ## _rebuild_role_controls legitimately toggles, so asserting on a hidden
 ## control would make every fixture a list of which columns happen to be
@@ -1305,6 +1305,17 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		var peer_height: float = peer.get_global_rect().size.y
 		if absf(rect.size.y - peer_height) > 1.0:
 			return {"ok": false, "reason": "control '%s' is %.1fpx tall but '%s' is %.1fpx" % [path, rect.size.y, peer_path, peer_height]}
+	if condition.has("same_width_as"):
+		var peer_path: String = condition["same_width_as"]
+		var peer_node: Node = _resolve_scoped_path(main, peer_path)
+		if peer_node == null or not (peer_node is Control):
+			return {"ok": false, "reason": "control '%s' width-peer '%s' not found" % [path, peer_path]}
+		var peer: Control = peer_node as Control
+		if not peer.is_visible_in_tree():
+			return {"ok": false, "reason": "control '%s' width-peer '%s' is not visible" % [path, peer_path]}
+		var peer_width: float = peer.get_global_rect().size.x
+		if absf(rect.size.x - peer_width) > 1.0:
+			return {"ok": false, "reason": "control '%s' is %.1fpx wide but '%s' is %.1fpx" % [path, rect.size.x, peer_path, peer_width]}
 	return {"ok": true, "reason": ""}
 
 ## "max_leading" (C-53): how far apart a Label draws consecutive list items,
