@@ -39,10 +39,11 @@ func begin_winter_countdown() -> void:
 		return
 	Session.winter_coming = true
 	Session.winter_starts_day = main.day + GameConfig.winter_countdown_days
+	_close_other_left_windows(main.winter_panel)
 	main.winter_panel.open()
 	main.hud.set_winter_button_visible(true)
 	main.hud.show_warning(
-		"Winter will arrive on day %d. The forecast in the top right shows what the colony will need to last it out, and how far short it is. Every bee you add between now and then is another mouth to feed through it."
+		"Winter will arrive on day %d. The Winter window on the left shows what the colony will need to last it out, and how far short it is. Every bee you add between now and then is another mouth to feed through it."
 		% int(Session.winter_starts_day)
 	)
 

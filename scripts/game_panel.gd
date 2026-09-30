@@ -7,8 +7,8 @@ extends CanvasLayer
 ##
 ## Every panel joins the "game_panel" group under its window_key, so
 ## scenario_actions.gd resolves names by walking the group rather than by
-## a hand-kept match. Left-side windows also join "left_window"; the Gallerin
-## bubble and the top-right winter window deliberately do not.
+## a hand-kept match. Left-side windows (Winter included) also join
+## "left_window"; the Gallerin bubble deliberately does not.
 
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")

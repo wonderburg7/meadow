@@ -802,7 +802,7 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 		return
 
 	var panel: GamePanel = _game_panel(main, window_key)
-	# The winter window has no left-window toggle; only the three below open here.
+	# Only left-window panels open here.
 	if panel != null and not panel.is_in_group("left_window"):
 		panel = null
 	if panel == null:
@@ -1142,6 +1142,10 @@ static func _check_panel_rect(main: Node2D, condition: Dictionary) -> Dictionary
 	var panel: Control = _resolve_named_panel(main, name)
 	if panel == null:
 		return {"ok": false, "reason": "unknown panel '%s'" % name}
+	if condition.has("open") and not condition["open"]:
+		if panel.visible:
+			return {"ok": false, "reason": "panel '%s' is open but should be closed" % name}
+		return {"ok": true, "reason": ""}
 	if not panel.visible:
 		return {"ok": false, "reason": "panel '%s' is not visible" % name}
 	var rect: Rect2 = panel.get_global_rect()
