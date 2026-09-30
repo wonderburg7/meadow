@@ -26,7 +26,7 @@ home per fact: read the plan.
 | Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
 | Challenge 1 follow-ups from hands-on passes | `plans/archive/c1-followups_2026-09-28.md` |
 | Comb builder placement and the per-site cap | `plans/archive/comb-builders_2026-09-20.md` |
-| How the flowering year feels at the start of a run | `plans/now/season-feel.md` |
+| How the flowering year feels at the start of a run | `plans/archive/season-feel_2026-09-30.md` |
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
 

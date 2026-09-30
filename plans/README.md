@@ -163,7 +163,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
 | Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
 | C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/archive/c1-followups_2026-09-28.md` |
-| SF-1 -- a new run's founding flower mix; the season recharge range | `plans/now/season-feel.md` |
+| SF-1 -- a new run's founding flower mix; the season recharge range | `plans/archive/season-feel_2026-09-30.md` |
 | UI-X-1..UI-X-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/archive/UI-X_2026-09-18.md` (complete) |
 | CB-1, CB-2 -- comb builders per site and per wall | `plans/archive/comb-builders_2026-09-20.md` |
 | Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |

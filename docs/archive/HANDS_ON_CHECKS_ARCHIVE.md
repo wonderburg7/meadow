@@ -84,7 +84,7 @@ PASS: the founding meadow reflects flowers' wrapped birth seasons, so its mix
 at the start resembles the mix at the same point one year later rather than a
 cohort selected entirely for the restart instant.
 
-Owner: `plans/now/season-feel.md` SF-1.
+Owner: `plans/archive/season-feel_2026-09-30.md` SF-1.
 
 Confirmed 28 Sep 2026: Passed in Dave's 28 Sep 2026 batch; his follow-up requests from the same run are filed as slices in plans/now/ (hud-followups, saves-access, skill-screen, season-feel SF-2).
 
@@ -420,7 +420,7 @@ PASS: the +/s figure climbs smoothly to a peak and falls smoothly away again, an
 If it fails, `GameConfig.out_of_season_strength` (0.75) and
 `peak_season_strength` (1.25) are wrong or not what the summary panel reads.
 
-Owner: `plans/now/season-feel.md` (values set on `claude/pass-0917`).
+Owner: `plans/archive/season-feel_2026-09-30.md` (values set on `claude/pass-0917`).
 
 Re-run note (Dave, 17 Sep 2026). Failed against the old 0.05/0.75 values:
 "flowers' nectar rates quickly falling to one tenth of their peak season
@@ -519,7 +519,7 @@ Passed (Dave, 19 Sep 2026).
 Eight checks run. C-48 passed and is recorded here. C-24 failed and was
 refiled against Dave's new season range; C-7, C-29, C-31 and C-42 were fixed
 in session on `claude/pass-0917` and refiled for re-run; C-25 and C-49 moved
-to `checks/blocked.md` behind SF-1 (`plans/now/season-feel.md`) and C1F-1
+to `checks/blocked.md` behind SF-1 (`plans/archive/season-feel_2026-09-30.md`) and C1F-1
 (`plans/archive/c1-followups_2026-09-28.md`). Dave's extra asks: staggered starter ages
 (shipped, C-54), automatic Nursing backup in Challenge 1 (shipped, C-55), the
 settings stage row (shipped with a headless check), and Dr Gallerin's bubble

@@ -216,7 +216,7 @@ Re-sequencing that would make later slices cheaper (front-loading):
 - `plans/reference/technical-audit.md` PERF-1: "Both calls already return
   immediately when `Session.perf_enabled` is false" -- true, but the section
   name must also be added to nothing else; the plan says so. Fine.
-- `plans/now/season-feel.md` SF-1 requirement 2 changes the random draw
+- `plans/archive/season-feel_2026-09-30.md` SF-1 requirement 2 changes the random draw
   order per founder and says so. Fine, and a model of how to state a
   behavioural side effect.
 - `plans/now/agent-lifecycle.md` L-10: "`plans/archive/**` is denied to the
