@@ -19,7 +19,6 @@ same run. `plans/now/saves-access.md` (SA-1) and
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HF-3 | The top bar's second row spans the first | `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf3_top_bar_rows_test.json` | yes | medium |
 | HF-4 | The Winter forecast is a left-hand window | `scripts/winter_panel.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf4_winter_left_window_test.json` | yes | medium |
 | HF-5 | Opening Nursery keeps the view you are in | `scripts/year_winter.gd` | yes | low |
 | HF-6 | Why Raises lacks Pollen at 2.2 (C-57) | `scripts/scenario_actions.gd`, `scripts/hud.gd`, `scripts/challenge_runner.gd`, `test_scenarios/hf6_challenge2_raises_test.json` | yes | high |
@@ -34,36 +33,7 @@ HF-1 shipped 2026-09-30; its specification is `plans/archive/HF-1_2026-09-30.md`
 
 HF-2 shipped 2026-09-30; its specification is `plans/archive/HF-2_2026-09-30.md`.
 
-## HF-3 — the top bar's second row spans the first
-
-Level: medium. Dave chose (28 Sep 2026) "span row 1's width": with labels off
-(the default) row 2's buttons are 32 wide and 56 tall.
-
-**Change.** In `hud.gd::_build_top_right_bar`, name the rows
-`top_bar_row1`/`top_bar_row2` and give every row-2 button (Colony, Nursery,
-Foraging, Winter, Saves while it exists, Skills, View)
-`size_flags_horizontal = Control.SIZE_EXPAND_FILL`. The info badges keep
-their default flags. The bar is a `VBoxContainer`, so row 2 already gets
-the bar's width; expanding buttons share it equally with the existing
-`TOP_BAR_BUTTON_GAP`. Heights and `TOP_BAR_CONTROL_HEIGHT` stay. When labels
-are on, row 2 may be the wider row; that is accepted. In
-`scenario_actions.gd::_check_control_rect` add `"same_width_as"`, a copy of
-`"same_height_as"` on `size.x`. Fixture (sandbox, 1280×720): assert
-`hud/**/top_bar_row2` `same_width_as` `hud/**/top_bar_row1`, and
-`even_columns` on `hud/**/top_bar_row2` with `"children": 4`, tolerance 1.
-Regenerate `FUNCTION_MAP.md` (`python tools/update_function_map.py`).
-
-**Acceptance (check filed at closeout).** Row 2's buttons fill the same width
-as row 1 above them, equally sized and evenly spaced.
-
-```queue
-**[Claude] HF-3 -- the top bar's second row spans the first**
-- Plan: `plans/now/hud-followups.md` -- "HF-3 — the top bar's second row spans the first"
-- Files: `scripts/hud.gd`, `scripts/scenario_actions.gd`, `test_scenarios/hf3_top_bar_rows_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/hf3_top_bar_rows_test.json` passes, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: top_bar_row2`
-- Next after: HF-4 -- the Winter forecast is a left-hand window
-```
+HF-3 shipped 2026-09-30; its specification is `plans/archive/HF-3_2026-09-30.md`.
 
 ## HF-4 — the Winter forecast is a left-hand window
 
