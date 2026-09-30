@@ -8,7 +8,7 @@ player naturally tries, from Dave's 28 Sep 2026 hands-on batch. Decisions
 were taken with Dave in that session.
 
 **State.** Nothing built yet. The sibling HUD fixes from the same batch are
-in `plans/now/hud-followups.md`.
+in `plans/archive/hud-followups_2026-09-30.md`.
 
 ## Open slices at a glance
 
