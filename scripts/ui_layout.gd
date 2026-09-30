@@ -126,8 +126,8 @@ static func gallerin_reserve_width(viewport_width: float) -> float:
 static func panel_chrome() -> Vector2:
 	var box := UiTheme.panel_stylebox()
 	return Vector2(
-		box.content_margin_left + box.content_margin_right + box.border_width_left + box.border_width_right,
-		box.content_margin_top + box.content_margin_bottom + box.border_width_top + box.border_width_bottom
+		box.content_margin_left + box.content_margin_right + 2.0 * UiTheme.PANEL_BORDER_WIDTH,
+		box.content_margin_top + box.content_margin_bottom + 2.0 * UiTheme.PANEL_BORDER_WIDTH
 	)
 
 ## --- persistent-rectangle owners ---------------------------------------

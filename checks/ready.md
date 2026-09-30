@@ -14,7 +14,10 @@ unblocker.
 
 ## Ready to run
 
+- [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-66 -- Developer mode toggle in the main menu settings](ready/C-66.md)
 - [C-67 -- Challenge 2 gives Nurses free at stage 2.5](ready/C-67.md)
 - [C-68 -- Clicking the hive or its exit switches view](ready/C-68.md)
 - [C-69 -- A bee waiting for room says so](ready/C-69.md)
+- [C-70 -- Changing panel texture moves nothing](ready/C-70.md)
+- [C-71 -- High contrast text legible over textures](ready/C-71.md)

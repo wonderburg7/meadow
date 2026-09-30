@@ -423,6 +423,49 @@ def check_hatch_brood_iteration(name, lines, problems):
             )
 
 
+STYLEBOX_NO_DRAW_BASES = ("StyleBoxFlat", "StyleBoxTexture", "StyleBoxLine")
+
+
+def check_stylebox_no_script_draw(name, lines, problems):
+    """A class extending StyleBoxFlat/StyleBoxTexture/StyleBoxLine may not
+    define _draw: those draw in C++ and never call a script override, so the
+    code silently never runs (HF-1, docs/known-pitfalls.md). Extend StyleBox
+    and hold the concrete box as a member instead."""
+    bases = "|".join(STYLEBOX_NO_DRAW_BASES)
+    extends_re = re.compile(r"^\s*extends\s+(%s)\b" % bases)
+    class_re = re.compile(r"^class\s+\w+(?:\s+extends\s+(\w+))?\s*:")
+    file_bad = False
+    class_bad = False
+    in_class = False
+    for line in lines:
+        code = strip_code(line)
+        if not code.strip():
+            continue
+        top = not line[0].isspace()
+        m = class_re.match(code)
+        if m:
+            in_class = True
+            class_bad = m.group(1) in STYLEBOX_NO_DRAW_BASES
+            continue
+        if in_class and top:
+            in_class = False
+            class_bad = False
+        hit = extends_re.match(code)
+        if hit:
+            if in_class:
+                class_bad = True
+            else:
+                file_bad = True
+            continue
+        bad = class_bad if in_class else file_bad
+        if bad and re.match(r"\s*(static\s+)?func\s+_draw\s*\(", code):
+            problems.append(
+                "%s: a StyleBoxFlat/StyleBoxTexture/StyleBoxLine subclass "
+                "defines _draw, which Godot never calls -- extend StyleBox "
+                "and hold the concrete box as a member" % name
+            )
+
+
 STAGE_EFFECTS_FILE = "challenge_runner.gd"
 STAGE_EFFECTS_FUNC = "_enter_stage"
 STAGE_EFFECTS_RUN_CALL = "_run_stage_effects("
@@ -2992,6 +3035,7 @@ def main():
         check_autonomous_transitions(name, lines, problems)
         check_stage_effects_order(name, lines, problems)
         check_hatch_brood_iteration(name, lines, problems)
+        check_stylebox_no_script_draw(name, lines, problems)
         funcs, _members = collect_names(code, source)
         # A panel inheriting GamePanel may call its base's functions bare.
         if re.search(r"^extends GamePanel", source, re.M):

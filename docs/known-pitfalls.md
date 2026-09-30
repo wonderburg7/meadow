@@ -462,6 +462,15 @@ The read-only inspection commands this project actually uses are allow-listed
 in `.claude/settings.json`; if a plain `sed -n`/`grep`/`git show` is refused,
 the path it names is denied on purpose — do not reach for a workaround.
 
+**A script `_draw` on a `StyleBoxFlat` subclass never runs (28 Sep 2026).**
+`StyleBoxFlat`, `StyleBoxTexture` and `StyleBoxLine` draw in C++ and do not
+call a script's `_draw` override, so `PanelBox extends StyleBoxFlat` drew
+plain flat panels whatever texture was chosen (C-60 failed on this). A
+headless probe printed from a `StyleBox` subclass's `_draw` and not from a
+`StyleBoxFlat` one. Extend `StyleBox`, keep the flat box as a member
+(`PanelBox.flat`) and call its `draw()` first. `tests/source_checks.py`
+fails any such subclass that defines `_draw`.
+
 **A bee under `hive_root` is in hive-local coordinates; a flower is not
 (19 Sep 2026).** Parenting decides the space `bee.position` is in. A
 Forager idling indoors was dispatched to flower-seeking where she stood,
