@@ -42,7 +42,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnostics import write_event  # noqa: E402
 from analyze_session import REPORT_PROFILES, aggregate_runs, analyze, load_entries, report  # noqa: E402
-from godot_compile_check import ensure_writable_user_dir, failing_lines  # noqa: E402
+from godot_compile_check import ensure_writable_user_dir, failing_lines, find_godot  # noqa: E402
 import godot_cache  # noqa: E402
 from headless.contracts import SCHEMA_VERSION, fits_stdout_budget  # noqa: E402
 from headless.experiments import (ContractError as ExperimentContractError, aggregate_case_metrics,
@@ -98,13 +98,19 @@ def log_dir() -> Path:
     # the app_userdata directory, and a renamed project must not make a
     # completed scenario look as though it wrote no result.
     appdata = os.environ.get("APPDATA")
-    if not appdata:
+    if not appdata and os.name != "nt":
+        # Godot on Linux and macOS keeps user:// under XDG_DATA_HOME, not APPDATA.
+        data_home = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        root = Path(data_home) / "godot" / "app_userdata"
+    elif not appdata:
         raise RuntimeError("%APPDATA% not set -- can't find the Godot user:// dir")
+    else:
+        root = Path(appdata) / "Godot" / "app_userdata"
     project_text = (ROOT / "project.godot").read_text(encoding="utf-8")
     name_match = re.search(r'^config/name="([^"]+)"$', project_text, re.MULTILINE)
     if name_match is None:
         raise RuntimeError("project.godot has no config/name -- can't find the Godot user:// dir")
-    return Path(appdata) / "Godot" / "app_userdata" / name_match.group(1) / "logs"
+    return root / name_match.group(1) / "logs"
 
 
 def _scenario_declares_seed(scenario_path: Path) -> bool:
@@ -817,7 +823,7 @@ def main() -> int:
                         help="print the deterministic headless routing card and exit")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
                          help="real-world seconds to wait before giving up, per run (default: %(default)s)")
-    parser.add_argument("--godot-path", default=DEFAULT_GODOT_PATH,
+    parser.add_argument("--godot-path", default=find_godot() or DEFAULT_GODOT_PATH,
                          help="path to the Godot executable (default: %(default)s)")
     parser.add_argument("--repeat", type=int, default=1,
                          help="run the scenario this many times and report a range, not a "

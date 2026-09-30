@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import glob
+import json
 import math
 import subprocess
 
@@ -3166,6 +3167,67 @@ def check_ui_gate_table(problems):
             "UI_GATES row governs" % name)
 
 
+# Test modules that verify.ps1 deliberately does not run, each with its reason.
+# Every other tests/test_*.py must be named in verify.ps1's $lifecycleModules
+# or $unitModules, so a new module cannot sit unrun (two did, unseen, until
+# the 30 Sep 2026 verification review).
+TESTS_NOT_IN_VERIFY = {
+    "test_sf1_founding_flower_mix": "boots Godot; red since it was added (flowers 945 to 49 in 7 days), waits on its owner",
+}
+
+
+def check_test_modules_are_run(problems):
+    verify = open(os.path.join(ROOT, "..", "tools", "verify.ps1"), encoding="utf-8").read()
+    named = set(re.findall(r"tests\.(test_\w+)", verify))
+    present = {os.path.basename(p)[:-3] for p in glob.glob(os.path.join(ROOT, "..", "tests", "test_*.py"))}
+    for module in sorted(present - named - set(TESTS_NOT_IN_VERIFY)):
+        problems.append("tests/%s.py is run by nothing: add it to verify.ps1's $unitModules or "
+                        "$lifecycleModules, or to TESTS_NOT_IN_VERIFY with a reason" % module)
+    for module in sorted(set(TESTS_NOT_IN_VERIFY) - present):
+        problems.append("TESTS_NOT_IN_VERIFY names %s, which no longer exists" % module)
+    for module in sorted(set(TESTS_NOT_IN_VERIFY) & named):
+        problems.append("TESTS_NOT_IN_VERIFY exempts %s, but verify.ps1 runs it" % module)
+
+
+def check_scenario_condition_keys(problems):
+    """Every `when` and `assert` key in test_scenarios/ must be one the harness answers.
+
+    scenario_actions.gd hands unknown keys to Conditions, which fails them at
+    run time, but no verify stage runs a scenario: before 30 Sep 2026 three
+    asserts named keys nothing read and passed unchecked.
+    """
+    actions = open(os.path.join(ROOT, "scenario_actions.gd"), encoding="utf-8").read()
+    conditions = open(os.path.join(ROOT, "conditions.gd"), encoding="utf-8").read()
+    legacy = set(re.findall(r'"(\w+)":\s*"\w+"', actions[actions.index("const LEGACY_WHEN_KEY_MAP"):].split("}", 1)[0]))
+    local = set(re.findall(r'"(\w+)"', actions[actions.index("const LOCAL_WHEN_KEYS"):].split("]", 1)[0]))
+    native = set(re.findall(r'^\t\t"(\w+)":', conditions.split("static func _met_key", 1)[1].split("static func _progress_key", 1)[0], re.M))
+    assert_body = actions.split("static func _evaluate_assert_condition", 1)[1].split("\nstatic func ", 1)[0]
+    assert_keys = set(re.findall(r'condition\.has\("(\w+)"\)', assert_body))
+    if not (legacy and local and native and assert_keys):
+        problems.append("check_scenario_condition_keys could not read the harness's key lists")
+        return
+    known = legacy | local | native
+    for path in sorted(glob.glob(os.path.join(ROOT, "..", "test_scenarios", "*.json"))):
+        try:
+            scenario = json.load(open(path, encoding="utf-8"))
+        except ValueError:
+            continue
+        clauses = []
+        for action in scenario.get("actions", []):
+            if isinstance(action.get("when"), dict):
+                clauses.append(("when", action["when"]))
+            if action.get("do") == "assert" and isinstance(action.get("condition"), dict):
+                clauses.append(("assert", action["condition"]))
+        if isinstance(scenario.get("stop"), dict) and isinstance(scenario["stop"].get("when"), dict):
+            clauses.append(("stop.when", scenario["stop"]["when"]))
+        for kind, clause in clauses:
+            if kind == "assert" and assert_keys & set(clause):
+                continue
+            for key in sorted(set(clause) - known):
+                problems.append("%s: %s key '%s' is not one the scenario harness answers"
+                                % (os.path.basename(path), kind, key))
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -3224,6 +3286,8 @@ def main():
     check_progression_transcribed_effects(problems)
     check_progression_reachability(problems)
     check_progression_grid(problems)
+    check_test_modules_are_run(problems)
+    check_scenario_condition_keys(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))

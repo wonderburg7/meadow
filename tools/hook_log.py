@@ -84,7 +84,10 @@ def _bash_command_token(command: str) -> str:
                 "",
             )
             if script:
-                return f"{program} {script.rsplit('/', 1)[-1].rsplit('\\', 1)[-1]}"
+                # Split outside the f-string: a backslash inside an f-string
+                # expression is a SyntaxError before Python 3.12.
+                script_name = script.rsplit('/', 1)[-1].rsplit('\\', 1)[-1]
+                return f"{program} {script_name}"
         return program
     return ""
 

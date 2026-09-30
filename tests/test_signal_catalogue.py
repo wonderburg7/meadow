@@ -98,7 +98,9 @@ class SignalCatalogueTest(unittest.TestCase):
             with self.subTest(signal=signal_id):
                 self.assertEqual(signal_id, condition)
                 self.assertEqual("signal_" + signal_id, message)
-        self.assertIn("Callable(ProblemMessages, str(signal.message)).call(state)", SOURCE)
+        # problem_messages.gd::_dispatch must route every catalogue message.
+        for _signal_id, _condition, _severity, _action, _category, message in rows:
+            self.assertIn(f'"{message}": return {message}(state)', SOURCE)
 
     def test_six_distinct_colony_states_have_exact_lines(self):
         cases = {

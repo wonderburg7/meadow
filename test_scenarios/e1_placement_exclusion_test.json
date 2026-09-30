@@ -11,8 +11,7 @@
     {"do": "request_placement_tool", "tool": "mine_target"},
     {"do": "click_world", "view": "hive", "soil_hex": [-5, -5]},
     {"do": "settle", "ticks": 1},
-    {"do": "assert", "condition": {"selected_mine_queue_at_least": 1}},
-    {"do": "assert", "condition": {"built_cells_at_least": 0}}
+    {"do": "assert", "condition": {"selected_mine_queue_at_least": 1}}
   ],
   "stop": {"when_actions_resolved": true, "max_days": 1}
 }

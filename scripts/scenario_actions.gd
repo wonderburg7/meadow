@@ -45,6 +45,16 @@ const LEGACY_WHEN_KEY_MAP := {
 	"disease_at_least": "disease", "disease_at_most": "disease",
 }
 
+## `when`/`assert` keys answered locally by _when_met rather than by Conditions.
+## Any other key that is not in LEGACY_WHEN_KEY_MAP goes to Conditions as
+## written, which fails an unsupported key loudly. Before 30 Sep 2026 such
+## keys were dropped, so an assert on `role_count` passed unchecked.
+const LOCAL_WHEN_KEYS := [
+	"food_stores_at_least", "challenge_stage_id", "queen_inside_hive", "queen_load_empty",
+	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
+	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
+]
+
 # --- run_pending --------------------------------------------------
 
 ## Called once per _process() tick while main.scenario_active. An "assert"
@@ -363,6 +373,9 @@ static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary:
 		if when.has("disease_at_most"):
 			disease_spec["at_most"] = when["disease_at_most"]
 		spec[LEGACY_WHEN_KEY_MAP["disease_at_least"]] = disease_spec
+	for key in when:
+		if not LEGACY_WHEN_KEY_MAP.has(key) and not LOCAL_WHEN_KEYS.has(key):
+			spec[key] = when[key]
 	return spec
 
 
