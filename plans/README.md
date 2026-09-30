@@ -159,29 +159,22 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 
 | If the queue names | Read |
 | --- | --- |
-| Flowers, season, senescence, the meadow's mix | `plans/archive/FLOWERS_SLICE_2_2026-09-06.md` (complete) |
-| Challenge 2 rescue and recovery messages | `plans/archive/CHALLENGE_2_MESSAGES_2026-09-10.md` (complete) |
-| Challenge 1 stages and acceptance | `plans/archive/CHALLENGE1_2026-09-15.md` |
-| C1F-1, C1F-2 -- Challenge 1 stage world setup, the queen's pollen-departure proof (Dave's 17 Sep 2026 pass) | `plans/archive/c1-followups_2026-09-28.md` |
-| SF-1 -- a new run's founding flower mix; the season recharge range | `plans/archive/season-feel_2026-09-30.md` |
-| UI-X-1..UI-X-4 -- settings window, Challenge 2's Raises row, cell tray columns, Dr Gallerin's bubble height | `plans/archive/UI-X_2026-09-18.md` (complete) |
-| CB-1, CB-2 -- comb builders per site and per wall | `plans/archive/comb-builders_2026-09-20.md` |
-| Comb autobuild order, cell art, cell rings | `plans/archive/HIVE_COMB_2026-09-12.md` (complete) |
-| Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
-| Progression/skills design | `plans/design/progression.md` |
-| E1, F1s, F2s, G3 -- one placement tool, a shared window base, the gate table, gateable actions | `plans/archive/architecture-review_2026-09-24.md` |
-| Product scope, alpha/beta gates and high-level development sequence | `plans/design/product-scope.md` |
-| Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
-| L-12, L-13 -- closeout as one command, queue lines carried by the plan (L-1..L-11 are archived) | `plans/now/agent-lifecycle.md` |
-| WD-0..WD-4 -- the workflow event log, its writers and `--events` | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` (complete) |
-| System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
-| SM-1 -- the headless smoke scenario routes builders from walkable spawn tiles | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` (complete) |
-| PE-1 -- the headless pacing gates time each milestone to the hour | `plans/now/pacing-evidence.md` |
+| SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/now/skill-screen.md` |
+| BS-4, BS-6, BS-7, BS-8 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run | `plans/now/brood-spine.md` |
+| GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/now/gameplay-consistency.md` |
+| PE-1, PE-2 -- the headless pacing gates timed to the hour, then the played arc | `plans/now/pacing-evidence.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/now/winter-onset.md` |
-| PERF-1 -- measure `find_food_cell` before changing it | `plans/reference/technical-audit.md` |
-| W-1..W-7, agent workflow, token cost, queue enforcement | `plans/archive/AGENT_WORKFLOW_2026-09-03.md` (complete) |
-| A measured hot-path or restore issue | `plans/reference/technical-audit.md` |
-| Provenance for a shipped slice | `plans/archive/` (search only) |
+| UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/now/ui-feedback.md` |
+| L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
+| Progression/skills design | `plans/design/progression.md` |
+| Product scope, alpha/beta gates, the Colony Run definition pass | `plans/design/product-scope.md` |
+| Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
+| Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
+| A measured hot-path or restore issue | `plans/reference/technical-audit.md` (candidate B is measurement-gated; no open slice) |
+| Closing a slice, merging, filing a check | `plans/reference/closeout.md` |
+| Running one of Dave's reviews | `plans/reference/review-contract.md` |
+| System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
+| Provenance for a shipped slice (E1, F1s, F2s, G3, C1F, CB, SF, SM, UI-X, WD, PERF, AP, BS-1 to BS-5, SK-1, L-1 to L-15, ...) | `plans/archive/` (search only) |
 
 Create a new file in `plans/now/` only when a selected slice cannot fit in the
 existing area's immediate-task section. On completion, distil durable rules,
@@ -197,16 +190,17 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    called C1, and is not the architecture review's C1). `debug_panel.gd` is
    now a view
    of that catalogue, and a new setting is added to the catalogue file.
-2. Add no counter-free evidence slice. X1 exists because the forager-return
-   check could not be answered at all without a counter; X2 reads the same
-   diagnostic surface. Evidence before threshold changes, every time.
-3. Diagnose UI-D and UI-P-5 from an observed reproduction before changing
-   geometry or menu-population code; both name two plausible causes. UI-R-1
-   is not in that category -- its cause is arithmetic and is worked in the
-   plan.
-5. If progression is selected, follow `plans/design/progression.md`'s order:
-   catalogue → resolver → run definition → modifiers → vertical slice. Do not
-   begin adaptations, campaign meta, or legacy-path removal first.
+2. Add no counter-free evidence slice: evidence before threshold changes,
+   every time (X1 and X2 in `plans/archive/FORAGING_EVIDENCE_2026-09-03.md`
+   are the precedent).
+3. Diagnose a geometry or menu-population defect from an observed
+   reproduction before changing code; a defect whose cause is arithmetic is
+   worked in its plan (UI-D, UI-P-5 and UI-R-1, all shipped, were the cases).
+5. If progression is selected, follow `plans/design/progression.md` section
+   11's order. Phase A (catalogue, resolver, run definition, modifiers, the
+   tier-1 vertical slice) shipped; Phase B runs through
+   `plans/now/brood-spine.md`. Do not begin adaptations, campaign meta, or
+   legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth
    per-symptom boolean to `bee.gd`; see `plans/archive/CHALLENGE1_2026-09-15.md` Slice 12
@@ -239,19 +233,13 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 13. Developer triggers all live in `debug_panel.gd`'s "Triggers" group. A
     slice that makes a rare state reachable adds a button there; it does not
     invent a new home (`plans/reference/check-loop.md` P-3).
-14. **`scripts/challenge_runner.gd` is the contended file, and this is the
-    order.** Several open slices across three plans want it, which is why so
-    many of them read as "not startable" for reasons stated in different
-    places. One list, so nobody re-derives it, rewritten 17 Sep 2026 by the
-    plan review because every slice the previous list named has shipped:
-    **E1**
-    (`plans/archive/architecture-review_2026-09-24.md`, the two
-    `awaiting_queen_build_cell` writes), then **C1F-1**
-    (`plans/archive/c1-followups_2026-09-28.md`, which adds the stage-setup call to both
-    debug arrows), then the architecture review's **F2s** and **G3** in that
-    order. A slice naming this file that is not next in that order is not
-    startable, whatever its own plan says. Added 11 Sep 2026 by the plan
-    review.
+14. **`scripts/challenge_runner.gd` is the contended file.** When more than
+    one open slice names it, the plan review writes one order here, and a
+    slice naming the file that is not next in that order is not startable,
+    whatever its own plan says. The 17 Sep 2026 list (E1, C1F-1, F2s, G3)
+    has entirely shipped and, as of 30 Sep 2026, no open slice names the
+    file, so there is no order to keep. Added 11 Sep 2026 by the plan
+    review; rule 9 applies to this guardrail as much as to a plan.
 15. **Cite the symbol, not the line.** A plan may give a line number as a
     hint, never as the address: `challenge-1.md` carried five numbers that
     had each moved 40 to 60 lines by the time the slices they belong to were

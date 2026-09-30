@@ -94,13 +94,9 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
 
-BS-1 shipped 2026-09-28; its specification is `plans/archive/BS-1_2026-09-28.md`.
-
-BS-2 shipped 2026-09-29; its specification is `plans/archive/BS-2_2026-09-29.md`.
-
-BS-3 shipped 2026-09-30; its specification is `plans/archive/BS-3_2026-09-30.md`.
-
-BS-5 shipped 2026-09-30; its specification is `plans/archive/BS-5_2026-09-30.md`.
+BS-1, BS-2, BS-3 and BS-5 shipped between 28 and 30 Sep 2026; each
+specification is in `plans/archive/` under its id and date
+(`plans/archive/BS-1_2026-09-28.md` and so on).
 
 ## BS-4 — the honey gate
 
@@ -127,7 +123,10 @@ made that real: no run owns Honey worker unless it seeds honey makers.
      is four full nectar cells and two full pollen cells
      (`world_building.gd::_stock_starting_comb`), so its 150 nectar and 60
      pollen are there from the start.
-  2. `assign_role` two nectar foragers to `honey`.
+  2. `assign_role` two foragers to `honey`, selector `{"current_role":
+     "forager", "count": 2}`: `scenario_actions.gd::_resolve_bees` takes the
+     first two by bee id and cannot tell nectar from pollen foragers, and
+     either serves, since the honey is made from the stocked cells.
   3. `buy_skill` `skill.colony.comb_worker` (20 honey, 200 nectar), then
      `assert` `{"skill_owned": "skill.colony.comb_worker"}`, both with
      `"when": {"food_stores_at_least": 20}`. That key counts ripe honey
@@ -146,7 +145,11 @@ made that real: no run owns Honey worker unless it seeds honey makers.
   it.
 - **Result.** Add one line to `plans/design/progression.md` section 11,
   step 7: the day Comb worker was bought, or the step the run stalled at,
-  naming the fixture.
+  naming the fixture. In the same edit, correct that file's Status line,
+  whose `Next:` still says "BS-1 queued in the Claude lane" (dated 17 Sep),
+  to name the Brood spine slice that follows BS-4, and step 7's "(BS-1 to
+  BS-6)" to "(BS-1 to BS-8)". The plan review left both to this slice on
+  30 Sep 2026 because the file is on its `Files:` line.
 - **Escalate** if the run stalls on honey or comb: that is the constraint
   failing, and the fix is a balance decision for Dave -- more pre-built
   empty comb in `levels.gd`, or a cheaper first tier-2 skill -- not this
@@ -198,6 +201,10 @@ once a worker has hatched. `"stop": {"when_actions_resolved": true,
 **Escalate** if the second assert is still unresolved at day 8: a queen
 nursing as her backup does not raise a worker from level 3's start, and what
 to change is Dave's call.
+
+**Downstream.** PE-2, the played pacing arc (`plans/now/pacing-evidence.md`,
+"Later"), starts from a Scenario whose queen has this backup, so it waits
+for BS-7 as well as for WO-1 and the Colony Run definition.
 
 ```queue
 **[Claude] BS-7 -- every Scenario's queen backs up as a Nurse**
