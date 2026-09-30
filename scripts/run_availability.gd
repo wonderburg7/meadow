@@ -21,13 +21,20 @@ extends RefCounted
 ## over both, the same reading progression.gd::is_permitted() gives
 ## contradictory data.
 ##
-## Columns still to come, each in its own slice: "introduced at stage" and
-## "free at stage", from challenge_stages.gd (BS-2); feature rows and a
-## feature-driven "unavailable" (BS-5, through progression.gd's
-## feature_valid(), since only the resolver reads features.gd).
+## Given the run's progression (the developer table does; main.gd's run
+## start does not need to), a skill the tree would offer but whose feature is
+## off in this run is "unavailable", and each feature a skill depends on gets
+## a row -- both through progression.gd's feature_valid(), since only the
+## resolver reads features.gd (BS-5). Never changes what a run starts owning.
+## Columns still to come: "introduced at stage" and "free at stage", from
+## challenge_stages.gd; the developer table names them as not yet available.
 ##
 ## Sheet shape:
 ##   "skills":   skill id -> {"source": SOURCE_*, "reason": REASON_*}
+##   "roles":    skill-gated role key -> {"skill": id, "source", "reason"},
+##               the same answer as that skill's row
+##   "features": feature id -> {"source": start/unavailable, "reason"}, empty
+##               without a progression
 ##   "starting": skill ids the run starts owning (never a baseline one --
 ##               the resolver owns those anyway)
 ##   "grants"/"bans"/"delays": the run's skill policy, as levels.gd names it
@@ -46,6 +53,8 @@ const REASON_RUN_GRANT := "reason.run_grant"
 const REASON_SEEDED_ROLE := "reason.seeded_role"
 const REASON_RUN_BAN := "reason.run_ban"
 const REASON_TREE := "reason.tree"
+const REASON_FEATURE_OFF := "reason.feature_off"
+const REASON_FEATURE_ON := "reason.feature_on"
 
 ## levels.gd's starting-count key for each role that has a skill. A newly
 ## gated role adds its count key here; sheet_for() reports one missing.
@@ -55,7 +64,7 @@ const SEED_COUNT_KEYS := {
 }
 
 
-static func sheet_for(run_definition: Dictionary) -> Dictionary:
+static func sheet_for(run_definition: Dictionary, progression = null) -> Dictionary:
 	var bans: Array = run_definition.get("skill_bans", [])
 	var grants: Array = run_definition.get("skill_grants", [])
 	var seeded := _seeded_skills(run_definition)
@@ -69,6 +78,8 @@ static func sheet_for(run_definition: Dictionary) -> Dictionary:
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_RUN_GRANT}
 		elif seeded.has(skill_id):
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_SEEDED_ROLE}
+		elif progression != null and not progression.feature_valid(skill_id):
+			rows[skill_id] = {"source": SOURCE_UNAVAILABLE, "reason": REASON_FEATURE_OFF}
 		else:
 			rows[skill_id] = {"source": SOURCE_TREE, "reason": REASON_TREE}
 	var starting := []
@@ -77,11 +88,47 @@ static func sheet_for(run_definition: Dictionary) -> Dictionary:
 			starting.append(skill_id)
 	return {
 		"skills": rows,
+		"roles": _role_rows(rows),
+		"features": _feature_rows(progression),
 		"starting": starting,
 		"grants": grants,
 		"bans": bans,
 		"delays": run_definition.get("skill_delays", {}),
 	}
+
+
+## A skill's display name, for the developer table, which may not read
+## skills.gd itself (tests/source_checks.py's CATALOGUE_READERS).
+static func skill_label(skill_id: String) -> String:
+	return Skills.label_for(skill_id)
+
+
+## One row per role a skill unlocks, answering as that skill's row does.
+static func _role_rows(skill_rows: Dictionary) -> Dictionary:
+	var roles := {}
+	for role in Roles.ROLES:
+		if role.skill != "" and skill_rows.has(role.skill):
+			var row: Dictionary = skill_rows[role.skill]
+			roles[role.key] = {"skill": role.skill, "source": row.source, "reason": row.reason}
+	return roles
+
+
+## One row per feature some skill depends on, on or off in this run as
+## progression.feature_valid() judges that skill. Empty with no progression.
+static func _feature_rows(progression) -> Dictionary:
+	var features := {}
+	if progression == null:
+		return features
+	for skill_id in Skills.ids():
+		var feature: String = Skills.entry(skill_id).get("feature", "")
+		if feature == "" or features.has(feature):
+			continue
+		var on: bool = progression.feature_valid(skill_id)
+		features[feature] = {
+			"source": SOURCE_START if on else SOURCE_UNAVAILABLE,
+			"reason": REASON_FEATURE_ON if on else REASON_FEATURE_OFF,
+		}
+	return features
 
 
 ## The skills this run starts owning: its `skill_grants` plus the skill of

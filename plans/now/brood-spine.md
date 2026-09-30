@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-5 -- the developer table shows a run's sheet (startable, in the Claude lane); BS-4 -- the honey gate needs its specification first (see Later slices) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits, waiting for Dave's persistence decision; BS-4 -- the honey gate needs its specification first (see Later slices) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -110,10 +110,22 @@ already exists).
 - **Escalation.** If the settings window cannot host the button without
   reaching into `main.gd`, report which and let Dave choose the entry point.
 
+**Result (30 Sep 2026).** `scripts/run_availability_panel.gd` is the
+read-only table, drawn over the settings window inside its own CanvasLayer;
+`debug_panel.gd::_make_run_availability_button` builds its button only while
+`Session.developer_mode` is on, and the Developer mode toggle rebuilds the row
+(and closes an open table). `RunAvailability.sheet_for(run_definition,
+progression = null)` gained `roles` and `features` rows and a feature-driven
+"unavailable" for tree skills, all only when handed a progression -- main.gd's
+run start passes none, so what a run starts owning is unchanged. Two new
+reason keys, `reason.feature_off`/`reason.feature_on`.
+`tests/source_checks.py::check_developer_table` fails an unguarded builder or
+a reason key with no sentence. The stage columns read "not yet available".
+
 ```queue
 **[Claude] BS-5 -- the developer table shows a run's sheet, read-only**
 - Plan: `plans/now/brood-spine.md` -- "BS-5 — the developer table shows a run's sheet, read-only"
-- Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`
+- Files: `scripts/run_availability_panel.gd`, `scripts/run_availability.gd`, `scripts/debug_panel.gd`, `tests/source_checks.py`
 - Check: with Developer mode on, the settings window lists a Run availability button that opens a read-only table of the run's skills with source and reason; with it off the button is absent, and `tools/verify.ps1` is green
 - Proof: `absent: scripts/debug_panel.gd :: run_availability_panel`
 - Next after: BS-6 -- developer edits to the table change what a run starts with
@@ -132,7 +144,12 @@ has shipped. These notes fix only what the earlier slices must not preclude.
   whether an edit is a local override stored under `user://` and applied at
   run start, or is written back to the run definition (`levels.gd` or the
   scenario JSON) so it becomes the game's data. BS-5's closeout brings the
-  options and costs to Dave.
+  options and costs to Dave. Brought on 30 Sep 2026 (BS-5's closeout): (a) a
+  `user://` override is private to one machine, needs a small store and a
+  "reset to the game's data" control, and never changes a fixture; (b) a
+  write-back edits `levels.gd` or a scenario JSON from inside the game, so an
+  edit becomes shared data but needs a GDScript/JSON writer and a guard that
+  it only runs in a development checkout.
 
 ## Read on demand
 

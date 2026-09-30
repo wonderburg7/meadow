@@ -3022,6 +3022,33 @@ def check_stage_role_skills(problems):
                 "challenge_stages.gd: stage %s.%s unlocks role %r before %s is free or owned "
                 "-- make it a free_skills entry at or before this stage" % (m.group(1), m.group(2), role_key, skill))
 
+
+def check_developer_table(problems):
+    """BS-5: the Run availability button exists only in Developer mode --
+    its builder returns before building anything while developer_mode is
+    off -- and every reason key run_availability.gd can emit has a sentence
+    in the developer table."""
+    debug_src = open(os.path.join(ROOT, "debug_panel.gd"), encoding="utf-8").read()
+    body = _func_body(debug_src, "_make_run_availability_button")
+    if body is None:
+        problems.append("debug_panel.gd: _make_run_availability_button not found")
+    else:
+        guard = body.find("if not Session.developer_mode:")
+        built = body.find("Button.new()")
+        if guard == -1 or built == -1 or guard > built:
+            problems.append(
+                "debug_panel.gd: _make_run_availability_button must return while "
+                "Session.developer_mode is off, before building the button")
+    avail_src = open(os.path.join(ROOT, "run_availability.gd"), encoding="utf-8").read()
+    panel_src = open(os.path.join(ROOT, "run_availability_panel.gd"), encoding="utf-8").read()
+    table = re.search(r"const REASON_TEXT := \{(.*?)\n\}", panel_src, re.S)
+    table_text = table.group(1) if table else ""
+    for const in re.findall(r'^const\s+(REASON_\w+)\s*:=\s*"reason\.', avail_src, re.M):
+        if ("RunAvailability.%s:" % const) not in table_text:
+            problems.append(
+                "run_availability_panel.gd: REASON_TEXT has no sentence for "
+                "RunAvailability.%s" % const)
+
 def check_ui_gate_table(problems):
     """F2s (plans/design/architecture-review.md): availability.gd's UI_GATES
     is the one table of stage-gated HUD controls. No stage_gate.gd
@@ -3164,6 +3191,7 @@ def main():
     check_progression_resolver(problems)
     check_progression_foraging_rules(problems)
     check_run_skill_policy(problems)
+    check_developer_table(problems)
     check_stage_role_skills(problems)
     check_progression_tier_and_cost(problems)
     check_progression_transcribed_effects(problems)
