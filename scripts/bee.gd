@@ -2162,15 +2162,6 @@ func role_name_text() -> String:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base
 
-func nurse_mode_name() -> String:
-	match nurse_mode:
-		"jelly":
-			return "royal jelly"
-		"both":
-			return "feeding and royal jelly"
-		_:
-			return "feeding brood"
-
 func architect_mode_name() -> String:
 	var mode_text: String = Roles.mode_label(Roles.COMB_WORKER, architect_mode).to_lower()
 	if architect_mode == "restock":

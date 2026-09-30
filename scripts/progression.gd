@@ -38,9 +38,9 @@ extends RefCounted
 ## -----------------------------
 ## **Run policy.** Section 4.5's "permitted by the run/Challenge stage"
 ## is answered by stage_gate.gd plus this run's explicit
-## `skill_grants`/`skill_bans`/`skill_delays` (Phase A step 3, set via
-## set_skill_policy() from levels.gd's/challenge_runner.gd's run
-## definition), which is why the gate is a function of its own rather
+## `skill_grants`/`skill_bans`/`skill_delays` (Phase A step 3, authored on
+## the levels.gd entry or scenario JSON and set via set_skill_policy()),
+## which is why the gate is a function of its own rather
 ## than an inline stage_gate call. main.gd hands both in once per run
 ## start through begin_run(), from run_availability.gd's sheet.
 ##
@@ -210,8 +210,9 @@ func discover(skill_id: String) -> void:
 
 
 ## Section 11 Phase A step 3: this run's explicit skill_grants/
-## skill_bans/skill_delays, from levels.gd's/challenge_runner.gd's run
-## definition. A ban always wins, even over a grant naming the same
+## skill_bans/skill_delays, from the run definition by way of
+## run_availability.gd's sheet (begin_run below). A ban always wins,
+## even over a grant naming the same
 ## skill by mistake -- refusing outright is the safe reading of
 ## contradictory data. A grant then wins over the stage gate, so a
 ## Challenge can hand a skill out early. Clears both dictionaries and

@@ -199,22 +199,6 @@ func can_debug_retreat_stage() -> bool:
 func can_debug_advance_stage() -> bool:
 	return active and _stage_index < _stages().size() - 1
 
-# --- skill grants, bans and delays --------------------------------
-## Section 11 Phase A step 3: this Challenge's explicit skill-policy
-## overrides, straight out of levels.gd's run definition for
-## Session.starting_level. Nothing calls this yet -- Phase B step 6 is
-## what constructs a Progression resolver for a running game and hands
-## it these via set_skill_policy(); every level ships them empty until
-## then, so today's call sites (none) would see no override either way.
-func run_skill_grants() -> Array:
-	return main.Levels.get_level(Session.starting_level).get("skill_grants", [])
-
-func run_skill_bans() -> Array:
-	return main.Levels.get_level(Session.starting_level).get("skill_bans", [])
-
-func run_skill_delays() -> Dictionary:
-	return main.Levels.get_level(Session.starting_level).get("skill_delays", {})
-
 # --- starting and the per-frame loop ------------------------------
 func start() -> void:
 	active = true
@@ -535,15 +519,6 @@ func _built_cell_count() -> int:
 	var count := 0
 	for cell in main.hive.cells:
 		if is_instance_valid(cell) and cell.is_built:
-			count += 1
-	return count
-
-## Shared by both Challenges' laying goals and _goal_progress's numeric
-## readout, so the checks never drift apart on what counts as an egg.
-func _brood_cell_count() -> int:
-	var count := 0
-	for cell in main.hive.cells:
-		if is_instance_valid(cell) and cell.content_type == "brood":
 			count += 1
 	return count
 
