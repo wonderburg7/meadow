@@ -55,7 +55,7 @@ closed alpha's are §6.1's list.
 
 | Id | Finding | Evidence | Severity | Disposition |
 | --- | --- | --- | --- | --- |
-| F1 | Winter never starts in an ordinary run, so §3's 60- and 90-minute outcomes cannot happen. | `year_winter.gd::begin_winter_countdown` is the only setter of `Session.winter_coming`; `grep -rn "begin_winter_countdown()" scripts/` shows its only callers are `main.gd`'s wrapper and `debug_panel.gd`, true since winter was added (e04e41b, 13 Aug) | high | Decided -- a fixed day (Dave); authoritative in `plans/now/winter-onset.md` "Decision", built by WO-1; `DESIGN_BACKLOG.md` is closed to agent writes, so Dave repoints its Winter bullet (text given in the session) |
+| F1 | Winter never starts in an ordinary run, so §3's 60- and 90-minute outcomes cannot happen. | `year_winter.gd::begin_winter_countdown` is the only setter of `Session.winter_coming`; `grep -rn "begin_winter_countdown()" scripts/` shows its only callers are `main.gd`'s wrapper and `debug_panel.gd`, true since winter was added (e04e41b, 13 Aug) | high | Decided -- a fixed day (Dave); authoritative in `plans/now/winter-onset.md` "Decision", built by WO-1; `DESIGN_BACKLOG.md`'s Winter bullet now points there (written with Dave's go-ahead, the file being closed to agent writes by default) |
 | F2 | The gates read a colony with no bees as food secure (and would as surviving winter): its winter requirement is 0. | `analyze_session.py::_milestones`, `_winter_food_requirement`; food secure day 4.0 above, after the queen starved at game time 589 s | high | Queued -- PE-1 in `plans/now/pacing-evidence.md`, amended to need a live colony (with a note on `day` counting from 1) |
 | F3 | The pacing arc is an unplayed lone queen: `alpha_arc_test.json` has no colony and no actions, so PE-1's precision measures nothing; the gates also convert winter at 1x though §3 assumes fast-forward. | `test_scenarios/alpha_arc_test.json`; the table above; `pacing_gates.py::target_day` | high | Decided -- the Colony Run definition is the next design pass and specifies PE-2, whose requirements are in `plans/design/product-scope.md` §6.2 (Dave) |
 | F4 | Since BS-3 a Scenario with no seeded nurses raises nothing until Nurses (120 nectar, 80 pollen) is bought, and nothing says so; a lone queen cannot make §3's five-minute worker. | E1; `run_availability.gd::_seeded_skills`; `bee_nursery.gd` feeds only role Nurse | high | Decided -- the queen backs up as a Nurse in every ordinary run (Dave); `plans/now/brood-spine.md` decision 5, built by BS-7 |
@@ -87,7 +87,7 @@ closed alpha's are §6.1's list.
 
 - `pacing_gates.py` repeats one pinned seed three times; PE-2's requirements carry the fix.
 - `plans/design/progression.md` §5.7 keeps Work Priorities as a baseline and step 13 omits it, against product-scope §8 and §12 rule 2; it matters when tier 3 is planned, and BS-4 owns the file now.
-- `ROADMAP.md` names no milestone; product-scope §3, §6.1, §13 and §15 hold it. The file is closed to agent writes; optional pointer text given to Dave.
+- `ROADMAP.md` named no milestone; product-scope §3, §6.1, §13 and §15 hold it. With Dave's go-ahead it now names the internal alpha and points there ("Next milestone").
 - Rolling checkpoints run every five days (`GameConfig.checkpoint_every_days`), not also before each crisis and season change as §11 asks.
 - Challenge 1's 1.18 and 1.19 have no "what the player does" hint; their Dr Gallerin lines cover it.
 

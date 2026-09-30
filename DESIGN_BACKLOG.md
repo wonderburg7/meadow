@@ -1,7 +1,7 @@
 # Meadow — design backlog
 
 Status: active design reference | Owner: Dave | Next: select one design area
-before creating an implementation slice | Verified: 2026-09-11
+before creating an implementation slice | Verified: 2026-09-30
 
 This is the parking place for agreed product direction, not an execution log.
 Built behaviour belongs in code, current plans and `docs/history.md`; the
@@ -29,6 +29,7 @@ home per fact: read the plan.
 | How the flowering year feels at the start of a run | `plans/archive/season-feel_2026-09-30.md` |
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
+| When winter comes in a run | `plans/now/winter-onset.md` |
 
 ## Areas whose plan is complete
 
@@ -52,8 +53,9 @@ starts a fresh `plans/now/` or `plans/design/` file.
 
 ## Deferred product decisions
 
-- **Winter:** retain the resolved-event versus short-season design question
-  until the core summer loop has evidence enough to model either option.
+- **Winter:** decided 30 Sep 2026 -- a played short season whose countdown
+  opens by itself on a fixed day. The authoritative statement is
+  `plans/now/winter-onset.md`, "Decision".
 - **Save/load during an active Challenge:** keep ordinary save/load disabled.
   A Challenge-aware save schema is a separate high-risk design and migration
   task, not an incidental UI change. Confirmed live on 2 Sep 2026 that both
