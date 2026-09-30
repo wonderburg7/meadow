@@ -1,10 +1,19 @@
 # Meadow roadmap
 
 Status: active product overview | Owner: Dave | Next: select from
-`NEXTSTEPS.md` or one linked plan | Verified: 2026-09-11
+`NEXTSTEPS.md` or one linked plan | Verified: 2026-09-30
 
-This file owns one thing: the product directions that have **no plan yet**.
+This file owns two things: which milestone is next, and the product
+directions that have **no plan yet**.
 The 22 Aug snapshot is at `docs/archive/ROADMAP_2026-08-22.md`.
+
+## Next milestone
+
+**The internal alpha** (`plans/design/product-scope.md` §15): the full
+90-minute route works, with placeholder art and developer-supported setup.
+Its exit criteria are §3's five timed outcomes; the closed alpha after it
+adds §6.1's list, judged at §13's gates. Those sections are the only home
+for the criteria -- this section names the milestone and nothing more.
 
 ## Directions that already have a plan
 

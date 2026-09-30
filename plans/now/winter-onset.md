@@ -19,7 +19,7 @@ countdown opens by itself on a fixed day, `GameConfig.winter_countdown_start_day
 in every run whose level has winter on. The event director may later replace
 the fixed day with a readiness-aware trigger. This paragraph is the
 authoritative statement; it settles `DESIGN_BACKLOG.md`'s deferred Winter
-question, which Dave repoints here (asked in
+question, which now points here (asked in
 `docs/product-review-2026-09-30.md`).
 
 **State, verified 30 Sep 2026.** `year_winter.gd::begin_winter_countdown` is
