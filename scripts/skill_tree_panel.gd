@@ -114,7 +114,7 @@ func _ready() -> void:
 	var extent := Shapes.hex_to_pixel(GRID_RINGS, 0, TILE_SIZE).x + TILE_SIZE
 	grid.custom_minimum_size = Vector2(extent * 2.0, sqrt(3.0) * TILE_SIZE * (GRID_RINGS * 2 + 1))
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	grid.tile_selected.connect(_on_tile_selected)
+	grid.on_select = _on_tile_selected
 	column.add_child(grid)
 
 	column.add_child(HSeparator.new())
@@ -346,7 +346,8 @@ class SkillGrid:
 	const Shapes = preload("res://scripts/shapes.gd")
 	const UiTheme = preload("res://scripts/ui_theme.gd")
 
-	signal tile_selected(hex: Vector2i)
+	## Called with the hex of a clicked skill tile.
+	var on_select: Callable = Callable()
 
 	var tiles: Dictionary = {}
 	var tile_size: float = 11.0
@@ -366,21 +367,19 @@ class SkillGrid:
 				points.append(at + point)
 			draw_colored_polygon(points, _fill(tile))
 		if selected != null and tiles.has(selected):
-			var ring := PackedVector2Array()
 			var centre: Vector2 = _centre() + Shapes.hex_to_pixel(selected.x, selected.y, tile_size)
-			for point in Shapes.hexagon_points(tile_size * 1.05):
-				ring.append(centre + point)
-			ring.append(ring[0])
-			draw_polyline(ring, UiTheme.color("text_primary"), 2.0)
+			var ring := Shapes.hexagon_points(tile_size * 1.05)
+			for i in range(ring.size()):
+				draw_line(centre + ring[i], centre + ring[(i + 1) % ring.size()], UiTheme.color("text_primary"), 2.0)
 
 	func _gui_input(event: InputEvent) -> void:
 		var click := event as InputEventMouseButton
 		if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
 			return
 		var hex := Shapes.pixel_to_hex(click.position - _centre(), tile_size)
-		if tiles.get(hex, {}).get("kind", "") == "skill":
-			tile_selected.emit(hex)
-			accept_event()
+		if tiles.get(hex, {}).get("kind", "") == "skill" and on_select.is_valid():
+			on_select.call(hex)
+			get_viewport().set_input_as_handled()
 
 	func _fill(tile: Dictionary) -> Color:
 		match tile.get("kind", ""):
