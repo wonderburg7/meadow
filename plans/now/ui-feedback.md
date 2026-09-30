@@ -12,6 +12,7 @@ Source: `docs/ui-review-2026-09-30.md` (F1, F2).
 | --- | --- | --- | --- |
 | UI-F-1 | `scripts/game_over.gd` | medium | none |
 | UI-F-2 | `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd` | medium | none |
+| UI-F-3 | `scripts/hive_cell.gd` | low | none |
 
 UI-F-1 and UI-F-2 share no file. Neither changes simulation: presentation
 only (`plans/archive/ui_2026-09-20.md`, "Durable rules": presentation may be
@@ -101,5 +102,40 @@ argument without restructuring it.
 - Files: `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd`
 - Check: `grep -c "SEVERITY_" scripts/bee_survival.gd scripts/crab_spider.gd scripts/main.gd scripts/year_winter.gd` prints at least 1 for each file, and `tools/verify.ps1` is green
 - Proof: `present: scripts/hud.gd :: _pending_warning = {"text": text, "severity": severity}`
+- Next after: UI-F-3 -- comb cell labels follow text scale
+```
+
+## UI-F-3 -- comb cell labels follow text scale
+
+<!-- LAYER: immediate-task -->
+
+**Decision (Dave, 30 Sep 2026, option A of `docs/ui-review-2026-09-30.md` F4).**
+Only the comb cell info labels follow Text scale, because they carry the
+colour-blind tags. Bee name labels and flower amounts stay fixed. The scale
+is capped at 1.5 so dense comb does not overlap (the cap is this slice's
+decision, not an open choice).
+
+**True now.** `hive_cell.gd::_ready` builds `info_label` with
+`add_theme_font_size_override("font_size", 9)`; nothing updates it when
+`Session.text_scale` changes.
+
+**True afterwards.** `hive_cell.gd::_refresh` sets the override to
+`int(round(9.0 * minf(Session.text_scale, 1.5)))`, only when that differs
+from the last value applied (store it in a new `_label_font_size: int`
+field, so the per-cell refresh does not re-set the override every call).
+The `_ready` literal 9 stays as the initial value.
+
+**Must not change.** `info_label.position`, the label text and every
+colour-blind tag, `show_cell_contents_text` gating.
+
+**Stop and escalate** if the `_refresh` call count makes the new compare show
+up in a profile (`.claude/rules/performance.md`).
+
+```queue
+**[Claude] UI-F-3 -- comb cell labels follow text scale**
+- Plan: `plans/now/ui-feedback.md` -- "UI-F-3 -- comb cell labels follow text scale"
+- Files: `scripts/hive_cell.gd`
+- Check: `grep -c "_label_font_size" scripts/hive_cell.gd` prints at least 2, and `tools/verify.ps1` is green
+- Proof: `present: scripts/hive_cell.gd :: info_label.add_theme_font_size_override("font_size", 9)`
 - Next after: none -- plans/now/ui-feedback.md is complete
 ```
