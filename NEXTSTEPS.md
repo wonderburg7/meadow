@@ -37,6 +37,27 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: plans/design/progression.md :: bs4_honey_gate_test`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
 
+3. **[Claude] BS-7 -- every Scenario's queen backs up as a Nurse**
+   - Plan: `plans/now/brood-spine.md` -- "BS-7 — every Scenario's queen backs up as a Nurse"
+   - Files: `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/bs7_queen_backup_nurse_test.json` passes, a worker hatching from level 3's start within 8 days, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/levels.gd :: ORDINARY_QUEEN_BACKUP`
+   - Next after: BS-6 -- developer edits to the table change what a run starts with
+
+4. **[Claude] GC-1 -- an Idle bee stays where she is**
+   - Plan: `plans/now/gameplay-consistency.md` -- "GC-1 — an Idle bee stays where she is"
+   - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `test_scenarios/gc1_idle_stays_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/gc1_idle_stays_test.json` passes (the Idle bee alive on day 5, no starvation deaths), the hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/bee_survival.gd :: Role.IDLE`
+   - Next after: GC-2 -- a bee changing job puts down what she carries
+
+5. **[Claude] GC-2 -- a bee changing job puts down what she carries**
+   - Plan: `plans/now/gameplay-consistency.md` -- "GC-2 — a bee changing job puts down what she carries"
+   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/bee_building.gd`, `scripts/bee_honey.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_actions.gd`, `test_scenarios/gc2_role_change_delivers_load_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/gc2_role_change_delivers_load_test.json` passes (two deliveries by day 2), `python tools/run_scenario.py test_scenarios/c1f2_queen_pollen_departure_test.json` still passes, the hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/bee.gd :: _deliver_held_load`
+   - Next after: GC-3 -- honey stops creating energy (gated on PE-2)
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -48,6 +69,27 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Check: `python -m unittest tests.test_pacing_gates tests.test_headless_verdicts` passes, including a first worker at day 1.5 reading in band at 200 s/day, `python tools/pacing_gates.py --repeat 1` prints a table with two-decimal median days, and `tools/verify.ps1` is green
    - Proof: `absent: tools/analyze_session.py :: milestone_times`
    - Next after: none -- plans/now/pacing-evidence.md is complete
+
+2. **[Codex] BS-8 -- a role's starting count is one field on its roles.gd row**
+   - Plan: `plans/now/brood-spine.md` -- "BS-8 — a role's starting count is one field on its roles.gd row"
+   - Files: `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py`
+   - Check: `python tools/equivalence.py test_scenarios/colony_30_bees_test.json master` exits 0, `python tools/run_scenario.py` passes `test_scenarios/bs1_seeded_skills_test.json`, `test_scenarios/bs1_seeded_none_test.json` and `test_scenarios/bs3_nurse_gate_test.json`, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/run_availability.gd :: const SEED_COUNT_KEYS`
+   - Next after: BS-6 -- developer edits to the table change what a run starts with
+
+3. **[Codex] UI-F-1 -- the game-over screen takes the theme and text scale**
+   - Plan: `plans/now/ui-feedback.md` -- "UI-F-1 -- the game-over screen takes the theme and text scale"
+   - Files: `scripts/game_over.gd`
+   - Check: `grep -c "add_theme_font_size_override" scripts/game_over.gd` prints `0`, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/game_over.gd :: add_theme_font_size_override("font_size", 28)`
+   - Next after: UI-F-3 -- comb cell labels follow text scale
+
+4. **[Codex] UI-F-3 -- comb cell labels follow text scale**
+   - Plan: `plans/now/ui-feedback.md` -- "UI-F-3 -- comb cell labels follow text scale"
+   - Files: `scripts/hive_cell.gd`
+   - Check: `grep -c "_label_font_size" scripts/hive_cell.gd` prints at least 2, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/hive_cell.gd :: info_label.add_theme_font_size_override("font_size", 9)`
+   - Next after: UI-F-2 -- warnings carry a severity and a pending one is never lost
 
 ## Not in the queue, and why
 

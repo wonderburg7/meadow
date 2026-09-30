@@ -26,6 +26,8 @@ skipped, simulation may not).
 
 <!-- LAYER: immediate-task -->
 
+Level: medium (presentation only; the section names every literal to change).
+
 **True now.** `game_over.gd::_ready` builds a `PanelContainer`, three
 `Label`s and its buttons with no theme: fixed sizes 28, 13 and 12 through
 `add_theme_font_size_override`, and fixed colours `Color(1.0, 0.75, 0.7)` and
@@ -64,6 +66,8 @@ redesign).
 ## UI-F-2 -- warnings carry a severity and a pending one is never lost
 
 <!-- LAYER: immediate-task -->
+
+Level: medium (presentation only; the section names every literal to change).
 
 **True now.** `hud.gd::show_warning` arbitrates on `severity` (UI-Q-3), but
 no producer passes one: `bee_survival.gd::_announce_death`,
@@ -112,6 +116,8 @@ argument without restructuring it.
 ## UI-F-3 -- comb cell labels follow text scale
 
 <!-- LAYER: immediate-task -->
+
+Level: low (presentation only; the section names every literal to change).
 
 **Decision (Dave, 30 Sep 2026, option A of `docs/ui-review-2026-09-30.md` F4).**
 Only the comb cell info labels follow Text scale, because they carry the
