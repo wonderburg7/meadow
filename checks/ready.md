@@ -29,3 +29,5 @@ unblocker.
 - [C-76 -- the top bar has no Saves button](ready/C-76.md)
 - [C-77 -- Saves opens over the main menu and loads a run](ready/C-77.md)
 - [C-78 -- deleting a saved run always asks](ready/C-78.md)
+- [C-79 -- Skills fills the screen and pauses the game](ready/C-79.md)
+- [C-80 -- clicking a skill and pressing Buy buys it](ready/C-80.md)

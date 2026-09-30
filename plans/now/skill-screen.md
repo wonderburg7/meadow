@@ -1,7 +1,7 @@
 # Skill screen — the tree as a full-screen, paused view
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SK-1 -- the skill tree opens full-screen and pauses the game, startable after BS-2 (see Dependencies) | Dependency: BS-2 in `plans/now/brood-spine.md` edits `skill_tree_panel.gd` first | Verified: 2026-09-28
+Status: active | Owner: Dave / Claude Code | Next: SK-2 -- skill names in big hexes, with drag and zoom | Dependency: none | Verified: 2026-09-30
 
 **Objective.** The in-run skill tree is a full-screen view that pauses the
 game, with each skill's name written in its hexagon, as
@@ -89,9 +89,17 @@ stores and marks it owned.
 
 ## SK-2 — skill names in big hexes, with drag and zoom
 
-Level: medium. Gated until SK-1 has merged: SK-1's closeout changes the
-fence below to `queue` and deletes SK-2's line from `NEXTSTEPS.md`'s "Not in
-the queue, and why".
+Level: medium. Startable: SK-1 merged on 30 Sep 2026.
+
+**What SK-1 left (30 Sep 2026).** The view is on CanvasLayer 14, not 15:
+Gallerin already draws on 15, and 14 keeps its prompts above the tree. The
+column sits in GamePanel's vertical scroll body, because at first layout the
+intro label wraps at 300 px and measured 261 px tall, which pushed the
+column past a 720 px window. Once the grid clips and pans, give it a small
+`custom_minimum_size` (it no longer needs room for every ring) so the view
+never scrolls at 800x600. Scenario actions do not run while the tree is
+paused (`main.gd` skips `run_pending`), so a fixture opens, asserts and
+closes the skill view in one tick, with no `settle` between.
 
 **Change, `skill_tree_panel.gd` only.** `TILE_SIZE` becomes `56.0` (the main
 menu's original hex size, `main_menu.gd` HEX_SIZE's comment). `SkillGrid`
@@ -111,7 +119,7 @@ hit-tests invert the same transform. Redraw only on input.
 inside its hexagon at 1.0 zoom; dragging moves the tree and the wheel zooms
 out until the whole tree is visible.
 
-```queue-gated
+```queue
 **[Claude] SK-2 -- skill names in big hexes, with drag and zoom**
 - Plan: `plans/now/skill-screen.md` -- "SK-2 — skill names in big hexes, with drag and zoom"
 - Files: `scripts/skill_tree_panel.gd`

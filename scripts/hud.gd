@@ -776,7 +776,8 @@ func _build_top_right_bar() -> void:
 	# AP-3 (icon AP-5), just left of View (progression.md 8.5). Hidden in a
 	# Challenge by its UI_GATES row (AP-7), as 8.5 asks.
 	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
-	skills_button.pressed.connect(func(): main.year_winter._toggle_panel(skill_tree_panel))
+	# SK-1: a full-screen view, not a left window, so it leaves those alone.
+	skills_button.pressed.connect(func(): skill_tree_panel.toggle())
 	skills_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(skills_button)
 	_register_gated_control("skills_button", func(): return skills_button)
