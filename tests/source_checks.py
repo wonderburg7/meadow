@@ -27,6 +27,7 @@ import re
 import sys
 import glob
 import math
+import subprocess
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts")
 
@@ -220,6 +221,39 @@ def check_autoloads(problems):
             problems.append(
                 "autoload %s is not registered in project.godot" % expected
             )
+
+
+def scripts_missing_uid(tracked_paths):
+    """The tracked scripts/*.gd whose `.gd.uid` companion is not tracked."""
+    tracked = set(tracked_paths)
+    return sorted(
+        path for path in tracked
+        if path.startswith("scripts/") and path.endswith(".gd")
+        and path + ".uid" not in tracked
+    )
+
+
+def check_script_uids_tracked(problems):
+    """Every tracked script must have its .gd.uid tracked beside it.
+
+    Godot 4 keeps each script's uid in a companion `<name>.gd.uid` file. When
+    that file isn't in git, every boot in a fresh worktree mints a new random
+    uid, leaving an untracked file that makes a merged worktree look dirty
+    (four scripts did this until 30 Sep 2026)."""
+    try:
+        listed = subprocess.run(
+            ["git", "ls-files", "-z", "--", "scripts"],
+            cwd=os.path.join(ROOT, ".."), capture_output=True, text=True, check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as error:
+        problems.append("could not list tracked scripts with git: %s" % error)
+        return
+    for path in scripts_missing_uid(listed.split("\0")):
+        problems.append(
+            "%s has no tracked .uid -- boot Godot once (or run "
+            "`godot --headless --import`) and commit the %s.uid it writes"
+            % (path, path)
+        )
 
 
 # Files allowed to assign into GameConfig -- see CLAUDE.md rule 2 and
@@ -3046,6 +3080,7 @@ def main():
         check_calls(name, code, funcs, problems)
 
     check_autoloads(problems)
+    check_script_uids_tracked(problems)
     check_goal_cadence_registry(problems)
     check_catalogue_alignment(problems)
     check_action_catalogue(problems)

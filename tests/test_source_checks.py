@@ -50,6 +50,21 @@ class BracketChecksTest(unittest.TestCase):
         self.assertEqual([], problems)
 
 
+class ScriptUidChecksTest(unittest.TestCase):
+    """An untracked .gd.uid gets a fresh random uid on every worktree boot."""
+
+    def test_a_script_without_a_tracked_uid_is_reported(self):
+        tracked = ["scripts/main.gd", "scripts/main.gd.uid", "scripts/saves_panel.gd"]
+
+        self.assertEqual(["scripts/saves_panel.gd"], source_checks.scripts_missing_uid(tracked))
+
+    def test_scripts_outside_scripts_and_non_gd_files_are_ignored(self):
+        tracked = ["tools/helper.gd", "scripts/theme.tres", "scripts/sub/panel.gd",
+                   "scripts/sub/panel.gd.uid", ""]
+
+        self.assertEqual([], source_checks.scripts_missing_uid(tracked))
+
+
 class ForagingPrerequisiteContractTest(unittest.TestCase):
     def test_orientation_flight_and_scouting_are_symmetric_alternatives(self):
         source = PREREQUISITES_PATH.read_text(encoding="utf-8")
