@@ -123,43 +123,44 @@ static var _texture_cache: Dictionary = {}
 static var _button_styleboxes: Dictionary = {}
 static var _active_theme: Theme
 
-static func panel_stylebox() -> StyleBoxFlat:
+static func panel_stylebox() -> StyleBox:
 	if _panel_stylebox == null:
 		_panel_stylebox = PanelBox.new()
 		_panel_stylebox.texture_source = Callable(panel_texture_image)
 		_refresh_panel_stylebox(_panel_stylebox)
 	return _panel_stylebox
 
-static func _refresh_panel_stylebox(box: StyleBoxFlat) -> void:
-	box.bg_color = color("panel_bg")
-	box.set_corner_radius_all(10)
-	box.set_border_width_all(2)
-	box.border_color = color("panel_bg").lightened(0.15)
+const PANEL_BORDER_WIDTH := 2
+
+static func _refresh_panel_stylebox(box: PanelBox) -> void:
+	box.flat.bg_color = color("panel_bg")
+	box.flat.set_corner_radius_all(10)
+	box.flat.set_border_width_all(PANEL_BORDER_WIDTH)
+	box.flat.border_color = color("panel_bg").lightened(0.15)
 	box.content_margin_left = 10
 	box.content_margin_right = 10
 	box.content_margin_top = 8
 	box.content_margin_bottom = 8
+	box.emit_changed()
 
 ## Panel stylebox that draws the flat rounded panel exactly as StyleBoxFlat
 ## would, then lays the chosen `panel_texture` inside the border. Margins and
 ## the outer rectangle are untouched, so no layout moves when it changes.
+## It extends StyleBox, not StyleBoxFlat: a StyleBoxFlat draws in C++ and
+## never calls a script _draw (see docs/known-pitfalls.md).
 class PanelBox:
-	extends StyleBoxFlat
-	var _base := StyleBoxFlat.new()
+	extends StyleBox
+	var flat := StyleBoxFlat.new()
 	## Returns the texture to lay inside the border (or null); set by
 	## panel_stylebox() since an inner class cannot name its own script.
 	var texture_source: Callable
 
 	func _draw(to_canvas_item: RID, rect: Rect2) -> void:
-		_base.bg_color = bg_color
-		_base.border_color = border_color
-		_base.set_border_width_all(border_width_left)
-		_base.set_corner_radius_all(corner_radius_top_left)
-		_base.draw(to_canvas_item, rect)
+		flat.draw(to_canvas_item, rect)
 		var tex: Texture2D = texture_source.call(Session.panel_texture)
 		if tex == null:
 			return
-		var inset := float(border_width_left) + 2.0
+		var inset := float(PANEL_BORDER_WIDTH) + 2.0
 		var inner := rect.grow(-inset)
 		if inner.size.x <= 0.0 or inner.size.y <= 0.0:
 			return
