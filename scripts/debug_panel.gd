@@ -562,7 +562,7 @@ func _make_winter_action() -> Control:
 	_style_button(winter_btn)
 	winter_btn.text = "Bring on winter"
 	winter_btn.pressed.connect(_on_winter_pressed)
-	row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" in the Winter section). A forecast opens in the top right showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
+	row.add_child(UI.with_info(winter_btn, "Schedule a winter for a set number of days from now (see \"Winter in days\" in the Winter section). A forecast opens in the Winter window on the left showing what the colony will need to last it out and how far short it currently is. The figure moves as the colony grows, which is the point: every bee you add is another mouth to feed through it."))
 	return row
 
 ## Starts the countdown on the running world. Winter is scheduled
