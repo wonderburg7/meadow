@@ -31,7 +31,12 @@ const Stages = preload("res://scripts/challenge_stages.gd")
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 
+## Text scale re-lays every window, so its -/+ buttons would jump from under
+## the pointer on each click; the change applies this long after the last one.
+const TEXT_SCALE_APPLY_DELAY := 0.8
+
 # --- fields -------------------------------------------------------
+var _text_scale_timer: Timer
 var value_labels: Dictionary = {}
 ## setting key -> its CheckBox, so the cascade helpers below can refresh
 ## a row's display when they flip a toggle other than the one clicked.
@@ -81,6 +86,11 @@ func _ready() -> void:
 	# without the two needing to know about each other directly -- same
 	# pattern as "main_menu" group used the other way by _on_main_menu_pressed().
 	add_to_group("debug_panel")
+	_text_scale_timer = Timer.new()
+	_text_scale_timer.one_shot = true
+	_text_scale_timer.wait_time = TEXT_SCALE_APPLY_DELAY
+	_text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))
+	add_child(_text_scale_timer)
 	Session.run_reset.connect(collapse_all)
 	Session.run_reset.connect(func() -> void: _c2_collapse_presses = 0)
 
@@ -997,7 +1007,10 @@ func _adjust(entry: Dictionary, delta: float) -> void:
 	if entry.has("max"):
 		new_value = min(new_value, entry.max)
 	Settings.setting_set(entry.key, new_value)
-	UiTheme.refresh_for_setting(entry.key)
+	if entry.key == "text_scale":
+		_text_scale_timer.start()
+	else:
+		UiTheme.refresh_for_setting(entry.key)
 	value_labels[entry.key].text = "%s: %s" % [entry.label, _format_value(new_value)]
 	if entry.key == "tooltip_delay":
 		# Godot's own project-wide tooltip timer, rather than something
