@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HF-6` (`claude/HF-6`) | Claude | why Raises lacks Pollen at 2.2 (C-57) | Claude | in progress | none | `plans/now/hud-followups.md` HF-6 — why Raises lacks Pollen at 2.2 (C-57) |
