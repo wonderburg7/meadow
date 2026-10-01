@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-2 -- a bee changing job puts down what she carries (startable); GC-3 -- honey stops creating energy (gated on PE-2) | Dependency: GC-3 waits for PE-2 (`plans/now/pacing-evidence.md`) | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: GC-2 -- a bee changing job puts down what she carries (startable); GC-3 -- honey stops creating energy (gated on PE-2) | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`) | Verified: 2026-10-01
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -135,7 +135,7 @@ priced in honey costs twice the nectar it does today. The decision is
 recorded in `.claude/rules/simulation.md`.
 
 **Gate.** PE-2, the played pacing arc through winter
-(`plans/now/pacing-evidence.md`), is the multi-season evidence the rule asks
+(`plans/archive/pacing-evidence_2026-10-01.md`), is the multi-season evidence the rule asks
 for. When it exists, fence this block `queue`.
 
 **Change.**
