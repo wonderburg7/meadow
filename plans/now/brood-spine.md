@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-8 (BS-7 landed 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (startable, Claude lane; BS-8 landed 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -86,7 +86,6 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-8 | a role's starting-count key is one field on its roles.gd row, before step 8 gates more roles | `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py` | startable (Codex lane) | medium |
 | BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-8 lands first (shared file; BS-7 landed 1 Oct 2026) | high |
 
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
@@ -100,39 +99,7 @@ BS-4 shipped 2026-10-01; its specification is `plans/archive/BS-4_2026-10-01.md`
 
 BS-7 shipped 2026-10-01; its specification is `plans/archive/BS-7_2026-10-01.md`.
 
-## BS-8 — a role's starting count is one field on its roles.gd row
-
-Level: medium, behaviour-preserving (architecture review 30 Sep, F3). **Now:**
-the count key is spelled in `run_availability.gd::SEED_COUNT_KEYS` (a gated
-role missing there is not seeded; its `push_error` fails no headless run),
-`world_building.gd::_spawn_hive_occupants`, `main.gd::_apply_scenario_boot_arg`
-and `tests/source_checks.py::check_stage_role_skills`. Step 8 gates Comb worker
-and Miner, which levels 4-6 seed. **Change.** (1) `roles.gd`: on the
-line after each row's `"skill"`, add `"start_count_key"`/`"start_config"`:
-Nurse `"nurses"`/`"starting_nurses"`, Comb worker `"builders"`/
-`"starting_builders"`, Miner `"miners"`/`"starting_miners"`, Honey
-`"honey_makers"`/`"starting_honey_makers"`, `""` elsewhere; document them by
-`skill`'s comment; cut the header list's two BS-8 clauses. (2)
-`run_availability.gd`: delete `SEED_COUNT_KEYS`; `_seeded_skills` skips a row
-with an empty `skill` or `start_count_key`. (3) `_spawn_hive_occupants`: one
-loop over `main.Roles.ROLES` for rows with a `start_count_key`, count
-`int(level.get(key, 0))`, or `int(GameConfig.get(row.start_config))` for an
-empty level, `_spawn_indoor_bee(row.id)`, the Miner's `automine` line kept.
-(4) `_apply_scenario_boot_arg` defaults only `cells` and the forager keys. (5)
-`check_stage_role_skills` reads `start_count_key`; a new check fails a row
-missing either field, or `SEED_COUNT_KEYS` returning. **Must not change:**
-spawn order (table order is today's; spawning draws from the RNG), `levels.gd`,
-scenario JSON, `game_config.gd`, `settings_catalogue.gd` and the level-0
-fallback (product-scope §6.2). **Escalate** if the equivalence run differs.
-
-```queue
-**[Codex] BS-8 -- a role's starting count is one field on its roles.gd row**
-- Plan: `plans/now/brood-spine.md` -- "BS-8 — a role's starting count is one field on its roles.gd row"
-- Files: `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py`
-- Check: `python tools/equivalence.py test_scenarios/colony_30_bees_test.json master` exits 0, `python tools/run_scenario.py` passes `test_scenarios/bs1_seeded_skills_test.json`, `test_scenarios/bs1_seeded_none_test.json` and `test_scenarios/bs3_nurse_gate_test.json`, and `tools/verify.ps1` is green
-- Proof: `present: scripts/run_availability.gd :: const SEED_COUNT_KEYS`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-8 shipped 2026-10-01; its specification is `plans/archive/BS-8_2026-10-01.md`.
 
 ## Later slices, in outline
 
