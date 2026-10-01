@@ -164,7 +164,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/now/gameplay-consistency.md` |
 | PE-1, PE-2 -- the headless pacing gates timed to the hour, then the played arc | `plans/archive/pacing-evidence_2026-10-01.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
-| UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/now/ui-feedback.md` |
+| UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/now/feedback-build.md` |
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/now/scenario-reds.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |

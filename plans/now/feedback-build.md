@@ -38,7 +38,7 @@ which §14's release stream says are hidden before the first feedback build.
    weekend** by letting the queen nurse without the Nurses skill: BS-9, recorded as decision 7 of
    `plans/now/brood-spine.md`. Challenge 2 is not on this session's route.
 5. **Order in the Claude lane:** FBB-1, then BS-9, ahead of L-16 and L-17
-   (`plans/now/agent-lifecycle.md`). UI-F-2 (`plans/now/ui-feedback.md`) runs
+   (`plans/now/agent-lifecycle.md`). UI-F-2 (`plans/archive/ui-feedback_2026-10-01.md`) runs
    in parallel in the Codex lane (Dave, 1 Oct 2026, so that lane had a
    successor to UI-F-3).
 

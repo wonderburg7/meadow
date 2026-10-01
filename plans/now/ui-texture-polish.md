@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-1 -- every panel texture is visible in every theme (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for UI-F-2 and SR-4 (`plans/now/ui-feedback.md`, `plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd` | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: UT-1 -- every panel texture is visible in every theme (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for UI-F-2 and SR-4 (`plans/archive/ui-feedback_2026-10-01.md`, `plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd` | Verified: 2026-10-01
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark, Light and High contrast. Changing the theme mid-run recolours all text,
