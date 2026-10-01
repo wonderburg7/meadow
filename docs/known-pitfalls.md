@@ -19,6 +19,13 @@ of these has bitten more than once:
   produced `var comb workers := 0`. Blank screen, because a parse error
   in `main.gd` means the only scene won't load. `source_checks.py` now
   catches it. Prefer word-boundary replacements and check the diff.
+- **JSON numbers come back as floats, and `Array.has()` is type-strict.**
+  `JSON.parse_string` turns `[1]` into `[1.0]`; `1 == 1.0` is true, but
+  `[1.0].has(1)` is false. `player_profile.gd::mark_challenge_complete`
+  appended another `1.0` on every Challenge win (Dave's profile reached
+  eight by 1 Oct 2026) and the main menu's completion tick never showed.
+  `completed_challenges()` now returns unique ints; convert any number read
+  from JSON with `int()` before a `has()`, `find()` or dictionary-key lookup.
 - **`Control.set_size()` destroys the anchor you set.** It recomputes all
   four offsets from the control's cached position, so `panel.size.x = w`,
   `panel.size.y = h` and `panel.reset_size()` all silently turn a
