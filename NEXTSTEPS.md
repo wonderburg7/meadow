@@ -105,6 +105,10 @@ One line each: the id, its plan, and the single thing it waits for.
 - **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
+- **SC-1** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full.
+- **SC-2** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows UT-1 and UT-3, which also edit `scripts/ui_theme.gd`.
+- **SC-3** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows SC-1, which also edits `scripts/debug_panel.gd`.
+- **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
 - **BS-6** (`plans/now/brood-spine.md`) -- startable since BS-8 landed (1 Oct 2026); waits for UI-F-2 (Codex lane) to land, since both edit `scripts/main.gd`.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.

@@ -30,7 +30,9 @@ Each of them came right after hovering before the click.
 UT-4 uses UT-3's helper and also waits for SR-4 to land, since it edits
 `hud.gd` (UI-F-2, the other `hud.gd` owner, landed 1 Oct 2026). UT-5 uses UT-1's `panel_texture_contrast` and waits for
 SR-2 and SR-4 to land, since both edit `scenario_actions.gd`. UT-2 depends on
-nothing. None of these changes the simulation; all are presentation
+nothing. `plans/now/settings-and-corner.md` shares two files: its SC-2 edits
+`ui_theme.gd` after UT-1 and UT-3, and its SC-4 edits `hud.gd`, so SC-4
+and UT-4 run one after the other. None of these changes the simulation; all are presentation
 (`plans/archive/ui_2026-09-20.md`, "Durable rules").
 
 **Hands-on checks this plan touches.** C-60 stays filed and is re-run once
