@@ -1841,8 +1841,10 @@ func _apply_role(new_role: int) -> void:
 
 	if _is_inside_hive():
 		# already in the hive: either start the new indoor job here, or
-		# walk out through the entrance the normal way
-		state = _default_state_for_role() if now_indoors else State.IN_HIVE_TO_EXIT
+		# walk out through the entrance the normal way. An Idle bee stays
+		# where she is, as its tip promises -- walked out, she could never
+		# eat again (BeeSurvival feeds only bees inside the hive)
+		state = _default_state_for_role() if (now_indoors or new_role == Role.IDLE) else State.IN_HIVE_TO_EXIT
 	else:
 		# out in the meadow: fly to the hive and walk in, or just get on
 		# with the new outdoor job from where it stands

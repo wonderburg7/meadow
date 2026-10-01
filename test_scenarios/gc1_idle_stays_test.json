@@ -1,0 +1,28 @@
+{
+  "cells": 7, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 1, "builders": 0, "miners": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "nectar", "amount": 200},
+    {"do": "settle", "ticks": 30},
+    {
+      "do": "assign_role",
+      "target": {"current_role": "nurse", "count": 1},
+      "role": "idle"
+    },
+    {
+      "when": {"day_at_least": 5},
+      "do": "assert",
+      "condition": {"event_count_at_most": {"type": "death", "subtype": "starvation", "count": 0}}
+    },
+    {
+      "when": {"day_at_least": 5},
+      "do": "assert",
+      "condition": {"population_at_least": {"role": "idle", "count": 1}}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 6}
+}
