@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PE-1` (`codex/PE-1`) | Codex | pacing milestones are timed to the hour | Codex | in progress | none | `plans/now/pacing-evidence.md` PE-1 — pacing milestones are timed to the hour |
+| `.worktrees/BS-7` (`claude/BS-7`) | Claude | every Scenario's queen backs up as a Nurse | Claude | in progress | none | `plans/now/brood-spine.md` BS-7 — every Scenario's queen backs up as a Nurse |
