@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-1 -- an Idle bee stays where she is (startable); GC-2 -- a bee changing job puts down what she carries (startable); GC-3 -- honey stops creating energy (gated on PE-2) | Dependency: GC-3 waits for PE-2 (`plans/now/pacing-evidence.md`) | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: GC-2 -- a bee changing job puts down what she carries (startable); GC-3 -- honey stops creating energy (gated on PE-2) | Dependency: GC-3 waits for PE-2 (`plans/now/pacing-evidence.md`) | Verified: 2026-10-01
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -14,7 +14,7 @@ each demonstrated in a headless run.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | GC-1 | a bee set to Idle in the hive stays in the hive, eats when hungry and lives | `scripts/bee.gd`, `scripts/bee_survival.gd`, `test_scenarios/gc1_idle_stays_test.json` | yes | medium |
-| GC-2 | a forager moved to an indoor job, or a Comb worker left holding a remnant, puts the load in the comb before anything else | `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/bee_building.gd`, `scripts/bee_honey.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_actions.gd`, `test_scenarios/gc2_role_change_delivers_load_test.json` | after GC-1 (both edit `bee.gd`) | medium |
+| GC-2 | a forager moved to an indoor job, or a Comb worker left holding a remnant, puts the load in the comb before anything else | `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/bee_building.gd`, `scripts/bee_honey.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_actions.gd`, `test_scenarios/gc2_role_change_delivers_load_test.json` | yes (GC-1 landed) | medium |
 | GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | gated: waits for PE-2's played arc | medium |
 
 GC-1 and GC-2 are independent in behaviour but share `bee.gd`, so they run in

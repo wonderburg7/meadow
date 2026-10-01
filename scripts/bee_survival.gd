@@ -247,10 +247,11 @@ static func feed_self(bee: Node2D, delta: float) -> void:
 static func after_feeding(bee: Node2D) -> void:
 	BeeForaging.release_cell_slot(bee)
 	bee.target_cell = null
-	if BeeStatus.works_indoors(bee):
+	if BeeStatus.works_indoors(bee) or bee.role == Role.IDLE:
 		# indoor roles pick their own job back up; sending one down the
 		# forager's deposit path would have it filing away whatever it
-		# was carrying for its own work
+		# was carrying for its own work. An Idle bee goes back to idling
+		# where she ate rather than walking out to starve
 		bee.state = bee._default_state_for_role()
 	elif bee.current_load > 0.0:
 		bee.state = State.IN_HIVE_TO_CELL
