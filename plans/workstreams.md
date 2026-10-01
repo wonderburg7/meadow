@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UI-F-1` (`codex/UI-F-1`) | Codex | the game-over screen takes the theme and text scale | Codex | in progress | none | `plans/now/ui-feedback.md` UI-F-1 -- the game-over screen takes the theme and text scale |
