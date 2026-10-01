@@ -1,7 +1,7 @@
 # UI feedback and theming -- two fixes from the first UI review
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: UI-F-2 -- warnings carry a severity and a pending one is never lost (Claude lane, once BS-8 has left the Codex lane) | Dependency: UI-F-2 shares `scripts/main.gd` with BS-8 (`plans/now/brood-spine.md`, Codex lane) | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code / Codex | Next: UI-F-2 -- warnings carry a severity and a pending one is never lost (Codex lane, moved from the Claude lane 1 Oct 2026) | Dependency: none -- BS-8 (`scripts/main.gd`) landed 1 Oct 2026 | Verified: 2026-10-01
 
 **Objective.** The two screens a player most needs to read when something goes
 wrong, the game-over screen and the warning banner, follow the player's
@@ -10,13 +10,13 @@ Source: `docs/ui-review-2026-09-30.md` (F1, F2).
 
 | Slice | Files | Level | Lane | Depends on |
 | --- | --- | --- | --- | --- |
-| UI-F-2 | `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd` | medium | Claude | none in behaviour; queued after BS-8 (Codex, `main.gd`) has closed |
+| UI-F-2 | `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd` | medium | Codex | none -- BS-8 (`main.gd`) landed 1 Oct 2026 |
 
 The three share no file with each other. UI-F-1 and UI-F-3 are single-file,
 mechanical slices and run in the Codex lane so that lane has bounded work
-after PE-1 and BS-8 (plan review, 30 Sep 2026); UI-F-2 stays in the Claude
-lane, where GC-1 (`plans/now/gameplay-consistency.md`) also edits
-`bee_survival.gd`. None changes simulation: presentation only
+after PE-1 and BS-8 (plan review, 30 Sep 2026). UI-F-2 moved to the Codex
+lane on 1 Oct 2026 (Dave), once BS-8 and GC-1 had landed, so the Codex lane
+had a successor to UI-F-3 and UI-F-2 runs alongside FBB-1. None changes simulation: presentation only
 (`plans/archive/ui_2026-09-20.md`, "Durable rules": presentation may be
 skipped, simulation may not).
 
@@ -64,7 +64,7 @@ wording.
 argument without restructuring it.
 
 ```queue
-**[Claude] UI-F-2 -- warnings carry a severity and a pending one is never lost**
+**[Codex] UI-F-2 -- warnings carry a severity and a pending one is never lost**
 - Plan: `plans/now/ui-feedback.md` -- "UI-F-2 -- warnings carry a severity and a pending one is never lost"
 - Files: `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd`
 - Check: `grep -c "SEVERITY_" scripts/bee_survival.gd scripts/crab_spider.gd scripts/main.gd scripts/year_winter.gd` prints at least 1 for each file, and `tools/verify.ps1` is green
