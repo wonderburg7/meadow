@@ -1,7 +1,7 @@
 # First feedback build -- what the 3-4 Oct 2026 session needs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FBB-1 -- the skill tree hides the cut skills and says which are not built (Claude lane, queued 1 Oct 2026) | Dependency: none | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- FBB-1 landed; C-92 awaits Dave (1 Oct 2026) | Dependency: none | Verified: 2026-10-01
 
 **Objective.** On Saturday 3 or Sunday 4 October 2026 Dave sits one tester at
 his own machine and collects their feedback: the first friends-and-family

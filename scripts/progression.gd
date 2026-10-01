@@ -249,6 +249,8 @@ func begin_run(sheet: Dictionary) -> void:
 ## grant permits regardless of it. Both are empty until set_skill_policy()
 ## is called, so this answers exactly as before until then.
 func is_permitted(skill_id: String) -> bool:
+	if Skills.is_cut(skill_id):
+		return false
 	if _skill_bans.has(skill_id):
 		return false
 	if _skill_grants.has(skill_id):

@@ -175,7 +175,7 @@ func _rebuild() -> void:
 
 	var edges: Array = []   # [from axial, to axial]
 	for skill in Skills.SKILLS:
-		if skill.get("baseline", false):
+		if skill.get("baseline", false) or Skills.is_cut(skill.id):
 			continue
 		var at: Vector2i = skill.axial
 		var state := STATE_BLOCKED
@@ -230,6 +230,8 @@ func _refresh_detail() -> void:
 	var skill: Dictionary = Skills.entry(tile.id)
 	detail_label.text = "%s (tier %d) — %s. Cost: %s." % [tile.name, int(tile.tier),
 		_state_text(tile.state, tile.reason), _cost_text(skill)]
+	if not Skills.is_built(tile.id):
+		detail_label.text += " Not built yet: buying it changes nothing yet."
 	detail_label.add_theme_color_override("font_color", _state_colour(tile.state))
 	buy_button.disabled = tile.state != STATE_AFFORDABLE
 
@@ -308,8 +310,12 @@ func _state_colour(state: String) -> Color:
 	return UiTheme.color("locked")
 
 func _skill_tip(skill: Dictionary, state: String, reason: String) -> String:
-	return "%s\n%s\nCost: %s\n%s" % [skill.name, skill.get("description", ""),
-		_cost_text(skill), _sentence(_state_text(state, reason))]
+	return "%s\n%s\nCost: %s\n%s%s" % [skill.name, skill.get("description", ""),
+		_cost_text(skill), _sentence(_state_text(state, reason)), _not_built_note(skill)]
+
+## FBB-1: a node whose effect is not built says so rather than sell nothing.
+func _not_built_note(skill: Dictionary) -> String:
+	return "" if Skills.is_built(str(skill.get("id", ""))) else "\nNot built yet: buying it changes nothing yet."
 
 func _cost_text(skill: Dictionary) -> String:
 	if Session.progression != null and Session.progression.is_free(str(skill.get("id", ""))):
