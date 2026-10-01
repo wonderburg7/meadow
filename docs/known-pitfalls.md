@@ -441,6 +441,31 @@ on PATH. Pass it to icacls as `*S-1-…`. Keep any setup that can fail
 inside the `try` whose `finally` cleans up; otherwise a failed setup
 leaves an ACL-locked folder in `%TEMP%`.
 
+## Environment quirk: `os.kill(pid, 0)` is Ctrl+C on Windows
+
+The POSIX idiom for "does this process exist?" is `os.kill(pid, 0)`: signal
+0 is delivered to nobody and only the permission check runs. On Windows
+there is no signal 0. `signal.CTRL_C_EVENT` has the value 0, so the same
+call is `GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid)`, which raises Ctrl+C
+in **every process attached to the console**, the caller included. When
+the pid lives on another console the call raises instead (observed, not
+documented), so the probe answers "dead" for a running process.
+
+On 1 Oct 2026 the first Windows run of `verify.ps1`'s unit-tests job
+showed both faces at once: `tools/headless/jobs.py::_pid_is_live` marked a
+running worker stale (test 20 red), then probed the test runner's own pid
+and ended the run with `KeyboardInterrupt` and exit code `-1073741510`
+(`STATUS_CONTROL_C_EXIT`). The Linux and cloud runs were green, because
+there signal 0 means what it says. `tests/test_headless_jobs.py::
+test_liveness_probe_signals_nothing_and_answers_for_this_process` now
+probes the runner's own pid, so a regression interrupts that one test.
+
+On Windows ask kernel32 instead: `OpenProcess` with
+`PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE`, `WaitForSingleObject(h,
+0)` returning `WAIT_TIMEOUT` for "still running", `GetProcessTimes` for a
+start token. A pid whose handle someone still holds opens fine but is
+signalled, so the wait, not the open, is the liveness answer.
+
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 
 The Bash tool already runs in the right working directory, so prefixing a
