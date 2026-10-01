@@ -41,3 +41,4 @@ unblocker.
 - [C-88 -- Skill names in big hexes, drag and zoom](ready/C-88.md)
 - [C-89 -- An Idle bee stays in the hive](ready/C-89.md)
 - [C-90 -- A forager moved indoors unloads first](ready/C-90.md)
+- [C-91 -- Winter's countdown opens by itself](ready/C-91.md)
