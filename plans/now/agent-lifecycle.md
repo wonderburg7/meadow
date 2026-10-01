@@ -180,7 +180,9 @@ nothing proves the next call site is safe.
 its own save-set-restore block on 29 Sep (`9153793`), so the top-of-file
 setting does not cover every native-command read. No lifecycle test runs
 under a cp1252 console; the fixtures' only non-ASCII is the em dash in a
-few plan headings of `tests/test_slice_lifecycle.py`.
+few plan headings of `tests/test_slice_lifecycle.py`. Since 1 Oct (ad hoc),
+`Read-GitLines` fails `owner`'s git reads on a non-zero exit only, never on a
+stderr warning; `Read-GitText` keeps that contract and replaces it.
 
 **True when done.**
 

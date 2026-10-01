@@ -134,6 +134,7 @@ function Get-SliceRetryLine {
         "finish" { return "rerun tools/slice.ps1 finish from the slice worktree (phases already done are skipped); once merged, use tools/slice.ps1 resume -Lane $laneArg from the primary checkout" }
         "start"  { return "rerun tools/slice.ps1 start -Lane $laneArg" }
         "resume" { return "rerun tools/slice.ps1 resume -Lane $laneArg" }
+        "owner"  { return "rerun tools/slice.ps1 owner $($script:Path -join ' ')" }
         default  { return "rerun tools/slice.ps1 $($context.Command) -Lane $laneArg" }
     }
 }
@@ -1497,6 +1498,26 @@ function Invoke-GitQuiet {
     return $LASTEXITCODE
 }
 
+function Read-GitLines {
+    # A git read whose stdout the caller needs; only git's exit code can fail
+    # it. Git writes warnings to stderr on success -- `diff master...<branch>`
+    # warns "multiple merge bases" for a branch merged both ways with master
+    # -- and `git ... 2>$null` under this script's Stop preference makes
+    # PowerShell 5.1 throw on the first stderr line, so `owner` stopped before
+    # checking anything (1 Oct 2026). Stderr is kept only to name a failure.
+    # Decoding is still the top-of-file console setting (L-17's subject).
+    # Plain $args, not a [Parameter] binding: an advanced function would take
+    # git flags such as -d, -v or -o as PowerShell's -Debug, -Verbose, -Out*.
+    $ErrorActionPreference = "Continue"
+    $output = @(& git @args 2>&1)
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        $stderr = @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_".Trim() })
+        Stop-Slice -Cause "git $($args -join ' ') failed (exit $exitCode): $($stderr -join ' | ')" -Fix "run that git command in the primary checkout to see git's whole message, fix what it names, then retry"
+    }
+    $output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
+}
+
 function Test-OwnedPath {
     # A queue `Files:` entry or a changed file owns a path when they are the
     # same file, or when one is a folder (trailing slash) containing the other.
@@ -1521,7 +1542,7 @@ function Invoke-SliceOwner {
         exit 1
     }
     $root = Get-PrimaryRoot
-    $here = (git rev-parse --abbrev-ref HEAD 2>$null)
+    $here = (Read-GitLines rev-parse --abbrev-ref HEAD)
     $owners = @()
     foreach ($item in Get-NextUpItems -Root $root) {
         $hits = @($Wanted | Where-Object { $w = $_; @($item.Files | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
@@ -1529,12 +1550,12 @@ function Invoke-SliceOwner {
             $owners += [PSCustomObject]@{ kind="queue"; id=$item.Id; lane=$item.Lane; title=$item.Title; paths=$hits }
         }
     }
-    $branches = @(git -C $root branch --no-merged master --format="%(refname:short)" 2>$null | Where-Object { $_ -and $_ -ne $here })
+    $branches = @(Read-GitLines -C $root branch --no-merged master "--format=%(refname:short)" | Where-Object { $_ -and $_ -ne $here })
     foreach ($branch in $branches) {
-        $changed = @(git -C $root diff --name-only "master...$branch" 2>$null)
+        $changed = @(Read-GitLines -C $root diff --name-only "master...$branch")
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
         if ($hits) {
-            $last = (git -C $root log -1 --format="%cs %s" $branch 2>$null)
+            $last = (Read-GitLines -C $root log -1 "--format=%cs %s" $branch)
             $owners += [PSCustomObject]@{ kind="branch"; branch=$branch; last_commit=$last; paths=$hits }
         }
     }
