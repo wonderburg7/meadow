@@ -403,23 +403,14 @@ func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: 
 	main.queen.setup(main.hive, "nectar", 0, main.Bee.Role.EGG_LAYER, main)
 
 	var level: Dictionary = main.Levels.get_level(Session.starting_level)
-	var nurses: int = int(level.nurses) if not level.is_empty() else int(GameConfig.starting_nurses)
-	var builders: int = int(level.builders) if not level.is_empty() else int(GameConfig.starting_builders)
-	var miners: int = int(level.miners) if not level.is_empty() else int(GameConfig.starting_miners)
-	# "honey_makers" is optional even on a level-shaped scenario -- every
-	# existing level/scenario predates this key and still means "none",
-	# same as before it existed.
-	var honey_makers: int = int(level.get("honey_makers", 0)) if not level.is_empty() else int(GameConfig.starting_honey_makers)
-	for i in range(nurses):
-		_spawn_indoor_bee(main.Bee.Role.NURSERY)
-	for i in range(builders):
-		_spawn_indoor_bee(main.Bee.Role.BUILDER)
-	for i in range(miners):
-		var miner = _spawn_indoor_bee(main.Bee.Role.MINER)
-		if miner != null and bool(level.get("automine", false)):
-			miner.automine = true
-	for i in range(honey_makers):
-		_spawn_indoor_bee(main.Bee.Role.HONEY_MAKER)
+	for role in main.Roles.ROLES:
+		if role.start_count_key == "":
+			continue
+		var count: int = int(level.get(role.start_count_key, 0)) if not level.is_empty() else int(GameConfig.get(role.start_config))
+		for i in range(count):
+			var bee = _spawn_indoor_bee(role.id)
+			if role.id == main.Roles.MINER and bee != null and bool(level.get("automine", false)):
+				bee.automine = true
 
 func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool:
 	if ring < interior_rings - 1:

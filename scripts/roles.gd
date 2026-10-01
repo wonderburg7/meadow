@@ -19,11 +19,8 @@ extends RefCounted
 ##   ids below in the enum's order);
 ## - bee.gd: ROLE_ACTION_FINDERS and _default_state_for_role; its work is
 ##   actions.gd rows found by a bee_<role>.gd module;
-## - a skill unlocks it: its `skill` below, plus run_availability.gd's
-##   SEED_COUNT_KEYS (BS-8 in plans/now/brood-spine.md moves that here);
-## - a level can seed it: its count key on levels.gd rows, in
-##   world_building.gd::_spawn_hive_occupants and in main.gd::
-##   _apply_scenario_boot_arg's defaults (BS-8 makes that one field too);
+## - a skill unlocks it: its `skill` below;
+## - a level can seed it: its `start_count_key` below;
 ## - it has sub-modes: a bee field, bee.gd::_action_mode_for_role and
 ##   role_name_text, hud.gd::_mode_is_active, orders_zones.gd::_apply_mode
 ##   and the field's line in save_game.gd and saving.gd;
@@ -54,10 +51,17 @@ const HONEY := 6
 ## CATALOGUE_READERS); check_run_skill_policy there checks every value is
 ## a real skills.gd id instead. actions.gd's own `skill` field is work a
 ## skill unlocks *inside* a role, not the role itself.
+##
+## `start_count_key` is the count a level or scenario uses to seed this role;
+## `start_config` is its equivalent GameConfig setting for the level-0
+## fallback. Both are empty for roles not seeded at run start. Keeping them on
+## the role row makes availability seeding and hive spawning read the same
+## definition.
 const ROLES := [
 	{
 		"id": FORAGER, "key": "forager", "label": "Forager", "letter": "F",
 		"skill": "",
+		"start_count_key": "", "start_config": "",
 		"colour": Color(0.95, 0.72, 0.20),
 		"tip": "Sends bees out to the meadow to gather nectar or pollen and carry it back into the comb.\n\nNectar is the colony's energy -- bees eat it, and building comb burns it. Pollen is what the queen eats to lay eggs, so no pollen means no new bees.",
 		"modes": [
@@ -68,6 +72,7 @@ const ROLES := [
 	{
 		"id": NURSE, "key": "nurse", "label": "Nurse", "letter": "U",
 		"skill": "skill.brood.nurses",
+		"start_count_key": "nurses", "start_config": "starting_nurses",
 		"colour": Color(0.40, 0.80, 0.95),
 		"tip": "Keeps bees indoors feeding the brood.\n\nLarvae do not develop on their own: a nurse collects pollen and either nectar or honey from the comb, carries it to the cell, and each feed buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. With no nurse, the colony cannot grow.",
 		"modes": [
@@ -79,6 +84,7 @@ const ROLES := [
 	{
 		"id": COMB_WORKER, "key": "comb_worker", "label": "Comb worker", "letter": "C",
 		"skill": "",
+		"start_count_key": "builders", "start_config": "starting_builders",
 		"colour": Color(0.55, 0.85, 0.45),
 		"tip": "Looks after the comb itself: drawing new cells, clearing blocked ones, and moving stores between them.\n\nBuilding burns extra energy, because bees make wax from the sugar they have eaten.",
 		"modes": [
@@ -91,6 +97,7 @@ const ROLES := [
 	{
 		"id": QUEEN, "key": "laying", "label": "Laying", "letter": "Q",
 		"skill": "",
+		"start_count_key": "", "start_config": "",
 		"colour": Color(1.0, 0.85, 0.55),
 		"tip": "Queen only. She eats pollen from the comb until she has enough for an egg, then walks to a free cell and lays into it.\n\nWhenever laying is blocked -- no pollen, or no free cell -- she falls back to her second job, which is nursing unless you change it. Other bees ignore this.",
 		"modes": [],
@@ -98,6 +105,7 @@ const ROLES := [
 	{
 		"id": IDLE, "key": "idle", "label": "Idle", "letter": "-",
 		"skill": "",
+		"start_count_key": "", "start_config": "",
 		"colour": Color(0.60, 0.60, 0.62),
 		"tip": "Stops bees doing anything on their own.\n\nThey stay where they are and keep burning energy, but you can still move them with right-click. Useful for holding bees back or parking one somewhere.",
 		"modes": [],
@@ -105,6 +113,7 @@ const ROLES := [
 	{
 		"id": MINER, "key": "miner", "label": "Miner", "letter": "M",
 		"skill": "",
+		"start_count_key": "miners", "start_config": "starting_miners",
 		"colour": Color(0.80, 0.55, 0.35),
 		"tip": "Digs out soil blocks to make room for more comb.\n\nOne miner takes about two minutes per block; several digging the same block share the work. A miner fills up with spoil as it digs and has to carry it outside before it can carry on.",
 		"modes": [
@@ -114,6 +123,7 @@ const ROLES := [
 	{
 		"id": HONEY, "key": "honey", "label": "Honey", "letter": "H",
 		"skill": "skill.brood.honey_worker",
+		"start_count_key": "honey_makers", "start_config": "starting_honey_makers",
 		"colour": Color(0.95, 0.45, 0.25),
 		"tip": "Turns stored nectar into honey.\n\nA honey bee takes nectar back out of the comb, chews enzymes into it, spits the mix into a cell of its own and then fans its wings over that cell until the water has evaporated off. Only then is it honey -- which is four times as energy-dense as the nectar it came from, keeps far better, and lets nurses raise larvae faster.",
 		"modes": [],

@@ -1098,9 +1098,9 @@ func _apply_scenario_boot_arg() -> void:
 	level["unlocks"] = level.get("unlocks", [])
 	level["win_conditions"] = level.get("win_conditions", [])
 	# A UI-only scenario (layout/text assertions) has no colony to describe;
-	# absent starting counts mean "none", as honey_makers already does, so
-	# world_building's strict level.<count> reads don't abort the boot.
-	for count_key in ["cells", "nectar_foragers", "pollen_foragers", "nurses", "builders", "miners"]:
+	# cells and forager counts remain direct boot fields, while indoor roles
+	# read their optional start_count_key from roles.gd.
+	for count_key in ["cells", "nectar_foragers", "pollen_foragers"]:
 		level[count_key] = level.get(count_key, 0)
 
 	Levels.scenario_override = level
