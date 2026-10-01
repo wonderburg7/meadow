@@ -166,6 +166,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/now/ui-feedback.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/now/feedback-build.md` |
+| SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/now/scenario-reds.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates, the Colony Run definition pass | `plans/design/product-scope.md` |

@@ -6,6 +6,86 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 1 Oct 2026 -- Dave's hands-on pass
+
+### C-57 -- at Challenge 2's 2.2 the Raises menu offers a pollen Forager
+
+What this checks: start Challenge 2 and play (or step with Game Settings -> World & start's arrows) to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click a comb cell and open its Raises row's "Forager..." menu.
+
+PASS: the menu lists "Forager -- Pollen" as well as "Forager -- Nectar".
+
+If it fails, say exactly how you reached 2.2 (played through, stage arrows forward or back, a loaded save, the cell already open when the stage changed, or something else). HF-6's fixture (`test_scenarios/hf6_challenge2_raises_test.json`) finds Pollen on every one of those routes it can drive headless, so a failure means your route is one it does not take yet, and that route becomes the next fixture.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+### C-66 -- Developer mode toggle in the main menu settings
+
+What this checks: From the main menu, click the cog (top-right) to open the
+settings window and open the Interface section. Tick "Developer mode", close
+the game completely, start it again and reopen the same settings window.
+
+PASS: "Developer mode" is listed under Interface, starts unticked on a first run, and is still ticked after a full restart.
+
+If it fails, the setting is not being saved between sessions or is missing from the window, and BS-D reopens before BS-5 (the developer table) builds on it.
+
+Owner: `plans/now/brood-spine.md`
+
+### C-67 -- Challenge 2 gives Nurses free at stage 2.5
+
+What this checks: Start Challenge 2 from the main menu and play to stage 2.5 ("buy Nurses in the skill tree, then raise a nurse"). Open the skills window from the Skills button at the top of the screen and hover the Nurses node in the Brood sector.
+
+PASS: The Skills button appears at 2.5, Nurses shows "Cost: Free", buying it takes no nectar or pollen from the comb, and raising one nurse then completes the stage.
+
+If it fails, the "Free" label or the button's stage gate reopens BS-2 (`scripts/skill_tree_panel.gd`, `scripts/challenge_stages.gd`).
+
+Owner: `plans/now/brood-spine.md`
+
+### C-68 -- Clicking the hive or its exit switches view
+
+What this checks: in a normal run with the View button available, left-click the hive in the meadow, then left-click the exit tile inside the hive.
+
+PASS: Clicking the hive shows the hive view, and clicking the exit inside shows the meadow again.
+
+If it fails, HR-2 reopens: the click radius or the bee-first rule in `scripts/input_selection.gd::_click_switches_view` needs adjusting.
+
+Owner: `plans/archive/hive-readouts_2026-09-29.md`
+
+### C-69 -- A bee waiting for room says so
+
+What this checks: in a running game, let the comb fill up so foragers stand still in the hive holding a load, then click one of those bees and read the "Now" line in the selection panel.
+
+PASS: A bee standing still with a load because the comb is full reads "waiting with <resource>: no cell has room for it".
+
+If it fails, HR-3 reopens: the wording in `scripts/bee.gd::task_description` (the `IN_HIVE_TO_CELL` case) is not reached for that bee.
+
+Owner: `plans/archive/hive-readouts_2026-09-29.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
+### C-70 -- Changing panel texture moves nothing
+
+What this checks: with the Colony window open, go to cog -> Appearance -> Panel texture and switch between Flat, Honeycomb and Grain, watching the window's edges and its lines of text.
+
+PASS: no panel edge and no line of text moves when the texture changes.
+
+If it fails, `scripts/ui_theme.gd::PanelBox` margins or border differ from the old flat panel, and HF-1 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
+### C-73 -- Top bar second row spans the first
+
+What this checks: start a normal run at the default 1280x720 window with button labels off and look at the top-right bar: the row of Colony, Nursery, Foraging and View buttons under the pause and speed row.
+
+PASS: the second row's buttons fill the same width as the row above, equally sized and evenly spaced.
+
+If it fails, the expand-fill flags in `scripts/hud.gd::_build_top_right_bar` are not taking effect and HF-3 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
 ## 28 Sep 2026 -- Dave's hands-on pass
 
 ### C-7 -- the queen forages unattended once she is given the job

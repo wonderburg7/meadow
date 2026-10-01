@@ -610,6 +610,22 @@ static func cost_for(skill_id: String) -> Dictionary:
 static func is_baseline(skill_id: String) -> bool:
 	return entry(skill_id).get("baseline", false)
 
+## Product-scope 6.4's nine cuts: kept in the catalogue, never offered,
+## never ownable in the alpha.
+const CUT_FROM_ALPHA := [
+	"skill.defence.guard_bee", "skill.defence.combat", "skill.defence.auto_defence",
+	"skill.foraging.nectar_robbing", "skill.brood.drones", "skill.defence.medicine",
+	"skill.hive_mind.adjustment_panel", "skill.hive_mind.extended_backup_roles",
+	"skill.hive_mind.chemical_cascade",
+]
+
+static func is_cut(skill_id: String) -> bool:
+	return CUT_FROM_ALPHA.has(skill_id)
+
+## False while the node's design status says its effect is not built yet.
+static func is_built(skill_id: String) -> bool:
+	return not ["new", "open", "existing_placeholder"].has(str(entry(skill_id).get("status", "")))
+
 ## Every purchasable node in one sector, in catalogue (tier) order.
 static func for_sector(sector_key: String) -> Array:
 	return SKILLS.filter(func(s): return s.sector == sector_key and not s.baseline)

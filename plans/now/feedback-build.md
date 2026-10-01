@@ -1,7 +1,7 @@
 # First feedback build -- what the 3-4 Oct 2026 session needs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FBB-1 -- the skill tree hides the cut skills and says which are not built (Claude lane, queued 1 Oct 2026) | Dependency: none | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- FBB-1 landed; C-92 awaits Dave (1 Oct 2026) | Dependency: none | Verified: 2026-10-01
 
 **Objective.** On Saturday 3 or Sunday 4 October 2026 Dave sits one tester at
 his own machine and collects their feedback: the first friends-and-family
@@ -46,75 +46,11 @@ which §14's release stream says are hidden before the first feedback build.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FBB-1 | the tree hides the nine cut skills and says which nodes are not built yet | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fbb1_cut_skills_test.json` | yes | medium |
 
 FBB-1 depends on nothing and shares no file with the Codex lane. It reads its
 own section below and nothing else.
 
-## FBB-1 -- the skill tree hides the cut skills and says which are not built
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one purchase rule extended, not added; every owner named).
-
-**True now** (verified 1 Oct 2026). `skills.gd`'s catalogue has 34
-non-baseline nodes; its `status` field marks 15 `"new"`, 2 `"open"` and 1
-`"existing_placeholder"`, and nothing marks product-scope §6.4's nine cuts:
-Guard bee, Combat, Auto-defence, Nectar robbing, Drones, Medicine, Adjustment
-panel, Extended backup roles and Chemical cascade.
-`skill_tree_panel.gd::_rebuild` draws every non-baseline node and
-`progression.gd::purchase_blocker` lets any of them be bought, so the tree
-sells Combat and Drones, and nine more nodes that do nothing yet.
-
-**True afterwards.**
-
-- `skills.gd` holds `const CUT_FROM_ALPHA := [...]` naming the nine ids above,
-  `static func is_cut(skill_id: String) -> bool`, and
-  `static func is_built(skill_id: String) -> bool`, false when the entry's
-  `status` is `"new"`, `"open"` or `"existing_placeholder"`. No catalogue entry
-  changes.
-- `progression.gd::is_permitted` refuses a cut skill before it reads bans or
-  grants, so no path -- the Buy button, the harness's `buy_skill`, a run
-  grant -- can own one, and `purchase_blocker` reports `BLOCK_NOT_PERMITTED`.
-- `skill_tree_panel.gd::_rebuild` skips a cut skill exactly as it skips a
-  baseline one: no tile and no edge. None of the 25 remaining nodes has a cut
-  prerequisite or sits above a cut node in its sector (checked 1 Oct 2026).
-- The nine unbuilt nodes left (Associative learning, Weighted flower choice,
-  Pollinator points, Bee bread, Priority cells, Cell capacity, Suppress
-  recruitment, Rain recall, Alarm pheromone) stay buyable. `_skill_tip` and
-  the detail strip (`_refresh_detail`) add the sentence "Not built yet: buying
-  it changes nothing yet." Tile drawing and colours do not change.
-- `scenario_actions.gd::_do_buy_skill` takes `{"expect_refused": bool}` the way
-  `assign_role` does (BS-3): true accepts only a refused purchase.
-
-**Must not change.** Any cost, tier, prerequisite or the tier rule itself;
-the state of every buildable node, Nurses and Honey worker included;
-Challenge 2's stage 2.5 (buy Nurses, then raise a nurse; Nurses is free
-there, C-67); BS-4's fixture; a save that owns
-a skill (ownership is never re-checked on load); `run_availability.gd` and its
-developer table, which still lists the cut skills as bought in the tree -- a
-follow-up for Dave to ask for, not part of this slice.
-
-**Stop and escalate** if a fixture or a Challenge stage buys or grants one of
-the nine cut skills, or if hiding a node leaves a visible node unreachable.
-
-**Check.** `test_scenarios/fbb1_cut_skills_test.json`, a Scenario with stocked
-stores: `buy_skill` on `skill.defence.combat` with `expect_refused: true`,
-`buy_skill` on `skill.colony.cell_capacity`, then `skill_owned` asserts that
-Combat is unowned and Cell capacity owned. The hands-on check to file: from
-the main menu start Scenario 2 "A working colony" and press Skills at the top
-of the screen. PASS when none of the nine cut skills has a tile, and clicking
-Cell capacity shows "Not built yet: buying it changes nothing yet." beside
-its cost.
-
-```queue
-**[Claude] FBB-1 -- the skill tree hides the cut skills and says which are not built**
-- Plan: `plans/now/feedback-build.md` -- "FBB-1 -- the skill tree hides the cut skills and says which are not built"
-- Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fbb1_cut_skills_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/fbb1_cut_skills_test.json` passes with Combat refused and Cell capacity bought, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/skills.gd :: CUT_FROM_ALPHA`
-- Next after: none -- plans/now/feedback-build.md is complete
-```
+FBB-1 shipped 2026-10-01; its specification is `plans/archive/FBB-1_2026-10-01.md`.
 
 ## Read on demand
 

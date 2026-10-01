@@ -1069,7 +1069,15 @@ static func _do_save_run(main: Node2D, action: Dictionary) -> void:
 ## spends the colony's real stores the way a click does.
 static func _do_buy_skill(main: Node2D, action: Dictionary) -> void:
 	var skill_id := str(action.get("skill", ""))
-	if main.hud.skill_tree_panel.buy_skill(skill_id):
+	var bought: bool = main.hud.skill_tree_panel.buy_skill(skill_id)
+	if action.get("expect_refused", false):
+		# FBB-1: accepts only a refused purchase.
+		if bought:
+			_log("buy_skill", str(action), "rejected", "bought, which should have been refused")
+		else:
+			_log("buy_skill", str(action), "accepted", "refused as expected")
+		return
+	if bought:
 		_log("buy_skill", str(action), "accepted", "")
 	else:
 		var reason: String = Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores()) if Session.progression != null else "no progression"

@@ -23,33 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] FBB-1 -- the skill tree hides the cut skills and says which are not built**
-   - Plan: `plans/now/feedback-build.md` -- "FBB-1 -- the skill tree hides the cut skills and says which are not built"
-   - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fbb1_cut_skills_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/fbb1_cut_skills_test.json` passes with Combat refused and Cell capacity bought, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skills.gd :: CUT_FROM_ALPHA`
-   - Next after: none -- plans/now/feedback-build.md is complete
-
-2. **[Claude] BS-9 -- the queen nurses without the Nurses skill**
+1. **[Claude] BS-9 -- the queen nurses without the Nurses skill**
    - Plan: `plans/now/brood-spine.md` -- "BS-9 — the queen nurses without the Nurses skill"
    - Files: `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/bs9_c2_queen_nurses_test.json` passes with a pollen Forager hatched at Challenge 2's stage 2.2, `test_scenarios/bs3_nurse_gate_test.json` still passes, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/availability.gd :: bee.is_queen`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
 
-3. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
+2. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_two_lane_closeout tests.test_slice_lifecycle` passes with the remote-ahead case strict and the five new cases, and `tools/verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: Sync-PrimaryMaster`
    - Next after: L-17 -- one console-encoding contract for the lifecycle, tested once
 
-4. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
+3. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`
    - Check: `python -m unittest tests.test_slice_lifecycle.ConsoleEncodingTest tests.test_source_checks` passes and `tools/verify.ps1` is green
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
+
+4. **[Claude] UT-1 -- every panel texture is visible in every theme**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
+   - Files: `scripts/ui_theme.gd`
+   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
+   - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
+
+5. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
+   - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
+   - Next after: UT-3 -- a theme change recolours the in-run panels' text
 
 ### Codex lane
 
@@ -63,10 +70,41 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/hud.gd :: _pending_warning = {"text": text, "severity": severity}`
    - Next after: none -- plans/now/ui-feedback.md is complete
 
+2. **[Codex] SR-1 -- a freed queen no longer breaks the problem messages**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-1 -- a freed queen no longer breaks the problem messages"
+   - Files: `scripts/problem_messages.gd`
+   - Check: `python tools/run_scenario.py test_scenarios/forage_radius_wide_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/problem_messages.gd :: static func no_foragers(queen: Node2D)`
+   - Next after: SR-2 -- the G3 fixture owns the Honey worker skill
+
+3. **[Codex] SR-2 -- the G3 fixture owns the Honey worker skill**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-2 -- the G3 fixture owns the Honey worker skill"
+   - Files: `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd`
+   - Check: `python tools/run_scenario.py test_scenarios/g3_actions_offered_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `absent: test_scenarios/g3_actions_offered_test.json :: skill.brood.honey_worker`
+   - Next after: SR-3 -- the disease-off fixture starts every bee newborn
+
+4. **[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-3 -- the disease-off fixture starts every bee newborn"
+   - Files: `test_scenarios/h5_disease_off_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `absent: test_scenarios/h5_disease_off_test.json :: starter_age_spread`
+   - Next after: SR-4 -- the command tray fits its content after a resize to 800x600
+
+5. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
+   - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
+   - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
+   - Next after: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
+- **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for UI-F-2 and SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`.
+- **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
 - **BS-6** (`plans/now/brood-spine.md`) -- startable since BS-8 landed (1 Oct 2026); waits for UI-F-2 (Codex lane) to land, since both edit `scripts/main.gd`.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
@@ -83,3 +121,7 @@ Codex, implementing: `Implement the next [Codex] slice: run tools/slice.ps1 star
 Claude, integrating a high-risk Codex branch: `Integrate the finished Codex branch and close it out.`
 
 Claude, after a hands-on pass: `I've done a hands-on pass. Here's what I found: <notes>. Update the checks, plans and queue.`
+
+Claude, when a gate has cleared: `<what happened, e.g. "UI-F-2 has landed">. Move whatever it unblocks into its lane: clear its line under "Not in the queue, and why" (or open its fence from queue-gated to queue), then run python tools/refill_lane.py --top-up.`
+
+Claude, when a lane is short and the backlog is dry (high reasoning): `The <Codex|Claude> lane is short and the backlog has nothing it can take. Plan the next <Codex|Claude> slices: write a queue block in the live plans for each one (it must touch no file in the other lane), put anything not ready yet under "Not in the queue, and why", then run python tools/refill_lane.py --top-up --lane <Codex|Claude>.`
