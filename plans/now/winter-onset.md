@@ -1,7 +1,7 @@
 # Winter onset — winter comes by itself
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: WO-1 -- winter's countdown opens by itself on a set day, startable, its block below | Dependency: none | Verified: 2026-09-30
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete. Follow-ups: hands-on check C-91 (checks/ready/C-91.md); tuning the provisional day 6 belongs to PE-2's played arc (plans/design/product-scope.md §6.2) | Dependency: none | Verified: 2026-10-01
 
 **Objective.** In every run whose level has winter on, winter's countdown
 opens by itself on day `GameConfig.winter_countdown_start_day`, so a Scenario

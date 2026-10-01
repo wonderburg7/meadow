@@ -863,9 +863,11 @@ var gyne_release_day: float = 0.75   # fraction of the season, earliest
 var gyne_release_energy: float = 0.8 # share of a full crop she needs first
 
 # --- winter ---
-## How long a winter is and what it costs. Whether one is *scheduled*,
-## and when, is state of the run rather than a setting, so it lives in
+## How long a winter is and what it costs, and the day a run's countdown
+## opens. The schedule that opening produces (Session.winter_starts_day
+## and friends) is state of the run rather than a setting, so it lives in
 ## Session.
+var winter_countdown_start_day: float = 6.0 # the day a run's countdown opens by itself (season.gd)
 var winter_countdown_days: float = 15.0
 var winter_length_days: float = 20.0
 ## What a bee burns through winter, as a multiple of its ordinary rate.

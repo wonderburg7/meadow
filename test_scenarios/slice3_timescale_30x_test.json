@@ -3,5 +3,6 @@
   "nurses": 2, "builders": 2, "miners": 2,
   "time_scale": 30,
   "config_overrides": {"seconds_per_day": 20},
+  "winter": false,
   "stop": {"max_days": 30}
 }

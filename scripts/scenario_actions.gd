@@ -1131,6 +1131,14 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		if paused == bool(condition["tree_paused"]):
 			return {"ok": true, "reason": ""}
 		return {"ok": false, "reason": "tree paused: %s" % paused}
+	if condition.has("winter_coming"):
+		if Session.winter_coming == bool(condition["winter_coming"]):
+			return {"ok": true, "reason": ""}
+		return {"ok": false, "reason": "winter_coming: %s" % Session.winter_coming}
+	if condition.has("winter_here"):
+		if Session.winter_here == bool(condition["winter_here"]):
+			return {"ok": true, "reason": ""}
+		return {"ok": false, "reason": "winter_here: %s" % Session.winter_here}
 	if condition.has("skill_owned"):
 		var owned: bool = Session.progression != null and Session.progression.is_owned(str(condition["skill_owned"]))
 		if owned == bool(condition.get("owned", true)):

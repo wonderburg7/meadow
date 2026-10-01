@@ -769,10 +769,16 @@ const TUNABLES := [
 
 	# --- Winter ---
 	{
+		"persist": "none",
+		"key": "winter_countdown_start_day", "label": "Winter countdown opens on day", "step": 1.0, "min": 0.0,
+		"category": "Winter",
+		"tip": "The day the winter countdown opens by itself. Winter then arrives \"Winter in days\" later. Day six gives a new colony its first week to find its feet before it has to start thinking about stores.",
+	},
+	{
 		"persist": "run",
 		"key": "winter_countdown_days", "label": "Winter in days", "step": 1.0, "min": 1.0,
 		"category": "Winter",
-		"tip": "How many in-game days ahead \"Bring on winter\" schedules it. Fifteen is enough to change what you are doing without being so far off that it stops mattering.",
+		"tip": "How many in-game days after the countdown opens winter arrives. Fifteen is enough to change what you are doing without being so far off that it stops mattering.",
 	},
 	{
 		"persist": "run",

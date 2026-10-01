@@ -11,5 +11,6 @@
     {"do": "settle", "ticks": 1},
     {"do": "assert", "condition": {"save_slot": "SV1 scenario", "named": true, "day_matches_saved": true}}
   ],
+  "winter": false,
   "stop": {"when_actions_resolved": true, "max_days": 30}
 }
