@@ -15,11 +15,8 @@ unblocker.
 ## Ready to run
 
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
-- [C-69 -- A bee waiting for room says so](ready/C-69.md)
-- [C-70 -- Changing panel texture moves nothing](ready/C-70.md)
 - [C-71 -- High contrast text legible over textures](ready/C-71.md)
 - [C-72 -- Text scale applies after a pause](ready/C-72.md)
-- [C-73 -- Top bar second row spans the first](ready/C-73.md)
 - [C-74 -- Winter forecast replaces Colony on the left](ready/C-74.md)
 - [C-75 -- Nursery keeps the meadow view](ready/C-75.md)
 - [C-76 -- the top bar has no Saves button](ready/C-76.md)

@@ -50,6 +50,42 @@ If it fails, HR-2 reopens: the click radius or the bee-first rule in `scripts/in
 
 Owner: `plans/archive/hive-readouts_2026-09-29.md`
 
+### C-69 -- A bee waiting for room says so
+
+What this checks: in a running game, let the comb fill up so foragers stand still in the hive holding a load, then click one of those bees and read the "Now" line in the selection panel.
+
+PASS: A bee standing still with a load because the comb is full reads "waiting with <resource>: no cell has room for it".
+
+If it fails, HR-3 reopens: the wording in `scripts/bee.gd::task_description` (the `IN_HIVE_TO_CELL` case) is not reached for that bee.
+
+Owner: `plans/archive/hive-readouts_2026-09-29.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
+### C-70 -- Changing panel texture moves nothing
+
+What this checks: with the Colony window open, go to cog -> Appearance -> Panel texture and switch between Flat, Honeycomb and Grain, watching the window's edges and its lines of text.
+
+PASS: no panel edge and no line of text moves when the texture changes.
+
+If it fails, `scripts/ui_theme.gd::PanelBox` margins or border differ from the old flat panel, and HF-1 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
+### C-73 -- Top bar second row spans the first
+
+What this checks: start a normal run at the default 1280x720 window with button labels off and look at the top-right bar: the row of Colony, Nursery, Foraging and View buttons under the pause and speed row.
+
+PASS: the second row's buttons fill the same width as the row above, equally sized and evenly spaced.
+
+If it fails, the expand-fill flags in `scripts/hud.gd::_build_top_right_bar` are not taking effect and HF-3 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 1 Oct 2026: First pass by Claude via computer use, confirmed by Dave (1 Oct 2026)
+
 ## 28 Sep 2026 -- Dave's hands-on pass
 
 ### C-7 -- the queen forages unattended once she is given the job
