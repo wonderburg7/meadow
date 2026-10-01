@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-1 -- every panel texture is visible in every theme (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for UI-F-2 and SR-4 (`plans/archive/ui-feedback_2026-10-01.md`, `plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd` | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: UT-1 -- every panel texture is visible in every theme (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark, Light and High contrast. Changing the theme mid-run recolours all text,
@@ -23,12 +23,12 @@ Each of them came right after hovering before the click.
 | UT-1 | every panel texture is visible in every theme | `scripts/ui_theme.gd` | yes -- queued | medium |
 | UT-2 | the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin | `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd` | yes -- queued | medium |
 | UT-3 | a theme change recolours the in-run panels' text | `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd` | yes, after UT-1 (same file) | medium |
-| UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- UI-F-2 and SR-4 own `hud.gd` | low |
+| UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- SR-4 owns `hud.gd` | low |
 | UT-5 | headless assertions for texture contrast and Buy clearance | `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json` | no -- SR-2 and SR-4 own `scenario_actions.gd` | medium |
 
 **Dependencies.** UT-3 runs after UT-1 because both edit `ui_theme.gd`.
-UT-4 uses UT-3's helper and also waits for UI-F-2 and SR-4 to land, since
-both edit `hud.gd`. UT-5 uses UT-1's `panel_texture_contrast` and waits for
+UT-4 uses UT-3's helper and also waits for SR-4 to land, since it edits
+`hud.gd` (UI-F-2, the other `hud.gd` owner, landed 1 Oct 2026). UT-5 uses UT-1's `panel_texture_contrast` and waits for
 SR-2 and SR-4 to land, since both edit `scenario_actions.gd`. UT-2 depends on
 nothing. None of these changes the simulation; all are presentation
 (`plans/archive/ui_2026-09-20.md`, "Durable rules").
@@ -195,8 +195,8 @@ because its cog changes the theme while the menu is showing.
 
 **Should be true.** Each of those overrides goes through `UiTheme.bind_color`.
 
-**Gate.** UT-3 has landed, and UI-F-2 and SR-4 (Codex lane) have landed,
-since both edit `hud.gd`.
+**Gate.** UT-3 has landed, and SR-4 (Codex lane) has landed, since it
+edits `hud.gd`.
 
 ```queue-gated
 **[Claude] UT-4 -- a theme change recolours the HUD, main menu and end screens**
