@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-7 -- every Scenario's queen backs up as a Nurse (startable, specified 30 Sep 2026); BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-7 and BS-8 | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-8 (BS-7 landed 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -88,7 +88,7 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 | --- | --- | --- | --- | --- |
 | BS-7 | every Scenario's queen backs up as a Nurse, so a lone queen raises a worker | `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json` | startable | medium |
 | BS-8 | a role's starting-count key is one field on its roles.gd row, before step 8 gates more roles | `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py` | startable (Codex lane) | medium |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-7 and BS-8 land first (shared files) | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-8 lands first (shared file; BS-7 landed 1 Oct 2026) | high |
 
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
@@ -196,7 +196,7 @@ Nothing is outlined here now: BS-6 is specified in full below.
 Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
 BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
 one machine, never a fixture). **Gated** on BS-8 landing, because both edit
-`run_availability.gd`, and BS-7 landing, because both read level definitions;
+`run_availability.gd` (BS-7, which also read level definitions, landed 1 Oct 2026);
 the lanes may not share a file.
 
 - **Scope.** The Run availability table (`run_availability_panel.gd`, opened

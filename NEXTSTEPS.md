@@ -88,7 +88,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-6** (`plans/now/brood-spine.md`) -- waits for its specification: Dave chose the `user://` override on 30 Sep 2026 (decision 6), and BS-4's closeout writes it.
+- **BS-6** (`plans/now/brood-spine.md`) -- specified 1 Oct 2026; waits for BS-8 (Codex lane) to land, since both edit `scripts/run_availability.gd`.
 - **L-16, L-17** (`plans/now/agent-lifecycle.md`) -- both edit `tools/slice.ps1`, whose suite skips off Windows, so each waits for a local Windows session: there, open its fence from `queue-gated` to `queue` and run `python tools/refill_lane.py --top-up --lane Claude` (plan review, 30 Sep 2026).
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; it waits for BS-4 to land, and it specifies PE-2.
 - **PE-2** (`plans/now/pacing-evidence.md`) -- the played pacing arc waits for the Colony Run definition, which specifies it.
