@@ -24,30 +24,36 @@ class PacingGatesTest(unittest.TestCase):
         self.assertFalse(in_band(4.49, 6.0))
         self.assertFalse(in_band(None, 6.0))
 
-    def test_rows_use_the_median_and_mark_an_incomplete_gate_outside_band(self):
+    def test_rows_use_elapsed_milestone_times_and_mark_an_incomplete_gate_outside_band(self):
         analyses = [
-            {"milestones": {"first_worker_day": 1, "food_secure_day": 3,
+            {"milestone_times": {"first_worker_day": 1.5, "food_secure_day": 3,
                             "winter_entered_day": 17, "winter_survived_day": 28}},
-            {"milestones": {"first_worker_day": 2, "food_secure_day": 3,
+            {"milestone_times": {"first_worker_day": 1.5, "food_secure_day": 3,
                             "winter_entered_day": 18, "winter_survived_day": 27}},
-            {"milestones": {"first_worker_day": 2, "food_secure_day": 4,
+            {"milestone_times": {"first_worker_day": 1.5, "food_secure_day": 4,
                             "winter_entered_day": 19}},
         ]
         rows = build_rows(analyses, 200)
-        self.assertEqual(2, rows[0]["median_day"])
+        self.assertEqual(1.5, rows[0]["median_day"])
+        self.assertTrue(rows[0]["inside_band"])
         self.assertEqual(3, rows[1]["median_day"])
         self.assertEqual(18, rows[2]["median_day"])
         self.assertIsNone(rows[3]["median_day"])
         self.assertFalse(rows[3]["inside_band"])
 
     def test_table_is_compact_and_names_missing_evidence(self):
-        rows = build_rows([{"milestones": {gate: 2 for gate in (
+        rows = build_rows([{"milestone_times": {gate: 2 for gate in (
             "first_worker_day", "food_secure_day", "winter_entered_day", "winter_survived_day",
         )}}], 200)
         table = render_table(rows, 200, 1)
         self.assertLess(len(table.splitlines()), 40)
         self.assertIn("milestone        median day  target day  in band", table)
         self.assertIn("Not instrumented: 20m forage/weather crisis; 90m gyne release.", table)
+        self.assertIn("2.00", table)
+
+    def test_first_worker_at_two_elapsed_days_is_outside_the_five_minute_band(self):
+        rows = build_rows([{"milestone_times": {"first_worker_day": 2.0}}], 200)
+        self.assertFalse(rows[0]["inside_band"])
 
 
 if __name__ == "__main__":

@@ -6,6 +6,10 @@ This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
 to work without an `expect` block.
 
+Balance and full reports include `milestone_times`: each pacing milestone's
+first qualifying snapshot as elapsed in-game days, while `milestones` retains
+the existing whole-day compatibility values.
+
 Run one deterministic scenario with the compact default:
 
 ```

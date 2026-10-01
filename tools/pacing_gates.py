@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure the headless alpha arc against the closed-alpha pacing targets.
 
-The five-minute forage/weather crisis and the ninety-minute gyne release are
+The twenty-minute forage/weather crisis and the ninety-minute gyne release are
 player-experience outcomes, not events the headless log currently records.
 This command therefore reports the four truthful, instrumented proxies rather
 than inventing a time for either one.
@@ -62,7 +62,7 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
     """Return one display-ready row for each measurable pacing gate."""
     rows = []
     for gate in GATES:
-        values = [analysis.get("milestones", {}).get(gate.metric) for analysis in analyses]
+        values = [analysis.get("milestone_times", {}).get(gate.metric) for analysis in analyses]
         complete = all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in values)
         median_day = statistics.median(values) if complete else None
         target = target_day(gate.target_minutes, day_length_seconds)
@@ -83,9 +83,9 @@ def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: 
         "---------------  ----------  ----------  -------",
     ]
     for row in rows:
-        median = "missing" if row["median_day"] is None else "%.1f" % row["median_day"]
+        median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
         result = "yes" if row["inside_band"] else "no"
-        lines.append("%-15s  %10s  %10.1f  %7s" % (
+        lines.append("%-15s  %10s  %10.2f  %7s" % (
             row["milestone"], median, row["target_day"], result,
         ))
     lines.append("Not instrumented: 20m forage/weather crisis; 90m gyne release.")

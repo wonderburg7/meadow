@@ -42,11 +42,11 @@ class HeadlessVerdictTest(unittest.TestCase):
         }
         entries = [
             {"type": "config", "settings": settings},
-            {"type": "snapshot", "day": 1, "population": {"total": 1},
+            {"type": "snapshot", "day": 1, "game_time": 2.0, "population": {"total": 1},
              "resources": {"food_stores": 1}, "environment": {"winter_here": False}},
-            {"type": "snapshot", "day": 2, "population": {"total": 2},
+            {"type": "snapshot", "day": 2, "game_time": 3.0, "population": {"total": 2},
              "resources": {"food_stores": 3}, "environment": {"winter_here": True}},
-            {"type": "snapshot", "day": 3, "population": {"total": 2},
+            {"type": "snapshot", "day": 3, "game_time": 6.0, "population": {"total": 2},
              "resources": {"food_stores": 4}, "environment": {"winter_here": False}},
         ]
 
@@ -56,9 +56,56 @@ class HeadlessVerdictTest(unittest.TestCase):
             "winter_survived_day": 3,
             "food_secure_day": 2,
         }, analyze(entries)["milestones"])
+        self.assertEqual({
+            "first_worker_day": 1.5,
+            "winter_entered_day": 1.5,
+            "winter_survived_day": 3.0,
+            "food_secure_day": 1.5,
+        }, analyze(entries)["milestone_times"])
+
+    def test_milestone_times_use_the_first_qualifying_snapshot_within_a_day(self):
+        settings = {"energy_burn_rate": 1.0, "winter_burn_factor": 1.0,
+                    "winter_length_days": 1.0, "seconds_per_day": 200.0,
+                    "honey_energy_factor": 1.0}
+        entries = [
+            {"type": "config", "settings": settings},
+            {"type": "snapshot", "day": 2, "game_time": 300.0,
+             "population": {"total": 1}, "resources": {"food_stores": 0},
+             "environment": {"winter_here": False}},
+            {"type": "snapshot", "day": 2, "game_time": 350.0,
+             "population": {"total": 2}, "resources": {"food_stores": 400},
+             "environment": {"winter_here": False}},
+            {"type": "snapshot", "day": 2, "game_time": 390.0,
+             "population": {"total": 2}, "resources": {"food_stores": 400},
+             "environment": {"winter_here": False}},
+        ]
+        analysis = analyze(entries)
+        self.assertEqual({"first_worker_day": 2, "food_secure_day": 2},
+                         analysis["milestones"])
+        self.assertEqual({"first_worker_day": 1.75, "food_secure_day": 1.75},
+                         analysis["milestone_times"])
+
+    def test_zero_population_is_neither_food_secure_nor_winter_survived(self):
+        settings = {"energy_burn_rate": 1.0, "winter_burn_factor": 1.0,
+                    "winter_length_days": 1.0, "seconds_per_day": 1.0,
+                    "honey_energy_factor": 1.0}
+        entries = [
+            {"type": "config", "settings": settings},
+            {"type": "snapshot", "day": 1, "game_time": 1.0,
+             "population": {"total": 0}, "resources": {"food_stores": 0},
+             "environment": {"winter_here": True}},
+            {"type": "snapshot", "day": 2, "game_time": 2.0,
+             "population": {"total": 0}, "resources": {"food_stores": 0},
+             "environment": {"winter_here": False}},
+        ]
+        analysis = analyze(entries)
+        self.assertEqual({"winter_entered_day": 1}, analysis["milestones"])
+        self.assertEqual({"winter_entered_day": 1.0}, analysis["milestone_times"])
 
     def test_analysis_without_snapshots_has_no_milestones(self):
-        self.assertEqual({}, analyze([{"type": "config", "settings": {}}])["milestones"])
+        analysis = analyze([{"type": "config", "settings": {}}])
+        self.assertEqual({}, analysis["milestones"])
+        self.assertEqual({}, analysis["milestone_times"])
 
     def test_missing_milestone_has_consistent_expectation_results(self):
         analysis = dict(ANALYSIS, milestones={})

@@ -8,16 +8,12 @@ headless alpha arc meets each timing budget in `plans/design/product-scope.md`
 §3, so a balance change can be judged against the 5/10/60/90-minute gates
 without a playthrough.
 
-**State.** `tools/pacing_gates.py` (FB-3, 24 Sep 2026) runs
-`test_scenarios/alpha_arc_test.json` and compares four milestones from
-`analyze_session.py::_milestones` with a +/-25% band around each target. Those
-milestones are whole days taken from the last snapshot of each day
-(`_last_snapshot_per_day`), so a gate whose band holds no whole day can never
-read "in band": at the default 200 seconds a day the 5-minute gate's target is
-day 1.5 and its band is days 1.125 to 1.875. The snapshots it needs are
-already written -- the default cadence is one an in-game hour
-(`diagnostic_log.gd::_snapshot_interval`, `seconds_per_day / 24`) and each
-carries `game_time` -- the analysis throws the precision away.
+**State.** `tools/pacing_gates.py` runs `test_scenarios/alpha_arc_test.json`
+and compares four `milestone_times` values from `analyze_session.py` with a
++/-25% band around each target. Each value is the elapsed in-game day of the
+first qualifying hourly snapshot; legacy `milestones` retains its whole-day,
+last-snapshot compatibility values. Food security and winter survival now
+require a population of at least one, so an extinct colony cannot read secure.
 
 **Measured 30 Sep 2026** (product review, `docs/product-review-2026-09-30.md`):
 first worker missing (target day 1.5), food secure day 4.0 (target 3.0),
@@ -28,6 +24,11 @@ and the log idles to day 36; nothing but the debug panel starts winter (WO-1,
 `plans/now/winter-onset.md`); and a colony with no bees reads food secure,
 because its winter requirement is 0 (PE-1 fixes that below). PE-2, outlined
 under "Later", makes the arc a played colony.
+
+**Probe 1 Oct 2026.** `python tools/pacing_gates.py --repeat 1` exceeded its
+existing 300-second run timeout, so it produced no pacing table or verdict.
+That is a harness limitation to resolve with PE-2's playable colony arc, not
+evidence for a balance change.
 
 ## Open slices at a glance
 
