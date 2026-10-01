@@ -160,11 +160,12 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | If the queue names | Read |
 | --- | --- |
 | SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/archive/skill-screen_2026-10-01.md` |
-| BS-4, BS-6, BS-7, BS-8 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run | `plans/now/brood-spine.md` |
+| BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/now/brood-spine.md` |
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/now/gameplay-consistency.md` |
 | PE-1, PE-2 -- the headless pacing gates timed to the hour, then the played arc | `plans/archive/pacing-evidence_2026-10-01.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/now/ui-feedback.md` |
+| FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/now/feedback-build.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates, the Colony Run definition pass | `plans/design/product-scope.md` |
