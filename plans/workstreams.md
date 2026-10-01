@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/BS-9` (`claude/BS-9`) | Claude | the queen nurses without the Nurses skill | Claude | in progress | none | `plans/now/brood-spine.md` BS-9 — the queen nurses without the Nurses skill |
