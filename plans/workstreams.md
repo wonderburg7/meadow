@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FBB-1` (`claude/FBB-1`) | Claude | the skill tree hides the cut skills and says which are not built | Claude | in progress | none | `plans/now/feedback-build.md` FBB-1 -- the skill tree hides the cut skills and says which are not built |
 | `.worktrees/UI-F-2` (`codex/UI-F-2`) | Codex | warnings carry a severity and a pending one is never lost | Codex | in progress | none | `plans/now/ui-feedback.md` UI-F-2 -- warnings carry a severity and a pending one is never lost |
