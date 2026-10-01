@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-9 -- the queen nurses without the Nurses skill (Claude lane, queued 1 Oct 2026 behind FBB-1), then BS-6 (waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -184,8 +184,9 @@ bee's work goes through). Specified 1 Oct 2026 from decision 7.
 Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
 BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
 one machine, never a fixture). It was gated on BS-8, which shared
-`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026, so BS-6 is
-startable and waits only for room in the Claude lane.
+`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026. It now
+waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`, so
+its block is fenced `queue-gated` until SR-5 lands.
 
 - **Scope.** The Run availability table (`run_availability_panel.gd`, opened
   from the debug panel) is read-only today. Each skill row gains a control
@@ -211,7 +212,7 @@ startable and waits only for room in the Claude lane.
 - **Escalate** if a run started with an override and one without differ in
   anything beyond starting ownership.
 
-```queue
+```queue-gated
 **[Claude] BS-6 -- developer edits to the table change what a run starts with**
 - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
 - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`

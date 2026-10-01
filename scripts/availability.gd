@@ -166,10 +166,13 @@ static func _role_skill_owned(role_id: int, progression) -> bool:
 ## here: only progression.gd's resolver may read features.gd, and it has no
 ## plain "is this feature on" query yet, so the source check keeps `feature`
 ## empty until it does.
-## `bee` is part of the contract for a per-bee fact; nothing reads it yet.
+## `bee` is the bee asking (null for a colony-wide answer). Decision 7
+## (BS-9): the queen nurses without the Nurses skill -- for her the role
+## check passes for Roles.NURSE, so a Challenge with no nurse yet still
+## feeds its brood. Workers still need the skill (role_query is unchanged).
 ## Callers cache the answer against gate_epoch (bee.gd::_action_available)
 ## rather than asking per action per think tick.
-static func action_query(action_id: String, _bee = null, stage_gate = null, progression = null) -> Dictionary:
+static func action_query(action_id: String, bee = null, stage_gate = null, progression = null) -> Dictionary:
 	var action: Dictionary = Actions.by_id(action_id)
 	if action.is_empty():
 		return {"available": false, "reason": REASON_UNKNOWN_KEY}
@@ -184,7 +187,10 @@ static func action_query(action_id: String, _bee = null, stage_gate = null, prog
 	var skill: String = action.get("skill", "")
 	if skill != "" and (progression == null or not progression.is_owned(skill)):
 		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
+	var queen_asking: bool = bee != null and bee.is_queen
 	for role_id in action.get("roles", []):
+		if queen_asking and role_id == Roles.NURSE:
+			continue
 		if not _role_skill_owned(role_id, progression):
 			return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
