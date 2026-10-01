@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/BS-8` (`codex/BS-8`) | Codex | a role's starting count is one field on its roles.gd row | Codex | in progress | none | `plans/now/brood-spine.md` BS-8 — a role's starting count is one field on its roles.gd row |
+| `.worktrees/GC-2` (`claude/GC-2`) | Claude | a bee changing job puts down what she carries | Claude | in progress | none | `plans/now/gameplay-consistency.md` GC-2 — a bee changing job puts down what she carries |
