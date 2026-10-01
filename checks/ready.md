@@ -39,3 +39,4 @@ unblocker.
 - [C-86 -- Game-over screen follows theme and text size](ready/C-86.md)
 - [C-87 -- Serious warning is not lost behind a minor one](ready/C-87.md)
 - [C-88 -- Skill names in big hexes, drag and zoom](ready/C-88.md)
+- [C-89 -- An Idle bee stays in the hive](ready/C-89.md)
