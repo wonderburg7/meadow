@@ -293,49 +293,98 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertFalse(worktree_b.exists())
         self.assertFalse(self.branch_exists("codex/B-1"))
 
-    def test_remote_ahead_integrates_or_fails_naming_remote_state(self):
+    def push_remote_commit(self, name, content, message="unrelated remote commit"):
+        """Land a commit on the remote's master from a separate clone -- what
+        the other lane's finish, or a cloud session, produces."""
+        with tempfile.TemporaryDirectory() as clone_dir:
+            clone = Path(clone_dir) / "clone"
+            subprocess.run(["git", "clone", str(self.remote), str(clone)], capture_output=True, text=True, check=True)
+            subprocess.run(["git", "config", "user.name", "Other Lane"], cwd=clone, check=True)
+            subprocess.run(["git", "config", "user.email", "other@example.invalid"], cwd=clone, check=True)
+            target = clone / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+            subprocess.run(["git", "add", name], cwd=clone, check=True)
+            subprocess.run(["git", "commit", "-m", message], cwd=clone, capture_output=True, text=True, check=True)
+            subprocess.run(["git", "push", "origin", "master"], cwd=clone, capture_output=True, text=True, check=True)
+
+    def git_out(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True, check=True).stdout
+
+    def commit_local(self, name, content, message):
+        (self.root / name).write_text(content, encoding="utf-8")
+        subprocess.run(["git", "add", name], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", message], cwd=self.root, capture_output=True, text=True, check=True)
+
+    def test_remote_ahead_integrates_before_the_merge(self):
         self.write_two_lane_queue()
         self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
         worktree_a = self.root / ".worktrees" / "A-1"
         self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
-
-        # An unrelated commit lands on the remote's master from outside this
-        # checkout -- exactly what the other lane's own finish, pushing from
-        # its own primary checkout, would also produce.
-        other_clone_dir = tempfile.TemporaryDirectory()
-        try:
-            other_clone = Path(other_clone_dir.name) / "clone"
-            subprocess.run(["git", "clone", str(self.remote), str(other_clone)], capture_output=True, text=True, check=True)
-            subprocess.run(["git", "config", "user.name", "Other Lane"], cwd=other_clone, check=True)
-            subprocess.run(["git", "config", "user.email", "other@example.invalid"], cwd=other_clone, check=True)
-            (other_clone / "unrelated.txt").write_text("unrelated change\n", encoding="utf-8")
-            subprocess.run(["git", "add", "unrelated.txt"], cwd=other_clone, check=True)
-            subprocess.run(["git", "commit", "-m", "unrelated remote commit"], cwd=other_clone, check=True)
-            subprocess.run(["git", "push", "origin", "master"], cwd=other_clone, capture_output=True, text=True, check=True)
-        finally:
-            other_clone_dir.cleanup()
+        self.push_remote_commit("unrelated.txt", "unrelated change\n")
 
         finish = self.run_finish(worktree_a)
-        if finish.returncode == 0:
-            # Integrated: the unrelated remote commit is present on local
-            # master and the slice still landed cleanly.
-            self.assertIn("unrelated.txt", subprocess.run(
-                ["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=self.root, capture_output=True, text=True, check=True
-            ).stdout)
-            self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
-        else:
-            combined = finish.stdout + finish.stderr
-            self.assertTrue(
-                any(marker in combined for marker in ("rejected", "non-fast-forward", "fetch first", "behind")),
-                combined,
-            )
-            # Never a half-pushed transaction: resume must still be able to
-            # find and complete this lane's outstanding work, not silently
-            # report it already done.
-            resumed = self.run_slice("resume", "-Lane", "Claude")
-            self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
-            self.assertFalse(worktree_a.exists())
-            self.assertFalse(self.branch_exists("claude/A-1"))
+
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn("unrelated.txt", self.git_out("ls-tree", "-r", "--name-only", "HEAD"))
+        self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+        self.assertFalse(worktree_a.exists())
+
+    def test_start_while_remote_is_ahead_claims_on_the_integrated_master(self):
+        self.write_two_lane_queue()
+        self.push_remote_commit("unrelated.txt", "unrelated change\n")
+
+        started = self.run_slice("start", "-Lane", "Claude")
+
+        self.assertEqual(0, started.returncode, started.stdout + started.stderr)
+        self.assertIn("unrelated.txt", self.git_out("ls-tree", "-r", "--name-only", "master"))
+        self.assertTrue(self.branch_exists("claude/A-1"))
+
+    def test_diverged_local_master_closes_out_with_a_merge_commit(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+        self.commit_local("hand.txt", "hand commit\n", "unpushed hand commit")
+        self.push_remote_commit("unrelated.txt", "unrelated change\n")
+
+        finish = self.run_finish(worktree_a)
+
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        subjects = self.git_out("log", "--merges", "--format=%s").splitlines()
+        self.assertTrue(
+            any(line.startswith("Merge origin/master into master before finish") for line in subjects), subjects
+        )
+        tree = self.git_out("ls-tree", "-r", "--name-only", "HEAD")
+        self.assertIn("unrelated.txt", tree)
+        self.assertIn("hand.txt", tree)
+
+    def test_conflicting_remote_stops_cleanly_then_finishes_after_a_hand_pull(self):
+        self.write_two_lane_queue()
+        self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+        self.push_remote_commit("scripts/sample.gd", "func existing():\n\tprint(1)\n")
+        self.commit_local("scripts/sample.gd", "func existing():\n\tprint(2)\n", "unpushed local sample edit")
+        head_before = self.git_out("rev-parse", "HEAD")
+
+        finish = self.run_finish(worktree_a)
+
+        combined = finish.stdout + finish.stderr
+        self.assertNotEqual(0, finish.returncode, combined)
+        self.assertIn("synchronising master with origin", combined)
+        self.assertIn("sample.gd", combined)
+        self.assertEqual("", self.git_out("status", "--porcelain", "--untracked-files=no"))
+        self.assertEqual(head_before, self.git_out("rev-parse", "HEAD"))
+
+        # The hand fix the stop names: pull, resolve, commit.
+        subprocess.run(["git", "pull", "--no-rebase", "--no-edit"], cwd=self.root, capture_output=True, text=True)
+        self.commit_local("scripts/sample.gd", "func new_function():\n\tpass\n", "resolve by hand")
+
+        resumed = self.run_finish(worktree_a)
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        self.assertFalse(worktree_a.exists())
+        self.assertFalse(self.branch_exists("claude/A-1"))
 
     def test_dirty_coordination_file_refuses_before_the_merge(self):
         self.write_two_lane_queue()
