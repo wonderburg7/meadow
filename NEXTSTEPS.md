@@ -56,14 +56,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] UI-F-3 -- comb cell labels follow text scale**
-   - Plan: `plans/now/ui-feedback.md` -- "UI-F-3 -- comb cell labels follow text scale"
-   - Files: `scripts/hive_cell.gd`
-   - Check: `grep -c "_label_font_size" scripts/hive_cell.gd` prints at least 2, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/hive_cell.gd :: info_label.add_theme_font_size_override("font_size", 9)`
-   - Next after: UI-F-2 -- warnings carry a severity and a pending one is never lost
-
-2. **[Codex] UI-F-2 -- warnings carry a severity and a pending one is never lost**
+1. **[Codex] UI-F-2 -- warnings carry a severity and a pending one is never lost**
    - Plan: `plans/now/ui-feedback.md` -- "UI-F-2 -- warnings carry a severity and a pending one is never lost"
    - Files: `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd`
    - Check: `grep -c "SEVERITY_" scripts/bee_survival.gd scripts/crab_spider.gd scripts/main.gd scripts/year_winter.gd` prints at least 1 for each file, and `tools/verify.ps1` is green
