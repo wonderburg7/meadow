@@ -1,7 +1,7 @@
 # Pacing evidence — the headless gates can read in band
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PE-1 -- pacing milestones are timed to the hour, startable, its block below; PE-2 (outline under "Later") waits for the Colony Run definition, BS-7 and WO-1 | Dependency: none | Verified: 2026-09-30
+Status: complete | Owner: Dave / Codex | Next: None -- plan complete; PE-2 (outline under "Later") waits for the Colony Run definition, BS-7 and WO-1 | Dependency: none | Verified: 2026-10-01
 
 **Objective.** `python tools/pacing_gates.py` can say truthfully whether the
 headless alpha arc meets each timing budget in `plans/design/product-scope.md`
@@ -34,63 +34,10 @@ evidence for a balance change.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PE-1 | The pacing gates use each milestone's first hour, not its whole day | `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md` | yes (SF-2, which shared `analyze_session.py`, merged 30 Sep 2026) | medium |
 
 **Required reading.** PE-1's section below only.
 
-## PE-1 — pacing milestones are timed to the hour
-
-Level: medium. Measurement only: no simulation, balance or save change, and
-nothing per frame. Existing verdicts keep working because `milestones` keeps
-its whole-day values.
-
-**Change.**
-
-- `analyze_session.py`: `analyze` adds `"milestone_times"`, a dictionary of
-  the same four names as `milestones` (`first_worker_day`, `food_secure_day`,
-  `winter_entered_day`, `winter_survived_day`) to the fractional in-game day
-  of the **first** snapshot at which each became true:
-  `game_time / settings.seconds_per_day`, walking every snapshot rather than
-  the last one per day. `{}` when no snapshot carries `game_time` or the run
-  recorded no positive `seconds_per_day`. The per-snapshot tests move into
-  one helper that `_milestones` and the new walk both call, so the two cannot
-  disagree about what a milestone means. Add the key to the `"balance"` and
-  `"full"` entries of `REPORT_PROFILES`.
-- That helper counts **food secure** and **winter survived** only when the
-  snapshot's `population.total` is at least 1. Today a colony with no bees
-  has a winter requirement of 0 (`_winter_food_requirement`), so the 30 Sep
-  2026 run read food secure on day 4, after its queen had starved, and would
-  read winter survived the same way. `milestones` changes only for a snapshot
-  with no bees.
-- Expect `milestone_times` to read up to a day earlier than `milestones`:
-  `day` counts from 1 (the first day is day 1), `game_time / seconds_per_day`
-  counts elapsed days from 0, and §3's budgets are elapsed time.
-- `pacing_gates.py`: `build_rows` reads `milestone_times` instead of
-  `milestones`; `render_table` prints the median day to two decimals. Its
-  module docstring calls the forage/weather crisis "five-minute"; §3 puts it
-  at twenty minutes, as `render_table`'s last line already says.
-- `tests/test_pacing_gates.py`: a case where every run's first worker arrives
-  at day 1.5 at 200 s/day reads in band, and one at day 2.0 reads out of band.
-- `tests/test_headless_verdicts.py`: a case proving `milestone_times` takes
-  the first qualifying snapshot inside a day, and that `milestones` is
-  unchanged for the existing fixture; and a case where snapshots with
-  `population.total` 0 set neither food secure nor winter survived.
-- `docs/headless-run-contract.md`: one line naming `milestone_times`.
-
-**Acceptance.** The unit tests above pass. Run
-`python tools/pacing_gates.py --repeat 1` once and paste its table into this
-plan's State line with the date, whatever it says: a gate out of band is
-evidence for a later balance slice, not a failure of this one. No hands-on
-check is filed.
-
-```queue
-**[Codex] PE-1 -- pacing milestones are timed to the hour**
-- Plan: `plans/now/pacing-evidence.md` -- "PE-1 — pacing milestones are timed to the hour"
-- Files: `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md`
-- Check: `python -m unittest tests.test_pacing_gates tests.test_headless_verdicts` passes, including a first worker at day 1.5 reading in band at 200 s/day, `python tools/pacing_gates.py --repeat 1` prints a table with two-decimal median days, and `tools/verify.ps1` is green
-- Proof: `absent: tools/analyze_session.py :: milestone_times`
-- Next after: none -- plans/now/pacing-evidence.md is complete
-```
+PE-1 shipped 2026-10-01; its specification is `plans/archive/PE-1_2026-10-01.md`.
 
 ## Later, not yet specified
 
