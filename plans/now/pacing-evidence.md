@@ -1,7 +1,7 @@
 # Pacing evidence — the headless gates can read in band
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Codex | Next: None -- plan complete; PE-2 (outline under "Later") waits for the Colony Run definition, BS-7 and WO-1 | Dependency: none | Verified: 2026-10-01
+Status: complete | Owner: Dave / Codex | Next: None -- plan complete; follow-ups: the arc's hourly snapshot cadence is filed in WO-1 (`plans/now/winter-onset.md`), PE-2 in `plans/design/product-scope.md` §6.2 | Dependency: none | Verified: 2026-10-01
 
 **Objective.** `python tools/pacing_gates.py` can say truthfully whether the
 headless alpha arc meets each timing budget in `plans/design/product-scope.md`
@@ -11,9 +11,13 @@ without a playthrough.
 **State.** `tools/pacing_gates.py` runs `test_scenarios/alpha_arc_test.json`
 and compares four `milestone_times` values from `analyze_session.py` with a
 +/-25% band around each target. Each value is the elapsed in-game day of the
-first qualifying hourly snapshot; legacy `milestones` retains its whole-day,
+first qualifying snapshot; legacy `milestones` retains its whole-day,
 last-snapshot compatibility values. Food security and winter survival now
 require a population of at least one, so an extinct colony cannot read secure.
+The arc's `balance` diagnostics profile snapshots once a day
+(`diagnostic_profile.gd::_default_snapshots`), not hourly, so on the arc
+these values still fall on day boundaries until the scenario asks for an
+hourly cadence (filed in WO-1, which already edits that scenario).
 
 **Measured 30 Sep 2026** (product review, `docs/product-review-2026-09-30.md`):
 first worker missing (target day 1.5), food secure day 4.0 (target 3.0),
@@ -25,10 +29,12 @@ and the log idles to day 36; nothing but the debug panel starts winter (WO-1,
 because its winter requirement is 0 (PE-1 fixes that below). PE-2, outlined
 under "Later", makes the arc a played colony.
 
-**Probe 1 Oct 2026.** `python tools/pacing_gates.py --repeat 1` exceeded its
-existing 300-second run timeout, so it produced no pacing table or verdict.
-That is a harness limitation to resolve with PE-2's playable colony arc, not
-evidence for a balance change.
+**Probe 1 Oct 2026** (`python tools/pacing_gates.py --repeat 1`, 99 s wall
+time): every gate reads `missing` against targets 1.50 / 3.00 / 18.00 /
+27.00. The queen still starves alone and winter never starts, and food secure
+no longer counts an empty hive. An earlier attempt timed out because the
+worktree had no Godot import cache and `pacing_gates.py`, unlike
+`run_scenario.py`'s entry point, did not seed one; it now does.
 
 ## Open slices at a glance
 

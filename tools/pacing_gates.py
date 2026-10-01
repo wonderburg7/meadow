@@ -21,6 +21,7 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 sys.path.insert(0, str(TOOLS))
 
+import godot_cache  # noqa: E402
 from analyze_session import analyze, load_entries  # noqa: E402
 from run_scenario import DEFAULT_FIXED_FPS, DEFAULT_GODOT_PATH, DEFAULT_TIMEOUT, run_once  # noqa: E402
 
@@ -133,6 +134,15 @@ def main() -> int:
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
+
+    # run_once launches Godot directly, so seed the import cache the way
+    # run_scenario.py's own entry point does: a worktree without one stalls
+    # at boot and reads as a timeout (1 Oct 2026).
+    if Path(args.godot_path).is_file():
+        cache_ok, cache_line = godot_cache.ensure_cache(ROOT, args.godot_path)
+        print(cache_line, file=sys.stderr)
+        if not cache_ok:
+            return 1
 
     try:
         analyses, day_length_seconds = run(args.repeat, args.godot_path, args.timeout)
