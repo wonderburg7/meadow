@@ -1,7 +1,7 @@
 # Skill screen — the tree as a full-screen, paused view
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None — plan complete (SK-2 shipped 1 Oct 2026; hands-on check C-88) | Dependency: none | Verified: 2026-10-01
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (SK-2 shipped 1 Oct 2026; hands-on check C-88) | Dependency: none | Verified: 2026-10-01
 
 **Objective.** The in-run skill tree is a full-screen view that pauses the
 game, with each skill's name written in its hexagon, as

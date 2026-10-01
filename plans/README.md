@@ -159,7 +159,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 
 | If the queue names | Read |
 | --- | --- |
-| SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/now/skill-screen.md` |
+| SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/archive/skill-screen_2026-10-01.md` |
 | BS-4, BS-6, BS-7, BS-8 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run | `plans/now/brood-spine.md` |
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/now/gameplay-consistency.md` |
 | PE-1, PE-2 -- the headless pacing gates timed to the hour, then the played arc | `plans/now/pacing-evidence.md` |
