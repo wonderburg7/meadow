@@ -36,6 +36,12 @@ extends RefCounted
 ## Challenge fills them in only once it has a real reason to grant, ban
 ## or delay a specific skill.
 
+## Every Scenario level's queen, set to Laying with no backup chosen,
+## nurses as her backup, so a Scenario feeds its first brood without the
+## player buying Nurses first (decision 5, plans/now/brood-spine.md).
+## Challenge 1 keeps its own literal; Challenge 2 has no backup.
+const ORDINARY_QUEEN_BACKUP := "nurse"
+
 const LEVELS := {
 	1: {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
@@ -46,7 +52,7 @@ const LEVELS := {
 		# Challenge 1 does not teach backup roles: a queen set to Laying with
 		# no backup chosen takes this one (a Roles key) automatically, so the
 		# first hatch is fed without a separate lesson (Dave, 17 Sep 2026).
-		# Absent on every other level, which leaves the backup to the player.
+		# Challenge 2 has none; Scenario levels use ORDINARY_QUEEN_BACKUP.
 		"queen_laying_backup": "nurse",
 		# Reserving a stocked cell for another resource never throws its
 		# contents away here: the cell keeps them, Dr Gallerin says so at
@@ -79,12 +85,14 @@ const LEVELS := {
 		"nurses": 0, "builders": 0, "miners": 0,
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	4: {
 		"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
 		"nurses": 2, "builders": 2, "miners": 2,
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# An established colony: enough bees and stores that the interesting
 	# decisions are about where it goes next rather than whether it
@@ -97,6 +105,7 @@ const LEVELS := {
 		"stock": {"nectar": 4, "pollen": 2},
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# 30-bee colony, three ring-layers of comb (18 cells) with half of them
 	# stocked -- 6 nectar-full, 2 pollen-full, 1 honey-full, the closest
@@ -109,6 +118,7 @@ const LEVELS := {
 		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# Free-form extreme start: deliberately distinct from Challenge 1 even
 	# though both begin with the queen and no comb. There is no staged guide or
@@ -119,6 +129,7 @@ const LEVELS := {
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 }
 

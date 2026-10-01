@@ -1,0 +1,17 @@
+{
+  "cells": 3, "nectar_foragers": 1, "pollen_foragers": 1,
+  "nurses": 0, "builders": 0, "miners": 0,
+  "queen_laying_backup": "nurse",
+  "random_seed": 4242,
+  "winter": false,
+  "actions": [
+    {"do": "settle", "ticks": 1},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.nurses"}},
+    {
+      "when": {"population_at_least": {"count": 4}},
+      "do": "assert",
+      "condition": {"skill_owned": "skill.brood.nurses"}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 8}
+}

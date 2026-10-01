@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-7 -- every Scenario's queen backs up as a Nurse (startable, specified 30 Sep 2026); BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-7 and BS-8 | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-8 (BS-7 landed 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -86,9 +86,8 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-7 | every Scenario's queen backs up as a Nurse, so a lone queen raises a worker | `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json` | startable | medium |
 | BS-8 | a role's starting-count key is one field on its roles.gd row, before step 8 gates more roles | `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py` | startable (Codex lane) | medium |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-7 and BS-8 land first (shared files) | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-8 lands first (shared file; BS-7 landed 1 Oct 2026) | high |
 
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
@@ -99,56 +98,7 @@ specification is in `plans/archive/` under its id and date
 
 BS-4 shipped 2026-10-01; its specification is `plans/archive/BS-4_2026-10-01.md`.
 
-## BS-7 — every Scenario's queen backs up as a Nurse
-
-Level: medium (one data change and one scenario; a failure is escalated,
-never tuned here). Decision 5 above.
-
-**Now.** `scripts/levels.gd` gives only Challenge 1's queen a
-`queen_laying_backup` (`"nurse"`). Scenario levels 3-7 give none, so a
-Scenario owns Nurses only if it seeds nurses (levels 4-6). Levels 3 and 7
-raise nothing until the player buys Nurses: at seed 4242, level 3's start ran
-11 days with no brood fed and one larva dead (product review, 30 Sep 2026).
-
-**Change.** In `scripts/levels.gd`, add `const ORDINARY_QUEEN_BACKUP :=
-"nurse"` above `LEVELS`, with a comment naming decision 5 of
-`plans/now/brood-spine.md`, and add `"queen_laying_backup":
-ORDINARY_QUEEN_BACKUP,` to levels 3, 4, 5, 6 and 7. Nothing else: `bee.gd`
-(the queen's default backup, where it reads `queen_laying_backup`) and
-`run_availability.gd::_seeded_skills` already read the field, so the queen
-takes the backup and the run owns Nurses through the existing rule.
-
-**Must not change.** Level 1 keeps its own literal `"nurse"`; level 2
-(Challenge 2) stays without a backup and keeps Nurses free at 2.5;
-`bee.gd`, `run_availability.gd` and every existing scenario JSON (a fixture
-is its own run definition).
-
-**Scenario.** `test_scenarios/bs7_queen_backup_nurse_test.json`: level 3's
-starting colony copied from `levels.gd` (3 cells, one nectar and one pollen
-forager, no nurses, builders or miners) plus `"queen_laying_backup":
-"nurse"`, `"random_seed": 4242` and `"winter": false`. Actions: `settle` one
-tick; `assert` `{"skill_owned": "skill.brood.nurses"}`; then the same
-`assert` with `"when": {"population_at_least": {"count": 4}}`. With no role
-named, that key counts every adult bee including the queen, so it holds only
-once a worker has hatched. `"stop": {"when_actions_resolved": true,
-"max_days": 8}`.
-
-**Escalate** if the second assert is still unresolved at day 8: a queen
-nursing as her backup does not raise a worker from level 3's start, and what
-to change is Dave's call.
-
-**Downstream.** PE-2, the played pacing arc (`plans/now/pacing-evidence.md`,
-"Later"), starts from a Scenario whose queen has this backup, so it waits
-for BS-7 as well as for WO-1 and the Colony Run definition.
-
-```queue
-**[Claude] BS-7 -- every Scenario's queen backs up as a Nurse**
-- Plan: `plans/now/brood-spine.md` -- "BS-7 — every Scenario's queen backs up as a Nurse"
-- Files: `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/bs7_queen_backup_nurse_test.json` passes, a worker hatching from level 3's start within 8 days, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/levels.gd :: ORDINARY_QUEEN_BACKUP`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-7 shipped 2026-10-01; its specification is `plans/archive/BS-7_2026-10-01.md`.
 
 ## BS-8 — a role's starting count is one field on its roles.gd row
 
@@ -196,7 +146,7 @@ Nothing is outlined here now: BS-6 is specified in full below.
 Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
 BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
 one machine, never a fixture). **Gated** on BS-8 landing, because both edit
-`run_availability.gd`, and BS-7 landing, because both read level definitions;
+`run_availability.gd` (BS-7, which also read level definitions, landed 1 Oct 2026);
 the lanes may not share a file.
 
 - **Scope.** The Run availability table (`run_availability_panel.gd`, opened
