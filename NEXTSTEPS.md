@@ -56,6 +56,34 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/hud.gd :: _pending_warning = {"text": text, "severity": severity}`
    - Next after: none -- plans/now/ui-feedback.md is complete
 
+2. **[Codex] SR-1 -- a freed queen no longer breaks the problem messages**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-1 -- a freed queen no longer breaks the problem messages"
+   - Files: `scripts/problem_messages.gd`
+   - Check: `python tools/run_scenario.py test_scenarios/forage_radius_wide_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/problem_messages.gd :: static func no_foragers(queen: Node2D)`
+   - Next after: SR-2 -- the G3 fixture owns the Honey worker skill
+
+3. **[Codex] SR-2 -- the G3 fixture owns the Honey worker skill**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-2 -- the G3 fixture owns the Honey worker skill"
+   - Files: `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd`
+   - Check: `python tools/run_scenario.py test_scenarios/g3_actions_offered_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `absent: test_scenarios/g3_actions_offered_test.json :: skill.brood.honey_worker`
+   - Next after: SR-3 -- the disease-off fixture starts every bee newborn
+
+4. **[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-3 -- the disease-off fixture starts every bee newborn"
+   - Files: `test_scenarios/h5_disease_off_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json` ends `status=passed`, and `tools/verify.ps1` is green
+   - Proof: `absent: test_scenarios/h5_disease_off_test.json :: starter_age_spread`
+   - Next after: SR-4 -- the command tray fits its content after a resize to 800x600
+
+5. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
+   - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
+   - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
+   - Next after: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
