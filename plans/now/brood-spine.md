@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-9 -- the queen nurses without the Nurses skill (Claude lane, queued 1 Oct 2026 behind FBB-1), then BS-6 (waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -103,7 +103,6 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-9 | the queen nurses without the Nurses skill, so Challenge 2's stage 2.2 (raise a pollen Forager) can be met | `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json` | yes -- queued behind FBB-1 | high |
 | BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
 
 BS-9 and BS-6 share no file and are independent. Every later slice names
@@ -126,66 +125,16 @@ has shipped. These notes fix only what the earlier slices must not preclude.
 
 Nothing is outlined here now: BS-9 and BS-6 are specified in full below.
 
-## BS-9 — the queen nurses without the Nurses skill
-
-Level: high (an exception to BS-3's role gate, inside the one query every
-bee's work goes through). Specified 1 Oct 2026 from decision 7.
-
-- **True now** (verified 1 Oct 2026). `availability.gd::action_query`
-  refuses an `actions.gd` row whose role's skill the run does not own
-  (`_role_skill_owned`, BS-3). The three nurse rows -- `nurse_feed_brood`,
-  `nurse_store_jelly` and `nurse_make_jelly` -- carry no gate key, skill or
-  config flag, so owning Nurses is their only gate; the `_bee` argument is in
-  the contract but unread. Every queen takes the nursery as her backup at
-  setup (`bee.gd`, where `is_queen` sets `secondary_role` to
-  `Role.NURSERY`), and a Scenario or Challenge 1 owns Nurses from the start
-  (decisions 2 and 5), so her nursing works there. Challenge 2 seeds no nurse
-  and names no queen backup (`levels.gd` level 2), so nothing feeds a larva
-  before its stage 2.5 (buy Nurses, then raise a nurse). The readiness probe
-  -- Challenge 2 stepped to stage 2.2 (raise a pollen Forager), 40 nectar and
-  30 pollen put in built cells 1 and 2, built cell 0 raising a pollen
-  Forager -- recorded 0 brood feeds, 0 hatches and 1 larval death in two
-  game-days.
-- **True afterwards.** `action_query` reads its `bee` argument (renamed from
-  `_bee`): when that bee is the queen, the role-skill check passes for
-  `Roles.NURSE`. Its doc comment names decision 7. Every other check, and
-  every other role, answers as before. In Challenge 2 the queen feeds brood
-  before stage 2.5, so a cell raising a pollen Forager at stage 2.2 hatches
-  one and the stage completes as its text asks.
-- **Runtime policy.** No new repeating work: `bee.gd::_action_available`
-  caches the answer per bee per `Availability.gate_epoch`, so the added test
-  runs only on a cache miss.
-- **Must not change.** Workers still need Nurses: `role_query`, `mode_query`,
-  the Raises menu and `assign_role` refuse Nurse until it is owned (BS-3's
-  fixture, C-81). Also unchanged: `levels.gd` (Challenge 2 keeps no queen
-  backup), `challenge_stages.gd` (stage 2.5 keeps its free Nurses purchase,
-  C-67), `run_availability.gd` (no run starts owning Nurses because of this),
-  the save format, and brood counts in every Scenario and Challenge 1 fixture.
-- **Escalate** if the queen still feeds nothing with the check passed
-  (another gate exists), or if a Scenario or Challenge 1 fixture's brood
-  counts change.
-- **Check.** `test_scenarios/bs9_c2_queen_nurses_test.json` repeats the probe
-  with `stop.max_days` 5 and asserts, `when` `day_at_least` 4, that
-  `role_count` holds at least one pollen Forager (`max_days` is a whole day
-  tested on the day change, so an assert's day must be below it). Then C-83
-  by hand.
-
-```queue
-**[Claude] BS-9 -- the queen nurses without the Nurses skill**
-- Plan: `plans/now/brood-spine.md` -- "BS-9 — the queen nurses without the Nurses skill"
-- Files: `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/bs9_c2_queen_nurses_test.json` passes with a pollen Forager hatched at Challenge 2's stage 2.2, `test_scenarios/bs3_nurse_gate_test.json` still passes, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/availability.gd :: bee.is_queen`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-9 shipped 2026-10-02; its specification is `plans/archive/BS-9_2026-10-02.md`.
 
 ## BS-6 — developer edits to the table change what a run starts with
 
 Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
 BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
 one machine, never a fixture). It was gated on BS-8, which shared
-`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026, so BS-6 is
-startable and waits only for room in the Claude lane.
+`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026. It now
+waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`, so
+its block is fenced `queue-gated` until SR-5 lands.
 
 - **Scope.** The Run availability table (`run_availability_panel.gd`, opened
   from the debug panel) is read-only today. Each skill row gains a control
@@ -211,7 +160,7 @@ startable and waits only for room in the Claude lane.
 - **Escalate** if a run started with an override and one without differ in
   anything beyond starting ownership.
 
-```queue
+```queue-gated
 **[Claude] BS-6 -- developer edits to the table change what a run starts with**
 - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
 - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`

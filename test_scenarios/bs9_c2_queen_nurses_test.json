@@ -1,0 +1,21 @@
+{
+  "challenge": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "2.1"},
+    {"do": "settle", "ticks": 2},
+    {"do": "advance_challenge_stage", "stage_id": "2.2"},
+    {"do": "settle", "ticks": 2},
+    {"do": "assert", "condition": {"skill_owned": "skill.brood.nurses", "owned": false}},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 40},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "pollen", "amount": 30},
+    {"do": "hatch_role", "cell": {"built_index": 0}, "role": "forager", "focus": "pollen", "expect_refused": false},
+    {"do": "settle", "ticks": 1},
+    {
+      "do": "assert",
+      "when": {"day_at_least": 4},
+      "condition": {"role_count": {"role": "forager", "focus": "pollen", "at_least": 1}}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 5}
+}
