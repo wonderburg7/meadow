@@ -64,7 +64,10 @@ the one test you need. It does not replace a Godot boot when parser/type feedbac
 Dave's hands-on check for click-driven, visual or feel-sensitive work. Run
 `tools/check_docs.py` after documentation work. The second time a check fails
 for the same reason, build the instrument that would catch it without a human
-(`docs/headless-run-contract.md`).
+(`docs/headless-run-contract.md`). A background Bash call (`verify.ps1`,
+`finish`, a long run) notifies you when it exits: wait for that, never a
+`ScheduleWakeup` or a polling check. `Monitor` is only for a condition no exit
+signals, such as a lock releasing.
 
 ## End-of-slice report
 
