@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-9 -- the queen nurses without the Nurses skill (Claude lane, queued 1 Oct 2026 behind FBB-1 and UI-F-2), then BS-6 (startable; waits for room in the Claude lane) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: BS-9 -- the queen nurses without the Nurses skill (Claude lane, queued 1 Oct 2026 behind FBB-1), then BS-6 (startable; waits for UI-F-2, Codex lane, which also edits `scripts/main.gd`) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -103,8 +103,8 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-9 | the queen nurses without the Nurses skill, so Challenge 2's stage 2.2 (raise a pollen Forager) can be met | `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json` | yes -- queued behind FBB-1 and UI-F-2 | high |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | yes -- BS-8 landed 1 Oct 2026; waits for room in the Claude lane | high |
+| BS-9 | the queen nurses without the Nurses skill, so Challenge 2's stage 2.2 (raise a pollen Forager) can be met | `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json` | yes -- queued behind FBB-1 | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | yes -- BS-8 landed 1 Oct 2026; waits for UI-F-2 (Codex lane, `main.gd`) | high |
 
 BS-9 and BS-6 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.

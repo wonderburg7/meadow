@@ -336,3 +336,24 @@ explicit request from Dave.
 - Disposition: promoted and fixed ad hoc 29 Sep 2026 at Dave's request --
   `Get-SuccessorId` ignores a lead that is not id-shaped, and
   `check_docs.py`'s `check_queue_successors` rejects one at queue time.
+
+### 2026-10-01 — a lone Codex item blocks its own `finish`
+
+- Source: UI-F-3 closeout (Claude, finishing a Codex branch at Dave's request)
+- Area: process / queue planning
+- Signal: the Codex lane held only UI-F-3, and no plan tagged its next
+  block `[Codex]`, so `refill_lane.py --delete UI-F-3` refused ("no [Codex]
+  item -- both lanes must have work") and `finish` could not land a green
+  branch. The same morning's readiness pass had filled the Claude lane to
+  five, including UI-F-2, the plan's own named successor to UI-F-3.
+- Evidence: second occurrence -- PERF-3 on 29 Sep 2026 (entry above) was
+  cleared the same way, by moving a Claude-tagged slice (SF-2) to the Codex
+  lane with Dave's agreement; this time UI-F-2 moved (commit "Move UI-F-2 to
+  the Codex lane as UI-F-3's successor").
+- Consequence: each time the Codex lane is down to one item, a Codex
+  closeout stalls until a human reassigns a lane, and a lane order Dave set
+  hours earlier is reopened.
+- Candidate direction: Hypothesis -- have `check_docs.py` warn when a lane
+  holds one item and no admissible block for that lane exists, so the
+  successor is chosen when the queue is planned rather than at `finish`.
+- Disposition: untriaged

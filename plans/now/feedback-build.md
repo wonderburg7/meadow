@@ -37,8 +37,10 @@ which §14's release stream says are hidden before the first feedback build.
 4. **Challenge 2's stage 2.2 (raise a pollen Forager) is fixed after the
    weekend** by letting the queen nurse without the Nurses skill: BS-9, recorded as decision 7 of
    `plans/now/brood-spine.md`. Challenge 2 is not on this session's route.
-5. **Order in the Claude lane:** FBB-1, then UI-F-2 (`plans/now/ui-feedback.md`),
-   then BS-9, ahead of L-16 and L-17 (`plans/now/agent-lifecycle.md`).
+5. **Order in the Claude lane:** FBB-1, then BS-9, ahead of L-16 and L-17
+   (`plans/now/agent-lifecycle.md`). UI-F-2 (`plans/now/ui-feedback.md`) runs
+   in parallel in the Codex lane (Dave, 1 Oct 2026, so that lane had a
+   successor to UI-F-3).
 
 ## Open slices at a glance
 
