@@ -41,7 +41,25 @@ const PREFERENCE_KEYS := [
 	"screen_shake", "tooltip_delay", "show_interface_labels", "developer_mode",
 ]
 
+## A --scenario= run (tools/run_scenario.py, verify.ps1's fixtures) never
+## reads or writes the player's own profile. Reading it laid every layout
+## fixture out at whatever text scale and typeface the player last chose,
+## and a fixture's own set_config wrote back through save_preferences(), so
+## a run that stopped between "text_scale 2.0" and "text_scale 1.0" left
+## the next run -- and the player's next game -- at double size (Windows
+## verify, 1 Oct 2026: layout_panels.json failed only on Dave's machine,
+## where the Linux container has no profile at all).
+static func _isolated(path: String) -> bool:
+	if path != PROFILE_PATH:
+		return false
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--scenario="):
+			return true
+	return false
+
 static func has_profile(path: String = PROFILE_PATH) -> bool:
+	if _isolated(path):
+		return false
 	return FileAccess.file_exists(path)
 
 ## Returns the parsed profile, or an empty dictionary if there isn't one
@@ -116,6 +134,8 @@ static func mark_scenario_played(level: int, preset_key: String) -> void:
 	_write(data)
 
 static func _write(data: Dictionary, path: String = PROFILE_PATH) -> void:
+	if _isolated(path):
+		return
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("Could not open the player profile file for writing: %s" % path)

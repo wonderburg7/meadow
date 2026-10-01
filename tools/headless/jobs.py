@@ -164,15 +164,34 @@ def _validate_job_dir(job_dir: Path, root: Path) -> Path:
     return resolved
 
 
+# On Windows a reader that opens status.json while the runner replaces it
+# gets "access denied" (the old file is pending delete), and the runner's
+# os.replace is refused while a reader holds the file open, because Python
+# opens files without FILE_SHARE_DELETE. Both windows last microseconds, so
+# a short bounded retry absorbs them; POSIX never raises here.
+_SHARING_RETRIES = 50
+_SHARING_RETRY_DELAY = 0.01
+
+
+def _retry_sharing_violation(operation):
+    for attempt in range(_SHARING_RETRIES):
+        try:
+            return operation()
+        except PermissionError:
+            if os.name != "nt" or attempt == _SHARING_RETRIES - 1:
+                raise
+            time.sleep(_SHARING_RETRY_DELAY)
+
+
 def _atomic_json(path: Path, data: dict[str, Any]) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    _retry_sharing_violation(lambda: os.replace(temporary, path))
 
 
 def _read_json(path: Path) -> dict[str, Any]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(_retry_sharing_violation(lambda: path.read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError) as error:
         raise JobError("invalid job metadata: %s" % error) from error
     if not isinstance(data, dict):

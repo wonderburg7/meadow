@@ -466,6 +466,23 @@ On Windows ask kernel32 instead: `OpenProcess` with
 start token. A pid whose handle someone still holds opens fine but is
 signalled, so the wait, not the open, is the liveness answer.
 
+## Environment quirk: a headless run inherits the player's profile
+
+`user://` resolves to the same `app_userdata` folder for the editor, a
+played game and every `--scenario=` run. Session's `_ready` loads
+`meadow_profile.json`, so a layout fixture laid out at whatever text scale
+and typeface the player last chose; and a fixture's `set_config` saves
+through `Session.save_preferences()`, so a run that stopped between
+`text_scale 2.0` and `text_scale 1.0` left the next run (and the next real
+game) at double size. On 1 Oct 2026 `layout_panels.json` failed only on
+Dave's Windows machine (`text_scale 2.0`, Silkscreen): the command tray's
+"Change to…" menu needed 192 px against a 180 px inner width. The Linux
+container has no profile, so it never saw it.
+
+`player_profile.gd::_isolated` now makes a `--scenario=` run read no
+profile and write none. Any new `user://` state a headless run could read
+back needs the same guard.
+
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 
 The Bash tool already runs in the right working directory, so prefixing a
