@@ -10,7 +10,6 @@ Source: `docs/ui-review-2026-09-30.md` (F1, F2).
 
 | Slice | Files | Level | Lane | Depends on |
 | --- | --- | --- | --- | --- |
-| UI-F-1 | `scripts/game_over.gd` | medium | Codex | none |
 | UI-F-3 | `scripts/hive_cell.gd` | low | Codex | none |
 | UI-F-2 | `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd` | medium | Claude | none in behaviour; queued after BS-8 (Codex, `main.gd`) has closed |
 
@@ -22,46 +21,7 @@ lane, where GC-1 (`plans/now/gameplay-consistency.md`) also edits
 (`plans/archive/ui_2026-09-20.md`, "Durable rules": presentation may be
 skipped, simulation may not).
 
-## UI-F-1 -- the game-over screen takes the theme and text scale
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (presentation only; the section names every literal to change).
-
-**True now.** `game_over.gd::_ready` builds a `PanelContainer`, three
-`Label`s and its buttons with no theme: fixed sizes 28, 13 and 12 through
-`add_theme_font_size_override`, and fixed colours `Color(1.0, 0.75, 0.7)` and
-`Color(0.85, 0.85, 0.8)`. So Text scale, the Light and High contrast themes
-and the typeface setting all skip the one screen that explains a loss.
-
-**True afterwards.**
-
-- `panel` gets `panel.theme = UiTheme.build_theme()` and
-  `panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())`,
-  exactly as `hud.gd::_build_warning_banner` does for `warning_panel`.
-- `title` uses `theme_type_variation = "Heading"`, colour
-  `UiTheme.color("danger")`; `body` uses `"Body"`; `summary_label` uses
-  `"Small"` with no colour override. Delete the three
-  `add_theme_font_size_override` calls and both `Color(...)` overrides.
-- The buttons are styled with the same theme (they inherit `panel.theme`).
-- The dark `backdrop` ColorRect stays as it is: it is a scrim, not text.
-
-**Must not change.** The signals `restart_requested` and `menu_requested`,
-`process_mode`, `layer`, the wording of the three texts, `summary_label`'s
-role as the field `main.gd` fills.
-
-**Stop and escalate** if `UiTheme.build_theme()` makes the panel wider than
-the viewport at 800 px wide and text scale 2 (report the width; do not
-redesign).
-
-```queue
-**[Codex] UI-F-1 -- the game-over screen takes the theme and text scale**
-- Plan: `plans/now/ui-feedback.md` -- "UI-F-1 -- the game-over screen takes the theme and text scale"
-- Files: `scripts/game_over.gd`
-- Check: `grep -c "add_theme_font_size_override" scripts/game_over.gd` prints `0`, and `tools/verify.ps1` is green
-- Proof: `present: scripts/game_over.gd :: add_theme_font_size_override("font_size", 28)`
-- Next after: UI-F-3 -- comb cell labels follow text scale
-```
+UI-F-1 shipped 2026-10-01; its specification is `plans/archive/UI-F-1_2026-10-01.md`.
 
 ## UI-F-2 -- warnings carry a severity and a pending one is never lost
 
