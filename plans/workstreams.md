@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/BS-8` (`codex/BS-8`) | Codex | a role's starting count is one field on its roles.gd row | Codex | in progress | none | `plans/now/brood-spine.md` BS-8 — a role's starting count is one field on its roles.gd row |
+| `.worktrees/WO-1` (`claude/WO-1`) | Claude | winter's countdown opens by itself on a set day | Claude | in progress | none | `plans/now/winter-onset.md` WO-1 — winter's countdown opens by itself on a set day |
