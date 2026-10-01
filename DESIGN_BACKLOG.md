@@ -29,7 +29,7 @@ home per fact: read the plan.
 | How the flowering year feels at the start of a run | `plans/archive/season-feel_2026-09-30.md` |
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
-| When winter comes in a run | `plans/now/winter-onset.md` |
+| When winter comes in a run | `plans/archive/winter-onset_2026-10-01.md` |
 
 ## Areas whose plan is complete
 
@@ -55,7 +55,7 @@ starts a fresh `plans/now/` or `plans/design/` file.
 
 - **Winter:** decided 30 Sep 2026 -- a played short season whose countdown
   opens by itself on a fixed day. The authoritative statement is
-  `plans/now/winter-onset.md`, "Decision".
+  `plans/archive/winter-onset_2026-10-01.md`, "Decision".
 - **Save/load during an active Challenge:** keep ordinary save/load disabled.
   A Challenge-aware save schema is a separate high-risk design and migration
   task, not an incidental UI change. Confirmed live on 2 Sep 2026 that both

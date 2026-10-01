@@ -1,7 +1,7 @@
 # Pacing evidence — the headless gates can read in band
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Codex | Next: None -- plan complete; follow-ups: the arc's hourly snapshot cadence is filed in WO-1 (`plans/now/winter-onset.md`), PE-2 in `plans/design/product-scope.md` §6.2 | Dependency: none | Verified: 2026-10-01
+Status: complete | Owner: Dave / Codex | Next: None -- plan complete; follow-ups: the arc's hourly snapshot cadence is filed in WO-1 (`plans/archive/winter-onset_2026-10-01.md`), PE-2 in `plans/design/product-scope.md` §6.2 | Dependency: none | Verified: 2026-10-01
 
 **Objective.** `python tools/pacing_gates.py` can say truthfully whether the
 headless alpha arc meets each timing budget in `plans/design/product-scope.md`
@@ -25,7 +25,7 @@ winter entered missing (18.0), winter survived missing (27.0). Precision is
 the smaller problem. `alpha_arc_test.json` sets no starting colony and no
 actions, so the run is a lone, unplayed queen who starves at game time 589 s
 and the log idles to day 36; nothing but the debug panel starts winter (WO-1,
-`plans/now/winter-onset.md`); and a colony with no bees reads food secure,
+`plans/archive/winter-onset_2026-10-01.md`); and a colony with no bees reads food secure,
 because its winter requirement is 0 (PE-1 fixes that below). PE-2, outlined
 under "Later", makes the arc a played colony.
 

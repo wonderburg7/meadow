@@ -205,7 +205,7 @@ unplayed queen. It settles:
 
 - the start state: a lone queen who backs up as a Nurse
   (`plans/now/brood-spine.md` decision 5), with or without starting comb;
-- winter: onset is decided (a fixed day, `plans/now/winter-onset.md` WO-1);
+- winter: onset is decided (a fixed day, `plans/archive/winter-onset_2026-10-01.md` WO-1);
   how many winters a run holds is not;
 - victory, failure and continue (§7's long-term goal, §11's doomed state);
 - **the year** (Dave, 30 Sep 2026, from `docs/gameplay-review-2026-09-30.md`
