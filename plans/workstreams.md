@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UI-F-2` (`codex/UI-F-2`) | Codex | warnings carry a severity and a pending one is never lost | Codex | in progress | none | `plans/now/ui-feedback.md` UI-F-2 -- warnings carry a severity and a pending one is never lost |
