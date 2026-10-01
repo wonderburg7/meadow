@@ -8,6 +8,7 @@ extends CanvasLayer
 ## isn't a game state worth sitting in.
 
 const UI = preload("res://scripts/ui.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 
 signal restart_requested()
 signal menu_requested()
@@ -27,6 +28,8 @@ func _ready() -> void:
 	add_child(backdrop)
 
 	var panel := PanelContainer.new()
+	panel.theme = UiTheme.build_theme()
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
@@ -39,8 +42,8 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "The queen is dead"
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(1.0, 0.75, 0.7))
+	title.theme_type_variation = "Heading"
+	title.add_theme_color_override("font_color", UiTheme.color("danger"))
 	column.add_child(title)
 
 	var body := Label.new()
@@ -49,14 +52,13 @@ func _ready() -> void:
 		+ "successor. No more eggs will be laid, and every worker still alive "
 		+ "will age out without a replacement.\n\nThe colony is over."
 	)
-	body.add_theme_font_size_override("font_size", 13)
+	body.theme_type_variation = "Body"
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(430, 0)
 	column.add_child(body)
 
 	summary_label = Label.new()
-	summary_label.add_theme_font_size_override("font_size", 12)
-	summary_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.8))
+	summary_label.theme_type_variation = "Small"
 	column.add_child(summary_label)
 
 	column.add_child(HSeparator.new())
