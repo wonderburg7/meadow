@@ -6,6 +6,7 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -20,6 +21,8 @@ sys.path.insert(0, str(TOOLS))
 from headless.jobs import (  # noqa: E402
     JobError,
     HeadlessRunOutcome,
+    _pid_is_live,
+    _process_start_token,
     ensure_job_root,
     prune_terminal_jobs,
     refresh_status,
@@ -43,6 +46,24 @@ class HeadlessJobsTest(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 5)
         self.assertEqual("timed_out", timed_out.kind)
         self.assertIsNotNone(timed_out.pid)
+
+    def test_liveness_probe_signals_nothing_and_answers_for_this_process(self):
+        # On Windows the POSIX probe os.kill(pid, 0) is CTRL_C_EVENT, so the
+        # old _pid_is_live sent Ctrl+C to every process on the console and
+        # interrupted the whole unit-test run (1 Oct 2026). Probing our own
+        # pid is the detector: a regression ends this test in KeyboardInterrupt.
+        started = time.monotonic()
+        self.assertTrue(_pid_is_live(os.getpid()))
+        token = _process_start_token(os.getpid())
+        self.assertLess(time.monotonic() - started, 1.0, "the probe must not spawn a shell")
+        self.assertIsNotNone(token)
+        self.assertTrue(token.isdigit())
+        exited = subprocess.Popen([sys.executable, "-c", "pass"])
+        exited.wait(timeout=30)
+        # The live Popen keeps its handle open, so on Windows this pid is an
+        # exited process that cannot have been reused, not a free number.
+        self.assertFalse(_pid_is_live(exited.pid))
+        self.assertIsNone(_process_start_token(exited.pid))
 
     def write_runner(self, directory: Path, status: str, exit_code: int) -> Path:
         runner = directory / "fake_runner.py"

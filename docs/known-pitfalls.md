@@ -441,6 +441,48 @@ on PATH. Pass it to icacls as `*S-1-…`. Keep any setup that can fail
 inside the `try` whose `finally` cleans up; otherwise a failed setup
 leaves an ACL-locked folder in `%TEMP%`.
 
+## Environment quirk: `os.kill(pid, 0)` is Ctrl+C on Windows
+
+The POSIX idiom for "does this process exist?" is `os.kill(pid, 0)`: signal
+0 is delivered to nobody and only the permission check runs. On Windows
+there is no signal 0. `signal.CTRL_C_EVENT` has the value 0, so the same
+call is `GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid)`, which raises Ctrl+C
+in **every process attached to the console**, the caller included. When
+the pid lives on another console the call raises instead (observed, not
+documented), so the probe answers "dead" for a running process.
+
+On 1 Oct 2026 the first Windows run of `verify.ps1`'s unit-tests job
+showed both faces at once: `tools/headless/jobs.py::_pid_is_live` marked a
+running worker stale (test 20 red), then probed the test runner's own pid
+and ended the run with `KeyboardInterrupt` and exit code `-1073741510`
+(`STATUS_CONTROL_C_EXIT`). The Linux and cloud runs were green, because
+there signal 0 means what it says. `tests/test_headless_jobs.py::
+test_liveness_probe_signals_nothing_and_answers_for_this_process` now
+probes the runner's own pid, so a regression interrupts that one test.
+
+On Windows ask kernel32 instead: `OpenProcess` with
+`PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE`, `WaitForSingleObject(h,
+0)` returning `WAIT_TIMEOUT` for "still running", `GetProcessTimes` for a
+start token. A pid whose handle someone still holds opens fine but is
+signalled, so the wait, not the open, is the liveness answer.
+
+## Environment quirk: a headless run inherits the player's profile
+
+`user://` resolves to the same `app_userdata` folder for the editor, a
+played game and every `--scenario=` run. Session's `_ready` loads
+`meadow_profile.json`, so a layout fixture laid out at whatever text scale
+and typeface the player last chose; and a fixture's `set_config` saves
+through `Session.save_preferences()`, so a run that stopped between
+`text_scale 2.0` and `text_scale 1.0` left the next run (and the next real
+game) at double size. On 1 Oct 2026 `layout_panels.json` failed only on
+Dave's Windows machine (`text_scale 2.0`, Silkscreen): the command tray's
+"Change to…" menu needed 192 px against a 180 px inner width. The Linux
+container has no profile, so it never saw it.
+
+`player_profile.gd::_isolated` now makes a `--scenario=` run read no
+profile and write none. Any new `user://` state a headless run could read
+back needs the same guard.
+
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 
 The Bash tool already runs in the right working directory, so prefixing a

@@ -164,15 +164,34 @@ def _validate_job_dir(job_dir: Path, root: Path) -> Path:
     return resolved
 
 
+# On Windows a reader that opens status.json while the runner replaces it
+# gets "access denied" (the old file is pending delete), and the runner's
+# os.replace is refused while a reader holds the file open, because Python
+# opens files without FILE_SHARE_DELETE. Both windows last microseconds, so
+# a short bounded retry absorbs them; POSIX never raises here.
+_SHARING_RETRIES = 50
+_SHARING_RETRY_DELAY = 0.01
+
+
+def _retry_sharing_violation(operation):
+    for attempt in range(_SHARING_RETRIES):
+        try:
+            return operation()
+        except PermissionError:
+            if os.name != "nt" or attempt == _SHARING_RETRIES - 1:
+                raise
+            time.sleep(_SHARING_RETRY_DELAY)
+
+
 def _atomic_json(path: Path, data: dict[str, Any]) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    _retry_sharing_violation(lambda: os.replace(temporary, path))
 
 
 def _read_json(path: Path) -> dict[str, Any]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(_retry_sharing_violation(lambda: path.read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError) as error:
         raise JobError("invalid job metadata: %s" % error) from error
     if not isinstance(data, dict):
@@ -180,21 +199,57 @@ def _read_json(path: Path) -> dict[str, Any]:
     return data
 
 
+if os.name == "nt":
+    import ctypes
+    from ctypes import wintypes
+
+    _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    _SYNCHRONIZE = 0x00100000
+    _WAIT_TIMEOUT = 0x102
+    _ERROR_ACCESS_DENIED = 5
+    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    _kernel32.OpenProcess.restype = wintypes.HANDLE
+    _kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    _kernel32.WaitForSingleObject.restype = wintypes.DWORD
+    _kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
+    _kernel32.GetProcessTimes.restype = wintypes.BOOL
+    _kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    _kernel32.CloseHandle.restype = wintypes.BOOL
+
+    def _windows_process_facts(pid: int) -> tuple[bool, str | None]:
+        """(alive, creation-time token) for one pid, from kernel32 alone.
+
+        Nothing here spawns a process or signals one.  The POSIX idiom
+        ``os.kill(pid, 0)`` must never be used on Windows: signal 0 is
+        ``CTRL_C_EVENT`` there, so it sends Ctrl+C to every process on the
+        console (``docs/known-pitfalls.md``, 1 Oct 2026).
+        """
+        handle = _kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION | _SYNCHRONIZE, False, pid)
+        if not handle:
+            # Access denied means the process exists under another account;
+            # any other failure means there is no such process.
+            return ctypes.get_last_error() == _ERROR_ACCESS_DENIED, None
+        try:
+            # A pid whose handle is still held (a reaped Popen, say) opens
+            # fine but is signalled: only a timeout means it is still running.
+            if _kernel32.WaitForSingleObject(handle, 0) != _WAIT_TIMEOUT:
+                return False, None
+            creation, exit_time, kernel, user = (wintypes.FILETIME() for _ in range(4))
+            if not _kernel32.GetProcessTimes(handle, ctypes.byref(creation), ctypes.byref(exit_time),
+                                             ctypes.byref(kernel), ctypes.byref(user)):
+                return True, None
+            return True, str((creation.dwHighDateTime << 32) | creation.dwLowDateTime)
+        finally:
+            _kernel32.CloseHandle(handle)
+
+
 def _process_start_token(pid: int) -> str | None:
     """Return a platform process-start token for identity checks, if available."""
     if pid <= 0:
         return None
     if os.name == "nt":
-        command = [
-            "powershell", "-NoProfile", "-NonInteractive", "-Command",
-            "(Get-Process -Id %d -ErrorAction Stop).StartTime.ToUniversalTime().Ticks" % pid,
-        ]
-        try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=2, check=False)
-        except (OSError, subprocess.TimeoutExpired):
-            return None
-        token = result.stdout.strip()
-        return token if result.returncode == 0 and token.isdigit() else None
+        return _windows_process_facts(pid)[1]
     try:
         # Field 22 (zero-based 21) of /proc/<pid>/stat is the kernel start tick.
         fields = (Path("/proc") / str(pid) / "stat").read_text(encoding="utf-8").split()
@@ -206,6 +261,8 @@ def _process_start_token(pid: int) -> str | None:
 def _pid_is_live(pid: int) -> bool:
     if pid <= 0:
         return False
+    if os.name == "nt":
+        return _windows_process_facts(pid)[0]
     try:
         os.kill(pid, 0)
     except OSError:
