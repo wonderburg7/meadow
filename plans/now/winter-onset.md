@@ -87,7 +87,10 @@ frame, nothing saved that is not saved today).
   `slice3_timescale_30x_test.json` and `sv1_named_saves_test.json`, all in
   `test_scenarios/`. BS-4's fixture sets it already.
 - `test_scenarios/alpha_arc_test.json`: `stop.max_days` 36 to 44, so the
-  pacing arc runs past winter's end on day 41. Keep its winter on.
+  pacing arc runs past winter's end on day 41. Keep its winter on. Also give
+  its `diagnostics` a `snapshots` block with the `balance` profile's three
+  fields and `every_sim_seconds` one in-game hour, so PE-1's
+  `milestone_times` resolve inside a day (the profile default is daily).
 - `test_scenarios/wo1_winter_onset_test.json` (new): level 4's starting
   colony copied from `levels.gd` (15 cells, 8 nectar and 3 pollen foragers,
   2 nurses, 2 builders, 2 miners), `"random_seed": 4242`, winter left on.

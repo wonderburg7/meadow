@@ -42,28 +42,21 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PE-1 -- pacing milestones are timed to the hour**
-   - Plan: `plans/now/pacing-evidence.md` -- "PE-1 — pacing milestones are timed to the hour"
-   - Files: `tools/analyze_session.py`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_headless_verdicts.py`, `docs/headless-run-contract.md`
-   - Check: `python -m unittest tests.test_pacing_gates tests.test_headless_verdicts` passes, including a first worker at day 1.5 reading in band at 200 s/day, `python tools/pacing_gates.py --repeat 1` prints a table with two-decimal median days, and `tools/verify.ps1` is green
-   - Proof: `absent: tools/analyze_session.py :: milestone_times`
-   - Next after: none -- plans/now/pacing-evidence.md is complete
-
-2. **[Codex] BS-8 -- a role's starting count is one field on its roles.gd row**
+1. **[Codex] BS-8 -- a role's starting count is one field on its roles.gd row**
    - Plan: `plans/now/brood-spine.md` -- "BS-8 — a role's starting count is one field on its roles.gd row"
    - Files: `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py`
    - Check: `python tools/equivalence.py test_scenarios/colony_30_bees_test.json master` exits 0, `python tools/run_scenario.py` passes `test_scenarios/bs1_seeded_skills_test.json`, `test_scenarios/bs1_seeded_none_test.json` and `test_scenarios/bs3_nurse_gate_test.json`, and `tools/verify.ps1` is green
    - Proof: `present: scripts/run_availability.gd :: const SEED_COUNT_KEYS`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
 
-3. **[Codex] UI-F-1 -- the game-over screen takes the theme and text scale**
+2. **[Codex] UI-F-1 -- the game-over screen takes the theme and text scale**
    - Plan: `plans/now/ui-feedback.md` -- "UI-F-1 -- the game-over screen takes the theme and text scale"
    - Files: `scripts/game_over.gd`
    - Check: `grep -c "add_theme_font_size_override" scripts/game_over.gd` prints `0`, and `tools/verify.ps1` is green
    - Proof: `present: scripts/game_over.gd :: add_theme_font_size_override("font_size", 28)`
    - Next after: UI-F-3 -- comb cell labels follow text scale
 
-4. **[Codex] UI-F-3 -- comb cell labels follow text scale**
+3. **[Codex] UI-F-3 -- comb cell labels follow text scale**
    - Plan: `plans/now/ui-feedback.md` -- "UI-F-3 -- comb cell labels follow text scale"
    - Files: `scripts/hive_cell.gd`
    - Check: `grep -c "_label_font_size" scripts/hive_cell.gd` prints at least 2, and `tools/verify.ps1` is green

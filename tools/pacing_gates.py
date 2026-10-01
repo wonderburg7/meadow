@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure the headless alpha arc against the closed-alpha pacing targets.
 
-The five-minute forage/weather crisis and the ninety-minute gyne release are
+The twenty-minute forage/weather crisis and the ninety-minute gyne release are
 player-experience outcomes, not events the headless log currently records.
 This command therefore reports the four truthful, instrumented proxies rather
 than inventing a time for either one.
@@ -21,6 +21,7 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 sys.path.insert(0, str(TOOLS))
 
+import godot_cache  # noqa: E402
 from analyze_session import analyze, load_entries  # noqa: E402
 from run_scenario import DEFAULT_FIXED_FPS, DEFAULT_GODOT_PATH, DEFAULT_TIMEOUT, run_once  # noqa: E402
 
@@ -62,7 +63,7 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
     """Return one display-ready row for each measurable pacing gate."""
     rows = []
     for gate in GATES:
-        values = [analysis.get("milestones", {}).get(gate.metric) for analysis in analyses]
+        values = [analysis.get("milestone_times", {}).get(gate.metric) for analysis in analyses]
         complete = all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in values)
         median_day = statistics.median(values) if complete else None
         target = target_day(gate.target_minutes, day_length_seconds)
@@ -83,9 +84,9 @@ def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: 
         "---------------  ----------  ----------  -------",
     ]
     for row in rows:
-        median = "missing" if row["median_day"] is None else "%.1f" % row["median_day"]
+        median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
         result = "yes" if row["inside_band"] else "no"
-        lines.append("%-15s  %10s  %10.1f  %7s" % (
+        lines.append("%-15s  %10s  %10.2f  %7s" % (
             row["milestone"], median, row["target_day"], result,
         ))
     lines.append("Not instrumented: 20m forage/weather crisis; 90m gyne release.")
@@ -133,6 +134,15 @@ def main() -> int:
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
+
+    # run_once launches Godot directly, so seed the import cache the way
+    # run_scenario.py's own entry point does: a worktree without one stalls
+    # at boot and reads as a timeout (1 Oct 2026).
+    if Path(args.godot_path).is_file():
+        cache_ok, cache_line = godot_cache.ensure_cache(ROOT, args.godot_path)
+        print(cache_line, file=sys.stderr)
+        if not cache_ok:
+            return 1
 
     try:
         analyses, day_length_seconds = run(args.repeat, args.godot_path, args.timeout)

@@ -43,6 +43,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "honey_fill_vs_winter": _honey_fill_vs_winter(snapshots),
         "flower_mix_by_day": _flower_mix_by_day(snapshots),
         "milestones": _milestones(snapshots, settings),
+        "milestone_times": _milestone_times(snapshots, settings),
         "mechanic_firing": _mechanic_firing(settings, summary, actions),
         "actions": _action_summary(actions),
         "summary": summary,
@@ -142,51 +143,87 @@ def _flower_mix_by_day(snapshots: list[dict[str, Any]]) -> dict[int, dict[str, A
     return mixes
 
 
-def _milestones(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, int]:
-    """The first day each pacing milestone became true.
+def _milestone_states(snapshot: dict[str, Any], settings: dict[str, Any],
+                      winter_seen: bool) -> tuple[dict[str, bool], bool]:
+    """Return the milestones true in one snapshot and the next winter state.
 
-    Snapshots are deliberately walked once: these are related facts about one
-    run, not four independent report passes.  Food stores are measured in
-    honey units, so the winter requirement calculated from the run's own
-    GameConfig snapshot is converted from energy to honey before comparison.
+    Both day-resolution compatibility output and elapsed-time pacing evidence
+    use this one predicate, so they cannot silently assign different meanings
+    to a milestone. Food security and winter survival require a living colony:
+    zero bees otherwise make the calculated winter requirement zero.
     """
+    population = snapshot.get("population")
+    resources = snapshot.get("resources")
+    environment = snapshot.get("environment")
+    total = population.get("total") if isinstance(population, dict) else None
+    has_population = (
+        not isinstance(total, bool)
+        and isinstance(total, (int, float))
+        and total >= 1
+    )
+    states = {
+        "first_worker_day": has_population and total > 1,
+        "winter_entered_day": False,
+        "winter_survived_day": False,
+        "food_secure_day": False,
+    }
+    winter_here = environment.get("winter_here") if isinstance(environment, dict) else None
+    if winter_here is True:
+        winter_seen = True
+        states["winter_entered_day"] = True
+    elif winter_here is False and winter_seen and has_population:
+        states["winter_survived_day"] = True
+
+    food_stores = resources.get("food_stores") if isinstance(resources, dict) else None
+    required_food = _winter_food_requirement(settings, total)
+    states["food_secure_day"] = (
+        has_population
+        and not isinstance(food_stores, bool)
+        and isinstance(food_stores, (int, float))
+        and required_food is not None
+        and food_stores >= required_food
+    )
+    return states, winter_seen
+
+
+def _milestones(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, int]:
+    """The first day each pacing milestone became true."""
     milestones: dict[str, int] = {}
     winter_seen = False
     for snapshot in _last_snapshot_per_day(snapshots):
         day = snapshot.get("day")
         if not isinstance(day, int):
             continue
-        population = snapshot.get("population")
-        resources = snapshot.get("resources")
-        environment = snapshot.get("environment")
-
-        total = population.get("total") if isinstance(population, dict) else None
-        if (
-            "first_worker_day" not in milestones
-            and not isinstance(total, bool)
-            and isinstance(total, (int, float))
-            and total > 1
-        ):
-            milestones["first_worker_day"] = day
-
-        winter_here = environment.get("winter_here") if isinstance(environment, dict) else None
-        if winter_here is True:
-            winter_seen = True
-            milestones.setdefault("winter_entered_day", day)
-        elif winter_here is False and winter_seen and "winter_survived_day" not in milestones:
-            milestones["winter_survived_day"] = day
-
-        food_stores = resources.get("food_stores") if isinstance(resources, dict) else None
-        required_food = _winter_food_requirement(settings, total)
-        if (
-            "food_secure_day" not in milestones
-            and not isinstance(food_stores, bool)
-            and isinstance(food_stores, (int, float))
-            and required_food is not None
-            and food_stores >= required_food
-        ):
-            milestones["food_secure_day"] = day
+        states, winter_seen = _milestone_states(snapshot, settings, winter_seen)
+        for name, reached in states.items():
+            if reached:
+                milestones.setdefault(name, day)
     return milestones
+
+
+def _milestone_times(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, float]:
+    """The elapsed day of the first snapshot where each milestone is true."""
+    seconds_per_day = settings.get("seconds_per_day")
+    has_game_time = any(
+        not isinstance(snapshot.get("game_time"), bool)
+        and isinstance(snapshot.get("game_time"), (int, float))
+        for snapshot in snapshots
+    )
+    if (isinstance(seconds_per_day, bool) or not isinstance(seconds_per_day, (int, float))
+            or seconds_per_day <= 0 or not has_game_time):
+        return {}
+
+    milestone_times: dict[str, float] = {}
+    winter_seen = False
+    for snapshot in snapshots:
+        game_time = snapshot.get("game_time")
+        if isinstance(game_time, bool) or not isinstance(game_time, (int, float)):
+            continue
+        states, winter_seen = _milestone_states(snapshot, settings, winter_seen)
+        for name, reached in states.items():
+            if reached:
+                milestone_times.setdefault(name, game_time / seconds_per_day)
+    return milestone_times
 
 
 def _winter_food_requirement(settings: dict[str, Any], population: Any) -> float | None:
@@ -317,9 +354,9 @@ def _mechanic_firing(settings: dict[str, Any], summary: dict[str, Any] | None,
 # skimming a chart would want instead.
 REPORT_PROFILES = {
     "brief": ["summary", "actions"],
-    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones"],
+    "balance": ["summary", "population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones", "milestone_times"],
     "behaviour": ["summary", "mechanic_firing", "actions"],
-    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones",
+    "full": ["population_curve", "deaths_over_time", "honey_fill_vs_winter", "flower_mix_by_day", "milestones", "milestone_times",
              "mechanic_firing", "actions", "summary"],
 }
 

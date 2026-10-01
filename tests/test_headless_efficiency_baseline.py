@@ -60,7 +60,7 @@ class HeadlessEfficiencyBaselineTest(unittest.TestCase):
                  contextlib.redirect_stdout(stdout):
                 self.assertEqual(0, run_scenario.run_scenario(success_run, "unused", 1, 1, profile))
             actual[profile] = len(stdout.getvalue().encode("utf-8"))
-        self.assertEqual({"brief": 396, "behaviour": 522, "full": 884}, actual)
+        self.assertEqual({"brief": 396, "behaviour": 522, "full": 909}, actual)
 
     def test_verdict_output_budgets_are_executable(self):
         self.assertTrue(fits_stdout_budget("status=passed run_id=fixture", failed=False))
