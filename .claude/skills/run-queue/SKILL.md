@@ -26,7 +26,7 @@ sitting in a `.worktrees/` directory:
    the lane, check `mcp__ccd_session_mgmt__list_sessions` for a running
    session on that branch. If one is running, stop the run and say which
    session holds the lane. Never `abort` a worktree you didn't open in this
-   run.
+   run. If the lane is empty, refill it (below), then rerun `doctor`.
 2. **Claim.** Run `start`. Keep its JSON, and note `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
    (`run_in_background: false`). Its `subagent_type` comes from the level:
@@ -65,17 +65,56 @@ sitting in a `.worktrees/` directory:
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,
      rerun. The refill gate (backlog dry) means specifying the owning
      plan's next slice. That is planning work, so do it yourself in the
-     worktree, at high reasoning, then rerun. Anything else stops the run.
+     slice worktree, as in steps 2-3 of the refill below, then rerun.
+     Anything else stops the run.
 7. **Record.** Keep only the `Slice landed:` block and the worker's
    one-line summary. Drop everything else from your working notes.
 
-Stop early if the lane is empty, a `start` refuses, or the maximum is
-reached.
+An empty or short lane is not a reason to stop: refill it. Stop only when
+the maximum is reached, a `start` refuses for any reason but an empty lane,
+or a refill needs Dave (below).
+
+## Refilling the lane
+
+Do this when `doctor` finds the lane empty, or when `finish` lands it with
+no admissible block left in the backlog. It is planning work, so do it at
+high reasoning, and read only what specifying the slice needs. Don't read
+plan history or `plans/archive/`.
+
+1. **Find the owner.** In `plans/now/`, find a live plan whose Status is
+   not terminal and whose `Next:` names work that hasn't been specified
+   yet. Read its Status line and the section that `Next:` points to.
+2. **Specify** its next slice, or two if they are plainly sequential. Read
+   `plans/README.md` § "Writing or editing a plan" first. Each slice gets
+   a fenced `queue` block in its plan section, which is what
+   `.claude/rules/documentation.md` calls the backlog. It holds the
+   `**[Claude] <id> -- <title>**` line and its `Plan:`/`Files:`/`Check:`/
+   `Proof:`/`Next after:` lines. Use only files the Codex lane doesn't
+   own (`tools/slice.ps1 owner <path>` for each one). State a reasoning
+   level and a deterministic `Check:` where one exists. Write a `Proof:`
+   that holds on master today. Fence a slice that can't start yet as
+   `queue-gated`, with its one line under `## Not in the queue, and why`.
+3. **Queue it.** Outside a slice worktree, use a work branch with its own
+   worktree, registered in `plans/workstreams.md` first. Run
+   `python tools/refill_lane.py --top-up --lane Claude`, then
+   `python tools/check_docs.py`. Commit, merge to master and push, then
+   go back to Preflight.
+
+Stop the run and ask Dave with AskUserQuestion (give the options and their
+costs, and recommend one) only if either of these is true:
+- No live plan in `plans/now/` has work left to specify. In that case,
+  propose which `ROADMAP.md` or `DESIGN_BACKLOG.md` item should become a
+  new plan. Read those two files through `ROOT`, because the file tools
+  are blocked on them.
+- Specifying the slice would change an ownership boundary, save
+  compatibility, a gameplay outcome, or more than one later slice, and
+  the plan leaves that open (CLAUDE.md rule 5).
 
 ## Final report
 
 For each slice: the CLAUDE.md end-of-slice block, plus the worker type used
-and any reviews or retries. Then a one-paragraph trial note covering what
+and any reviews or retries. For each refill: the plan it came from, the
+ids it added, and why that slice came next. Then a one-paragraph trial note covering what
 the worker got wrong, where you had to step in, and any change the worker
 brief or this skill needs. Fill in `Connectors: active now` from your own
 tool list.
