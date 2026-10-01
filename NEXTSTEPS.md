@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] WO-1 -- winter's countdown opens by itself on a set day**
-   - Plan: `plans/now/winter-onset.md` -- "WO-1 — winter's countdown opens by itself on a set day"
-   - Files: `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/scenario_actions.gd`, `test_scenarios/wo1_winter_onset_test.json`, `test_scenarios/alpha_arc_test.json`, `test_scenarios/a3_fixedfps_benchmark_test.json`, `test_scenarios/a5_actions_resolved_test.json`, `test_scenarios/a5_stop_when_test.json`, `test_scenarios/slice3_timescale_8x_test.json`, `test_scenarios/slice3_timescale_16x_test.json`, `test_scenarios/slice3_timescale_30x_test.json`, `test_scenarios/sv1_named_saves_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/wo1_winter_onset_test.json` passes (countdown open by day 7, winter here by day 22 and not before day 21), the hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/game_config.gd :: winter_countdown_start_day`
-   - Next after: none -- plans/now/winter-onset.md is complete
-
-2. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
+1. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_two_lane_closeout tests.test_slice_lifecycle` passes with the remote-ahead case strict and the five new cases, and `tools/verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: Sync-PrimaryMaster`
    - Next after: L-17 -- one console-encoding contract for the lifecycle, tested once
+
+2. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
+   - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`
+   - Check: `python -m unittest tests.test_slice_lifecycle.ConsoleEncodingTest tests.test_source_checks` passes and `tools/verify.ps1` is green
+   - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
+   - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
 ### Codex lane
 
