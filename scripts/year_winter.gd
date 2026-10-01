@@ -44,7 +44,8 @@ func begin_winter_countdown() -> void:
 	main.hud.set_winter_button_visible(true)
 	main.hud.show_warning(
 		"Winter will arrive on day %d. The Winter window on the left shows what the colony will need to last it out, and how far short it is. Every bee you add between now and then is another mouth to feed through it."
-		% int(Session.winter_starts_day)
+		% int(Session.winter_starts_day),
+		"", 0.0, main.hud.SEVERITY_NOTICE
 	)
 
 func _refresh_winter(bees_count: int) -> void:
