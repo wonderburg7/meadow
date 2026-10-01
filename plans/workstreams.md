@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/PE-1` (`codex/PE-1`) | Codex | pacing milestones are timed to the hour | Codex | in progress | none | `plans/now/pacing-evidence.md` PE-1 — pacing milestones are timed to the hour |
