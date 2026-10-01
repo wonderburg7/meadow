@@ -228,7 +228,7 @@ unplayed queen. It settles:
   plan was archived nothing owned the Colony Run's layers. This pass does,
   which settles the 11 Sep note above against `NEXTSTEPS.md`'s claim that
   the goal model needed a pass of its own;
-- **PE-2, the played pacing arc** (`plans/now/pacing-evidence.md`):
+- **PE-2, the played pacing arc** (`plans/archive/pacing-evidence_2026-10-01.md`):
   `test_scenarios/alpha_arc_test.json` starts from the Colony Run's start
   and is played by a scripted reference player using only the `when` keys
   the harness honours (`scenario_actions.gd::_legacy_when_spec`); it stops
