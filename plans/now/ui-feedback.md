@@ -22,3 +22,5 @@ skipped, simulation may not).
 UI-F-1 shipped 2026-10-01; its specification is `plans/archive/UI-F-1_2026-10-01.md`.
 
 UI-F-2 shipped 2026-10-01; its specification is `plans/archive/UI-F-2_2026-10-01.md`.
+
+UI-F-3 shipped 2026-10-01; its specification is `plans/archive/UI-F-3_2026-10-01.md`.
