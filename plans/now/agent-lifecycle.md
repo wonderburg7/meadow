@@ -60,8 +60,8 @@ Both slices change `tools/slice.ps1`, whose suite skips off Windows
 local Windows session**, never a cloud one. Their blocks are fenced
 `queue-gated` until such a session opens them (plan review, 30 Sep 2026:
 a cloud claim could not run either slice's check, and `verify.ps1` would
-pass with the tests skipped). `NEXTSTEPS.md` "Not in the queue, and why"
-carries the two commands.
+pass with the tests skipped). WO-1's local Windows closeout opened both on
+1 Oct 2026; claim them only from a local Windows session.
 
 ### L-16 — master is synchronised with origin before a claim and before a merge
 
@@ -151,7 +151,7 @@ tools/session_cost.py --stops` showing no `git push failed` stop for it.
 `grep -n "^function"`); the remote-ahead test in
 `tests/test_two_lane_closeout.py`.
 
-```queue-gated
+```queue
 **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
 - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
@@ -220,7 +220,7 @@ block of `Invoke-SliceFinish` in `tools/slice.ps1`; the `Invoke-GitQuiet`
 function; the fixture helpers at the top of `SliceLifecycleTest` in
 `tests/test_slice_lifecycle.py`.
 
-```queue-gated
+```queue
 **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
 - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`

@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/game_config.gd :: winter_countdown_start_day`
    - Next after: none -- plans/now/winter-onset.md is complete
 
+2. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
+   - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
+   - Check: `python -m unittest tests.test_two_lane_closeout tests.test_slice_lifecycle` passes with the remote-ahead case strict and the five new cases, and `tools/verify.ps1` is green
+   - Proof: `absent: tools/slice.ps1 :: Sync-PrimaryMaster`
+   - Next after: L-17 -- one console-encoding contract for the lifecycle, tested once
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -61,7 +68,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **BS-6** (`plans/now/brood-spine.md`) -- specified 1 Oct 2026; waits for BS-8 (Codex lane) to land, since both edit `scripts/run_availability.gd`.
-- **L-16, L-17** (`plans/now/agent-lifecycle.md`) -- both edit `tools/slice.ps1`, whose suite skips off Windows, so each waits for a local Windows session: there, open its fence from `queue-gated` to `queue` and run `python tools/refill_lane.py --top-up --lane Claude` (plan review, 30 Sep 2026).
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; it waits for BS-4 to land, and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
