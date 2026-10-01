@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] GC-2 -- a bee changing job puts down what she carries**
-   - Plan: `plans/now/gameplay-consistency.md` -- "GC-2 — a bee changing job puts down what she carries"
-   - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/bee_building.gd`, `scripts/bee_honey.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_actions.gd`, `test_scenarios/gc2_role_change_delivers_load_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/gc2_role_change_delivers_load_test.json` passes (two deliveries by day 2), `python tools/run_scenario.py test_scenarios/c1f2_queen_pollen_departure_test.json` still passes, the hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: _deliver_held_load`
-   - Next after: GC-3 -- honey stops creating energy (gated on PE-2)
-
-2. **[Claude] WO-1 -- winter's countdown opens by itself on a set day**
+1. **[Claude] WO-1 -- winter's countdown opens by itself on a set day**
    - Plan: `plans/now/winter-onset.md` -- "WO-1 — winter's countdown opens by itself on a set day"
    - Files: `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/scenario_actions.gd`, `test_scenarios/wo1_winter_onset_test.json`, `test_scenarios/alpha_arc_test.json`, `test_scenarios/a3_fixedfps_benchmark_test.json`, `test_scenarios/a5_actions_resolved_test.json`, `test_scenarios/a5_stop_when_test.json`, `test_scenarios/slice3_timescale_8x_test.json`, `test_scenarios/slice3_timescale_16x_test.json`, `test_scenarios/slice3_timescale_30x_test.json`, `test_scenarios/sv1_named_saves_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/wo1_winter_onset_test.json` passes (countdown open by day 7, winter here by day 22 and not before day 21), the hands-on check is filed, and `tools/verify.ps1` is green

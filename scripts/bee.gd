@@ -1281,6 +1281,25 @@ func _apply_pending_role() -> bool:
 		return true
 	return false
 
+## GC-2. A bee reaching an idle state still holding a load puts it in a cell
+## before starting anything else: a forager made a Miner mid-trip, or a Comb
+## worker left with a remnant when a restock target filled. Only the
+## forager's own routine used to deliver, so any other job kept the load
+## aboard for good, and the next lift overwrote it. One choke point here
+## rather than a guard per job (docs/known-pitfalls.md). When no cell had
+## room and none has changed since, she gets on with her job instead.
+func _deliver_held_load() -> bool:
+	if is_queen:
+		return false
+	if current_load <= 0.0 or current_load_type == "":
+		return false
+	if not _is_inside_hive():
+		return false
+	if deposit_blocked_epoch == hive.index_epoch:
+		return false
+	state = State.IN_HIVE_TO_CELL
+	return true
+
 ## Is this bee partway through something worth finishing? Everything
 ## except the "waiting for work" states and standing idle.
 func _is_busy() -> bool:
@@ -1291,6 +1310,8 @@ func _is_busy() -> bool:
 
 func _idle_dispatch() -> void:
 	if _apply_pending_role():
+		return
+	if _deliver_held_load():
 		return
 
 	# The queen is the exception to "own role first". A hungry larva stops

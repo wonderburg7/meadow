@@ -26,6 +26,8 @@ static func find_cell_needing_cleaning(bee: Node2D) -> bool:
 
 
 static func find_cell_needing_eviction(bee: Node2D) -> bool:
+	if bee.current_load > 0.0:
+		return false   # still holding a load (GC-2): never lift over it
 	var source = bee.hive.find_cell_needing_eviction()
 	if source == null:
 		return false
@@ -190,6 +192,8 @@ static func may_draw_from(bee: Node2D, cell: Node2D) -> bool:
 ## from. Emptiest first, so a set of cells fills evenly rather than one
 ## being topped up repeatedly while another sits empty.
 static func find_restock_job(bee: Node2D) -> bool:
+	if bee.current_load > 0.0:
+		return false   # still holding a load (GC-2): never lift over it
 	if not has_restock_orders(bee) or bee.hive == null:
 		return false
 

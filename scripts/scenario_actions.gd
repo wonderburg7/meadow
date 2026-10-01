@@ -255,6 +255,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_retreat_challenge_stage(main, action)
 		"set_queen_load":
 			_do_set_queen_load(main, action)
+		"set_bee_load":
+			_do_set_bee_load(main, action)
 		"set_cell_contents":
 			_do_set_cell_contents(main, action)
 		"empty_cell":
@@ -983,6 +985,22 @@ static func _do_set_queen_load(main: Node2D, action: Dictionary) -> void:
 		queen.target_cell = target
 	queen._update_label()
 	_log("set_queen_load", str(action), "accepted", "")
+
+## GC-2. Gives every matched bee a carried load: {"target": <bee selector>,
+## "resource": "nectar", "amount": 30}. Writes the two fields a lift or a
+## trip leaves (current_load, current_load_type) and nothing else, so the
+## bee's own routine decides what happens to it. Rejected when no bee matches.
+static func _do_set_bee_load(main: Node2D, action: Dictionary) -> void:
+	var bees: Array = _resolve_bees(main, action.get("target", {}))
+	if bees.is_empty():
+		_log("set_bee_load", str(action), "rejected", "no matching bees")
+		return
+	var amount: float = float(action.get("amount", 0.0))
+	for bee in bees:
+		bee.current_load = amount
+		bee.current_load_type = str(action.get("resource", "")) if amount > 0.0 else ""
+		bee._update_label()
+	_log("set_bee_load", str(action), "accepted", "%d bee(s)" % bees.size())
 
 ## C1F-2. {"hex": [q, r] (or "cell": {"built_index": n}), "resource": "nectar",
 ## "amount": n} -- through the cell's own add_resource, the function a

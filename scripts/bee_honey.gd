@@ -33,6 +33,8 @@ static func find_cell_needing_fanning(bee: Node2D) -> bool:
 
 
 static func find_cell_with(bee: Node2D) -> bool:
+	if bee.current_load > 0.0:
+		return false   # still holding a load (GC-2): never lift over it
 	if bee.honey_load > 0.0:
 		return false
 	var nectar_cell = bee.hive.find_cell_with("nectar")
