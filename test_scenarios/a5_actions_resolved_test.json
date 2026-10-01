@@ -5,5 +5,6 @@
   "actions": [
     {"do": "set_config", "key": "scouting_on", "value": true}
   ],
+  "winter": false,
   "stop": {"when_actions_resolved": true, "max_days": 30}
 }

@@ -116,6 +116,12 @@ func disease_text() -> String:
 ## the game. That is the whole argument for doing it this way.
 func _advance_winter() -> void:
 	if not Session.winter_coming:
+		# The countdown opens by itself once a run reaches its day. A
+		# winter_starts_day above 0 means one has already opened (and
+		# perhaps been survived), so this is once per run. A level with
+		# winter off is turned away inside begin_winter_countdown.
+		if Session.winter_starts_day <= 0.0 and world.day >= GameConfig.winter_countdown_start_day:
+			world.begin_winter_countdown()
 		return
 
 	if not Session.winter_here:

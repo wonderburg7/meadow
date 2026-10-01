@@ -6,6 +6,13 @@
     "pollen_recharge_rate": 0.1,
     "winter_burn_factor": 0.15
   },
-  "diagnostics": {"profile": "balance"},
-  "stop": {"max_days": 36}
+  "diagnostics": {
+    "profile": "balance",
+    "snapshots": {
+      "every_sim_seconds": 8.333333,
+      "fields": ["population.total", "resources.food_stores", "environment.winter_here"],
+      "only_when_changed": false
+    }
+  },
+  "stop": {"max_days": 44}
 }

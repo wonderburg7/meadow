@@ -1,0 +1,12 @@
+{
+  "cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
+  "nurses": 2, "builders": 2, "miners": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "assert", "condition": {"winter_coming": false}, "when": {"day_at_least": 5}},
+    {"do": "assert", "condition": {"winter_coming": true}, "when": {"day_at_least": 7}},
+    {"do": "assert", "condition": {"winter_here": false}, "when": {"day_at_least": 20}},
+    {"do": "assert", "condition": {"winter_here": true}, "when": {"day_at_least": 22}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 23}
+}
