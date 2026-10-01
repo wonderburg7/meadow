@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/GC-2` (`claude/GC-2`) | Claude | a bee changing job puts down what she carries | Claude | in progress | none | `plans/now/gameplay-consistency.md` GC-2 — a bee changing job puts down what she carries |
