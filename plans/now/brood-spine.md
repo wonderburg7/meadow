@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-4 -- the honey gate (startable, specified 30 Sep 2026); BS-7 -- every Scenario's queen backs up as a Nurse (startable, specified 30 Sep 2026); BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, decided (decision 6), specified in BS-4's closeout | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: BS-7 -- every Scenario's queen backs up as a Nurse (startable, specified 30 Sep 2026); BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-7 and BS-8 | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -86,10 +86,9 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md` | startable | medium |
 | BS-7 | every Scenario's queen backs up as a Nurse, so a lone queen raises a worker | `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json` | startable | medium |
 | BS-8 | a role's starting-count key is one field on its roles.gd row, before step 8 gates more roles | `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py` | startable (Codex lane) | medium |
-| BS-6 | developer edits to the table change what a run starts with | named in its specification | after BS-4's closeout specifies it (decision 6 settled the persistence question) | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-7 and BS-8 land first (shared files) | high |
 
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
@@ -254,11 +253,48 @@ fallback (product-scope §6.2). **Escalate** if the equivalence run differs.
 Each is specified in full, with its own `queue` block, when what it waits for
 has shipped. These notes fix only what the earlier slices must not preclude.
 
-- **BS-6 — developer edits.** Decided 30 Sep 2026 (decision 6): (a), a
-  `user://` override private to one machine, with a small store applied at
-  run start and a "reset to the game's data" control, never changing a
-  fixture. The rejected option (b) wrote edits back to `levels.gd` or a
-  scenario JSON. BS-4's closeout specifies BS-6 in full.
+Nothing is outlined here now: BS-6 is specified in full below.
+
+## BS-6 — developer edits to the table change what a run starts with
+
+Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
+BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
+one machine, never a fixture). **Gated** on BS-8 landing, because both edit
+`run_availability.gd`, and BS-7 landing, because both read level definitions;
+the lanes may not share a file.
+
+- **Scope.** The Run availability table (`run_availability_panel.gd`, opened
+  from the debug panel) is read-only today. Each skill row gains a control
+  cycling start / tree / unavailable for the level being viewed. An edit
+  changes that level's run definition only through `skill_grants` and
+  `skill_bans`, the two keys `sheet_for` already honours; it never edits a
+  starting count, since "seeding implies owning" derives from counts.
+- **Store.** New `scripts/developer_overrides.gd`: one small JSON file,
+  `user://developer_start_overrides.json`, mapping level id to
+  `{"grants": [...], "bans": [...]}`. `apply(level_id, definition)` returns a
+  copy of the definition with the lists merged (a ban still wins over a
+  grant, as in `run_availability.gd`). Missing or unparseable file reads as
+  no overrides.
+- **Hook.** `main.gd` line ~417, where `RunAvailability.sheet_for(level)` runs,
+  passes the level through `apply` first. Scenario runs (level 999 /
+  `SCENARIO_LEVEL_ID`) and headless runs are never overridden, so every
+  fixture and `tools/verify.ps1` behave exactly as before.
+- **Reset.** A "Reset to the game's data" button on the panel deletes the
+  file and rebuilds the table. Edited rows are marked so a developer can see
+  they differ from `levels.gd`.
+- **Must not change:** `levels.gd`, any scenario JSON, save files, or
+  `progression.gd`'s ownership answers.
+- **Escalate** if a run started with an override and one without differ in
+  anything beyond starting ownership.
+
+```queue-gated
+**[Claude] BS-6 -- developer edits to the table change what a run starts with**
+- Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
+- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`
+- Check: `tools/verify.ps1` is green, a `source_checks.py` check proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
+- Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
+- Next after: none -- the Brood spine plan completes here
+```
 
 ## Read on demand
 
