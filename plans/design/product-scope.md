@@ -671,7 +671,8 @@ the procedural fallback means it must not block playability.
 ### Evidence and feedback stream
 
 - internal milestone play at 5/10/20/60/90 minutes;
-- friends/family observation before broad distribution;
+- friends/family observation before broad distribution
+  (`docs/feedback-session-runbook.md`);
 - feedback separated into defect, confusion, pacing, decision quality and
   desired expansion;
 - balance changes backed by repeatable scenario evidence where possible.
@@ -684,7 +685,9 @@ Extended backup roles, Chemical cascade) are unavailable and hidden, and
 every other tree node either does what it says or is marked not built. On
 30 Sep 2026 only four of the 34 non-baseline nodes changed anything when
 bought: Tarsal secretions, Orientation flight, Nurses and Honey worker
-(`docs/product-review-2026-09-30.md`).
+(`docs/product-review-2026-09-30.md`). FBB-1 (`plans/now/feedback-build.md`)
+hides the nine and marks the other unbuilt nodes without blocking them
+(Dave, 1 Oct 2026).
 
 Before Early Access: named saves and migrations, stable distributable builds,
 crash/feedback collection, accessibility review, performance budgets, asset
