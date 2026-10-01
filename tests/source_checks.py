@@ -2999,17 +2999,27 @@ def check_stage_role_skills(problems):
     avail_src = open(os.path.join(ROOT, "run_availability.gd"), encoding="utf-8").read()
 
     role_skill = {}      # role key -> skill id
-    role_const = {}      # role const name -> role key
-    for const, key, skill in re.findall(
-            r'"id":\s*(\w+),\s*"key":\s*"(\w+)"[^\n]*\n\s*"skill":\s*"([^"]*)"', roles_src):
-        role_const[const] = key
+    role_start_key = {}  # role key -> level/scenario starting count key
+    for const, key, skill, start_count_key, start_config in re.findall(
+            r'"id":\s*(\w+),\s*"key":\s*"(\w+)"[^\n]*\n\s*"skill":\s*"([^"]*)"[^\n]*\n\s*"start_count_key":\s*"([^"]*)",\s*"start_config":\s*"([^"]*)"', roles_src):
+        if not start_count_key and start_config:
+            problems.append(
+                "roles.gd: role %s has start_config but no start_count_key" % key)
+        elif start_count_key and not start_config:
+            problems.append(
+                "roles.gd: role %s has start_count_key but no start_config" % key)
+        role_start_key[key] = start_count_key
         if skill:
             role_skill[key] = skill
+    role_rows = re.findall(r'^\t\{\n(.*?)^\t\},?$', roles_src, re.M | re.S)
+    if len(role_start_key) != len(role_rows):
+        problems.append(
+            "roles.gd: every role row needs start_count_key and start_config fields")
     if not role_skill:
         problems.append("roles.gd: found no skill-gated role for the stage role-skill check")
         return
-    seed_keys = {role_const.get(const, ""): count_key
-                 for const, count_key in re.findall(r'Roles\.(\w+):\s*"(\w+)"', avail_src)}
+    if "SEED_COUNT_KEYS" in avail_src:
+        problems.append("run_availability.gd: SEED_COUNT_KEYS must not return; roles.gd owns start count keys")
 
     consts = dict(re.findall(r'^const\s+(\w+)\s*:?=\s*"([^"]*)"', stages_src, re.M))
 
@@ -3026,7 +3036,7 @@ def check_stage_role_skills(problems):
         grants = re.search(r'"skill_grants":\s*\[([^\]]*)\]', body)
         if grants and ('"%s"' % skill) in grants.group(1):
             return True
-        count = re.search(r'"%s":\s*(\d+)' % re.escape(seed_keys.get(role_key, "~")), body)
+        count = re.search(r'"%s":\s*(\d+)' % re.escape(role_start_key.get(role_key, "~")), body)
         if count and int(count.group(1)) > 0:
             return True
         return re.search(r'"queen_laying_backup":\s*"%s"' % re.escape(role_key), body) is not None

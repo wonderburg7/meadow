@@ -56,14 +56,6 @@ const REASON_TREE := "reason.tree"
 const REASON_FEATURE_OFF := "reason.feature_off"
 const REASON_FEATURE_ON := "reason.feature_on"
 
-## levels.gd's starting-count key for each role that has a skill. A newly
-## gated role adds its count key here; sheet_for() reports one missing.
-const SEED_COUNT_KEYS := {
-	Roles.NURSE: "nurses",
-	Roles.HONEY: "honey_makers",
-}
-
-
 static func sheet_for(run_definition: Dictionary, progression = null) -> Dictionary:
 	var bans: Array = run_definition.get("skill_bans", [])
 	var grants: Array = run_definition.get("skill_grants", [])
@@ -141,12 +133,9 @@ static func starting_skills(run_definition: Dictionary) -> Array:
 static func _seeded_skills(run_definition: Dictionary) -> Dictionary:
 	var seeded := {}
 	for role in Roles.ROLES:
-		if role.skill == "":
+		if role.skill == "" or role.start_count_key == "":
 			continue
-		if not SEED_COUNT_KEYS.has(role.id):
-			push_error("run_availability.gd: role %s has a skill but no SEED_COUNT_KEYS entry" % role.key)
-			continue
-		if int(run_definition.get(SEED_COUNT_KEYS[role.id], 0)) > 0:
+		if int(run_definition.get(role.start_count_key, 0)) > 0:
 			seeded[role.skill] = true
 	var backup_skill := Roles.skill_for(Roles.id_for_key(str(run_definition.get("queen_laying_backup", ""))))
 	if backup_skill != "":
