@@ -1915,16 +1915,18 @@ function Invoke-SliceFinish {
     if ($LASTEXITCODE -ne 0) { throw "could not read NEXTSTEPS.md from master" }
     $masterItems = Get-NextUpItemsFromText -Text $masterNextSteps
     $item = $masterItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
-    $handsOnNote = "none needed"
+    # A worker may file a hands-on check its Check: line never asked for
+    # (FBB-1, 1 Oct 2026), so the report names any new record; only the gate
+    # is limited to items whose Check: demands one.
+    $readyDirectory = Join-Path $worktreeRoot "checks\ready"
+    $branchChecks = if (Test-Path -LiteralPath $readyDirectory) { Get-ChildItem -LiteralPath $readyDirectory -Filter "C-*.md" | ForEach-Object { $_.Name } } else { @() }
+    $masterChecks = @(git -C $root ls-tree -r --name-only master -- checks/ready | ForEach-Object { Split-Path -Leaf $_ })
+    $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
+    $handsOnNote = if ($newEntries) { "checks/ready/ gained $($newEntries -join ', ')" } else { "none needed" }
     if ($item -and $item.Check -match '(?i)hands-on check') {
-        $readyDirectory = Join-Path $worktreeRoot "checks\ready"
-        $branchChecks = if (Test-Path -LiteralPath $readyDirectory) { Get-ChildItem -LiteralPath $readyDirectory -Filter "C-*.md" | ForEach-Object { $_.Name } } else { @() }
-        $masterChecks = @(git -C $root ls-tree -r --name-only master -- checks/ready | ForEach-Object { Split-Path -Leaf $_ })
-        $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
         if (-not $newEntries) {
             Stop-Slice -Cause "$id -- Check: names a hands-on check but checks/ready/ gained no independently owned C-<id>.md record" -Fix "write checks/ready/C-<next free number>.md on this branch in the format plans/reference/closeout.md 'Filing a hands-on check' gives, commit, and retry"
         }
-        $handsOnNote = "checks/ready/ gained $($newEntries -join ', ')"
     }
     elseif (-not $item) {
         Write-Output "$id -- no NEXTSTEPS.md entry found on master; skipping the hands-on-check gate"
@@ -2079,9 +2081,11 @@ function Invoke-SliceFinish {
     if ($item -and -not $successorId) {
         $nextSliceLine = $item.NextAfter
         # A prose `Next after:` (see Get-SuccessorId) is a note, not the next
-        # slice; the lane's new lead is.
-        if ($laneLead -and $item.NextAfter -notmatch '^\s*none\b') {
-            $nextSliceLine = "$($laneLead.Id) -- $($laneLead.Title)  (Next after was not a slice: $($item.NextAfter))"
+        # slice; the lane's new lead is. So is `none -- <plan> is complete`:
+        # that plan is finished, not the lane (FBB-1, 1 Oct 2026).
+        if ($laneLead) {
+            $nextAfterNote = if ($item.NextAfter -match '^\s*none\b') { "Next after: $($item.NextAfter)" } else { "Next after was not a slice: $($item.NextAfter)" }
+            $nextSliceLine = "$($laneLead.Id) -- $($laneLead.Title)  ($nextAfterNote)"
         }
     }
     elseif ($successorId) {

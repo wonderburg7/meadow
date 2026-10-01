@@ -1138,7 +1138,8 @@ class SliceDoctorTest(unittest.TestCase):
     )
 
     def finish_with_a_deferred_successor(self, lane_after_refill="",
-                                         next_after="T-2 -- the fixture's own successor."):
+                                         next_after="T-2 -- the fixture's own successor.",
+                                         check_record=None):
         """Close T-1, whose `Next after:` names T-2, with T-2 deferred under
         '## Not in the queue, and why' and $lane_after_refill as the Codex
         lane the refill leaves. Returns the finish process."""
@@ -1171,6 +1172,10 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, start.returncode, start.stderr)
         worktree = self.root / ".worktrees" / "T-1"
         (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        if check_record:
+            ready_dir = worktree / "checks" / "ready"
+            ready_dir.mkdir(parents=True, exist_ok=True)
+            (ready_dir / check_record).write_text("# fixture check\n", encoding="utf-8")
 
         archive_dir = worktree / "plans" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
@@ -1249,6 +1254,38 @@ class SliceDoctorTest(unittest.TestCase):
             "close candidate A in the audit if the runs agree)",
             finish.stdout,
         )
+
+    FIXTURE_LANE_LEAD = (
+        "1. **[Codex] T-3 -- fixture lead.**\n"
+        "   - Plan: `plans/fixture.md` -- fixture lead\n"
+        "   - Files: `scripts/other.gd`\n"
+        "   - Check: deterministic\n"
+        "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+        "   - Next after: none -- fixture plan is complete\n\n"
+    )
+
+    def test_report_names_the_lane_lead_when_the_plan_is_complete(self):
+        """FBB-1 (1 Oct 2026) ended its plan with `Next after: none -- ...
+        is complete`, and the report printed that as the next slice although
+        BS-9 led the lane. A finished plan is not a finished lane."""
+        finish = self.finish_with_a_deferred_successor(
+            self.FIXTURE_LANE_LEAD, next_after="none -- fixture plan is complete"
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn(
+            "Next slice:   T-3 -- fixture lead.  (Next after: none -- fixture plan is complete)",
+            finish.stdout,
+        )
+
+    def test_report_names_a_check_the_check_line_did_not_ask_for(self):
+        """FBB-1's worker filed C-92 although its Check: line named no
+        hands-on check, and the report said 'Hands-on: none needed'. The
+        report names any record the branch adds to checks/ready/."""
+        finish = self.finish_with_a_deferred_successor(
+            self.FIXTURE_LANE_LEAD, check_record="C-7.md"
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn("Hands-on:     checks/ready/ gained C-7.md", finish.stdout)
 
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
