@@ -854,7 +854,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 			_score_trip(bee)
 			if bee._apply_pending_role():
 				return
-		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+		bee.state = autonomous_state(bee, _after_delivery_state(bee))
 		return
 
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for(bee.current_load_type) <= 0.0:
@@ -874,6 +874,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		# waiting before 1.14 would otherwise never reach the discard below,
 		# because entering the stage changes no cell (C-42).
 		if bee.deposit_blocked_epoch == bee.hive.index_epoch and not challenge_discards:
+			_resume_own_job_if_indoors(bee)
 			return
 		bee.target_cell = bee.hive.find_cell_for(bee.current_load_type)
 		if bee.target_cell == null:
@@ -884,6 +885,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 				# finished shouldn't lose her whole trip for it; just wait
 				# here (still carrying it) and recheck next frame, so a
 				# cell finishing mid-wait picks her straight back up.
+				_resume_own_job_if_indoors(bee)
 				return
 			# Challenge 1 only: by the pollen stage both built cells hold
 			# nectar, so a nectar trip genuinely has nowhere to go until the
@@ -904,6 +906,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 			# Keep the load until a cell changes.  Discarding it here made a
 			# full comb silently erase every later foraging trip.
 			bee.deposit_blocked_epoch = bee.hive.index_epoch
+			_resume_own_job_if_indoors(bee)
 			return
 
 	var approach := approach_cell(bee, bee.target_cell, delta)
@@ -950,7 +953,29 @@ static func finish_depositing(bee: Node2D) -> void:
 		return
 	# Leaving the hive after a delivery is the forager routine's own move, so
 	# for a player-driven queen it is the player's next command to give.
-	bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+	bee.state = autonomous_state(bee, _after_delivery_state(bee))
+
+
+## GC-2. Where a bee goes once her load is down. An indoor worker was only
+## unloading on the way to her own job (bee.gd::_deliver_held_load), so she
+## goes back to it; a forager, or the queen, heads out as before.
+static func _after_delivery_state(bee: Node2D) -> int:
+	if BeeStatus.works_indoors(bee) and not bee.is_queen:
+		return bee._default_state_for_role()
+	return State.IN_HIVE_TO_EXIT
+
+
+## GC-2. An indoor worker whose load has nowhere to go does not stand and
+## wait the way a forager does (C-69): a full comb must never stop her own
+## job. She keeps the load, and the blocked epoch stops _deliver_held_load
+## sending her back here until a cell changes. Returns false, leaving the
+## bee waiting, for a forager or the queen.
+static func _resume_own_job_if_indoors(bee: Node2D) -> bool:
+	if not BeeStatus.works_indoors(bee) or bee.is_queen:
+		return false
+	bee.deposit_blocked_epoch = bee.hive.index_epoch
+	bee.state = autonomous_state(bee, bee._default_state_for_role())
+	return true
 
 
 # --- scoring a trip -----------------------------------------------

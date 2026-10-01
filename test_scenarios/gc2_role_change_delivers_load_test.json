@@ -1,0 +1,18 @@
+{
+  "cells": 7, "nectar_foragers": 1, "builders": 1,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 200},
+    {"do": "settle", "ticks": 30},
+    {"do": "set_bee_load", "target": {"current_role": "forager", "count": 1}, "resource": "nectar", "amount": 30},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "miner"},
+    {"do": "set_bee_load", "target": {"current_role": "comb_worker", "count": 1}, "resource": "nectar", "amount": 20},
+    {
+      "when": {"day_at_least": 2},
+      "do": "assert",
+      "condition": {"event_count_at_least": {"type": "forager_delivery", "count": 2}}
+    }
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
+}

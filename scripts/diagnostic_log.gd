@@ -713,6 +713,9 @@ func event_count(type: String, subtype: String = "") -> int:
 			return _cells_ripened
 		"cells_restocked":
 			return _cells_restocked
+		"forager_delivery":
+			# Every placement finish_depositing makes, whatever the bee's role.
+			return _forager_deliveries
 		"death":
 			if subtype != "":
 				return int(_deaths_by_cause.get(subtype, 0))
