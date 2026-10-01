@@ -47,8 +47,13 @@ sitting in a `.worktrees/` directory:
    - Every changed file must be in `files`, or be the owning plan, a test,
      `checks/` or `FUNCTION_MAP.md`. Anything else goes back to the worker
      as a question.
-   - For a `high` slice, or a stat that looks wrong, read the full diff of
-     the code files (not the docs) and check it against `proof`.
+   - For a `medium` or `high` slice, run the `code-review` skill on the
+     branch (args `low <branch>` for medium, `medium <branch>` for high).
+     It reads the diff itself, so don't also read it. A correctness finding
+     inside the slice's files goes back to the worker (SendMessage) once;
+     anything else goes in the trial note. Skip it for a `low` slice.
+   - If the stat looks wrong, read the full diff of the code files (not the
+     docs) and check it against `proof`.
    - Spot-check one claim from the worker's `check_run` by rerunning that
      single command.
 6. **Finish.** Run `finish` from the slice worktree as a background Bash
