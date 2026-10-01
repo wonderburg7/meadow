@@ -233,6 +233,49 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, clear.returncode, clear.stderr)
         self.assertEqual("clear", json.loads(clear.stdout)["status"])
 
+    def test_owner_reads_past_a_criss_cross_branchs_merge_base_warning(self):
+        """A branch merged both ways with master has two merge bases, so
+        `git diff master...<branch>` warns on stderr yet exits 0 with a good
+        diff. owner stopped on that warning before checking anything
+        (1 Oct 2026); only git's exit code may fail the scan."""
+        def git(*args: str) -> str:
+            return subprocess.run(
+                ["git", *args], cwd=self.root, capture_output=True, text=True, check=True
+            ).stdout
+
+        def commit_new_file(name: str) -> None:
+            (self.root / name).write_text(f"{name}\n", encoding="utf-8")
+            git("add", name)
+            git("commit", "-m", f"add {name}")
+
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        git("add", "NEXTSTEPS.md")
+        git("commit", "-m", "queue")
+        git("switch", "-c", "claude/criss-cross")
+        commit_new_file("plans/branch-side.md")
+        git("switch", "master")
+        commit_new_file("plans/master-side.md")
+        git("merge", "--no-ff", "-m", "master takes the branch side", "claude/criss-cross")
+        git("switch", "claude/criss-cross")
+        git("merge", "--no-ff", "-m", "the branch takes the master side", "master~1")
+        commit_new_file("tools/branch_only.py")
+        git("switch", "master")
+        self.assertEqual(
+            2, len(git("merge-base", "--all", "master", "claude/criss-cross").split()),
+            "the fixture must give the branch two merge bases with master",
+        )
+
+        owned = self.run_owner("tools/branch_only.py")
+        clear = self.run_owner("scripts/other.gd")
+
+        self.assertEqual(1, owned.returncode, owned.stderr)
+        report = json.loads(owned.stdout)
+        self.assertEqual("owned", report["status"])
+        self.assertEqual(["claude/criss-cross"], [o["branch"] for o in report["owners"]])
+        self.assertEqual(["tools/branch_only.py"], report["owners"][0]["paths"])
+        self.assertEqual(0, clear.returncode, clear.stderr)
+        self.assertEqual("clear", json.loads(clear.stdout)["status"])
+
     def test_doctor_names_the_bounded_plan_read_and_the_successor(self):
         """A claimed slice must arrive with its own reading command attached.
 
