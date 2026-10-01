@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PE-1` (`codex/PE-1`) | Codex | pacing milestones are timed to the hour | Codex | in progress | none | `plans/now/pacing-evidence.md` PE-1 — pacing milestones are timed to the hour |
-| `.worktrees/BS-4` (`claude/BS-4`) | Claude | a run buys Honey worker, makes honey and affords a tier-2 skill | Claude | in progress | none | `plans/now/brood-spine.md` BS-4 — the honey gate |
