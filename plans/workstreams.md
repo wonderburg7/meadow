@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/UI-F-3` (`codex/UI-F-3`) | Codex | comb cell labels follow text scale | Codex | in progress | none | `plans/now/ui-feedback.md` UI-F-3 -- comb cell labels follow text scale |
+| `.claude/worktrees/meadow-feedback-readiness-28f1b6` (`claude/meadow-feedback-readiness-28f1b6`) | Claude | queue the first feedback build's slices (FB-2, UI-F-2, BS-9) and reorder the Claude lane; plans and queue only | Claude | in progress | none | `plans/now/feedback-build.md` |
