@@ -44,69 +44,75 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
-4. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
-   - Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
-   - Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
-   - Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
-   - Next after: SC-2 -- cycling the typeface logs no engine error
+4. **[Claude] UT-1 -- every panel texture is visible in every theme**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
+   - Files: `scripts/ui_theme.gd`
+   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
+   - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
 
-5. **[Claude] SC-2 -- cycling the typeface logs no engine error**
-   - Plan: `plans/now/settings-and-corner.md` -- "SC-2 -- cycling the typeface logs no engine error"
-   - Files: `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/sc2_typeface_cycle_test.json` passes and its output has no `Parameter "fd" is null`, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/ui_theme.gd :: set_block_signals`
-   - Next after: SC-3 -- the project boots without GDScript warnings outside the HUD
+5. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
+   - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
+   - Next after: UT-3 -- a theme change recolours the in-run panels' text
 
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] UI-F-2 -- warnings carry a severity and a pending one is never lost**
-   - Plan: `plans/now/ui-feedback.md` -- "UI-F-2 -- warnings carry a severity and a pending one is never lost"
-   - Files: `scripts/hud.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/main.gd`, `scripts/year_winter.gd`
-   - Check: `grep -c "SEVERITY_" scripts/bee_survival.gd scripts/crab_spider.gd scripts/main.gd scripts/year_winter.gd` prints at least 1 for each file, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/hud.gd :: _pending_warning = {"text": text, "severity": severity}`
-   - Next after: none -- plans/now/ui-feedback.md is complete
-
-2. **[Codex] SR-1 -- a freed queen no longer breaks the problem messages**
+1. **[Codex] SR-1 -- a freed queen no longer breaks the problem messages**
    - Plan: `plans/now/scenario-reds.md` -- "SR-1 -- a freed queen no longer breaks the problem messages"
    - Files: `scripts/problem_messages.gd`
    - Check: `python tools/run_scenario.py test_scenarios/forage_radius_wide_test.json` ends `status=passed`, and `tools/verify.ps1` is green
    - Proof: `present: scripts/problem_messages.gd :: static func no_foragers(queen: Node2D)`
    - Next after: SR-2 -- the G3 fixture owns the Honey worker skill
 
-3. **[Codex] SR-2 -- the G3 fixture owns the Honey worker skill**
+2. **[Codex] SR-2 -- the G3 fixture owns the Honey worker skill**
    - Plan: `plans/now/scenario-reds.md` -- "SR-2 -- the G3 fixture owns the Honey worker skill"
    - Files: `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd`
    - Check: `python tools/run_scenario.py test_scenarios/g3_actions_offered_test.json` ends `status=passed`, and `tools/verify.ps1` is green
    - Proof: `absent: test_scenarios/g3_actions_offered_test.json :: skill.brood.honey_worker`
    - Next after: SR-3 -- the disease-off fixture starts every bee newborn
 
-4. **[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
+3. **[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
    - Plan: `plans/now/scenario-reds.md` -- "SR-3 -- the disease-off fixture starts every bee newborn"
    - Files: `test_scenarios/h5_disease_off_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json` ends `status=passed`, and `tools/verify.ps1` is green
    - Proof: `absent: test_scenarios/h5_disease_off_test.json :: starter_age_spread`
    - Next after: SR-4 -- the command tray fits its content after a resize to 800x600
 
-5. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
+4. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
    - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
    - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
    - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
    - Next after: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
 
+5. **[Codex] SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question**
+   - Plan: `plans/now/scenario-reds.md` -- "SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question"
+   - Files: `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
+   - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes with its `TESTS_NOT_IN_VERIFY` entry removed and `tools/verify.ps1` is green, or the slice stops with the evidence that the flower lifecycle is wrong
+   - Proof: `present: tests/source_checks.py :: "test_sf1_founding_flower_mix":`
+   - Next after: none -- plans/now/scenario-reds.md is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
+- **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for UI-F-2 and SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`.
+- **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
+- **SC-1** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full.
+- **SC-2** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows UT-1 and UT-3, which also edit `scripts/ui_theme.gd`.
+- **SC-3** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows SC-1, which also edits `scripts/debug_panel.gd`.
+- **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
 - **BS-6** (`plans/now/brood-spine.md`) -- startable since BS-8 landed (1 Oct 2026); waits for UI-F-2 (Codex lane) to land, since both edit `scripts/main.gd`.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
-- **SC-4** (`plans/now/settings-and-corner.md`) -- waits for UI-F-2 and SR-4 (Codex lane) to land, since all three edit `scripts/hud.gd`.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).

@@ -128,7 +128,7 @@ static func _announce_escape(bee: Node2D) -> void:
 		return
 	bee.world.hud.show_warning(
 		ProblemMessages.crab_spider_escape(bee.bee_name),
-		"crab_spider_escape", GameConfig.crab_spider_escape_min_gap
+		"crab_spider_escape", GameConfig.crab_spider_escape_min_gap, bee.world.hud.SEVERITY_DANGER
 	)
 
 

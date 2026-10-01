@@ -488,6 +488,9 @@ var _cell_popup_last_epoch: int = -1
 var warning_panel: PanelContainer
 var warning_label: Label
 var warning_timer: float = 0.0
+const SEVERITY_INFO := 0
+const SEVERITY_NOTICE := 1
+const SEVERITY_DANGER := 2
 ## Set by challenge_runner.gd for the length of a Challenge -- see
 ## TUTORIAL_PLAN.md's "Don't include the warning messages" note. Every
 ## other caller of show_warning is unaffected outside a Challenge.
@@ -507,8 +510,7 @@ const MIN_DWELL_SECONDS := 6.0
 var _warning_shown_at: float = -INF
 var _warning_severity: int = -1
 ## The one message waiting behind the current one, or empty. A later
-## arrival while something is already pending simply replaces it -- same
-## last-call-wins rule show_warning always had, just deferred.
+## arrival only replaces it when it is at least as important.
 var _pending_warning: Dictionary = {}
 
 # --- problem strip ------------------------------------------------
@@ -1833,7 +1835,8 @@ func show_warning(text: String, key: String = "", min_gap: float = 0.0, severity
 
 	if warning_panel.visible and severity <= _warning_severity \
 			and Session.sim_time - _warning_shown_at < MIN_DWELL_SECONDS:
-		_pending_warning = {"text": text, "severity": severity}
+		if _pending_warning.is_empty() or severity >= _pending_warning.get("severity", SEVERITY_INFO):
+			_pending_warning = {"text": text, "severity": severity}
 		return
 
 	_show_warning_now(text, severity)
@@ -2169,11 +2172,11 @@ func _process(_delta: float) -> void:
 	_update_stage_marker_arrow()
 	if warning_panel.visible:
 		warning_timer -= _delta
-		var dwell_elapsed := Session.sim_time - _warning_shown_at >= MIN_DWELL_SECONDS
-		if not _pending_warning.is_empty() and dwell_elapsed:
-			_show_warning_now(_pending_warning.get("text", ""), _pending_warning.get("severity", 0))
-		elif warning_timer <= 0.0:
-			warning_panel.visible = false
+		if warning_timer <= 0.0:
+			if not _pending_warning.is_empty():
+				_show_warning_now(_pending_warning.get("text", ""), _pending_warning.get("severity", SEVERITY_INFO))
+			else:
+				warning_panel.visible = false
 
 	_popup_cadence_elapsed -= _delta
 	var cadence_due := _popup_cadence_elapsed <= 0.0

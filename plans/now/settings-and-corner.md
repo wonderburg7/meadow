@@ -1,7 +1,7 @@
 # Settings window and corner HUD -- findings from the 1 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SC-1 -- the settings window does not move under a Text scale click (Claude lane) | Dependency: SC-4 waits for UI-F-2 and SR-4 (Codex lane), which both edit `scripts/hud.gd` | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: SC-1 -- the settings window does not move under a Text scale click (startable; waits for room in the Claude lane) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-01
 
 **Objective.** Four defects seen while running C-69 to C-73 by computer use on
 1 Oct 2026 are fixed: C-72 failed once in three runs, cycling the typeface
@@ -14,9 +14,14 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
 | SC-1 | `scripts/debug_panel.gd`, `checks/ready/C-72.md` | high | Claude | yes | none |
-| SC-2 | `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json` | medium | Claude | yes | none |
+| SC-2 | `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json` | medium | Claude | yes, after UT-1 and UT-3 (share `ui_theme.gd`) | UT-1, UT-3 |
 | SC-3 | `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd` | low | Claude | yes, after SC-1 (shares `debug_panel.gd`) | SC-1 |
-| SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | UI-F-2 and SR-4 landing (`scripts/hud.gd`) |
+| SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | SR-4 landing; not alongside UT-4 (all edit `scripts/hud.gd`) |
+
+**Neighbouring plan.** `plans/now/ui-texture-polish.md` (UT-1 to UT-5) came
+from the same day's pass over C-57 to C-68 and shares two files: UT-1 and
+UT-3 edit `scripts/ui_theme.gd` (SC-2 goes after them) and UT-4 edits
+`scripts/hud.gd` (SC-4 and UT-4 run one after the other, either order).
 
 A slice reads its own section and nothing else. Not planned: the hive view
 swapping the last top-bar icon (it shows the view the button switches to,
@@ -46,7 +51,10 @@ settled in the same pass (for example: wait one frame after
 `refresh_for_setting`, then clamp `scroll_vertical` to the bar's maximum), so
 a later click on any row moves nothing until its own apply. Reproduce run 1
 before changing anything; if it does not reproduce, stop and report rather
-than guess. Rewrite `checks/ready/C-72.md`'s "What this checks" to start from
+than guess. `plans/now/ui-texture-polish.md` ("Source") puts a similar
+"arrows stepped the other row" sighting down to the capture tool; this one
+is different because the game's own state changed -- Typeface really did
+become Open Sans, and the boot log carries SC-2's error from `_cycle_option`. Rewrite `checks/ready/C-72.md`'s "What this checks" to start from
 Text scale 2.0, step it to 1.50 with five − clicks, wait two seconds, then
 click + four times quickly -- 2.0 is the maximum, so the old wording could
 not be run from the default -- and point its Owner line at this plan.

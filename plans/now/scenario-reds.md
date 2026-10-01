@@ -1,7 +1,7 @@
 # Scenario reds -- the four red scenarios and the red SF-1 test
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: SR-1 -- a freed queen no longer breaks the problem messages (Codex lane, queued 1 Oct 2026) | Dependency: SR-4 follows UI-F-2 (`plans/now/ui-feedback.md`), which also edits `scripts/hud.gd` | Verified: 2026-10-01
+Status: active | Owner: Dave / Codex | Next: SR-1 -- a freed queen no longer breaks the problem messages (Codex lane, queued 1 Oct 2026) | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-01
 
 **Objective.** Every short scenario in `python tools/scenario_sweep.py` is
 green again, and the one exempt unit test either passes or its failure is
@@ -21,7 +21,7 @@ were tried on throwaway copies of their fixtures and both ended
 | SR-1 | a freed queen no longer breaks the problem messages | `scripts/problem_messages.gd` | yes | low |
 | SR-2 | the G3 fixture owns the Honey worker skill | `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd` | yes | low |
 | SR-3 | the disease-off fixture starts every bee newborn | `test_scenarios/h5_disease_off_test.json` | yes | low |
-| SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | after UI-F-2 merges | high |
+| SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- UI-F-2 closes with this refill | high |
 | SR-5 | the SF-1 flower-mix test passes, or is shown to be a simulation question | `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
 
 All five run in the Codex lane and share no file with the Claude lane
