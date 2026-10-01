@@ -44,6 +44,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
+4. **[Claude] UT-1 -- every panel texture is visible in every theme**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
+   - Files: `scripts/ui_theme.gd`
+   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
+   - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
+
+5. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
+   - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
+   - Next after: UT-3 -- a theme change recolours the in-run panels' text
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -88,6 +102,9 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
+- **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for UI-F-2 and SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`.
+- **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
 - **BS-6** (`plans/now/brood-spine.md`) -- startable since BS-8 landed (1 Oct 2026); waits for UI-F-2 (Codex lane) to land, since both edit `scripts/main.gd`.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
