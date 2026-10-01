@@ -44,6 +44,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
+4. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
+   - Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
+   - Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
+   - Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
+   - Next after: SC-2 -- cycling the typeface logs no engine error
+
+5. **[Claude] SC-2 -- cycling the typeface logs no engine error**
+   - Plan: `plans/now/settings-and-corner.md` -- "SC-2 -- cycling the typeface logs no engine error"
+   - Files: `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/sc2_typeface_cycle_test.json` passes and its output has no `Parameter "fd" is null`, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/ui_theme.gd :: set_block_signals`
+   - Next after: SC-3 -- the project boots without GDScript warnings outside the HUD
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -92,6 +106,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
+- **SC-4** (`plans/now/settings-and-corner.md`) -- waits for UI-F-2 and SR-4 (Codex lane) to land, since all three edit `scripts/hud.gd`.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
