@@ -29,7 +29,9 @@ All five run in the Codex lane and share no file with the Claude lane
 and SR-4 shares `scripts/hud.gd` with UI-F-2; one lane worked top to bottom
 never has two of them open. SR-4 and SR-5 were chosen by Dave on 1 Oct 2026
 ("chase it"; "a diagnosis slice"). A slice reads its own section and
-nothing else.
+nothing else. Two Claude-lane slices wait on this plan: UT-4
+(`plans/now/ui-texture-polish.md`) for SR-4, which edits `scripts/hud.gd`,
+and UT-5 for SR-2 and SR-4, which edit `scripts/scenario_actions.gd`.
 
 ## SR-1 -- a freed queen no longer breaks the problem messages
 
