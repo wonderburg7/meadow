@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-2 -- a bee changing job puts down what she carries (startable); GC-3 -- honey stops creating energy (gated on PE-2) | Dependency: GC-3 waits for PE-2 (`plans/now/pacing-evidence.md`) | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-2 landed 1 Oct 2026, hands-on check C-90 | Dependency: GC-3 waits for PE-2 (`plans/now/pacing-evidence.md`) | Verified: 2026-10-01
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
