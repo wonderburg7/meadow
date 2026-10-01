@@ -163,12 +163,54 @@ def _report_failure(label: str, stdout: str, stderr: str, tail_lines: int = 15) 
         print("  %s" % line, file=sys.stderr)
 
 
+# Each Godot path prepare_launch has handled in this process, mapped to the
+# line that refused it, or None when it may launch.
+_prepared: dict[str, str | None] = {}
+
+
+def prepare_launch(godot_path: str) -> str | None:
+    """Make this process and worktree fit to launch Godot, once per process.
+
+    Godot crashes before boot when it cannot write user:// (Codex's sandbox
+    denies it), so that is redirected first. A worktree's missing or stale
+    .godot then fails the boot on a script it cannot resolve, and a scenario
+    boot that fails that way never quits: run_once waits out its whole
+    timeout. main() and run_once() both come through here, so a caller that
+    imports run_once -- the Godot-booting unit tests, pacing_gates.py --
+    cannot skip it; verify.ps1 runs those tests before its own boot stage
+    seeds the cache (1 Oct 2026).
+
+    Returns None when the launch may go ahead, else the line that refused
+    it. A refusal is remembered, so a batch of runs stops at once instead of
+    booting the primary checkout again for each. Lines go to stderr, which
+    keeps stdout's one-line verdict contract.
+    """
+    if godot_path in _prepared:
+        return _prepared[godot_path]
+    redirected = ensure_writable_user_dir()
+    if redirected:
+        print(redirected, file=sys.stderr)
+    refusal = None
+    if Path(godot_path).is_file():
+        cache_ok, cache_line = godot_cache.ensure_cache(ROOT, godot_path)
+        if cache_ok:
+            print(cache_line, file=sys.stderr)
+        else:
+            refusal = cache_line
+    _prepared[godot_path] = refusal
+    return refusal
+
+
 def run_once(scenario_path: Path, godot_path: str, timeout: int,
              fixed_fps: int | None = None, seed_override: int | None = None) -> Path | None:
     """Launch one headless run and return the session_*.jsonl it wrote,
     or None (with an error already printed to stderr) if it didn't
-    produce one.
+    produce one. A launch prepare_launch refuses never starts.
     """
+    refusal = prepare_launch(godot_path)
+    if refusal is not None:
+        print("error: not launching Godot -- %s" % refusal, file=sys.stderr)
+        return None
     run_id = uuid.uuid4().hex[:12]
     cmd = [godot_path, "--headless", "--disable-crash-handler"]
     if fixed_fps is not None:
@@ -874,19 +916,13 @@ def main() -> int:
             return 1
         return submit_background_job(sys.argv[1:], args.job_root)
 
-    # Godot crashes before boot when it cannot write user:// (Codex's
-    # sandbox denies it), so that is redirected before any launch below.
-    # A worktree's missing or stale .godot would otherwise fail every run
-    # below as a compile error or a fake collapse. Stderr keeps stdout's
-    # one-line verdict contract.
-    redirected = ensure_writable_user_dir()
-    if redirected:
-        print(redirected, file=sys.stderr)
-    if Path(args.godot_path).is_file():
-        cache_ok, cache_line = godot_cache.ensure_cache(ROOT, args.godot_path)
-        print(cache_line, file=sys.stderr)
-        if not cache_ok:
-            return 1
+    # A writable user:// and a current .godot before any launch below (see
+    # prepare_launch); without them every run fails as a compile error, a
+    # timeout or a fake collapse.
+    refusal = prepare_launch(args.godot_path)
+    if refusal is not None:
+        print(refusal, file=sys.stderr)
+        return 1
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
     if args.experiment is not None:

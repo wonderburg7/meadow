@@ -111,7 +111,7 @@ $lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", 
 # not. Before 30 Sep 2026 none of these ran anywhere and two had gone red
 # unseen. A module that belongs in neither list must be exempted, with its
 # reason, in tests/source_checks.py::TESTS_NOT_IN_VERIFY.
-$unitModules = @("tests.test_conditions", "tests.test_equivalence", "tests.test_headless_efficiency_baseline", "tests.test_headless_experiments", "tests.test_headless_jobs", "tests.test_headless_profiles", "tests.test_headless_route", "tests.test_headless_verdicts", "tests.test_save_migrations", "tests.test_session_cost_stops", "tests.test_signal_catalogue", "tests.test_layout_regression", "tests.test_hc8_tray_first_open", "tests.test_hc16_tray_reselect")
+$unitModules = @("tests.test_conditions", "tests.test_equivalence", "tests.test_headless_efficiency_baseline", "tests.test_headless_experiments", "tests.test_headless_jobs", "tests.test_headless_profiles", "tests.test_headless_route", "tests.test_headless_verdicts", "tests.test_run_scenario_launch", "tests.test_save_migrations", "tests.test_session_cost_stops", "tests.test_signal_catalogue", "tests.test_layout_regression", "tests.test_hc8_tray_first_open", "tests.test_hc16_tray_reselect")
 
 # The lifecycle suite runs only when the branch's diff against master can
 # reach it -- in the branch scope, finish's included. It used to run in the
