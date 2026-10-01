@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-4 -- the honey gate (startable, specified 30 Sep 2026); BS-7 -- every Scenario's queen backs up as a Nurse (startable, specified 30 Sep 2026); BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, decided (decision 6), specified in BS-4's closeout | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-09-30
+Status: active | Owner: Dave / Claude Code | Next: BS-8 -- a role's starting count is one roles.gd field (startable, Codex lane, from the 30 Sep architecture review); BS-6 -- developer edits, specified 1 Oct 2026, gated on BS-8 (BS-7 landed 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-01
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -86,10 +86,8 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-4 | a run buys Honey worker, makes honey and affords a tier-2 skill | `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md` | startable | medium |
-| BS-7 | every Scenario's queen backs up as a Nurse, so a lone queen raises a worker | `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json` | startable | medium |
 | BS-8 | a role's starting-count key is one field on its roles.gd row, before step 8 gates more roles | `scripts/roles.gd`, `scripts/run_availability.gd`, `scripts/world_building.gd`, `scripts/main.gd`, `tests/source_checks.py` | startable (Codex lane) | medium |
-| BS-6 | developer edits to the table change what a run starts with | named in its specification | after BS-4's closeout specifies it (decision 6 settled the persistence question) | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | gated: BS-8 lands first (shared file; BS-7 landed 1 Oct 2026) | high |
 
 BS-4, BS-7 and BS-8 share no file and are independent. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
@@ -98,122 +96,9 @@ BS-1, BS-2, BS-3 and BS-5 shipped between 28 and 30 Sep 2026; each
 specification is in `plans/archive/` under its id and date
 (`plans/archive/BS-1_2026-09-28.md` and so on).
 
-## BS-4 — the honey gate
+BS-4 shipped 2026-10-01; its specification is `plans/archive/BS-4_2026-10-01.md`.
 
-Level: medium (one scenario and a recorded result; a stall is escalated,
-never rebalanced here). Specified 30 Sep 2026 in BS-5's closeout.
-
-`plans/design/progression.md` section 6, constraint 2: a run must start with
-enough empty comb for a Honey worker to make the honey its first tier-2
-purchase costs, "checked by a scenario run, not an assertion in code". BS-3
-made that real: no run owns Honey worker unless it seeds honey makers.
-
-- **Scenario.** `test_scenarios/bs4_honey_gate_test.json`, the starting
-  colony of level 5 copied from `levels.gd` (its counts, `stock` and
-  `automine`; it seeds nurses but no honey makers, so it starts owning
-  Nurses and not Honey worker), with `"winter": false` -- the gate is a
-  summer question, and WO-1 makes winter arrive on day 21.
-- **Actions, using only `when` keys the harness honours.**
-  `scenario_actions.gd::_legacy_when_spec` translates `day_at_least`,
-  `population_at_least`, `food_stores_at_least` and a few others, and
-  silently drops the rest: a `when` on `hive_total` or `all_of` is met at
-  once, so the action fires on the first tick (product review, 30 Sep 2026:
-  such a `buy_skill` fired at game time 1.75 and was refused for cost).
-  1. `buy_skill` `skill.brood.honey_worker` with no `when`: level 5's `stock`
-     is four full nectar cells and two full pollen cells
-     (`world_building.gd::_stock_starting_comb`), so its 150 nectar and 60
-     pollen are there from the start.
-  2. `assign_role` two foragers to `honey`, selector `{"current_role":
-     "forager", "count": 2}`: `scenario_actions.gd::_resolve_bees` takes the
-     first two by bee id and cannot tell nectar from pollen foragers, and
-     either serves, since the honey is made from the stocked cells.
-  3. `buy_skill` `skill.colony.comb_worker` (20 honey, 200 nectar), then
-     `assert` `{"skill_owned": "skill.colony.comb_worker"}`, both with
-     `"when": {"food_stores_at_least": 20}`. That key counts ripe honey
-     only, the stricter reading, so the honey the cost counts is there. Both
-     fire in file order on the tick it first holds, and `skill_owned` is
-     special-cased in `_evaluate_assert_condition`, so the assert really
-     checks. Put no `settle` between them: `settle` ignores `when` and would
-     run out on the first ticks (`scenario_actions.gd::run_pending`).
-
-  Stop when the actions resolve, `max_days` 30. A refused `buy_skill` logs
-  its reason (`block.cost` and the like) in the session file. If Comb
-  worker is refused for nectar while the honey was there, that is not the
-  honey gate failing: report it as nectar, do not escalate it as the
-  constraint. If a purchase is refused for a reason other than cost (the
-  tree's tier rule, say), say which in the result rather than working round
-  it.
-- **Result.** Add one line to `plans/design/progression.md` section 11,
-  step 7: the day Comb worker was bought, or the step the run stalled at,
-  naming the fixture. In the same edit, correct that file's Status line,
-  whose `Next:` still says "BS-1 queued in the Claude lane" (dated 17 Sep),
-  to name the Brood spine slice that follows BS-4, and step 7's "(BS-1 to
-  BS-6)" to "(BS-1 to BS-8)". The plan review left both to this slice on
-  30 Sep 2026 because the file is on its `Files:` line.
-- **Escalate** if the run stalls on honey or comb: that is the constraint
-  failing, and the fix is a balance decision for Dave -- more pre-built
-  empty comb in `levels.gd`, or a cheaper first tier-2 skill -- not this
-  slice's to make.
-
-```queue
-**[Claude] BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill**
-- Plan: `plans/now/brood-spine.md` -- "BS-4 — the honey gate"
-- Files: `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md`
-- Check: `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json` passes with Comb worker bought within 30 days, or its failure names the stalled step and the options go to Dave; `plans/design/progression.md` section 11 step 7 records the result; and `tools/verify.ps1` is green
-- Proof: `absent: plans/design/progression.md :: bs4_honey_gate_test`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
-
-## BS-7 — every Scenario's queen backs up as a Nurse
-
-Level: medium (one data change and one scenario; a failure is escalated,
-never tuned here). Decision 5 above.
-
-**Now.** `scripts/levels.gd` gives only Challenge 1's queen a
-`queen_laying_backup` (`"nurse"`). Scenario levels 3-7 give none, so a
-Scenario owns Nurses only if it seeds nurses (levels 4-6). Levels 3 and 7
-raise nothing until the player buys Nurses: at seed 4242, level 3's start ran
-11 days with no brood fed and one larva dead (product review, 30 Sep 2026).
-
-**Change.** In `scripts/levels.gd`, add `const ORDINARY_QUEEN_BACKUP :=
-"nurse"` above `LEVELS`, with a comment naming decision 5 of
-`plans/now/brood-spine.md`, and add `"queen_laying_backup":
-ORDINARY_QUEEN_BACKUP,` to levels 3, 4, 5, 6 and 7. Nothing else: `bee.gd`
-(the queen's default backup, where it reads `queen_laying_backup`) and
-`run_availability.gd::_seeded_skills` already read the field, so the queen
-takes the backup and the run owns Nurses through the existing rule.
-
-**Must not change.** Level 1 keeps its own literal `"nurse"`; level 2
-(Challenge 2) stays without a backup and keeps Nurses free at 2.5;
-`bee.gd`, `run_availability.gd` and every existing scenario JSON (a fixture
-is its own run definition).
-
-**Scenario.** `test_scenarios/bs7_queen_backup_nurse_test.json`: level 3's
-starting colony copied from `levels.gd` (3 cells, one nectar and one pollen
-forager, no nurses, builders or miners) plus `"queen_laying_backup":
-"nurse"`, `"random_seed": 4242` and `"winter": false`. Actions: `settle` one
-tick; `assert` `{"skill_owned": "skill.brood.nurses"}`; then the same
-`assert` with `"when": {"population_at_least": {"count": 4}}`. With no role
-named, that key counts every adult bee including the queen, so it holds only
-once a worker has hatched. `"stop": {"when_actions_resolved": true,
-"max_days": 8}`.
-
-**Escalate** if the second assert is still unresolved at day 8: a queen
-nursing as her backup does not raise a worker from level 3's start, and what
-to change is Dave's call.
-
-**Downstream.** PE-2, the played pacing arc (`plans/now/pacing-evidence.md`,
-"Later"), starts from a Scenario whose queen has this backup, so it waits
-for BS-7 as well as for WO-1 and the Colony Run definition.
-
-```queue
-**[Claude] BS-7 -- every Scenario's queen backs up as a Nurse**
-- Plan: `plans/now/brood-spine.md` -- "BS-7 — every Scenario's queen backs up as a Nurse"
-- Files: `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/bs7_queen_backup_nurse_test.json` passes, a worker hatching from level 3's start within 8 days, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/levels.gd :: ORDINARY_QUEEN_BACKUP`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-7 shipped 2026-10-01; its specification is `plans/archive/BS-7_2026-10-01.md`.
 
 ## BS-8 — a role's starting count is one field on its roles.gd row
 
@@ -254,11 +139,48 @@ fallback (product-scope §6.2). **Escalate** if the equivalence run differs.
 Each is specified in full, with its own `queue` block, when what it waits for
 has shipped. These notes fix only what the earlier slices must not preclude.
 
-- **BS-6 — developer edits.** Decided 30 Sep 2026 (decision 6): (a), a
-  `user://` override private to one machine, with a small store applied at
-  run start and a "reset to the game's data" control, never changing a
-  fixture. The rejected option (b) wrote edits back to `levels.gd` or a
-  scenario JSON. BS-4's closeout specifies BS-6 in full.
+Nothing is outlined here now: BS-6 is specified in full below.
+
+## BS-6 — developer edits to the table change what a run starts with
+
+Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
+BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
+one machine, never a fixture). **Gated** on BS-8 landing, because both edit
+`run_availability.gd` (BS-7, which also read level definitions, landed 1 Oct 2026);
+the lanes may not share a file.
+
+- **Scope.** The Run availability table (`run_availability_panel.gd`, opened
+  from the debug panel) is read-only today. Each skill row gains a control
+  cycling start / tree / unavailable for the level being viewed. An edit
+  changes that level's run definition only through `skill_grants` and
+  `skill_bans`, the two keys `sheet_for` already honours; it never edits a
+  starting count, since "seeding implies owning" derives from counts.
+- **Store.** New `scripts/developer_overrides.gd`: one small JSON file,
+  `user://developer_start_overrides.json`, mapping level id to
+  `{"grants": [...], "bans": [...]}`. `apply(level_id, definition)` returns a
+  copy of the definition with the lists merged (a ban still wins over a
+  grant, as in `run_availability.gd`). Missing or unparseable file reads as
+  no overrides.
+- **Hook.** `main.gd` line ~417, where `RunAvailability.sheet_for(level)` runs,
+  passes the level through `apply` first. Scenario runs (level 999 /
+  `SCENARIO_LEVEL_ID`) and headless runs are never overridden, so every
+  fixture and `tools/verify.ps1` behave exactly as before.
+- **Reset.** A "Reset to the game's data" button on the panel deletes the
+  file and rebuilds the table. Edited rows are marked so a developer can see
+  they differ from `levels.gd`.
+- **Must not change:** `levels.gd`, any scenario JSON, save files, or
+  `progression.gd`'s ownership answers.
+- **Escalate** if a run started with an override and one without differ in
+  anything beyond starting ownership.
+
+```queue-gated
+**[Claude] BS-6 -- developer edits to the table change what a run starts with**
+- Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
+- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`
+- Check: `tools/verify.ps1` is green, a `source_checks.py` check proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
+- Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
+- Next after: none -- the Brood spine plan completes here
+```
 
 ## Read on demand
 

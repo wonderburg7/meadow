@@ -1,0 +1,59 @@
+{
+ "cells": 12,
+ "nectar_foragers": 16,
+ "pollen_foragers": 6,
+ "nurses": 2,
+ "builders": 3,
+ "miners": 3,
+ "automine": true,
+ "stock": {
+  "nectar": 4,
+  "pollen": 2
+ },
+ "unlocks": [],
+ "win_conditions": [],
+ "skill_grants": [],
+ "skill_bans": [],
+ "skill_delays": {},
+ "winter": false,
+ "random_seed": 804,
+ "snapshot_seconds": 200,
+ "actions": [
+  {
+   "do": "buy_skill",
+   "skill": "skill.brood.honey_worker"
+  },
+  {
+   "do": "assign_role",
+   "target": {
+    "current_role": "forager",
+    "count": 2
+   },
+   "role": "honey"
+  },
+  {
+   "do": "buy_skill",
+   "skill": "skill.colony.cell_capacity"
+  },
+  {
+   "do": "buy_skill",
+   "skill": "skill.colony.comb_worker",
+   "when": {
+    "food_stores_at_least": 20
+   }
+  },
+  {
+   "do": "assert",
+   "condition": {
+    "skill_owned": "skill.colony.comb_worker"
+   },
+   "when": {
+    "food_stores_at_least": 20
+   }
+  }
+ ],
+ "stop": {
+  "when_actions_resolved": true,
+  "max_days": 30
+ }
+}

@@ -31,7 +31,7 @@ functions were grepped and exist; the one wrong attribution found is F11.
 | F7 | `plans/design/progression.md`'s Status line still says "BS-1 queued in the Claude lane" (Verified 17 Sep) and step 7 says "BS-1 to BS-6"; BS-1..BS-5 shipped and BS-7, BS-8 exist | `grep -m1 Status: plans/design/progression.md` | low | Queued -- BS-4 (`plans/now/brood-spine.md`), whose `Files:` line owns the file, corrects both in its result edit |
 | F8 | PE-2's dependency on BS-7 was recorded in pacing-evidence only (README rule 7) | `plans/now/pacing-evidence.md` Status line vs `plans/now/brood-spine.md` BS-7 | low | Fixed -- "Downstream" line under BS-7 |
 | F9 | BS-4 asked for "two nectar foragers" but `scenario_actions.gd::_resolve_bees` selects by `current_role` and `count` only | `python tools/func.py scripts/scenario_actions.gd _resolve_bees` | low | Fixed -- BS-4 now gives the selector and says either forager kind serves |
-| F10 | skill-screen's "Dependencies" paragraph described BS-2 and SK-1 as ahead in the lane; both shipped 30 Sep | `plans/now/skill-screen.md` | low | Fixed -- paragraph reduced to what still holds |
+| F10 | skill-screen's "Dependencies" paragraph described BS-2 and SK-1 as ahead in the lane; both shipped 30 Sep | `plans/archive/skill-screen_2026-10-01.md` | low | Fixed -- paragraph reduced to what still holds |
 | F11 | UI-F-2 attributes the pending-slot overwrite to `_show_warning_now`; it is `show_warning` (`hud.gd` line 1836 hint) | `grep -n "_pending_warning = {" scripts/hud.gd` | low | Fixed -- one word |
 
 All 14 open slices were marked **Retain**: each defect was confirmed in the

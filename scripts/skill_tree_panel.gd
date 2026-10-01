@@ -42,7 +42,7 @@ const DIRECTIONS := [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 1),
 	Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, -1),
 ]
-const TILE_SIZE := 11.0
+const TILE_SIZE := 56.0
 const GRID_RINGS := 9
 
 const STATE_OWNED := "owned"
@@ -111,8 +111,9 @@ func _ready() -> void:
 	grid.tile_size = TILE_SIZE
 	# Fallback text; _get_tooltip answers per tile.
 	grid.tooltip_text = "The skill tree"
-	var extent := Shapes.hex_to_pixel(GRID_RINGS, 0, TILE_SIZE).x + TILE_SIZE
-	grid.custom_minimum_size = Vector2(extent * 2.0, sqrt(3.0) * TILE_SIZE * (GRID_RINGS * 2 + 1))
+	grid.rings = GRID_RINGS
+	# The grid clips and pans, so it no longer needs room for every ring.
+	grid.custom_minimum_size = Vector2(300, 160)
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.on_select = _on_tile_selected
 	column.add_child(grid)
@@ -139,6 +140,7 @@ func open() -> void:
 	_was_paused = get_tree().paused
 	get_tree().paused = true
 	_rebuild()
+	grid.reset_view()
 	# A hidden control keeps the size it had when the window last changed;
 	# re-anchoring measures the viewport as it is now.
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -169,7 +171,7 @@ func _rebuild() -> void:
 	var tiles: Dictionary = {}   # Vector2i -> tile dictionary
 	tiles[Vector2i(0, 0)] = {"kind": "centre", "tip": "The colony's stores:\n" + _stores_text(stores)}
 	for i in range(Skills.SECTORS.size()):
-		tiles[DIRECTIONS[i]] = {"kind": "title", "tip": Skills.SECTORS[i].label}
+		tiles[DIRECTIONS[i]] = {"kind": "title", "tip": Skills.SECTORS[i].label, "label": Skills.SECTORS[i].label}
 
 	var edges: Array = []   # [from axial, to axial]
 	for skill in Skills.SKILLS:
@@ -338,50 +340,147 @@ func _label(text: String, variation: String) -> Label:
 	return label
 
 
-## The hex grid itself. Draws from `tiles`, which the panel fills on open;
-## the tooltip and a click both find the tile under the pointer with
-## Shapes.pixel_to_hex. It redraws only when told to: on open, on a click
-## and after a purchase.
+## The hex grid itself. Draws from `tiles`, which the panel fills on open.
+## It clips to its own rectangle and shows the tree through a pan and a zoom:
+## dragging moves it, the wheel zooms about the pointer, and the tooltip and
+## a click both invert the same transform before Shapes.pixel_to_hex finds
+## the tile. It redraws only when told to: on open, on a click, on a pan or
+## zoom and after a purchase.
 class SkillGrid:
 	extends Control
 
 	const Shapes = preload("res://scripts/shapes.gd")
 	const UiTheme = preload("res://scripts/ui_theme.gd")
 
+	const MAX_ZOOM := 1.5
+	const ZOOM_STEP := 1.1
+	## A press that moves less than this is a click, not a drag.
+	const DRAG_THRESHOLD := 6.0
+	const NAME_LINES := 3
+	## Text colours over a coloured tile, picked by the tile's brightness.
+	const DARK_TEXT := Color(0.11, 0.09, 0.06)
+	const LIGHT_TEXT := Color(1, 1, 1)
+
 	## Called with the hex of a clicked skill tile.
 	var on_select: Callable = Callable()
 
 	var tiles: Dictionary = {}
-	var tile_size: float = 11.0
+	var tile_size: float = 56.0
+	## How many rings the whole tree spans; sets the zoomed-out limit.
+	var rings: int = 9
 	## The clicked skill tile, outlined; null when none is.
 	var selected = null
+	## Where the colony tile sits, as an offset from the middle of the control.
+	var pan: Vector2 = Vector2.ZERO
+	var zoom: float = 1.0
 
-	func _centre() -> Vector2:
-		return size / 2.0
+	var _pressed: bool = false
+	var _dragging: bool = false
+	var _press_at: Vector2 = Vector2.ZERO
+
+	func _init() -> void:
+		clip_contents = true
+
+	## Back to 1.0 zoom, centred on the colony tile.
+	func reset_view() -> void:
+		pan = Vector2.ZERO
+		zoom = clampf(1.0, _min_zoom(), MAX_ZOOM)
+		queue_redraw()
+
+	## The zoom at which the whole tree fits inside the control, never above 1.0.
+	func _min_zoom() -> float:
+		var half := Vector2(
+				Shapes.hex_to_pixel(rings, 0, tile_size).x + tile_size,
+				sqrt(3.0) * tile_size * (rings * 2 + 1) / 2.0)
+		if size.x <= 0.0 or size.y <= 0.0:
+			return 1.0
+		return minf(minf(size.x / (half.x * 2.0), size.y / (half.y * 2.0)), 1.0)
+
+	## Keeps some of the tree on screen however far it is dragged.
+	func _clamp_pan() -> void:
+		var half := Vector2(
+				Shapes.hex_to_pixel(rings, 0, tile_size).x + tile_size,
+				sqrt(3.0) * tile_size * (rings * 2 + 1) / 2.0)
+		var limit := half * zoom
+		pan = pan.clamp(-limit, limit)
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_RESIZED:
+			zoom = clampf(zoom, _min_zoom(), MAX_ZOOM)
+			_clamp_pan()
+			queue_redraw()
+
+	## A point on the control, in the tree's own coordinates (colony tile at 0,0).
+	func _to_tree(point: Vector2) -> Vector2:
+		return (point - size / 2.0 - pan) / zoom
 
 	func _draw() -> void:
+		draw_set_transform(size / 2.0 + pan, 0.0, Vector2(zoom, zoom))
 		var outline := Shapes.hexagon_points(tile_size * 0.92)
+		var font: Font = get_theme_font("font", "Small")
+		var font_size: int = get_theme_font_size("font_size", "Small")
+		var text_width := tile_size * 1.4
 		for hex in tiles:
 			var tile: Dictionary = tiles[hex]
-			var at: Vector2 = _centre() + Shapes.hex_to_pixel(hex.x, hex.y, tile_size)
+			var at: Vector2 = Shapes.hex_to_pixel(hex.x, hex.y, tile_size)
 			var points := PackedVector2Array()
 			for point in outline:
 				points.append(at + point)
-			draw_colored_polygon(points, _fill(tile))
+			var fill := _fill(tile)
+			draw_colored_polygon(points, fill)
+			var text := str(tile.get("name", tile.get("label", "")))
+			if text != "":
+				var height := font.get_multiline_string_size(
+						text, HORIZONTAL_ALIGNMENT_CENTER, text_width, font_size, NAME_LINES).y
+				var origin := at + Vector2(-text_width / 2.0, -height / 2.0 + font.get_ascent(font_size))
+				draw_multiline_string(font, origin, text, HORIZONTAL_ALIGNMENT_CENTER,
+						text_width, font_size, NAME_LINES, _text_colour(tile, fill))
 		if selected != null and tiles.has(selected):
-			var centre: Vector2 = _centre() + Shapes.hex_to_pixel(selected.x, selected.y, tile_size)
+			var centre: Vector2 = Shapes.hex_to_pixel(selected.x, selected.y, tile_size)
 			var ring := Shapes.hexagon_points(tile_size * 1.05)
 			for i in range(ring.size()):
 				draw_line(centre + ring[i], centre + ring[(i + 1) % ring.size()], UiTheme.color("text_primary"), 2.0)
 
 	func _gui_input(event: InputEvent) -> void:
-		var click := event as InputEventMouseButton
-		if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
+		var button := event as InputEventMouseButton
+		if button != null:
+			if button.button_index == MOUSE_BUTTON_LEFT:
+				if button.pressed:
+					_pressed = true
+					_dragging = false
+					_press_at = button.position
+				else:
+					if _pressed and not _dragging:
+						_click(button.position)
+					_pressed = false
+					_dragging = false
+				accept_event()
+			elif button.pressed and (button.button_index == MOUSE_BUTTON_WHEEL_UP or button.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+				_zoom_about(button.position, ZOOM_STEP if button.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / ZOOM_STEP)
+				accept_event()
 			return
-		var hex := Shapes.pixel_to_hex(click.position - _centre(), tile_size)
+		var motion := event as InputEventMouseMotion
+		if motion != null and _pressed:
+			if not _dragging and motion.position.distance_to(_press_at) > DRAG_THRESHOLD:
+				_dragging = true
+			if _dragging:
+				pan += motion.relative
+				_clamp_pan()
+				queue_redraw()
+				accept_event()
+
+	func _click(at_position: Vector2) -> void:
+		var hex := Shapes.pixel_to_hex(_to_tree(at_position), tile_size)
 		if tiles.get(hex, {}).get("kind", "") == "skill" and on_select.is_valid():
 			on_select.call(hex)
-			get_viewport().set_input_as_handled()
+
+	## Zooms by `factor`, keeping the tree point under `at_position` where it is.
+	func _zoom_about(at_position: Vector2, factor: float) -> void:
+		var anchor := _to_tree(at_position)
+		zoom = clampf(zoom * factor, _min_zoom(), MAX_ZOOM)
+		pan = at_position - size / 2.0 - anchor * zoom
+		_clamp_pan()
+		queue_redraw()
 
 	func _fill(tile: Dictionary) -> Color:
 		match tile.get("kind", ""):
@@ -400,6 +499,12 @@ class SkillGrid:
 				return UiTheme.color("warning")
 		return UiTheme.color("locked")
 
+	## The panel's own text colour on a locked tile, dark or light on a coloured one.
+	func _text_colour(tile: Dictionary, fill: Color) -> Color:
+		if tile.get("kind", "") == "skill" and tile.get("state", "") == "blocked":
+			return UiTheme.color("text_primary")
+		return DARK_TEXT if fill.get_luminance() > 0.45 else LIGHT_TEXT
+
 	func _get_tooltip(at_position: Vector2) -> String:
-		var hex := Shapes.pixel_to_hex(at_position - _centre(), tile_size)
+		var hex := Shapes.pixel_to_hex(_to_tree(at_position), tile_size)
 		return str(tiles.get(hex, {}).get("tip", ""))

@@ -79,7 +79,7 @@ closed alpha's are §6.1's list.
 - **Verification review.** `run_scenario.py::log_dir` finds `user://` only
   through `%APPDATA%`, so headless runs fail to read their log on Linux cloud
   sessions.
-- **Plan review.** `plans/now/skill-screen.md` still says SK-2 starts "after
+- **Plan review.** `plans/archive/skill-screen_2026-10-01.md` still says SK-2 starts "after
   SK-1" (shipped 30 Sep); `plans/design/progression.md`'s Status line says
   BS-1 is queued; `plans/README.md`'s routing table has no brood-spine row.
 

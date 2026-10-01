@@ -176,7 +176,7 @@ Challenge goal readout.
 3449 func _is_gate_open(control_name: String) -> bool
 ```
 
-## bee.gd (2,404 lines)
+## bee.gd (2,406 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -267,32 +267,32 @@ A bee's dispatch loop, player commands, display text, vars.
 1787 func can_take_role(new_role: int) -> bool
 1797 func set_role(new_role: int) -> void
 1814 func _apply_role(new_role: int) -> void
-1854 func _release_everything() -> void
-1871 func release_flower_reference(flower: Node2D) -> void
-1877 func set_selected(value: bool) -> void
-1881 # --- display ------------------------------------------------------
-1883 func role_letter() -> String
-1912 func challenge_vocabulary_limited() -> bool
-1925 func idle_reason() -> String
-1978 func task_description() -> String
-2129 func _idle_backup_note() -> String
-2139 func role_name_text() -> String
-2165 func architect_mode_name() -> String
-2171 func carrying_text() -> String
-2192 func age_days() -> float
-2200 func leave_to_found_colony() -> void
-2213 func days_remaining() -> float
-2225 func _update_label() -> void
-2245 func _update_alarm_ring() -> void
-2256 func _update_heading_marker() -> void
-2270 func _update_search_ring() -> void
-2293 func _update_dance_ring() -> void
-2326 func _update_wander_flight(delta: float) -> void
-2357 func _update_dance_circle(delta: float) -> void
-2371 func _terrain_speed_factor() -> float
-2380 func _is_inside_hive() -> bool
-2383 # --- getting round things in the meadow ---------------------------
-2403 func clear_navigation_state() -> void
+1856 func _release_everything() -> void
+1873 func release_flower_reference(flower: Node2D) -> void
+1879 func set_selected(value: bool) -> void
+1883 # --- display ------------------------------------------------------
+1885 func role_letter() -> String
+1914 func challenge_vocabulary_limited() -> bool
+1927 func idle_reason() -> String
+1980 func task_description() -> String
+2131 func _idle_backup_note() -> String
+2141 func role_name_text() -> String
+2167 func architect_mode_name() -> String
+2173 func carrying_text() -> String
+2194 func age_days() -> float
+2202 func leave_to_found_colony() -> void
+2215 func days_remaining() -> float
+2227 func _update_label() -> void
+2247 func _update_alarm_ring() -> void
+2258 func _update_heading_marker() -> void
+2272 func _update_search_ring() -> void
+2295 func _update_dance_ring() -> void
+2328 func _update_wander_flight(delta: float) -> void
+2359 func _update_dance_circle(delta: float) -> void
+2373 func _terrain_speed_factor() -> float
+2382 func _is_inside_hive() -> bool
+2385 # --- getting round things in the meadow ---------------------------
+2405 func clear_navigation_state() -> void
 ```
 
 ## scenario_actions.gd (1,541 lines)

@@ -23,40 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SK-2 -- skill names in big hexes, with drag and zoom**
-   - Plan: `plans/now/skill-screen.md` -- "SK-2 — skill names in big hexes, with drag and zoom"
-   - Files: `scripts/skill_tree_panel.gd`
-   - Check: `python tools/run_scenario.py test_scenarios/ap3_skill_tree_window_test.json` passes, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/skill_tree_panel.gd :: const TILE_SIZE := 11.0`
-   - Next after: none -- plans/now/skill-screen.md is complete
-
-2. **[Claude] BS-4 -- a run buys Honey worker, makes honey and affords a tier-2 skill**
-   - Plan: `plans/now/brood-spine.md` -- "BS-4 — the honey gate"
-   - Files: `test_scenarios/bs4_honey_gate_test.json`, `plans/design/progression.md`
-   - Check: `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json` passes with Comb worker bought within 30 days, or its failure names the stalled step and the options go to Dave; `plans/design/progression.md` section 11 step 7 records the result; and `tools/verify.ps1` is green
-   - Proof: `absent: plans/design/progression.md :: bs4_honey_gate_test`
-   - Next after: BS-6 -- developer edits to the table change what a run starts with
-
-3. **[Claude] BS-7 -- every Scenario's queen backs up as a Nurse**
-   - Plan: `plans/now/brood-spine.md` -- "BS-7 — every Scenario's queen backs up as a Nurse"
-   - Files: `scripts/levels.gd`, `test_scenarios/bs7_queen_backup_nurse_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/bs7_queen_backup_nurse_test.json` passes, a worker hatching from level 3's start within 8 days, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/levels.gd :: ORDINARY_QUEEN_BACKUP`
-   - Next after: BS-6 -- developer edits to the table change what a run starts with
-
-4. **[Claude] GC-1 -- an Idle bee stays where she is**
-   - Plan: `plans/now/gameplay-consistency.md` -- "GC-1 — an Idle bee stays where she is"
-   - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `test_scenarios/gc1_idle_stays_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/gc1_idle_stays_test.json` passes (the Idle bee alive on day 5, no starvation deaths), the hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/bee_survival.gd :: Role.IDLE`
-   - Next after: GC-2 -- a bee changing job puts down what she carries
-
-5. **[Claude] GC-2 -- a bee changing job puts down what she carries**
+1. **[Claude] GC-2 -- a bee changing job puts down what she carries**
    - Plan: `plans/now/gameplay-consistency.md` -- "GC-2 — a bee changing job puts down what she carries"
    - Files: `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/bee_building.gd`, `scripts/bee_honey.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_actions.gd`, `test_scenarios/gc2_role_change_delivers_load_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/gc2_role_change_delivers_load_test.json` passes (two deliveries by day 2), `python tools/run_scenario.py test_scenarios/c1f2_queen_pollen_departure_test.json` still passes, the hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: _deliver_held_load`
    - Next after: GC-3 -- honey stops creating energy (gated on PE-2)
+
+2. **[Claude] WO-1 -- winter's countdown opens by itself on a set day**
+   - Plan: `plans/now/winter-onset.md` -- "WO-1 — winter's countdown opens by itself on a set day"
+   - Files: `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/scenario_actions.gd`, `test_scenarios/wo1_winter_onset_test.json`, `test_scenarios/alpha_arc_test.json`, `test_scenarios/a3_fixedfps_benchmark_test.json`, `test_scenarios/a5_actions_resolved_test.json`, `test_scenarios/a5_stop_when_test.json`, `test_scenarios/slice3_timescale_8x_test.json`, `test_scenarios/slice3_timescale_16x_test.json`, `test_scenarios/slice3_timescale_30x_test.json`, `test_scenarios/sv1_named_saves_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/wo1_winter_onset_test.json` passes (countdown open by day 7, winter here by day 22 and not before day 21), the hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: winter_countdown_start_day`
+   - Next after: none -- plans/now/winter-onset.md is complete
 
 ### Codex lane
 
@@ -88,7 +67,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-6** (`plans/now/brood-spine.md`) -- waits for its specification: Dave chose the `user://` override on 30 Sep 2026 (decision 6), and BS-4's closeout writes it.
+- **BS-6** (`plans/now/brood-spine.md`) -- specified 1 Oct 2026; waits for BS-8 (Codex lane) to land, since both edit `scripts/run_availability.gd`.
 - **L-16, L-17** (`plans/now/agent-lifecycle.md`) -- both edit `tools/slice.ps1`, whose suite skips off Windows, so each waits for a local Windows session: there, open its fence from `queue-gated` to `queue` and run `python tools/refill_lane.py --top-up --lane Claude` (plan review, 30 Sep 2026).
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; it waits for BS-4 to land, and it specifies PE-2.
 - **PE-2** (`plans/now/pacing-evidence.md`) -- the played pacing arc waits for the Colony Run definition, which specifies it.

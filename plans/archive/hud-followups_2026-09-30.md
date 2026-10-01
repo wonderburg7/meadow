@@ -12,7 +12,7 @@ in the session that processed the batch (28 Sep 2026).
 outright and C-57 half-failed; both corrected checks wait in
 `checks/blocked.md` for HF-1 and HF-6. The rest are Dave's requests from the
 same run. `plans/archive/saves-access_2026-09-30.md` (SA-1) and
-`plans/now/skill-screen.md` (SK-1) hold the two larger requests, and
+`plans/archive/skill-screen_2026-10-01.md` (SK-1) hold the two larger requests, and
 `plans/archive/hive-readouts_2026-09-29.md` (HR-1 to HR-3) the hive-view clicks and readouts.
 
 ## Open slices at a glance
