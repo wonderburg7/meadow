@@ -833,7 +833,8 @@ func _advance_weather(delta: float) -> void:
 				rain_seconds_left = randf_range(GameConfig.rain_min_seconds, GameConfig.rain_max_seconds)
 				rain_changed.emit(true)
 				hud.show_warning(
-					"Rain is coming in. Nectar in the open flowers is being watered down, wet wings cost more to fly on, and if it gets heavy enough your foragers will stay at the hive."
+					"Rain is coming in. Nectar in the open flowers is being watered down, wet wings cost more to fly on, and if it gets heavy enough your foragers will stay at the hive.",
+					"", 0.0, hud.SEVERITY_NOTICE
 				)
 
 	# eased rather than switched, so bees aren't grounded from one frame
@@ -899,7 +900,7 @@ func _check_colony_energy(delta: float) -> void:
 	hud.show_warning(
 		"%d of your %d bees (%d%%) are below %d%% energy. The colony is burning nectar faster than it is bringing it in — put more bees on nectar foraging, or they will start to starve."
 		% [hungry, bees.size(), int(share * 100.0), int(GameConfig.low_energy_warning_level * 100.0)],
-		"low_energy", GameConfig.low_energy_gap
+		"low_energy", GameConfig.low_energy_gap, hud.SEVERITY_DANGER
 	)
 
 ## Bumped whenever the live population's role assignment changes -- birth

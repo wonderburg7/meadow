@@ -417,5 +417,5 @@ static func die(bee: Node2D, cause: String) -> void:
 static func _announce_death(bee: Node2D) -> void:
 	bee.world.hud.show_warning(
 		ProblemMessages.epitaph(bee.bee_name, bee.death_cause, bee.bee_fact),
-		"epitaph", GameConfig.epitaph_min_gap
+		"epitaph", GameConfig.epitaph_min_gap, bee.world.hud.SEVERITY_DANGER
 	)
