@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] FBB-1 -- the skill tree hides the cut skills and says which are not built**
-   - Plan: `plans/now/feedback-build.md` -- "FBB-1 -- the skill tree hides the cut skills and says which are not built"
-   - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/skill_tree_panel.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fbb1_cut_skills_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/fbb1_cut_skills_test.json` passes with Combat refused and Cell capacity bought, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skills.gd :: CUT_FROM_ALPHA`
-   - Next after: none -- plans/now/feedback-build.md is complete
-
-2. **[Claude] BS-9 -- the queen nurses without the Nurses skill**
+1. **[Claude] BS-9 -- the queen nurses without the Nurses skill**
    - Plan: `plans/now/brood-spine.md` -- "BS-9 — the queen nurses without the Nurses skill"
    - Files: `scripts/availability.gd`, `test_scenarios/bs9_c2_queen_nurses_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/bs9_c2_queen_nurses_test.json` passes with a pollen Forager hatched at Challenge 2's stage 2.2, `test_scenarios/bs3_nurse_gate_test.json` still passes, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/availability.gd :: bee.is_queen`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
 
-3. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
+2. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
    - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_two_lane_closeout tests.test_slice_lifecycle` passes with the remote-ahead case strict and the five new cases, and `tools/verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: Sync-PrimaryMaster`
    - Next after: L-17 -- one console-encoding contract for the lifecycle, tested once
 
-4. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
+3. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`
    - Check: `python -m unittest tests.test_slice_lifecycle.ConsoleEncodingTest tests.test_source_checks` passes and `tools/verify.ps1` is green
