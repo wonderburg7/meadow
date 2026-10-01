@@ -90,9 +90,17 @@ static func apply_to_session(data: Dictionary) -> void:
 			Session.set(key, prefs[key])
 
 ## Whichever Challenge levels (1, 2, ...) have been completed at least
-## once.
+## once, as unique ints. JSON hands numbers back as floats, and
+## Array.has(1) is false against 1.0, so every reader goes through here;
+## the de-duplication also heals profiles written before the fix, which
+## gained a copy of the level on every completion.
 static func completed_challenges(data: Dictionary) -> Array:
-	return data.get("completed_challenges", [])
+	var levels: Array = []
+	for value in data.get("completed_challenges", []):
+		var level := int(value)
+		if not levels.has(level):
+			levels.append(level)
+	return levels
 
 ## "<level>_<preset>" -> true for every Scenario+preset combination that
 ## has actually been started. Scenarios (the main menu's "starter" group)
@@ -118,7 +126,7 @@ static func save_preferences() -> void:
 
 static func mark_challenge_complete(level: int) -> void:
 	var data := read()
-	var completed: Array = data.get("completed_challenges", [])
+	var completed := completed_challenges(data)
 	if not completed.has(level):
 		completed.append(level)
 	data["completed_challenges"] = completed
