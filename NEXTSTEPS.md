@@ -42,14 +42,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] UI-F-1 -- the game-over screen takes the theme and text scale**
-   - Plan: `plans/now/ui-feedback.md` -- "UI-F-1 -- the game-over screen takes the theme and text scale"
-   - Files: `scripts/game_over.gd`
-   - Check: `grep -c "add_theme_font_size_override" scripts/game_over.gd` prints `0`, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/game_over.gd :: add_theme_font_size_override("font_size", 28)`
-   - Next after: UI-F-3 -- comb cell labels follow text scale
-
-2. **[Codex] UI-F-3 -- comb cell labels follow text scale**
+1. **[Codex] UI-F-3 -- comb cell labels follow text scale**
    - Plan: `plans/now/ui-feedback.md` -- "UI-F-3 -- comb cell labels follow text scale"
    - Files: `scripts/hive_cell.gd`
    - Check: `grep -c "_label_font_size" scripts/hive_cell.gd` prints at least 2, and `tools/verify.ps1` is green
