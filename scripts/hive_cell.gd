@@ -230,6 +230,9 @@ var empty_scale: float = 1.0
 ## note on that Session field).
 var squashed: bool = false
 var info_label: Label
+## The last size applied to `info_label`. `_refresh` runs frequently, so a
+## live text-scale change only updates the label when its capped size differs.
+var _label_font_size: int = 9
 var outline: Line2D
 var designation_ring: Line2D
 var selection_ring: Line2D
@@ -985,6 +988,10 @@ func _resource_outline_colour(resource_type: String) -> Color:
 	return Color(0.35, 0.28, 0.12)
 
 func _refresh() -> void:
+	var scaled_label_font_size: int = int(round(9.0 * minf(Session.text_scale, 1.5)))
+	if scaled_label_font_size != _label_font_size:
+		_label_font_size = scaled_label_font_size
+		info_label.add_theme_font_size_override("font_size", _label_font_size)
 	# Independent of everything below -- see Session.show_cell_contents_text.
 	# The text is always computed regardless (cheap, and other logic below
 	# doesn't need to know or care whether it's actually shown), only its
