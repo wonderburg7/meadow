@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
@@ -72,48 +71,7 @@ UT-3).
 
 HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`.
 
-## HO-2 -- every skill's name reads whole in its hex
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `SkillGrid._draw` wraps each name to `tile_size * 1.4` across
-`NAME_LINES` (3) lines in the "Small" font. Seen at the opening zoom, text
-scale 2, Silkscreen: words are cut, not wrapped -- "CLEA", "ORIE FLIGH",
-"TARS SECR", "WEIG FLOW CHOI" -- so C-88's PASS ("every skill's name is
-readable inside its hexagon") fails.
-
-**Seen again (second pass, build 932d320).** The cut names match. Zoom
-did not fully pass there: maximised at text scale 2, the wheel stopped
-zooming out with the tree about 675 px tall in a view about 610 px tall
-(screenshot pixels), so REST and AUTO RECR never showed together.
-
-**Decision (Dave, 2 Oct 2026).** HO-2 fixes the zoom limit too.
-
-**True afterwards.** At the opening zoom, at text scale 1 and 2, in
-Silkscreen and Atkinson Hyperlegible, every name shows every letter: a word
-that cannot fit breaks with a hyphen or the name drops to a smaller size, and
-the detail strip still gives the full name. The wheel zooms out until the
-whole tree fits the view at text scale 1 and 2, maximised and at the default
-window size (`_min_zoom`). File a hands-on check that replaces C-88.
-
-**Must not change.** Drag (passed on both 2 Oct passes), and the hover
-tooltip.
-
-**Level:** medium -- bounded drawing and zoom-limit work in one class, with
-a hands-on acceptance check.
-
-```queue
-**[Claude] HO-2 -- every skill's name reads whole in its hex**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
-- Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
-- Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
-- Next after: HO-5 -- long text stays inside its window
-```
-
-HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
-
-HO-4 shipped 2026-10-02; its specification is `plans/archive/HO-4_2026-10-02.md`.
+HO-2 shipped 2026-10-02; its specification is `plans/archive/HO-2_2026-10-02.md`.
 
 ## HO-5 -- long text stays inside its window
 
