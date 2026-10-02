@@ -1,12 +1,12 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 and HO-8 wait on Dave | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is startable (Dave chose option (b), 2 Oct 2026); HO-8 waits on Dave's C-84 verdict | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
-developer tooling only, except HO-7 (Challenge 2 pacing), which waits on a
-decision. The skill-screen and HUD plans that owned these areas are archived,
+developer tooling only, except HO-7 (Challenge stage pacing), a
+decision Dave took on 2 Oct 2026. The skill-screen and HUD plans that owned these areas are archived,
 so they start here (`plans/README.md`, "Plan schema").
 
 **Already owned elsewhere, so not repeated here.** C-60's faint textures
@@ -23,17 +23,17 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | --- | --- | --- | --- | --- |
 | HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
-| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | no -- after SC-1 and SC-3 (same file); asks Dave one question | medium |
+| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | no -- after SC-1 and SC-3 (same file) | medium |
 | HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | no -- after SC-3 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
-| HO-7 | each Challenge 2 stage is seen before the next clears | `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd` | gated -- Dave's decision | medium |
+| HO-7 | each Challenge stage stays on screen a moment before the next can clear | `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd` | yes -- queued | high |
 | HO-8 | Challenge 2's 2.9 shows which targets are still short | `scripts/challenge_runner.gd`, `scripts/hud.gd` | gated -- Dave's verdict on C-84 | medium |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
 they run one after the other, after SC-4, UT-4 and SR-4 have landed. HO-7
-and HO-8 both edit `scripts/challenge_runner.gd`: one after the other.
+goes before HO-8; both edit `scripts/challenge_runner.gd`.
 
 **What a slice reads.** Its own section below, and the function it names.
 Every "Seen" line is from the 2 Oct 2026 pass, driven by computer use in a
@@ -94,18 +94,29 @@ could not be run on 2 Oct (blocked). The Return to Main Menu tip still
 offers "Level 1 (the queen alone), Level 2 ... Level 3", which the menu no
 longer has.
 
-**Decision for Dave, asked when this is queued.** Hide the Triggers with
-Developer mode off (recommended: the feedback build's tester should not see
-"Force Challenge 2 collapse"), or keep them for everyone.
+**Decision (Dave, 2 Oct 2026).** The Triggers are hidden with Developer mode
+off: the feedback build's tester must not see "Force Challenge 2 collapse".
 
-**True afterwards.** The Triggers follow that decision, using the same
-refresh `_refresh_developer_row` already runs. A new trigger ends the run
-through the game's own queen-death path, so `game_over.gd` shows "The queen
-is dead". The Return to Main Menu tip describes the current menu. C-86 then
+**True afterwards.** With Developer mode off the Triggers group -- header
+and every button -- is absent, not disabled, and it appears or goes as the
+box is ticked, through the refresh `_refresh_developer_row` already runs.
+A new "End the run" trigger kills the queen through
+`bee_survival.gd::die`, so `main.gd::_check_for_loss` opens `game_over.gd`'s
+"The queen is dead" exactly as a real death does; it does nothing in a
+scenario run, which `_check_for_loss` ends differently. The Return to Main Menu tip describes the current menu. C-86 then
 runs as written.
 
-**Must not change.** Each trigger's behaviour, and Run availability's guard
-(`tests/source_checks.py` checks it).
+**Must not change.** Each existing trigger's behaviour, and Run
+availability's guard (`tests/source_checks.py` checks it).
+
+```queue-gated
+**[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
+- Files: `scripts/debug_panel.gd`
+- Check: with Developer mode off no Triggers header or button is built, "End the run" in a Challenge or level run opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/debug_panel.gd :: End the run`
+- Next after: HO-4 -- the Saves window's name field is usable and always opens on top
+```
 
 ## HO-4 -- the Saves window's name field is usable and always opens on top
 
@@ -164,25 +175,54 @@ the world, unless the text is itself interactive. Find the control first.
 
 **Must not change.** Anything in the corner that is meant to be clicked.
 
-## HO-7 -- each Challenge 2 stage is seen before the next clears
+## HO-7 -- each Challenge stage stays on screen a moment before the next can clear
 
 <!-- LAYER: immediate-task -->
 
-**True now.** 2.3's condition (`challenge_stages.gd`) accepts an explicit
-nectar, pollen or brood designation. Choosing a Raises role on a cell
-reserves it for Eggs ("Takes: raising eggs"), which counts. Seen: at 2.2 I
-set a developing larva's cell to raise a pollen Forager. When it hatched,
-2.2, 2.3 and 2.4 (whose reserve was already met) all cleared at once, and
+Level: high (event ordering in every Challenge's stage flow).
+
+**True now.** `challenge_runner.gd::_process` calls `_advance()` the first
+frame a stage's goal is met, and `_enter_stage` runs the next stage's check
+from its own first poll. So any later stage whose goal is already true
+clears straight after it. 2.3's condition (`challenge_stages.gd`) accepts
+an explicit nectar, pollen or brood designation, and choosing a Raises role
+reserves the cell for Eggs, which counts. Seen on 2 Oct 2026: at 2.2 I set a
+developing larva's cell to raise a pollen Forager. When it hatched, 2.2, 2.3
+and 2.4 (whose reserve was already met) all cleared within one poll, and
 the next thing on screen was 2.5. The player never saw 2.3's lesson or
 2.4's goal.
 
-**Decision for Dave.** (a) Leave it: a Raises choice is a designation, and
-skipped stages are fine. (b) Hold each stage for a minimum time, or until
-its Dr Gallerin line has shown, before the next can clear. (c) Stop a Raises
-choice counting for 2.3. (b) touches every Challenge's stage flow; (c)
-touches only 2.3's condition.
+**Decision (Dave, 2 Oct 2026): option (b).** Every stage holds for a minimum
+time before it can clear. A Raises choice still counts for 2.3 (option (c)
+declined). Applies to Challenge 1 and Challenge 2 alike.
 
-**True afterwards.** Whatever Dave picks, written into this section first.
+**True afterwards.** A stage cannot clear until it has been on screen for
+`MIN_STAGE_DWELL` game seconds (5.0 to start; a named constant beside the
+other stage constants in `challenge_stages.gd`), counted from
+`_enter_stage` while the game is unpaused, in game time so speed 8 shortens
+it with everything else. A goal met earlier clears the moment the dwell
+ends. Each stage's goal text and its delay-0 Dr Gallerin line are therefore
+on screen first. Runtime policy: one float added per frame in `_process`,
+which already runs every frame; no new scan. The debug stage arrows and
+`debug_advance_stage` bypass the dwell. A checkpoint restore that re-enters
+the same stage restarts it.
+
+**Must not change.** Stage order, goals and conditions; Challenge 2's rescue
+and failure (`_check_c2_failure`); the goal-poll cadence (`GOAL_CADENCE`).
+Every Challenge fixture in `test_scenarios/` (`h4_challenge1_stage_advance`,
+`f2s_challenge2_gate_table`, `bs9_c2_queen_nurses`,
+`uiw2_challenge2_raises_forager`, `hf6_challenge2_raises` and the rest)
+still passes. Escalate if one needs its timings changed rather than
+lengthened.
+
+```queue
+**[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
+- Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
+- Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
+- Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
+```
 
 ## HO-8 -- Challenge 2's 2.9 shows which targets are still short
 

@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 waits for Dave's decision; C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`); GC-4 waits for Dave | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 -- a nurse's brood food survives a job change (startable, Dave chose (b) 2 Oct 2026); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`); GC-4 none | Verified: 2026-10-02
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -14,7 +14,7 @@ each demonstrated in a headless run.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | gated: waits for PE-2's played arc | medium |
-| GC-4 | a nurse moved to another job does not lose the brood food she carries | `scripts/bee.gd` | gated: waits for Dave's decision | medium |
+| GC-4 | a nurse moved to another job does not lose the brood food she carries | `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` | yes -- queued | high |
 
 GC-1 and GC-2 are independent in behaviour but share `bee.gd`, so they run in
 that order in one lane. GC-3 is independent of both. **Required reading:**
@@ -89,11 +89,36 @@ carrying "6 pollen and 12 nectar for the brood" was set to Idle, and her
 Carrying line read "Nothing" at once. That is the loss GC-2 removed for
 foragers, kept for nurses on purpose.
 
-**Decision for Dave.** (a) Keep it: the amounts are small. (b) She puts
-the food back in a cell before taking up the new job, as GC-2's forager
-does. (b) follows this plan's objective ("a change of job never loses what
-the bee is carrying").
+**Decision (Dave, 2 Oct 2026): option (b).** The food goes back into the
+comb before she takes up the new job, as GC-2's forager does.
 
-**True afterwards.** Specified once Dave decides. Under (b), carried food is
-conserved across a job change, a headless fixture proves it, and the queen
-is untouched (this plan's "Must not change").
+Level: high (energy conservation in the simulation; `.claude/rules/simulation.md`).
+
+**True afterwards.** On any job change, a nurse's `nurse_pollen`,
+`nurse_carb` (as `nurse_carb_type`, nectar or honey) and `nurse_jelly` are
+returned to the comb before they are cleared, so the hive's stored totals
+are the same just before and just after the change. Owner: the choke point
+GC-2 built (`_deliver_held_load` and `_apply_pending_role` in `bee.gd`)
+rather than a second mechanism. A nurse is always inside the hive, so the
+return may be immediate through `hive.deposit`, which spreads an amount over
+any cells with room. Whatever finds no room is recorded through
+`DiagnosticLog` rather than dropped silently. Escalate if conservation
+needs a walk to a cell (a new state) instead. Runtime policy: on the role
+change only; nothing per frame. A headless fixture,
+`gc4_nurse_role_change_keeps_food_test.json`, modelled on
+`gc2_role_change_delivers_load_test.json`, proves the totals for a nurse
+carrying pollen and nectar who is set to Idle and to Forager. The queen is
+untouched (this plan's "Must not change"; she keeps her own backup nursing,
+BS-9).
+
+**Must not change.** GC-1's Idle behaviour and GC-2's forager delivery
+(C-89 and C-90, passed 2 Oct 2026); the save format.
+
+```queue
+**[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
+- Plan: `plans/now/gameplay-consistency.md` -- "GC-4 — a nurse moved to another job does not lose the brood food she carries"
+- Files: `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json`
+- Check: `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` passes headless, a Godot boot is clean, and `tools/verify.ps1` is green
+- Proof: `present: scripts/bee.gd :: brood food a nurse was carrying isn't any use in another job`
+- Next after: GC-3 -- honey stops creating energy
+```
