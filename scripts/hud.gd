@@ -1307,6 +1307,9 @@ func _build_command_tray() -> void:
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	command_scroll.add_child(column)
 	command_content = column
+	# SR-4 -- the tray follows its content's minimum height whenever that
+	# changes, not only while _resettle_command_tray's chain is running.
+	column.minimum_size_changed.connect(_on_command_content_minimum_size_changed)
 
 	# Three ranked columns rather than one flowing row, per Dave's 22 Aug
 	# call -- each one wraps onto more rows internally rather than the
@@ -3328,13 +3331,37 @@ func _resettle_command_tray(generation: int, previous_content_min_y: float, stab
 		return
 	if command_tray == null or not command_tray.visible:
 		return
-	command_scroll.custom_minimum_size.y = 0.0
-	var rect := UiLayout.command_tray_rect(get_viewport().get_visible_rect().size)
-	UiPanelLayout.apply(command_tray, command_scroll, rect, UiLayout.BOTTOM_ROW_MARGIN)
+	_apply_command_tray_rect()
 	var content_min_y := command_content.get_combined_minimum_size().y
 	var streak: int = (stable_streak + 1) if content_min_y == previous_content_min_y else 0
 	if pass_count < COMMAND_TRAY_SETTLE_PASS_LIMIT and streak < COMMAND_TRAY_SETTLE_STABLE_STREAK:
 		call_deferred("_resettle_command_tray", generation, content_min_y, streak, pass_count + 1)
+
+## One application of the tray's rectangle at the content's current
+## minimum height -- what each settle pass and each content minimum-size
+## change does.
+func _apply_command_tray_rect() -> void:
+	command_scroll.custom_minimum_size.y = 0.0
+	var rect := UiLayout.command_tray_rect(get_viewport().get_visible_rect().size)
+	UiPanelLayout.apply(command_tray, command_scroll, rect, UiLayout.BOTTOM_ROW_MARGIN)
+
+## SR-4 -- every pass of the settle chain above runs inside the one
+## deferred-call flush that started it (call_deferred from a deferred call
+## lands in the same flush), so its "four reads agree" streak can complete
+## before the content has finished re-wrapping. After a resize to 800x600
+## the content's minimum height went 111 -> 233 inside that flush, the
+## chain stopped at 233, and the autowrapped rows then grew it to 271 on
+## the same frame with nothing left to re-apply the tray: 38px of content
+## below the tray's bottom edge. Godot emits minimum_size_changed for each
+## of those later changes, so re-applying here keeps the tray matched to
+## its content whenever that changes, whichever pass of the chain is
+## running or not. apply() only moves the tray's own offsets and the
+## scroll's minimum height, which never alter the content's width, so this
+## cannot feed back into another change of its own.
+func _on_command_content_minimum_size_changed() -> void:
+	if command_tray == null or not command_tray.visible:
+		return
+	_apply_command_tray_rect()
 
 ## Not a stage gate: Session.winter_coming decides it (saving.gd,
 ## year_winter.gd), so it stays outside Availability.UI_GATES.
