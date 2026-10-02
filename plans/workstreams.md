@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/L-16` (`claude/L-16`) | Claude | master is synchronised with origin before a claim and before a merge | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-16 — master is synchronised with origin before a claim and before a merge |
-| `.worktrees/SR-1` (`codex/SR-1`) | Codex | a freed queen no longer breaks the problem messages | Codex | in progress | none | `plans/now/scenario-reds.md` SR-1 -- a freed queen no longer breaks the problem messages |
