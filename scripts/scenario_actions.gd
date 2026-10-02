@@ -1186,8 +1186,8 @@ static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
 
 ## G3: {"all_actions_available": true} -- every actions.gd row answers
 ## available from Availability.action_query against this run's stage gate
-## and progression, which outside a Challenge with no skills owned is the
-## "ordinary play is unchanged" invariant.
+## and progression once this run owns the skills its actions need. This is
+## the "ordinary play is unchanged" invariant.
 static func _check_all_actions_available(main: Node2D) -> Dictionary:
 	var refused: Array = []
 	for action in Actions.ACTIONS:
