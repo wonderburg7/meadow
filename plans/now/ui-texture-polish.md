@@ -45,6 +45,10 @@ named there. `FUNCTION_MAP.md` indexes `hud.gd` and `debug_panel.gd`.
 
 ## UT-1 -- every panel texture is visible in every theme
 
+2 Oct 2026 re-run (C-60 failed again): spread of brightness on an empty
+panel patch, texture against Flat -- Honeycomb 1.0/0.35 (Dark), 9.3/0.3
+(Light), 3.2/1.0 (High contrast); Grain 1.2/0.35, 1.05/0.3, 1.10/1.04.
+
 <!-- LAYER: immediate-task -->
 
 Level: medium (one file; visual tuning bounded by contrast invariants).
@@ -98,6 +102,10 @@ key `mode + ":" + Session.ui_theme`.
 ```
 
 ## UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
+
+2 Oct 2026: C-80 failed on exactly this -- three clicks on Buy (top-left,
+centre, bottom-left of the button) bought nothing and the stores stayed put,
+while the strip read "can be bought".
 
 <!-- LAYER: immediate-task -->
 

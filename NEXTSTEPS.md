@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
    - Next after: UT-3 -- a theme change recolours the in-run panels' text
 
+5. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
+   - Plan: `plans/now/brood-spine.md` -- "BS-10 — C-81 tests the one run that buys Nurses"
+   - Files: `checks/ready/C-81.md`
+   - Check: `checks/ready/C-81.md` starts Challenge 2 rather than level 7, and `python tools/check_docs.py` passes
+   - Proof: `present: checks/ready/C-81.md :: start level 7 from the main menu`
+   - Next after: BS-6 -- developer edits to the table change what a run starts with
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude

@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-2 landed 1 Oct 2026, hands-on check C-90 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`) | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 waits for Dave's decision; C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`); GC-4 waits for Dave | Verified: 2026-10-02
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -14,6 +14,7 @@ each demonstrated in a headless run.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | gated: waits for PE-2's played arc | medium |
+| GC-4 | a nurse moved to another job does not lose the brood food she carries | `scripts/bee.gd` | gated: waits for Dave's decision | medium |
 
 GC-1 and GC-2 are independent in behaviour but share `bee.gd`, so they run in
 that order in one lane. GC-3 is independent of both. **Required reading:**
@@ -76,3 +77,23 @@ for. When it exists, fence this block `queue`.
 - Proof: `present: scripts/game_config.gd :: var nectar_per_honey: float = 2.0`
 - Next after: none -- plans/now/gameplay-consistency.md is complete
 ```
+
+## GC-4 — a nurse moved to another job does not lose the brood food she carries
+
+<!-- LAYER: immediate-task -->
+
+**True now.** `bee.gd::_apply_role` zeroes `nurse_pollen`, `nurse_carb`
+and `nurse_jelly` on every role change ("brood food a nurse was carrying
+isn't any use in another job"). Seen on 2 Oct 2026, Scenario 4: a nurse
+carrying "6 pollen and 12 nectar for the brood" was set to Idle, and her
+Carrying line read "Nothing" at once. That is the loss GC-2 removed for
+foragers, kept for nurses on purpose.
+
+**Decision for Dave.** (a) Keep it: the amounts are small. (b) She puts
+the food back in a cell before taking up the new job, as GC-2's forager
+does. (b) follows this plan's objective ("a change of job never loses what
+the bee is carrying").
+
+**True afterwards.** Specified once Dave decides. Under (b), carried food is
+conserved across a job change, a headless fixture proves it, and the queen
+is untouched (this plan's "Must not change").
