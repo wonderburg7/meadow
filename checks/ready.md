@@ -15,7 +15,7 @@ unblocker.
 ## Ready to run
 
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
-- [C-71 -- High contrast text legible over textures](ready/C-71.md)
+- [C-71 -- High contrast panels stay plain](ready/C-71.md)
 - [C-72 -- Text scale applies after a pause](ready/C-72.md)
 - [C-79 -- Skills fills the screen and pauses the game](ready/C-79.md)
 - [C-80 -- clicking a skill and pressing Buy buys it](ready/C-80.md)
