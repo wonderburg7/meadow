@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SR-4` (`claude/SR-4`) | Claude | the command tray fits its content after a resize to 800x600 | Claude | in progress | none | `plans/now/scenario-reds.md` SR-4 -- the command tray fits its content after a resize to 800x600 |
