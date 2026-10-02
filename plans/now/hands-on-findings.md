@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | yes -- queued (UT-2 landed 2 Oct 2026) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
@@ -71,51 +70,7 @@ running off the right edge (HO-5, UT-2), PAUSED drawn over the readout's
 (UT-3, UT-4), Light's Honeycomb muddying the Colony window's pale hint (UT-1,
 UT-3).
 
-## HO-1 -- Escape closes the skill tree
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `skill_tree_panel.gd::_input` closes the view on
-`KEY_ESCAPE` and swallows every other key. Seen: with the tree open over
-Scenario 2, Escape did nothing three times (pointer still, then over the
-tree, then after a click on empty tree). Ctrl+1 a moment later reached the
-game ("Group 1 cleared."), so keys were arriving. × closed it and restored
-speed 2 every time. So the handler exists and does not run, or runs after
-another node has already consumed Escape -- an inference, not a diagnosis.
-
-**True afterwards.** Escape closes the tree and restores the speed it had,
-exactly as × does. Reproduce first; if Escape works, stop and report.
-Likely places: a node earlier in `_input` order handling Escape (the
-settings window or HUD), or the layer's process mode while the tree is
-paused.
-
-**Must not change.** The swallowing of every other key while the view is
-open (Space and Tab must not reach the paused game), C-79's full-screen
-pause, and × closing it.
-
-**Level:** high -- the cause is not yet diagnosed (input order or process
-mode), so this is an ambiguous bug.
-
-**Closed without a code change (2 Oct 2026).** The fault does not
-reproduce headlessly. A Scenario 2 boot at speed 2 with the tree open
-ignored Space and Tab, and Escape (sent before and after a hover and a
-click on the grid) closed the tree and brought speed 2 back, as × does.
-Neither suspect holds: `skill_tree_panel.gd::_input` is the only `_input`
-in the project and nothing else handles Escape; `GamePanel.setup_layer`
-sets `PROCESS_MODE_ALWAYS`, so it runs while paused; and the handler is
-unchanged since SK-1 added it with the pause. Ctrl+1 reaching the game
-while the tree was open would have been swallowed by that handler, which
-suggests the 2 Oct key presses were not real keyboard keys. Dave chose to
-close HO-1 and re-test by hand in a standalone window: C-100.
-
-```queue
-**[Claude] HO-1 -- Escape closes the skill tree**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-1 -- Escape closes the skill tree"
-- Files: `scripts/skill_tree_panel.gd`
-- Check: with the skill tree open over a run, Escape closes it and restores the earlier speed as × does, Space and Tab still do not reach the game, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/skill_tree_panel.gd :: (event as InputEventKey).keycode == KEY_ESCAPE`
-- Next after: HO-2 -- every skill's name reads whole in its hex
-```
+HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`.
 
 ## HO-2 -- every skill's name reads whole in its hex
 
