@@ -6,6 +6,7 @@
     "seconds_per_day": 20,
     "energy_burn_rate": 0.0,
     "bee_lifespan_days": 10.0,
+    "starter_age_spread": 0.0,
     "disease_per_bee": 0.001,
     "disease_threshold": 0.1,
     "disease_lifespan_penalty": 0.9
