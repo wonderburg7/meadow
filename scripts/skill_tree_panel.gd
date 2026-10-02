@@ -447,7 +447,7 @@ class SkillGrid:
 		var font: Font = get_theme_font("font", "Small")
 		var font_size: int = get_theme_font_size("font_size", "Small")
 		var text_width := tile_size * 1.4
-		var key := "%s|%d|%d" % [font.resource_path, font_size, int(text_width)]
+		var key := "%d|%d|%d" % [font.get_instance_id(), font_size, int(text_width)]
 		if key != _fit_key:
 			_fit_key = key
 			_fit_cache.clear()
