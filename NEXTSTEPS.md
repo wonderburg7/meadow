@@ -44,12 +44,19 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/bee.gd :: brood food a nurse was carrying isn't any use in another job`
    - Next after: GC-3 -- honey stops creating energy
 
-5. **[Claude] UT-3 -- a theme change recolours the in-run panels' text**
+4. **[Claude] UT-3 -- a theme change recolours the in-run panels' text**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-3 -- a theme change recolours the in-run panels' text"
    - Files: `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd`
    - Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/colony_panel.gd scripts/foraging_panel.gd scripts/nursery_panel.gd scripts/winter_panel.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/colony_panel.gd :: hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))`
    - Next after: UT-4 -- a theme change recolours the HUD, main menu and end screens
+
+5. **[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
+   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
+   - Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
+   - Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
 
 ### Codex lane
 
@@ -90,8 +97,8 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
-- **SC-2** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows UT-1 and UT-3, which also edit `scripts/ui_theme.gd`.
-- **SC-3** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows SC-1, which also edits `scripts/debug_panel.gd`.
+- **SC-2** (`plans/now/settings-and-corner.md`) -- follows UT-3, which also edits `scripts/ui_theme.gd`.
+- **SC-3** (`plans/now/settings-and-corner.md`) -- follows SC-1, which also edits `scripts/debug_panel.gd`.
 - **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
@@ -99,7 +106,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
-- **HO-7** (`plans/now/hands-on-findings.md`) -- startable (Dave chose (b), 2 Oct 2026), but the Claude lane is full.
 - **HO-1** (`plans/now/hands-on-findings.md`) -- follows UT-2, which also edits `scripts/skill_tree_panel.gd`; HO-2 follows HO-1.
 - **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-1 and SC-3, which also edit `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4, UT-3 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
