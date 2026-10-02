@@ -20,7 +20,7 @@ const SaveGame = preload("res://scripts/save_game.gd")
 static var _run_named: bool = false
 
 var list_box: VBoxContainer
-var name_row: HBoxContainer
+var name_row: VBoxContainer
 var name_edit: LineEdit
 ## Hidden on the main menu, where there is no run of the player's to save.
 var save_run_btn: Button
@@ -54,21 +54,24 @@ func _ready() -> void:
 	save_run_btn.pressed.connect(_on_save_pressed)
 	column.add_child(save_run_btn)
 
-	name_row = HBoxContainer.new()
+	name_row = VBoxContainer.new()
 	name_row.visible = false
 	column.add_child(name_row)
 	var prompt := Label.new()
 	prompt.text = "Name this run:"
 	prompt.theme_type_variation = "Body"
 	name_row.add_child(prompt)
+	var edit_row := HBoxContainer.new()
+	name_row.add_child(edit_row)
 	name_edit = LineEdit.new()
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_edit.custom_minimum_size = Vector2(240, 0)
 	name_edit.max_length = 40
 	name_edit.text_submitted.connect(func(_text): _on_name_confirmed())
-	name_row.add_child(name_edit)
+	edit_row.add_child(name_edit)
 	var confirm_btn := _button("Save")
 	confirm_btn.pressed.connect(_on_name_confirmed)
-	name_row.add_child(confirm_btn)
+	edit_row.add_child(confirm_btn)
 
 	column.add_child(HSeparator.new())
 	list_box = VBoxContainer.new()
@@ -83,13 +86,22 @@ func _ready() -> void:
 ## menu's CanvasLayer (20) would otherwise hide it; in a run it sits at the
 ## ordinary GamePanel layer.
 func open() -> void:
+	name_row.visible = false
+	_apply_menu_context()
+	_rebuild()
+	super.open()
+
+## The window can be left open in a run while the player returns to the main
+## menu, so open() does not run again; the menu's visibility drives this too.
+func _apply_menu_context() -> void:
 	var menus := get_tree().get_nodes_in_group("main_menu")
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
 	layer = 21 if menu_visible else 11
 	save_run_btn.visible = not menu_visible
-	name_row.visible = false
-	_rebuild()
-	super.open()
+	if menu_visible:
+		name_row.visible = false
+	if not menus.is_empty() and not menus[0].visibility_changed.is_connected(_apply_menu_context):
+		menus[0].visibility_changed.connect(_apply_menu_context)
 
 func _on_run_reset() -> void:
 	_run_named = false
