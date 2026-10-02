@@ -28,7 +28,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
-| HO-9 | "Back to the run" on a fresh boot leaves the menu up | `scripts/main_menu.gd` | yes -- queued | low |
 | HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, `scripts/game_over.gd`, a new headless test, `tools/verify.ps1` | yes -- queued; land before HO-8 (`main.gd`) | high |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
 | HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | no -- after HO-9 (same file) | low |
@@ -268,36 +267,7 @@ column SC-4 builds).
 - Next after: HO-9 -- "Back to the run" on a fresh boot leaves the menu up
 ```
 
-## HO-9 -- "Back to the run" on a fresh boot leaves the menu up
-
-<!-- LAYER: immediate-task -->
-
-**True now.** On a fresh boot `main.gd::_ready` returns early while
-`Session.menu_pending` is true, so `camera_view` and the rest of the run are
-never built. The menu still offers "Back to the run", and
-`main_menu.gd::close` clears `Session.menu_pending` whatever is behind it, so
-the next `main.gd::_process` calls `camera_view._handle_pan` on null
-(`main.gd`, the presentation block under `if not scenario_active`) and errors
-every frame. Seen 2 Oct 2026 (second pass): launched through the Godot MCP,
-the debugger halted on that line and the window froze on the menu.
-
-**True afterwards.** With no run behind the menu, "Back to the run" is
-absent, and nothing in the menu clears `menu_pending` without starting a
-run. With a run behind it, the button works as now. The button is kept as
-`_back_btn`, shown by `open()` only when a run exists (`Session.menu_pending`
-is false), and `close()` does nothing while `menu_pending` is still true.
-
-**Must not change.** The in-run Return to Main Menu and back path, and the
-fresh-boot early return in `main.gd::_ready`.
-
-```queue
-**[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
-- Files: `scripts/main_menu.gd`
-- Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/main_menu.gd :: _back_btn`
-- Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
-```
+HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
 
 ## HO-10 -- a queen who starves ends the run with "The queen is dead"
 
