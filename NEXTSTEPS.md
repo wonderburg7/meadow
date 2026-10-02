@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
-   - Files: `scripts/debug_panel.gd`
-   - Check: with Developer mode off no Triggers header or button is built, "End the run" in a Challenge or level run opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/debug_panel.gd :: End the run`
-   - Next after: HO-4 -- the Saves window's name field is usable and always opens on top
-
-2. **[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
+1. **[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
    - Files: `scripts/saves_panel.gd`
    - Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
    - Next after: HO-5 -- long text stays inside its window
 
-3. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
+2. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
    - Files: `scripts/main_menu.gd`
    - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
