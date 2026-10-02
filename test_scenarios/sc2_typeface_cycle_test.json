@@ -1,0 +1,79 @@
+{
+  "random_seed": 5354,
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  },
+  "actions": [
+    {
+      "do": "viewport_size",
+      "w": 1920,
+      "h": 1080
+    },
+    {
+      "do": "open_window",
+      "window": "settings",
+      "sections": [
+        "Controls"
+      ]
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "atkinson"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "opensans"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "opendyslexic"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "munro"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "silkscreen"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "set_config",
+      "key": "ui_typeface",
+      "value": "sans"
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    }
+  ]
+}

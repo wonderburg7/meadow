@@ -426,12 +426,27 @@ static func _refresh_color_bindings() -> void:
 ## controls already holding them redraw without being rebuilt.
 static func refresh() -> void:
 	var theme := active_theme()
+	# Block change signals while mutating so controls re-shape text once, after
+	# the font swap is complete, not part-way through it (SC-2).
+	theme.set_block_signals(true)
+	if _panel_stylebox != null:
+		_panel_stylebox.set_block_signals(true)
+	for state in _button_styleboxes:
+		_button_styleboxes[state].set_block_signals(true)
 	_refresh_theme_resource(theme)
 	_texture_cache.clear()
 	if _panel_stylebox != null:
 		_refresh_panel_stylebox(_panel_stylebox)
 	for state in _button_styleboxes:
 		_refresh_button_stylebox(_button_styleboxes[state], state)
+	theme.set_block_signals(false)
+	if _panel_stylebox != null:
+		_panel_stylebox.set_block_signals(false)
+		_panel_stylebox.emit_changed()
+	for state in _button_styleboxes:
+		_button_styleboxes[state].set_block_signals(false)
+		_button_styleboxes[state].emit_changed()
+	theme.emit_changed()
 	_refresh_color_bindings()
 
 static func _refresh_theme_resource(theme: Theme) -> void:
