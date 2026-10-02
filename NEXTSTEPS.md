@@ -25,8 +25,8 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
    - Plan: `plans/now/gameplay-consistency.md` -- "GC-4 — a nurse moved to another job does not lose the brood food she carries"
-   - Files: `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json`
-   - Check: `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` passes headless, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Files: `scripts/bee.gd`, `tests/gc4_nurse_role_change_keeps_food_test.gd`, `tests/test_gc4_nurse_role_change_keeps_food.py`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_gc4_nurse_role_change_keeps_food` passes (it runs `tests/gc4_nurse_role_change_keeps_food_test.gd` in a headless Godot), a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/bee.gd :: brood food a nurse was carrying isn't any use in another job`
    - Next after: GC-3 -- honey stops creating energy
 

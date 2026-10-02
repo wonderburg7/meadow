@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 -- a nurse's brood food survives a job change (startable, Dave chose (b) 2 Oct 2026); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`); GC-4 none | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`) | Verified: 2026-10-02
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -14,7 +14,7 @@ each demonstrated in a headless run.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | gated: waits for PE-2's played arc | medium |
-| GC-4 | a nurse moved to another job does not lose the brood food she carries | `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` | yes -- queued | high |
+| GC-4 | a nurse moved to another job does not lose the brood food she carries | `scripts/bee.gd`, `tests/gc4_nurse_role_change_keeps_food_test.gd`, `tests/test_gc4_nurse_role_change_keeps_food.py`, `tools/verify.ps1` | yes -- queued | high |
 
 GC-1 and GC-2 are independent in behaviour but share `bee.gd`, so they run in
 that order in one lane. GC-3 is independent of both. **Required reading:**
@@ -114,11 +114,27 @@ BS-9).
 **Must not change.** GC-1's Idle behaviour and GC-2's forager delivery
 (C-89 and C-90, passed 2 Oct 2026); the save format.
 
+Fixture replaced by unit test: scenario_actions.gd is Codex-owned (Dave, 2 Oct 2026).
+
+**Closeout notes (2 Oct 2026).** Built as `bee.gd::_return_nurse_food`,
+called from `_apply_role`, which both `set_role` and `_apply_pending_role`
+go through. No scenario action can load a nurse with brood food, so
+`tests/gc4_nurse_role_change_keeps_food_test.gd` builds a real hive, cells
+and nurse outside any world and proves the totals for Idle (straight away)
+and Forager (queued), with the queen unchanged. It is run headless by
+`tests/test_gc4_nurse_role_change_keeps_food.py`, now one of `verify.ps1`'s
+unit modules. Side effect: honey a nurse returns goes through
+`hive.deposit`, which tops up part-filled honey cells first, and
+`hive_cell.add_resource` re-wets a honey cell it tops up
+(`ripen_progress *= honey_rewet_factor`). Stored totals are kept, but a ripe
+cell that takes it back stops counting as edible honey until it re-ripens,
+as with GC-2's honey delivery. Nurses carry honey mainly for gyne larvae.
+
 ```queue
 **[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
 - Plan: `plans/now/gameplay-consistency.md` -- "GC-4 — a nurse moved to another job does not lose the brood food she carries"
-- Files: `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json`
-- Check: `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` passes headless, a Godot boot is clean, and `tools/verify.ps1` is green
+- Files: `scripts/bee.gd`, `tests/gc4_nurse_role_change_keeps_food_test.gd`, `tests/test_gc4_nurse_role_change_keeps_food.py`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_gc4_nurse_role_change_keeps_food` passes (it runs `tests/gc4_nurse_role_change_keeps_food_test.gd` in a headless Godot), a Godot boot is clean, and `tools/verify.ps1` is green
 - Proof: `present: scripts/bee.gd :: brood food a nurse was carrying isn't any use in another job`
 - Next after: GC-3 -- honey stops creating energy
 ```
