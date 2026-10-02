@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 and HO-10 are startable, HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 are startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is startable, HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -23,12 +23,11 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | --- | --- | --- | --- | --- |
 | HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
-| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | no -- after SC-1 and SC-3 (same file) | medium |
-| HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | no -- after SC-3 (same file) | medium |
+| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
+| HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
-| HO-9 | "Back to the run" on a fresh boot leaves the menu up | `scripts/main_menu.gd` | yes -- queued | low |
 | HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, `scripts/game_over.gd`, a new headless test, `tools/verify.ps1` | yes -- queued; land before HO-8 (`main.gd`) | high |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
 | HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | no -- after HO-9 (same file) | low |
@@ -153,7 +152,7 @@ runs as written.
 **Must not change.** Each existing trigger's behaviour, and Run
 availability's guard (`tests/source_checks.py` checks it).
 
-```queue-gated
+```queue
 **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
 - Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
 - Files: `scripts/debug_panel.gd`
@@ -182,6 +181,15 @@ part first.
 
 **Must not change.** C-77 and C-78 (passed 2 Oct 2026): no "Save this run"
 over the menu, Load starts the run, Delete always asks.
+
+```queue
+**[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
+- Files: `scripts/saves_panel.gd`
+- Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
+- Next after: HO-5 -- long text stays inside its window
+```
 
 ## HO-5 -- long text stays inside its window
 
@@ -268,36 +276,7 @@ column SC-4 builds).
 - Next after: HO-9 -- "Back to the run" on a fresh boot leaves the menu up
 ```
 
-## HO-9 -- "Back to the run" on a fresh boot leaves the menu up
-
-<!-- LAYER: immediate-task -->
-
-**True now.** On a fresh boot `main.gd::_ready` returns early while
-`Session.menu_pending` is true, so `camera_view` and the rest of the run are
-never built. The menu still offers "Back to the run", and
-`main_menu.gd::close` clears `Session.menu_pending` whatever is behind it, so
-the next `main.gd::_process` calls `camera_view._handle_pan` on null
-(`main.gd`, the presentation block under `if not scenario_active`) and errors
-every frame. Seen 2 Oct 2026 (second pass): launched through the Godot MCP,
-the debugger halted on that line and the window froze on the menu.
-
-**True afterwards.** With no run behind the menu, "Back to the run" is
-absent, and nothing in the menu clears `menu_pending` without starting a
-run. With a run behind it, the button works as now. The button is kept as
-`_back_btn`, shown by `open()` only when a run exists (`Session.menu_pending`
-is false), and `close()` does nothing while `menu_pending` is still true.
-
-**Must not change.** The in-run Return to Main Menu and back path, and the
-fresh-boot early return in `main.gd::_ready`.
-
-```queue
-**[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
-- Files: `scripts/main_menu.gd`
-- Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/main_menu.gd :: _back_btn`
-- Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
-```
+HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
 
 ## HO-10 -- a queen who starves ends the run with "The queen is dead"
 
@@ -367,3 +346,12 @@ whole words: its label shrinks or the hex grows rather than splitting one.
 
 **Must not change.** Challenges above Scenarios, the ticks, and the
 selection outline.
+
+```queue
+**[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
+- Files: `scripts/main_menu.gd`
+- Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
+- Next after: none -- the last slice in this plan
+```

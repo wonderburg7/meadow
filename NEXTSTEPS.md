@@ -23,19 +23,33 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
-   - Files: `scripts/main_menu.gd`
-   - Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/main_menu.gd :: _back_btn`
-   - Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
-
-2. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
+1. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
    - Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
    - Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `absent: tools/verify.ps1 :: tests.test_ho10_queen_starvation_ends_run`
    - Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
+
+2. **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
+   - Files: `scripts/debug_panel.gd`
+   - Check: with Developer mode off no Triggers header or button is built, "End the run" in a Challenge or level run opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/debug_panel.gd :: End the run`
+   - Next after: HO-4 -- the Saves window's name field is usable and always opens on top
+
+3. **[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
+   - Files: `scripts/saves_panel.gd`
+   - Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
+   - Next after: HO-5 -- long text stays inside its window
+
+4. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
+   - Files: `scripts/main_menu.gd`
+   - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
+   - Next after: none -- the last slice in this plan
 
 ### Codex lane
 
@@ -70,7 +84,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **HO-1** (`plans/now/hands-on-findings.md`) -- follows UT-2, which also edits `scripts/skill_tree_panel.gd`; HO-2 follows HO-1.
-- **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-3, which also edits `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
 - **BS-11** (`plans/now/brood-spine.md`) -- follows BS-6, which also edits `scripts/run_availability_panel.gd`.
