@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin (Claude lane, queued 1 Oct 2026); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark and Light; High contrast never draws a texture (Dave, 2 Oct 2026). Changing the theme mid-run recolours all text,
