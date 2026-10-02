@@ -119,6 +119,8 @@ static var _panel_stylebox: PanelBox
 static var _texture_cache: Dictionary = {}
 static var _button_styleboxes: Dictionary = {}
 static var _active_theme: Theme
+## Live colour bindings: [WeakRef(control), property, token]. Re-applied by refresh().
+static var _color_bindings: Array = []
 
 static func panel_stylebox() -> StyleBox:
 	if _panel_stylebox == null:
@@ -399,6 +401,26 @@ static func refresh_for_setting(key: String) -> void:
 	if key in APPEARANCE_KEYS:
 		refresh()
 
+## Applies a palette token to a control's theme colour now and re-applies it
+## on every appearance change. Runs only from refresh(), never per frame.
+static func bind_color(control: Control, property: String, token: String) -> void:
+	control.add_theme_color_override(property, color(token))
+	for entry in _color_bindings:
+		if entry[0].get_ref() == control and entry[1] == property:
+			entry[2] = token
+			return
+	_color_bindings.append([weakref(control), property, token])
+
+static func _refresh_color_bindings() -> void:
+	var live: Array = []
+	for entry in _color_bindings:
+		var control = entry[0].get_ref()
+		if control == null:
+			continue
+		control.add_theme_color_override(entry[1], color(entry[2]))
+		live.append(entry)
+	_color_bindings = live
+
 ## Reapplies all palette, scale and typeface values to the same resources.
 ## Theme and StyleBox resources emit change notifications as they mutate, so
 ## controls already holding them redraw without being rebuilt.
@@ -410,6 +432,7 @@ static func refresh() -> void:
 		_refresh_panel_stylebox(_panel_stylebox)
 	for state in _button_styleboxes:
 		_refresh_button_stylebox(_button_styleboxes[state], state)
+	_refresh_color_bindings()
 
 static func _refresh_theme_resource(theme: Theme) -> void:
 	var scale: float = Session.text_scale

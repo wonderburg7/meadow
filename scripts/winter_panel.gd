@@ -93,12 +93,12 @@ func refresh(needs: Dictionary) -> void:
 	var shortfall: float = required - held
 	if shortfall <= 0.0:
 		verdict.text = "On track — about %d units spare." % int(-shortfall)
-		verdict.add_theme_color_override("font_color", UiTheme.color("success"))
+		UiTheme.bind_color(verdict, "font_color", "success")
 		corner_text = "Winter in %d days — on track" % int(ceil(days_left))
 	else:
 		var per_day: float = shortfall / max(1.0, days_left)
 		verdict.text = "Short by about %d units. That is %d a day from now until winter." % [
 			int(shortfall), int(ceil(per_day)),
 		]
-		verdict.add_theme_color_override("font_color", UiTheme.color("danger"))
+		UiTheme.bind_color(verdict, "font_color", "danger")
 		corner_text = "Winter in %d days — short by %d" % [int(ceil(days_left)), int(shortfall)]

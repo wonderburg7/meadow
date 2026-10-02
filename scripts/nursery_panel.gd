@@ -138,7 +138,7 @@ func _ready() -> void:
 	needing_attention_ok_label = Label.new()
 	needing_attention_ok_label.text = "Brood is fine -- nothing needs attention right now."
 	needing_attention_ok_label.theme_type_variation = "Small"
-	needing_attention_ok_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(needing_attention_ok_label, "font_color", "success")
 	needing_attention_ok_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
 	needing_attention_column.add_child(needing_attention_ok_label)

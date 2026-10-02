@@ -38,7 +38,7 @@ func _ready() -> void:
 	gate_hint_label.theme_type_variation = "Tiny"
 	gate_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	gate_hint_label.custom_minimum_size = Vector2(310, 0)
-	gate_hint_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(gate_hint_label, "font_color", "text_secondary")
 	column.add_child(gate_hint_label)
 
 	var overview := _section(column, "Overview", false)
@@ -55,7 +55,7 @@ func _ready() -> void:
 	species_empty_label = Label.new()
 	species_empty_label.text = "No scored trips yet."
 	species_empty_label.theme_type_variation = "Small"
-	species_empty_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(species_empty_label, "font_color", "text_secondary")
 	species_column.add_child(species_empty_label)
 
 	var recruitment := _section(column, "Recruitment", false)

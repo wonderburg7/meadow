@@ -102,7 +102,7 @@ func _ready() -> void:
 	hint.theme_type_variation = "Tiny"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(300, 0)
-	hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(hint, "font_color", "text_secondary")
 	column.add_child(hint)
 
 	# Priority order per UI_PLAN.md section 5: is anything wrong right
@@ -113,7 +113,7 @@ func _ready() -> void:
 	needing_attention_ok_label = Label.new()
 	needing_attention_ok_label.text = "Nothing needs attention right now."
 	needing_attention_ok_label.theme_type_variation = "Small"
-	needing_attention_ok_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(needing_attention_ok_label, "font_color", "success")
 	needing_attention_ok_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
 	needing_attention_column.add_child(needing_attention_ok_label)
@@ -130,7 +130,7 @@ func _ready() -> void:
 	favourites_empty_label = Label.new()
 	favourites_empty_label.text = "Star a bee from its selection panel to pin it here."
 	favourites_empty_label.theme_type_variation = "Small"
-	favourites_empty_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(favourites_empty_label, "font_color", "text_secondary")
 	favourites_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	favourites_empty_label.custom_minimum_size = Vector2(300, 0)
 	favourites_column.add_child(favourites_empty_label)
@@ -284,7 +284,7 @@ func _build_plot(column: VBoxContainer) -> void:
 
 	plot_label = Label.new()
 	plot_label.theme_type_variation = "Small"
-	plot_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(plot_label, "font_color", "text_secondary")
 	column.add_child(plot_label)
 
 func _choose_series(key: String) -> void:
