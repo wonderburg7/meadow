@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: UT-3 -- a theme change recolours the in-run panels' text (Claude lane); UT-2 landed 2 Oct 2026 (Skills tooltip wraps via UiInfoBadge.make_bounded_tooltip, Buy first in the detail strip); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark and Light; High contrast never draws a texture (Dave, 2 Oct 2026). Changing the theme mid-run recolours all text,
@@ -20,8 +20,6 @@ Each of them came right after hovering before the click.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UT-1 | panel textures are visible in Dark and Light, and High contrast stays flat | `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md` | yes -- queued | medium |
-| UT-2 | the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin | `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd` | yes -- queued | medium |
 | UT-3 | a theme change recolours the in-run panels' text | `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd` | yes, after UT-1 (same file) | medium |
 | UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- SR-4 owns `hud.gd` | low |
 | UT-5 | headless assertions for texture contrast and Buy clearance | `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json` | no -- SR-2 and SR-4 own `scenario_actions.gd` | medium |
@@ -43,120 +41,9 @@ UT-1 lands. C-71 (high-contrast text legible over textures) should be run
 **What a slice reads.** Its own section below, plus the routed functions
 named there. `FUNCTION_MAP.md` indexes `hud.gd` and `debug_panel.gd`.
 
-## UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat
+UT-1 shipped 2026-10-02; its specification is `plans/archive/UT-1_2026-10-02.md`.
 
-<!-- LAYER: immediate-task -->
-
-**Decision (Dave, 2 Oct 2026, on C-71).** No texture in High contrast:
-that theme draws every panel flat whatever Panel texture says, so its text
-keeps its full contrast and C-71's question goes away.
-
-2 Oct 2026 re-run (C-60 failed again): spread of brightness on an empty
-panel patch, texture against Flat -- Honeycomb 1.0/0.35 (Dark), 9.3/0.3
-(Light), 3.2/1.0 (High contrast); Grain 1.2/0.35, 1.05/0.3, 1.10/1.04.
-
-Level: medium (one file; visual tuning bounded by contrast invariants).
-
-**True now.** `PanelBox._draw` does draw the texture. HF-1's fix holds, so
-C-60's "still not drawing" diagnosis is out of date. The texture is simply
-too faint to see. Measured from the palettes in `ui_theme.gd` (WCAG contrast
-of the composited texture against `panel_bg`):
-
-| Theme | Comb line | Grain, lightest / darkest |
-| --- | --- | --- |
-| Dark | 1.01:1 (`#460F00` at alpha 0.15) | 1.10 / 1.01 |
-| Light | 1.38:1 -- reads clearly | 1.01 / 1.10 |
-| High contrast | 1.09:1 | 1.03 / 1.00 |
-
-Grain's jitter is uniform within ±7% (±3% in high contrast) at alpha 0.6, so
-most of its pixels sit much closer to 1:1 than those extremes. The 1 Oct pass
-saw Honeycomb in Light and faintly in High contrast, and nothing else.
-
-**Should be true.**
-- In High contrast, `PanelBox` draws no texture for any `Session.panel_texture`
-  (check `Session.ui_theme == "high_contrast"` where the texture is chosen,
-  not in the image builder), and the High contrast palette's texture-only
-  entries go.
-- In Dark and Light, the comb line composites at **at least 1.25:1** against
-  `panel_bg`.
-- At least a tenth of grain pixels differ from `panel_bg` by **at least
-  1.10:1**. In Dark, the jitter has to lean lighter, because `#370C00`
-  cannot get much darker.
-- `text_primary` keeps **at least 4.5:1** against every composited texture
-  pixel in Dark and Light.
-- Panel texture's tip in `settings_catalogue.gd` adds that High contrast
-  always shows plain panels.
-- `checks/ready/C-71.md` is rewritten: in High contrast, Honeycomb and Grain
-  both leave the Colony window plain; Owner points at this plan.
-- These thresholds are a starting point. Dave's re-run of C-60 is the final
-  judge in Dark and Light; C-71 covers High contrast.
-- Add `static func contrast_ratio(a: Color, b: Color) -> float` (WCAG
-  relative luminance) and `static func panel_texture_contrast(mode: String)
-  -> Dictionary` to `UiTheme`. The second returns the three numbers above for
-  the active theme. Build them from the `Image` before it becomes an
-  `ImageTexture`, so they work under the headless dummy renderer. UT-5
-  asserts on them. Nothing calls them per frame.
-- The settings tip ("a faint honeycomb, or fine grain") stays true; faint
-  must still be visible.
-
-**Must not change.** Panel margins and outer rect (C-70: changing the
-texture moves nothing). The tile sizes (comb 12x18, grain 64x64). The cache
-key `mode + ":" + Session.ui_theme`.
-
-```queue
-**[Claude] UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat**
-- Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat"
-- Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md`
-- Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records Dark's and Light's comb and grain contrast from it meeting the UT-1 thresholds, High contrast draws no texture, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
-- Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
-```
-
-## UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
-
-2 Oct 2026: C-80 failed on exactly this -- three clicks on Buy (top-left,
-centre, bottom-left of the button) bought nothing and the stores stayed put,
-while the strip read "can be bought".
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (two files; a layout change checked by hand until UT-5).
-
-**True now.**
-- The skill grid answers `_get_tooltip` with plain text, so Godot's default
-  tooltip lays it out as one unwrapped line. On 1 Oct, the Nurses tooltip
-  ran off the right edge of a 1456-px-wide window.
-- `ui_info_badge.gd::_make_custom_tooltip` already builds the bounded,
-  wrapped, themed tooltip, but only for "i" badges.
-- The detail strip puts Buy last in an `HBoxContainer`, flush right, at the
-  bottom-right corner.
-- Dr Gallerin's bubble and book icon are on canvas layer 15, above the Skills
-  window's 14 (`skill_tree_panel.gd::LAYER`). That is deliberate: Challenge 2
-  stage 2.5's prompt must stay readable over the full-screen tree. As a
-  result, Buy was half covered and its first click missed.
-
-**Should be true.**
-- **Tooltip.** Move the badge's builder to a static
-  `make_bounded_tooltip(text)` in `ui_info_badge.gd`, called by both the
-  badge's own `_make_custom_tooltip` and the skill grid's. That keeps one
-  owner. Do not copy it.
-- **Buy button.** Move Buy beside the detail text, as the strip's first
-  child, so it is never in the corner Dr Gallerin occupies. Do not lower
-  Gallerin's layer or hide the bubble: the 2.5 prompt tells the player to
-  press Buy.
-
-**Must not change.** C-79 (Skills fills the screen and pauses). C-88 (drag
-and zoom). C-92 (cut skills hidden). Buy's disabled state for unaffordable
-tiles.
-
-```queue
-**[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
-- Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
-- Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
-- Next after: UT-3 -- a theme change recolours the in-run panels' text
-```
+UT-2 shipped 2026-10-02; its specification is `plans/archive/UT-2_2026-10-02.md`.
 
 ## UT-3 -- a theme change recolours the in-run panels' text
 

@@ -23,33 +23,33 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat**
-   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat"
-   - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md`
-   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records Dark's and Light's comb and grain contrast from it meeting the UT-1 thresholds, High contrast draws no texture, a Godot boot is clean, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
-   - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
-
-2. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
-   - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
-   - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
-   - Next after: UT-3 -- a theme change recolours the in-run panels' text
-
-3. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
-   - Plan: `plans/now/brood-spine.md` -- "BS-10 — C-81 tests the one run that buys Nurses"
-   - Files: `checks/ready/C-81.md`
-   - Check: `checks/ready/C-81.md` starts Challenge 2 rather than level 7, and `python tools/check_docs.py` passes
-   - Proof: `present: checks/ready/C-81.md :: start level 7 from the main menu`
-   - Next after: BS-6 -- developer edits to the table change what a run starts with
-
-4. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
+1. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
    - Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
    - Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
    - Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
    - Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
    - Next after: SC-2 -- cycling the typeface logs no engine error
+
+2. **[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
+   - Plan: `plans/now/gameplay-consistency.md` -- "GC-4 — a nurse moved to another job does not lose the brood food she carries"
+   - Files: `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json`
+   - Check: `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` passes headless, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/bee.gd :: brood food a nurse was carrying isn't any use in another job`
+   - Next after: GC-3 -- honey stops creating energy
+
+3. **[Claude] UT-3 -- a theme change recolours the in-run panels' text**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-3 -- a theme change recolours the in-run panels' text"
+   - Files: `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd`
+   - Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/colony_panel.gd scripts/foraging_panel.gd scripts/nursery_panel.gd scripts/winter_panel.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/colony_panel.gd :: hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))`
+   - Next after: UT-4 -- a theme change recolours the HUD, main menu and end screens
+
+4. **[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
+   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
+   - Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
+   - Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
 
 ### Codex lane
 
@@ -88,11 +88,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
-- **SC-2** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows UT-1 and UT-3, which also edit `scripts/ui_theme.gd`.
-- **SC-3** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows SC-1, which also edits `scripts/debug_panel.gd`.
+- **SC-2** (`plans/now/settings-and-corner.md`) -- follows UT-3, which also edits `scripts/ui_theme.gd`.
+- **SC-3** (`plans/now/settings-and-corner.md`) -- follows SC-1, which also edits `scripts/debug_panel.gd`.
 - **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
@@ -100,8 +99,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
-- **GC-4** (`plans/now/gameplay-consistency.md`) -- startable (Dave chose (b), 2 Oct 2026), but the Claude lane is full.
-- **HO-7** (`plans/now/hands-on-findings.md`) -- startable (Dave chose (b), 2 Oct 2026), but the Claude lane is full.
 - **HO-1** (`plans/now/hands-on-findings.md`) -- follows UT-2, which also edits `scripts/skill_tree_panel.gd`; HO-2 follows HO-1.
 - **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-1 and SC-3, which also edit `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4, UT-3 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).

@@ -10,6 +10,10 @@ const UiTheme = preload("res://scripts/ui_theme.gd")
 const TOOLTIP_TEXT_WIDTH := 260.0
 
 func _make_custom_tooltip(for_text: String) -> Control:
+	return make_bounded_tooltip(for_text)
+
+## The one bounded, wrapped, themed tooltip; the skill grid calls it too.
+static func make_bounded_tooltip(for_text: String) -> Control:
 	var panel := PanelContainer.new()
 	panel.theme = UiTheme.build_theme()
 	panel.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())

@@ -1062,7 +1062,7 @@ const TUNABLES := [
 		"options": ["flat", "comb", "grain"],
 		"option_labels": {"flat": "Flat", "comb": "Honeycomb", "grain": "Grain"},
 		"category": "Appearance",
-		"tip": "Optional texture inside every panel's background: a faint honeycomb, or fine grain. Flat is the plain colour. Panel edges and text never move. Takes effect immediately.",
+		"tip": "Optional texture inside every panel's background: a faint honeycomb, or fine grain. Flat is the plain colour, and High contrast always shows plain panels. Panel edges and text never move. Takes effect immediately.",
 	},
 	{
 		"persist": "player",
