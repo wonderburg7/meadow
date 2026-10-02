@@ -13,7 +13,6 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| SC-1 | `scripts/debug_panel.gd`, `checks/ready/C-72.md` | high | Claude | yes | none |
 | SC-2 | `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json` | medium | Claude | yes, after UT-1 and UT-3 (share `ui_theme.gd`) | UT-1, UT-3 |
 | SC-3 | `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd` | low | Claude | yes, after SC-1 (shares `debug_panel.gd`) | SC-1 |
 | SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | SR-4 landing; not alongside UT-4 (all edit `scripts/hud.gd`) |
@@ -27,68 +26,7 @@ A slice reads its own section and nothing else. Not planned: the hive view
 swapping the last top-bar icon (it shows the view the button switches to,
 which reads as intended), and C-60/C-71, which UT-1 now owns (Dave, 2 Oct 2026).
 
-## SC-1 -- the settings window does not move under a Text scale click
-
-<!-- LAYER: immediate-task -->
-
-Level: high (ambiguous bug: the cause below is an inference, not a repro).
-
-**True now.** `debug_panel.gd::_adjust` debounces Text scale correctly: each
-click restarts `_text_scale_timer` (`TEXT_SCALE_APPLY_DELAY` 0.8 s) and only
-the timeout calls `UiTheme.refresh_for_setting("text_scale")`. Observed on
-1 Oct 2026 (C-72, run 1): Text scale 2.0, one − click, then four quick −
-clicks (1.90 to 1.50, applied once, fine). Seconds later, four quick + clicks
-from 1.50: the first counted (1.60), then the rows inside `panel_scroll`
-moved down by one row (~27 px) before the timer fired, so the next three
-clicks hit Typeface ▸ and changed the typeface three times. Two later runs
-from 1.60 passed. 2 Oct 2026: four uninterrupted + clicks from 1.60
-reached 2.0 cleanly. A run with a capture of about 1 s after the second
-click let the apply fire (1.80), and the re-laid window sent clicks three and
-four to Typeface ▸. That is the debounce working, not run 1's early move, so
-C-72 was left open for this slice rather than confirmed. Inference: after an apply shrinks the content,
-`panel_scroll.scroll_vertical` is left past the new maximum until the next
-re-sort; the value-label change on the next click triggers that sort and the
-clamp moves every row.
-
-**True afterwards.** After the debounced apply, the scroll position is
-settled in the same pass (for example: wait one frame after
-`refresh_for_setting`, then clamp `scroll_vertical` to the bar's maximum), so
-a later click on any row moves nothing until its own apply. Reproduce run 1
-before changing anything; if it does not reproduce, stop and report rather
-than guess. `plans/now/ui-texture-polish.md` ("Source") puts a similar
-"arrows stepped the other row" sighting down to the capture tool; this one
-is different because the game's own state changed -- Typeface really did
-become Open Sans, and the boot log carries SC-2's error from `_cycle_option`. Rewrite `checks/ready/C-72.md`'s "What this checks" to start from
-Text scale 2.0, step it to 1.50 with five − clicks, wait two seconds, then
-click + four times quickly -- 2.0 is the maximum, so the old wording could
-not be run from the default -- and point its Owner line at this plan.
-
-**Must not change.** `TEXT_SCALE_APPLY_DELAY`, the hold-to-repeat timer in
-`_wire_repeat_button`, and every other setting's immediate apply.
-
-**Outcome (2 Oct 2026).** The guessed cause was wrong. In a headless run that
-clicks the real window, Godot pulls `scroll_vertical` back into range in the
-same layout pass as the apply. In the full Main scene, with Challenge 1 running
-and World & start open, run 1 did reproduce. The developer Challenge stage
-navigator at the end of World & start shows the goal in an autowrapping label,
-rewritten whenever the stage changes. Going from 1.3 (one line) to 1.4 (two
-lines) moved every row below it down 18 px at text scale 1.6, before any
-apply. With the pointer on the upper half of +, the next click landed on
-Typeface ▸. The fix gives that label a fixed height of `STAGE_GOAL_LINES` (2)
-lines, recomputed on each theme change. A longer goal ends in an ellipsis and
-the tooltip carries the full text; at 2.0, two Challenge 1 goals need three
-lines. After the fix, rows moved 0 px on every Challenge 1 stage change at
-text scale 1.0, 1.6 and 2.0, and the run 1 sequence ended at 1.90 with
-Typeface unchanged.
-
-```queue
-**[Claude] SC-1 -- the settings window does not move under a Text scale click**
-- Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
-- Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
-- Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
-- Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
-- Next after: SC-2 -- cycling the typeface logs no engine error
-```
+SC-1 shipped 2026-10-02; its specification is `plans/archive/SC-1_2026-10-02.md`.
 
 ## SC-2 -- cycling the typeface logs no engine error
 
