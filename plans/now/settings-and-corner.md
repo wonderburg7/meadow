@@ -1,7 +1,7 @@
 # Settings window and corner HUD -- findings from the 1 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SC-1 -- the settings window does not move under a Text scale click (startable; waits for room in the Claude lane) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-01
+Status: active | Owner: Dave / Claude Code | Next: SC-2 -- cycling the typeface logs no engine error (follows UT-1 and UT-3) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
 
 **Objective.** Four defects seen while running C-69 to C-73 by computer use on
 1 Oct 2026 are fixed: C-72 failed once in three runs, cycling the typeface
@@ -65,6 +65,21 @@ not be run from the default -- and point its Owner line at this plan.
 
 **Must not change.** `TEXT_SCALE_APPLY_DELAY`, the hold-to-repeat timer in
 `_wire_repeat_button`, and every other setting's immediate apply.
+
+**Outcome (2 Oct 2026).** The guessed cause was wrong. In a headless run that
+clicks the real window, Godot pulls `scroll_vertical` back into range in the
+same layout pass as the apply. In the full Main scene, with Challenge 1 running
+and World & start open, run 1 did reproduce. The developer Challenge stage
+navigator at the end of World & start shows the goal in an autowrapping label,
+rewritten whenever the stage changes. Going from 1.3 (one line) to 1.4 (two
+lines) moved every row below it down 18 px at text scale 1.6, before any
+apply. With the pointer on the upper half of +, the next click landed on
+Typeface ▸. The fix gives that label a fixed height of `STAGE_GOAL_LINES` (2)
+lines, recomputed on each theme change. A longer goal ends in an ellipsis and
+the tooltip carries the full text; at 2.0, two Challenge 1 goals need three
+lines. After the fix, rows moved 0 px on every Challenge 1 stage change at
+text scale 1.0, 1.6 and 2.0, and the run 1 sequence ended at 1.90 with
+Typeface unchanged.
 
 ```queue
 **[Claude] SC-1 -- the settings window does not move under a Text scale click**

@@ -35,6 +35,11 @@ const RunAvailabilityPanel = preload("res://scripts/run_availability_panel.gd")
 ## Text scale re-lays every window, so its -/+ buttons would jump from under
 ## the pointer on each click; the change applies this long after the last one.
 const TEXT_SCALE_APPLY_DELAY := 0.8
+## The Challenge stage navigator's goal always takes exactly this many lines.
+## It sits above every Game Settings row, and a goal that wrapped to a
+## different line count on a stage change moved every row under the pointer
+## with no click at all (SC-1, C-72 run 1: + clicks landed on Typeface).
+const STAGE_GOAL_LINES := 2
 
 # --- fields -------------------------------------------------------
 var _text_scale_timer: Timer
@@ -386,6 +391,25 @@ func _make_challenge_stage_navigation() -> Control:
 	challenge_stage_label.theme_type_variation = "Small"
 	challenge_stage_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	challenge_stage_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A fixed height whatever the goal says (STAGE_GOAL_LINES): a longer goal
+	# ends in an ellipsis and the full text is in the tooltip. The reserve is
+	# recomputed on every theme change because text scale and typeface
+	# change the line height in place; the inequality guard keeps a
+	# same-size refresh from re-laying the window.
+	challenge_stage_label.max_lines_visible = STAGE_GOAL_LINES
+	challenge_stage_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	challenge_stage_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	var reserve_goal_lines := func() -> void:
+		var label := challenge_stage_label
+		var font_size := label.get_theme_font_size("font_size")
+		var line_height := label.get_theme_font("font").get_height(font_size)
+		var height := ceilf(line_height * STAGE_GOAL_LINES
+			+ label.get_theme_constant("line_spacing") * (STAGE_GOAL_LINES - 1)
+			+ label.get_theme_stylebox("normal").get_minimum_size().y)
+		if label.custom_minimum_size.y != height:
+			label.custom_minimum_size.y = height
+	challenge_stage_label.ready.connect(reserve_goal_lines)
+	challenge_stage_label.theme_changed.connect(reserve_goal_lines)
 	row.add_child(challenge_stage_label)
 
 	challenge_advance_btn = Button.new()
@@ -421,6 +445,7 @@ func _refresh_challenge_stage_navigation() -> void:
 	if not active:
 		return
 	challenge_stage_label.text = "%s — %s" % [stage_id, stage_goal]
+	challenge_stage_label.tooltip_text = challenge_stage_label.text
 	challenge_retreat_btn.disabled = not runner.can_debug_retreat_stage()
 	challenge_advance_btn.disabled = not runner.can_debug_advance_stage()
 
