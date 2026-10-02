@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-4 -- a theme change recolours the HUD, main menu and end screens (Claude lane, gated on SR-4); UT-3 landed 2 Oct 2026 (UiTheme.bind_color re-applies bound label colours on refresh; the four in-run panels use it); UT-2 landed 2 Oct 2026 (Skills tooltip wraps via UiInfoBadge.make_bounded_tooltip, Buy first in the detail strip); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: UT-4 -- a theme change recolours the HUD, main menu and end screens (Claude lane, queued behind SR-4 and SC-4); UT-3 landed 2 Oct 2026 (UiTheme.bind_color re-applies bound label colours on refresh; the four in-run panels use it); UT-2 landed 2 Oct 2026 (Skills tooltip wraps via UiInfoBadge.make_bounded_tooltip, Buy first in the detail strip); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 follows SR-4 and SC-4 in the Claude lane (SR-4 moved there by Dave, 2 Oct 2026; all three edit `scripts/hud.gd`); UT-5 waits for SR-4 (`plans/now/scenario-reds.md`), which edits `scripts/scenario_actions.gd` (SR-2 landed 2 Oct 2026); UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark and Light; High contrast never draws a texture (Dave, 2 Oct 2026). Changing the theme mid-run recolours all text,
@@ -20,7 +20,7 @@ Each of them came right after hovering before the click.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- SR-4 owns `hud.gd` | low |
+| UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | yes -- queued behind SR-4 and SC-4 (same lane) | low |
 | UT-5 | headless assertions for texture contrast and Buy clearance | `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json` | no -- SR-2 and SR-4 own `scenario_actions.gd` | medium |
 
 **Dependencies.** UT-3 runs after UT-1 because both edit `ui_theme.gd`.
@@ -58,10 +58,10 @@ because its cog changes the theme while the menu is showing.
 
 **Should be true.** Each of those overrides goes through `UiTheme.bind_color`.
 
-**Gate.** UT-3 has landed, and SR-4 (Codex lane) has landed, since it
-edits `hud.gd`.
+**Gate.** Cleared 2 Oct 2026: UT-3 has landed, and SR-4 now runs ahead of
+it in the Claude lane, so the shared `hud.gd` is never open twice.
 
-```queue-gated
+```queue
 **[Claude] UT-4 -- a theme change recolours the HUD, main menu and end screens**
 - Plan: `plans/now/ui-texture-polish.md` -- "UT-4 -- a theme change recolours the HUD, main menu and end screens"
 - Files: `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd`

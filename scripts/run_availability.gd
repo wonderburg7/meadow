@@ -53,6 +53,7 @@ const REASON_RUN_GRANT := "reason.run_grant"
 const REASON_SEEDED_ROLE := "reason.seeded_role"
 const REASON_RUN_BAN := "reason.run_ban"
 const REASON_TREE := "reason.tree"
+const REASON_CUT := "reason.cut"
 const REASON_FEATURE_OFF := "reason.feature_off"
 const REASON_FEATURE_ON := "reason.feature_on"
 
@@ -70,6 +71,8 @@ static func sheet_for(run_definition: Dictionary, progression = null) -> Diction
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_RUN_GRANT}
 		elif seeded.has(skill_id):
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_SEEDED_ROLE}
+		elif Skills.is_cut(skill_id):
+			rows[skill_id] = {"source": SOURCE_UNAVAILABLE, "reason": REASON_CUT}
 		elif progression != null and not progression.feature_valid(skill_id):
 			rows[skill_id] = {"source": SOURCE_UNAVAILABLE, "reason": REASON_FEATURE_OFF}
 		else:
