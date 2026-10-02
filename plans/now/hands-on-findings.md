@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is startable, HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 are startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is startable, HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -23,8 +23,8 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | --- | --- | --- | --- | --- |
 | HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
-| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | no -- after SC-1 and SC-3 (same file) | medium |
-| HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | no -- after SC-3 (same file) | medium |
+| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
+| HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
@@ -152,7 +152,7 @@ runs as written.
 **Must not change.** Each existing trigger's behaviour, and Run
 availability's guard (`tests/source_checks.py` checks it).
 
-```queue-gated
+```queue
 **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
 - Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
 - Files: `scripts/debug_panel.gd`
@@ -181,6 +181,15 @@ part first.
 
 **Must not change.** C-77 and C-78 (passed 2 Oct 2026): no "Save this run"
 over the menu, Load starts the run, Delete always asks.
+
+```queue
+**[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
+- Files: `scripts/saves_panel.gd`
+- Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
+- Next after: HO-5 -- long text stays inside its window
+```
 
 ## HO-5 -- long text stays inside its window
 
@@ -343,6 +352,6 @@ selection outline.
 - Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
 - Files: `scripts/main_menu.gd`
 - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/main_menu.gd :: AUTOWRAP_WORD_SMART`
+- Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
 - Next after: none -- the last slice in this plan
 ```
