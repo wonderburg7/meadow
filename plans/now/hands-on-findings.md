@@ -27,7 +27,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | no -- after SC-3 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
-| HO-7 | each Challenge stage stays on screen a moment before the next can clear | `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd` | yes -- queued | high |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-9 | "Back to the run" on a fresh boot leaves the menu up | `scripts/main_menu.gd` | yes -- queued | low |
 | HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, `scripts/game_over.gd`, a new headless test, `tools/verify.ps1` | yes -- queued; land before HO-8 (`main.gd`) | high |
@@ -220,54 +219,7 @@ the world, unless the text is itself interactive. Find the control first.
 
 **Must not change.** Anything in the corner that is meant to be clicked.
 
-## HO-7 -- each Challenge stage stays on screen a moment before the next can clear
-
-<!-- LAYER: immediate-task -->
-
-Level: high (event ordering in every Challenge's stage flow).
-
-**True now.** `challenge_runner.gd::_process` calls `_advance()` the first
-frame a stage's goal is met, and `_enter_stage` runs the next stage's check
-from its own first poll. So any later stage whose goal is already true
-clears straight after it. 2.3's condition (`challenge_stages.gd`) accepts
-an explicit nectar, pollen or brood designation, and choosing a Raises role
-reserves the cell for Eggs, which counts. Seen on 2 Oct 2026: at 2.2 I set a
-developing larva's cell to raise a pollen Forager. When it hatched, 2.2, 2.3
-and 2.4 (whose reserve was already met) all cleared within one poll, and
-the next thing on screen was 2.5. The player never saw 2.3's lesson or
-2.4's goal.
-
-**Decision (Dave, 2 Oct 2026): option (b).** Every stage holds for a minimum
-time before it can clear. A Raises choice still counts for 2.3 (option (c)
-declined). Applies to Challenge 1 and Challenge 2 alike.
-
-**True afterwards.** A stage cannot clear until it has been on screen for
-`MIN_STAGE_DWELL` game seconds (5.0 to start; a named constant beside the
-other stage constants in `challenge_stages.gd`), counted from
-`_enter_stage` while the game is unpaused, in game time so speed 8 shortens
-it with everything else. A goal met earlier clears the moment the dwell
-ends. Each stage's goal text and its delay-0 Dr Gallerin line are therefore
-on screen first. Runtime policy: one float added per frame in `_process`,
-which already runs every frame; no new scan. The debug stage arrows and
-`debug_advance_stage` bypass the dwell. A checkpoint restore that re-enters
-the same stage restarts it.
-
-**Must not change.** Stage order, goals and conditions; Challenge 2's rescue
-and failure (`_check_c2_failure`); the goal-poll cadence (`GOAL_CADENCE`).
-Every Challenge fixture in `test_scenarios/` (`h4_challenge1_stage_advance`,
-`f2s_challenge2_gate_table`, `bs9_c2_queen_nurses`,
-`uiw2_challenge2_raises_forager`, `hf6_challenge2_raises` and the rest)
-still passes. Escalate if one needs its timings changed rather than
-lengthened.
-
-```queue
-**[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
-- Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
-- Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
-- Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
-```
+HO-7 shipped 2026-10-02; its specification is `plans/archive/HO-7_2026-10-02.md`.
 
 ## HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
 
