@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-17` (`claude/L-17`) | Claude | one console-encoding contract for the lifecycle, tested once | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-17 — one console-encoding contract for the lifecycle, tested once |
