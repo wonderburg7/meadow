@@ -104,7 +104,6 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
-| BS-10 | C-81 tests the one run that buys Nurses | `checks/ready/C-81.md` | yes | low |
 | BS-11 | the developer table calls a cut skill cut, and names features in words | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd` | no -- after BS-6 (shares `run_availability_panel.gd`) | low |
 
 BS-10 shares no file with BS-6 and can go first; BS-11 follows BS-6. Every later slice names
@@ -171,37 +170,7 @@ its block is fenced `queue-gated` until SR-5 lands.
 - Next after: BS-11 -- the developer table calls a cut skill cut, and names features in words
 ```
 
-## BS-10 — C-81 tests the one run that buys Nurses
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one check file, no code).
-
-**True now.** `checks/ready/C-81.md` starts level 7 (Scenario 1, the queen
-alone) and expects neither the queen's Job menu nor a cell's Raises row to
-offer Nurse until Nurses is bought. Decision 5 makes every Scenario's queen
-back up as a Nurse, so under decision 2 level 7 owns Nurses from the start
-(`run_availability.gd::_seeded_skills` reads `queen_laying_backup`; the
-developer table shows Nurses "at the start"). The 2 Oct 2026 pass saw Nurse
-offered in the queen's menu at once -- the game is right and the check is
-stale. Challenge 2 is the one run that buys Nurses (decision 7, free at
-2.5).
-
-**True afterwards.** C-81 starts Challenge 2, and before 2.5 checks that
-the queen's Job menu and an empty cell's Raises row do not offer Nurse. It
-then buys Nurses at 2.5 and checks that both menus offer it, the open one as
-soon as the tree closes. It notes that Buy needs UT-2
-(`plans/now/ui-texture-polish.md`) to be clickable, so Dave runs it after
-UT-2 lands. Owner line unchanged.
-
-```queue
-**[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
-- Plan: `plans/now/brood-spine.md` -- "BS-10 — C-81 tests the one run that buys Nurses"
-- Files: `checks/ready/C-81.md`
-- Check: `checks/ready/C-81.md` starts Challenge 2 rather than level 7, and `python tools/check_docs.py` passes
-- Proof: `present: checks/ready/C-81.md :: start level 7 from the main menu`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-10 shipped 2026-10-02; its specification is `plans/archive/BS-10_2026-10-02.md`.
 
 ## BS-11 — the developer table calls a cut skill cut, and names features in words
 
