@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
-   - Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
-   - Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: tools/verify.ps1 :: tests.test_ho10_queen_starvation_ends_run`
-   - Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
-
-2. **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
+1. **[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
    - Files: `scripts/debug_panel.gd`
    - Check: with Developer mode off no Triggers header or button is built, "End the run" in a Challenge or level run opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/debug_panel.gd :: End the run`
    - Next after: HO-4 -- the Saves window's name field is usable and always opens on top
 
-3. **[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
+2. **[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
    - Files: `scripts/saves_panel.gd`
    - Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
    - Next after: HO-5 -- long text stays inside its window
 
-4. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
+3. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
    - Files: `scripts/main_menu.gd`
    - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green

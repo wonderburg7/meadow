@@ -26,3 +26,4 @@ unblocker.
 - [C-93 -- Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin](ready/C-93.md)
 - [C-94 -- Challenge 2 shows 2.2, then 2.3, then 2.4 on screen when one hatch meets all three](ready/C-94.md)
 - [C-95 -- Back to the run is absent on a fresh boot and works after Return to Main Menu](ready/C-95.md)
+- [C-96 -- A queen who starves in Scenario 1 opens "The queen is dead"](ready/C-96.md)

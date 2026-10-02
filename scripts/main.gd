@@ -204,6 +204,9 @@ var rival: Node2D = null
 ## The year: seasons, disease, winter and gynes leaving.
 var season: Node2D = null
 var colony_lost: bool = false
+## Set the first frame _check_for_loss sees a live queen, so a run that
+## has not built one yet is told apart from one whose queen has died.
+var queen_seen_alive: bool = false
 
 ## Every bee that has emerged, as {t, key} where key is "role|focus".
 ## Used for the nursery window's "emerging in the last three minutes"
@@ -857,10 +860,20 @@ func _apply_rain_overlay() -> void:
 ## losing her ends the run. Checked here rather than from the bee itself
 ## because a dying bee frees itself, and main.gd is what holds the
 ## reference worth watching.
+##
+## HO-10: this used to open with `queen == null`, meant to skip a run with
+## no queen yet. But a freed Object compares equal to null in Godot 4, so
+## the moment she died and freed herself the guard returned early, every
+## frame, and the run carried on without her. Whether a queen ever lived
+## is now remembered instead (queen_seen_alive), and only
+## is_instance_valid() is asked about the reference itself.
 func _check_for_loss() -> void:
-	if colony_lost or queen == null:
+	if colony_lost:
 		return
 	if is_instance_valid(queen):
+		queen_seen_alive = true
+		return
+	if not queen_seen_alive:
 		return
 	colony_lost = true
 	if scenario_active:

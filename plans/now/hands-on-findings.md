@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 are startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is startable, HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 are startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -28,7 +28,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
-| HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, `scripts/game_over.gd`, a new headless test, `tools/verify.ps1` | yes -- queued; land before HO-8 (`main.gd`) | high |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
 | HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | no -- after HO-9 (same file) | low |
 
@@ -278,42 +277,7 @@ column SC-4 builds).
 
 HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
 
-## HO-10 -- a queen who starves ends the run with "The queen is dead"
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 2 Oct 2026 (second pass, build 932d320): Scenario 1 (the
-queen alone, no comb) at speed 8 with no input. Her energy reached 0% by
-Day 4; a click where she lay showed "Dapper Willow ... died of starvation,
-lived 2.9 days", but the run went on into Day 5 at speed 8 and "The queen is
-dead" never showed. Nothing was logged. `bee_survival.gd::die` frees the bee
-and `main.gd::_check_for_loss` runs every unpaused frame, so the cause is not
-visible from reading. Candidates: `game_over.gd::open` ran but draws under
-the hive view; `main.queen` is not the bee that died; or the inspector showed
-a memorial for another bee.
-
-**True afterwards.** A headless test,
-`tests/test_ho10_queen_starvation_ends_run.py` running
-`tests/ho10_queen_starvation_ends_run_test.gd` in the style of
-`tests/test_gc4_nurse_role_change_keeps_food.py` (`scripts/scenario_actions.gd`
-is Codex-owned), starts the queen alone with no stores, lets her starve and
-asserts `colony_lost` is set and "The queen is dead" is visible. It is listed
-in `tools/verify.ps1`'s `$unitModules` and ships with the fix
-(`plans/reference/check-loop.md`, rule 7). In a Challenge or level run a
-queen who dies of any cause opens "The queen is dead". If the cause lies
-outside the files the block names, stop and ask before widening it.
-
-**Must not change.** How and when a bee starves, its epitaph, and scenario
-runs ending "collapsed".
-
-```queue
-**[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
-- Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
-- Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `absent: tools/verify.ps1 :: tests.test_ho10_queen_starvation_ends_run`
-- Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
-```
+HO-10 shipped 2026-10-02; its specification is `plans/archive/HO-10_2026-10-02.md`.
 
 ## HO-11 -- the role menus use the theme's font and the text scale
 
