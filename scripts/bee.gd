@@ -1300,6 +1300,34 @@ func _deliver_held_load() -> bool:
 	state = State.IN_HIVE_TO_CELL
 	return true
 
+## GC-4. A nurse moved to another job puts the brood food she carries --
+## pollen, nectar or honey, and royal jelly -- back into the comb first,
+## as GC-2's forager delivers her load, so the hive's stored totals are the
+## same just before and just after the change. A nurse is always inside
+## the hive, so it goes straight in through hive.deposit, which spreads it
+## over any cells with room; whatever finds none is recorded rather than
+## dropped silently. Called only from _apply_role, the one place `role`
+## changes, so nothing here runs per frame. The queen's backup nursing
+## (BS-9) is left exactly as it was: she simply stops carrying it.
+func _return_nurse_food() -> void:
+	if not is_queen and hive != null:
+		var carb_type: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
+		var lost := PackedStringArray()
+		for item in [["pollen", nurse_pollen], [carb_type, nurse_carb], ["jelly", nurse_jelly]]:
+			var amount: float = item[1]
+			if amount <= 0.0:
+				continue
+			var unplaced: float = amount - hive.deposit(item[0], amount)
+			if unplaced > 0.001:
+				lost.append("%.1f %s" % [unplaced, item[0]])
+		if not lost.is_empty():
+			DiagnosticLog.log_action("return_nurse_food", "bee %d" % bee_id, "partly lost",
+				"no cell had room for " + ", ".join(lost))
+	nurse_pollen = 0.0
+	nurse_carb = 0.0
+	nurse_carb_type = ""
+	nurse_jelly = 0.0
+
 ## Is this bee partway through something worth finishing? Everything
 ## except the "waiting for work" states and standing idle.
 func _is_busy() -> bool:
@@ -1845,12 +1873,10 @@ func _apply_role(new_role: int) -> void:
 	if world != null and is_instance_valid(world):
 		world.invalidate_population()
 	visible = true
-	# brood food a nurse was carrying isn't any use in another job
-	nurse_pollen = 0.0
-	nurse_carb = 0.0
-	nurse_carb_type = ""
+	# GC-4. Brood food a nurse was carrying goes back into the comb before
+	# she takes up the new job, rather than vanishing.
+	_return_nurse_food()
 	nurse_fetching = ""
-	nurse_jelly = 0.0
 	var now_indoors := BeeStatus.works_indoors(self)
 
 	if is_queen and new_role == Role.EGG_LAYER and secondary_role == -1:
