@@ -30,6 +30,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
    - Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
 
+2. **[Claude] SC-2 -- cycling the typeface logs no engine error**
+   - Plan: `plans/now/settings-and-corner.md` -- "SC-2 -- cycling the typeface logs no engine error"
+   - Files: `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/sc2_typeface_cycle_test.json` passes and its output has no `Parameter "fd" is null`, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/ui_theme.gd :: set_block_signals`
+   - Next after: SC-3 -- the project boots without GDScript warnings outside the HUD
+
+3. **[Claude] SC-3 -- the project boots without GDScript warnings outside the HUD**
+   - Plan: `plans/now/settings-and-corner.md` -- "SC-3 -- the project boots without GDScript warnings outside the HUD"
+   - Files: `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd`
+   - Check: a headless boot prints no `GDScript::reload` warning for the three files, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/saves_panel.gd :: "%d min ago" % (seconds / 60)`
+   - Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -62,8 +76,6 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
-- **SC-2** (`plans/now/settings-and-corner.md`) -- follows UT-3, which also edits `scripts/ui_theme.gd`.
-- **SC-3** (`plans/now/settings-and-corner.md`) -- follows SC-1, which also edits `scripts/debug_panel.gd`.
 - **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
@@ -72,8 +84,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **HO-1** (`plans/now/hands-on-findings.md`) -- follows UT-2, which also edits `scripts/skill_tree_panel.gd`; HO-2 follows HO-1.
-- **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-1 and SC-3, which also edit `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
-- **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4, UT-3 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
+- **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-3, which also edits `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
+- **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
 - **BS-11** (`plans/now/brood-spine.md`) -- follows BS-6, which also edits `scripts/run_availability_panel.gd`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
