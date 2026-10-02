@@ -418,7 +418,7 @@ class SkillGrid:
 	func _visible_size() -> Vector2:
 		if not is_inside_tree():
 			return size
-		var seen := get_global_rect().intersection(get_viewport_rect())
+		var seen := Rect2(global_position, size).intersection(get_viewport_rect())
 		if seen.size.x <= 0.0 or seen.size.y <= 0.0:
 			return size
 		return seen.size
