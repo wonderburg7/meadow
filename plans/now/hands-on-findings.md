@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-2 -- every skill's name reads whole in its hex (after UT-2, same file) | Dependency: HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-2 is queued in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-5 -- long text stays inside its window (after SC-4, UT-3 and UT-4) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
@@ -72,48 +71,7 @@ UT-3).
 
 HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`.
 
-## HO-2 -- every skill's name reads whole in its hex
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `SkillGrid._draw` wraps each name to `tile_size * 1.4` across
-`NAME_LINES` (3) lines in the "Small" font. Seen at the opening zoom, text
-scale 2, Silkscreen: words are cut, not wrapped -- "CLEA", "ORIE FLIGH",
-"TARS SECR", "WEIG FLOW CHOI" -- so C-88's PASS ("every skill's name is
-readable inside its hexagon") fails.
-
-**Seen again (second pass, build 932d320).** The cut names match. Zoom
-did not fully pass there: maximised at text scale 2, the wheel stopped
-zooming out with the tree about 675 px tall in a view about 610 px tall
-(screenshot pixels), so REST and AUTO RECR never showed together.
-
-**Decision (Dave, 2 Oct 2026).** HO-2 fixes the zoom limit too.
-
-**True afterwards.** At the opening zoom, at text scale 1 and 2, in
-Silkscreen and Atkinson Hyperlegible, every name shows every letter: a word
-that cannot fit breaks with a hyphen or the name drops to a smaller size, and
-the detail strip still gives the full name. The wheel zooms out until the
-whole tree fits the view at text scale 1 and 2, maximised and at the default
-window size (`_min_zoom`). File a hands-on check that replaces C-88.
-
-**Must not change.** Drag (passed on both 2 Oct passes), and the hover
-tooltip.
-
-**Level:** medium -- bounded drawing and zoom-limit work in one class, with
-a hands-on acceptance check.
-
-```queue
-**[Claude] HO-2 -- every skill's name reads whole in its hex**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
-- Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
-- Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
-- Next after: HO-5 -- long text stays inside its window
-```
-
-HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
-
-HO-4 shipped 2026-10-02; its specification is `plans/archive/HO-4_2026-10-02.md`.
+HO-2 shipped 2026-10-02; its specification is `plans/archive/HO-2_2026-10-02.md`.
 
 ## HO-5 -- long text stays inside its window
 
@@ -136,6 +94,15 @@ and drop whatever it fixed. Split per file if more than one remains.
 
 **Must not change.** The corner column SC-4 builds, and the Winter window
 opening by itself on day 6 (C-91, passed).
+
+```queue-gated
+**[Claude] HO-5 -- long text stays inside its window**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
+- Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
+- Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
+- Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
+- Next after: HO-6 -- a bee under the top-left readout can be clicked
+```
 
 ## HO-6 -- a bee under the top-left readout can be clicked
 
