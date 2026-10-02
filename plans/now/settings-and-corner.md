@@ -1,7 +1,7 @@
 # Settings window and corner HUD -- findings from the 1 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height (SC-3 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height (SC-3 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 follows SR-4 in the Claude lane (SR-4 moved there by Dave, 2 Oct 2026; both edit `scripts/hud.gd`) and runs before UT-4 | Verified: 2026-10-02
 
 **Objective.** Four defects seen while running C-69 to C-73 by computer use on
 1 Oct 2026 are fixed: C-72 failed once in three runs, cycling the typeface
@@ -13,7 +13,7 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | SR-4 landing; not alongside UT-4 (all edit `scripts/hud.gd`) |
+| SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | yes -- queued behind SR-4 (same lane) | SR-4 first; not alongside UT-4 (all edit `scripts/hud.gd`) |
 
 **Neighbouring plan.** `plans/now/ui-texture-polish.md` (UT-1 to UT-5) came
 from the same day's pass over C-57 to C-68 and shares two files: UT-1 and
@@ -58,7 +58,7 @@ locals are renamed.
 **Must not change.** `camera_view.gd`'s `pause_label.visible` interface,
 `corner_bottom()`, and the problem strip's click-to-select behaviour.
 
-```queue-gated
+```queue
 **[Claude] SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height**
 - Plan: `plans/now/settings-and-corner.md` -- "SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height"
 - Files: `scripts/hud.gd`, `scripts/game_panel.gd`

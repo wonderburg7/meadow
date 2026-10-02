@@ -1,7 +1,7 @@
 # Scenario reds -- the four red scenarios and the red SF-1 test
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: SR-2 -- the G3 fixture owns the Honey worker skill (Codex lane, queued 2 Oct 2026) | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-02
+Status: active | Owner: Dave / Codex | Next: SR-4 -- the command tray fits its content after a resize to 800x600 (moved to the Claude lane by Dave, 2 Oct 2026, so SC-4 and UT-4 can queue behind it); SR-5 stays in the Codex lane | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-02
 
 **Objective.** Every short scenario in `python tools/scenario_sweep.py` is
 green again, and the one exempt unit test either passes or its failure is
@@ -18,7 +18,7 @@ were tried on throwaway copies of their fixtures and both ended
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- UI-F-2 closes with this refill | high |
+| SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- Claude lane (moved by Dave, 2 Oct 2026) | high |
 | SR-5 | the SF-1 flower-mix test passes, or is shown to be a simulation question | `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
 
 All five run in the Codex lane and share no file with the Claude lane
@@ -26,9 +26,10 @@ All five run in the Codex lane and share no file with the Claude lane
 and SR-4 shares `scripts/hud.gd` with UI-F-2; one lane worked top to bottom
 never has two of them open. SR-4 and SR-5 were chosen by Dave on 1 Oct 2026
 ("chase it"; "a diagnosis slice"). A slice reads its own section and
-nothing else. Two Claude-lane slices wait on this plan: UT-4
-(`plans/now/ui-texture-polish.md`) for SR-4, which edits `scripts/hud.gd`,
-and UT-5 for SR-2 and SR-4, which edit `scripts/scenario_actions.gd`.
+nothing else. SR-4 moved to the Claude lane (Dave, 2 Oct 2026): SC-4
+(`plans/now/settings-and-corner.md`) and UT-4
+(`plans/now/ui-texture-polish.md`) share `scripts/hud.gd` with it, so they
+queue behind it in that one lane, and UT-5 follows them.
 
 SR-1 shipped 2026-10-02; its specification is `plans/archive/SR-1_2026-10-02.md`.
 
@@ -67,12 +68,12 @@ ends `status=passed`; Dave's hands-on check resizes the game window to its
 smallest with a comb cell selected and sees the whole tray.
 
 ```queue
-**[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
+**[Claude] SR-4 -- the command tray fits its content after a resize to 800x600**
 - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
 - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
 - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
 - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
-- Next after: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
+- Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
 ```
 
 ## SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
