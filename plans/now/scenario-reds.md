@@ -1,7 +1,7 @@
 # Scenario reds -- the four red scenarios and the red SF-1 test
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: SR-1 -- a freed queen no longer breaks the problem messages (Codex lane, queued 1 Oct 2026) | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-01
+Status: active | Owner: Dave / Codex | Next: SR-2 -- the G3 fixture owns the Honey worker skill (Codex lane, queued 2 Oct 2026) | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-02
 
 **Objective.** Every short scenario in `python tools/scenario_sweep.py` is
 green again, and the one exempt unit test either passes or its failure is
@@ -18,7 +18,6 @@ were tried on throwaway copies of their fixtures and both ended
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SR-1 | a freed queen no longer breaks the problem messages | `scripts/problem_messages.gd` | yes | low |
 | SR-2 | the G3 fixture owns the Honey worker skill | `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd` | yes | low |
 | SR-3 | the disease-off fixture starts every bee newborn | `test_scenarios/h5_disease_off_test.json` | yes | low |
 | SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- UI-F-2 closes with this refill | high |
@@ -33,36 +32,7 @@ nothing else. Two Claude-lane slices wait on this plan: UT-4
 (`plans/now/ui-texture-polish.md`) for SR-4, which edits `scripts/hud.gd`,
 and UT-5 for SR-2 and SR-4, which edit `scripts/scenario_actions.gd`.
 
-## SR-1 -- a freed queen no longer breaks the problem messages
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one file, two signatures).
-
-**True now.** `problem_messages.gd::no_foragers(queen: Node2D)` and
-`no_free_cells(bees: Array, queen: Node2D)` already handle a missing queen
-with `is_instance_valid`, but the typed parameter raises first: Godot
-refuses a previously freed object for a `Node2D` argument.
-`year_winter.gd` builds the message state with `"queen": main.queen`, which
-is a freed node once the queen has died, so `forage_radius_wide_test` logs
-hundreds of `SCRIPT ERROR: Invalid type in function 'no_foragers'` lines
-and ends `compile_error`.
-
-**Done when.** Both functions take an untyped `queen` and keep their
-`is_instance_valid` branch, so a dead queen gets the existing queenless
-wording. Presentation only; no producer changes.
-
-**Check.** `python tools/run_scenario.py test_scenarios/forage_radius_wide_test.json`
-ends `status=passed`.
-
-```queue
-**[Codex] SR-1 -- a freed queen no longer breaks the problem messages**
-- Plan: `plans/now/scenario-reds.md` -- "SR-1 -- a freed queen no longer breaks the problem messages"
-- Files: `scripts/problem_messages.gd`
-- Check: `python tools/run_scenario.py test_scenarios/forage_radius_wide_test.json` ends `status=passed`, and `tools/verify.ps1` is green
-- Proof: `present: scripts/problem_messages.gd :: static func no_foragers(queen: Node2D)`
-- Next after: SR-2 -- the G3 fixture owns the Honey worker skill
-```
+SR-1 shipped 2026-10-02; its specification is `plans/archive/SR-1_2026-10-02.md`.
 
 ## SR-2 -- the G3 fixture owns the Honey worker skill
 
