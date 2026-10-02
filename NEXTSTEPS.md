@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
-   - Files: `scripts/main_menu.gd`
-   - Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/main_menu.gd :: _back_btn`
-   - Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
-
-2. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
+1. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
    - Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
    - Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
