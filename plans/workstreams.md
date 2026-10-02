@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HO-12` (`claude/HO-12`) | Claude | a Challenge or Scenario hex breaks its name between words | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-12 -- a Challenge or Scenario hex breaks its name between words |
