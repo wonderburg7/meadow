@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-4` (`claude/GC-4`) | Claude | a nurse moved to another job does not lose the brood food she carries | Claude | in progress | none | `plans/now/gameplay-consistency.md` GC-4 — a nurse moved to another job does not lose the brood food she carries |
-| `.worktrees/SR-2` (`codex/SR-2`) | Codex | the G3 fixture owns the Honey worker skill | Codex | in progress | none | `plans/now/scenario-reds.md` SR-2 -- the G3 fixture owns the Honey worker skill |
