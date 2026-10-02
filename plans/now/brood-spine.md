@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-10 -- C-81 tests the one run that buys Nurses (startable, from the 2 Oct 2026 hands-on pass); then BS-6 -- developer edits to the table change what a run starts with (BS-9 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9 and BS-10 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
