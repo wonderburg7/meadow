@@ -676,6 +676,38 @@ class SliceDoctorTest(unittest.TestCase):
             (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
         )
 
+    def test_finish_stops_on_an_uncommitted_edit_to_a_lifecycle_product(self):
+        """The dirty-coordination guard hands git an array of pathspecs; a
+        helper that joined it into one argument matched nothing and let the
+        edit be folded into the merge unseen."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, capture_output=True, check=True)
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
+        with (self.root / "checks" / "ready.md").open("a", encoding="utf-8") as stray:
+            stray.write("stray hand edit\n")
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertNotEqual(0, finish.returncode)
+        self.assertIn("uncommitted changes to checks/ready.md", finish.stdout + finish.stderr)
+
     def test_finish_completes_when_the_worktree_directory_cannot_be_deleted(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         (self.root / "tools" / "verify.ps1").write_text(
@@ -1461,6 +1493,140 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertIn(self.squeeze("codex/T-1 has no commits ahead of master and its worktree has uncommitted changes"), refusal)
         self.assertIn(self.squeeze("so abandon it (`tools/slice.ps1 abort -Lane Codex`) or finish the work in it"), refusal)
         self.assertNotIn(self.squeeze("so finish it"), refusal)
+
+
+class ConsoleEncodingTest(unittest.TestCase):
+    """L-17: the lifecycle runs from Windows PowerShell 5.1 consoles whose
+    code page is cp1252. Seven commits each fixed one place where that mangled
+    an em dash or curly quote in a coordination file; this runs `start` and
+    `finish` under such a console, with non-ASCII in every text the lifecycle
+    reads back from git, and requires every record to round-trip byte for byte."""
+
+    TEXT = "fixture — it’s café"
+    PLAN_TITLE = "café plan, it’s done"
+    NEXT_TEXT = "successor — it’s café"
+
+    # The fixture machinery is SliceDoctorTest's; borrowing it keeps the
+    # inherited tests from running a second time under this class.
+    setUpClass = classmethod(SliceDoctorTest.setUpClass.__func__)
+    setUp = SliceDoctorTest.setUp
+    tearDown = SliceDoctorTest.tearDown
+
+    def run_cp1252(self, script: Path, command: str, cwd: Path) -> subprocess.CompletedProcess:
+        # chcp only reaches a real console, so the console encoding is also
+        # set explicitly: both are what a PowerShell 5.1 window on a
+        # Western-European Windows install starts with.
+        prelude = (
+            "chcp 1252 | Out-Null; "
+            "$cp1252 = [System.Text.Encoding]::GetEncoding(1252); "
+            "[Console]::OutputEncoding = $cp1252; $OutputEncoding = $cp1252; "
+            "Set-Location -LiteralPath '{}'; ".format(str(cwd).replace("'", "''"))
+        )
+        invocation = "& '{}' {}; exit $LASTEXITCODE".format(str(script).replace("'", "''"), command)
+        return subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", prelude + invocation],
+            cwd=self.root, capture_output=True, timeout=120,
+        )
+
+    def text_of(self, result: subprocess.CompletedProcess) -> str:
+        return (result.stdout + result.stderr).decode("utf-8", errors="replace")
+
+    def git_text(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=self.root, capture_output=True, check=True
+        ).stdout.decode("utf-8")
+
+    @unittest.skipUnless(os.name == "nt", "the cp1252 console is a Windows PowerShell 5.1 behaviour")
+    def test_every_record_round_trips_from_a_cp1252_console(self):
+        shutil.copy2(SLICE_PATH.with_name("archive_slice.py"), self.root / "tools" / "archive_slice.py")
+        shutil.copy2(SLICE_PATH.with_name("heading.py"), self.root / "tools" / "heading.py")
+        (self.root / "plans" / "now").mkdir()
+        (self.root / "plans" / "now" / "sample.md").write_text(
+            f"# Sample plan — {self.PLAN_TITLE}\n\n"
+            "Status: active | Owner: t | Next: T-1 | Dependency: none | Verified: 2026-09-18\n\n"
+            "The one open slice is specified in the queue.\n",
+            encoding="utf-8",
+        )
+        (self.root / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            f"1. **[Codex] T-1 -- {self.TEXT}.**\n"
+            f"   - Plan: `plans/now/sample.md` -- {self.TEXT}\n"
+            "   - Files: `scripts/sample.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
+            f"   - Next after: T-2 -- {self.NEXT_TEXT}.\n"
+            "\n"
+            f"2. **[Codex] T-2 -- {self.NEXT_TEXT}.**\n"
+            f"   - Plan: `plans/other.md` -- {self.NEXT_TEXT}\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- the other plan is complete\n",
+            encoding="utf-8",
+        )
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "encoding fixture"], cwd=self.root, check=True)
+
+        start = self.run_cp1252(self.root / "tools" / "slice.ps1", "start -Lane Codex", self.root)
+        self.assertEqual(0, start.returncode, self.text_of(start))
+        ledger = (self.root / "plans" / "workstreams.md").read_bytes()
+        self.assertIn(self.TEXT.encode("utf-8"), ledger)
+
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        archive_file = worktree / "plans" / "archive" / "T-1_2026-01-01.md"
+        archive_file.parent.mkdir(parents=True)
+        # The deliberate stop: an archive record that does not name the
+        # slice's heading, so the cause quotes the heading read from master.
+        archive_file.write_text("# T-1 -- not the heading\n", encoding="utf-8")
+        (worktree / "NEXTSTEPS.md").write_text(
+            "## Next up\n\n"
+            f"1. **[Codex] T-2 -- {self.NEXT_TEXT}.**\n"
+            f"   - Plan: `plans/other.md` -- {self.NEXT_TEXT}\n"
+            "   - Files: `scripts/other.gd`\n"
+            "   - Check: deterministic\n"
+            "   - Proof: `absent: scripts/other.gd :: new_function`\n"
+            "   - Next after: none -- the other plan is complete\n",
+            encoding="utf-8",
+        )
+        (worktree / "plans" / "now" / "sample.md").write_text(
+            f"# Sample plan — {self.PLAN_TITLE}\n\n"
+            "Status: active | Owner: t | Next: None -- plan complete | Dependency: none | Verified: 2026-09-18\n\n"
+            "T-1 shipped 2026-01-01.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True)
+
+        finish_command = "finish -PythonPath '{}'".format(sys.executable.replace("'", "''"))
+        stopped = self.run_cp1252(worktree / "tools" / "slice.ps1", finish_command, worktree)
+        self.assertNotEqual(0, stopped.returncode, self.text_of(stopped))
+        common_dir = Path(self.git_text("rev-parse", "--absolute-git-dir").strip())
+        stop_records = (common_dir / "meadow-slice-stops.jsonl").read_bytes()
+        self.assertIn(self.TEXT.encode("utf-8"), stop_records)
+        self.assertIn(self.TEXT, self.text_of(stopped))
+
+        archive_file.write_text(f"# T-1 -- {self.TEXT}\n\nShipped.\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-m", "name the heading in the archive"], cwd=worktree, check=True)
+        finish = self.run_cp1252(worktree / "tools" / "slice.ps1", finish_command, worktree)
+        self.assertEqual(0, finish.returncode, self.text_of(finish))
+
+        merge_subject = self.git_text("log", "--merges", "-1", "--format=%s", "master").strip()
+        self.assertEqual(f"Merge codex/T-1: {self.TEXT}.", merge_subject)
+        archived_plan = self.root / "plans" / "archive" / f"sample_{time.strftime('%Y-%m-%d')}.md"
+        self.assertIn(
+            f"# Sample plan — {self.PLAN_TITLE}".encode("utf-8"), archived_plan.read_bytes()
+        )
+        self.assertIn(
+            f"1. **[Codex] T-2 -- {self.NEXT_TEXT}.**".encode("utf-8"),
+            (self.root / "NEXTSTEPS.md").read_bytes(),
+        )
 
 
 if __name__ == "__main__":
