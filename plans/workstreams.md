@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/UT-2` (`claude/UT-2`) | Claude | the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin | Claude | in progress | none | `plans/now/ui-texture-polish.md` UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin |
