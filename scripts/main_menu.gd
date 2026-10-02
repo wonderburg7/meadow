@@ -122,6 +122,8 @@ const DETAIL_PANE_MIN_WIDTH := 390.0
 
 var root: Control
 var backdrop: ColorRect
+var _back_btn: Button
+var _back_row: Control
 var settings_button: Button
 var _detail_column: VBoxContainer
 ## level -> {"border": Polygon2D, "fill": Polygon2D, "tick": Label}
@@ -265,11 +267,13 @@ func _ready() -> void:
 	right_pane.add_child(HSeparator.new())
 
 	var close_btn := Button.new()
+	_back_btn = close_btn
 	close_btn.text = "Back to the run"
 	close_btn.custom_minimum_size = Vector2(0, 30)
 	_style_button(close_btn)
 	close_btn.pressed.connect(close)
-	right_pane.add_child(UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted."))
+	_back_row = UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted.")
+	right_pane.add_child(_back_row)
 
 func open() -> void:
 	# Re-read rather than trust whatever was loaded at _ready() -- a
@@ -279,10 +283,14 @@ func open() -> void:
 	# otherwise go stale for the rest of the session.
 	_profile_data = PlayerProfile.read()
 	_refresh_ticks()
+	# "Back to the run" only makes sense with a run behind the menu.
+	_back_row.visible = not Session.menu_pending
 	visible = true
 	get_tree().paused = true
 
 func close() -> void:
+	if Session.menu_pending:
+		return   # no run behind the menu to return to
 	visible = false
 	get_tree().paused = false
 	Session.menu_pending = false
