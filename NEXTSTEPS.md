@@ -44,6 +44,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/saves_panel.gd :: "%d min ago" % (seconds / 60)`
    - Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
 
+4. **[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
+   - Files: `scripts/main_menu.gd`
+   - Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/main_menu.gd :: _back_btn`
+   - Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
+
+5. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
+   - Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
+   - Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `absent: tools/verify.ps1 :: tests.test_ho10_queen_starvation_ends_run`
+   - Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude

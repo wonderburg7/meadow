@@ -29,8 +29,8 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-7 | each Challenge stage stays on screen a moment before the next can clear | `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd` | yes -- queued | high |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
-| HO-9 | "Back to the run" on a fresh boot leaves the menu up | `scripts/main_menu.gd` | yes | low |
-| HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, a new scenario fixture | yes -- land before HO-8 (same file) | high |
+| HO-9 | "Back to the run" on a fresh boot leaves the menu up | `scripts/main_menu.gd` | yes -- queued | low |
+| HO-10 | a queen who starves ends the run with "The queen is dead" | `scripts/main.gd`, `scripts/game_over.gd`, a new headless test, `tools/verify.ps1` | yes -- queued; land before HO-8 (`main.gd`) | high |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
 | HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | no -- after HO-9 (same file) | low |
 
@@ -331,10 +331,21 @@ the debugger halted on that line and the window froze on the menu.
 
 **True afterwards.** With no run behind the menu, "Back to the run" is
 absent, and nothing in the menu clears `menu_pending` without starting a
-run. With a run behind it, the button works as now.
+run. With a run behind it, the button works as now. The button is kept as
+`_back_btn`, shown by `open()` only when a run exists (`Session.menu_pending`
+is false), and `close()` does nothing while `menu_pending` is still true.
 
 **Must not change.** The in-run Return to Main Menu and back path, and the
 fresh-boot early return in `main.gd::_ready`.
+
+```queue
+**[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
+- Files: `scripts/main_menu.gd`
+- Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/main_menu.gd :: _back_btn`
+- Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
+```
 
 ## HO-10 -- a queen who starves ends the run with "The queen is dead"
 
@@ -350,15 +361,28 @@ visible from reading. Candidates: `game_over.gd::open` ran but draws under
 the hive view; `main.queen` is not the bee that died; or the inspector showed
 a memorial for another bee.
 
-**True afterwards.** A headless fixture starts the queen alone with no
-stores and asserts the run ends "collapsed" within a set number of days
-(a scenario run ends through the same `_check_for_loss`), which says whether
-the check fires at all; the fix follows from that, and the fixture ships with
-it (`plans/reference/check-loop.md`, rule 7). In a Challenge or level run a
-queen who dies of any cause opens "The queen is dead".
+**True afterwards.** A headless test,
+`tests/test_ho10_queen_starvation_ends_run.py` running
+`tests/ho10_queen_starvation_ends_run_test.gd` in the style of
+`tests/test_gc4_nurse_role_change_keeps_food.py` (`scripts/scenario_actions.gd`
+is Codex-owned), starts the queen alone with no stores, lets her starve and
+asserts `colony_lost` is set and "The queen is dead" is visible. It is listed
+in `tools/verify.ps1`'s `$unitModules` and ships with the fix
+(`plans/reference/check-loop.md`, rule 7). In a Challenge or level run a
+queen who dies of any cause opens "The queen is dead". If the cause lies
+outside the files the block names, stop and ask before widening it.
 
 **Must not change.** How and when a bee starves, its epitaph, and scenario
 runs ending "collapsed".
+
+```queue
+**[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
+- Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
+- Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `absent: tools/verify.ps1 :: tests.test_ho10_queen_starvation_ends_run`
+- Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
+```
 
 ## HO-11 -- the role menus use the theme's font and the text scale
 
