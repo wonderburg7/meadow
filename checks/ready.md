@@ -16,6 +16,7 @@ unblocker.
 
 - [C-100 -- Escape closes the skill tree on a real keyboard](ready/C-100.md)
 - [C-101 -- Every skill name reads whole in its hex, and the wheel zooms out to the whole tree](ready/C-101.md)
+- [C-102 -- Run availability table: cut skills read not available, features named in words](ready/C-102.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-71 -- High contrast panels stay plain](ready/C-71.md)
 - [C-72 -- Text scale applies after a pause](ready/C-72.md)
