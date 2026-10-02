@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SR-4 -- the command tray fits its content after a resize to 800x600**
-   - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
-   - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
-   - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
-   - Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
-
-2. **[Claude] SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height**
+1. **[Claude] SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height**
    - Plan: `plans/now/settings-and-corner.md` -- "SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height"
    - Files: `scripts/hud.gd`, `scripts/game_panel.gd`
    - Check: `python tools/gdscript_warnings.py scripts/hud.gd` passes, a hands-on check is filed for PAUSED, the wrapped strip and the Colony window at Text scale 2 in Open Sans, and `tools/verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: pause_label = _make_label(Vector2(16, 300), "Heading")`
    - Next after: none -- plans/now/settings-and-corner.md is complete
 
-3. **[Claude] UT-4 -- a theme change recolours the HUD, main menu and end screens**
+2. **[Claude] UT-4 -- a theme change recolours the HUD, main menu and end screens**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-4 -- a theme change recolours the HUD, main menu and end screens"
    - Files: `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd`
    - Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/hud.gd scripts/main_menu.gd scripts/game_over.gd scripts/challenge_complete.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
