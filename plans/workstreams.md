@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HO-4` (`claude/HO-4`) | Claude | the Saves window's name field is usable and always opens on top | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-4 -- the Saves window's name field is usable and always opens on top |
