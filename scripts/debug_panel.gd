@@ -564,11 +564,11 @@ func _build_actions(column: VBoxContainer) -> void:
 	triggers_header.theme_type_variation = "Small"
 	triggers.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
 
-	var challenge_advance_btn := Button.new()
-	_style_button(challenge_advance_btn)
-	challenge_advance_btn.text = "Advance Challenge stage"
-	challenge_advance_btn.pressed.connect(_on_challenge_advance_pressed)
-	_add_action_row(triggers, challenge_advance_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder.")
+	var stage_trigger_btn := Button.new()
+	_style_button(stage_trigger_btn)
+	stage_trigger_btn.text = "Advance Challenge stage"
+	stage_trigger_btn.pressed.connect(_on_challenge_advance_pressed)
+	_add_action_row(triggers, stage_trigger_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder.")
 
 	var fire_warnings_btn := Button.new()
 	_style_button(fire_warnings_btn)

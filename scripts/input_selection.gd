@@ -429,7 +429,7 @@ func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
 			else:
 				b.set_mine_target(block)
 
-func _place_keep_clear(global_point: Vector2, keep_adding: bool) -> void:
+func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void:
 	var hex: Vector2i = _hex_at(global_point)
 	if main.hive.tile_is_walkable(hex):
 		main.hive.set_keep_clear(hex, not main.hive.is_keep_clear(hex))

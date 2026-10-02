@@ -214,6 +214,7 @@ func _delete(slug: String) -> void:
 func _day_text(day: int) -> String:
 	return "day %d" % day if day >= 0 else "day unknown"
 
+@warning_ignore("integer_division")
 func _age_text(seconds: int) -> String:
 	if seconds < 60:
 		return "just now"

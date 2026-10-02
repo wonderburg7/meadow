@@ -1,7 +1,7 @@
 # Settings window and corner HUD -- findings from the 1 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SC-3 -- the project boots without GDScript warnings outside the HUD (SC-2 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height (SC-3 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
 
 **Objective.** Four defects seen while running C-69 to C-73 by computer use on
 1 Oct 2026 are fixed: C-72 failed once in three runs, cycling the typeface
