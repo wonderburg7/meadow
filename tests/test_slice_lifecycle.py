@@ -676,6 +676,38 @@ class SliceDoctorTest(unittest.TestCase):
             (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
         )
 
+    def test_finish_stops_on_an_uncommitted_edit_to_a_lifecycle_product(self):
+        """The dirty-coordination guard hands git an array of pathspecs; a
+        helper that joined it into one argument matched nothing and let the
+        edit be folded into the merge unseen."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, capture_output=True, check=True)
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
+        with (self.root / "checks" / "ready.md").open("a", encoding="utf-8") as stray:
+            stray.write("stray hand edit\n")
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertNotEqual(0, finish.returncode)
+        self.assertIn("uncommitted changes to checks/ready.md", finish.stdout + finish.stderr)
+
     def test_finish_completes_when_the_worktree_directory_cannot_be_deleted(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         (self.root / "tools" / "verify.ps1").write_text(

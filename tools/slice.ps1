@@ -1594,7 +1594,10 @@ function Invoke-GitText {
     # git flags such as -d, -v or -o as PowerShell's -Debug, -Verbose, -Out*.
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = "git"
-    $startInfo.Arguments = (@($args | ForEach-Object { ConvertTo-GitArgument ([string]$_) }) -join " ")
+    # Flatten first: a caller's @(...) arrives as ONE $args element, which
+    # [string] would space-join into a single, wrong argument.
+    $flat = @($args | ForEach-Object { $_ })
+    $startInfo.Arguments = (@($flat | ForEach-Object { ConvertTo-GitArgument ([string]$_) }) -join " ")
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
