@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-2 -- every skill's name reads whole in its hex**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
-   - Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
-   - Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
-   - Next after: HO-5 -- long text stays inside its window
+1. **[Claude] BS-11 -- the developer table calls a cut skill cut, and names features in words**
+   - Plan: `plans/now/brood-spine.md` -- "BS-11 — the developer table calls a cut skill cut, and names features in words"
+   - Files: `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`
+   - Check: in the Run availability table at levels 5 and 6, each of the nine `Skills.CUT_FROM_ALPHA` skills reads "not available" with a cut-from-this-build reason and no Feature row prints a raw id; every run's starting ownership is unchanged; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/run_availability_panel.gd :: _row("Feature: %s" % feature_id, features[feature_id])`
+   - Next after: BS-6 -- developer edits to the table change what a run starts with
 
 ### Codex lane
 
