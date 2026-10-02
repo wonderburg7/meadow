@@ -21,6 +21,7 @@ extends GamePanel
 ## Created by hud.gd, which owns the Skills button that opens it.
 
 const Skills = preload("res://scripts/skills.gd")
+const UiInfoBadge = preload("res://scripts/ui_info_badge.gd")
 const Progression = preload("res://scripts/progression.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Resources = preload("res://scripts/resources.gd")
@@ -124,14 +125,16 @@ func _ready() -> void:
 	column.add_child(strip)
 	detail_label = _label("", "Body")
 	detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	strip.add_child(detail_label)
 	buy_button = Button.new()
 	buy_button.text = "Buy"
 	buy_button.focus_mode = Control.FOCUS_NONE
 	for button_state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		buy_button.add_theme_stylebox_override(button_state, UiTheme.button_stylebox(button_state))
 	buy_button.pressed.connect(_on_buy_pressed)
+	# First in the strip, so Buy is never in the bottom-right corner that
+	# Dr Gallerin's layer-15 bubble covers.
 	strip.add_child(buy_button)
+	strip.add_child(detail_label)
 	_refresh_detail()
 
 func open() -> void:
@@ -510,6 +513,11 @@ class SkillGrid:
 		if tile.get("kind", "") == "skill" and tile.get("state", "") == "blocked":
 			return UiTheme.color("text_primary")
 		return DARK_TEXT if fill.get_luminance() > 0.45 else LIGHT_TEXT
+
+	func _make_custom_tooltip(for_text: String) -> Object:
+		if for_text.is_empty():
+			return null
+		return UiInfoBadge.make_bounded_tooltip(for_text)
 
 	func _get_tooltip(at_position: Vector2) -> String:
 		var hex := Shapes.pixel_to_hex(_to_tree(at_position), tile_size)
