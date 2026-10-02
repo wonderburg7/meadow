@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SC-3` (`claude/SC-3`) | Claude | the project boots without GDScript warnings outside the HUD | Claude | in progress | none | `plans/now/settings-and-corner.md` SC-3 -- the project boots without GDScript warnings outside the HUD |
