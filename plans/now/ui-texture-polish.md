@@ -1,7 +1,7 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-3 -- a theme change recolours the in-run panels' text (Claude lane); UT-2 landed 2 Oct 2026 (Skills tooltip wraps via UiInfoBadge.make_bounded_tooltip, Buy first in the detail strip); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: UT-4 -- a theme change recolours the HUD, main menu and end screens (Claude lane, gated on SR-4); UT-3 landed 2 Oct 2026 (UiTheme.bind_color re-applies bound label colours on refresh; the four in-run panels use it); UT-2 landed 2 Oct 2026 (Skills tooltip wraps via UiInfoBadge.make_bounded_tooltip, Buy first in the detail strip); UT-1 landed 2 Oct 2026 (Dark comb 1.33:1, grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38:1, grain 1.28 darker, 31%; High contrast draws no texture) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
 Dark and Light; High contrast never draws a texture (Dave, 2 Oct 2026). Changing the theme mid-run recolours all text,
@@ -20,7 +20,6 @@ Each of them came right after hovering before the click.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UT-3 | a theme change recolours the in-run panels' text | `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd` | yes, after UT-1 (same file) | medium |
 | UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- SR-4 owns `hud.gd` | low |
 | UT-5 | headless assertions for texture contrast and Buy clearance | `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json` | no -- SR-2 and SR-4 own `scenario_actions.gd` | medium |
 
@@ -45,51 +44,7 @@ UT-1 shipped 2026-10-02; its specification is `plans/archive/UT-1_2026-10-02.md`
 
 UT-2 shipped 2026-10-02; its specification is `plans/archive/UT-2_2026-10-02.md`.
 
-## UT-3 -- a theme change recolours the in-run panels' text
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (owner extension plus a mechanical conversion in four panels).
-
-**True now.**
-- `UiTheme.refresh()` re-applies colours only through the shared `Theme`
-  resource (type variations) and the shared styleboxes.
-- 26 labels in 8 scripts instead take
-  `add_theme_color_override("font_color", UiTheme.color(...))` once, at
-  build time, so they keep the old palette after a theme change:
-  `colony_panel.gd` 4, `foraging_panel.gd` 2, `nursery_panel.gd` 1,
-  `winter_panel.gd` 2, `hud.gd` 9, `main_menu.gd` 4, `challenge_complete.gd`
-  3, `game_over.gd` 1.
-- Seen on 1 Oct: after switching to Light, the Colony window's hint stayed
-  Dark's `#C9B8A8` on Light's `#F6DFC8` panel, and was barely readable.
-  Light's own `text_secondary`, `#7A5A44`, is about 4.8:1.
-- Colours read inside `_draw` are already right, because they are re-read
-  on every draw.
-
-**Should be true.**
-- `UiTheme` gains `bind_color(control, property, token)`. It applies the
-  token now and remembers `(weakref, property, token)`. `refresh()`
-  re-applies every live binding and drops freed ones.
-  - Owner: this extends `UiTheme.refresh()`, the one appearance-change path.
-    It is not a new service.
-  - Runtime policy: it runs only on an appearance change, never per frame.
-  - Alternative considered: one type variation per size and token
-    (`SmallSecondary`, ...). Rejected because sizes times tokens multiply,
-    and several overrides are status colours (`success`, `danger`).
-- Convert the four in-run panels' build-time overrides to `bind_color`.
-  `hud.gd`, `main_menu.gd` and the end screens are UT-4.
-
-**Must not change.** The colours each label shows in its theme at build
-time. Nothing about `_draw`-time colour reads.
-
-```queue
-**[Claude] UT-3 -- a theme change recolours the in-run panels' text**
-- Plan: `plans/now/ui-texture-polish.md` -- "UT-3 -- a theme change recolours the in-run panels' text"
-- Files: `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd`
-- Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/colony_panel.gd scripts/foraging_panel.gd scripts/nursery_panel.gd scripts/winter_panel.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `present: scripts/colony_panel.gd :: hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))`
-- Next after: UT-4 -- a theme change recolours the HUD, main menu and end screens
-```
+UT-3 shipped 2026-10-02; its specification is `plans/archive/UT-3_2026-10-02.md`.
 
 ## UT-4 -- a theme change recolours the HUD, main menu and end screens
 

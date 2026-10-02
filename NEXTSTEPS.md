@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] UT-3 -- a theme change recolours the in-run panels' text**
-   - Plan: `plans/now/ui-texture-polish.md` -- "UT-3 -- a theme change recolours the in-run panels' text"
-   - Files: `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd`
-   - Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/colony_panel.gd scripts/foraging_panel.gd scripts/nursery_panel.gd scripts/winter_panel.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/colony_panel.gd :: hint.add_theme_color_override("font_color", UiTheme.color("text_secondary"))`
-   - Next after: UT-4 -- a theme change recolours the HUD, main menu and end screens
-
-2. **[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
+1. **[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
    - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
    - Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
