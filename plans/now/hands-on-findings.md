@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1 and HO-2 are queued, one after the other in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-2 -- every skill's name reads whole in its hex (after UT-2, same file) | Dependency: HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-2 is queued in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | yes -- queued (UT-2 landed 2 Oct 2026) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
@@ -71,39 +70,7 @@ running off the right edge (HO-5, UT-2), PAUSED drawn over the readout's
 (UT-3, UT-4), Light's Honeycomb muddying the Colony window's pale hint (UT-1,
 UT-3).
 
-## HO-1 -- Escape closes the skill tree
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `skill_tree_panel.gd::_input` closes the view on
-`KEY_ESCAPE` and swallows every other key. Seen: with the tree open over
-Scenario 2, Escape did nothing three times (pointer still, then over the
-tree, then after a click on empty tree). Ctrl+1 a moment later reached the
-game ("Group 1 cleared."), so keys were arriving. × closed it and restored
-speed 2 every time. So the handler exists and does not run, or runs after
-another node has already consumed Escape -- an inference, not a diagnosis.
-
-**True afterwards.** Escape closes the tree and restores the speed it had,
-exactly as × does. Reproduce first; if Escape works, stop and report.
-Likely places: a node earlier in `_input` order handling Escape (the
-settings window or HUD), or the layer's process mode while the tree is
-paused.
-
-**Must not change.** The swallowing of every other key while the view is
-open (Space and Tab must not reach the paused game), C-79's full-screen
-pause, and × closing it.
-
-**Level:** high -- the cause is not yet diagnosed (input order or process
-mode), so this is an ambiguous bug.
-
-```queue
-**[Claude] HO-1 -- Escape closes the skill tree**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-1 -- Escape closes the skill tree"
-- Files: `scripts/skill_tree_panel.gd`
-- Check: with the skill tree open over a run, Escape closes it and restores the earlier speed as × does, Space and Tab still do not reach the game, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/skill_tree_panel.gd :: (event as InputEventKey).keycode == KEY_ESCAPE`
-- Next after: HO-2 -- every skill's name reads whole in its hex
-```
+HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`.
 
 ## HO-2 -- every skill's name reads whole in its hex
 

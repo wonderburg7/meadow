@@ -30,3 +30,4 @@ unblocker.
 - [C-97 -- Developer mode shows the Triggers, and End the run opens The queen is dead](ready/C-97.md)
 - [C-98 -- Saves window name field shows 24+ characters and opens on top of the menu](ready/C-98.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
+- [C-100 -- Escape closes the skill tree on a real keyboard](ready/C-100.md)
