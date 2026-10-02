@@ -148,7 +148,7 @@ static func hungry(bees: Array, count: int) -> String:
 		return "%s is running low on energy — she is trying to work, but the pantry is not helping." % bee.bee_name
 	return "%d bees are running low on energy" % count
 
-static func no_free_cells(bees: Array, queen: Node2D) -> String:
+static func no_free_cells(bees: Array, queen) -> String:
 	var loaded := _first_bee(bees, func(candidate):
 		return candidate.current_load > 0.0 and candidate.current_load_type in ["nectar", "pollen"]
 	)
@@ -158,7 +158,7 @@ static func no_free_cells(bees: Array, queen: Node2D) -> String:
 		return "%s has inspected the comb and found no free cell for stores or eggs. She is not impressed." % queen.bee_name
 	return "No free cells — nowhere to store food or lay eggs"
 
-static func no_foragers(queen: Node2D) -> String:
+static func no_foragers(queen) -> String:
 	if is_instance_valid(queen):
 		return "%s has noticed that nobody is bringing food home. She is trying not to take it personally." % queen.bee_name
 	return "No foragers — nothing is coming in"
