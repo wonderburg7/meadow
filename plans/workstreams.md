@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-7-15a6c5` (`claude/run-queue-7-15a6c5`) | Claude | queue HO-13 (restore clears queen_seen_alive); slice-worker brief, run-queue skill, warning instrument | Claude | in progress | none | `plans/now/hands-on-findings.md` |
