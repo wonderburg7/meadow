@@ -27,7 +27,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
-| HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | no -- after HO-9 (same file) | low |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
@@ -231,26 +230,4 @@ and follows a change to either.
 **Must not change.** Which roles each menu offers (`hud.gd::_role_offered`,
 C-81).
 
-## HO-12 -- a Challenge or Scenario hex breaks its name between words
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 2 Oct 2026 (second pass) on the main menu at text scale 2
-in Silkscreen: hex labels split words -- "CHALLENG / E 1 FIRST STORES",
-"ESTABLIS / HED NEST". `main_menu.gd::_make_hex_tile` sets
-`AUTOWRAP_WORD_SMART`, which breaks a word wider than the label.
-
-**True afterwards.** At text scale 1 and 2, in every typeface, each hex shows
-whole words: its label shrinks or the hex grows rather than splitting one.
-
-**Must not change.** Challenges above Scenarios, the ticks, and the
-selection outline.
-
-```queue
-**[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
-- Files: `scripts/main_menu.gd`
-- Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
-- Next after: none -- the last slice in this plan
-```
+HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
