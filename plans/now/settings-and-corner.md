@@ -62,7 +62,7 @@ locals are renamed.
 **[Claude] SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height**
 - Plan: `plans/now/settings-and-corner.md` -- "SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height"
 - Files: `scripts/hud.gd`, `scripts/game_panel.gd`
-- Check: a hands-on check is filed for PAUSED, the wrapped strip and the Colony window at Text scale 2 in Open Sans, and `tools/verify.ps1` is green
+- Check: `python tools/gdscript_warnings.py scripts/hud.gd` passes, a hands-on check is filed for PAUSED, the wrapped strip and the Colony window at Text scale 2 in Open Sans, and `tools/verify.ps1` is green
 - Proof: `present: scripts/hud.gd :: pause_label = _make_label(Vector2(16, 300), "Heading")`
 - Next after: none -- plans/now/settings-and-corner.md is complete
 ```

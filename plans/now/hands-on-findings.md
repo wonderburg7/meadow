@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1 and HO-2 are queued, one after the other in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1 and HO-2 are queued, one after the other in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is queued (Dave, 2 Oct 2026: a queenless save ends at once) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,12 +21,13 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
-| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
+| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | yes -- queued (UT-2 landed 2 Oct 2026) | high |
+| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
+| HO-13 | restoring a save keeps HO-10's rule: no queen, no run | `scripts/saving.gd`, the HO-10 headless test | yes -- queued | medium |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
@@ -255,3 +256,37 @@ and follows a change to either.
 C-81).
 
 HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
+
+## HO-13 -- restoring a save keeps HO-10's rule: no queen, no run
+
+<!-- LAYER: immediate-task -->
+
+Level: medium (the save path; the outcome is decided below).
+
+**True now.** HO-10 made `main.gd::_check_for_loss` end the run once
+`queen_seen_alive` is set and `main.queen` is no longer a live object.
+`saving.gd::_restore_bees` resets `main.queen` and `colony_lost` but not
+`queen_seen_alive`, so a save holding no queen (possible before HO-10,
+when a dead queen left the run going) ends the run at once if loaded
+after a live queen was seen in this scene, and never ends if loaded on a
+fresh boot. Found by the HO-10 review, 2 Oct 2026.
+
+**True afterwards.** Restoring a save sets `queen_seen_alive` true, so a
+queenless save opens "The queen is dead" on its first frame wherever it
+was loaded from (Dave, 2 Oct 2026: such a colony is over; keeping it
+playable was the rejected option). A save with a queen plays on as now.
+A scenario fixture that restores a queenless save on purpose would now
+end: grep `test_scenarios/` for one before changing anything, and return
+`blocked` if one exists.
+
+**Must not change.** The save format, Challenge 2's checkpoint restore
+(it restores a queen), and HO-10's ending for a queen who dies in play.
+
+```queue
+**[Claude] HO-13 -- restoring a save keeps HO-10's rule: no queen, no run**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-13 -- restoring a save keeps HO-10's rule: no queen, no run"
+- Files: `scripts/saving.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
+- Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes with two new cases, a queenless save restored on a fresh scene opens "The queen is dead" (fails before the fix) and a save with a queen plays on, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/saving.gd :: queen_seen_alive`
+- Next after: HO-1 -- Escape closes the skill tree
+```

@@ -80,6 +80,12 @@ sitting in a `.worktrees/` directory:
      rerun. The refill gate (backlog dry) means specifying the owning
      plan's next slice. That is planning work, so do it yourself in the
      slice worktree, as in steps 2-3 of the refill below, then rerun.
+     The same stop also comes when a block the worker wrote has a
+     `Proof:` that fails on master, or names a successor with no block:
+     fix the block. While there, open any `queue-gated` fence whose gate
+     a slice landed earlier in this run has now cleared (its gate line
+     under `## Not in the queue, and why` goes too), so the lane does
+     not run dry one slice later.
      The lifecycle lock held by another lane's `finish` (the cause names
      its PID): wait for it and rerun in one background call,
      `powershell.exe -NoProfile -Command "Wait-Process -Id <pid>"; (cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
