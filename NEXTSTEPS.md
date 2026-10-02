@@ -30,10 +30,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
-2. **[Claude] UT-1 -- every panel texture is visible in every theme**
-   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
-   - Files: `scripts/ui_theme.gd`
-   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
+2. **[Claude] UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat"
+   - Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md`
+   - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records Dark's and Light's comb and grain contrast from it meeting the UT-1 thresholds, High contrast draws no texture, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
    - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
 
@@ -44,12 +44,19 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
    - Next after: UT-3 -- a theme change recolours the in-run panels' text
 
-5. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
+4. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
    - Plan: `plans/now/brood-spine.md` -- "BS-10 — C-81 tests the one run that buys Nurses"
    - Files: `checks/ready/C-81.md`
    - Check: `checks/ready/C-81.md` starts Challenge 2 rather than level 7, and `python tools/check_docs.py` passes
    - Proof: `present: checks/ready/C-81.md :: start level 7 from the main menu`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
+
+5. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
+   - Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
+   - Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
+   - Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
+   - Next after: SC-2 -- cycling the typeface logs no engine error
 
 ### Codex lane
 
@@ -91,7 +98,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **UT-3** (`plans/now/ui-texture-polish.md`) -- startable, but the Claude lane is full; it follows UT-1, which also edits `scripts/ui_theme.gd`.
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
-- **SC-1** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full.
 - **SC-2** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows UT-1 and UT-3, which also edit `scripts/ui_theme.gd`.
 - **SC-3** (`plans/now/settings-and-corner.md`) -- startable, but the Claude lane is full; it follows SC-1, which also edits `scripts/debug_panel.gd`.
 - **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
@@ -106,7 +112,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **HO-1** (`plans/now/hands-on-findings.md`) -- follows UT-2, which also edits `scripts/skill_tree_panel.gd`; HO-2 follows HO-1.
 - **HO-3** (`plans/now/hands-on-findings.md`) -- follows SC-1 and SC-3, which also edit `scripts/debug_panel.gd`; HO-4 follows SC-3 (`scripts/saves_panel.gd`).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4, UT-3 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
-- **HO-8** (`plans/now/hands-on-findings.md`) -- waits for Dave's verdict on C-84, and follows HO-7 (`scripts/challenge_runner.gd`).
+- **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
 - **BS-11** (`plans/now/brood-spine.md`) -- follows BS-6, which also edits `scripts/run_availability_panel.gd`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

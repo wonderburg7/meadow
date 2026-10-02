@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is startable (Dave chose option (b), 2 Oct 2026); HO-8 waits on Dave's C-84 verdict | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 follow SC-3 and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is startable (Dave chose option (b), 2 Oct 2026); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -28,12 +28,13 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-7 | each Challenge stage stays on screen a moment before the next can clear | `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd` | yes -- queued | high |
-| HO-8 | Challenge 2's 2.9 shows which targets are still short | `scripts/challenge_runner.gd`, `scripts/hud.gd` | gated -- Dave's verdict on C-84 | medium |
+| HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
 they run one after the other, after SC-4, UT-4 and SR-4 have landed. HO-7
-goes before HO-8; both edit `scripts/challenge_runner.gd`.
+goes before HO-8; both edit `scripts/challenge_runner.gd`. HO-8 also edits
+`scripts/hud.gd` (after HO-6) and `scripts/main.gd` (after BS-6).
 
 **What a slice reads.** Its own section below, and the function it names.
 Every "Seen" line is from the 2 Oct 2026 pass, driven by computer use in a
@@ -224,21 +225,49 @@ lengthened.
 - Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
 ```
 
-## HO-8 -- Challenge 2's 2.9 shows which targets are still short
+## HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
 
 <!-- LAYER: immediate-task -->
 
 **True now.** At 2.9 (reached with the stage arrows) the goal text lists all
-seven targets, but `hud.gd::set_challenge_goal` shows one bar and one count:
-"400 / 300", while the HUD's own Nectar read 376. The HUD does not split
-nectar from pollen Foragers or count miners. Dr Gallerin still showed 2.8's
-line, since 2.9's `prompts` list is empty. C-84 asks whether a player can
-finish 2.9 without guessing; the 2 Oct pass left that verdict to Dave
-(FEEL, leaning fail).
+seven targets -- 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen
+Foragers, 2 nurses, 2 Comb workers, 2 miners -- but the screen cannot answer
+them. `hud.gd::update_population` prints "Bees: %d foraging, %d nursing, %d
+comb workers, %d on honey". `main.gd::_update_population_readout` adds the
+nectar and pollen Forager counts together before passing them, and passes no
+miner count, though `_role_counts` holds all of them. The goal shelf
+(`set_challenge_goal`) showed one bar and count, "400 / 300", while the
+HUD's Nectar read 376. Dr Gallerin still showed 2.8's line, since 2.9's
+`prompts` list is empty.
 
-**Gate.** Dave's verdict on C-84. If it fails, this becomes the "Challenge 2
-goal-presentation slice" `checks/ready/C-84.md` names. Either way, find
-where `c2_complete`'s progress pair comes from and why it read 400 against
-376.
+**Decision (Dave, 2 Oct 2026, on C-84).** The HUD's population line splits
+nectar from pollen Foragers and counts miners, so every 2.9 target can be
+read off the screen. No per-target goal readout is added.
 
-**True afterwards.** Specified when the gate clears.
+**True afterwards.**
+- The population line reads, for example, "Bees: 6 nectar foragers, 2
+  pollen foragers, 1 nursing, 2 comb workers, 1 mining, 0 on honey", in every
+  run, not only Challenge 2. A count of zero still shows, so a shortfall is
+  visible. `update_population` takes the split counts and the miner count;
+  `_update_population_readout` passes them from `_role_counts`. Runtime
+  policy unchanged: the readout already refreshes on population change.
+- The "400 / 300" mismatch is explained and fixed: find which amount
+  `Conditions.progress` reports for `c2_complete`'s condition (via
+  `challenge_runner.gd::_goal_progress`) and make it the same nectar total
+  the HUD shows, or drop the bar for a multi-target goal if it can only
+  ever show one target.
+- `checks/ready/C-84.md` keeps its question and points its Owner line at
+  this plan; Dave re-runs it.
+
+**Must not change.** The stores line; the goal shelf for single-target
+goals; C-74's left-window layout (a longer line wraps inside the corner
+column SC-4 builds).
+
+```queue-gated
+**[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read"
+- Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md`
+- Check: the population line names nectar foragers, pollen foragers and miners in a Challenge 2 run, 2.9's goal bar agrees with the HUD's nectar or is absent, a Godot boot is clean, and `tools/verify.ps1` is green
+- Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
+- Next after: none -- plans/now/hands-on-findings.md is complete
+```
