@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/BS-10` (`claude/BS-10`) | Claude | C-81 tests the one run that buys Nurses | Claude | in progress | none | `plans/now/brood-spine.md` BS-10 — C-81 tests the one run that buys Nurses |
