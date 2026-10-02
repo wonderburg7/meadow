@@ -214,15 +214,14 @@ func _delete(slug: String) -> void:
 func _day_text(day: int) -> String:
 	return "day %d" % day if day >= 0 else "day unknown"
 
-@warning_ignore("integer_division")
 func _age_text(seconds: int) -> String:
 	if seconds < 60:
 		return "just now"
 	if seconds < 3600:
-		return "%d min ago" % (seconds / 60)
+		return "%d min ago" % int(seconds / 60.0)
 	if seconds < 86400:
-		return "%d h ago" % (seconds / 3600)
-	return "%d days ago" % (seconds / 86400)
+		return "%d h ago" % int(seconds / 3600.0)
+	return "%d days ago" % int(seconds / 86400.0)
 
 func _label(text: String, variation: String) -> Label:
 	var label := Label.new()
