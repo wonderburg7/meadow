@@ -18,7 +18,6 @@ were tried on throwaway copies of their fixtures and both ended
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SR-2 | the G3 fixture owns the Honey worker skill | `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd` | yes | low |
 | SR-3 | the disease-off fixture starts every bee newborn | `test_scenarios/h5_disease_off_test.json` | yes | low |
 | SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- UI-F-2 closes with this refill | high |
 | SR-5 | the SF-1 flower-mix test passes, or is shown to be a simulation question | `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
@@ -34,35 +33,7 @@ and UT-5 for SR-2 and SR-4, which edit `scripts/scenario_actions.gd`.
 
 SR-1 shipped 2026-10-02; its specification is `plans/archive/SR-1_2026-10-02.md`.
 
-## SR-2 -- the G3 fixture owns the Honey worker skill
-
-<!-- LAYER: immediate-task -->
-
-Level: low (a fixture key and a comment).
-
-**True now.** `g3_actions_offered_test` asserts `all_actions_available` on
-day 1 with no skills owned. Since BS-3 made the honey actions need the bought
-Honey worker skill, it fails with `honey_deposit_load (skill_not_owned)`,
-`honey_fan_cell` and `honey_fetch_nectar`. The gate is intended; the fixture
-is stale. The docstring above `scenario_actions.gd::_check_all_actions_available`
-still calls "no skills owned" the "ordinary play is unchanged" invariant.
-
-**Done when.** The fixture adds `"skill_grants": ["skill.brood.honey_worker"]`
-(the run-definition key `run_availability.gd` reads), and the docstring says
-the condition holds once the run owns the skills its actions need. The
-condition itself does not change: it must still fail on any other refusal.
-
-**Check.** `python tools/run_scenario.py test_scenarios/g3_actions_offered_test.json`
-ends `status=passed`.
-
-```queue
-**[Codex] SR-2 -- the G3 fixture owns the Honey worker skill**
-- Plan: `plans/now/scenario-reds.md` -- "SR-2 -- the G3 fixture owns the Honey worker skill"
-- Files: `test_scenarios/g3_actions_offered_test.json`, `scripts/scenario_actions.gd`
-- Check: `python tools/run_scenario.py test_scenarios/g3_actions_offered_test.json` ends `status=passed`, and `tools/verify.ps1` is green
-- Proof: `absent: test_scenarios/g3_actions_offered_test.json :: skill.brood.honey_worker`
-- Next after: SR-3 -- the disease-off fixture starts every bee newborn
-```
+SR-2 shipped 2026-10-02; its specification is `plans/archive/SR-2_2026-10-02.md`.
 
 ## SR-3 -- the disease-off fixture starts every bee newborn
 
