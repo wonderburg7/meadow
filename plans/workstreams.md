@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UT-3` (`claude/UT-3`) | Claude | a theme change recolours the in-run panels' text | Claude | in progress | none | `plans/now/ui-texture-polish.md` UT-3 -- a theme change recolours the in-run panels' text |
