@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HO-13` (`claude/HO-13`) | Claude | restoring a save keeps HO-10's rule: no queen, no run | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-13 -- restoring a save keeps HO-10's rule: no queen, no run |
