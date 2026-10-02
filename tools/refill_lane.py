@@ -26,8 +26,13 @@ Before writing, every mode runs tools/check_docs.py's queue checks over the
 result and refuses to write a queue that would fail verification -- for example
 one that drops below the three-item floor, or that loses a lane entirely.
 
-Nothing here touches `## Not in the queue, and why`: a deferral is a judgement,
-and stays one.
+`## Not in the queue, and why` is left alone with one exception: a bullet
+whose only reason is that this lane is full ("startable, but the Claude lane
+is full.") is a fact about the lane's size, not a judgement. When `--top-up`
+finds a free slot it queues that item and deletes its bullet, rather than
+leaving a sentence that went false with the last closeout to fail
+check_docs (2 Oct 2026: GC-4, UT-3 and HO-7 each needed a hand edit). A
+bullet that gives another reason as well stays, and the log says to reword it.
 """
 
 from __future__ import annotations
@@ -151,6 +156,68 @@ def deferred_ids(text: str) -> set[str]:
     }
 
 
+# A reason that is only "this lane is full", optionally after "startable
+# (...), but". Anything after the lane clause (a "; it follows X" or a second
+# sentence) makes it a judgement as well, which a refill must not erase.
+CAPACITY_ONLY = re.compile(
+    r"^(?:startable\b[^;]*?,\s*but\s+)?"
+    r"(?:(?:the\s+)?(?P<a>Claude|Codex) lane is full"
+    r"|waits for a free slot in the (?P<b>Claude|Codex) lane)\.?$",
+    re.IGNORECASE,
+)
+BULLET = re.compile(r"^-\s+\*\*(?P<lead>.+?)\*\*(?P<rest>.*)$", re.MULTILINE)
+
+
+def _bullet_reason(rest: str) -> str:
+    """The reason part of a bullet: what follows its ' -- '."""
+    parts = re.split(r"\s--\s", rest, maxsplit=1)
+    return parts[1].strip() if len(parts) == 2 else rest.strip()
+
+
+def capacity_deferrals(text: str, lane: str) -> tuple[set[str], set[str]]:
+    """Ids deferred under '## Not in the queue, and why' because `lane` is full.
+
+    Returns (only, mixed): `only` gives no other reason, so a free slot
+    makes the bullet false and a refill may clear it; `mixed` blames the
+    full lane alongside another reason, so a person has to reword it. Only
+    single-id leads count -- a bullet covering several ids is left alone."""
+    only: set[str] = set()
+    mixed: set[str] = set()
+    section = NOT_IN_QUEUE.search(text)
+    if not section:
+        return only, mixed
+    for bullet in BULLET.finditer(section.group(1)):
+        ids = re.findall(r"[\w.-]+", bullet.group("lead"))
+        if len(ids) != 1:
+            continue
+        reason = _bullet_reason(bullet.group("rest"))
+        match = CAPACITY_ONLY.match(reason)
+        if match and (match.group("a") or match.group("b")).lower() == lane.lower():
+            only.add(ids[0])
+        elif (check_docs.LANE_FULL_REASON.search(reason)
+              and re.search(rf"\b{re.escape(lane)} lane\b", reason, re.IGNORECASE)):
+            mixed.add(ids[0])
+    return only, mixed
+
+
+def clear_deferral(text: str, slice_id: str) -> str:
+    """The queue text without `slice_id`'s bullet under '## Not in the queue'."""
+    section = NOT_IN_QUEUE.search(text)
+    if not section:
+        return text
+    body = section.group(1)
+    for bullet in BULLET.finditer(body):
+        if re.findall(r"[\w.-]+", bullet.group("lead")) == [slice_id]:
+            end = bullet.end()
+            if body[end:end + 2] == "\r\n":
+                end += 2
+            elif body[end:end + 1] == "\n":
+                end += 1
+            body = body[:bullet.start()] + body[end:]
+            break
+    return text[:section.start(1)] + body + text[section.end(1):]
+
+
 def lane_files(text: str, lane: str) -> set[str]:
     """Every path named on a `Files:` line in `lane`."""
     paths: set[str] = set()
@@ -185,15 +252,18 @@ def load_backlog(root: Path) -> list[backlog.Entry]:
     return entries
 
 
-def rejection(entry: backlog.Entry, text: str, root: Path) -> str | None:
+def rejection(entry: backlog.Entry, text: str, root: Path,
+              undeferred: set[str] | None = None) -> str | None:
     """Why `entry` may not join its lane now, or None if it may.
 
     These are the admission test written out: already queued, deliberately
-    deferred, a proof that no longer holds, or a file the other lane owns."""
+    deferred, a proof that no longer holds, or a file the other lane owns.
+    `undeferred` holds ids whose only deferral is a full lane that now has
+    room; the caller clears their bullet when it queues them."""
     queued = dict((slice_id, lane) for lane, slice_id in queued_ids(text))
     if entry.slice_id in queued:
         return "already in the queue"
-    if entry.slice_id in deferred_ids(text):
+    if entry.slice_id in deferred_ids(text) and entry.slice_id not in (undeferred or set()):
         return "deferred under '## Not in the queue, and why'"
     if entry.lane not in check_docs.LANES:
         return f"its block carries an unknown lane tag [{entry.lane}]"
@@ -242,22 +312,31 @@ def top_up(text: str, lane: str, root: Path, prefer: list[str],
                   if e.lane == lane and not e.gated and e.slice_id not in closed]
     candidates.sort(key=lambda e: prefer.index(e.slice_id) if e.slice_id in prefer else len(prefer))
     held = sum(1 for item_lane, _ in queued_ids(text) if item_lane == lane)
+    capacity_only, capacity_mixed = capacity_deferrals(text, lane)
     for entry in candidates:
         if held >= check_docs.LANE_SIZE_MAX:
             break
-        reason = rejection(entry, text, root)
+        reason = rejection(entry, text, root, undeferred=capacity_only)
         if reason:
             if reason != "already in the queue":
                 log.append(f"  not added: {entry.slice_id} ({entry.plan}) -- {reason}")
             continue
         candidate = append_item(text, entry)
+        cleared = entry.slice_id in capacity_only and entry.slice_id in deferred_ids(text)
+        if cleared:
+            candidate = clear_deferral(candidate, entry.slice_id)
         errors = queue_errors(candidate, root)
         if errors:
             log.append(f"  not added: {entry.slice_id} ({entry.plan}) -- {errors[0]}")
             continue
         text, held = candidate, held + 1
-        log.append(f"  added:     {entry.slice_id} -- {entry.title} (from {entry.plan})")
+        note = "; its 'lane is full' deferral is cleared" if cleared else ""
+        log.append(f"  added:     {entry.slice_id} -- {entry.title} (from {entry.plan}{note})")
     if held < check_docs.LANE_SIZE_MAX:
+        stale = sorted(capacity_mixed & deferred_ids(text))
+        for slice_id in stale:
+            log.append(f"  reword:    {slice_id} -- its bullet under '## Not in the queue, and why' "
+                       f"blames a full {lane} lane, which has a free slot; keep only its other reason")
         log.append(f"  the {lane} lane holds {held} of {check_docs.LANE_SIZE_MAX}; the backlog "
                    "has no further admissible block for it.")
         gated = [e for e in entries if e.lane == lane and e.gated]

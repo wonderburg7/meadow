@@ -591,8 +591,9 @@ def check_not_in_queue_reasons(errors: list[str], text: str | None = None) -> No
         if lane_sizes[lane] < LANE_SIZE_MAX:
             errors.append(
                 f"NEXTSTEPS.md: '{name}' waits for a free slot in the {lane} lane, "
-                f"but that lane holds {lane_sizes[lane]} of {LANE_SIZE_MAX} -- queue it, "
-                "or state the real reason it waits"
+                f"but that lane holds {lane_sizes[lane]} of {LANE_SIZE_MAX} -- run python "
+                f"tools/refill_lane.py --top-up --lane {lane} (it queues the item and clears "
+                "a bullet whose only reason is the full lane), or state the real reason it waits"
             )
 
 

@@ -882,6 +882,68 @@ class BacklogRefillTest(unittest.TestCase):
         self.assertNotIn("A-9", self.queue_text())
         self.assertIn("Codex lane already owns scripts/B-1.gd", result.stdout)
 
+    def write_deferrals(self, *bullets):
+        text = self.queue_text().replace(
+            self.tail, "## Not in the queue, and why\n\n" + "".join(b + "\n" for b in bullets))
+        (self.root / "NEXTSTEPS.md").write_text(text, encoding="utf-8")
+
+    def test_a_lane_is_full_deferral_clears_itself_when_the_lane_has_room(self):
+        self.write_plan(self.block("A-9"), self.block("A-8"))
+        self.write_deferrals(
+            "- **A-9** (`plans/now/x.md`) -- startable (Dave chose (b), 2 Oct 2026), "
+            "but the Claude lane is full.",
+            "- **A-8** (`plans/now/x.md`) -- waits for a free slot in the Claude lane.",
+            "- **C-1** -- waits on Dave.")
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        text = self.queue_text()
+        self.assertIn("**[Claude] A-9 --", text)
+        self.assertIn("**[Claude] A-8 --", text)
+        self.assertNotIn("- **A-9**", text)
+        self.assertNotIn("- **A-8**", text)
+        self.assertIn("- **C-1** -- waits on Dave.", text)
+        self.assertIn("'lane is full' deferral is cleared", result.stdout)
+        errors: list[str] = []
+        check_docs.check_not_in_queue_reasons(errors, text=text)
+        self.assertEqual([], errors)
+
+    def test_a_deferral_with_another_reason_stays_and_is_flagged(self):
+        self.write_plan(self.block("A-9"))
+        self.write_deferrals(
+            "- **A-9** (`plans/now/x.md`) -- startable, but the Claude lane is full; "
+            "it follows A-1, which also edits `scripts/A-1.gd`.")
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        text = self.queue_text()
+        self.assertNotIn("**[Claude] A-9 --", text)
+        self.assertIn("- **A-9**", text)
+        self.assertIn("reword:    A-9", result.stdout)
+
+    def test_a_full_deferral_naming_the_other_lane_is_left_alone(self):
+        self.write_plan(self.block("A-9"))
+        self.write_deferrals("- **A-9** (`plans/now/x.md`) -- startable, but the Codex lane is full.")
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("**[Claude] A-9 --", self.queue_text())
+        self.assertIn("- **A-9**", self.queue_text())
+
+    def test_a_full_lane_keeps_its_capacity_deferral(self):
+        self.write_queue(claude=("A-1", "A-2", "A-3", "A-4", "A-5"))
+        self.write_plan(self.block("A-9"))
+        self.write_deferrals("- **A-9** (`plans/now/x.md`) -- startable, but the Claude lane is full.")
+
+        result = self.run_tool("--top-up", "--lane", "Claude")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("**[Claude] A-9 --", self.queue_text())
+        self.assertIn("- **A-9**", self.queue_text())
+
     def test_delete_then_top_up_does_not_requeue_the_slice_just_closed(self):
         self.write_queue(claude=("A-1", "A-9"))
         self.write_plan(self.block("A-9"))
