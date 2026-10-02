@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-16 -- master is synchronised with origin before a claim and before a merge**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-16 — master is synchronised with origin before a claim and before a merge"
-   - Files: `tools/slice.ps1`, `tests/test_two_lane_closeout.py`, `tests/test_slice_lifecycle.py`
-   - Check: `python -m unittest tests.test_two_lane_closeout tests.test_slice_lifecycle` passes with the remote-ahead case strict and the five new cases, and `tools/verify.ps1` is green
-   - Proof: `absent: tools/slice.ps1 :: Sync-PrimaryMaster`
-   - Next after: L-17 -- one console-encoding contract for the lifecycle, tested once
-
-2. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
+1. **[Claude] L-17 -- one console-encoding contract for the lifecycle, tested once**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-17 — one console-encoding contract for the lifecycle, tested once"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`, `tests/test_source_checks.py`
    - Check: `python -m unittest tests.test_slice_lifecycle.ConsoleEncodingTest tests.test_source_checks` passes and `tools/verify.ps1` is green
    - Proof: `absent: tests/test_slice_lifecycle.py :: ConsoleEncodingTest`
    - Next after: none -- agent-lifecycle is complete once L-17 ships and the Objective's completion gate is met
 
-3. **[Claude] UT-1 -- every panel texture is visible in every theme**
+2. **[Claude] UT-1 -- every panel texture is visible in every theme**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
    - Files: `scripts/ui_theme.gd`
    - Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
    - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
 
-4. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
+3. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
    - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
    - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
