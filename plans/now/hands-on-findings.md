@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file); HO-13 is queued after HO-12 (Dave, 2 Oct 2026: a queenless save ends at once) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1 and HO-2 are queued, one after the other in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is queued (Dave, 2 Oct 2026: a queenless save ends at once) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,13 +21,12 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
-| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
+| HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | yes -- queued (UT-2 landed 2 Oct 2026) | high |
+| HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | yes -- queued after HO-1 (same file) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
-| HO-12 | a Challenge or Scenario hex breaks its name between words | `scripts/main_menu.gd` | yes -- queued (HO-9 landed 2 Oct 2026) | low |
 | HO-13 | restoring a save keeps HO-10's rule: no queen, no run | `scripts/saving.gd`, the HO-10 headless test | yes -- queued | medium |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
@@ -95,6 +94,18 @@ paused.
 open (Space and Tab must not reach the paused game), C-79's full-screen
 pause, and × closing it.
 
+**Level:** high -- the cause is not yet diagnosed (input order or process
+mode), so this is an ambiguous bug.
+
+```queue
+**[Claude] HO-1 -- Escape closes the skill tree**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-1 -- Escape closes the skill tree"
+- Files: `scripts/skill_tree_panel.gd`
+- Check: with the skill tree open over a run, Escape closes it and restores the earlier speed as × does, Space and Tab still do not reach the game, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/skill_tree_panel.gd :: (event as InputEventKey).keycode == KEY_ESCAPE`
+- Next after: HO-2 -- every skill's name reads whole in its hex
+```
+
 ## HO-2 -- every skill's name reads whole in its hex
 
 <!-- LAYER: immediate-task -->
@@ -121,6 +132,18 @@ window size (`_min_zoom`). File a hands-on check that replaces C-88.
 
 **Must not change.** Drag (passed on both 2 Oct passes), and the hover
 tooltip.
+
+**Level:** medium -- bounded drawing and zoom-limit work in one class, with
+a hands-on acceptance check.
+
+```queue
+**[Claude] HO-2 -- every skill's name reads whole in its hex**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
+- Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
+- Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
+- Next after: HO-5 -- long text stays inside its window
+```
 
 HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
 
@@ -232,29 +255,7 @@ and follows a change to either.
 **Must not change.** Which roles each menu offers (`hud.gd::_role_offered`,
 C-81).
 
-## HO-12 -- a Challenge or Scenario hex breaks its name between words
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 2 Oct 2026 (second pass) on the main menu at text scale 2
-in Silkscreen: hex labels split words -- "CHALLENG / E 1 FIRST STORES",
-"ESTABLIS / HED NEST". `main_menu.gd::_make_hex_tile` sets
-`AUTOWRAP_WORD_SMART`, which breaks a word wider than the label.
-
-**True afterwards.** At text scale 1 and 2, in every typeface, each hex shows
-whole words: its label shrinks or the hex grows rather than splitting one.
-
-**Must not change.** Challenges above Scenarios, the ticks, and the
-selection outline.
-
-```queue
-**[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
-- Files: `scripts/main_menu.gd`
-- Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
-- Next after: HO-13 -- restoring a save keeps HO-10's rule: no queen, no run
-```
+HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
 
 ## HO-13 -- restoring a save keeps HO-10's rule: no queen, no run
 
@@ -287,5 +288,5 @@ end: grep `test_scenarios/` for one before changing anything, and return
 - Files: `scripts/saving.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
 - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes with two new cases, a queenless save restored on a fresh scene opens "The queen is dead" (fails before the fix) and a save with a queen plays on, and `tools/verify.ps1` is green
 - Proof: `absent: scripts/saving.gd :: queen_seen_alive`
-- Next after: none -- the last slice in this plan
+- Next after: HO-1 -- Escape closes the skill tree
 ```
