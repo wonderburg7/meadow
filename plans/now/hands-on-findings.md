@@ -367,3 +367,12 @@ whole words: its label shrinks or the hex grows rather than splitting one.
 
 **Must not change.** Challenges above Scenarios, the ticks, and the
 selection outline.
+
+```queue
+**[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
+- Files: `scripts/main_menu.gd`
+- Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `absent: scripts/main_menu.gd :: AUTOWRAP_WORD_SMART`
+- Next after: none -- the last slice in this plan
+```
