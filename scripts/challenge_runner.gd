@@ -137,6 +137,14 @@ var _goal_poll_timer: float = 0.0
 ## last looked" without re-running its own predicate every frame.
 var _goal_checked_index_epoch: int = -1
 var _goal_checked_population_epoch: int = -1
+## HO-7: unpaused game seconds the current stage has been on screen, and
+## whether its goal has been met yet. Both reset by _enter_stage and by a
+## Challenge 2 checkpoint restore. The goal is still polled during the dwell
+## (the ordered-visit goals record each point as it is reached), and a goal
+## met then stays met, clearing the moment the dwell reaches
+## Stages.MIN_STAGE_DWELL.
+var _stage_dwell: float = 0.0
+var _stage_goal_met: bool = false
 
 ## Challenge 1 only: the queen gathers at twice her normal rate once the
 ## automatic-foraging lesson begins. Keep the actual pre-override values so
@@ -313,7 +321,14 @@ func _process(delta: float) -> void:
 		_goal_poll_timer = GOAL_POLL_INTERVAL
 		_goal_checked_index_epoch = main.hive.index_epoch
 		_goal_checked_population_epoch = main._population_epoch
-	if check_goal_now and _goal_met(goal_id):
+	# HO-7: this node runs while paused (main is PROCESS_MODE_ALWAYS), so a
+	# pause must not count towards the dwell; delta is already scaled by
+	# Engine.time_scale, so game speed does.
+	if _stage_dwell < Stages.MIN_STAGE_DWELL and not get_tree().paused:
+		_stage_dwell += delta
+	if check_goal_now and not _stage_goal_met and _goal_met(goal_id):
+		_stage_goal_met = true
+	if _stage_goal_met and _stage_dwell >= Stages.MIN_STAGE_DWELL:
 		_advance()
 
 # --- goal polling -------------------------------------------------
@@ -400,6 +415,10 @@ func _check_c2_failure() -> void:
 		# survive the rescue.
 		_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
 		main.queen.energy_immune = true
+		# The restored stage starts over, so its goal text is on screen again
+		# for the full dwell, and a goal met before the dip no longer counts.
+		_stage_dwell = 0.0
+		_stage_goal_met = false
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
 		_apply_stage_gate_to_ui()
@@ -449,6 +468,8 @@ func _queen_allowed_role_ids(entries: Array) -> Array:
 
 func _enter_stage() -> void:
 	var stage: Dictionary = _stages()[_stage_index]
+	_stage_dwell = 0.0
+	_stage_goal_met = false
 	queen_command_locked = Session.starting_level == 1 and stage.id == "1.1"
 	# Fresh per stage, including after a foraging trip during the waypoint
 	# lesson. Entering either automatic-forage stage therefore always arms its

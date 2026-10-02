@@ -39,6 +39,13 @@ const C1_DISCARD_STAGES := ["1.14"]
 ## current rate. challenge_runner.gd restores the saved per-bee values on exit.
 const CHALLENGE1_FORAGE_SPEED_MULTIPLIER := 2.0
 const CENTRE_RADIUS := 40.0
+## HO-7 (Dave, 2 Oct 2026): game seconds a stage stays on screen before its
+## goal can clear, so its goal text and its delay-0 Dr Gallerin line are seen
+## even when one event satisfies several stages in a row. Counted from
+## challenge_runner.gd's _enter_stage while unpaused, scaled by game speed;
+## a goal met sooner clears the moment the dwell ends. Debug stage moves
+## bypass it.
+const MIN_STAGE_DWELL := 5.0
 const VISIT_POINT_RADIUS := 30.0
 
 ## The opening seals the inner third of world_building's entrance tunnel.
