@@ -41,7 +41,11 @@ clicks (1.90 to 1.50, applied once, fine). Seconds later, four quick + clicks
 from 1.50: the first counted (1.60), then the rows inside `panel_scroll`
 moved down by one row (~27 px) before the timer fired, so the next three
 clicks hit Typeface ▸ and changed the typeface three times. Two later runs
-from 1.60 passed. Inference: after an apply shrinks the content,
+from 1.60 passed. 2 Oct 2026: four uninterrupted + clicks from 1.60
+reached 2.0 cleanly. A run with a capture of about 1 s after the second
+click let the apply fire (1.80), and the re-laid window sent clicks three and
+four to Typeface ▸. That is the debounce working, not run 1's early move, so
+C-72 was left open for this slice rather than confirmed. Inference: after an apply shrinks the content,
 `panel_scroll.scroll_vertical` is left past the new maximum until the next
 re-sort; the value-label change on the next click triggers that sort and the
 clamp moves every row.

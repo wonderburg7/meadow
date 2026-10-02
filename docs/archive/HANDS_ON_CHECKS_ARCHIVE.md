@@ -6,6 +6,173 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 2 Oct 2026 -- Dave's hands-on pass
+
+### C-74 -- Winter forecast replaces Colony on the left
+
+What this checks: in a running game with a winter scheduled (settings cog -> Winter section, or wait for the countdown), open the Colony window, then press the Winter button in the top-right bar.
+
+PASS: the Winter forecast opens where Colony was, Colony closes, and nothing covers the top-right bar.
+
+If it fails, `scripts/year_winter.gd::_toggle_panel` or `scripts/winter_panel.gd` is not using the left-window rules and HF-4 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-75 -- Nursery keeps the meadow view
+
+What this checks: in a running game showing the meadow, press the Nursery button in the top-right bar.
+
+PASS: the Nursery window opens and the meadow stays on screen (the view does not switch to the hive).
+
+If it fails, `scripts/year_winter.gd::_on_nursery_window_requested` still switches views and HF-5 reopens.
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-76 -- the top bar has no Saves button
+
+What this checks: start a sandbox run and look along the top bar's second row (the row with the Winter and Skills buttons).
+
+PASS: there is no Saves button there; the Saves window opens only from the cog's settings window, under "Saves…".
+
+If it fails, SA-1's removal of `saves_button` from `hud.gd::_build_top_right_bar` did not land.
+
+Owner: `plans/archive/saves-access_2026-09-30.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-77 -- Saves opens over the main menu and loads a run
+
+What this checks: in a sandbox run, save it by name (cog -> "Saves…" -> "Save this run"). Go back to the main menu, open the cog there and press "Saves…". Press Load on the run you just saved.
+
+PASS: the Saves window appears on top of the main menu (with no "Save this run" button), and Load starts that saved run.
+
+If it fails, the window is drawing behind the menu (its layer in `saves_panel.gd::open`) or the cog still loads the latest save directly (`debug_panel.gd::_on_load_pressed`).
+
+Owner: `plans/archive/saves-access_2026-09-30.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-78 -- deleting a saved run always asks
+
+What this checks: your profile already has the discard warning switched off (28 Sep). If it has been switched back on, turn it off by saving a run under a name that already exists (cog -> "Saves…" -> "Save this run") and pressing "Discard, and stop warning me". Then, in cog -> "Saves…", press Delete on a saved run you don't need.
+
+PASS: a "Delete this run" confirmation appears, offering only "Delete it" and "Keep it", and the run is gone only after "Delete it".
+
+If it fails, Delete still honours the discard warning switch (`saves_panel.gd::_on_delete_pressed`) and a run can be lost with one click.
+
+Owner: `plans/archive/saves-access_2026-09-30.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-82 -- Developer mode shows the Run availability table
+
+What this checks: start level 5, open the cog, and switch on Interface -> Developer mode. Press the "Run availability" button that appears near the top of the settings window. Then switch Developer mode off again.
+
+PASS: the table lists every skill with where it comes from and why in plain words (Nurses "at the start", because level 5 starts with nurses; Honey worker "in the tree"), plus Role and Feature rows; with Developer mode off the button is gone and the table closes.
+
+If it fails, the button's guard (`debug_panel.gd::_make_run_availability_button`) or the table (`run_availability_panel.gd`) is not doing its job.
+
+Owner: `plans/now/brood-spine.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-83 -- at Challenge 2's 2.2 a raised pollen Forager hatches
+
+What this checks: start Challenge 2 and play to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click an empty comb cell, choose "Forager -- Pollen" from its Raises row's "Forager..." menu, then wait for the egg to grow (fast-forward is fine; about a game-day). Do not move the nectar Forager to pollen. Only valid after BS-9 has merged (`plans/now/brood-spine.md`).
+
+PASS: a pollen Forager hatches from that cell and 2.2 completes.
+
+If it fails, BS-9 reopens: the queen is not feeding the larva (`availability.gd::action_query`), so stages 2.1 to 2.4 still ask the player to raise bees that nobody can feed until 2.5 opens Nurses. Say whether the larva died or nothing was laid. Before BS-9 the readiness probe of 1 Oct 2026 reproduced exactly this failure; Dave's answer to it is decision 7 of `plans/now/brood-spine.md`.
+
+Owner: `plans/now/brood-spine.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-85 -- Challenge 2's 2.3 waits for you to designate a cell
+
+What this checks: start Challenge 2 from the main menu and play (or step with Game Settings -> World & start's arrows) to 2.3, "designate a cell" (`docs/challenge-stages.md`). Wait there a moment without touching the comb, then click an empty comb cell and choose a resource on its Reserve for row.
+
+PASS: 2.3 and Dr Gallerin's reminder stay on screen until you reserve a cell, and the stage clears once you do.
+
+If it fails, say which way: clearing before you reserve anything means 2.3's condition in `scripts/challenge_stages.gd` has lost `"explicit": true` (`tests/source_checks.py::check_designation_goals_explicit` guards it); not clearing after you reserve means the Reserve for row is not reaching `scripts/orders_zones.gd::_designate_one`. Either becomes this plan's next slice. Found by `docs/gameplay-review-2026-09-30.md` F1.
+
+Owner: `plans/now/gameplay-consistency.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-87 -- Serious warning is not lost behind a minor one
+
+What this checks: In a run, save a selection group with Ctrl+1 and, within about six seconds, let a bee die or drop colony energy so the starvation warning fires (the debug panel's Triggers group has a button that fires a death warning then a save-style notice). Only valid after UI-F-2 has merged.
+
+PASS: The death or starvation message is on the banner (or appears the moment the dwell ends), and "Group 1 saved" never replaces it.
+
+If it fails, UI-F-2 reopens, and the severity values or the pending-slot rule in `scripts/hud.gd::show_warning` are what change.
+
+Owner: `plans/archive/ui-feedback_2026-10-01.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-89 -- An Idle bee stays in the hive
+
+What this checks: start Scenario 4 from the main menu, click a nurse
+inside the hive and choose Job, Idle. Watch her for three game days.
+
+PASS: she stays in the hive and is still there and alive three game days later.
+
+If it fails, Idle still walks a bee out into the meadow where she cannot
+eat and starves; GC-1 (`scripts/bee.gd::_apply_role`,
+`scripts/bee_survival.gd::after_feeding`) reopens.
+
+Owner: `plans/now/gameplay-consistency.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-90 -- A forager moved indoors unloads first
+
+What this checks: start Scenario 4 from the main menu, click a forager
+while she is flying home from a flower (her panel shows a "Carrying" line
+with nectar or pollen), and in her panel change her job to Miner.
+
+PASS: once back in the hive she walks to a cell, her "Carrying" line drops to nothing, and she then starts mining.
+
+If it fails, the colony still loses a load whenever a forager is moved to
+an indoor job, and GC-2 (`plans/now/gameplay-consistency.md`) reopens.
+
+Owner: `plans/now/gameplay-consistency.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-91 -- Winter's countdown opens by itself
+
+What this checks: start Scenario 4 from the main menu with default settings
+and play, fast-forwarding is fine, until the day counter reaches day 6. Do
+not press any winter button.
+
+PASS: on day 6, with no button pressed, the Winter window opens on the left and a message says winter will arrive on day 21.
+
+If it fails, a player never sees winter coming and no ordinary run meets a
+winter at all; WO-1 (`season.gd::_advance_winter`) reopens.
+
+Owner: `plans/archive/winter-onset_2026-10-01.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
+### C-92 -- Skills tree hides the cut skills
+
+What this checks: from the main menu start Scenario 2 "A working colony" and press Skills at the top of the screen, then click Cell capacity.
+
+PASS: none of the nine cut skills (Guard bee, Combat, Auto-defence, Nectar robbing, Drones, Medicine, Adjustment panel, Extended backup roles, Chemical cascade) has a tile, and Cell capacity shows "Not built yet: buying it changes nothing yet." beside its cost.
+
+If it fails, FBB-1 in `plans/now/feedback-build.md` reopens: a cut node is still drawn in `scripts/skill_tree_panel.gd::_rebuild`, or the note is missing from `_refresh_detail`.
+
+Owner: `plans/now/feedback-build.md`
+
+Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
+
 ## 1 Oct 2026 -- Dave's hands-on pass
 
 ### C-57 -- at Challenge 2's 2.2 the Raises menu offers a pollen Forager
