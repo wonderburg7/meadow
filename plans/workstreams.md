@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/HO-7` (`claude/HO-7`) | Claude | each Challenge stage stays on screen a moment before the next can clear | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-7 -- each Challenge stage stays on screen a moment before the next can clear |
