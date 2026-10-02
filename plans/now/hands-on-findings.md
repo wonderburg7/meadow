@@ -23,7 +23,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | --- | --- | --- | --- | --- |
 | HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
-| HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
@@ -124,35 +123,7 @@ tooltip.
 
 HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
 
-## HO-4 -- the Saves window's name field is usable and always opens on top
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `saves_panel.gd` puts "Name this run:", the `LineEdit` and
-Save on one row. Seen: the field was about seven characters wide ("My
-colo"). Also seen: with the Saves window left open in a run, Return to Main
-Menu then cog -> "Saves…" showed nothing on top. The run's window stayed
-dimmed behind the menu, still with "Save this run". After closing it in the
-run, the same steps opened it correctly over the menu. `open()` sets
-`layer` from the menu's visibility; whether it runs for a window already
-open is not yet known.
-
-**True afterwards.** The name field shows at least 24 characters (its own
-row if need be), and "Saves…" from the main menu opens the window on top of
-the menu whether or not it was left open in the run. Reproduce the second
-part first.
-
-**Must not change.** C-77 and C-78 (passed 2 Oct 2026): no "Save this run"
-over the menu, Load starts the run, Delete always asks.
-
-```queue
-**[Claude] HO-4 -- the Saves window's name field is usable and always opens on top**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-4 -- the Saves window's name field is usable and always opens on top"
-- Files: `scripts/saves_panel.gd`
-- Check: the name field shows at least 24 characters; with the Saves window left open in a run, Return to Main Menu then cog -> "Saves…" opens it on top of the menu; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/saves_panel.gd :: prompt.text = "Name this run:"`
-- Next after: HO-5 -- long text stays inside its window
-```
+HO-4 shipped 2026-10-02; its specification is `plans/archive/HO-4_2026-10-02.md`.
 
 ## HO-5 -- long text stays inside its window
 
