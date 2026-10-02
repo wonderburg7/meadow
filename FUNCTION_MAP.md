@@ -990,7 +990,7 @@ Selection, drag and placement resolution.
 408  func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void
 418  func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void
 421  func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void
-432  func _place_keep_clear(global_point: Vector2, keep_adding: bool) -> void
+432  func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void
 437  func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void
 448  func _on_cell_empty_by_bee_requested(cell: Node2D) -> void
 457  func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void

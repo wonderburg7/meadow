@@ -1,7 +1,7 @@
 # Settings window and corner HUD -- findings from the 1 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SC-3 -- the project boots without GDScript warnings outside the HUD (SC-2 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height (SC-3 landed) | Dependency: SC-2 follows UT-1 and UT-3 (`plans/now/ui-texture-polish.md`, `scripts/ui_theme.gd`); SC-4 waits for SR-4 (Codex lane, `scripts/hud.gd`) and runs one after the other with UT-4 | Verified: 2026-10-02
 
 **Objective.** Four defects seen while running C-69 to C-73 by computer use on
 1 Oct 2026 are fixed: C-72 failed once in three runs, cycling the typeface
@@ -13,7 +13,6 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| SC-3 | `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd` | low | Claude | yes, after SC-1 (shares `debug_panel.gd`) | SC-1 |
 | SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | SR-4 landing; not alongside UT-4 (all edit `scripts/hud.gd`) |
 
 **Neighbouring plan.** `plans/now/ui-texture-polish.md` (UT-1 to UT-5) came
@@ -29,31 +28,7 @@ SC-1 shipped 2026-10-02; its specification is `plans/archive/SC-1_2026-10-02.md`
 
 SC-2 shipped 2026-10-02; its specification is `plans/archive/SC-2_2026-10-02.md`.
 
-## SC-3 -- the project boots without GDScript warnings outside the HUD
-
-<!-- LAYER: immediate-task -->
-
-Level: low (mechanical, behaviour identical).
-
-**True now.** A boot prints: integer division in `saves_panel.gd`'s "min
-ago"/"h ago"/"days ago" lines; `debug_panel.gd`'s Triggers section declares
-a local `var challenge_advance_btn` that shadows the member at the top of the
-file (the member is the ▶ button whose `disabled` state is refreshed); and
-`input_selection.gd::_place_keep_clear` never uses `keep_adding`.
-
-**True afterwards.** The integer divisions are explicit with identical
-results; the local is renamed (e.g. `stage_trigger_btn`), so the member stays
-the ▶ button; the parameter becomes `_keep_adding`, matching
-`_place_home_cell`. `hud.gd`'s two warnings belong to SC-4.
-
-```queue
-**[Claude] SC-3 -- the project boots without GDScript warnings outside the HUD**
-- Plan: `plans/now/settings-and-corner.md` -- "SC-3 -- the project boots without GDScript warnings outside the HUD"
-- Files: `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd`
-- Check: a headless boot prints no `GDScript::reload` warning for the three files, and `tools/verify.ps1` is green
-- Proof: `present: scripts/saves_panel.gd :: "%d min ago" % (seconds / 60)`
-- Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
-```
+SC-3 shipped 2026-10-02; its specification is `plans/archive/SC-3_2026-10-02.md`.
 
 ## SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
 
