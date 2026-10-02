@@ -1171,16 +1171,19 @@ class SliceDoctorTest(unittest.TestCase):
 
     def finish_with_a_deferred_successor(self, lane_after_refill="",
                                          next_after="T-2 -- the fixture's own successor.",
-                                         check_record=None):
+                                         check_record=None, check_line="deterministic",
+                                         master_confirms_check=None):
         """Close T-1, whose `Next after:` names T-2, with T-2 deferred under
         '## Not in the queue, and why' and $lane_after_refill as the Codex
-        lane the refill leaves. Returns the finish process."""
+        lane the refill leaves. $master_confirms_check names a record master
+        holds when T-1 forks and removes afterwards. Returns the finish
+        process."""
         (self.root / "NEXTSTEPS.md").write_text(
             "## Next up\n\n"
             "1. **[Codex] T-1 -- fixture.**\n"
             "   - Plan: `plans/fixture.md` -- fixture\n"
             "   - Files: `scripts/sample.gd`\n"
-            "   - Check: deterministic\n"
+            f"   - Check: {check_line}\n"
             "   - Proof: `absent: scripts/sample.gd :: new_function`\n"
             f"   - Next after: {next_after}\n"
             "\n## Not in the queue, and why\n\n"
@@ -1195,6 +1198,11 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(
             ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
         )
+        if master_confirms_check:
+            master_ready = self.root / "checks" / "ready"
+            master_ready.mkdir(parents=True, exist_ok=True)
+            (master_ready / master_confirms_check).write_text("# fixture check\n", encoding="utf-8")
+            subprocess.run(["git", "add", "checks/ready"], cwd=self.root, check=True)
         subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         start = subprocess.run(
@@ -1202,6 +1210,11 @@ class SliceDoctorTest(unittest.TestCase):
             cwd=self.root, capture_output=True, text=True,
         )
         self.assertEqual(0, start.returncode, start.stderr)
+        if master_confirms_check:
+            subprocess.run(
+                ["git", "rm", "-q", f"checks/ready/{master_confirms_check}"], cwd=self.root, check=True
+            )
+            subprocess.run(["git", "commit", "-m", "confirm a check"], cwd=self.root, check=True)
         worktree = self.root / ".worktrees" / "T-1"
         (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
         if check_record:
@@ -1318,6 +1331,26 @@ class SliceDoctorTest(unittest.TestCase):
         )
         self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
         self.assertIn("Hands-on:     checks/ready/ gained C-7.md", finish.stdout)
+
+    def test_report_ignores_checks_master_confirmed_after_the_fork(self):
+        """L-16 (2 Oct 2026) forked before master confirmed C-74..C-92, and
+        its report said checks/ready/ 'gained' all thirteen. Only records the
+        branch itself adds count."""
+        finish = self.finish_with_a_deferred_successor(
+            self.FIXTURE_LANE_LEAD, master_confirms_check="C-5.md"
+        )
+        self.assertEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn("Hands-on:     none needed", finish.stdout)
+
+    def test_gate_is_not_satisfied_by_checks_master_confirmed_after_the_fork(self):
+        """The same stale record must not stand in for the hands-on check a
+        Check: line demands."""
+        finish = self.finish_with_a_deferred_successor(
+            self.FIXTURE_LANE_LEAD, master_confirms_check="C-5.md",
+            check_line="hands-on check of the fixture",
+        )
+        self.assertNotEqual(0, finish.returncode, finish.stdout + finish.stderr)
+        self.assertIn("checks/ready/ gained no independently owned", finish.stdout + finish.stderr)
 
     def test_status_reports_a_claimed_slice(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
