@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-12 -- a Challenge or Scenario hex breaks its name between words**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-12 -- a Challenge or Scenario hex breaks its name between words"
-   - Files: `scripts/main_menu.gd`
-   - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
-   - Next after: none -- the last slice in this plan
+1. **[Claude] HO-2 -- every skill's name reads whole in its hex**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
+   - Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
+   - Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
+   - Next after: HO-5 -- long text stays inside its window
 
 ### Codex lane
 
