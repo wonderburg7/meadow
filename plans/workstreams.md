@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HO-1` (`claude/HO-1`) | Claude | Escape closes the skill tree | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-1 -- Escape closes the skill tree |
