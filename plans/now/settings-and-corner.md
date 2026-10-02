@@ -13,7 +13,6 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| SC-2 | `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json` | medium | Claude | yes, after UT-1 and UT-3 (share `ui_theme.gd`) | UT-1, UT-3 |
 | SC-3 | `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd` | low | Claude | yes, after SC-1 (shares `debug_panel.gd`) | SC-1 |
 | SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | no | SR-4 landing; not alongside UT-4 (all edit `scripts/hud.gd`) |
 
@@ -28,37 +27,7 @@ which reads as intended), and C-60/C-71, which UT-1 now owns (Dave, 2 Oct 2026).
 
 SC-1 shipped 2026-10-02; its specification is `plans/archive/SC-1_2026-10-02.md`.
 
-## SC-2 -- cycling the typeface logs no engine error
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one function, with a backtrace; escalate if it will not
-reproduce headlessly).
-
-**True now.** Cycling Typeface (options `sans`, `atkinson`, `opensans`,
-`opendyslexic`, `munro`, `silkscreen`) printed `ERROR: Parameter "fd" is
-null` from `text_server_adv.cpp` `_shape_run`, backtrace
-`ui_theme.gd::_refresh_button_stylebox` <- `refresh` <-
-`refresh_for_setting` <- `debug_panel.gd::_cycle_option`. Inference:
-`refresh()` mutates the shared Theme's font per variation and then each
-button StyleBox; every mutation emits `changed`, so controls re-shape text
-part-way through a font swap.
-
-**True afterwards.** A new fixture `test_scenarios/sc2_typeface_cycle_test.json`
-sets `ui_typeface` to each option in turn with `set_config` (it reaches
-`UiTheme.refresh_for_setting`, C-53) and settles between them; it shows the
-error before the fix and not after. The fix lives in `UiTheme.refresh()` --
-for example, block the Theme's and StyleBoxes' signals while mutating and
-emit `changed` once at the end. No new refresh path.
-
-```queue
-**[Claude] SC-2 -- cycling the typeface logs no engine error**
-- Plan: `plans/now/settings-and-corner.md` -- "SC-2 -- cycling the typeface logs no engine error"
-- Files: `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/sc2_typeface_cycle_test.json` passes and its output has no `Parameter "fd" is null`, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/ui_theme.gd :: set_block_signals`
-- Next after: SC-3 -- the project boots without GDScript warnings outside the HUD
-```
+SC-2 shipped 2026-10-02; its specification is `plans/archive/SC-2_2026-10-02.md`.
 
 ## SC-3 -- the project boots without GDScript warnings outside the HUD
 
