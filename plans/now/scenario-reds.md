@@ -1,7 +1,7 @@
 # Scenario reds -- the four red scenarios and the red SF-1 test
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: SR-4 -- the command tray fits its content after a resize to 800x600 (moved to the Claude lane by Dave, 2 Oct 2026, so SC-4 and UT-4 can queue behind it); SR-5 stays in the Codex lane | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-02
+Status: active | Owner: Dave / Codex | Next: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question (Codex lane); SR-4 is built on branch claude/SR-4 (the settle chain stopped inside one deferred flush before the content finished re-wrapping; the tray now re-applies on the content's minimum_size_changed; hands-on check C-103 filed) | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-02
 
 **Objective.** Every short scenario in `python tools/scenario_sweep.py` is
 green again, and the one exempt unit test either passes or its failure is
