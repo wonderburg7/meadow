@@ -39,9 +39,27 @@ class HO10QueenStarvationEndsRunTest(unittest.TestCase):
         if not gcc.engine_can_boot(godot):
             self.skipTest("the installed Godot engine cannot initialise headlessly here")
         self.assertTrue(gcc.prepare_cache(godot), "could not prepare the Godot import cache")
+        self._run_mode(godot, "starve")
 
+    def test_queenless_save_restored_on_fresh_scene_ends_run(self):
+        self._boot_and_run("restore_queenless")
+
+    def test_save_with_a_queen_plays_on(self):
+        self._boot_and_run("restore_queen")
+
+    def _boot_and_run(self, mode):
+        godot = gcc.find_godot()
+        if not godot:
+            self.skipTest("no Godot executable found -- this test needs a real boot")
+        gcc.ensure_writable_user_dir()
+        if not gcc.engine_can_boot(godot):
+            self.skipTest("the installed Godot engine cannot initialise headlessly here")
+        self.assertTrue(gcc.prepare_cache(godot), "could not prepare the Godot import cache")
+        self._run_mode(godot, mode)
+
+    def _run_mode(self, godot, mode):
         finished = subprocess.run(
-            [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT), "--script", TEST_SCRIPT],
+            [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT), "--script", TEST_SCRIPT, "--", mode],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=TIMEOUT_SECONDS,
         )

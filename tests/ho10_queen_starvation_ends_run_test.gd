@@ -21,6 +21,8 @@ var _queen: Node = null
 var _frame := 0
 var _phase := "boot"
 var _death_frame := -1
+var _mode := "starve"   # starve | restore_queenless | restore_queen (HO-13)
+var _restore_frame := -1
 var _failures: PackedStringArray = PackedStringArray()
 var _log: PackedStringArray = PackedStringArray()
 
@@ -32,7 +34,12 @@ func _process(_delta: float) -> bool:
 			_boot()
 		"settle":
 			if _frame >= BOOT_FRAMES:
-				_starve_queen()
+				if _mode == "starve":
+					_starve_queen()
+				else:
+					_restore_save()
+		"restored":
+			_watch_restore()
 		"starving":
 			_watch_starvation()
 		"dead":
@@ -50,6 +57,9 @@ func _boot() -> void:
 	if not root.has_node("Session"):
 		_fail("Session autoload is not loaded")
 		return
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 0:
+		_mode = args[0]
 	var session: Node = root.get_node("Session")
 	session.starting_level = SCENARIO_ONE_LEVEL
 	session.menu_pending = false
@@ -71,6 +81,45 @@ func _starve_queen() -> void:
 	_log.append("queen %s, energy %.2f, paused %s" % [_queen.get("bee_name"), float(_queen.get("energy")), paused])
 	_queen.set("energy", 0.01)
 	_phase = "starving"
+
+
+# HO-13: saves the live colony, optionally strips the queen from the file,
+# then restores it on a scene that has not yet seen a queen (as on a fresh
+# boot), and watches whether the run ends.
+func _restore_save() -> void:
+	var path := "user://ho13_test_save.json"
+	if not _main.SaveGame.save(_main, path):
+		_fail("could not write the test save")
+		return
+	var data: Dictionary = _main.SaveGame.read(path)
+	if _mode == "restore_queenless":
+		var kept: Array = []
+		for entry in data.get("bees", []):
+			if not bool(entry.get("queen", false)):
+				kept.append(entry)
+		data["bees"] = kept
+	_main.set("queen_seen_alive", false)
+	_main.saving._restore(data)
+	_restore_frame = _frame
+	_phase = "restored"
+
+
+func _watch_restore() -> void:
+	var lost := bool(_main.get("colony_lost"))
+	var game_over: Node = _main.get("game_over")
+	if _mode == "restore_queenless":
+		if lost and game_over != null and game_over.visible:
+			if _find_label(game_over, "The queen is dead") == null:
+				_fail("the game-over panel has no \"The queen is dead\" label")
+			elif _failures.is_empty():
+				_phase = "done"
+		elif _frame - _restore_frame > LOSS_FRAME_LIMIT:
+			_fail("queenless save restored but the run did not end (colony_lost %s)" % lost)
+	else:
+		if lost:
+			_fail("a save with a queen ended the run after restore")
+		elif _frame - _restore_frame > LOSS_FRAME_LIMIT:
+			_phase = "done"
 
 
 func _watch_starvation() -> void:
