@@ -403,7 +403,7 @@ func _make_challenge_stage_navigation() -> Control:
 		var label := challenge_stage_label
 		var font_size := label.get_theme_font_size("font_size")
 		var line_height := label.get_theme_font("font").get_height(font_size)
-		var height := ceilf(line_height * STAGE_GOAL_LINES
+		var height: float = ceil(line_height * STAGE_GOAL_LINES
 			+ label.get_theme_constant("line_spacing") * (STAGE_GOAL_LINES - 1)
 			+ label.get_theme_stylebox("normal").get_minimum_size().y)
 		if label.custom_minimum_size.y != height:
