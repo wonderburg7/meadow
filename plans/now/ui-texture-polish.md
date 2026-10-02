@@ -1,10 +1,10 @@
 # UI texture and polish -- C-60's panel texture and four things seen beside it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: UT-1 -- every panel texture is visible in every theme (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat (Claude lane, queued 1 Oct 2026) | Dependency: UT-4 and UT-5 wait for SR-4 and SR-2 (`plans/now/scenario-reds.md`), which own `scripts/hud.gd` and `scripts/scenario_actions.gd`; UI-F-2 landed 1 Oct 2026 | Verified: 2026-10-02
 
 **Objective.** Choosing Honeycomb or Grain visibly textures every panel in
-Dark, Light and High contrast. Changing the theme mid-run recolours all text,
+Dark and Light; High contrast never draws a texture (Dave, 2 Oct 2026). Changing the theme mid-run recolours all text,
 not only text that reads a theme type variation. In the Skills window, a
 tile's tooltip stays on screen and Buy is never under Dr Gallerin.
 
@@ -20,7 +20,7 @@ Each of them came right after hovering before the click.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UT-1 | every panel texture is visible in every theme | `scripts/ui_theme.gd` | yes -- queued | medium |
+| UT-1 | panel textures are visible in Dark and Light, and High contrast stays flat | `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md` | yes -- queued | medium |
 | UT-2 | the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin | `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd` | yes -- queued | medium |
 | UT-3 | a theme change recolours the in-run panels' text | `scripts/ui_theme.gd`, `scripts/colony_panel.gd`, `scripts/foraging_panel.gd`, `scripts/nursery_panel.gd`, `scripts/winter_panel.gd` | yes, after UT-1 (same file) | medium |
 | UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | no -- SR-4 owns `hud.gd` | low |
@@ -43,13 +43,17 @@ UT-1 lands. C-71 (high-contrast text legible over textures) should be run
 **What a slice reads.** Its own section below, plus the routed functions
 named there. `FUNCTION_MAP.md` indexes `hud.gd` and `debug_panel.gd`.
 
-## UT-1 -- every panel texture is visible in every theme
+## UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat
+
+<!-- LAYER: immediate-task -->
+
+**Decision (Dave, 2 Oct 2026, on C-71).** No texture in High contrast:
+that theme draws every panel flat whatever Panel texture says, so its text
+keeps its full contrast and C-71's question goes away.
 
 2 Oct 2026 re-run (C-60 failed again): spread of brightness on an empty
 panel patch, texture against Flat -- Honeycomb 1.0/0.35 (Dark), 9.3/0.3
 (Light), 3.2/1.0 (High contrast); Grain 1.2/0.35, 1.05/0.3, 1.10/1.04.
-
-<!-- LAYER: immediate-task -->
 
 Level: medium (one file; visual tuning bounded by contrast invariants).
 
@@ -69,16 +73,23 @@ most of its pixels sit much closer to 1:1 than those extremes. The 1 Oct pass
 saw Honeycomb in Light and faintly in High contrast, and nothing else.
 
 **Should be true.**
-- In every theme, the comb line composites at **at least 1.25:1** against
+- In High contrast, `PanelBox` draws no texture for any `Session.panel_texture`
+  (check `Session.ui_theme == "high_contrast"` where the texture is chosen,
+  not in the image builder), and the High contrast palette's texture-only
+  entries go.
+- In Dark and Light, the comb line composites at **at least 1.25:1** against
   `panel_bg`.
 - At least a tenth of grain pixels differ from `panel_bg` by **at least
   1.10:1**. In Dark, the jitter has to lean lighter, because `#370C00`
   cannot get much darker.
 - `text_primary` keeps **at least 4.5:1** against every composited texture
-  pixel, and **at least 7:1** in High contrast, preserving its AAA claim in
-  `settings_catalogue.gd`'s theme tip.
+  pixel in Dark and Light.
+- Panel texture's tip in `settings_catalogue.gd` adds that High contrast
+  always shows plain panels.
+- `checks/ready/C-71.md` is rewritten: in High contrast, Honeycomb and Grain
+  both leave the Colony window plain; Owner points at this plan.
 - These thresholds are a starting point. Dave's re-run of C-60 is the final
-  judge, and C-71 confirms that text stays legible.
+  judge in Dark and Light; C-71 covers High contrast.
 - Add `static func contrast_ratio(a: Color, b: Color) -> float` (WCAG
   relative luminance) and `static func panel_texture_contrast(mode: String)
   -> Dictionary` to `UiTheme`. The second returns the three numbers above for
@@ -93,10 +104,10 @@ texture moves nothing). The tile sizes (comb 12x18, grain 64x64). The cache
 key `mode + ":" + Session.ui_theme`.
 
 ```queue
-**[Claude] UT-1 -- every panel texture is visible in every theme**
-- Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- every panel texture is visible in every theme"
-- Files: `scripts/ui_theme.gd`
-- Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records each theme's comb and grain contrast from it meeting the UT-1 thresholds, a Godot boot is clean, and `tools/verify.ps1` is green
+**[Claude] UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat**
+- Plan: `plans/now/ui-texture-polish.md` -- "UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat"
+- Files: `scripts/ui_theme.gd`, `scripts/settings_catalogue.gd`, `checks/ready/C-71.md`
+- Check: `grep -c "func panel_texture_contrast" scripts/ui_theme.gd` prints 1, the closeout records Dark's and Light's comb and grain contrast from it meeting the UT-1 thresholds, High contrast draws no texture, a Godot boot is clean, and `tools/verify.ps1` is green
 - Proof: `present: scripts/ui_theme.gd :: "panel_line": Color("#460F00", 0.15)`
 - Next after: UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
 ```

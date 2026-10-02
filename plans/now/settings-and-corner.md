@@ -25,7 +25,7 @@ UT-3 edit `scripts/ui_theme.gd` (SC-2 goes after them) and UT-4 edits
 
 A slice reads its own section and nothing else. Not planned: the hive view
 swapping the last top-bar icon (it shows the view the button switches to,
-which reads as intended), and C-60/C-71, which wait on Dave.
+which reads as intended), and C-60/C-71, which UT-1 now owns (Dave, 2 Oct 2026).
 
 ## SC-1 -- the settings window does not move under a Text scale click
 
