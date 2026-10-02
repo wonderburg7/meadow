@@ -20,10 +20,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Git's stdout is UTF-8. Without this, capturing it through a pipeline (e.g.
-# `git show ... | Out-String`) decodes via the console's OEM/ANSI codepage on
-# Windows PowerShell 5.1, silently corrupting non-ASCII bytes (an em dash
-# became three garbage codepoints) before any string comparison runs.
+# Console encoding contract (L-17). This is the ONE place OutputEncoding is
+# assigned (tests/test_source_checks.py holds it to that). Git's stdout is
+# UTF-8; piping it through PowerShell decodes it with the console's OEM/ANSI
+# code page on Windows PowerShell 5.1, so an em dash became three garbage
+# codepoints before any comparison ran. These two lines cover what this
+# script writes and what it echoes. They do NOT cover reads of git output that
+# the script then acts on: 9153793 (29 Sep) still needed its own
+# save-set-restore block around `git show master:NEXTSTEPS.md` although these
+# lines already ran. The likely cause is that a native command's output is
+# decoded with the encoding in force when its pipeline started, which is not
+# reliably the value set here on every host; the L-17 fixture (a cp1252
+# console) could not reproduce the failure with these lines present, and
+# fails at once without them. So no read depends on them: every git read the
+# script acts on goes through Read-GitText / Invoke-GitText, which take git's
+# stdout as raw bytes and decode them as UTF-8 themselves.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -838,8 +849,8 @@ function Get-OpenWorktreeAdvice {
     $present = Test-Path -LiteralPath $target.WorktreePath
     $dirty = $false
     if ($present) {
-        $changes = @(git -C $target.WorktreePath status --porcelain 2>$null)
-        $dirty = ($LASTEXITCODE -ne 0) -or (@($changes | Where-Object { "$_".Trim() }).Count -gt 0)
+        $status = Invoke-GitText -C $target.WorktreePath status --porcelain
+        $dirty = ($status.ExitCode -ne 0) -or (@(Split-GitText $status.Text | Where-Object { $_.Trim() }).Count -gt 0)
     }
     $facts = @()
     $facts += if ($ahead -gt 0) { "branch $($target.Branch) is $ahead commit(s) ahead of master" } else { "branch $($target.Branch) has no commits ahead of master" }
@@ -1118,11 +1129,9 @@ function Get-DoctorEnvironmentFailures {
     # This probe ignores untracked files, so a user-level excludes file cannot
     # affect its answer. Override it with an empty value to avoid making doctor depend on
     # read access to an otherwise unrelated home-directory file.
-    $ownershipOutput = @(& git -c core.excludesFile= -C $Root status --porcelain --untracked-files=no 2>&1 |
-        ForEach-Object { $_.ToString() })
-    $ownershipExit = $LASTEXITCODE
-    if ($ownershipExit -ne 0) {
-        $detail = ($ownershipOutput | Where-Object { $_ } | Select-Object -Last 1)
+    $ownership = Invoke-GitText -c core.excludesFile= -C $Root status --porcelain --untracked-files=no
+    if ($ownership.ExitCode -ne 0) {
+        $detail = (Split-GitText ($ownership.Stderr + "`n" + $ownership.Text) | Select-Object -Last 1)
         $failures += "Repository ownership: Git cannot read the worktree: $detail"
     }
 
@@ -1404,7 +1413,7 @@ function Test-SliceBranchMerged {
     # old completed fixture or reused id from being mistaken for the current
     # unmerged branch.
     $branchHead = @(git -C $Root rev-parse --verify --quiet "refs/heads/$Branch" 2>$null | Select-Object -First 1)
-    $mergeParents = @(git -C $Root log master --merges --format=%P --fixed-strings --grep=$Branch 2>$null)
+    $mergeParents = Split-GitText (Invoke-GitText -C $Root log master --merges --format=%P --fixed-strings "--grep=$Branch").Text
     if ($branchHead) {
         return @($mergeParents | Where-Object { ($_ -split '\s+') -contains $branchHead[0].Trim() }).Count -gt 0
     }
@@ -1560,24 +1569,69 @@ function Invoke-GitQuiet {
     return $LASTEXITCODE
 }
 
-function Read-GitLines {
-    # A git read whose stdout the caller needs; only git's exit code can fail
-    # it. Git writes warnings to stderr on success -- `diff master...<branch>`
-    # warns "multiple merge bases" for a branch merged both ways with master
-    # -- and `git ... 2>$null` under this script's Stop preference makes
-    # PowerShell 5.1 throw on the first stderr line, so `owner` stopped before
-    # checking anything (1 Oct 2026). Stderr is kept only to name a failure.
-    # Decoding is still the top-of-file console setting (L-17's subject).
+function ConvertTo-GitArgument {
+    # One argument as Windows' command-line rules want it (CommandLineToArgvW):
+    # quote when it holds a space or quote, double the backslashes that sit
+    # before a quote, and escape the quotes.
+    param([string]$Argument)
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') { return $Argument }
+    $escaped = $Argument -replace '(\\*)"', '$1$1\"'
+    $escaped = $escaped -replace '(\\+)$', '$1$1'
+    return '"' + $escaped + '"'
+}
+
+function Invoke-GitText {
+    # Runs git and returns @{ Text; Stderr; ExitCode }: stdout decoded as
+    # UTF-8 from the process's raw bytes, whatever the console code page is
+    # (the L-17 contract; see the top of the file). Never throws and never
+    # lets stderr become a PowerShell error: git writes warnings there on
+    # success -- `diff master...<branch>` warns "multiple merge bases" for a
+    # branch merged both ways with master -- and `git ... 2>$null` under this
+    # script's Stop preference makes PowerShell 5.1 throw on the first stderr
+    # line (`owner` stopped before checking anything, 1 Oct 2026). Sets
+    # $LASTEXITCODE as a native call would, for callers that test it.
     # Plain $args, not a [Parameter] binding: an advanced function would take
     # git flags such as -d, -v or -o as PowerShell's -Debug, -Verbose, -Out*.
-    $ErrorActionPreference = "Continue"
-    $output = @(& git @args 2>&1)
-    $exitCode = $LASTEXITCODE
-    if ($exitCode -ne 0) {
-        $stderr = @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_".Trim() })
-        Stop-Slice -Cause "git $($args -join ' ') failed (exit $exitCode): $($stderr -join ' | ')" -Fix "run that git command in the primary checkout to see git's whole message, fix what it names, then retry"
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = "git"
+    $startInfo.Arguments = (@($args | ForEach-Object { ConvertTo-GitArgument ([string]$_) }) -join " ")
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.CreateNoWindow = $true
+    $startInfo.WorkingDirectory = (Get-Location).ProviderPath
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $startInfo.StandardOutputEncoding = $utf8
+    $startInfo.StandardErrorEncoding = $utf8
+    $process = [System.Diagnostics.Process]::Start($startInfo)
+    try {
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $text = $process.StandardOutput.ReadToEnd()
+        $process.WaitForExit()
+        $stderr = $stderrTask.Result
+        $exitCode = $process.ExitCode
     }
-    $output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
+    finally {
+        $process.Dispose()
+    }
+    $global:LASTEXITCODE = $exitCode
+    return [pscustomobject]@{ Text = $text; Stderr = $stderr; ExitCode = $exitCode }
+}
+
+function Read-GitText {
+    # A git read whose stdout the caller needs, as one string; only git's exit
+    # code can fail it, never a stderr warning (see Invoke-GitText).
+    $result = Invoke-GitText @args
+    if ($result.ExitCode -ne 0) {
+        $detail = (@($result.Stderr -split '\r?\n' | Where-Object { $_.Trim() } | ForEach-Object { $_.Trim() }) -join ' | ')
+        Stop-Slice -Cause "git $($args -join ' ') failed (exit $($result.ExitCode)): $detail" -Fix "run that git command in the primary checkout to see git's whole message, fix what it names, then retry"
+    }
+    return $result.Text
+}
+
+function Split-GitText {
+    param([string]$Text)
+    return @($Text -split '\r?\n' | Where-Object { $_ })
 }
 
 function Test-OwnedPath {
@@ -1604,7 +1658,7 @@ function Invoke-SliceOwner {
         exit 1
     }
     $root = Get-PrimaryRoot
-    $here = (Read-GitLines rev-parse --abbrev-ref HEAD)
+    $here = (Read-GitText rev-parse --abbrev-ref HEAD).Trim()
     $owners = @()
     foreach ($item in Get-NextUpItems -Root $root) {
         $hits = @($Wanted | Where-Object { $w = $_; @($item.Files | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
@@ -1612,12 +1666,12 @@ function Invoke-SliceOwner {
             $owners += [PSCustomObject]@{ kind="queue"; id=$item.Id; lane=$item.Lane; title=$item.Title; paths=$hits }
         }
     }
-    $branches = @(Read-GitLines -C $root branch --no-merged master "--format=%(refname:short)" | Where-Object { $_ -and $_ -ne $here })
+    $branches = @(Split-GitText (Read-GitText -C $root branch --no-merged master "--format=%(refname:short)") | Where-Object { $_ -ne $here })
     foreach ($branch in $branches) {
-        $changed = @(Read-GitLines -C $root diff --name-only "master...$branch")
+        $changed = (Split-GitText (Read-GitText -C $root diff --name-only "master...$branch"))
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
         if ($hits) {
-            $last = (Read-GitLines -C $root log -1 "--format=%cs %s" $branch)
+            $last = (Read-GitText -C $root log -1 "--format=%cs %s" $branch).Trim()
             $owners += [PSCustomObject]@{ kind="branch"; branch=$branch; last_commit=$last; paths=$hits }
         }
     }
@@ -1962,19 +2016,9 @@ function Invoke-SliceFinish {
     # branch, and by the time finish reaches it the branch's own copy may no
     # longer list this id at all.
     Set-SliceStep "hands-on check gate"
-    $previousOutputEncoding = $OutputEncoding
-    $previousConsoleOutputEncoding = [Console]::OutputEncoding
-    try {
-        $utf8 = [System.Text.UTF8Encoding]::new($false)
-        $OutputEncoding = $utf8
-        [Console]::OutputEncoding = $utf8
-        $masterNextSteps = (git show "master:NEXTSTEPS.md" | Out-String)
-    }
-    finally {
-        $OutputEncoding = $previousOutputEncoding
-        [Console]::OutputEncoding = $previousConsoleOutputEncoding
-    }
-    if ($LASTEXITCODE -ne 0) { throw "could not read NEXTSTEPS.md from master" }
+    $masterRead = Invoke-GitText show "master:NEXTSTEPS.md"
+    $masterNextSteps = $masterRead.Text
+    if ($masterRead.ExitCode -ne 0) { throw "could not read NEXTSTEPS.md from master" }
     $masterItems = Get-NextUpItemsFromText -Text $masterNextSteps
     $item = $masterItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
     # A worker may file a hands-on check its Check: line never asked for
@@ -1982,7 +2026,7 @@ function Invoke-SliceFinish {
     # is limited to items whose Check: demands one.
     $readyDirectory = Join-Path $worktreeRoot "checks\ready"
     $branchChecks = if (Test-Path -LiteralPath $readyDirectory) { Get-ChildItem -LiteralPath $readyDirectory -Filter "C-*.md" | ForEach-Object { $_.Name } } else { @() }
-    $masterChecks = @(git -C $root ls-tree -r --name-only master -- checks/ready | ForEach-Object { Split-Path -Leaf $_ })
+    $masterChecks = @(Split-GitText (Invoke-GitText -C $root ls-tree -r --name-only master -- checks/ready).Text | ForEach-Object { Split-Path -Leaf $_ })
     $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
     $handsOnNote = if ($newEntries) { "checks/ready/ gained $($newEntries -join ', ')" } else { "none needed" }
     if ($item -and $item.Check -match '(?i)hands-on check') {
@@ -2062,8 +2106,7 @@ function Invoke-SliceFinish {
     # branch. An uncommitted edit already sitting there -- a stray hand edit,
     # or another lane's `start`/`finish` caught mid-write -- must not be
     # silently folded into this merge or silently discarded by it.
-    $dirtyCoordination = @(git -C $root status --porcelain --untracked-files=no -- (Get-LifecycleProducts) |
-        ForEach-Object { $_.ToString() })
+    $dirtyCoordination = @(Split-GitText (Invoke-GitText -C $root status --porcelain --untracked-files=no -- @(Get-LifecycleProducts)).Text)
     if ($dirtyCoordination) {
         $dirtyFiles = @($dirtyCoordination | ForEach-Object { $_.Substring(3).Trim() } | Select-Object -Unique)
         Stop-Slice -Cause "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', ')" -Fix "in the primary checkout, git diff those files: commit them if they are a deliberate edit, or git checkout -- them if they are a stray one, then retry"

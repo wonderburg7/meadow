@@ -1,6 +1,7 @@
 """Source and queue-schema checks: brackets, GDScript contracts, NEXTSTEPS.md parsing."""
 
 from pathlib import Path
+import re
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -18,6 +19,25 @@ class FinishGodotScopeTest(unittest.TestCase):
         text = SLICE_PATH.read_text(encoding="utf-8")
         self.assertNotRegex(text, r'Get-Process\s+-Name\s+"Godot\*"[^\n]*Stop-Process')
         self.assertIn("Stop-WorktreeGodot -Root $worktreeRoot", text)
+
+
+class SliceConsoleEncodingRuleTest(unittest.TestCase):
+    """L-17: one place for the lifecycle's console-encoding fix, so the next
+    one does not become an eighth call-site patch."""
+
+    def test_output_encoding_is_assigned_only_at_the_top_of_slice_ps1(self):
+        lines = SLICE_PATH.read_text(encoding="utf-8").splitlines()
+        assigned = [
+            number
+            for number, line in enumerate(lines, start=1)
+            if re.match(r"\s*(\[Console\]::)?(Output|Input)Encoding\s*=", line)
+        ]
+        self.assertTrue(assigned, "slice.ps1 sets no console encoding at all")
+        self.assertTrue(
+            all(number <= 60 for number in assigned),
+            f"OutputEncoding assigned below the top of tools/slice.ps1 (lines {assigned}); "
+            "read git output through Read-GitText instead of saving and restoring it",
+        )
 
 
 class BracketChecksTest(unittest.TestCase):
