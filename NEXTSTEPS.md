@@ -28,6 +28,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Files: `scripts/main_menu.gd`
    - Check: at text scale 1 and 2 in every typeface each hex shows whole words, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `present: scripts/main_menu.gd :: label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART`
+   - Next after: HO-13 -- restoring a save keeps HO-10's rule: no queen, no run
+
+2. **[Claude] HO-13 -- restoring a save keeps HO-10's rule: no queen, no run**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-13 -- restoring a save keeps HO-10's rule: no queen, no run"
+   - Files: `scripts/saving.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
+   - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes with two new cases, a queenless save restored on a fresh scene opens "The queen is dead" (fails before the fix) and a save with a queen plays on, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/saving.gd :: queen_seen_alive`
    - Next after: none -- the last slice in this plan
 
 ### Codex lane

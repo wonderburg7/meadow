@@ -49,15 +49,28 @@ Read/Write/Edit and PowerShell file cmdlets are denied there; use Bash.
 3. Implement. Edit only the files in `files`, plus the plan and test files
    the section says to touch. If the work needs a file outside that set,
    stop and return `blocked`.
+   - A bug fix reproduces the fault before changing the code whenever the
+     plan says to, or the check names a symptom (an error line, a warning,
+     a wrong outcome). A fault you could not reproduce goes in `check_run`
+     in those words: a check that passes before and after the fix proves
+     nothing.
+   - Clear a GDScript warning by changing the code, never with
+     `@warning_ignore`: `tests/source_checks.py` reads an annotation as a
+     call to an undefined function and fails `verify.ps1`.
 4. Prove it: run the slice's `check` (or the one test it names), and nothing
    broader. Do not run `verify.ps1`; `finish` does that. If a test fails,
-   run only that test and read only its function.
+   run only that test and read only its function. A check about GDScript
+   warnings runs `python tools/gdscript_warnings.py <the files>`: the
+   ordinary boot and `godot_compile_check.py` never print a warning.
 5. Closeout edits on the branch (`plans/reference/closeout.md`, "Closeout
    order", steps 1-2): update the owning plan's Status line and `Next:`;
    make sure the `next_after` successor has a fenced `queue` (or
-   `queue-gated`) block. File a hands-on check with `python
-   tools/new_check.py --name "<what Dave checks>" --owner <the plan path>`
-   only if the slice is click-driven, visual or feel-sensitive and the
+   `queue-gated`) block. A block you write needs a `Proof:` that holds on
+   master now, not after your slice: test it with
+   `git show master:<file> | grep -F '<text>'` (`present:` must match,
+   `absent:` must not), or `finish` stops at the refill gate. File a
+   hands-on check with `python tools/new_check.py --name "<what Dave
+   checks>" --owner <the plan path>` only if the slice is click-driven, visual or feel-sensitive and the
    plan's acceptance says so.
 6. Commit on the branch with a plain-language message, ending with the
    attribution trailer from your instructions.
@@ -81,7 +94,7 @@ Your final message is only this JSON, no prose around it:
   "status": "ready | blocked | failed",
   "summary": "<two sentences: what changed, from the player's seat if it shows>",
   "commits": ["<sha> <subject>"],
-  "check_run": "<the command you ran and its result line>",
+  "check_run": "<the command you ran and its result line; say so if it could not show the fault before the fix>",
   "hands_on": "<C-<n> filed, or none>",
   "question": "<blocked only: the decision, the options and their costs>",
   "failure": "<failed only: the failing command and its key error lines>"
