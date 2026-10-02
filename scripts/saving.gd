@@ -359,4 +359,7 @@ func _restore_bees(bees: Array) -> Array:
 		created.append(bee)
 
 	main.colony_lost = false
+	# HO-13: a restored colony counts as having lived, so a save holding no
+	# queen ends at once (HO-10 rule) wherever it was loaded from.
+	main.queen_seen_alive = true
 	return created
