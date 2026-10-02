@@ -1387,6 +1387,35 @@ class SliceDoctorTest(unittest.TestCase):
             cwd=self.root, capture_output=True, text=True,
         )
 
+    def start_committed_queue(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "queue"], cwd=self.root, capture_output=True, text=True, check=True)
+        return subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+
+    def test_start_publishes_its_ledger_row(self):
+        started = self.start_committed_queue()
+
+        self.assertEqual(0, started.returncode, started.stderr)
+        self.assertEqual("T-1", json.loads(started.stdout)["id"])
+        local = subprocess.run(["git", "rev-parse", "master"], cwd=self.root, capture_output=True, text=True, check=True).stdout
+        remote = subprocess.run(["git", "rev-parse", "origin/master"], cwd=self.root, capture_output=True, text=True, check=True).stdout
+        self.assertEqual(local, remote)
+
+    def test_start_with_the_remote_gone_still_claims_and_says_offline(self):
+        subprocess.run(
+            ["git", "remote", "set-url", "origin", str(self.root / "missing.git")], cwd=self.root, check=True
+        )
+
+        started = self.start_committed_queue()
+
+        self.assertEqual(0, started.returncode, started.stderr)
+        self.assertEqual("T-1", json.loads(started.stdout)["id"])
+        self.assertIn("could not fetch origin; continuing offline", started.stdout + started.stderr)
+
     def start_against_open_worktree(self, prepare) -> str:
         """Claim T-1, let `prepare` shape its worktree, then claim again and
         return the refusal with all whitespace removed -- PowerShell may wrap

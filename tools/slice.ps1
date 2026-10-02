@@ -116,7 +116,7 @@ function Get-DefaultSliceFix {
         return "git's own message is printed above. Resolve the conflict in the primary checkout (edit, git add, git commit); a conflict between lanes means a Files: line in NEXTSTEPS.md was wrong -- fix it in the same pass"
     }
     if ($Cause -match 'git push') {
-        return "git's own message is printed above. If the remote is ahead, run git pull --no-rebase in the primary checkout, then retry; if it is an auth or network error, retry once it is fixed"
+        return "git's own message is printed above. This command already integrated origin/master just before pushing, so a rejection means another push landed in between -- retry once; if it fails again, read git's message above for an auth or network error"
     }
     if ($Cause -match '^git |git \w+ failed') {
         return "git's own message is printed above; run git status where the step ran, fix what it names, then retry"
@@ -1239,8 +1239,63 @@ function Invoke-SliceDoctor {
     } | ConvertTo-Json -Compress
 }
 
+function Invoke-GitSilent {
+    # Like Invoke-GitQuiet but prints nothing: `start` must leave stdout as
+    # the claim's JSON alone. The captured lines are kept for the caller.
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $script:GitSilentOutput = @(& git @Arguments 2>&1 | ForEach-Object { "$_" })
+    }
+    finally {
+        $ErrorActionPreference = $previous
+    }
+    return $LASTEXITCODE
+}
+
+function Sync-PrimaryMaster {
+    # L-16: bring origin/master into the primary checkout's master before a
+    # claim reads the queue, before a merge, and before the closeout push, so
+    # a remote that moved (another machine, a cloud review session) never
+    # turns into a rejected push after the merge is already done. Idempotent,
+    # one fetch per call, never a rebase or force; a conflict is aborted and
+    # handed back, never resolved here.
+    param([string]$Root, [string]$Reason)
+
+    $branch = ((git -C $Root rev-parse --abbrev-ref HEAD) | Out-String).Trim()
+    if ($branch -ne "master") { return }
+
+    if ((Invoke-GitSilent -c http.sslBackend=openssl -C $Root fetch origin master) -ne 0) {
+        [Console]::Error.WriteLine("${Reason}: could not fetch origin; continuing offline")
+        return
+    }
+
+    git -C $Root merge-base --is-ancestor origin/master master
+    if ($LASTEXITCODE -eq 0) { return }
+
+    git -C $Root merge-base --is-ancestor master origin/master
+    if ($LASTEXITCODE -eq 0) {
+        if ((Invoke-GitSilent -C $Root merge --ff-only origin/master) -ne 0) {
+            Stop-Slice -Cause "git merge --ff-only origin/master failed before $Reason" -Fix "git's own message is: $($script:GitSilentOutput -join ' | '). Run git pull --no-rebase in the primary checkout, then retry"
+        }
+        return
+    }
+
+    $message = "Merge origin/master into master before $Reason"
+    if ((Invoke-GitSilent -C $Root merge --no-edit -m $message origin/master) -ne 0) {
+        $conflicts = @(git -C $Root diff --name-only --diff-filter=U | ForEach-Object { "$_" })
+        git -C $Root merge --abort | Out-Null
+        Stop-Slice -Cause "origin/master conflicts with local master in $($conflicts -join ', ')" -Fix "master is unchanged. In the primary checkout run git pull --no-rebase, resolve $($conflicts -join ', ') (edit, git add, git commit), then retry"
+    }
+}
+
 function Invoke-SliceStart {
     param([string]$Lane)
+
+    Set-SliceStep "synchronising master with origin"
+    Sync-PrimaryMaster -Root (Get-PrimaryRoot) -Reason "start"
+    Set-SliceStep ""
 
     try {
         $preflight = Get-SlicePreflight -Lane $Lane
@@ -1276,6 +1331,12 @@ function Invoke-SliceStart {
 
         git worktree add $worktreeRelative -b $branch | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git worktree add failed" }
+
+        # Publish the claim so another machine sees it. Not a stop if it
+        # fails: the closeout push carries the row anyway.
+        if ((Invoke-GitSilent -c http.sslBackend=openssl -C $root push) -ne 0) {
+            [Console]::Error.WriteLine("start: could not push the ledger row; the closeout push will carry it")
+        }
 
         # The new worktree has no .godot import cache yet. Its first boot
         # through verify.ps1 or run_scenario.py seeds one from this primary
@@ -1469,6 +1530,7 @@ function Invoke-SlicePostMergeCleanup {
 
     # The one push for the whole transaction: every commit the merge, the
     # ready-index refresh and the ledger removal made travels together.
+    Sync-PrimaryMaster -Root $Root -Reason "pushing the closeout"
     if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push) -ne 0) { throw "git push failed" }
     Invoke-InjectedLifecycleFailure -Phase "pushed"
 
@@ -2006,6 +2068,9 @@ function Invoke-SliceFinish {
         $dirtyFiles = @($dirtyCoordination | ForEach-Object { $_.Substring(3).Trim() } | Select-Object -Unique)
         Stop-Slice -Cause "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', ')" -Fix "in the primary checkout, git diff those files: commit them if they are a deliberate edit, or git checkout -- them if they are a stray one, then retry"
     }
+
+    Set-SliceStep "synchronising master with origin"
+    Sync-PrimaryMaster -Root $root -Reason "finish"
 
     Set-SliceStep "primary verification (tools/verify.ps1 -Scope primary)"
     $primaryVerifyScript = Join-Path $root "tools\verify.ps1"
