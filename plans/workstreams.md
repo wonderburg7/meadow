@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SC-2` (`claude/SC-2`) | Claude | cycling the typeface logs no engine error | Claude | in progress | none | `plans/now/settings-and-corner.md` SC-2 -- cycling the typeface logs no engine error |
