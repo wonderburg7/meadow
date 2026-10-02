@@ -366,6 +366,9 @@ class SkillGrid:
 	## A press that moves less than this is a click, not a drag.
 	const DRAG_THRESHOLD := 6.0
 	const NAME_LINES := 3
+	## A name may shrink to this share of the Small font before a word that
+	## still does not fit is broken with a hyphen.
+	const MIN_NAME_SCALE := 0.6
 	## Text colours over a coloured tile, picked by the tile's brightness.
 	const DARK_TEXT := Color(0.11, 0.09, 0.06)
 	const LIGHT_TEXT := Color(1, 1, 1)
@@ -386,6 +389,9 @@ class SkillGrid:
 	var _pressed: bool = false
 	var _dragging: bool = false
 	var _press_at: Vector2 = Vector2.ZERO
+	## text -> {"size": int, "lines": Array}; cleared when the font or width changes.
+	var _fit_cache: Dictionary = {}
+	var _fit_key: String = ""
 
 	func _init() -> void:
 		clip_contents = true
@@ -401,9 +407,21 @@ class SkillGrid:
 		var half := Vector2(
 				Shapes.hex_to_pixel(rings, 0, tile_size).x + tile_size,
 				sqrt(3.0) * tile_size * (rings * 2 + 1) / 2.0)
-		if size.x <= 0.0 or size.y <= 0.0:
+		var view := _visible_size()
+		if view.x <= 0.0 or view.y <= 0.0:
 			return 1.0
-		return minf(minf(size.x / (half.x * 2.0), size.y / (half.y * 2.0)), 1.0)
+		return minf(minf(view.x / (half.x * 2.0), view.y / (half.y * 2.0)), 1.0)
+
+	## The part of this control the player can actually see: at large text
+	## scales the window can be taller than the screen, so `size` alone
+	## over-reports the room the tree has.
+	func _visible_size() -> Vector2:
+		if not is_inside_tree():
+			return size
+		var seen := get_global_rect().intersection(get_viewport_rect())
+		if seen.size.x <= 0.0 or seen.size.y <= 0.0:
+			return size
+		return seen.size
 
 	## Keeps some of the tree on screen however far it is dragged.
 	func _clamp_pan() -> void:
@@ -429,6 +447,10 @@ class SkillGrid:
 		var font: Font = get_theme_font("font", "Small")
 		var font_size: int = get_theme_font_size("font_size", "Small")
 		var text_width := tile_size * 1.4
+		var key := "%s|%d|%d" % [font.resource_path, font_size, int(text_width)]
+		if key != _fit_key:
+			_fit_key = key
+			_fit_cache.clear()
 		for hex in tiles:
 			var tile: Dictionary = tiles[hex]
 			var at: Vector2 = Shapes.hex_to_pixel(hex.x, hex.y, tile_size)
@@ -439,16 +461,66 @@ class SkillGrid:
 			draw_colored_polygon(points, fill)
 			var text := str(tile.get("name", tile.get("label", "")))
 			if text != "":
-				var height := font.get_multiline_string_size(
-						text, HORIZONTAL_ALIGNMENT_CENTER, text_width, font_size, NAME_LINES).y
-				var origin := at + Vector2(-text_width / 2.0, -height / 2.0 + font.get_ascent(font_size))
-				draw_multiline_string(font, origin, text, HORIZONTAL_ALIGNMENT_CENTER,
-						text_width, font_size, NAME_LINES, _text_colour(tile, fill))
+				if not _fit_cache.has(text):
+					_fit_cache[text] = _fit_name(text, font, font_size, text_width)
+				var fit: Dictionary = _fit_cache[text]
+				var lines: Array = fit["lines"]
+				var line_size: int = fit["size"]
+				var line_height := font.get_height(line_size)
+				var top := at.y - line_height * lines.size() / 2.0 + font.get_ascent(line_size)
+				var colour := _text_colour(tile, fill)
+				for i in range(lines.size()):
+					draw_string(font, Vector2(at.x - text_width / 2.0, top + line_height * i),
+							lines[i], HORIZONTAL_ALIGNMENT_CENTER, text_width, line_size, colour)
 		if selected != null and tiles.has(selected):
 			var centre: Vector2 = Shapes.hex_to_pixel(selected.x, selected.y, tile_size)
 			var ring := Shapes.hexagon_points(tile_size * 1.05)
 			for i in range(ring.size()):
 				draw_line(centre + ring[i], centre + ring[(i + 1) % ring.size()], UiTheme.color("text_primary"), 2.0)
+
+	## Lays a name out so every letter shows: whole words at the largest size
+	## (down to MIN_NAME_SCALE of `base_size`) that fits NAME_LINES lines,
+	## else hyphen-broken words at that smallest size.
+	func _fit_name(text: String, font: Font, base_size: int, width: float) -> Dictionary:
+		var min_size := maxi(int(base_size * MIN_NAME_SCALE), 6)
+		for line_size in range(base_size, min_size - 1, -1):
+			var lines := _wrap(text, font, line_size, width, false)
+			if not lines.is_empty() and lines.size() <= NAME_LINES:
+				return {"size": line_size, "lines": lines}
+		return {"size": min_size, "lines": _wrap(text, font, min_size, width, true)}
+
+	## Greedy word wrap. Returns [] when a word is too wide and `hyphenate` is off.
+	func _wrap(text: String, font: Font, line_size: int, width: float, hyphenate: bool) -> Array:
+		var pieces: Array = []
+		for word in text.split(" ", false):
+			var rest: String = word
+			while _text_width(rest, font, line_size) > width and rest.length() > 1:
+				if not hyphenate:
+					return []
+				var cut := 1
+				for n in range(rest.length() - 1, 0, -1):
+					if _text_width(rest.substr(0, n) + "-", font, line_size) <= width:
+						cut = n
+						break
+				pieces.append(rest.substr(0, cut) + "-")
+				rest = rest.substr(cut)
+			pieces.append(rest)
+		var lines: Array = []
+		var current := ""
+		for piece in pieces:
+			if current == "":
+				current = piece
+			elif not current.ends_with("-") and _text_width(current + " " + piece, font, line_size) <= width:
+				current += " " + piece
+			else:
+				lines.append(current)
+				current = piece
+		if current != "":
+			lines.append(current)
+		return lines
+
+	func _text_width(text: String, font: Font, line_size: int) -> float:
+		return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, line_size).x
 
 	func _gui_input(event: InputEvent) -> void:
 		var button := event as InputEventMouseButton

@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-2 -- every skill's name reads whole in its hex (after UT-2, same file) | Dependency: HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-2 is queued in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-5 -- long text stays inside its window (after SC-4, UT-3 and UT-4) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -136,6 +136,15 @@ and drop whatever it fixed. Split per file if more than one remains.
 
 **Must not change.** The corner column SC-4 builds, and the Winter window
 opening by itself on day 6 (C-91, passed).
+
+```queue-gated
+**[Claude] HO-5 -- long text stays inside its window**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
+- Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
+- Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
+- Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
+- Next after: HO-6 -- a bee under the top-left readout can be clicked
+```
 
 ## HO-6 -- a bee under the top-left readout can be clicked
 
