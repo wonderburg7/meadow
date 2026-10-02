@@ -22,12 +22,10 @@ extends RefCounted
 
 const DARK := {
 	"panel_bg": Color("#370C00"),
-	# Honeycomb relief line: panel_bg lightened ~6% in HSV value, drawn at
-	# low opacity rather than a contrasting colour (identical-hue lines on
-	# identical-hue fill only read as texture through a relief/opacity
-	# difference). Proposed starting point, not a final answer -- see
-	# UI_PLAN.md section 6 and section 16.
-	"panel_line": Color("#460F00", 0.15),
+	# Honeycomb line: a warm wax tone at low opacity, about 1.3:1 against
+	# panel_bg once composited (UT-1; the old panel_bg-lightened line was
+	# 1.01:1 and invisible). text_primary stays above 8:1 over it.
+	"panel_line": Color("#C87A3C", 0.2),
 	"text_primary": Color("#F5E9DC"),
 	"text_secondary": Color("#C9B8A8"),
 	"accent_nectar": Color("#C9D5B5"),
@@ -75,7 +73,6 @@ const LIGHT := {
 ## already clear it unbrightened -- see UI_PLAN.md section 6.
 const HIGH_CONTRAST := {
 	"panel_bg": Color("#0A0A0A"),
-	"panel_line": Color("#2A2A2A"),
 	"text_primary": Color("#FFFFFF"),
 	"text_secondary": Color("#E0E0E0"),
 	"accent_nectar": Color("#C9D5B5"),
@@ -157,6 +154,9 @@ class PanelBox:
 
 	func _draw(to_canvas_item: RID, rect: Rect2) -> void:
 		flat.draw(to_canvas_item, rect)
+		# High contrast always draws plain panels, whatever Panel texture says.
+		if Session.ui_theme == "high_contrast":
+			return
 		var tex: Texture2D = texture_source.call(Session.panel_texture)
 		if tex == null:
 			return
@@ -178,6 +178,11 @@ static func panel_texture_image(mode: String) -> Texture2D:
 	return _texture_cache[key]
 
 static func _build_panel_texture(mode: String) -> Texture2D:
+	return ImageTexture.create_from_image(_build_panel_image(mode))
+
+## The tile as an Image, before it becomes a texture, so the contrast numbers
+## below can read it under the headless dummy renderer.
+static func _build_panel_image(mode: String) -> Image:
 	var bg := color("panel_bg")
 	var line := color("panel_line")
 	if line.a >= 1.0:
@@ -207,18 +212,96 @@ static func _build_panel_texture(mode: String) -> Texture2D:
 						d2 = d
 				img.set_pixel(x, y, line if d2 - d1 < 1.3 else Color(0, 0, 0, 0))
 	else:
-		# Per-pixel value jitter around panel_bg; kept small in high contrast
-		# so the AAA body-text pairing is never disturbed.
-		var spread := 0.03 if Session.ui_theme == "high_contrast" else 0.07
+		# Per-pixel value jitter around panel_bg. Dark leans lighter because
+		# its background cannot get much darker; Light leans darker for the
+		# same reason in reverse. (High contrast never draws a texture.)
+		var light_share := 0.5
+		var max_lighter := 0.22
+		var max_darker := 0.03
+		if Session.ui_theme == "light":
+			max_lighter = 0.06
+			max_darker = 0.18
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 20260919
 		img = Image.create(64, 64, false, Image.FORMAT_RGBA8)
 		for y in 64:
 			for x in 64:
-				var c := bg.lightened(rng.randf_range(0.0, spread)) 					if rng.randf() < 0.5 else bg.darkened(rng.randf_range(0.0, spread))
+				var c: Color
+				if rng.randf() < light_share:
+					c = bg.lightened(rng.randf_range(0.0, max_lighter))
+				else:
+					c = bg.darkened(rng.randf_range(0.0, max_darker))
 				c.a = 0.6
 				img.set_pixel(x, y, c)
-	return ImageTexture.create_from_image(img)
+	return img
+
+## WCAG relative-luminance contrast ratio, always >= 1.0.
+static func contrast_ratio(a: Color, b: Color) -> float:
+	var la := _relative_luminance(a)
+	var lb := _relative_luminance(b)
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
+
+static func _relative_luminance(c: Color) -> float:
+	var ch := [c.r, c.g, c.b]
+	for i in 3:
+		var v: float = ch[i]
+		ch[i] = v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
+	return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2]
+
+## Contrast of the composited texture against panel_bg for the active theme.
+## `mode` is "comb", "grain", or anything else for both. Keys: comb,
+## grain_lightest, grain_darkest, grain_share (fraction of grain pixels at
+## 1.10:1 or more), text_min (worst text_primary contrast over any composited
+## texture pixel). High contrast draws no texture, so every ratio is 1.0 and
+## `drawn` is false. Reads the Image, not a texture; not for per-frame use.
+static func panel_texture_contrast(mode: String) -> Dictionary:
+	var out := {"drawn": Session.ui_theme != "high_contrast"}
+	var bg := color("panel_bg")
+	var text := color("text_primary")
+	var text_min := contrast_ratio(text, bg)
+	if mode != "grain":
+		var comb := 1.0
+		if out["drawn"]:
+			var img := _build_panel_image("comb")
+			for y in img.get_height():
+				for x in img.get_width():
+					var px := img.get_pixel(x, y)
+					if px.a <= 0.0:
+						continue
+					var over := bg.lerp(Color(px.r, px.g, px.b), px.a)
+					comb = maxf(comb, contrast_ratio(over, bg))
+					text_min = minf(text_min, contrast_ratio(text, over))
+		out["comb"] = comb
+	if mode != "comb":
+		var lightest := 1.0
+		var darkest := 1.0
+		var share := 0.0
+		if out["drawn"]:
+			var gimg := _build_panel_image("grain")
+			var seen := 0
+			var visible := 0
+			darkest = 99.0
+			for y in gimg.get_height():
+				for x in gimg.get_width():
+					var px := gimg.get_pixel(x, y)
+					var over := bg.lerp(Color(px.r, px.g, px.b), px.a)
+					var r := contrast_ratio(over, bg)
+					seen += 1
+					if r >= 1.10:
+						visible += 1
+					# "Lightest"/"darkest" name the pixels' side of panel_bg,
+					# reported as the largest ratio on each side.
+					if _relative_luminance(over) >= _relative_luminance(bg):
+						lightest = maxf(lightest, r)
+					else:
+						darkest = maxf(darkest if darkest < 99.0 else 1.0, r)
+					text_min = minf(text_min, contrast_ratio(text, over))
+			share = float(visible) / float(maxi(seen, 1))
+		out["grain_lightest"] = lightest
+		out["grain_darkest"] = darkest if darkest < 99.0 else 1.0
+		out["grain_share"] = share
+	out["text_min"] = text_min
+	return out
 
 ## The seven interaction states every interactive control should draw
 ## from (UI_PLAN.md section 11), rather than each panel inventing its
