@@ -24,3 +24,4 @@ unblocker.
 - [C-86 -- Game-over screen follows theme and text size](ready/C-86.md)
 - [C-88 -- Skill names in big hexes, drag and zoom](ready/C-88.md)
 - [C-93 -- Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin](ready/C-93.md)
+- [C-94 -- Challenge 2 shows 2.2, then 2.3, then 2.4 on screen when one hatch meets all three](ready/C-94.md)
