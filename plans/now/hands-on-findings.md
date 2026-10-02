@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3/HO-4 are startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is startable (SC-3 landed 2 Oct 2026) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 follows HO-9 (same file) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -23,7 +23,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 | --- | --- | --- | --- | --- |
 | HO-1 | Escape closes the skill tree | `scripts/skill_tree_panel.gd` | no -- after UT-2 (same file) | high |
 | HO-2 | every skill's name reads whole in its hex | `scripts/skill_tree_panel.gd` | no -- after HO-1 (same file) | medium |
-| HO-3 | the Triggers live under Developer mode, and one ends the run | `scripts/debug_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
 | HO-4 | the Saves window's name field is usable and always opens on top | `scripts/saves_panel.gd` | yes -- queued (SC-3 landed 2 Oct 2026) | medium |
 | HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
@@ -123,42 +122,7 @@ window size (`_min_zoom`). File a hands-on check that replaces C-88.
 **Must not change.** Drag (passed on both 2 Oct passes), and the hover
 tooltip.
 
-## HO-3 -- the Triggers live under Developer mode, and one ends the run
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `debug_panel.gd::_build_actions` builds the Triggers group
-(Advance Challenge stage, Fire test warnings, Force Challenge 2 collapse)
-for every player. Only Run availability is behind `Session.developer_mode`
-(`_refresh_developer_row`). No trigger reaches "The queen is dead": Force
-Challenge 2 collapse gives the rescue, then a checkpoint rewind. So C-86
-could not be run on 2 Oct (blocked). The Return to Main Menu tip still
-offers "Level 1 (the queen alone), Level 2 ... Level 3", which the menu no
-longer has.
-
-**Decision (Dave, 2 Oct 2026).** The Triggers are hidden with Developer mode
-off: the feedback build's tester must not see "Force Challenge 2 collapse".
-
-**True afterwards.** With Developer mode off the Triggers group -- header
-and every button -- is absent, not disabled, and it appears or goes as the
-box is ticked, through the refresh `_refresh_developer_row` already runs.
-A new "End the run" trigger kills the queen through
-`bee_survival.gd::die`, so `main.gd::_check_for_loss` opens `game_over.gd`'s
-"The queen is dead" exactly as a real death does; it does nothing in a
-scenario run, which `_check_for_loss` ends differently. The Return to Main Menu tip describes the current menu. C-86 then
-runs as written.
-
-**Must not change.** Each existing trigger's behaviour, and Run
-availability's guard (`tests/source_checks.py` checks it).
-
-```queue
-**[Claude] HO-3 -- the Triggers live under Developer mode, and one ends the run**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-3 -- the Triggers live under Developer mode, and one ends the run"
-- Files: `scripts/debug_panel.gd`
-- Check: with Developer mode off no Triggers header or button is built, "End the run" in a Challenge or level run opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/debug_panel.gd :: End the run`
-- Next after: HO-4 -- the Saves window's name field is usable and always opens on top
-```
+HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
 
 ## HO-4 -- the Saves window's name field is usable and always opens on top
 

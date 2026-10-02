@@ -26,6 +26,7 @@ const Prerequisites = preload("res://scripts/prerequisites.gd")
 ## The table this window is a view of -- every row's key, label,
 ## range and tip, plus the read/write and cascade functions.
 const Settings = preload("res://scripts/settings_catalogue.gd")
+const BeeSurvival = preload("res://scripts/bee_survival.gd")
 const Hud = preload("res://scripts/hud.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
@@ -51,6 +52,8 @@ var panel: PanelContainer
 ## BS-5: the developer-only rows, rebuilt whenever Developer mode changes,
 ## and the read-only Run availability table they open (built on first use).
 var developer_row: VBoxContainer
+## HO-3: the Triggers group, built only while Developer mode is on.
+var triggers_box: VBoxContainer
 var run_availability_panel: PanelContainer
 ## Kept so _apply_panel_width() can resize it alongside the panel on
 ## get_viewport().size_changed, the same pattern gallerin_panel.gd uses.
@@ -525,7 +528,7 @@ func _build_actions(column: VBoxContainer) -> void:
 	_style_button(menu_btn)
 	menu_btn.text = "Return to Main Menu"
 	menu_btn.pressed.connect(_on_main_menu_pressed)
-	_add_action_row(column, menu_btn, "Pause and go back to the main menu, where you can start a fresh run at Level 1 (the queen alone), Level 2 (queen, one nectar forager, one cell) or Level 3 (queen, two foragers, three cells). You can also close the menu again and carry on with the run you have.")
+	_add_action_row(column, menu_btn, "Pause and go back to the main menu, where you can start a Challenge or a Scenario. You can also close the menu again and carry on with the run you have.")
 
 	# Save and Load keep their shared row: both labels are short enough that
 	# the pair still fits inside the panel's width.
@@ -548,48 +551,71 @@ func _build_actions(column: VBoxContainer) -> void:
 	developer_row = VBoxContainer.new()
 	developer_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_child(developer_row)
-	_refresh_developer_row()
 
 	# One labelled home for buttons that force a state the simulation
-	# reaches only rarely on its own, built before anything needs it so the
-	# triggers still to come (plans/now/ui.md UI-R-3, plans/now/challenge-2.md
-	# Slice 1) drop a button in rather than each re-laying out this block.
-	var triggers := VBoxContainer.new()
-	triggers.add_theme_constant_override("separation", 0)
-	triggers.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_child(triggers)
-
-	var triggers_header := Label.new()
-	triggers_header.text = "Triggers"
-	triggers_header.theme_type_variation = "Small"
-	triggers.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
-
-	var stage_trigger_btn := Button.new()
-	_style_button(stage_trigger_btn)
-	stage_trigger_btn.text = "Advance Challenge stage"
-	stage_trigger_btn.pressed.connect(_on_challenge_advance_pressed)
-	_add_action_row(triggers, stage_trigger_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder.")
-
-	var fire_warnings_btn := Button.new()
-	_style_button(fire_warnings_btn)
-	fire_warnings_btn.text = "Fire test warnings"
-	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
-	_add_action_row(triggers, fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own.")
-
-	var c2_collapse_btn := Button.new()
-	_style_button(c2_collapse_btn)
-	c2_collapse_btn.text = "Force Challenge 2 collapse"
-	c2_collapse_btn.pressed.connect(_on_force_c2_collapse_pressed)
-	_add_action_row(triggers, c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run.")
+	# reaches only rarely on its own. HO-3: built only with Developer mode on
+	# (_refresh_developer_row fills and empties it).
+	triggers_box = VBoxContainer.new()
+	triggers_box.add_theme_constant_override("separation", 0)
+	triggers_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(triggers_box)
+	_refresh_developer_row()
 
 	column.add_child(HSeparator.new())
 
 ## One action button on its own row, filling the window's width with its
 ## info badge pinned to the right. The button expands rather than sitting at
 ## its text width so a row of one does not read as a stray short button.
+## HO-3: the Triggers group exists only with Developer mode on.
+func _rebuild_triggers() -> void:
+	for child in triggers_box.get_children():
+		triggers_box.remove_child(child)
+		child.queue_free()
+	if not Session.developer_mode:
+		return
+	var triggers_header := Label.new()
+	triggers_header.text = "Triggers"
+	triggers_header.theme_type_variation = "Small"
+	triggers_box.add_child(UI.with_info(triggers_header, "Debug only: every button in this group forces a simulation state the world otherwise reaches rarely or not at all, so a behaviour that depends on it can be watched on demand instead of waited for."))
+
+	var stage_trigger_btn := Button.new()
+	_style_button(stage_trigger_btn)
+	stage_trigger_btn.text = "Advance Challenge stage"
+	stage_trigger_btn.pressed.connect(_on_challenge_advance_pressed)
+	_add_action_row(triggers_box, stage_trigger_btn, "Debug only: advance an active Challenge through its ordinary stage-transition path, even when the current goal's mechanic is still a placeholder.")
+
+	var fire_warnings_btn := Button.new()
+	_style_button(fire_warnings_btn)
+	fire_warnings_btn.text = "Fire test warnings"
+	fire_warnings_btn.pressed.connect(_on_fire_test_warnings_pressed)
+	_add_action_row(triggers_box, fire_warnings_btn, "Debug only: fires an epitaph, a crab-spider-escape warning eight seconds later and a save-style confirmation two seconds after that, so the warning banner's arbitration between producers can be watched without waiting for the simulation to collide them on its own.")
+
+	var c2_collapse_btn := Button.new()
+	_style_button(c2_collapse_btn)
+	c2_collapse_btn.text = "Force Challenge 2 collapse"
+	c2_collapse_btn.pressed.connect(_on_force_c2_collapse_pressed)
+	_add_action_row(triggers_box, c2_collapse_btn, "Debug only, and only during an active Challenge 2 run: withdraws nectar from the hive. One press drops the stores just below the rescue threshold; a second press drops them below the failure floor, so both the one-time rescue and the checkpoint restore in challenge_runner.gd::_check_c2_failure() can be reached from one run.")
+
+	var end_run_btn := Button.new()
+	_style_button(end_run_btn)
+	end_run_btn.text = "End the run"
+	end_run_btn.pressed.connect(_on_end_run_pressed)
+	_add_action_row(triggers_box, end_run_btn, "Debug only: kills the queen, so the run ends at \"The queen is dead\" exactly as a real death does. Does nothing in a scenario run.")
+
+func _on_end_run_pressed() -> void:
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return
+	var world = worlds[0]
+	if world.scenario_active or not is_instance_valid(world.queen):
+		return
+	BeeSurvival.die(world.queen, "debug")
+
 ## BS-5: the Developer mode rows. With it off the row is empty -- the
 ## button is absent, not disabled -- and an open table closes.
 func _refresh_developer_row() -> void:
+	if triggers_box != null:
+		_rebuild_triggers()
 	for child in developer_row.get_children():
 		developer_row.remove_child(child)
 		child.queue_free()
