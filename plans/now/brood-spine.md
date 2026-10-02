@@ -104,7 +104,6 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 | BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`), and follows BS-11 (shares `run_availability_panel.gd`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
-| BS-11 | the developer table calls a cut skill cut, and names features in words | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd` | yes -- queued 2 Oct 2026, ahead of BS-6 | low |
 
 BS-11 goes before BS-6 (reordered 2 Oct 2026): BS-6 waits for SR-5 and the two share
 `run_availability_panel.gd`, so BS-6 follows BS-11. Every later slice names
@@ -173,34 +172,7 @@ its block is fenced `queue-gated` until SR-5 lands.
 
 BS-10 shipped 2026-10-02; its specification is `plans/archive/BS-10_2026-10-02.md`.
 
-## BS-11 — the developer table calls a cut skill cut, and names features in words
-
-<!-- LAYER: immediate-task -->
-
-Level: low.
-
-**True now.** `RunAvailability.sheet_for` gives each of the nine skills in
-`Skills.CUT_FROM_ALPHA` the source "in the tree" with "Left to be bought in
-the skill tree.", but FBB-1 hides them from the tree (C-92, passed 2 Oct
-2026), so the table promises a purchase nobody can make. Its Feature rows
-print raw ids ("Feature: feature.predators", seen at levels 5 and 6).
-
-**True afterwards.** A cut skill reads "not available" with a reason that
-says it is cut from this build. Feature rows use a player-facing label for
-each feature. The sheet's `starting` list and every run's start are
-unchanged.
-
-**Must not change.** What any run starts owning. BS-6 follows and builds
-its override store on this table, so keep the row layout it edits.
-
-```queue
-**[Claude] BS-11 -- the developer table calls a cut skill cut, and names features in words**
-- Plan: `plans/now/brood-spine.md` -- "BS-11 — the developer table calls a cut skill cut, and names features in words"
-- Files: `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`
-- Check: in the Run availability table at levels 5 and 6, each of the nine `Skills.CUT_FROM_ALPHA` skills reads "not available" with a cut-from-this-build reason and no Feature row prints a raw id; every run's starting ownership is unchanged; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
-- Proof: `present: scripts/run_availability_panel.gd :: _row("Feature: %s" % feature_id, features[feature_id])`
-- Next after: BS-6 -- developer edits to the table change what a run starts with
-```
+BS-11 shipped 2026-10-02; its specification is `plans/archive/BS-11_2026-10-02.md`.
 
 ## Read on demand
 
