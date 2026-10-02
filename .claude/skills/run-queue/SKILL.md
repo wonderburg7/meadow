@@ -54,10 +54,6 @@ sitting in a `.worktrees/` directory:
    - Every changed file must be in `files`, or be the owning plan, a test,
      `checks/` or `FUNCTION_MAP.md`. Anything else goes back to the worker
      as a question.
-   - Note any `checks/ready/C-*.md` the stat adds. The report's `Hands-on:`
-     line names exactly those: `finish` compares the branch with master's
-     tip, so a branch older than a check confirmation over-reports
-     (L-16 listed 13 checks it never filed).
    - For a `medium` or `high` slice, run the `code-review` skill on the
      branch (args `low <branch>` for medium, `medium <branch>` for high),
      going by the plan's level, not your own sense of the risk. It reads

@@ -2027,10 +2027,19 @@ function Invoke-SliceFinish {
     # A worker may file a hands-on check its Check: line never asked for
     # (FBB-1, 1 Oct 2026), so the report names any new record; only the gate
     # is limited to items whose Check: demands one.
-    $readyDirectory = Join-Path $worktreeRoot "checks\ready"
-    $branchChecks = if (Test-Path -LiteralPath $readyDirectory) { Get-ChildItem -LiteralPath $readyDirectory -Filter "C-*.md" | ForEach-Object { $_.Name } } else { @() }
-    $masterChecks = @(Split-GitText (Invoke-GitText -C $root ls-tree -r --name-only master -- checks/ready).Text | ForEach-Object { Split-Path -Leaf $_ })
-    $newEntries = @($branchChecks | Where-Object { $_ -notin $masterChecks })
+    # New means added since the merge base, committed or not. Comparing the
+    # worktree with master's tip counted every check master confirmed after
+    # the branch forked: L-16's report "gained" C-74..C-92 (2 Oct 2026), and
+    # such a stale branch passed the gate without filing a check of its own.
+    $mergeBaseRead = Invoke-GitText -C $worktreeRoot merge-base master HEAD
+    if ($mergeBaseRead.ExitCode -ne 0) { throw "could not find the merge base of master and $branch" }
+    $mergeBase = $mergeBaseRead.Text.Trim()
+    # Quoted: PowerShell drops a bare -- passed to a function, and git then reads a missing checks/ready as a revision.
+    $addedRead = Invoke-GitText -C $worktreeRoot diff --name-only --diff-filter=A $mergeBase '--' checks/ready
+    $untrackedRead = Invoke-GitText -C $worktreeRoot ls-files --others --exclude-standard '--' checks/ready
+    if ($addedRead.ExitCode -ne 0 -or $untrackedRead.ExitCode -ne 0) { throw "could not list the checks/ready/ records $branch adds: $($addedRead.Stderr)$($untrackedRead.Stderr)" }
+    $newEntries = @(@(Split-GitText $addedRead.Text) + @(Split-GitText $untrackedRead.Text) |
+        ForEach-Object { Split-Path -Leaf $_ } | Where-Object { $_ -like "C-*.md" } | Sort-Object -Unique)
     $handsOnNote = if ($newEntries) { "checks/ready/ gained $($newEntries -join ', ')" } else { "none needed" }
     if ($item -and $item.Check -match '(?i)hands-on check') {
         if (-not $newEntries) {
