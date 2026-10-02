@@ -382,6 +382,31 @@ func _make_honeycomb_strip(group_key: String) -> Control:
 
 	return strip
 
+func _fit_hex_label(label: Label) -> void:
+	var font := label.get_theme_font("font")
+	var current := label.get_theme_font_size("font_size")
+	var overridden := label.has_theme_font_size_override("font_size")
+	# Recover the themed size from the remembered one so the override never
+	# feeds back into its own measurement.
+	var base: int = label.get_meta("hex_base_size", current)
+	if not overridden or current != int(label.get_meta("hex_fit_size", -1)):
+		base = current
+	label.set_meta("hex_base_size", base)
+	var widest := 0.0
+	for word in label.text.split(" ", false):
+		widest = maxf(widest, font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, base).x)
+	var target := base
+	if widest > label.size.x and widest > 0.0:
+		target = maxi(6, int(floor(base * label.size.x / widest)))
+	label.set_meta("hex_fit_size", target)
+	if target == current:
+		return
+	if target == base:
+		label.remove_theme_font_size_override("font_size")
+	else:
+		label.add_theme_font_size_override("font_size", target)
+
+
 func _make_hex_tile(stage: Dictionary) -> Control:
 	var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))
 	var tile := Control.new()
@@ -434,6 +459,9 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 	label.size = Vector2(bbox.x - 44.0, bbox.y - 16.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(label)
+	# HO-12: shrink the font until the longest word fits the label width, so
+	# word-smart wrapping never has to split a word.
+	label.draw.connect(_fit_hex_label.bind(label))
 
 	var tick := Label.new()
 	tick.text = "✓"
