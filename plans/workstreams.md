@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/HO-3` (`claude/HO-3`) | Claude | the Triggers live under Developer mode, and one ends the run | Claude | in progress | none | `plans/now/hands-on-findings.md` HO-3 -- the Triggers live under Developer mode, and one ends the run |
