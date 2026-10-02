@@ -1,7 +1,7 @@
 # Slice worker — one claimed slice, implemented by a subagent
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: by a slice-worker subagent only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- trial on the first coordinated slice, then tune from its report | Dependency: none | Verified: 2026-10-01
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tuned 2 Oct from the FBB-1, BS-9, L-16 and L-17 runs; tune again from the next trial note | Dependency: none | Verified: 2026-10-02
 
 You are a `slice-worker-*` subagent. A coordinator session (the
 `/run-queue` skill) has already claimed one slice with
@@ -25,10 +25,15 @@ Read/Write/Edit and PowerShell file cmdlets are denied there; use Bash.
   `grep -rn` for a search. Read only the routed section or function
   (`python tools/heading.py`, `python tools/func.py`, run with the
   worktree as cwd via `(cd <wt> && python tools/func.py ...)`).
-- One-line edit: `sed -i`. Larger edit: write the new text with the Write
-  tool into your scratchpad, then `cp` it over the file, or write a short
-  Python script to the scratchpad that does the replacement and run it.
-  Heredocs over ~40 lines or containing backslashes get mangled.
+- Files in the checkout have CRLF line endings (`* text=auto` with
+  `core.autocrlf`). A Python edit opens with `newline=""` and writes `\r\n`
+  into the text it matches and inserts. Matching on `\n` fails silently.
+- One-line edit with no backslash in the pattern: `sed -i`. Anything else:
+  write a Python edit script with the Write tool into your scratchpad, then
+  `python <that path>` (or write the whole new file and `cp` it over).
+  Never pass a script through a heredoc: the shell wrapper breaks it
+  ("unexpected EOF") or mangles its escapes. The Write tool can't target
+  the worktree itself, so the scratchpad is the only place it works.
 - Run every command in a subshell, `(cd <wt> && ...)`, so no tool's shell is
   left sitting in the worktree: Windows then refuses to delete it at
   `finish`.
@@ -51,8 +56,9 @@ Read/Write/Edit and PowerShell file cmdlets are denied there; use Bash.
    order", steps 1-2): update the owning plan's Status line and `Next:`;
    make sure the `next_after` successor has a fenced `queue` (or
    `queue-gated`) block. File a hands-on check with `python
-   tools/new_check.py` only if the slice is click-driven, visual or
-   feel-sensitive and the plan's acceptance says so.
+   tools/new_check.py --name "<what Dave checks>" --owner <the plan path>`
+   only if the slice is click-driven, visual or feel-sensitive and the
+   plan's acceptance says so.
 6. Commit on the branch with a plain-language message, ending with the
    attribution trailer from your instructions.
 
