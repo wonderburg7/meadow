@@ -49,21 +49,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
-   - Plan: `plans/now/scenario-reds.md` -- "SR-3 -- the disease-off fixture starts every bee newborn"
-   - Files: `test_scenarios/h5_disease_off_test.json`
-   - Check: `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json` ends `status=passed`, and `tools/verify.ps1` is green
-   - Proof: `absent: test_scenarios/h5_disease_off_test.json :: starter_age_spread`
-   - Next after: SR-4 -- the command tray fits its content after a resize to 800x600
-
-2. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
+1. **[Codex] SR-4 -- the command tray fits its content after a resize to 800x600**
    - Plan: `plans/now/scenario-reds.md` -- "SR-4 -- the command tray fits its content after a resize to 800x600"
    - Files: `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/uiw3_cell_tray_columns_test.json` ends `status=passed` with its 800x600 asserts unchanged, and `tools/verify.ps1` is green
    - Proof: `present: test_scenarios/uiw3_cell_tray_columns_test.json :: {"do": "viewport_size", "w": 800, "h": 600}`
    - Next after: SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question
 
-3. **[Codex] SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question**
+2. **[Codex] SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question**
    - Plan: `plans/now/scenario-reds.md` -- "SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question"
    - Files: `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
    - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes with its `TESTS_NOT_IN_VERIFY` entry removed and `tools/verify.ps1` is green, or the slice stops with the evidence that the flower lifecycle is wrong

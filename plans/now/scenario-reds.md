@@ -18,7 +18,6 @@ were tried on throwaway copies of their fixtures and both ended
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SR-3 | the disease-off fixture starts every bee newborn | `test_scenarios/h5_disease_off_test.json` | yes | low |
 | SR-4 | the command tray fits its content after a resize to 800x600 | `scripts/hud.gd`, `scripts/ui_layout.gd`, `scripts/scenario_actions.gd`, `test_scenarios/uiw3_cell_tray_columns_test.json` | yes -- UI-F-2 closes with this refill | high |
 | SR-5 | the SF-1 flower-mix test passes, or is shown to be a simulation question | `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
 
@@ -35,34 +34,7 @@ SR-1 shipped 2026-10-02; its specification is `plans/archive/SR-1_2026-10-02.md`
 
 SR-2 shipped 2026-10-02; its specification is `plans/archive/SR-2_2026-10-02.md`.
 
-## SR-3 -- the disease-off fixture starts every bee newborn
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one fixture key).
-
-**True now.** `h5_disease_off_test` sets a 10-day lifespan and asserts no
-old-age death by day 7. Disease really is off (`season.gd::_advance_disease`
-honours the level's `"disease": false`, so `lifespan_factor()` is 1), but
-`GameConfig.starter_age_spread` (0.5) starts bees up to half-way through
-their lives: bee 5 died of old age at 117.75 s aged 200.2 s, its full
-lifespan. The fixture is stale, not the simulation.
-
-**Done when.** The fixture's `config_overrides` sets
-`"starter_age_spread": 0.0`, so any old-age death before day 10 can only
-come from a shortened lifespan, which is what the test is for.
-
-**Check.** `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json`
-ends `status=passed`.
-
-```queue
-**[Codex] SR-3 -- the disease-off fixture starts every bee newborn**
-- Plan: `plans/now/scenario-reds.md` -- "SR-3 -- the disease-off fixture starts every bee newborn"
-- Files: `test_scenarios/h5_disease_off_test.json`
-- Check: `python tools/run_scenario.py test_scenarios/h5_disease_off_test.json` ends `status=passed`, and `tools/verify.ps1` is green
-- Proof: `absent: test_scenarios/h5_disease_off_test.json :: starter_age_spread`
-- Next after: SR-4 -- the command tray fits its content after a resize to 800x600
-```
+SR-3 shipped 2026-10-02; its specification is `plans/archive/SR-3_2026-10-02.md`.
 
 ## SR-4 -- the command tray fits its content after a resize to 800x600
 
