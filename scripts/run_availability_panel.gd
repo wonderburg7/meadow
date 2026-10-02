@@ -27,8 +27,18 @@ const REASON_TEXT := {
 	RunAvailability.REASON_SEEDED_ROLE: "The run starts with bees in the role this skill unlocks.",
 	RunAvailability.REASON_RUN_BAN: "Banned in this run by its skill_bans.",
 	RunAvailability.REASON_TREE: "Left to be bought in the skill tree.",
+	RunAvailability.REASON_CUT: "Cut from this build: kept in the catalogue but never offered.",
 	RunAvailability.REASON_FEATURE_OFF: "Needs a part of the game that is off, or not built yet, in this run.",
 	RunAvailability.REASON_FEATURE_ON: "On in this run.",
+}
+
+const FEATURE_LABELS := {
+	"feature.predators": "Predators",
+	"feature.weather": "Weather",
+	"feature.seasons": "Seasons",
+	"feature.fog_of_war": "Fog of war",
+	"feature.disease": "Disease",
+	"feature.drought": "Drought",
 }
 
 const SOURCE_TEXT := {
@@ -110,7 +120,7 @@ func _fill() -> void:
 		_row("Role: %s" % Roles.label_for(Roles.id_for_key(role_key)), roles[role_key])
 	var features: Dictionary = sheet.get("features", {})
 	for feature_id in features:
-		_row("Feature: %s" % feature_id, features[feature_id])
+		_row("Feature: %s" % FEATURE_LABELS.get(feature_id, feature_id.trim_prefix("feature.").capitalize()), features[feature_id])
 
 func _row(row_name: String, row: Dictionary) -> void:
 	_cell(row_name, "Small")
