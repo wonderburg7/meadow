@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-7 -- each Challenge stage stays on screen a moment before the next can clear**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-7 -- each Challenge stage stays on screen a moment before the next can clear"
-   - Files: `scripts/challenge_runner.gd`, `scripts/challenge_stages.gd`
-   - Check: a Godot boot is clean, every Challenge fixture in `test_scenarios/` passes, a hands-on check is filed for 2.2 -> 2.3 -> 2.4 each showing on screen when one hatch satisfies all three, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/challenge_stages.gd :: MIN_STAGE_DWELL`
-   - Next after: HO-8 -- Challenge 2's 2.9 shows which targets are still short
-
-2. **[Claude] SC-2 -- cycling the typeface logs no engine error**
+1. **[Claude] SC-2 -- cycling the typeface logs no engine error**
    - Plan: `plans/now/settings-and-corner.md` -- "SC-2 -- cycling the typeface logs no engine error"
    - Files: `scripts/ui_theme.gd`, `test_scenarios/sc2_typeface_cycle_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/sc2_typeface_cycle_test.json` passes and its output has no `Parameter "fd" is null`, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/ui_theme.gd :: set_block_signals`
    - Next after: SC-3 -- the project boots without GDScript warnings outside the HUD
 
-3. **[Claude] SC-3 -- the project boots without GDScript warnings outside the HUD**
+2. **[Claude] SC-3 -- the project boots without GDScript warnings outside the HUD**
    - Plan: `plans/now/settings-and-corner.md` -- "SC-3 -- the project boots without GDScript warnings outside the HUD"
    - Files: `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `scripts/input_selection.gd`
    - Check: a headless boot prints no `GDScript::reload` warning for the three files, and `tools/verify.ps1` is green
    - Proof: `present: scripts/saves_panel.gd :: "%d min ago" % (seconds / 60)`
    - Next after: SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
 
-4. **[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
+3. **[Claude] HO-9 -- "Back to the run" on a fresh boot leaves the menu up**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-9 -- "Back to the run" on a fresh boot leaves the menu up"
    - Files: `scripts/main_menu.gd`
    - Check: on a fresh boot the menu shows no "Back to the run"; after starting a run and choosing Return to Main Menu it shows and resumes the run; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/main_menu.gd :: _back_btn`
    - Next after: HO-12 -- a Challenge or Scenario hex breaks its name between words
 
-5. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
+4. **[Claude] HO-10 -- a queen who starves ends the run with "The queen is dead"**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-10 -- a queen who starves ends the run with "The queen is dead""
    - Files: `scripts/main.gd`, `scripts/game_over.gd`, `tests/test_ho10_queen_starvation_ends_run.py`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tools/verify.ps1`
    - Check: the new headless test fails on master before the fix and passes after it, a queen starved in Scenario 1 opens "The queen is dead", a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
