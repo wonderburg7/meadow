@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin**
-   - Plan: `plans/now/ui-texture-polish.md` -- "UT-2 -- the Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/ui_info_badge.gd`
-   - Check: `grep -c "make_bounded_tooltip" scripts/skill_tree_panel.gd scripts/ui_info_badge.gd` prints at least 1 for each file, a Godot boot is clean, a hands-on check is filed for the tooltip and Buy position, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skill_tree_panel.gd :: _make_custom_tooltip`
-   - Next after: UT-3 -- a theme change recolours the in-run panels' text
-
-2. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
+1. **[Claude] BS-10 -- C-81 tests the one run that buys Nurses**
    - Plan: `plans/now/brood-spine.md` -- "BS-10 — C-81 tests the one run that buys Nurses"
    - Files: `checks/ready/C-81.md`
    - Check: `checks/ready/C-81.md` starts Challenge 2 rather than level 7, and `python tools/check_docs.py` passes
    - Proof: `present: checks/ready/C-81.md :: start level 7 from the main menu`
    - Next after: BS-6 -- developer edits to the table change what a run starts with
 
-3. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
+2. **[Claude] SC-1 -- the settings window does not move under a Text scale click**
    - Plan: `plans/now/settings-and-corner.md` -- "SC-1 -- the settings window does not move under a Text scale click"
    - Files: `scripts/debug_panel.gd`, `checks/ready/C-72.md`
    - Check: run 1's sequence in `checks/ready/C-72.md` reproduces before the change and not after it, and `tools/verify.ps1` is green
    - Proof: `present: scripts/debug_panel.gd :: _text_scale_timer.timeout.connect(func() -> void: UiTheme.refresh_for_setting("text_scale"))`
    - Next after: SC-2 -- cycling the typeface logs no engine error
 
-4. **[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
+3. **[Claude] GC-4 -- a nurse moved to another job does not lose the brood food she carries**
    - Plan: `plans/now/gameplay-consistency.md` -- "GC-4 — a nurse moved to another job does not lose the brood food she carries"
    - Files: `scripts/bee.gd`, `test_scenarios/gc4_nurse_role_change_keeps_food_test.json`
    - Check: `test_scenarios/gc4_nurse_role_change_keeps_food_test.json` passes headless, a Godot boot is clean, and `tools/verify.ps1` is green
