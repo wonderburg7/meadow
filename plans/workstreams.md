@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/UT-1` (`claude/UT-1`) | Claude | panel textures are visible in Dark and Light, and High contrast stays flat | Claude | in progress | none | `plans/now/ui-texture-polish.md` UT-1 -- panel textures are visible in Dark and Light, and High contrast stays flat |
