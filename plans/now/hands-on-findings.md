@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1/HO-2 follow UT-2 (`plans/now/ui-texture-polish.md`); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 is built on branch claude/HO-12 (hands-on check C-99 filed) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-1 -- Escape closes the skill tree (after UT-2, same file) | Dependency: HO-1 and HO-2 are queued, one after the other in `scripts/skill_tree_panel.gd` (UT-2 landed 2 Oct 2026); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/now/settings-and-corner.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -93,6 +93,18 @@ paused.
 open (Space and Tab must not reach the paused game), C-79's full-screen
 pause, and × closing it.
 
+**Level:** high -- the cause is not yet diagnosed (input order or process
+mode), so this is an ambiguous bug.
+
+```queue
+**[Claude] HO-1 -- Escape closes the skill tree**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-1 -- Escape closes the skill tree"
+- Files: `scripts/skill_tree_panel.gd`
+- Check: with the skill tree open over a run, Escape closes it and restores the earlier speed as × does, Space and Tab still do not reach the game, a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/skill_tree_panel.gd :: (event as InputEventKey).keycode == KEY_ESCAPE`
+- Next after: HO-2 -- every skill's name reads whole in its hex
+```
+
 ## HO-2 -- every skill's name reads whole in its hex
 
 <!-- LAYER: immediate-task -->
@@ -119,6 +131,18 @@ window size (`_min_zoom`). File a hands-on check that replaces C-88.
 
 **Must not change.** Drag (passed on both 2 Oct passes), and the hover
 tooltip.
+
+**Level:** medium -- bounded drawing and zoom-limit work in one class, with
+a hands-on acceptance check.
+
+```queue
+**[Claude] HO-2 -- every skill's name reads whole in its hex**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-2 -- every skill's name reads whole in its hex"
+- Files: `scripts/skill_tree_panel.gd`, `checks/ready/C-88.md`
+- Check: at the opening zoom, at text scale 1 and 2 in Silkscreen and Atkinson Hyperlegible, every skill name shows every letter; the wheel zooms out until the whole tree fits, maximised and at the default window size; a Godot boot is clean, a hands-on check replacing C-88 is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/skill_tree_panel.gd :: const NAME_LINES := 3`
+- Next after: HO-5 -- long text stays inside its window
+```
 
 HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
 
