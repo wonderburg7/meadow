@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9 and BS-10 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: BS-11 -- the developer table calls a cut skill cut, and names features in words (queued 2 Oct 2026 ahead of BS-6); then BS-6 -- developer edits to the table change what a run starts with (BS-9 and BS-10 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -103,10 +103,11 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
-| BS-11 | the developer table calls a cut skill cut, and names features in words | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd` | no -- after BS-6 (shares `run_availability_panel.gd`) | low |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`), and follows BS-11 (shares `run_availability_panel.gd`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
+| BS-11 | the developer table calls a cut skill cut, and names features in words | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd` | yes -- queued 2 Oct 2026, ahead of BS-6 | low |
 
-BS-10 shares no file with BS-6 and can go first; BS-11 follows BS-6. Every later slice names
+BS-11 goes before BS-6 (reordered 2 Oct 2026): BS-6 waits for SR-5 and the two share
+`run_availability_panel.gd`, so BS-6 follows BS-11. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
 
 BS-1, BS-2, BS-3 and BS-5 shipped between 28 and 30 Sep 2026; each
@@ -167,7 +168,7 @@ its block is fenced `queue-gated` until SR-5 lands.
 - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`
 - Check: `tools/verify.ps1` is green, a `source_checks.py` check proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
 - Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
-- Next after: BS-11 -- the developer table calls a cut skill cut, and names features in words
+- Next after: none -- the last slice in this plan
 ```
 
 BS-10 shipped 2026-10-02; its specification is `plans/archive/BS-10_2026-10-02.md`.
@@ -189,7 +190,17 @@ says it is cut from this build. Feature rows use a player-facing label for
 each feature. The sheet's `starting` list and every run's start are
 unchanged.
 
-**Must not change.** What any run starts owning; BS-6's override store.
+**Must not change.** What any run starts owning. BS-6 follows and builds
+its override store on this table, so keep the row layout it edits.
+
+```queue
+**[Claude] BS-11 -- the developer table calls a cut skill cut, and names features in words**
+- Plan: `plans/now/brood-spine.md` -- "BS-11 — the developer table calls a cut skill cut, and names features in words"
+- Files: `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`
+- Check: in the Run availability table at levels 5 and 6, each of the nine `Skills.CUT_FROM_ALPHA` skills reads "not available" with a cut-from-this-build reason and no Feature row prints a raw id; every run's starting ownership is unchanged; a Godot boot is clean, a hands-on check is filed, and `tools/verify.ps1` is green
+- Proof: `present: scripts/run_availability_panel.gd :: _row("Feature: %s" % feature_id, features[feature_id])`
+- Next after: BS-6 -- developer edits to the table change what a run starts with
+```
 
 ## Read on demand
 

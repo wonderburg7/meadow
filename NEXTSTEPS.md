@@ -56,7 +56,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **UT-4** (`plans/now/ui-texture-polish.md`) -- waits for UT-3, and for SR-4 (Codex lane) to land, since it edits `scripts/hud.gd`.
 - **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for UT-1 and UT-2, and for SR-2 and SR-4 (Codex lane) to land, since both edit `scripts/scenario_actions.gd`.
 - **SC-4** (`plans/now/settings-and-corner.md`) -- waits for SR-4 (Codex lane) to land, since both edit `scripts/hud.gd`; it and UT-4 also share `hud.gd`, so they run one after the other.
-- **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
+- **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
@@ -64,7 +64,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
-- **BS-11** (`plans/now/brood-spine.md`) -- follows BS-6, which also edits `scripts/run_availability_panel.gd`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 
