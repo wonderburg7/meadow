@@ -23,3 +23,4 @@ unblocker.
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
 - [C-86 -- Game-over screen follows theme and text size](ready/C-86.md)
 - [C-88 -- Skill names in big hexes, drag and zoom](ready/C-88.md)
+- [C-93 -- Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin](ready/C-93.md)
