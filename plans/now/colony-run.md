@@ -69,7 +69,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CR-2 | the Colony Run records the day each milestone is first met | `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py` | after CR-1 (shares `save_game.gd`) | high |
 | PE-2 | the played pacing arc starts from the Colony Run's start | `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes (CR-1 landed) | medium |
 | COL-1 | the goal shelf shows the Colony Run's next milestone | `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py` | after CR-2 | medium |
 | COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
@@ -86,49 +85,7 @@ apart by heading. Later slices take the COL- prefix, since CR-3 to CR-7 have arc
 
 CR-1 shipped 2026-10-03; its specification is `plans/archive/CR-1_2026-10-03.md`.
 
-## CR-2 -- the Colony Run records the day each milestone is first met
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a second save field, and a new evaluator on two event hooks).
-
-**True now** (verified 3 Oct 2026). `conditions.gd` evaluates condition
-dictionaries for Challenge stages, with keys such as `role_count`,
-`hive_total`, `skill_owned`, `event_count` and `all_of`; it has no key for a
-rate of income. No run tracks milestones. `Skills.AUTOMATION`
-(`skill.hive_mind.automation`) exists.
-
-**True afterwards.**
-- New `scripts/colony_milestones.gd` holds §7's six milestones as data, each
-  a `conditions.gd` condition: first worker (a non-queen adult exists); first
-  automation (`skill_owned` `Skills.AUTOMATION`); stable resource income (net
-  nectar and pollen income non-negative over the last three days, through a
-  new `conditions.gd` rate key); winter readiness (the winter panel's own
-  readiness measure, met before winter begins); post-winter recovery (after
-  winter ends, the queen is alive and an egg has been laid); first gyne (a
-  gyne has left the hive).
-- It runs only when the level's `run_type` is `"colony"`, on day change and
-  on population change -- the hooks `main.gd` already has -- never per frame.
-  It records the day each milestone is first met; a met milestone is never
-  re-checked.
-- The recorded days are saved as an additive field and restored on load; a
-  save without it reads as nothing met.
-- Before adding the rate key's history, find whether something already keeps
-  per-day store totals and extend it (`plans/README.md` rule 4).
-
-**Must not change.** Challenge stage evaluation; any non-Colony run; balance.
-
-**Escalate** if the winter panel has no readiness measure to reuse, or if a
-milestone needs a fact no existing owner provides.
-
-```queue
-**[Claude] CR-2 -- the Colony Run records the day each milestone is first met**
-- Plan: `plans/now/colony-run.md` -- "CR-2 -- the Colony Run records the day each milestone is first met"
-- Files: `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py`
-- Check: `python -m unittest tests.test_conditions` covers the rate key; `python -m unittest tests.test_save_migrations` proves recorded milestone days survive a save and load; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/conditions.gd :: income`
-- Next after: PE-2 -- the played pacing arc starts from the Colony Run's start
-```
+CR-2 shipped 2026-10-03; its specification is `plans/archive/CR-2_2026-10-03.md`.
 
 ## PE-2 -- the played pacing arc starts from the Colony Run's start
 
