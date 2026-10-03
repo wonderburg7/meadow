@@ -18,6 +18,7 @@ unblocker.
 - [C-101 -- Every skill name reads whole in its hex, and the wheel zooms out to the whole tree](ready/C-101.md)
 - [C-102 -- Run availability table: cut skills read not available, features named in words](ready/C-102.md)
 - [C-103 -- the command tray shows all of a comb cell's actions at the smallest window](ready/C-103.md)
+- [C-104 -- PAUSED, the wrapped problem strip and the Colony window at Text scale 2 in Open Sans](ready/C-104.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
