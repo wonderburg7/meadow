@@ -25,7 +25,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] HO-5 -- long text stays inside its window**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
-   - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
+   - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`, `scripts/debug_panel.gd`
    - Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
    - Next after: HO-6 -- a bee under the top-left readout can be clicked
