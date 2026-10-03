@@ -611,6 +611,8 @@ func _ready() -> void:
 		# STAGES_1/STAGES_2) -- levels.gd's own presets only cover the
 		# starting state for either.
 		challenge_runner.start()
+	# COL-1: the goal shelf's first line in a Colony Run, fresh or loaded.
+	colony_milestones.show_next()
 
 # --- public surface other scripts call directly -------------------
 ## bee.gd holds a reference to this node (as `world`) and calls these by

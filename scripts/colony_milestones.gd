@@ -25,19 +25,23 @@ const Levels = preload("res://scripts/levels.gd")
 const AUTOMATION_SKILL := "skill.hive_mind.automation"
 
 ## The six milestones, in the order a colony usually meets them. The label is
-## for CR-3's readout; nothing shows it yet.
+## for CR-3's readout; the goal is COL-1's short player-facing line for the
+## goal shelf.
 const MILESTONES := [
 	{
 		"id": "first_worker", "label": "First worker",
+		"goal": "Raise your first worker",
 		# Any adult other than the queen. The run starts with her alone.
 		"condition": {"non_queen_adults_at_least": 1},
 	},
 	{
 		"id": "first_automation", "label": "First automation",
+		"goal": "Unlock your first automation",
 		"condition": {"skill_owned": AUTOMATION_SKILL},
 	},
 	{
 		"id": "stable_income", "label": "Stable resource income",
+		"goal": "Keep nectar and pollen coming in",
 		# Nectar and pollen both came in, and neither store fell, across the
 		# last three whole days (main.gd's day_store_totals).
 		"condition": {"all_of": [
@@ -47,12 +51,14 @@ const MILESTONES := [
 	},
 	{
 		"id": "winter_ready", "label": "Ready for winter",
+		"goal": "Get the colony ready for winter",
 		# The winter window's own verdict ("On track"), judged on the
 		# countdown's last day, on the colony that meets winter.
 		"condition": {"winter_ready": true},
 	},
 	{
 		"id": "winter_recovery", "label": "Recovered after winter",
+		"goal": "Bring the colony through winter",
 		# Winter is over, the queen came through it, and she is laying again:
 		# brood in its egg stage is in the comb.
 		"condition": {"all_of": [
@@ -63,6 +69,7 @@ const MILESTONES := [
 	},
 	{
 		"id": "first_gyne", "label": "First gyne away",
+		"goal": "Send out a gyne",
 		"condition": {"gynes_released_at_least": 1},
 	},
 ]
@@ -85,12 +92,16 @@ func applies() -> bool:
 func evaluate() -> void:
 	if main == null or not applies():
 		return
+	var changed := false
 	for milestone in MILESTONES:
 		var id: String = milestone.id
 		if met_days.has(id):
 			continue
 		if Conditions.met(main, milestone.condition):
 			met_days[id] = main.day
+			changed = true
+	if changed:
+		show_next()
 
 
 ## The day `id` was first met, or -1 if it hasn't been.
@@ -113,3 +124,26 @@ func restore(data: Dictionary) -> void:
 		var day = data.get(id)
 		if typeof(day) == TYPE_INT or typeof(day) == TYPE_FLOAT:
 			met_days[id] = int(day)
+
+
+## COL-1: the goal shelf shows the first milestone not yet met, with the one
+## most recently met struck through beneath it. Called when a milestone is
+## newly met, at the start of the run and after a load -- never per frame.
+## No bar: a milestone has no single number. Does nothing outside a Colony Run.
+func show_next() -> void:
+	if main == null or main.hud == null or not applies():
+		return
+	var next_goal := ""
+	var done_goal := ""
+	var done_day := -1
+	for milestone in MILESTONES:
+		var id: String = milestone.id
+		if met_days.has(id):
+			if int(met_days[id]) >= done_day:
+				done_day = int(met_days[id])
+				done_goal = milestone.goal
+		elif next_goal.is_empty():
+			next_goal = milestone.goal
+	if next_goal.is_empty():
+		next_goal = "Every milestone met -- your colony has made it"
+	main.hud.set_challenge_goal(next_goal, done_goal)

@@ -204,5 +204,20 @@ class ColonyMilestonesTest(unittest.TestCase):
         self.assertNotIn("colony_milestones", process)
 
 
+    def test_every_milestone_has_a_goal_and_shelf_follows_first_unmet(self):
+        block = self.MILESTONES.split("const MILESTONES", 1)[1].split("\n]\n", 1)[0]
+        self.assertEqual(6, len(re.findall(r'"goal": "[^"]+",', block)))
+        show = self.MILESTONES.split("func show_next()", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("not applies()", show)
+        self.assertIn("elif next_goal.is_empty():", show)
+        self.assertIn("main.hud.set_challenge_goal(next_goal, done_goal)", show)
+        evaluate = self.MILESTONES.split("func evaluate()", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("show_next()", evaluate)
+        main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+        self.assertIn("colony_milestones.show_next()", main)
+        process = main.split("func _process(", 1)[1].split("\nfunc ", 1)[0]
+        self.assertNotIn("show_next", process)
+
+
 if __name__ == "__main__":
     unittest.main()
