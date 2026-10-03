@@ -108,6 +108,9 @@ signal queen_lay_any_cell_toggled(value: bool)
 ## Colony, Foraging and Nursery listen so an already-open window reflows
 ## instead of only sizing itself once in open() (UI-T-2, Dave 8 Sep 2026).
 signal bottom_row_changed()
+## The corner column's height changed (text scale, typeface, a new problem
+## line, PAUSED). Left windows reflow through the same path as bottom_row_changed.
+signal corner_height_changed()
 
 # --- role controls ------------------------------------------------
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
@@ -586,9 +589,14 @@ func _ready() -> void:
 	perf_breakdown.visible = false
 	corner_column.add_child(perf_breakdown)
 
-	pause_label = _make_label(Vector2(16, 300), "Heading")
+	# Last child of corner_column, so pausing only appends a line instead of
+	# drawing over whichever readout reaches a fixed y.
+	pause_label = Label.new()
+	pause_label.theme_type_variation = "Heading"
 	pause_label.text = "PAUSED"
 	pause_label.visible = false
+	corner_column.add_child(pause_label)
+	corner_column.resized.connect(_on_corner_resized)
 
 	_build_top_right_bar()
 	_apply_interface_label_visibility()
@@ -604,6 +612,7 @@ func _ready() -> void:
 ## (UI_PLAN.md UI-B) -- a window resize is the only thing allowed to change
 ## either tray's width; bee/cell/flower content must not.
 func _on_viewport_size_changed() -> void:
+	_apply_corner_line_width()
 	_apply_selection_tray_width()
 	call_deferred("_resize_command_tray")
 	_update_stage_marker_arrow()
@@ -626,9 +635,9 @@ func _build_stage_marker_arrow() -> void:
 
 ## Called only by challenge_runner.gd. `in_hive` is presentation state from
 ## the runner, not a HUD inference about where the marker belongs.
-func set_stage_marker(global_position: Vector2, visible: bool, in_hive: bool) -> void:
+func set_stage_marker(global_position: Vector2, marker_visible: bool, in_hive: bool) -> void:
 	_stage_marker_global_position = global_position
-	_stage_marker_visible = visible
+	_stage_marker_visible = marker_visible
 	_stage_marker_in_hive = in_hive
 
 func _make_label(pos: Vector2, variation: String = "Body") -> Label:
@@ -2261,13 +2270,13 @@ func _slide_arrow_along_edge(edge_point: Vector2, edge_bounds: Rect2) -> Vector2
 	var horizontal_edge := is_equal_approx(edge_point.y, edge_bounds.position.y) \
 		or is_equal_approx(edge_point.y, edge_bounds.end.y)
 	var limit: float = edge_bounds.size.x if horizontal_edge else edge_bounds.size.y
-	for offset in range(int(MARKER_ARROW_SCAN_STEP), int(limit + MARKER_ARROW_SCAN_STEP), int(MARKER_ARROW_SCAN_STEP)):
+	for step in range(int(MARKER_ARROW_SCAN_STEP), int(limit + MARKER_ARROW_SCAN_STEP), int(MARKER_ARROW_SCAN_STEP)):
 		for direction in [-1.0, 1.0]:
 			var candidate := edge_point
 			if horizontal_edge:
-				candidate.x = clampf(edge_point.x + offset * direction, edge_bounds.position.x, edge_bounds.end.x)
+				candidate.x = clampf(edge_point.x + step * direction, edge_bounds.position.x, edge_bounds.end.x)
 			else:
-				candidate.y = clampf(edge_point.y + offset * direction, edge_bounds.position.y, edge_bounds.end.y)
+				candidate.y = clampf(edge_point.y + step * direction, edge_bounds.position.y, edge_bounds.end.y)
 			if not _marker_arrow_obscured(candidate):
 				return candidate
 	return edge_point # At the minimum supported viewport no clear edge exists.
@@ -2484,7 +2493,7 @@ func _refresh_corner() -> void:
 		# perf_plot and perf_breakdown are persistent -- see their
 		# declaration -- so their own redraw timing survives a rebuild
 		# triggered by something unrelated, like the day counter.
-		if child == perf_plot or child == perf_breakdown:
+		if child == perf_plot or child == perf_breakdown or child == pause_label:
 			continue
 		child.queue_free()
 	Perf.end("corner_rebuild_free")
@@ -2516,6 +2525,7 @@ func _refresh_corner() -> void:
 		corner_column.move_child(perf_breakdown, corner_column.get_child_count() - 1)
 
 	if not show_signals:
+		corner_column.move_child(pause_label, corner_column.get_child_count() - 1)
 		Perf.end("corner_refresh")
 		return
 	# Each line is a button rather than a label, so it can take you to
@@ -2537,9 +2547,26 @@ func _refresh_corner() -> void:
 		if action != "":
 			line.tooltip_text = "Click to select what this is about."
 			line.pressed.connect(func(): signal_clicked.emit(action))
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.custom_minimum_size.x = _corner_line_width()
 		corner_column.add_child(line)
 	Perf.end("corner_rebuild_signals")
+	corner_column.move_child(pause_label, corner_column.get_child_count() - 1)
 	Perf.end("corner_refresh")
+
+## Width a problem line may take: the viewport minus the corner's margins.
+func _corner_line_width() -> float:
+	return maxf(0.0, get_viewport().get_visible_rect().size.x - corner_column.position.x * 2.0)
+
+## Re-wraps the strip's lines after a viewport resize. Not per frame.
+func _apply_corner_line_width() -> void:
+	var width := _corner_line_width()
+	for child in corner_column.get_children():
+		if child is Button:
+			child.custom_minimum_size.x = width
+
+func _on_corner_resized() -> void:
+	corner_height_changed.emit()
 
 ## Bottom edge of the live top-left readout block. Left-side windows ask the
 ## HUD for this instead of guessing a fixed height for a changing column.
