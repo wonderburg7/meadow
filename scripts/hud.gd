@@ -904,7 +904,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.custom_minimum_size = Vector2(320, 0)
 	current_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	current_goal_label.theme_type_variation = "Body"
-	current_goal_label.add_theme_color_override("font_color", UiTheme.color("warning"))
+	UiTheme.bind_color(current_goal_label, "font_color", "warning")
 	goal_shelf.add_child(current_goal_label)
 
 	# Tertiary: numeric progress, only for a goal with a countable target.
@@ -923,7 +923,7 @@ func _build_goal_shelf() -> void:
 
 	goal_progress_label = Label.new()
 	goal_progress_label.theme_type_variation = "Small"
-	goal_progress_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(goal_progress_label, "font_color", "text_secondary")
 	goal_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_label)
 
@@ -1017,7 +1017,7 @@ func _build_selection_panel() -> void:
 	energy_label = Label.new()
 	energy_label.theme_type_variation = "Small"
 	energy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	energy_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(energy_label, "font_color", "success")
 	column.add_child(energy_label)
 
 	# what the bee is doing right this second
@@ -1399,7 +1399,7 @@ func _build_tray_column(title: String) -> Array:
 	header.text = title
 	header.theme_type_variation = "Small"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(header, "font_color", "text_secondary")
 	wrapper.add_child(header)
 
 	var content := VBoxContainer.new()
@@ -1534,7 +1534,7 @@ func _build_cell_action_column(parent: Container, title: String) -> VBoxContaine
 	var header := Label.new()
 	header.text = title
 	header.theme_type_variation = "Small"
-	header.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(header, "font_color", "text_secondary")
 	wrapper.add_child(header)
 
 	var body := VBoxContainer.new()
@@ -1817,7 +1817,7 @@ func _build_warning_banner() -> void:
 
 	warning_label = Label.new()
 	warning_label.theme_type_variation = "Body"
-	warning_label.add_theme_color_override("font_color", UiTheme.color("warning"))
+	UiTheme.bind_color(warning_label, "font_color", "warning")
 	warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	warning_label.custom_minimum_size = Vector2(450, 0)
 	row.add_child(warning_label)
@@ -2772,7 +2772,7 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		var mixed := Label.new()
 		mixed.text = "mixed selection"
 		mixed.theme_type_variation = "Small"
-		mixed.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+		UiTheme.bind_color(mixed, "font_color", "text_secondary")
 		row.add_child(mixed)
 	elif allowed_role_keys.is_empty() or allowed_role_keys.has(Roles.key_for(common_role)):
 		row.add_child(_current_role_marker(Roles.label_for(common_role)))
@@ -2906,7 +2906,7 @@ func _build_restock_row(first) -> void:
 		var summary := Label.new()
 		summary.text = "%d cells of %s" % [first.restock_targets.size(), first.restock_resource]
 		summary.theme_type_variation = "Small"
-		summary.add_theme_color_override("font_color", UiTheme.color("success"))
+		UiTheme.bind_color(summary, "font_color", "success")
 		orders_column.add_child(summary)
 
 ## The backup role and whether a reassignment waits for the current job.
@@ -3163,7 +3163,7 @@ func _refresh_selection_text() -> void:
 			stuck = b.idle_reason()
 			if stuck != "":
 				activity += "\n%s" % stuck
-				activity_label.add_theme_color_override("font_color", UiTheme.color("warning"))
+				UiTheme.bind_color(activity_label, "font_color", "warning")
 			else:
 				activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":

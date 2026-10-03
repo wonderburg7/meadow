@@ -43,7 +43,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "The queen is dead"
 	title.theme_type_variation = "Heading"
-	title.add_theme_color_override("font_color", UiTheme.color("danger"))
+	UiTheme.bind_color(title, "font_color", "danger")
 	column.add_child(title)
 
 	var body := Label.new()
