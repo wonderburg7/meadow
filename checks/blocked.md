@@ -44,3 +44,14 @@ pick this up before it can be checked at all.
 
 Owner: none currently.
 
+### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
+
+What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.
+
+PASS: every hexagon shows its whole name at both scales in every typeface: no word is split across two lines, and no line is missing or cut off.
+
+If it fails, HO-15 reopens: the fit in `scripts/main_menu.gd::hex_fit_size`.
+
+Blocked by: HO-15 (`plans/now/hands-on-third-pass.md`); on 3 Oct 2026 OpenDyslexic split words and lost lines at scale 2, and Open Sans lost "Expansion".
+
+Owner: `plans/now/hands-on-third-pass.md`
