@@ -72,7 +72,7 @@ instrument. UT-2's Buy overlap is a geometry fact that a fixture can hold.
 **Gate.** UT-1 and UT-2 have landed, and SR-2 and SR-4 (Codex lane) have
 landed, since both edit `scenario_actions.gd`.
 
-```queue-gated
+```queue
 **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
 - Plan: `plans/now/ui-texture-polish.md` -- "UT-5 -- headless assertions for texture contrast and Buy clearance"
 - Files: `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json`

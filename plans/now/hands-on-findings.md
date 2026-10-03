@@ -95,7 +95,7 @@ and drop whatever it fixed. Split per file if more than one remains.
 **Must not change.** The corner column SC-4 builds, and the Winter window
 opening by itself on day 6 (C-91, passed).
 
-```queue-gated
+```queue
 **[Claude] HO-5 -- long text stays inside its window**
 - Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
 - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
