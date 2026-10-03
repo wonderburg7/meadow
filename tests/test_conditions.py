@@ -120,6 +120,46 @@ class NetIncomeRateKeyTest(unittest.TestCase):
         self.assertIn("DAY_STORE_SAMPLES", sampler)
 
 
+def winter_ready(winter_coming, winter_here, days_left, held, required):
+    """Mirrors conditions.gd::_winter_ready (CR-2): the winter window's
+    on-track test, judged only on the countdown's last day."""
+    if not winter_coming or winter_here:
+        return False
+    if days_left > 1.0:
+        return False
+    return held >= required
+
+
+class WinterReadyKeyTest(unittest.TestCase):
+    """CR-2 review: readiness is judged on the colony that meets winter, so
+    an on-track verdict early in the countdown records nothing."""
+
+    def test_an_early_countdown_does_not_record_it(self):
+        for days_left in (5.0, 3.0, 2.0):
+            with self.subTest(days_left=days_left):
+                self.assertFalse(winter_ready(True, False, days_left, 500.0, 10.0))
+
+    def test_judged_on_the_last_countdown_day_with_the_panels_test(self):
+        self.assertTrue(winter_ready(True, False, 1.0, 100.0, 100.0))
+        self.assertTrue(winter_ready(True, False, 0.0, 100.0, 90.0))
+        self.assertFalse(winter_ready(True, False, 1.0, 80.0, 100.0))
+
+    def test_never_outside_the_countdown(self):
+        self.assertFalse(winter_ready(False, False, 0.0, 100.0, 10.0))
+        self.assertFalse(winter_ready(True, True, 0.0, 100.0, 10.0))
+
+    def test_source_matches_the_mirror(self):
+        body = function_body(SOURCE, "_winter_ready")
+        self.assertIn("if not Session.winter_coming or Session.winter_here:", body)
+        self.assertIn('if float(forecast.get("days_left", INF)) > 1.0:', body)
+        self.assertIn('float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))', body)
+        self.assertLess(body.index('"days_left"'), body.index('"held_energy"'))
+        main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+        process = main.split("func _process(", 1)[1].split("\nfunc ", 1)[0]
+        # day_changed is emitted from main's frame, ahead of season.gd's tick.
+        self.assertIn("day_changed.emit(day)", process)
+
+
 class ColonyMilestonesTest(unittest.TestCase):
     """CR-2: the six milestones are conditions.gd data, evaluated only in a
     Colony Run and only from main.gd's day and population hooks."""

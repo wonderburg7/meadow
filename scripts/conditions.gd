@@ -225,9 +225,13 @@ static func _non_queen_adults(main) -> int:
 
 ## CR-2: the winter window's own verdict -- year_winter.gd's forecast, read
 ## the way winter_panel.gd::refresh reads it ("On track" when the comb holds
-## at least what winter needs) -- and only while the countdown runs, before
-## winter arrives. The bee count is the whole population, queen included,
-## as main's panel refresh passes it.
+## at least what winter needs) -- judged on the colony that meets winter: only
+## on the countdown's last day (the forecast's days_left at most 1), up to the
+## day boundary winter arrives on. main.gd emits day_changed before season.gd's
+## once-a-second tick sets winter_here, so that boundary is still checked. An
+## earlier verdict says nothing about the colony winter finds, and a met
+## milestone is never re-checked. The bee count is the whole population, queen
+## included, as main's panel refresh passes it.
 static func _winter_ready(main) -> bool:
 	if not Session.winter_coming or Session.winter_here:
 		return false
@@ -235,6 +239,8 @@ static func _winter_ready(main) -> bool:
 	for count in main._role_counts().values():
 		bees += int(count)
 	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
+	if float(forecast.get("days_left", INF)) > 1.0:
+		return false
 	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
 
 

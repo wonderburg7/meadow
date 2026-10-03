@@ -47,8 +47,8 @@ const MILESTONES := [
 	},
 	{
 		"id": "winter_ready", "label": "Ready for winter",
-		# The winter window's own verdict ("On track"), while the countdown
-		# runs and before winter arrives.
+		# The winter window's own verdict ("On track"), judged on the
+		# countdown's last day, on the colony that meets winter.
 		"condition": {"winter_ready": true},
 	},
 	{

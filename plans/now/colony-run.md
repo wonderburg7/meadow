@@ -54,7 +54,10 @@ existing stage gates, with no grants or bans.
   also asks that some nectar and pollen were collected in the window, or a
   colony with empty stores meets it on day 5; *post-winter recovery* reads
   "an egg has been laid" as brood in its egg stage after winter, since no
-  owner counts lays (an egg laid in winter's last days can count); and the
+  owner counts lays (an egg laid in winter's last days can count); *winter
+  readiness* is the winter window's "On track" test judged only on the
+  countdown's last day (to the boundary winter arrives on), so it describes
+  the colony winter finds, not the one the countdown opened on; and the
   first check is the first hook (a birth, death, gyne or day change), so a
   milestone true from the start records day 2 at the latest. The milestones' state is `colony_milestones.met_days` (id to
   day) and `day_met(id)`.
