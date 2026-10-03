@@ -1,7 +1,7 @@
 # Hands-on third pass -- what the 3 Oct 2026 check run left open
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly | Dependency: HO-15 follows HO-16 (both add to `tools/verify.ps1`); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: HO-15 -- a menu hex shrinks its name until every word and every line fits | Dependency: HO-16 landed (headless test of C-81, C-94 and C-100's Escape); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
 
 **Objective.** Every check the 3 Oct 2026 computer-use pass did not pass,
 and every fault it noticed on the way, is either fixed, given a headless
