@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners (HO-6 is built on branch claude/HO-6; HO-5 is built on branch claude/HO-5; hands-on check C-105 filed) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is built on branch claude/HO-8 (Dave's decision of 2 Oct 2026; re-run check C-84); HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 is queued after HO-8 (SR-4 landed), HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners (HO-6 is built on branch claude/HO-6; HO-5 is built on branch claude/HO-5; hands-on check C-105 filed) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is built on branch claude/HO-8 (Dave's decision of 2 Oct 2026; re-run check C-84); HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 is built on branch claude/HO-11 (popups take the theme font on open; hands-on check on text scale 2 not filed), HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | after HO-8 (`hud.gd`); SR-4 landed | low |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
@@ -77,37 +76,4 @@ HO-6 shipped 2026-10-03; its specification is `plans/archive/HO-6_2026-10-03.md`
 
 HO-8 shipped 2026-10-03; its specification is `plans/archive/HO-8_2026-10-03.md`.
 
-## HO-11 -- the role menus use the theme's font and the text scale
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 2 Oct 2026 (second pass, build 932d320) at text scale 2 in
-High contrast: the queen's Job row "Change to..." list (Forager, Nurse, Comb
-worker, Idle, Miner) opened in Godot's small default font, unthemed, while
-the inspector around it used the theme's font at scale 2. The menus are
-`MenuButton`s built in `hud.gd`; their popups take no theme font or size.
-
-**True afterwards.** Every `MenuButton` popup in the HUD (Job, Raises, the
-selection cog) uses the theme's font, colours and the current text scale,
-and follows a change to either.
-
-**Must not change.** Which roles each menu offers (`hud.gd::_role_offered`,
-C-81).
-
-**Reasoning.** Low: one file, the three `MenuButton` builders and the
-theme/text-scale refresh path in `hud.gd`.
-
-```queue
-**[Claude] HO-11 -- the role menus use the theme's font and the text scale**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-11 -- the role menus use the theme's font and the text scale"
-- Files: `scripts/hud.gd`
-- Check: at text scale 2 in High contrast the Job, Raises and selection-cog popups open in the theme's font at that scale and follow a change to either; the roles each offers are unchanged; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: HO-11`
-- Next after: none -- `plans/now/hands-on-findings.md` is complete
-```
-
-HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
-
-HO-13 shipped 2026-10-02; its specification is `plans/archive/HO-13_2026-10-02.md`.
-
-The 3 Oct 2026 check pass (C-99 failing on HO-12's code, C-81 and C-94 blocked, C-100 failed by synthetic key only, "End the run" while paused) is planned in `plans/archive/hands-on-third-pass_2026-10-03.md` (CK-1, HO-14 to HO-16).
+HO-11 shipped 2026-10-03; its specification is `plans/archive/HO-11_2026-10-03.md`.
