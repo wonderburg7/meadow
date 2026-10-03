@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
-   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-14 -- a queen who dies while the run is paused ends it at once"
-   - Files: `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
-   - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes all four modes including kill_paused, which failed before the main.gd change; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: tests/ho10_queen_starvation_ends_run_test.gd :: "kill_paused"`
-   - Next after: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
-
-2. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
+1. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
    - Plan: `plans/now/hands-on-third-pass.md` -- "HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly"
    - Files: `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md`
    - Check: `python tests/test_challenge2_checks.py` passes nurse_gating, dwell and escape; `tools/verify.ps1` runs it and is green
    - Proof: `absent: tools/verify.ps1 :: "tests.test_challenge2_checks"`
    - Next after: HO-15 -- a menu hex shrinks its name until every word and every line fits
 
-3. **[Claude] HO-5 -- long text stays inside its window**
+2. **[Claude] HO-5 -- long text stays inside its window**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
    - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
    - Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
    - Next after: HO-6 -- a bee under the top-left readout can be clicked
 
-4. **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
+3. **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-5 -- headless assertions for texture contrast and Buy clearance"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/ut5_panel_texture_test.json` and `python tools/run_scenario.py test_scenarios/ut5_skills_buy_clear_test.json` both pass, each fails when its fix is reverted, and `tools/verify.ps1` is green
