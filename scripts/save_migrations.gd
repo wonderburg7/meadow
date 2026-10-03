@@ -17,7 +17,8 @@ extends RefCounted
 ##
 ## Deliberately does NOT touch the several field additions that never
 ## bumped FORMAT_VERSION at all (search_anchor_x/y, known_patches,
-## species_experience/species_confidence) -- those are safe additive
+## species_experience/species_confidence, and CR-1's starting_level, read
+## by SaveGame.apply_starting_level) -- those are safe additive
 ## fields with their own .get() defaults in saving.gd already, unrelated
 ## to the version number, so folding them in here would just create a
 ## second, divergent place recording the same default.

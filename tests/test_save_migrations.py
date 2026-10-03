@@ -95,6 +95,16 @@ def upgrade(data, target_version=FORMAT_VERSION):
     return out
 
 
+def apply_starting_level(data, current):
+    """Mirrors save_game.gd::apply_starting_level (CR-1): a save that
+    records its run puts that level back; one without the field leaves
+    the current level alone. JSON numbers may arrive as floats."""
+    saved = data.get("starting_level")
+    if isinstance(saved, bool) or not isinstance(saved, (int, float)):
+        return current
+    return int(saved)
+
+
 class SaveMigrationsSourceTest(unittest.TestCase):
     """Checks the actual GDScript keeps the same version ladder these
     tests assume, so the Python mirror above can't silently drift from
@@ -184,6 +194,46 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         self.assertEqual(99, data["version"])
         self.assertEqual("future", data["marker"])
 
+
+class StartingLevelTest(unittest.TestCase):
+    """CR-1 (plans/now/colony-run.md): a save remembers which run it is,
+    as an additive field that changes nothing for a save without it."""
+
+    def test_a_save_written_at_level_8_restores_level_8(self):
+        written = json.loads(json.dumps(
+            {"version": FORMAT_VERSION, "starting_level": 8, "settings": {}}))
+        data = upgrade(written)
+        self.assertEqual(8, apply_starting_level(data, 0))
+        self.assertEqual(8, apply_starting_level({"starting_level": 8.0}, 3))
+
+    def test_a_version_6_save_without_the_field_leaves_the_level_unchanged(self):
+        data = upgrade({"version": 6, "settings": {}})
+        self.assertNotIn("starting_level", data)
+        for current in (0, 1, 3, 7, 8):
+            self.assertEqual(current, apply_starting_level(data, current))
+
+    def test_no_migration_invents_a_starting_level(self):
+        for name in ("save_v1.json", "save_v2.json"):
+            self.assertNotIn("starting_level", upgrade(load_fixture(name)))
+
+    def test_gdscript_writes_and_applies_the_starting_level(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"starting_level": Session.starting_level', save_game)
+        self.assertIn("static func apply_starting_level(data: Dictionary)", save_game)
+        self.assertIn("Session.starting_level = int(saved)", save_game)
+        for name in ("saves_panel.gd", "debug_panel.gd"):
+            source = (SCRIPTS / name).read_text(encoding="utf-8")
+            applied = source.find("SaveGame.apply_starting_level(data)")
+            self.assertNotEqual(-1, applied, name)
+            # Before the world is rebuilt, or the old level builds it.
+            self.assertLess(applied, source.find("reload_current_scene()", applied), name)
+
+    def test_levels_has_the_colony_run_at_8(self):
+        levels = (SCRIPTS / "levels.gd").read_text(encoding="utf-8")
+        row = re.search(r"\t8: \{(.*?)\n\t\},", levels, re.S)
+        self.assertIsNotNone(row, "levels.gd has no row 8")
+        self.assertIn('"run_type": "colony"', row.group(1))
+        self.assertEqual(1, levels.count('"run_type"'))
 
 if __name__ == "__main__":
     unittest.main()

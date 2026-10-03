@@ -39,6 +39,10 @@ signal scenario_chosen(level: int, preset_key: String, custom_overrides: Diction
 ## Existing internal level ids stay unchanged for save/profile stability;
 ## new run definitions receive new ids even when their player-facing order is
 ## earlier. The menu's Scenario number is presentation, not an array index.
+##
+## The Colony Run (level 8, plans/now/colony-run.md) leads the Scenarios
+## strip but carries `"presets": false`: it has no difficulty preset yet, so
+## it starts through level_chosen like a Challenge (_uses_presets below).
 const STAGES := [
 	{
 		"level": 1,
@@ -51,6 +55,13 @@ const STAGES := [
 		"group": "challenge",
 		"title": "Challenge 2 Brood, Roles and Expansion",
 		"blurb": "Grow the colony from stored food into a working hive. Lay eggs, raise specialist bees, keep nectar flowing, and expand the hive enough to support a balanced workforce.",
+	},
+	{
+		"level": 8,
+		"group": "starter",
+		"presets": false,
+		"title": "Colony Run",
+		"blurb": "The full run. One queen, no workers and no comb, and winter will come. She builds the first cell herself and nurses her own brood while she lays; grow a colony strong enough to see the winter through.",
 	},
 	{
 		"level": 7,
@@ -570,7 +581,7 @@ func _rebuild_detail_pane(stage: Dictionary) -> void:
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_column.add_child(blurb)
 
-	if stage.group == "starter":
+	if _uses_presets(stage):
 		_detail_column.add_child(_make_preset_row(stage))
 		_detail_column.add_child(_make_preset_description())
 		if _selected_preset_key == "custom":
@@ -681,12 +692,18 @@ func _make_custom_row(field: Dictionary) -> Control:
 
 func _choose(stage: Dictionary) -> void:
 	visible = false
-	if stage.group == "challenge":
+	if not _uses_presets(stage):
 		level_chosen.emit(stage.level)
 	else:
 		scenario_chosen.emit(stage.level, _selected_preset_key, _custom_values.duplicate())
 
 # --- small shared helpers ---------------------------------------------
+
+## A Scenario tile offers a difficulty preset and starts through
+## scenario_chosen. A Challenge, and the Colony Run (`"presets": false`,
+## CR-1), start through level_chosen with the tuning as it stands.
+func _uses_presets(stage: Dictionary) -> bool:
+	return stage.group == "starter" and bool(stage.get("presets", true))
 
 func _style_button(button: Button, selected: bool = false) -> void:
 	for state in UiTheme.BUTTON_STATES:

@@ -81,6 +81,7 @@ static func has_save(path: String = SAVE_PATH) -> bool:
 static func save(world, path: String = SAVE_PATH) -> bool:
 	var data := {
 		"version": FORMAT_VERSION,
+		"starting_level": Session.starting_level,
 		"settings": _settings_dict(),
 		"clock": {
 			"sim_time": Session.sim_time,
@@ -371,3 +372,14 @@ static func apply_settings(data: Dictionary) -> void:
 	for key in settings.keys():
 		if GameConfig.get(key) != null or typeof(settings[key]) == TYPE_BOOL:
 			GameConfig.set(key, settings[key])
+
+## CR-1 (plans/now/colony-run.md decision 1): puts back which run the save
+## belongs to before the world is rebuilt, so a Colony Run save reloads as a
+## Colony Run rather than inside whatever level is current. An additive field,
+## with no FORMAT_VERSION bump and no migration: a save without it leaves
+## Session.starting_level as it is, which is how every save loaded before the
+## field existed. JSON hands numbers back as floats, hence the int().
+static func apply_starting_level(data: Dictionary) -> void:
+	var saved = data.get("starting_level")
+	if typeof(saved) == TYPE_INT or typeof(saved) == TYPE_FLOAT:
+		Session.starting_level = int(saved)

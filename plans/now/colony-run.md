@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is | Dependency: none; PE-2 waits for CR-1, and the year waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: CR-2 -- the Colony Run records the day each milestone is first met (CR-1 landed: level 8, the menu tile and the saved starting_level) | Dependency: none; PE-2 waits for CR-1, and the year waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -65,6 +65,11 @@ existing stage gates, with no grants or bans.
 both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
 plays CR-1's start state. `plans/now/brood-spine.md`'s BS-6 also edits
 `scripts/main.gd`; whichever lands second rebases.
+
+**Ids.** This plan reuses the ids CR-1 and CR-2 from two slices archived on
+8-9 Sep 2026 under an earlier plan: the queue had claimed CR-1 before the
+clash surfaced, and `tools/slice.ps1 finish`'s archive gate tells the records
+apart by heading. CR-3 onwards should take ids no archive record uses.
 
 ## CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is
 
