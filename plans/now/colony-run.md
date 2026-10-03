@@ -68,7 +68,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 | COL-3 | a doomed Colony Run offers its latest checkpoint | `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd` | after COL-2 (shares `main.gd`) | medium |
 | COL-5 | level rows lose the two keys nothing reads | `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json` | after COL-3 (shares `main.gd`) | low |
 
@@ -90,42 +89,7 @@ PE-2 shipped 2026-10-03; its specification is `plans/archive/PE-2_2026-10-03.md`
 
 COL-1 shipped 2026-10-03; its specification is `plans/archive/COL-1_2026-10-03.md`.
 
-## COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one end-of-run beat, with an acceptance check).
-
-**True now** (verified 3 Oct 2026). No run has a victory. `challenge_complete.gd`
-is the Challenges' pause-and-celebrate screen, with "Continue playing" and
-"Main menu" (decision 3's Continue and End), opened by
-`challenge_runner.gd` with a headline and flavour text; `main.gd` wires its
-Continue to close it and unpause. `season.gd` emits `gyne_released`, and
-CR-2's evaluator already runs on it.
-
-**True afterwards.**
-- A Colony Run is won the first time a gyne leaves after the first winter
-  has ended with the queen alive (decision 3). A gyne released before winter
-  does not count.
-- Winning records a `victory` day alongside the milestones, in CR-2's saved
-  record, so a load never shows the screen twice and needs no new save field.
-- On the win, `challenge_complete.gd` opens with Colony Run wording: Continue
-  keeps the run going, Main menu ends it.
-
-**Must not change.** The Challenges' use of `challenge_complete.gd`; any
-other run; the milestones (CR-2) and the shelf (COL-1).
-
-**Escalate** if `challenge_complete.gd`'s wiring is Challenge-specific in a
-way that a headline and flavour cannot cover.
-
-```queue
-**[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
-- Plan: `plans/now/colony-run.md` -- "COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run"
-- Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
-- Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/challenge_complete.gd :: Colony Run`
-- Next after: COL-3 -- a doomed Colony Run offers its latest checkpoint
-```
+COL-2 shipped 2026-10-03; its specification is `plans/archive/COL-2_2026-10-03.md`.
 
 ## COL-3 -- a doomed Colony Run offers its latest checkpoint
 
