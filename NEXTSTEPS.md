@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CR-2 -- the Colony Run records the day each milestone is first met**
-   - Plan: `plans/now/colony-run.md` -- "CR-2 -- the Colony Run records the day each milestone is first met"
-   - Files: `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py`
-   - Check: `python -m unittest tests.test_conditions` covers the rate key; `python -m unittest tests.test_save_migrations` proves recorded milestone days survive a save and load; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/conditions.gd :: income`
-   - Next after: PE-2 -- the played pacing arc starts from the Colony Run's start
-
-2. **[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
+1. **[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
    - Plan: `plans/now/colony-run.md` -- "PE-2 -- the played pacing arc starts from the Colony Run's start"
    - Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` runs three different seeds from the Colony Run's start, through winter, and the plan records each seed's rows and whether the colony lived; `tools/verify.ps1` is green
    - Proof: `absent: test_scenarios/alpha_arc_test.json :: "actions"`
    - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 
-3. **[Claude] COL-1 -- the goal shelf shows the Colony Run's next milestone**
+2. **[Claude] COL-1 -- the goal shelf shows the Colony Run's next milestone**
    - Plan: `plans/now/colony-run.md` -- "COL-1 -- the goal shelf shows the Colony Run's next milestone"
    - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py`
    - Check: `python -m unittest tests.test_conditions` proves every milestone has a goal text and the shelf text follows the first unmet milestone; a Godot boot is clean; `tools/verify.ps1` is green; Dave starts a Colony Run and sees "Raise your first worker" on the goal shelf, then the next milestone once a worker emerges
    - Proof: `absent: scripts/main.gd :: colony_milestones.show_next`
    - Next after: COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
 
-4. **[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
+3. **[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
    - Plan: `plans/now/colony-run.md` -- "COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run"
    - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
    - Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
