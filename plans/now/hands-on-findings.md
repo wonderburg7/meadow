@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners (HO-6 is built on branch claude/HO-6; HO-5 is built on branch claude/HO-5; hands-on check C-105 filed) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is specified (Dave, 2 Oct 2026) and waits for the `scripts/hud.gd` and `scripts/main.gd` slices ahead of it; HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 waits for SR-4 (Codex lane) and the `scripts/hud.gd` slices ahead of it, HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners (HO-6 is built on branch claude/HO-6; HO-5 is built on branch claude/HO-5; hands-on check C-105 filed) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is queued (Dave's decision of 2 Oct 2026; HO-7 and HO-6 have landed, and it goes ahead of BS-6 in `scripts/main.gd`); HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 is queued after HO-8 (SR-4 landed), HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -21,17 +21,18 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
-| HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
+| HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | yes -- HO-7 and HO-6 landed; goes ahead of BS-6 (`main.gd`) | medium |
+| HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | after HO-8 (`hud.gd`); SR-4 landed | low |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
 they run one after the other, after SC-4, UT-4 and SR-4 have landed. HO-7
 goes before HO-8; both edit `scripts/challenge_runner.gd`. HO-8 also edits
-`scripts/hud.gd` (after HO-6) and `scripts/main.gd` (after BS-6). HO-9
+`scripts/hud.gd` (after HO-6) and `scripts/main.gd` (ahead of BS-6, swapped
+3 Oct 2026: BS-6 waits for SR-5, and the two edit different functions). HO-9
 then HO-12 edit `scripts/main_menu.gd`. HO-10 edits `scripts/main.gd` and
 should land before HO-8, which edits it too. HO-11 edits `scripts/hud.gd`
-after SR-4 and HO-8.
+after HO-8 (SR-4 landed).
 
 **What a slice reads.** Its own section below, and the function it names.
 Every "Seen" line is from the 2 Oct 2026 pass, driven by computer use in a
@@ -113,13 +114,13 @@ read off the screen. No per-target goal readout is added.
 goals; C-74's left-window layout (a longer line wraps inside the corner
 column SC-4 builds).
 
-```queue-gated
+```queue
 **[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
 - Plan: `plans/now/hands-on-findings.md` -- "HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read"
 - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md`
 - Check: the population line names nectar foragers, pollen foragers and miners in a Challenge 2 run, 2.9's goal bar agrees with the HUD's nectar or is absent, a Godot boot is clean, and `tools/verify.ps1` is green
 - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
-- Next after: HO-9 -- "Back to the run" on a fresh boot leaves the menu up
+- Next after: HO-11 -- the role menus use the theme's font and the text scale
 ```
 
 HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
@@ -142,6 +143,18 @@ and follows a change to either.
 
 **Must not change.** Which roles each menu offers (`hud.gd::_role_offered`,
 C-81).
+
+**Reasoning.** Low: one file, the three `MenuButton` builders and the
+theme/text-scale refresh path in `hud.gd`.
+
+```queue
+**[Claude] HO-11 -- the role menus use the theme's font and the text scale**
+- Plan: `plans/now/hands-on-findings.md` -- "HO-11 -- the role menus use the theme's font and the text scale"
+- Files: `scripts/hud.gd`
+- Check: at text scale 2 in High contrast the Job, Raises and selection-cog popups open in the theme's font at that scale and follow a change to either; the roles each offers are unchanged; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/hud.gd :: HO-11`
+- Next after: none -- `plans/now/hands-on-findings.md` is complete
+```
 
 HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
 
