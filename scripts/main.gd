@@ -958,11 +958,13 @@ func _role_counts(bees = null) -> Dictionary:
 func _update_population_readout(bees = null) -> void:
 	invalidate_population()
 	var counts: Dictionary = _role_counts(bees)
-	var foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)) + int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var nectar_foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0))
+	var pollen_foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var miners: int = int(counts.get(Roles.count_key(Roles.MINER), 0))
 	var nurses: int = int(counts.get(Roles.count_key(Roles.NURSE), 0))
 	var builders: int = int(counts.get(Roles.count_key(Roles.COMB_WORKER), 0))
 	var honey_makers: int = int(counts.get(Roles.count_key(Roles.HONEY), 0))
-	hud.update_population(foragers, nurses, builders, honey_makers)
+	hud.update_population(nectar_foragers, pollen_foragers, nurses, builders, miners, honey_makers)
 
 ## Records what just came out of the comb, for the nursery window's
 ## emergence rates. Keyed the same way the population counts are, so the

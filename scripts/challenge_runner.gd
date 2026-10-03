@@ -1230,6 +1230,10 @@ func _goal_progress(goal: String) -> Dictionary:
 	var condition: Dictionary = stage.get("condition", {})
 	if condition.has("custom"):
 		return _custom_goal_progress(str(condition.custom))
+	# The shelf bar is set once when the stage opens and shows one number, so
+	# a goal with several targets (2.9) would show a stale first target.
+	if condition.has("all_of") and condition.all_of.size() > 1:
+		return {}
 	return Conditions.progress(main, condition)
 
 func _custom_goal_progress(method: String) -> Dictionary:

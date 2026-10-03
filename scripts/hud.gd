@@ -2421,9 +2421,9 @@ func update_storage(nectar: float, pollen: float, honey: float, jelly: float, se
 	corner_texts["stores"] = text
 	_refresh_corner()
 
-func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void:
-	corner_texts["population"] = "Bees: %d foraging, %d nursing, %d comb workers, %d on honey" % [
-		foragers, nurses, builders, honey_makers,
+func update_population(nectar_foragers: int, pollen_foragers: int, nurses: int, builders: int, miners: int, honey_makers: int) -> void:
+	corner_texts["population"] = "Bees: %d nectar foragers, %d pollen foragers, %d nursing, %d comb workers, %d mining, %d on honey" % [
+		nectar_foragers, pollen_foragers, nurses, builders, miners, honey_makers,
 	]
 	_refresh_corner()
 
