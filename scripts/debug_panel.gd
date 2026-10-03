@@ -1146,7 +1146,9 @@ func _restart() -> void:
 
 ## The settings cog's button, so its long hover description wraps inside the
 ## screen (the shared bounded tooltip) instead of running off the right edge.
-class WrappedTooltipButton extends Button:
+class WrappedTooltipButton:
+	extends Button
+
 	func _make_custom_tooltip(for_text: String) -> Object:
 		if for_text.is_empty():
 			return null

@@ -212,7 +212,7 @@ func _build_bubble() -> void:
 	# expected to fit within whatever width it is actually given (no real
 	# overflow), so no scrollbar should ever appear in practice.
 	_bubble_scroll = ScrollContainer.new()
-	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_bubble_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	bubble.add_child(_bubble_scroll)
 
