@@ -27,7 +27,7 @@ never has two of them open. SR-4 and SR-5 were chosen by Dave on 1 Oct 2026
 ("chase it"; "a diagnosis slice"). A slice reads its own section and
 nothing else. SR-4 moved to the Claude lane (Dave, 2 Oct 2026): SC-4
 (`plans/archive/settings-and-corner_2026-10-03.md`) and UT-4
-(`plans/now/ui-texture-polish.md`) share `scripts/hud.gd` with it, so they
+(`plans/archive/ui-texture-polish_2026-10-03.md`) share `scripts/hud.gd` with it, so they
 queue behind it in that one lane, and UT-5 follows them.
 
 SR-1 shipped 2026-10-02; its specification is `plans/archive/SR-1_2026-10-02.md`.

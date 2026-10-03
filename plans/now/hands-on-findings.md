@@ -11,7 +11,7 @@ so they start here (`plans/README.md`, "Plan schema").
 
 **Already owned elsewhere, so not repeated here.** C-60's faint textures
 (UT-1) and Buy under Dr Gallerin, which failed C-80 (UT-2):
-`plans/now/ui-texture-polish.md`. Light theme leaving the Colony hint and the
+`plans/archive/ui-texture-polish_2026-10-03.md`. Light theme leaving the Colony hint and the
 HUD stats unreadable (UT-3, UT-4). C-72's quick + clicks landing on Typeface
 (SC-1) and the boot's GDScript warnings (SC-3):
 `plans/archive/settings-and-corner_2026-10-03.md`. C-81 tests a run that owns Nurses from
