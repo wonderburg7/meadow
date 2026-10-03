@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
 
@@ -74,30 +73,7 @@ HO-2 shipped 2026-10-02; its specification is `plans/archive/HO-2_2026-10-02.md`
 
 HO-5 shipped 2026-10-03; its specification is `plans/archive/HO-5_2026-10-03.md`.
 
-## HO-6 -- a bee under the top-left readout can be clicked
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen in Scenario 4's meadow: a click on forager 4N, drawn
-under the stats lines ("Hive health..."), selected nothing. The same click
-on a bee clear of the text selected it. Which control takes the click is
-not yet known: `energy_label` is built in `hud.gd` with no `mouse_filter`.
-
-**True afterwards.** Text in the top-left readout passes clicks through to
-the world, unless the text is itself interactive. Find the control first.
-
-**Must not change.** Anything in the corner that is meant to be clicked.
-
-```queue
-**[Claude] HO-6 -- a bee under the top-left readout can be clicked**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-6 -- a bee under the top-left readout can be clicked"
-- Files: `scripts/hud.gd`
-- Check: a click on a bee drawn under the top-left readout text selects it, anything in the corner meant to be clicked still works, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: HO-6`
-- Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
-```
-
-HO-7 shipped 2026-10-02; its specification is `plans/archive/HO-7_2026-10-02.md`.
+HO-6 shipped 2026-10-03; its specification is `plans/archive/HO-6_2026-10-03.md`.
 
 ## HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
 
