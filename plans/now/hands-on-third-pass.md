@@ -1,7 +1,7 @@
 # Hands-on third pass -- what the 3 Oct 2026 check run left open
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-15 -- a menu hex shrinks its name until every word and every line fits | Dependency: HO-16 landed (headless test of C-81, C-94 and C-100's Escape); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- HO-15 landed; C-99 and C-100 wait on Dave or a computer-use pass | Dependency: HO-16 landed (headless test of C-81, C-94 and C-100's Escape); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
 
 **Objective.** Every check the 3 Oct 2026 computer-use pass did not pass,
 and every fault it noticed on the way, is either fixed, given a headless
