@@ -35,7 +35,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
    - Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/challenge_complete.gd :: Colony Run`
-   - Next after: COL-3 -- a doomed Colony Run offers a checkpoint restore
+   - Next after: COL-3 -- a doomed Colony Run offers its latest checkpoint
+
+3. **[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
+   - Plan: `plans/now/colony-run.md` -- "COL-3 -- a doomed Colony Run offers its latest checkpoint"
+   - Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
+   - Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
+   - Proof: `absent: scripts/game_over.gd :: checkpoint`
+   - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 
 ### Codex lane
 
@@ -54,9 +61,8 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026; it follows HO-8 there.
-- **COL-3** (`plans/now/colony-run.md`) -- a doomed Colony Run's checkpoint restore waits to be specified after COL-2, whose end-of-run screen it sits beside.
 - **COL-4** (`plans/now/colony-run.md`) -- the year waits for PE-2's evidence and Dave's answers to its open questions.
-- **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
+- **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waited for PE-2's arc, which landed 3 Oct 2026 (one winter, three seeds; its reference player made no honey, so it is thin evidence for a honey change -- `plans/now/colony-run.md`), and now waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run's slices (`plans/now/colony-run.md`, defined 3 Oct 2026), which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
