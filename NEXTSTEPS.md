@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is**
-   - Plan: `plans/now/colony-run.md` -- "CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is"
-   - Files: `scripts/levels.gd`, `scripts/main_menu.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`
-   - Check: `python -m unittest tests.test_save_migrations` proves a save written at level 8 restores `starting_level` 8 and a version-6 save without the field loads with the level unchanged; a Godot boot is clean; `tools/verify.ps1` is green; Dave starts a Colony Run from the menu, sees a lone queen and no comb, saves, reboots and loads back into a Colony Run
-   - Proof: `absent: scripts/levels.gd :: "run_type"`
-   - Next after: CR-2 -- the Colony Run records the day each milestone is first met
-
-2. **[Claude] CR-2 -- the Colony Run records the day each milestone is first met**
+1. **[Claude] CR-2 -- the Colony Run records the day each milestone is first met**
    - Plan: `plans/now/colony-run.md` -- "CR-2 -- the Colony Run records the day each milestone is first met"
    - Files: `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py`
    - Check: `python -m unittest tests.test_conditions` covers the rate key; `python -m unittest tests.test_save_migrations` proves recorded milestone days survive a save and load; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/conditions.gd :: income`
    - Next after: PE-2 -- the played pacing arc starts from the Colony Run's start
 
-3. **[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
+2. **[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
    - Plan: `plans/now/colony-run.md` -- "PE-2 -- the played pacing arc starts from the Colony Run's start"
    - Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` runs three different seeds from the Colony Run's start, through winter, and the plan records each seed's rows and whether the colony lived; `tools/verify.ps1` is green
