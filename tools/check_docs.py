@@ -903,6 +903,9 @@ def _owner_plan(line: str) -> str | None:
     return None
 
 
+TEMPLATE_MARKERS = ("<what Dave does", "<the single condition", "<what a failure would change")
+
+
 def check_checks(errors: list[str]) -> None:
     """Every hands-on check is addressable by id, with one PASS line and one owning plan.
 
@@ -955,6 +958,11 @@ def check_checks(errors: list[str]) -> None:
                 errors.append(
                     f"{rel}: {check_id} has no line beginning 'PASS:' -- an entry states its single "
                     "pass condition on one line"
+                )
+            if any(m in body for m in TEMPLATE_MARKERS):
+                errors.append(
+                    f"{rel}: {check_id} still holds new_check.py's template text -- write what Dave does, "
+                    "its PASS line and what a failure changes before filing it"
                 )
 
             owners = [line for line in lines if line.startswith("Owner:")]
