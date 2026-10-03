@@ -98,9 +98,12 @@ def upgrade(data, target_version=FORMAT_VERSION):
 def apply_starting_level(data, current):
     """Mirrors save_game.gd::apply_starting_level (CR-1): a save that
     records its run puts that level back; one without the field leaves
-    the current level alone. JSON numbers may arrive as floats."""
+    the current level alone. JSON numbers may arrive as floats. A
+    Challenge 1 or 2 save keeps the current level, as before the field."""
     saved = data.get("starting_level")
     if isinstance(saved, bool) or not isinstance(saved, (int, float)):
+        return current
+    if int(saved) in (1, 2):
         return current
     return int(saved)
 
@@ -211,6 +214,15 @@ class StartingLevelTest(unittest.TestCase):
         self.assertNotIn("starting_level", data)
         for current in (0, 1, 3, 7, 8):
             self.assertEqual(current, apply_starting_level(data, current))
+
+    def test_a_challenge_save_keeps_the_current_level(self):
+        for saved in (1, 2, 1.0, 2.0):
+            data = upgrade({"version": FORMAT_VERSION, "starting_level": saved})
+            for current in (0, 1, 3, 8):
+                self.assertEqual(current, apply_starting_level(data, current))
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn("const CHALLENGE_LEVELS := [1, 2]", save_game)
+        self.assertIn("if int(saved) in CHALLENGE_LEVELS:", save_game)
 
     def test_no_migration_invents_a_starting_level(self):
         for name in ("save_v1.json", "save_v2.json"):
