@@ -118,7 +118,7 @@ Challenge goal readout.
 2400 # --- readouts -----------------------------------------------------
 2405 func update_day(day: int, note: String = "") -> void
 2415 func update_storage(nectar: float, pollen: float, honey: float, jelly: float, sealed: float = 0.0) -> void
-2424 func update_population(foragers: int, nurses: int, builders: int, honey_makers: int) -> void
+2424 func update_population(nectar_foragers: int, pollen_foragers: int, nurses: int, builders: int, miners: int, honey_makers: int) -> void
 2430 func update_comb(text: String) -> void
 2434 func update_energy(mean_fraction: float) -> void
 2441 func update_rates(nectar_per_sec: float, pollen_per_sec: float, births_per_sec: float) -> void
@@ -484,7 +484,7 @@ behaviour.
 1431 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## challenge_runner.gd (1,245 lines)
+## challenge_runner.gd (1,249 lines)
 
 The stage machine, goal checks and stage effects.
 
@@ -574,10 +574,10 @@ The stage machine, goal checks and stage effects.
 1213 func _goal_check_miner_expansion() -> bool
 1220 # --- goal progress readouts ---------------------------------------
 1226 func _goal_progress(goal: String) -> Dictionary
-1235 func _custom_goal_progress(method: String) -> Dictionary
+1239 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
-## main.gd (1,220 lines)
+## main.gd (1,222 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -613,15 +613,15 @@ Per-frame entry point, everything not yet split out of main.
 930  func invalidate_population() -> void
 941  func _role_counts(bees = null) -> Dictionary
 958  func _update_population_readout(bees = null) -> void
-970  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-976  func _prune_selection() -> void
-989  func _on_restart_after_loss() -> void
-995  func _on_level_chosen(level: int) -> void
-1008 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1026 func _apply_scenario_boot_arg() -> void
-1153 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1193 func _is_whole_number(value: Variant) -> bool
-1207 func _end_scenario_run(outcome: String) -> void
+972  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+978  func _prune_selection() -> void
+991  func _on_restart_after_loss() -> void
+997  func _on_level_chosen(level: int) -> void
+1010 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1028 func _apply_scenario_boot_arg() -> void
+1155 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1195 func _is_whole_number(value: Variant) -> bool
+1209 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,185 lines)
