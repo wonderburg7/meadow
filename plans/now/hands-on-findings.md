@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | yes -- HO-7 and HO-6 landed; goes ahead of BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | after HO-8 (`hud.gd`); SR-4 landed | low |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
@@ -76,56 +75,7 @@ HO-5 shipped 2026-10-03; its specification is `plans/archive/HO-5_2026-10-03.md`
 
 HO-6 shipped 2026-10-03; its specification is `plans/archive/HO-6_2026-10-03.md`.
 
-## HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
-
-<!-- LAYER: immediate-task -->
-
-**True now.** At 2.9 (reached with the stage arrows) the goal text lists all
-seven targets -- 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen
-Foragers, 2 nurses, 2 Comb workers, 2 miners -- but the screen cannot answer
-them. `hud.gd::update_population` prints "Bees: %d foraging, %d nursing, %d
-comb workers, %d on honey". `main.gd::_update_population_readout` adds the
-nectar and pollen Forager counts together before passing them, and passes no
-miner count, though `_role_counts` holds all of them. The goal shelf
-(`set_challenge_goal`) showed one bar and count, "400 / 300", while the
-HUD's Nectar read 376. Dr Gallerin still showed 2.8's line, since 2.9's
-`prompts` list is empty.
-
-**Decision (Dave, 2 Oct 2026, on C-84).** The HUD's population line splits
-nectar from pollen Foragers and counts miners, so every 2.9 target can be
-read off the screen. No per-target goal readout is added.
-
-**True afterwards.**
-- The population line reads, for example, "Bees: 6 nectar foragers, 2
-  pollen foragers, 1 nursing, 2 comb workers, 1 mining, 0 on honey", in every
-  run, not only Challenge 2. A count of zero still shows, so a shortfall is
-  visible. `update_population` takes the split counts and the miner count;
-  `_update_population_readout` passes them from `_role_counts`. Runtime
-  policy unchanged: the readout already refreshes on population change.
-- The "400 / 300" mismatch is explained and fixed: find which amount
-  `Conditions.progress` reports for `c2_complete`'s condition (via
-  `challenge_runner.gd::_goal_progress`) and make it the same nectar total
-  the HUD shows, or drop the bar for a multi-target goal if it can only
-  ever show one target.
-- `checks/ready/C-84.md` keeps its question and points its Owner line at
-  this plan; Dave re-runs it.
-
-**Must not change.** The stores line; the goal shelf for single-target
-goals; C-74's left-window layout (a longer line wraps inside the corner
-column SC-4 builds).
-
-```queue
-**[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read"
-- Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md`
-- Check: the population line names nectar foragers, pollen foragers and miners in a Challenge 2 run, 2.9's goal bar agrees with the HUD's nectar or is absent, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
-- Next after: HO-11 -- the role menus use the theme's font and the text scale
-```
-
-HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
-
-HO-10 shipped 2026-10-02; its specification is `plans/archive/HO-10_2026-10-02.md`.
+HO-8 shipped 2026-10-03; its specification is `plans/archive/HO-8_2026-10-03.md`.
 
 ## HO-11 -- the role menus use the theme's font and the text scale
 
