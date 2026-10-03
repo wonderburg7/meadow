@@ -57,7 +57,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CR-1 | a Colony Run can be started from the menu, and a save remembers which run it is | `scripts/levels.gd`, `scripts/main_menu.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py` | yes | high |
 | CR-2 | the Colony Run records the day each milestone is first met | `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py` | after CR-1 (shares `save_game.gd`) | high |
 | PE-2 | the played pacing arc starts from the Colony Run's start | `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes (CR-1 landed) | medium |
 
@@ -71,52 +70,7 @@ plays CR-1's start state. `plans/now/brood-spine.md`'s BS-6 also edits
 clash surfaced, and `tools/slice.ps1 finish`'s archive gate tells the records
 apart by heading. CR-3 onwards should take ids no archive record uses.
 
-## CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a save field and the load path).
-
-**True now** (verified 3 Oct 2026 against master). No run type matches §2's
-Colony Run: `levels.gd` holds Challenges 1-2, Scenario levels 3-7 and the
-harness's `SCENARIO_LEVEL_ID` (999), and no row has a `run_type` key. A run
-is `Session.starting_level`, set by `main.gd::_on_level_chosen` and
-`_on_scenario_chosen`. `SaveGame.save` (`FORMAT_VERSION` 6) writes no
-`starting_level`. A load sets `Session.load_path` (`saves_panel.gd`,
-`debug_panel.gd`), and `main.gd` restores it after the world is rebuilt for
-whichever level is current, so a save made in a Scenario and loaded after a
-fresh boot comes back inside level 0's world.
-
-**True afterwards.**
-- `levels.gd` gains the Colony Run row at the next free id (8):
-  `"run_type": "colony"`, `cells` 0, every worker count 0, winter on,
-  `queen_laying_backup` `ORDINARY_QUEEN_BACKUP`, empty skill lists. No other
-  row changes; a row without `run_type` behaves as today.
-- The main menu's Scenarios strip leads with a "Colony Run" tile that starts
-  level 8 through `_on_level_chosen` (no difficulty preset yet).
-- A save records `starting_level`. Loading one sets `Session.starting_level`
-  from it before the world is rebuilt, so a Colony Run save reloads as a
-  Colony Run. A save without the field loads exactly as today. Whether
-  `FORMAT_VERSION` moves, and the migration if it does, follow
-  `.claude/rules/saving.md`.
-- Checkpoints run in the Colony Run (`saving.gd::checkpoint` skips only
-  levels 1 and 2; unchanged).
-
-**Must not change.** Levels 1-7 and 999; every scenario fixture; how an
-existing save loads; Challenge checkpoints (`tutorial_checkpoint.gd`).
-
-**Escalate** if a run started at level 8 differs from decision 2 in anything
-but its world layout, or if recording the level on a save would change how
-any existing save loads.
-
-```queue
-**[Claude] CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is**
-- Plan: `plans/now/colony-run.md` -- "CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is"
-- Files: `scripts/levels.gd`, `scripts/main_menu.gd`, `scripts/save_game.gd`, `scripts/save_migrations.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`
-- Check: `python -m unittest tests.test_save_migrations` proves a save written at level 8 restores `starting_level` 8 and a version-6 save without the field loads with the level unchanged; a Godot boot is clean; `tools/verify.ps1` is green; Dave starts a Colony Run from the menu, sees a lone queen and no comb, saves, reboots and loads back into a Colony Run
-- Proof: `absent: scripts/levels.gd :: "run_type"`
-- Next after: CR-2 -- the Colony Run records the day each milestone is first met
-```
+CR-1 shipped 2026-10-03; its specification is `plans/archive/CR-1_2026-10-03.md`.
 
 ## CR-2 -- the Colony Run records the day each milestone is first met
 
