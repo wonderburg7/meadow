@@ -59,4 +59,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HO-14` (`claude/HO-14`) | Claude | a queen who dies while the run is paused ends it at once | Claude | in progress | none | `plans/now/hands-on-third-pass.md` HO-14 -- a queen who dies while the run is paused ends it at once |
