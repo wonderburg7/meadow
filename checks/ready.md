@@ -24,6 +24,7 @@ unblocker.
 - [C-107 -- Role menus use the theme font and text scale](ready/C-107.md)
 - [C-108 -- Colony Run starts from the menu as a lone queen and reloads as a Colony Run](ready/C-108.md)
 - [C-109 -- Colony Run's goal shelf shows the next milestone](ready/C-109.md)
+- [C-110 -- Colony Run victory screen](ready/C-110.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
