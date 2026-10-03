@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SC-4` (`claude/SC-4`) | Claude | the corner column holds PAUSED and its problem lines, and left windows follow its height | Claude | in progress | none | `plans/now/settings-and-corner.md` SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height |
