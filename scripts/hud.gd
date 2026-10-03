@@ -2547,9 +2547,8 @@ func _refresh_corner() -> void:
 		if action != "":
 			line.tooltip_text = "Click to select what this is about."
 			line.pressed.connect(func(): signal_clicked.emit(action))
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		line.custom_minimum_size.x = _corner_line_width()
 		corner_column.add_child(line)
+		_fit_corner_line(line)
 	Perf.end("corner_rebuild_signals")
 	corner_column.move_child(pause_label, corner_column.get_child_count() - 1)
 	Perf.end("corner_refresh")
@@ -2560,10 +2559,21 @@ func _corner_line_width() -> float:
 
 ## Re-wraps the strip's lines after a viewport resize. Not per frame.
 func _apply_corner_line_width() -> void:
-	var width := _corner_line_width()
 	for child in corner_column.get_children():
 		if child is Button:
-			child.custom_minimum_size.x = width
+			_fit_corner_line(child)
+
+## Caps a problem line at the corner width without forcing it: a line that
+## fits keeps its natural width (so it is not a click target across the top
+## of the screen); a longer one wraps at the cap. Needs the button in the
+## tree so its theme font resolves.
+func _fit_corner_line(line: Button) -> void:
+	line.autowrap_mode = TextServer.AUTOWRAP_OFF
+	line.custom_minimum_size.x = 0.0
+	var cap := _corner_line_width()
+	if line.get_minimum_size().x > cap:
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.custom_minimum_size.x = cap
 
 func _on_corner_resized() -> void:
 	corner_height_changed.emit()
