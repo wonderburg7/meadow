@@ -44,6 +44,9 @@ class HO10QueenStarvationEndsRunTest(unittest.TestCase):
     def test_queenless_save_restored_on_fresh_scene_ends_run(self):
         self._boot_and_run("restore_queenless")
 
+    def test_queen_killed_while_paused_ends_run_at_once(self):
+        self._boot_and_run("kill_paused")
+
     def test_save_with_a_queen_plays_on(self):
         self._boot_and_run("restore_queen")
 

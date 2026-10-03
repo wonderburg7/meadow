@@ -678,6 +678,11 @@ func _process(delta: float) -> void:
 	world_building._apply_scenery_setting()
 	Perf.end("scenery")
 
+	# HO-14: checked every frame, not only while the run steps. The
+	# developer "End the run" trigger kills the queen from the settings
+	# window, which pauses the run, and the game-over panel used to wait
+	# for an unpause (3 Oct 2026 check pass).
+	_check_for_loss()
 	if not get_tree().paused:
 		Session.sim_time += delta
 		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
@@ -691,7 +696,6 @@ func _process(delta: float) -> void:
 		Perf.begin("housekeeping")
 		_reseed_meadow(delta)
 		_advance_weather(delta)
-		_check_for_loss()
 		_check_colony_energy(delta)
 		Perf.end("housekeeping")
 		year_winter._refresh_signals(delta)
