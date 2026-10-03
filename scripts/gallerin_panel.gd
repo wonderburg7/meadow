@@ -212,7 +212,7 @@ func _build_bubble() -> void:
 	# expected to fit within whatever width it is actually given (no real
 	# overflow), so no scrollbar should ever appear in practice.
 	_bubble_scroll = ScrollContainer.new()
-	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_bubble_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	bubble.add_child(_bubble_scroll)
 
@@ -305,7 +305,9 @@ func _apply_layout() -> void:
 	# The label needs its content-area width before apply() reads the
 	# panel's combined minimum height below, or that height is computed
 	# from whatever width the label last had.
-	_bubble_label.custom_minimum_size.x = rect.size.x - ui_layout.panel_chrome().x
+	# Less the vertical scrollbar, which takes its width when the text is tall,
+	# so the wrap never lands under it and cuts a word.
+	_bubble_label.custom_minimum_size.x = maxf(0.0, rect.size.x - ui_layout.panel_chrome().x - _bubble_scroll.get_v_scroll_bar().get_combined_minimum_size().x)
 	_ui_panel_layout().apply(bubble, _bubble_scroll, rect, ICON_MARGIN)
 	_position_bubble_pointer()
 
