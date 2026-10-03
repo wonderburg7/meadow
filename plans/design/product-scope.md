@@ -195,6 +195,12 @@ what a run type does about discovery, difficulty, victory and continuation, and
 how pressure is scheduled -- and the architecture review deliberately proposes
 no gameplay change.
 
+**Done 3 Oct 2026:** the pass's decisions, its open questions (the year,
+level 0, the unread level keys) and its slices live in
+`plans/now/colony-run.md`; it ran before the feedback session's notes
+arrived (Dave, 3 Oct 2026). The brief below is kept as the question it
+answered.
+
 **Next design pass: the Colony Run definition (Dave, 30 Sep 2026).** Run
 policy for the flagship run comes next, after BS-4 lands and ahead of
 progression step 8. It is a high-reasoning pass whose output is a design
