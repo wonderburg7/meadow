@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-5 | long text stays inside its window | `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd` | no -- after SC-4, UT-3 and UT-4 | medium |
 | HO-6 | a bee under the top-left readout can be clicked | `scripts/hud.gd` | no -- after SC-4 (same file) | low |
 | HO-8 | the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read | `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md` | no -- after HO-7, HO-6 (`hud.gd`) and BS-6 (`main.gd`) | medium |
 | HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | no -- after SR-4 and the `hud.gd` slices ahead of it | low |
@@ -73,38 +72,7 @@ HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`
 
 HO-2 shipped 2026-10-02; its specification is `plans/archive/HO-2_2026-10-02.md`.
 
-## HO-5 -- long text stays inside its window
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen: problem lines under the stats ("Mighty Fern is annoyed
-that there is nowhere to put the nectar she gathered -- how can she work
-un...") run off the right edge and under the settings window. The one-line
-description shown on hovering the cog runs off the right. Dr Gallerin's
-bubble cuts words at its right edge ("DESIGNATE A CELL FOI"). The Winter
-window runs off the bottom of the screen and opens over the selected bee's
-panel instead of replacing it. Around day 7 at speed 8 it closed and
-reopened within about 3 s.
-
-**True afterwards.** Every one of these wraps or scrolls inside its own
-window, and the Winter window follows the left-window rules (C-74, passed).
-Diagnose first: SC-4 ("left windows follow its height") may already fix the
-Winter window and the problem lines. Re-run the sightings after SC-4 lands
-and drop whatever it fixed. Split per file if more than one remains.
-
-**Still open.** The Winter window closing and reopening around day 7 at speed 8 is not fixed by HO-5 and has no owner yet.
-
-**Must not change.** The corner column SC-4 builds, and the Winter window
-opening by itself on day 6 (C-91, passed).
-
-```queue
-**[Claude] HO-5 -- long text stays inside its window**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
-- Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`, `scripts/debug_panel.gd`
-- Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
-- Next after: HO-6 -- a bee under the top-left readout can be clicked
-```
+HO-5 shipped 2026-10-03; its specification is `plans/archive/HO-5_2026-10-03.md`.
 
 ## HO-6 -- a bee under the top-left readout can be clicked
 
