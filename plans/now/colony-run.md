@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run (COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: COL-3 -- a doomed Colony Run offers its latest checkpoint (COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -43,8 +43,8 @@ existing stage gates, with no grants or bans.
   what genetic points buy. It changes balance, so PE-2's played arc is its
   evidence and comes first. Until then, decision 3's "next mating window" is
   today's `season.gd::_gyne_season`.
-- Level 0 and the six "World & start" settings; the `win_conditions` and
-  `unlocks` keys every `levels.gd` row carries and nothing reads.
+- Level 0 and the six "World & start" settings. (The `win_conditions` and
+  `unlocks` keys nothing reads go in COL-5.)
 - §7's short-term goals (the Dr Gallerin guidance pass owns them) and urgent
   problems (today's problem strip and signal catalogue already cover them).
 - Difficulty presets for the Colony Run.
@@ -68,8 +68,8 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 | COL-3 | a doomed Colony Run offers its latest checkpoint | `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd` | after COL-2 (shares `main.gd`) | medium |
+| COL-5 | level rows lose the two keys nothing reads | `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json` | after COL-3 (shares `main.gd`) | low |
 
 **Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
 both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
@@ -89,42 +89,7 @@ PE-2 shipped 2026-10-03; its specification is `plans/archive/PE-2_2026-10-03.md`
 
 COL-1 shipped 2026-10-03; its specification is `plans/archive/COL-1_2026-10-03.md`.
 
-## COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one end-of-run beat, with an acceptance check).
-
-**True now** (verified 3 Oct 2026). No run has a victory. `challenge_complete.gd`
-is the Challenges' pause-and-celebrate screen, with "Continue playing" and
-"Main menu" (decision 3's Continue and End), opened by
-`challenge_runner.gd` with a headline and flavour text; `main.gd` wires its
-Continue to close it and unpause. `season.gd` emits `gyne_released`, and
-CR-2's evaluator already runs on it.
-
-**True afterwards.**
-- A Colony Run is won the first time a gyne leaves after the first winter
-  has ended with the queen alive (decision 3). A gyne released before winter
-  does not count.
-- Winning records a `victory` day alongside the milestones, in CR-2's saved
-  record, so a load never shows the screen twice and needs no new save field.
-- On the win, `challenge_complete.gd` opens with Colony Run wording: Continue
-  keeps the run going, Main menu ends it.
-
-**Must not change.** The Challenges' use of `challenge_complete.gd`; any
-other run; the milestones (CR-2) and the shelf (COL-1).
-
-**Escalate** if `challenge_complete.gd`'s wiring is Challenge-specific in a
-way that a headline and flavour cannot cover.
-
-```queue
-**[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
-- Plan: `plans/now/colony-run.md` -- "COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run"
-- Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
-- Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/challenge_complete.gd :: Colony Run`
-- Next after: COL-3 -- a doomed Colony Run offers its latest checkpoint
-```
+COL-2 shipped 2026-10-03; its specification is `plans/archive/COL-2_2026-10-03.md`.
 
 ## COL-3 -- a doomed Colony Run offers its latest checkpoint
 
@@ -160,5 +125,32 @@ a new owner shared by both screens.
 - Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
 - Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
 - Proof: `absent: scripts/game_over.gd :: checkpoint`
+- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
+```
+
+## COL-5 -- level rows lose the two keys nothing reads
+
+<!-- LAYER: immediate-task -->
+
+Level: low (mechanical removal across one data file, its one writer and two fixtures).
+
+**True now** (verified 3 Oct 2026 by grep). Every `levels.gd` row carries
+`"unlocks": []` and `"win_conditions": []`; `main.gd`'s scenario setup
+defaults both on a scenario's row; `test_scenarios/bs4_honey_gate_test.json`
+and `colony_30_bees_test.json` set them empty. Nothing in `scripts/`,
+`tests/` or `tools/` reads either. The Colony Run's goals are CR-2's
+milestones and COL-2's victory (decision 4), so neither key has a future
+owner here; Challenges keep their goals in `challenge_runner.gd`.
+
+**True afterwards.** Neither key appears in `scripts/` or `test_scenarios/`,
+and `levels.gd`'s header no longer describes them. No run, scenario or save
+behaves differently.
+
+```queue
+**[Claude] COL-5 -- level rows lose the two keys nothing reads**
+- Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
+- Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
+- Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/levels.gd :: "win_conditions"`
 - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 ```

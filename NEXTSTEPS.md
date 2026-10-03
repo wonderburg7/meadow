@@ -23,18 +23,18 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
-   - Plan: `plans/now/colony-run.md` -- "COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run"
-   - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
-   - Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/challenge_complete.gd :: Colony Run`
-   - Next after: COL-3 -- a doomed Colony Run offers its latest checkpoint
-
-2. **[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
+1. **[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
    - Plan: `plans/now/colony-run.md` -- "COL-3 -- a doomed Colony Run offers its latest checkpoint"
    - Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
    - Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
    - Proof: `absent: scripts/game_over.gd :: checkpoint`
+   - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
+
+2. **[Claude] COL-5 -- level rows lose the two keys nothing reads**
+   - Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
+   - Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
+   - Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/levels.gd :: "win_conditions"`
    - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 
 ### Codex lane
