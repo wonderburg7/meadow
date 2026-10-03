@@ -579,14 +579,19 @@ func _ready() -> void:
 	# shared, live-mutated Theme resource, so this stays in sync with
 	# every other panel's typeface/colour/scale without a refresh call.
 	corner_column.theme = UiTheme.build_theme()
+	# HO-6: the column and its text must not swallow clicks meant for a bee
+	# drawn beneath; the signal buttons below keep their own STOP filter.
+	corner_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(corner_column)
 
 	perf_plot = PerfPlot.new()
 	perf_plot.custom_minimum_size = Vector2(140, 40)
 	perf_plot.visible = false
+	perf_plot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	corner_column.add_child(perf_plot)
 	perf_breakdown = PerfBreakdown.new()
 	perf_breakdown.visible = false
+	perf_breakdown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	corner_column.add_child(perf_breakdown)
 
 	# Last child of corner_column, so pausing only appends a line instead of
@@ -594,6 +599,7 @@ func _ready() -> void:
 	pause_label = Label.new()
 	pause_label.theme_type_variation = "Heading"
 	pause_label.text = "PAUSED"
+	pause_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pause_label.visible = false
 	corner_column.add_child(pause_label)
 	corner_column.resized.connect(_on_corner_resized)
@@ -2507,6 +2513,7 @@ func _refresh_corner() -> void:
 			continue
 		var label := Label.new()
 		label.text = text
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# Each readout keeps its own headline/detail weighting (see
 		# CORNER_SIZES) rather than collapsing onto the four shared
 		# variations, so it scales directly instead.

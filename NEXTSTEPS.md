@@ -23,19 +23,26 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-6 -- a bee under the top-left readout can be clicked**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-6 -- a bee under the top-left readout can be clicked"
-   - Files: `scripts/hud.gd`
-   - Check: a click on a bee drawn under the top-left readout text selects it, anything in the corner meant to be clicked still works, a Godot boot is clean, and `tools/verify.ps1` is green
-   - Proof: `absent: scripts/hud.gd :: HO-6`
-   - Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
-
-2. **[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
+1. **[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
    - Plan: `plans/now/hands-on-third-pass.md` -- "HO-15 -- a menu hex shrinks its name until every word and every line fits"
    - Files: `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md`
    - Check: `python tests/test_ho15_menu_hex_fit.py` passes for six typefaces at text scale 1 and 2; a Godot boot is clean; `tools/verify.ps1` is green; C-99 is back in `checks/ready/`
    - Proof: `present: scripts/main_menu.gd :: widest = maxf(widest, font.get_string_size(word`
    - Next after: none -- `plans/now/hands-on-third-pass.md` is complete
+
+2. **[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read"
+   - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md`
+   - Check: the population line names nectar foragers, pollen foragers and miners in a Challenge 2 run, 2.9's goal bar agrees with the HUD's nectar or is absent, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
+   - Next after: HO-11 -- the role menus use the theme's font and the text scale
+
+3. **[Claude] HO-11 -- the role menus use the theme's font and the text scale**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-11 -- the role menus use the theme's font and the text scale"
+   - Files: `scripts/hud.gd`
+   - Check: at text scale 2 in High contrast the Job, Raises and selection-cog popups open in the theme's font at that scale and follow a change to either; the roles each offers are unchanged; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: HO-11`
+   - Next after: none -- `plans/now/hands-on-findings.md` is complete
 
 ### Codex lane
 
@@ -53,13 +60,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
+- **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026; it follows HO-8 there.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
-- **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 
