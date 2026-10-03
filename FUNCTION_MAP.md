@@ -790,7 +790,7 @@ One cell: contents, brood, honey ripening, how it draws.
 1177 func development_percent() -> float
 ```
 
-## debug_panel.gd (1,145 lines)
+## debug_panel.gd (1,155 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
