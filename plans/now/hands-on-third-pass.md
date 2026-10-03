@@ -39,7 +39,6 @@ at 21:07 on 2 Oct, so it **included HO-1, HO-12 and HO-13 but not HO-2**
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-16 | Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly | `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md` | yes | medium |
 | HO-15 | a menu hex shrinks its name until every word and every line fits | `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md` | no -- after UT-4 and HO-16 | medium |
 
 **Dependencies.** CK-1, HO-14 and HO-16 share no file and can run in any
@@ -57,86 +56,7 @@ CK-1 shipped 2026-10-03; its specification is `plans/archive/CK-1_2026-10-03.md`
 
 HO-14 shipped 2026-10-03; its specification is `plans/archive/HO-14_2026-10-03.md`.
 
-## HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
-
-<!-- LAYER: immediate-task -->
-
-**True now.** C-81 and C-94 were blocked on 3 Oct because the stage arrows
-overshoot 2.5 and the stacked comb cells are hard to click; C-100's Escape
-has only ever been "verified" by an uncommitted headless run (HO-1) and
-by computer use, which likely cannot send Escape. Nothing in `tests/`
-covers any of the three.
-
-**Do this.** One GDScript test with three modes, run like HO-10's.
-1. Create `tests/challenge2_checks_test.gd` by copying
-   `tests/ho10_queen_starvation_ends_run_test.gd`'s skeleton: `extends
-   SceneTree`, `_process` phase machine, `_boot` (with
-   `const CHALLENGE_TWO_LEVEL := 2` in place of `SCENARIO_ONE_LEVEL`),
-   `_fail`, `_report`. Print prefix `C2CHECKS` (`C2CHECKS PASS` /
-   `C2CHECKS FAIL ...`). Modes from `OS.get_cmdline_user_args()[0]`:
-   `nurse_gating`, `dwell`, `escape`. After `BOOT_FRAMES` (10):
-   `var runner = _main.get("challenge_runner")`; fail if `not runner.active`.
-   Reach scripts with `load(...)`, never by class name (a `--script` run
-   compiles before autoloads exist): `roles.gd` (`NURSE`),
-   `challenge_stages.gd` (`NURSES_SKILL`, `MIN_STAGE_DWELL`).
-2. **`nurse_gating`** (C-81). `var hud = _main.get("hud")`. Fail if
-   `hud._role_offered(NURSE)` is true at the start ("Challenge 2 offers
-   Nurse before 2.5"). Call `runner.debug_advance_stage()` until
-   `runner.current_stage_id() == "2.5"` (at most 10 calls, all in this
-   frame); fail if not reached. Fail if `_role_offered(NURSE)` is now true
-   (stage taught, skill not bought). Fail unless
-   `hud.skill_tree_panel.buy_skill(NURSES_SKILL)` returns true. Next frame,
-   fail unless `_role_offered(NURSE)` is true.
-3. **`dwell`** (C-94). Advance with `debug_advance_stage()` until the stage
-   is `"2.2"`. Take the first cell in `_main.hive.cells` whose `is_built`
-   is true and call `set_designation("pollen", true)`. Call
-   `_main.hive.deposit("nectar", 400.0)` and `deposit("pollen", 200.0)`;
-   fail, printing both totals, unless `_main.hive.total("nectar") >= 175.0`
-   and `total("pollen") >= 90.0` (if this fails, stop and report: do not
-   hunt for another way to fill the comb). Call `debug_advance_stage()`
-   once (to 2.3). Then every frame: if `paused`, set `paused = false` and
-   log it once; add `delta` to a per-stage total keyed by
-   `runner.current_stage_id()`; finish when the stage is `"2.5"`, failing
-   if 3000 frames pass first. Fail unless the totals for `"2.3"` and
-   `"2.4"` are each at least `MIN_STAGE_DWELL - 0.1`; log all totals.
-4. **`escape`** (C-100). `var tree_panel = _main.get("hud").skill_tree_panel`;
-   `tree_panel.open()`; fail unless `paused`. Push a Space press and release
-   with `root.push_input(event)` (`InputEventKey`, `keycode = KEY_SPACE`,
-   `pressed` true then false); fail if `not paused` or the tree closed. Push
-   an Escape press (`KEY_ESCAPE`). Next frame fail if `tree_panel.is_open()`
-   or `paused` is still true.
-5. Create `tests/test_challenge2_checks.py` by copying
-   `tests/test_ho10_queen_starvation_ends_run.py`: `TEST_SCRIPT =
-   "res://tests/challenge2_checks_test.gd"`, markers `C2CHECKS PASS` /
-   `C2CHECKS FAIL`, one test method per mode, and `"--fixed-fps", "60"`
-   inserted before `"--script"` in the subprocess call so `delta` is fixed.
-6. `tools/verify.ps1`: append `"tests.test_challenge2_checks"` to the end of
-   the `$unitModules` array.
-7. `checks/ready/C-81.md`: replace "What this checks" with
-   `What this checks: start Challenge 2 from the main menu and click the queen; open her Job row's "Change to..." menu. Open the cog, tick Developer mode, and under World & start press the Challenge stage ▶ arrow until it reads 2.5 (stop there). Close the cog, open Skills, buy Nurses (free at 2.5), close the tree and open the queen's "Change to..." menu again.`
-   and PASS with
-   `PASS: Nurse is missing from the menu before Nurses is bought and offered straight after.`
-   Set its Owner to `plans/now/hands-on-third-pass.md`.
-8. `checks/ready/C-94.md`: add after the PASS line
-   `The hold itself is proved headlessly (tests/test_challenge2_checks.py, HO-16); this check asks only whether each stage stays up long enough to read.`
-   and set its Owner to `plans/now/hands-on-third-pass.md`.
-
-**True afterwards.** `python tests/test_challenge2_checks.py` passes all
-three modes. If `nurse_gating` or `dwell` fails, that is a real defect:
-report it with the test's output and stop (it reopens BS-3 or HO-7);
-do not change game code in this slice. If `escape` fails, report it the
-same way: it is HO-1's fault reproduced, and Dave decides.
-
-**Must not change.** Any file under `scripts/`.
-
-```queue
-**[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
-- Plan: `plans/now/hands-on-third-pass.md` -- "HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly"
-- Files: `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md`
-- Check: `python tests/test_challenge2_checks.py` passes nurse_gating, dwell and escape; `tools/verify.ps1` runs it and is green
-- Proof: `absent: tools/verify.ps1 :: "tests.test_challenge2_checks"`
-- Next after: HO-15 -- a menu hex shrinks its name until every word and every line fits
-```
+HO-16 shipped 2026-10-03; its specification is `plans/archive/HO-16_2026-10-03.md`.
 
 ## HO-15 -- a menu hex shrinks its name until every word and every line fits
 
