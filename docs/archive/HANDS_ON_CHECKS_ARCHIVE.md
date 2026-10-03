@@ -6,6 +6,107 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 3 Oct 2026 -- Dave's hands-on pass
+
+### C-79 -- Skills fills the screen and pauses the game
+
+What this checks: start a sandbox run, set the speed to 2, and press Skills on the top bar's second row. Then close the view with its × (and once more with Escape).
+
+PASS: the skill tree covers the whole window and the colony stops (the pause readout shows); after closing, the colony runs again at speed 2.
+
+If it fails, `skill_tree_panel.gd::open`/`close` are not pausing or restoring the tree, or the view is not anchored full-screen.
+
+Owner: `plans/archive/skill-screen_2026-10-01.md`
+
+### C-80 -- clicking a skill and pressing Buy buys it
+
+What this checks: in a sandbox run with some nectar and pollen stored (a few in-game days in is enough), press Skills and click a skill tile drawn in the "can be bought" colour. Read the strip along the bottom, then press its Buy button.
+
+PASS: the strip names the skill, its tier and its cost; after Buy, the colony's stores drop by that cost and the strip and the tile both show it as owned.
+
+If it fails, the click is not reaching `SkillGrid._gui_input` or the strip's Buy (`_on_buy_pressed`) is not calling `buy_skill`.
+
+Owner: `plans/archive/skill-screen_2026-10-01.md`
+
+### C-93 -- Skills tooltip wraps on screen and Buy sits clear of Dr Gallerin
+
+What this checks: Run the game, open the Skills window, and hover the Nurses tile near the right edge of the window. Then click an affordable skill and press the Buy button, which now sits at the left of the strip along the bottom, beside the skill's text.
+
+PASS: The tooltip wraps into a narrow themed box fully inside the window, and one click on Buy (anywhere on the button) buys the skill.
+
+If it fails, UT-2 reopens: a tooltip still running off-screen means SkillGrid's tooltip override is not being used; a missed Buy click means Dr Gallerin's layer still covers the button.
+
+Owner: `plans/now/ui-texture-polish.md`
+
+### C-71 -- High contrast panels stay plain
+
+What this checks: switch Appearance to High contrast, then set Panel texture to Honeycomb and then Grain, and look at the Colony window.
+
+PASS: in High contrast, Honeycomb and Grain both leave the Colony window plain, with no pattern behind the text.
+
+If it fails, `scripts/ui_theme.gd::PanelBox._draw` is drawing a texture in High contrast.
+
+Owner: `plans/now/ui-texture-polish.md`
+
+### C-72 -- Text scale applies after a pause
+
+What this checks: open the settings window during a Challenge, open World & start and Appearance, and set Text scale to 2.0 (2 is the most it goes to). Click − five times quickly to reach 1.50, wait two seconds, then click + four times quickly, keeping the pointer still.
+
+PASS: + stays under the pointer for every click, Text scale reads 1.90, Typeface has not changed, and the whole interface resizes about a second after the last click.
+
+If it fails, `scripts/debug_panel.gd::_adjust` re-lays the window on each click (or never applies the scale), or the Challenge stage navigator in World & start (`_make_challenge_stage_navigation`) changes height when the stage moves on, which shifts every row below it. SC-1 fixed that second cause: in C-72 run 1 (1 Oct 2026) the stage moved on mid-click and three + clicks changed Typeface. A stage change while you click is chance, so a pass doesn't prove that fix. The headless check in SC-1's plan section does.
+
+Owner: `plans/now/settings-and-corner.md`
+
+### C-96 -- A queen who starves in Scenario 1 opens "The queen is dead"
+
+What this checks: from the main menu, start "Scenario 1 Queen alone" on
+any preset, set the speed to 8 and give no orders at all. Watch until her
+energy reaches 0% (around Day 4) and she dies of starvation.
+
+PASS: the moment she dies, the dark-red "The queen is dead" panel covers the screen, the day counter stops, and "Try again" and "Main menu" both work.
+
+If it fails, HO-10 (`plans/now/hands-on-findings.md`) reopens: the run
+carrying on past her death means `main.gd::_check_for_loss` still misses a
+freed queen; a panel that opens but sits behind something means
+`scripts/game_over.gd`'s layer is wrong.
+
+Owner: `plans/now/hands-on-findings.md`
+
+### C-97 -- Developer mode shows the Triggers, and End the run opens The queen is dead
+
+What this checks: open the debug menu in a Challenge run with Developer mode unticked, then tick it in the settings and press "End the run" under Triggers.
+
+PASS: with Developer mode off there is no Triggers header or button, and with it on "End the run" opens "The queen is dead".
+
+If it fails, HO-3 reopens in `scripts/debug_panel.gd` (or the Triggers show for a tester who should not see them).
+
+Owner: `plans/now/hands-on-findings.md`
+
+### C-98 -- Saves window name field shows 24+ characters and opens on top of the menu
+
+What this checks: In a run, click the cog -> "Saves…", press "Save this run" on a fresh run and type a long name such as "My very long colony name 1"; then, leaving the window open, choose Return to Main Menu and press cog -> "Saves…".
+
+PASS: The name field shows at least 24 characters on its own row, and the Saves window appears on top of the main menu without a "Save this run" button.
+
+If it fails, the HO-4 slice reopens: `scripts/saves_panel.gd` (field width, or the layer refresh in `_apply_menu_context`).
+
+Owner: `plans/now/hands-on-findings.md`
+
+### C-95 -- Back to the run is absent on a fresh boot and works after Return to Main Menu
+
+What this checks: <what Dave does, and where: the screen, the setting,
+the control. Plain language -- say how to reach it, not what the code
+does. One or two sentences.>
+
+PASS: <the single condition, on this one line>
+
+If it fails, <what a failure would change -- the value, the file, or the
+slice it reopens. A check whose failure changes nothing does not belong
+here.>
+
+Owner: `plans/now/hands-on-findings.md`
+
 ## 2 Oct 2026 -- Dave's hands-on pass
 
 ### C-74 -- Winter forecast replaces Colony on the left
