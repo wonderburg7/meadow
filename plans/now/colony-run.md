@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: CR-2 -- the Colony Run records the day each milestone is first met (CR-1 landed: level 8, the menu tile and the saved starting_level) | Dependency: none; CR-3 waits for CR-2 and PE-2, and the year waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: PE-2 -- the played pacing arc starts from the Colony Run's start (CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; CR-3 waits for PE-2, and the year waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -49,7 +49,15 @@ existing stage gates, with no grants or bans.
   problems (today's problem strip and signal catalogue already cover them).
 - Difficulty presets for the Colony Run.
 - CR-3, the milestone readout and the victory screen: specified after CR-2,
-  once the evaluator's facts exist to show.
+  once the evaluator's facts exist to show. CR-2 (3 Oct 2026) took three
+  readings CR-3 should confirm with Dave before showing them: *stable income*
+  also asks that some nectar and pollen were collected in the window, or a
+  colony with empty stores meets it on day 5; *post-winter recovery* reads
+  "an egg has been laid" as brood in its egg stage after winter, since no
+  owner counts lays (an egg laid in winter's last days can count); and the
+  first check is the first hook (a birth, death, gyne or day change), so a
+  milestone true from the start records day 2 at the latest. The milestones' state is `colony_milestones.met_days` (id to
+  day) and `day_met(id)`.
 
 ## Open slices at a glance
 

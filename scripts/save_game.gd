@@ -121,6 +121,7 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		"flowers": _flowers_data(world),
 		"fog": world.fog_of_war.explored_list(),
 		"skills": _skills_data(),
+		"colony_milestones": world.colony_milestones.save_data(),
 	}
 
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -364,6 +365,17 @@ static func restore_skills(data: Dictionary, progression) -> void:
 	for skill_id in data.get("skills", {}).get("temporary", []):
 		progression.grant_temporary(str(skill_id))
 	Availability.invalidate()
+
+## CR-2 (plans/now/colony-run.md): the day each Colony Run milestone was first
+## met, as main.gd hands it to colony_milestones.gd::restore after the world is
+## replayed. An additive field, with no FORMAT_VERSION bump and no migration,
+## like CR-1's starting_level: a save without it -- or with something other
+## than a dictionary there -- reads as nothing met.
+static func milestone_days(data: Dictionary) -> Dictionary:
+	var days = data.get("colony_milestones")
+	if typeof(days) != TYPE_DICTIONARY:
+		return {}
+	return days
 
 ## Puts the saved tuning values back before anything is built, so the
 ## world comes out the same shape it was saved in.
