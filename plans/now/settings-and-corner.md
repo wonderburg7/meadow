@@ -13,7 +13,6 @@ archived, so these start a fresh plan (`plans/README.md`, "Plan schema").
 
 | Slice | Files | Level | Lane | Startable | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| SC-4 | `scripts/hud.gd`, `scripts/game_panel.gd` | medium | Claude | yes -- queued behind SR-4 (same lane) | SR-4 first; not alongside UT-4 (all edit `scripts/hud.gd`) |
 
 **Neighbouring plan.** `plans/now/ui-texture-polish.md` (UT-1 to UT-5) came
 from the same day's pass over C-57 to C-68 and shares two files: UT-1 and
@@ -30,39 +29,4 @@ SC-2 shipped 2026-10-02; its specification is `plans/archive/SC-2_2026-10-02.md`
 
 SC-3 shipped 2026-10-02; its specification is `plans/archive/SC-3_2026-10-02.md`.
 
-## SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (layout; the owner of each piece is named below).
-
-**True now.** `hud.gd` builds `pause_label` at a fixed `Vector2(16, 300)`,
-so it draws over whichever readout line reaches y 300 (seen over
-"Recruiting" in Silkscreen and "Average energy" in Open Sans). The problem
-strip's lines are Buttons in `corner_column` with no width limit, so at the
-default window they run off the right edge. `game_panel.gd` places a left
-window below `hud.corner_bottom()`, but reflows only on a viewport resize and
-`bottom_row_changed`; when the corner grows (text scale, typeface, a new
-problem line) the Colony window covers the strip. `hud.gd` also warns on the
-`set_stage_marker` parameter `visible` and the marker-arrow loop's `offset`.
-
-**True afterwards.** `pause_label` is the last child of `corner_column`
-(kept across `_refresh_corner` rebuilds like `perf_breakdown`), so pausing
-only appends a line. Strip lines wrap within the viewport width minus the
-corner's margins, recomputed on corner rebuild and viewport resize, not per
-frame. `hud.gd` emits a corner-height signal from `corner_column.resized`,
-and `connect_left_window_reflow` connects it the same way as
-`bottom_row_changed` (extend that path; add no second one). The two `hud.gd`
-locals are renamed.
-
-**Must not change.** `camera_view.gd`'s `pause_label.visible` interface,
-`corner_bottom()`, and the problem strip's click-to-select behaviour.
-
-```queue
-**[Claude] SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height**
-- Plan: `plans/now/settings-and-corner.md` -- "SC-4 -- the corner column holds PAUSED and its problem lines, and left windows follow its height"
-- Files: `scripts/hud.gd`, `scripts/game_panel.gd`
-- Check: `python tools/gdscript_warnings.py scripts/hud.gd` passes, a hands-on check is filed for PAUSED, the wrapped strip and the Colony window at Text scale 2 in Open Sans, and `tools/verify.ps1` is green
-- Proof: `present: scripts/hud.gd :: pause_label = _make_label(Vector2(16, 300), "Heading")`
-- Next after: none -- plans/now/settings-and-corner.md is complete
-```
+SC-4 shipped 2026-10-03; its specification is `plans/archive/SC-4_2026-10-03.md`.
