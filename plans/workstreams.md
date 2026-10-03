@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SR-5` (`codex/SR-5`) | Codex | the SF-1 flower-mix test passes, or is shown to be a simulation question | Codex | in progress | none | `plans/now/scenario-reds.md` SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question |
-| `.worktrees/CR-1` (`claude/CR-1`) | Claude | a Colony Run can be started from the menu, and a save remembers which run it is | Claude | in progress | none | `plans/now/colony-run.md` CR-1 -- a Colony Run can be started from the menu, and a save remembers which run it is |
