@@ -39,7 +39,6 @@ at 21:07 on 2 Oct, so it **included HO-1, HO-12 and HO-13 but not HO-2**
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-15 | a menu hex shrinks its name until every word and every line fits | `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md` | no -- after UT-4 and HO-16 | medium |
 
 **Dependencies.** CK-1, HO-14 and HO-16 share no file and can run in any
 order. HO-15 waits for UT-4 (`scripts/main_menu.gd`) and for HO-16 (both
@@ -58,99 +57,4 @@ HO-14 shipped 2026-10-03; its specification is `plans/archive/HO-14_2026-10-03.m
 
 HO-16 shipped 2026-10-03; its specification is `plans/archive/HO-16_2026-10-03.md`.
 
-## HO-15 -- a menu hex shrinks its name until every word and every line fits
-
-<!-- LAYER: immediate-task -->
-
-**True now.** HO-12's `main_menu.gd::_fit_hex_label` shrinks the font by
-the ratio `label.size.x / widest word`, measured once at the base size. It
-never measures at the new size (glyph widths do not scale linearly, so
-OpenDyslexic still split words at scale 2) and never checks height, so with
-`clip_text` on, a third line is cut ("Expansion" in Open Sans). It also
-recovers the base size from metadata, which goes stale when the text scale
-changes while the menu exists.
-
-**Do this.**
-1. `scripts/main_menu.gd`: add `const HEX_MIN_FONT_SIZE := 6` beside
-   `HEX_SIZE`, and these two static functions above `_fit_hex_label`:
-
-   ```gdscript
-   ## HO-15: the largest size, at most `base`, at which every word of `text`
-   ## fits `avail.x` on its own line and the word-wrapped text fits
-   ## `avail.y`. Measured at each candidate size: glyph widths do not scale
-   ## linearly, which is how OpenDyslexic still split words after HO-12.
-   static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int:
-   	var size := base
-   	while size > HEX_MIN_FONT_SIZE:
-   		if hex_text_fits(font, text, avail, size, line_spacing):
-   			return size
-   		size -= 1
-   	return HEX_MIN_FONT_SIZE
-
-   static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool:
-   	for word in text.split(" ", false):
-   		if font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > avail.x:
-   			return false
-   	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
-   	var block := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, avail.x, size, -1, flags)
-   	var lines := maxi(1, roundi(block.y / font.get_height(size)))
-   	return block.y + line_spacing * (lines - 1) <= avail.y
-   ```
-2. Replace the body of `_fit_hex_label(label)` with:
-
-   ```gdscript
-   	var font := label.get_theme_font("font")
-   	# The themed size, read from UiTheme rather than the label: the label's
-   	# own size is this function's override once it has run.
-   	var base := int(round(UiTheme.TYPE_SIZES["Tiny"] * Session.text_scale))
-   	var avail := label.size - label.get_theme_stylebox("normal").get_minimum_size()
-   	var key := "%d|%d|%s" % [font.get_rid().get_id(), base, str(avail)]
-   	if label.get_meta("hex_fit_key", "") == key:
-   		return
-   	label.set_meta("hex_fit_key", key)
-   	var target := hex_fit_size(font, label.text, avail, base, label.get_theme_constant("line_spacing"))
-   	if target == base:
-   		label.remove_theme_font_size_override("font_size")
-   	else:
-   		label.add_theme_font_size_override("font_size", target)
-   ```
-   Keep the `label.draw.connect(_fit_hex_label.bind(label))` line and the
-   "HO-12" comment above it; change that comment's first word to "HO-12/15".
-3. `tests/ho15_menu_hex_fit_test.gd` (`extends SceneTree`, prefix `HO15`,
-   copy `_fail`/`_report` from HO-10's test): on the first `_process`, load
-   `res://scripts/main_menu.gd` and `res://scripts/ui_theme.gd`. Fonts: for
-   each of `"sans", "atkinson", "opendyslexic", "opensans", "munro",
-   "silkscreen"`, `ui_theme._typeface_font(name)`, or
-   `ThemeDB.fallback_font` when that returns null. Box:
-   `Vector2(HEX_SIZE * 2.0 - 44.0, HEX_SIZE * sqrt(3.0) - 16.0)` with
-   `HEX_SIZE` from `menu.get_script_constant_map()`. Line spacing:
-   `ThemeDB.get_default_theme().get_constant("line_spacing", "Label")`. For
-   each scale in `[1.0, 2.0]` (`base = int(round(11 * scale))`) and each
-   `stage.title` in the `STAGES` constant: `size = menu.hex_fit_size(...)`;
-   fail, naming typeface, scale, title and size, unless
-   `menu.hex_text_fits(font, title, box, size, spacing)` is true, and unless
-   `size == base` or `hex_text_fits(..., size + 1, ...)` is false.
-4. `tests/test_ho15_menu_hex_fit.py`: copy HO-10's wrapper with
-   `TEST_SCRIPT = "res://tests/ho15_menu_hex_fit_test.gd"` and markers
-   `HO15 PASS`/`HO15 FAIL`, one test method, no mode argument. Append
-   `"tests.test_ho15_menu_hex_fit"` to `tools/verify.ps1`'s `$unitModules`.
-5. Move C-99 back: cut its `### C-99` entry out of `checks/blocked.md`,
-   drop its `Blocked by:` paragraph, and write it to `checks/ready/C-99.md`
-   with the heading `# C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface`.
-
-**True afterwards.** The HO-15 test passes for all six typefaces at both
-scales; a Godot boot is clean; C-99 is ready for Dave or a computer-use
-pass. The one-frame flash at the old size that the 3 Oct pass saw in
-Silkscreen may remain (the fit still runs on `draw`); it is out of scope.
-
-**Must not change.** `HEX_SIZE`, the label's position and size, its
-"Tiny" variation, `clip_text`, `autowrap_mode`.
-
-```queue
-**[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
-- Plan: `plans/now/hands-on-third-pass.md` -- "HO-15 -- a menu hex shrinks its name until every word and every line fits"
-- Files: `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md`
-- Check: `python tests/test_ho15_menu_hex_fit.py` passes for six typefaces at text scale 1 and 2; a Godot boot is clean; `tools/verify.ps1` is green; C-99 is back in `checks/ready/`
-- Proof: `present: scripts/main_menu.gd :: widest = maxf(widest, font.get_string_size(word`
-- Next after: none -- `plans/now/hands-on-third-pass.md` is complete
-```
+HO-15 shipped 2026-10-03; its specification is `plans/archive/HO-15_2026-10-03.md`.
