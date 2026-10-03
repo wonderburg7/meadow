@@ -791,6 +791,7 @@ func _on_load_pressed() -> void:
 		push_warning("There is no save to load")
 		return
 	SaveGame.apply_settings(data)
+	SaveGame.apply_starting_level(data)
 	Session.run_name = str(slot["name"])
 	Session.load_path = path
 	Session.load_pending = true

@@ -81,6 +81,7 @@ static func has_save(path: String = SAVE_PATH) -> bool:
 static func save(world, path: String = SAVE_PATH) -> bool:
 	var data := {
 		"version": FORMAT_VERSION,
+		"starting_level": Session.starting_level,
 		"settings": _settings_dict(),
 		"clock": {
 			"sim_time": Session.sim_time,
@@ -371,3 +372,26 @@ static func apply_settings(data: Dictionary) -> void:
 	for key in settings.keys():
 		if GameConfig.get(key) != null or typeof(settings[key]) == TYPE_BOOL:
 			GameConfig.set(key, settings[key])
+
+## CR-1 (plans/now/colony-run.md decision 1): puts back which run the save
+## belongs to before the world is rebuilt, so a Colony Run save reloads as a
+## Colony Run rather than inside whatever level is current. An additive field,
+## with no FORMAT_VERSION bump and no migration: a save without it leaves
+## Session.starting_level as it is, which is how every save loaded before the
+## field existed. JSON hands numbers back as floats, hence the int().
+##
+## A save made in Challenge 1 or 2 keeps the current level instead, exactly
+## as before this field: main.gd::_ready never starts the stage runner on a
+## load, so restoring level 1 or 2 would switch on the Challenge-only
+## branches (no checkpoints, and the rest of `starting_level in [1, 2]`)
+## with no Challenge running. Challenges roll back through their own
+## tutorial_checkpoint.gd, which never comes through here.
+const CHALLENGE_LEVELS := [1, 2]
+
+static func apply_starting_level(data: Dictionary) -> void:
+	var saved = data.get("starting_level")
+	if typeof(saved) != TYPE_INT and typeof(saved) != TYPE_FLOAT:
+		return
+	if int(saved) in CHALLENGE_LEVELS:
+		return
+	Session.starting_level = int(saved)

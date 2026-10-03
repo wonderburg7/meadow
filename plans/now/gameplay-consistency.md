@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (`plans/archive/pacing-evidence_2026-10-01.md`) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (now `plans/now/colony-run.md`) | Verified: 2026-10-02
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is

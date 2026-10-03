@@ -200,6 +200,7 @@ func _load(path: String, display_name: String) -> void:
 		main.hud.show_warning("That save could not be read — check the log for why.")
 		return
 	SaveGame.apply_settings(data)
+	SaveGame.apply_starting_level(data)
 	Session.run_name = display_name
 	Session.load_path = path
 	Session.load_pending = true

@@ -131,6 +131,22 @@ const LEVELS := {
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
+	# The Colony Run (plans/now/colony-run.md decisions 1-2), the flagship
+	# run and the first row to carry a `run_type`. A lone queen with no comb
+	# and no workers: she backs up as a Nurse while laying and builds the
+	# first cell herself as a Comb worker. Winter is on, said outright rather
+	# than left to the `.get("winter", true)` default. A row without
+	# `run_type` is an ordinary Challenge or Scenario preset, as before.
+	# The main menu starts it through level_chosen, with no difficulty preset.
+	8: {
+		"run_type": "colony",
+		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
+		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
+		"winter": true,
+		"unlocks": [], "win_conditions": [],
+		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
+	},
 }
 
 ## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md). main.gd's
