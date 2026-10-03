@@ -66,6 +66,7 @@ func build_scroll_body() -> void:
 func connect_left_window_reflow() -> void:
 	get_viewport().size_changed.connect(_apply_left_window_rect)
 	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	main.hud.corner_height_changed.connect(_on_bottom_row_changed)
 
 func _apply_left_window_rect() -> void:
 	var rect := UiLayout.left_window_rect(
