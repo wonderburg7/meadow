@@ -39,7 +39,6 @@ at 21:07 on 2 Oct, so it **included HO-1, HO-12 and HO-13 but not HO-2**
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CK-1 | check records match the build and never ship as the bare template | `tools/check_docs.py`, `checks/ready/C-60.md`, `checks/ready/C-86.md`, `checks/ready/C-99.md`, `checks/blocked.md` | yes | low |
 | HO-14 | a queen who dies while the run is paused ends it at once | `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py` | yes | low |
 | HO-16 | Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly | `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md` | yes | medium |
 | HO-15 | a menu hex shrinks its name until every word and every line fits | `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md` | no -- after UT-4 and HO-16 | medium |
@@ -55,67 +54,7 @@ names (`python tools/func.py <file> <function>`). Every value a slice needs
 is written here; if a named function is not where the section says, stop
 and report rather than search widely.
 
-## CK-1 -- check records match the build and never ship as the bare template
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `tools/new_check.py::record_text` writes placeholder text
-(`<what Dave does, ...>`, `<the single condition ...>`), and
-`check_docs.py::check_checks` accepts it, so C-95 and C-99 reached a
-verifier with no steps. C-60's PASS asks for texture "in all three themes"
-though C-71 (confirmed 3 Oct) requires High contrast panels plain. C-86's
-route names the editor Game tab and an unnamed "debug route", and its PASS
-asks for "the doubled text size", which no eye can measure.
-
-**Do this.**
-1. `tools/check_docs.py`: above `def check_checks`, add
-   `TEMPLATE_MARKERS = ("<what Dave does", "<the single condition", "<what a failure would change")`.
-   In `check_checks`, straight after the `PASS:` test, add: if any marker is
-   in `body`, append
-   `f"{rel}: {check_id} still holds new_check.py's template text -- write what Dave does, its PASS line and what a failure changes before filing it"`.
-2. `checks/ready/C-60.md`: replace the PASS line with
-   `PASS: Honeycomb and Grain each visibly texture the Colony window's background the moment they are chosen in Dark and in Light; in High contrast the background stays plain whichever is chosen (C-71).`
-   and in "What this checks" replace "in each of Dark, Light and High
-   contrast" with "in Dark, then Light, then High contrast".
-3. `checks/ready/C-86.md`: replace the "What this checks" paragraph with:
-   `What this checks: start Challenge 2 from the main menu. Open the cog, set Appearance -> Theme to High contrast and Text scale to 2, and tick Developer mode. Under the Triggers heading that appears, press "End the run", then close the settings window if "The queen is dead" is not already showing.`
-   and the PASS line with
-   `PASS: the game-over text and buttons use the High contrast colours, their text is the same size as the HUD's text, and nothing runs off the window edge.`
-   Delete the sentence "Only valid after UI-F-1 has merged."
-4. C-99 moves to `checks/blocked.md`, filled in: delete
-   `checks/ready/C-99.md` and append to `checks/blocked.md`:
-
-   ```md
-   ### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
-
-   What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.
-
-   PASS: every hexagon shows its whole name at both scales in every typeface: no word is split across two lines, and no line is missing or cut off.
-
-   If it fails, HO-15 reopens: the fit in `scripts/main_menu.gd::hex_fit_size`.
-
-   Blocked by: HO-15 (`plans/now/hands-on-third-pass.md`); on 3 Oct 2026 OpenDyslexic split words and lost lines at scale 2, and Open Sans lost "Expansion".
-
-   Owner: `plans/now/hands-on-third-pass.md`
-   ```
-
-**True afterwards.** `python tools/check_docs.py` passes; with any
-`checks/ready/` file's PASS line set back to `PASS: <the single condition, on this one line>`
-it fails naming that file (try it, then undo). C-60 and C-86 can be
-confirmed from the 3 Oct readings; C-99 is no longer in the ready list
-(`finish` refreshes the index).
-
-**Must not change.** `new_check.py` (the template is right; filing it
-unfilled is the fault). Any other check record.
-
-```queue
-**[Claude] CK-1 -- check records match the build and never ship as the bare template**
-- Plan: `plans/now/hands-on-third-pass.md` -- "CK-1 -- check records match the build and never ship as the bare template"
-- Files: `tools/check_docs.py`, `checks/ready/C-60.md`, `checks/ready/C-86.md`, `checks/ready/C-99.md`, `checks/blocked.md`
-- Check: `python tools/check_docs.py` passes, and fails naming the file when a ready check's PASS line is set back to the template text; C-99 sits in `checks/blocked.md` blocked by HO-15
-- Proof: `present: checks/ready/C-99.md :: <what Dave does`
-- Next after: HO-14 -- a queen who dies while the run is paused ends it at once
-```
+CK-1 shipped 2026-10-03; its specification is `plans/archive/CK-1_2026-10-03.md`.
 
 ## HO-14 -- a queen who dies while the run is paused ends it at once
 
