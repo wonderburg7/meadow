@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-1 -- the goal shelf shows the Colony Run's next milestone**
-   - Plan: `plans/now/colony-run.md` -- "COL-1 -- the goal shelf shows the Colony Run's next milestone"
-   - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py`
-   - Check: `python -m unittest tests.test_conditions` proves every milestone has a goal text and the shelf text follows the first unmet milestone; a Godot boot is clean; `tools/verify.ps1` is green; Dave starts a Colony Run and sees "Raise your first worker" on the goal shelf, then the next milestone once a worker emerges
-   - Proof: `absent: scripts/main.gd :: colony_milestones.show_next`
-   - Next after: COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
-
-2. **[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
+1. **[Claude] COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run**
    - Plan: `plans/now/colony-run.md` -- "COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run"
    - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py`
    - Check: `python -m unittest tests.test_conditions` proves a gyne before winter does not win, one after winter with the queen alive does, and a recorded victory is not shown again after a load; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/challenge_complete.gd :: Colony Run`
    - Next after: COL-3 -- a doomed Colony Run offers its latest checkpoint
 
-3. **[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
+2. **[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
    - Plan: `plans/now/colony-run.md` -- "COL-3 -- a doomed Colony Run offers its latest checkpoint"
    - Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
    - Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
