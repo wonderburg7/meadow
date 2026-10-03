@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
-   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-15 -- a menu hex shrinks its name until every word and every line fits"
-   - Files: `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md`
-   - Check: `python tests/test_ho15_menu_hex_fit.py` passes for six typefaces at text scale 1 and 2; a Godot boot is clean; `tools/verify.ps1` is green; C-99 is back in `checks/ready/`
-   - Proof: `present: scripts/main_menu.gd :: widest = maxf(widest, font.get_string_size(word`
-   - Next after: none -- `plans/now/hands-on-third-pass.md` is complete
-
-2. **[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
+1. **[Claude] HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read"
    - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/challenge_runner.gd`, `checks/ready/C-84.md`
    - Check: the population line names nectar foragers, pollen foragers and miners in a Challenge 2 run, 2.9's goal bar agrees with the HUD's nectar or is absent, a Godot boot is clean, and `tools/verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
    - Next after: HO-11 -- the role menus use the theme's font and the text scale
 
-3. **[Claude] HO-11 -- the role menus use the theme's font and the text scale**
+2. **[Claude] HO-11 -- the role menus use the theme's font and the text scale**
    - Plan: `plans/now/hands-on-findings.md` -- "HO-11 -- the role menus use the theme's font and the text scale"
    - Files: `scripts/hud.gd`
    - Check: at text scale 2 in High contrast the Job, Raises and selection-cog popups open in the theme's font at that scale and follow a change to either; the roles each offers are unchanged; a Godot boot is clean; `tools/verify.ps1` is green
