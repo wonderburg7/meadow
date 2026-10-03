@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-3 -- a doomed Colony Run offers its latest checkpoint (COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: COL-5 -- level rows lose the two keys nothing reads (COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct

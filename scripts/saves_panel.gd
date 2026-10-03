@@ -195,10 +195,15 @@ func _rebuild() -> void:
 ## The same reload the cog's Load run performs: the saved tuning values
 ## decide the hive's shape, so the world is rebuilt with them first.
 func _load(path: String, display_name: String) -> void:
+	if not reload_from(get_tree(), path, display_name):
+		main.hud.show_warning("That save could not be read — check the log for why.")
+
+## The reload itself, static so the game-over screen's "Load the latest
+## checkpoint" runs the very same path. False if the file could not be read.
+static func reload_from(tree: SceneTree, path: String, display_name: String) -> bool:
 	var data := SaveGame.read(path)
 	if data.is_empty():
-		main.hud.show_warning("That save could not be read — check the log for why.")
-		return
+		return false
 	SaveGame.apply_settings(data)
 	SaveGame.apply_starting_level(data)
 	Session.run_name = display_name
@@ -206,9 +211,10 @@ func _load(path: String, display_name: String) -> void:
 	Session.load_pending = true
 	Session.menu_pending = false
 	_run_named = true
-	get_tree().paused = false
+	tree.paused = false
 	Engine.time_scale = 1.0
-	get_tree().reload_current_scene()
+	tree.reload_current_scene()
+	return true
 
 ## Always asks, whatever warn_on_discard says (SA-1): a deleted run cannot
 ## be recovered, so the confirmation offers no "stop warning me".
