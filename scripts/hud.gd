@@ -1194,9 +1194,28 @@ func _build_selection_cog() -> Control:
 	selection_cog_btn.tooltip_text = "Choose which fields this panel shows for the selected bee."
 	selection_cog_btn.focus_mode = Control.FOCUS_NONE
 	var popup := selection_cog_btn.get_popup()
+	_theme_popup_on_open(popup)
 	popup.hide_on_checkable_item_selection = false
 	popup.id_pressed.connect(func(id: int): _on_selection_field_toggled(id, popup))
 	return selection_cog_btn
+
+## HO-11: a MenuButton's popup is its own window and takes none of the HUD
+## theme, so it opened in Godot's small default font. Each popup reads the
+## shared theme's font, size and colours as it opens, so it follows a change
+## to text scale, typeface or contrast without a refresh hook.
+func _theme_popup_on_open(popup: PopupMenu) -> void:
+	popup.about_to_popup.connect(func():
+		var theme := UiTheme.active_theme()
+		if theme.has_font("font", "Button"):
+			popup.add_theme_font_override("font", theme.get_font("font", "Button"))
+		else:
+			popup.remove_theme_font_override("font")
+		popup.add_theme_font_size_override("font_size", theme.get_font_size("font_size", "Button"))
+		popup.add_theme_color_override("font_color", UiTheme.color("text_primary"))
+		popup.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
+		popup.add_theme_color_override("font_disabled_color", UiTheme.color("disabled"))
+		popup.add_theme_stylebox_override("panel", UiTheme.panel_stylebox())
+	)
 
 ## Rebuilds the cog's popup from SELECTION_FIELD_TABLE for the given
 ## selection kind, and hides the cog entirely when that kind has no
@@ -1775,6 +1794,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 	var role_value: int = entry.role
 	menu.name = "hatch_%s_menu" % Roles.key_for(role_value)
 	var popup := menu.get_popup()
+	_theme_popup_on_open(popup)
 	_fill_hatch_menu(popup, role_value, options)
 	popup.id_pressed.connect(func(id: int):
 		_request_hatch_role(role_value, options[id].focus, options[id].automine)
@@ -3100,6 +3120,7 @@ func _make_role_menu(label: String, tip: String, items: Array, node_name: String
 	menu.theme_type_variation = "Small"
 	menu.tooltip_text = tip
 	var popup := menu.get_popup()
+	_theme_popup_on_open(popup)
 	for i in range(items.size()):
 		popup.add_item(items[i].text, i)
 	popup.id_pressed.connect(func(id: int): items[id].action.call())
