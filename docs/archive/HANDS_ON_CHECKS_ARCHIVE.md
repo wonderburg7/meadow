@@ -56,7 +56,7 @@ PASS: + stays under the pointer for every click, Text scale reads 1.90, Typeface
 
 If it fails, `scripts/debug_panel.gd::_adjust` re-lays the window on each click (or never applies the scale), or the Challenge stage navigator in World & start (`_make_challenge_stage_navigation`) changes height when the stage moves on, which shifts every row below it. SC-1 fixed that second cause: in C-72 run 1 (1 Oct 2026) the stage moved on mid-click and three + clicks changed Typeface. A stage change while you click is chance, so a pass doesn't prove that fix. The headless check in SC-1's plan section does.
 
-Owner: `plans/now/settings-and-corner.md`
+Owner: `plans/archive/settings-and-corner_2026-10-03.md`
 
 ### C-96 -- A queen who starves in Scenario 1 opens "The queen is dead"
 
