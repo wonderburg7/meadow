@@ -20,7 +20,6 @@ Each of them came right after hovering before the click.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| UT-4 | a theme change recolours the HUD, main menu and end screens | `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd` | yes -- queued behind SR-4 and SC-4 (same lane) | low |
 | UT-5 | headless assertions for texture contrast and Buy clearance | `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json` | no -- SR-2 and SR-4 own `scenario_actions.gd` | medium |
 
 **Dependencies.** UT-3 runs after UT-1 because both edit `ui_theme.gd`.
@@ -46,29 +45,7 @@ UT-2 shipped 2026-10-02; its specification is `plans/archive/UT-2_2026-10-02.md`
 
 UT-3 shipped 2026-10-02; its specification is `plans/archive/UT-3_2026-10-02.md`.
 
-## UT-4 -- a theme change recolours the HUD, main menu and end screens
-
-<!-- LAYER: immediate-task -->
-
-Level: low (mechanical: UT-3's helper applied to the remaining 17 overrides).
-
-**True now.** UT-3's "True now" covers it: `hud.gd` has 9, `main_menu.gd` 4,
-`challenge_complete.gd` 3 and `game_over.gd` 1. The main menu matters most,
-because its cog changes the theme while the menu is showing.
-
-**Should be true.** Each of those overrides goes through `UiTheme.bind_color`.
-
-**Gate.** Cleared 2 Oct 2026: UT-3 has landed, and SR-4 now runs ahead of
-it in the Claude lane, so the shared `hud.gd` is never open twice.
-
-```queue
-**[Claude] UT-4 -- a theme change recolours the HUD, main menu and end screens**
-- Plan: `plans/now/ui-texture-polish.md` -- "UT-4 -- a theme change recolours the HUD, main menu and end screens"
-- Files: `scripts/hud.gd`, `scripts/main_menu.gd`, `scripts/game_over.gd`, `scripts/challenge_complete.gd`
-- Check: `grep -c 'add_theme_color_override("font_color", UiTheme.color' scripts/hud.gd scripts/main_menu.gd scripts/game_over.gd scripts/challenge_complete.gd` prints 0 for each file, a Godot boot is clean, and `tools/verify.ps1` is green
-- Proof: `present: scripts/main_menu.gd :: add_theme_color_override("font_color", UiTheme.color(`
-- Next after: UT-5 -- headless assertions for texture contrast and Buy clearance
-```
+UT-4 shipped 2026-10-03; its specification is `plans/archive/UT-4_2026-10-03.md`.
 
 ## UT-5 -- headless assertions for texture contrast and Buy clearance
 
