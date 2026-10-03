@@ -575,7 +575,7 @@ The stage machine, goal checks and stage effects.
 1235 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
-## main.gd (1,216 lines)
+## main.gd (1,220 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -600,26 +600,26 @@ Per-frame entry point, everything not yet split out of main.
 633  func begin_winter_countdown() -> void
 636  # --- per-frame ----------------------------------------------------
 646  func _process(delta: float) -> void
-728  # --- the frame rate readout ----------------------------------------
-747  func _sample_fps() -> void
-770  func _reseed_meadow(delta: float) -> void
-785  func _hatch_ready_brood() -> void
-817  func _advance_weather(delta: float) -> void
-848  func _apply_rain_overlay() -> void
-870  func _check_for_loss() -> void
-895  func _check_colony_energy(delta: float) -> void
-926  func invalidate_population() -> void
-937  func _role_counts(bees = null) -> Dictionary
-954  func _update_population_readout(bees = null) -> void
-966  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-972  func _prune_selection() -> void
-985  func _on_restart_after_loss() -> void
-991  func _on_level_chosen(level: int) -> void
-1004 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1022 func _apply_scenario_boot_arg() -> void
-1149 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1189 func _is_whole_number(value: Variant) -> bool
-1203 func _end_scenario_run(outcome: String) -> void
+732  # --- the frame rate readout ----------------------------------------
+751  func _sample_fps() -> void
+774  func _reseed_meadow(delta: float) -> void
+789  func _hatch_ready_brood() -> void
+821  func _advance_weather(delta: float) -> void
+852  func _apply_rain_overlay() -> void
+874  func _check_for_loss() -> void
+899  func _check_colony_energy(delta: float) -> void
+930  func invalidate_population() -> void
+941  func _role_counts(bees = null) -> Dictionary
+958  func _update_population_readout(bees = null) -> void
+970  func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+976  func _prune_selection() -> void
+989  func _on_restart_after_loss() -> void
+995  func _on_level_chosen(level: int) -> void
+1008 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1026 func _apply_scenario_boot_arg() -> void
+1153 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1193 func _is_whole_number(value: Variant) -> bool
+1207 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,185 lines)
