@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CK-1 -- check records match the build and never ship as the bare template**
-   - Plan: `plans/now/hands-on-third-pass.md` -- "CK-1 -- check records match the build and never ship as the bare template"
-   - Files: `tools/check_docs.py`, `checks/ready/C-60.md`, `checks/ready/C-86.md`, `checks/ready/C-99.md`, `checks/blocked.md`
-   - Check: `python tools/check_docs.py` passes, and fails naming the file when a ready check's PASS line is set back to the template text; C-99 sits in `checks/blocked.md` blocked by HO-15
-   - Proof: `present: checks/ready/C-99.md :: <what Dave does`
-   - Next after: HO-14 -- a queen who dies while the run is paused ends it at once
-
-2. **[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
+1. **[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
    - Plan: `plans/now/hands-on-third-pass.md` -- "HO-14 -- a queen who dies while the run is paused ends it at once"
    - Files: `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
    - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes all four modes including kill_paused, which failed before the main.gd change; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: tests/ho10_queen_starvation_ends_run_test.gd :: "kill_paused"`
    - Next after: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
 
-3. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
+2. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
    - Plan: `plans/now/hands-on-third-pass.md` -- "HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly"
    - Files: `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md`
    - Check: `python tests/test_challenge2_checks.py` passes nurse_gating, dwell and escape; `tools/verify.ps1` runs it and is green
