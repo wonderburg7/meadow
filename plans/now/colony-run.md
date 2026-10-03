@@ -68,7 +68,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-1 | the goal shelf shows the Colony Run's next milestone | `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py` | after CR-2 | medium |
 | COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 | COL-3 | a doomed Colony Run offers its latest checkpoint | `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd` | after COL-2 (shares `main.gd`) | medium |
 
@@ -88,41 +87,7 @@ CR-2 shipped 2026-10-03; its specification is `plans/archive/CR-2_2026-10-03.md`
 
 PE-2 shipped 2026-10-03; its specification is `plans/archive/PE-2_2026-10-03.md`.
 
-## COL-1 -- the goal shelf shows the Colony Run's next milestone
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (presentation over CR-2's facts, with an acceptance check).
-
-**True now** (verified 3 Oct 2026 on branch claude/CR-2). CR-2's
-`colony_milestones.gd` records the day each of §7's six milestones is first
-met, and nothing shows them. The goal shelf (`hud.gd::set_challenge_goal`:
-goal text, the last completed goal struck through, an optional bar) is fed
-only by `challenge_runner.gd::_show_goal`, so it is hidden in every
-non-Challenge run. Dave accepted CR-2's three readings of stable income,
-post-winter recovery and winter readiness on 3 Oct 2026.
-
-**True afterwards.**
-- In a Colony Run the goal shelf shows the first milestone not yet met, in
-  `MILESTONES` order, as a short player-facing goal (each milestone gains one,
-  such as "Raise your first worker"), with the last milestone met struck
-  through beneath it. No bar: a milestone has no single number.
-- It refreshes when a milestone is newly met, at the start of the run and
-  after a load -- never per frame.
-- Once all six are met the shelf says so and stays up.
-- Nothing changes in any other run.
-
-**Must not change.** How the Challenge runner drives the shelf; the
-milestones' conditions and recorded days (CR-2).
-
-```queue
-**[Claude] COL-1 -- the goal shelf shows the Colony Run's next milestone**
-- Plan: `plans/now/colony-run.md` -- "COL-1 -- the goal shelf shows the Colony Run's next milestone"
-- Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py`
-- Check: `python -m unittest tests.test_conditions` proves every milestone has a goal text and the shelf text follows the first unmet milestone; a Godot boot is clean; `tools/verify.ps1` is green; Dave starts a Colony Run and sees "Raise your first worker" on the goal shelf, then the next milestone once a worker emerges
-- Proof: `absent: scripts/main.gd :: colony_milestones.show_next`
-- Next after: COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
-```
+COL-1 shipped 2026-10-03; its specification is `plans/archive/COL-1_2026-10-03.md`.
 
 ## COL-2 -- surviving the first winter and sending out a gyne wins the Colony Run
 
