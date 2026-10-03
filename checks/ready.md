@@ -21,6 +21,7 @@ unblocker.
 - [C-104 -- PAUSED, the wrapped problem strip and the Colony window at Text scale 2 in Open Sans](ready/C-104.md)
 - [C-105 -- Dr Gallerin's bubble wraps inside itself and the Winter window scrolls inside the screen](ready/C-105.md)
 - [C-106 -- A bee drawn under the top-left readout text can be clicked and selected](ready/C-106.md)
+- [C-107 -- Role menus use the theme font and text scale](ready/C-107.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
