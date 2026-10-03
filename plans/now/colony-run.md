@@ -154,5 +154,5 @@ milestone needs a fact no existing owner provides.
 - Files: `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py`
 - Check: `python -m unittest tests.test_conditions` covers the rate key; `python -m unittest tests.test_save_migrations` proves recorded milestone days survive a save and load; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/conditions.gd :: income`
-- Next after: none -- CR-3, the milestone readout and the victory screen, is specified once CR-2 lands
+- Next after: PE-2 -- the played pacing arc starts from the Colony Run's start (CR-3, the milestone readout and the victory screen, is specified once CR-2 lands)
 ```

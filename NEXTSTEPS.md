@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/levels.gd :: "run_type"`
    - Next after: CR-2 -- the Colony Run records the day each milestone is first met
 
+3. **[Claude] CR-2 -- the Colony Run records the day each milestone is first met**
+   - Plan: `plans/now/colony-run.md` -- "CR-2 -- the Colony Run records the day each milestone is first met"
+   - Files: `scripts/colony_milestones.gd`, `scripts/conditions.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `tests/test_conditions.py`, `tests/test_save_migrations.py`
+   - Check: `python -m unittest tests.test_conditions` covers the rate key; `python -m unittest tests.test_save_migrations` proves recorded milestone days survive a save and load; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/conditions.gd :: income`
+   - Next after: PE-2 -- the played pacing arc starts from the Colony Run's start (CR-3, the milestone readout and the victory screen, is specified once CR-2 lands)
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
