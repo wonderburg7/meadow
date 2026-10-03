@@ -21,7 +21,6 @@ her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-11 | the role menus use the theme's font and the text scale | `scripts/hud.gd` | after HO-8 (`hud.gd`); SR-4 landed | low |
 
 **Dependencies.** HO-1 then HO-2 (one file). HO-3 and HO-4 each wait for the
 SC slice that owns their file. HO-5 and HO-6 both edit `scripts/hud.gd`, so
@@ -77,37 +76,4 @@ HO-6 shipped 2026-10-03; its specification is `plans/archive/HO-6_2026-10-03.md`
 
 HO-8 shipped 2026-10-03; its specification is `plans/archive/HO-8_2026-10-03.md`.
 
-## HO-11 -- the role menus use the theme's font and the text scale
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 2 Oct 2026 (second pass, build 932d320) at text scale 2 in
-High contrast: the queen's Job row "Change to..." list (Forager, Nurse, Comb
-worker, Idle, Miner) opened in Godot's small default font, unthemed, while
-the inspector around it used the theme's font at scale 2. The menus are
-`MenuButton`s built in `hud.gd`; their popups take no theme font or size.
-
-**True afterwards.** Every `MenuButton` popup in the HUD (Job, Raises, the
-selection cog) uses the theme's font, colours and the current text scale,
-and follows a change to either.
-
-**Must not change.** Which roles each menu offers (`hud.gd::_role_offered`,
-C-81).
-
-**Reasoning.** Low: one file, the three `MenuButton` builders and the
-theme/text-scale refresh path in `hud.gd`.
-
-```queue
-**[Claude] HO-11 -- the role menus use the theme's font and the text scale**
-- Plan: `plans/now/hands-on-findings.md` -- "HO-11 -- the role menus use the theme's font and the text scale"
-- Files: `scripts/hud.gd`
-- Check: at text scale 2 in High contrast the Job, Raises and selection-cog popups open in the theme's font at that scale and follow a change to either; the roles each offers are unchanged; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: HO-11`
-- Next after: none -- `plans/now/hands-on-findings.md` is complete
-```
-
-HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
-
-HO-13 shipped 2026-10-02; its specification is `plans/archive/HO-13_2026-10-02.md`.
-
-The 3 Oct 2026 check pass (C-99 failing on HO-12's code, C-81 and C-94 blocked, C-100 failed by synthetic key only, "End the run" while paused) is planned in `plans/archive/hands-on-third-pass_2026-10-03.md` (CK-1, HO-14 to HO-16).
+HO-11 shipped 2026-10-03; its specification is `plans/archive/HO-11_2026-10-03.md`.
