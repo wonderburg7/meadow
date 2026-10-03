@@ -1023,3 +1023,45 @@ Selection, drag and placement resolution.
 702  func _tile_centre(hex: Vector2i) -> Vector2
 707  func _draw_start_point_marker(point: Vector2) -> void
 ```
+
+## main_menu.gd (711 lines)
+
+The main menu overlay: the honeycomb of stage hexes, their name fitting,
+and the menu buttons.
+
+```
+139  # --- lifecycle -------------------------------------------------------
+141  func _ready() -> void
+280  func open() -> void
+293  func close() -> void
+300  # --- settings ----------------------------------------------------------
+310  func _build_settings_button(right_pane: VBoxContainer) -> void
+331  func _on_settings_pressed() -> void
+338  # --- the honeycomb ------------------------------------------------------
+346  func _hex_row_offset() -> float
+353  func _hex_row_height() -> float
+356  func _make_honeycomb_strip(group_key: String) -> Control
+391  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
+400  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
+410  func _fit_hex_label(label: Label) -> void
+426  func _make_hex_tile(stage: Dictionary) -> Control
+519  func _apply_hex_colors(level: int, state: String) -> void
+530  func _refresh_hex_state(level: int) -> void
+533  func _refresh_ticks() -> void
+540  func _stage_for_level(level: int) -> Dictionary
+546  # --- selection and the detail pane ---------------------------------------
+548  func _select_stage(stage: Dictionary) -> void
+558  func _rebuild_detail_pane(stage: Dictionary) -> void
+590  func _make_note_label(text: String) -> Label
+601  func _make_preset_row(stage: Dictionary) -> Control
+618  func _make_preset_description() -> Control
+628  func _make_custom_controls() -> Control
+636  func _make_custom_row(field: Dictionary) -> Control
+680  # --- choosing --------------------------------------------------------
+682  func _choose(stage: Dictionary) -> void
+689  # --- small shared helpers ---------------------------------------------
+691  func _style_button(button: Button, selected: bool = false) -> void
+698  func _is_challenge_complete(level: int) -> bool
+701  func _is_scenario_played(level: int) -> bool
+708  func _is_completed(stage: Dictionary) -> bool
+```
