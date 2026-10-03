@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: PE-2 -- the played pacing arc starts from the Colony Run's start (CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-1 then COL-2 follow CR-2, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: COL-1 -- the goal shelf shows the Colony Run's next milestone (PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-1 then COL-2 follow CR-2, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -126,6 +126,36 @@ seed change.
 **Escalate** if the reference player cannot bring a colony through winter on
 any seed (a gameplay finding for Dave, not something to tune here), or if it
 needs an action or `when` key the harness lacks.
+
+**Evidence (landed 3 Oct 2026).** `test_scenarios/alpha_arc_test.json` now
+starts as `levels.gd` row 8 does and a scripted reference player drives it:
+the queen builds the first cell, forages nectar, builds four more cells in
+two batches (building burns nectar, so one batch of four starved her), then
+forages pollen (an egg costs 60, and the larvae eat 3 a feed, so she needs a
+buffer past the first egg), then lays; each hatched worker joins the pollen
+foragers (the oldest one, then two, then three, as the colony reaches 2, 4
+and 6 bees). It stops once winter has ended and day 43 has passed, so the
+first snapshot after winter is logged. `pacing_gates.py` runs seeds 20260923
+to 20260925 (`--repeat` more adds `last + n`) and prints them. Winter rows
+are judged against WO-1's days 21 and 41, one day either side; the log's own
+days are 20.02 (entered) and 40.05 (ended), both in band.
+
+`python tools/pacing_gates.py` (three seeds, one run each):
+
+| Seed | First worker | Winter entered | Winter ended | Colony |
+| --- | --- | --- | --- | --- |
+| 20260923 | day 16.83 | 20.02 | 40.05 | lived, 8 bees |
+| 20260924 | day 30.33 | 20.02 | 40.05 | lived, 4 bees |
+| 20260925 | day 16.87 | 20.02 | 40.05 | died (6 bees entered winter on 47 nectar, the nectar ran out on day 32, and the queen starved just before winter ended) |
+
+"Food secure" is missing on every seed: stores stay nectar, never ripe
+honey, so `food_stores` (honey only) is 0 all run. The first-worker row
+(1.5 days at 1x minutes) is far outside its band, and so is any played arc
+from a lone queen. Earlier tuning runs on seeds 101 to 505 (the same player
+before its last timing change) lived on four of five; seed 202 died when the
+queen's nectar ran out while she fed larvae. So the player brings a colony
+through winter on most seeds but not reliably: a finding for Dave about how
+thin a lone queen's first twenty days are, not something tuned here.
 
 ```queue
 **[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
