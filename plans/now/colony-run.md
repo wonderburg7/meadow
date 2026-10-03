@@ -69,7 +69,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PE-2 | the played pacing arc starts from the Colony Run's start | `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes (CR-1 landed) | medium |
 | COL-1 | the goal shelf shows the Colony Run's next milestone | `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py` | after CR-2 | medium |
 | COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 
@@ -87,84 +86,7 @@ CR-1 shipped 2026-10-03; its specification is `plans/archive/CR-1_2026-10-03.md`
 
 CR-2 shipped 2026-10-03; its specification is `plans/archive/CR-2_2026-10-03.md`.
 
-## PE-2 -- the played pacing arc starts from the Colony Run's start
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one scenario and its measuring tool, with an acceptance check).
-
-**True now** (verified 3 Oct 2026). `test_scenarios/alpha_arc_test.json` is
-an unplayed queen: no `actions`, no `queen_laying_backup`, one pinned
-`random_seed` (20260923), and `stop.max_days` 44. A scenario's top-level keys
-act as its level row (`main.gd`, where `Levels.scenario_override` is set), and
-cells and forager counts default to 0, so its start is close to CR-1's but
-not the same. `tools/pacing_gates.py::run` replays that one seed `--repeat`
-times (default 3), so its three runs are one run three times. WO-1's winter
-falls on days 21 to 41 (`plans/archive/winter-onset_2026-10-01.md`).
-
-**True afterwards.**
-- The arc starts as `levels.gd` row 8 does: its start keys (cells, worker
-  counts, `winter`, `queen_laying_backup`) are copied into the scenario,
-  since the harness has no key to borrow a level row.
-- A scripted reference player drives it through `actions`, using only the
-  `when` keys `scenario_actions.gd::_legacy_when_spec` honours: the queen
-  builds the first cell, lays, and the player raises workers into the roles
-  a colony needs as it grows. It plays plainly well, not optimally.
-- The run stops after winter ends, not at a fixed 44 days.
-- `pacing_gates.py` gives each repeat its own seed (the `--random-seed=`
-  route `main.gd` already honours), and prints the seeds it used.
-- Winter rows are judged against WO-1's schedule and a live colony (the
-  queen alive and workers present after winter), not against 1x minutes.
-- The evidence -- each seed's rows and whether the colony lived -- is
-  recorded under this heading. It is what the year and GC-3
-  (`plans/now/gameplay-consistency.md`) wait for.
-
-**Must not change.** Simulation code, `GameConfig` defaults, every other
-scenario, and `tests/test_pacing_gates.py`'s existing assertions beyond the
-seed change.
-
-**Escalate** if the reference player cannot bring a colony through winter on
-any seed (a gameplay finding for Dave, not something to tune here), or if it
-needs an action or `when` key the harness lacks.
-
-**Evidence (landed 3 Oct 2026).** `test_scenarios/alpha_arc_test.json` now
-starts as `levels.gd` row 8 does and a scripted reference player drives it:
-the queen builds the first cell, forages nectar, builds four more cells in
-two batches (building burns nectar, so one batch of four starved her), then
-forages pollen (an egg costs 60, and the larvae eat 3 a feed, so she needs a
-buffer past the first egg), then lays; each hatched worker joins the pollen
-foragers (the oldest one, then two, then three, as the colony reaches 2, 4
-and 6 bees). It stops once winter has ended and day 43 has passed, so the
-first snapshot after winter is logged. `pacing_gates.py` runs seeds 20260923
-to 20260925 (`--repeat` more adds `last + n`) and prints them. Winter rows
-are judged against WO-1's days 21 and 41, one day either side; the log's own
-days are 20.02 (entered) and 40.05 (ended), both in band.
-
-`python tools/pacing_gates.py` (three seeds, one run each):
-
-| Seed | First worker | Winter entered | Winter ended | Colony |
-| --- | --- | --- | --- | --- |
-| 20260923 | day 16.83 | 20.02 | 40.05 | lived, 8 bees |
-| 20260924 | day 30.33 | 20.02 | 40.05 | lived, 4 bees |
-| 20260925 | day 16.87 | 20.02 | 40.05 | died (6 bees entered winter on 47 nectar, the nectar ran out on day 32, and the queen starved just before winter ended) |
-
-"Food secure" is missing on every seed: stores stay nectar, never ripe
-honey, so `food_stores` (honey only) is 0 all run. The first-worker row
-(1.5 days at 1x minutes) is far outside its band, and so is any played arc
-from a lone queen. Earlier tuning runs on seeds 101 to 505 (the same player
-before its last timing change) lived on four of five; seed 202 died when the
-queen's nectar ran out while she fed larvae. So the player brings a colony
-through winter on most seeds but not reliably: a finding for Dave about how
-thin a lone queen's first twenty days are, not something tuned here.
-
-```queue
-**[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
-- Plan: `plans/now/colony-run.md` -- "PE-2 -- the played pacing arc starts from the Colony Run's start"
-- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` runs three different seeds from the Colony Run's start, through winter, and the plan records each seed's rows and whether the colony lived; `tools/verify.ps1` is green
-- Proof: `absent: test_scenarios/alpha_arc_test.json :: "actions"`
-- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
-```
+PE-2 shipped 2026-10-03; its specification is `plans/archive/PE-2_2026-10-03.md`.
 
 ## COL-1 -- the goal shelf shows the Colony Run's next milestone
 
