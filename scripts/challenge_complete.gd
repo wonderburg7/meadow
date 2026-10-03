@@ -55,7 +55,7 @@ func _ready() -> void:
 
 	headline_label = Label.new()
 	headline_label.theme_type_variation = "Heading"
-	headline_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(headline_label, "font_color", "success")
 	headline_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	headline_label.custom_minimum_size = Vector2(430, 0)
 	column.add_child(headline_label)
@@ -68,12 +68,12 @@ func _ready() -> void:
 
 	summary_label = Label.new()
 	summary_label.theme_type_variation = "Small"
-	summary_label.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(summary_label, "font_color", "text_secondary")
 	column.add_child(summary_label)
 
 	reward_label = Label.new()
 	reward_label.theme_type_variation = "Small"
-	reward_label.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(reward_label, "font_color", "success")
 	reward_label.text = "+ [meta-currency placeholder] earned"
 	reward_label.visible = false
 	column.add_child(reward_label)

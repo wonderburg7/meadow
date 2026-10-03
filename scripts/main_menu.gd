@@ -218,7 +218,7 @@ func _ready() -> void:
 		var note := Label.new()
 		note.text = group.note
 		note.theme_type_variation = "Small"
-		note.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+		UiTheme.bind_color(note, "font_color", "text_secondary")
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		group_column.add_child(note)
 
@@ -255,7 +255,7 @@ func _ready() -> void:
 	var detail_placeholder := Label.new()
 	detail_placeholder.text = "Choose a Challenge or Scenario on the left."
 	detail_placeholder.theme_type_variation = "Body"
-	detail_placeholder.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+	UiTheme.bind_color(detail_placeholder, "font_color", "text_secondary")
 	detail_placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	_detail_column = VBoxContainer.new()
@@ -466,7 +466,7 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 	var tick := Label.new()
 	tick.text = "✓"
 	tick.theme_type_variation = "Body"
-	tick.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(tick, "font_color", "success")
 	tick.position = Vector2(bbox.x - 22.0, 2.0)
 	tick.size = Vector2(20.0, 20.0)
 	tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -575,7 +575,7 @@ func _make_note_label(text: String) -> Label:
 	var note := Label.new()
 	note.text = text
 	note.theme_type_variation = "Small"
-	note.add_theme_color_override("font_color", UiTheme.color("success"))
+	UiTheme.bind_color(note, "font_color", "success")
 	return note
 
 ## The cog described in UI_PLAN.md section 5 ("its cog... is secondary
