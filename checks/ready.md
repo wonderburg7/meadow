@@ -26,3 +26,4 @@ unblocker.
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
 - [C-86 -- Game-over screen follows theme and text size](ready/C-86.md)
 - [C-94 -- Challenge 2 shows 2.2, then 2.3, then 2.4 on screen when one hatch meets all three](ready/C-94.md)
+- [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
