@@ -23,19 +23,26 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-5 -- long text stays inside its window**
-   - Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
-   - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
-   - Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
-   - Next after: HO-6 -- a bee under the top-left readout can be clicked
-
-2. **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
+1. **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
    - Plan: `plans/now/ui-texture-polish.md` -- "UT-5 -- headless assertions for texture contrast and Buy clearance"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json`
    - Check: `python tools/run_scenario.py test_scenarios/ut5_panel_texture_test.json` and `python tools/run_scenario.py test_scenarios/ut5_skills_buy_clear_test.json` both pass, each fails when its fix is reverted, and `tools/verify.ps1` is green
    - Proof: `absent: scripts/scenario_actions.gd :: panel_texture_contrast`
    - Next after: none -- plans/now/ui-texture-polish.md is complete
+
+2. **[Claude] HO-6 -- a bee under the top-left readout can be clicked**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-6 -- a bee under the top-left readout can be clicked"
+   - Files: `scripts/hud.gd`
+   - Check: a click on a bee drawn under the top-left readout text selects it, anything in the corner meant to be clicked still works, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: HO-6`
+   - Next after: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners, so 2.9's shortfall can be read
+
+3. **[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
+   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-15 -- a menu hex shrinks its name until every word and every line fits"
+   - Files: `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md`
+   - Check: `python tests/test_ho15_menu_hex_fit.py` passes for six typefaces at text scale 1 and 2; a Godot boot is clean; `tools/verify.ps1` is green; C-99 is back in `checks/ready/`
+   - Proof: `present: scripts/main_menu.gd :: widest = maxf(widest, font.get_string_size(word`
+   - Next after: none -- `plans/now/hands-on-third-pass.md` is complete
 
 ### Codex lane
 
@@ -60,7 +67,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
-- **HO-15** (`plans/now/hands-on-third-pass.md`) -- follows HO-16, since both add to `tools/verify.ps1`; UT-4 and CK-1 landed 3 Oct 2026.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

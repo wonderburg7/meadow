@@ -146,7 +146,7 @@ Silkscreen may remain (the fit still runs on `draw`); it is out of scope.
 **Must not change.** `HEX_SIZE`, the label's position and size, its
 "Tiny" variation, `clip_text`, `autowrap_mode`.
 
-```queue-gated
+```queue
 **[Claude] HO-15 -- a menu hex shrinks its name until every word and every line fits**
 - Plan: `plans/now/hands-on-third-pass.md` -- "HO-15 -- a menu hex shrinks its name until every word and every line fits"
 - Files: `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md`
