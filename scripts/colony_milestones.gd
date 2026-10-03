@@ -74,6 +74,10 @@ const MILESTONES := [
 	},
 ]
 
+## COL-2: the key under which the win is recorded in met_days, beside the
+## milestone ids, so the saved record needs no new field.
+const VICTORY := "victory"
+
 var main: Node2D
 ## Milestone id -> the day it was first met. A milestone absent here is not
 ## met yet.
@@ -124,6 +128,28 @@ func restore(data: Dictionary) -> void:
 		var day = data.get(id)
 		if typeof(day) == TYPE_INT or typeof(day) == TYPE_FLOAT:
 			met_days[id] = int(day)
+	var won = data.get(VICTORY)
+	if typeof(won) == TYPE_INT or typeof(won) == TYPE_FLOAT:
+		met_days[VICTORY] = int(won)
+
+
+## COL-2 (decision 3): the Colony Run is won the first time a gyne leaves
+## after the first winter has ended with the queen alive. Called from
+## season.gd's gyne_released only, so a gyne from before winter never counts
+## and a later day change cannot win on an old release. The win is recorded
+## in met_days, so a load never shows the screen twice.
+func check_victory() -> void:
+	if main == null or not applies() or met_days.has(VICTORY):
+		return
+	if not Conditions.met(main, {"all_of": [{"winter_over": true}, {"queen_alive": true}]}):
+		return
+	met_days[VICTORY] = main.day
+	var bees: int = main.get_tree().get_nodes_in_group("bees").size()
+	main.challenge_complete.open(
+		"Colony Run won: your colony came through its first winter and sent out a gyne.",
+		"A new queen leaves to found a colony of her own. Keep playing to see this one thrive, or head back to the menu.",
+		main.day, bees, main.hive.total("nectar"), main.hive.total("pollen"), true,
+	)
 
 
 ## COL-1: the goal shelf shows the first milestone not yet met, with the one

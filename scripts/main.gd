@@ -567,6 +567,7 @@ func _ready() -> void:
 	season.winter_survived.connect(year_winter._on_winter_survived)
 	season.gyne_released.connect(year_winter._on_gyne_released)
 	season.gyne_released.connect(func(_total): colony_milestones.evaluate())
+	season.gyne_released.connect(func(_total): colony_milestones.check_victory())
 	add_child(season)
 
 	game_over = GameOver.new()

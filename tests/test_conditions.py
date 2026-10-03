@@ -218,6 +218,42 @@ class ColonyMilestonesTest(unittest.TestCase):
         process = main.split("func _process(", 1)[1].split("\nfunc ", 1)[0]
         self.assertNotIn("show_next", process)
 
+    def test_victory_needs_a_gyne_after_winter_with_the_queen_alive(self):
+        """COL-2: a gyne before winter does not win; one after winter does."""
+        check = self.MILESTONES.split("func check_victory()", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("not applies()", check)
+        self.assertIn('{"winter_over": true}', check)
+        self.assertIn('{"queen_alive": true}', check)
+        # Only the gyne signal asks, so an old release can't win on a later day.
+        self.assertNotIn("check_victory", self.MILESTONES.split("func evaluate()", 1)[1].split("\nfunc ", 1)[0])
+        main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+        self.assertIn("season.gyne_released.connect(func(_total): colony_milestones.check_victory())", main)
+        # Before winter the gate is False; after it, with the queen alive, True.
+        conditions = (SCRIPTS / "conditions.gd").read_text(encoding="utf-8")
+        self.assertIn("Session.winter_ends_day > 0.0 and not Session.winter_here",
+                      function_body(conditions, "_winter_over"))
+
+    def test_victory_is_recorded_once_and_survives_a_load(self):
+        check = self.MILESTONES.split("func check_victory()", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("met_days.has(VICTORY)", check)
+        self.assertIn("met_days[VICTORY] = main.day", check)
+        self.assertIn('const VICTORY := "victory"', self.MILESTONES)
+        restore = self.MILESTONES.split("func restore(", 1)[1].split("\n\n\n", 1)[0]
+        self.assertIn("data.get(VICTORY)", restore)
+        self.assertIn("met_days[VICTORY] = int(won)", restore)
+        # No new save field: it rides in the existing colony_milestones record.
+        save = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertNotIn("victory", save)
+
+    def test_victory_screen_has_colony_run_wording_and_challenges_unchanged(self):
+        screen = (SCRIPTS / "challenge_complete.gd").read_text(encoding="utf-8")
+        self.assertIn("colony_run: bool = false", screen)
+        self.assertIn("Session.starting_level == 1 and not colony_run", screen)
+        check = self.MILESTONES.split("func check_victory()", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("Colony Run won", check)
+        runner = (SCRIPTS / "challenge_runner.gd").read_text(encoding="utf-8")
+        self.assertNotIn("colony_run", runner)
+
 
 if __name__ == "__main__":
     unittest.main()

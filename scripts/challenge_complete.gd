@@ -124,8 +124,10 @@ func _ready() -> void:
 ## `nectar`/`pollen` are a short summary in the same spirit as
 ## game_over.gd's epitaph, just framed as what got achieved rather than
 ## what was lost.
-func open(headline: String, flavour: String, day: int, bees: int, nectar: float, pollen: float) -> void:
-	var is_challenge_one := Session.starting_level == 1
+## `colony_run` (COL-2) opens the same screen with Colony Run wording: Continue
+## keeps the run going, Main menu ends it. No Challenge button or reward shows.
+func open(headline: String, flavour: String, day: int, bees: int, nectar: float, pollen: float, colony_run: bool = false) -> void:
+	var is_challenge_one := Session.starting_level == 1 and not colony_run
 	headline_label.text = headline
 	flavour_label.text = flavour
 	summary_label.text = "Day %d · %d bees · %d nectar and %d pollen in the comb" % [
