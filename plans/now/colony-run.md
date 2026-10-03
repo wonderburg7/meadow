@@ -43,8 +43,8 @@ existing stage gates, with no grants or bans.
   what genetic points buy. It changes balance, so PE-2's played arc is its
   evidence and comes first. Until then, decision 3's "next mating window" is
   today's `season.gd::_gyne_season`.
-- Level 0 and the six "World & start" settings; the `win_conditions` and
-  `unlocks` keys every `levels.gd` row carries and nothing reads.
+- Level 0 and the six "World & start" settings. (The `win_conditions` and
+  `unlocks` keys nothing reads go in COL-5.)
 - §7's short-term goals (the Dr Gallerin guidance pass owns them) and urgent
   problems (today's problem strip and signal catalogue already cover them).
 - Difficulty presets for the Colony Run.
@@ -70,6 +70,7 @@ existing stage gates, with no grants or bans.
 | --- | --- | --- | --- | --- |
 | COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 | COL-3 | a doomed Colony Run offers its latest checkpoint | `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd` | after COL-2 (shares `main.gd`) | medium |
+| COL-5 | level rows lose the two keys nothing reads | `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json` | after COL-3 (shares `main.gd`) | low |
 
 **Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
 both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
@@ -160,5 +161,32 @@ a new owner shared by both screens.
 - Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
 - Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
 - Proof: `absent: scripts/game_over.gd :: checkpoint`
+- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
+```
+
+## COL-5 -- level rows lose the two keys nothing reads
+
+<!-- LAYER: immediate-task -->
+
+Level: low (mechanical removal across one data file, its one writer and two fixtures).
+
+**True now** (verified 3 Oct 2026 by grep). Every `levels.gd` row carries
+`"unlocks": []` and `"win_conditions": []`; `main.gd`'s scenario setup
+defaults both on a scenario's row; `test_scenarios/bs4_honey_gate_test.json`
+and `colony_30_bees_test.json` set them empty. Nothing in `scripts/`,
+`tests/` or `tools/` reads either. The Colony Run's goals are CR-2's
+milestones and COL-2's victory (decision 4), so neither key has a future
+owner here; Challenges keep their goals in `challenge_runner.gd`.
+
+**True afterwards.** Neither key appears in `scripts/` or `test_scenarios/`,
+and `levels.gd`'s header no longer describes them. No run, scenario or save
+behaves differently.
+
+```queue
+**[Claude] COL-5 -- level rows lose the two keys nothing reads**
+- Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
+- Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
+- Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/levels.gd :: "win_conditions"`
 - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 ```

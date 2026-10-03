@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/game_over.gd :: checkpoint`
    - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 
+3. **[Claude] COL-5 -- level rows lose the two keys nothing reads**
+   - Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
+   - Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
+   - Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/levels.gd :: "win_conditions"`
+   - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
