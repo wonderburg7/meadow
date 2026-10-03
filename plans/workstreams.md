@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CK-1` (`claude/CK-1`) | Claude | check records match the build and never ship as the bare template | Claude | in progress | none | `plans/now/hands-on-third-pass.md` CK-1 -- check records match the build and never ship as the bare template |
