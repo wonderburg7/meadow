@@ -10,7 +10,10 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parent.parent / "tools"
 sys.path.insert(0, str(TOOLS))
 
-from pacing_gates import build_rows, in_band, render_table, target_day  # noqa: E402
+from pacing_gates import (  # noqa: E402
+    DEFAULT_SEEDS, build_rows, colony_lived, in_band, in_days, render_seed_rows,
+    render_table, seed_rows, target_day,
+)
 
 
 class PacingGatesTest(unittest.TestCase):
@@ -54,6 +57,39 @@ class PacingGatesTest(unittest.TestCase):
     def test_first_worker_at_two_elapsed_days_is_outside_the_five_minute_band(self):
         rows = build_rows([{"milestone_times": {"first_worker_day": 2.0}}], 200)
         self.assertFalse(rows[0]["inside_band"])
+
+
+    def test_winter_rows_are_judged_against_the_wo1_schedule(self):
+        self.assertTrue(in_days(20.02, 21))
+        self.assertFalse(in_days(25.0, 21))
+        analyses = [{"milestone_times": {"winter_entered_day": 20.02, "winter_survived_day": 40.05}}]
+        rows = build_rows(analyses, 200)
+        self.assertEqual(21.0, rows[2]["target_day"])
+        self.assertTrue(rows[2]["inside_band"])
+        self.assertEqual(41.0, rows[3]["target_day"])
+        self.assertTrue(rows[3]["inside_band"])
+
+    def test_each_repeat_has_its_own_seed(self):
+        self.assertEqual(len(DEFAULT_SEEDS), len(set(DEFAULT_SEEDS)))
+        self.assertGreaterEqual(len(DEFAULT_SEEDS), 3)
+
+    def test_colony_lived_needs_a_queen_workers_and_a_finished_winter(self):
+        entries = [{"type": "snapshot", "population": {"total": 5}}]
+        survived = {"milestone_times": {"winter_survived_day": 40}, "summary": {"queen_alive": True}}
+        self.assertTrue(colony_lived(entries, survived)["lived"])
+        self.assertFalse(colony_lived(entries, {**survived, "summary": {"queen_alive": False}})["lived"])
+        self.assertFalse(colony_lived([{"type": "snapshot", "population": {"total": 1}}], survived)["lived"])
+        self.assertFalse(colony_lived(entries, {"milestone_times": {}, "summary": {"queen_alive": True}})["lived"])
+
+    def test_seed_block_names_every_seed_and_its_verdict(self):
+        analyses = [
+            {"seed": 7, "milestone_times": {"first_worker_day": 3}, "colony": {"lived": True, "population": 4}},
+            {"seed": 8, "milestone_times": {}, "colony": {"lived": False, "population": 1}},
+        ]
+        text = render_seed_rows(seed_rows(analyses))
+        self.assertIn("lived (4 bees)", text)
+        self.assertIn("died", text)
+        self.assertIn("missing", text)
 
 
 if __name__ == "__main__":

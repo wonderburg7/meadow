@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: PE-2 -- the played pacing arc starts from the Colony Run's start (CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-1 then COL-2 follow CR-2, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: COL-1 -- the goal shelf shows the Colony Run's next milestone (PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-1 then COL-2 follow CR-2, and the year (COL-4) waits for PE-2's evidence | Verified: 2026-10-03
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -69,7 +69,6 @@ existing stage gates, with no grants or bans.
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PE-2 | the played pacing arc starts from the Colony Run's start | `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes (CR-1 landed) | medium |
 | COL-1 | the goal shelf shows the Colony Run's next milestone | `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/test_conditions.py` | after CR-2 | medium |
 | COL-2 | surviving the first winter and sending out a gyne wins the Colony Run | `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/challenge_complete.gd`, `tests/test_conditions.py` | after COL-1 | medium |
 
@@ -87,54 +86,7 @@ CR-1 shipped 2026-10-03; its specification is `plans/archive/CR-1_2026-10-03.md`
 
 CR-2 shipped 2026-10-03; its specification is `plans/archive/CR-2_2026-10-03.md`.
 
-## PE-2 -- the played pacing arc starts from the Colony Run's start
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one scenario and its measuring tool, with an acceptance check).
-
-**True now** (verified 3 Oct 2026). `test_scenarios/alpha_arc_test.json` is
-an unplayed queen: no `actions`, no `queen_laying_backup`, one pinned
-`random_seed` (20260923), and `stop.max_days` 44. A scenario's top-level keys
-act as its level row (`main.gd`, where `Levels.scenario_override` is set), and
-cells and forager counts default to 0, so its start is close to CR-1's but
-not the same. `tools/pacing_gates.py::run` replays that one seed `--repeat`
-times (default 3), so its three runs are one run three times. WO-1's winter
-falls on days 21 to 41 (`plans/archive/winter-onset_2026-10-01.md`).
-
-**True afterwards.**
-- The arc starts as `levels.gd` row 8 does: its start keys (cells, worker
-  counts, `winter`, `queen_laying_backup`) are copied into the scenario,
-  since the harness has no key to borrow a level row.
-- A scripted reference player drives it through `actions`, using only the
-  `when` keys `scenario_actions.gd::_legacy_when_spec` honours: the queen
-  builds the first cell, lays, and the player raises workers into the roles
-  a colony needs as it grows. It plays plainly well, not optimally.
-- The run stops after winter ends, not at a fixed 44 days.
-- `pacing_gates.py` gives each repeat its own seed (the `--random-seed=`
-  route `main.gd` already honours), and prints the seeds it used.
-- Winter rows are judged against WO-1's schedule and a live colony (the
-  queen alive and workers present after winter), not against 1x minutes.
-- The evidence -- each seed's rows and whether the colony lived -- is
-  recorded under this heading. It is what the year and GC-3
-  (`plans/now/gameplay-consistency.md`) wait for.
-
-**Must not change.** Simulation code, `GameConfig` defaults, every other
-scenario, and `tests/test_pacing_gates.py`'s existing assertions beyond the
-seed change.
-
-**Escalate** if the reference player cannot bring a colony through winter on
-any seed (a gameplay finding for Dave, not something to tune here), or if it
-needs an action or `when` key the harness lacks.
-
-```queue
-**[Claude] PE-2 -- the played pacing arc starts from the Colony Run's start**
-- Plan: `plans/now/colony-run.md` -- "PE-2 -- the played pacing arc starts from the Colony Run's start"
-- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` runs three different seeds from the Colony Run's start, through winter, and the plan records each seed's rows and whether the colony lived; `tools/verify.ps1` is green
-- Proof: `absent: test_scenarios/alpha_arc_test.json :: "actions"`
-- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
-```
+PE-2 shipped 2026-10-03; its specification is `plans/archive/PE-2_2026-10-03.md`.
 
 ## COL-1 -- the goal shelf shows the Colony Run's next milestone
 
