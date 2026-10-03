@@ -37,6 +37,27 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/main_menu.gd :: add_theme_color_override("font_color", UiTheme.color(`
    - Next after: UT-5 -- headless assertions for texture contrast and Buy clearance
 
+3. **[Claude] CK-1 -- check records match the build and never ship as the bare template**
+   - Plan: `plans/now/hands-on-third-pass.md` -- "CK-1 -- check records match the build and never ship as the bare template"
+   - Files: `tools/check_docs.py`, `checks/ready/C-60.md`, `checks/ready/C-86.md`, `checks/ready/C-99.md`, `checks/blocked.md`
+   - Check: `python tools/check_docs.py` passes, and fails naming the file when a ready check's PASS line is set back to the template text; C-99 sits in `checks/blocked.md` blocked by HO-15
+   - Proof: `present: checks/ready/C-99.md :: <what Dave does`
+   - Next after: HO-14 -- a queen who dies while the run is paused ends it at once
+
+4. **[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
+   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-14 -- a queen who dies while the run is paused ends it at once"
+   - Files: `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
+   - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes all four modes including kill_paused, which failed before the main.gd change; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: tests/ho10_queen_starvation_ends_run_test.gd :: "kill_paused"`
+   - Next after: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
+
+5. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
+   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly"
+   - Files: `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md`
+   - Check: `python tests/test_challenge2_checks.py` passes nurse_gating, dwell and escape; `tools/verify.ps1` runs it and is green
+   - Proof: `absent: tools/verify.ps1 :: "tests.test_challenge2_checks"`
+   - Next after: HO-15 -- a menu hex shrinks its name until every word and every line fits
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -62,6 +83,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
 - **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
+- **HO-15** (`plans/now/hands-on-third-pass.md`) -- waits for UT-4 (Claude lane), which owns `scripts/main_menu.gd`, and follows HO-16 and CK-1 (`tools/verify.ps1`, `checks/blocked.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

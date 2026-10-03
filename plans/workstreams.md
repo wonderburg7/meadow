@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/meadow-hands-on-checks-review-b7acfc` (`claude/meadow-hands-on-checks-review-b7acfc`) | Claude | plan the 3 Oct 2026 check pass's open findings | Claude | in progress | none | `plans/now/hands-on-third-pass.md` |
