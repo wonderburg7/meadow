@@ -16,5 +16,5 @@
       "only_when_changed": true
     }
   },
-  "stop": {"max_days": 7}
+  "stop": {"max_days": 6}
 }

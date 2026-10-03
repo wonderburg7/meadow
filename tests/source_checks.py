@@ -3184,9 +3184,7 @@ def check_ui_gate_table(problems):
 # Every other tests/test_*.py must be named in verify.ps1's $lifecycleModules
 # or $unitModules, so a new module cannot sit unrun (two did, unseen, until
 # the 30 Sep 2026 verification review).
-TESTS_NOT_IN_VERIFY = {
-    "test_sf1_founding_flower_mix": "boots Godot; red since it was added (flowers 945 to 49 in 7 days), waits on its owner",
-}
+TESTS_NOT_IN_VERIFY = {}
 
 
 def check_test_modules_are_run(problems):

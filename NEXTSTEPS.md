@@ -51,7 +51,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question**
    - Plan: `plans/now/scenario-reds.md` -- "SR-5 -- the SF-1 flower-mix test passes, or is shown to be a simulation question"
-   - Files: `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
+   - Files: `tests/test_sf1_founding_flower_mix.py`, `tests/source_checks.py`, `test_scenarios/sf1_founding_flower_mix_test.json`, `tools/verify.ps1`
    - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes with its `TESTS_NOT_IN_VERIFY` entry removed and `tools/verify.ps1` is green, or the slice stops with the evidence that the flower lifecycle is wrong
    - Proof: `present: tests/source_checks.py :: "test_sf1_founding_flower_mix":`
    - Next after: none -- plans/now/scenario-reds.md is complete
