@@ -160,4 +160,4 @@ HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.m
 
 HO-13 shipped 2026-10-02; its specification is `plans/archive/HO-13_2026-10-02.md`.
 
-The 3 Oct 2026 check pass (C-99 failing on HO-12's code, C-81 and C-94 blocked, C-100 failed by synthetic key only, "End the run" while paused) is planned in `plans/now/hands-on-third-pass.md` (CK-1, HO-14 to HO-16).
+The 3 Oct 2026 check pass (C-99 failing on HO-12's code, C-81 and C-94 blocked, C-100 failed by synthetic key only, "End the run" while paused) is planned in `plans/archive/hands-on-third-pass_2026-10-03.md` (CK-1, HO-14 to HO-16).
