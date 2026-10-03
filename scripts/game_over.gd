@@ -10,6 +10,7 @@ extends CanvasLayer
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
+const Levels = preload("res://scripts/levels.gd")
 const SavesPanel = preload("res://scripts/saves_panel.gd")
 
 signal restart_requested()
@@ -71,7 +72,7 @@ func _ready() -> void:
 	checkpoint_btn = Button.new()
 	checkpoint_btn.custom_minimum_size = Vector2(0, 32)
 	checkpoint_btn.visible = false
-	checkpoint_btn.pressed.connect(func(): SavesPanel.reload_from(get_tree(), _checkpoint_path, _checkpoint_name))
+	checkpoint_btn.pressed.connect(_on_checkpoint_pressed)
 	column.add_child(UI.with_info(checkpoint_btn, "Reload the run as it was on that day, the same way the Saves window loads a checkpoint."))
 
 	var restart_btn := Button.new()
@@ -106,11 +107,16 @@ func open(day: int, bees: int, nectar: float, honey: float) -> void:
 	visible = true
 	get_tree().paused = true
 
+func _on_checkpoint_pressed() -> void:
+	if not SavesPanel.reload_from(get_tree(), _checkpoint_path, _checkpoint_name):
+		summary_label.text += "\nThat checkpoint could not be read."
+
 ## Colony Runs only (a Challenge keeps its own rollback): offers the newest
 ## of the run's rotating checkpoints that still exists on disk.
 func _offer_checkpoint() -> void:
 	checkpoint_btn.visible = false
-	if Session.starting_level in [1, 2]:
+	var level: Dictionary = Levels.get_level(Session.starting_level)
+	if str(level.get("run_type", "")) != "colony":
 		return
 	var slug := SaveSlots.slugify(Session.run_name)
 	var checkpoints: Dictionary = {}
