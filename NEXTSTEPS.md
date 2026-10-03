@@ -23,19 +23,26 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
-   - Plan: `plans/now/hands-on-third-pass.md` -- "HO-14 -- a queen who dies while the run is paused ends it at once"
-   - Files: `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
-   - Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes all four modes including kill_paused, which failed before the main.gd change; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: tests/ho10_queen_starvation_ends_run_test.gd :: "kill_paused"`
-   - Next after: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
-
-2. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
+1. **[Claude] HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly**
    - Plan: `plans/now/hands-on-third-pass.md` -- "HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly"
    - Files: `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md`
    - Check: `python tests/test_challenge2_checks.py` passes nurse_gating, dwell and escape; `tools/verify.ps1` runs it and is green
    - Proof: `absent: tools/verify.ps1 :: "tests.test_challenge2_checks"`
    - Next after: HO-15 -- a menu hex shrinks its name until every word and every line fits
+
+2. **[Claude] HO-5 -- long text stays inside its window**
+   - Plan: `plans/now/hands-on-findings.md` -- "HO-5 -- long text stays inside its window"
+   - Files: `scripts/hud.gd`, `scripts/gallerin_panel.gd`, `scripts/winter_panel.gd`
+   - Check: the problem lines, the cog's hover description, Dr Gallerin's bubble and the Winter window each wrap or scroll inside their own window, the Winter window follows the left-window rules, a Godot boot is clean, and `tools/verify.ps1` is green
+   - Proof: `present: scripts/hud.gd :: "Bees: %d foraging, %d nursing, %d comb workers, %d on honey"`
+   - Next after: HO-6 -- a bee under the top-left readout can be clicked
+
+3. **[Claude] UT-5 -- headless assertions for texture contrast and Buy clearance**
+   - Plan: `plans/now/ui-texture-polish.md` -- "UT-5 -- headless assertions for texture contrast and Buy clearance"
+   - Files: `scripts/scenario_actions.gd`, `test_scenarios/ut5_panel_texture_test.json`, `test_scenarios/ut5_skills_buy_clear_test.json`
+   - Check: `python tools/run_scenario.py test_scenarios/ut5_panel_texture_test.json` and `python tools/run_scenario.py test_scenarios/ut5_skills_buy_clear_test.json` both pass, each fails when its fix is reverted, and `tools/verify.ps1` is green
+   - Proof: `absent: scripts/scenario_actions.gd :: panel_texture_contrast`
+   - Next after: none -- plans/now/ui-texture-polish.md is complete
 
 ### Codex lane
 
@@ -53,16 +60,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **UT-5** (`plans/now/ui-texture-polish.md`) -- waits for SR-4 (now in the Claude lane) to land, since both edit `scripts/scenario_actions.gd`; UT-1, UT-2 and SR-2 have landed.
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026.
 - **Colony Run definition** (`plans/design/product-scope.md` §6.2, "Next design pass") -- a high-reasoning design pass Dave put next on 30 Sep 2026; startable since BS-4 landed (1 Oct 2026), it waits for the 3-4 Oct feedback session, whose notes feed it (Dave, 1 Oct 2026), and it specifies PE-2.
 - **PE-2** (`plans/design/product-scope.md` §6.2) -- the played pacing arc waits for the Colony Run definition, which specifies it.
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waits for PE-2's arc as the multi-season evidence `.claude/rules/simulation.md` requires.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run definition, which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026).
-- **HO-5** (`plans/now/hands-on-findings.md`) -- waits for SC-4 and UT-4, which own its files; HO-6 follows HO-5 (`scripts/hud.gd`).
 - **HO-8** (`plans/now/hands-on-findings.md`) -- specified (Dave, 2 Oct 2026); follows HO-7 (`scripts/challenge_runner.gd`), HO-6 (`scripts/hud.gd`) and BS-6 (`scripts/main.gd`).
-- **HO-15** (`plans/now/hands-on-third-pass.md`) -- waits for UT-4 (Claude lane), which owns `scripts/main_menu.gd`, and follows HO-16 and CK-1 (`tools/verify.ps1`, `checks/blocked.md`).
+- **HO-15** (`plans/now/hands-on-third-pass.md`) -- follows HO-16, since both add to `tools/verify.ps1`; UT-4 and CK-1 landed 3 Oct 2026.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

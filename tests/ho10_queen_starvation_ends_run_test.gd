@@ -21,7 +21,7 @@ var _queen: Node = null
 var _frame := 0
 var _phase := "boot"
 var _death_frame := -1
-var _mode := "starve"   # starve | restore_queenless | restore_queen (HO-13)
+var _mode := "starve"   # starve | kill_paused (HO-14) | restore_queenless | restore_queen (HO-13)
 var _restore_frame := -1
 var _failures: PackedStringArray = PackedStringArray()
 var _log: PackedStringArray = PackedStringArray()
@@ -36,6 +36,8 @@ func _process(_delta: float) -> bool:
 			if _frame >= BOOT_FRAMES:
 				if _mode == "starve":
 					_starve_queen()
+				elif _mode == "kill_paused":
+					_kill_queen_paused()
 				else:
 					_restore_save()
 		"restored":
@@ -81,6 +83,20 @@ func _starve_queen() -> void:
 	_log.append("queen %s, energy %.2f, paused %s" % [_queen.get("bee_name"), float(_queen.get("energy")), paused])
 	_queen.set("energy", 0.01)
 	_phase = "starving"
+
+
+# HO-14: the developer "End the run" trigger kills the queen while the
+# settings window has the run paused. The panel must open without an
+# unpause.
+func _kill_queen_paused() -> void:
+	_queen = _main.get("queen")
+	if _queen == null or not is_instance_valid(_queen):
+		_fail("Scenario 1 has no queen after boot")
+		return
+	paused = true
+	load("res://scripts/bee_survival.gd").die(_queen, "debug")
+	_death_frame = _frame
+	_phase = "dead"
 
 
 # HO-13: saves the live colony, optionally strips the queen from the file,

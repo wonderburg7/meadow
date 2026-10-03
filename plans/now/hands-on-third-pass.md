@@ -1,7 +1,7 @@
 # Hands-on third pass -- what the 3 Oct 2026 check run left open
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-14 -- a queen who dies while the run is paused ends it at once | Dependency: HO-15 waits for UT-4 (Claude lane, owns `scripts/main_menu.gd`) and follows HO-16 (both add to `tools/verify.ps1`); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
+Status: active | Owner: Dave / Claude Code | Next: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly | Dependency: HO-15 follows HO-16 (both add to `tools/verify.ps1`); C-100 waits only for Dave's physical-keyboard run | Verified: 2026-10-03
 
 **Objective.** Every check the 3 Oct 2026 computer-use pass did not pass,
 and every fault it noticed on the way, is either fixed, given a headless
@@ -39,7 +39,6 @@ at 21:07 on 2 Oct, so it **included HO-1, HO-12 and HO-13 but not HO-2**
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HO-14 | a queen who dies while the run is paused ends it at once | `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py` | yes | low |
 | HO-16 | Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly | `tests/challenge2_checks_test.gd`, `tests/test_challenge2_checks.py`, `tools/verify.ps1`, `checks/ready/C-81.md`, `checks/ready/C-94.md` | yes | medium |
 | HO-15 | a menu hex shrinks its name until every word and every line fits | `scripts/main_menu.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/test_ho15_menu_hex_fit.py`, `tools/verify.ps1`, `checks/blocked.md`, `checks/ready/C-99.md` | no -- after UT-4 and HO-16 | medium |
 
@@ -56,77 +55,7 @@ and report rather than search widely.
 
 CK-1 shipped 2026-10-03; its specification is `plans/archive/CK-1_2026-10-03.md`.
 
-## HO-14 -- a queen who dies while the run is paused ends it at once
-
-<!-- LAYER: immediate-task -->
-
-**True now.** Seen 3 Oct: Developer → Triggers → "End the run" pressed in
-the settings window (which pauses the run) showed nothing until "Back to
-the run". `debug_panel.gd::_on_end_run_pressed` kills the queen at once, but
-`main.gd::_process` calls `_check_for_loss()` only inside
-`if not get_tree().paused:`, so the loss waits for an unpause. Checked: no
-other code frees the queen while paused (`challenge_stage_setup.gd` moves
-her, never frees her), and a new run or a load reloads the whole scene.
-
-**Do this.**
-1. `scripts/main.gd::_process`: delete the line `_check_for_loss()` inside
-   the `if not get_tree().paused:` block (between `_advance_weather(delta)`
-   and `_check_colony_energy(delta)`). Insert, immediately above
-   `if not get_tree().paused:` and at the same indentation:
-
-   ```gdscript
-   	# HO-14: checked every frame, not only while the run steps. The
-   	# developer "End the run" trigger kills the queen from the settings
-   	# window, which pauses the run, and the game-over panel used to wait
-   	# for an unpause (3 Oct 2026 check pass).
-   	_check_for_loss()
-   ```
-2. `tests/ho10_queen_starvation_ends_run_test.gd`: extend the `_mode`
-   comment to `# starve | kill_paused (HO-14) | restore_queenless | restore_queen (HO-13)`.
-   In `_process`'s `"settle"` branch make it
-   `if _mode == "starve": _starve_queen()` / `elif _mode == "kill_paused": _kill_queen_paused()` / `else: _restore_save()`.
-   Add after `_starve_queen`:
-
-   ```gdscript
-   # HO-14: the developer "End the run" trigger kills the queen while the
-   # settings window has the run paused. The panel must open without an
-   # unpause.
-   func _kill_queen_paused() -> void:
-   	_queen = _main.get("queen")
-   	if _queen == null or not is_instance_valid(_queen):
-   		_fail("Scenario 1 has no queen after boot")
-   		return
-   	paused = true
-   	load("res://scripts/bee_survival.gd").die(_queen, "debug")
-   	_death_frame = _frame
-   	_phase = "dead"
-   ```
-   `_watch_loss` and `_check_panel` then apply unchanged.
-3. `tests/test_ho10_queen_starvation_ends_run.py`: add to the class
-
-   ```python
-       def test_queen_killed_while_paused_ends_run_at_once(self):
-           self._boot_and_run("kill_paused")
-   ```
-4. Before step 1, run `python tests/test_ho10_queen_starvation_ends_run.py`
-   with steps 2-3 only: the new test must fail ("colony_lost False"). Then
-   apply step 1; all four tests pass.
-
-**True afterwards.** The four HO-10/HO-13/HO-14 modes pass; a Godot boot
-is clean. No hands-on check: C-97 is already confirmed and the test covers
-the paused path.
-
-**Must not change.** `_check_for_loss` itself; the other housekeeping
-calls stay inside the paused gate; `debug_panel.gd`.
-
-```queue
-**[Claude] HO-14 -- a queen who dies while the run is paused ends it at once**
-- Plan: `plans/now/hands-on-third-pass.md` -- "HO-14 -- a queen who dies while the run is paused ends it at once"
-- Files: `scripts/main.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/test_ho10_queen_starvation_ends_run.py`
-- Check: `python tests/test_ho10_queen_starvation_ends_run.py` passes all four modes including kill_paused, which failed before the main.gd change; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: tests/ho10_queen_starvation_ends_run_test.gd :: "kill_paused"`
-- Next after: HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
-```
+HO-14 shipped 2026-10-03; its specification is `plans/archive/HO-14_2026-10-03.md`.
 
 ## HO-16 -- Challenge 2's Nurse gating, stage dwell and the skill tree's Escape are tested headlessly
 
