@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-12 -- the Run availability button no longer calls the table read-only (BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs; hands-on check C-112, `checks/ready/C-112.md`). The table's "Introduced at stage" and "Free at stage" columns still read "not yet available": `skills.gd`'s `introduced_by` stays empty until the campaign meta tree exists (`plans/design/progression.md` Phase C), so no slice can fill them yet | Dependency: none | Verified: 2026-10-04
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- BS-12 landed 4 Oct 2026 (BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs; hands-on check C-112, `checks/ready/C-112.md`). The table's "Introduced at stage" and "Free at stage" columns still read "not yet available": `skills.gd`'s `introduced_by` stays empty until the campaign meta tree exists (`plans/design/progression.md` Phase C), so no slice can fill them yet | Dependency: none | Verified: 2026-10-04
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
