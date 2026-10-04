@@ -13,9 +13,9 @@ extends PanelContainer
 ## BS-6: a skill row's source is a button cycling the states the level's
 ## skill_grants and skill_bans can reach -- start, tree (only if the level
 ## leaves it to the tree), unavailable -- written to DeveloperOverrides'
-## user:// file, so the next run of that level starts with it. Baseline, cut
-## and already-unavailable rows have no button: no grant or ban edit can
-## change them safely. An edited row is marked; "Reset to the game's data"
+## user:// file, so the next run of that level starts with it. Baseline,
+## seeded-role, cut and already-unavailable rows have no button: no grant or
+## ban edit can change them safely. An edited row is marked; "Reset to the game's data"
 ## deletes the file. Scenario runs (SCENARIO_LEVEL_ID) are never editable.
 ##
 ## Built by debug_panel.gd, only while Session.developer_mode is on, and
@@ -160,15 +160,18 @@ func _fill() -> void:
 		_row("Feature: %s" % FEATURE_LABELS.get(feature_id, feature_id.trim_prefix("feature.").capitalize()), features[feature_id])
 
 ## The edits a skill row cycles through, from its source in the level's own
-## data: a tree skill goes tree -> start -> unavailable, a start skill
-## start -> unavailable. Empty (no button) for baseline, cut and unavailable
-## rows -- a grant cannot lift a level's ban or an off feature, and banning
-## a baseline skill is not an edit this table offers.
+## data: a tree skill goes tree -> start -> unavailable, a skill the level
+## grants goes start -> unavailable. Empty (no button) for every other row:
+## a grant cannot lift a level's ban or an off feature, banning a baseline
+## skill is not an edit this table offers, and a seeded-role skill stays
+## owned -- the level's starting count still puts bees in that role, and
+## "seeding implies owning" derives from counts, which this table never
+## edits (DeveloperOverrides.apply drops such a ban too).
 static func _edit_cycle(own_row: Dictionary) -> Array:
 	var reason: String = own_row.get("reason", "")
 	if reason == RunAvailability.REASON_TREE:
 		return [DeveloperOverrides.EDIT_NONE, DeveloperOverrides.EDIT_GRANT, DeveloperOverrides.EDIT_BAN]
-	if reason == RunAvailability.REASON_RUN_GRANT or reason == RunAvailability.REASON_SEEDED_ROLE:
+	if reason == RunAvailability.REASON_RUN_GRANT:
 		return [DeveloperOverrides.EDIT_NONE, DeveloperOverrides.EDIT_BAN]
 	return []
 

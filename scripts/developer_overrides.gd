@@ -18,6 +18,8 @@ extends RefCounted
 ## developer table (run_availability_panel.gd) read this; only the table
 ## writes it. A missing or unparseable file reads as no overrides.
 
+const RunAvailability = preload("res://scripts/run_availability.gd")
+
 const PATH := "user://developer_start_overrides.json"
 
 ## What a row's edit can be: none (the game's own data), grant from the
@@ -55,15 +57,20 @@ static func for_level(level_id: int, path: String = PATH) -> Dictionary:
 
 ## A copy of the run definition with this level's override lists merged into
 ## its skill_grants and skill_bans. A skill banned by either drops out of the
-## merged grants, so a ban wins. With no overrides the copy is unchanged.
+## merged grants, so a ban wins. An override ban on a skill the definition's
+## starting counts seed is dropped: the run still starts with bees in that
+## role, so banning its skill would break "seeding implies owning" (the
+## table offers no such edit; this covers a stale or hand-edited file). With
+## no overrides the copy is unchanged.
 static func apply(level_id: int, definition: Dictionary, path: String = PATH) -> Dictionary:
 	var result := definition.duplicate(true)
 	var edits := for_level(level_id, path)
 	if edits.grants.is_empty() and edits.bans.is_empty():
 		return result
+	var seeded := _seeded_skills(definition)
 	var bans: Array = _ids(definition.get("skill_bans", []))
 	for skill_id in edits.bans:
-		if not bans.has(skill_id):
+		if not bans.has(skill_id) and not seeded.has(skill_id):
 			bans.append(skill_id)
 	var grants: Array = []
 	for skill_id in _ids(definition.get("skill_grants", [])) + edits.grants:
@@ -115,6 +122,21 @@ static func set_edit(level_id: int, skill_id: String, edit: String, path: String
 static func reset(path: String = PATH) -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+## The skills the definition's starting counts seed, read through
+## RunAvailability's public sheet of the definition with its skill policy
+## cleared, so a level grant or ban cannot hide the seeding.
+static func _seeded_skills(definition: Dictionary) -> Array:
+	var counts_only := definition.duplicate(true)
+	counts_only["skill_grants"] = []
+	counts_only["skill_bans"] = []
+	var rows: Dictionary = RunAvailability.sheet_for(counts_only).get("skills", {})
+	var seeded: Array = []
+	for skill_id in rows:
+		if rows[skill_id].get("reason", "") == RunAvailability.REASON_SEEDED_ROLE:
+			seeded.append(skill_id)
+	return seeded
 
 
 ## Skill id strings out of whatever JSON or a level definition held.
