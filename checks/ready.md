@@ -26,6 +26,7 @@ unblocker.
 - [C-109 -- Colony Run's goal shelf shows the next milestone](ready/C-109.md)
 - [C-110 -- Colony Run victory screen](ready/C-110.md)
 - [C-111 -- A lost Colony Run offers its latest checkpoint](ready/C-111.md)
+- [C-112 -- An edit in the Run availability table changes what the next run starts with, and Reset restores it](ready/C-112.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
