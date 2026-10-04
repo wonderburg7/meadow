@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9, BS-10 and BS-11 landed 2 Oct 2026; BS-6 waits for SR-5, Codex lane, which also edits `tests/source_checks.py`; UI-F-2 freed `scripts/main.gd` on 1 Oct 2026) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9, BS-10 and BS-11 landed 2 Oct 2026; queued 4 Oct 2026 with its scope check moved to `tests/test_run_scenario_launch.py`, so it no longer waits for SR-5) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-04
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -103,10 +103,10 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py` | no -- waits for SR-5 (Codex lane, `tests/source_checks.py`), and follows BS-11 (shares `run_availability_panel.gd`); BS-8 and UI-F-2 landed 1 Oct 2026 | high |
+| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py` | yes -- BS-11 landed 2 Oct 2026; its check left `tests/source_checks.py` (SR-5's) on 4 Oct 2026 | high |
 
-BS-11 goes before BS-6 (reordered 2 Oct 2026): BS-6 waits for SR-5 and the two share
-`run_availability_panel.gd`, so BS-6 follows BS-11. Every later slice names
+BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
+`run_availability_panel.gd`. Every later slice names
 what it waits for above; each is specified in full when it becomes startable.
 
 BS-1, BS-2, BS-3 and BS-5 shipped between 28 and 30 Sep 2026; each
@@ -134,8 +134,10 @@ Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
 BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
 one machine, never a fixture). It was gated on BS-8, which shared
 `run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026. It now
-waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`, so
-its block is fenced `queue-gated` until SR-5 lands.
+waited for SR-5 (Codex lane), which also edits `tests/source_checks.py`; on
+4 Oct 2026 (Dave) its scope check moved to `tests/test_run_scenario_launch.py`,
+a module `tools/verify.ps1` already runs and no other lane owns, so it is
+queued.
 
 - **Scope.** The Run availability table (`run_availability_panel.gd`, opened
   from the debug panel) is read-only today. Each skill row gains a control
@@ -161,11 +163,11 @@ its block is fenced `queue-gated` until SR-5 lands.
 - **Escalate** if a run started with an override and one without differ in
   anything beyond starting ownership.
 
-```queue-gated
+```queue
 **[Claude] BS-6 -- developer edits to the table change what a run starts with**
 - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
-- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/source_checks.py`
-- Check: `tools/verify.ps1` is green, a `source_checks.py` check proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
+- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
+- Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
 - Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
 - Next after: none -- the last slice in this plan
 ```

@@ -53,7 +53,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026; it follows HO-8 there.
 - **COL-6** (`plans/now/colony-run.md`) -- skipping winter waits for COL-4's year clock, and is specified once it lands (Dave's year decisions, 4 Oct 2026).
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waited for PE-2's arc, which landed 3 Oct 2026 (one winter, three seeds; its reference player made no honey, so it is thin evidence for a honey change -- `plans/now/colony-run.md`), and now waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run's slices (`plans/now/colony-run.md`, defined 3 Oct 2026), which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
