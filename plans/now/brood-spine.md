@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9, BS-10 and BS-11 landed 2 Oct 2026; queued 4 Oct 2026 with its scope check moved to `tests/test_run_scenario_launch.py`, so it no longer waits for SR-5) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-04
+Status: active | Owner: Dave / Claude Code | Next: BS-12 -- the Run availability button no longer calls the table read-only (BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs; hands-on check C-112, `checks/ready/C-112.md`). The table's "Introduced at stage" and "Free at stage" columns still read "not yet available": `skills.gd`'s `introduced_by` stays empty until the campaign meta tree exists (`plans/design/progression.md` Phase C), so no slice can fill them yet | Dependency: none | Verified: 2026-10-04
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -103,7 +103,7 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py` | yes -- BS-11 landed 2 Oct 2026; its check left `tests/source_checks.py` (SR-5's) on 4 Oct 2026 | high |
+| BS-12 | the Run availability button no longer calls the table read-only | `scripts/debug_panel.gd` | yes | low |
 
 BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
 `run_availability_panel.gd`. Every later slice names
@@ -128,53 +128,41 @@ Nothing is outlined here now: BS-9 and BS-6 are specified in full below.
 
 BS-9 shipped 2026-10-02; its specification is `plans/archive/BS-9_2026-10-02.md`.
 
-## BS-6 — developer edits to the table change what a run starts with
+BS-6 shipped 2026-10-04; its specification is `plans/archive/BS-6_2026-10-04.md`.
 
-Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
-BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
-one machine, never a fixture). It was gated on BS-8, which shared
-`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026. It now
-waited for SR-5 (Codex lane), which also edits `tests/source_checks.py`; on
-4 Oct 2026 (Dave) its scope check moved to `tests/test_run_scenario_launch.py`,
-a module `tools/verify.ps1` already runs and no other lane owns, so it is
-queued.
+## BS-12 -- the Run availability button no longer calls the table read-only
 
-- **Scope.** The Run availability table (`run_availability_panel.gd`, opened
-  from the debug panel) is read-only today. Each skill row gains a control
-  cycling start / tree / unavailable for the level being viewed. An edit
-  changes that level's run definition only through `skill_grants` and
-  `skill_bans`, the two keys `sheet_for` already honours; it never edits a
-  starting count, since "seeding implies owning" derives from counts.
-- **Store.** New `scripts/developer_overrides.gd`: one small JSON file,
-  `user://developer_start_overrides.json`, mapping level id to
-  `{"grants": [...], "bans": [...]}`. `apply(level_id, definition)` returns a
-  copy of the definition with the lists merged (a ban still wins over a
-  grant, as in `run_availability.gd`). Missing or unparseable file reads as
-  no overrides.
-- **Hook.** `main.gd` line ~417, where `RunAvailability.sheet_for(level)` runs,
-  passes the level through `apply` first. Scenario runs (level 999 /
-  `SCENARIO_LEVEL_ID`) and headless runs are never overridden, so every
-  fixture and `tools/verify.ps1` behave exactly as before.
-- **Reset.** A "Reset to the game's data" button on the panel deletes the
-  file and rebuilds the table. Edited rows are marked so a developer can see
-  they differ from `levels.gd`.
-- **Must not change:** `levels.gd`, any scenario JSON, save files, or
-  `progression.gd`'s ownership answers.
-- **Escalate** if a run started with an override and one without differ in
-  anything beyond starting ownership.
+<!-- LAYER: immediate-task -->
+
+Level: low (one file, two strings). Specified 4 Oct 2026 from BS-6's
+closeout, which named it as an unfiled follow-up.
+
+**True now** (verified 4 Oct 2026 on branch claude/BS-6). BS-6 made the
+Run availability table editable: a skill row's source is a button, and
+"Reset to the game's data" deletes the edits. `debug_panel.gd` still
+describes it as read-only in two places: the comment above `developer_row`
+("the read-only Run availability table they open") and the action row's
+hover text in `_refresh_developer_row` ("Developer mode: a read-only table
+of this run's skills, ...").
+
+**True afterwards.** Both describe the table as BS-6 left it: it shows what
+a run of this level starts owning, leaves to the skill tree or does not
+offer, and why, and a click on a skill's source changes what the next run
+of this level starts with, on this machine only. The wording follows the
+table's own intro line in `run_availability_panel.gd`; nothing else
+changes.
+
+**Must not change.** The table, `developer_overrides.gd`, or when the
+button is built.
 
 ```queue
-**[Claude] BS-6 -- developer edits to the table change what a run starts with**
-- Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
-- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
-- Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
-- Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
-- Next after: none -- the last slice in this plan
+**[Claude] BS-12 -- the Run availability button no longer calls the table read-only**
+- Plan: `plans/now/brood-spine.md` -- "BS-12 -- the Run availability button no longer calls the table read-only"
+- Files: `scripts/debug_panel.gd`
+- Check: `grep -n "read-only" scripts/debug_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/debug_panel.gd :: a read-only table of this run's skills`
+- Next after: none -- plans/now/brood-spine.md is complete
 ```
-
-BS-10 shipped 2026-10-02; its specification is `plans/archive/BS-10_2026-10-02.md`.
-
-BS-11 shipped 2026-10-02; its specification is `plans/archive/BS-11_2026-10-02.md`.
 
 ## Read on demand
 

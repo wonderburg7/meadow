@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-6 -- developer edits to the table change what a run starts with**
-   - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
-   - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
-   - Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
-   - Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
-   - Next after: none -- the last slice in this plan
+1. **[Claude] BS-12 -- the Run availability button no longer calls the table read-only**
+   - Plan: `plans/now/brood-spine.md` -- "BS-12 -- the Run availability button no longer calls the table read-only"
+   - Files: `scripts/debug_panel.gd`
+   - Check: `grep -n "read-only" scripts/debug_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/debug_panel.gd :: a read-only table of this run's skills`
+   - Next after: none -- plans/now/brood-spine.md is complete
 
 ### Codex lane
 
