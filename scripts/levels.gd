@@ -7,10 +7,8 @@ extends RefCounted
 ##
 ## Extracted out of main.gd's old LEVELS constant (agreed direction in
 ## DESIGN_BACKLOG.md §1) as the first step toward the Challenges/starter-
-## modes split in TUTORIAL_PLAN.md. Each entry now carries empty
-## `unlocks` and `win_conditions` arrays alongside the starting-state
-## fields that were already here, so Challenge 1 and 2 can fill those in
-## without a second restructure. Levels 1 and 2 are the ones TUTORIAL_PLAN.md
+## modes split in TUTORIAL_PLAN.md. Each entry carries the starting-state
+## fields. Levels 1 and 2 are the ones TUTORIAL_PLAN.md
 ## says will eventually be superseded by full Challenge definitions;
 ## levels 3-7 stay as plain Scenario presets (level ids remain stable even
 ## though their player-facing Scenario numbers are ordered independently).
@@ -47,7 +45,6 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0,
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		# Challenge 1 does not teach backup roles: a queen set to Laying with
 		# no backup chosen takes this one (a Roles key) automatically, so the
@@ -77,20 +74,17 @@ const LEVELS := {
 		"nurses": 0, "builders": 0, "miners": 0,
 		"stock": {"nectar": 2, "pollen": 1},
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 	},
 	3: {
 		"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1,
 		"nurses": 0, "builders": 0, "miners": 0,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	4: {
 		"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
 		"nurses": 2, "builders": 2, "miners": 2,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
@@ -103,7 +97,6 @@ const LEVELS := {
 		"cells": 12, "nectar_foragers": 16, "pollen_foragers": 6,
 		"nurses": 2, "builders": 3, "miners": 3, "automine": true,
 		"stock": {"nectar": 4, "pollen": 2},
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
@@ -116,7 +109,6 @@ const LEVELS := {
 		"cells": 18, "nectar_foragers": 14, "pollen_foragers": 6,
 		"nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
 		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
@@ -127,7 +119,6 @@ const LEVELS := {
 	7: {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
@@ -143,7 +134,6 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"winter": true,
-		"unlocks": [], "win_conditions": [],
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},

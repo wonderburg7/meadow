@@ -485,7 +485,7 @@ behaviour.
 1431 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,262 lines)
+## main.gd (1,260 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -528,9 +528,9 @@ Per-frame entry point, everything not yet split out of main.
 1037 func _on_level_chosen(level: int) -> void
 1050 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
 1068 func _apply_scenario_boot_arg() -> void
-1195 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1235 func _is_whole_number(value: Variant) -> bool
-1249 func _end_scenario_run(outcome: String) -> void
+1193 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1233 func _is_whole_number(value: Variant) -> bool
+1247 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## challenge_runner.gd (1,249 lines)
