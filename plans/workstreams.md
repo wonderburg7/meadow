@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/BS-6` (`claude/BS-6`) | Claude | developer edits to the table change what a run starts with | Claude | in progress | none | `plans/now/brood-spine.md` BS-6 — developer edits to the table change what a run starts with |
