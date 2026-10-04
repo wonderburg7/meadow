@@ -99,7 +99,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-3 | a doomed Colony Run offers its latest checkpoint | `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd` | after COL-2 (shares `main.gd`) | medium |
 | COL-5 | level rows lose the two keys nothing reads | `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json` | after COL-3 (shares `main.gd`) | low |
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes | high |
 
@@ -123,42 +122,7 @@ COL-1 shipped 2026-10-03; its specification is `plans/archive/COL-1_2026-10-03.m
 
 COL-2 shipped 2026-10-03; its specification is `plans/archive/COL-2_2026-10-03.md`.
 
-## COL-3 -- a doomed Colony Run offers its latest checkpoint
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one screen and the existing load path, with an acceptance check).
-
-**True now** (verified 3 Oct 2026). `main.gd::_check_for_loss` ends the run
-the moment the queen dies (HO-10, HO-13) and opens `game_over.gd`, which
-offers Restart and Main menu only. The Colony Run checkpoints every few days
-into three rolling slots (`saving.gd::checkpoint`, `save_slots.gd`), and the
-Saves window loads one through `saves_panel.gd::_load`, which already puts
-back the settings and, since CR-1, the run's level. No gyne can take over
-from a dead queen in any run today, so §11's "doomed" (the queen dead and no
-gynes) is, for now, the queen dead.
-
-**True afterwards.**
-- In a Colony Run with at least one checkpoint, the game-over screen also
-  offers "Load the latest checkpoint", naming its day. It loads through the
-  same path the Saves window uses -- reused, not copied
-  (`plans/README.md` rule 4) -- so the run comes back as it was on that day.
-- With no checkpoint yet, or in any other run, the screen is unchanged.
-
-**Must not change.** When a run is lost; checkpoint timing and rotation;
-Restart and Main menu; Challenge and Scenario game-over screens.
-
-**Escalate** if reusing the Saves window's load path would mean moving it to
-a new owner shared by both screens.
-
-```queue
-**[Claude] COL-3 -- a doomed Colony Run offers its latest checkpoint**
-- Plan: `plans/now/colony-run.md` -- "COL-3 -- a doomed Colony Run offers its latest checkpoint"
-- Files: `scripts/game_over.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`
-- Check: a Godot boot is clean; `tools/verify.ps1` is green; Dave loses a Colony Run after its first checkpoint and the game-over screen offers the latest checkpoint by day, which loads the run as it was; a Scenario's game-over screen is unchanged
-- Proof: `absent: scripts/game_over.gd :: checkpoint`
-- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
-```
+COL-3 shipped 2026-10-04; its specification is `plans/archive/COL-3_2026-10-04.md`.
 
 ## COL-5 -- level rows lose the two keys nothing reads
 
