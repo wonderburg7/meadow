@@ -1437,6 +1437,27 @@ def check_settings_persist(problems):
         )
 
 
+def check_honey_conserves_energy(problems):
+    """GC-3: turning nectar into honey cannot increase its energy value."""
+    config_path = os.path.join(ROOT, "game_config.gd")
+    source = open(config_path, encoding="utf-8").read()
+
+    def default_for(key):
+        match = re.search(r"var\s+%s\s*:\s*float\s*=\s*([0-9.]+)" % key, source)
+        if match is None:
+            problems.append("game_config.gd: no float default for %s" % key)
+            return None
+        return float(match.group(1))
+
+    honey_energy_factor = default_for("honey_energy_factor")
+    nectar_per_honey = default_for("nectar_per_honey")
+    if (honey_energy_factor is not None and nectar_per_honey is not None
+            and honey_energy_factor > nectar_per_honey):
+        problems.append(
+            "game_config.gd: honey_energy_factor (%s) exceeds nectar_per_honey (%s), "
+            "so honey creates energy" % (honey_energy_factor, nectar_per_honey))
+
+
 # --- progression catalogues ---------------------------------------
 # skills.gd, adaptations.gd and features.gd are pure data that nothing
 # reads yet (progression.md Phase A step 1), which is exactly why they
@@ -3287,6 +3308,7 @@ def main():
     check_role_count_key_ownership(problems)
     check_settings_keys(problems)
     check_settings_persist(problems)
+    check_honey_conserves_energy(problems)
     check_progression_catalogues(problems)
     check_progression_resolver(problems)
     check_progression_foraging_rules(problems)

@@ -73,6 +73,16 @@ it in the same lane.
   in this slice's closeout. If the new value fails a gate the old one
   passed, stop and take the numbers to Dave.
 
+**Evidence (4 Oct 2026).** `python tools/pacing_gates.py --repeat 3` ran
+PE-2's fixed seeds 20260923--20260925 from the untouched 2.0 checkout and
+again from this 4.0 branch. The results were identical: seeds 20260923 and
+20260924 survived winter, seed 20260925 died, winter entered on day 20.02,
+and winter survived on day 40.05. Ripe honey was zero at winter's start on
+all three runs (`food_stores`, the ripe-honey measure, remained zero); this
+matches PE-2's recorded observation that its reference player makes no
+honey. `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json`
+passed at 4.0 and bought Comb worker at 39.75 simulated seconds (day 1).
+
 ```queue
 **[Codex] GC-3 -- honey stops creating energy**
 - Plan: `plans/now/gameplay-consistency.md` -- "GC-3 — honey stops creating energy"
