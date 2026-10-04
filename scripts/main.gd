@@ -1155,8 +1155,6 @@ func _apply_scenario_boot_arg() -> void:
 	if cmdline_seed != "":
 		scenario_random_seed = int(cmdline_seed)
 	level.erase("random_seed")
-	level["unlocks"] = level.get("unlocks", [])
-	level["win_conditions"] = level.get("win_conditions", [])
 	# A UI-only scenario (layout/text assertions) has no colony to describe;
 	# cells and forager counts remain direct boot fields, while indoor roles
 	# read their optional start_count_key from roles.gd.
