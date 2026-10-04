@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (Codex lane, after SR-5; Dave, 4 Oct 2026); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: none -- PE-2's arc landed 3 Oct 2026; COL-4 (Claude lane, `plans/now/colony-run.md`) shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, so it waits for GC-3 | Verified: 2026-10-04
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (Codex lane, after SR-5; Dave, 4 Oct 2026); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: none -- PE-2's arc landed 3 Oct 2026; COL-4 (Claude lane, `plans/now/colony-run.md`) shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and follows GC-3 in the Codex lane | Verified: 2026-10-04
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -53,8 +53,8 @@ for. It landed 3 Oct 2026 (`plans/archive/pacing-evidence_2026-10-01.md`):
 one winter on three seeds, and its reference player made no honey, so it is
 thin evidence for a honey change -- the before-and-after runs below carry the
 weight. The block is fenced `queue` in the Codex lane, as SR-5's successor
-(Dave, 4 Oct 2026); COL-4 shares this slice's two script files and waits for
-it rather than sit in the other lane.
+(Dave, 4 Oct 2026); COL-4 shares this slice's two script files and follows
+it in the same lane.
 
 **Change.**
 

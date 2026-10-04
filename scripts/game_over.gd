@@ -9,11 +9,17 @@ extends CanvasLayer
 
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
+const SaveSlots = preload("res://scripts/save_slots.gd")
+const Levels = preload("res://scripts/levels.gd")
+const SavesPanel = preload("res://scripts/saves_panel.gd")
 
 signal restart_requested()
 signal menu_requested()
 
 var summary_label: Label
+var checkpoint_btn: Button
+var _checkpoint_path: String = ""
+var _checkpoint_name: String = ""
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # still works while the run is paused
@@ -63,6 +69,12 @@ func _ready() -> void:
 
 	column.add_child(HSeparator.new())
 
+	checkpoint_btn = Button.new()
+	checkpoint_btn.custom_minimum_size = Vector2(0, 32)
+	checkpoint_btn.visible = false
+	checkpoint_btn.pressed.connect(_on_checkpoint_pressed)
+	column.add_child(UI.with_info(checkpoint_btn, "Reload the run as it was on that day, the same way the Saves window loads a checkpoint."))
+
 	var restart_btn := Button.new()
 	restart_btn.text = "Try again"
 	restart_btn.custom_minimum_size = Vector2(0, 32)
@@ -91,5 +103,33 @@ func open(day: int, bees: int, nectar: float, honey: float) -> void:
 		day, bees, int(round(nectar)), int(round(honey)),
 	])
 	summary_label.text = "\n".join(lines)
+	_offer_checkpoint()
 	visible = true
 	get_tree().paused = true
+
+func _on_checkpoint_pressed() -> void:
+	if not SavesPanel.reload_from(get_tree(), _checkpoint_path, _checkpoint_name):
+		summary_label.text += "\nThat checkpoint could not be read."
+
+## Colony Runs only (a Challenge keeps its own rollback): offers the newest
+## of the run's rotating checkpoints that still exists on disk.
+func _offer_checkpoint() -> void:
+	checkpoint_btn.visible = false
+	var level: Dictionary = Levels.get_level(Session.starting_level)
+	if str(level.get("run_type", "")) != "colony":
+		return
+	var slug := SaveSlots.slugify(Session.run_name)
+	var checkpoints: Dictionary = {}
+	for entry in SaveSlots.list_slots():
+		if entry["slug"] == slug:
+			checkpoints = entry.get("checkpoints", {})
+	var best_time := -1
+	for number in checkpoints:
+		var path := SaveSlots.checkpoint_path(slug, int(number))
+		var saved_at := int(checkpoints[number].get("saved_at", 0))
+		if FileAccess.file_exists(path) and saved_at > best_time:
+			best_time = saved_at
+			_checkpoint_path = path
+			_checkpoint_name = Session.run_name
+			checkpoint_btn.text = "Load the latest checkpoint (day %d)" % int(checkpoints[number].get("day", 0))
+			checkpoint_btn.visible = true

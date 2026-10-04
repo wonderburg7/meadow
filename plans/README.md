@@ -170,7 +170,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/now/brood-spine.md` |
 | GC-4 -- a nurse's brood food survives a job change | `plans/now/gameplay-consistency.md` |
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/now/scenario-reds.md` |
-| CR-1, CR-2, PE-2, COL-1 to COL-5 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/now/colony-run.md` |
+| CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/now/colony-run.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/now/colony-run.md`) | `plans/design/product-scope.md` |
