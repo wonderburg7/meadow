@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-5 -- level rows lose the two keys nothing reads**
-   - Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
-   - Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
-   - Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `present: scripts/levels.gd :: "win_conditions"`
-   - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
-
-2. **[Claude] COL-4 -- one editable year: thirty playable days, then winter**
+1. **[Claude] COL-4 -- one editable year: thirty playable days, then winter**
    - Plan: `plans/now/colony-run.md` -- "COL-4 -- one editable year: thirty playable days, then winter"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` before and after shows winter on days 31 to 41 and the plan records both; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: scripts/game_config.gd :: var season_length_days: float = 60.0`
    - Next after: COL-6 -- winter is skipped and resolved in one step
+
+2. **[Claude] BS-6 -- developer edits to the table change what a run starts with**
+   - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
+   - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
+   - Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
+   - Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
+   - Next after: none -- the last slice in this plan
 
 ### Codex lane
 
