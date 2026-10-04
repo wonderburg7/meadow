@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/levels.gd :: "win_conditions"`
    - Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
 
+3. **[Claude] COL-4 -- one editable year: thirty playable days, then winter**
+   - Plan: `plans/now/colony-run.md` -- "COL-4 -- one editable year: thirty playable days, then winter"
+   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+   - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` before and after shows winter on days 31 to 41 and the plan records both; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/game_config.gd :: var season_length_days: float = 60.0`
+   - Next after: COL-6 -- winter is skipped and resolved in one step
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -54,7 +61,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **BS-6** (`plans/now/brood-spine.md`) -- waits for SR-5 (Codex lane) to land, since both edit `tests/source_checks.py`, and follows BS-11 (`scripts/run_availability_panel.gd`); UI-F-2 freed `scripts/main.gd` on 1 Oct 2026; it follows HO-8 there.
-- **COL-4** (`plans/now/colony-run.md`) -- the year waits for PE-2's evidence and Dave's answers to its open questions.
+- **COL-6** (`plans/now/colony-run.md`) -- skipping winter waits for COL-4's year clock, and is specified once it lands (Dave's year decisions, 4 Oct 2026).
 - **GC-3** (`plans/now/gameplay-consistency.md`) -- raising `nectar_per_honey` to 4.0 (Dave, 30 Sep 2026) waited for PE-2's arc, which landed 3 Oct 2026 (one winter, three seeds; its reference player made no honey, so it is thin evidence for a honey change -- `plans/now/colony-run.md`), and now waits for SR-5 (Codex lane), which also edits `tests/source_checks.py`.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run's slices (`plans/now/colony-run.md`, defined 3 Oct 2026), which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
