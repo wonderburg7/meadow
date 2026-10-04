@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (gated on PE-2); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: GC-3 waits for PE-2 (now `plans/now/colony-run.md`) | Verified: 2026-10-02
+Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (Codex lane, after SR-5; Dave, 4 Oct 2026); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: none -- PE-2's arc landed 3 Oct 2026; COL-4 (Claude lane, `plans/now/colony-run.md`) shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, so it waits for GC-3 | Verified: 2026-10-04
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -13,7 +13,7 @@ each demonstrated in a headless run.
 
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | gated: waits for PE-2's played arc | medium |
+| GC-3 | a colony that turns nectar into honey has the same energy afterwards, stored four times as densely | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py` | yes, Codex lane, once SR-5 has merged (`tests/source_checks.py`) | medium |
 
 GC-1 and GC-2 are independent in behaviour but share `bee.gd`, so they run in
 that order in one lane. GC-3 is independent of both. **Required reading:**
@@ -49,7 +49,12 @@ recorded in `.claude/rules/simulation.md`.
 
 **Gate.** PE-2, the played pacing arc through winter
 (`plans/archive/pacing-evidence_2026-10-01.md`), is the multi-season evidence the rule asks
-for. When it exists, fence this block `queue`.
+for. It landed 3 Oct 2026 (`plans/archive/pacing-evidence_2026-10-01.md`):
+one winter on three seeds, and its reference player made no honey, so it is
+thin evidence for a honey change -- the before-and-after runs below carry the
+weight. The block is fenced `queue` in the Codex lane, as SR-5's successor
+(Dave, 4 Oct 2026); COL-4 shares this slice's two script files and waits for
+it rather than sit in the other lane.
 
 **Change.**
 
@@ -68,8 +73,8 @@ for. When it exists, fence this block `queue`.
   in this slice's closeout. If the new value fails a gate the old one
   passed, stop and take the numbers to Dave.
 
-```queue-gated
-**[Claude] GC-3 -- honey stops creating energy**
+```queue
+**[Codex] GC-3 -- honey stops creating energy**
 - Plan: `plans/now/gameplay-consistency.md` -- "GC-3 — honey stops creating energy"
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py`
 - Check: `python tests/source_checks.py` passes with the new check, PE-2's arc and `test_scenarios/bs4_honey_gate_test.json` pass at 4.0 with the comparison recorded, and `tools/verify.ps1` is green
