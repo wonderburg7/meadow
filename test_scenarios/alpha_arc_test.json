@@ -10,9 +10,213 @@
     "profile": "balance",
     "snapshots": {
       "every_sim_seconds": 8.333333,
-      "fields": ["population.total", "resources.food_stores", "environment.winter_here"],
+      "fields": [
+        "population.total",
+        "resources.food_stores",
+        "resources.stored_nectar",
+        "resources.stored_pollen",
+        "role_outcomes.cells_completed_total",
+        "environment.winter_here"
+      ],
       "only_when_changed": false
     }
   },
-  "stop": {"max_days": 44}
+  "stop": {
+    "when": {
+      "winter_over": true,
+      "day_at_least": 43
+    },
+    "max_days": 70
+  },
+  "cells": 0,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "honey_makers": 0,
+  "winter": true,
+  "queen_laying_backup": "nurse",
+  "actions": [
+    {
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "comb_worker"
+    },
+    {
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        0,
+        0
+      ]
+    },
+    {
+      "when": {
+        "cells_completed_at_least": 1
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_nectar"
+    },
+    {
+      "when": {
+        "day_at_least": 5
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "comb_worker"
+    },
+    {
+      "when": {
+        "day_at_least": 5
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        1,
+        0
+      ]
+    },
+    {
+      "when": {
+        "day_at_least": 5
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        0,
+        1
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "cells_completed_at_least": 3
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_nectar"
+    },
+    {
+      "when": {
+        "day_at_least": 10
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "comb_worker"
+    },
+    {
+      "when": {
+        "day_at_least": 10
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -1,
+        1
+      ]
+    },
+    {
+      "when": {
+        "day_at_least": 10
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        0,
+        -1
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "cells_completed_at_least": 5
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_nectar"
+    },
+    {
+      "when": {
+        "day_at_least": 13
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "forager_pollen"
+    },
+    {
+      "when": {
+        "day_at_least": 17
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "population_at_least": {
+          "count": 2
+        }
+      },
+      "do": "assign_role",
+      "target": {
+        "current_role": "forager",
+        "count": 1
+      },
+      "role": "forager_pollen"
+    },
+    {
+      "when": {
+        "population_at_least": {
+          "count": 4
+        }
+      },
+      "do": "assign_role",
+      "target": {
+        "current_role": "forager",
+        "count": 2
+      },
+      "role": "forager_pollen"
+    },
+    {
+      "when": {
+        "population_at_least": {
+          "count": 6
+        }
+      },
+      "do": "assign_role",
+      "target": {
+        "current_role": "forager",
+        "count": 3
+      },
+      "role": "forager_pollen"
+    }
+  ]
 }

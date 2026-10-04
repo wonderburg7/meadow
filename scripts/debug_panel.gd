@@ -117,7 +117,7 @@ func _ready() -> void:
 
 	# Anchored to the top-right corner so it tracks window resizing.
 	# hud.gd keeps this width clear for us, so the two bars can't overlap.
-	toggle_button = Button.new()
+	toggle_button = WrappedTooltipButton.new()
 	_style_button(toggle_button)
 	# A plain cog glyph rather than a loaded texture, consistent with the
 	# rest of the game's placeholder-art approach of drawing everything
@@ -791,6 +791,7 @@ func _on_load_pressed() -> void:
 		push_warning("There is no save to load")
 		return
 	SaveGame.apply_settings(data)
+	SaveGame.apply_starting_level(data)
 	Session.run_name = str(slot["name"])
 	Session.load_path = path
 	Session.load_pending = true
@@ -1143,3 +1144,13 @@ func _restart() -> void:
 	Engine.time_scale = 1.0
 	Session.reset_run_state()
 	get_tree().reload_current_scene()
+
+## The settings cog's button, so its long hover description wraps inside the
+## screen (the shared bounded tooltip) instead of running off the right edge.
+class WrappedTooltipButton:
+	extends Button
+
+	func _make_custom_tooltip(for_text: String) -> Object:
+		if for_text.is_empty():
+			return null
+		return preload("res://scripts/ui_info_badge.gd").make_bounded_tooltip(for_text)

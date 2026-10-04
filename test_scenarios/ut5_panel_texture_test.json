@@ -1,0 +1,123 @@
+{
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "set_config",
+      "key": "ui_theme",
+      "value": "dark"
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "comb"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "grain"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "flat"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "ui_theme",
+      "value": "light"
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "comb"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "grain"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "flat"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "ui_theme",
+      "value": "high_contrast"
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "comb"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "grain"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    },
+    {
+      "do": "set_config",
+      "key": "panel_texture",
+      "value": "flat"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "panel_texture_contrast": true
+      }
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  }
+}

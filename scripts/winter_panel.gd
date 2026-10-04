@@ -27,10 +27,12 @@ func _ready() -> void:
 	setup_layer("winter", "winter_panel")
 	# A left-hand window like Colony/Foraging, so it never covers the top-right bar.
 	build_left_window(330)
+	build_scroll_body()
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
-	panel.add_child(column)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_container.add_child(column)
 
 	var header := HBoxContainer.new()
 	column.add_child(header)

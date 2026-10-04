@@ -95,6 +95,40 @@ def upgrade(data, target_version=FORMAT_VERSION):
     return out
 
 
+def apply_starting_level(data, current):
+    """Mirrors save_game.gd::apply_starting_level (CR-1): a save that
+    records its run puts that level back; one without the field leaves
+    the current level alone. JSON numbers may arrive as floats. A
+    Challenge 1 or 2 save keeps the current level, as before the field."""
+    saved = data.get("starting_level")
+    if isinstance(saved, bool) or not isinstance(saved, (int, float)):
+        return current
+    if int(saved) in (1, 2):
+        return current
+    return int(saved)
+
+
+MILESTONE_IDS = ("first_worker", "first_automation", "stable_income",
+                 "winter_ready", "winter_recovery", "first_gyne")
+
+
+def restore_milestones(data):
+    """Mirrors save_game.gd::milestone_days feeding
+    colony_milestones.gd::restore (CR-2): a dictionary of milestone id to the
+    day first met. A save without one -- or with anything else there -- reads
+    as nothing met; unknown ids are dropped and JSON floats become days."""
+    days = data.get("colony_milestones")
+    if not isinstance(days, dict):
+        return {}
+    restored = {}
+    for milestone_id in MILESTONE_IDS:
+        day = days.get(milestone_id)
+        if isinstance(day, bool) or not isinstance(day, (int, float)):
+            continue
+        restored[milestone_id] = int(day)
+    return restored
+
+
 class SaveMigrationsSourceTest(unittest.TestCase):
     """Checks the actual GDScript keeps the same version ladder these
     tests assume, so the Python mirror above can't silently drift from
@@ -183,6 +217,102 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         data = upgrade({"version": 99, "marker": "future"})
         self.assertEqual(99, data["version"])
         self.assertEqual("future", data["marker"])
+
+
+class StartingLevelTest(unittest.TestCase):
+    """CR-1 (plans/now/colony-run.md): a save remembers which run it is,
+    as an additive field that changes nothing for a save without it."""
+
+    def test_a_save_written_at_level_8_restores_level_8(self):
+        written = json.loads(json.dumps(
+            {"version": FORMAT_VERSION, "starting_level": 8, "settings": {}}))
+        data = upgrade(written)
+        self.assertEqual(8, apply_starting_level(data, 0))
+        self.assertEqual(8, apply_starting_level({"starting_level": 8.0}, 3))
+
+    def test_a_version_6_save_without_the_field_leaves_the_level_unchanged(self):
+        data = upgrade({"version": 6, "settings": {}})
+        self.assertNotIn("starting_level", data)
+        for current in (0, 1, 3, 7, 8):
+            self.assertEqual(current, apply_starting_level(data, current))
+
+    def test_a_challenge_save_keeps_the_current_level(self):
+        for saved in (1, 2, 1.0, 2.0):
+            data = upgrade({"version": FORMAT_VERSION, "starting_level": saved})
+            for current in (0, 1, 3, 8):
+                self.assertEqual(current, apply_starting_level(data, current))
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn("const CHALLENGE_LEVELS := [1, 2]", save_game)
+        self.assertIn("if int(saved) in CHALLENGE_LEVELS:", save_game)
+
+    def test_no_migration_invents_a_starting_level(self):
+        for name in ("save_v1.json", "save_v2.json"):
+            self.assertNotIn("starting_level", upgrade(load_fixture(name)))
+
+    def test_gdscript_writes_and_applies_the_starting_level(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"starting_level": Session.starting_level', save_game)
+        self.assertIn("static func apply_starting_level(data: Dictionary)", save_game)
+        self.assertIn("Session.starting_level = int(saved)", save_game)
+        for name in ("saves_panel.gd", "debug_panel.gd"):
+            source = (SCRIPTS / name).read_text(encoding="utf-8")
+            applied = source.find("SaveGame.apply_starting_level(data)")
+            self.assertNotEqual(-1, applied, name)
+            # Before the world is rebuilt, or the old level builds it.
+            self.assertLess(applied, source.find("reload_current_scene()", applied), name)
+
+    def test_levels_has_the_colony_run_at_8(self):
+        levels = (SCRIPTS / "levels.gd").read_text(encoding="utf-8")
+        row = re.search(r"\t8: \{(.*?)\n\t\},", levels, re.S)
+        self.assertIsNotNone(row, "levels.gd has no row 8")
+        self.assertIn('"run_type": "colony"', row.group(1))
+        self.assertEqual(1, levels.count('"run_type"'))
+
+
+class ColonyMilestoneDaysTest(unittest.TestCase):
+    """CR-2 (plans/now/colony-run.md): the day each Colony Run milestone was
+    first met survives a save and load, as an additive field."""
+
+    def test_recorded_days_survive_a_save_and_load(self):
+        met = {"first_worker": 3, "first_automation": 9, "winter_ready": 17}
+        written = json.loads(json.dumps(
+            {"version": FORMAT_VERSION, "starting_level": 8, "colony_milestones": met}))
+        self.assertEqual(met, restore_milestones(upgrade(written)))
+
+    def test_a_save_without_the_field_reads_as_nothing_met(self):
+        self.assertEqual({}, restore_milestones(upgrade({"version": FORMAT_VERSION})))
+        self.assertEqual({}, restore_milestones({"colony_milestones": [3, 9]}))
+        for name in ("save_v1.json", "save_v2.json"):
+            data = upgrade(load_fixture(name))
+            self.assertNotIn("colony_milestones", data)
+            self.assertEqual({}, restore_milestones(data))
+
+    def test_unknown_ids_and_non_numbers_are_dropped(self):
+        data = {"colony_milestones": {"first_gyne": 40.0, "made_up": 2, "first_worker": "3"}}
+        self.assertEqual({"first_gyne": 40}, restore_milestones(data))
+
+    def test_gdscript_writes_and_restores_the_days(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"colony_milestones": world.colony_milestones.save_data()', save_game)
+        self.assertIn("static func milestone_days(data: Dictionary) -> Dictionary:", save_game)
+        self.assertIn('data.get("colony_milestones")', save_game)
+        self.assertIn("if typeof(days) != TYPE_DICTIONARY:", save_game)
+        milestones = (SCRIPTS / "colony_milestones.gd").read_text(encoding="utf-8")
+        for milestone_id in MILESTONE_IDS:
+            self.assertIn('"id": "%s"' % milestone_id, milestones)
+        restore = milestones.split("func restore(data: Dictionary)", 1)[1]
+        self.assertIn("met_days.clear()", restore)
+        self.assertIn("typeof(day) == TYPE_INT or typeof(day) == TYPE_FLOAT", restore)
+        main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+        replayed = main.index("saving._restore(loaded)")
+        # After the replay, so the save's record replaces anything a
+        # population hook recorded on the way through.
+        self.assertLess(replayed, main.index(
+            "colony_milestones.restore(SaveGame.milestone_days(loaded))", replayed))
+
+    def test_no_migration_invents_milestone_days(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        self.assertNotIn("colony_milestones", migrations)
 
 
 if __name__ == "__main__":

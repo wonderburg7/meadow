@@ -39,6 +39,10 @@ signal scenario_chosen(level: int, preset_key: String, custom_overrides: Diction
 ## Existing internal level ids stay unchanged for save/profile stability;
 ## new run definitions receive new ids even when their player-facing order is
 ## earlier. The menu's Scenario number is presentation, not an array index.
+##
+## The Colony Run (level 8, plans/now/colony-run.md) leads the Scenarios
+## strip but carries `"presets": false`: it has no difficulty preset yet, so
+## it starts through level_chosen like a Challenge (_uses_presets below).
 const STAGES := [
 	{
 		"level": 1,
@@ -51,6 +55,13 @@ const STAGES := [
 		"group": "challenge",
 		"title": "Challenge 2 Brood, Roles and Expansion",
 		"blurb": "Grow the colony from stored food into a working hive. Lay eggs, raise specialist bees, keep nectar flowing, and expand the hive enough to support a balanced workforce.",
+	},
+	{
+		"level": 8,
+		"group": "starter",
+		"presets": false,
+		"title": "Colony Run",
+		"blurb": "The full run. One queen, no workers and no comb, and winter will come. She builds the first cell herself and nurses her own brood while she lays; grow a colony strong enough to see the winter through.",
 	},
 	{
 		"level": 7,
@@ -96,6 +107,8 @@ const GROUPS := [
 ## now that each honeycomb strip has a whole half of the left pane to
 ## itself instead of sharing a single narrow scrolling column.
 const HEX_SIZE := 84.0
+## HO-15: the smallest font size a hex name is shrunk to.
+const HEX_MIN_FONT_SIZE := 6
 const HEX_BORDER_OVERLAP := 3.0
 const LEFT_PANE_MARGIN := 32
 ## Horizontal centre-to-centre spacing for a touching row of hexagons
@@ -382,30 +395,44 @@ func _make_honeycomb_strip(group_key: String) -> Control:
 
 	return strip
 
+## HO-15: the largest size, at most `base`, at which every word of `text`
+## fits `avail.x` on its own line and the word-wrapped text fits
+## `avail.y`. Measured at each candidate size: glyph widths do not scale
+## linearly, which is how OpenDyslexic still split words after HO-12.
+static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int:
+	var size := base
+	while size > HEX_MIN_FONT_SIZE:
+		if hex_text_fits(font, text, avail, size, line_spacing):
+			return size
+		size -= 1
+	return HEX_MIN_FONT_SIZE
+
+
+static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool:
+	for word in text.split(" ", false):
+		if font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > avail.x:
+			return false
+	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+	var block := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, avail.x, size, -1, flags)
+	var lines := maxi(1, roundi(block.y / font.get_height(size)))
+	return block.y + line_spacing * (lines - 1) <= avail.y
+
+
 func _fit_hex_label(label: Label) -> void:
 	var font := label.get_theme_font("font")
-	var current := label.get_theme_font_size("font_size")
-	var overridden := label.has_theme_font_size_override("font_size")
-	# Recover the themed size from the remembered one so the override never
-	# feeds back into its own measurement.
-	var base: int = label.get_meta("hex_base_size", current)
-	if not overridden or current != int(label.get_meta("hex_fit_size", -1)):
-		base = current
-	label.set_meta("hex_base_size", base)
-	var widest := 0.0
-	for word in label.text.split(" ", false):
-		widest = maxf(widest, font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, base).x)
-	var target := base
-	if widest > label.size.x and widest > 0.0:
-		target = maxi(6, int(floor(base * label.size.x / widest)))
-	label.set_meta("hex_fit_size", target)
-	if target == current:
+	# The themed size, read from UiTheme rather than the label: the label's
+	# own size is this function's override once it has run.
+	var base := int(round(UiTheme.TYPE_SIZES["Tiny"] * Session.text_scale))
+	var avail := label.size - label.get_theme_stylebox("normal").get_minimum_size()
+	var key := "%d|%d|%s" % [font.get_rid().get_id(), base, str(avail)]
+	if label.get_meta("hex_fit_key", "") == key:
 		return
+	label.set_meta("hex_fit_key", key)
+	var target := hex_fit_size(font, label.text, avail, base, label.get_theme_constant("line_spacing"))
 	if target == base:
 		label.remove_theme_font_size_override("font_size")
 	else:
 		label.add_theme_font_size_override("font_size", target)
-
 
 func _make_hex_tile(stage: Dictionary) -> Control:
 	var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))
@@ -459,7 +486,7 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 	label.size = Vector2(bbox.x - 44.0, bbox.y - 16.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tile.add_child(label)
-	# HO-12: shrink the font until the longest word fits the label width, so
+	# HO-12/15: shrink the font until the longest word fits the label width, so
 	# word-smart wrapping never has to split a word.
 	label.draw.connect(_fit_hex_label.bind(label))
 
@@ -554,7 +581,7 @@ func _rebuild_detail_pane(stage: Dictionary) -> void:
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_column.add_child(blurb)
 
-	if stage.group == "starter":
+	if _uses_presets(stage):
 		_detail_column.add_child(_make_preset_row(stage))
 		_detail_column.add_child(_make_preset_description())
 		if _selected_preset_key == "custom":
@@ -665,12 +692,18 @@ func _make_custom_row(field: Dictionary) -> Control:
 
 func _choose(stage: Dictionary) -> void:
 	visible = false
-	if stage.group == "challenge":
+	if not _uses_presets(stage):
 		level_chosen.emit(stage.level)
 	else:
 		scenario_chosen.emit(stage.level, _selected_preset_key, _custom_values.duplicate())
 
 # --- small shared helpers ---------------------------------------------
+
+## A Scenario tile offers a difficulty preset and starts through
+## scenario_chosen. A Challenge, and the Colony Run (`"presets": false`,
+## CR-1), start through level_chosen with the tuning as it stands.
+func _uses_presets(stage: Dictionary) -> bool:
+	return stage.group == "starter" and bool(stage.get("presets", true))
 
 func _style_button(button: Button, selected: bool = false) -> void:
 	for state in UiTheme.BUTTON_STATES:

@@ -1,0 +1,99 @@
+{
+  "random_seed": 4242,
+  "actions": [
+    {
+      "do": "viewport_size",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "show_gallerin_prompt",
+      "text": "Bees rely on decisions made together. Bees rely on decisions made together."
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "open_window",
+      "window": "skills"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "skills_buy",
+        "visible": true,
+        "not_overlapping": "gallerin_bubble"
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "skills_buy",
+        "visible": true,
+        "not_overlapping": "gallerin_icon"
+      }
+    },
+    {
+      "do": "close_window",
+      "window": "skills"
+    },
+    {
+      "do": "settle",
+      "ticks": 3
+    },
+    {
+      "do": "viewport_size",
+      "w": 800,
+      "h": 600
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "show_gallerin_prompt",
+      "text": "Bees rely on decisions made together. Bees rely on decisions made together."
+    },
+    {
+      "do": "settle",
+      "ticks": 10
+    },
+    {
+      "do": "open_window",
+      "window": "skills"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "skills_buy",
+        "visible": true,
+        "not_overlapping": "gallerin_bubble"
+      }
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "control": "skills_buy",
+        "visible": true,
+        "not_overlapping": "gallerin_icon"
+      }
+    },
+    {
+      "do": "close_window",
+      "window": "skills"
+    },
+    {
+      "do": "settle",
+      "ticks": 3
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 1
+  }
+}

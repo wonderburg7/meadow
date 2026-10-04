@@ -105,6 +105,7 @@ const InputSelection = preload("res://scripts/input_selection.gd")
 const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
+const ColonyMilestones = preload("res://scripts/colony_milestones.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
 const FogOfWar = preload("res://scripts/fog_of_war.gd")
 const StageGate = preload("res://scripts/stage_gate.gd")
@@ -116,6 +117,8 @@ var input_selection: Node
 var orders_zones: Node
 var foraging_stats: Node
 var year_winter: Node
+## CR-2: the Colony Run's milestone evaluator. Idle in any other run.
+var colony_milestones: ColonyMilestones
 var camera_view: Node
 var fog_of_war: Node
 var stage_gate: Node
@@ -311,6 +314,15 @@ var reseed_timer: float = 0.0
 ## steadier than reading the last 10s alone.
 var rate_samples: Array = []
 var rate_sample_timer: float = 10.0 + randf() * 2.0
+## CR-2: the stores at each day boundary, for conditions.gd's net_income rate
+## key -- {day, nectar, pollen, nectar_collected, pollen_collected}, one per
+## new day, keeping the last DAY_STORE_SAMPLES. Neither history_samples (a
+## fixed count of 5 s samples for the colony window's plot, whose span moves
+## with the day length) nor rate_samples (60 s of lifetime collection) holds a
+## whole day, so this is its own series. Not saved: after a load the window
+## refills over the next few days.
+const DAY_STORE_SAMPLES := 8
+var day_store_totals: Array = []
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre": Vector2, "radius": float}]
 var panning: bool = false          # middle mouse button held
@@ -401,6 +413,8 @@ func _ready() -> void:
 	year_winter = YearWinter.new()
 	year_winter.main = self
 	add_child(year_winter)
+	colony_milestones = ColonyMilestones.new()
+	colony_milestones.main = self
 	camera_view = CameraView.new()
 	camera_view.main = self
 	add_child(camera_view)
@@ -552,6 +566,8 @@ func _ready() -> void:
 	season.winter_started.connect(year_winter._on_winter_started)
 	season.winter_survived.connect(year_winter._on_winter_survived)
 	season.gyne_released.connect(year_winter._on_gyne_released)
+	season.gyne_released.connect(func(_total): colony_milestones.evaluate())
+	season.gyne_released.connect(func(_total): colony_milestones.check_victory())
 	add_child(season)
 
 	game_over = GameOver.new()
@@ -568,7 +584,10 @@ func _ready() -> void:
 
 	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
 	bee_died.connect(_on_bee_died)
+	bee_died.connect(func(_bee): colony_milestones.evaluate())
 	day_changed.connect(func(d): hud.update_day(d, year_winter._season_text()))
+	# Before the checkpoint, so a day's checkpoint carries that day's milestones.
+	day_changed.connect(func(_d): colony_milestones.evaluate())
 	day_changed.connect(func(_d): saving.checkpoint())
 	hud.update_day(day, year_winter._season_text())
 	hud.update_storage(0, 0, 0, 0)
@@ -582,13 +601,19 @@ func _ready() -> void:
 	# it replays state rather than restoring a scene tree.
 	if Session.load_pending:
 		Session.load_pending = false
-		saving._restore(SaveGame.read(Session.load_path))
+		var loaded: Dictionary = SaveGame.read(Session.load_path)
+		saving._restore(loaded)
+		# After the world: a population hook during the replay may have
+		# recorded the load day, and the save's own record replaces that.
+		colony_milestones.restore(SaveGame.milestone_days(loaded))
 		Session.load_path = ""
 	elif Session.starting_level in [1, 2]:
 		# Both Challenges now have stage data (challenge_runner.gd's
 		# STAGES_1/STAGES_2) -- levels.gd's own presets only cover the
 		# starting state for either.
 		challenge_runner.start()
+	# COL-1: the goal shelf's first line in a Colony Run, fresh or loaded.
+	colony_milestones.show_next()
 
 # --- public surface other scripts call directly -------------------
 ## bee.gd holds a reference to this node (as `world`) and calls these by
@@ -688,6 +713,7 @@ func _process(delta: float) -> void:
 		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
 		if new_day != day:
 			day = new_day
+			_sample_day_stores()
 			day_changed.emit(day)
 			if scenario_active and scenario_stop_max_days >= 0 and day >= scenario_stop_max_days:
 				_end_scenario_run("max_days")
@@ -810,7 +836,21 @@ func _hatch_ready_brood() -> void:
 			cell.bump_display_epoch()
 		hive.record_birth()
 		_update_population_readout()
+		colony_milestones.evaluate()
 	Perf.end("hatch")
+
+## CR-2: one sample of the stores per day boundary, taken before day_changed
+## is emitted so its listeners (the milestone evaluator) see today's.
+func _sample_day_stores() -> void:
+	day_store_totals.append({
+		"day": day,
+		"nectar": hive.total("nectar"),
+		"pollen": hive.total("pollen"),
+		"nectar_collected": hive.lifetime_nectar_collected,
+		"pollen_collected": hive.lifetime_pollen_collected,
+	})
+	while day_store_totals.size() > DAY_STORE_SAMPLES:
+		day_store_totals.pop_front()
 
 ## Weather. Rain arrives, builds, sits, and eases off again, so the
 ## colony gets a warning rather than being switched off mid-flight. The
@@ -958,11 +998,13 @@ func _role_counts(bees = null) -> Dictionary:
 func _update_population_readout(bees = null) -> void:
 	invalidate_population()
 	var counts: Dictionary = _role_counts(bees)
-	var foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)) + int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var nectar_foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0))
+	var pollen_foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
+	var miners: int = int(counts.get(Roles.count_key(Roles.MINER), 0))
 	var nurses: int = int(counts.get(Roles.count_key(Roles.NURSE), 0))
 	var builders: int = int(counts.get(Roles.count_key(Roles.COMB_WORKER), 0))
 	var honey_makers: int = int(counts.get(Roles.count_key(Roles.HONEY), 0))
-	hud.update_population(foragers, nurses, builders, honey_makers)
+	hud.update_population(nectar_foragers, pollen_foragers, nurses, builders, miners, honey_makers)
 
 ## Records what just came out of the comb, for the nursery window's
 ## emergence rates. Keyed the same way the population counts are, so the

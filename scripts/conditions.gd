@@ -54,6 +54,21 @@ static func _met_key(main, key: String, value) -> bool:
 			var disease_spec: Dictionary = value
 			var disease := _disease(main)
 			return disease >= float(disease_spec.get("at_least", -INF)) and disease <= float(disease_spec.get("at_most", INF))
+		"net_income":
+			var income_spec: Dictionary = value
+			var income := _net_income(main, income_spec)
+			return not income.is_empty() and float(income.collected) > 0.0 and float(income.net) >= float(income_spec.get("at_least", 0.0))
+		"non_queen_adults_at_least":
+			return _non_queen_adults(main) >= int(value)
+		"winter_ready":
+			return _winter_ready(main) == bool(value)
+		"winter_over":
+			return _winter_over() == bool(value)
+		"brood_stage":
+			var stage_spec: Dictionary = value
+			return _brood_stage(main, stage_spec) >= int(stage_spec.get("at_least", 0))
+		"gynes_released_at_least":
+			return Session.gynes_released >= int(value)
 		"all_of":
 			for child in value:
 				if not met(main, child):
@@ -106,6 +121,17 @@ static func _progress_key(main, key: String, value) -> Dictionary:
 				return {"current": _disease(main), "target": float(disease_spec["at_least"])}
 			if disease_spec.has("at_most"):
 				return {"current": _disease(main), "target": float(disease_spec["at_most"])}
+		"net_income":
+			var income_spec: Dictionary = value
+			var income := _net_income(main, income_spec)
+			return {"current": float(income.get("net", 0.0)), "target": float(income_spec.get("at_least", 0.0))}
+		"non_queen_adults_at_least":
+			return {"current": _non_queen_adults(main), "target": int(value)}
+		"brood_stage":
+			var stage_spec: Dictionary = value
+			return {"current": _brood_stage(main, stage_spec), "target": int(stage_spec.get("at_least", 0))}
+		"gynes_released_at_least":
+			return {"current": Session.gynes_released, "target": int(value)}
 		"all_of", "any_of":
 			for child in value:
 				var result := progress(main, child)
@@ -161,3 +187,70 @@ static func _disease(main) -> float:
 	if main.season == null or not is_instance_valid(main.season):
 		return 0.0
 	return main.season.disease
+
+
+## CR-2: `{"net_income": {"resource": "nectar", "days": 3, "at_least": 0.0}}`,
+## a rate of income over the last `days` whole days. Read from main.gd's
+## day_store_totals (one sample per day boundary), never from a live total,
+## so a check on day change and one later the same day give the same answer.
+## `net` is how far the store moved across the window; `collected` is how
+## much came in from the meadow over it. The leaf asks for both: income means
+## something arrived, so a store that sat at zero is not a stable income.
+## An empty result means the window is not full yet -- a new run, or the
+## first days after a load, since the samples are not saved.
+static func _net_income(main, spec: Dictionary) -> Dictionary:
+	var samples: Array = main.day_store_totals
+	var days: int = maxi(1, int(spec.get("days", 1)))
+	if samples.size() <= days:
+		return {}
+	var resource := str(spec.get("resource", ""))
+	var newest: Dictionary = samples[samples.size() - 1]
+	var oldest: Dictionary = samples[samples.size() - 1 - days]
+	return {
+		"net": float(newest.get(resource, 0.0)) - float(oldest.get(resource, 0.0)),
+		"collected": float(newest.get(resource + "_collected", 0.0)) - float(oldest.get(resource + "_collected", 0.0)),
+	}
+
+
+## CR-2: every adult other than the queen, gynes included, from main's cached
+## role counts (which count every bee, the queen among them).
+static func _non_queen_adults(main) -> int:
+	var total := 0
+	for count in main._role_counts().values():
+		total += int(count)
+	if main.queen != null and is_instance_valid(main.queen):
+		total -= 1
+	return maxi(0, total)
+
+
+## CR-2: the winter window's own verdict -- year_winter.gd's forecast, read
+## the way winter_panel.gd::refresh reads it ("On track" when the comb holds
+## at least what winter needs) -- judged on the colony that meets winter: only
+## on the countdown's last day (the forecast's days_left at most 1), up to the
+## day boundary winter arrives on. main.gd emits day_changed before season.gd's
+## once-a-second tick sets winter_here, so that boundary is still checked. An
+## earlier verdict says nothing about the colony winter finds, and a met
+## milestone is never re-checked. The bee count is the whole population, queen
+## included, as main's panel refresh passes it.
+static func _winter_ready(main) -> bool:
+	if not Session.winter_coming or Session.winter_here:
+		return false
+	var bees := 0
+	for count in main._role_counts().values():
+		bees += int(count)
+	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
+	if float(forecast.get("days_left", INF)) > 1.0:
+		return false
+	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
+
+
+## CR-2: a winter has come and gone. season.gd sets winter_ends_day when winter
+## arrives and clears winter_here when it ends; a run opens one countdown.
+static func _winter_over() -> bool:
+	return Session.winter_ends_day > 0.0 and not Session.winter_here
+
+
+## CR-2: `{"brood_stage": {"stage": "egg", "at_least": 1}}`, brood cells in one
+## stage of hive.gd's own egg/larva/capped split.
+static func _brood_stage(main, spec: Dictionary) -> int:
+	return int(main.hive.brood_stage_counts().get(str(spec.get("stage", "")), 0))

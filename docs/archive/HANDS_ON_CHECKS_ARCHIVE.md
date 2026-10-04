@@ -36,7 +36,7 @@ PASS: The tooltip wraps into a narrow themed box fully inside the window, and on
 
 If it fails, UT-2 reopens: a tooltip still running off-screen means SkillGrid's tooltip override is not being used; a missed Buy click means Dr Gallerin's layer still covers the button.
 
-Owner: `plans/now/ui-texture-polish.md`
+Owner: `plans/archive/ui-texture-polish_2026-10-03.md`
 
 ### C-71 -- High contrast panels stay plain
 
@@ -46,7 +46,7 @@ PASS: in High contrast, Honeycomb and Grain both leave the Colony window plain, 
 
 If it fails, `scripts/ui_theme.gd::PanelBox._draw` is drawing a texture in High contrast.
 
-Owner: `plans/now/ui-texture-polish.md`
+Owner: `plans/archive/ui-texture-polish_2026-10-03.md`
 
 ### C-72 -- Text scale applies after a pause
 

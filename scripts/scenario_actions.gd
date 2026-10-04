@@ -806,6 +806,15 @@ static func _do_select_cell(main: Node2D, action: Dictionary) -> void:
 	main.input_selection._select_cells([built_cells[built_index]], false)
 	_log("select_cell", "built_index %d" % built_index, "accepted", "")
 
+## Sorts every container under `node` now, parents before children, instead
+## of on the next idle frame -- for a window that opens while paused.
+static func _force_layout(node: Node) -> void:
+	if node is Container:
+		node.notification(Container.NOTIFICATION_SORT_CHILDREN)
+	for child in node.get_children():
+		_force_layout(child)
+
+
 ## Opens one of the left-side windows or the command tray's "More…" panel,
 ## through the same functions their buttons call
 ## (main.gd wires colony_button/foraging_button to year_winter._toggle_panel,
@@ -841,6 +850,9 @@ static func _do_open_window(main: Node2D, action: Dictionary) -> void:
 		# SK-1: full-screen and pausing, not a left window -- the Skills
 		# button's own toggle.
 		main.hud.skill_tree_panel.open()
+		# The view pauses the tree, which stops the scenario clock, so no
+		# "settle" can follow: lay the window out now for the assertions.
+		_force_layout(main.hud.skill_tree_panel.panel)
 		if main.hud.skill_tree_panel.is_open():
 			_log("open_window", window_key, "accepted", "")
 		else:
@@ -1118,6 +1130,8 @@ static func _do_assert(main: Node2D, action: Dictionary) -> bool:
 	return false
 
 static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary:
+	if condition.has("panel_texture_contrast"):
+		return _check_panel_texture_contrast(condition)
 	if condition.has("panel"):
 		return _check_panel_rect(main, condition)
 	if condition.has("control") and condition.has("menu_items"):
@@ -1411,6 +1425,52 @@ static func _check_control_rect(main: Node2D, condition: Dictionary) -> Dictiona
 		var peer_width: float = peer.get_global_rect().size.x
 		if absf(rect.size.x - peer_width) > 1.0:
 			return {"ok": false, "reason": "control '%s' is %.1fpx wide but '%s' is %.1fpx" % [path, rect.size.x, peer_path, peer_width]}
+	if condition.has("not_overlapping"):
+		var other_path: String = condition["not_overlapping"]
+		var other_node: Node = _resolve_scoped_path(main, other_path)
+		if other_node == null or not (other_node is Control):
+			return {"ok": false, "reason": "control '%s' overlap-peer '%s' not found" % [path, other_path]}
+		var other: Control = other_node as Control
+		if not other.is_visible_in_tree():
+			return {"ok": false, "reason": "control '%s' overlap-peer '%s' is not visible" % [path, other_path]}
+		var other_rect: Rect2 = other.get_global_rect()
+		if rect.intersects(other_rect):
+			return {"ok": false, "reason": "control '%s' rect %s overlaps '%s' rect %s" % [path, rect, other_path, other_rect]}
+	return {"ok": true, "reason": ""}
+
+## UT-5: {"panel_texture_contrast": true} -- the panel texture the current
+## theme and Panel texture setting would draw is visible but never fights
+## the text on it. Reads UiTheme.panel_texture_contrast, so it needs no
+## renderer. Floors sit just under UT-1's measured values (Dark comb 1.33,
+## grain 1.42 lighter, 33% of pixels at 1.10+; Light comb 1.38, grain 1.28
+## darker, 31%). "flat" draws nothing and High contrast never draws a
+## texture, so both must report no visible texture at all.
+const TEXTURE_MIN_COMB := 1.25
+const TEXTURE_MIN_GRAIN_SIDE := 1.20
+const TEXTURE_MIN_GRAIN_SHARE := 0.25
+const TEXTURE_MIN_TEXT := 4.5
+
+static func _check_panel_texture_contrast(_condition: Dictionary) -> Dictionary:
+	var mode: String = Session.panel_texture
+	var label := "%s theme, %s texture" % [Session.ui_theme, mode]
+	var report: Dictionary = UiTheme.panel_texture_contrast(mode if mode != "flat" else "both")
+	if Session.ui_theme == "high_contrast":
+		if report["drawn"]:
+			return {"ok": false, "reason": "%s: a texture is drawn" % label}
+		return {"ok": true, "reason": ""}
+	if mode == "flat":
+		return {"ok": true, "reason": ""}
+	if float(report["text_min"]) < TEXTURE_MIN_TEXT:
+		return {"ok": false, "reason": "%s: text contrast over the texture falls to %.2f:1, needs %.2f" % [label, report["text_min"], TEXTURE_MIN_TEXT]}
+	if mode == "comb":
+		if float(report["comb"]) < TEXTURE_MIN_COMB:
+			return {"ok": false, "reason": "%s: comb lines reach only %.2f:1 against the panel, needs %.2f" % [label, report["comb"], TEXTURE_MIN_COMB]}
+		return {"ok": true, "reason": ""}
+	var side_key := "grain_lightest" if Session.ui_theme == "dark" else "grain_darkest"
+	if float(report[side_key]) < TEXTURE_MIN_GRAIN_SIDE:
+		return {"ok": false, "reason": "%s: grain %s reaches only %.2f:1, needs %.2f" % [label, side_key, report[side_key], TEXTURE_MIN_GRAIN_SIDE]}
+	if float(report["grain_share"]) < TEXTURE_MIN_GRAIN_SHARE:
+		return {"ok": false, "reason": "%s: only %.0f%% of grain pixels reach 1.10:1, needs %.0f%%" % [label, float(report["grain_share"]) * 100.0, TEXTURE_MIN_GRAIN_SHARE * 100.0]}
 	return {"ok": true, "reason": ""}
 
 ## HF-6: {"control": "<path>", "menu_items": ["label", ...]} -- the item
@@ -1559,6 +1619,12 @@ static func _resolve_scoped_path(main: Node2D, path: String) -> Node:
 			root = main.hud.command_tray
 		"gallerin_panel":
 			root = main.gallerin_panel
+		"gallerin_bubble":
+			return main.gallerin_panel.bubble
+		"gallerin_icon":
+			return main.gallerin_panel._icon_button
+		"skills_buy":
+			return main.hud.skill_tree_panel.buy_button
 		"settings":
 			root = main.debug_panel.panel
 		_:

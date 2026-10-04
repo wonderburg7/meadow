@@ -30,6 +30,8 @@ LINE_THRESHOLD = 700
 DESCRIPTIONS = {
     "hud.gd": "Corner readouts, panels, popups, warnings, the problem strip, the\n"
               "Challenge goal readout.",
+    "main_menu.gd": "The main menu overlay: the honeycomb of stage hexes, their name fitting,\n"
+                    "and the menu buttons.",
     "bee.gd": "A bee's dispatch loop, player commands, display text, vars.",
     "debug_panel.gd": "The settings window (the cog icon): tuner rows, save/load buttons,\n"
                        "restart.",
