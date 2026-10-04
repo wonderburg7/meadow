@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9, BS-10 and BS-11 landed 2 Oct 2026; queued 4 Oct 2026 with its scope check moved to `tests/test_run_scenario_launch.py`, so it no longer waits for SR-5) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-04
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (BS-6, the last slice, landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs). Follow-ups: hands-on check C-112 (`checks/ready/C-112.md`); not yet filed anywhere -- the table's "Introduced at stage" and "Free at stage" columns still read "not yet available", and `scripts/debug_panel.gd`'s Run availability tooltip still calls the table read-only | Dependency: none | Verified: 2026-10-04
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes

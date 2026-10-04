@@ -80,6 +80,7 @@ const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Levels = preload("res://scripts/levels.gd")
 const RunAvailability = preload("res://scripts/run_availability.gd")
+const DeveloperOverrides = preload("res://scripts/developer_overrides.gd")
 const Availability = preload("res://scripts/availability.gd")
 const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
 const ScenarioActions = preload("res://scripts/scenario_actions.gd")
@@ -431,6 +432,12 @@ func _ready() -> void:
 	# save replaces the starting skills with the ones it recorded
 	# (saving.gd::_restore, after this).
 	var level: Dictionary = Levels.get_level(Session.starting_level)
+	# BS-6: the developer table's user:// edits to skill_grants/skill_bans.
+	# Never in a scenario run (a Challenge fixture keeps level 1 or 2, so
+	# the level id alone is not enough) or a headless one, so every fixture
+	# and verify.ps1 start exactly as levels.gd and their JSON say.
+	if not scenario_active and Session.starting_level != Levels.SCENARIO_LEVEL_ID and DisplayServer.get_name() != "headless":
+		level = DeveloperOverrides.apply(Session.starting_level, level)
 	Session.ensure_progression(stage_gate).begin_run(RunAvailability.sheet_for(level))
 	Availability.invalidate()
 	challenge_runner = ChallengeRunner.new()
