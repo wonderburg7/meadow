@@ -99,7 +99,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-5 | level rows lose the two keys nothing reads | `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json` | after COL-3 (shares `main.gd`) | low |
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes | high |
 
 **Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
@@ -124,32 +123,7 @@ COL-2 shipped 2026-10-03; its specification is `plans/archive/COL-2_2026-10-03.m
 
 COL-3 shipped 2026-10-04; its specification is `plans/archive/COL-3_2026-10-04.md`.
 
-## COL-5 -- level rows lose the two keys nothing reads
-
-<!-- LAYER: immediate-task -->
-
-Level: low (mechanical removal across one data file, its one writer and two fixtures).
-
-**True now** (verified 3 Oct 2026 by grep). Every `levels.gd` row carries
-`"unlocks": []` and `"win_conditions": []`; `main.gd`'s scenario setup
-defaults both on a scenario's row; `test_scenarios/bs4_honey_gate_test.json`
-and `colony_30_bees_test.json` set them empty. Nothing in `scripts/`,
-`tests/` or `tools/` reads either. The Colony Run's goals are CR-2's
-milestones and COL-2's victory (decision 4), so neither key has a future
-owner here; Challenges keep their goals in `challenge_runner.gd`.
-
-**True afterwards.** Neither key appears in `scripts/` or `test_scenarios/`,
-and `levels.gd`'s header no longer describes them. No run, scenario or save
-behaves differently.
-
-```queue
-**[Claude] COL-5 -- level rows lose the two keys nothing reads**
-- Plan: `plans/now/colony-run.md` -- "COL-5 -- level rows lose the two keys nothing reads"
-- Files: `scripts/levels.gd`, `scripts/main.gd`, `test_scenarios/bs4_honey_gate_test.json`, `test_scenarios/colony_30_bees_test.json`
-- Check: `grep -rn "win_conditions" scripts test_scenarios` and the same for `"unlocks"` find nothing; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/levels.gd :: "win_conditions"`
-- Next after: COL-4 -- one calendar for flowers and gynes, counted from the end of winter
-```
+COL-5 shipped 2026-10-04; its specification is `plans/archive/COL-5_2026-10-04.md`.
 
 ## COL-4 -- one editable year: thirty playable days, then winter
 
