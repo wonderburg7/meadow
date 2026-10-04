@@ -1,7 +1,7 @@
 # Scenario reds -- the four red scenarios and the red SF-1 test
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: None — plan complete (SR-5 landed 4 Oct 2026: the SF-1 flower-mix test passes and runs in verify; SR-4 landed earlier with hands-on check C-103 filed); no follow-ups filed | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-04
+Status: complete | Owner: Dave / Codex | Next: None — plan complete (SR-5 landed 4 Oct 2026: the SF-1 flower-mix test passes and runs in verify; SR-4 landed earlier with hands-on check C-103 filed); no follow-ups filed | Dependency: none -- UI-F-2's warning changes accompany this five-slice lane refill | Verified: 2026-10-04
 
 **Objective.** Every short scenario in `python tools/scenario_sweep.py` is
 green again, and the one exempt unit test either passes or its failure is
