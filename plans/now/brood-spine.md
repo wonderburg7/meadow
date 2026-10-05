@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-12 -- the Run availability button no longer calls the table read-only (BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs; hands-on check C-112, `checks/ready/C-112.md`). The table's "Introduced at stage" and "Free at stage" columns still read "not yet available": `skills.gd`'s `introduced_by` stays empty until the campaign meta tree exists (`plans/design/progression.md` Phase C), so no slice can fill them yet | Dependency: none | Verified: 2026-10-04
+Status: active | Owner: Dave / Claude Code | Next: BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill, then BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them (Dave, 5 Oct 2026; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -77,6 +77,23 @@ Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
    Challenge 2, which would make the run own Nurses and take stage 2.5's
    purchase away. BS-9 builds it.
 
+## Decisions (Dave, 5 Oct 2026, run-queue follow-up)
+
+<!-- LAYER: design -->
+
+- **The stage columns read Challenge data.** "Introduced at stage" is the
+  first Challenge stage whose `unlocked_keys` name the skill; "Free at stage"
+  is every stage whose `free_skills` name it (`scripts/challenge_stages.gd`).
+  `skills.gd`'s `introduced_by` is a different thing -- the run that
+  discovers a skill in the campaign meta tree, post-alpha
+  (`plans/design/progression.md` section 11, step 9) -- and stays empty.
+  This supersedes the 4 Oct Status line's "no slice can fill them yet".
+- **A save keeps its run's skill policy.** BS-6 left a loaded save re-reading
+  the developer's current start overrides, because a run's
+  `skill_grants`/`skill_bans` were not saved. A save now records them, a load
+  uses them, and a save from a run whose policy developer edits changed says
+  so in a top-level tag that anyone reading the file can see.
+
 ## Ownership taken by this plan
 
 - **`scripts/roles.gd` owns which skill unlocks a role** (a `skill` field on
@@ -103,7 +120,8 @@ Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-12 | the Run availability button no longer calls the table read-only | `scripts/debug_panel.gd` | yes | low |
+| BS-13 | the Run availability table names the Challenge stage that introduces and frees each skill | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`, `tests/test_bs13_stage_columns.py`, `tests/bs13_stage_columns_test.gd`, `tools/verify.ps1` | yes | medium |
+| BS-14 | a save keeps its run's skill grants and bans, and says when developer edits made them | `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1` | yes | high |
 
 BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
 `run_availability_panel.gd`. Every later slice names
@@ -130,37 +148,91 @@ BS-9 shipped 2026-10-02; its specification is `plans/archive/BS-9_2026-10-02.md`
 
 BS-6 shipped 2026-10-04; its specification is `plans/archive/BS-6_2026-10-04.md`.
 
-## BS-12 -- the Run availability button no longer calls the table read-only
+BS-12 shipped 2026-10-05; its specification is `plans/archive/BS-12_2026-10-05.md`.
+
+## BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill
 
 <!-- LAYER: immediate-task -->
 
-Level: low (one file, two strings). Specified 4 Oct 2026 from BS-6's
-closeout, which named it as an unfiled follow-up.
+Level: medium (two files and a test, with an acceptance check). Specified
+5 Oct 2026 from Dave's decision above.
 
-**True now** (verified 4 Oct 2026 on branch claude/BS-6). BS-6 made the
-Run availability table editable: a skill row's source is a button, and
-"Reset to the game's data" deletes the edits. `debug_panel.gd` still
-describes it as read-only in two places: the comment above `developer_row`
-("the read-only Run availability table they open") and the action row's
-hover text in `_refresh_developer_row` ("Developer mode: a read-only table
-of this run's skills, ...").
+**True now** (verified 5 Oct 2026 on master). `run_availability_panel.gd`
+fills the last two columns of every row with `NOT_YET` ("not yet
+available"), in `_fill` and `_row`, and `run_availability.gd`'s header says
+those columns wait for `challenge_stages.gd`. The data is already there:
+`STAGES_1` and `STAGES_2` name skill ids in a stage's cumulative
+`unlocked_keys` (Nurses first at 2.5, Challenge 2's "buy Nurses in the skill
+tree, then raise a nurse") and in `free_skills` (Nurses at 2.5, waived by
+`challenge_runner.gd` through `progression.waive_cost`). No other skill id
+appears in either list today.
 
-**True afterwards.** Both describe the table as BS-6 left it: it shows what
-a run of this level starts owning, leaves to the skill tree or does not
-offer, and why, and a click on a skill's source changes what the next run
-of this level starts with, on this machine only. The wording follows the
-table's own intro line in `run_availability_panel.gd`; nothing else
-changes.
+**True afterwards.** `run_availability.gd` answers, for a skill id, the first
+stage whose `unlocked_keys` contain it and the stages whose `free_skills`
+contain it, read from `challenge_stages.gd`'s two stage lists by a static
+function beside `sheet_for` -- the existing owner extended, no new
+catalogue. The panel shows them in its two columns: "2.5" for Nurses in
+both, "--" for a skill no stage names. A role row shows its skill's answer;
+a feature row shows "--". `NOT_YET` and the header's "still to come" note go.
 
-**Must not change.** The table, `developer_overrides.gd`, or when the
-button is built.
+**Must not change.** What a run starts owning; the sheet's shape that
+`main.gd` and `progression.gd` read; `challenge_stages.gd`; `skills.gd`'s
+`introduced_by`.
+
+**Runtime policy.** Computed when the table fills (`_fill`), never per
+frame: two stage lists of under thirty records.
 
 ```queue
-**[Claude] BS-12 -- the Run availability button no longer calls the table read-only**
-- Plan: `plans/now/brood-spine.md` -- "BS-12 -- the Run availability button no longer calls the table read-only"
-- Files: `scripts/debug_panel.gd`
-- Check: `grep -n "read-only" scripts/debug_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/debug_panel.gd :: a read-only table of this run's skills`
+**[Claude] BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill**
+- Plan: `plans/now/brood-spine.md` -- "BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill"
+- Files: `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`, `tests/test_bs13_stage_columns.py`, `tests/bs13_stage_columns_test.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_bs13_stage_columns` passes (Nurses reads 2.5 in both columns, Honey worker reads "--" in both); `grep -n "not yet available" scripts/run_availability_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/run_availability_panel.gd :: const NOT_YET := "not yet available"`
+- Next after: BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them
+```
+
+## BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them
+
+<!-- LAYER: immediate-task -->
+
+Level: high (save compatibility, and the order of run start and load).
+Specified 5 Oct 2026 from Dave's decision above.
+
+**True now** (verified 5 Oct 2026 on master). `main.gd::_ready` builds the
+run's availability sheet from `Levels.get_level(Session.starting_level)`,
+passed through `DeveloperOverrides.apply` outside scenario and headless
+runs, before `saving.gd::_restore` puts back the owned skills. A save
+records `starting_level` (CR-1, put back by `SaveGame.apply_starting_level`
+from `saves_panel.gd` and `debug_panel.gd` before the world is rebuilt) but
+not the run's `skill_grants`/`skill_bans`, so a load re-reads
+`user://developer_start_overrides.json` as it stands at load time: a save
+made under one set of developer edits loads under another.
+
+**True afterwards.**
+- `save_game.gd` writes the run's effective `skill_grants` and `skill_bans`
+  (what `begin_run` was given) as one additive field, and a top-level
+  `developer_changes: true` when developer edits changed that run's level
+  policy at its start. No `FORMAT_VERSION` bump and no migration, like
+  CR-1's `starting_level`: a save without the field loads exactly as today.
+- A load puts the saved policy back before the world is rebuilt, from the
+  same two call sites as `apply_starting_level`, through `Session`, which
+  owns run state. `main.gd`'s run start uses it instead of
+  `DeveloperOverrides.apply`, then clears it, so the next new run reads the
+  overrides file again.
+- The tag survives a re-save: a run started under developer edits keeps
+  `developer_changes` through every later save of that run.
+- `developer_overrides.gd` stays the only reader of the overrides file.
+
+**Must not change.** How a save without the field loads; a Challenge save
+keeping the current level (`apply_starting_level`); scenario and headless
+runs never reading the overrides file; `developer_overrides.gd`.
+
+```queue
+**[Claude] BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them**
+- Plan: `plans/now/brood-spine.md` -- "BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them"
+- Files: `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_save_migrations tests.test_bs14_saved_skill_policy` passes (a save without the field loads as before; a run under a developer ban, saved, then loaded after the overrides file changed, keeps the saved ban and its file carries `developer_changes`); a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/save_game.gd :: developer_changes`
 - Next after: none -- plans/now/brood-spine.md is complete
 ```
 
