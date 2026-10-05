@@ -110,10 +110,10 @@ PE-2's arc (`tools/pacing_gates.py`).
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/now/gameplay-consistency.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
 | COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1` | no -- after COL-4 (shares `season.gd`; needs its year clock) | high |
 
-**Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
-both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
-plays CR-1's start state. `plans/now/brood-spine.md`'s BS-6 also edits
-`scripts/main.gd`; whichever lands second rebases.
+**Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
+COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
+(`plans/now/gameplay-consistency.md`), which shares `scripts/game_config.gd`
+and `scripts/settings_catalogue.gd`.
 
 **Ids.** This plan reuses the ids CR-1 and CR-2 from two slices archived on
 8-9 Sep 2026 under an earlier plan: the queue had claimed CR-1 before the
