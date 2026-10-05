@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them (Dave, 5 Oct 2026; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; no follow-up filed (BS-14 landed 5 Oct 2026: a save records its run's skill grants and bans as `skill_policy`, and a top-level `developer_changes: true` when developer edits changed that run's start; a load puts them back instead of re-reading `user://developer_start_overrides.json`; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes

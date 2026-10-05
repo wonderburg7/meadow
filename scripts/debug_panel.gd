@@ -792,6 +792,7 @@ func _on_load_pressed() -> void:
 		return
 	SaveGame.apply_settings(data)
 	SaveGame.apply_starting_level(data)
+	SaveGame.apply_skill_policy(data)
 	Session.run_name = str(slot["name"])
 	Session.load_path = path
 	Session.load_pending = true
