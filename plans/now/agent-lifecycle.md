@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-18 -- the claim warns when it takes a lane's last item into a dry backlog, then L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's (Dave, 5 Oct 2026, from the 4-5 Oct run-queue run), then L-22, L-21, L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; until L-21 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude | Next: L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's (Dave, 5 Oct 2026, from the 4-5 Oct run-queue run), then L-22, L-21, L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; until L-21 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
 
 ## Objective
 
@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-18 | the claim warns when it takes a lane's last item into a dry backlog | `tools/slice.ps1`, `tools/refill_lane.py`, `tests/test_slice_lifecycle.py` | medium |
 | L-19 | queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's | `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
 | L-21 | session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-22 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
@@ -72,42 +71,7 @@ L-16 shipped 2026-10-02; its specification is `plans/archive/L-16_2026-10-02.md`
 
 L-17 shipped 2026-10-02; its specification is `plans/archive/L-17_2026-10-02.md`.
 
-## L-18 -- the claim warns when it takes a lane's last item into a dry backlog
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one script and its suite, with a deterministic check).
-Specified 5 Oct 2026: Dave chose this and L-19 from four refill-gate
-options; counting a `queue-gated` block toward the floor, and refusing the
-claim, were declined, and the floor stays 3.
-
-**True now** (verified 5 Oct 2026). On 4-5 Oct the run-queue coordinator
-claimed BS-12, the Claude lane's only item, with nothing admissible behind
-it; BS-12 was built, and then `finish` refused to close it at the refill
-gate, because deleting it would empty the lane and take the whole queue
-under `check_docs.QUEUE_SIZE_MIN`. Nothing warned before the claim: `doctor`
-and `start` print `advice` (model and connectors, `Get-SliceAdvice`) but
-nothing about what follows the item, and `refill_lane.py --top-up
---dry-run` prints prose only.
-
-**True afterwards.**
-- `refill_lane.py --top-up --dry-run` can report in a machine-readable form
-  (the lane's count, the ids it would add, the gated ids waiting).
-- `doctor` and `start` add `advice.dry_after`: true when closing the item
-  would empty its lane or take the whole queue under the floor and the dry
-  run would add nothing. `start` prints one warning line naming the item and
-  the gated blocks waiting, and still claims: the warning never blocks.
-
-**Must not change.** The floor; `finish`'s refill gate; what `start` claims.
-
-```queue
-**[Claude] L-18 -- the claim warns when it takes a lane's last item into a dry backlog**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-18 -- the claim warns when it takes a lane's last item into a dry backlog"
-- Files: `tools/slice.ps1`, `tools/refill_lane.py`, `tests/test_slice_lifecycle.py`
-- Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case (a one-item lane over a dry backlog shows `dry_after` true; the same lane with an admissible block behind it shows false); `tools/verify.ps1` is green
-- Proof: `absent: tools/slice.ps1 :: dry_after`
-- Next after: L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's
-```
+L-18 shipped 2026-10-05; its specification is `plans/archive/L-18_2026-10-05.md`.
 
 ## L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's
 
