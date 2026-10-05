@@ -61,4 +61,3 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
 | `.worktrees/BS-12` (`claude/BS-12`) | Claude | the Run availability button no longer calls the table read-only | Claude | in progress | none | `plans/now/brood-spine.md` BS-12 -- the Run availability button no longer calls the table read-only |
-| `.claude/worktrees/run-queue-followup-1ba3aa` (`claude/run-queue-followup-1ba3aa`) | Claude (docs only) | 5 Oct run-queue follow-up: stale plan Status lines, plan archiving, new Claude-lane plans, run-queue skill; never edits `plans/now/gameplay-consistency.md` (GC-3 owns it) | Claude | in progress | none | ad hoc |
