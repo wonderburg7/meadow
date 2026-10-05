@@ -79,6 +79,9 @@ sitting in a `.worktrees/` directory:
    call: `(cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
    Never pipe it through `2>&1 |`. Wait for the notification. It has ended
    only when it prints `Slice landed:` or a `slice finish stopped` block.
+   - Never run `verify.ps1` yourself, to diagnose a stop or otherwise:
+     the stop block names the saved `meadow-slice-verify.log`, and
+     `finish` reruns verify itself (20 coordinator runs, 28 Sep-5 Oct).
    - On a stop, read only the stop block. A verify failure inside the
      slice's files goes back to the worker once, then rerun `finish`. A
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,

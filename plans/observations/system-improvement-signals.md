@@ -356,4 +356,8 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- have `check_docs.py` warn when a lane
   holds one item and no admissible block for that lane exists, so the
   successor is chosen when the queue is planned rather than at `finish`.
-- Disposition: untriaged
+- Disposition: promoted 5 Oct 2026 by the agent-workflow review
+  (`docs/agent-workflow-review-2026-10-05.md` F3): L-18 warns at claim
+  (`advice.dry_after`, either lane) and L-23 makes the warning a
+  `check_docs.py` lookahead and a rule to specify before claiming, both in
+  `plans/now/agent-lifecycle.md`
