@@ -56,9 +56,8 @@ const SOURCE_TEXT := {
 }
 
 const COLUMNS := ["Name", "Source", "Why", "Introduced at stage", "Free at stage"]
-## The two stage columns are not in the sheet yet; the table says so rather
-## than leaving them blank.
-const NOT_YET := "not yet available"
+## Shown in a stage column for a row no Challenge stage names.
+const NO_STAGE := "--"
 const EDITED_MARK := " (edited)"
 
 var title_label: Label
@@ -136,7 +135,7 @@ func _fill() -> void:
 		var row: Dictionary = skills[skill_id]
 		var edits: Array = _edit_cycle(own_skills.get(skill_id, row)) if editable else []
 		if edits.is_empty():
-			_row(RunAvailability.skill_label(skill_id), row)
+			_row(RunAvailability.skill_label(skill_id), row, skill_id)
 			continue
 		var edit: String = DeveloperOverrides.edit_for(level_id, skill_id)
 		var row_name: String = RunAvailability.skill_label(skill_id)
@@ -150,11 +149,10 @@ func _fill() -> void:
 		source_btn.pressed.connect(_set_edit.bind(level_id, skill_id, next_edit))
 		grid.add_child(source_btn)
 		_cell(REASON_TEXT.get(row.get("reason", ""), str(row.get("reason", ""))), "Small")
-		_cell(NOT_YET, "Small")
-		_cell(NOT_YET, "Small")
+		_stage_cells(skill_id)
 	var roles: Dictionary = sheet.get("roles", {})
 	for role_key in roles:
-		_row("Role: %s" % Roles.label_for(Roles.id_for_key(role_key)), roles[role_key])
+		_row("Role: %s" % Roles.label_for(Roles.id_for_key(role_key)), roles[role_key], str(roles[role_key].get("skill", "")))
 	var features: Dictionary = sheet.get("features", {})
 	for feature_id in features:
 		_row("Feature: %s" % FEATURE_LABELS.get(feature_id, feature_id.trim_prefix("feature.").capitalize()), features[feature_id])
@@ -183,12 +181,19 @@ func _reset() -> void:
 	DeveloperOverrides.reset()
 	_fill()
 
-func _row(row_name: String, row: Dictionary) -> void:
+func _row(row_name: String, row: Dictionary, skill_id: String = "") -> void:
 	_cell(row_name, "Small")
 	_cell(SOURCE_TEXT.get(row.get("source", ""), str(row.get("source", ""))), "Small")
 	_cell(REASON_TEXT.get(row.get("reason", ""), str(row.get("reason", ""))), "Small")
-	_cell(NOT_YET, "Small")
-	_cell(NOT_YET, "Small")
+	_stage_cells(skill_id)
+
+## The "Introduced at stage" and "Free at stage" cells; a row with no skill
+## (a feature) or a skill no stage names reads "--".
+func _stage_cells(skill_id: String) -> void:
+	var introduced: String = RunAvailability.introduced_stage(skill_id) if skill_id != "" else ""
+	var free: Array = RunAvailability.free_stages(skill_id) if skill_id != "" else []
+	_cell(introduced if introduced != "" else NO_STAGE, "Small")
+	_cell(", ".join(PackedStringArray(free)) if not free.is_empty() else NO_STAGE, "Small")
 
 func _cell(text: String, variation: String) -> void:
 	var label := Label.new()
