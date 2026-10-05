@@ -17,7 +17,7 @@ below against them before COL-2 ships.
    field, and a save without it loads exactly as today. Run policy stays in
    level rows until a later consolidation earns its own catalogue.
 2. **Start state.** A lone queen with no comb and no workers. She backs up as
-   a Nurse (`plans/now/brood-spine.md` decision 5, `ORDINARY_QUEEN_BACKUP`),
+   a Nurse (`plans/archive/brood-spine_2026-10-05.md` decision 5, `ORDINARY_QUEEN_BACKUP`),
    and builds the first cell herself as a Comb worker, a job her Job menu
    already offers (C-81). Winter is on.
 3. **Victory, failure and continuing.** Victory: the colony survives its first

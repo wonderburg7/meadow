@@ -160,14 +160,14 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | If the queue names | Read |
 | --- | --- |
 | SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/archive/skill-screen_2026-10-01.md` |
-| BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/now/brood-spine.md` |
+| BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/archive/brood-spine_2026-10-05.md` |
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/now/gameplay-consistency.md` |
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |
 | HO-1 to HO-8 -- the 2 Oct 2026 hands-on findings: Escape and names in the skill tree, Triggers behind Developer mode, the Saves window, text overflow, Challenge 2 stage pacing and 2.9's readout | `plans/archive/hands-on-findings_2026-10-05.md` |
-| BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/now/brood-spine.md` |
+| BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/archive/brood-spine_2026-10-05.md` |
 | GC-4 -- a nurse's brood food survives a job change | `plans/now/gameplay-consistency.md` |
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/archive/scenario-reds_2026-10-04.md` |
 | CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/now/colony-run.md` |
@@ -205,7 +205,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 5. If progression is selected, follow `plans/design/progression.md` section
    11's order. Phase A (catalogue, resolver, run definition, modifiers, the
    tier-1 vertical slice) shipped; Phase B runs through
-   `plans/now/brood-spine.md`. Do not begin adaptations, campaign meta, or
+   `plans/archive/brood-spine_2026-10-05.md`. Do not begin adaptations, campaign meta, or
    legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth

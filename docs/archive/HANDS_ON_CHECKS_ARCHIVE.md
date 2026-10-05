@@ -177,19 +177,19 @@ PASS: the table lists every skill with where it comes from and why in plain word
 
 If it fails, the button's guard (`debug_panel.gd::_make_run_availability_button`) or the table (`run_availability_panel.gd`) is not doing its job.
 
-Owner: `plans/now/brood-spine.md`
+Owner: `plans/archive/brood-spine_2026-10-05.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 
 ### C-83 -- at Challenge 2's 2.2 a raised pollen Forager hatches
 
-What this checks: start Challenge 2 and play to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click an empty comb cell, choose "Forager -- Pollen" from its Raises row's "Forager..." menu, then wait for the egg to grow (fast-forward is fine; about a game-day). Do not move the nectar Forager to pollen. Only valid after BS-9 has merged (`plans/now/brood-spine.md`).
+What this checks: start Challenge 2 and play to 2.2, raise a pollen Forager (`docs/challenge-stages.md`). Click an empty comb cell, choose "Forager -- Pollen" from its Raises row's "Forager..." menu, then wait for the egg to grow (fast-forward is fine; about a game-day). Do not move the nectar Forager to pollen. Only valid after BS-9 has merged (`plans/archive/brood-spine_2026-10-05.md`).
 
 PASS: a pollen Forager hatches from that cell and 2.2 completes.
 
-If it fails, BS-9 reopens: the queen is not feeding the larva (`availability.gd::action_query`), so stages 2.1 to 2.4 still ask the player to raise bees that nobody can feed until 2.5 opens Nurses. Say whether the larva died or nothing was laid. Before BS-9 the readiness probe of 1 Oct 2026 reproduced exactly this failure; Dave's answer to it is decision 7 of `plans/now/brood-spine.md`.
+If it fails, BS-9 reopens: the queen is not feeding the larva (`availability.gd::action_query`), so stages 2.1 to 2.4 still ask the player to raise bees that nobody can feed until 2.5 opens Nurses. Say whether the larva died or nothing was laid. Before BS-9 the readiness probe of 1 Oct 2026 reproduced exactly this failure; Dave's answer to it is decision 7 of `plans/archive/brood-spine_2026-10-05.md`.
 
-Owner: `plans/now/brood-spine.md`
+Owner: `plans/archive/brood-spine_2026-10-05.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 
@@ -296,7 +296,7 @@ PASS: "Developer mode" is listed under Interface, starts unticked on a first run
 
 If it fails, the setting is not being saved between sessions or is missing from the window, and BS-D reopens before BS-5 (the developer table) builds on it.
 
-Owner: `plans/now/brood-spine.md`
+Owner: `plans/archive/brood-spine_2026-10-05.md`
 
 ### C-67 -- Challenge 2 gives Nurses free at stage 2.5
 
@@ -306,7 +306,7 @@ PASS: The Skills button appears at 2.5, Nurses shows "Cost: Free", buying it tak
 
 If it fails, the "Free" label or the button's stage gate reopens BS-2 (`scripts/skill_tree_panel.gd`, `scripts/challenge_stages.gd`).
 
-Owner: `plans/now/brood-spine.md`
+Owner: `plans/archive/brood-spine_2026-10-05.md`
 
 ### C-68 -- Clicking the hive or its exit switches view
 

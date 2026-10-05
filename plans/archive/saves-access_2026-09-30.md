@@ -1,7 +1,7 @@
 # Saves access — Dave's 28 Sep 2026 pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; follow-ups: hands-on checks C-76, C-77 and C-78 in checks/ready.md | Dependency: BS-2 in `plans/now/brood-spine.md` edits the same fixture | Verified: 2026-09-28
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; follow-ups: hands-on checks C-76, C-77 and C-78 in checks/ready.md | Dependency: BS-2 in `plans/archive/brood-spine_2026-10-05.md` edits the same fixture | Verified: 2026-09-28
 
 **Objective.** One way into the Saves window -- the settings cog -- that works
 the same in a run and on the main menu, and a Delete that always asks.
@@ -27,7 +27,7 @@ discard-warning setting says.
 | Slice | Outcome from the player's seat | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
 
-**Dependencies.** BS-2 (`plans/now/brood-spine.md`) also edits
+**Dependencies.** BS-2 (`plans/archive/brood-spine_2026-10-05.md`) also edits
 `test_scenarios/f2s_challenge2_gate_table_test.json`; it is ahead of SA-1 in
 the Claude lane, so SA-1 starts from BS-2's version. **Required reading:**
 SA-1 below and the functions it names. **Do not change** the Challenge

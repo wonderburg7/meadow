@@ -16,7 +16,7 @@ HUD stats unreadable (UT-3, UT-4). C-72's quick + clicks landing on Typeface
 (SC-1) and the boot's GDScript warnings (SC-3):
 `plans/archive/settings-and-corner_2026-10-03.md`. C-81 tests a run that owns Nurses from
 the start (BS-10), and the developer table lists cut skills as buyable
-(BS-11): `plans/now/brood-spine.md`. A nurse switched to another job loses
+(BS-11): `plans/archive/brood-spine_2026-10-05.md`. A nurse switched to another job loses
 her brood food (GC-4): `plans/now/gameplay-consistency.md`.
 
 | Slice | Outcome | Files | Startable | Level |
