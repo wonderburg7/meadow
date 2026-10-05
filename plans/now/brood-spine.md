@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill, then BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them (Dave, 5 Oct 2026; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude Code | Next: BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them (Dave, 5 Oct 2026; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -120,7 +120,6 @@ Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-13 | the Run availability table names the Challenge stage that introduces and frees each skill | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`, `tests/test_bs13_stage_columns.py`, `tests/bs13_stage_columns_test.gd`, `tools/verify.ps1` | yes | medium |
 | BS-14 | a save keeps its run's skill grants and bans, and says when developer edits made them | `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1` | yes | high |
 
 BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
@@ -150,46 +149,7 @@ BS-6 shipped 2026-10-04; its specification is `plans/archive/BS-6_2026-10-04.md`
 
 BS-12 shipped 2026-10-05; its specification is `plans/archive/BS-12_2026-10-05.md`.
 
-## BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (two files and a test, with an acceptance check). Specified
-5 Oct 2026 from Dave's decision above.
-
-**True now** (verified 5 Oct 2026 on master). `run_availability_panel.gd`
-fills the last two columns of every row with `NOT_YET` ("not yet
-available"), in `_fill` and `_row`, and `run_availability.gd`'s header says
-those columns wait for `challenge_stages.gd`. The data is already there:
-`STAGES_1` and `STAGES_2` name skill ids in a stage's cumulative
-`unlocked_keys` (Nurses first at 2.5, Challenge 2's "buy Nurses in the skill
-tree, then raise a nurse") and in `free_skills` (Nurses at 2.5, waived by
-`challenge_runner.gd` through `progression.waive_cost`). No other skill id
-appears in either list today.
-
-**True afterwards.** `run_availability.gd` answers, for a skill id, the first
-stage whose `unlocked_keys` contain it and the stages whose `free_skills`
-contain it, read from `challenge_stages.gd`'s two stage lists by a static
-function beside `sheet_for` -- the existing owner extended, no new
-catalogue. The panel shows them in its two columns: "2.5" for Nurses in
-both, "--" for a skill no stage names. A role row shows its skill's answer;
-a feature row shows "--". `NOT_YET` and the header's "still to come" note go.
-
-**Must not change.** What a run starts owning; the sheet's shape that
-`main.gd` and `progression.gd` read; `challenge_stages.gd`; `skills.gd`'s
-`introduced_by`.
-
-**Runtime policy.** Computed when the table fills (`_fill`), never per
-frame: two stage lists of under thirty records.
-
-```queue
-**[Claude] BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill**
-- Plan: `plans/now/brood-spine.md` -- "BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill"
-- Files: `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`, `tests/test_bs13_stage_columns.py`, `tests/bs13_stage_columns_test.gd`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_bs13_stage_columns` passes (Nurses reads 2.5 in both columns, Honey worker reads "--" in both); `grep -n "not yet available" scripts/run_availability_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/run_availability_panel.gd :: const NOT_YET := "not yet available"`
-- Next after: BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them
-```
+BS-13 shipped 2026-10-05; its specification is `plans/archive/BS-13_2026-10-05.md`.
 
 ## BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them
 
