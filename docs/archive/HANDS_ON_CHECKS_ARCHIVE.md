@@ -66,12 +66,12 @@ energy reaches 0% (around Day 4) and she dies of starvation.
 
 PASS: the moment she dies, the dark-red "The queen is dead" panel covers the screen, the day counter stops, and "Try again" and "Main menu" both work.
 
-If it fails, HO-10 (`plans/now/hands-on-findings.md`) reopens: the run
+If it fails, HO-10 (`plans/archive/hands-on-findings_2026-10-05.md`) reopens: the run
 carrying on past her death means `main.gd::_check_for_loss` still misses a
 freed queen; a panel that opens but sits behind something means
 `scripts/game_over.gd`'s layer is wrong.
 
-Owner: `plans/now/hands-on-findings.md`
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 ### C-97 -- Developer mode shows the Triggers, and End the run opens The queen is dead
 
@@ -81,7 +81,7 @@ PASS: with Developer mode off there is no Triggers header or button, and with it
 
 If it fails, HO-3 reopens in `scripts/debug_panel.gd` (or the Triggers show for a tester who should not see them).
 
-Owner: `plans/now/hands-on-findings.md`
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 ### C-98 -- Saves window name field shows 24+ characters and opens on top of the menu
 
@@ -91,7 +91,7 @@ PASS: The name field shows at least 24 characters on its own row, and the Saves 
 
 If it fails, the HO-4 slice reopens: `scripts/saves_panel.gd` (field width, or the layer refresh in `_apply_menu_context`).
 
-Owner: `plans/now/hands-on-findings.md`
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 ### C-95 -- Back to the run is absent on a fresh boot and works after Return to Main Menu
 
@@ -105,7 +105,7 @@ If it fails, <what a failure would change -- the value, the file, or the
 slice it reopens. A check whose failure changes nothing does not belong
 here.>
 
-Owner: `plans/now/hands-on-findings.md`
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 ## 2 Oct 2026 -- Dave's hands-on pass
 

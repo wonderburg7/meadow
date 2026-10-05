@@ -19,7 +19,7 @@ at 21:07 on 2 Oct, so it **included HO-1, HO-12 and HO-13 but not HO-2**
 | --- | --- | --- |
 | C-100 Escape closes the skill tree | FAIL, but by synthetic key only | Dave: run it on the physical keyboard (its own text asks for that). HO-16 adds the headless regression test through the real input path. Escape is very likely swallowed by computer use itself (both passes that "failed" it pressed a synthetic Escape; Space reached the game). If Dave's physical Escape also fails, HO-1 reopens as a high-reasoning diagnosis -- not specified here. |
 | C-88 big hexes, drag, zoom | FAIL (names clipped, zoom limit) | Nothing new: tested a build without HO-2. C-101 (ready) re-asks it on HO-2's code. |
-| C-84 2.9 shows what is short | FAIL | Nothing new: HO-8 (`plans/now/hands-on-findings.md`, Dave's decision of 2 Oct) owns it. Seen 3 Oct: bar "730 / 300", pollen 116 of 150 with no cue. |
+| C-84 2.9 shows what is short | FAIL | Nothing new: HO-8 (`plans/archive/hands-on-findings_2026-10-05.md`, Dave's decision of 2 Oct) owns it. Seen 3 Oct: bar "730 / 300", pollen 116 of 150 with no cue. |
 | C-99 menu hexes, whole words | FAIL at scale 2: OpenDyslexic splits words and loses lines; Open Sans loses "Expansion" | HO-15 (fix), CK-1 (fills the record and parks it in `checks/blocked.md` until HO-15) |
 | C-60 panel texture appears | FEEL: textured in Dark and Light, plain in High contrast | CK-1: C-60's "all three themes" contradicts the confirmed C-71 (High contrast panels plain); reword, then Dave confirms from the 3 Oct readings |
 | C-86 game-over follows theme and size | FEEL: colours right, nothing off-edge, "exact scale" unjudgeable | CK-1: PASS line asks for something an eye can judge; route fixed (editor Game tab and "debug route" are stale) |
