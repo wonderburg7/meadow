@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane (COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-04
+Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026) (COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-05
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -44,8 +44,8 @@ existing stage gates, with no grants or bans.
 - Difficulty presets for the Colony Run.
 - A gyne taking over from a dead queen (§11's "no gynes" half of doomed):
   not built in any run; COL-3 treats the queen's death as doom until it is.
-- COL-6's open question: how a skipped winter is charged, and who dies,
-  before Shiver Cluster exists.
+- COL-6's open question (how a skipped winter is charged, and who dies,
+  before Shiver Cluster exists) -- settled 5 Oct 2026; see decision 11.
 - CR-2's readings, accepted by Dave on 3 Oct 2026 and shown by COL-1:
   *stable income* also asks that some nectar and pollen were collected in
   the window, or empty stores would meet it on day 5; *post-winter
@@ -84,10 +84,18 @@ lived, one starved on day 32; no honey was ever made). These supersede the
    it a colony does not survive winter. It starts a future thermoregulation
    thread. Its tree, cost and numbers belong to `plans/design/progression.md`.
 10. **Genetic points** are counted and saved now, and spent later.
+11. **A skipped winter is one bill** (Dave, 5 Oct 2026, for COL-6). At
+    winter's start the colony pays, at once, what played winter would have
+    burned: living bees x `energy_burn_rate` x `winter_burn_factor` x
+    winter's length, the formula the winter forecast already shows. It comes
+    out of the comb's stores. If they fall short, workers die oldest first
+    until the survivors' bill fits; the queen dies only if the stores cannot
+    cover even her share, and that is doom (COL-3). Until Shiver Cluster
+    exists this is the whole of winter's cost.
 
 **Order.** COL-4 (the calendar) first. Then, each specified when the one
-before it lands: COL-6 winter is skipped and resolved in one step (open: how
-winter's cost is charged, and who dies, before Shiver Cluster exists);
+before it lands: COL-6 winter is skipped and resolved in one step
+(specified 5 Oct 2026 from decision 11, gated on COL-4);
 COL-7 the mating window, genetic points and COL-2's narrower win; COL-8
 winter die-back and spring regrowth; Shiver Cluster through the progression
 plan. Every one of them changes balance, so each is simulated first with
@@ -100,6 +108,7 @@ PE-2's arc (`tools/pacing_gates.py`).
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/now/gameplay-consistency.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
+| COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1` | no -- after COL-4 (shares `season.gd`; needs its year clock) | high |
 
 **Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
 both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
@@ -171,4 +180,68 @@ seeds of three), or if deriving onset would change a Challenge.
 - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` before and after shows winter on days 31 to 41 and the plan records both; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `present: scripts/game_config.gd :: var season_length_days: float = 60.0`
 - Next after: COL-6 -- winter is skipped and resolved in one step
+```
+
+## COL-6 -- winter is skipped and resolved in one step
+
+<!-- LAYER: immediate-task -->
+
+Level: high (event ordering at the year's turn, a balance change, and who
+dies). Specified 5 Oct 2026 from decisions 5 and 11. Gated on COL-4: it
+needs COL-4's year clock and edits `season.gd` after it.
+
+**True now** (verified 5 Oct 2026, before COL-4). Winter is played:
+`season.gd::_advance_winter` opens the countdown, sets `Session.winter_here`
+for `winter_length_days`, and on its last day emits `winter_survived(losses)`
+(bees at winter's start minus survivors). While `winter_here` is true,
+foragers stay in, `bee_survival.gd::age_and_burn` burns at
+`energy_burn_rate x winter_burn_factor`, and lifespans stretch by
+`winter_lifespan_factor`; a bee that finds the comb empty starves.
+`year_winter.gd::_winter_forecast` already computes what winter will cost
+(bees x `energy_burn_rate` x `winter_burn_factor` x winter's seconds) and
+what the comb holds (nectar plus honey x `honey_energy_factor`), for the
+forecast panel only. `winter_bill` appears nowhere.
+
+**True afterwards.**
+- When winter arrives (the day COL-4's year clock puts it on), the run
+  resolves it at once instead of playing it, and the next tick is the first
+  day of spring: the day counter jumps by winter's length, and
+  `Session.winter_here`/`winter_coming` end as they do after a winter
+  survived today. Nobody ages, eats or forages through the skipped days.
+- The bill is decision 11's formula, computed once by `season.gd`
+  (simulation owns it): `season.gd::winter_bill(bees)` returns the energy,
+  and `year_winter.gd::_winter_forecast` reads it instead of keeping its
+  own copy, so the forecast and the charge can never disagree.
+- The bill comes out of the comb's stores in the forecast's energy units
+  (`honey_energy_factor`, as GC-3 leaves it). If they cover it, everyone
+  lives. If not, workers are removed oldest first (by `age_seconds`) until
+  the survivors' bill fits what is held; the stores end at what is left. The
+  queen goes only if the stores cannot cover her share alone, through the
+  existing queen-death path, so COL-3 offers the checkpoint. Brood is left
+  as it is, outside the bill.
+- `winter_survived(losses)` still fires once, with the bees the bill took,
+  so CR-2's milestones (post-winter recovery) and COL-2's win hear winter
+  exactly as before, and the player sees the existing post-winter notice.
+- A level with winter off is unaffected. No Challenge changes.
+- PE-2's arc is run before and after (`python tools/pacing_gates.py`), and
+  this section records both.
+
+**Must not change.** How a bee eats outside winter; CR-2's milestones and
+COL-2's win (both read winter through `Session` and `winter_survived`); the
+forecast panel's wording; any Challenge; saves (a save made mid-winter
+before this slice still loads: the skip finishes that winter at once on the
+next tick).
+
+**Escalate** if the arc's survival drops sharply against COL-4's record (two
+seeds of three), if no existing field tells a worker from a gyne or the
+queen (gynes are not workers and are never billed away), or if a save made during a played winter
+cannot be finished safely by the skip.
+
+```queue-gated
+**[Claude] COL-6 -- winter is skipped and resolved in one step**
+- Plan: `plans/now/colony-run.md` -- "COL-6 -- winter is skipped and resolved in one step"
+- Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/season.gd :: winter_bill`
+- Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 ```
