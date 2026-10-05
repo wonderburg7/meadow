@@ -268,9 +268,9 @@ What this checks: from the main menu start Scenario 2 "A working colony" and pre
 
 PASS: none of the nine cut skills (Guard bee, Combat, Auto-defence, Nectar robbing, Drones, Medicine, Adjustment panel, Extended backup roles, Chemical cascade) has a tile, and Cell capacity shows "Not built yet: buying it changes nothing yet." beside its cost.
 
-If it fails, FBB-1 in `plans/now/feedback-build.md` reopens: a cut node is still drawn in `scripts/skill_tree_panel.gd::_rebuild`, or the note is missing from `_refresh_detail`.
+If it fails, FBB-1 in `plans/archive/feedback-build_2026-10-05.md` reopens: a cut node is still drawn in `scripts/skill_tree_panel.gd::_rebuild`, or the note is missing from `_refresh_detail`.
 
-Owner: `plans/now/feedback-build.md`
+Owner: `plans/archive/feedback-build_2026-10-05.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 
