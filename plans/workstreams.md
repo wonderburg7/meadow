@@ -61,3 +61,4 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
 | `.worktrees/BS-12` (`claude/BS-12`) | Claude | the Run availability button no longer calls the table read-only | Claude | in progress | none | `plans/now/brood-spine.md` BS-12 -- the Run availability button no longer calls the table read-only |
+| `.claude/worktrees/run-queue-limit-9132e4` (`claude/run-queue-limit-9132e4`) | Claude (docs only) | specify COL-6 from Dave's 5 Oct winter decisions; edits only `plans/now/colony-run.md` and `NEXTSTEPS.md`'s not-in-queue list | Claude | in progress | none | `plans/now/colony-run.md` COL-6 |
