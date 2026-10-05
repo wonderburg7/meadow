@@ -296,6 +296,69 @@ class SliceDoctorTest(unittest.TestCase):
         )
         self.assertEqual("none -- fixture plan is complete", payload["next_after"])
 
+    def write_one_item_lane(self, backlog_block: str) -> None:
+        """A Claude lane of one item over a Codex lane of three, with the
+        plan holding `backlog_block` (a fenced block, or nothing) behind it."""
+        shutil.copy2(SLICE_PATH.with_name("refill_lane.py"), self.root / "tools" / "refill_lane.py")
+        shutil.copy2(SLICE_PATH.with_name("heading.py"), self.root / "tools" / "heading.py")
+        for name in ("second.gd", "b1.gd", "b2.gd", "b3.gd"):
+            (self.root / "scripts" / name).write_text("func existing():\n\tpass\n", encoding="utf-8")
+
+        def item(number, lane, slice_id, source):
+            return (
+                f"{number}. **[{lane}] {slice_id} -- {slice_id} fixture**\n"
+                f"   - Plan: `plans/now/fixture.md` -- \"{slice_id} -- fixture\"\n"
+                f"   - Files: `scripts/{source}`\n"
+                "   - Check: deterministic\n"
+                f"   - Proof: `absent: scripts/{source} :: new_function`\n"
+                "   - Next after: none -- the fixture plan is complete.\n"
+            )
+
+        sections = "".join(
+            f"## {i} -- fixture\n\nLevel: low\n\n" for i in ("A-1", "B-1", "B-2", "B-3")
+        )
+        (self.root / "plans" / "now").mkdir(parents=True, exist_ok=True)
+        (self.root / "plans" / "now" / "fixture.md").write_text(
+            "# Fixture\n\n" + sections + backlog_block, encoding="utf-8"
+        )
+        (self.root / "NEXTSTEPS.md").write_text(
+            "# Next steps\n\n## Next up\n\n### Claude lane\n\n"
+            + item(1, "Claude", "A-1", "sample.gd") + "\n### Codex lane\n\n"
+            + item(1, "Codex", "B-1", "b1.gd") + "\n" + item(2, "Codex", "B-2", "b2.gd") + "\n"
+            + item(3, "Codex", "B-3", "b3.gd") + "\n## Not in the queue, and why\n\n"
+            "- Nothing is held back in this fixture.\n",
+            encoding="utf-8",
+        )
+
+    def doctor_advice(self) -> dict:
+        result = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"),
+             "doctor", "-Lane", "Claude", "-PythonPath", sys.executable],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        return json.loads(result.stdout)["advice"]
+
+    BACKLOG_BLOCK = (
+        "\n## A-2 -- fixture\n\nLevel: low\n"
+        "\n```{fence}\n**[Claude] A-2 -- A-2 fixture**\n"
+        "- Plan: `plans/now/fixture.md` -- \"A-2 -- fixture\"\n"
+        "- Files: `scripts/second.gd`\n"
+        "- Check: deterministic\n"
+        "- Proof: `absent: scripts/second.gd :: new_function`\n"
+        "- Next after: none -- the fixture plan is complete.\n```\n"
+    )
+
+    def test_doctor_warns_when_the_last_item_leaves_a_dry_backlog(self):
+        self.write_one_item_lane(self.BACKLOG_BLOCK.format(fence="queue-gated"))
+        advice = self.doctor_advice()
+        self.assertTrue(advice["dry_after"])
+        self.assertEqual(["A-2"], advice["gated_waiting"])
+
+    def test_doctor_is_quiet_when_an_admissible_block_waits_behind_the_item(self):
+        self.write_one_item_lane(self.BACKLOG_BLOCK.format(fence="queue"))
+        self.assertFalse(self.doctor_advice()["dry_after"])
+
     def test_doctor_advises_model_and_connectors_from_the_plan_level(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         (self.root / "plans" / "fixture.md").write_text(

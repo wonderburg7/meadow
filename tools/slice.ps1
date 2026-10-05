@@ -803,6 +803,25 @@ function Get-SliceLevel {
     return "unstated"
 }
 
+function Get-SliceDryAfter {
+    # L-18: would closing this item leave its lane empty, or the whole queue
+    # under the floor, with nothing admissible to refill from? Asks
+    # tools/refill_lane.py --json, so the answer is the one `finish`'s refill
+    # gate will reach. Advice only: any failure here reads as "not dry".
+    param([string]$Root, [object]$Candidate, [string]$Lane, [string]$PythonPath)
+    $none = [ordered]@{ dry_after = $false; gated_waiting = @() }
+    $tool = Join-Path $Root "tools\refill_lane.py"
+    if (-not $Candidate.Id -or -not (Test-Path -LiteralPath $tool -PathType Leaf)) { return $none }
+    try {
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($tool, "--json", "--delete", $Candidate.Id, "--top-up", "--lane", $Lane, "--root", $Root)
+        $line = @($run.Output | Where-Object { $_ -like '{*' }) | Select-Object -Last 1
+        if ($run.Exit -ne 0 -or -not $line) { return $none }
+        $report = $line | ConvertFrom-Json
+        return [ordered]@{ dry_after = [bool]$report.dry_after; gated_waiting = @($report.gated) }
+    }
+    catch { return $none }
+}
+
 function Get-SliceAdvice {
     # Which model and which connectors a slice needs, derived from facts the
     # queue and plan already hold so every briefing and report agrees.
@@ -812,7 +831,7 @@ function Get-SliceAdvice {
     # enabled connector's tool listing is re-sent on every request, so the
     # default is all off; the Godot connector is worth its cost only when a
     # slice edits scenes or on-screen UI, where a live boot shows the result.
-    param([string]$Root, [object]$Candidate, [string]$Lane)
+    param([string]$Root, [object]$Candidate, [string]$Lane, [string]$PythonPath = $script:PythonPath, [switch]$NoDry)
     $level = Get-SliceLevel -Root $Root -Candidate $Candidate
     if ($Lane -eq "Codex") {
         $model = if ($level -eq "unstated") { "Codex default model; the plan states no level -- use medium reasoning" } else { "Codex default model at $level reasoning" }
@@ -827,10 +846,13 @@ function Get-SliceAdvice {
     }
     $uiFile = @($Candidate.Files | Where-Object { $_ -match '\.(tscn|tres)$' -or $_ -match '^scripts/(hud|ui_[a-z_]+|[a-z_]+_panel|debug_panel|main)\.gd$' })
     $connectorsOn = if ($uiFile.Count -gt 0) { @("godot") } else { @() }
+    $dry = if ($NoDry) { [ordered]@{ dry_after = $false; gated_waiting = @() } } else { Get-SliceDryAfter -Root $Root -Candidate $Candidate -Lane $Lane -PythonPath $PythonPath }
     return [ordered]@{
         level          = $level
         model          = $model
         connectors_on  = @($connectorsOn)
+        dry_after      = $dry.dry_after
+        gated_waiting  = @($dry.gated_waiting)
         connectors_off = "every other MCP connector (Notion, computer-use, GitKraken, Claude Docs, scheduled tasks, MCP registry, music, design data)"
     }
 }
@@ -1386,6 +1408,11 @@ function Invoke-SliceStart {
         session = $env:CLAUDE_CODE_SESSION_ID
         ok     = $true
         ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
+    }
+    if ($result.advice.dry_after) {
+        # Stderr, so stdout stays the claim's JSON alone; never blocks.
+        $waiting = if (@($result.advice.gated_waiting).Count -gt 0) { "gated blocks waiting: $(@($result.advice.gated_waiting) -join ', ')" } else { "no gated block is waiting either" }
+        [Console]::Error.WriteLine("warning: $id is the $Lane lane's last admissible item and the backlog is dry behind it; finish will stop at the refill gate unless a slice is specified first ($waiting)")
     }
     $result | ConvertTo-Json -Compress
 }
@@ -2229,7 +2256,7 @@ function Invoke-SliceFinish {
     $adviceLine = "none -- the $lane lane is empty"
     $connectorLine = "none needed"
     if ($laneLead) {
-        $advice = Get-SliceAdvice -Root $root -Candidate $laneLead -Lane $lane
+        $advice = Get-SliceAdvice -Root $root -Candidate $laneLead -Lane $lane -NoDry
         $adviceLine = "$($advice.model) (plan level: $($advice.level))"
         $connectorLine = if ($advice.connectors_on.Count -gt 0) { "on: $($advice.connectors_on -join ', '); off: $($advice.connectors_off)" } else { "on: none; off: $($advice.connectors_off)" }
     }

@@ -38,6 +38,7 @@ bullet that gives another reason as well stays, and the log says to reword it.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -352,6 +353,28 @@ def top_up(text: str, lane: str, root: Path, prefer: list[str],
     return text
 
 
+def dry_after_report(text: str, lane: str, slice_id: str, root: Path,
+                     entries: list[backlog.Entry]) -> dict:
+    """What closing `slice_id` would leave, as data (L-18).
+
+    Runs the same delete and top-up `finish` runs, on a copy, and reports the
+    lane's and the queue's size afterwards, the ids the top-up would add and
+    the gated ids still waiting. `dry_after` is true when closing would empty
+    the lane or take the whole queue under the floor and the top-up adds
+    nothing: the case `finish`'s refill gate refuses."""
+    after = delete_item(text, slice_id)
+    before_ids = {i for _, i in queued_ids(after)}
+    refilled = top_up(after, lane, root, [], entries, [], closed={slice_id})
+    added = [i for _, i in queued_ids(refilled) if i not in before_ids]
+    lane_after = sum(1 for item_lane, _ in queued_ids(after) if item_lane == lane)
+    queue_after = len(queued_ids(after))
+    gated = [e.slice_id for e in entries if e.lane == lane and e.gated]
+    short = lane_after == 0 or queue_after < check_docs.QUEUE_SIZE_MIN
+    return {"id": slice_id, "lane": lane, "lane_after": lane_after,
+            "queue_after": queue_after, "would_add": added, "gated": gated,
+            "dry_after": bool(short and not added)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--delete", metavar="ID",
@@ -364,6 +387,9 @@ def main() -> int:
                         help="with --top-up, the one lane to fill (default: both)")
     parser.add_argument("--dry-run", action="store_true",
                         help="say what would change and write nothing")
+    parser.add_argument("--json", action="store_true",
+                        help="with --delete ID --top-up --lane L: print what closing ID would "
+                             "leave as one JSON object (implies --dry-run)")
     parser.add_argument("--root", default=str(Path(__file__).resolve().parent.parent),
                         help="repository root (default: this checkout)")
     args = parser.parse_args()
@@ -377,6 +403,12 @@ def main() -> int:
     queue_path = root / "NEXTSTEPS.md"
 
     original = queue_path.read_text(encoding="utf-8")
+    if args.json:
+        if not (args.delete and args.top_up and args.lane):
+            parser.error("--json needs --delete ID, --top-up and --lane")
+        print(json.dumps(dry_after_report(original, args.lane, args.delete, root,
+                                          load_backlog(root))))
+        return 0
     candidate = original
     log: list[str] = []
     successor: list[str] = []
